@@ -34,7 +34,7 @@ definition client {
 	permission read_permission = read + parent_group->client_read_permission + domain->client_read_permission
 	permission delete_permission = delete + parent_group->client_delete_permission + domain->client_delete_permission
 	permission set_parent_group_permission = set_parent_group + parent_group->client_set_parent_group_permission + domain->client_set_parent_group_permission
-	permission connect_to_channel_permission  =  connect_to_channel + parent_group->client_connect_to_channel + domain->client_connect_to_channel_permission
+	permission connect_to_channel_permission  =  connect_to_channel + parent_group->client_connect_to_channel_permission + domain->client_connect_to_channel_permission
 
 	permission manage_role_permission = manage_role + parent_group->client_manage_role_permission + domain->client_manage_role_permission
 	permission add_role_users_permission = add_role_users + parent_group->client_add_role_users_permission + domain->client_add_role_users_permission
@@ -63,7 +63,7 @@ definition channel {
 	permission read_permission = read + parent_group->channel_read_permission + domain->channel_read_permission
 	permission delete_permission = delete + parent_group->channel_delete_permission + domain->channel_delete_permission
 	permission set_parent_group_permission = set_parent_group + parent_group->channel_set_parent_group_permission + domain->channel_set_parent_group_permission
-	permission connect_to_client_permission = connect_to_client + parent_group->channel_connect_to_client_permission + domain->channel_connect_to_client
+	permission connect_to_client_permission = connect_to_client + parent_group->channel_connect_to_client_permission + domain->channel_connect_to_client_permission
 	permission publish_permission = publish + parent_group->channel_publish_permission + domain->channel_publish_permission
 	permission subscribe_permission = subscribe + parent_group->channel_subscribe_permission + domain->channel_subscribe_permission
 
@@ -178,8 +178,8 @@ definition group {
 	permission membership_permission = membership + parent_group->subgroup_membership_permission + domain->group_membership_permission
 	permission read_permission = read + parent_group->subgroup_read_permission + domain->group_read_permission
 	permission delete_permission = delete + parent_group->subgroup_delete_permission + domain->group_delete_permission
-	permission set_child_permission =	set_child + parent_group->subgroup_set_child_permission + domain->group_set_child
-	permission set_parent_permission = set_parent + parent_group->subgroup_set_parent_permission + domain->group_set_parent
+	permission set_child_permission =	set_child + parent_group->subgroup_set_child_permission + domain->group_set_child_permission
+	permission set_parent_permission = set_parent + parent_group->subgroup_set_parent_permission + domain->group_set_parent_permission
 
 	permission manage_role_permission = manage_role + parent_group->subgroup_manage_role_permission + domain->group_manage_role_permission
 	permission add_role_users_permission = add_role_users + parent_group->subgroup_add_role_users_permission + domain->group_add_role_users_permission
@@ -199,17 +199,17 @@ definition group {
 	permission subgroup_client_view_role_users_permission = subgroup_client_view_role_users + parent_group->subgroup_client_view_role_users_permission
 
 	// Group clients permission
-	permission client_create_permission = client_create + parent_group->subgroup_client_create + domain->client_create_permission
-	permission client_update_permission = client_update + parent_group->subgroup_client_update + domain->client_update_permission
-	permission client_read_permission = client_read + parent_group->subgroup_client_read + domain->client_read_permission
-	permission client_delete_permission = client_delete + parent_group->subgroup_client_delete + domain->client_delete_permission
-	permission client_set_parent_group_permission = client_set_parent_group + parent_group->subgroup_client_set_parent_group + domain->client_set_parent_group_permission
-	permission client_connect_to_channel_permission = client_connect_to_channel + parent_group->subgroup_client_connect_to_channel + domain->client_connect_to_channel_permission
+	permission client_create_permission = client_create + parent_group->subgroup_client_create_permission + domain->client_create_permission
+	permission client_update_permission = client_update + parent_group->subgroup_client_update_permission + domain->client_update_permission
+	permission client_read_permission = client_read + parent_group->subgroup_client_read_permission + domain->client_read_permission
+	permission client_delete_permission = client_delete + parent_group->subgroup_client_delete_permission + domain->client_delete_permission
+	permission client_set_parent_group_permission = client_set_parent_group + parent_group->subgroup_client_set_parent_group_permission + domain->client_set_parent_group_permission
+	permission client_connect_to_channel_permission = client_connect_to_channel + parent_group->subgroup_client_connect_to_channel_permission + domain->client_connect_to_channel_permission
 
-	permission client_manage_role_permission = client_manage_role + parent_group->subgroup_client_manage_role + domain->client_manage_role_permission
-	permission client_add_role_users_permission = client_add_role_users + parent_group->subgroup_client_add_role_users + domain->client_add_role_users_permission
-	permission client_remove_role_users_permission = client_remove_role_users + parent_group->subgroup_client_remove_role_users + domain->client_remove_role_users_permission
-	permission client_view_role_users_permission = client_view_role_users + parent_group->subgroup_client_view_role_users + domain->client_view_role_users_permission
+	permission client_manage_role_permission = client_manage_role + parent_group->subgroup_client_manage_role_permission + domain->client_manage_role_permission
+	permission client_add_role_users_permission = client_add_role_users + parent_group->subgroup_client_add_role_users_permission + domain->client_add_role_users_permission
+	permission client_remove_role_users_permission = client_remove_role_users + parent_group->subgroup_client_remove_role_users_permission + domain->client_remove_role_users_permission
+	permission client_view_role_users_permission = client_view_role_users + parent_group->subgroup_client_view_role_users_permission + domain->client_view_role_users_permission
 
 	// Subgroup channels permission
 	permission subgroup_channel_update_permission = subgroup_channel_update + parent_group->subgroup_channel_update_permission
@@ -227,18 +227,18 @@ definition group {
 
 	// Group channels permission
 	permission channel_create_permission = channel_create + parent_group->subgroup_channel_create_permission + domain->channel_create_permission
-	permission channel_update_permission = channel_update + parent_group->subgroup_channel_update + domain->channel_update_permission
-	permission channel_read_permission = channel_read + parent_group->subgroup_channel_read + domain->channel_read_permission
+	permission channel_update_permission = channel_update + parent_group->subgroup_channel_update_permission + domain->channel_update_permission
+	permission channel_read_permission = channel_read + parent_group->subgroup_channel_read_permission + domain->channel_read_permission
 	permission channel_delete_permission = channel_delete + parent_group->subgroup_channel_delete_permission + domain->channel_delete_permission
-	permission channel_set_parent_group_permission = channel_set_parent_group + parent_group->subgroup_channel_set_parent_group + domain->channel_set_parent_group_permission
-	permission channel_connect_to_client_permission = channel_connect_to_client + parent_group->subgroup_channel_connect_to_client + domain->channel_connect_to_client_permission
-	permission channel_publish_permission = channel_publish + parent_group->subgroup_channel_publish + domain->channel_publish_permission
-	permission channel_subscribe_permission = channel_subscribe + parent_group->subgroup_channel_subscribe + domain->channel_subscribe_permission
+	permission channel_set_parent_group_permission = channel_set_parent_group + parent_group->subgroup_channel_set_parent_group_permission + domain->channel_set_parent_group_permission
+	permission channel_connect_to_client_permission = channel_connect_to_client + parent_group->subgroup_channel_connect_to_client_permission + domain->channel_connect_to_client_permission
+	permission channel_publish_permission = channel_publish + parent_group->subgroup_channel_publish_permission + domain->channel_publish_permission
+	permission channel_subscribe_permission = channel_subscribe + parent_group->subgroup_channel_subscribe_permission + domain->channel_subscribe_permission
 
-	permission channel_manage_role_permission = channel_manage_role + parent_group->subgroup_channel_manage_role + domain->channel_manage_role_permission
-	permission channel_add_role_users_permission = channel_add_role_users + parent_group->subgroup_channel_add_role_users + domain->channel_add_role_users_permission
-	permission channel_remove_role_users_permission = channel_remove_role_users + parent_group->subgroup_channel_remove_role_users + domain->channel_remove_role_users_permission
-	permission channel_view_role_users_permission = channel_view_role_users + parent_group->subgroup_channel_view_role_users + domain->channel_view_role_users_permission
+	permission channel_manage_role_permission = channel_manage_role + parent_group->channel_manage_role_permission + domain->channel_manage_role_permission
+	permission channel_add_role_users_permission = channel_add_role_users + parent_group->channel_add_role_users_permission + domain->channel_add_role_users_permission
+	permission channel_remove_role_users_permission = channel_remove_role_users + parent_group->channel_remove_role_users_permission + domain->channel_remove_role_users_permission
+	permission channel_view_role_users_permission = channel_view_role_users + parent_group->channel_view_role_users_permission + domain->channel_view_role_users_permission
 
 
 }

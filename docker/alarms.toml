@@ -6,3 +6,6 @@
 # followed by a subtopic (e.g ["alarms.<domain_id>.c.<channel_id>.sub.topic.x", ...]).
 [subscriber]
 subjects = ["alarms.>"]
+
+[transformer]
+format = "gob"

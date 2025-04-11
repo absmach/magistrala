@@ -31,6 +31,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/messaging/nats"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
@@ -48,6 +49,11 @@ const (
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
+)
+
+var (
+	alarmsPrefix  = "alarms"
+	writersPrefix = "writers"
 )
 
 type config struct {
@@ -124,13 +130,30 @@ func main() {
 		}
 	}()
 	tracer := tp.Tracer(svcName)
-	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+
+	rePubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for rePubSub: %s", err))
 		exitCode = 1
 		return
 	}
-	defer pubSub.Close()
+	defer rePubSub.Close()
+
+	writersPubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger, nats.Prefix(writersPrefix))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to message broker for writersPubSub: %s", err))
+		exitCode = 1
+		return
+	}
+	defer writersPubSub.Close()
+
+	alarmsPubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger, nats.Prefix(alarmsPrefix))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to message broker for alarmsPubSub: %s", err))
+		exitCode = 1
+		return
+	}
+	defer alarmsPubSub.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -138,7 +161,10 @@ func main() {
 		exitCode = 1
 		return
 	}
-	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
+
+	rePubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, rePubSub)
+	writersPubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, writersPubSub)
+	alarmsPubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, alarmsPubSub)
 
 	// Setup new redis cache client
 	// cacheclient, err := redisclient.Connect(cfg.CacheURL)
@@ -174,14 +200,14 @@ func main() {
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(ctx, database, pubSub, authz, cfg.ESURL, tracer, ec, logger)
+	svc, err := newService(ctx, database, rePubSub, writersPubSub, alarmsPubSub, authz, cfg.ESURL, tracer, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
 		return
 	}
 
-	if err = consumers.Start(ctx, svcName, pubSub, svc, cfg.ConfigPath, logger); err != nil {
+	if err = consumers.Start(ctx, svcName, rePubSub, svc, cfg.ConfigPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Rule Engine: %s", err))
 		exitCode = 1
 		return
@@ -214,7 +240,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db pgclient.Database, pubsub messaging.PubSub, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db pgclient.Database, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -224,7 +250,7 @@ func newService(ctx context.Context, db pgclient.Database, pubsub messaging.PubS
 	}
 
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
-	csvc := re.NewService(repo, idp, pubsub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, idp, rePubSub, writersPubSub, alarmsPubSub, re.NewTicker(time.Minute), emailerClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	mgsenml "github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
@@ -112,23 +113,27 @@ type Service interface {
 }
 
 type re struct {
-	idp    supermq.IDProvider
-	repo   Repository
-	pubSub messaging.PubSub
-	errors chan error
-	ticker Ticker
-	email  Emailer
-	ts     []transformers.Transformer
+	writersPubSub messaging.PubSub
+	alarmsPubSub  messaging.PubSub
+	rePubSub      messaging.PubSub
+	idp           supermq.IDProvider
+	repo          Repository
+	errors        chan error
+	ticker        Ticker
+	email         Emailer
+	ts            []transformers.Transformer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
 	return &re{
-		repo:   repo,
-		idp:    idp,
-		pubSub: pubSub,
-		errors: make(chan error),
-		ticker: tck,
-		email:  emailer,
+		writersPubSub: writersPubSub,
+		alarmsPubSub:  alarmsPubSub,
+		rePubSub:      rePubSub,
+		repo:          repo,
+		idp:           idp,
+		errors:        make(chan error),
+		ticker:        tck,
+		email:         emailer,
 		// Transformers order is important since SenML is also JSON content type.
 		ts: []transformers.Transformer{
 			mgsenml.New(mgsenml.JSON),
@@ -332,9 +337,11 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
 	l.SetGlobal("messages", messages)
+	l.SetGlobal("domain_id", lua.LString(r.DomainID))
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
+	l.SetGlobal("save_senml", l.NewFunction(re.saveSenml))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
@@ -356,7 +363,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			Domain:    r.DomainID,
 			Subtopic:  r.OutputTopic,
 		}
-		return re.pubSub.Publish(ctx, m.Channel, m)
+		return re.rePubSub.Publish(ctx, m.Channel, m)
 	}
 }
 
@@ -455,6 +462,37 @@ func (re *re) sendEmail(L *lua.LState) int {
 	})
 
 	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
+		return 0
+	}
+	return 1
+}
+
+func (re *re) saveSenml(L *lua.LState) int {
+	luaString := L.ToString(1)
+	var message senml.Message
+
+	if err := json.Unmarshal([]byte(luaString), &message); err != nil {
+		return 0
+	}
+
+	payload, err := json.Marshal(message)
+	if err != nil {
+		return 0
+	}
+
+	domainId := L.GetGlobal("domain_id").String()
+
+	ctx := context.Background()
+	m := &messaging.Message{
+		Publisher: message.Publisher,
+		Created:   time.Now().Unix(),
+		Payload:   payload,
+		Channel:   message.Channel,
+		Subtopic:  message.Subtopic,
+		Domain:    domainId,
+	}
+
+	if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {
 		return 0
 	}
 	return 1

@@ -5,7 +5,7 @@ go 1.24.2
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/supermq v0.16.1-0.20250411071139-6151be72ce6d
+	github.com/absmach/supermq v0.16.1-0.20250411092334-5fd1d9b43136
 	github.com/authzed/authzed-go v1.3.1-0.20250320210445-0cde0d8c71e2
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1

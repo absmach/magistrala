@@ -237,15 +237,15 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// send message to test connectivity
-			if err := sdk.SendMessage(context.Background(), channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[0].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(context.Background(), domain.ID, channels[0].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(context.Background(), channels[0].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[1].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(context.Background(), domain.ID, channels[0].ID, clients[1].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(context.Background(), channels[1].ID, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int()), clients[0].Credentials.Secret); err != nil {
+			if err := sdk.SendMessage(context.Background(), domain.ID, channels[1].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

@@ -342,6 +342,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("save_senml", l.NewFunction(re.saveSenml))
+	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
@@ -495,6 +496,20 @@ func (re *re) saveSenml(L *lua.LState) int {
 	if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {
 		return 0
 	}
+	return 1
+}
+
+func (re *re) sendAlarm(L *lua.LState) int {
+	// luaString := L.ToString(1)
+	//  This will be the Alarm struct in Alarm service
+	// var alarm interface{}
+	// if err := json.Unmarshal([]byte(luaString), &alarm); err != nil {
+	// 	return 0
+	// }
+
+	// if err := re.alarmsPubSub.Publish(context.Background(), "alarms", alarm); err!=nil {
+	// 	return 0
+	// }
 	return 1
 }
 

@@ -56,11 +56,6 @@ var (
 	writersPrefix = "writers"
 )
 
-var (
-	alarmsPrefix  = "alarms"
-	writersPrefix = "writers"
-)
-
 type config struct {
 	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
 	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`

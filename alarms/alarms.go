@@ -11,9 +11,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 )
 
-const (
-	SeverityMax uint8 = 100
-)
+const SeverityMax uint8 = 100
 
 var ErrInvalidSeverity = errors.New("invalid severity. Must be between 0 and 100")
 

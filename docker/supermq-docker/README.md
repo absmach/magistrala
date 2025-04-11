@@ -49,24 +49,24 @@ Therefore, the following combinations are possible:
 For Message brokers other than NATS, you would need to build the docker images with RabbitMQ as the build tag and change the `docker/.env`. For example, to use RabbitMQ as a message broker:
 
 ```bash
-SMQ_MESSAGE_BROKER_TYPE=rabbitmq make dockers
+SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
 ```
 
 ```env
-SMQ_MESSAGE_BROKER_TYPE=rabbitmq
+SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
 SMQ_MESSAGE_BROKER_URL=${SMQ_RABBITMQ_URL}
 ```
 
 For Redis as an events store, you would need to run RabbitMQ or NATS as a message broker. For example, to use Redis as an events store with rabbitmq as a message broker:
 
 ```bash
-SMQ_ES_TYPE=redis SMQ_MESSAGE_BROKER_TYPE=rabbitmq make dockers
+SMQ_ES_TYPE=es_redis SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
 ```
 
 ```env
-SMQ_MESSAGE_BROKER_TYPE=rabbitmq
+SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
 SMQ_MESSAGE_BROKER_URL=${SMQ_RABBITMQ_URL}
-SMQ_ES_TYPE=redis
+SMQ_ES_TYPE=es_redis
 SMQ_ES_URL=${SMQ_REDIS_URL}
 ```
 

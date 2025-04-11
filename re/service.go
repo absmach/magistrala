@@ -4,8 +4,13 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -27,7 +32,7 @@ import (
 	luajson "github.com/vadv/gopher-lua-libs/json"
 	"github.com/vadv/gopher-lua-libs/regexp"
 	"github.com/vadv/gopher-lua-libs/storage"
-	"github.com/vadv/gopher-lua-libs/strings"
+	luastrings "github.com/vadv/gopher-lua-libs/strings"
 	luatime "github.com/vadv/gopher-lua-libs/time"
 	"github.com/vadv/gopher-lua-libs/yaml"
 	lua "github.com/yuin/gopher-lua"
@@ -338,6 +343,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	l.SetGlobal("message", message)
 	l.SetGlobal("messages", messages)
 	l.SetGlobal("domain_id", lua.LString(r.DomainID))
+	l.SetGlobal("rule_id", lua.LString(r.ID))
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
@@ -499,17 +505,80 @@ func (re *re) saveSenml(L *lua.LState) int {
 	return 1
 }
 
-func (re *re) sendAlarm(L *lua.LState) int {
-	// luaString := L.ToString(1)
-	//  This will be the Alarm struct in Alarm service
-	// var alarm interface{}
-	// if err := json.Unmarshal([]byte(luaString), &alarm); err != nil {
-	// 	return 0
-	// }
+type Alarm struct {
+	RuleID      string `json:"rule_id"`
+	Measurement string `json:"measurement"`
+	Value       string `json:"value"`
+	Threshold   string `json:"threshold"`
+	Unit        string `json:"unit"`
+	Cause       string `json:"cause"`
+	Severity    uint8  `json:"severity"`
+}
 
-	// if err := re.alarmsPubSub.Publish(context.Background(), "alarms", alarm); err!=nil {
-	// 	return 0
-	// }
+func (re *re) sendAlarm(L *lua.LState) int {
+	tbl := L.ToTable(1)
+	if tbl == nil {
+		return 0
+	}
+
+	processAlarm := func(alarmTable *lua.LTable) {
+		getStr := func(field string) string {
+			return alarmTable.RawGetString(field).String()
+		}
+
+		severityStr := getStr("severity")
+		severity := uint8(1)
+		if s, err := strconv.ParseUint(strings.TrimSpace(severityStr), 10, 8); err == nil {
+			severity = uint8(s)
+		}
+
+		topic := fmt.Sprintf("%s.c.%s.%s", getStr("domain"), getStr("channel"), getStr("subtopic"))
+
+		payload := Alarm{
+			RuleID:      getStr("ruleId"),
+			Measurement: getStr("measurement"),
+			Value:       getStr("value"),
+			Threshold:   getStr("threshold"),
+			Unit:        getStr("unit"),
+			Cause:       getStr("cause"),
+			Severity:    severity,
+		}
+
+		var buf bytes.Buffer
+		if err := gob.NewEncoder(&buf).Encode(payload); err != nil {
+			return
+		}
+
+		createdNs, err := strconv.ParseInt(getStr("created"), 10, 64)
+		if err != nil {
+			return
+		}
+
+		pubMsg := &messaging.Message{
+			Channel:   getStr("channel"),
+			Domain:    getStr("domain"),
+			Subtopic:  getStr("subtopic"),
+			Publisher: getStr("publisher"),
+			Protocol:  getStr("protocol"),
+			Created:   createdNs,
+			Payload:   buf.Bytes(),
+		}
+
+		if err := re.alarmsPubSub.Publish(context.Background(), topic, pubMsg); err != nil {
+			return
+		}
+	}
+
+	if tbl.RawGetInt(1) != lua.LNil {
+		tbl.ForEach(func(_, value lua.LValue) {
+			if alarmTable, ok := value.(*lua.LTable); ok {
+				processAlarm(alarmTable)
+			}
+		})
+	} else {
+		processAlarm(tbl)
+	}
+
 	return 1
 }
 
@@ -524,7 +593,7 @@ func preload(l *lua.LState) {
 	storage.Preload(l)
 	base64.Preload(l)
 	argparse.Preload(l)
-	strings.Preload(l)
+	luastrings.Preload(l)
 	filepath.Preload(l)
 }
 

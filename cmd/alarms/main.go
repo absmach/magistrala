@@ -165,7 +165,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	consumer := consumer.NewConsumer(svc)
+	consumer := consumer.NewConsumer(svc, logger)
 	consumer = consumertracing.NewBlocking(tracer, consumer, httpServerConfig)
 	if err = consumers.Start(ctx, svcName, pubSub, consumer, cfg.ConfigPath, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create alarms consumer: %s", err))

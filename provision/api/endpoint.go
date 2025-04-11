@@ -13,13 +13,13 @@ import (
 )
 
 func doProvision(svc provision.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(provisionReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		res, err := svc.Provision(req.domainID, req.token, req.Name, req.ExternalID, req.ExternalKey)
+		res, err := svc.Provision(ctx, req.domainID, req.token, req.Name, req.ExternalID, req.ExternalKey)
 		if err != nil {
 			return nil, err
 		}
@@ -38,13 +38,13 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 }
 
 func getMapping(svc provision.Service) endpoint.Endpoint {
-	return func(_ context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(mappingReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		res, err := svc.Mapping(req.token)
+		res, err := svc.Mapping(ctx, req.token)
 		if err != nil {
 			return nil, err
 		}

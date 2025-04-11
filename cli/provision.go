@@ -4,7 +4,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -54,7 +53,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			clients, err = sdk.CreateClients(context.Background(), clients, args[1], args[2])
+			clients, err = sdk.CreateClients(cmd.Context(), clients, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -81,7 +80,7 @@ var cmdProvision = []cobra.Command{
 
 			var chs []smqsdk.Channel
 			for _, c := range channels {
-				c, err = sdk.CreateChannel(context.Background(), c, args[1], args[2])
+				c, err = sdk.CreateChannel(cmd.Context(), c, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -109,7 +108,7 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 			for _, conn := range connIDs {
-				if err := sdk.Connect(context.Background(), conn, args[1], args[2]); err != nil {
+				if err := sdk.Connect(cmd.Context(), conn, args[1], args[2]); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
@@ -146,13 +145,13 @@ var cmdProvision = []cobra.Command{
 				},
 				Status: smqsdk.EnabledStatus,
 			}
-			user, err := sdk.CreateUser(context.Background(), user, "")
+			user, err := sdk.CreateUser(cmd.Context(), user, "")
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			ut, err := sdk.CreateToken(context.Background(), smqsdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
+			ut, err := sdk.CreateToken(cmd.Context(), smqsdk.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -163,13 +162,13 @@ var cmdProvision = []cobra.Command{
 				Name:   fmt.Sprintf("%s-domain", name),
 				Status: smqsdk.EnabledStatus,
 			}
-			domain, err = sdk.CreateDomain(context.Background(), domain, ut.AccessToken)
+			domain, err = sdk.CreateDomain(cmd.Context(), domain, ut.AccessToken)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			ut, err = sdk.CreateToken(context.Background(), smqsdk.Login{Username: user.Email, Password: user.Credentials.Secret})
+			ut, err = sdk.CreateToken(cmd.Context(), smqsdk.Login{Username: user.Email, Password: user.Credentials.Secret})
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -184,7 +183,7 @@ var cmdProvision = []cobra.Command{
 
 				clients = append(clients, t)
 			}
-			clients, err = sdk.CreateClients(context.Background(), clients, domain.ID, ut.AccessToken)
+			clients, err = sdk.CreateClients(cmd.Context(), clients, domain.ID, ut.AccessToken)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -196,7 +195,7 @@ var cmdProvision = []cobra.Command{
 					Name:   fmt.Sprintf("%s-channel-%d", name, i),
 					Status: smqsdk.EnabledStatus,
 				}
-				c, err = sdk.CreateChannel(context.Background(), c, domain.ID, ut.AccessToken)
+				c, err = sdk.CreateChannel(cmd.Context(), c, domain.ID, ut.AccessToken)
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -211,7 +210,7 @@ var cmdProvision = []cobra.Command{
 				ClientIDs:  []string{clients[0].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
-			if err := sdk.Connect(context.Background(), conIDs, domain.ID, ut.AccessToken); err != nil {
+			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -221,7 +220,7 @@ var cmdProvision = []cobra.Command{
 				ClientIDs:  []string{clients[0].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
-			if err := sdk.Connect(context.Background(), conIDs, domain.ID, ut.AccessToken); err != nil {
+			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -231,21 +230,21 @@ var cmdProvision = []cobra.Command{
 				ClientIDs:  []string{clients[1].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
-			if err := sdk.Connect(context.Background(), conIDs, domain.ID, ut.AccessToken); err != nil {
+			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
 			// send message to test connectivity
-			if err := sdk.SendMessage(context.Background(), domain.ID, channels[0].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(context.Background(), domain.ID, channels[0].ID, clients[1].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, clients[1].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(context.Background(), domain.ID, channels[1].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[1].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

@@ -19,7 +19,7 @@ var cmdSubscription = []cobra.Command{
 				return
 			}
 
-			id, err := sdk.CreateSubscription(args[0], args[1], args[2])
+			id, err := sdk.CreateSubscription(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -46,7 +46,7 @@ var cmdSubscription = []cobra.Command{
 				Contact: Contact,
 			}
 			if args[0] == "all" {
-				sub, err := sdk.ListSubscriptions(pageMetadata, args[1])
+				sub, err := sdk.ListSubscriptions(cmd.Context(), pageMetadata, args[1])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -55,7 +55,7 @@ var cmdSubscription = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.ViewSubscription(args[0], args[1])
+			c, err := sdk.ViewSubscription(cmd.Context(), args[0], args[1])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -74,7 +74,7 @@ var cmdSubscription = []cobra.Command{
 				return
 			}
 
-			if err := sdk.DeleteSubscription(args[0], args[1]); err != nil {
+			if err := sdk.DeleteSubscription(cmd.Context(), args[0], args[1]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

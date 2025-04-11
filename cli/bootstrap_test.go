@@ -102,7 +102,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("AddBootstrap", mock.Anything, mock.Anything, mock.Anything).Return(tc.id, tc.sdkErr)
+			sdkCall := sdkMock.On("AddBootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.id, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{createCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -199,8 +199,8 @@ func TestGetBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ViewBootstrap", tc.args[0], tc.args[1], tc.args[2]).Return(tc.boot, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Bootstraps", mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ViewBootstrap", mock.Anything, tc.args[0], tc.args[1], tc.args[2]).Return(tc.boot, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Bootstraps", mock.Anything, mock.Anything, tc.args[1], tc.args[2]).Return(tc.page, tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{getCmd}, tc.args...)...)
 
@@ -284,7 +284,7 @@ func TestRemoveBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RemoveBootstrap", tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RemoveBootstrap", mock.Anything, tc.args[0], tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{rmCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -443,9 +443,9 @@ func TestUpdateBootstrapConfigCmd(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var boot mgsdk.BootstrapConfig
-			sdkCall := sdkMock.On("UpdateBootstrap", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
-			sdkCall1 := sdkMock.On("UpdateBootstrapConnection", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
-			sdkCall2 := sdkMock.On("UpdateBootstrapCerts", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
+			sdkCall := sdkMock.On("UpdateBootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall1 := sdkMock.On("UpdateBootstrapConnection", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall2 := sdkMock.On("UpdateBootstrapCerts", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{updCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -527,7 +527,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("Whitelist", mock.Anything, mock.Anything, tc.args[1], tc.args[2]).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("Whitelist", mock.Anything, mock.Anything, mock.Anything, tc.args[1], tc.args[2]).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{whitelistCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -613,8 +613,8 @@ func TestBootstrapConfigCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("BootstrapSecure", mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
-			sdkCall1 := sdkMock.On("Bootstrap", mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
+			sdkCall := sdkMock.On("BootstrapSecure", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
+			sdkCall1 := sdkMock.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything).Return(tc.boot, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{bootStrapCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:

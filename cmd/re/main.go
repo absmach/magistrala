@@ -49,7 +49,6 @@ const (
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
-	maxReconnects  = -1
 )
 
 var (

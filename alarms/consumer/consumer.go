@@ -48,6 +48,7 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 	var (
 		ruleID, domainID, measurement, value, unit, threshold, cause, assigneeID string
 		severity                                                                 uint8
+		createdAt                                                                float64
 		metadata                                                                 map[string]interface{}
 	)
 
@@ -97,6 +98,11 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 				assigneeID = *msg.StringValue
 			}
 		}
+		if msg.Name == "created_at" {
+			if msg.Value != nil {
+				createdAt = *msg.Value
+			}
+		}
 		if msg.Name == "metadata" {
 			if msg.DataValue != nil {
 				data, err := json.Marshal(msg.DataValue)
@@ -108,6 +114,9 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 				}
 			}
 		}
+	}
+	if createdAt == 0 {
+		createdAt = msgs[0].Time
 	}
 
 	a := alarms.Alarm{
@@ -124,7 +133,7 @@ func (c consumer) saveSenml(ctx context.Context, messages interface{}) (err erro
 		Cause:       cause,
 		Severity:    severity,
 		AssigneeID:  assigneeID,
-		CreatedAt:   time.Now(),
+		CreatedAt:   time.Unix(0, int64(createdAt)),
 		Metadata:    metadata,
 	}
 
@@ -139,6 +148,7 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	var (
 		ruleID, domainID, measurement, value, unit, threshold, cause, assigneeID string
 		severity                                                                 uint8
+		createdAt                                                                float64
 		metadata                                                                 map[string]interface{}
 	)
 
@@ -171,6 +181,9 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		if getString(msg.Payload, "assignee_id") != "" {
 			assigneeID = getString(msg.Payload, "assignee_id")
 		}
+		if getFloat64(msg.Payload, "created_at") != 0 {
+			createdAt = getFloat64(msg.Payload, "created_at")
+		}
 		if getString(msg.Payload, "metadata") != "" {
 			data, err := json.Marshal(getString(msg.Payload, "metadata"))
 			if err == nil {
@@ -180,6 +193,9 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 				}
 			}
 		}
+	}
+	if createdAt == 0 {
+		createdAt = float64(msgs.Data[0].Created)
 	}
 
 	a := alarms.Alarm{
@@ -196,7 +212,7 @@ func (c consumer) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 		Cause:       cause,
 		Severity:    severity,
 		AssigneeID:  assigneeID,
-		CreatedAt:   time.Now(),
+		CreatedAt:   time.Unix(0, int64(createdAt)),
 		Metadata:    metadata,
 	}
 
@@ -252,4 +268,30 @@ func getUint8(payload map[string]interface{}, key string) *uint8 {
 	}
 	v := uint8(0)
 	return &v
+}
+
+func getFloat64(payload map[string]interface{}, key string) float64 {
+	if payload == nil {
+		return 0
+	}
+	value, ok := payload[key]
+	if !ok {
+		return 0
+	}
+	f, ok := value.(float64)
+	if ok {
+		return f
+	}
+	val, ok := value.(uint64)
+	if ok {
+		v := float64(val)
+		return v
+	}
+	i, ok := value.(int)
+	if ok {
+		v := float64(i)
+		return v
+	}
+
+	return 0
 }

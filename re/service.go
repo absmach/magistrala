@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers"
 	mgjson "github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/supermq/pkg/transformers/senml"
 	mgsenml "github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
@@ -112,23 +113,27 @@ type Service interface {
 }
 
 type re struct {
-	idp    supermq.IDProvider
-	repo   Repository
-	pubSub messaging.PubSub
-	errors chan error
-	ticker Ticker
-	email  Emailer
-	ts     []transformers.Transformer
+	writersPubSub messaging.PubSub
+	alarmsPubSub  messaging.PubSub
+	rePubSub      messaging.PubSub
+	idp           supermq.IDProvider
+	repo          Repository
+	errors        chan error
+	ticker        Ticker
+	email         Emailer
+	ts            []transformers.Transformer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, pubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
 	return &re{
-		repo:   repo,
-		idp:    idp,
-		pubSub: pubSub,
-		errors: make(chan error),
-		ticker: tck,
-		email:  emailer,
+		writersPubSub: writersPubSub,
+		alarmsPubSub:  alarmsPubSub,
+		rePubSub:      rePubSub,
+		repo:          repo,
+		idp:           idp,
+		errors:        make(chan error),
+		ticker:        tck,
+		email:         emailer,
 		// Transformers order is important since SenML is also JSON content type.
 		ts: []transformers.Transformer{
 			mgsenml.New(mgsenml.JSON),
@@ -357,7 +362,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 			Domain:    r.DomainID,
 			Subtopic:  r.OutputTopic,
 		}
-		return re.pubSub.Publish(ctx, m.Channel, m)
+		return re.rePubSub.Publish(ctx, m.Channel, m)
 	}
 }
 
@@ -483,7 +488,7 @@ func (re *re) saveSenml(L *lua.LState) int {
 		Subtopic:  message.Subtopic,
 	}
 
-	if err := re.pubSub.Publish(ctx, "w", m); err != nil {
+	if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {
 		return 0
 	}
 	return 1

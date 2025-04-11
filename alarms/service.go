@@ -31,7 +31,9 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 		return err
 	}
 	alarm.ID = id
-	alarm.CreatedAt = time.Now()
+	if alarm.CreatedAt.IsZero() {
+		alarm.CreatedAt = time.Now()
+	}
 
 	if err := alarm.Validate(); err != nil {
 		return err

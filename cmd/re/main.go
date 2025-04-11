@@ -52,8 +52,8 @@ const (
 )
 
 var (
-	alarmsPrefix  = "a"
-	writersPrefix = "w"
+	alarmsPrefix  = "alarms"
+	writersPrefix = "writers"
 )
 
 type config struct {

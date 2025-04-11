@@ -337,6 +337,7 @@ func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
 	l.SetGlobal("messages", messages)
+	l.SetGlobal("domain_id", lua.LString(r.DomainID))
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
@@ -479,6 +480,8 @@ func (re *re) saveSenml(L *lua.LState) int {
 		return 0
 	}
 
+	domainId := L.GetGlobal("domain_id").String()
+
 	ctx := context.Background()
 	m := &messaging.Message{
 		Publisher: message.Publisher,
@@ -486,6 +489,7 @@ func (re *re) saveSenml(L *lua.LState) int {
 		Payload:   payload,
 		Channel:   message.Channel,
 		Subtopic:  message.Subtopic,
+		Domain:    domainId,
 	}
 
 	if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {

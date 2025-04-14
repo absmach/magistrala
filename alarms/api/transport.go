@@ -83,7 +83,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	thingID, err := apiutil.ReadStringQuery(r, "thing_id", "")
+	clientID, err := apiutil.ReadStringQuery(r, "client_id", "")
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
@@ -134,7 +134,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			Limit:          limit,
 			DomainID:       domainID,
 			ChannelID:      channelID,
-			ThingID:        thingID,
+			ClientID:       clientID,
 			Subtopic:       subtopic,
 			RuleID:         ruleID,
 			Status:         status,

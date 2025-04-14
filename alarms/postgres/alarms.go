@@ -30,9 +30,9 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, domain_id, channel_id, thing_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at)
-				VALUES (:id, :rule_id, :domain_id, :channel_id, :thing_id, :subtopic, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :assignee_id, :metadata, :created_at)
-				RETURNING id, rule_id, domain_id, channel_id, thing_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at;`
+	query := `INSERT INTO alarms (id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at)
+				VALUES (:id, :rule_id, :domain_id, :channel_id, :client_id, :subtopic, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :assignee_id, :metadata, :created_at)
+				RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at;`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -207,7 +207,7 @@ type dbAlarm struct {
 	RuleID         string        `db:"rule_id"`
 	DomainID       string        `db:"domain_id"`
 	ChannelID      string        `db:"channel_id"`
-	ThingID        string        `db:"thing_id"`
+	ClientID       string        `db:"client_id"`
 	Subtopic       string        `db:"subtopic"`
 	Measurement    string        `db:"measurement"`
 	Value          string        `db:"value"`
@@ -283,7 +283,7 @@ func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
 		RuleID:         a.RuleID,
 		DomainID:       a.DomainID,
 		ChannelID:      a.ChannelID,
-		ThingID:        a.ThingID,
+		ClientID:       a.ClientID,
 		Subtopic:       a.Subtopic,
 		Measurement:    a.Measurement,
 		Value:          a.Value,
@@ -356,7 +356,7 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		RuleID:         dbr.RuleID,
 		DomainID:       dbr.DomainID,
 		ChannelID:      dbr.ChannelID,
-		ThingID:        dbr.ThingID,
+		ClientID:       dbr.ClientID,
 		Subtopic:       dbr.Subtopic,
 		Measurement:    dbr.Measurement,
 		Value:          dbr.Value,
@@ -387,8 +387,8 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	if pm.ChannelID != "" {
 		query = append(query, "channel_id = :channel_id")
 	}
-	if pm.ThingID != "" {
-		query = append(query, "thing_id = :thing_id")
+	if pm.ClientID != "" {
+		query = append(query, "client_id = :client_id")
 	}
 	if pm.Subtopic != "" {
 		query = append(query, "subtopic = :subtopic")

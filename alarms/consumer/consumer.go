@@ -52,7 +52,7 @@ func (c consumer) handleMessage(ctx context.Context, msg *messaging.Message) (er
 	}
 	alarm.DomainID = msg.GetDomain()
 	alarm.ChannelID = msg.GetChannel()
-	alarm.ThingID = msg.GetPublisher()
+	alarm.ClientID = msg.GetPublisher()
 	alarm.Subtopic = msg.GetSubtopic()
 
 	if alarm.CreatedAt.IsZero() {

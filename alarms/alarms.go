@@ -23,7 +23,7 @@ type Alarm struct {
 	RuleID         string    `json:"rule_id"`
 	DomainID       string    `json:"domain_id"`
 	ChannelID      string    `json:"channel_id"`
-	ThingID        string    `json:"thing_id"`
+	ClientID       string    `json:"client_id"`
 	Subtopic       string    `json:"subtopic"`
 	Status         Status    `json:"status"`
 	Measurement    string    `json:"measurement"`
@@ -57,7 +57,7 @@ type PageMetadata struct {
 	Limit          uint64 `json:"limit"           db:"limit"`
 	DomainID       string `json:"domain_id"       db:"domain_id"`
 	ChannelID      string `json:"channel_id"      db:"channel_id"`
-	ThingID        string `json:"thing_id"        db:"thing_id"`
+	ClientID       string `json:"client_id"       db:"client_id"`
 	Subtopic       string `json:"subtopic"        db:"subtopic"`
 	RuleID         string `json:"rule_id"         db:"rule_id"`
 	Status         Status `json:"status"          db:"status"`
@@ -79,8 +79,8 @@ func (a Alarm) Validate() error {
 	if a.ChannelID == "" {
 		return errors.New("channel_id is required")
 	}
-	if a.ThingID == "" {
-		return errors.New("thing_id is required")
+	if a.ClientID == "" {
+		return errors.New("client_id is required")
 	}
 	if a.Subtopic == "" {
 		return errors.New("subtopic is required")

@@ -21,7 +21,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						rule_id		    VARCHAR(36) NOT NULL CHECK (length(rule_id) > 0),
 						domain_id	    VARCHAR(36) NOT NULL,
 						channel_id	    VARCHAR(36) NOT NULL,
-						thing_id	    VARCHAR(36) NOT NULL,
+						client_id	    VARCHAR(36) NOT NULL,
 						subtopic        TEXT NOT NULL,
 						measurement	    TEXT NOT NULL,
 						value		    TEXT NOT NULL,

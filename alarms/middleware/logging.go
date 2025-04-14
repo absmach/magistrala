@@ -34,10 +34,16 @@ func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm
 			slog.String("request_id", middleware.GetReqID(ctx)),
 			slog.Group("alarm",
 				slog.String("rule_id", alarm.RuleID),
+				slog.String("domain_id", alarm.DomainID),
+				slog.String("channel_id", alarm.ChannelID),
+				slog.String("client_id", alarm.ClientID),
+				slog.String("subtopic", alarm.Subtopic),
 				slog.String("measurement", alarm.Measurement),
 				slog.String("value", alarm.Value),
 				slog.String("unit", alarm.Unit),
+				slog.String("threshold", alarm.Threshold),
 				slog.String("cause", alarm.Cause),
+				slog.Uint64("severity", uint64(alarm.Severity)),
 			),
 		}
 		if err != nil {
@@ -59,10 +65,16 @@ func (lm *loggingMiddleware) UpdateAlarm(ctx context.Context, session authn.Sess
 			slog.Group("alarm",
 				slog.String("id", dba.ID),
 				slog.String("rule_id", dba.RuleID),
+				slog.String("domain_id", dba.DomainID),
+				slog.String("channel_id", dba.ChannelID),
+				slog.String("client_id", dba.ClientID),
+				slog.String("subtopic", dba.Subtopic),
 				slog.String("measurement", dba.Measurement),
 				slog.String("value", dba.Value),
 				slog.String("unit", dba.Unit),
+				slog.String("threshold", dba.Threshold),
 				slog.String("cause", dba.Cause),
+				slog.Uint64("severity", uint64(dba.Severity)),
 				slog.String("status", dba.Status.String()),
 			),
 		}
@@ -102,6 +114,12 @@ func (lm *loggingMiddleware) ListAlarms(ctx context.Context, session authn.Sessi
 			slog.String("request_id", middleware.GetReqID(ctx)),
 			slog.Int("offset", int(pm.Offset)),
 			slog.Int("limit", int(pm.Limit)),
+			slog.String("rule_id", pm.RuleID),
+			slog.String("domain_id", pm.DomainID),
+			slog.String("channel_id", pm.ChannelID),
+			slog.String("client_id", pm.ClientID),
+			slog.String("subtopic", pm.Subtopic),
+			slog.Uint64("severity", uint64(pm.Severity)),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))

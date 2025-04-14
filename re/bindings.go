@@ -37,7 +37,7 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 			Payload:   payload,
 		}
 
-		if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {
+		if err := re.writersPub.Publish(ctx, message.Channel, m); err != nil {
 			return 0
 		}
 		return 1

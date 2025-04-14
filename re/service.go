@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -87,7 +86,7 @@ type Page struct {
 }
 
 type Service interface {
-	consumers.AsyncConsumer
+	messaging.MessageHandler
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -96,30 +95,31 @@ type Service interface {
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	StartScheduler(ctx context.Context) error
+	Errors() <-chan error
 }
 
 type re struct {
-	writersPubSub messaging.PubSub
-	alarmsPubSub  messaging.PubSub
-	rePubSub      messaging.PubSub
-	idp           supermq.IDProvider
-	repo          Repository
-	errors        chan error
-	ticker        Ticker
-	email         Emailer
-	ts            []transformers.Transformer
+	writersPub messaging.Publisher
+	alarmsPub  messaging.Publisher
+	rePubSub   messaging.PubSub
+	idp        supermq.IDProvider
+	repo       Repository
+	errors     chan error
+	ticker     Ticker
+	email      Emailer
+	ts         []transformers.Transformer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
 	return &re{
-		writersPubSub: writersPubSub,
-		alarmsPubSub:  alarmsPubSub,
-		rePubSub:      rePubSub,
-		repo:          repo,
-		idp:           idp,
-		errors:        make(chan error),
-		ticker:        tck,
-		email:         emailer,
+		writersPub: writersPub,
+		alarmsPub:  alarmsPub,
+		rePubSub:   rePubSub,
+		repo:       repo,
+		idp:        idp,
+		errors:     make(chan error),
+		ticker:     tck,
+		email:      emailer,
 		// Transformers order is important since SenML is also JSON content type.
 		ts: []transformers.Transformer{
 			mgsenml.New(mgsenml.JSON),
@@ -213,28 +213,31 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	return rule, nil
 }
 
-func (re *re) ConsumeAsync(ctx context.Context, msg interface{}) {
-	m, ok := msg.(*messaging.Message)
-	if !ok {
-		return
-	}
-	inputChannel := m.Channel
+func (re *re) Handle(msg *messaging.Message) error {
+	inputChannel := msg.Channel
 
 	pm := PageMeta{
 		InputChannel: inputChannel,
 		Status:       EnabledStatus,
 	}
+	ctx := context.Background()
 	page, err := re.repo.ListRules(ctx, pm)
 	if err != nil {
-		re.errors <- err
-		return
+		return err
 	}
 
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
-			re.errors <- re.process(ctx, r, m)
+			if err := re.process(ctx, r, msg); err != nil {
+				re.errors <- err
+			}
 		}(ctx)
 	}
+	return nil
+}
+
+func (re *re) Cancel() error {
+	return nil
 }
 
 func (re *re) Errors() <-chan error {

@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/absmach/magistrala/alarms"
 	httpAPI "github.com/absmach/magistrala/alarms/api"
@@ -26,11 +27,13 @@ import (
 	"github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/messaging/nats"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
+	"github.com/nats-io/nats.go/jetstream"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -51,6 +54,18 @@ type config struct {
 	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+}
+
+var jsStreamConfig = jetstream.StreamConfig{
+	Name:              "alarms",
+	Description:       "SuperMQ stream for alarms",
+	Subjects:          []string{"alarms.>"},
+	Retention:         jetstream.LimitsPolicy,
+	MaxMsgsPerSubject: 1e6,
+	MaxAge:            time.Hour * 24,
+	MaxMsgSize:        1024 * 1024,
+	Discard:           jetstream.DiscardOld,
+	Storage:           jetstream.FileStorage,
 }
 
 func main() {
@@ -156,7 +171,7 @@ func main() {
 	}
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpAPI.MakeHandler(svc, logger, idp, cfg.InstanceID, authn), logger)
 
-	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger, nats.JSStreamConfig(jsStreamConfig))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1

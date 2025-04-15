@@ -35,6 +35,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 	// if assignee is present check if assignee is member of domain
 
 	req := smqauthz.PolicyReq{
+		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,

@@ -80,9 +80,5 @@ func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm 
 	alarm.UpdatedAt = time.Now()
 	alarm.UpdatedBy = session.UserID
 
-	if err := alarm.Validate(); err != nil {
-		return Alarm{}, err
-	}
-
 	return s.repo.UpdateAlarm(ctx, alarm)
 }

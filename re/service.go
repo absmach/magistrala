@@ -318,7 +318,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		if r.OutputChannel == "" {
 			return nil
 		}
-		if re.pubSub == nil {
+		if re.rePubSub == nil {
 			return errors.New("message broker not initialized")
 		}
 		m := &messaging.Message{

@@ -21,7 +21,6 @@ import (
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/consumers"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/supermq/pkg/authz"
@@ -29,7 +28,6 @@ import (
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/messaging/nats"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
@@ -38,22 +36,20 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	svcName        = "rules_engine"
+	svcName       = "rules_engine"
+	channelsTopic = "channels.>"
+
 	envPrefixDB    = "MG_RE_DB_"
 	envPrefixHTTP  = "MG_RE_HTTP_"
 	envPrefixAuth  = "SMQ_AUTH_GRPC_"
 	defDB          = "r"
 	defSvcHTTPPort = "9008"
-)
-
-var (
-	alarmsPrefix  = "alarms"
-	writersPrefix = "writers"
 )
 
 type config struct {
@@ -65,8 +61,30 @@ type config struct {
 	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	ConfigPath       string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+}
+
+const (
+	writersCfgName = "writers"
+	alarmsCfgName  = "alarms"
+
+	alarmsPrefix  = "alarms"
+	writersPrefix = "writers"
+)
+
+var (
+	writersSubjects = []string{"writers.>"}
+	alarmsSubjects  = []string{"alarms.>"}
+)
+
+var jsStreamConfig = jetstream.StreamConfig{
+	Retention:         jetstream.LimitsPolicy,
+	Description:       "SuperMQ Rules Engine stream for handling internal messages",
+	MaxMsgsPerSubject: 1e6,
+	MaxAge:            time.Hour * 24,
+	MaxMsgSize:        1024 * 1024,
+	Discard:           jetstream.DiscardOld,
+	Storage:           jetstream.FileStorage,
 }
 
 func main() {
@@ -131,7 +149,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	rePubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	rePubSub, err := nats.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for rePubSub: %s", err))
 		exitCode = 1
@@ -139,21 +157,27 @@ func main() {
 	}
 	defer rePubSub.Close()
 
-	writersPubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger, nats.Prefix(writersPrefix))
+	writersCfg := jsStreamConfig
+	writersCfg.Name = writersCfgName
+	writersCfg.Subjects = writersSubjects
+	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg), nats.Prefix(writersPrefix))
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for writersPubSub: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
 		exitCode = 1
 		return
 	}
-	defer writersPubSub.Close()
+	defer writersPub.Close()
 
-	alarmsPubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger, nats.Prefix(alarmsPrefix))
+	alarmsCfg := jsStreamConfig
+	alarmsCfg.Name = alarmsCfgName
+	alarmsCfg.Subjects = alarmsSubjects
+	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg), nats.Prefix(alarmsPrefix))
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for alarmsPubSub: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
 		exitCode = 1
 		return
 	}
-	defer alarmsPubSub.Close()
+	defer alarmsPub.Close()
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
@@ -163,17 +187,8 @@ func main() {
 	}
 
 	rePubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, rePubSub)
-	writersPubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, writersPubSub)
-	alarmsPubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, alarmsPubSub)
-
-	// Setup new redis cache client
-	// cacheclient, err := redisclient.Connect(cfg.CacheURL)
-	// if err != nil {
-	// 	logger.Error(err.Error())
-	// 	exitCode = 1
-	// 	return
-	// }
-	// defer cacheclient.Close()
+	writersPub = brokerstracing.NewPublisher(httpServerConfig, tracer, writersPub)
+	alarmsPub = brokerstracing.NewPublisher(httpServerConfig, tracer, alarmsPub)
 
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
@@ -200,18 +215,31 @@ func main() {
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(ctx, database, rePubSub, writersPubSub, alarmsPubSub, authz, cfg.ESURL, tracer, ec, logger)
+	svc, err := newService(ctx, database, rePubSub, writersPub, alarmsPub, authz, cfg.ESURL, tracer, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
 		return
 	}
-
-	if err = consumers.Start(ctx, svcName, rePubSub, svc, cfg.ConfigPath, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create Rule Engine: %s", err))
+	subCfg := messaging.SubscriberConfig{
+		ID:             svcName,
+		Topic:          channelsTopic,
+		DeliveryPolicy: messaging.DeliverAllPolicy,
+		Handler:        svc,
+	}
+	if err := rePubSub.Subscribe(ctx, subCfg); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to internal message broker: %s", err))
 		exitCode = 1
 		return
 	}
+
+	go func() {
+		for {
+			err := <-svc.Errors()
+			logger.Warn("Error handling rule", slog.String("error", err.Error()))
+		}
+	}()
+
 	mux := chi.NewRouter()
 
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, mux, logger, cfg.InstanceID), logger)
@@ -240,7 +268,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db pgclient.Database, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(ctx context.Context, db pgclient.Database, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, esURL string, tracer trace.Tracer, ec email.Config, logger *slog.Logger) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -250,7 +278,7 @@ func newService(ctx context.Context, db pgclient.Database, rePubSub messaging.Pu
 	}
 
 	// csvc = authzmw.AuthorizationMiddleware(csvc, authz)
-	csvc := re.NewService(repo, idp, rePubSub, writersPubSub, alarmsPubSub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

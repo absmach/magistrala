@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/messaging"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -98,38 +99,47 @@ func (_c *Service_AddRule_Call) RunAndReturn(run func(ctx context.Context, sessi
 	return _c
 }
 
-// ConsumeAsync provides a mock function for the type Service
-func (_mock *Service) ConsumeAsync(ctx context.Context, messages interface{}) {
-	_mock.Called(ctx, messages)
-	return
+// Cancel provides a mock function for the type Service
+func (_mock *Service) Cancel() error {
+	ret := _mock.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for Cancel")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func() error); ok {
+		r0 = returnFunc()
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
 }
 
-// Service_ConsumeAsync_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConsumeAsync'
-type Service_ConsumeAsync_Call struct {
+// Service_Cancel_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Cancel'
+type Service_Cancel_Call struct {
 	*mock.Call
 }
 
-// ConsumeAsync is a helper method to define mock.On call
-//   - ctx
-//   - messages
-func (_e *Service_Expecter) ConsumeAsync(ctx interface{}, messages interface{}) *Service_ConsumeAsync_Call {
-	return &Service_ConsumeAsync_Call{Call: _e.mock.On("ConsumeAsync", ctx, messages)}
+// Cancel is a helper method to define mock.On call
+func (_e *Service_Expecter) Cancel() *Service_Cancel_Call {
+	return &Service_Cancel_Call{Call: _e.mock.On("Cancel")}
 }
 
-func (_c *Service_ConsumeAsync_Call) Run(run func(ctx context.Context, messages interface{})) *Service_ConsumeAsync_Call {
+func (_c *Service_Cancel_Call) Run(run func()) *Service_Cancel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		run()
 	})
 	return _c
 }
 
-func (_c *Service_ConsumeAsync_Call) Return() *Service_ConsumeAsync_Call {
-	_c.Call.Return()
+func (_c *Service_Cancel_Call) Return(err error) *Service_Cancel_Call {
+	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Service_ConsumeAsync_Call) RunAndReturn(run func(ctx context.Context, messages interface{})) *Service_ConsumeAsync_Call {
-	_c.Run(run)
+func (_c *Service_Cancel_Call) RunAndReturn(run func() error) *Service_Cancel_Call {
+	_c.Call.Return(run)
 	return _c
 }
 
@@ -287,6 +297,51 @@ func (_c *Service_Errors_Call) Return(errCh <-chan error) *Service_Errors_Call {
 }
 
 func (_c *Service_Errors_Call) RunAndReturn(run func() <-chan error) *Service_Errors_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Handle provides a mock function for the type Service
+func (_mock *Service) Handle(msg *messaging.Message) error {
+	ret := _mock.Called(msg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Handle")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(*messaging.Message) error); ok {
+		r0 = returnFunc(msg)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_Handle_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Handle'
+type Service_Handle_Call struct {
+	*mock.Call
+}
+
+// Handle is a helper method to define mock.On call
+//   - msg
+func (_e *Service_Expecter) Handle(msg interface{}) *Service_Handle_Call {
+	return &Service_Handle_Call{Call: _e.mock.On("Handle", msg)}
+}
+
+func (_c *Service_Handle_Call) Run(run func(msg *messaging.Message)) *Service_Handle_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*messaging.Message))
+	})
+	return _c
+}
+
+func (_c *Service_Handle_Call) Return(err error) *Service_Handle_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_Handle_Call) RunAndReturn(run func(msg *messaging.Message) error) *Service_Handle_Call {
 	_c.Call.Return(run)
 	return _c
 }

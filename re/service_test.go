@@ -19,7 +19,6 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	pubsubmocks "github.com/absmach/supermq/pkg/messaging/mocks"
-	mgjson "github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -545,13 +544,13 @@ func TestDisableRule(t *testing.T) {
 	}
 }
 
-func TestConsumeAsync(t *testing.T) {
+func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t)
 	now := time.Now()
 
 	cases := []struct {
 		desc       string
-		message    any
+		message    *messaging.Message
 		pageMeta   re.PageMeta
 		page       re.Page
 		listErr    error
@@ -600,32 +599,10 @@ func TestConsumeAsync(t *testing.T) {
 			},
 			listErr: nil,
 		},
-		{
-			desc:    "consume message with unsupported message type",
-			message: "unsupported message type",
-			pageMeta: re.PageMeta{
-				InputChannel: inputChannel,
-				Status:       re.EnabledStatus,
-			},
-			page: re.Page{},
-		},
-		{
-			desc:    "consume json message",
-			message: mgjson.Message{},
-			pageMeta: re.PageMeta{
-				InputChannel: inputChannel,
-				Status:       re.EnabledStatus,
-			},
-			page:    re.Page{},
-			listErr: nil,
-		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ctx, cancel := context.WithTimeout(context.Background(), 500*time.Millisecond)
-			defer cancel()
-
 			var err error
 
 			repoCall := repo.On("ListRules", mock.Anything, tc.pageMeta).Return(tc.page, tc.listErr).Run(func(args mock.Arguments) {
@@ -635,7 +612,8 @@ func TestConsumeAsync(t *testing.T) {
 			})
 			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
 
-			svc.ConsumeAsync(ctx, tc.message)
+			err = svc.Handle(tc.message)
+			assert.Nil(t, err)
 
 			assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
 

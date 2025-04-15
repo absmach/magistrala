@@ -175,23 +175,27 @@ func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 	return lm.svc.StartScheduler(ctx)
 }
 
-func (lm *loggingMiddleware) ConsumeAsync(ctx context.Context, msgs interface{}) {
+func (lm *loggingMiddleware) Handle(msg *messaging.Message) error {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 		}
-		if m, ok := msgs.(*messaging.Message); ok {
+		if msg != nil {
 			args = append(args,
-				slog.String("channel", m.Channel),
-				slog.String("payload_size", fmt.Sprintf("%d", len(m.Payload))),
+				slog.String("channel", msg.Channel),
+				slog.String("payload_size", fmt.Sprintf("%d", len(msg.Payload))),
 			)
 		}
 		lm.logger.Info("Message consumption completed", args...)
 	}(time.Now())
 
-	lm.svc.ConsumeAsync(ctx, msgs)
+	return lm.svc.Handle(msg)
 }
 
 func (lm *loggingMiddleware) Errors() <-chan error {
 	return lm.svc.Errors()
+}
+
+func (lm *loggingMiddleware) Cancel() error {
+	return lm.Cancel()
 }

@@ -5,31 +5,13 @@ package re
 
 import (
 	"context"
-	"encoding/json"
 	"time"
 
 	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers"
-	mgjson "github.com/absmach/supermq/pkg/transformers/json"
-	"github.com/absmach/supermq/pkg/transformers/senml"
-	mgsenml "github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/vadv/gopher-lua-libs/argparse"
-	"github.com/vadv/gopher-lua-libs/base64"
-	"github.com/vadv/gopher-lua-libs/crypto"
-	"github.com/vadv/gopher-lua-libs/db"
-	"github.com/vadv/gopher-lua-libs/filepath"
-	"github.com/vadv/gopher-lua-libs/ioutil"
-	luajson "github.com/vadv/gopher-lua-libs/json"
-	"github.com/vadv/gopher-lua-libs/regexp"
-	"github.com/vadv/gopher-lua-libs/storage"
-	"github.com/vadv/gopher-lua-libs/strings"
-	luatime "github.com/vadv/gopher-lua-libs/time"
-	"github.com/vadv/gopher-lua-libs/yaml"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -101,7 +83,7 @@ type Page struct {
 }
 
 type Service interface {
-	consumers.AsyncConsumer
+	messaging.MessageHandler
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -110,35 +92,30 @@ type Service interface {
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	StartScheduler(ctx context.Context) error
+	Errors() <-chan error
 }
 
 type re struct {
-	writersPubSub messaging.PubSub
-	alarmsPubSub  messaging.PubSub
-	rePubSub      messaging.PubSub
-	idp           supermq.IDProvider
-	repo          Repository
-	errors        chan error
-	ticker        Ticker
-	email         Emailer
-	ts            []transformers.Transformer
+	writersPub messaging.Publisher
+	alarmsPub  messaging.Publisher
+	rePubSub   messaging.PubSub
+	idp        supermq.IDProvider
+	repo       Repository
+	errors     chan error
+	ticker     Ticker
+	email      Emailer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPubSub messaging.PubSub, alarmsPubSub messaging.PubSub, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
 	return &re{
-		writersPubSub: writersPubSub,
-		alarmsPubSub:  alarmsPubSub,
-		rePubSub:      rePubSub,
-		repo:          repo,
-		idp:           idp,
-		errors:        make(chan error),
-		ticker:        tck,
-		email:         emailer,
-		// Transformers order is important since SenML is also JSON content type.
-		ts: []transformers.Transformer{
-			mgsenml.New(mgsenml.JSON),
-			mgjson.New(nil),
-		},
+		writersPub: writersPub,
+		alarmsPub:  alarmsPub,
+		rePubSub:   rePubSub,
+		repo:       repo,
+		idp:        idp,
+		errors:     make(chan error),
+		ticker:     tck,
+		email:      emailer,
 	}
 }
 
@@ -227,132 +204,61 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	return rule, nil
 }
 
-func (re *re) ConsumeAsync(ctx context.Context, msgs interface{}) {
-	m, ok := msgs.(*messaging.Message)
-	if !ok {
-		return
-	}
-	inputChannel := m.Channel
-	for _, t := range re.ts {
-		if v, err := t.Transform(m); err == nil {
-			msgs = v
-			break
-		}
-	}
+func (re *re) Handle(msg *messaging.Message) error {
+	inputChannel := msg.Channel
 
 	pm := PageMeta{
 		InputChannel: inputChannel,
 		Status:       EnabledStatus,
 	}
+	ctx := context.Background()
 	page, err := re.repo.ListRules(ctx, pm)
 	if err != nil {
-		re.errors <- err
-		return
+		return err
 	}
 
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
-			re.errors <- re.process(ctx, r, msgs)
+			if err := re.process(ctx, r, msg); err != nil {
+				re.errors <- err
+			}
 		}(ctx)
 	}
+	return nil
+}
+
+func (re *re) Cancel() error {
+	return nil
 }
 
 func (re *re) Errors() <-chan error {
 	return re.errors
 }
 
-func (re *re) process(ctx context.Context, r Rule, msg interface{}) error {
+func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
 	l := lua.NewState()
 	defer l.Close()
 	preload(l)
 
-	message := l.NewTable()
-	messages := l.NewTable()
-
-	switch m := msg.(type) {
-	case *messaging.Message:
-		{
-			l.RawSet(message, lua.LString("channel"), lua.LString(m.Channel))
-			l.RawSet(message, lua.LString("subtopic"), lua.LString(m.Subtopic))
-			l.RawSet(message, lua.LString("publisher"), lua.LString(m.Publisher))
-			l.RawSet(message, lua.LString("protocol"), lua.LString(m.Protocol))
-			l.RawSet(message, lua.LString("created"), lua.LNumber(m.Created))
-
-			pld := l.NewTable()
-			for i, b := range m.Payload {
-				l.RawSet(pld, lua.LNumber(i+1), lua.LNumber(b)) // Lua tables are 1-indexed
-			}
-			l.RawSet(message, lua.LString("payload"), pld)
-		}
-
-	case []mgsenml.Message:
-		for i, msg := range m {
-			insert := l.NewTable()
-			insert.RawSetString("channel", lua.LString(msg.Channel))
-			insert.RawSetString("subtopic", lua.LString(msg.Subtopic))
-			insert.RawSetString("publisher", lua.LString(msg.Publisher))
-			insert.RawSetString("protocol", lua.LString(msg.Protocol))
-			insert.RawSetString("name", lua.LString(msg.Name))
-			insert.RawSetString("unit", lua.LString(msg.Unit))
-			insert.RawSetString("time", lua.LNumber(msg.Time))
-			insert.RawSetString("update_time", lua.LNumber(msg.UpdateTime))
-
-			if msg.Value != nil {
-				insert.RawSetString("value", lua.LNumber(*msg.Value))
-			}
-			if msg.StringValue != nil {
-				insert.RawSetString("string_value", lua.LString(*msg.StringValue))
-			}
-			if msg.DataValue != nil {
-				insert.RawSetString("data_value", lua.LString(*msg.DataValue))
-			}
-			if msg.BoolValue != nil {
-				insert.RawSetString("bool_value", lua.LBool(*msg.BoolValue))
-			}
-			if msg.Sum != nil {
-				insert.RawSetString("sum", lua.LNumber(*msg.Sum))
-			}
-			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
-		}
-		if len(m) == 1 {
-			message = messages.RawGetInt(1).(*lua.LTable)
-		}
-
-	case mgjson.Messages:
-		for i, msg := range m.Data {
-			insert := l.NewTable()
-			insert.RawSetString("channel", lua.LString(msg.Channel))
-			insert.RawSetString("subtopic", lua.LString(msg.Subtopic))
-			insert.RawSetString("publisher", lua.LString(msg.Publisher))
-			insert.RawSetString("protocol", lua.LString(msg.Protocol))
-			insert.RawSetString("format", lua.LString(m.Format))
-			traverseJson(l, insert, lua.LString("payload"), map[string]interface{}(msg.Payload))
-			messages.RawSetInt(i+1, insert) // Lua index starts at 1.
-		}
-		if len(m.Data) == 1 {
-			message = messages.RawGetInt(1).(*lua.LTable)
-		}
-	}
+	message := prepareMsg(l, msg)
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
-	l.SetGlobal("messages", messages)
-	l.SetGlobal("domain_id", lua.LString(r.DomainID))
 
-	// set the email function as a Lua global function
+	// set the email function as a Lua global function.
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
-	l.SetGlobal("save_senml", l.NewFunction(re.saveSenml))
+	l.SetGlobal("save_senml", l.NewFunction(re.save(ctx, msg)))
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
 	}
 
-	result := l.Get(-1) // Get the last result
+	result := l.Get(-1) // Get the last result.
 	switch result {
 	case lua.LNil:
 		return nil
 	default:
-		if len(r.OutputChannel) == 0 {
+		if r.OutputChannel == "" {
 			return nil
 		}
 		m := &messaging.Message{
@@ -447,106 +353,4 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	return false
-}
-
-func (re *re) sendEmail(L *lua.LState) int {
-	recipientsTable := L.ToTable(1)
-	subject := L.ToString(2)
-	content := L.ToString(3)
-
-	var recipients []string
-	recipientsTable.ForEach(func(_, value lua.LValue) {
-		if str, ok := value.(lua.LString); ok {
-			recipients = append(recipients, string(str))
-		}
-	})
-
-	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
-		return 0
-	}
-	return 1
-}
-
-func (re *re) saveSenml(L *lua.LState) int {
-	luaString := L.ToString(1)
-	var message senml.Message
-
-	if err := json.Unmarshal([]byte(luaString), &message); err != nil {
-		return 0
-	}
-
-	payload, err := json.Marshal(message)
-	if err != nil {
-		return 0
-	}
-
-	domainId := L.GetGlobal("domain_id").String()
-
-	ctx := context.Background()
-	m := &messaging.Message{
-		Publisher: message.Publisher,
-		Created:   time.Now().Unix(),
-		Payload:   payload,
-		Channel:   message.Channel,
-		Subtopic:  message.Subtopic,
-		Domain:    domainId,
-	}
-
-	if err := re.writersPubSub.Publish(ctx, message.Channel, m); err != nil {
-		return 0
-	}
-	return 1
-}
-
-func preload(l *lua.LState) {
-	db.Preload(l)
-	ioutil.Preload(l)
-	luajson.Preload(l)
-	yaml.Preload(l)
-	crypto.Preload(l)
-	regexp.Preload(l)
-	luatime.Preload(l)
-	storage.Preload(l)
-	base64.Preload(l)
-	argparse.Preload(l)
-	strings.Preload(l)
-	filepath.Preload(l)
-}
-
-func traverseJson(l *lua.LState, parent *lua.LTable, key lua.LValue, value interface{}) {
-	var lval lua.LValue
-	switch val := value.(type) {
-	case string:
-		lval = lua.LString(val)
-	case float64:
-		lval = lua.LNumber(val)
-	case int:
-		lval = lua.LNumber(float64(val))
-	case json.Number:
-		if num, err := val.Float64(); err != nil {
-			lval = lua.LNumber(num)
-		}
-	case bool:
-		lval = lua.LBool(val)
-	case []interface{}:
-		t := l.NewTable()
-		for i, j := range val {
-			traverseJson(l, t, lua.LNumber(i+1), j)
-		}
-		lval = t
-	case map[string]interface{}:
-		t := l.NewTable()
-		for k, v := range val {
-			traverseJson(l, t, lua.LString(k), v)
-		}
-		lval = t
-	case []map[string]interface{}:
-		t := l.NewTable()
-		for i, j := range val {
-			traverseJson(l, t, lua.LNumber(i+1), j)
-		}
-		lval = t
-	}
-	parent.RawSet(key, lval)
-	return
 }

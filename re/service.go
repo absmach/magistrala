@@ -250,7 +250,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
 
-	// set the email function as a Lua global function
+	// set the email function as a Lua global function.
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("save_senml", l.NewFunction(re.save(msg)))
 
@@ -258,12 +258,12 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		return err
 	}
 
-	result := l.Get(-1) // Get the last result
+	result := l.Get(-1) // Get the last result.
 	switch result {
 	case lua.LNil:
 		return nil
 	default:
-		if len(r.OutputChannel) == 0 {
+		if r.OutputChannel == "" {
 			return nil
 		}
 		m := &messaging.Message{

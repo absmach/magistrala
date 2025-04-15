@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -12,9 +13,6 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers"
-	mgjson "github.com/absmach/supermq/pkg/transformers/json"
-	mgsenml "github.com/absmach/supermq/pkg/transformers/senml"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -107,7 +105,6 @@ type re struct {
 	errors     chan error
 	ticker     Ticker
 	email      Emailer
-	ts         []transformers.Transformer
 }
 
 func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
@@ -120,11 +117,6 @@ func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubS
 		errors:     make(chan error),
 		ticker:     tck,
 		email:      emailer,
-		// Transformers order is important since SenML is also JSON content type.
-		ts: []transformers.Transformer{
-			mgsenml.New(mgsenml.JSON),
-			mgjson.New(nil),
-		},
 	}
 }
 
@@ -249,42 +241,21 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	defer l.Close()
 	preload(l)
 
-	message := l.NewTable()
-	messages := l.NewTable()
-
-	var msgs interface{}
-
-	for _, t := range re.ts {
-		if v, err := t.Transform(msg); err == nil {
-			msgs = v
-			break
-		}
-	}
-
-	switch m := msgs.(type) {
-	case *messaging.Message:
-		prepareMsg(l, message, m)
-
-	case []mgsenml.Message:
-		prepareSenml(l, messages, m)
-		if len(m) == 1 {
-			message = messages.RawGetInt(1).(*lua.LTable)
-		}
-
-	case mgjson.Messages:
-		prepareJson(l, messages, m)
-		if len(m.Data) == 1 {
-			message = messages.RawGetInt(1).(*lua.LTable)
-		}
+	var message lua.LValue
+	var err error
+	message, err = prepareSenml(l, msg)
+	if err != nil {
+		message = prepareMsg(l, msg)
 	}
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
-	l.SetGlobal("messages", messages)
 
 	// set the email function as a Lua global function
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("save_senml", l.NewFunction(re.save(msg)))
+
+	fmt.Println(r.Logic.Value)
 
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err

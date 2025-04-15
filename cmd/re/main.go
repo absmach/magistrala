@@ -52,11 +52,6 @@ const (
 	defSvcHTTPPort = "9008"
 )
 
-var (
-	alarmsPrefix  = "alarms"
-	writersPrefix = "writers"
-)
-
 type config struct {
 	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
 	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
@@ -72,6 +67,9 @@ type config struct {
 const (
 	writersCfgName = "writers"
 	alarmsCfgName  = "alarms"
+
+	alarmsPrefix  = "alarms"
+	writersPrefix = "writers"
 )
 
 var (
@@ -162,7 +160,7 @@ func main() {
 	writersCfg := jsStreamConfig
 	writersCfg.Name = writersCfgName
 	writersCfg.Subjects = writersSubjects
-	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg), nats.Prefix("writers"))
+	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg), nats.Prefix(writersPrefix))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
 		exitCode = 1
@@ -173,7 +171,7 @@ func main() {
 	alarmsCfg := jsStreamConfig
 	alarmsCfg.Name = alarmsCfgName
 	alarmsCfg.Subjects = alarmsSubjects
-	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg), nats.Prefix("alarms"))
+	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg), nats.Prefix(alarmsPrefix))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
 		exitCode = 1
@@ -229,7 +227,11 @@ func main() {
 		DeliveryPolicy: messaging.DeliverAllPolicy,
 		Handler:        svc,
 	}
-	rePubSub.Subscribe(ctx, subCfg)
+	if err := rePubSub.Subscribe(ctx, subCfg); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to internal message broker: %s", err))
+		exitCode = 1
+		return
+	}
 
 	go func() {
 		for {

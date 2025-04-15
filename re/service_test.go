@@ -612,7 +612,8 @@ func TestHandle(t *testing.T) {
 			})
 			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
 
-			svc.Handle(tc.message)
+			err = svc.Handle(tc.message)
+			assert.Nil(t, err)
 
 			assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
 

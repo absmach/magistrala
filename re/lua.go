@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 
 	"github.com/absmach/supermq/pkg/messaging"
-
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
 	"github.com/vadv/gopher-lua-libs/crypto"

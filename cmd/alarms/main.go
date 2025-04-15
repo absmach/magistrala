@@ -16,15 +16,14 @@ import (
 	"github.com/absmach/magistrala/alarms/consumer"
 	"github.com/absmach/magistrala/alarms/middleware"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
-	consumertracing "github.com/absmach/magistrala/consumers/tracing"
 	"github.com/absmach/magistrala/pkg/prometheus"
-	"github.com/absmach/supermq/consumers"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	"github.com/absmach/supermq/pkg/jaeger"
+	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/messaging/nats"
@@ -45,11 +44,11 @@ const (
 	defDB            = "alarms"
 	defSvcHTTPPort   = "8050"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	topic            = "alarms.>"
 )
 
 type config struct {
 	LogLevel   string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
-	ConfigPath string  `env:"MG_ALARMS_CONFIG_PATH"  envDefault:"/config.toml"`
 	BrokerURL  string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
 	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
@@ -180,11 +179,18 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	consumer := consumer.NewConsumer(svc, logger)
-	consumer = consumertracing.NewBlocking(tracer, consumer, httpServerConfig)
-	if err = consumers.Start(ctx, svcName, pubSub, consumer, cfg.ConfigPath, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create alarms consumer: %s", err))
+	consumer := consumer.Newhandler(svc, logger)
+
+	subCfg := messaging.SubscriberConfig{
+		ID:             svcName,
+		Topic:          topic,
+		DeliveryPolicy: messaging.DeliverAllPolicy,
+		Handler:        consumer,
+	}
+	if err := pubSub.Subscribe(ctx, subCfg); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to message broker: %s", err))
 		exitCode = 1
+
 		return
 	}
 

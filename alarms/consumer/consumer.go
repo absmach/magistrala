@@ -11,34 +11,20 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/alarms"
-	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
-var _ consumers.BlockingConsumer = (*consumer)(nil)
-
-type consumer struct {
+type handler struct {
 	svc    alarms.Service
 	logger *slog.Logger
 }
 
-func NewConsumer(svc alarms.Service, logger *slog.Logger) consumers.BlockingConsumer {
-	return &consumer{svc: svc, logger: logger}
+func Newhandler(svc alarms.Service, logger *slog.Logger) messaging.MessageHandler {
+	return &handler{svc: svc, logger: logger}
 }
 
-func (c consumer) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
-	switch m := message.(type) {
-	case *messaging.Message:
-		return c.handleMessage(ctx, m)
-	default:
-		c.logger.Warn("Invalid message received")
-
-		return nil
-	}
-}
-
-func (c consumer) handleMessage(ctx context.Context, msg *messaging.Message) (err error) {
+func (h handler) Handle(msg *messaging.Message) (err error) {
 	if msg == nil {
 		return errors.New("message is empty")
 	}
@@ -63,5 +49,9 @@ func (c consumer) handleMessage(ctx context.Context, msg *messaging.Message) (er
 		return err
 	}
 
-	return c.svc.CreateAlarm(ctx, alarm)
+	return h.svc.CreateAlarm(context.Background(), alarm)
+}
+
+func (h handler) Cancel() error {
+	return nil
 }

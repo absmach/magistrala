@@ -12,7 +12,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func (re *re) save(original *messaging.Message) lua.LGFunction {
+func (re *re) save(ctx context.Context, original *messaging.Message) lua.LGFunction {
 	return func(l *lua.LState) int {
 		table := l.ToTable(1)
 		val := convertLua(table)
@@ -25,7 +25,6 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 			return 0
 		}
 
-		ctx := context.Background()
 		m := &messaging.Message{
 			Domain:    original.Domain,
 			Publisher: original.Publisher,
@@ -35,7 +34,6 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 			Protocol:  original.Protocol,
 			Payload:   data,
 		}
-
 		if err := re.writersPub.Publish(ctx, original.Channel, m); err != nil {
 			return 0
 		}

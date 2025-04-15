@@ -163,7 +163,7 @@ func main() {
 	writersCfg := jsStreamConfig
 	writersCfg.Name = writersCfgName
 	writersCfg.Subjects = writersSubjects
-	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg))
+	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg), nats.Prefix("writers"))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
 		exitCode = 1
@@ -174,7 +174,7 @@ func main() {
 	alarmsCfg := jsStreamConfig
 	alarmsCfg.Name = alarmsCfgName
 	alarmsCfg.Subjects = alarmsSubjects
-	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg))
+	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg), nats.Prefix("alarms"))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
 		exitCode = 1

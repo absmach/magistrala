@@ -76,7 +76,7 @@ const (
 )
 
 var (
-	writersSubjects = []string{"wrtiers.>"}
+	writersSubjects = []string{"writers.>"}
 	alarmsSubjects  = []string{"alarms.>"}
 )
 
@@ -165,7 +165,7 @@ func main() {
 	writersCfg.Subjects = writersSubjects
 	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg))
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for writersPubSub: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
 		exitCode = 1
 		return
 	}
@@ -176,7 +176,7 @@ func main() {
 	alarmsCfg.Subjects = alarmsSubjects
 	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg))
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for alarmsPubSub: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
 		exitCode = 1
 		return
 	}

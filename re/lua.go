@@ -25,6 +25,21 @@ import (
 
 const payloadKey = "payload"
 
+func preload(l *lua.LState) {
+	db.Preload(l)
+	ioutil.Preload(l)
+	luajson.Preload(l)
+	yaml.Preload(l)
+	crypto.Preload(l)
+	regexp.Preload(l)
+	luatime.Preload(l)
+	storage.Preload(l)
+	base64.Preload(l)
+	argparse.Preload(l)
+	strings.Preload(l)
+	filepath.Preload(l)
+}
+
 func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	message := l.NewTable()
 	message.RawSetString("domain", lua.LString(msg.Domain))
@@ -49,21 +64,6 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	// Payload is JSON, set the correct value.
 	message.RawSetString(payloadKey, traverseJson(l, payload))
 	return message
-}
-
-func preload(l *lua.LState) {
-	db.Preload(l)
-	ioutil.Preload(l)
-	luajson.Preload(l)
-	yaml.Preload(l)
-	crypto.Preload(l)
-	regexp.Preload(l)
-	luatime.Preload(l)
-	storage.Preload(l)
-	base64.Preload(l)
-	argparse.Preload(l)
-	strings.Preload(l)
-	filepath.Preload(l)
 }
 
 func traverseJson(l *lua.LState, value interface{}) lua.LValue {

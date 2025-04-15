@@ -6,7 +6,6 @@ package re
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers/senml"
@@ -16,23 +15,14 @@ import (
 func (re *re) save(original *messaging.Message) lua.LGFunction {
 	return func(l *lua.LState) int {
 		table := l.ToTable(1)
-		fmt.Println(table.String())
-
-		jsn, err := json.Marshal(table)
-		if err != nil {
-			return 0
-		}
-		fmt.Println(string(jsn))
-
-		ls := l.ToString(1)
+		val := convertLua(table)
 		var message senml.Message
-
-		if err := json.Unmarshal([]byte(ls), &message); err != nil {
+		data, err := json.Marshal(val)
+		if err != nil {
 			return 0
 		}
 
-		payload, err := json.Marshal(message)
-		if err != nil {
+		if err := json.Unmarshal(data, &message); err != nil {
 			return 0
 		}
 
@@ -44,7 +34,7 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 			Channel:   original.Channel,
 			Subtopic:  original.Subtopic,
 			Protocol:  original.Protocol,
-			Payload:   payload,
+			Payload:   data,
 		}
 
 		if err := re.writersPub.Publish(ctx, message.Channel, m); err != nil {

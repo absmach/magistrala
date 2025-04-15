@@ -63,4 +63,4 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - ./config.toml:/config.toml
+      - ./addons/timescale-writer/config.toml:${MG_TIMESCALE_WRITER_CONFIG_PATH}

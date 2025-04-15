@@ -16,12 +16,11 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 	return func(l *lua.LState) int {
 		table := l.ToTable(1)
 		val := convertLua(table)
-		var message senml.Message
 		data, err := json.Marshal(val)
 		if err != nil {
 			return 0
 		}
-
+		var message []senml.Message
 		if err := json.Unmarshal(data, &message); err != nil {
 			return 0
 		}
@@ -37,7 +36,7 @@ func (re *re) save(original *messaging.Message) lua.LGFunction {
 			Payload:   data,
 		}
 
-		if err := re.writersPub.Publish(ctx, message.Channel, m); err != nil {
+		if err := re.writersPub.Publish(ctx, original.Channel, m); err != nil {
 			return 0
 		}
 		return 1

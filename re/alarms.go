@@ -23,6 +23,7 @@ type Alarm struct {
 	Unit        string `json:"unit"`
 	Cause       string `json:"cause"`
 	Severity    uint8  `json:"severity"`
+	Status      string `json:"status"`
 }
 
 func (re *re) sendAlarm(L *lua.LState) int {
@@ -51,6 +52,7 @@ func (re *re) sendAlarm(L *lua.LState) int {
 			Threshold:   getStr("threshold"),
 			Unit:        getStr("unit"),
 			Cause:       getStr("cause"),
+			Status:      getStr("status"),
 			Severity:    severity,
 		}
 

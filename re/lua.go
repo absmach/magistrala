@@ -6,7 +6,6 @@ package re
 import (
 	"encoding/json"
 
-	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/messaging"
 
 	"github.com/vadv/gopher-lua-libs/argparse"
@@ -50,53 +49,6 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	// Payload is JSON, set the correct value.
 	message.RawSetString(payloadKey, traverseJson(l, payload))
 	return message
-}
-
-func prepareSenml(l *lua.LState, msg *messaging.Message) (lua.LValue, error) {
-	message := l.NewTable()
-	pack, err := senml.Decode(msg.Payload, senml.JSON)
-	if err != nil {
-		return &lua.LNilType{}, err
-	}
-	message.RawSetString("domain", lua.LString(msg.Domain))
-	message.RawSetString("channel", lua.LString(msg.Channel))
-	message.RawSetString("subtopic", lua.LString(msg.Subtopic))
-	message.RawSetString("publisher", lua.LString(msg.Publisher))
-	message.RawSetString("protocol", lua.LString(msg.Protocol))
-	message.RawSetString("created", lua.LNumber(msg.Created))
-	payload := l.NewTable()
-
-	for i, r := range pack.Records {
-		insert := l.NewTable()
-		insert.RawSetString("bn", lua.LString(r.BaseName))
-		insert.RawSetString("bt", lua.LNumber(r.BaseTime))
-		insert.RawSetString("bu", lua.LString(r.BaseUnit))
-		insert.RawSetString("bver", lua.LNumber(r.BaseVersion))
-		insert.RawSetString("bv", lua.LNumber(r.BaseValue))
-		insert.RawSetString("bs", lua.LNumber(r.BaseSum))
-		insert.RawSetString("n", lua.LString(r.Name))
-		insert.RawSetString("u", lua.LString(r.Unit))
-		insert.RawSetString("t", lua.LNumber(r.Time))
-		insert.RawSetString("ut", lua.LNumber(r.UpdateTime))
-		if r.Value != nil {
-			insert.RawSetString("v", lua.LNumber(*r.Value))
-		}
-		if r.StringValue != nil {
-			insert.RawSetString("vs", lua.LString(*r.StringValue))
-		}
-		if r.DataValue != nil {
-			insert.RawSetString("vd", lua.LString(*r.DataValue))
-		}
-		if r.BoolValue != nil {
-			insert.RawSetString("vb", lua.LBool(*r.BoolValue))
-		}
-		if r.Sum != nil {
-			insert.RawSetString("s", lua.LNumber(*r.Sum))
-		}
-		payload.RawSetInt(i+1, insert)
-	}
-	message.RawSetString(payloadKey, payload)
-	return message, nil
 }
 
 func preload(l *lua.LState) {

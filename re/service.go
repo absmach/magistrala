@@ -240,12 +240,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	defer l.Close()
 	preload(l)
 
-	var message lua.LValue
-	var err error
-	message, err = prepareSenml(l, msg)
-	if err != nil {
-		message = prepareMsg(l, msg)
-	}
+	message := prepareMsg(l, msg)
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)

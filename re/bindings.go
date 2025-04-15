@@ -16,10 +16,15 @@ func (re *re) save(ctx context.Context, original *messaging.Message) lua.LGFunct
 	return func(l *lua.LState) int {
 		table := l.ToTable(1)
 		val := convertLua(table)
+		// In case there is a single SenML value, convert to slice so we can unmarshal.
+		if _, ok := val.([]any); !ok {
+			val = []any{val}
+		}
 		data, err := json.Marshal(val)
 		if err != nil {
 			return 0
 		}
+
 		var message []senml.Message
 		if err := json.Unmarshal(data, &message); err != nil {
 			return 0

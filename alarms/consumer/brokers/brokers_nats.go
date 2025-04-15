@@ -9,15 +9,28 @@ package brokers
 import (
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	broker "github.com/absmach/supermq/pkg/messaging/nats"
+	"github.com/nats-io/nats.go/jetstream"
 )
 
 const AllTopic = "alarms.>"
 
 func NewPubSub(ctx context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(ctx, url, logger, broker.Prefix("alarms"))
+	cfg := jetstream.StreamConfig{
+		Name:              "alarms",
+		Description:       "SuperMQ stream alarms",
+		Subjects:          []string{"alarms.>"},
+		Retention:         jetstream.LimitsPolicy,
+		MaxMsgsPerSubject: 1e6,
+		MaxAge:            time.Hour * 24,
+		MaxMsgSize:        1024 * 1024,
+		Discard:           jetstream.DiscardOld,
+		Storage:           jetstream.FileStorage,
+	}
+	pb, err := broker.NewPubSub(ctx, url, logger, broker.JSStreamConfig(cfg))
 	if err != nil {
 		return nil, err
 	}

@@ -82,7 +82,7 @@ var (
 
 var jsStreamConfig = jetstream.StreamConfig{
 	Retention:         jetstream.LimitsPolicy,
-	Description:       "SuperMQ Rules Engine Stream for sending and receiving data between channels",
+	Description:       "SuperMQ Rules Engine stream for handling internal messages",
 	MaxMsgsPerSubject: 1e6,
 	MaxAge:            time.Hour * 24,
 	MaxMsgSize:        1024 * 1024,

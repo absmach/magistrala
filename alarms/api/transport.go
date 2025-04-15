@@ -19,6 +19,7 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
@@ -62,6 +63,9 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 			})
 		})
 	})
+
+	mux.Get("/health", supermq.Health("alarms", instanceID))
+	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
 }

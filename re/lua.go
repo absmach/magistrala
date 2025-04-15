@@ -141,12 +141,6 @@ func traverseJson(l *lua.LState, value interface{}) lua.LValue {
 			t.RawSetString(k, traverseJson(l, v))
 		}
 		return t
-	case []map[string]interface{}:
-		t := l.NewTable()
-		for i, j := range val {
-			t.RawSetInt(i+1, traverseJson(l, j))
-		}
-		return t
 	default:
 		return lua.LNil
 	}
@@ -155,7 +149,6 @@ func traverseJson(l *lua.LState, value interface{}) lua.LValue {
 func convertLua(lv lua.LValue) interface{} {
 	switch v := lv.(type) {
 	case *lua.LTable:
-
 		isArray := true
 		v.ForEach(func(key, value lua.LValue) {
 			if key.Type() != lua.LTNumber {

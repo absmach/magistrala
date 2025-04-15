@@ -4,6 +4,7 @@
 package sdk_test
 
 import (
+	"context"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
@@ -252,7 +253,7 @@ func TestAddBootstrap(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Add", mock.Anything, tc.session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.AddBootstrap(tc.cfg, tc.domainID, tc.token)
+			resp, err := mgsdk.AddBootstrap(context.Background(), tc.cfg, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, bootstrapConfig.ClientID, resp)
@@ -399,7 +400,7 @@ func TestListBootstraps(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.Bootstraps(tc.pageMeta, tc.domainID, tc.token)
+			resp, err := mgsdk.Bootstraps(context.Background(), tc.pageMeta, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
@@ -504,7 +505,7 @@ func TestWhiteList(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.Whitelist(tc.clientID, tc.state, tc.domainID, tc.token)
+			err := mgsdk.Whitelist(context.Background(), tc.clientID, tc.state, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq)
@@ -625,7 +626,7 @@ func TestViewBootstrap(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("View", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.ViewBootstrap(tc.id, tc.domainID, tc.token)
+			resp, err := mgsdk.ViewBootstrap(context.Background(), tc.id, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
 			if err == nil {
@@ -788,7 +789,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticationErr)
 			svcCall := bsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrap(tc.cfg, tc.domainID, tc.token)
+			err := mgsdk.UpdateBootstrap(context.Background(), tc.cfg, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.session, tc.svcReq)
@@ -912,7 +913,7 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.UpdateBootstrapCerts(tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
+			resp, err := mgsdk.UpdateBootstrapCerts(context.Background(), tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, tc.response, resp)
@@ -1015,7 +1016,7 @@ func TestUpdateBootstrapConnection(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrapConnection(tc.id, tc.channels, tc.domainID, tc.token)
+			err := mgsdk.UpdateBootstrapConnection(context.Background(), tc.id, tc.channels, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels)
@@ -1102,7 +1103,7 @@ func TestRemoveBootstrap(t *testing.T) {
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
 			svcCall := bsvc.On("Remove", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
-			err := mgsdk.RemoveBootstrap(tc.id, tc.domainID, tc.token)
+			err := mgsdk.RemoveBootstrap(context.Background(), tc.id, tc.domainID, tc.token)
 			assert.Equal(t, tc.err, err)
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "Remove", mock.Anything, tc.session, tc.id)
@@ -1207,7 +1208,7 @@ func TestBoostrap(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := bsvc.On("Bootstrap", mock.Anything, tc.externalKey, tc.externalID, false).Return(tc.svcResp, tc.svcErr)
 			readerCall := reader.On("ReadConfig", tc.svcResp, false).Return(tc.readerResp, tc.readerErr)
-			resp, err := mgsdk.Bootstrap(tc.externalID, tc.externalKey)
+			resp, err := mgsdk.Bootstrap(context.Background(), tc.externalID, tc.externalKey)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, tc.response, resp)
@@ -1324,7 +1325,7 @@ func TestBootstrapSecure(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := bsvc.On("Bootstrap", mock.Anything, mock.Anything, tc.externalID, true).Return(tc.svcResp, tc.svcErr)
 			readerCall := reader.On("ReadConfig", tc.svcResp, true).Return(tc.readerResp, tc.readerErr)
-			resp, err := mgsdk.BootstrapSecure(tc.externalID, tc.externalKey, tc.cryptoKey)
+			resp, err := mgsdk.BootstrapSecure(context.Background(), tc.externalID, tc.externalKey, tc.cryptoKey)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
 				assert.Equal(t, sdkBootsrapConfigRes, resp)

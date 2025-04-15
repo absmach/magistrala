@@ -144,6 +144,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	if err != nil {
 		return Config{}, errors.Wrap(errCheckChannels, err)
 	}
+
 	cfg.Channels, err = bs.connectionChannels(ctx, toConnect, bs.toIDList(existing), session.DomainID, token)
 	if err != nil {
 		return Config{}, errors.Wrap(errConnectionChannels, err)

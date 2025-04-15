@@ -5,6 +5,7 @@ package sdk
 
 import (
 	"bytes"
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -67,16 +68,16 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  id, _ := sdk.AddBootstrap(cfg, "domainID", "token")
+	//  id, _ := sdk.AddBootstrap(ctx, cfg, "domainID", "token")
 	//  fmt.Println(id)
-	AddBootstrap(cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
+	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
 
 	// View returns Client Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  bootstrap, _ := sdk.ViewBootstrap("id", "domainID", "token")
+	//  bootstrap, _ := sdk.ViewBootstrap(ctx, "id", "domainID", "token")
 	//  fmt.Println(bootstrap)
-	ViewBootstrap(id, domainID, token string) (BootstrapConfig, errors.SDKError)
+	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// Update updates editable fields of the provided Config.
 	//
@@ -88,44 +89,44 @@ type SDK interface {
 	//    ExternalKey: "externalKey",
 	//    Channels: []string{"channel1", "channel2"},
 	//  }
-	//  err := sdk.UpdateBootstrap(cfg, "domainID", "token")
+	//  err := sdk.UpdateBootstrap(ctx, cfg, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrap(cfg BootstrapConfig, domainID, token string) errors.SDKError
+	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) errors.SDKError
 
 	// Update bootstrap config certificates.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapCerts("id", "clientCert", "clientKey", "ca", "domainID", "token")
+	//  err := sdk.UpdateBootstrapCerts(ctx, "id", "clientCert", "clientKey", "ca", "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapCerts(id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
+	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Client is connected to.
 	//
 	// example:
-	//  err := sdk.UpdateBootstrapConnection("id", []string{"channel1", "channel2"}, "domainID", "token")
+	//  err := sdk.UpdateBootstrapConnection(ctx, "id", []string{"channel1", "channel2"}, "domainID", "token")
 	//  fmt.Println(err)
-	UpdateBootstrapConnection(id string, channels []string, domainID, token string) errors.SDKError
+	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) errors.SDKError
 
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.RemoveBootstrap("id", "domainID", "token")
+	//  err := sdk.RemoveBootstrap(ctx, "id", "domainID", "token")
 	//  fmt.Println(err)
-	RemoveBootstrap(id, domainID, token string) errors.SDKError
+	RemoveBootstrap(ctx context.Context, id, domainID, token string) errors.SDKError
 
 	// Bootstrap returns Config to the Client with provided external ID using external key.
 	//
 	// example:
-	//  bootstrap, _ := sdk.Bootstrap("externalID", "externalKey")
+	//  bootstrap, _ := sdk.Bootstrap(ctx, "externalID", "externalKey")
 	//  fmt.Println(bootstrap)
-	Bootstrap(externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, errors.SDKError)
 
 	// BootstrapSecure retrieves a configuration with given external ID and encrypted external key.
 	//
 	// example:
-	//  bootstrap, _ := sdk.BootstrapSecure("externalID", "externalKey", "cryptoKey")
+	//  bootstrap, _ := sdk.BootstrapSecure(ctx, "externalID", "externalKey", "cryptoKey")
 	//  fmt.Println(bootstrap)
-	BootstrapSecure(externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+	BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
 	//
@@ -134,16 +135,16 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  bootstraps, _ := sdk.Bootstraps(pm, "domainID", "token")
+	//  bootstraps, _ := sdk.Bootstraps(ctx, pm, "domainID", "token")
 	//  fmt.Println(bootstraps)
-	Bootstraps(pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
 
 	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
 	//
 	// example:
-	//  err := sdk.Whitelist("clientID", 1, "domainID", "token")
+	//  err := sdk.Whitelist(ctx, "clientID", 1, "domainID", "token")
 	//  fmt.Println(err)
-	Whitelist(clientID string, state int, domainID, token string) errors.SDKError
+	Whitelist(ctx context.Context, clientID string, state int, domainID, token string) errors.SDKError
 
 	// ReadMessages read messages of specified channel.
 	//
@@ -152,16 +153,16 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  msgs, _ := sdk.ReadMessages(pm,"channelID", "domainID", "token")
+	//  msgs, _ := sdk.ReadMessages(ctx, pm,"channelID", "domainID", "token")
 	//  fmt.Println(msgs)
-	ReadMessages(pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
+	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
 
 	// CreateSubscription creates a new subscription
 	//
 	// example:
-	//  subscription, _ := sdk.CreateSubscription("topic", "contact", "token")
+	//  subscription, _ := sdk.CreateSubscription(ctx, "topic", "contact", "token")
 	//  fmt.Println(subscription)
-	CreateSubscription(topic, contact, token string) (string, errors.SDKError)
+	CreateSubscription(ctx context.Context, topic, contact, token string) (string, errors.SDKError)
 
 	// ListSubscriptions list subscriptions given list parameters.
 	//
@@ -170,23 +171,23 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  subscriptions, _ := sdk.ListSubscriptions(pm, "token")
+	//  subscriptions, _ := sdk.ListSubscriptions(ctx, pm, "token")
 	//  fmt.Println(subscriptions)
-	ListSubscriptions(pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
+	ListSubscriptions(ctx context.Context, pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
 
 	// ViewSubscription retrieves a subscription with the provided id.
 	//
 	// example:
-	//  subscription, _ := sdk.ViewSubscription("id", "token")
+	//  subscription, _ := sdk.ViewSubscription(ctx, "id", "token")
 	//  fmt.Println(subscription)
-	ViewSubscription(id, token string) (Subscription, errors.SDKError)
+	ViewSubscription(ctx context.Context, id, token string) (Subscription, errors.SDKError)
 
 	// DeleteSubscription removes a subscription with the provided id.
 	//
 	// example:
-	//  err := sdk.DeleteSubscription("id", "token")
+	//  err := sdk.DeleteSubscription(ctx, "id", "token")
 	//  fmt.Println(err)
-	DeleteSubscription(id, token string) errors.SDKError
+	DeleteSubscription(ctx context.Context, id, token string) errors.SDKError
 }
 
 type mgSDK struct {
@@ -257,8 +258,8 @@ func NewSDK(conf Config) SDK {
 
 // processRequest creates and send a new HTTP request, and checks for errors in the HTTP response.
 // It then returns the response headers, the response body, and the associated error(s) (if any).
-func (sdk mgSDK) processRequest(method, reqUrl, token string, data []byte, headers map[string]string, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
-	req, err := http.NewRequest(method, reqUrl, bytes.NewReader(data))
+func (sdk mgSDK) processRequest(ctx context.Context, method, reqUrl, token string, data []byte, headers map[string]string, expectedRespCodes ...int) (http.Header, []byte, errors.SDKError) {
+	req, err := http.NewRequestWithContext(ctx, method, reqUrl, bytes.NewReader(data))
 	if err != nil {
 		return make(http.Header), []byte{}, errors.NewSDKError(err)
 	}

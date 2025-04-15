@@ -8,6 +8,8 @@
 package mocks
 
 import (
+	"context"
+
 	"github.com/absmach/magistrala/provision"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,8 +42,8 @@ func (_m *Service) EXPECT() *Service_Expecter {
 }
 
 // Cert provides a mock function for the type Service
-func (_mock *Service) Cert(domainID string, token string, clientID string, duration string) (string, string, error) {
-	ret := _mock.Called(domainID, token, clientID, duration)
+func (_mock *Service) Cert(ctx context.Context, domainID string, token string, clientID string, duration string) (string, string, error) {
+	ret := _mock.Called(ctx, domainID, token, clientID, duration)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Cert")
@@ -50,21 +52,21 @@ func (_mock *Service) Cert(domainID string, token string, clientID string, durat
 	var r0 string
 	var r1 string
 	var r2 error
-	if returnFunc, ok := ret.Get(0).(func(string, string, string, string) (string, string, error)); ok {
-		return returnFunc(domainID, token, clientID, duration)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (string, string, error)); ok {
+		return returnFunc(ctx, domainID, token, clientID, duration)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, string, string, string) string); ok {
-		r0 = returnFunc(domainID, token, clientID, duration)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) string); ok {
+		r0 = returnFunc(ctx, domainID, token, clientID, duration)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, string, string, string) string); ok {
-		r1 = returnFunc(domainID, token, clientID, duration)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) string); ok {
+		r1 = returnFunc(ctx, domainID, token, clientID, duration)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
-	if returnFunc, ok := ret.Get(2).(func(string, string, string, string) error); ok {
-		r2 = returnFunc(domainID, token, clientID, duration)
+	if returnFunc, ok := ret.Get(2).(func(context.Context, string, string, string, string) error); ok {
+		r2 = returnFunc(ctx, domainID, token, clientID, duration)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -77,17 +79,18 @@ type Service_Cert_Call struct {
 }
 
 // Cert is a helper method to define mock.On call
+//   - ctx
 //   - domainID
 //   - token
 //   - clientID
 //   - duration
-func (_e *Service_Expecter) Cert(domainID interface{}, token interface{}, clientID interface{}, duration interface{}) *Service_Cert_Call {
-	return &Service_Cert_Call{Call: _e.mock.On("Cert", domainID, token, clientID, duration)}
+func (_e *Service_Expecter) Cert(ctx interface{}, domainID interface{}, token interface{}, clientID interface{}, duration interface{}) *Service_Cert_Call {
+	return &Service_Cert_Call{Call: _e.mock.On("Cert", ctx, domainID, token, clientID, duration)}
 }
 
-func (_c *Service_Cert_Call) Run(run func(domainID string, token string, clientID string, duration string)) *Service_Cert_Call {
+func (_c *Service_Cert_Call) Run(run func(ctx context.Context, domainID string, token string, clientID string, duration string)) *Service_Cert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(string), args[3].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
 	})
 	return _c
 }
@@ -97,14 +100,14 @@ func (_c *Service_Cert_Call) Return(s string, s1 string, err error) *Service_Cer
 	return _c
 }
 
-func (_c *Service_Cert_Call) RunAndReturn(run func(domainID string, token string, clientID string, duration string) (string, string, error)) *Service_Cert_Call {
+func (_c *Service_Cert_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string, clientID string, duration string) (string, string, error)) *Service_Cert_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Mapping provides a mock function for the type Service
-func (_mock *Service) Mapping(token string) (map[string]interface{}, error) {
-	ret := _mock.Called(token)
+func (_mock *Service) Mapping(ctx context.Context, token string) (map[string]interface{}, error) {
+	ret := _mock.Called(ctx, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Mapping")
@@ -112,18 +115,18 @@ func (_mock *Service) Mapping(token string) (map[string]interface{}, error) {
 
 	var r0 map[string]interface{}
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string) (map[string]interface{}, error)); ok {
-		return returnFunc(token)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]interface{}, error)); ok {
+		return returnFunc(ctx, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string) map[string]interface{}); ok {
-		r0 = returnFunc(token)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]interface{}); ok {
+		r0 = returnFunc(ctx, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]interface{})
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(string) error); ok {
-		r1 = returnFunc(token)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, token)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -136,14 +139,15 @@ type Service_Mapping_Call struct {
 }
 
 // Mapping is a helper method to define mock.On call
+//   - ctx
 //   - token
-func (_e *Service_Expecter) Mapping(token interface{}) *Service_Mapping_Call {
-	return &Service_Mapping_Call{Call: _e.mock.On("Mapping", token)}
+func (_e *Service_Expecter) Mapping(ctx interface{}, token interface{}) *Service_Mapping_Call {
+	return &Service_Mapping_Call{Call: _e.mock.On("Mapping", ctx, token)}
 }
 
-func (_c *Service_Mapping_Call) Run(run func(token string)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) Run(run func(ctx context.Context, token string)) *Service_Mapping_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -153,14 +157,14 @@ func (_c *Service_Mapping_Call) Return(stringToIfaceVal map[string]interface{}, 
 	return _c
 }
 
-func (_c *Service_Mapping_Call) RunAndReturn(run func(token string) (map[string]interface{}, error)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) RunAndReturn(run func(ctx context.Context, token string) (map[string]interface{}, error)) *Service_Mapping_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Provision provides a mock function for the type Service
-func (_mock *Service) Provision(domainID string, token string, name string, externalID string, externalKey string) (provision.Result, error) {
-	ret := _mock.Called(domainID, token, name, externalID, externalKey)
+func (_mock *Service) Provision(ctx context.Context, domainID string, token string, name string, externalID string, externalKey string) (provision.Result, error) {
+	ret := _mock.Called(ctx, domainID, token, name, externalID, externalKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Provision")
@@ -168,16 +172,16 @@ func (_mock *Service) Provision(domainID string, token string, name string, exte
 
 	var r0 provision.Result
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(string, string, string, string, string) (provision.Result, error)); ok {
-		return returnFunc(domainID, token, name, externalID, externalKey)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (provision.Result, error)); ok {
+		return returnFunc(ctx, domainID, token, name, externalID, externalKey)
 	}
-	if returnFunc, ok := ret.Get(0).(func(string, string, string, string, string) provision.Result); ok {
-		r0 = returnFunc(domainID, token, name, externalID, externalKey)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) provision.Result); ok {
+		r0 = returnFunc(ctx, domainID, token, name, externalID, externalKey)
 	} else {
 		r0 = ret.Get(0).(provision.Result)
 	}
-	if returnFunc, ok := ret.Get(1).(func(string, string, string, string, string) error); ok {
-		r1 = returnFunc(domainID, token, name, externalID, externalKey)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) error); ok {
+		r1 = returnFunc(ctx, domainID, token, name, externalID, externalKey)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -190,18 +194,19 @@ type Service_Provision_Call struct {
 }
 
 // Provision is a helper method to define mock.On call
+//   - ctx
 //   - domainID
 //   - token
 //   - name
 //   - externalID
 //   - externalKey
-func (_e *Service_Expecter) Provision(domainID interface{}, token interface{}, name interface{}, externalID interface{}, externalKey interface{}) *Service_Provision_Call {
-	return &Service_Provision_Call{Call: _e.mock.On("Provision", domainID, token, name, externalID, externalKey)}
+func (_e *Service_Expecter) Provision(ctx interface{}, domainID interface{}, token interface{}, name interface{}, externalID interface{}, externalKey interface{}) *Service_Provision_Call {
+	return &Service_Provision_Call{Call: _e.mock.On("Provision", ctx, domainID, token, name, externalID, externalKey)}
 }
 
-func (_c *Service_Provision_Call) Run(run func(domainID string, token string, name string, externalID string, externalKey string)) *Service_Provision_Call {
+func (_c *Service_Provision_Call) Run(run func(ctx context.Context, domainID string, token string, name string, externalID string, externalKey string)) *Service_Provision_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
 	})
 	return _c
 }
@@ -211,7 +216,7 @@ func (_c *Service_Provision_Call) Return(result provision.Result, err error) *Se
 	return _c
 }
 
-func (_c *Service_Provision_Call) RunAndReturn(run func(domainID string, token string, name string, externalID string, externalKey string) (provision.Result, error)) *Service_Provision_Call {
+func (_c *Service_Provision_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string, name string, externalID string, externalKey string) (provision.Result, error)) *Service_Provision_Call {
 	_c.Call.Return(run)
 	return _c
 }

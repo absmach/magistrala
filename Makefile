@@ -3,7 +3,7 @@
 
 MG_DOCKER_IMAGE_NAME_PREFIX ?= ghcr.io/absmach/magistrala
 BUILD_DIR = build
-SERVICES =  bootstrap provision re postgres-writer postgres-reader timescale-writer	timescale-reader cli
+SERVICES =  bootstrap provision re postgres-writer postgres-reader timescale-writer	timescale-reader cli alarms
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
@@ -39,9 +39,9 @@ endif
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
 	go build -tags $(MG_MESSAGE_BROKER_TYPE) -tags $(MG_ES_TYPE) -ldflags "-s -w \
-	-X 'github.com/absmach/magistrala.BuildTime=$(TIME)' \
-	-X 'github.com/absmach/magistrala.Version=$(VERSION)' \
-	-X 'github.com/absmach/magistrala.Commit=$(COMMIT)'" \
+	-X 'github.com/absmach/supermq.BuildTime=$(TIME)' \
+	-X 'github.com/absmach/supermq.Version=$(VERSION)' \
+	-X 'github.com/absmach/supermq.Commit=$(COMMIT)'" \
 	-o ${BUILD_DIR}/$(1) cmd/$(1)/main.go
 endef
 

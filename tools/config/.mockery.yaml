@@ -33,3 +33,7 @@ packages:
   github.com/absmach/magistrala/provision:
     interfaces:
       Service:
+  github.com/absmach/magistrala/alarms:
+    interfaces:
+      Service:
+      Repository:

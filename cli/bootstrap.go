@@ -27,7 +27,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			id, err := sdk.AddBootstrap(cfg, args[1], args[2])
+			id, err := sdk.AddBootstrap(cmd.Context(), cfg, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -54,7 +54,7 @@ var cmdBootstrap = []cobra.Command{
 				Name:   Name,
 			}
 			if args[0] == "all" {
-				l, err := sdk.Bootstraps(pageMetadata, args[1], args[2])
+				l, err := sdk.Bootstraps(cmd.Context(), pageMetadata, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -63,7 +63,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			c, err := sdk.ViewBootstrap(args[0], args[1], args[2])
+			c, err := sdk.ViewBootstrap(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -92,7 +92,7 @@ var cmdBootstrap = []cobra.Command{
 					return
 				}
 
-				if err := sdk.UpdateBootstrap(cfg, args[1], args[2]); err != nil {
+				if err := sdk.UpdateBootstrap(cmd.Context(), cfg, args[1], args[2]); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
@@ -106,7 +106,7 @@ var cmdBootstrap = []cobra.Command{
 					logErrorCmd(*cmd, err)
 					return
 				}
-				if err := sdk.UpdateBootstrapConnection(args[1], ids, args[3], args[4]); err != nil {
+				if err := sdk.UpdateBootstrapConnection(cmd.Context(), args[1], ids, args[3], args[4]); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
@@ -115,7 +115,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			if args[0] == "certs" {
-				cfg, err := sdk.UpdateBootstrapCerts(args[0], args[1], args[2], args[3], args[4], args[5])
+				cfg, err := sdk.UpdateBootstrapCerts(cmd.Context(), args[0], args[1], args[2], args[3], args[4], args[5])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -137,7 +137,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			if err := sdk.RemoveBootstrap(args[0], args[1], args[2]); err != nil {
+			if err := sdk.RemoveBootstrap(cmd.Context(), args[0], args[1], args[2]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
@@ -156,7 +156,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 			if args[0] == "secure" {
-				c, err := sdk.BootstrapSecure(args[1], args[2], args[3])
+				c, err := sdk.BootstrapSecure(cmd.Context(), args[1], args[2], args[3])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -165,7 +165,7 @@ var cmdBootstrap = []cobra.Command{
 				logJSONCmd(*cmd, c)
 				return
 			}
-			c, err := sdk.Bootstrap(args[0], args[1])
+			c, err := sdk.Bootstrap(cmd.Context(), args[0], args[1])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -190,7 +190,7 @@ var cmdBootstrap = []cobra.Command{
 				return
 			}
 
-			if err := sdk.Whitelist(cfg.ClientID, cfg.State, args[1], args[2]); err != nil {
+			if err := sdk.Whitelist(cmd.Context(), cfg.ClientID, cfg.State, args[1], args[2]); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}

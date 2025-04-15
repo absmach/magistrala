@@ -4,6 +4,7 @@
 package provision_test
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -51,8 +52,8 @@ func TestMapping(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			pm := smqSDK.PageMetadata{Offset: uint64(0), Limit: uint64(10)}
-			repocall := mgsdk.On("Users", pm, c.token).Return(smqSDK.UsersPage{}, c.sdkerr)
-			content, err := svc.Mapping(c.token)
+			repocall := mgsdk.On("Users", mock.Anything, pm, c.token).Return(smqSDK.UsersPage{}, c.sdkerr)
+			content, err := svc.Mapping(context.Background(), c.token)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))
 			assert.Equal(t, c.content, content)
 			repocall.Unset()
@@ -215,15 +216,15 @@ func TestCert(t *testing.T) {
 			mgsdk := new(sdkmocks.SDK)
 			svc := provision.New(c.config, mgsdk, smqlog.NewMock())
 
-			mgsdk.On("Client", c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
-			mgsdk.On("IssueCert", c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(smqSDK.Cert{SerialNumber: c.serial}, c.sdkCertErr)
-			mgsdk.On("ViewCert", c.serial, mock.Anything, mock.Anything).Return(smqSDK.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
+			mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
+			mgsdk.On("IssueCert", mock.Anything, c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(smqSDK.Cert{SerialNumber: c.serial}, c.sdkCertErr)
+			mgsdk.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(smqSDK.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 			login := smqSDK.Login{
 				Username: c.config.Server.MgUsername,
 				Password: c.config.Server.MgPass,
 			}
-			mgsdk.On("CreateToken", login).Return(smqSDK.Token{AccessToken: validToken}, c.sdkTokenErr)
-			cert, key, err := svc.Cert(c.domainID, c.token, c.clientID, c.ttl)
+			mgsdk.On("CreateToken", mock.Anything, login).Return(smqSDK.Token{AccessToken: validToken}, c.sdkTokenErr)
+			cert, key, err := svc.Cert(context.Background(), c.domainID, c.token, c.clientID, c.ttl)
 			assert.Equal(t, c.cert, cert)
 			assert.Equal(t, c.key, key)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))

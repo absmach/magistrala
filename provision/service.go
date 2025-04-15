@@ -56,18 +56,18 @@ type Service interface {
 	// - create multiple Channels
 	// - create Bootstrap configuration
 	// - whitelist Client in Bootstrap configuration == connect Client to Channels
-	Provision(domainID, token, name, externalID, externalKey string) (Result, error)
+	Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (Result, error)
 
 	// Mapping returns current configuration used for provision
 	// useful for using in ui to create configuration that matches
 	// one created with Provision method.
-	Mapping(token string) (map[string]interface{}, error)
+	Mapping(ctx context.Context, token string) (map[string]interface{}, error)
 
 	// Certs creates certificate for clients that communicate over mTLS
 	// A duration string is a possibly signed sequence of decimal numbers,
 	// each with optional fraction and a unit suffix, such as "300ms", "-1.5h" or "2h45m".
 	// Valid time units are "ns", "us" (or "µs"), "ms", "s", "m", "h".
-	Cert(domainID, token, clientID, duration string) (string, string, error)
+	Cert(ctx context.Context, domainID, token, clientID, duration string) (string, string, error)
 }
 
 type provisionService struct {
@@ -97,13 +97,13 @@ func New(cfg Config, mgsdk sdk.SDK, logger *slog.Logger) Service {
 }
 
 // Mapping retrieves current configuration.
-func (ps *provisionService) Mapping(token string) (map[string]interface{}, error) {
+func (ps *provisionService) Mapping(ctx context.Context, token string) (map[string]interface{}, error) {
 	pm := smqSDK.PageMetadata{
 		Offset: uint64(offset),
 		Limit:  uint64(limit),
 	}
 
-	if _, err := ps.sdk.Users(context.Background(), pm, token); err != nil {
+	if _, err := ps.sdk.Users(ctx, pm, token); err != nil {
 		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
 	}
 
@@ -112,12 +112,12 @@ func (ps *provisionService) Mapping(token string) (map[string]interface{}, error
 
 // Provision is provision method for creating setup according to
 // provision layout specified in config.toml.
-func (ps *provisionService) Provision(domainID, token, name, externalID, externalKey string) (res Result, err error) {
+func (ps *provisionService) Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (res Result, err error) {
 	var channels []smqSDK.Channel
 	var clients []smqSDK.Client
-	defer ps.recover(&err, &clients, &channels, &domainID, &token)
+	defer ps.recover(ctx, &err, &clients, &channels, &domainID, &token)
 
-	token, err = ps.createTokenIfEmpty(token)
+	token, err = ps.createTokenIfEmpty(ctx, token)
 	if err != nil {
 		return res, errors.Wrap(ErrFailedToCreateToken, err)
 	}
@@ -142,14 +142,14 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			name = c.Name
 		}
 		cli.Name = name
-		cli, err := ps.sdk.CreateClient(context.Background(), cli, domainID, token)
+		cli, err := ps.sdk.CreateClient(ctx, cli, domainID, token)
 		if err != nil {
 			res.Error = err.Error()
 			return res, errors.Wrap(ErrFailedClientCreation, err)
 		}
 
 		// Get newly created client (in order to get the key).
-		cli, err = ps.sdk.Client(context.Background(), cli.ID, domainID, token)
+		cli, err = ps.sdk.Client(ctx, cli.ID, domainID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("client id: %s", cli.ID))
 			return res, errors.Wrap(ErrFailedClientRetrieval, e)
@@ -162,11 +162,11 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			Name:     name + "_" + channel.Name,
 			Metadata: smqSDK.Metadata(channel.Metadata),
 		}
-		ch, err := ps.sdk.CreateChannel(context.Background(), ch, domainID, token)
+		ch, err := ps.sdk.CreateChannel(ctx, ch, domainID, token)
 		if err != nil {
 			return res, errors.Wrap(ErrFailedChannelCreation, err)
 		}
-		ch, err = ps.sdk.Channel(context.Background(), ch.ID, domainID, token)
+		ch, err = ps.sdk.Channel(ctx, ch.ID, domainID, token)
 		if err != nil {
 			e := errors.Wrap(err, fmt.Errorf("channel id: %s", ch.ID))
 			return res, errors.Wrap(ErrFailedChannelRetrieval, e)
@@ -206,12 +206,12 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 				ClientKey:   cert.Key,
 				Content:     string(content),
 			}
-			bsid, err := ps.sdk.AddBootstrap(bsReq, domainID, token)
+			bsid, err := ps.sdk.AddBootstrap(ctx, bsReq, domainID, token)
 			if err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
 			}
 
-			bsConfig, err = ps.sdk.ViewBootstrap(bsid, domainID, token)
+			bsConfig, err = ps.sdk.ViewBootstrap(ctx, bsid, domainID, token)
 			if err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrapValidate, err)
 			}
@@ -220,12 +220,12 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 		if ps.conf.Bootstrap.X509Provision {
 			var cert smqSDK.Cert
 
-			cert, err = ps.sdk.IssueCert(context.Background(), c.ID, ps.conf.Cert.TTL, domainID, token)
+			cert, err = ps.sdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, domainID, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("client id: %s", c.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
-			cert, err := ps.sdk.ViewCert(context.Background(), cert.SerialNumber, domainID, token)
+			cert, err := ps.sdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
 			if err != nil {
 				return res, errors.Wrap(ErrFailedCertView, err)
 			}
@@ -235,14 +235,14 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 			res.CACert = ""
 
 			if needsBootstrap(c) {
-				if _, err = ps.sdk.UpdateBootstrapCerts(bsConfig.ClientID, cert.Certificate, cert.Key, "", domainID, token); err != nil {
+				if _, err = ps.sdk.UpdateBootstrapCerts(ctx, bsConfig.ClientID, cert.Certificate, cert.Key, "", domainID, token); err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
 				}
 			}
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-			if err := ps.sdk.Whitelist(c.ID, Active, domainID, token); err != nil {
+			if err := ps.sdk.Whitelist(ctx, c.ID, Active, domainID, token); err != nil {
 				res.Error = err.Error()
 				return res, ErrClientUpdate
 			}
@@ -250,18 +250,17 @@ func (ps *provisionService) Provision(domainID, token, name, externalID, externa
 		}
 	}
 
-	if err = ps.updateGateway(domainID, token, bsConfig, channels); err != nil {
+	if err = ps.updateGateway(ctx, domainID, token, bsConfig, channels); err != nil {
 		return res, err
 	}
 	return res, nil
 }
 
-func (ps *provisionService) Cert(domainID, token, clientID, ttl string) (string, string, error) {
-	token, err := ps.createTokenIfEmpty(token)
+func (ps *provisionService) Cert(ctx context.Context, domainID, token, clientID, ttl string) (string, string, error) {
+	token, err := ps.createTokenIfEmpty(ctx, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedToCreateToken, err)
 	}
-	ctx := context.Background()
 
 	th, err := ps.sdk.Client(ctx, clientID, domainID, token)
 	if err != nil {
@@ -278,7 +277,7 @@ func (ps *provisionService) Cert(domainID, token, clientID, ttl string) (string,
 	return cert.Certificate, cert.Key, err
 }
 
-func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
+func (ps *provisionService) createTokenIfEmpty(ctx context.Context, token string) (string, error) {
 	if token != "" {
 		return token, nil
 	}
@@ -298,7 +297,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 		Username: ps.conf.Server.MgUsername,
 		Password: ps.conf.Server.MgPass,
 	}
-	tkn, err := ps.sdk.CreateToken(context.Background(), u)
+	tkn, err := ps.sdk.CreateToken(ctx, u)
 	if err != nil {
 		return token, errors.Wrap(ErrFailedToCreateToken, err)
 	}
@@ -306,7 +305,7 @@ func (ps *provisionService) createTokenIfEmpty(token string) (string, error) {
 	return tkn.AccessToken, nil
 }
 
-func (ps *provisionService) updateGateway(domainID, token string, bs sdk.BootstrapConfig, channels []smqSDK.Channel) error {
+func (ps *provisionService) updateGateway(ctx context.Context, domainID, token string, bs sdk.BootstrapConfig, channels []smqSDK.Channel) error {
 	var gw Gateway
 	for _, ch := range channels {
 		switch ch.Metadata["type"] {
@@ -323,7 +322,7 @@ func (ps *provisionService) updateGateway(domainID, token string, bs sdk.Bootstr
 	gw.CfgID = bs.ClientID
 	gw.Type = gateway
 
-	c, sdkerr := ps.sdk.Client(context.Background(), bs.ClientID, domainID, token)
+	c, sdkerr := ps.sdk.Client(ctx, bs.ClientID, domainID, token)
 	if sdkerr != nil {
 		return errors.Wrap(ErrGatewayUpdate, sdkerr)
 	}
@@ -334,7 +333,7 @@ func (ps *provisionService) updateGateway(domainID, token string, bs sdk.Bootstr
 	if err := json.Unmarshal(b, &c.Metadata); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
-	if _, err := ps.sdk.UpdateClient(context.Background(), c, domainID, token); err != nil {
+	if _, err := ps.sdk.UpdateClient(ctx, c, domainID, token); err != nil {
 		return errors.Wrap(ErrGatewayUpdate, err)
 	}
 	return nil
@@ -346,18 +345,18 @@ func (ps *provisionService) errLog(err error) {
 	}
 }
 
-func clean(ps *provisionService, clients []smqSDK.Client, channels []smqSDK.Channel, domainID, token string) {
+func clean(ctx context.Context, ps *provisionService, clients []smqSDK.Client, channels []smqSDK.Channel, domainID, token string) {
 	for _, t := range clients {
-		err := ps.sdk.DeleteClient(context.Background(), t.ID, domainID, token)
+		err := ps.sdk.DeleteClient(ctx, t.ID, domainID, token)
 		ps.errLog(err)
 	}
 	for _, c := range channels {
-		err := ps.sdk.DeleteChannel(context.Background(), c.ID, domainID, token)
+		err := ps.sdk.DeleteChannel(ctx, c.ID, domainID, token)
 		ps.errLog(err)
 	}
 }
 
-func (ps *provisionService) recover(e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, dm, tkn *string) {
+func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, dm, tkn *string) {
 	if e == nil {
 		return
 	}
@@ -365,49 +364,49 @@ func (ps *provisionService) recover(e *error, ths *[]smqSDK.Client, chs *[]smqSD
 
 	if errors.Contains(err, ErrFailedClientRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, c := range clients {
-			err := ps.sdk.DeleteClient(context.Background(), c.ID, domainID, token)
+			err := ps.sdk.DeleteClient(ctx, c.ID, domainID, token)
 			ps.errLog(err)
 		}
 		return
 	}
 
 	if errors.Contains(err, ErrFailedBootstrap) || errors.Contains(err, ErrFailedChannelRetrieval) {
-		clean(ps, clients, channels, domainID, token)
+		clean(ctx, ps, clients, channels, domainID, token)
 		return
 	}
 
 	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
-		clean(ps, clients, channels, domainID, token)
+		clean(ctx, ps, clients, channels, domainID, token)
 		for _, th := range clients {
 			if needsBootstrap(th) {
-				ps.errLog(ps.sdk.RemoveBootstrap(th.ID, domainID, token))
+				ps.errLog(ps.sdk.RemoveBootstrap(ctx, th.ID, domainID, token))
 			}
 		}
 		return
 	}
 
 	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
-		clean(ps, clients, channels, domainID, token)
+		clean(ctx, ps, clients, channels, domainID, token)
 		for _, th := range clients {
 			if needsBootstrap(th) {
-				bs, err := ps.sdk.ViewBootstrap(th.ID, domainID, token)
+				bs, err := ps.sdk.ViewBootstrap(ctx, th.ID, domainID, token)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(bs.ClientID, domainID, token))
+				ps.errLog(ps.sdk.RemoveBootstrap(ctx, bs.ClientID, domainID, token))
 			}
 		}
 	}
 
 	if errors.Contains(err, ErrClientUpdate) || errors.Contains(err, ErrGatewayUpdate) {
-		clean(ps, clients, channels, domainID, token)
+		clean(ctx, ps, clients, channels, domainID, token)
 		for _, th := range clients {
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(th) {
-				_, err := ps.sdk.RevokeCert(context.Background(), th.ID, domainID, token)
+				_, err := ps.sdk.RevokeCert(ctx, th.ID, domainID, token)
 				ps.errLog(err)
 			}
 			if needsBootstrap(th) {
-				bs, err := ps.sdk.ViewBootstrap(th.ID, domainID, token)
+				bs, err := ps.sdk.ViewBootstrap(ctx, th.ID, domainID, token)
 				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(bs.ClientID, domainID, token))
+				ps.errLog(ps.sdk.RemoveBootstrap(ctx, bs.ClientID, domainID, token))
 			}
 		}
 		return

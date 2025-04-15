@@ -4,8 +4,8 @@
 # To listen all messsage broker subjects use default value "writers.>".
 # To subscribe to specific subjects use values starting by "writers." and
 # followed by a subtopic (e.g ["writers.<channel_id>.sub.topic.x", ...]).
-[subjects]
-filter = ["writers.>"]
+["subscriber"]
+subjects = ["writers.>"]
 
 [transformer]
 # SenML or JSON

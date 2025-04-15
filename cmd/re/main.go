@@ -66,7 +66,6 @@ type config struct {
 	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	ConfigPath       string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 

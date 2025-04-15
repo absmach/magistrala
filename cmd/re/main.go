@@ -28,7 +28,6 @@ import (
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/messaging/nats"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
@@ -37,6 +36,7 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 )
@@ -68,6 +68,26 @@ type config struct {
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 	ConfigPath       string        `env:"MG_RE_CONFIG_PATH"         envDefault:"/config.toml"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+}
+
+const (
+	writersCfgName = "writers"
+	alarmsCfgName  = "alarms"
+)
+
+var (
+	writersSubjects = []string{"wrtiers.>"}
+	alarmsSubjects  = []string{"alarms.>"}
+)
+
+var jsStreamConfig = jetstream.StreamConfig{
+	Retention:         jetstream.LimitsPolicy,
+	Description:       "SuperMQ Rules Engine Stream for sending and receiving data between channels",
+	MaxMsgsPerSubject: 1e6,
+	MaxAge:            time.Hour * 24,
+	MaxMsgSize:        1024 * 1024,
+	Discard:           jetstream.DiscardOld,
+	Storage:           jetstream.FileStorage,
 }
 
 func main() {
@@ -132,7 +152,7 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	rePubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	rePubSub, err := nats.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for rePubSub: %s", err))
 		exitCode = 1
@@ -140,7 +160,10 @@ func main() {
 	}
 	defer rePubSub.Close()
 
-	writersPub, err := brokers.NewPublisher(ctx, cfg.BrokerURL, nats.Prefix(writersPrefix))
+	writersCfg := jsStreamConfig
+	writersCfg.Name = writersCfgName
+	writersCfg.Subjects = writersSubjects
+	writersPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(writersCfg))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for writersPubSub: %s", err))
 		exitCode = 1
@@ -148,7 +171,10 @@ func main() {
 	}
 	defer writersPub.Close()
 
-	alarmsPub, err := brokers.NewPublisher(ctx, cfg.BrokerURL, nats.Prefix(alarmsPrefix))
+	alarmsCfg := jsStreamConfig
+	alarmsCfg.Name = alarmsCfgName
+	alarmsCfg.Subjects = alarmsSubjects
+	alarmsPub, err := nats.NewPublisher(ctx, cfg.BrokerURL, nats.JSStreamConfig(alarmsCfg))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for alarmsPubSub: %s", err))
 		exitCode = 1

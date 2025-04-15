@@ -36,8 +36,8 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	message.RawSetString("created", lua.LNumber(msg.Created))
 
 	var payload interface{}
-	pld := l.NewTable()
 	if err := json.Unmarshal(msg.GetPayload(), &payload); err != nil {
+		pld := l.NewTable()
 		// If message is not JSON, set binary payload and exit.
 		for i, b := range msg.Payload {
 			// Lua tables are 1-indexed.
@@ -48,8 +48,7 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	}
 
 	// Payload is JSON, set the correct value.
-	payload = traverseJson(l, payload)
-	message.RawSetString(payloadKey, pld)
+	message.RawSetString(payloadKey, traverseJson(l, payload))
 	return message
 }
 

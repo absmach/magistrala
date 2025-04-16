@@ -82,17 +82,11 @@ func (a Alarm) Validate() error {
 	if a.ClientID == "" {
 		return errors.New("client_id is required")
 	}
-	if a.Subtopic == "" {
-		return errors.New("subtopic is required")
-	}
 	if a.Measurement == "" {
 		return errors.New("measurement is required")
 	}
 	if a.Value == "" {
 		return errors.New("value is required")
-	}
-	if a.Unit == "" {
-		return errors.New("unit is required")
 	}
 	if a.Cause == "" {
 		return errors.New("cause is required")

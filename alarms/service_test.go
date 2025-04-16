@@ -65,7 +65,16 @@ func TestCreateAlarm(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("CreateAlarm", context.Background(), mock.Anything).Return(tc.alarm, tc.err)
-			repoCall1 := repo.On("ListAlarms", context.Background(), alarms.PageMetadata{Offset: 0, Limit: 1}).Return(alarms.AlarmsPage{}, tc.err)
+			repoCall1 := repo.On("ListAlarms", context.Background(), alarms.PageMetadata{
+				Offset: 0, Limit: 1,
+				DomainID:  tc.alarm.DomainID,
+				ChannelID: tc.alarm.ChannelID,
+				ClientID:  tc.alarm.ClientID,
+				Subtopic:  tc.alarm.Subtopic,
+				RuleID:    tc.alarm.RuleID,
+				Severity:  tc.alarm.Severity,
+				Status:    tc.alarm.Status,
+			}).Return(alarms.AlarmsPage{}, tc.err)
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

@@ -27,6 +27,8 @@ import (
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/supermq/pkg/authz"
+	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
@@ -255,7 +257,7 @@ func main() {
 	defer client.Close()
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, ec, logger, readersClient)
+	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -313,7 +315,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 

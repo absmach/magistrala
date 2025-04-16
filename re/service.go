@@ -476,6 +476,10 @@ func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg Re
 	cfg.DomainID = session.DomainID
 	cfg.Status = EnabledStatus
 
+	if cfg.Schedule.StartDateTime.IsZero() {
+		cfg.Schedule.StartDateTime = now
+	}
+
 	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)

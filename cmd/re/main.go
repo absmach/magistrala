@@ -41,7 +41,6 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
-	"github.com/nats-io/nats.go/jetstream"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -66,29 +65,6 @@ type config struct {
 	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
-}
-
-const (
-	writersCfgName = "writers"
-	alarmsCfgName  = "alarms"
-
-	alarmsPrefix  = "alarms"
-	writersPrefix = "writers"
-)
-
-var (
-	writersSubjects = []string{"writers.>"}
-	alarmsSubjects  = []string{"alarms.>"}
-)
-
-var jsStreamConfig = jetstream.StreamConfig{
-	Retention:         jetstream.LimitsPolicy,
-	Description:       "SuperMQ Rules Engine stream for handling internal messages",
-	MaxMsgsPerSubject: 1e6,
-	MaxAge:            time.Hour * 24,
-	MaxMsgSize:        1024 * 1024,
-	Discard:           jetstream.DiscardOld,
-	Storage:           jetstream.FileStorage,
 }
 
 func main() {

@@ -19,7 +19,7 @@ import (
 const (
 	AllTopic = "alarms.>"
 
-	prefix = "writers"
+	prefix = "alarms"
 )
 
 var cfg = jetstream.StreamConfig{

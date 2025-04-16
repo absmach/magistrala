@@ -12,8 +12,8 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	httpAPI "github.com/absmach/magistrala/alarms/api"
+	"github.com/absmach/magistrala/alarms/brokers"
 	"github.com/absmach/magistrala/alarms/consumer"
-	"github.com/absmach/magistrala/alarms/consumer/brokers"
 	"github.com/absmach/magistrala/alarms/middleware"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"

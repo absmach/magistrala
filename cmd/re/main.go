@@ -14,11 +14,11 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	abrokers "github.com/absmach/magistrala/alarms/consumer/brokers"
+	abrokers "github.com/absmach/magistrala/alarms/brokers"
+	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
-	"github.com/absmach/magistrala/re/brokers"
 	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
@@ -140,7 +140,7 @@ func main() {
 	defer rePubSub.Close()
 	rePubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, rePubSub)
 
-	writersPub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	writersPub, err := brokers.NewPublisher(ctx, cfg.BrokerURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
 		exitCode = 1
@@ -148,9 +148,9 @@ func main() {
 		return
 	}
 	defer writersPub.Close()
-	writersPub = brokerstracing.NewPubSub(httpServerConfig, tracer, writersPub)
+	writersPub = brokerstracing.NewPublisher(httpServerConfig, tracer, writersPub)
 
-	alarmsPub, err := abrokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	alarmsPub, err := abrokers.NewPublisher(ctx, cfg.BrokerURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
 		exitCode = 1
@@ -158,7 +158,7 @@ func main() {
 		return
 	}
 	defer alarmsPub.Close()
-	alarmsPub = brokerstracing.NewPubSub(httpServerConfig, tracer, alarmsPub)
+	alarmsPub = brokerstracing.NewPublisher(httpServerConfig, tracer, alarmsPub)
 
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
@@ -231,7 +231,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, rePubSub, writersPub, alarmsPub messaging.PubSub, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(db pgclient.Database, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 

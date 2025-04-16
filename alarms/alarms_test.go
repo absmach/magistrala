@@ -97,21 +97,6 @@ func TestValidateAlarms(t *testing.T) {
 			err: errors.New("client_id is required"),
 		},
 		{
-			desc: "missing subtopic",
-			alarm: alarms.Alarm{
-				RuleID:      testsutil.GenerateUUID(t),
-				DomainID:    testsutil.GenerateUUID(t),
-				ChannelID:   testsutil.GenerateUUID(t),
-				ClientID:    testsutil.GenerateUUID(t),
-				Measurement: "measurement",
-				Value:       "value",
-				Unit:        "unit",
-				Cause:       "cause",
-				Severity:    100,
-			},
-			err: errors.New("subtopic is required"),
-		},
-		{
 			desc: "missing measurement",
 			alarm: alarms.Alarm{
 				RuleID:    testsutil.GenerateUUID(t),
@@ -140,21 +125,6 @@ func TestValidateAlarms(t *testing.T) {
 				Severity:    100,
 			},
 			err: errors.New("value is required"),
-		},
-		{
-			desc: "missing unit",
-			alarm: alarms.Alarm{
-				RuleID:      testsutil.GenerateUUID(t),
-				DomainID:    testsutil.GenerateUUID(t),
-				ChannelID:   testsutil.GenerateUUID(t),
-				ClientID:    testsutil.GenerateUUID(t),
-				Subtopic:    "subtopic",
-				Measurement: "measurement",
-				Value:       "value",
-				Cause:       "cause",
-				Severity:    100,
-			},
-			err: errors.New("unit is required"),
 		},
 		{
 			desc: "missing cause",

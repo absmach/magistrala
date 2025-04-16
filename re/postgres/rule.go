@@ -44,7 +44,7 @@ type dbReport struct {
 	DomainID        string         `db:"domain_id"`
 	ChannelIDs      pq.StringArray `db:"channel_ids"`
 	ClientIDs       pq.StringArray `db:"client_ids"`
-	Aggregation     sql.NullString `db:"aggregation"`
+	Config          []byte         `db:"config,omitempty"`
 	Metrics         pq.StringArray `db:"metrics"`
 	To              pq.StringArray `db:"to"`
 	From            sql.NullString `db:"from"`
@@ -138,6 +138,15 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 }
 
 func reportToDb(r re.ReportConfig) (dbReport, error) {
+	config := []byte("{}")
+	if r.Config != nil {
+		b, err := json.Marshal(r.Config)
+		if err != nil {
+			return dbReport{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		config = b
+	}
+
 	return dbReport{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -153,8 +162,8 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 		UpdatedBy:       r.UpdatedBy,
 		ChannelIDs:      r.ChannelIDs,
 		ClientIDs:       r.ClientIDs,
+		Config:          config,
 		Metrics:         r.Metrics,
-		Aggregation:     toNullString(r.Aggregation),
 		To:              r.Email.To,
 		From:            toNullString(r.Email.From),
 		Subject:         toNullString(r.Email.Subject),
@@ -163,14 +172,21 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 }
 
 func dbToReport(dto dbReport) (re.ReportConfig, error) {
+	var config re.MetricConfig
+	if dto.Config != nil {
+		if err := json.Unmarshal(dto.Config, &config); err != nil {
+			return re.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	rpt := re.ReportConfig{
-		ID:          dto.ID,
-		Name:        dto.Name,
-		DomainID:    dto.DomainID,
-		ChannelIDs:  dto.ChannelIDs,
-		ClientIDs:   dto.ClientIDs,
-		Aggregation: fromNullString(dto.Aggregation),
-		Metrics:     dto.Metrics,
+		ID:         dto.ID,
+		Name:       dto.Name,
+		DomainID:   dto.DomainID,
+		ChannelIDs: dto.ChannelIDs,
+		ClientIDs:  dto.ClientIDs,
+		Config:     &config,
+		Metrics:    dto.Metrics,
 		Schedule: re.Schedule{
 			StartDateTime:   dto.StartDateTime,
 			Time:            dto.Time,

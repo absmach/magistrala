@@ -56,16 +56,18 @@ var (
 		},
 	}
 	reportConfig = re.ReportConfig{
-		ID:          validID,
-		Name:        namegen.Generate(),
-		DomainID:    domainID,
-		Schedule:    schedule,
-		Status:      re.EnabledStatus,
-		ChannelIDs:  []string{"channel1", "channel2"},
-		ClientIDs:   []string{"client1", "client2"},
-		Metrics:     []string{"metric1", "metric2"},
-		Aggregation: "AVG",
-		Limit:       100,
+		ID:         validID,
+		Name:       namegen.Generate(),
+		DomainID:   domainID,
+		Schedule:   schedule,
+		Status:     re.EnabledStatus,
+		ChannelIDs: []string{"channel1", "channel2"},
+		ClientIDs:  []string{"client1", "client2"},
+		Metrics:    []string{"metric1", "metric2"},
+		Config: &re.MetricConfig{
+			Aggregation: re.AggConfig{AggType: "AVG"},
+		},
+		Limit: 100,
 		Email: re.Email{
 			To:      []string{"test@example.com"},
 			From:    "noreply@example.com",

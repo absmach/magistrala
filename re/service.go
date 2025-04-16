@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/vadv/gopher-lua-libs/strings"
 )
 
 type Repository interface {
@@ -308,4 +310,113 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 	}
 
 	return reportPage, nil
+}
+func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
+	reportPage := ReportPage{
+		Reports: make([]Report, 0),
+	}
+
+	report := Report{
+		ClientMessages: make(map[string][]senml.Message, 0),
+	}
+
+	for _, ch := range cfg.ChannelIDs {
+		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+		switch cfg.Config.Aggregation.AggType {
+		case "MAX":
+			agg = grpcReadersV1.Aggregation_MAX
+		case "MIN":
+			agg = grpcReadersV1.Aggregation_MIN
+		case "COUNT":
+			agg = grpcReadersV1.Aggregation_COUNT
+		case "AVG":
+			agg = grpcReadersV1.Aggregation_AVG
+		case "SUM":
+			agg = grpcReadersV1.Aggregation_SUM
+		}
+
+		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+			ChannelId: ch,
+			DomainId:  cfg.DomainID,
+			PageMetadata: &grpcReadersV1.PageMetadata{
+				Aggregation: agg,
+				Limit:       cfg.Limit,
+				Offset:      0,
+				From:        float64(from.UnixNano()),
+				To:          float64(time.Now().UnixNano()),
+				Interval:    interval,
+			},
+		})
+		if err != nil {
+			return ReportPage{}, err
+		}
+
+		for _, msg := range msgs.Messages {
+			message := msg.GetSenml()
+			publisher := message.Base.Publisher
+
+			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message.Name, cfg.Metrics) {
+				report.ClientMessages[publisher] = append(report.ClientMessages[publisher],
+					senml.Message{
+						Channel:     message.Base.Channel,
+						Subtopic:    message.Base.Subtopic,
+						Publisher:   message.Base.Publisher,
+						Protocol:    message.Base.Protocol,
+						Name:        message.Name,
+						Unit:        message.Unit,
+						Time:        message.Time,
+						UpdateTime:  message.UpdateTime,
+						Value:       &message.Value,
+						StringValue: &message.StringValue,
+						DataValue:   &message.DataValue,
+						BoolValue:   &message.BoolValue,
+						Sum:         &message.Sum,
+					},
+				)
+			}
+		}
+	}
+
+	if len(reportPage.Reports) > 0 {
+		reportPage.Reports = append(reportPage.Reports, report)
+		reportPage.Total = uint64(len(reportPage.Reports))
+	}
+	if download {
+		var err error
+
+		reportPage.PDF, err = re.generatePDFReport(report)
+		if err != nil {
+			return reportPage, err
+		}
+
+		reportPage.CSV, err = re.generateCSVReport(report)
+		if err != nil {
+			return reportPage, err
+		}
+	}
+
+	return reportPage, nil
+}
+
+func contains(slice []string, str string) bool {
+	for _, s := range slice {
+		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
+func shouldIncludeMessage(name string, metrics []string) bool {
+	if len(metrics) == 0 {
+		return true
+	}
+
+	for _, metric := range metrics {
+		if strings.Contains(name, metric) {
+			return true
+		}
+	}
+
+	return false
 }

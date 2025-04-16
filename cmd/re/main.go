@@ -15,6 +15,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	abrokers "github.com/absmach/magistrala/alarms/brokers"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/re"

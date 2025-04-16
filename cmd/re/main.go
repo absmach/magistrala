@@ -130,15 +130,15 @@ func main() {
 		return
 	}
 
-	rePubSub, err := smqbrokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	msgSub, err := smqbrokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for rePubSub: %s", err))
+		logger.Error(fmt.Sprintf("failed to connect to message broker for mg pubSub: %s", err))
 		exitCode = 1
 
 		return
 	}
-	defer rePubSub.Close()
-	rePubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, rePubSub)
+	defer msgSub.Close()
+	msgSub = brokerstracing.NewPubSub(httpServerConfig, tracer, msgSub)
 
 	writersPub, err := brokers.NewPublisher(ctx, cfg.BrokerURL)
 	if err != nil {
@@ -178,7 +178,7 @@ func main() {
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(database, rePubSub, writersPub, alarmsPub, ec, logger)
+	svc, err := newService(database, msgSub, writersPub, alarmsPub, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -191,7 +191,7 @@ func main() {
 		DeliveryPolicy: messaging.DeliverAllPolicy,
 		Handler:        svc,
 	}
-	if err := rePubSub.Subscribe(ctx, subCfg); err != nil {
+	if err := msgSub.Subscribe(ctx, subCfg); err != nil {
 		logger.Error(fmt.Sprintf("failed to subscribe to internal message broker: %s", err))
 		exitCode = 1
 

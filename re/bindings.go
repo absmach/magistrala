@@ -4,9 +4,13 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/gob"
 	"encoding/json"
+	"fmt"
 
+	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	lua "github.com/yuin/gopher-lua"
@@ -62,4 +66,58 @@ func (re *re) sendEmail(L *lua.LState) int {
 		return 0
 	}
 	return 1
+}
+
+func (re *re) sendAlarm(ctx context.Context, original *messaging.Message) lua.LGFunction {
+	return func(l *lua.LState) int {
+		processAlarm := func(alarmTable *lua.LTable) int {
+			val := convertLua(alarmTable)
+			data, err := json.Marshal(val)
+			if err != nil {
+				return 0
+			}
+
+			var alarm alarms.Alarm
+			if err := json.Unmarshal(data, &alarm); err != nil {
+				return 0
+			}
+
+			fmt.Println("alarm: ", alarm)
+
+			var buf bytes.Buffer
+			if err := gob.NewEncoder(&buf).Encode(alarm); err != nil {
+				return 0
+			}
+
+			m := &messaging.Message{
+				Domain:    original.Domain,
+				Publisher: original.Publisher,
+				Created:   alarm.CreatedAt.UnixNano(),
+				Channel:   original.Channel,
+				Subtopic:  original.Subtopic,
+				Protocol:  original.Protocol,
+				Payload:   buf.Bytes(),
+			}
+
+			fmt.Println("message: ", m)
+
+			topic := fmt.Sprintf("%s.c.%s.%s", original.Domain, original.Channel, original.Subtopic)
+			if err := re.alarmsPub.Publish(ctx, topic, m); err != nil {
+				return 0
+			}
+			return 1
+		}
+		table := l.ToTable(1)
+		if table.RawGetInt(1) != lua.LNil {
+			table.ForEach(func(_, value lua.LValue) {
+				if alarmTable, ok := value.(*lua.LTable); ok {
+					processAlarm(alarmTable)
+				}
+			})
+		} else {
+			processAlarm(table)
+		}
+
+		return 1
+	}
 }

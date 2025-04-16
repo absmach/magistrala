@@ -190,7 +190,7 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return generateReportResp{}, err
 		}
 
-		reportPage, err := svc.GenerateReport(ctx, session, req.ReportConfig)
+		reportPage, err := svc.GenerateReport(ctx, session, req.ReportConfig, false)
 		if err != nil {
 			return generateReportResp{}, err
 		}
@@ -373,7 +373,7 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return downloadReportResp{}, err
 		}
 
-		page, err := svc.GenerateReport(ctx, session, cfg)
+		page, err := svc.GenerateReport(ctx, session, cfg, true)
 		if err != nil {
 			return downloadReportResp{}, err
 		}

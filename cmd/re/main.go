@@ -26,6 +26,7 @@ import (
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
+	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -37,17 +38,19 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
+	"github.com/nats-io/nats.go/jetstream"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	svcName        = "rules_engine"
-	envPrefixDB    = "MG_RE_DB_"
-	envPrefixHTTP  = "MG_RE_HTTP_"
-	envPrefixAuth  = "SMQ_AUTH_GRPC_"
-	defDB          = "r"
-	defSvcHTTPPort = "9008"
-	envPrefixGrpc  = "MG_TIMESCALE_READER_GRPC_"
+	svcName          = "rules_engine"
+	envPrefixDB      = "MG_RE_DB_"
+	envPrefixHTTP    = "MG_RE_HTTP_"
+	envPrefixAuth    = "SMQ_AUTH_GRPC_"
+	defDB            = "r"
+	defSvcHTTPPort   = "9008"
+	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
+	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )
 
 type config struct {
@@ -205,6 +208,29 @@ func main() {
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
+	domsGrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer domainsHandler.Close()
+
+	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg, domAuthz)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authzClient.Close()
+	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
+
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	regrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -291,6 +317,10 @@ func newService(db pgclient.Database, rePubSub messaging.PubSub, writersPub, ala
 	}
 
 	csvc := re.NewService(repo, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient, readersClient)
+	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	if err != nil {
+		return nil, err
+	}
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

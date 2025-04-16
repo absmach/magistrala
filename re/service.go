@@ -30,9 +30,10 @@ const (
 	monthsInYear = 12
 
 	publisher = "magistrala.re"
-	from      = 173568960000000000
 	interval  = "1s"
 )
+
+var from = time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
@@ -123,7 +124,7 @@ type Service interface {
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 
-	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 	Errors() <-chan error
 }
@@ -150,6 +151,7 @@ func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubS
 		errors:     make(chan error),
 		ticker:     tck,
 		email:      emailer,
+		readers:    readers,
 	}
 }
 
@@ -334,7 +336,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 }
 
 func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
-	reportPage, err := re.generateReport(ctx, cfg)
+	reportPage, err := re.generateReport(ctx, cfg, false)
 	if err != nil {
 		return err
 	}
@@ -543,14 +545,14 @@ func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id
 	return cfg, nil
 }
 
-func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error) {
+func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
 	if config.Status != EnabledStatus {
 		return ReportPage{}, svcerr.ErrInvalidStatus
 	}
 
-	reportPage, err := re.generateReport(ctx, config)
+	reportPage, err := re.generateReport(ctx, config, download)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -558,13 +560,13 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 	return reportPage, nil
 }
 
-func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage, error) {
+func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
 	reportPage := ReportPage{
 		Reports: make([]Report, 0),
 	}
 
 	report := Report{
-		ClientMessages: make(map[string][]senml.Message),
+		ClientMessages: make(map[string][]senml.Message, 0),
 	}
 
 	for _, ch := range cfg.ChannelIDs {
@@ -589,7 +591,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 				Aggregation: agg,
 				Limit:       cfg.Limit,
 				Offset:      0,
-				From:        from,
+				From:        float64(from.UnixNano()),
 				To:          float64(time.Now().UnixNano()),
 				Interval:    interval,
 			},
@@ -597,6 +599,8 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		if err != nil {
 			return ReportPage{}, err
 		}
+
+		fmt.Printf("messages is %+v\n", msgs)
 
 		for _, msg := range msgs.Messages {
 			message := msg.GetSenml()
@@ -624,18 +628,22 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig) (ReportPage,
 		}
 	}
 
-	reportPage.Reports = append(reportPage.Reports, report)
-	reportPage.Total = uint64(len(reportPage.Reports))
-
-	var err error
-	reportPage.PDF, err = re.generatePDFReport(report)
-	if err != nil {
-		return reportPage, err
+	if len(reportPage.Reports) > 0 {
+		reportPage.Reports = append(reportPage.Reports, report)
+		reportPage.Total = uint64(len(reportPage.Reports))
 	}
+	if download {
+		var err error
 
-	reportPage.CSV, err = re.generateCSVReport(report)
-	if err != nil {
-		return reportPage, err
+		reportPage.PDF, err = re.generatePDFReport(report)
+		if err != nil {
+			return reportPage, err
+		}
+
+		reportPage.CSV, err = re.generateCSVReport(report)
+		if err != nil {
+			return reportPage, err
+		}
 	}
 
 	return reportPage, nil

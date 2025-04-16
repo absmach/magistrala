@@ -4,13 +4,7 @@
 package re
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
-	"encoding/json"
-	"fmt"
-	"sort"
-	"strings"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
@@ -215,3 +209,103 @@ func (re *re) Errors() <-chan error {
 	return re.errors
 }
 
+func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	id, err := re.idp.ID()
+	if err != nil {
+		return ReportConfig{}, err
+	}
+
+	now := time.Now()
+	cfg.ID = id
+	cfg.CreatedAt = now
+	cfg.CreatedBy = session.UserID
+	cfg.DomainID = session.DomainID
+	cfg.Status = EnabledStatus
+
+	if cfg.Schedule.StartDateTime.IsZero() {
+		cfg.Schedule.StartDateTime = now
+	}
+
+	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	cfg, err := re.repo.ViewReportConfig(ctx, id)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return cfg, nil
+}
+
+func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedBy = session.UserID
+	reportConfig, err := re.repo.UpdateReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
+	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
+func (re *re) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
+	pm.Domain = session.DomainID
+	page, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return page, nil
+}
+
+func (re *re) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Enabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
+func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Disabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
+func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error) {
+	config.DomainID = session.DomainID
+
+	if config.Status != EnabledStatus {
+		return ReportPage{}, svcerr.ErrInvalidStatus
+	}
+
+	reportPage, err := re.generateReport(ctx, config, download)
+	if err != nil {
+		return ReportPage{}, err
+	}
+
+	return reportPage, nil
+}

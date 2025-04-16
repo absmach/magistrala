@@ -17,12 +17,12 @@ import (
 const (
 	AllTopic = "alarms.#"
 
-	exchangeName = "writers"
-	prefix       = "writers"
+	exchangeName = "alarms"
+	prefix       = "alarms"
 )
 
 func NewPubSub(_ context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(url, logger, broker.Prefix("writers"), broker.Exchange(exchangeName))
+	pb, err := broker.NewPubSub(url, logger, broker.Prefix(prefix), broker.Exchange(exchangeName))
 	if err != nil {
 		return nil, err
 	}
@@ -31,7 +31,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger) (messaging.Pu
 }
 
 func NewPublisher(_ context.Context, url string) (messaging.Publisher, error) {
-	pb, err := broker.NewPublisher(url, broker.Prefix("writers"), broker.Exchange(exchangeName))
+	pb, err := broker.NewPublisher(url, broker.Prefix(prefix), broker.Exchange(exchangeName))
 	if err != nil {
 		return nil, err
 	}

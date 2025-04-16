@@ -14,10 +14,15 @@ import (
 	broker "github.com/absmach/supermq/pkg/messaging/rabbitmq"
 )
 
-const AllTopic = "writers.#"
+const (
+	AllTopic = "writers.#"
+
+	exchangeName = "writers"
+	prefix       = "writers"
+)
 
 func NewPubSub(_ context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(url, logger, broker.Prefix("writers"))
+	pb, err := broker.NewPubSub(url, logger, broker.Prefix(prefix), broker.Exchange(exchangeName))
 	if err != nil {
 		return nil, err
 	}
@@ -26,7 +31,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger) (messaging.Pu
 }
 
 func NewPublisher(_ context.Context, url string) (messaging.Publisher, error) {
-	pb, err := broker.NewPublisher(url, broker.Prefix("writers"))
+	pb, err := broker.NewPublisher(url, broker.Prefix(prefix), broker.Exchange(exchangeName))
 	if err != nil {
 		return nil, err
 	}

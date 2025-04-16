@@ -16,7 +16,11 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-const AllTopic = "writers.>"
+const (
+	AllTopic = "writers.>"
+
+	prefix = "writers"
+)
 
 var cfg = jetstream.StreamConfig{
 	Name:              "writers",
@@ -31,7 +35,7 @@ var cfg = jetstream.StreamConfig{
 }
 
 func NewPubSub(ctx context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(ctx, url, logger, broker.JSStreamConfig(cfg))
+	pb, err := broker.NewPubSub(ctx, url, logger, broker.Prefix(prefix), broker.JSStreamConfig(cfg))
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +44,7 @@ func NewPubSub(ctx context.Context, url string, logger *slog.Logger) (messaging.
 }
 
 func NewPublisher(ctx context.Context, url string) (messaging.Publisher, error) {
-	pb, err := broker.NewPublisher(ctx, url, broker.JSStreamConfig(cfg))
+	pb, err := broker.NewPublisher(ctx, url, broker.Prefix(prefix), broker.JSStreamConfig(cfg))
 	if err != nil {
 		return nil, err
 	}

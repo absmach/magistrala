@@ -126,6 +126,11 @@ jobs:
               - "cmd/re/**"
               - "re/api/**"
 
+            alarms:
+              - "alarms/**"
+              - "cmd/alarms/**"
+
+
       - name: Create coverage directory
         run: |
           mkdir coverage
@@ -174,6 +179,11 @@ jobs:
         if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/re.out ./re/...
+
+      - name: Run alarms tests
+        if: steps.changes.outputs.alarms == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/alarms.out ./alarms/...
 
       - name: Upload coverage
         uses: codecov/codecov-action@v5

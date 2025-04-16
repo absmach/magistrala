@@ -576,7 +576,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 
 	for _, ch := range cfg.ChannelIDs {
 		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
-		switch cfg.Aggregation {
+		switch cfg.Config.Aggregation.AggType {
 		case "MAX":
 			agg = grpcReadersV1.Aggregation_MAX
 		case "MIN":
@@ -604,8 +604,6 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 		if err != nil {
 			return ReportPage{}, err
 		}
-
-		fmt.Printf("messages is %+v\n", msgs)
 
 		for _, msg := range msgs.Messages {
 			message := msg.GetSenml()

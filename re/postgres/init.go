@@ -52,7 +52,6 @@ func Migration() *migrate.MemoryMigrationSource {
 						"limit"				BIGINT CHECK ("limit" >= 0),
 						channel_ids 	  	TEXT[],
 						client_ids 		  	TEXT[],
-						aggregation			TEXT,
 						metrics				TEXT[],
 						"to" 				TEXT[],
 						"from" 				TEXT,
@@ -65,7 +64,8 @@ func Migration() *migrate.MemoryMigrationSource {
 						time              	TIMESTAMP,
 						recurring         	SMALLINT,
 						recurring_period  	SMALLINT,
-						start_datetime    	TIMESTAMP
+						start_datetime    	TIMESTAMP,
+						config			  	JSONB
 					);`,
 				},
 				Down: []string{

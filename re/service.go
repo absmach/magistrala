@@ -463,6 +463,7 @@ func (s Schedule) ShouldRun(startTime time.Time) bool {
 
 	return false
 }
+
 func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
 	id, err := re.idp.ID()
 	if err != nil {

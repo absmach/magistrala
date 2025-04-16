@@ -81,7 +81,7 @@ type Service interface {
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 
-	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig) (ReportPage, error)
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 }
 
@@ -107,6 +107,7 @@ func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, re
 		alarmsPub:  alarmsPub,
 		ticker:     tck,
 		email:      emailer,
+		readers:    readers,
 	}
 }
 

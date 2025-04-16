@@ -16,8 +16,8 @@ type Report struct {
 type ReportPage struct {
 	Total   uint64   `json:"total"`
 	Reports []Report `json:"reports"`
-	PDF     []byte
-	CSV     []byte
+	PDF     []byte   `json:"pdf,omitempty"`
+	CSV     []byte   `json:"csv,omitempty"`
 }
 
 type ReportConfig struct {

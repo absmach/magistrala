@@ -234,7 +234,7 @@ func (lm *loggingMiddleware) GenerateReport(ctx context.Context, session authn.S
 		lm.logger.Info("Generate report completed", args...)
 	}(time.Now())
 
-	return lm.svc.GenerateReport(ctx, session, config)
+	return lm.svc.GenerateReport(ctx, session, config, download)
 }
 
 func (lm *loggingMiddleware) AddReportConfig(ctx context.Context, session authn.Session, config re.ReportConfig) (res re.ReportConfig, err error) {

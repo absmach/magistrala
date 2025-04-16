@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/policies"
 )
 
@@ -282,8 +283,12 @@ func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 	return am.svc.StartScheduler(ctx)
 }
 
-func (am *authorizationMiddleware) ConsumeAsync(ctx context.Context, msgs interface{}) {
-	am.svc.ConsumeAsync(ctx, msgs)
+func (am *authorizationMiddleware) Handle(msg *messaging.Message) error {
+	return am.svc.Handle(msg)
+}
+
+func (am *authorizationMiddleware) Cancel() error {
+	return am.svc.Cancel()
 }
 
 func (am *authorizationMiddleware) Errors() <-chan error {

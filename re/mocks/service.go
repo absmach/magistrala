@@ -199,6 +199,62 @@ func (_c *Service_Cancel_Call) RunAndReturn(run func() error) *Service_Cancel_Ca
 	return _c
 }
 
+// DisableReportConfig provides a mock function for the type Service
+func (_mock *Service) DisableReportConfig(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableReportConfig")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, session, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_DisableReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableReportConfig'
+type Service_DisableReportConfig_Call struct {
+	*mock.Call
+}
+
+// DisableReportConfig is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - id
+func (_e *Service_Expecter) DisableReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_DisableReportConfig_Call {
+	return &Service_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, session, id)}
+}
+
+func (_c *Service_DisableReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DisableReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Service_DisableReportConfig_Call) Return(reportConfig re.ReportConfig, err error) *Service_DisableReportConfig_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Service_DisableReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error)) *Service_DisableReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DisableRule provides a mock function for the type Service
 func (_mock *Service) DisableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	ret := _mock.Called(ctx, session, id)

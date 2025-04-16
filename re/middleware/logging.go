@@ -221,7 +221,7 @@ func (lm *loggingMiddleware) Cancel() error {
 	return lm.Cancel()
 }
 
-func (lm *loggingMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig) (page re.ReportPage, err error) {
+func (lm *loggingMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, download bool) (page re.ReportPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

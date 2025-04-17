@@ -4,6 +4,7 @@
 package re
 
 import (
+	"bytes"
 	"context"
 	"time"
 
@@ -401,19 +402,19 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 	}
 
 	reportPage.Total = uint64(len(reportPage.Reports))
-	// if download {
-	// 	var err error
+	if download {
+		var err error
 
-	// 	reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
-	// 	if err != nil {
-	// 		return reportPage, err
-	// 	}
+		reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
 
-	// 	reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
-	// 	if err != nil {
-	// 		return reportPage, err
-	// 	}
-	// }
+		reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
+	}
 
 	return reportPage, nil
 }
@@ -432,19 +433,12 @@ func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
 		Sum:         g.Sum,
 	}
 }
-func contains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
-		}
-	}
-	return false
-}
 
-func shouldIncludeMessage(name string, metrics []string) bool {
-	if len(metrics) == 0 {
-		return true
-	}
+func (re *re) generatePDFReport(reports []Report) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+
+	headers := []string{"Time", "Metric Name", "Value", "Unit", "Subtopic"}
+	widths := []float64{40, 30, 30, 25, 35}
 
 	for _, metric := range metrics {
 		if strings.Contains(name, metric) {

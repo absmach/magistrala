@@ -149,27 +149,6 @@ func stringifyAggregation(agg grpcReadersV1.Aggregation) string {
 	}
 }
 
-func derefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-func derefFloat64(f *float64) float64 {
-	if f == nil {
-		return 0
-	}
-	return *f
-}
-
-func derefBool(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
-}
-
 func safeString(v interface{}) string {
 	if s, ok := v.(string); ok {
 		return s

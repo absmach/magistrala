@@ -4,14 +4,23 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
+	"encoding/json"
+	"fmt"
+	"sort"
 	"time"
 
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/reltime"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/jung-kurt/gofpdf"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -19,8 +28,9 @@ const (
 	hoursInDay   = 24
 	daysInWeek   = 7
 	monthsInYear = 12
-
-	publisher = "magistrala.re"
+	limit        = 1000
+	publisher    = "magistrala.re"
+	interval     = "1s"
 )
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
@@ -60,6 +70,13 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+
+	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, id string) error
+	UpdateReportConfigStatus(ctx context.Context, id string, status Status) (ReportConfig, error)
+	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
@@ -96,6 +113,16 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+
+	AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
+	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
+	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 	Errors() <-chan error
 }
@@ -109,9 +136,10 @@ type re struct {
 	errors     chan error
 	ticker     Ticker
 	email      Emailer
+	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		writersPub: writersPub,
 		alarmsPub:  alarmsPub,
@@ -121,6 +149,7 @@ func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubS
 		errors:     make(chan error),
 		ticker:     tck,
 		email:      emailer,
+		readers:    readers,
 	}
 }
 
@@ -233,13 +262,23 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if err != nil {
 		return err
 	}
+	reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		return err
+	}
 
 	for _, r := range page.Rules {
-		go func(ctx context.Context) {
+		go func(ctx context.Context, rule Rule) {
 			if err := re.process(ctx, r, msg); err != nil {
 				re.errors <- err
 			}
-		}(ctx)
+		}(ctx, r)
+	}
+
+	for _, cfg := range reportConfigs.ReportConfigs {
+		go func(ctx context.Context, config ReportConfig) {
+			re.errors <- re.processReportConfig(ctx, config)
+		}(ctx, cfg)
 	}
 	return nil
 }
@@ -279,6 +318,9 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		if r.OutputChannel == "" {
 			return nil
 		}
+		if re.rePubSub == nil {
+			return errors.New("message broker not initialized")
+		}
 		m := &messaging.Message{
 			Publisher: publisher,
 			Created:   time.Now().Unix(),
@@ -291,6 +333,35 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	}
 }
 
+func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
+	reportPage, err := re.generateReport(ctx, cfg, false)
+	if err != nil {
+		return err
+	}
+
+	if len(cfg.Email.To) > 0 {
+		reportContent, err := json.Marshal(reportPage)
+		if err != nil {
+			return err
+		}
+
+		err = re.email.SendEmailNotification(
+			cfg.Email.To,
+			cfg.Email.From,
+			cfg.Email.Subject,
+			"",
+			"",
+			string(reportContent),
+			"",
+		)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (re *re) StartScheduler(ctx context.Context) error {
 	defer re.ticker.Stop()
 
@@ -301,18 +372,18 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-re.ticker.Tick():
 			startTime := time.Now()
 
-			pm := PageMeta{
+			rulePM := PageMeta{
 				Status:          EnabledStatus,
 				ScheduledBefore: &startTime,
 			}
 
-			page, err := re.repo.ListRules(ctx, pm)
+			page, err := re.repo.ListRules(ctx, rulePM)
 			if err != nil {
 				return err
 			}
 
 			for _, rule := range page.Rules {
-				if rule.shouldRun(startTime) {
+				if rule.Schedule.ShouldRun(startTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -322,48 +393,66 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}(rule)
 				}
 			}
+
+			reportPM := PageMeta{
+				Status:          EnabledStatus,
+				ScheduledBefore: &startTime,
+			}
+
+			reportConfigs, err := re.repo.ListReportsConfig(ctx, reportPM)
+			if err != nil {
+				return err
+			}
+
+			for _, cfg := range reportConfigs.ReportConfigs {
+				if cfg.Schedule.ShouldRun(startTime) {
+					go func(config ReportConfig) {
+						re.errors <- re.processReportConfig(ctx, config)
+					}(cfg)
+				}
+			}
 		}
 	}
 }
 
-func (r Rule) shouldRun(startTime time.Time) bool {
+func (s Schedule) ShouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	if r.Schedule.StartDateTime.After(startTime) {
+	if s.StartDateTime.After(startTime) {
 		return false
 	}
 
-	t := r.Schedule.Time.Truncate(time.Minute).UTC()
+	t := s.Time.Truncate(time.Minute).UTC()
 	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
 	if t.Equal(startTimeOnly) {
 		return true
 	}
 
-	if r.Schedule.RecurringPeriod == 0 {
+	if s.RecurringPeriod == 0 {
 		return false
 	}
 
-	period := int(r.Schedule.RecurringPeriod)
+	period := int(s.RecurringPeriod)
 
-	switch r.Schedule.Recurring {
+	switch s.Recurring {
 	case Daily:
-		if r.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
+		if s.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
 			if int(daysSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Weekly:
-		if r.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+		if s.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
 			if int(weeksSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Monthly:
-		if r.Schedule.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-r.Schedule.StartDateTime.Month())
+		if s.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-s.StartDateTime.Month())
 			if monthsSinceStart%period == 0 {
 				return true
 			}
@@ -371,4 +460,395 @@ func (r Rule) shouldRun(startTime time.Time) bool {
 	}
 
 	return false
+}
+
+func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	id, err := re.idp.ID()
+	if err != nil {
+		return ReportConfig{}, err
+	}
+
+	now := time.Now()
+	cfg.ID = id
+	cfg.CreatedAt = now
+	cfg.CreatedBy = session.UserID
+	cfg.DomainID = session.DomainID
+	cfg.Status = EnabledStatus
+
+	if cfg.Schedule.StartDateTime.IsZero() {
+		cfg.Schedule.StartDateTime = now
+	}
+
+	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	cfg, err := re.repo.ViewReportConfig(ctx, id)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	return cfg, nil
+}
+
+func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedBy = session.UserID
+	reportConfig, err := re.repo.UpdateReportConfig(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return reportConfig, nil
+}
+
+func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
+	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
+func (re *re) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
+	pm.Domain = session.DomainID
+	page, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return page, nil
+}
+
+func (re *re) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Enabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
+func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	status, err := ToStatus(Disabled)
+	if err != nil {
+		return ReportConfig{}, err
+	}
+	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	return cfg, nil
+}
+
+func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error) {
+	config.DomainID = session.DomainID
+
+	if config.Status != EnabledStatus {
+		return ReportPage{}, svcerr.ErrInvalidStatus
+	}
+
+	reportPage, err := re.generateReport(ctx, config, download)
+	if err != nil {
+		return ReportPage{}, err
+	}
+
+	return reportPage, nil
+}
+
+func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
+	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+	switch cfg.Config.Aggregation.AggType {
+	case "MAX":
+		agg = grpcReadersV1.Aggregation_MAX
+	case "MIN":
+		agg = grpcReadersV1.Aggregation_MIN
+	case "COUNT":
+		agg = grpcReadersV1.Aggregation_COUNT
+	case "AVG":
+		agg = grpcReadersV1.Aggregation_AVG
+	case "SUM":
+		agg = grpcReadersV1.Aggregation_SUM
+	}
+
+	from, err := reltime.Parse(cfg.Config.From)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	to, err := reltime.Parse(cfg.Config.To)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	pm := &grpcReadersV1.PageMetadata{
+		Aggregation: agg,
+		Limit:       limit,
+		From:        float64(from.UnixNano()),
+		To:          float64(to.UnixNano()),
+		Interval:    interval,
+	}
+
+	reportPage := ReportPage{
+		Reports:     make([]Report, 0),
+		From:        from,
+		To:          to,
+		Aggregation: cfg.Config.Aggregation,
+	}
+
+	for _, metric := range cfg.Metrics {
+		sMsgs := []senml.Message{}
+
+		pm.Offset = uint64(0)
+		pm.Publisher = metric.ClientID
+		pm.Name = metric.Name
+		if metric.Subtopic != "" {
+			pm.Subtopic = metric.Subtopic
+		}
+		if metric.Protocol != "" {
+			pm.Protocol = metric.Protocol
+		}
+		if metric.Format != "" {
+			pm.Format = metric.Format
+		}
+
+		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+			ChannelId:    metric.ChannelID,
+			DomainId:     cfg.DomainID,
+			PageMetadata: pm,
+		})
+		if err != nil {
+			return ReportPage{}, err
+		}
+		for _, msg := range msgs.Messages {
+			sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
+		}
+
+		for msgs.GetTotal() > (pm.Offset + pm.Limit) {
+			pm.Offset = pm.Offset + pm.Limit
+			msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+				ChannelId:    metric.ChannelID,
+				DomainId:     cfg.DomainID,
+				PageMetadata: pm,
+			})
+			if err != nil {
+				return ReportPage{}, err
+			}
+			for _, msg := range msgs.Messages {
+				sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
+			}
+		}
+
+		reportPage.Reports = append(reportPage.Reports, Report{
+			Metric:   metric,
+			Messages: sMsgs,
+		})
+	}
+
+	reportPage.Total = uint64(len(reportPage.Reports))
+
+	if download {
+		var err error
+		reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
+
+		reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
+	}
+
+	return reportPage, nil
+}
+
+func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
+	return senml.Message{
+		Protocol:    g.Base.GetProtocol(),
+		Subtopic:    g.Base.GetSubtopic(),
+		Unit:        g.GetUnit(),
+		Time:        g.GetTime(),
+		UpdateTime:  g.GetUpdateTime(),
+		Value:       g.Value,
+		StringValue: g.StringValue,
+		DataValue:   g.DataValue,
+		BoolValue:   g.BoolValue,
+		Sum:         g.Sum,
+	}
+}
+
+func (re *re) generatePDFReport(reports []Report) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+
+	headers := []string{"Time", "Metric Name", "Value", "Unit", "Subtopic"}
+	widths := []float64{40, 30, 30, 25, 35}
+
+	for i, report := range reports {
+		if len(report.Messages) == 0 {
+			continue
+		}
+
+		if i > 0 {
+			pdf.AddPage()
+		}
+
+		pdf.SetFont("Arial", "B", 16)
+		pdf.Cell(0, 10, "Metrics Report")
+		pdf.Ln(5)
+
+		pdf.SetFont("Arial", "B", 12)
+		pdf.Cell(0, 8, fmt.Sprintf("Metric: %s", report.Metric.Name))
+		pdf.Cell(0, 8, fmt.Sprintf("Device ID: %s", report.Metric.ClientID))
+		pdf.Cell(0, 8, fmt.Sprintf("Channel ID: %s", report.Metric.ChannelID))
+		if report.Metric.Subtopic != "" {
+			pdf.Cell(0, 8, fmt.Sprintf("Subtopic: %s", report.Metric.Subtopic))
+		}
+		pdf.Ln(5)
+
+		pdf.SetFont("Arial", "B", 10)
+		pdf.SetFillColor(200, 200, 200)
+
+		for i, header := range headers {
+			pdf.Cell(widths[i], 8, header)
+		}
+		pdf.Ln(-1)
+
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetFillColor(255, 255, 255)
+
+		sort.Slice(report.Messages, func(i, j int) bool {
+			return report.Messages[i].Time < report.Messages[j].Time
+		})
+
+		fill := false
+		for _, msg := range report.Messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			pdf.Cell(widths[0], 8, timeStr)
+			pdf.Cell(widths[1], 8, report.Metric.Name)
+			pdf.Cell(widths[2], 8, valueStr)
+			pdf.Cell(widths[3], 8, msg.Unit)
+			pdf.Cell(widths[4], 8, msg.Subtopic)
+			pdf.Ln(-1)
+
+			fill = !fill
+		}
+	}
+
+	var buf bytes.Buffer
+	err := pdf.Output(&buf)
+	if err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
+}
+
+func (re *re) generateCSVReport(reports []Report) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+
+	headers := []string{"Metric Name", "Device ID", "Channel ID", "Subtopic", "Time", "Value", "Unit"}
+
+	for i, report := range reports {
+		if len(report.Messages) == 0 {
+			continue
+		}
+
+		if i > 0 {
+			if err := writer.Write([]string{""}); err != nil {
+				return nil, err
+			}
+			if err := writer.Write([]string{"=== NEW REPORT ==="}); err != nil {
+				return nil, err
+			}
+			if err := writer.Write([]string{""}); err != nil {
+				return nil, err
+			}
+		}
+
+		if err := writer.Write([]string{"Report Information:"}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Metric Name", report.Metric.Name}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Device ID", report.Metric.ClientID}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Channel ID", report.Metric.ChannelID}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Subtopic", report.Metric.Subtopic}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{""}); err != nil {
+			return nil, err
+		}
+
+		if err := writer.Write(headers); err != nil {
+			return nil, err
+		}
+
+		sort.Slice(report.Messages, func(i, j int) bool {
+			return report.Messages[i].Time < report.Messages[j].Time
+		})
+
+		for _, msg := range report.Messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			row := []string{
+				report.Metric.Name,
+				report.Metric.ClientID,
+				report.Metric.ChannelID,
+				msg.Subtopic,
+				timeStr,
+				valueStr,
+				msg.Unit,
+			}
+
+			if err := writer.Write(row); err != nil {
+				return nil, err
+			}
+		}
+	}
+
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }

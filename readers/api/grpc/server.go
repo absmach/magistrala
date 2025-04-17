@@ -97,11 +97,11 @@ func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 						Unit:        typed.Unit,
 						Time:        typed.Time,
 						UpdateTime:  typed.UpdateTime,
-						Value:       derefFloat64(typed.Value),
-						StringValue: derefString(typed.StringValue),
-						DataValue:   derefString(typed.DataValue),
-						BoolValue:   derefBool(typed.BoolValue),
-						Sum:         derefFloat64(typed.Sum),
+						Value:       typed.Value,
+						StringValue: typed.StringValue,
+						DataValue:   typed.DataValue,
+						BoolValue:   typed.BoolValue,
+						Sum:         typed.Sum,
 					},
 				},
 			})
@@ -147,27 +147,6 @@ func stringifyAggregation(agg grpcReadersV1.Aggregation) string {
 	default:
 		return ""
 	}
-}
-
-func derefString(s *string) string {
-	if s == nil {
-		return ""
-	}
-	return *s
-}
-
-func derefFloat64(f *float64) float64 {
-	if f == nil {
-		return 0
-	}
-	return *f
-}
-
-func derefBool(b *bool) bool {
-	if b == nil {
-		return false
-	}
-	return *b
 }
 
 func safeString(v interface{}) string {

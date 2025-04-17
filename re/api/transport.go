@@ -49,13 +49,6 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					opts...,
 				), "create_rule").ServeHTTP)
 
-				r.Get("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-					viewRuleEndpoint(svc),
-					decodeViewRuleRequest,
-					api.EncodeResponse,
-					opts...,
-				), "view_rule").ServeHTTP)
-
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					listRulesEndpoint(svc),
 					decodeListRulesRequest,
@@ -64,26 +57,26 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 				), "list_rules").ServeHTTP)
 
 				r.Route("/{ruleID}", func(r chi.Router) {
-				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-					viewRuleEndpoint(svc),
-					decodeViewRuleRequest,
-					api.EncodeResponse,
-					opts...,
-				), "view_rule").ServeHTTP)
+					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+						viewRuleEndpoint(svc),
+						decodeViewRuleRequest,
+						api.EncodeResponse,
+						opts...,
+					), "view_rule").ServeHTTP)
 
-				r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
+					r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
 						updateRuleEndpoint(svc),
 						decodeUpdateRuleRequest,
 						api.EncodeResponse,
 						opts...,
 					), "update_rule").ServeHTTP)
 
-				r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
-					updateRuleScheduleEndpoint(svc),
-					decodeUpdateRuleScheduleRequest,
-					api.EncodeResponse,
-					opts...,
-				), "update_rule_scheduler").ServeHTTP)
+					r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
+						updateRuleScheduleEndpoint(svc),
+						decodeUpdateRuleScheduleRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_rule_scheduler").ServeHTTP)
 
 					r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
 						deleteRuleEndpoint(svc),
@@ -105,7 +98,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						api.EncodeResponse,
 						opts...,
 					), "disable_rule").ServeHTTP)
-			})
+				})
 			})
 			r.Route("/reports", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -216,7 +209,7 @@ func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interf
 	}
 
 	req := updateRuleScheduleReq{
-		id: chi.URLParam(r, idKey),
+		id: chi.URLParam(r, ruleIdKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))

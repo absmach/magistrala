@@ -42,6 +42,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS rules`,
 				},
 			},
+			{
+				Id: "rules02",
+				Up: []string{
+					`ALTER TABLE IF EXISTS rules ADD COLUMN IF NOT EXISTS logic_kind SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0);`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS rules DROP COLUMN logic_kind;`,
+				},
+			},
 		},
 	}
 }

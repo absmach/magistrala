@@ -121,3 +121,34 @@ func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.
 		return 1
 	}
 }
+
+func (re *re) saveGo(ctx context.Context, table lua.LValue, original *messaging.Message) error {
+	val := convertLua(table)
+	// In case there is a single SenML value, convert to slice so we can unmarshal.
+	if _, ok := val.([]any); !ok {
+		val = []any{val}
+	}
+	data, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+
+	var message []senml.Message
+	if err := json.Unmarshal(data, &message); err != nil {
+		return err
+	}
+
+	m := &messaging.Message{
+		Domain:    original.Domain,
+		Publisher: original.Publisher,
+		Created:   original.Created,
+		Channel:   original.Channel,
+		Subtopic:  original.Subtopic,
+		Protocol:  original.Protocol,
+		Payload:   data,
+	}
+	if err := re.writersPub.Publish(ctx, original.Channel, m); err != nil {
+		return err
+	}
+	return nil
+}

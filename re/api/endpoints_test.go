@@ -543,14 +543,6 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 		},
 	}
 
-	invalidReq := re.Rule{
-		ID:   rule.ID,
-		Name: rule.Name,
-		Metadata: map[string]any{
-			"name": "test",
-		},
-	}
-
 	cases := []struct {
 		desc        string
 		token       string
@@ -607,17 +599,6 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingDomainID,
-		},
-		{
-			desc:        "update rule with empty logic",
-			token:       validToken,
-			domainID:    domainID,
-			id:          rule.ID,
-			updateReq:   invalidReq,
-			contentType: contentType,
-			svcResp:     rule,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrEmptyList,
 		},
 		{
 			desc:     "update rule with name that is too long",

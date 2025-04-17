@@ -349,9 +349,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			status:   http.StatusOK,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
 				Rules: []re.Rule{rule},
 			},
 			err: nil,
@@ -376,9 +374,8 @@ func TestListRulesEndpoint(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
+
 				Rules: []re.Rule{rule},
 			},
 			query:  "offset=1",
@@ -398,9 +395,8 @@ func TestListRulesEndpoint(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
+
 				Rules: []re.Rule{rule},
 			},
 			query:  "limit=1",
@@ -436,9 +432,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
 				Rules: []re.Rule{rule},
 			},
 			query:  "input_channel=input.channel",
@@ -458,9 +452,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
 				Rules: []re.Rule{rule},
 			},
 			query:  "status=enabled",
@@ -488,9 +480,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			listRulesResponse: re.Page{
-				PageMeta: re.PageMeta{
-					Total: 1,
-				},
+				Total: 1,
 				Rules: []re.Rule{rule},
 			},
 			query:  "output_channel=output.channel",

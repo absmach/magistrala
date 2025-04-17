@@ -52,7 +52,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 			), "list_rules").ServeHTTP)
 
 			r.Route("/{ruleID}", func(r chi.Router) {
-				r.Get("", otelhttp.NewHandler(kithttp.NewServer(
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewRuleEndpoint(svc),
 					decodeViewRuleRequest,
 					api.EncodeResponse,
@@ -109,7 +109,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, errors.Wrap(err, apiutil.ErrValidation)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	return addRuleReq{Rule: rule}, nil
 }
@@ -125,7 +125,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	rule.ID = chi.URLParam(r, idKey)
 	return updateRuleReq{Rule: rule}, nil
@@ -140,7 +140,7 @@ func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interf
 		id: chi.URLParam(r, idKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 
 	return req, nil

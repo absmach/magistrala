@@ -80,8 +80,10 @@ type PageMeta struct {
 }
 
 type Page struct {
-	PageMeta
-	Rules []Rule `json:"rules"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+	Total  uint64 `json:"total"`
+	Rules  []Rule `json:"rules"`
 }
 
 type Service interface {

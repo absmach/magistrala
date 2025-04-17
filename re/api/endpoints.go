@@ -111,12 +111,7 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 			return rulesPageRes{}, nil
 		}
 		ret := rulesPageRes{
-			pageRes: pageRes{
-				Limit:  page.Limit,
-				Offset: page.Offset,
-				Total:  page.Total,
-			},
-			Rules: page.Rules,
+			Page: page,
 		}
 		return ret, nil
 	}

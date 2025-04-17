@@ -40,6 +40,7 @@ type dbRule struct {
 type dbReport struct {
 	ID              string       `db:"id"`
 	Name            string       `db:"name"`
+	Description     string       `db:"description"`
 	DomainID        string       `db:"domain_id"`
 	StartDateTime   time.Time    `db:"start_datetime"`
 	Time            time.Time    `db:"time"`
@@ -162,6 +163,7 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 	return dbReport{
 		ID:              r.ID,
 		Name:            r.Name,
+		Description:     r.Description,
 		DomainID:        r.DomainID,
 		StartDateTime:   r.Schedule.StartDateTime,
 		Time:            r.Schedule.Time,
@@ -201,11 +203,12 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 	}
 
 	rpt := re.ReportConfig{
-		ID:       dto.ID,
-		Name:     dto.Name,
-		DomainID: dto.DomainID,
-		Config:   &config,
-		Metrics:  metrics,
+		ID:          dto.ID,
+		Name:        dto.Name,
+		Description: dto.Description,
+		DomainID:    dto.DomainID,
+		Config:      &config,
+		Metrics:     metrics,
 		Schedule: re.Schedule{
 			StartDateTime:   dto.StartDateTime,
 			Time:            dto.Time,

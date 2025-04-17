@@ -49,6 +49,7 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS report_config (
 						id          	 	VARCHAR(36) PRIMARY KEY,
 						name				VARCHAR(1024),
+						description			TEXT,
 						domain_id         	VARCHAR(36) NOT NULL,
 						status				SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						created_at			TIMESTAMP,

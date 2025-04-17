@@ -222,6 +222,9 @@ func pageQuery(pm re.PageMeta) string {
 	if pm.InputChannel != "" {
 		query = append(query, "r.input_channel = :input_channel")
 	}
+	if pm.InputTopic != "" {
+		query = append(query, "r.input_topic = :input_topic")
+	}
 	if pm.OutputChannel != "" {
 		query = append(query, "r.output_channel = :output_channel")
 	}

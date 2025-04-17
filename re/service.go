@@ -69,6 +69,7 @@ type PageMeta struct {
 	Dir             string     `json:"dir" db:"dir"`
 	Name            string     `json:"name" db:"name"`
 	InputChannel    string     `json:"input_channel,omitempty" db:"input_channel"`
+	InputTopic      string     `json:"input_topic,omitempty" db:"input_topic"`
 	OutputChannel   string     `json:"output_channel,omitempty" db:"output_channel"`
 	Status          Status     `json:"status,omitempty" db:"status"`
 	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
@@ -210,6 +211,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 	pm := PageMeta{
 		InputChannel: inputChannel,
 		Status:       EnabledStatus,
+		InputTopic:   msg.Subtopic,
 	}
 	ctx := context.Background()
 	page, err := re.repo.ListRules(ctx, pm)

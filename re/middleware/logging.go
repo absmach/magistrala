@@ -212,10 +212,6 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) error {
 	return lm.svc.Handle(msg)
 }
 
-func (lm *loggingMiddleware) Errors() <-chan error {
-	return lm.svc.Errors()
-}
-
 func (lm *loggingMiddleware) Cancel() error {
 	return lm.Cancel()
 }

@@ -15,43 +15,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-const (
-	hoursInDay   = 24
-	daysInWeek   = 7
-	monthsInYear = 12
-
-	publisher = "magistrala.re"
-)
-
-var ErrInvalidRecurringType = errors.New("invalid recurring type")
-
-type (
-	ScriptType uint
-	Metadata   map[string]interface{}
-	Script     struct {
-		Type  ScriptType `json:"type"`
-		Value string     `json:"value"`
-	}
-)
-
-type Rule struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	DomainID      string    `json:"domain"`
-	Metadata      Metadata  `json:"metadata,omitempty"`
-	InputChannel  string    `json:"input_channel"`
-	InputTopic    string    `json:"input_topic"`
-	Logic         Script    `json:"logic"`
-	OutputChannel string    `json:"output_channel,omitempty"`
-	OutputTopic   string    `json:"output_topic,omitempty"`
-	Schedule      Schedule  `json:"schedule,omitempty"`
-	Status        Status    `json:"status"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	CreatedBy     string    `json:"created_by,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
-	UpdatedBy     string    `json:"updated_by,omitempty"`
-}
-
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
@@ -97,28 +60,27 @@ type Service interface {
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	StartScheduler(ctx context.Context) error
-	Errors() <-chan error
 }
 
 type re struct {
-	writersPub messaging.Publisher
-	alarmsPub  messaging.Publisher
-	rePubSub   messaging.PubSub
-	idp        supermq.IDProvider
 	repo       Repository
 	errors     chan error
+	idp        supermq.IDProvider
+	rePubSub   messaging.PubSub
+	writersPub messaging.Publisher
+	alarmsPub  messaging.Publisher
 	ticker     Ticker
 	email      Emailer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
 	return &re{
-		writersPub: writersPub,
-		alarmsPub:  alarmsPub,
-		rePubSub:   rePubSub,
 		repo:       repo,
 		idp:        idp,
-		errors:     make(chan error),
+		errors:     errors,
+		rePubSub:   rePubSub,
+		writersPub: writersPub,
+		alarmsPub:  alarmsPub,
 		ticker:     tck,
 		email:      emailer,
 	}
@@ -270,12 +232,12 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	if err := l.DoString(string(r.Logic.Value)); err != nil {
 		return err
 	}
-
 	result := l.Get(-1) // Get the last result.
-	switch result {
-	case lua.LNil:
+	if result == lua.LNil {
 		return nil
-	default:
+	}
+	switch r.Logic.Kind {
+	case Channels:
 		if r.OutputChannel == "" {
 			return nil
 		}
@@ -288,7 +250,12 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 			Subtopic:  r.OutputTopic,
 		}
 		return re.rePubSub.Publish(ctx, m.Channel, m)
+	case SaveSenML:
+		return re.saveGo(ctx, result, msg)
+	case Email:
+		break
 	}
+	return nil
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {

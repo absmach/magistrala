@@ -21,6 +21,7 @@ type dbRule struct {
 	InputChannel    string         `db:"input_channel"`
 	InputTopic      sql.NullString `db:"input_topic"`
 	LogicType       re.ScriptType  `db:"logic_type"`
+	LogicKind       re.ScriptKind  `db:"logic_kind"`
 	LogicValue      string         `db:"logic_value"`
 	OutputChannel   sql.NullString `db:"output_channel"`
 	OutputTopic     sql.NullString `db:"output_topic"`

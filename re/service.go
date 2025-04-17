@@ -4,9 +4,12 @@
 package re
 
 import (
+	"bytes"
 	"context"
+	"encoding/csv"
 	"encoding/json"
-	"strings"
+	"fmt"
+	"sort"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
@@ -17,6 +20,7 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/jung-kurt/gofpdf"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -28,8 +32,6 @@ const (
 	publisher    = "magistrala.re"
 	interval     = "1s"
 )
-
-var from = time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
@@ -650,19 +652,19 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 	}
 
 	reportPage.Total = uint64(len(reportPage.Reports))
-	// if download {
-	// 	var err error
+	if download {
+		var err error
 
-	// 	reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
-	// 	if err != nil {
-	// 		return reportPage, err
-	// 	}
+		reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
 
-	// 	reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
-	// 	if err != nil {
-	// 		return reportPage, err
-	// 	}
-	// }
+		reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+		if err != nil {
+			return reportPage, err
+		}
+	}
 
 	return reportPage, nil
 }
@@ -681,161 +683,175 @@ func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
 		Sum:         g.Sum,
 	}
 }
-func contains(slice []string, str string) bool {
-	for _, s := range slice {
-		if s == str {
-			return true
+
+func (re *re) generatePDFReport(reports []Report) ([]byte, error) {
+	pdf := gofpdf.New("P", "mm", "A4", "")
+
+	headers := []string{"Time", "Metric Name", "Value", "Unit", "Subtopic"}
+	widths := []float64{40, 30, 30, 25, 35}
+
+	for i, report := range reports {
+		if len(report.Messages) == 0 {
+			continue
+		}
+
+		if i > 0 {
+			pdf.AddPage()
+		} else {
+			pdf.AddPage()
+		}
+
+		pdf.SetFont("Arial", "B", 16)
+		pdf.Cell(0, 10, "Metrics Report")
+		pdf.Ln(5)
+
+		pdf.SetFont("Arial", "B", 12)
+		pdf.Cell(0, 8, fmt.Sprintf("Metric: %s", report.Metric.Name))
+		pdf.Cell(0, 8, fmt.Sprintf("Device ID: %s", report.Metric.ClientID))
+		pdf.Cell(0, 8, fmt.Sprintf("Channel ID: %s", report.Metric.ChannelID))
+		if report.Metric.Subtopic != "" {
+			pdf.Cell(0, 8, fmt.Sprintf("Subtopic: %s", report.Metric.Subtopic))
+		}
+		pdf.Ln(5)
+
+		pdf.SetFont("Arial", "B", 10)
+		pdf.SetFillColor(200, 200, 200)
+
+		for i, header := range headers {
+			pdf.Cell(widths[i], 8, header)
+		}
+		pdf.Ln(-1)
+
+		pdf.SetFont("Arial", "", 10)
+		pdf.SetFillColor(255, 255, 255)
+
+		sort.Slice(report.Messages, func(i, j int) bool {
+			return report.Messages[i].Time < report.Messages[j].Time
+		})
+
+		fill := false
+		for _, msg := range report.Messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			pdf.Cell(widths[0], 8, timeStr)
+			pdf.Cell(widths[1], 8, report.Metric.Name)
+			pdf.Cell(widths[2], 8, valueStr)
+			pdf.Cell(widths[3], 8, msg.Unit)
+			pdf.Cell(widths[4], 8, msg.Subtopic)
+			pdf.Ln(-1)
+
+			fill = !fill
 		}
 	}
-	return false
-}
 
-func shouldIncludeMessage(name string, metrics []string) bool {
-	if len(metrics) == 0 {
-		return true
+	var buf bytes.Buffer
+	err := pdf.Output(&buf)
+	if err != nil {
+		return nil, err
 	}
 
-	for _, metric := range metrics {
-		if strings.Contains(name, metric) {
-			return true
+	return buf.Bytes(), nil
+}
+
+func (re *re) generateCSVReport(reports []Report) ([]byte, error) {
+	var buf bytes.Buffer
+	writer := csv.NewWriter(&buf)
+
+	headers := []string{"Metric Name", "Device ID", "Channel ID", "Subtopic", "Time", "Value", "Unit"}
+
+	for i, report := range reports {
+		if len(report.Messages) == 0 {
+			continue
+		}
+
+		if i > 0 {
+			if err := writer.Write([]string{""}); err != nil {
+				return nil, err
+			}
+			if err := writer.Write([]string{"=== NEW REPORT ==="}); err != nil {
+				return nil, err
+			}
+			if err := writer.Write([]string{""}); err != nil {
+				return nil, err
+			}
+		}
+
+		if err := writer.Write([]string{"Report Information:"}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Metric Name", report.Metric.Name}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Device ID", report.Metric.ClientID}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Channel ID", report.Metric.ChannelID}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{"Subtopic", report.Metric.Subtopic}); err != nil {
+			return nil, err
+		}
+		if err := writer.Write([]string{""}); err != nil {
+			return nil, err
+		}
+
+		if err := writer.Write(headers); err != nil {
+			return nil, err
+		}
+
+		sort.Slice(report.Messages, func(i, j int) bool {
+			return report.Messages[i].Time < report.Messages[j].Time
+		})
+
+		for _, msg := range report.Messages {
+			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+
+			var valueStr string
+			if msg.Value != nil {
+				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+			} else if msg.StringValue != nil {
+				valueStr = *msg.StringValue
+			} else if msg.BoolValue != nil {
+				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+			} else if msg.DataValue != nil {
+				valueStr = *msg.DataValue
+			} else {
+				valueStr = "N/A"
+			}
+
+			row := []string{
+				report.Metric.Name,
+				report.Metric.ClientID,
+				report.Metric.ChannelID,
+				msg.Subtopic,
+				timeStr,
+				valueStr,
+				msg.Unit,
+			}
+
+			if err := writer.Write(row); err != nil {
+				return nil, err
+			}
 		}
 	}
 
-	return false
+	writer.Flush()
+	if err := writer.Error(); err != nil {
+		return nil, err
+	}
+
+	return buf.Bytes(), nil
 }
-
-// func (re *re) generatePDFReport(report Report) ([]byte, error) {
-// 	pdf := gofpdf.New("P", "mm", "A4", "")
-// 	pdf.AddPage()
-// 	pdf.SetFont("Arial", "B", 16)
-// 	pdf.Cell(40, 10, "Device Metrics Report")
-// 	pdf.Ln(15)
-
-// 	for publisher, messages := range report.ClientMessages {
-// 		if len(messages) == 0 {
-// 			continue
-// 		}
-
-// 		pdf.SetFont("Arial", "B", 12)
-// 		pdf.Cell(40, 10, fmt.Sprintf("Device: %s", publisher))
-// 		pdf.Ln(10)
-
-// 		pdf.SetFont("Arial", "B", 10)
-// 		pdf.SetFillColor(200, 200, 200)
-
-// 		headers := []string{"Time", "Metric Name", "Value", "Unit"}
-// 		widths := []float64{60, 40, 30, 40}
-
-// 		for i, header := range headers {
-// 			pdf.Cell(widths[i], 8, header)
-// 		}
-// 		pdf.Ln(-1)
-
-// 		pdf.SetFont("Arial", "", 10)
-// 		pdf.SetFillColor(255, 255, 255)
-
-// 		fill := false
-
-// 		sort.Slice(messages, func(i, j int) bool {
-// 			return messages[i].Time < messages[j].Time
-// 		})
-
-// 		for _, msg := range messages {
-// 			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
-
-// 			var valueStr string
-// 			if msg.Value != nil {
-// 				valueStr = fmt.Sprintf("%.2f", *msg.Value)
-// 			} else if msg.StringValue != nil {
-// 				valueStr = *msg.StringValue
-// 			} else if msg.BoolValue != nil {
-// 				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
-// 			} else if msg.DataValue != nil {
-// 				valueStr = *msg.DataValue
-// 			} else {
-// 				valueStr = "N/A"
-// 			}
-
-// 			pdf.Cell(widths[0], 8, timeStr)
-// 			pdf.Cell(widths[1], 8, msg.Name)
-// 			pdf.Cell(widths[2], 8, valueStr)
-// 			pdf.Cell(widths[3], 8, msg.Unit)
-// 			pdf.Ln(-1)
-
-// 			fill = !fill
-// 		}
-
-// 		pdf.Ln(10)
-// 	}
-
-// 	var buf bytes.Buffer
-// 	err := pdf.Output(&buf)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return buf.Bytes(), nil
-// }
-
-// func (re *re) generateCSVReport(report Report) ([]byte, error) {
-// 	var buf bytes.Buffer
-// 	writer := csv.NewWriter(&buf)
-
-// 	for publisher, messages := range report.ClientMessages {
-// 		if len(messages) == 0 {
-// 			continue
-// 		}
-
-// 		if err := writer.Write([]string{fmt.Sprintf("Device: %s", publisher)}); err != nil {
-// 			return nil, err
-// 		}
-
-// 		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel"}); err != nil {
-// 			return nil, err
-// 		}
-
-// 		sort.Slice(messages, func(i, j int) bool {
-// 			return messages[i].Time < messages[j].Time
-// 		})
-
-// 		for _, msg := range messages {
-// 			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
-
-// 			var valueStr string
-// 			if msg.Value != nil {
-// 				valueStr = fmt.Sprintf("%.2f", *msg.Value)
-// 			} else if msg.StringValue != nil {
-// 				valueStr = *msg.StringValue
-// 			} else if msg.BoolValue != nil {
-// 				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
-// 			} else if msg.DataValue != nil {
-// 				valueStr = *msg.DataValue
-// 			} else {
-// 				valueStr = "N/A"
-// 			}
-
-// 			row := []string{
-// 				timeStr,
-// 				msg.Name,
-// 				valueStr,
-// 				msg.Unit,
-// 				msg.Channel,
-// 			}
-
-// 			if err := writer.Write(row); err != nil {
-// 				return nil, err
-// 			}
-// 		}
-
-// 		if err := writer.Write([]string{}); err != nil {
-// 			return nil, err
-// 		}
-// 	}
-
-// 	writer.Flush()
-// 	if err := writer.Error(); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return buf.Bytes(), nil
-// }

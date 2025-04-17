@@ -21,6 +21,7 @@ type dbRule struct {
 	InputChannel    string         `db:"input_channel"`
 	InputTopic      sql.NullString `db:"input_topic"`
 	LogicType       re.ScriptType  `db:"logic_type"`
+	LogicKind       re.ScriptKind  `db:"logic_kind"`
 	LogicValue      string         `db:"logic_value"`
 	OutputChannel   sql.NullString `db:"output_channel"`
 	OutputTopic     sql.NullString `db:"output_topic"`
@@ -52,6 +53,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
+		LogicKind:       r.Logic.Kind,
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
@@ -82,6 +84,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
+			Kind:  dto.LogicKind,
 			Type:  dto.LogicType,
 			Value: dto.LogicValue,
 		},

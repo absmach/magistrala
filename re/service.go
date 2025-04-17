@@ -8,6 +8,7 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/reltime"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -312,92 +313,126 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 	return reportPage, nil
 }
 func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
+
+	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+	switch cfg.Config.Aggregation.AggType {
+	case "MAX":
+		agg = grpcReadersV1.Aggregation_MAX
+	case "MIN":
+		agg = grpcReadersV1.Aggregation_MIN
+	case "COUNT":
+		agg = grpcReadersV1.Aggregation_COUNT
+	case "AVG":
+		agg = grpcReadersV1.Aggregation_AVG
+	case "SUM":
+		agg = grpcReadersV1.Aggregation_SUM
+	}
+
+	from, err := reltime.Parse(cfg.Config.From)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	to, err := reltime.Parse(cfg.Config.To)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	pm := &grpcReadersV1.PageMetadata{
+		Aggregation: agg,
+		Limit:       limit,
+		From:        float64(from.UnixNano()),
+		To:          float64(to.UnixNano()),
+		Interval:    interval,
+	}
+
 	reportPage := ReportPage{
-		Reports: make([]Report, 0),
+		Reports:     make([]Report, 0),
+		From:        from,
+		To:          to,
+		Aggregation: cfg.Config.Aggregation,
 	}
 
-	report := Report{
-		ClientMessages: make(map[string][]senml.Message, 0),
-	}
+	for _, metric := range cfg.Metrics {
+		sMsgs := []senml.Message{}
 
-	for _, ch := range cfg.ChannelIDs {
-		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
-		switch cfg.Config.Aggregation.AggType {
-		case "MAX":
-			agg = grpcReadersV1.Aggregation_MAX
-		case "MIN":
-			agg = grpcReadersV1.Aggregation_MIN
-		case "COUNT":
-			agg = grpcReadersV1.Aggregation_COUNT
-		case "AVG":
-			agg = grpcReadersV1.Aggregation_AVG
-		case "SUM":
-			agg = grpcReadersV1.Aggregation_SUM
+		pm.Offset = uint64(0)
+		pm.Publisher = metric.ClientID
+		pm.Name = metric.Name
+		if metric.Subtopic != "" {
+			pm.Subtopic = metric.Subtopic
+		}
+		if metric.Protocol != "" {
+			pm.Protocol = metric.Protocol
+		}
+		if metric.Format != "" {
+			pm.Format = metric.Format
 		}
 
 		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
-			ChannelId: ch,
-			DomainId:  cfg.DomainID,
-			PageMetadata: &grpcReadersV1.PageMetadata{
-				Aggregation: agg,
-				Limit:       cfg.Limit,
-				Offset:      0,
-				From:        float64(from.UnixNano()),
-				To:          float64(time.Now().UnixNano()),
-				Interval:    interval,
-			},
+			ChannelId:    metric.ChannelID,
+			DomainId:     cfg.DomainID,
+			PageMetadata: pm,
 		})
 		if err != nil {
 			return ReportPage{}, err
 		}
-
 		for _, msg := range msgs.Messages {
-			message := msg.GetSenml()
-			publisher := message.Base.Publisher
+			sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
+		}
 
-			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message.Name, cfg.Metrics) {
-				report.ClientMessages[publisher] = append(report.ClientMessages[publisher],
-					senml.Message{
-						Channel:     message.Base.Channel,
-						Subtopic:    message.Base.Subtopic,
-						Publisher:   message.Base.Publisher,
-						Protocol:    message.Base.Protocol,
-						Name:        message.Name,
-						Unit:        message.Unit,
-						Time:        message.Time,
-						UpdateTime:  message.UpdateTime,
-						Value:       &message.Value,
-						StringValue: &message.StringValue,
-						DataValue:   &message.DataValue,
-						BoolValue:   &message.BoolValue,
-						Sum:         &message.Sum,
-					},
-				)
+		for msgs.GetTotal() > (pm.Offset + pm.Limit) {
+			pm.Offset = pm.Offset + pm.Limit
+			msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+				ChannelId:    metric.ChannelID,
+				DomainId:     cfg.DomainID,
+				PageMetadata: pm,
+			})
+			if err != nil {
+				return ReportPage{}, err
+			}
+			for _, msg := range msgs.Messages {
+				sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
 			}
 		}
+
+		reportPage.Reports = append(reportPage.Reports, Report{
+			Metric:   metric,
+			Messages: sMsgs,
+		})
+
 	}
 
-	if len(reportPage.Reports) > 0 {
-		reportPage.Reports = append(reportPage.Reports, report)
-		reportPage.Total = uint64(len(reportPage.Reports))
-	}
-	if download {
-		var err error
+	reportPage.Total = uint64(len(reportPage.Reports))
+	// if download {
+	// 	var err error
 
-		reportPage.PDF, err = re.generatePDFReport(report)
-		if err != nil {
-			return reportPage, err
-		}
+	// 	reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+	// 	if err != nil {
+	// 		return reportPage, err
+	// 	}
 
-		reportPage.CSV, err = re.generateCSVReport(report)
-		if err != nil {
-			return reportPage, err
-		}
-	}
+	// 	reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+	// 	if err != nil {
+	// 		return reportPage, err
+	// 	}
+	// }
 
 	return reportPage, nil
 }
 
+func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
+	return senml.Message{
+		Protocol:    g.Base.GetProtocol(),
+		Subtopic:    g.Base.GetSubtopic(),
+		Unit:        g.GetUnit(),
+		Time:        g.GetTime(),
+		UpdateTime:  g.GetUpdateTime(),
+		Value:       g.Value,
+		StringValue: g.StringValue,
+		DataValue:   g.DataValue,
+		BoolValue:   g.BoolValue,
+		Sum:         g.Sum,
+	}
+}
 func contains(slice []string, str string) bool {
 	for _, s := range slice {
 		if s == str {

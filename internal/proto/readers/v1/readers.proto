@@ -60,11 +60,11 @@ message SenMLMessage {
   string unit = 3;
   double time = 4;
   double update_time = 5;
-  double value = 6;
-  string string_value = 7;
-  string data_value = 8;
-  bool bool_value = 9;
-  double sum = 10;
+  optional double value = 6;
+  optional string string_value = 7;
+  optional string data_value = 8;
+  optional bool bool_value = 9;
+  optional double sum = 10;
 }
 
 message JsonMessage {

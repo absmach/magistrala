@@ -116,7 +116,7 @@ func (req updateReportConfigReq) validate() error {
 	if req.Name == "" {
 		return svcerr.ErrMalformedEntity
 	}
-	if len(req.ChannelIDs) == 0 {
+	if len(req.Metrics) == 0 {
 		return svcerr.ErrMalformedEntity
 	}
 	return nil
@@ -130,11 +130,8 @@ func (req addReportConfigReq) validate() error {
 	if req.Name == "" {
 		return svcerr.ErrMalformedEntity
 	}
-	if len(req.ChannelIDs) == 0 {
+	if len(req.Metrics) == 0 {
 		return svcerr.ErrMalformedEntity
-	}
-	if req.Limit == 0 {
-		return apiutil.ErrValidation
 	}
 	return nil
 }
@@ -180,10 +177,13 @@ func (req generateReportReq) validate() error {
 	if req.Name == "" {
 		return svcerr.ErrMalformedEntity
 	}
-	if len(req.ChannelIDs) == 0 {
+	if len(req.Metrics) == 0 {
 		return svcerr.ErrMalformedEntity
 	}
-	if req.Limit == 0 {
+	if req.Config.From == "" {
+		return apiutil.ErrValidation
+	}
+	if req.Config.To == "" {
 		return apiutil.ErrValidation
 	}
 	return nil

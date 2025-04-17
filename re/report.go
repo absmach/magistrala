@@ -140,6 +140,7 @@ type Metric struct {
 	Name      string `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string `json:"protocol,omitempty"`   // Optional field
+	Format    string `json:"format,omitiempty"`    // Optional field
 }
 
 type ReportConfig struct {
@@ -148,7 +149,7 @@ type ReportConfig struct {
 	DomainID  string        `json:"domain_id"`
 	Schedule  Schedule      `json:"schedule,omitempty"`
 	Config    *MetricConfig `json:"config,omitempty"`
-	Email     Email         `json:"email,omitempty"`
+	Email     *Email        `json:"email,omitempty"`
 	Metrics   []Metric      `json:"metrics,omitempty"`
 	Status    Status        `json:"status"`
 	CreatedAt time.Time     `json:"created_at,omitempty"`

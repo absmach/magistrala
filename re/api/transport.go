@@ -44,13 +44,6 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 				opts...,
 			), "create_rule").ServeHTTP)
 
-			r.Get("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				viewRuleEndpoint(svc),
-				decodeViewRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "view_rule").ServeHTTP)
-
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 				listRulesEndpoint(svc),
 				decodeListRulesRequest,
@@ -58,33 +51,49 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 				opts...,
 			), "list_rules").ServeHTTP)
 
-			r.Patch("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				updateRuleEndpoint(svc),
-				decodeUpdateRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "update_rule").ServeHTTP)
+			r.Route("/{ruleID}", func(r chi.Router) {
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					viewRuleEndpoint(svc),
+					decodeViewRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "view_rule").ServeHTTP)
 
-			r.Delete("/{ruleID}", otelhttp.NewHandler(kithttp.NewServer(
-				deleteRuleEndpoint(svc),
-				decodeDeleteRuleRequest,
-				api.EncodeResponse,
-				opts...,
-			), "delete_rule").ServeHTTP)
+				r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
+					updateRuleEndpoint(svc),
+					decodeUpdateRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "update_rule").ServeHTTP)
 
-			r.Post("/{ruleID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-				enableRuleEndpoint(svc),
-				decodeUpdateRuleStatusRequest,
-				api.EncodeResponse,
-				opts...,
-			), "enable_rule").ServeHTTP)
+				r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
+					updateRuleScheduleEndpoint(svc),
+					decodeUpdateRuleScheduleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "update_rule_scheduler").ServeHTTP)
 
-			r.Post("/{ruleID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-				disableRuleEndpoint(svc),
-				decodeUpdateRuleStatusRequest,
-				api.EncodeResponse,
-				opts...,
-			), "disable_rule").ServeHTTP)
+				r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+					deleteRuleEndpoint(svc),
+					decodeDeleteRuleRequest,
+					api.EncodeResponse,
+					opts...,
+				), "delete_rule").ServeHTTP)
+
+				r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
+					enableRuleEndpoint(svc),
+					decodeUpdateRuleStatusRequest,
+					api.EncodeResponse,
+					opts...,
+				), "enable_rule").ServeHTTP)
+
+				r.Post("/disable", otelhttp.NewHandler(kithttp.NewServer(
+					disableRuleEndpoint(svc),
+					decodeUpdateRuleStatusRequest,
+					api.EncodeResponse,
+					opts...,
+				), "disable_rule").ServeHTTP)
+			})
 		})
 	})
 
@@ -100,7 +109,7 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, errors.Wrap(err, apiutil.ErrValidation)
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	return addRuleReq{Rule: rule}, nil
 }
@@ -116,10 +125,25 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, err
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	rule.ID = chi.URLParam(r, idKey)
 	return updateRuleReq{Rule: rule}, nil
+}
+
+func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateRuleScheduleReq{
+		id: chi.URLParam(r, idKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
 }
 
 func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {

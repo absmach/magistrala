@@ -86,8 +86,7 @@ func (res viewRuleRes) Empty() bool {
 }
 
 type rulesPageRes struct {
-	pageRes
-	Rules []re.Rule `json:"rules"`
+	re.Page `json:",inline"`
 }
 
 func (res rulesPageRes) Code() int {

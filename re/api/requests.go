@@ -60,11 +60,21 @@ func (req updateRuleReq) validate() error {
 	if req.Rule.ID == "" {
 		return apiutil.ErrMissingID
 	}
-	if len(req.Rule.Logic.Value) == 0 {
-		return apiutil.ErrEmptyList
-	}
-	if len(req.Rule.Name) > api.MaxNameSize || req.Rule.Name == "" {
+	if len(req.Rule.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
+	}
+
+	return nil
+}
+
+type updateRuleScheduleReq struct {
+	id       string
+	Schedule re.Schedule `json:"schedule,omitempty"`
+}
+
+func (req updateRuleScheduleReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
 	}
 
 	return nil

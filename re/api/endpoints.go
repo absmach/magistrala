@@ -70,6 +70,31 @@ func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
 	}
 }
 
+func updateRuleScheduleEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateRuleScheduleReq)
+		if err := req.validate(); err != nil {
+			return updateRuleRes{}, err
+		}
+
+		rule := re.Rule{
+			ID:       req.id,
+			Schedule: req.Schedule,
+		}
+
+		updatedRule, err := s.UpdateRuleSchedule(ctx, session, rule)
+		if err != nil {
+			return updateRuleRes{}, err
+		}
+		return updateRuleRes{Rule: updatedRule}, nil
+	}
+}
+
 func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
@@ -86,12 +111,7 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 			return rulesPageRes{}, nil
 		}
 		ret := rulesPageRes{
-			pageRes: pageRes{
-				Limit:  page.Limit,
-				Offset: page.Offset,
-				Total:  page.Total,
-			},
-			Rules: page.Rules,
+			Page: page,
 		}
 		return ret, nil
 	}

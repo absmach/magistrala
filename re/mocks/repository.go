@@ -252,6 +252,61 @@ func (_c *Repository_UpdateRule_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// UpdateRuleSchedule provides a mock function for the type Repository
+func (_mock *Repository) UpdateRuleSchedule(ctx context.Context, r re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, r)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleSchedule")
+	}
+
+	var r0 re.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) (re.Rule, error)); ok {
+		return returnFunc(ctx, r)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) re.Rule); ok {
+		r0 = returnFunc(ctx, r)
+	} else {
+		r0 = ret.Get(0).(re.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.Rule) error); ok {
+		r1 = returnFunc(ctx, r)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateRuleSchedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleSchedule'
+type Repository_UpdateRuleSchedule_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleSchedule is a helper method to define mock.On call
+//   - ctx
+//   - r
+func (_e *Repository_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}) *Repository_UpdateRuleSchedule_Call {
+	return &Repository_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r)}
+}
+
+func (_c *Repository_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleSchedule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(re.Rule))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateRuleSchedule_Call) Return(rule re.Rule, err error) *Repository_UpdateRuleSchedule_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *Repository_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Context, r re.Rule) (re.Rule, error)) *Repository_UpdateRuleSchedule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateRuleStatus provides a mock function for the type Repository
 func (_mock *Repository) UpdateRuleStatus(ctx context.Context, id string, status re.Status) (re.Rule, error) {
 	ret := _mock.Called(ctx, id, status)

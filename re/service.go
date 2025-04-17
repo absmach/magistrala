@@ -56,6 +56,7 @@ type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
 	UpdateRule(ctx context.Context, r Rule) (Rule, error)
+	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
@@ -79,8 +80,10 @@ type PageMeta struct {
 }
 
 type Page struct {
-	PageMeta
-	Rules []Rule `json:"rules"`
+	Offset uint64 `json:"offset"`
+	Limit  uint64 `json:"limit"`
+	Total  uint64 `json:"total"`
+	Rules  []Rule `json:"rules"`
 }
 
 type Service interface {
@@ -88,6 +91,7 @@ type Service interface {
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
+	UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
@@ -157,6 +161,17 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 	r.UpdatedAt = time.Now()
 	r.UpdatedBy = session.UserID
 	rule, err := re.repo.UpdateRule(ctx, r)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return rule, nil
+}
+
+func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+	r.UpdatedAt = time.Now()
+	r.UpdatedBy = session.UserID
+	rule, err := re.repo.UpdateRuleSchedule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}

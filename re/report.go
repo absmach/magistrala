@@ -4,12 +4,7 @@
 package re
 
 import (
-	"encoding/json"
-	"fmt"
-	"strconv"
-	"strings"
 	"time"
-	"unicode"
 
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
@@ -32,99 +27,6 @@ type ReportPage struct {
 type AggConfig struct {
 	AggType  string `json:"agg_type,omitempty"` // Optional field
 	Interval string `json:"interval,omitempty"` // Mandatory field if "AggType" field is set MAX, MIN, COUNT, SUM, AVG
-}
-
-type TimeExpression float64
-
-func (te *TimeExpression) UnmarshalJSON(data []byte) error {
-	var expr string
-	if err := json.Unmarshal(data, &expr); err == nil {
-		timestamp, err := parseTimeExpression(expr)
-		if err != nil {
-			return err
-		}
-		*te = TimeExpression(timestamp)
-		return nil
-	}
-
-	var value float64
-	if err := json.Unmarshal(data, &value); err != nil {
-		return err
-	}
-	*te = TimeExpression(value)
-	return nil
-}
-
-func parseTimeExpression(expr string) (float64, error) {
-	if expr == "" {
-		return 0, nil
-	}
-
-	expr = strings.TrimSpace(expr)
-	if expr == "now()" || expr == "now" {
-		return float64(time.Now().Unix()), nil
-	}
-
-	if strings.Contains(expr, "now()") || strings.Contains(expr, "now") {
-		expr = strings.ReplaceAll(expr, "+", " + ")
-		expr = strings.ReplaceAll(expr, "-", " - ")
-
-		parts := strings.Fields(expr)
-		if len(parts) != 3 {
-			return 0, fmt.Errorf("invalid time expression format: %s", expr)
-		}
-
-		operation := parts[1]
-		if operation != "+" && operation != "-" {
-			return 0, fmt.Errorf("unsupported operation: %s", operation)
-		}
-
-		durStr := parts[2]
-		valueStr := ""
-		unitStr := ""
-		for _, c := range durStr {
-			if unicode.IsDigit(c) {
-				valueStr += string(c)
-			} else {
-				unitStr += string(c)
-			}
-		}
-
-		value, err := strconv.ParseInt(valueStr, 10, 64)
-		if err != nil {
-			return 0, fmt.Errorf("invalid duration value: %s", valueStr)
-		}
-
-		var duration time.Duration
-		switch unitStr {
-		case "d":
-			duration = time.Duration(value) * 24 * time.Hour
-		case "h":
-			duration = time.Duration(value) * time.Hour
-		case "m":
-			duration = time.Duration(value) * time.Minute
-		case "s":
-			duration = time.Duration(value) * time.Second
-		default:
-			return 0, fmt.Errorf("unsupported time unit: %s", unitStr)
-		}
-
-		now := time.Now()
-		if operation == "+" {
-			targetTime := now.Add(duration)
-			return float64(targetTime.Unix()), nil
-		} else {
-			targetTime := now.Add(-duration)
-			return float64(targetTime.Unix()), nil
-		}
-	}
-
-	timestamp, err := strconv.ParseFloat(expr, 64)
-	if err != nil {
-		return 0, fmt.Errorf("invalid timestamp: %s", expr)
-	}
-
-	return timestamp, nil
 }
 
 type MetricConfig struct {

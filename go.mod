@@ -24,7 +24,6 @@ require (
 	github.com/jackc/pgx/v5 v5.7.4
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/jung-kurt/gofpdf v1.16.2
-	github.com/lib/pq v1.10.9
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.22.0
@@ -44,6 +43,8 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
 )
+
+require github.com/lib/pq v1.10.9 // indirect
 
 require (
 	dario.cat/mergo v1.0.0 // indirect

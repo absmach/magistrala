@@ -648,13 +648,12 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 			Metric:   metric,
 			Messages: sMsgs,
 		})
-
 	}
 
 	reportPage.Total = uint64(len(reportPage.Reports))
+
 	if download {
 		var err error
-
 		reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
 		if err != nil {
 			return reportPage, err
@@ -696,8 +695,6 @@ func (re *re) generatePDFReport(reports []Report) ([]byte, error) {
 		}
 
 		if i > 0 {
-			pdf.AddPage()
-		} else {
 			pdf.AddPage()
 		}
 

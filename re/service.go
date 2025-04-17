@@ -4,23 +4,19 @@
 package re
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"encoding/json"
-	"fmt"
-	"sort"
 	"strings"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/reltime"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/jung-kurt/gofpdf"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -28,9 +24,9 @@ const (
 	hoursInDay   = 24
 	daysInWeek   = 7
 	monthsInYear = 12
-
-	publisher = "magistrala.re"
-	interval  = "1s"
+	limit        = 1000
+	publisher    = "magistrala.re"
+	interval     = "1s"
 )
 
 var from = time.Date(2025, time.January, 1, 0, 0, 0, 0, time.UTC)
@@ -566,92 +562,126 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 }
 
 func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
+
+	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
+	switch cfg.Config.Aggregation.AggType {
+	case "MAX":
+		agg = grpcReadersV1.Aggregation_MAX
+	case "MIN":
+		agg = grpcReadersV1.Aggregation_MIN
+	case "COUNT":
+		agg = grpcReadersV1.Aggregation_COUNT
+	case "AVG":
+		agg = grpcReadersV1.Aggregation_AVG
+	case "SUM":
+		agg = grpcReadersV1.Aggregation_SUM
+	}
+
+	from, err := reltime.Parse(cfg.Config.From)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	to, err := reltime.Parse(cfg.Config.To)
+	if err != nil {
+		return ReportPage{}, err
+	}
+	pm := &grpcReadersV1.PageMetadata{
+		Aggregation: agg,
+		Limit:       limit,
+		From:        float64(from.UnixNano()),
+		To:          float64(to.UnixNano()),
+		Interval:    interval,
+	}
+
 	reportPage := ReportPage{
-		Reports: make([]Report, 0),
+		Reports:     make([]Report, 0),
+		From:        from,
+		To:          to,
+		Aggregation: cfg.Config.Aggregation,
 	}
 
-	report := Report{
-		ClientMessages: make(map[string][]senml.Message, 0),
-	}
+	for _, metric := range cfg.Metrics {
+		sMsgs := []senml.Message{}
 
-	for _, ch := range cfg.ChannelIDs {
-		agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
-		switch cfg.Config.Aggregation.AggType {
-		case "MAX":
-			agg = grpcReadersV1.Aggregation_MAX
-		case "MIN":
-			agg = grpcReadersV1.Aggregation_MIN
-		case "COUNT":
-			agg = grpcReadersV1.Aggregation_COUNT
-		case "AVG":
-			agg = grpcReadersV1.Aggregation_AVG
-		case "SUM":
-			agg = grpcReadersV1.Aggregation_SUM
+		pm.Offset = uint64(0)
+		pm.Publisher = metric.ClientID
+		pm.Name = metric.Name
+		if metric.Subtopic != "" {
+			pm.Subtopic = metric.Subtopic
+		}
+		if metric.Protocol != "" {
+			pm.Protocol = metric.Protocol
+		}
+		if metric.Format != "" {
+			pm.Format = metric.Format
 		}
 
 		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
-			ChannelId: ch,
-			DomainId:  cfg.DomainID,
-			PageMetadata: &grpcReadersV1.PageMetadata{
-				Aggregation: agg,
-				Limit:       cfg.Limit,
-				Offset:      0,
-				From:        float64(from.UnixNano()),
-				To:          float64(time.Now().UnixNano()),
-				Interval:    interval,
-			},
+			ChannelId:    metric.ChannelID,
+			DomainId:     cfg.DomainID,
+			PageMetadata: pm,
 		})
 		if err != nil {
 			return ReportPage{}, err
 		}
-
 		for _, msg := range msgs.Messages {
-			message := msg.GetSenml()
-			publisher := message.Base.Publisher
+			sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
+		}
 
-			if contains(cfg.ClientIDs, publisher) && shouldIncludeMessage(message.Name, cfg.Metrics) {
-				report.ClientMessages[publisher] = append(report.ClientMessages[publisher],
-					senml.Message{
-						Channel:     message.Base.Channel,
-						Subtopic:    message.Base.Subtopic,
-						Publisher:   message.Base.Publisher,
-						Protocol:    message.Base.Protocol,
-						Name:        message.Name,
-						Unit:        message.Unit,
-						Time:        message.Time,
-						UpdateTime:  message.UpdateTime,
-						Value:       &message.Value,
-						StringValue: &message.StringValue,
-						DataValue:   &message.DataValue,
-						BoolValue:   &message.BoolValue,
-						Sum:         &message.Sum,
-					},
-				)
+		for msgs.GetTotal() > (pm.Offset + pm.Limit) {
+			pm.Offset = pm.Offset + pm.Limit
+			msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+				ChannelId:    metric.ChannelID,
+				DomainId:     cfg.DomainID,
+				PageMetadata: pm,
+			})
+			if err != nil {
+				return ReportPage{}, err
+			}
+			for _, msg := range msgs.Messages {
+				sMsgs = append(sMsgs, convertToSenml(msg.GetSenml()))
 			}
 		}
+
+		reportPage.Reports = append(reportPage.Reports, Report{
+			Metric:   metric,
+			Messages: sMsgs,
+		})
+
 	}
 
-	if len(reportPage.Reports) > 0 {
-		reportPage.Reports = append(reportPage.Reports, report)
-		reportPage.Total = uint64(len(reportPage.Reports))
-	}
-	if download {
-		var err error
+	reportPage.Total = uint64(len(reportPage.Reports))
+	// if download {
+	// 	var err error
 
-		reportPage.PDF, err = re.generatePDFReport(report)
-		if err != nil {
-			return reportPage, err
-		}
+	// 	reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+	// 	if err != nil {
+	// 		return reportPage, err
+	// 	}
 
-		reportPage.CSV, err = re.generateCSVReport(report)
-		if err != nil {
-			return reportPage, err
-		}
-	}
+	// 	reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+	// 	if err != nil {
+	// 		return reportPage, err
+	// 	}
+	// }
 
 	return reportPage, nil
 }
 
+func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
+	return senml.Message{
+		Protocol:    g.Base.GetProtocol(),
+		Subtopic:    g.Base.GetSubtopic(),
+		Unit:        g.GetUnit(),
+		Time:        g.GetTime(),
+		UpdateTime:  g.GetUpdateTime(),
+		Value:       g.Value,
+		StringValue: g.StringValue,
+		DataValue:   g.DataValue,
+		BoolValue:   g.BoolValue,
+		Sum:         g.Sum,
+	}
+}
 func contains(slice []string, str string) bool {
 	for _, s := range slice {
 		if s == str {
@@ -675,138 +705,138 @@ func shouldIncludeMessage(name string, metrics []string) bool {
 	return false
 }
 
-func (re *re) generatePDFReport(report Report) ([]byte, error) {
-	pdf := gofpdf.New("P", "mm", "A4", "")
-	pdf.AddPage()
-	pdf.SetFont("Arial", "B", 16)
-	pdf.Cell(40, 10, "Device Metrics Report")
-	pdf.Ln(15)
+// func (re *re) generatePDFReport(report Report) ([]byte, error) {
+// 	pdf := gofpdf.New("P", "mm", "A4", "")
+// 	pdf.AddPage()
+// 	pdf.SetFont("Arial", "B", 16)
+// 	pdf.Cell(40, 10, "Device Metrics Report")
+// 	pdf.Ln(15)
 
-	for publisher, messages := range report.ClientMessages {
-		if len(messages) == 0 {
-			continue
-		}
+// 	for publisher, messages := range report.ClientMessages {
+// 		if len(messages) == 0 {
+// 			continue
+// 		}
 
-		pdf.SetFont("Arial", "B", 12)
-		pdf.Cell(40, 10, fmt.Sprintf("Device: %s", publisher))
-		pdf.Ln(10)
+// 		pdf.SetFont("Arial", "B", 12)
+// 		pdf.Cell(40, 10, fmt.Sprintf("Device: %s", publisher))
+// 		pdf.Ln(10)
 
-		pdf.SetFont("Arial", "B", 10)
-		pdf.SetFillColor(200, 200, 200)
+// 		pdf.SetFont("Arial", "B", 10)
+// 		pdf.SetFillColor(200, 200, 200)
 
-		headers := []string{"Time", "Metric Name", "Value", "Unit"}
-		widths := []float64{60, 40, 30, 40}
+// 		headers := []string{"Time", "Metric Name", "Value", "Unit"}
+// 		widths := []float64{60, 40, 30, 40}
 
-		for i, header := range headers {
-			pdf.Cell(widths[i], 8, header)
-		}
-		pdf.Ln(-1)
+// 		for i, header := range headers {
+// 			pdf.Cell(widths[i], 8, header)
+// 		}
+// 		pdf.Ln(-1)
 
-		pdf.SetFont("Arial", "", 10)
-		pdf.SetFillColor(255, 255, 255)
+// 		pdf.SetFont("Arial", "", 10)
+// 		pdf.SetFillColor(255, 255, 255)
 
-		fill := false
+// 		fill := false
 
-		sort.Slice(messages, func(i, j int) bool {
-			return messages[i].Time < messages[j].Time
-		})
+// 		sort.Slice(messages, func(i, j int) bool {
+// 			return messages[i].Time < messages[j].Time
+// 		})
 
-		for _, msg := range messages {
-			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+// 		for _, msg := range messages {
+// 			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
 
-			var valueStr string
-			if msg.Value != nil {
-				valueStr = fmt.Sprintf("%.2f", *msg.Value)
-			} else if msg.StringValue != nil {
-				valueStr = *msg.StringValue
-			} else if msg.BoolValue != nil {
-				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
-			} else if msg.DataValue != nil {
-				valueStr = *msg.DataValue
-			} else {
-				valueStr = "N/A"
-			}
+// 			var valueStr string
+// 			if msg.Value != nil {
+// 				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+// 			} else if msg.StringValue != nil {
+// 				valueStr = *msg.StringValue
+// 			} else if msg.BoolValue != nil {
+// 				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+// 			} else if msg.DataValue != nil {
+// 				valueStr = *msg.DataValue
+// 			} else {
+// 				valueStr = "N/A"
+// 			}
 
-			pdf.Cell(widths[0], 8, timeStr)
-			pdf.Cell(widths[1], 8, msg.Name)
-			pdf.Cell(widths[2], 8, valueStr)
-			pdf.Cell(widths[3], 8, msg.Unit)
-			pdf.Ln(-1)
+// 			pdf.Cell(widths[0], 8, timeStr)
+// 			pdf.Cell(widths[1], 8, msg.Name)
+// 			pdf.Cell(widths[2], 8, valueStr)
+// 			pdf.Cell(widths[3], 8, msg.Unit)
+// 			pdf.Ln(-1)
 
-			fill = !fill
-		}
+// 			fill = !fill
+// 		}
 
-		pdf.Ln(10)
-	}
+// 		pdf.Ln(10)
+// 	}
 
-	var buf bytes.Buffer
-	err := pdf.Output(&buf)
-	if err != nil {
-		return nil, err
-	}
+// 	var buf bytes.Buffer
+// 	err := pdf.Output(&buf)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return buf.Bytes(), nil
-}
+// 	return buf.Bytes(), nil
+// }
 
-func (re *re) generateCSVReport(report Report) ([]byte, error) {
-	var buf bytes.Buffer
-	writer := csv.NewWriter(&buf)
+// func (re *re) generateCSVReport(report Report) ([]byte, error) {
+// 	var buf bytes.Buffer
+// 	writer := csv.NewWriter(&buf)
 
-	for publisher, messages := range report.ClientMessages {
-		if len(messages) == 0 {
-			continue
-		}
+// 	for publisher, messages := range report.ClientMessages {
+// 		if len(messages) == 0 {
+// 			continue
+// 		}
 
-		if err := writer.Write([]string{fmt.Sprintf("Device: %s", publisher)}); err != nil {
-			return nil, err
-		}
+// 		if err := writer.Write([]string{fmt.Sprintf("Device: %s", publisher)}); err != nil {
+// 			return nil, err
+// 		}
 
-		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel"}); err != nil {
-			return nil, err
-		}
+// 		if err := writer.Write([]string{"Metric Name", "Value", "Unit", "Time", "Channel"}); err != nil {
+// 			return nil, err
+// 		}
 
-		sort.Slice(messages, func(i, j int) bool {
-			return messages[i].Time < messages[j].Time
-		})
+// 		sort.Slice(messages, func(i, j int) bool {
+// 			return messages[i].Time < messages[j].Time
+// 		})
 
-		for _, msg := range messages {
-			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
+// 		for _, msg := range messages {
+// 			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
 
-			var valueStr string
-			if msg.Value != nil {
-				valueStr = fmt.Sprintf("%.2f", *msg.Value)
-			} else if msg.StringValue != nil {
-				valueStr = *msg.StringValue
-			} else if msg.BoolValue != nil {
-				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
-			} else if msg.DataValue != nil {
-				valueStr = *msg.DataValue
-			} else {
-				valueStr = "N/A"
-			}
+// 			var valueStr string
+// 			if msg.Value != nil {
+// 				valueStr = fmt.Sprintf("%.2f", *msg.Value)
+// 			} else if msg.StringValue != nil {
+// 				valueStr = *msg.StringValue
+// 			} else if msg.BoolValue != nil {
+// 				valueStr = fmt.Sprintf("%v", *msg.BoolValue)
+// 			} else if msg.DataValue != nil {
+// 				valueStr = *msg.DataValue
+// 			} else {
+// 				valueStr = "N/A"
+// 			}
 
-			row := []string{
-				timeStr,
-				msg.Name,
-				valueStr,
-				msg.Unit,
-				msg.Channel,
-			}
+// 			row := []string{
+// 				timeStr,
+// 				msg.Name,
+// 				valueStr,
+// 				msg.Unit,
+// 				msg.Channel,
+// 			}
 
-			if err := writer.Write(row); err != nil {
-				return nil, err
-			}
-		}
+// 			if err := writer.Write(row); err != nil {
+// 				return nil, err
+// 			}
+// 		}
 
-		if err := writer.Write([]string{}); err != nil {
-			return nil, err
-		}
-	}
+// 		if err := writer.Write([]string{}); err != nil {
+// 			return nil, err
+// 		}
+// 	}
 
-	writer.Flush()
-	if err := writer.Error(); err != nil {
-		return nil, err
-	}
+// 	writer.Flush()
+// 	if err := writer.Error(); err != nil {
+// 		return nil, err
+// 	}
 
-	return buf.Bytes(), nil
-}
+// 	return buf.Bytes(), nil
+// }

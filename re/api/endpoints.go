@@ -5,7 +5,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
@@ -187,7 +186,6 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 		}
 
 		req := request.(generateReportReq)
-		fmt.Printf("req is %+v\n", req)
 		if err := req.validate(); err != nil {
 			return generateReportResp{}, err
 		}

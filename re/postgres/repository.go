@@ -136,11 +136,79 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, id string,
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
+	var query []string
+	var upq string
+	if r.Name != "" {
+		query = append(query, "name = :name,")
+	}
+	if r.Metadata != nil {
+		query = append(query, "metadata = :metadata,")
+	}
+	if r.InputChannel != "" {
+		query = append(query, "input_channel = :input_channel,")
+	}
+	if r.InputTopic != "" {
+		query = append(query, "input_topic = :input_topic,")
+	}
+	if r.OutputChannel != "" {
+		query = append(query, "output_channel = :output_channel,")
+	}
+	if r.OutputTopic != "" {
+		query = append(query, "output_topic = :output_topic,")
+	}
+	if r.Logic.Value != "" {
+		query = append(query, "logic_value = :logic_value,")
+		query = append(query, "logic_type = :logic_type,")
+	}
+
+	if len(query) > 0 {
+		upq = strings.Join(query, " ")
+	}
+
+	q := fmt.Sprintf(`
+		UPDATE rules
+		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`, upq)
+
 	dbr, err := ruleToDb(r)
 	if err != nil {
 		return re.Rule{}, err
 	}
-	row, err := repo.DB.NamedQueryContext(ctx, updateRuleQuery, dbr)
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return re.Rule{}, err
+	}
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, err
+		}
+	}
+	rule, err := dbToRule(dbRule)
+	if err != nil {
+		return re.Rule{}, err
+	}
+
+	return rule, nil
+}
+
+func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rule) (re.Rule, error) {
+	q := `
+		UPDATE rules
+		SET start_datetime = :start_datetime, time = :time, recurring = :recurring, 
+			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`
+	dbr, err := ruleToDb(r)
+	if err != nil {
+		return re.Rule{}, err
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
 		return re.Rule{}, err
 	}

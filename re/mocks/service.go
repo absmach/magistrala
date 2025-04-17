@@ -550,6 +550,62 @@ func (_c *Service_UpdateRule_Call) RunAndReturn(run func(ctx context.Context, se
 	return _c
 }
 
+// UpdateRuleSchedule provides a mock function for the type Service
+func (_mock *Service) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, session, r)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleSchedule")
+	}
+
+	var r0 re.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) (re.Rule, error)); ok {
+		return returnFunc(ctx, session, r)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) re.Rule); ok {
+		r0 = returnFunc(ctx, session, r)
+	} else {
+		r0 = ret.Get(0).(re.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.Rule) error); ok {
+		r1 = returnFunc(ctx, session, r)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_UpdateRuleSchedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleSchedule'
+type Service_UpdateRuleSchedule_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleSchedule is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - r
+func (_e *Service_Expecter) UpdateRuleSchedule(ctx interface{}, session interface{}, r interface{}) *Service_UpdateRuleSchedule_Call {
+	return &Service_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, session, r)}
+}
+
+func (_c *Service_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_UpdateRuleSchedule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+	})
+	return _c
+}
+
+func (_c *Service_UpdateRuleSchedule_Call) Return(rule re.Rule, err error) *Service_UpdateRuleSchedule_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *Service_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error)) *Service_UpdateRuleSchedule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewRule provides a mock function for the type Service
 func (_mock *Service) ViewRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	ret := _mock.Called(ctx, session, id)

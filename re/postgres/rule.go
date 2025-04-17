@@ -53,6 +53,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
+		LogicKind:       r.Logic.Kind,
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
@@ -83,6 +84,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
+			Kind:  dto.LogicKind,
 			Type:  dto.LogicType,
 			Value: dto.LogicValue,
 		},

@@ -30,15 +30,17 @@ const (
 	Alarms
 	SaveSenML
 	Email
+	Save
 )
 
 var (
-	scriptKindToString = [...]string{"channels", "alarms", "saveSenML", "email"}
+	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save"}
 	stringToScriptKind = map[string]ScriptKind{
 		"channels":   Channels,
 		"alarms":     Alarms,
 		"save_senml": SaveSenML,
 		"email":      Email,
+		"save":       Save,
 	}
 )
 

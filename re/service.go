@@ -313,7 +313,6 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 	return reportPage, nil
 }
 func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
-
 	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 	switch cfg.Config.Aggregation.AggType {
 	case "MAX":

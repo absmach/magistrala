@@ -10,7 +10,6 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -39,26 +38,21 @@ type dbRule struct {
 
 // dbReport represents the database structure for a Report.
 type dbReport struct {
-	ID              string         `db:"id"`
-	Name            string         `db:"name"`
-	DomainID        string         `db:"domain_id"`
-	ChannelIDs      pq.StringArray `db:"channel_ids"`
-	ClientIDs       pq.StringArray `db:"client_ids"`
-	Config          []byte         `db:"config,omitempty"`
-	Metrics         pq.StringArray `db:"metrics"`
-	To              pq.StringArray `db:"to"`
-	From            sql.NullString `db:"from"`
-	Subject         sql.NullString `db:"subject"`
-	StartDateTime   time.Time      `db:"start_datetime"`
-	Time            time.Time      `db:"time"`
-	Recurring       re.Recurring   `db:"recurring"`
-	RecurringPeriod uint           `db:"recurring_period"`
-	Status          re.Status      `db:"status"`
-	CreatedAt       time.Time      `db:"created_at"`
-	CreatedBy       string         `db:"created_by"`
-	UpdatedAt       time.Time      `db:"updated_at"`
-	UpdatedBy       string         `db:"updated_by"`
-	Limit           uint64         `db:"limit"`
+	ID              string       `db:"id"`
+	Name            string       `db:"name"`
+	DomainID        string       `db:"domain_id"`
+	StartDateTime   time.Time    `db:"start_datetime"`
+	Time            time.Time    `db:"time"`
+	Recurring       re.Recurring `db:"recurring"`
+	RecurringPeriod uint         `db:"recurring_period"`
+	Status          re.Status    `db:"status"`
+	CreatedAt       time.Time    `db:"created_at"`
+	CreatedBy       string       `db:"created_by"`
+	UpdatedAt       time.Time    `db:"updated_at"`
+	UpdatedBy       string       `db:"updated_by"`
+	Config          []byte       `db:"config,omitempty"`
+	Metrics         []byte       `db:"metrics"`
+	Email           []byte       `db:"email"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -147,6 +141,24 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 		config = b
 	}
 
+	metrics := []byte("{}")
+	if r.Metrics != nil {
+		m, err := json.Marshal(r.Metrics)
+		if err != nil {
+			return dbReport{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		metrics = m
+	}
+
+	email := []byte("{}")
+	if r.Email != nil {
+		e, err := json.Marshal(r.Email)
+		if err != nil {
+			return dbReport{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		email = e
+	}
+
 	return dbReport{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -160,14 +172,9 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 		CreatedBy:       r.CreatedBy,
 		UpdatedAt:       r.UpdatedAt,
 		UpdatedBy:       r.UpdatedBy,
-		ChannelIDs:      r.ChannelIDs,
-		ClientIDs:       r.ClientIDs,
 		Config:          config,
-		Metrics:         r.Metrics,
-		To:              r.Email.To,
-		From:            toNullString(r.Email.From),
-		Subject:         toNullString(r.Email.Subject),
-		Limit:           r.Limit,
+		Metrics:         metrics,
+		Email:           email,
 	}, nil
 }
 
@@ -179,31 +186,38 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 		}
 	}
 
+	var email re.Email
+	if dto.Email != nil {
+		if err := json.Unmarshal(dto.Email, &email); err != nil {
+			return re.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
+	var metrics []re.Metric
+	if dto.Metrics != nil {
+		if err := json.Unmarshal(dto.Metrics, &metrics); err != nil {
+			return re.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	rpt := re.ReportConfig{
-		ID:         dto.ID,
-		Name:       dto.Name,
-		DomainID:   dto.DomainID,
-		ChannelIDs: dto.ChannelIDs,
-		ClientIDs:  dto.ClientIDs,
-		Config:     &config,
-		Metrics:    dto.Metrics,
+		ID:       dto.ID,
+		Name:     dto.Name,
+		DomainID: dto.DomainID,
+		Config:   &config,
+		Metrics:  metrics,
 		Schedule: re.Schedule{
 			StartDateTime:   dto.StartDateTime,
 			Time:            dto.Time,
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Email: re.Email{
-			To:      dto.To,
-			From:    fromNullString(dto.From),
-			Subject: fromNullString(dto.Subject),
-		},
+		Email:     &email,
 		Status:    re.Status(dto.Status),
 		CreatedAt: dto.CreatedAt,
 		CreatedBy: dto.CreatedBy,
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
-		Limit:     dto.Limit,
 	}
 
 	return rpt, nil

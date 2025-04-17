@@ -50,13 +50,6 @@ func Migration() *migrate.MemoryMigrationSource {
 						id          	 	VARCHAR(36) PRIMARY KEY,
 						name				VARCHAR(1024),
 						domain_id         	VARCHAR(36) NOT NULL,
-						"limit"				BIGINT CHECK ("limit" >= 0),
-						channel_ids 	  	TEXT[],
-						client_ids 		  	TEXT[],
-						metrics				TEXT[],
-						"to" 				TEXT[],
-						"from" 				TEXT,
-						subject 			TEXT,
 						status				SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						created_at			TIMESTAMP,
 						created_by			VARCHAR(254),
@@ -66,7 +59,9 @@ func Migration() *migrate.MemoryMigrationSource {
 						recurring         	SMALLINT,
 						recurring_period  	SMALLINT,
 						start_datetime    	TIMESTAMP,
-						config			  	JSONB
+						config			  	JSONB,
+						email				JSONB,
+						metrics				JSONB
 					);`,
 				},
 				Down: []string{

@@ -284,15 +284,10 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	fmt.Println("am here 1")
-
 	var req generateReportReq
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		fmt.Printf("err is %+v\n", err)
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
-
-	fmt.Println("am here 2")
 
 	return req, nil
 }

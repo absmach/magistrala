@@ -186,6 +186,12 @@ func (req generateReportReq) validate() error {
 	if req.Config.To == "" {
 		return apiutil.ErrValidation
 	}
+	if req.Config.Aggregation.AggType != "" {
+		if req.Config.Aggregation.Interval == "" {
+			return apiutil.ErrValidation
+		}
+	}
+
 	return nil
 }
 

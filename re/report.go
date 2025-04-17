@@ -144,18 +144,19 @@ type Metric struct {
 }
 
 type ReportConfig struct {
-	ID        string        `json:"id"`
-	Name      string        `json:"name"`
-	DomainID  string        `json:"domain_id"`
-	Schedule  Schedule      `json:"schedule,omitempty"`
-	Config    *MetricConfig `json:"config,omitempty"`
-	Email     *Email        `json:"email,omitempty"`
-	Metrics   []Metric      `json:"metrics,omitempty"`
-	Status    Status        `json:"status"`
-	CreatedAt time.Time     `json:"created_at,omitempty"`
-	CreatedBy string        `json:"created_by,omitempty"`
-	UpdatedAt time.Time     `json:"updated_at,omitempty"`
-	UpdatedBy string        `json:"updated_by,omitempty"`
+	ID          string        `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	DomainID    string        `json:"domain_id"`
+	Schedule    Schedule      `json:"schedule,omitempty"`
+	Config      *MetricConfig `json:"config,omitempty"`
+	Email       *Email        `json:"email,omitempty"`
+	Metrics     []Metric      `json:"metrics,omitempty"`
+	Status      Status        `json:"status"`
+	CreatedAt   time.Time     `json:"created_at,omitempty"`
+	CreatedBy   string        `json:"created_by,omitempty"`
+	UpdatedAt   time.Time     `json:"updated_at,omitempty"`
+	UpdatedBy   string        `json:"updated_by,omitempty"`
 }
 
 type ReportConfigPage struct {

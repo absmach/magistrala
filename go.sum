@@ -36,8 +36,8 @@ github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRF
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
 github.com/alessio/shellescape v1.4.1/go.mod h1:PZAiSCk0LJaZkiCSkPv8qIobYglO3FPpyFjDCtHLS30=
-github.com/authzed/authzed-go v1.3.1-0.20250320210445-0cde0d8c71e2 h1:Thss/u6uu0rJULAHdvd3kMJfFZIealMZYPx21KI/3HI=
-github.com/authzed/authzed-go v1.3.1-0.20250320210445-0cde0d8c71e2/go.mod h1:ReuY/1rPEqJ+3dVE1Esi2VJI2uQNLtOeQN+8Yq9uNJw=
+github.com/authzed/authzed-go v1.4.0 h1:0LnVg/r38rJgbljBx0m9vWHvaHYEElMaomAXyEeaiI8=
+github.com/authzed/authzed-go v1.4.0/go.mod h1:iW6QQWmTbgFfn4b6zPPzbgOUOSB93/or4VdQ+zLTjeY=
 github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8 h1:y17oq4U8n+k1OcIGGDsjYdIdp4QywGcE7ZphIvtfEbo=
 github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8/go.mod h1:Pf1ZSi41EePvx1GC1DeEJw5dn35iUcxZHqpHuG1Rpic=
 github.com/aws/aws-sdk-go v1.34.0/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=

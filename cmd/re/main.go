@@ -202,7 +202,9 @@ func main() {
 	go func() {
 		for {
 			err := <-errs
-			logger.Warn("Error handling rule", slog.String("error", err.Error()))
+			if err != nil {
+				logger.Warn("Error handling rule", slog.String("error", err.Error()))
+			}
 		}
 	}()
 

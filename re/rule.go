@@ -21,12 +21,12 @@ const (
 	publisher = "magistrala.re"
 )
 
-// ScriptKind is the indicator for type of the logic
+// ScriptOutput is the indicator for type of the logic
 // so we can move it to the Go instead calling Go from Lua.
-type ScriptKind uint
+type ScriptOutput uint
 
 const (
-	Channels ScriptKind = iota
+	Channels ScriptOutput = iota
 	Alarms
 	SaveSenML
 	Email
@@ -35,7 +35,7 @@ const (
 
 var (
 	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save"}
-	stringToScriptKind = map[string]ScriptKind{
+	stringToScriptKind = map[string]ScriptOutput{
 		"channels":   Channels,
 		"alarms":     Alarms,
 		"save_senml": SaveSenML,
@@ -44,7 +44,7 @@ var (
 	}
 )
 
-func (s ScriptKind) String() string {
+func (s ScriptOutput) String() string {
 	if int(s) < 0 || int(s) >= len(scriptKindToString) {
 		return "unknown"
 	}
@@ -52,12 +52,12 @@ func (s ScriptKind) String() string {
 }
 
 // MarshalJSON converts ScriptKind to JSON string.
-func (s ScriptKind) MarshalJSON() ([]byte, error) {
+func (s ScriptOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
 // UnmarshalJSON parses JSON string into ScriptKind.
-func (s *ScriptKind) UnmarshalJSON(data []byte) error {
+func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
@@ -78,9 +78,9 @@ type (
 	Metadata map[string]interface{}
 
 	Script struct {
-		Type  ScriptType `json:"type"`
-		Kind  ScriptKind `json:"kind"`
-		Value string     `json:"value"`
+		Type    ScriptType     `json:"type"`
+		Outputs []ScriptOutput `json:"outputs"`
+		Value   string         `json:"value"`
 	}
 )
 

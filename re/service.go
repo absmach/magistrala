@@ -184,7 +184,6 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 
 func (re *re) Handle(msg *messaging.Message) error {
 	inputChannel := msg.Channel
-
 	pm := PageMeta{
 		InputChannel: inputChannel,
 		Status:       EnabledStatus,
@@ -234,22 +233,23 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	if result == lua.LNil {
 		return nil
 	}
-	switch r.Logic.Kind {
+	var err error
+	for _, o := range r.Logic.Outputs {
+		err = errors.Wrap(err, re.handleOutput(ctx, o, r, msg, result))
+	}
+
+	return err
+}
+
+func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val lua.LValue) error {
+	switch o {
 	case Channels:
 		if r.OutputChannel == "" {
 			return nil
 		}
-		m := &messaging.Message{
-			Publisher: publisher,
-			Created:   time.Now().Unix(),
-			Payload:   []byte(result.String()),
-			Channel:   r.OutputChannel,
-			Domain:    r.DomainID,
-			Subtopic:  r.OutputTopic,
-		}
-		return re.rePubSub.Publish(ctx, m.Channel, m)
+		return re.publishChannel(ctx, val, r.OutputChannel, r.OutputTopic, msg)
 	case SaveSenML:
-		return re.saveSenml(ctx, result, msg)
+		return re.saveSenml(ctx, val, msg)
 	case Email:
 		break
 	}

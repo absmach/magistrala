@@ -31,6 +31,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						output_topic      TEXT,
 						status            SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_type        SMALLINT NOT NULL DEFAULT 0 CHECK (logic_type >= 0),
+						logic_output 	  SMALLINT[] NOT NULL DEFAULT '{}',
 						logic_value       BYTEA,
 						time              TIMESTAMP,
 						recurring         SMALLINT,
@@ -40,15 +41,6 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS rules`,
-				},
-			},
-			{
-				Id: "rules02",
-				Up: []string{
-					`ALTER TABLE IF EXISTS rules ADD COLUMN IF NOT EXISTS logic_kind SMALLINT NOT NULL DEFAULT 0 CHECK (logic_kind >= 0);`,
-				},
-				Down: []string{
-					`ALTER TABLE IF EXISTS rules DROP COLUMN logic_kind;`,
 				},
 			},
 		},

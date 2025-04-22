@@ -118,3 +118,25 @@ func (re *re) saveSenml(ctx context.Context, table lua.LValue, msg *messaging.Me
 	}
 	return nil
 }
+
+func (re *re) publishChannel(ctx context.Context, table lua.LValue, channel, subtopic string, msg *messaging.Message) error {
+	val := convertLua(table)
+	data, err := json.Marshal(val)
+	if err != nil {
+		return err
+	}
+
+	m := &messaging.Message{
+		Domain:    msg.Domain,
+		Publisher: publisher,
+		Created:   msg.Created,
+		Channel:   channel,
+		Subtopic:  subtopic,
+		Protocol:  msg.Protocol,
+		Payload:   data,
+	}
+	if err := re.rePubSub.Publish(ctx, channel, m); err != nil {
+		return err
+	}
+	return nil
+}

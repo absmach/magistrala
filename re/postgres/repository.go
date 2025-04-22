@@ -24,7 +24,7 @@ func NewRepository(db postgres.Database) re.Repository {
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	q := `
-	INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+	INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_kind, logic_value,
 		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
 	VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_kind, :logic_value,
 		:output_channel, :output_topic, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)

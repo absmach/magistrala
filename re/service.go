@@ -25,14 +25,16 @@ type Repository interface {
 	UpdateRule(ctx context.Context, r Rule) (Rule, error)
 	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
-	UpdateRuleStatus(ctx context.Context, id string, status Status) (Rule, error)
+	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 
 	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
 	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportConfigParams(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
-	UpdateReportConfigStatus(ctx context.Context, id string, status Status) (ReportConfig, error)
+	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 }
 
@@ -74,6 +76,8 @@ type Service interface {
 	AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
 	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
@@ -186,7 +190,13 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 	if err != nil {
 		return Rule{}, err
 	}
-	rule, err := re.repo.UpdateRuleStatus(ctx, id, status)
+	r := Rule{
+		ID:        id,
+		UpdatedAt: time.Now(),
+		UpdatedBy: session.UserID,
+		Status:    status,
+	}
+	rule, err := re.repo.UpdateRuleStatus(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -198,7 +208,13 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	if err != nil {
 		return Rule{}, err
 	}
-	rule, err := re.repo.UpdateRuleStatus(ctx, id, status)
+	r := Rule{
+		ID:        id,
+		UpdatedAt: time.Now(),
+		UpdatedBy: session.UserID,
+		Status:    status,
+	}
+	rule, err := re.repo.UpdateRuleStatus(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -258,6 +274,28 @@ func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg
 	return reportConfig, nil
 }
 
+func (re *re) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedBy = session.UserID
+	c, err := re.repo.UpdateReportSchedule(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return c, nil
+}
+
+func (re *re) UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedBy = session.UserID
+	c, err := re.repo.UpdateReportConfigParams(ctx, cfg)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return c, nil
+}
+
 func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
 	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
@@ -280,10 +318,17 @@ func (re *re) EnableReportConfig(ctx context.Context, session authn.Session, id 
 	if err != nil {
 		return ReportConfig{}, err
 	}
-	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	cfg := ReportConfig{
+		ID:        id,
+		UpdatedAt: time.Now(),
+		UpdatedBy: session.UserID,
+		Status:    status,
+	}
+	cfg, err = re.repo.UpdateReportConfigStatus(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
 	return cfg, nil
 }
 
@@ -292,7 +337,13 @@ func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id
 	if err != nil {
 		return ReportConfig{}, err
 	}
-	cfg, err := re.repo.UpdateReportConfigStatus(ctx, id, status)
+	cfg := ReportConfig{
+		ID:        id,
+		UpdatedAt: time.Now(),
+		UpdatedBy: session.UserID,
+		Status:    status,
+	}
+	cfg, err = re.repo.UpdateReportConfigStatus(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -339,7 +390,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 	pm := &grpcReadersV1.PageMetadata{
 		Aggregation: agg,
 		Limit:       limit,
-		From:        float64(from.UnixNano()),
+		From:        float64(from.UnixMicro()),
 		To:          float64(to.UnixNano()),
 		Interval:    cfg.Config.Aggregation.Interval,
 	}

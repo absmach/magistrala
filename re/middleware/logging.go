@@ -294,6 +294,60 @@ func (lm *loggingMiddleware) UpdateReportConfig(ctx context.Context, session aut
 	return lm.svc.UpdateReportConfig(ctx, session, config)
 }
 
+func (lm *loggingMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg re.ReportConfig) (res re.ReportConfig, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.Group("report",
+				slog.String("id", cfg.ID),
+				slog.Any("schedule", cfg.Schedule),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Update report schedule failed", args...)
+			return
+		}
+		lm.logger.Info("Update report schedule completed successfully", args...)
+	}(time.Now())
+	return lm.svc.UpdateReportSchedule(ctx, session, cfg)
+}
+
+func (lm *loggingMiddleware) UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg re.ReportConfig) (res re.ReportConfig, err error) {
+	defer func(begin time.Time) {
+		reportAttrs := []any{
+			slog.String("id", cfg.ID),
+		}
+		
+		if len(cfg.Metrics) > 0 {
+			reportAttrs = append(reportAttrs, slog.Any("metrics", cfg.Metrics))
+		}
+		
+		if cfg.Email != nil {
+			reportAttrs = append(reportAttrs, slog.Any("email", cfg.Email))
+		}
+		
+		if cfg.Config != nil {
+			reportAttrs = append(reportAttrs, slog.Any("config", cfg.Config))
+		}
+
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.Group("report", reportAttrs...),
+		}
+		
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Update report metrics failed", args...)
+			return
+		}
+		lm.logger.Info("Update report metrics completed successfully", args...)
+	}(time.Now())
+	return lm.svc.UpdateReportConfigParams(ctx, session, cfg)
+}
+
 func (lm *loggingMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm re.PageMeta) (pg re.ReportConfigPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{

@@ -5,6 +5,7 @@ package grpc
 
 import (
 	"context"
+	"log"
 
 	readers "github.com/absmach/supermq/readers"
 	"github.com/go-kit/kit/endpoint"
@@ -17,10 +18,14 @@ func readMessagesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
 			return readMessagesRes{}, err
 		}
 
+		log.Printf("am here in grpc an req is %+v\n", req)
+
 		page, err := svc.ReadAll(req.chanID, req.pageMeta)
 		if err != nil {
 			return readMessagesRes{}, err
 		}
+		log.Printf("page is %+v\n", page)
+
 
 		return readMessagesRes{
 			PageMetadata: page.PageMetadata,

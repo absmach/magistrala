@@ -27,7 +27,7 @@ func (re *re) sendEmail(l *lua.LState) int {
 		}
 	})
 
-	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, ""); err != nil {
+	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, "", make(map[string][]byte)); err != nil {
 		return 0
 	}
 	return 1

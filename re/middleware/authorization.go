@@ -215,6 +215,38 @@ func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, sessi
 	return am.svc.UpdateReportConfig(ctx, session, cfg)
 }
 
+func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return re.ReportConfig{}, errors.Wrap(errDomainDeleteConfigs, err)
+	}
+
+	return am.svc.UpdateReportSchedule(ctx, session, cfg)
+}
+
+func (am *authorizationMiddleware) UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return re.ReportConfig{}, errors.Wrap(errDomainDeleteConfigs, err)
+	}
+
+	return am.svc.UpdateReportConfigParams(ctx, session, cfg)
+}
+
 func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
 	if err := am.authorize(ctx, smqauthz.PolicyReq{
 		Domain:      session.DomainID,

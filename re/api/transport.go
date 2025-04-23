@@ -130,6 +130,34 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "update_report_config").ServeHTTP)
 
+					r.Patch("/{reportID}/schedule", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportScheduleEndpoint(svc),
+						decodeUpdateReportScheduleRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_scheduler").ServeHTTP)
+
+					r.Patch("/{reportID}/metrics", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportMetricsEndpoint(svc),
+						decodeUpdateReportMetricsRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_metrics").ServeHTTP)
+
+					r.Patch("/{reportID}/email", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportEmailEndpoint(svc),
+						decodeUpdateReportEmailRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_email").ServeHTTP)
+
+					r.Patch("/{reportID}/metric_config", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportMetricConfigEndpoint(svc),
+						decodeUpdateReportMetricConfigRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_metric_config").ServeHTTP)
+
 					r.Delete("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
 						deleteReportConfigEndpoint(svc),
 						decodeDeleteReportConfigRequest,
@@ -311,6 +339,66 @@ func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interf
 	}
 	config.ID = chi.URLParam(r, reportIdKey)
 	return updateReportConfigReq{ReportConfig: config}, nil
+}
+
+func decodeUpdateReportScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateReportScheduleReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
+}
+
+func decodeUpdateReportEmailRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateReportEmailReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
+}
+
+func decodeUpdateReportMetricConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateReportMetricConfigReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
+}
+
+func decodeUpdateReportMetricsRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateReportMetricsReq{
+		id: chi.URLParam(r, reportIdKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
 }
 
 func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {

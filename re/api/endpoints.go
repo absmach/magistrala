@@ -269,6 +269,106 @@ func updateReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 	}
 }
 
+func updateReportScheduleEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportScheduleReq)
+		if err := req.validate(); err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		rpt := re.ReportConfig{
+			ID:       req.id,
+			Schedule: req.Schedule,
+		}
+
+		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		if err != nil {
+			return updateReportConfigRes{}, err
+		}
+		return updateReportConfigRes{ReportConfig: updatedReport}, nil
+	}
+}
+
+func updateReportMetricsEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportMetricsReq)
+		if err := req.validate(); err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		rpt := re.ReportConfig{
+			ID:      req.id,
+			Metrics: req.Metrics,
+		}
+
+		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		if err != nil {
+			return updateReportConfigRes{}, err
+		}
+		return updateReportConfigRes{ReportConfig: updatedReport}, nil
+	}
+}
+
+func updateReportEmailEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportEmailReq)
+		if err := req.validate(); err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		rpt := re.ReportConfig{
+			ID:    req.id,
+			Email: &req.Email,
+		}
+
+		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		if err != nil {
+			return updateReportConfigRes{}, err
+		}
+		return updateReportConfigRes{ReportConfig: updatedReport}, nil
+	}
+}
+
+func updateReportMetricConfigEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportMetricConfigReq)
+		if err := req.validate(); err != nil {
+			return updateReportConfigRes{}, err
+		}
+
+		rpt := re.ReportConfig{
+			ID:     req.id,
+			Config: &req.Config,
+		}
+
+		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		if err != nil {
+			return updateReportConfigRes{}, err
+		}
+		return updateReportConfigRes{ReportConfig: updatedReport}, nil
+	}
+}
+
 func viewReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
@@ -323,15 +423,15 @@ func enableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 
 		req := request.(updateReportStatusReq)
 		if err := req.validate(); err != nil {
-			return updateRuleStatusRes{}, err
+			return updateReportConfigRes{}, err
 		}
 
 		cfg, err := svc.EnableReportConfig(ctx, session, req.id)
 		if err != nil {
-			return updateRuleStatusRes{}, err
+			return updateReportConfigRes{}, err
 		}
 
-		return updateRuleStatusRes{Rule: re.Rule{ID: cfg.ID, Name: cfg.Name}}, nil
+		return updateReportConfigRes{ReportConfig: cfg}, nil
 	}
 }
 
@@ -344,15 +444,15 @@ func disableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 
 		req := request.(updateReportStatusReq)
 		if err := req.validate(); err != nil {
-			return updateRuleStatusRes{}, err
+			return updateReportConfigRes{}, err
 		}
 
 		cfg, err := svc.DisableReportConfig(ctx, session, req.id)
 		if err != nil {
-			return updateRuleStatusRes{}, err
+			return updateReportConfigRes{}, err
 		}
 
-		return updateRuleStatusRes{Rule: re.Rule{ID: cfg.ID, Name: cfg.Name}}, nil
+		return updateReportConfigRes{ReportConfig: cfg}, nil
 	}
 }
 

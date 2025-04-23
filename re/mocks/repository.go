@@ -408,9 +408,64 @@ func (_c *Repository_UpdateReportConfig_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// UpdateReportConfigParams provides a mock function for the type Repository
+func (_mock *Repository) UpdateReportConfigParams(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, cfg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportConfigParams")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, cfg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, cfg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateReportConfigParams_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportConfigParams'
+type Repository_UpdateReportConfigParams_Call struct {
+	*mock.Call
+}
+
+// UpdateReportConfigParams is a helper method to define mock.On call
+//   - ctx
+//   - cfg
+func (_e *Repository_Expecter) UpdateReportConfigParams(ctx interface{}, cfg interface{}) *Repository_UpdateReportConfigParams_Call {
+	return &Repository_UpdateReportConfigParams_Call{Call: _e.mock.On("UpdateReportConfigParams", ctx, cfg)}
+}
+
+func (_c *Repository_UpdateReportConfigParams_Call) Run(run func(ctx context.Context, cfg re.ReportConfig)) *Repository_UpdateReportConfigParams_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(re.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateReportConfigParams_Call) Return(reportConfig re.ReportConfig, err error) *Repository_UpdateReportConfigParams_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Repository_UpdateReportConfigParams_Call) RunAndReturn(run func(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error)) *Repository_UpdateReportConfigParams_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateReportConfigStatus provides a mock function for the type Repository
-func (_mock *Repository) UpdateReportConfigStatus(ctx context.Context, id string, status re.Status) (re.ReportConfig, error) {
-	ret := _mock.Called(ctx, id, status)
+func (_mock *Repository) UpdateReportConfigStatus(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, cfg)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateReportConfigStatus")
@@ -418,16 +473,16 @@ func (_mock *Repository) UpdateReportConfigStatus(ctx context.Context, id string
 
 	var r0 re.ReportConfig
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.Status) (re.ReportConfig, error)); ok {
-		return returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, cfg)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.Status) re.ReportConfig); ok {
-		r0 = returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg)
 	} else {
 		r0 = ret.Get(0).(re.ReportConfig)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, re.Status) error); ok {
-		r1 = returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, cfg)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -441,15 +496,14 @@ type Repository_UpdateReportConfigStatus_Call struct {
 
 // UpdateReportConfigStatus is a helper method to define mock.On call
 //   - ctx
-//   - id
-//   - status
-func (_e *Repository_Expecter) UpdateReportConfigStatus(ctx interface{}, id interface{}, status interface{}) *Repository_UpdateReportConfigStatus_Call {
-	return &Repository_UpdateReportConfigStatus_Call{Call: _e.mock.On("UpdateReportConfigStatus", ctx, id, status)}
+//   - cfg
+func (_e *Repository_Expecter) UpdateReportConfigStatus(ctx interface{}, cfg interface{}) *Repository_UpdateReportConfigStatus_Call {
+	return &Repository_UpdateReportConfigStatus_Call{Call: _e.mock.On("UpdateReportConfigStatus", ctx, cfg)}
 }
 
-func (_c *Repository_UpdateReportConfigStatus_Call) Run(run func(ctx context.Context, id string, status re.Status)) *Repository_UpdateReportConfigStatus_Call {
+func (_c *Repository_UpdateReportConfigStatus_Call) Run(run func(ctx context.Context, cfg re.ReportConfig)) *Repository_UpdateReportConfigStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(re.Status))
+		run(args[0].(context.Context), args[1].(re.ReportConfig))
 	})
 	return _c
 }
@@ -459,7 +513,62 @@ func (_c *Repository_UpdateReportConfigStatus_Call) Return(reportConfig re.Repor
 	return _c
 }
 
-func (_c *Repository_UpdateReportConfigStatus_Call) RunAndReturn(run func(ctx context.Context, id string, status re.Status) (re.ReportConfig, error)) *Repository_UpdateReportConfigStatus_Call {
+func (_c *Repository_UpdateReportConfigStatus_Call) RunAndReturn(run func(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error)) *Repository_UpdateReportConfigStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateReportSchedule provides a mock function for the type Repository
+func (_mock *Repository) UpdateReportSchedule(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, cfg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportSchedule")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, cfg)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.ReportConfig) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.ReportConfig) error); ok {
+		r1 = returnFunc(ctx, cfg)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateReportSchedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportSchedule'
+type Repository_UpdateReportSchedule_Call struct {
+	*mock.Call
+}
+
+// UpdateReportSchedule is a helper method to define mock.On call
+//   - ctx
+//   - cfg
+func (_e *Repository_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}) *Repository_UpdateReportSchedule_Call {
+	return &Repository_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg)}
+}
+
+func (_c *Repository_UpdateReportSchedule_Call) Run(run func(ctx context.Context, cfg re.ReportConfig)) *Repository_UpdateReportSchedule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(re.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateReportSchedule_Call) Return(reportConfig re.ReportConfig, err error) *Repository_UpdateReportSchedule_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Repository_UpdateReportSchedule_Call) RunAndReturn(run func(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error)) *Repository_UpdateReportSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -575,8 +684,8 @@ func (_c *Repository_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.
 }
 
 // UpdateRuleStatus provides a mock function for the type Repository
-func (_mock *Repository) UpdateRuleStatus(ctx context.Context, id string, status re.Status) (re.Rule, error) {
-	ret := _mock.Called(ctx, id, status)
+func (_mock *Repository) UpdateRuleStatus(ctx context.Context, r re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, r)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRuleStatus")
@@ -584,16 +693,16 @@ func (_mock *Repository) UpdateRuleStatus(ctx context.Context, id string, status
 
 	var r0 re.Rule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.Status) (re.Rule, error)); ok {
-		return returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) (re.Rule, error)); ok {
+		return returnFunc(ctx, r)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.Status) re.Rule); ok {
-		r0 = returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) re.Rule); ok {
+		r0 = returnFunc(ctx, r)
 	} else {
 		r0 = ret.Get(0).(re.Rule)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, re.Status) error); ok {
-		r1 = returnFunc(ctx, id, status)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.Rule) error); ok {
+		r1 = returnFunc(ctx, r)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -607,15 +716,14 @@ type Repository_UpdateRuleStatus_Call struct {
 
 // UpdateRuleStatus is a helper method to define mock.On call
 //   - ctx
-//   - id
-//   - status
-func (_e *Repository_Expecter) UpdateRuleStatus(ctx interface{}, id interface{}, status interface{}) *Repository_UpdateRuleStatus_Call {
-	return &Repository_UpdateRuleStatus_Call{Call: _e.mock.On("UpdateRuleStatus", ctx, id, status)}
+//   - r
+func (_e *Repository_Expecter) UpdateRuleStatus(ctx interface{}, r interface{}) *Repository_UpdateRuleStatus_Call {
+	return &Repository_UpdateRuleStatus_Call{Call: _e.mock.On("UpdateRuleStatus", ctx, r)}
 }
 
-func (_c *Repository_UpdateRuleStatus_Call) Run(run func(ctx context.Context, id string, status re.Status)) *Repository_UpdateRuleStatus_Call {
+func (_c *Repository_UpdateRuleStatus_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(re.Status))
+		run(args[0].(context.Context), args[1].(re.Rule))
 	})
 	return _c
 }
@@ -625,7 +733,7 @@ func (_c *Repository_UpdateRuleStatus_Call) Return(rule re.Rule, err error) *Rep
 	return _c
 }
 
-func (_c *Repository_UpdateRuleStatus_Call) RunAndReturn(run func(ctx context.Context, id string, status re.Status) (re.Rule, error)) *Repository_UpdateRuleStatus_Call {
+func (_c *Repository_UpdateRuleStatus_Call) RunAndReturn(run func(ctx context.Context, r re.Rule) (re.Rule, error)) *Repository_UpdateRuleStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

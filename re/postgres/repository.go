@@ -79,30 +79,39 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 	return ret, nil
 }
 
-func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, id string, status re.Status) (re.Rule, error) {
-	q := `
-		UPDATE rules
-		SET status = $2
-		WHERE id = $1
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
-			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;  
-	`
-	row := repo.DB.QueryRowxContext(ctx, q, id, status)
-	if err := row.Err(); err != nil {
-		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
-	}
+func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule) (re.Rule, error) {
+	q := `UPDATE rules 
+	SET status = :status, updated_at = :updated_at, updated_by = :updated_by
+	WHERE id = :id
+	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 
-	var dbr dbRule
-	if err := row.StructScan(&dbr); err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	rule, err := dbToRule(dbr)
+	dbr, err := ruleToDb(r)
 	if err != nil {
 		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	return rule, nil
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err := row.Err(); err != nil {
+		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	var res dbRule
+	if row.Next() {
+		if err := row.StructScan(&res); err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+
+		rule, err := dbToRule(res)
+		if err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+
+		return rule, nil
+	}
+
+	return re.Rule{}, repoerr.ErrNotFound
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -355,31 +364,37 @@ func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string)
 	return rpt, nil
 }
 
-func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, id string, status re.Status) (re.ReportConfig, error) {
-	q := `
-		UPDATE report_config
-		SET status = $2
-		WHERE id = $1
-		RETURNING id, name, description, domain_id, metrics, email, config,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status; 
-	`
+func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	q := `UPDATE report_config SET status = :status, updated_at = :updated_at, updated_by = :updated_by
+		WHERE id = :id
+        RETURNING id, name, description, domain_id, metrics, email, config,
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 
-	row := repo.DB.QueryRowxContext(ctx, q, id, status)
-	if err := row.Err(); err != nil {
-		return re.ReportConfig{}, err
-	}
-
-	var dbr dbReport
-	if err := row.StructScan(&dbr); err != nil {
-		return re.ReportConfig{}, err
-	}
-
-	rpt, err := dbToReport(dbr)
+	dbRpt, err := reportToDb(cfg)
 	if err != nil {
-		return re.ReportConfig{}, err
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	return rpt, nil
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbRpt)
+	if err != nil {
+		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	dbr := dbReport{}
+	if row.Next() {
+		if err := row.StructScan(&dbr); err != nil {
+			return re.ReportConfig{}, err
+		}
+
+		res, err := dbToReport(dbr)
+		if err != nil {
+			return re.ReportConfig{}, err
+		}
+		return res, err
+	}
+
+	return re.ReportConfig{}, repoerr.ErrNotFound
 }
 
 func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
@@ -416,6 +431,90 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg re.R
 	}
 
 	return rpt, nil
+}
+
+func (repo *PostgresRepository) UpdateReportSchedule(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	q := `
+		UPDATE report_config
+		SET start_datetime = :start_datetime, time = :time, recurring = :recurring, 
+			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
+		RETURNING id, name, description, domain_id, config, metrics,
+			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`
+
+	dbr, err := reportToDb(cfg)
+	if err != nil {
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	var dbReport dbReport
+	if row.Next() {
+		if err := row.StructScan(&dbReport); err != nil {
+			return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+	}
+	report, err := dbToReport(dbReport)
+	if err != nil {
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	return report, nil
+}
+
+func (repo *PostgresRepository) UpdateReportConfigParams(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
+	var query []string
+
+	if len(cfg.Metrics) > 0 {
+		query = append(query, "metrics = :metrics")
+	}
+
+	if cfg.Email != nil {
+		query = append(query, "email = :email")
+	}
+
+	if cfg.Config != nil {
+		query = append(query, "config = :config")
+	}
+
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("%s", strings.Join(query, ", "))
+	}
+
+	q = fmt.Sprintf(`
+		UPDATE report_config
+		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
+		RETURNING id, name, description, domain_id, config, metrics,
+			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`, q)
+
+	dbr, err := reportToDb(cfg)
+	if err != nil {
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	var dbReport dbReport
+	if row.Next() {
+		if err := row.StructScan(&dbReport); err != nil {
+			return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+	}
+	report, err := dbToReport(dbReport)
+	if err != nil {
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	return report, nil
 }
 
 func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id string) error {

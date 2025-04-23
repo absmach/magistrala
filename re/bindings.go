@@ -10,8 +10,8 @@ import (
 	"encoding/json"
 
 	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers/senml"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -88,8 +88,7 @@ func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.
 	}
 }
 
-func (re *re) saveSenml(ctx context.Context, table lua.LValue, msg *messaging.Message) error {
-	val := convertLua(table)
+func (re *re) saveSenml(ctx context.Context, val interface{}, msg *messaging.Message) error {
 	// In case there is a single SenML value, convert to slice so we can unmarshal.
 	if _, ok := val.([]any); !ok {
 		val = []any{val}
@@ -98,9 +97,7 @@ func (re *re) saveSenml(ctx context.Context, table lua.LValue, msg *messaging.Me
 	if err != nil {
 		return err
 	}
-
-	var message []senml.Message
-	if err := json.Unmarshal(data, &message); err != nil {
+	if _, err := senml.Decode(data, senml.JSON); err != nil {
 		return err
 	}
 
@@ -119,8 +116,7 @@ func (re *re) saveSenml(ctx context.Context, table lua.LValue, msg *messaging.Me
 	return nil
 }
 
-func (re *re) publishChannel(ctx context.Context, table lua.LValue, channel, subtopic string, msg *messaging.Message) error {
-	val := convertLua(table)
+func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subtopic string, msg *messaging.Message) error {
 	data, err := json.Marshal(val)
 	if err != nil {
 		return err

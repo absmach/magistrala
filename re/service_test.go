@@ -63,6 +63,8 @@ var (
 		Status:    re.EnabledStatus,
 		Schedule:  schedule,
 		CreatedBy: userID,
+		UpdatedBy: userID,
+		UpdatedAt: time.Now(),
 	}
 )
 
@@ -442,6 +444,8 @@ func TestRemoveRule(t *testing.T) {
 func TestEnableRule(t *testing.T) {
 	svc, repo, _, _ := newService(t, make(chan error))
 
+	now := time.Now()
+
 	cases := []struct {
 		desc    string
 		session authn.Session
@@ -465,6 +469,8 @@ func TestEnableRule(t *testing.T) {
 				InputChannel: inputChannel,
 				Status:       re.EnabledStatus,
 				Schedule:     schedule,
+				UpdatedBy:    userID,
+				UpdatedAt:    now,
 			},
 			err: nil,
 		},
@@ -482,7 +488,7 @@ func TestEnableRule(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("UpdateRuleStatus", context.Background(), tc.id, tc.status).Return(tc.res, tc.err)
+			repoCall := repo.On("UpdateRuleStatus", context.Background(), mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.EnableRule(context.Background(), tc.session, tc.id)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -496,6 +502,8 @@ func TestEnableRule(t *testing.T) {
 
 func TestDisableRule(t *testing.T) {
 	svc, repo, _, _ := newService(t, make(chan error))
+
+	now := time.Now()
 
 	cases := []struct {
 		desc    string
@@ -520,6 +528,8 @@ func TestDisableRule(t *testing.T) {
 				InputChannel: inputChannel,
 				Status:       re.DisabledStatus,
 				Schedule:     schedule,
+				UpdatedBy:    userID,
+				UpdatedAt:    now,
 			},
 			err: nil,
 		},
@@ -537,7 +547,7 @@ func TestDisableRule(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("UpdateRuleStatus", mock.Anything, tc.id, tc.status).Return(tc.res, tc.err)
+			repoCall := repo.On("UpdateRuleStatus", mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.DisableRule(context.Background(), tc.session, tc.id)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -975,7 +985,7 @@ func TestEnableReportConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("UpdateReportConfigStatus", context.Background(), tc.id, tc.status).Return(tc.res, tc.err)
+			repoCall := repo.On("UpdateReportConfigStatus", context.Background(), mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.EnableReportConfig(context.Background(), tc.session, tc.id)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1007,11 +1017,13 @@ func TestDisableReportConfig(t *testing.T) {
 			id:     rptConfig.ID,
 			status: re.DisabledStatus,
 			res: re.ReportConfig{
-				ID:       rptConfig.ID,
-				Name:     rptConfig.Name,
-				DomainID: rptConfig.DomainID,
-				Status:   re.DisabledStatus,
-				Schedule: schedule,
+				ID:        rptConfig.ID,
+				Name:      rptConfig.Name,
+				DomainID:  rptConfig.DomainID,
+				Status:    re.DisabledStatus,
+				Schedule:  schedule,
+				UpdatedBy: userID,
+				UpdatedAt: time.Now(),
 			},
 			err: nil,
 		},
@@ -1029,7 +1041,7 @@ func TestDisableReportConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("UpdateReportConfigStatus", mock.Anything, tc.id, tc.status).Return(tc.res, tc.err)
+			repoCall := repo.On("UpdateReportConfigStatus", mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.DisableReportConfig(context.Background(), tc.session, tc.id)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

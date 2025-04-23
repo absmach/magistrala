@@ -132,7 +132,7 @@ func (re *re) publishChannel(ctx context.Context, table lua.LValue, channel, sub
 		Created:   msg.Created,
 		Channel:   channel,
 		Subtopic:  subtopic,
-		Protocol:  msg.Protocol,
+		Protocol:  protocol,
 		Payload:   data,
 	}
 	if err := re.rePubSub.Publish(ctx, channel, m); err != nil {

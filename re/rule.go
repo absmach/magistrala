@@ -19,6 +19,7 @@ const (
 	monthsInYear = 12
 
 	publisher = "magistrala.re"
+	protocol  = "nats"
 )
 
 // ScriptOutput is the indicator for type of the logic

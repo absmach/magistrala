@@ -223,14 +223,9 @@ func main() {
 		exitCode = 1
 		return
 	}
+	defer client.Close()
 
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to readers gRPC server: %s", err))
-		exitCode = 1
-		return
-	}
-	defer client.Close()
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
 	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)

@@ -174,9 +174,6 @@ type generateReportReq struct {
 }
 
 func (req generateReportReq) validate() error {
-	if req.Name == "" {
-		return svcerr.ErrMalformedEntity
-	}
 	if len(req.Metrics) == 0 {
 		return svcerr.ErrMalformedEntity
 	}

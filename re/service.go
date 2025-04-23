@@ -341,7 +341,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 		Limit:       limit,
 		From:        float64(from.UnixNano()),
 		To:          float64(to.UnixNano()),
-		Interval:    interval,
+		Interval:    cfg.Config.Aggregation.Interval,
 	}
 
 	reportPage := ReportPage{

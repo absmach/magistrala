@@ -30,17 +30,17 @@ const (
 	Alarms
 	SaveSenML
 	Email
-	Save
+	SaveRemotePg
 )
 
 var (
-	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save"}
+	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg"}
 	stringToScriptKind = map[string]ScriptOutput{
-		"channels":   Channels,
-		"alarms":     Alarms,
-		"save_senml": SaveSenML,
-		"email":      Email,
-		"save":       Save,
+		"channels":       Channels,
+		"alarms":         Alarms,
+		"save_senml":     SaveSenML,
+		"email":          Email,
+		"save_remote_pg": SaveRemotePg,
 	}
 )
 
@@ -51,12 +51,12 @@ func (s ScriptOutput) String() string {
 	return scriptKindToString[s]
 }
 
-// MarshalJSON converts ScriptKind to JSON string.
+// MarshalJSON converts ScriptOutput to JSON.
 func (s ScriptOutput) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
-// UnmarshalJSON parses JSON string into ScriptKind.
+// UnmarshalJSON parses JSON string into ScriptOutput.
 func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
@@ -67,7 +67,7 @@ func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
 		*s = val
 		return nil
 	}
-	return errors.New("invalid ScriptKind: " + str)
+	return errors.New("invalid ScriptOutput: " + str)
 }
 
 type (

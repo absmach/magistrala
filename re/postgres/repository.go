@@ -92,7 +92,7 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule)
 	}
 
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
-	if err := row.Err(); err != nil {
+	if err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 	defer row.Close()

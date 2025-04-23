@@ -113,12 +113,7 @@ func (req updateReportConfigReq) validate() error {
 	if req.ID == "" {
 		return svcerr.ErrMalformedEntity
 	}
-	if req.Name == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	if len(req.Metrics) == 0 {
-		return svcerr.ErrMalformedEntity
-	}
+
 	return nil
 }
 
@@ -162,7 +157,7 @@ func (req updateReportEmailReq) validate() error {
 }
 
 type updateReportMetricConfigReq struct {
-	id    string
+	id     string
 	Config re.MetricConfig `json:"config,omitempty"`
 }
 

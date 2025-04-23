@@ -319,15 +319,15 @@ func (lm *loggingMiddleware) UpdateReportConfigParams(ctx context.Context, sessi
 		reportAttrs := []any{
 			slog.String("id", cfg.ID),
 		}
-		
+
 		if len(cfg.Metrics) > 0 {
 			reportAttrs = append(reportAttrs, slog.Any("metrics", cfg.Metrics))
 		}
-		
+
 		if cfg.Email != nil {
 			reportAttrs = append(reportAttrs, slog.Any("email", cfg.Email))
 		}
-		
+
 		if cfg.Config != nil {
 			reportAttrs = append(reportAttrs, slog.Any("config", cfg.Config))
 		}
@@ -337,7 +337,7 @@ func (lm *loggingMiddleware) UpdateReportConfigParams(ctx context.Context, sessi
 			slog.String("domain_id", session.DomainID),
 			slog.Group("report", reportAttrs...),
 		}
-		
+
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
 			lm.logger.Warn("Update report metrics failed", args...)

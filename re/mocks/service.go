@@ -255,52 +255,6 @@ func (_c *Service_EnableRule_Call) RunAndReturn(run func(ctx context.Context, se
 	return _c
 }
 
-// Errors provides a mock function for the type Service
-func (_mock *Service) Errors() <-chan error {
-	ret := _mock.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for Errors")
-	}
-
-	var r0 <-chan error
-	if returnFunc, ok := ret.Get(0).(func() <-chan error); ok {
-		r0 = returnFunc()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(<-chan error)
-		}
-	}
-	return r0
-}
-
-// Service_Errors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Errors'
-type Service_Errors_Call struct {
-	*mock.Call
-}
-
-// Errors is a helper method to define mock.On call
-func (_e *Service_Expecter) Errors() *Service_Errors_Call {
-	return &Service_Errors_Call{Call: _e.mock.On("Errors")}
-}
-
-func (_c *Service_Errors_Call) Run(run func()) *Service_Errors_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run()
-	})
-	return _c
-}
-
-func (_c *Service_Errors_Call) Return(errCh <-chan error) *Service_Errors_Call {
-	_c.Call.Return(errCh)
-	return _c
-}
-
-func (_c *Service_Errors_Call) RunAndReturn(run func() <-chan error) *Service_Errors_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // Handle provides a mock function for the type Service
 func (_mock *Service) Handle(msg *messaging.Message) error {
 	ret := _mock.Called(msg)

@@ -68,6 +68,10 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	var err error
 	for _, o := range r.Logic.Outputs {
 		val := convertLua(result)
+		// If value is false, don't run the follow-up.
+		if v, ok := val.(bool); ok && !v {
+			return nil
+		}
 		if e := re.handleOutput(ctx, o, r, msg, val); e != nil {
 			err = errors.Wrap(e, err)
 		}

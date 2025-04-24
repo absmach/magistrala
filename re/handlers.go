@@ -61,7 +61,8 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return err
 	}
-	result := l.Get(-1) // Get the last result.
+	// Get the last result.
+	result := l.Get(-1)
 	if result == lua.LNil {
 		return nil
 	}

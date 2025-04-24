@@ -16,7 +16,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         time BIGINT NOT NULL,
                         channel       UUID,
                         subtopic      VARCHAR(254),
-                        publisher     UUID,
+                        publisher     VARCHAR(254),
                         protocol      TEXT,
                         name          VARCHAR(254),
                         unit          TEXT,

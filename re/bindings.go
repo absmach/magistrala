@@ -89,7 +89,7 @@ func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.
 }
 
 func (re *re) saveSenml(ctx context.Context, val interface{}, msg *messaging.Message) error {
-	// In case there is a single SenML value, convert to slice so we can unmarshal.
+	// In case there is a single SenML value, convert to slice so we can decode.
 	if _, ok := val.([]any); !ok {
 		val = []any{val}
 	}

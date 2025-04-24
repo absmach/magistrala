@@ -222,7 +222,7 @@ func listReportsConfigEndpoint(svc re.Service) endpoint.Endpoint {
 				Offset: page.Offset,
 				Total:  page.Total,
 			},
-			Reports: page.ReportConfigs,
+			ReportConfigs: page.ReportConfigs,
 		}, nil
 	}
 }
@@ -311,7 +311,7 @@ func updateReportMetricsEndpoint(s re.Service) endpoint.Endpoint {
 			Metrics: req.Metrics,
 		}
 
-		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		updatedReport, err := s.UpdateReportConfig(ctx, session, rpt)
 		if err != nil {
 			return updateReportConfigRes{}, err
 		}
@@ -336,7 +336,7 @@ func updateReportEmailEndpoint(s re.Service) endpoint.Endpoint {
 			Email: &req.Email,
 		}
 
-		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		updatedReport, err := s.UpdateReportConfig(ctx, session, rpt)
 		if err != nil {
 			return updateReportConfigRes{}, err
 		}
@@ -361,7 +361,7 @@ func updateReportMetricConfigEndpoint(s re.Service) endpoint.Endpoint {
 			Config: &req.Config,
 		}
 
-		updatedReport, err := s.UpdateReportSchedule(ctx, session, rpt)
+		updatedReport, err := s.UpdateReportConfig(ctx, session, rpt)
 		if err != nil {
 			return updateReportConfigRes{}, err
 		}

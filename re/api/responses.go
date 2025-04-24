@@ -234,7 +234,7 @@ func (res deleteReportConfigRes) Empty() bool {
 
 type listReportsConfigRes struct {
 	pageRes
-	Reports []re.ReportConfig `json:"reports"`
+	ReportConfigs []re.ReportConfig `json:"report_configs"`
 }
 
 func (res listReportsConfigRes) Code() int {

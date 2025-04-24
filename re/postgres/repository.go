@@ -398,16 +398,41 @@ func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, cf
 }
 
 func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
-	q := `
+	var query []string
+
+	if cfg.Name != "" {
+		query = append(query, "name = :name")
+	}
+
+	if cfg.Description != "" {
+		query = append(query, "description = :description")
+	}
+
+	if len(cfg.Metrics) > 0 {
+		query = append(query, "metrics = :metrics")
+	}
+
+	if cfg.Email != nil {
+		query = append(query, "email = :email")
+	}
+
+	if cfg.Config != nil {
+		query = append(query, "config = :config")
+	}
+
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("%s", strings.Join(query, ", "))
+	}
+
+	q = fmt.Sprintf(`
 		UPDATE report_config
-		SET name = :name, description = :description, config = :config, metrics = :metrics,
-			start_datetime = :start_datetime, time = :time, recurring = :recurring, 
-			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by, status = :status,
-			email = :email
+		SET %s,
+			updated_at = :updated_at, updated_by = :updated_by
 		WHERE id = :id
 		RETURNING id, name, description, domain_id, config, metrics,
 			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
-		`
+		`, q)
 
 	dbr, err := reportToDb(cfg)
 	if err != nil {
@@ -441,57 +466,6 @@ func (repo *PostgresRepository) UpdateReportSchedule(ctx context.Context, cfg re
 		RETURNING id, name, description, domain_id, config, metrics,
 			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
-
-	dbr, err := reportToDb(cfg)
-	if err != nil {
-		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
-	if err != nil {
-		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
-	}
-	defer row.Close()
-
-	var dbReport dbReport
-	if row.Next() {
-		if err := row.StructScan(&dbReport); err != nil {
-			return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-	}
-	report, err := dbToReport(dbReport)
-	if err != nil {
-		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	return report, nil
-}
-
-func (repo *PostgresRepository) UpdateReportConfigParams(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
-	var query []string
-
-	if len(cfg.Metrics) > 0 {
-		query = append(query, "metrics = :metrics")
-	}
-
-	if cfg.Email != nil {
-		query = append(query, "email = :email")
-	}
-
-	if cfg.Config != nil {
-		query = append(query, "config = :config")
-	}
-
-	var q string
-	if len(query) > 0 {
-		q = fmt.Sprintf("%s", strings.Join(query, ", "))
-	}
-
-	q = fmt.Sprintf(`
-		UPDATE report_config
-		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
-	`, q)
 
 	dbr, err := reportToDb(cfg)
 	if err != nil {
@@ -557,7 +531,7 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.Pag
 	}
 	defer rows.Close()
 
-	var cfgs []re.ReportConfig
+	cfgs := []re.ReportConfig{}
 	for rows.Next() {
 		var r dbReport
 		if err := rows.StructScan(&r); err != nil {

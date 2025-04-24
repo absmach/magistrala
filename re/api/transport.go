@@ -422,10 +422,19 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	status, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefStatus)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	st, err := re.ToStatus(status)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return listReportsConfigReq{
 		PageMeta: re.PageMeta{
 			Offset: offset,
 			Limit:  limit,
+			Status: st,
 		},
 	}, nil
 }

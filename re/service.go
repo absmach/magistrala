@@ -32,7 +32,6 @@ type Repository interface {
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
 	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
-	UpdateReportConfigParams(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
@@ -77,7 +76,6 @@ type Service interface {
 	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
-	UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
 	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
@@ -285,17 +283,6 @@ func (re *re) UpdateReportSchedule(ctx context.Context, session authn.Session, c
 	return c, nil
 }
 
-func (re *re) UpdateReportConfigParams(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
-	cfg.UpdatedAt = time.Now()
-	cfg.UpdatedBy = session.UserID
-	c, err := re.repo.UpdateReportConfigParams(ctx, cfg)
-	if err != nil {
-		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
-	}
-
-	return c, nil
-}
-
 func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
 	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
@@ -305,7 +292,6 @@ func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id 
 }
 
 func (re *re) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
-	pm.Domain = session.DomainID
 	page, err := re.repo.ListReportsConfig(ctx, pm)
 	if err != nil {
 		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)

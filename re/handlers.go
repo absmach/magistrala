@@ -27,7 +27,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 	pm := PageMeta{
 		InputChannel: inputChannel,
 		Status:       EnabledStatus,
-		InputTopic:   msg.Subtopic,
+		InputTopic:   &msg.Subtopic,
 	}
 	ctx := context.Background()
 	page, err := re.repo.ListRules(ctx, pm)

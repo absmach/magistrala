@@ -511,7 +511,7 @@ func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id strin
 
 func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.PageMeta) (re.ReportConfigPage, error) {
 	listReportsQuery := `
-		SELECT id, name, domain_id, metrics, email, config,
+		SELECT id, name, description, domain_id, metrics, email, config,
 			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config rc %s %s;
 	`
@@ -567,6 +567,10 @@ func pageReportQuery(pm re.PageMeta) string {
 
 	if pm.Domain != "" {
 		query = append(query, "rc.domain_id = :domain_id")
+	}
+
+	if pm.Name != "" {
+		query = append(query, "rc.name ILIKE '%' || :name || '%'")
 	}
 
 	var q string

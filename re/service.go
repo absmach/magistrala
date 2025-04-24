@@ -4,7 +4,6 @@
 package re
 
 import (
-	"bytes"
 	"context"
 	"time"
 
@@ -441,12 +440,12 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 
 	if download {
 		var err error
-		reportPage.PDF, err = re.generatePDFReport(reportPage.Reports)
+		reportPage.PDF, err = generatePDFReport(reportPage.Reports)
 		if err != nil {
 			return reportPage, err
 		}
 
-		reportPage.CSV, err = re.generateCSVReport(reportPage.Reports)
+		reportPage.CSV, err = generateCSVReport(reportPage.Reports)
 		if err != nil {
 			return reportPage, err
 		}

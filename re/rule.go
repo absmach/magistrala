@@ -18,8 +18,7 @@ const (
 	daysInWeek   = 7
 	monthsInYear = 12
 
-	publisher = "magistrala.re"
-	protocol  = "nats"
+	protocol = "nats"
 )
 
 // ScriptOutput is the indicator for type of the logic

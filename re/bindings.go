@@ -124,7 +124,7 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 
 	m := &messaging.Message{
 		Domain:    msg.Domain,
-		Publisher: publisher,
+		Publisher: msg.Publisher,
 		Created:   msg.Created,
 		Channel:   channel,
 		Subtopic:  subtopic,

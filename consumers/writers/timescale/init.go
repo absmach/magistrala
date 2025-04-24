@@ -16,7 +16,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         time BIGINT NOT NULL,
                         channel       UUID,
                         subtopic      VARCHAR(254),
-                        publisher     UUID,
+                        publisher     VARCHAR(254),
                         protocol      TEXT,
                         name          VARCHAR(254),
                         unit          TEXT,
@@ -26,7 +26,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         data_value    BYTEA,
                         sum           FLOAT,
                         update_time   FLOAT,
-                        PRIMARY KEY (time, publisher, subtopic, name)
+                        PRIMARY KEY (time, publisher, channel, subtopic, name)
                     );
                     SELECT create_hypertable('messages', 'time', create_default_indexes => FALSE, chunk_time_interval => 86400000, if_not_exists => TRUE);`,
 				},

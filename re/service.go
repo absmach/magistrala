@@ -12,45 +12,7 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
-	lua "github.com/yuin/gopher-lua"
 )
-
-const (
-	hoursInDay   = 24
-	daysInWeek   = 7
-	monthsInYear = 12
-
-	publisher = "magistrala.re"
-)
-
-var ErrInvalidRecurringType = errors.New("invalid recurring type")
-
-type (
-	ScriptType uint
-	Metadata   map[string]interface{}
-	Script     struct {
-		Type  ScriptType `json:"type"`
-		Value string     `json:"value"`
-	}
-)
-
-type Rule struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	DomainID      string    `json:"domain"`
-	Metadata      Metadata  `json:"metadata,omitempty"`
-	InputChannel  string    `json:"input_channel"`
-	InputTopic    string    `json:"input_topic"`
-	Logic         Script    `json:"logic"`
-	OutputChannel string    `json:"output_channel,omitempty"`
-	OutputTopic   string    `json:"output_topic,omitempty"`
-	Schedule      Schedule  `json:"schedule,omitempty"`
-	Status        Status    `json:"status"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	CreatedBy     string    `json:"created_by,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
-	UpdatedBy     string    `json:"updated_by,omitempty"`
-}
 
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
@@ -70,7 +32,7 @@ type PageMeta struct {
 	Dir             string     `json:"dir" db:"dir"`
 	Name            string     `json:"name" db:"name"`
 	InputChannel    string     `json:"input_channel,omitempty" db:"input_channel"`
-	InputTopic      string     `json:"input_topic,omitempty" db:"input_topic"`
+	InputTopic      *string    `json:"input_topic,omitempty" db:"input_topic"`
 	OutputChannel   string     `json:"output_channel,omitempty" db:"output_channel"`
 	Status          Status     `json:"status,omitempty" db:"status"`
 	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
@@ -97,28 +59,27 @@ type Service interface {
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	StartScheduler(ctx context.Context) error
-	Errors() <-chan error
 }
 
 type re struct {
-	writersPub messaging.Publisher
-	alarmsPub  messaging.Publisher
-	rePubSub   messaging.PubSub
-	idp        supermq.IDProvider
 	repo       Repository
 	errors     chan error
+	idp        supermq.IDProvider
+	rePubSub   messaging.PubSub
+	writersPub messaging.Publisher
+	alarmsPub  messaging.Publisher
 	ticker     Ticker
 	email      Emailer
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
+func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer) Service {
 	return &re{
-		writersPub: writersPub,
-		alarmsPub:  alarmsPub,
-		rePubSub:   rePubSub,
 		repo:       repo,
 		idp:        idp,
-		errors:     make(chan error),
+		errors:     errors,
+		rePubSub:   rePubSub,
+		writersPub: writersPub,
+		alarmsPub:  alarmsPub,
 		ticker:     tck,
 		email:      emailer,
 	}
@@ -220,155 +181,10 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	return rule, nil
 }
 
-func (re *re) Handle(msg *messaging.Message) error {
-	inputChannel := msg.Channel
-
-	pm := PageMeta{
-		InputChannel: inputChannel,
-		Status:       EnabledStatus,
-		InputTopic:   msg.Subtopic,
-	}
-	ctx := context.Background()
-	page, err := re.repo.ListRules(ctx, pm)
-	if err != nil {
-		return err
-	}
-
-	for _, r := range page.Rules {
-		go func(ctx context.Context) {
-			if err := re.process(ctx, r, msg); err != nil {
-				re.errors <- err
-			}
-		}(ctx)
-	}
-	return nil
-}
-
 func (re *re) Cancel() error {
 	return nil
 }
 
 func (re *re) Errors() <-chan error {
 	return re.errors
-}
-
-func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
-	l := lua.NewState()
-	defer l.Close()
-	preload(l)
-
-	message := prepareMsg(l, msg)
-
-	// Set the message object as a Lua global variable.
-	l.SetGlobal("message", message)
-
-	// set the email function as a Lua global function.
-	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
-	l.SetGlobal("save_senml", l.NewFunction(re.save(ctx, msg)))
-	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
-
-	if err := l.DoString(string(r.Logic.Value)); err != nil {
-		return err
-	}
-
-	result := l.Get(-1) // Get the last result.
-	switch result {
-	case lua.LNil:
-		return nil
-	default:
-		if r.OutputChannel == "" {
-			return nil
-		}
-		m := &messaging.Message{
-			Publisher: publisher,
-			Created:   time.Now().Unix(),
-			Payload:   []byte(result.String()),
-			Channel:   r.OutputChannel,
-			Domain:    r.DomainID,
-			Subtopic:  r.OutputTopic,
-		}
-		return re.rePubSub.Publish(ctx, m.Channel, m)
-	}
-}
-
-func (re *re) StartScheduler(ctx context.Context) error {
-	defer re.ticker.Stop()
-
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-re.ticker.Tick():
-			startTime := time.Now()
-
-			pm := PageMeta{
-				Status:          EnabledStatus,
-				ScheduledBefore: &startTime,
-			}
-
-			page, err := re.repo.ListRules(ctx, pm)
-			if err != nil {
-				return err
-			}
-
-			for _, rule := range page.Rules {
-				if rule.shouldRun(startTime) {
-					go func(r Rule) {
-						msg := &messaging.Message{
-							Channel: r.InputChannel,
-							Created: startTime.Unix(),
-						}
-						re.errors <- re.process(ctx, r, msg)
-					}(rule)
-				}
-			}
-		}
-	}
-}
-
-func (r Rule) shouldRun(startTime time.Time) bool {
-	// Don't run if the rule's start time is in the future
-	// This allows scheduling rules to start at a specific future time
-	if r.Schedule.StartDateTime.After(startTime) {
-		return false
-	}
-
-	t := r.Schedule.Time.Truncate(time.Minute).UTC()
-	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
-	if t.Equal(startTimeOnly) {
-		return true
-	}
-
-	if r.Schedule.RecurringPeriod == 0 {
-		return false
-	}
-
-	period := int(r.Schedule.RecurringPeriod)
-
-	switch r.Schedule.Recurring {
-	case Daily:
-		if r.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
-			if int(daysSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Weekly:
-		if r.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
-			if int(weeksSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Monthly:
-		if r.Schedule.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-r.Schedule.StartDateTime.Month())
-			if monthsSinceStart%period == 0 {
-				return true
-			}
-		}
-	}
-
-	return false
 }

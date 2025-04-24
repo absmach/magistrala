@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -21,6 +22,7 @@ type dbRule struct {
 	InputChannel    string         `db:"input_channel"`
 	InputTopic      sql.NullString `db:"input_topic"`
 	LogicType       re.ScriptType  `db:"logic_type"`
+	LogicOutputs    pq.Int32Array  `db:"logic_output"`
 	LogicValue      string         `db:"logic_value"`
 	OutputChannel   sql.NullString `db:"output_channel"`
 	OutputTopic     sql.NullString `db:"output_topic"`
@@ -44,6 +46,10 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		}
 		metadata = b
 	}
+	lo := pq.Int32Array{}
+	for _, v := range r.Logic.Outputs {
+		lo = append(lo, int32(v))
+	}
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -52,6 +58,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
+		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
@@ -74,6 +81,10 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 	}
+	lo := []re.ScriptOutput{}
+	for _, v := range dto.LogicOutputs {
+		lo = append(lo, re.ScriptOutput(v))
+	}
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
@@ -82,8 +93,9 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
-			Type:  dto.LogicType,
-			Value: dto.LogicValue,
+			Outputs: lo,
+			Type:    dto.LogicType,
+			Value:   dto.LogicValue,
 		},
 		OutputChannel: fromNullString(dto.OutputChannel),
 		OutputTopic:   fromNullString(dto.OutputTopic),

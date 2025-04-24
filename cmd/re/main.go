@@ -176,9 +176,10 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
+	errs := make(chan error)
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(database, msgSub, writersPub, alarmsPub, ec, logger)
+	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, ec, logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -200,8 +201,10 @@ func main() {
 
 	go func() {
 		for {
-			err := <-svc.Errors()
-			logger.Warn("Error handling rule", slog.String("error", err.Error()))
+			err := <-errs
+			if err != nil {
+				logger.Warn("Error handling rule", slog.String("error", err.Error()))
+			}
 		}
 	}()
 
@@ -231,7 +234,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -240,7 +243,7 @@ func newService(db pgclient.Database, rePubSub messaging.PubSub, writersPub, ala
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient)
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

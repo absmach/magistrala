@@ -56,17 +56,17 @@ var (
 	}
 )
 
-func newService(t *testing.T) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
+func newService(t *testing.T, errs chan error) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	e := new(mocks.Emailer)
-	return re.NewService(repo, idProvider, pubsub, pubsub, pubsub, mockTicker, e), repo, pubsub, mockTicker
+	return re.NewService(repo, errs, idProvider, pubsub, pubsub, pubsub, mockTicker, e), repo, pubsub, mockTicker
 }
 
 func TestAddRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -141,7 +141,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -199,7 +199,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -284,7 +284,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestListRules(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -389,7 +389,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -429,7 +429,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -484,7 +484,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -539,8 +539,9 @@ func TestDisableRule(t *testing.T) {
 }
 
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _ := newService(t)
+	svc, repo, pubmocks, _ := newService(t, make(chan error))
 	now := time.Now()
+	empty := ""
 
 	cases := []struct {
 		desc       string
@@ -559,6 +560,7 @@ func TestHandle(t *testing.T) {
 			},
 			pageMeta: re.PageMeta{
 				InputChannel: inputChannel,
+				InputTopic:   &empty,
 				Status:       re.EnabledStatus,
 			},
 			page: re.Page{
@@ -575,6 +577,7 @@ func TestHandle(t *testing.T) {
 			pageMeta: re.PageMeta{
 				InputChannel: inputChannel,
 				Status:       re.EnabledStatus,
+				InputTopic:   &empty,
 			},
 			page: re.Page{
 				Rules: []re.Rule{
@@ -619,7 +622,8 @@ func TestHandle(t *testing.T) {
 
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
-	svc, repo, _, ticker := newService(t)
+	errs := make(chan error)
+	svc, repo, _, ticker := newService(t, errs)
 
 	noRecurringPeriod := re.Rule{
 		ID:           testsutil.GenerateUUID(t),
@@ -834,7 +838,7 @@ func TestStartScheduler(t *testing.T) {
 			case "start scheduler with list error":
 				tickChan <- time.Now()
 				time.Sleep(100 * time.Millisecond)
-				if err := svc.Errors(); err != nil {
+				if err := errs; err != nil {
 					cancel()
 				}
 			default:

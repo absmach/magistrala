@@ -24,11 +24,11 @@ func NewRepository(db postgres.Database) re.Repository {
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	q := `
-	INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+	INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
-	VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_value,
+	VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_output, :logic_value,
 		:output_channel, :output_topic, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
-	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 `
 	dbr, err := ruleToDb(r)
@@ -58,7 +58,7 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	q := `
-		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value, output_channel, 
+		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel, 
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules
 		WHERE id = $1;
@@ -84,7 +84,7 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, id string,
 		UPDATE rules
 		SET status = $2
 		WHERE id = $1
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;  
 	`
 	row := repo.DB.QueryRowxContext(ctx, q, id, status)
@@ -127,8 +127,9 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 		query = append(query, "output_topic = :output_topic,")
 	}
 	if r.Logic.Value != "" {
-		query = append(query, "logic_value = :logic_value,")
 		query = append(query, "logic_type = :logic_type,")
+		query = append(query, "logic_output = :logic_output,")
+		query = append(query, "logic_value = :logic_value,")
 	}
 
 	if len(query) > 0 {
@@ -138,7 +139,7 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 	q := fmt.Sprintf(`
 		UPDATE rules
 		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`, upq)
 
@@ -171,7 +172,7 @@ func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rul
 		UPDATE rules
 		SET start_datetime = :start_datetime, time = :time, recurring = :recurring, 
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_value,
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 	dbr, err := ruleToDb(r)
@@ -230,10 +231,11 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	}
 	pq := pageQuery(pm)
 	q := fmt.Sprintf(`
-		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_value, output_channel, 
+		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel, 
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`, pq, pgData)
+
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.Page{}, err
@@ -274,7 +276,7 @@ func pageQuery(pm re.PageMeta) string {
 	if pm.InputChannel != "" {
 		query = append(query, "r.input_channel = :input_channel")
 	}
-	if pm.InputTopic != "" {
+	if pm.InputTopic != nil {
 		query = append(query, "r.input_topic = :input_topic")
 	}
 	if pm.OutputChannel != "" {

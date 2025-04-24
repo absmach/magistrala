@@ -130,45 +130,6 @@ func (req updateReportScheduleReq) validate() error {
 	return nil
 }
 
-type updateReportMetricsReq struct {
-	id      string
-	Metrics []re.Metric `json:"metrics,omitempty"`
-}
-
-func (req updateReportMetricsReq) validate() error {
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
-type updateReportEmailReq struct {
-	id    string
-	Email re.Email `json:"email,omitempty"`
-}
-
-func (req updateReportEmailReq) validate() error {
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
-type updateReportMetricConfigReq struct {
-	id     string
-	Config re.MetricConfig `json:"config,omitempty"`
-}
-
-func (req updateReportMetricConfigReq) validate() error {
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
 type addReportConfigReq struct {
 	re.ReportConfig `json:",inline"`
 }

@@ -541,6 +541,7 @@ func TestDisableRule(t *testing.T) {
 func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t, make(chan error))
 	now := time.Now()
+	empty := ""
 
 	cases := []struct {
 		desc       string
@@ -559,6 +560,7 @@ func TestHandle(t *testing.T) {
 			},
 			pageMeta: re.PageMeta{
 				InputChannel: inputChannel,
+				InputTopic:   &empty,
 				Status:       re.EnabledStatus,
 			},
 			page: re.Page{
@@ -575,6 +577,7 @@ func TestHandle(t *testing.T) {
 			pageMeta: re.PageMeta{
 				InputChannel: inputChannel,
 				Status:       re.EnabledStatus,
+				InputTopic:   &empty,
 			},
 			page: re.Page{
 				Rules: []re.Rule{

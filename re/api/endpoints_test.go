@@ -69,6 +69,8 @@ var (
 			},
 		},
 		Config: &re.MetricConfig{
+			From:        "now()-1h",
+			To:          "now()",
 			Aggregation: re.AggConfig{AggType: "AVG"},
 		},
 		Email: &re.EmailSetting{

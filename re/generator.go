@@ -7,7 +7,6 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
-	"log"
 	"sort"
 	"time"
 
@@ -321,7 +320,6 @@ func formatValue(msg senml.Message) string {
 }
 
 func generateCSVReport(reports []Report) ([]byte, error) {
-	log.Printf("reports is %+v\n", reports)
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 

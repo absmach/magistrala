@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/re"
-	"github.com/lib/pq"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.

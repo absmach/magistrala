@@ -166,9 +166,9 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 					), "disable_report_config").ServeHTTP)
 				})
 
-				r.Get("/{reportID}/download", otelhttp.NewHandler(kithttp.NewServer(
+				r.Post("/download", otelhttp.NewHandler(kithttp.NewServer(
 					downloadReportEndpoint(svc),
-					decodeViewReportConfigRequest,
+					decodeAddReportConfigRequest,
 					encodeFileDownloadResponse,
 					opts...,
 				), "download_report").ServeHTTP)

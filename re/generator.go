@@ -117,7 +117,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 		})
 	})
 
-	headers := []string{"Time", "Metric Name", "Value", "Unit", "Subtopic"}
+	headers := []string{"Time", "Name", "Value", "Unit", "Subtopic"}
 	widths := []uint{4, 2, 2, 2, 2}
 
 	for i, report := range reports {
@@ -239,7 +239,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 				})
 
 				m.Col(widths[1], func() {
-					m.Text(report.Metric.Name, props.Text{
+					m.Text(msg.Name, props.Text{
 						Size:  10,
 						Style: consts.Bold,
 						Align: consts.Center,
@@ -323,7 +323,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	headers := []string{"Time", "Metric Name", "Device ID", "Channel ID", "Subtopic", "Value", "Unit"}
+	headers := []string{"Time", "Metric", "Device ID", "Channel ID", "Subtopic", "Value", "Unit"}
 
 	for i, report := range reports {
 		if len(report.Messages) == 0 {
@@ -345,7 +345,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 		if err := writer.Write([]string{"Report Information:"}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
-		if err := writer.Write([]string{"Metric Name", report.Metric.Name}); err != nil {
+		if err := writer.Write([]string{"Name", report.Metric.Name}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
 		if err := writer.Write([]string{"Device ID", report.Metric.ClientID}); err != nil {
@@ -390,7 +390,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 
 			row := []string{
 				timeStr,
-				report.Metric.Name,
+				msg.Name,
 				report.Metric.ClientID,
 				report.Metric.ChannelID,
 				msg.Subtopic,

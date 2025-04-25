@@ -442,15 +442,18 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 	reportPage.Total = uint64(len(reportPage.Reports))
 
 	if download {
-		var err error
-		reportPage.PDF, err = generatePDFReport(reportPage.Reports)
-		if err != nil {
-			return reportPage, err
+		if cfg.Email.Format == PDF {
+			reportPage.PDF, err = generatePDFReport(reportPage.Reports)
+			if err != nil {
+				return reportPage, err
+			}
 		}
 
-		reportPage.CSV, err = generateCSVReport(reportPage.Reports)
-		if err != nil {
-			return reportPage, err
+		if cfg.Email.Format == CSV {
+			reportPage.CSV, err = generateCSVReport(reportPage.Reports)
+			if err != nil {
+				return reportPage, err
+			}
 		}
 	}
 

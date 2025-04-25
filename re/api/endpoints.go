@@ -214,7 +214,6 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 		default:
 			return generateReportResp{page}, nil
 		}
-
 	}
 }
 

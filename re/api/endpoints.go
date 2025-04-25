@@ -388,12 +388,20 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		req := request.(addReportConfigReq)
+		req := request.(downloadReportReq)
 		if err := req.validate(); err != nil {
 			return downloadReportResp{}, err
 		}
 
-		page, err := svc.GenerateReport(ctx, session, req.ReportConfig, true)
+		page, err := svc.GenerateReport(ctx, session, re.ReportConfig{
+			Name:     req.Name,
+			DomainID: req.DomainID,
+			Config:   req.Config,
+			Metrics:  req.Metrics,
+			Email: &re.EmailSetting{
+				Format: req.format,
+			},
+		}, true)
 		if err != nil {
 			return downloadReportResp{}, err
 		}
@@ -401,7 +409,7 @@ func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
 		return downloadReportResp{
 			PDF:         page.PDF,
 			CSV:         page.CSV,
-			Filename:    req.ReportConfig.Name + ".zip",
+			Filename:    req.Name + ".zip",
 			ContentType: "application/zip",
 		}, nil
 	}

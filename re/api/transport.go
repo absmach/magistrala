@@ -168,7 +168,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 
 				r.Post("/download", otelhttp.NewHandler(kithttp.NewServer(
 					downloadReportEndpoint(svc),
-					decodeAddReportConfigRequest,
+					decodeDownloadReportRequest,
 					encodeFileDownloadResponse,
 					opts...,
 				), "download_report").ServeHTTP)
@@ -378,37 +378,80 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 	}, nil
 }
 
+func decodeDownloadReportRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+	var req downloadReportReq
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+	f, err := apiutil.ReadStringQuery(r, "format", "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	format, err := re.ToFormat(f)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	req.format = format
+
+	return req, nil
+}
+
 func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	resp := response.(downloadReportResp)
-	var buffer bytes.Buffer
-	zw := zip.NewWriter(&buffer)
+	hasPDF := len(resp.PDF) > 0
+	hasCSV := len(resp.CSV) > 0
 
-	f, err := zw.Create("Report.pdf")
-	if err != nil {
+	if hasPDF && hasCSV {
+		var buffer bytes.Buffer
+		zw := zip.NewWriter(&buffer)
+
+		f, err := zw.Create("Report.pdf")
+		if err != nil {
+			return err
+		}
+
+		if _, err = f.Write(resp.PDF); err != nil {
+			return err
+		}
+
+		f, err = zw.Create("Report.csv")
+		if err != nil {
+			return err
+		}
+
+		if _, err = f.Write(resp.CSV); err != nil {
+			return err
+		}
+
+		if err := zw.Close(); err != nil {
+			return err
+		}
+
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.Filename))
+		w.Header().Set("Content-Type", resp.ContentType)
+
+		_, err = w.Write(buffer.Bytes())
+
 		return err
 	}
 
-	if _, err = f.Write(resp.PDF); err != nil {
+	if hasPDF {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", strings.TrimSuffix(resp.Filename, ".zip")+".pdf"))
+		w.Header().Set("Content-Type", "application/pdf")
+		_, err := w.Write(resp.PDF)
 		return err
 	}
 
-	f, err = zw.Create("Report.csv")
-	if err != nil {
+	if hasCSV {
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", strings.TrimSuffix(resp.Filename, ".zip")+".csv"))
+		w.Header().Set("Content-Type", "text/csv")
+		_, err := w.Write(resp.CSV)
 		return err
 	}
 
-	if _, err = f.Write(resp.CSV); err != nil {
-		return err
-	}
-
-	if err := zw.Close(); err != nil {
-		return err
-	}
-
-	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.Filename))
-	w.Header().Set("Content-Type", resp.ContentType)
-
-	_, err = w.Write(buffer.Bytes())
-
-	return err
+	return apiutil.ErrEmptyMessage
 }

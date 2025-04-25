@@ -185,6 +185,8 @@ func (req deleteReportConfigReq) validate() error {
 
 type generateReportReq struct {
 	re.ReportConfig
+	download bool
+	format   re.Format
 }
 
 func (req generateReportReq) validate() error {
@@ -215,29 +217,5 @@ func (req updateReportStatusReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	return nil
-}
-
-type downloadReportReq struct {
-	format   re.Format
-	Name     string           `json:"name"`
-	DomainID string           `json:"domain_id"`
-	Config   *re.MetricConfig `json:"config,omitempty"`
-	Metrics  []re.Metric      `json:"metrics,omitempty"`
-}
-
-func (req downloadReportReq) validate() error {
-	if req.Name == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	if len(req.Metrics) == 0 {
-		return svcerr.ErrMalformedEntity
-	}
-	if req.Config.From == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	if req.Config.To == "" {
-		return svcerr.ErrMalformedEntity
-	}
 	return nil
 }

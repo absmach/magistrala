@@ -179,24 +179,43 @@ func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
+    return func(ctx context.Context, request interface{}) (interface{}, error) {
+        session, ok := ctx.Value(api.SessionKey).(authn.Session)
+        if !ok {
+            return nil, svcerr.ErrAuthorization
+        }
 
-		req := request.(generateReportReq)
-		if err := req.validate(); err != nil {
-			return generateReportResp{}, err
-		}
+        req := request.(generateReportReq)
+        if err := req.validate(); err != nil {
+            return generateReportResp{}, err
+        }
 
-		reportPage, err := svc.GenerateReport(ctx, session, req.ReportConfig, false)
-		if err != nil {
-			return generateReportResp{}, err
-		}
+        page, err := svc.GenerateReport(ctx, session, re.ReportConfig{
+            Name:     req.Name,
+            DomainID: req.DomainID,
+            Config:   req.Config,
+            Metrics:  req.Metrics,
+            Email: &re.EmailSetting{
+                Format: req.format,
+            },
+        }, req.download)
+        if err != nil {
+            return generateReportResp{}, err
+        }
 
-		return generateReportResp{reportPage}, nil
-	}
+        switch req.download {
+        case true:
+            return downloadReportResp{
+                PDF:         page.PDF,
+                CSV:         page.CSV,
+                Filename:    req.Name + ".zip",
+                ContentType: "application/zip",
+            }, nil
+        default:
+            return generateReportResp{page}, nil
+        }
+
+    }
 }
 
 func listReportsConfigEndpoint(svc re.Service) endpoint.Endpoint {
@@ -378,39 +397,5 @@ func disableReportConfigEndpoint(svc re.Service) endpoint.Endpoint {
 		}
 
 		return updateReportConfigRes{ReportConfig: cfg}, nil
-	}
-}
-
-func downloadReportEndpoint(svc re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-
-		req := request.(downloadReportReq)
-		if err := req.validate(); err != nil {
-			return downloadReportResp{}, err
-		}
-
-		page, err := svc.GenerateReport(ctx, session, re.ReportConfig{
-			Name:     req.Name,
-			DomainID: req.DomainID,
-			Config:   req.Config,
-			Metrics:  req.Metrics,
-			Email: &re.EmailSetting{
-				Format: req.format,
-			},
-		}, true)
-		if err != nil {
-			return downloadReportResp{}, err
-		}
-
-		return downloadReportResp{
-			PDF:         page.PDF,
-			CSV:         page.CSV,
-			Filename:    req.Name + ".zip",
-			ContentType: "application/zip",
-		}, nil
 	}
 }

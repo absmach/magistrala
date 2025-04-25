@@ -197,22 +197,24 @@ func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 
 func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-		}
-		if msg != nil {
-			args = append(args,
-				slog.String("channel", msg.Channel),
-				slog.String("payload_size", fmt.Sprintf("%d", len(msg.Payload))),
-			)
-		}
+		// Log only failure since the handlers are executed async and will always
+		// return nil error. The rest of the loggin is performed in main.go error loop.
 		if err != nil {
-			args = append(args, slog.String("error", err.Error()))
+			args := []any{
+				slog.String("duration", time.Since(begin).String()),
+			}
+			if msg != nil {
+				args = append(args,
+					slog.String("channel", msg.Channel),
+					slog.String("payload_size", fmt.Sprintf("%d", len(msg.Payload))),
+				)
+			}
+			lm.logger.Warn("Message consumption completed", args...)
 		}
-		lm.logger.Info("Message consumption completed", args...)
 	}(time.Now())
 
-	return lm.svc.Handle(msg)
+	err = lm.svc.Handle(msg)
+	return
 }
 
 func (lm *loggingMiddleware) Cancel() error {

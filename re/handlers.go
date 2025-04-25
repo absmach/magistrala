@@ -37,9 +37,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
-			if err := re.process(ctx, r, msg); err != nil {
-				re.errors <- err
-			}
+			re.errors <- re.process(ctx, r, msg)
 		}(ctx)
 	}
 	return nil

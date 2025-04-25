@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"encoding/csv"
 	"fmt"
+	"log"
 	"sort"
 	"time"
 
@@ -320,10 +321,11 @@ func formatValue(msg senml.Message) string {
 }
 
 func generateCSVReport(reports []Report) ([]byte, error) {
+	log.Printf("reports is %+v\n", reports)
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	headers := []string{"Time", "Name", "Device ID", "Channel ID", "Subtopic", "Value", "Unit"}
+	headers := []string{"Time", "Name", "Subtopic", "Value", "Unit"}
 
 	for i, report := range reports {
 		if len(report.Messages) == 0 {
@@ -385,8 +387,6 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 			row := []string{
 				timeStr,
 				msg.Name,
-				report.Metric.ClientID,
-				report.Metric.ChannelID,
 				msg.Subtopic,
 				valueStr,
 				msg.Unit,

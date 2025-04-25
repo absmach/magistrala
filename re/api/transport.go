@@ -104,7 +104,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					generateReportEndpoint(svc),
 					decodeGenerateReportRequest,
-					api.EncodeResponse,
+					encodeFileDownloadResponse,
 					opts...,
 				), "generate_report").ServeHTTP)
 

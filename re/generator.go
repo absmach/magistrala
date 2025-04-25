@@ -323,7 +323,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	headers := []string{"Time", "Metric", "Device ID", "Channel ID", "Subtopic", "Value", "Unit"}
+	headers := []string{"Time", "Name", "Device ID", "Channel ID", "Subtopic", "Value", "Unit"}
 
 	for i, report := range reports {
 		if len(report.Messages) == 0 {
@@ -345,16 +345,10 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 		if err := writer.Write([]string{"Report Information:"}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
-		if err := writer.Write([]string{"Name", report.Metric.Name}); err != nil {
-			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-		}
 		if err := writer.Write([]string{"Device ID", report.Metric.ClientID}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
 		if err := writer.Write([]string{"Channel ID", report.Metric.ChannelID}); err != nil {
-			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-		}
-		if err := writer.Write([]string{"Subtopic", report.Metric.Subtopic}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
 		if err := writer.Write([]string{""}); err != nil {

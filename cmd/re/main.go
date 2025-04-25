@@ -79,7 +79,6 @@ func main() {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
 			logger.Error(fmt.Sprintf("failed to generate instanceID: %s", err))
 			exitCode = 1
-
 			return
 		}
 	}
@@ -202,7 +201,10 @@ func main() {
 	go func() {
 		for {
 			err := <-errs
-			if err != nil {
+			switch err {
+			case nil:
+				logger.Info("Handling rule completed successfully")
+			default:
 				logger.Warn("Error handling rule", slog.String("error", err.Error()))
 			}
 		}

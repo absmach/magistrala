@@ -197,7 +197,8 @@ func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 
 func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 	defer func(begin time.Time) {
-		// Log only errors since we consume a lot of messages.
+		// Log only failure since the handlers are executed async and will always
+		// return nil error. The rest of the loggin is performed in main.go error loop.
 		if err != nil {
 			args := []any{
 				slog.String("duration", time.Since(begin).String()),

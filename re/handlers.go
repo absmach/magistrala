@@ -23,9 +23,9 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if n := len(msg.Payload); n > maxPayload {
 		return errors.New(pldExceededFmt + strconv.Itoa(n))
 	}
-	inputChannel := msg.Channel
 	pm := PageMeta{
-		InputChannel: inputChannel,
+		Domain:       msg.Domain,
+		InputChannel: msg.Channel,
 		Status:       EnabledStatus,
 		InputTopic:   &msg.Subtopic,
 	}
@@ -37,9 +37,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
-			if err := re.process(ctx, r, msg); err != nil {
-				re.errors <- err
-			}
+			re.errors <- re.process(ctx, r, msg)
 		}(ctx)
 	}
 	return nil
@@ -66,14 +64,19 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	if result == lua.LNil {
 		return nil
 	}
+	// Converting Lua is an expensive operation, so
+	// don't do it if there are no outputs.
+	if len(r.Logic.Outputs) == 0 {
+		return nil
+	}
 	var err error
+	res := convertLua(result)
 	for _, o := range r.Logic.Outputs {
-		val := convertLua(result)
 		// If value is false, don't run the follow-up.
-		if v, ok := val.(bool); ok && !v {
+		if v, ok := res.(bool); ok && !v {
 			return nil
 		}
-		if e := re.handleOutput(ctx, o, r, msg, val); e != nil {
+		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
 			err = errors.Wrap(e, err)
 		}
 	}

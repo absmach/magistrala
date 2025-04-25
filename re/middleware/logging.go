@@ -206,7 +206,10 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 				slog.String("payload_size", fmt.Sprintf("%d", len(msg.Payload))),
 			)
 		}
-		lm.logger.Warn("Message consumption completed", args...)
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+		}
+		lm.logger.Info("Message consumption completed", args...)
 	}(time.Now())
 
 	return lm.svc.Handle(msg)

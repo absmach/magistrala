@@ -423,6 +423,63 @@ func (_c *Service_EnableRule_Call) RunAndReturn(run func(ctx context.Context, se
 	return _c
 }
 
+// GenerateReport provides a mock function for the type Service
+func (_mock *Service) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, download bool) (re.ReportPage, error) {
+	ret := _mock.Called(ctx, session, config, download)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateReport")
+	}
+
+	var r0 re.ReportPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig, bool) (re.ReportPage, error)); ok {
+		return returnFunc(ctx, session, config, download)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig, bool) re.ReportPage); ok {
+		r0 = returnFunc(ctx, session, config, download)
+	} else {
+		r0 = ret.Get(0).(re.ReportPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.ReportConfig, bool) error); ok {
+		r1 = returnFunc(ctx, session, config, download)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
+type Service_GenerateReport_Call struct {
+	*mock.Call
+}
+
+// GenerateReport is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - config
+//   - download
+func (_e *Service_Expecter) GenerateReport(ctx interface{}, session interface{}, config interface{}, download interface{}) *Service_GenerateReport_Call {
+	return &Service_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, session, config, download)}
+}
+
+func (_c *Service_GenerateReport_Call) Run(run func(ctx context.Context, session authn.Session, config re.ReportConfig, download bool)) *Service_GenerateReport_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.ReportConfig), args[3].(bool))
+	})
+	return _c
+}
+
+func (_c *Service_GenerateReport_Call) Return(reportPage re.ReportPage, err error) *Service_GenerateReport_Call {
+	_c.Call.Return(reportPage, err)
+	return _c
+}
+
+func (_c *Service_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, config re.ReportConfig, download bool) (re.ReportPage, error)) *Service_GenerateReport_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Handle provides a mock function for the type Service
 func (_mock *Service) Handle(msg *messaging.Message) error {
 	ret := _mock.Called(msg)
@@ -464,63 +521,6 @@ func (_c *Service_Handle_Call) Return(err error) *Service_Handle_Call {
 }
 
 func (_c *Service_Handle_Call) RunAndReturn(run func(msg *messaging.Message) error) *Service_Handle_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GenerateReport provides a mock function for the type Service
-func (_mock *Service) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, downLoad bool) (re.ReportPage, error) {
-	ret := _mock.Called(ctx, session, config, downLoad)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GenerateReport")
-	}
-
-	var r0 re.ReportPage
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig, bool) (re.ReportPage, error)); ok {
-		return returnFunc(ctx, session, config, downLoad)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.ReportConfig, bool) re.ReportPage); ok {
-		r0 = returnFunc(ctx, session, config, downLoad)
-	} else {
-		r0 = ret.Get(0).(re.ReportPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.ReportConfig, bool) error); ok {
-		r1 = returnFunc(ctx, session, config, downLoad)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// Service_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
-type Service_GenerateReport_Call struct {
-	*mock.Call
-}
-
-// GenerateReport is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - config
-//   - downLoad
-func (_e *Service_Expecter) GenerateReport(ctx interface{}, session interface{}, config interface{}, downLoad interface{}) *Service_GenerateReport_Call {
-	return &Service_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, session, config, downLoad)}
-}
-
-func (_c *Service_GenerateReport_Call) Run(run func(ctx context.Context, session authn.Session, config re.ReportConfig, downLoad bool)) *Service_GenerateReport_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.ReportConfig), args[3].(bool))
-	})
-	return _c
-}
-
-func (_c *Service_GenerateReport_Call) Return(reportPage re.ReportPage, err error) *Service_GenerateReport_Call {
-	_c.Call.Return(reportPage, err)
-	return _c
-}
-
-func (_c *Service_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, config re.ReportConfig, downLoad bool) (re.ReportPage, error)) *Service_GenerateReport_Call {
 	_c.Call.Return(run)
 	return _c
 }

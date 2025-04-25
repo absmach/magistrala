@@ -15,8 +15,9 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/vadv/gopher-lua-libs/strings"
 )
+
+const limit = 1000
 
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
@@ -291,6 +292,7 @@ func (re *re) RemoveReportConfig(ctx context.Context, session authn.Session, id 
 }
 
 func (re *re) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
+	pm.Domain = session.DomainID
 	page, err := re.repo.ListReportsConfig(ctx, pm)
 	if err != nil {
 		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
@@ -467,19 +469,4 @@ func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
 		BoolValue:   g.BoolValue,
 		Sum:         g.Sum,
 	}
-}
-
-func (re *re) generatePDFReport(reports []Report) ([]byte, error) {
-	pdf := gofpdf.New("P", "mm", "A4", "")
-
-	headers := []string{"Time", "Metric Name", "Value", "Unit", "Subtopic"}
-	widths := []float64{40, 30, 30, 25, 35}
-
-	for _, metric := range metrics {
-		if strings.Contains(name, metric) {
-			return true
-		}
-	}
-
-	return false
 }

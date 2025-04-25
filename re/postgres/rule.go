@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/re"
+	"github.com/lib/pq"
 	"github.com/absmach/supermq/pkg/errors"
 )
 
@@ -188,7 +189,7 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 		}
 	}
 
-	var email re.Email
+	var email re.EmailSetting
 	if dto.Email != nil {
 		if err := json.Unmarshal(dto.Email, &email); err != nil {
 			return re.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)

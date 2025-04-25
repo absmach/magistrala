@@ -71,7 +71,7 @@ var (
 		Config: &re.MetricConfig{
 			Aggregation: re.AggConfig{AggType: "AVG"},
 		},
-		Email: &re.Email{
+		Email: &re.EmailSetting{
 			To:      []string{"test@example.com"},
 			From:    "noreply@example.com",
 			Subject: "Test Report",

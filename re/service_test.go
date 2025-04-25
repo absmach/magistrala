@@ -644,7 +644,7 @@ func TestHandle(t *testing.T) {
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -696,7 +696,7 @@ func TestAddReportConfig(t *testing.T) {
 }
 
 func TestViewReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -741,7 +741,7 @@ func TestViewReportConfig(t *testing.T) {
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -804,7 +804,7 @@ func TestUpdateReportConfig(t *testing.T) {
 }
 
 func TestListReportsConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 	numConfigs := 50
 	now := time.Now().Add(time.Hour)
 	var configs []re.ReportConfig
@@ -910,7 +910,7 @@ func TestListReportsConfig(t *testing.T) {
 }
 
 func TestRemoveReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -950,7 +950,7 @@ func TestRemoveReportConfig(t *testing.T) {
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string
@@ -998,7 +998,7 @@ func TestEnableReportConfig(t *testing.T) {
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t)
+	svc, repo, _, _ := newService(t, make(chan error))
 
 	cases := []struct {
 		desc    string

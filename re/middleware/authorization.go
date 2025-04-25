@@ -323,10 +323,6 @@ func (am *authorizationMiddleware) Cancel() error {
 	return am.svc.Cancel()
 }
 
-func (am *authorizationMiddleware) Errors() <-chan error {
-	return am.svc.Errors()
-}
-
 func (am *authorizationMiddleware) authorize(ctx context.Context, pr smqauthz.PolicyReq) error {
 	if err := am.authz.Authorize(ctx, pr); err != nil {
 		return err

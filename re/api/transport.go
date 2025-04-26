@@ -4,8 +4,6 @@
 package api
 
 import (
-	"archive/zip"
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -31,6 +29,8 @@ const (
 	inputChannelKey  = "input_channel"
 	outputChannelKey = "output_channel"
 	statusKey        = "status"
+	actionKey        = "action"
+	defAction        = "view"
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
@@ -277,26 +277,21 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
 
-	var req generateReportReq
+	a, err := apiutil.ReadStringQuery(r, actionKey, defAction)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	action, err := re.ToReportAction(a)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	req := generateReportReq{
+		action: action,
+	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
-
-	f, err := apiutil.ReadStringQuery(r, "format", "")
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	b, err := apiutil.ReadBoolQuery(r, "download", false)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-	format, err := re.ToFormat(f)
-	if err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, err)
-	}
-
-	req.format = format
-	req.download = b
 
 	return req, nil
 }
@@ -390,58 +385,10 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
 	switch resp := response.(type) {
 	case downloadReportResp:
-		hasPDF := len(resp.PDF) > 0
-		hasCSV := len(resp.CSV) > 0
-
-		if hasPDF && hasCSV {
-			var buffer bytes.Buffer
-			zw := zip.NewWriter(&buffer)
-
-			f, err := zw.Create("Report.pdf")
-			if err != nil {
-				return err
-			}
-
-			if _, err = f.Write(resp.PDF); err != nil {
-				return err
-			}
-
-			f, err = zw.Create("Report.csv")
-			if err != nil {
-				return err
-			}
-
-			if _, err = f.Write(resp.CSV); err != nil {
-				return err
-			}
-
-			if err := zw.Close(); err != nil {
-				return err
-			}
-
-			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.Filename))
-			w.Header().Set("Content-Type", resp.ContentType)
-
-			_, err = w.Write(buffer.Bytes())
-
-			return err
-		}
-
-		if hasPDF {
-			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", strings.TrimSuffix(resp.Filename, ".zip")+".pdf"))
-			w.Header().Set("Content-Type", "application/pdf")
-			_, err := w.Write(resp.PDF)
-			return err
-		}
-
-		if hasCSV {
-			w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", strings.TrimSuffix(resp.Filename, ".zip")+".csv"))
-			w.Header().Set("Content-Type", "text/csv")
-			_, err := w.Write(resp.CSV)
-			return err
-		}
-		return apiutil.ErrEmptyMessage
-
+		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.File.Name))
+		w.Header().Set("Content-Type", resp.File.Format.ContentType())
+		_, err := w.Write(resp.File.Data)
+		return err
 	default:
 		if ar, ok := response.(supermq.Response); ok {
 			for k, v := range ar.Headers() {
@@ -454,7 +401,6 @@ func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, respon
 				return nil
 			}
 		}
-
 		return json.NewEncoder(w).Encode(response)
 	}
 }

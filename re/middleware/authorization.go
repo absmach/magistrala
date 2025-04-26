@@ -295,7 +295,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 	return am.svc.DisableReportConfig(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, download bool) (re.ReportPage, error) {
+func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, action re.ReportAction) (re.ReportPage, error) {
 	if err := am.authorize(ctx, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
@@ -308,7 +308,7 @@ func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session a
 		return re.ReportPage{}, errors.Wrap(errDomainGenerateReports, err)
 	}
 
-	return am.svc.GenerateReport(ctx, session, config, download)
+	return am.svc.GenerateReport(ctx, session, config, action)
 }
 
 func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {

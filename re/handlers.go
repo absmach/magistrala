@@ -5,7 +5,6 @@ package re
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 	"time"
 
@@ -99,43 +98,9 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 }
 
 func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
-	reportPage, err := re.generateReport(ctx, cfg, true)
-	if err != nil {
+	if _, err := re.generateReport(ctx, cfg, EmailReport); err != nil {
 		return err
 	}
-
-	if len(cfg.Email.To) > 0 {
-		reportContent, err := json.Marshal(reportPage)
-		if err != nil {
-			return err
-		}
-
-		attachments := make(map[string][]byte)
-		switch cfg.Email.Format {
-		case PDF:
-			attachments["report.pdf"] = reportPage.PDF
-		case CSV:
-			attachments["report.csv"] = reportPage.CSV
-		case AllFormats:
-			attachments["report.pdf"] = reportPage.PDF
-			attachments["report.csv"] = reportPage.CSV
-		}
-
-		err = re.email.SendEmailNotification(
-			cfg.Email.To,
-			cfg.Email.From,
-			cfg.Email.Subject,
-			"",
-			"",
-			string(reportContent),
-			"",
-			attachments,
-		)
-		if err != nil {
-			return err
-		}
-	}
-
 	return nil
 }
 

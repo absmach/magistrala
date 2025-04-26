@@ -6,6 +6,7 @@ package api
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq"
@@ -143,7 +144,11 @@ func (res deleteRuleRes) Empty() bool {
 }
 
 type generateReportResp struct {
-	re.ReportPage `json:",inline"`
+	Total       uint64       `json:"total"`
+	From        time.Time    `json:"from,omitempty"`
+	To          time.Time    `json:"to,omitempty"`
+	Aggregation re.AggConfig `json:"aggregation,omitempty"`
+	Reports     []re.Report  `json:"reports,omitempty"`
 }
 
 func (res generateReportResp) Code() int {
@@ -250,10 +255,7 @@ func (res listReportsConfigRes) Empty() bool {
 }
 
 type downloadReportResp struct {
-	PDF         []byte `json:"pdf"`
-	CSV         []byte `json:"csv"`
-	ContentType string `json:"content_type"`
-	Filename    string `json:"filename"`
+	File re.ReportFile
 }
 
 func (res downloadReportResp) Code() int {
@@ -266,4 +268,18 @@ func (res downloadReportResp) Headers() map[string]string {
 
 func (res downloadReportResp) Empty() bool {
 	return false
+}
+
+type emailReportResp struct{}
+
+func (res emailReportResp) Code() int {
+	return http.StatusOK
+}
+
+func (res emailReportResp) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res emailReportResp) Empty() bool {
+	return true
 }

@@ -71,11 +71,10 @@ var (
 		Config: &re.MetricConfig{
 			From:        "now()-1h",
 			To:          "now()",
-			Aggregation: re.AggConfig{AggType: "AVG"},
+			Aggregation: re.AggConfig{AggType: re.AggregationAVG, Interval: "1h"},
 		},
 		Email: &re.EmailSetting{
 			To:      []string{"test@example.com"},
-			From:    "noreply@example.com",
 			Subject: "Test Report",
 		},
 	}

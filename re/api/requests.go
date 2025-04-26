@@ -4,15 +4,28 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+)
+
+var (
+	errInvalidReportAction      = errors.New("invalid report action")
+	errMetricsNotProvided       = errors.New("metrics not provided")
+	errMissingReportConfig      = errors.New("missing report config")
+	errMissingReportEmailConfig = errors.New("missing report email config")
+	errInvalidRecurringPeriod   = errors.New("invalid recurring period")
 )
 
 const (
 	maxLimitSize = 1000
 	MaxNameSize  = 1024
+
+	errInvalidMetric = "invalid metric[%d]: %w"
 )
 
 type addRuleReq struct {
@@ -111,10 +124,9 @@ type updateReportConfigReq struct {
 
 func (req updateReportConfigReq) validate() error {
 	if req.ID == "" {
-		return svcerr.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
-
-	return nil
+	return validateReportConfig(req.ReportConfig, false, false)
 }
 
 type updateReportScheduleReq struct {
@@ -136,18 +148,9 @@ type addReportConfigReq struct {
 
 func (req addReportConfigReq) validate() error {
 	if req.Name == "" {
-		return svcerr.ErrMalformedEntity
+		return apiutil.ErrMissingName
 	}
-	if len(req.Metrics) == 0 {
-		return svcerr.ErrMalformedEntity
-	}
-	if req.Config.From == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	if req.Config.To == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	return nil
+	return validateReportConfig(req.ReportConfig, false, false)
 }
 
 type viewReportConfigReq struct {
@@ -156,7 +159,7 @@ type viewReportConfigReq struct {
 
 func (req viewReportConfigReq) validate() error {
 	if req.ID == "" {
-		return svcerr.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 	return nil
 }
@@ -178,34 +181,25 @@ type deleteReportConfigReq struct {
 
 func (req deleteReportConfigReq) validate() error {
 	if req.ID == "" {
-		return svcerr.ErrMalformedEntity
+		return apiutil.ErrMissingID
 	}
 	return nil
 }
 
 type generateReportReq struct {
 	re.ReportConfig
-	download bool
-	format   re.Format
+	action re.ReportAction
 }
 
 func (req generateReportReq) validate() error {
-	if len(req.Metrics) == 0 {
-		return svcerr.ErrMalformedEntity
+	switch req.action {
+	case re.ViewReport, re.DownloadReport:
+		return validateReportConfig(req.ReportConfig, true, true)
+	case re.EmailReport:
+		return validateReportConfig(req.ReportConfig, false, true)
+	default:
+		return errors.Wrap(apiutil.ErrValidation, errInvalidReportAction)
 	}
-	if req.Config.From == "" {
-		return apiutil.ErrValidation
-	}
-	if req.Config.To == "" {
-		return apiutil.ErrValidation
-	}
-	if req.Config.Aggregation.AggType != "" {
-		if req.Config.Aggregation.Interval == "" {
-			return apiutil.ErrValidation
-		}
-	}
-
-	return nil
 }
 
 type updateReportStatusReq struct {
@@ -216,6 +210,46 @@ func (req updateReportStatusReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
+	return nil
+}
 
+func validateReportConfig(req re.ReportConfig, skipEmailValidation bool, skipSchedularValidation bool) error {
+	if len(req.Metrics) == 0 {
+		return errors.Wrap(apiutil.ErrValidation, errMetricsNotProvided)
+	}
+	for i, metric := range req.Metrics {
+		if err := metric.Validate(); err != nil {
+			return errors.Wrap(apiutil.ErrValidation, fmt.Errorf(errInvalidMetric, i+1, err))
+		}
+	}
+
+	if req.Config == nil {
+		return errMissingReportConfig
+	}
+	if err := req.Config.Validate(); err != nil {
+		return errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	if skipEmailValidation {
+		return nil
+	}
+	if req.Email == nil {
+		return errMissingReportEmailConfig
+	}
+	if err := req.Email.Validate(); err != nil {
+		return errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	if skipSchedularValidation {
+		return nil
+	}
+
+	return validateScheduler(req.Schedule)
+}
+
+func validateScheduler(sch re.Schedule) error {
+	if sch.Recurring != re.None && sch.RecurringPeriod < 1 {
+		return errInvalidRecurringPeriod
+	}
 	return nil
 }

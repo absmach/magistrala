@@ -5,6 +5,8 @@ package re
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
@@ -81,7 +83,7 @@ type Service interface {
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 
-	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error)
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
 }
 
@@ -337,14 +339,14 @@ func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id
 	return cfg, nil
 }
 
-func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, download bool) (ReportPage, error) {
+func (re *re) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
 	if config.Status != EnabledStatus {
 		return ReportPage{}, svcerr.ErrInvalidStatus
 	}
 
-	reportPage, err := re.generateReport(ctx, config, download)
+	reportPage, err := re.generateReport(ctx, config, action)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -352,18 +354,23 @@ func (re *re) GenerateReport(ctx context.Context, session authn.Session, config 
 	return reportPage, nil
 }
 
-func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download bool) (ReportPage, error) {
+func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
+	genReportFile, err := generateFileFunc(action, cfg.Config.FileFormat)
+	if err != nil {
+		return ReportPage{}, err
+	}
+
 	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 	switch cfg.Config.Aggregation.AggType {
-	case "MAX":
+	case AggregationMAX:
 		agg = grpcReadersV1.Aggregation_MAX
-	case "MIN":
+	case AggregationMIN:
 		agg = grpcReadersV1.Aggregation_MIN
-	case "COUNT":
+	case AggregationCOUNT:
 		agg = grpcReadersV1.Aggregation_COUNT
-	case "AVG":
+	case AggregationAVG:
 		agg = grpcReadersV1.Aggregation_AVG
-	case "SUM":
+	case AggregationSUM:
 		agg = grpcReadersV1.Aggregation_SUM
 	}
 
@@ -383,13 +390,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 		Interval:    cfg.Config.Aggregation.Interval,
 	}
 
-	reportPage := ReportPage{
-		Reports:     make([]Report, 0),
-		From:        from,
-		To:          to,
-		Aggregation: cfg.Config.Aggregation,
-	}
-
+	var reports []Report
 	for _, metric := range cfg.Metrics {
 		sMsgs := []senml.Message{}
 
@@ -433,39 +434,93 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, download boo
 			}
 		}
 
-		reportPage.Reports = append(reportPage.Reports, Report{
+		reports = append(reports, Report{
 			Metric:   metric,
 			Messages: sMsgs,
 		})
 	}
 
-	reportPage.Total = uint64(len(reportPage.Reports))
-
-	if download {
-		switch cfg.Email.Format {
-		case PDF:
-			reportPage.PDF, err = generatePDFReport(reportPage.Reports)
-			if err != nil {
-				return reportPage, err
-			}
-		case CSV:
-			reportPage.CSV, err = generateCSVReport(reportPage.Reports)
-			if err != nil {
-				return reportPage, err
-			}
-		case AllFormats:
-			reportPage.PDF, err = generatePDFReport(reportPage.Reports)
-			if err != nil {
-				return reportPage, err
-			}
-			reportPage.CSV, err = generateCSVReport(reportPage.Reports)
-			if err != nil {
-				return reportPage, err
-			}
+	switch {
+	case genReportFile != nil:
+		data, err := genReportFile(reports)
+		if err != nil {
+			return ReportPage{}, err
 		}
+		timeStr := strings.ReplaceAll(time.Now().Format(time.RFC3339), ":", "")
+		filePrefix := cfg.Name
+		if filePrefix == "" {
+			filePrefix = "report"
+		}
+		fileName := fmt.Sprintf("%s_%s.%s", filePrefix, timeStr, cfg.Config.FileFormat.Extension())
+
+		file := ReportFile{
+			Name:   fileName,
+			Data:   data,
+			Format: cfg.Config.FileFormat,
+		}
+
+		switch action {
+		case EmailReport:
+			if err := re.emailReports(*cfg.Email, file); err != nil {
+				return ReportPage{}, errors.Wrap(err, svcerr.ErrCreateEntity)
+			}
+
+			return ReportPage{}, nil
+		default:
+			return ReportPage{
+				File: file,
+			}, nil
+		}
+
+	default:
+		return ReportPage{
+			From:        from,
+			To:          to,
+			Aggregation: cfg.Config.Aggregation,
+			Total:       uint64(len(reports)),
+			Reports:     reports,
+		}, nil
+	}
+}
+
+func generateFileFunc(action ReportAction, format Format) (func([]Report) ([]byte, error), error) {
+	switch action {
+	case DownloadReport, EmailReport:
+		switch format {
+		case PDF:
+			return generatePDFReport, nil
+		case CSV:
+			return generateCSVReport, nil
+		default:
+			return nil, errors.New("file format not supported")
+		}
+	default:
+		return nil, nil
+	}
+}
+
+func (re *re) emailReports(es EmailSetting, file ReportFile) error {
+	if err := es.Validate(); err != nil {
+		return errors.Wrap(svcerr.ErrMalformedEntity, err)
 	}
 
-	return reportPage, nil
+	attachments := map[string][]byte{
+		file.Name: file.Data,
+	}
+
+	if err := re.email.SendEmailNotification(
+		es.To,
+		"",
+		es.Subject,
+		"",
+		"",
+		es.Content,
+		"",
+		attachments,
+	); err != nil {
+		return err
+	}
+	return nil
 }
 
 func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
@@ -475,6 +530,7 @@ func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
 		Unit:        g.GetUnit(),
 		Time:        g.GetTime(),
 		UpdateTime:  g.GetUpdateTime(),
+		Name:        g.GetName(),
 		Value:       g.Value,
 		StringValue: g.StringValue,
 		DataValue:   g.DataValue,

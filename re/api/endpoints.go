@@ -190,29 +190,32 @@ func generateReportEndpoint(svc re.Service) endpoint.Endpoint {
 			return generateReportResp{}, err
 		}
 
-		page, err := svc.GenerateReport(ctx, session, re.ReportConfig{
+		res, err := svc.GenerateReport(ctx, session, re.ReportConfig{
 			Name:     req.Name,
 			DomainID: req.DomainID,
 			Config:   req.Config,
 			Metrics:  req.Metrics,
-			Email: &re.EmailSetting{
-				Format: req.format,
-			},
-		}, req.download)
+			Email:    req.Email,
+		}, req.action)
 		if err != nil {
 			return generateReportResp{}, err
 		}
 
-		switch req.download {
-		case true:
+		switch req.action {
+		case re.DownloadReport:
 			return downloadReportResp{
-				PDF:         page.PDF,
-				CSV:         page.CSV,
-				Filename:    req.Name + ".zip",
-				ContentType: "application/zip",
+				File: res.File,
 			}, nil
+		case re.EmailReport:
+			return emailReportResp{}, nil
 		default:
-			return generateReportResp{page}, nil
+			return generateReportResp{
+				Total:       res.Total,
+				From:        res.From,
+				To:          res.To,
+				Aggregation: res.Aggregation,
+				Reports:     res.Reports,
+			}, nil
 		}
 	}
 }

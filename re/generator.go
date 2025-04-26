@@ -299,7 +299,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 
 func formatTime(t float64) string {
 	if t > 9999999999 {
-		return time.Unix(0, int64(t)*1000000).Format("2006-01-02 15:04:05")
+		return time.Unix(0, int64(t)).Format("2006-01-02 15:04:05")
 	}
 	return time.Unix(int64(t), 0).Format("2006-01-02 15:04:05")
 }
@@ -364,10 +364,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 		})
 
 		for _, msg := range report.Messages {
-			timeStr := time.Unix(int64(msg.Time), 0).Format("2006-01-02 15:04:05")
-			if msg.Time > 9999999999 {
-				timeStr = time.Unix(0, int64(msg.Time)*1000000).Format("2006-01-02 15:04:05")
-			}
+			timeStr := formatTime(msg.Time)
 
 			var valueStr string
 			if msg.Value != nil {

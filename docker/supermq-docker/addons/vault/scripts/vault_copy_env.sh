@@ -33,10 +33,16 @@ done
 
 write_env() {
     if [ -e "$scriptdir/data/secrets" ]; then
-        sed -i "s,SMQ_VAULT_UNSEAL_KEY_1=.*,SMQ_VAULT_UNSEAL_KEY_1=$(awk -F ": " '$1 == "Unseal Key 1" {print $2}' $scriptdir/data/secrets)," "$env_file"
-        sed -i "s,SMQ_VAULT_UNSEAL_KEY_2=.*,SMQ_VAULT_UNSEAL_KEY_2=$(awk -F ": " '$1 == "Unseal Key 2" {print $2}' $scriptdir/data/secrets)," "$env_file"
-        sed -i "s,SMQ_VAULT_UNSEAL_KEY_3=.*,SMQ_VAULT_UNSEAL_KEY_3=$(awk -F ": " '$1 == "Unseal Key 3" {print $2}' $scriptdir/data/secrets)," "$env_file"
-        sed -i "s,SMQ_VAULT_TOKEN=.*,SMQ_VAULT_TOKEN=$(awk -F ": " '$1 == "Initial Root Token" {print $2}' $scriptdir/data/secrets)," "$env_file"
+        if [[ "$(uname)" == "Darwin" ]]; then
+            SED_OPT=(-i '')
+        else
+            SED_OPT=(-i)
+        fi
+    
+        sed "${SED_OPT[@]}" "s,SMQ_VAULT_UNSEAL_KEY_1=.*,SMQ_VAULT_UNSEAL_KEY_1=$(awk -F ': ' '$1 == "Unseal Key 1" {print $2}' "$scriptdir/data/secrets")," "$env_file"
+        sed "${SED_OPT[@]}" "s,SMQ_VAULT_UNSEAL_KEY_2=.*,SMQ_VAULT_UNSEAL_KEY_2=$(awk -F ': ' '$1 == "Unseal Key 2" {print $2}' "$scriptdir/data/secrets")," "$env_file"
+        sed "${SED_OPT[@]}" "s,SMQ_VAULT_UNSEAL_KEY_3=.*,SMQ_VAULT_UNSEAL_KEY_3=$(awk -F ': ' '$1 == "Unseal Key 3" {print $2}' "$scriptdir/data/secrets")," "$env_file"
+        sed "${SED_OPT[@]}" "s,SMQ_VAULT_TOKEN=.*,SMQ_VAULT_TOKEN=$(awk -F ': ' '$1 == "Initial Root Token" {print $2}' "$scriptdir/data/secrets")," "$env_file"
         echo "Vault environment variables are set successfully in $env_file"
     else
         echo "Error: Source file '$scriptdir/data/secrets' not found."

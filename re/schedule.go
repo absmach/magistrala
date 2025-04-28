@@ -16,11 +16,6 @@ const (
 	Daily
 	Weekly
 	Monthly
-
-	none  = 0
-	day   = time.Hour * 24
-	week  = day * 7
-	month = day * 30
 )
 
 func (rt Recurring) String() string {
@@ -33,19 +28,6 @@ func (rt Recurring) String() string {
 		return "monthly"
 	default:
 		return "none"
-	}
-}
-
-func (rt Recurring) Duration() time.Duration {
-	switch rt {
-	case Daily:
-		return day
-	case Weekly:
-		return week
-	case Monthly:
-		return month
-	default:
-		return none
 	}
 }
 
@@ -125,5 +107,14 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 }
 
 func (s Schedule) NextDue() time.Time {
-	return s.Time.Add(s.Recurring.Duration() * time.Duration(s.RecurringPeriod))
+	switch s.Recurring {
+	case Daily:
+		return s.Time.AddDate(0, 0, int(s.RecurringPeriod))
+	case Weekly:
+		return s.Time.AddDate(0, 0, int(s.RecurringPeriod)*7)
+	case Monthly:
+		return s.Time.AddDate(0, int(s.RecurringPeriod), 0)
+	default:
+		return time.Time{}
+	}
 }

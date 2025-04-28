@@ -117,8 +117,8 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 		})
 	})
 
-	headers := []string{"Time", "Name", "Protocol", "Value", "Unit", "Subtopic"}
-	widths := []uint{3, 2, 2, 2, 1, 2}
+	headers := []string{"Time", "Value", "Unit", "Protocol", "Subtopic"}
+	widths := []uint{3, 2, 2, 2, 3}
 
 	for i, report := range reports {
 		if i > 0 {
@@ -143,6 +143,27 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 
 		m.SetBackgroundColor(alternateRow)
 		m.Row(0.5, func() { m.Col(12, func() {}) })
+
+		m.Row(8, func() {
+			m.Col(2, func() {
+				m.Text("Name:	", props.Text{
+					Size:  11,
+					Style: consts.Bold,
+					Align: consts.Left,
+					Color: textPrimary,
+					Top:   1,
+				})
+			})
+
+			m.Col(10, func() {
+				m.Text(report.Metric.Name, props.Text{
+					Size:  11,
+					Style: consts.Italic,
+					Color: textPrimary,
+					Top:   1,
+				})
+			})
+		})
 
 		if report.Metric.ClientID != "" {
 			m.Row(8, func() {
@@ -240,25 +261,6 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 				})
 
 				m.Col(widths[1], func() {
-					m.Text(msg.Name, props.Text{
-						Size:  10,
-						Style: consts.Bold,
-						Align: consts.Center,
-						Top:   2,
-						Color: primaryColor,
-					})
-				})
-
-				m.Col(widths[2], func() {
-					m.Text(msg.Protocol, props.Text{
-						Size:  10,
-						Align: consts.Center,
-						Top:   2,
-						Color: textPrimary,
-					})
-				})
-
-				m.Col(widths[3], func() {
 					m.Text(formatValue(msg), props.Text{
 						Size:  10,
 						Style: consts.Normal,
@@ -268,7 +270,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 					})
 				})
 
-				m.Col(widths[4], func() {
+				m.Col(widths[2], func() {
 					m.Text(msg.Unit, props.Text{
 						Size:  10,
 						Style: consts.Italic,
@@ -278,7 +280,16 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 					})
 				})
 
-				m.Col(widths[5], func() {
+				m.Col(widths[3], func() {
+					m.Text(msg.Protocol, props.Text{
+						Size:  10,
+						Align: consts.Center,
+						Top:   2,
+						Color: textPrimary,
+					})
+				})
+
+				m.Col(widths[4], func() {
 					m.Text(msg.Subtopic, props.Text{
 						Size:  10,
 						Align: consts.Center,
@@ -333,7 +344,7 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
-	headers := []string{"Time", "Name", "Protocol", "Subtopic", "Value", "Unit"}
+	headers := []string{"Time", "Value", "Unit", "Protocol", "Subtopic"}
 
 	for i, report := range reports {
 		if i > 0 {
@@ -351,6 +362,11 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 		if err := writer.Write([]string{"Report Information:"}); err != nil {
 			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 		}
+
+		if err := writer.Write([]string{"Name", report.Metric.Name}); err != nil {
+			return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		}
+
 		if report.Metric.ClientID != "" {
 			if err := writer.Write([]string{"Device ID", report.Metric.ClientID}); err != nil {
 				return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
@@ -389,11 +405,10 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 
 			row := []string{
 				timeStr,
-				msg.Name,
-				msg.Protocol,
-				msg.Subtopic,
 				valueStr,
 				msg.Unit,
+				msg.Protocol,
+				msg.Subtopic,
 			}
 
 			if err := writer.Write(row); err != nil {

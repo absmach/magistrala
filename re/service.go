@@ -395,8 +395,10 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action Repor
 		sMsgs := []senml.Message{}
 
 		pm.Offset = uint64(0)
-		pm.Publisher = metric.ClientID
 		pm.Name = metric.Name
+		if metric.ClientID != "" {
+			pm.Publisher = metric.ClientID
+		}
 		if metric.Subtopic != "" {
 			pm.Subtopic = metric.Subtopic
 		}

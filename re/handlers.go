@@ -137,7 +137,8 @@ func (re *re) StartScheduler(ctx context.Context) error {
 
 			page, err := re.repo.ListRules(ctx, pm)
 			if err != nil {
-				return err
+				re.errors <- err
+				continue
 			}
 
 			for _, rule := range page.Rules {
@@ -148,19 +149,26 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}
 					re.errors <- re.process(ctx, r, msg)
 				}(rule)
-				re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue())
+				if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
+					re.errors <- err
+					continue
+				}
 			}
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				return err
+				re.errors <- err
+				continue
 			}
 
 			for _, cfg := range reportConfigs.ReportConfigs {
 				go func(config ReportConfig) {
 					re.errors <- re.processReportConfig(ctx, config)
 				}(cfg)
-				re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue())
+				if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
+					re.errors <- err
+					continue
+				}
 			}
 		}
 	}

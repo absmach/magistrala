@@ -13,13 +13,7 @@ import (
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
-const (
-	hoursInDay   = 24
-	daysInWeek   = 7
-	monthsInYear = 12
-
-	protocol = "nats"
-)
+const protocol = "nats"
 
 // ScriptOutput is the indicator for type of the logic
 // so we can move it to the Go instead calling Go from Lua.

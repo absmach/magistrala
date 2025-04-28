@@ -24,7 +24,6 @@ var (
 	errInvalidAggInterval         = errors.New("invalid aggregation interval time")
 	errNoToEmail                  = errors.New("no \"To\" email address found")
 	errChannelIDNotProvided       = errors.New("channel id not provided")
-	errClientIDNotProvided        = errors.New("client id not provided")
 	errNameNotProvided            = errors.New("name not provided")
 )
 

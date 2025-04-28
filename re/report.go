@@ -109,7 +109,7 @@ func (mc MetricConfig) Validate() error {
 
 type Metric struct {
 	ChannelID string `json:"channel_id,omitempty"` // Mandatory field
-	ClientID  string `json:"client_id,omitempty"`  // Mandatory field
+	ClientID  string `json:"client_id,omitempty"`  // Optional field
 	Name      string `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string `json:"protocol,omitempty"`   // Optional field
@@ -119,9 +119,6 @@ type Metric struct {
 func (m Metric) Validate() error {
 	if m.ChannelID == "" {
 		return errChannelIDNotProvided
-	}
-	if m.ClientID == "" {
-		return errClientIDNotProvided
 	}
 	if m.Name == "" {
 		return errNameNotProvided

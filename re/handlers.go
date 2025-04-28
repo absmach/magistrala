@@ -128,7 +128,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-re.ticker.Tick():
-			due := time.Now()
+			due := time.Now().UTC()
 
 			pm := PageMeta{
 				Status:          EnabledStatus,

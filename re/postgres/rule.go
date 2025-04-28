@@ -26,8 +26,8 @@ type dbRule struct {
 	LogicValue      string         `db:"logic_value"`
 	OutputChannel   sql.NullString `db:"output_channel"`
 	OutputTopic     sql.NullString `db:"output_topic"`
-	StartDateTime   time.Time      `db:"start_datetime"`
-	Time            time.Time      `db:"time"`
+	StartDateTime   sql.NullTime   `db:"start_datetime"`
+	Time            sql.NullTime   `db:"time"`
 	Recurring       re.Recurring   `db:"recurring"`
 	RecurringPeriod uint           `db:"recurring_period"`
 	Status          re.Status      `db:"status"`
@@ -43,8 +43,8 @@ type dbReport struct {
 	Name            string       `db:"name"`
 	Description     string       `db:"description"`
 	DomainID        string       `db:"domain_id"`
-	StartDateTime   time.Time    `db:"start_datetime"`
-	Time            time.Time    `db:"time"`
+	StartDateTime   sql.NullTime `db:"start_datetime"`
+	Time            sql.NullTime `db:"time"`
 	Recurring       re.Recurring `db:"recurring"`
 	RecurringPeriod uint         `db:"recurring_period"`
 	Status          re.Status    `db:"status"`
@@ -70,6 +70,14 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	for _, v := range r.Logic.Outputs {
 		lo = append(lo, int32(v))
 	}
+	start := sql.NullTime{Time: r.Schedule.StartDateTime}
+	if !r.Schedule.StartDateTime.IsZero() {
+		start.Valid = true
+	}
+	t := sql.NullTime{Time: r.Schedule.Time}
+	if !r.Schedule.Time.IsZero() {
+		t.Valid = true
+	}
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -82,8 +90,8 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
-		StartDateTime:   r.Schedule.StartDateTime,
-		Time:            r.Schedule.Time,
+		StartDateTime:   start,
+		Time:            t,
 		Recurring:       r.Schedule.Recurring,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
 		Status:          r.Status,
@@ -120,8 +128,8 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		OutputChannel: fromNullString(dto.OutputChannel),
 		OutputTopic:   fromNullString(dto.OutputTopic),
 		Schedule: re.Schedule{
-			StartDateTime:   dto.StartDateTime,
-			Time:            dto.Time,
+			StartDateTime:   dto.StartDateTime.Time,
+			Time:            dto.Time.Time,
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
@@ -161,13 +169,22 @@ func reportToDb(r re.ReportConfig) (dbReport, error) {
 		email = e
 	}
 
+	start := sql.NullTime{Time: r.Schedule.StartDateTime}
+	if !r.Schedule.StartDateTime.IsZero() {
+		start.Valid = true
+	}
+	t := sql.NullTime{Time: r.Schedule.Time}
+	if !r.Schedule.Time.IsZero() {
+		t.Valid = true
+	}
+
 	return dbReport{
 		ID:              r.ID,
 		Name:            r.Name,
 		Description:     r.Description,
 		DomainID:        r.DomainID,
-		StartDateTime:   r.Schedule.StartDateTime,
-		Time:            r.Schedule.Time,
+		StartDateTime:   start,
+		Time:            t,
 		Recurring:       r.Schedule.Recurring,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
 		Status:          r.Status,
@@ -211,8 +228,8 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 		Config:      &config,
 		Metrics:     metrics,
 		Schedule: re.Schedule{
-			StartDateTime:   dto.StartDateTime,
-			Time:            dto.Time,
+			StartDateTime:   dto.StartDateTime.Time,
+			Time:            dto.Time.Time,
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},

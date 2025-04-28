@@ -5,6 +5,7 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 	"time"
@@ -290,8 +291,8 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	`
 	dbr := dbRule{
 		ID:        id,
-		Time:      due,
-		UpdatedAt: time.Now(),
+		Time:      sql.NullTime{Time: due, Valid: true},
+		UpdatedAt: time.Now().UTC(),
 	}
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
@@ -330,10 +331,10 @@ func pageRulesQuery(pm re.PageMeta) string {
 	if pm.Domain != "" {
 		query = append(query, "r.domain_id = :domain_id")
 	}
-	if !pm.ScheduledBefore.IsZero() {
+	if pm.ScheduledBefore != nil {
 		query = append(query, "r.time < :scheduled_before")
 	}
-	if !pm.ScheduledAfter.IsZero() {
+	if pm.ScheduledAfter != nil {
 		query = append(query, "r.time > :scheduled_after")
 	}
 
@@ -606,8 +607,9 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	`
 
 	dbr := dbReport{
-		ID:   id,
-		Time: due,
+		ID:        id,
+		UpdatedAt: time.Now().UTC(),
+		Time:      sql.NullTime{Time: due, Valid: true},
 	}
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
@@ -637,10 +639,10 @@ func pageReportQuery(pm re.PageMeta) string {
 	if pm.Domain != "" {
 		query = append(query, "rc.domain_id = :domain_id")
 	}
-	if !pm.ScheduledBefore.IsZero() {
+	if pm.ScheduledBefore != nil {
 		query = append(query, "rc.time < :scheduled_before")
 	}
-	if !pm.ScheduledAfter.IsZero() {
+	if pm.ScheduledAfter != nil {
 		query = append(query, "rc.time > :scheduled_after")
 	}
 	if pm.Name != "" {

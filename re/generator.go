@@ -118,7 +118,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 	})
 
 	headers := []string{"Time", "Name", "Protocol", "Value", "Unit", "Subtopic"}
-	widths := []uint{4, 2, 2, 2, 1, 1}
+	widths := []uint{3, 2, 2, 2, 1, 2}
 
 	for i, report := range reports {
 		if i > 0 {

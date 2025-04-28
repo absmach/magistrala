@@ -118,7 +118,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 	})
 
 	headers := []string{"Time", "Device ID", "Protocol", "Name", "Value", "Unit", "Subtopic"}
-	widths := []uint{3, 2, 1, 2, 2, 1, 1}
+	widths := []uint{3, 3, 1, 1, 1, 1, 2}
 
 	for i, report := range reports {
 		if i > 0 {
@@ -218,8 +218,13 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 				})
 
 				m.Col(widths[1], func() {
-					m.Text(msg.Publisher, props.Text{
-						Size:  10,
+					deviceID := msg.Publisher
+					if len(deviceID) > 16 {
+						deviceID = deviceID[:13] + "..."
+					}
+
+					m.Text(deviceID, props.Text{
+						Size:  9,
 						Align: consts.Center,
 						Top:   2,
 						Color: textPrimary,

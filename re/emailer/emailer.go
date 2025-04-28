@@ -19,6 +19,6 @@ func New(a *email.Config) (re.Emailer, error) {
 	return &emailer{agent: e}, err
 }
 
-func (e *emailer) SendEmailNotification(to []string, from, subject, header, user, content, footer string) error {
-	return e.agent.Send(to, from, subject, header, user, content, footer)
+func (e *emailer) SendEmailNotification(to []string, from, subject, header, user, content, footer string, attachments map[string][]byte) error {
+	return e.agent.Send(to, from, subject, header, user, content, footer, attachments)
 }

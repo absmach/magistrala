@@ -21,6 +21,7 @@ packages:
       Repository:
       Service:
       Ticker:
+      Emailer:
   github.com/absmach/magistrala/bootstrap:
     interfaces:
       ConfigRepository:
@@ -36,4 +37,11 @@ packages:
   github.com/absmach/magistrala/alarms:
     interfaces:
       Service:
-      Repository:
+      Repository:  
+  github.com/absmach/magistrala/api/grpc/readers/v1:
+    interfaces:
+      ReadersServiceClient:
+        config:
+          dir: "./readers/mocks"
+          mockname: "ReadersServiceClient"
+          filename: "readers_client.go"

@@ -5,6 +5,8 @@ package email
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"net/mail"
 	"strconv"
 	"strings"
@@ -71,7 +73,7 @@ func New(c *Config) (*Agent, error) {
 }
 
 // Send sends e-mail.
-func (a *Agent) Send(to []string, from, subject, header, user, content, footer string) error {
+func (a *Agent) Send(to []string, from, subject, header, user, content, footer string, attachments map[string][]byte) error {
 	if a.tmpl == nil {
 		return errMissingEmailTemplate
 	}
@@ -101,6 +103,22 @@ func (a *Agent) Send(to []string, from, subject, header, user, content, footer s
 	m.SetHeader("To", to...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/plain", buff.String())
+
+	for filename, data := range attachments {
+		reader := bytes.NewReader(data)
+
+		settings := []gomail.FileSetting{
+			gomail.SetHeader(map[string][]string{
+				"Content-Disposition": {fmt.Sprintf(`attachment; filename="%s"`, filename)},
+			}),
+			gomail.SetCopyFunc(func(w io.Writer) error {
+				_, err := io.Copy(w, reader)
+				return err
+			}),
+		}
+
+		m.Attach(filename, settings...)
+	}
 
 	if err := a.dial.DialAndSend(m); err != nil {
 		return errors.Wrap(errSendMail, err)

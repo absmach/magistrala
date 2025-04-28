@@ -472,11 +472,11 @@ type SenMLMessage struct {
 	Unit          string                 `protobuf:"bytes,3,opt,name=unit,proto3" json:"unit,omitempty"`
 	Time          float64                `protobuf:"fixed64,4,opt,name=time,proto3" json:"time,omitempty"`
 	UpdateTime    float64                `protobuf:"fixed64,5,opt,name=update_time,json=updateTime,proto3" json:"update_time,omitempty"`
-	Value         float64                `protobuf:"fixed64,6,opt,name=value,proto3" json:"value,omitempty"`
-	StringValue   string                 `protobuf:"bytes,7,opt,name=string_value,json=stringValue,proto3" json:"string_value,omitempty"`
-	DataValue     string                 `protobuf:"bytes,8,opt,name=data_value,json=dataValue,proto3" json:"data_value,omitempty"`
-	BoolValue     bool                   `protobuf:"varint,9,opt,name=bool_value,json=boolValue,proto3" json:"bool_value,omitempty"`
-	Sum           float64                `protobuf:"fixed64,10,opt,name=sum,proto3" json:"sum,omitempty"`
+	Value         *float64               `protobuf:"fixed64,6,opt,name=value,proto3,oneof" json:"value,omitempty"`
+	StringValue   *string                `protobuf:"bytes,7,opt,name=string_value,json=stringValue,proto3,oneof" json:"string_value,omitempty"`
+	DataValue     *string                `protobuf:"bytes,8,opt,name=data_value,json=dataValue,proto3,oneof" json:"data_value,omitempty"`
+	BoolValue     *bool                  `protobuf:"varint,9,opt,name=bool_value,json=boolValue,proto3,oneof" json:"bool_value,omitempty"`
+	Sum           *float64               `protobuf:"fixed64,10,opt,name=sum,proto3,oneof" json:"sum,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -547,36 +547,36 @@ func (x *SenMLMessage) GetUpdateTime() float64 {
 }
 
 func (x *SenMLMessage) GetValue() float64 {
-	if x != nil {
-		return x.Value
+	if x != nil && x.Value != nil {
+		return *x.Value
 	}
 	return 0
 }
 
 func (x *SenMLMessage) GetStringValue() string {
-	if x != nil {
-		return x.StringValue
+	if x != nil && x.StringValue != nil {
+		return *x.StringValue
 	}
 	return ""
 }
 
 func (x *SenMLMessage) GetDataValue() string {
-	if x != nil {
-		return x.DataValue
+	if x != nil && x.DataValue != nil {
+		return *x.DataValue
 	}
 	return ""
 }
 
 func (x *SenMLMessage) GetBoolValue() bool {
-	if x != nil {
-		return x.BoolValue
+	if x != nil && x.BoolValue != nil {
+		return *x.BoolValue
 	}
 	return false
 }
 
 func (x *SenMLMessage) GetSum() float64 {
-	if x != nil {
-		return x.Sum
+	if x != nil && x.Sum != nil {
+		return *x.Sum
 	}
 	return 0
 }
@@ -742,22 +742,27 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
 	"\bsubtopic\x18\x02 \x01(\tR\bsubtopic\x12\x1c\n" +
 	"\tpublisher\x18\x03 \x01(\tR\tpublisher\x12\x1a\n" +
-	"\bprotocol\x18\x04 \x01(\tR\bprotocol\"\xa1\x02\n" +
+	"\bprotocol\x18\x04 \x01(\tR\bprotocol\"\xfb\x02\n" +
 	"\fSenMLMessage\x12+\n" +
 	"\x04base\x18\x01 \x01(\v2\x17.readers.v1.BaseMessageR\x04base\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +
 	"\x04unit\x18\x03 \x01(\tR\x04unit\x12\x12\n" +
 	"\x04time\x18\x04 \x01(\x01R\x04time\x12\x1f\n" +
 	"\vupdate_time\x18\x05 \x01(\x01R\n" +
-	"updateTime\x12\x14\n" +
-	"\x05value\x18\x06 \x01(\x01R\x05value\x12!\n" +
-	"\fstring_value\x18\a \x01(\tR\vstringValue\x12\x1d\n" +
+	"updateTime\x12\x19\n" +
+	"\x05value\x18\x06 \x01(\x01H\x00R\x05value\x88\x01\x01\x12&\n" +
+	"\fstring_value\x18\a \x01(\tH\x01R\vstringValue\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"data_value\x18\b \x01(\tR\tdataValue\x12\x1d\n" +
+	"data_value\x18\b \x01(\tH\x02R\tdataValue\x88\x01\x01\x12\"\n" +
 	"\n" +
-	"bool_value\x18\t \x01(\bR\tboolValue\x12\x10\n" +
+	"bool_value\x18\t \x01(\bH\x03R\tboolValue\x88\x01\x01\x12\x15\n" +
 	"\x03sum\x18\n" +
-	" \x01(\x01R\x03sum\"n\n" +
+	" \x01(\x01H\x04R\x03sum\x88\x01\x01B\b\n" +
+	"\x06_valueB\x0f\n" +
+	"\r_string_valueB\r\n" +
+	"\v_data_valueB\r\n" +
+	"\v_bool_valueB\x06\n" +
+	"\x04_sum\"n\n" +
 	"\vJsonMessage\x12+\n" +
 	"\x04base\x18\x01 \x01(\v2\x17.readers.v1.BaseMessageR\x04base\x12\x18\n" +
 	"\acreated\x18\x02 \x01(\x03R\acreated\x12\x18\n" +
@@ -828,6 +833,7 @@ func file_readers_v1_readers_proto_init() {
 		(*Message_Senml)(nil),
 		(*Message_Json)(nil),
 	}
+	file_readers_v1_readers_proto_msgTypes[4].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

@@ -15,6 +15,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	abrokers "github.com/absmach/magistrala/alarms/brokers"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/re"
@@ -22,9 +23,13 @@ import (
 	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
+	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/supermq/pkg/authz"
+	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
+	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -40,21 +45,26 @@ import (
 )
 
 const (
-	svcName        = "rules_engine"
-	envPrefixDB    = "MG_RE_DB_"
-	envPrefixHTTP  = "MG_RE_HTTP_"
-	envPrefixAuth  = "SMQ_AUTH_GRPC_"
-	defDB          = "r"
-	defSvcHTTPPort = "9008"
+	svcName          = "rules_engine"
+	envPrefixDB      = "MG_RE_DB_"
+	envPrefixHTTP    = "MG_RE_HTTP_"
+	envPrefixAuth    = "SMQ_AUTH_GRPC_"
+	defDB            = "r"
+	defSvcHTTPPort   = "9008"
+	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
+	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_RE_LOG_LEVEL"        envDefault:"info"`
-	InstanceID    string  `env:"MG_RE_INSTANCE_ID"      envDefault:""`
-	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"     envDefault:"true"`
-	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
+	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
+	JaegerURL        url.URL       `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry    bool          `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
+	ESURL            string        `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
+	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
+	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 
 func main() {
@@ -177,8 +187,48 @@ func main() {
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 	errs := make(chan error)
 
+	domsGrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer domainsHandler.Close()
+
+	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg, domAuthz)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer authzClient.Close()
+	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
+
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, ec, logger)
+	regrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+
+	client, err := grpcclient.NewHandler(regrpcCfg)
+	if err != nil {
+		exitCode = 1
+		return
+	}
+	defer client.Close()
+
+	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
+	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
+
+	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -236,7 +286,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, ec email.Config, logger *slog.Logger) (re.Service, error) {
+func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -245,7 +295,11 @@ func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient)
+	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Minute), emailerClient, readersClient)
+	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	if err != nil {
+		return nil, err
+	}
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

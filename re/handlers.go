@@ -35,11 +35,25 @@ func (re *re) Handle(msg *messaging.Message) error {
 		return err
 	}
 
+	reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
+	if err != nil {
+		return err
+	}
+
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
 			re.errors <- re.process(ctx, r, msg)
 		}(ctx)
 	}
+
+	for _, cfg := range reportConfigs.ReportConfigs {
+		go func(ctx context.Context) {
+			if err := re.processReportConfig(ctx, cfg); err != nil {
+				re.errors <- err
+			}
+		}(ctx)
+	}
+
 	return nil
 }
 
@@ -83,6 +97,13 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	return err
 }
 
+func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
+	if _, err := re.generateReport(ctx, cfg, EmailReport); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
 	switch o {
 	case Channels:
@@ -119,7 +140,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if rule.shouldRun(startTime) {
+				if rule.Schedule.ShouldRun(startTime) {
 					go func(r Rule) {
 						msg := &messaging.Message{
 							Channel: r.InputChannel,
@@ -129,48 +150,61 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}(rule)
 				}
 			}
+
+			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
+			if err != nil {
+				return err
+			}
+
+			for _, cfg := range reportConfigs.ReportConfigs {
+				if cfg.Schedule.ShouldRun(startTime) {
+					go func(config ReportConfig) {
+						re.errors <- re.processReportConfig(ctx, config)
+					}(cfg)
+				}
+			}
 		}
 	}
 }
 
-func (r Rule) shouldRun(startTime time.Time) bool {
+func (s Schedule) ShouldRun(startTime time.Time) bool {
 	// Don't run if the rule's start time is in the future
 	// This allows scheduling rules to start at a specific future time
-	if r.Schedule.StartDateTime.After(startTime) {
+	if s.StartDateTime.After(startTime) {
 		return false
 	}
 
-	t := r.Schedule.Time.Truncate(time.Minute).UTC()
+	t := s.Time.Truncate(time.Minute).UTC()
 	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
 	if t.Equal(startTimeOnly) {
 		return true
 	}
 
-	if r.Schedule.RecurringPeriod == 0 {
+	if s.RecurringPeriod == 0 {
 		return false
 	}
 
-	period := int(r.Schedule.RecurringPeriod)
+	period := int(s.RecurringPeriod)
 
-	switch r.Schedule.Recurring {
+	switch s.Recurring {
 	case Daily:
-		if r.Schedule.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / hoursInDay
+		if s.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
 			if int(daysSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Weekly:
-		if r.Schedule.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(r.Schedule.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+		if s.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
 			if int(weeksSinceStart)%period == 0 {
 				return true
 			}
 		}
 	case Monthly:
-		if r.Schedule.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-r.Schedule.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-r.Schedule.StartDateTime.Month())
+		if s.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-s.StartDateTime.Month())
 			if monthsSinceStart%period == 0 {
 				return true
 			}

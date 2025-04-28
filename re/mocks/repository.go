@@ -9,6 +9,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/magistrala/re"
 	mock "github.com/stretchr/testify/mock"
@@ -463,6 +464,62 @@ func (_c *Repository_UpdateReportConfigStatus_Call) RunAndReturn(run func(ctx co
 	return _c
 }
 
+// UpdateReportDue provides a mock function for the type Repository
+func (_mock *Repository) UpdateReportDue(ctx context.Context, id string, due time.Time) (re.ReportConfig, error) {
+	ret := _mock.Called(ctx, id, due)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportDue")
+	}
+
+	var r0 re.ReportConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Time) (re.ReportConfig, error)); ok {
+		return returnFunc(ctx, id, due)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Time) re.ReportConfig); ok {
+		r0 = returnFunc(ctx, id, due)
+	} else {
+		r0 = ret.Get(0).(re.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, time.Time) error); ok {
+		r1 = returnFunc(ctx, id, due)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateReportDue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportDue'
+type Repository_UpdateReportDue_Call struct {
+	*mock.Call
+}
+
+// UpdateReportDue is a helper method to define mock.On call
+//   - ctx
+//   - id
+//   - due
+func (_e *Repository_Expecter) UpdateReportDue(ctx interface{}, id interface{}, due interface{}) *Repository_UpdateReportDue_Call {
+	return &Repository_UpdateReportDue_Call{Call: _e.mock.On("UpdateReportDue", ctx, id, due)}
+}
+
+func (_c *Repository_UpdateReportDue_Call) Run(run func(ctx context.Context, id string, due time.Time)) *Repository_UpdateReportDue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(time.Time))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateReportDue_Call) Return(reportConfig re.ReportConfig, err error) *Repository_UpdateReportDue_Call {
+	_c.Call.Return(reportConfig, err)
+	return _c
+}
+
+func (_c *Repository_UpdateReportDue_Call) RunAndReturn(run func(ctx context.Context, id string, due time.Time) (re.ReportConfig, error)) *Repository_UpdateReportDue_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateReportSchedule provides a mock function for the type Repository
 func (_mock *Repository) UpdateReportSchedule(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
 	ret := _mock.Called(ctx, cfg)
@@ -569,6 +626,62 @@ func (_c *Repository_UpdateRule_Call) Return(rule re.Rule, err error) *Repositor
 }
 
 func (_c *Repository_UpdateRule_Call) RunAndReturn(run func(ctx context.Context, r re.Rule) (re.Rule, error)) *Repository_UpdateRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRuleDue provides a mock function for the type Repository
+func (_mock *Repository) UpdateRuleDue(ctx context.Context, id string, due time.Time) (re.Rule, error) {
+	ret := _mock.Called(ctx, id, due)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleDue")
+	}
+
+	var r0 re.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Time) (re.Rule, error)); ok {
+		return returnFunc(ctx, id, due)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, time.Time) re.Rule); ok {
+		r0 = returnFunc(ctx, id, due)
+	} else {
+		r0 = ret.Get(0).(re.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, time.Time) error); ok {
+		r1 = returnFunc(ctx, id, due)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateRuleDue_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleDue'
+type Repository_UpdateRuleDue_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleDue is a helper method to define mock.On call
+//   - ctx
+//   - id
+//   - due
+func (_e *Repository_Expecter) UpdateRuleDue(ctx interface{}, id interface{}, due interface{}) *Repository_UpdateRuleDue_Call {
+	return &Repository_UpdateRuleDue_Call{Call: _e.mock.On("UpdateRuleDue", ctx, id, due)}
+}
+
+func (_c *Repository_UpdateRuleDue_Call) Run(run func(ctx context.Context, id string, due time.Time)) *Repository_UpdateRuleDue_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(time.Time))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateRuleDue_Call) Return(rule re.Rule, err error) *Repository_UpdateRuleDue_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *Repository_UpdateRuleDue_Call) RunAndReturn(run func(ctx context.Context, id string, due time.Time) (re.Rule, error)) *Repository_UpdateRuleDue_Call {
 	_c.Call.Return(run)
 	return _c
 }

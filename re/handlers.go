@@ -128,11 +128,11 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-re.ticker.Tick():
-			startTime := time.Now()
+			due := time.Now()
 
 			pm := PageMeta{
 				Status:          EnabledStatus,
-				ScheduledBefore: &startTime,
+				ScheduledBefore: &due,
 			}
 
 			page, err := re.repo.ListRules(ctx, pm)
@@ -141,15 +141,14 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, rule := range page.Rules {
-				if rule.Schedule.ShouldRun(startTime) {
-					go func(r Rule) {
-						msg := &messaging.Message{
-							Channel: r.InputChannel,
-							Created: startTime.Unix(),
-						}
-						re.errors <- re.process(ctx, r, msg)
-					}(rule)
-				}
+				go func(r Rule) {
+					msg := &messaging.Message{
+						Channel: r.InputChannel,
+						Created: due.Unix(),
+					}
+					re.errors <- re.process(ctx, r, msg)
+				}(rule)
+				re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue())
 			}
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
@@ -158,11 +157,10 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, cfg := range reportConfigs.ReportConfigs {
-				if cfg.Schedule.ShouldRun(startTime) {
-					go func(config ReportConfig) {
-						re.errors <- re.processReportConfig(ctx, config)
-					}(cfg)
-				}
+				go func(config ReportConfig) {
+					re.errors <- re.processReportConfig(ctx, config)
+				}(cfg)
+				re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue())
 			}
 		}
 	}

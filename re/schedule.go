@@ -11,6 +11,18 @@ import (
 // Type can be daily, weekly or monthly.
 type Recurring uint
 
+const (
+	None Recurring = iota
+	Daily
+	Weekly
+	Monthly
+
+	none  = 0
+	day   = time.Hour * 24
+	week  = day * 7
+	month = day * 30
+)
+
 func (rt Recurring) String() string {
 	switch rt {
 	case Daily:
@@ -21,6 +33,19 @@ func (rt Recurring) String() string {
 		return "monthly"
 	default:
 		return "none"
+	}
+}
+
+func (rt Recurring) Duration() time.Duration {
+	switch rt {
+	case Daily:
+		return day
+	case Weekly:
+		return week
+	case Monthly:
+		return month
+	default:
+		return none
 	}
 }
 
@@ -99,56 +124,6 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s Schedule) ShouldRun(startTime time.Time) bool {
-	// Don't run if the rule's start time is in the future
-	// This allows scheduling rules to start at a specific future time
-	if s.StartDateTime.After(startTime) {
-		return false
-	}
-
-	t := s.Time.Truncate(time.Minute).UTC()
-	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
-	if t.Equal(startTimeOnly) {
-		return true
-	}
-
-	if s.RecurringPeriod == 0 {
-		return false
-	}
-
-	period := int(s.RecurringPeriod)
-
-	switch s.Recurring {
-	case Daily:
-		if s.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
-			if int(daysSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Weekly:
-		if s.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
-			if int(weeksSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Monthly:
-		if s.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-s.StartDateTime.Month())
-			if monthsSinceStart%period == 0 {
-				return true
-			}
-		}
-	}
-
-	return false
+func (s Schedule) NextDue() time.Time {
+	return s.Time.Add(s.Recurring.Duration() * time.Duration(s.RecurringPeriod))
 }
-
-const (
-	None Recurring = iota
-	Daily
-	Weekly
-	Monthly
-)

@@ -29,6 +29,7 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 
 	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
@@ -37,6 +38,7 @@ type Repository interface {
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
@@ -128,6 +130,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	if r.Schedule.StartDateTime.IsZero() {
 		r.Schedule.StartDateTime = now
 	}
+	r.Schedule.Time = r.Schedule.StartDateTime
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
@@ -241,6 +244,7 @@ func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg Re
 	if cfg.Schedule.StartDateTime.IsZero() {
 		cfg.Schedule.StartDateTime = now
 	}
+	cfg.Schedule.Time = cfg.Schedule.StartDateTime
 
 	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
 	if err != nil {

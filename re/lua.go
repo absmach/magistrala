@@ -154,7 +154,6 @@ func decodeF32(l *lua.LState) int {
 			l.RaiseError("array element is not a number")
 		}
 		data = append(data, byte(val))
-
 	}
 	v, err := decodeF32LE(data)
 	if err != nil {

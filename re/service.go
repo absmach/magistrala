@@ -436,10 +436,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action Repor
 			}
 		}
 
-		reports = append(reports, Report{
-			Metric:   metric,
-			Messages: sMsgs,
-		})
+		reports = append(reports, convertToReports(metric, sMsgs)...)
 	}
 
 	switch {
@@ -526,17 +523,55 @@ func (re *re) emailReports(es EmailSetting, file ReportFile) error {
 }
 
 func convertToSenml(g *grpcReadersV1.SenMLMessage) senml.Message {
+	if g == nil {
+		return senml.Message{}
+	}
 	return senml.Message{
 		Protocol:    g.Base.GetProtocol(),
 		Subtopic:    g.Base.GetSubtopic(),
+		Publisher:   g.Base.GetPublisher(),
+		Channel:     g.Base.GetChannel(),
+		Name:        g.GetName(),
 		Unit:        g.GetUnit(),
 		Time:        g.GetTime(),
 		UpdateTime:  g.GetUpdateTime(),
-		Name:        g.GetName(),
 		Value:       g.Value,
 		StringValue: g.StringValue,
 		DataValue:   g.DataValue,
 		BoolValue:   g.BoolValue,
 		Sum:         g.Sum,
 	}
+}
+
+func convertToReports(metric Metric, senmlMsgs []senml.Message) []Report {
+	if metric.ClientID != "" {
+		return []Report{
+			{
+				Metric:   metric,
+				Messages: senmlMsgs,
+			},
+		}
+	}
+
+	return groupReportsByPublisher(metric, senmlMsgs)
+}
+
+func groupReportsByPublisher(metric Metric, sMsgs []senml.Message) []Report {
+	publishers := map[string][]senml.Message{}
+
+	for _, msg := range sMsgs {
+		publishers[msg.Publisher] = append(publishers[msg.Publisher], msg)
+	}
+
+	var groupedReports []Report
+	for publisher, messages := range publishers {
+		gMetric := metric
+		gMetric.ClientID = publisher
+		groupedReports = append(groupedReports, Report{
+			Metric:   gMetric,
+			Messages: messages,
+		})
+	}
+
+	return groupedReports
 }

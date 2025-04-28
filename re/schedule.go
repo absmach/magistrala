@@ -8,6 +8,47 @@ import (
 	"time"
 )
 
+// Type can be daily, weekly or monthly.
+type Recurring uint
+
+func (rt Recurring) String() string {
+	switch rt {
+	case Daily:
+		return "daily"
+	case Weekly:
+		return "weekly"
+	case Monthly:
+		return "monthly"
+	default:
+		return "none"
+	}
+}
+
+func (rt Recurring) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rt.String())
+}
+
+func (rt *Recurring) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	switch s {
+	case "daily":
+		*rt = Daily
+	case "weekly":
+		*rt = Weekly
+	case "monthly":
+		*rt = Monthly
+	case "none":
+		*rt = None
+	default:
+		return ErrInvalidRecurringType
+	}
+	return nil
+}
+
 type Schedule struct {
 	StartDateTime   time.Time `json:"start_datetime"`   // When the schedule becomes active
 	Time            time.Time `json:"time"`             // Specific time for the rule to run
@@ -58,8 +99,52 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Type can be daily, weekly or monthly.
-type Recurring uint
+func (s Schedule) ShouldRun(startTime time.Time) bool {
+	// Don't run if the rule's start time is in the future
+	// This allows scheduling rules to start at a specific future time
+	if s.StartDateTime.After(startTime) {
+		return false
+	}
+
+	t := s.Time.Truncate(time.Minute).UTC()
+	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
+	if t.Equal(startTimeOnly) {
+		return true
+	}
+
+	if s.RecurringPeriod == 0 {
+		return false
+	}
+
+	period := int(s.RecurringPeriod)
+
+	switch s.Recurring {
+	case Daily:
+		if s.RecurringPeriod > 0 {
+			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
+			if int(daysSinceStart)%period == 0 {
+				return true
+			}
+		}
+	case Weekly:
+		if s.RecurringPeriod > 0 {
+			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
+			if int(weeksSinceStart)%period == 0 {
+				return true
+			}
+		}
+	case Monthly:
+		if s.RecurringPeriod > 0 {
+			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
+				int(startTime.Month()-s.StartDateTime.Month())
+			if monthsSinceStart%period == 0 {
+				return true
+			}
+		}
+	}
+
+	return false
+}
 
 const (
 	None Recurring = iota
@@ -67,41 +152,3 @@ const (
 	Weekly
 	Monthly
 )
-
-func (rt Recurring) String() string {
-	switch rt {
-	case Daily:
-		return "daily"
-	case Weekly:
-		return "weekly"
-	case Monthly:
-		return "monthly"
-	default:
-		return "none"
-	}
-}
-
-func (rt Recurring) MarshalJSON() ([]byte, error) {
-	return json.Marshal(rt.String())
-}
-
-func (rt *Recurring) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	switch s {
-	case "daily":
-		*rt = Daily
-	case "weekly":
-		*rt = Weekly
-	case "monthly":
-		*rt = Monthly
-	case "none":
-		*rt = None
-	default:
-		return ErrInvalidRecurringType
-	}
-	return nil
-}

@@ -225,10 +225,6 @@ func (re *re) Cancel() error {
 	return nil
 }
 
-func (re *re) Errors() <-chan error {
-	return re.errors
-}
-
 func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
 	id, err := re.idp.ID()
 	if err != nil {

@@ -5,8 +5,10 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
@@ -244,7 +246,6 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`, pq, pgData)
-
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.Page{}, err
@@ -280,6 +281,41 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	return ret, nil
 }
 
+func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, due time.Time) (re.Rule, error) {
+	q := `
+		UPDATE rules
+		SET time = :time, updated_at = :updated_at WHERE id = :id
+		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`
+	dbr := dbRule{
+		ID:        id,
+		UpdatedAt: time.Now().UTC(),
+		Time:      sql.NullTime{Time: due},
+	}
+	if !due.IsZero() {
+		dbr.Time.Valid = true
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	var dbRule dbRule
+	if row.Next() {
+		if err := row.StructScan(&dbRule); err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+	}
+	rule, err := dbToRule(dbRule)
+	if err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	return rule, nil
+}
+
 func pageRulesQuery(pm re.PageMeta) string {
 	var query []string
 	if pm.InputChannel != "" {
@@ -294,9 +330,14 @@ func pageRulesQuery(pm re.PageMeta) string {
 	if pm.Status != re.AllStatus {
 		query = append(query, "r.status = :status")
 	}
-
 	if pm.Domain != "" {
 		query = append(query, "r.domain_id = :domain_id")
+	}
+	if pm.ScheduledBefore != nil {
+		query = append(query, "r.time < :scheduled_before")
+	}
+	if pm.ScheduledAfter != nil {
+		query = append(query, "r.time > :scheduled_after")
 	}
 
 	var q string
@@ -559,16 +600,57 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm re.Pag
 	return ret, nil
 }
 
+func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, due time.Time) (re.ReportConfig, error) {
+	q := `
+		UPDATE report_config
+		SET time = :time, updated_at = :updated_at WHERE id = :id
+		RETURNING id, name, description, domain_id, config, metrics,
+			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+	`
+
+	dbr := dbReport{
+		ID:        id,
+		UpdatedAt: time.Now().UTC(),
+		Time:      sql.NullTime{Time: due},
+	}
+	if !due.IsZero() {
+		dbr.Time.Valid = true
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	var dbReport dbReport
+	if row.Next() {
+		if err := row.StructScan(&dbReport); err != nil {
+			return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+	}
+	report, err := dbToReport(dbReport)
+	if err != nil {
+		return re.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	return report, nil
+}
+
 func pageReportQuery(pm re.PageMeta) string {
 	var query []string
 	if pm.Status != re.AllStatus {
 		query = append(query, "rc.status = :status")
 	}
-
 	if pm.Domain != "" {
 		query = append(query, "rc.domain_id = :domain_id")
 	}
-
+	if pm.ScheduledBefore != nil {
+		query = append(query, "rc.time < :scheduled_before")
+	}
+	if pm.ScheduledAfter != nil {
+		query = append(query, "rc.time > :scheduled_after")
+	}
 	if pm.Name != "" {
 		query = append(query, "rc.name ILIKE '%' || :name || '%'")
 	}

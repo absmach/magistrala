@@ -29,6 +29,7 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 
 	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
@@ -37,6 +38,7 @@ type Repository interface {
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 }
 
 // PageMeta contains page metadata that helps navigation.
@@ -128,6 +130,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	if r.Schedule.StartDateTime.IsZero() {
 		r.Schedule.StartDateTime = now
 	}
+	r.Schedule.Time = r.Schedule.StartDateTime
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
@@ -147,7 +150,7 @@ func (re *re) ViewRule(ctx context.Context, session authn.Session, id string) (R
 }
 
 func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
-	r.UpdatedAt = time.Now()
+	r.UpdatedAt = time.Now().UTC()
 	r.UpdatedBy = session.UserID
 	rule, err := re.repo.UpdateRule(ctx, r)
 	if err != nil {
@@ -158,8 +161,9 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 }
 
 func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
-	r.UpdatedAt = time.Now()
+	r.UpdatedAt = time.Now().UTC()
 	r.UpdatedBy = session.UserID
+	r.Schedule.Time = r.Schedule.StartDateTime
 	rule, err := re.repo.UpdateRuleSchedule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
@@ -192,7 +196,7 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 	}
 	r := Rule{
 		ID:        id,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}
@@ -210,7 +214,7 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	}
 	r := Rule{
 		ID:        id,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}
@@ -223,10 +227,6 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 
 func (re *re) Cancel() error {
 	return nil
-}
-
-func (re *re) Errors() <-chan error {
-	return re.errors
 }
 
 func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
@@ -245,6 +245,7 @@ func (re *re) AddReportConfig(ctx context.Context, session authn.Session, cfg Re
 	if cfg.Schedule.StartDateTime.IsZero() {
 		cfg.Schedule.StartDateTime = now
 	}
+	cfg.Schedule.Time = cfg.Schedule.StartDateTime
 
 	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
 	if err != nil {
@@ -264,7 +265,7 @@ func (re *re) ViewReportConfig(ctx context.Context, session authn.Session, id st
 }
 
 func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
-	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedAt = time.Now().UTC()
 	cfg.UpdatedBy = session.UserID
 	reportConfig, err := re.repo.UpdateReportConfig(ctx, cfg)
 	if err != nil {
@@ -275,8 +276,9 @@ func (re *re) UpdateReportConfig(ctx context.Context, session authn.Session, cfg
 }
 
 func (re *re) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
-	cfg.UpdatedAt = time.Now()
+	cfg.UpdatedAt = time.Now().UTC()
 	cfg.UpdatedBy = session.UserID
+	cfg.Schedule.Time = cfg.Schedule.StartDateTime
 	c, err := re.repo.UpdateReportSchedule(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
@@ -309,7 +311,7 @@ func (re *re) EnableReportConfig(ctx context.Context, session authn.Session, id 
 	}
 	cfg := ReportConfig{
 		ID:        id,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}
@@ -328,7 +330,7 @@ func (re *re) DisableReportConfig(ctx context.Context, session authn.Session, id
 	}
 	cfg := ReportConfig{
 		ID:        id,
-		UpdatedAt: time.Now(),
+		UpdatedAt: time.Now().UTC(),
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}

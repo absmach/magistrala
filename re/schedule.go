@@ -8,6 +8,54 @@ import (
 	"time"
 )
 
+// Type can be daily, weekly or monthly.
+type Recurring uint
+
+const (
+	None Recurring = iota
+	Daily
+	Weekly
+	Monthly
+)
+
+func (rt Recurring) String() string {
+	switch rt {
+	case Daily:
+		return "daily"
+	case Weekly:
+		return "weekly"
+	case Monthly:
+		return "monthly"
+	default:
+		return "none"
+	}
+}
+
+func (rt Recurring) MarshalJSON() ([]byte, error) {
+	return json.Marshal(rt.String())
+}
+
+func (rt *Recurring) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	switch s {
+	case "daily":
+		*rt = Daily
+	case "weekly":
+		*rt = Weekly
+	case "monthly":
+		*rt = Monthly
+	case "none":
+		*rt = None
+	default:
+		return ErrInvalidRecurringType
+	}
+	return nil
+}
+
 type Schedule struct {
 	StartDateTime   time.Time `json:"start_datetime"`   // When the schedule becomes active
 	Time            time.Time `json:"time"`             // Specific time for the rule to run
@@ -58,50 +106,15 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Type can be daily, weekly or monthly.
-type Recurring uint
-
-const (
-	None Recurring = iota
-	Daily
-	Weekly
-	Monthly
-)
-
-func (rt Recurring) String() string {
-	switch rt {
+func (s Schedule) NextDue() time.Time {
+	switch s.Recurring {
 	case Daily:
-		return "daily"
+		return s.Time.AddDate(0, 0, int(s.RecurringPeriod))
 	case Weekly:
-		return "weekly"
+		return s.Time.AddDate(0, 0, int(s.RecurringPeriod)*7)
 	case Monthly:
-		return "monthly"
+		return s.Time.AddDate(0, int(s.RecurringPeriod), 0)
 	default:
-		return "none"
+		return time.Time{}
 	}
-}
-
-func (rt Recurring) MarshalJSON() ([]byte, error) {
-	return json.Marshal(rt.String())
-}
-
-func (rt *Recurring) UnmarshalJSON(data []byte) error {
-	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
-		return err
-	}
-
-	switch s {
-	case "daily":
-		*rt = Daily
-	case "weekly":
-		*rt = Weekly
-	case "monthly":
-		*rt = Monthly
-	case "none":
-		*rt = None
-	default:
-		return ErrInvalidRecurringType
-	}
-	return nil
 }

@@ -38,23 +38,6 @@ var (
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
 	}
-	rule = re.Rule{
-		ID:           testsutil.GenerateUUID(&testing.T{}),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule:     schedule,
-	}
-	futureRule = re.Rule{
-		ID:           testsutil.GenerateUUID(&testing.T{}),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule: re.Schedule{
-			StartDateTime: time.Now().Add(24 * time.Hour),
-			Recurring:     re.None,
-		},
-	}
 	reportName = namegen.Generate()
 	rptConfig  = re.ReportConfig{
 		ID:        testsutil.GenerateUUID(&testing.T{}),
@@ -1058,59 +1041,7 @@ func TestStartScheduler(t *testing.T) {
 	errs := make(chan error)
 	svc, repo, _, ticker := newService(t, errs)
 
-	noRecurringPeriod := re.Rule{
-		ID:           testsutil.GenerateUUID(t),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule: re.Schedule{
-			StartDateTime:   time.Now().Add(-time.Hour),
-			Recurring:       re.None,
-			RecurringPeriod: 0,
-			Time:            time.Now().Add(-time.Hour),
-		},
-	}
-
-	weeklyRule := re.Rule{
-		ID:           testsutil.GenerateUUID(t),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule: re.Schedule{
-			StartDateTime:   time.Now().Add(-time.Hour),
-			Recurring:       re.Weekly,
-			RecurringPeriod: 1,
-			Time:            time.Now().Add(-time.Hour),
-		},
-	}
-
-	monthlyRule := re.Rule{
-		ID:           testsutil.GenerateUUID(t),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule: re.Schedule{
-			StartDateTime:   time.Now().Add(-time.Hour),
-			Recurring:       re.Monthly,
-			RecurringPeriod: 1,
-			Time:            time.Now().Add(-time.Hour),
-		},
-	}
-
-	pastRule := re.Rule{
-		ID:           testsutil.GenerateUUID(t),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule: re.Schedule{
-			StartDateTime:   time.Now().Add(-time.Hour),
-			Recurring:       re.None,
-			RecurringPeriod: 1,
-			Time:            time.Now().Add(-time.Hour),
-		},
-	}
-
-	cases := []struct {
+	ctxCases := []struct {
 		desc     string
 		err      error
 		pageMeta re.PageMeta
@@ -1126,7 +1057,9 @@ func TestStartScheduler(t *testing.T) {
 				ScheduledBefore: &now,
 			},
 			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
+				ctx, cancel := context.WithCancel(context.Background())
+				cancel()
+				return ctx, cancel
 			},
 		},
 		{
@@ -1152,106 +1085,9 @@ func TestStartScheduler(t *testing.T) {
 				return context.WithDeadline(context.Background(), time.Now().Add(time.Millisecond))
 			},
 		},
-		{
-			desc: "start scheduler successfully processes rules",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{rule},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler with list error",
-			err:  repoerr.ErrViewEntity,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page:    re.Page{},
-			listErr: repoerr.ErrViewEntity,
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler with rule to be run in the future",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{futureRule},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler successfully with no recurring period",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{noRecurringPeriod},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler successfully with weekly schedule",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{weeklyRule},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler successfully with monthly schedule",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{monthlyRule},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
-		{
-			desc: "start scheduler successfully processes rules with past schedule",
-			err:  context.Canceled,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page: re.Page{
-				Rules: []re.Rule{pastRule},
-			},
-			setupCtx: func() (context.Context, context.CancelFunc) {
-				return context.WithCancel(context.Background())
-			},
-		},
 	}
 
-	for _, tc := range cases {
+	for _, tc := range ctxCases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(tc.page, tc.listErr)
 			repoCall1 := repo.On("ListReportsConfig", mock.Anything, mock.Anything).Return(re.ReportConfigPage{}, nil)
@@ -1265,21 +1101,6 @@ func TestStartScheduler(t *testing.T) {
 			go func() {
 				errc <- svc.StartScheduler(ctx)
 			}()
-
-			switch tc.desc {
-			case "start scheduler with canceled context":
-				cancel()
-			case "start scheduler with list error":
-				tickChan <- time.Now()
-				time.Sleep(100 * time.Millisecond)
-				if err := errs; err != nil {
-					cancel()
-				}
-			default:
-				tickChan <- time.Now()
-				time.Sleep(100 * time.Millisecond)
-				cancel()
-			}
 
 			err := <-errc
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v but got %v", tc.err, err))

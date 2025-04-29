@@ -128,89 +128,50 @@ func (re *re) StartScheduler(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-re.ticker.Tick():
-			startTime := time.Now()
+			due := time.Now().UTC()
 
 			pm := PageMeta{
 				Status:          EnabledStatus,
-				ScheduledBefore: &startTime,
+				ScheduledBefore: &due,
 			}
 
 			page, err := re.repo.ListRules(ctx, pm)
 			if err != nil {
-				return err
+				re.errors <- err
+				continue
 			}
 
 			for _, rule := range page.Rules {
-				if rule.Schedule.ShouldRun(startTime) {
-					go func(r Rule) {
-						msg := &messaging.Message{
-							Channel: r.InputChannel,
-							Created: startTime.Unix(),
-						}
-						re.errors <- re.process(ctx, r, msg)
-					}(rule)
+				go func(r Rule) {
+					msg := &messaging.Message{
+						Channel:  r.InputChannel,
+						Subtopic: r.InputTopic,
+						Protocol: protocol,
+						Created:  due.Unix(),
+					}
+					re.errors <- re.process(ctx, r, msg)
+				}(rule)
+				if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
+					re.errors <- err
+					continue
 				}
 			}
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				return err
+				re.errors <- err
+				continue
 			}
 
 			for _, cfg := range reportConfigs.ReportConfigs {
-				if cfg.Schedule.ShouldRun(startTime) {
-					go func(config ReportConfig) {
-						re.errors <- re.processReportConfig(ctx, config)
-					}(cfg)
+				go func(config ReportConfig) {
+					re.errors <- re.processReportConfig(ctx, config)
+				}(cfg)
+				if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
+					re.errors <- err
+					continue
 				}
 			}
 		}
 	}
-}
-
-func (s Schedule) ShouldRun(startTime time.Time) bool {
-	// Don't run if the rule's start time is in the future
-	// This allows scheduling rules to start at a specific future time
-	if s.StartDateTime.After(startTime) {
-		return false
-	}
-
-	t := s.Time.Truncate(time.Minute).UTC()
-	startTimeOnly := time.Date(0, 1, 1, startTime.Hour(), startTime.Minute(), 0, 0, time.UTC)
-	if t.Equal(startTimeOnly) {
-		return true
-	}
-
-	if s.RecurringPeriod == 0 {
-		return false
-	}
-
-	period := int(s.RecurringPeriod)
-
-	switch s.Recurring {
-	case Daily:
-		if s.RecurringPeriod > 0 {
-			daysSinceStart := startTime.Sub(s.StartDateTime).Hours() / hoursInDay
-			if int(daysSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Weekly:
-		if s.RecurringPeriod > 0 {
-			weeksSinceStart := startTime.Sub(s.StartDateTime).Hours() / (hoursInDay * daysInWeek)
-			if int(weeksSinceStart)%period == 0 {
-				return true
-			}
-		}
-	case Monthly:
-		if s.RecurringPeriod > 0 {
-			monthsSinceStart := (startTime.Year()-s.StartDateTime.Year())*monthsInYear +
-				int(startTime.Month()-s.StartDateTime.Month())
-			if monthsSinceStart%period == 0 {
-				return true
-			}
-		}
-	}
-
-	return false
 }

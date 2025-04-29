@@ -246,7 +246,6 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`, pq, pgData)
-
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.Page{}, err
@@ -291,8 +290,11 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	`
 	dbr := dbRule{
 		ID:        id,
-		Time:      sql.NullTime{Time: due, Valid: true},
 		UpdatedAt: time.Now().UTC(),
+		Time:      sql.NullTime{Time: due},
+	}
+	if !due.IsZero() {
+		dbr.Time.Valid = true
 	}
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
@@ -609,8 +611,12 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	dbr := dbReport{
 		ID:        id,
 		UpdatedAt: time.Now().UTC(),
-		Time:      sql.NullTime{Time: due, Valid: true},
+		Time:      sql.NullTime{Time: due},
 	}
+	if !due.IsZero() {
+		dbr.Time.Valid = true
+	}
+
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
 		return re.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)

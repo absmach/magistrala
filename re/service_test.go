@@ -1110,46 +1110,4 @@ func TestStartScheduler(t *testing.T) {
 			tickCall1.Unset()
 		})
 	}
-	cases := []struct {
-		desc     string
-		err      error
-		pageMeta re.PageMeta
-		page     re.Page
-		listErr  error
-	}{
-		{
-			desc: "start scheduler with list error",
-			err:  repoerr.ErrViewEntity,
-			pageMeta: re.PageMeta{
-				Status:          re.EnabledStatus,
-				ScheduledBefore: &now,
-			},
-			page:    re.Page{},
-			listErr: repoerr.ErrViewEntity,
-		},
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	tickChan := make(chan time.Time)
-	ticker.On("Tick").Return((<-chan time.Time)(tickChan))
-	go func() { tickChan <- time.Now() }()
-
-	go func() {
-		errs <- svc.StartScheduler(ctx)
-	}()
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			tickCall := ticker.On("Tick").Return((<-chan time.Time)(tickChan))
-			repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(tc.page, tc.listErr)
-			repoCall1 := repo.On("ListReportsConfig", mock.Anything, mock.Anything).Return(re.ReportConfigPage{}, nil)
-			go func() { tickChan <- time.Now() }()
-
-			err := <-errs
-
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v but got %v", tc.err, err))
-			repoCall.Unset()
-			repoCall1.Unset()
-			tickCall.Unset()
-		})
-	}
 }

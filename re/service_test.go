@@ -38,13 +38,6 @@ var (
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
 	}
-	rule = re.Rule{
-		ID:           testsutil.GenerateUUID(&testing.T{}),
-		Name:         namegen.Generate(),
-		InputChannel: inputChannel,
-		Status:       re.EnabledStatus,
-		Schedule:     schedule,
-	}
 	reportName = namegen.Generate()
 	rptConfig  = re.ReportConfig{
 		ID:        testsutil.GenerateUUID(&testing.T{}),

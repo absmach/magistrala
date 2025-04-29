@@ -144,8 +144,10 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			for _, rule := range page.Rules {
 				go func(r Rule) {
 					msg := &messaging.Message{
-						Channel: r.InputChannel,
-						Created: due.Unix(),
+						Channel:  r.InputChannel,
+						Subtopic: r.InputTopic,
+						Protocol: protocol,
+						Created:  due.Unix(),
 					}
 					re.errors <- re.process(ctx, r, msg)
 				}(rule)

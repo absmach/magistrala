@@ -11,8 +11,10 @@
 networks:
   supermq-base-net:
 
+
 volumes:
   supermq-journal-volume:
+
 
 services:
   journal-db:

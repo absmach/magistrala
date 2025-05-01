@@ -6,6 +6,7 @@ name: "supermq"
 networks:
   supermq-base-net:
     driver: bridge
+    name: supermq-base-net
 
 volumes:
   supermq-users-db-volume:
@@ -20,8 +21,8 @@ volumes:
   supermq-pat-db-volume:
   supermq-domains-db-volume:
   supermq-domains-redis-volume:
-  supermq-ui-db-volume:
   supermq-auth-redis-volume:
+
 
 services:
   spicedb:
@@ -68,7 +69,7 @@ services:
       POSTGRES_DB: ${SMQ_SPICEDB_DB_NAME}
     volumes:
       - supermq-spicedb-db-volume:/var/lib/postgresql/data
-    command: ["postgres", "-c", "track_commit_timestamp=on"]
+    command: [ "postgres", "-c", "track_commit_timestamp=on" ]
 
   auth-db:
     image: postgres:16.2-alpine

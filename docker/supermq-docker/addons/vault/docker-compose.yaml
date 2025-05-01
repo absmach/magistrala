@@ -11,8 +11,10 @@
 networks:
   supermq-base-net:
 
+
 volumes:
   supermq-vault-volume:
+
 
 services:
   vault:

@@ -19,11 +19,13 @@ var (
 	errMissingReportConfig      = errors.New("missing report config")
 	errMissingReportEmailConfig = errors.New("missing report email config")
 	errInvalidRecurringPeriod   = errors.New("invalid recurring period")
+	errTitleSize                = errors.New("invalid title size")
 )
 
 const (
 	maxLimitSize = 1000
 	MaxNameSize  = 1024
+	MaxTitleSize = 37
 
 	errInvalidMetric = "invalid metric[%d]: %w"
 )
@@ -192,6 +194,10 @@ type generateReportReq struct {
 }
 
 func (req generateReportReq) validate() error {
+	if len(req.Config.Title) > MaxTitleSize {
+		return errors.Wrap(apiutil.ErrValidation, errTitleSize)
+	}
+
 	switch req.action {
 	case re.ViewReport, re.DownloadReport:
 		return validateReportConfig(req.ReportConfig, true, true)

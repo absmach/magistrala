@@ -213,7 +213,7 @@ func dbToReport(dto dbReport) (re.ReportConfig, error) {
 		}
 	}
 
-	var metrics []re.Metric
+	var metrics []re.ReqMetric
 	if dto.Metrics != nil {
 		if err := json.Unmarshal(dto.Metrics, &metrics); err != nil {
 			return re.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)

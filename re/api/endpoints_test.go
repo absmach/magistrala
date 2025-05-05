@@ -61,10 +61,10 @@ var (
 		DomainID: domainID,
 		Schedule: schedule,
 		Status:   re.EnabledStatus,
-		Metrics: []re.Metric{
+		Metrics: []re.ReqMetric{
 			{
 				ChannelID: "channel1",
-				ClientID:  "channel2",
+				ClientIDs: []string{"client1"},
 				Name:      "metric_name",
 			},
 		},

@@ -19,6 +19,7 @@ var (
 	errFromTimeNotProvided        = errors.New("\"from time\" not provided")
 	errInvalidFromTime            = errors.New("invalid \"from time\" ")
 	errToTimeNotProvided          = errors.New("\"to time\" not provided")
+	errTitleNotProvided           = errors.New("title not provided")
 	errInvalidToTime              = errors.New("invalid \"to time\"")
 	errAggIntervalTimeNotProvided = errors.New("aggregation interval time not provided")
 	errInvalidAggInterval         = errors.New("invalid aggregation interval time")
@@ -75,8 +76,9 @@ func (ac AggConfig) Validate() error {
 }
 
 type MetricConfig struct {
-	From string `json:"from,omitempty"` // Mandatory field
-	To   string `json:"to,omitempty"`   // Mandatory field
+	From  string `json:"from,omitempty"`  // Mandatory field
+	To    string `json:"to,omitempty"`    // Mandatory field
+	Title string `json:"title,omitempty"` // Mandatory field
 
 	FileFormat Format `json:"file_format,omitempty"` // Optional field
 
@@ -99,6 +101,11 @@ func (mc MetricConfig) Validate() error {
 	if _, err := reltime.Parse(mc.To); err != nil {
 		return errInvalidToTime
 	}
+
+	if mc.Title == "" {
+		return errTitleNotProvided
+	}
+
 	if err := mc.Aggregation.Validate(); err != nil {
 		return err
 	}

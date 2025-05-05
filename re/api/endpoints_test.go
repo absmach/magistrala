@@ -71,6 +71,7 @@ var (
 		Config: &re.MetricConfig{
 			From:        "now()-1h",
 			To:          "now()",
+			Title:       title,
 			Aggregation: re.AggConfig{AggType: re.AggregationAVG, Interval: "1h"},
 		},
 		Email: &re.EmailSetting{
@@ -78,6 +79,7 @@ var (
 			Subject: "Test Report",
 		},
 	}
+	title = "test_title"
 )
 
 type testRequest struct {

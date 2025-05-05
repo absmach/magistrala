@@ -19,7 +19,7 @@ import (
 	"github.com/johnfercher/maroto/pkg/props"
 )
 
-func generatePDFReport(reports []Report) ([]byte, error) {
+func generatePDFReport(title string, reports []Report) ([]byte, error) {
 	m := pdf.NewMaroto(consts.Portrait, consts.A4)
 	m.SetPageMargins(10, 15, 10)
 
@@ -41,7 +41,7 @@ func generatePDFReport(reports []Report) ([]byte, error) {
 			m.Col(2, func() {})
 
 			m.Col(8, func() {
-				m.Text("Magistrala IoT Report", props.Text{
+				m.Text(title, props.Text{
 					Size:  20,
 					Style: consts.Bold,
 					Color: primaryColor,
@@ -340,7 +340,7 @@ func formatValue(msg senml.Message) string {
 	}
 }
 
-func generateCSVReport(reports []Report) ([]byte, error) {
+func generateCSVReport(title string, reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
@@ -352,6 +352,13 @@ func generateCSVReport(reports []Report) ([]byte, error) {
 				return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 			}
 			if err := writer.Write([]string{"=== NEW REPORT ==="}); err != nil {
+				return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+			}
+			if err := writer.Write([]string{""}); err != nil {
+				return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+			}
+		} else {
+			if err := writer.Write([]string{title}); err != nil {
 				return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 			}
 			if err := writer.Write([]string{""}); err != nil {

@@ -468,7 +468,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action Repor
 
 	switch {
 	case genReportFile != nil:
-		data, err := genReportFile(reports)
+		data, err := genReportFile(cfg.Config.Title, reports)
 		if err != nil {
 			return ReportPage{}, err
 		}
@@ -509,7 +509,7 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action Repor
 	}
 }
 
-func generateFileFunc(action ReportAction, format Format) (func([]Report) ([]byte, error), error) {
+func generateFileFunc(action ReportAction, format Format) (func(string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {

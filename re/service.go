@@ -392,8 +392,33 @@ func (re *re) generateReport(ctx context.Context, cfg ReportConfig, action Repor
 		Interval:    cfg.Config.Aggregation.Interval,
 	}
 
+	var mets []Metric
 	var reports []Report
 	for _, metric := range cfg.Metrics {
+		switch {
+		case len(metric.ClientIDs) != 0:
+			for _, clientID := range metric.ClientIDs {
+				mets = append(mets, Metric{
+					ChannelID: metric.ChannelID,
+					ClientID:  clientID,
+					Name:      metric.Name,
+					Subtopic:  metric.Subtopic,
+					Protocol:  metric.Protocol,
+					Format:    metric.Format,
+				})
+			}
+		default:
+			mets = append(mets, Metric{
+				ChannelID: metric.ChannelID,
+				Name:      metric.Name,
+				Subtopic:  metric.Subtopic,
+				Protocol:  metric.Protocol,
+				Format:    metric.Format,
+			})
+		}
+	}
+
+	for _, metric := range mets {
 		sMsgs := []senml.Message{}
 
 		pm.Offset = uint64(0)

@@ -115,11 +115,20 @@ type Metric struct {
 	Format    string `json:"format,omitiempty"`    // Optional field
 }
 
-func (m Metric) Validate() error {
-	if m.ChannelID == "" {
+type ReqMetric struct {
+	ChannelID string   `json:"channel_id,omitempty"` // Mandatory field
+	ClientIDs []string `json:"client_ids,omitempty"` // Optional field
+	Name      string   `json:"name,omitempty"`       // Mandatory field
+	Subtopic  string   `json:"subtopic,omitempty"`   // Optional field
+	Protocol  string   `json:"protocol,omitempty"`   // Optional field
+	Format    string   `json:"format,omitiempty"`    // Optional field
+}
+
+func (rm ReqMetric) Validate() error {
+	if rm.ChannelID == "" {
 		return errChannelIDNotProvided
 	}
-	if m.Name == "" {
+	if rm.Name == "" {
 		return errNameNotProvided
 	}
 	return nil
@@ -133,7 +142,7 @@ type ReportConfig struct {
 	Schedule    Schedule      `json:"schedule,omitempty"`
 	Config      *MetricConfig `json:"config,omitempty"`
 	Email       *EmailSetting `json:"email,omitempty"`
-	Metrics     []Metric      `json:"metrics,omitempty"`
+	Metrics     []ReqMetric   `json:"metrics,omitempty"`
 	Status      Status        `json:"status"`
 	CreatedAt   time.Time     `json:"created_at,omitempty"`
 	CreatedBy   string        `json:"created_by,omitempty"`

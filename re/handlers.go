@@ -69,7 +69,6 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	// set the email function as a Lua global function.
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
-	l.SetGlobal("decode_f32", l.NewFunction(decodeF32))
 
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return err

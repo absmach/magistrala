@@ -4,10 +4,7 @@
 package re
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
-	"fmt"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/vadv/gopher-lua-libs/argparse"
@@ -134,49 +131,4 @@ func convertLua(lv lua.LValue) interface{} {
 	default:
 		return v.String()
 	}
-}
-
-func decodeF32(l *lua.LState) int {
-	t := l.ToTable(1)
-	if t == nil {
-		l.RaiseError("nil parameter")
-		return 0
-	}
-	data := []byte{}
-	for i := 0; i < 4; i++ {
-		v := t.RawGetInt(i + 1)
-		if v == lua.LNil {
-			l.RaiseError("nil elment in array")
-			return 0
-		}
-		val, ok := v.(lua.LNumber)
-		if !ok {
-			l.RaiseError("array element is not a number")
-		}
-		data = append(data, byte(val))
-	}
-	v, err := decodeF32LE(data)
-	if err != nil {
-		l.RaiseError("failed to decode data %s", err.Error())
-		return 0
-	}
-
-	l.Push(lua.LNumber(float64(v)))
-	return 1
-}
-
-func decodeF32LE(data []byte) (float32, error) {
-	if len(data) != 4 {
-		return 0, fmt.Errorf("invalid data length: expected 4 bytes, got %d", len(data))
-	}
-
-	buf := bytes.NewReader(data)
-
-	var value float32
-	err := binary.Read(buf, binary.LittleEndian, &value)
-	if err != nil {
-		return 0, fmt.Errorf("binary read failed: %v", err)
-	}
-
-	return value, nil
 }

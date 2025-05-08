@@ -1,3 +1,7 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+
 function aes_cbc_decrypt(key_hex, iv, encrypted_hex)
 
     local openssl = require("openssl")

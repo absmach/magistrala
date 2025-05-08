@@ -60,7 +60,7 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	q := `
-		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel, 
+		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules
 		WHERE id = $1;
@@ -82,7 +82,7 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 }
 
 func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule) (re.Rule, error) {
-	q := `UPDATE rules 
+	q := `UPDATE rules
 	SET status = :status, updated_at = :updated_at, updated_by = :updated_by
 	WHERE id = :id
 	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
@@ -181,7 +181,7 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	q := `
 		UPDATE rules
-		SET start_datetime = :start_datetime, time = :time, recurring = :recurring, 
+		SET start_datetime = :start_datetime, time = :time, recurring = :recurring,
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
@@ -242,7 +242,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	}
 	pq := pageRulesQuery(pm)
 	q := fmt.Sprintf(`
-		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel, 
+		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`, pq, pgData)
@@ -338,6 +338,9 @@ func pageRulesQuery(pm re.PageMeta) string {
 	}
 	if pm.ScheduledAfter != nil {
 		query = append(query, "r.time > :scheduled_after")
+	}
+	if pm.Name != "" {
+		query = append(query, "r.name ILIKE '%' || :name || '%'")
 	}
 
 	var q string
@@ -502,7 +505,7 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg re.R
 func (repo *PostgresRepository) UpdateReportSchedule(ctx context.Context, cfg re.ReportConfig) (re.ReportConfig, error) {
 	q := `
 		UPDATE report_config
-		SET start_datetime = :start_datetime, time = :time, recurring = :recurring, 
+		SET start_datetime = :start_datetime, time = :time, recurring = :recurring,
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 		RETURNING id, name, description, domain_id, config, metrics,
 			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;

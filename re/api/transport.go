@@ -234,6 +234,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	name, err := apiutil.ReadStringQuery(r, api.NameKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	ic, err := apiutil.ReadStringQuery(r, inputChannelKey, "")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -258,6 +262,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 		PageMeta: re.PageMeta{
 			Offset:        offset,
 			Limit:         limit,
+			Name:          name,
 			InputChannel:  ic,
 			OutputChannel: oc,
 			Status:        st,

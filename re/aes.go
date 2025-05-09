@@ -1,61 +1,85 @@
-// Copyright (c) Abstract Machines
-// SPDX-License-Identifier: Apache-2.0
-
-package re
+package main
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"encoding/hex"
+	"crypto/rand"
 	"errors"
 	"fmt"
+	"io"
 )
 
-// Converts a full raw hex frame to decrypted output
-func decryptAxiomaFrame(rawHex string, keyHex string) (string, error) {
-	// Convert inputs to bytes
-	raw, err := hex.DecodeString(rawHex)
-	if err != nil {
-		return "", fmt.Errorf("invalid raw hex: %v", err)
-	}
-	key, err := hex.DecodeString(keyHex)
-	if err != nil {
-		return "", fmt.Errorf("invalid key hex: %v", err)
-	}
-	if len(raw) < 16 {
-		return "", errors.New("raw frame too short")
-	}
-	if len(key) != 16 {
-		return "", errors.New("AES-128 requires 16-byte key")
-	}
+var (
+	errTooShort             = errors.New("ciphertext too short")
+	errNotMultipleBlockSize = errors.New("ciphertext is not a multiple of the block size")
+)
 
-	// Extract Meter ID (bytes 4–7, index 4–7)
-	mid := raw[4:8]
-
-	// Extract Access Number (byte 12, index 11 in 0-based)
-	accessNumber := raw[11]
-
-	// Construct IV: 4 zeroes + meter ID + access number + 3 zeroes
-	iv := make([]byte, 16)
-	copy(iv[4:], mid)
-	iv[8] = accessNumber
-	// iv[9:] are already zero
-
-	// Encrypted part starts from byte 16 (index 15)
-	encrypted := raw[15:]
-	if len(encrypted)%aes.BlockSize != 0 {
-		return "", errors.New("encrypted data must be multiple of 16 bytes")
-	}
-
-	// Decrypt
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", err
-	}
-	mode := cipher.NewCBCDecrypter(block, iv)
-	decrypted := make([]byte, len(encrypted))
-	mode.CryptBlocks(decrypted, encrypted)
-
-	return hex.EncodeToString(decrypted), nil
+func pad(src []byte) []byte {
+	padding := aes.BlockSize - len(src)%aes.BlockSize
+	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
+	return append(src, padtext...)
 }
 
+func unpad(src []byte) []byte {
+	length := len(src)
+	unpadding := int(src[length-1])
+	return src[:(length - unpadding)]
+}
+
+func encryptAES128(plaintext, key []byte) ([]byte, []byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	plaintext = pad(plaintext)
+
+	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
+	iv := ciphertext[:aes.BlockSize]
+
+	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
+		return nil, nil, err
+	}
+
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
+
+	return ciphertext, iv, nil
+}
+
+func decryptAES128(ciphertext, iv,  key []byte) ([]byte, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(ciphertext) < aes.BlockSize {
+		return nil, errTooShort
+	}
+
+	//iv := ciphertext[:aes.BlockSize]
+	ciphertext = ciphertext[aes.BlockSize:]
+
+	if len(ciphertext)%aes.BlockSize != 0 {
+		return nil, errNotMultipleBlockSize
+	}
+
+	mode := cipher.NewCBCDecrypter(block, iv)
+	mode.CryptBlocks(ciphertext, ciphertext)
+
+	return unpad(ciphertext), nil
+}
+
+func main(){
+	encText := "2e4409073708130007047a46002005165B780f12898B235425Bc7a69e3e6B9f14f0ef3c618754c635332efd3d64659"
+	ciphertext := []byte(encText)
+	keys := "CB6ABFAA8D2247B59127D3B839CF34B4"
+	key := []byte(keys)
+	iv := "2e4409073708130007047a460020052f"
+	//iv := []byte(initV)
+
+	data, err := decryptAES128(ciphertext, iv,  key []byte)
+	fmt.Println(data, err)
+
+}

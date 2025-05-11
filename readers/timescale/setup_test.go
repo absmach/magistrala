@@ -11,7 +11,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/magistrala/readers/timescale"
+	tsWriter "github.com/absmach/magistrala/consumers/writers/timescale"
+	pgclient "github.com/absmach/supermq/pkg/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"
@@ -28,7 +29,7 @@ func TestMain(m *testing.M) {
 
 	container, err := pool.RunWithOptions(&dockertest.RunOptions{
 		Repository: "timescale/timescaledb",
-		Tag:        "2.13.1-pg16",
+		Tag:        "2.19.3-pg16-oss",
 		Env: []string{
 			"POSTGRES_USER=test",
 			"POSTGRES_PASSWORD=test",
@@ -56,7 +57,7 @@ func TestMain(m *testing.M) {
 		log.Fatalf("Could not connect to docker: %s", err)
 	}
 
-	dbConfig := timescale.Config{
+	dbConfig := pgclient.Config{
 		Host:        "localhost",
 		Port:        port,
 		User:        "test",
@@ -68,7 +69,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	if db, err = timescale.Connect(dbConfig); err != nil {
+	if db, err = pgclient.Setup(dbConfig, *tsWriter.Migration()); err != nil {
 		log.Fatalf("Could not setup test DB connection: %s", err)
 	}
 

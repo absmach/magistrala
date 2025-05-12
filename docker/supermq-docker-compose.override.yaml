@@ -3,7 +3,7 @@
 
 services:
   spicedb:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   spicedb-migrate:
@@ -75,7 +75,7 @@ services:
       - magistrala-base-net
 
   jaeger:
-    networks:
+    networks: !override
       - magistrala-base-net
 
   mqtt-adapter:

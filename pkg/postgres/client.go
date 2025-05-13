@@ -6,8 +6,10 @@ package postgres
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	migrate "github.com/rubenv/sql-migrate"
@@ -72,10 +74,7 @@ func Setup(cfg Config, migrations migrate.MemoryMigrationSource) (*sqlx.DB, erro
 
 // Connect creates a connection to the Postgres instance.
 func Connect(cfg Config) (*sqlx.DB, error) {
-	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s pool_max_conns=%d pool_min_conns=%d pool_max_conn_lifetime=%s pool_max_conn_idle_time=%s pool_health_check_period=%s pool_max_conn_lifetime_jitter=%d",
-		cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.Pass, cfg.SSLMode, cfg.SSLCert, cfg.SSLKey, cfg.SSLRootCert, cfg.Pool.MaxConns, cfg.Pool.MinConns, cfg.Pool.MaxConnLifetime, cfg.Pool.MaxConnIdleTime, cfg.Pool.HealthCheckPeriod, cfg.Pool.MaxConnLifetimeJitter)
-
-	pgxPoolConfig, err := pgxpool.ParseConfig(url)
+	pgxPoolConfig, err := pgxpool.ParseConfig(cfg.URL())
 	if err != nil {
 		return nil, errors.Wrap(errInvalidConnectionString, err)
 	}
@@ -85,7 +84,65 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	sqlDB := stdlib.OpenDBFromPool(dbpool, nil)
+	beforeConnect := stdlib.OptionBeforeConnect(func(ctx context.Context, pgxConfig *pgx.ConnConfig) error {
+		return nil
+	})
+
+	afterConnect := stdlib.OptionAfterConnect(func(ctx context.Context, conn *pgx.Conn) error {
+		return nil
+	})
+
+	resetSession := stdlib.OptionResetSession(func(ctx context.Context, c *pgx.Conn) error {
+		return nil
+	})
+
+	sqlDB := stdlib.OpenDBFromPool(dbpool, beforeConnect, afterConnect, resetSession)
 
 	return sqlx.NewDb(sqlDB, "pgx"), nil
+}
+
+func (cfg Config) URL() string {
+	urlParts := []string{}
+
+	if cfg.Host != "" {
+		urlParts = append(urlParts, "host="+cfg.Host)
+	}
+	if cfg.Port != "" {
+		urlParts = append(urlParts, "port="+cfg.Port)
+	}
+	if cfg.User != "" {
+		urlParts = append(urlParts, "user="+cfg.User)
+	}
+	if cfg.Pass != "" {
+		urlParts = append(urlParts, "password="+cfg.Pass)
+	}
+	if cfg.Name != "" {
+		urlParts = append(urlParts, "dbname="+cfg.Name)
+	}
+	if cfg.SSLMode != "" {
+		urlParts = append(urlParts, "sslmode="+cfg.SSLMode)
+	}
+	if cfg.SSLCert != "" {
+		urlParts = append(urlParts, "sslcert="+cfg.SSLCert)
+	}
+	if cfg.SSLKey != "" {
+		urlParts = append(urlParts, "sslkey="+cfg.SSLKey)
+	}
+	if cfg.SSLRootCert != "" {
+		urlParts = append(urlParts, "sslrootcert="+cfg.SSLRootCert)
+	}
+	urlParts = append(urlParts, fmt.Sprintf("pool_max_conns=%d", cfg.Pool.MaxConns))
+	urlParts = append(urlParts, fmt.Sprintf("pool_min_conns=%d", cfg.Pool.MinConns))
+	if cfg.Pool.MaxConnLifetime != "" {
+		urlParts = append(urlParts, "pool_max_conn_lifetime="+cfg.Pool.MaxConnLifetime)
+	}
+	if cfg.Pool.MaxConnIdleTime != "" {
+		urlParts = append(urlParts, "pool_max_conn_idle_time="+cfg.Pool.MaxConnIdleTime)
+	}
+	if cfg.Pool.HealthCheckPeriod != "" {
+		urlParts = append(urlParts, "pool_health_check_period="+cfg.Pool.HealthCheckPeriod)
+	}
+	urlParts = append(urlParts, fmt.Sprintf("pool_max_conn_lifetime_jitter=%d", cfg.Pool.MaxConnLifetimeJitter))
+
+	return strings.Join(urlParts, " ")
 }

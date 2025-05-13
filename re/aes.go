@@ -1,85 +1,55 @@
-package main
+package re
 
 import (
-	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
-	"errors"
+	"encoding/hex"
 	"fmt"
-	"io"
+	"log"
+	"strings"
 )
 
-var (
-	errTooShort             = errors.New("ciphertext too short")
-	errNotMultipleBlockSize = errors.New("ciphertext is not a multiple of the block size")
-)
 
-func pad(src []byte) []byte {
-	padding := aes.BlockSize - len(src)%aes.BlockSize
-	padtext := bytes.Repeat([]byte{byte(padding)}, padding)
-	return append(src, padtext...)
+func hexToBytes(s string) []byte {
+	b, err := hex.DecodeString(strings.ReplaceAll(s, " ", ""))
+	if err != nil {
+		log.Fatalf("hex decode error: %v", err)
+	}
+	return b
 }
 
-func unpad(src []byte) []byte {
-	length := len(src)
-	unpadding := int(src[length-1])
-	return src[:(length - unpadding)]
+
+func reverseBytes(b []byte) []byte {
+	for i := 0; i < len(b)/2; i++ {
+		b[i], b[len(b)-1-i] = b[len(b)-1-i], b[i]
+	}
+	return b
 }
 
-func encryptAES128(plaintext, key []byte) ([]byte, []byte, error) {
+
+func generateIV(accessNumber byte, deviceID string) []byte {
+	idBytes := reverseBytes(hexToBytes(deviceID)) 
+	if len(idBytes) != 4 {
+		log.Fatalf("Device ID must be 4 bytes")
+	}
+	iv := make([]byte, 16)
+	copy(iv[4:], append(idBytes, []byte{accessNumber}...)) 
+	return iv
+}
+
+
+
+func decryptAES128CBC(key, iv, encrypted []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, nil, err
+		log.Fatalf("NewCipher error: %v", err)
 	}
-
-	plaintext = pad(plaintext)
-
-	ciphertext := make([]byte, aes.BlockSize+len(plaintext))
-	iv := ciphertext[:aes.BlockSize]
-
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, nil, err
+	if len(encrypted)%aes.BlockSize != 0 {
+		log.Fatalf("Encrypted data is not a multiple of the block size")
 	}
-
-	mode := cipher.NewCBCEncrypter(block, iv)
-	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
-
-	return ciphertext, iv, nil
-}
-
-func decryptAES128(ciphertext, iv,  key []byte) ([]byte, error) {
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(ciphertext) < aes.BlockSize {
-		return nil, errTooShort
-	}
-
-	//iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
-
-	if len(ciphertext)%aes.BlockSize != 0 {
-		return nil, errNotMultipleBlockSize
-	}
-
 	mode := cipher.NewCBCDecrypter(block, iv)
-	mode.CryptBlocks(ciphertext, ciphertext)
-
-	return unpad(ciphertext), nil
+	decrypted := make([]byte, len(encrypted))
+	mode.CryptBlocks(decrypted, encrypted)
+	return decrypted
 }
 
-func main(){
-	encText := "2e4409073708130007047a46002005165B780f12898B235425Bc7a69e3e6B9f14f0ef3c618754c635332efd3d64659"
-	ciphertext := []byte(encText)
-	keys := "CB6ABFAA8D2247B59127D3B839CF34B4"
-	key := []byte(keys)
-	iv := "2e4409073708130007047a460020052f"
-	//iv := []byte(initV)
-
-	data, err := decryptAES128(ciphertext, iv,  key []byte)
-	fmt.Println(data, err)
-
-}

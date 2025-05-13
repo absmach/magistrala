@@ -56,15 +56,15 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 				DisableTransactionUp: true,
 				Down: []string{
-					"DRP INDEX IF EXISTS idx_channel_time ;",
+					"DROP INDEX IF EXISTS idx_channel_time ;",
 
-					"CREATE INDEX IF EXISTS idx_channel_name_time ;",
+					"DROP INDEX IF EXISTS idx_channel_name_time ;",
 
-					"CREATE INDEX IF EXISTS idx_channel_subtopic_name_time ;",
+					"DROP INDEX IF EXISTS idx_channel_subtopic_name_time ;",
 
-					"CREATE INDEX IF EXISTS idx_channel_publisher_name_time ;",
+					"DROP INDEX IF EXISTS idx_channel_publisher_name_time ;",
 
-					"CREATE INDEX IF EXISTS idx_channel_subtopic_publisher_name_time ;",
+					"DROP INDEX IF EXISTS idx_channel_subtopic_publisher_name_time ;",
 				},
 			},
 		},

@@ -16,10 +16,10 @@ import (
 	"github.com/jmoiron/sqlx" // required for DB access
 )
 
-var _ readers.MessageRepository = (*timescaleRepository)(nil)
-
 // Table for SenML messages.
 const defTable = "messages"
+
+var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 type timescaleRepository struct {
 	db *sqlx.DB

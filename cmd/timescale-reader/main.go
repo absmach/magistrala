@@ -13,6 +13,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	readersgrpcapi "github.com/absmach/magistrala/readers/api/grpc"
 	httpapi "github.com/absmach/magistrala/readers/api/http"
 	middleware "github.com/absmach/magistrala/readers/middleware"
@@ -21,7 +22,6 @@ import (
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/grpcclient"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/prometheus"
 	"github.com/absmach/supermq/pkg/server"
 	grpcserver "github.com/absmach/supermq/pkg/server/grpc"

@@ -5,8 +5,8 @@ package postgres
 
 import (
 	"context"
-	"fmt"
 	"strings"
+	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/jackc/pgx/v5"
@@ -22,23 +22,32 @@ var (
 )
 
 type PoolConfig struct {
-	// pool_max_conns
-	MaxConns uint16 `env:"MAX_CONNS" envDefault:"5"`
-
-	// pool_min_conns
-	MinConns uint16 `env:"MIN_CONNS" envDefault:"1"`
-
-	// pool_max_conn_lifetime , example: 1h30m
-	MaxConnLifetime string `env:"MAX_CONN_LIFETIME" envDefault:"1h"`
-
-	// pool_max_conn_idle_time, example: 30m
-	MaxConnIdleTime string `env:"MAX_CONN_IDLE_TIME" envDefault:"15m"`
-
-	// pool_health_check_period
-	HealthCheckPeriod string `env:"HEALTH_CHECK_PERIOD" envDefault:"1m"`
+	// MaxConnLifetime is the duration since creation after which a connection will be automatically closed.
+	MaxConnLifetime time.Duration `env:"MAX_CONN_LIFETIME" envDefault:"1h"`
 
 	// pool_max_conn_lifetime_jitter
-	MaxConnLifetimeJitter uint16 `env:"MAX_CONN_LIFETIME_JITTER" envDefault:"0"`
+	MaxConnLifetimeJitter time.Duration `env:"MAX_CONN_LIFETIME_JITTER" envDefault:"0"`
+
+	// MaxConnIdleTime is the duration after which an idle connection will be automatically closed by the health check.
+	MaxConnIdleTime time.Duration `env:"MAX_CONN_IDLE_TIME" envDefault:"15m"`
+
+	// MaxConnLifetime is the duration since creation after which a connection will be automatically closed.
+	MaxConns uint16 `env:"MAX_CONNS" envDefault:"5"`
+
+	// MinConns is the minimum size of the pool. After connection closes, the pool might dip below MinConns. A low
+	// number of MinConns might mean the pool is empty after MaxConnLifetime until the health check has a chance
+	// to create new connections.
+	MinConns uint16 `env:"MIN_CONNS" envDefault:"1"`
+
+	// MinIdleConns is the minimum number of idle connections in the pool. You can increase this to ensure that
+	// there are always idle connections available. This can help reduce tail latencies during request processing,
+	// as you can avoid the latency of establishing a new connection while handling requests. It is superior
+	// to MinConns for this purpose.
+	// Similar to MinConns, the pool might temporarily dip below MinIdleConns after connection closes.
+	MinIdleConns uint16 `env:"MIN_IDLE_CONNS" envDefault:"1"`
+
+	// HealthCheckPeriod is the duration between checks of the health of idle connections.
+	HealthCheckPeriod time.Duration `env:"HEALTH_CHECK_PERIOD" envDefault:"1m"`
 }
 
 // Config defines the options that are used when connecting to a TimescaleSQL instance.
@@ -73,34 +82,46 @@ func Setup(cfg Config, migrations migrate.MemoryMigrationSource) (*sqlx.DB, erro
 
 // Connect creates a connection to the Postgres instance.
 func Connect(cfg Config) (*sqlx.DB, error) {
-	pgxPoolConfig, err := pgxpool.ParseConfig(cfg.URL())
+	pgxPoolConfig, err := pgxpool.ParseConfig(cfg.dbConnURL())
 	if err != nil {
 		return nil, errors.Wrap(errInvalidConnectionString, err)
 	}
+
+	beforeConnect := func(ctx context.Context, pgxConfig *pgx.ConnConfig) error {
+		return nil
+	}
+
+	afterConnect := func(ctx context.Context, conn *pgx.Conn) error {
+		return nil
+	}
+
+	resetSession := func(ctx context.Context, conn *pgx.Conn) error {
+		return nil
+	}
+
+	pgxPoolConfig.MaxConnIdleTime = cfg.Pool.MaxConnIdleTime
+	pgxPoolConfig.MaxConnLifetimeJitter = cfg.Pool.MaxConnLifetimeJitter
+	pgxPoolConfig.MaxConnLifetime = cfg.Pool.MaxConnLifetime
+	pgxPoolConfig.MaxConns = int32(cfg.Pool.MaxConns)
+	pgxPoolConfig.MinConns = int32(cfg.Pool.MinConns)
+	pgxPoolConfig.MinIdleConns = int32(cfg.Pool.MinIdleConns)
+	pgxPoolConfig.HealthCheckPeriod = cfg.Pool.HealthCheckPeriod
 
 	dbpool, err := pgxpool.NewWithConfig(context.Background(), pgxPoolConfig)
 	if err != nil {
 		return nil, err
 	}
 
-	beforeConnect := stdlib.OptionBeforeConnect(func(ctx context.Context, pgxConfig *pgx.ConnConfig) error {
-		return nil
-	})
-
-	afterConnect := stdlib.OptionAfterConnect(func(ctx context.Context, conn *pgx.Conn) error {
-		return nil
-	})
-
-	resetSession := stdlib.OptionResetSession(func(ctx context.Context, c *pgx.Conn) error {
-		return nil
-	})
-
-	sqlDB := stdlib.OpenDBFromPool(dbpool, beforeConnect, afterConnect, resetSession)
+	sqlDB := stdlib.OpenDBFromPool(dbpool,
+		stdlib.OptionBeforeConnect(beforeConnect),
+		stdlib.OptionAfterConnect(afterConnect),
+		stdlib.OptionResetSession(resetSession),
+	)
 
 	return sqlx.NewDb(sqlDB, "pgx"), nil
 }
 
-func (cfg Config) URL() string {
+func (cfg Config) dbConnURL() string {
 	urlParts := []string{}
 
 	if cfg.Host != "" {
@@ -130,18 +151,5 @@ func (cfg Config) URL() string {
 	if cfg.SSLRootCert != "" {
 		urlParts = append(urlParts, "sslrootcert="+cfg.SSLRootCert)
 	}
-	urlParts = append(urlParts, fmt.Sprintf("pool_max_conns=%d", cfg.Pool.MaxConns))
-	urlParts = append(urlParts, fmt.Sprintf("pool_min_conns=%d", cfg.Pool.MinConns))
-	if cfg.Pool.MaxConnLifetime != "" {
-		urlParts = append(urlParts, "pool_max_conn_lifetime="+cfg.Pool.MaxConnLifetime)
-	}
-	if cfg.Pool.MaxConnIdleTime != "" {
-		urlParts = append(urlParts, "pool_max_conn_idle_time="+cfg.Pool.MaxConnIdleTime)
-	}
-	if cfg.Pool.HealthCheckPeriod != "" {
-		urlParts = append(urlParts, "pool_health_check_period="+cfg.Pool.HealthCheckPeriod)
-	}
-	urlParts = append(urlParts, fmt.Sprintf("pool_max_conn_lifetime_jitter=%d", cfg.Pool.MaxConnLifetimeJitter))
-
 	return strings.Join(urlParts, " ")
 }

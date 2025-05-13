@@ -15,7 +15,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-var errMigration = errors.New("failed to apply migrations")
+var (
+	errMigration               = errors.New("failed to apply migrations")
+	errInvalidConnectionString = errors.New("invalid connection string")
+)
 
 type PoolConfig struct {
 	// pool_max_conns
@@ -72,7 +75,12 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 	url := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s sslcert=%s sslkey=%s sslrootcert=%s pool_max_conns=%d pool_min_conns=%d pool_max_conn_lifetime=%s pool_max_conn_idle_time=%s pool_health_check_period=%s pool_max_conn_lifetime_jitter=%d",
 		cfg.Host, cfg.Port, cfg.User, cfg.Name, cfg.Pass, cfg.SSLMode, cfg.SSLCert, cfg.SSLKey, cfg.SSLRootCert, cfg.Pool.MaxConns, cfg.Pool.MinConns, cfg.Pool.MaxConnLifetime, cfg.Pool.MaxConnIdleTime, cfg.Pool.HealthCheckPeriod, cfg.Pool.MaxConnLifetimeJitter)
 
-	dbpool, err := pgxpool.New(context.Background(), url)
+	pgxPoolConfig, err := pgxpool.ParseConfig(url)
+	if err != nil {
+		return nil, errors.Wrap(errInvalidConnectionString, err)
+	}
+
+	dbpool, err := pgxpool.NewWithConfig(context.Background(), pgxPoolConfig)
 	if err != nil {
 		return nil, err
 	}

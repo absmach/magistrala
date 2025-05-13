@@ -161,7 +161,7 @@ type ReportConfig struct {
 }
 
 type ReportConfigPage struct {
-	re.PageMeta
+	PageMeta
 	ReportConfigs []ReportConfig `json:"report_configs"`
 }
 
@@ -374,6 +374,17 @@ func (a *Aggregation) UnmarshalJSON(data []byte) error {
 	return err
 }
 
+type PageMeta struct {
+	Total           uint64     `json:"total" db:"total"`
+	Offset          uint64     `json:"offset" db:"offset"`
+	Limit           uint64     `json:"limit" db:"limit"`
+	Name            string     `json:"name" db:"name"`
+	Status          Status     `json:"status,omitempty" db:"status"`
+	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
+	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+}
+
 type Repository interface {
 	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
@@ -381,7 +392,7 @@ type Repository interface {
 	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
-	ListReportsConfig(ctx context.Context, pm re.PageMeta) (ReportConfigPage, error)
+	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 }
 
@@ -391,7 +402,7 @@ type Service interface {
 	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
-	ListReportsConfig(ctx context.Context, session authn.Session, pm re.PageMeta) (ReportConfigPage, error)
+	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 

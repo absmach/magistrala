@@ -24,7 +24,6 @@ func NewRepository(db postgres.Database) reports.Repository {
 	return &PostgresRepository{DB: db}
 }
 
-
 func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	q := `
 		INSERT INTO report_config (id, name, description, domain_id, config, metrics,
@@ -314,7 +313,7 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	return report, nil
 }
 
-func pageReportQuery(pm re.PageMeta) string {
+func pageReportQuery(pm reports.PageMeta) string {
 	var query []string
 	if pm.Status != reports.AllStatus {
 		query = append(query, "rc.status = :status")

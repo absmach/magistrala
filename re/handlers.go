@@ -140,20 +140,21 @@ func (re *re) StartScheduler(ctx context.Context) error {
 				continue
 			}
 
-			for _, rule := range page.Rules {
-				go func(r Rule) {
+			for _, r := range page.Rules {
+				go func(rule Rule) {
+					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
+						re.errors <- err
+						return
+					}
+
 					msg := &messaging.Message{
-						Channel:  r.InputChannel,
-						Subtopic: r.InputTopic,
+						Channel:  rule.InputChannel,
+						Subtopic: rule.InputTopic,
 						Protocol: protocol,
 						Created:  due.Unix(),
 					}
-					re.errors <- re.process(ctx, r, msg)
-				}(rule)
-				if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-					re.errors <- err
-					continue
-				}
+					re.errors <- re.process(ctx, rule, msg)
+				}(r)
 			}
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
@@ -162,14 +163,14 @@ func (re *re) StartScheduler(ctx context.Context) error {
 				continue
 			}
 
-			for _, cfg := range reportConfigs.ReportConfigs {
-				go func(config ReportConfig) {
-					re.errors <- re.processReportConfig(ctx, config)
-				}(cfg)
-				if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-					re.errors <- err
-					continue
-				}
+			for _, c := range reportConfigs.ReportConfigs {
+				go func(cfg ReportConfig) {
+					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
+						re.errors <- err
+						return
+					}
+					re.errors <- re.processReportConfig(ctx, cfg)
+				}(c)
 			}
 		}
 	}

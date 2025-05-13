@@ -55,6 +55,11 @@ const (
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )
 
+// We use a buffered channel to prevent blocking, as logging is an expensive operation.
+// A larger buffer size would also work, but we’d likely need another instance of RE in that case.
+// A smaller size would probably work too, but there's no need to be that frugal with resources.
+const channBuffer = 256
+
 type config struct {
 	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
 	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
@@ -185,7 +190,7 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-	errs := make(chan error)
+	errs := make(chan error, channBuffer)
 
 	domsGrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
@@ -249,14 +254,12 @@ func main() {
 	}
 
 	go func() {
-		for {
-			err := <-errs
-			switch err {
-			case nil:
-				logger.Info("Handling rule completed successfully")
-			default:
+		for err := range errs {
+			if err != nil {
 				logger.Warn("Error handling rule", slog.String("error", err.Error()))
+				continue
 			}
+			logger.Info("Handling rule completed successfully")
 		}
 	}()
 

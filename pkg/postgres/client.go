@@ -53,7 +53,7 @@ type Config struct {
 	SSLCert     string     `env:"SSL_CERT"       envDefault:""`
 	SSLKey      string     `env:"SSL_KEY"        envDefault:""`
 	SSLRootCert string     `env:"SSL_ROOT_CERT"  envDefault:""`
-	Pool        PoolConfig `envPrefix:"POOL"`
+	Pool        PoolConfig `envPrefix:"POOL_"`
 }
 
 // Setup creates a connection to the Postgres instance and applies any

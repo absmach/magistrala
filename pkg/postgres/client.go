@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
-	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -87,18 +86,6 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 		return nil, errors.Wrap(errInvalidConnectionString, err)
 	}
 
-	beforeConnect := func(ctx context.Context, pgxConfig *pgx.ConnConfig) error {
-		return nil
-	}
-
-	afterConnect := func(ctx context.Context, conn *pgx.Conn) error {
-		return nil
-	}
-
-	resetSession := func(ctx context.Context, conn *pgx.Conn) error {
-		return nil
-	}
-
 	pgxPoolConfig.MaxConnIdleTime = cfg.Pool.MaxConnIdleTime
 	pgxPoolConfig.MaxConnLifetimeJitter = cfg.Pool.MaxConnLifetimeJitter
 	pgxPoolConfig.MaxConnLifetime = cfg.Pool.MaxConnLifetime
@@ -112,11 +99,7 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 		return nil, err
 	}
 
-	sqlDB := stdlib.OpenDBFromPool(dbpool,
-		stdlib.OptionBeforeConnect(beforeConnect),
-		stdlib.OptionAfterConnect(afterConnect),
-		stdlib.OptionResetSession(resetSession),
-	)
+	sqlDB := stdlib.OpenDBFromPool(dbpool)
 
 	return sqlx.NewDb(sqlDB, "pgx"), nil
 }

@@ -15,11 +15,10 @@ import (
 )
 
 var (
-	errDomainCreateRules     = errors.New("not authorized to create rules in domain")
-	errDomainViewRules       = errors.New("not authorized to view rules in domain")
-	errDomainUpdateRules     = errors.New("not authorized to update rules in domain")
-	errDomainDeleteRules     = errors.New("not authorized to delete rules in domain")
-	errDomainGenerateReports = errors.New("not authorized to generate reports in domain")
+	errDomainCreateRules = errors.New("not authorized to create rules in domain")
+	errDomainViewRules   = errors.New("not authorized to view rules in domain")
+	errDomainUpdateRules = errors.New("not authorized to update rules in domain")
+	errDomainDeleteRules = errors.New("not authorized to delete rules in domain")
 )
 
 type authorizationMiddleware struct {

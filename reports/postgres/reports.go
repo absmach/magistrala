@@ -151,22 +151,22 @@ import (
 
 // dbReport represents the database structure for a Report.
 type dbReport struct {
-	ID              string       `db:"id"`
-	Name            string       `db:"name"`
-	Description     string       `db:"description"`
-	DomainID        string       `db:"domain_id"`
-	StartDateTime   sql.NullTime `db:"start_datetime"`
-	Time            sql.NullTime `db:"time"`
-	Recurring       re.Recurring `db:"recurring"`
-	RecurringPeriod uint         `db:"recurring_period"`
-	Status          reports.Status    `db:"status"`
-	CreatedAt       time.Time    `db:"created_at"`
-	CreatedBy       string       `db:"created_by"`
-	UpdatedAt       time.Time    `db:"updated_at"`
-	UpdatedBy       string       `db:"updated_by"`
-	Config          []byte       `db:"config,omitempty"`
-	Metrics         []byte       `db:"metrics"`
-	Email           []byte       `db:"email"`
+	ID              string         `db:"id"`
+	Name            string         `db:"name"`
+	Description     string         `db:"description"`
+	DomainID        string         `db:"domain_id"`
+	StartDateTime   sql.NullTime   `db:"start_datetime"`
+	Time            sql.NullTime   `db:"time"`
+	Recurring       re.Recurring   `db:"recurring"`
+	RecurringPeriod uint           `db:"recurring_period"`
+	Status          reports.Status `db:"status"`
+	CreatedAt       time.Time      `db:"created_at"`
+	CreatedBy       string         `db:"created_by"`
+	UpdatedAt       time.Time      `db:"updated_at"`
+	UpdatedBy       string         `db:"updated_by"`
+	Config          []byte         `db:"config,omitempty"`
+	Metrics         []byte         `db:"metrics"`
+	Email           []byte         `db:"email"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -270,18 +270,4 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 	}
 
 	return rpt, nil
-}
-
-func toNullString(value string) sql.NullString {
-	if value == "" {
-		return sql.NullString{Valid: false}
-	}
-	return sql.NullString{String: value, Valid: true}
-}
-
-func fromNullString(nullString sql.NullString) string {
-	if !nullString.Valid {
-		return ""
-	}
-	return nullString.String
 }

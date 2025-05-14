@@ -84,13 +84,6 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	return err
 }
 
-func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
-	if _, err := re.generateReport(ctx, cfg, EmailReport); err != nil {
-		return err
-	}
-	return nil
-}
-
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
 	switch o {
 	case Channels:
@@ -142,22 +135,6 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}
 					re.errors <- re.process(ctx, rule, msg)
 				}(r)
-			}
-
-			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
-			if err != nil {
-				re.errors <- err
-				continue
-			}
-
-			for _, c := range reportConfigs.ReportConfigs {
-				go func(cfg ReportConfig) {
-					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.errors <- err
-						return
-					}
-					re.errors <- re.processReportConfig(ctx, cfg)
-				}(c)
 			}
 		}
 	}

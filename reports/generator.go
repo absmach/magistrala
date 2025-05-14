@@ -104,16 +104,6 @@ func generatePDFReport(title string, reports []Report) ([]byte, error) {
 					Top:   3,
 				})
 			})
-
-			m.Col(4, func() {
-				m.Text("Magistrala System", props.Text{
-					Size:  8,
-					Style: consts.Italic,
-					Align: consts.Right,
-					Color: textSecondary,
-					Top:   3,
-				})
-			})
 		})
 	})
 

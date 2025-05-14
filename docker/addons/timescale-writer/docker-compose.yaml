@@ -17,7 +17,7 @@ volumes:
 
 services:
   timescale:
-    image: timescale/timescaledb:2.13.1-pg16
+    image: timescale/timescaledb:2.19.3-pg16-oss
     container_name: magistrala-timescale
     restart: on-failure
     environment:

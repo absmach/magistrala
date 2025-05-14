@@ -6,6 +6,7 @@ package timescale
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/senml"
@@ -14,6 +15,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access
 )
+
+// Table for SenML messages.
+const defTable = "messages"
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
@@ -44,7 +48,24 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	const timeDivisor = 1000000000
 
 	if rpm.Aggregation != "" {
-		q = fmt.Sprintf(`SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time, %s(value) AS value, FIRST(publisher, time) AS publisher, FIRST(protocol, time) AS protocol, FIRST(subtopic, time) AS subtopic, FIRST(name,time) AS name, FIRST(unit, time) AS unit FROM %s WHERE %s GROUP BY 1 ORDER BY time DESC LIMIT :limit OFFSET :offset;`, rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
+		q = fmt.Sprintf(`
+			SELECT
+				EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time,
+				%s(value) AS value,
+				FIRST(publisher, time) AS publisher,
+				FIRST(protocol, time) AS protocol,
+				FIRST(subtopic, time) AS subtopic,
+				FIRST(name,time) AS name,
+				FIRST(unit, time) AS unit
+			FROM
+				%s
+			WHERE
+				%s
+			GROUP BY 1
+			ORDER BY time DESC
+			LIMIT :limit OFFSET :offset;
+			`,
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
 
 		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
 	}
@@ -122,54 +143,73 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 }
 
 func fmtCondition(rpm readers.PageMetadata) string {
-	condition := `channel = :channel`
+	// Indexed columns conditions based on indices order.
+	chCondition := " channel = :channel "
 
 	var query map[string]interface{}
 	meta, err := json.Marshal(rpm)
 	if err != nil {
-		return condition
+		return chCondition
 	}
 	if err := json.Unmarshal(meta, &query); err != nil {
-		return condition
+		return chCondition
+	}
+
+	conditions := []string{chCondition}
+
+	if _, ok := query["subtopic"]; ok {
+		conditions = append(conditions, " subtopic = :subtopic ")
+	}
+
+	if _, ok := query["publisher"]; ok {
+		conditions = append(conditions, " publisher = :publisher ")
+	}
+
+	if _, ok := query["name"]; ok {
+		conditions = append(conditions, " name = :name ")
+	}
+
+	if _, ok := query["from"]; ok {
+		conditions = append(conditions, " time >= :from ")
+	}
+
+	if _, ok := query["to"]; ok {
+		conditions = append(conditions, " time < :to ")
+	}
+
+	// Non Indexed columns conditions added after indexed columns conditions order.
+	if _, ok := query["protocol"]; ok {
+		conditions = append(conditions, " protocol = :protocol ")
 	}
 
 	for name := range query {
 		switch name {
-		case
-			"subtopic",
-			"publisher",
-			"name",
-			"protocol":
-			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
 		case "v":
 			comparator := readers.ParseValueComparator(query)
-			condition = fmt.Sprintf(`%s AND value %s :value`, condition, comparator)
+			conditions = append(conditions, fmt.Sprintf(" value %s :value ", comparator))
 		case "vb":
-			condition = fmt.Sprintf(`%s AND bool_value = :bool_value`, condition)
+			conditions = append(conditions, "bool_value = :bool_value")
 		case "vs":
 			comparator := readers.ParseValueComparator(query)
 			switch comparator {
 			case "=":
-				condition = fmt.Sprintf("%s AND string_value = :string_value ", condition)
+				conditions = append(conditions, " string_value = :string_value ")
 			case ">":
-				condition = fmt.Sprintf("%s AND string_value LIKE '%%' || :string_value || '%%' AND string_value <> :string_value", condition)
+				conditions = append(conditions, " string_value LIKE '%%' || :string_value || '%%' AND string_value <> :string_value ")
 			case ">=":
-				condition = fmt.Sprintf("%s AND string_value LIKE '%%' || :string_value || '%%'", condition)
+				conditions = append(conditions, " string_value LIKE '%%' || :string_value || '%%' ")
 			case "<=":
-				condition = fmt.Sprintf("%s AND :string_value LIKE '%%' || string_value || '%%'", condition)
+				conditions = append(conditions, " :string_value LIKE '%%' || string_value || '%%' ")
 			case "<":
-				condition = fmt.Sprintf("%s AND :string_value LIKE '%%' || string_value || '%%' AND string_value <> :string_value", condition)
+				conditions = append(conditions, " :string_value LIKE '%%' || string_value || '%%' AND string_value <> :string_value ")
 			}
 		case "vd":
 			comparator := readers.ParseValueComparator(query)
-			condition = fmt.Sprintf(`%s AND data_value %s :data_value`, condition, comparator)
-		case "from":
-			condition = fmt.Sprintf(`%s AND time >= :from`, condition)
-		case "to":
-			condition = fmt.Sprintf(`%s AND time < :to`, condition)
+			conditions = append(conditions, fmt.Sprintf(" data_value %s :data_value ", comparator))
 		}
 	}
-	return condition
+
+	return strings.Join(conditions, " AND ")
 }
 
 type senmlMessage struct {

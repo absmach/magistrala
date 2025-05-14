@@ -42,6 +42,8 @@ type MessagePageMetadata struct {
 	PageMetadata
 	Subtopic    string  `json:"subtopic,omitempty"`
 	Publisher   string  `json:"publisher,omitempty"`
+	Limit       int     `json:"limit,omitempty"`
+	Name        string  `json:"name,omitempty"`
 	Comparator  string  `json:"comparator,omitempty"`
 	BoolValue   *bool   `json:"vb,omitempty"`
 	StringValue string  `json:"vs,omitempty"`

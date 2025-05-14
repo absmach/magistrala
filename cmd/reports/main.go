@@ -42,8 +42,8 @@ import (
 
 const (
 	svcName          = "reports"
-	envPrefixDB      = "MG_REPORT_DB_"
-	envPrefixHTTP    = "MG_REPORT_HTTP_"
+	envPrefixDB      = "MG_REPORTS_DB_"
+	envPrefixHTTP    = "MG_REPORTS_HTTP_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
 	defDB            = "repo"
 	defSvcHTTPPort   = "9009"
@@ -52,8 +52,8 @@ const (
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_REPORT_LOG_LEVEL"           envDefault:"info"`
-	InstanceID    string  `env:"MG_REPORT_INSTANCE_ID"         envDefault:""`
+	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
+	InstanceID    string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
 	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
 	ESURL         string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`

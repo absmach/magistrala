@@ -188,39 +188,6 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 			// Reset due, it will reset in the page meta as well.
 			due = time.Now().UTC()
-
-			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
-			if err != nil {
-				re.runInfo <- RunInfo{
-					Level:   slog.LevelError,
-					Message: fmt.Sprintf("failed to list reports : %s", err),
-					Details: []slog.Attr{slog.Time("due", due)},
-				}
-				continue
-			}
-
-			for _, c := range reportConfigs.ReportConfigs {
-				go func(cfg ReportConfig) {
-					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
-						return
-					}
-					_, err := re.generateReport(ctx, cfg, EmailReport)
-					ret := RunInfo{
-						Details: []slog.Attr{
-							slog.String("domain_id", cfg.DomainID),
-							slog.String("report_id", cfg.ID),
-							slog.String("report_name", cfg.Name),
-							slog.Time("exec_time", time.Now().UTC()),
-						},
-					}
-					if err != nil {
-						ret.Level = slog.LevelError
-						ret.Message = fmt.Sprintf("failed to generate report: %s", err)
-					}
-					re.runInfo <- ret
-				}(c)
-			}
 		}
 	}
 }

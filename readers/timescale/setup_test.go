@@ -10,6 +10,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 
 	tsWriter "github.com/absmach/magistrala/consumers/writers/timescale"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
@@ -67,6 +68,15 @@ func TestMain(m *testing.M) {
 		SSLCert:     "",
 		SSLKey:      "",
 		SSLRootCert: "",
+		Pool: pgclient.PoolConfig{
+			MaxConnLifetime:       1 * time.Hour,
+			MaxConnLifetimeJitter: time.Duration(0),
+			MaxConnIdleTime:       15 * time.Minute,
+			MaxConns:              5,
+			MinConns:              1,
+			MinIdleConns:          1,
+			HealthCheckPeriod:     1 * time.Minute,
+		},
 	}
 
 	if db, err = pgclient.Setup(dbConfig, *tsWriter.Migration()); err != nil {

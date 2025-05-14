@@ -38,7 +38,6 @@ var (
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
 	}
-	reportName = namegen.Generate()
 )
 
 func newService(t *testing.T, runInfo chan re.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {

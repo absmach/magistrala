@@ -10,14 +10,7 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 )
 
-var (
-	errInvalidReportAction      = errors.New("invalid report action")
-	errMetricsNotProvided       = errors.New("metrics not provided")
-	errMissingReportConfig      = errors.New("missing report config")
-	errMissingReportEmailConfig = errors.New("missing report email config")
-	errInvalidRecurringPeriod   = errors.New("invalid recurring period")
-	errTitleSize                = errors.New("invalid title size")
-)
+var errInvalidRecurringPeriod = errors.New("invalid recurring period")
 
 const (
 	maxLimitSize = 1000

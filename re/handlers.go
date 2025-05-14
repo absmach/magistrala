@@ -35,22 +35,9 @@ func (re *re) Handle(msg *messaging.Message) error {
 		return err
 	}
 
-	reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
-	if err != nil {
-		return err
-	}
-
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
 			re.errors <- re.process(ctx, r, msg)
-		}(ctx)
-	}
-
-	for _, cfg := range reportConfigs.ReportConfigs {
-		go func(ctx context.Context) {
-			if err := re.processReportConfig(ctx, cfg); err != nil {
-				re.errors <- err
-			}
 		}(ctx)
 	}
 

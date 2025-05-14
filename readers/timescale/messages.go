@@ -178,7 +178,6 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	}
 
 	// Non Indexed columns conditions added after indexed columns conditions order.
-
 	if _, ok := query["protocol"]; ok {
 		conditions = append(conditions, " protocol = :protocol ")
 	}

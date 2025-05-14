@@ -7,17 +7,12 @@ import (
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
 )
-
-var errInvalidRecurringPeriod = errors.New("invalid recurring period")
 
 const (
 	maxLimitSize = 1000
 	MaxNameSize  = 1024
 	MaxTitleSize = 37
-
-	errInvalidMetric = "invalid metric[%d]: %w"
 )
 
 type addRuleReq struct {
@@ -107,12 +102,5 @@ func (req deleteRuleReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	return nil
-}
-
-func validateScheduler(sch re.Schedule) error {
-	if sch.Recurring != re.None && sch.RecurringPeriod < 1 {
-		return errInvalidRecurringPeriod
-	}
 	return nil
 }

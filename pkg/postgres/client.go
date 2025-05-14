@@ -86,6 +86,10 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 		return nil, errors.Wrap(errInvalidConnectionString, err)
 	}
 
+	// Although pgxpool.ParseConfig supports parsing pool settings from the connection string,
+	// in practice, only basic database connection parameters are typically provided.
+	// Pool configuration values like max connections and lifetimes are usually omitted.
+	// As a result, pool configuration settings are explicitly configured below for clarity.
 	pgxPoolConfig.MaxConnIdleTime = cfg.Pool.MaxConnIdleTime
 	pgxPoolConfig.MaxConnLifetimeJitter = cfg.Pool.MaxConnLifetimeJitter
 	pgxPoolConfig.MaxConnLifetime = cfg.Pool.MaxConnLifetime
@@ -104,6 +108,10 @@ func Connect(cfg Config) (*sqlx.DB, error) {
 	return sqlx.NewDb(sqlDB, "pgx"), nil
 }
 
+// dbConnURL builds a PostgreSQL connection string from non-empty config fields.
+// Only non-empty fields are included to avoid malformed parameters.
+// If `host` is empty and `port` is set, pgx may misinterpret `host=` as `host=port=5432`,
+// so each part is conditionally added to prevent such issues.
 func (cfg Config) dbConnURL() string {
 	urlParts := []string{}
 

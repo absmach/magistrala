@@ -15,10 +15,6 @@ import (
 )
 
 var (
-	errDomainCreateConfigs   = errors.New("not authorized to create report configs in domain")
-	errDomainViewConfigs     = errors.New("not authorized to view report configs in domain")
-	errDomainUpdateConfigs   = errors.New("not authorized to update report configs in domain")
-	errDomainDeleteConfigs   = errors.New("not authorized to delete report configs in domain")
 	errDomainCreateRules     = errors.New("not authorized to create rules in domain")
 	errDomainViewRules       = errors.New("not authorized to view rules in domain")
 	errDomainUpdateRules     = errors.New("not authorized to update rules in domain")

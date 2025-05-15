@@ -21,8 +21,8 @@ func Migration() *migrate.MemoryMigrationSource {
 						rule_id		    VARCHAR(36) NOT NULL CHECK (length(rule_id) > 0),
 						domain_id	    VARCHAR(36) NOT NULL,
 						channel_id	    VARCHAR(36) NOT NULL,
-						client_id	    VARCHAR(36) NOT NULL,
 						subtopic        TEXT NOT NULL,
+						client_id	    VARCHAR(36) NOT NULL,
 						measurement	    TEXT NOT NULL,
 						value		    TEXT NOT NULL,
 						unit		    TEXT NOT NULL,
@@ -42,6 +42,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						resolved_by	    VARCHAR(36) NULL,
 						metadata	    JSONB
 					);`,
+					"CREATE INDEX IF NOT EXISTS idx_alarms_state ON alarms (domain_id, rule_id, channel_id, subtopic, client_id, measurement, created_at DESC);",
 				},
 				Down: []string{
 					`DROP TABLE IF EXISTS alarms`,

@@ -43,7 +43,7 @@ func (s Status) String() string {
 
 // ToStatus converts string value to a valid Alarm status.
 func ToStatus(status string) (Status, error) {
-	switch status {
+	switch strings.ToLower(status) {
 	case Active:
 		return ActiveStatus, nil
 	case Cleared:

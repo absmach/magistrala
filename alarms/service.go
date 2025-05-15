@@ -5,6 +5,7 @@ package alarms
 
 import (
 	"context"
+	"math"
 	"time"
 
 	"github.com/absmach/supermq"
@@ -40,23 +41,37 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 	}
 
 	pm := PageMetadata{
-		Limit:     1,
-		Offset:    0,
-		DomainID:  alarm.DomainID,
-		ChannelID: alarm.ChannelID,
-		ClientID:  alarm.ClientID,
-		Subtopic:  alarm.Subtopic,
-		RuleID:    alarm.RuleID,
-		Severity:  alarm.Severity,
-		Status:    alarm.Status,
+		Limit:       1,
+		Offset:      0,
+		DomainID:    alarm.DomainID,
+		RuleID:      alarm.RuleID,
+		ChannelID:   alarm.ChannelID,
+		ClientID:    alarm.ClientID,
+		Subtopic:    alarm.Subtopic,
+		Measurement: alarm.Measurement,
+		Status:      AllStatus,
+		Severity:    math.MaxUint8,
+		CreatedTill: alarm.CreatedAt,
 	}
+
+	// Retrieve the last alarm of (DomainID, RuleID, ChannelID, ClientID, Subtopic, Measurement)
 	lastAlarms, err := s.repo.ListAlarms(ctx, pm)
 	if err != nil {
 		return err
 	}
 
-	if len(lastAlarms.Alarms) > 0 {
-		return nil
+	// Exit conditions
+	switch alarm.Status {
+	case ClearedStatus:
+		// No alarm created yet and received alarm cleared status
+		// Which mean no alarm created yet.
+		if len(lastAlarms.Alarms) == 0 || lastAlarms.Alarms[0].Status == ClearedStatus {
+			return nil
+		}
+	case ActiveStatus:
+		if len(lastAlarms.Alarms) > 0 && lastAlarms.Alarms[0].Status == ActiveStatus && lastAlarms.Alarms[0].Severity == alarm.Severity {
+			return nil
+		}
 	}
 
 	_, err = s.repo.CreateAlarm(ctx, alarm)

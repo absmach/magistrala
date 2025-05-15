@@ -51,7 +51,9 @@ func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm
 			lm.logger.Warn("Create alarm failed", args...)
 			return
 		}
-		lm.logger.Info("Create alarm completed successfully", args...)
+		if alarm.ID != "" {
+			lm.logger.Info("Create alarm completed successfully", args...)
+		}
 	}(time.Now())
 
 	return lm.service.CreateAlarm(ctx, alarm)

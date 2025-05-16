@@ -66,7 +66,7 @@ func TestCreateAlarm(t *testing.T) {
 		{
 			desc:  "duplicate alarm",
 			alarm: alarm,
-			err:   repoerr.ErrConflict,
+			err:   repoerr.ErrNotFound,
 		},
 		{
 			desc: "missing rule id",

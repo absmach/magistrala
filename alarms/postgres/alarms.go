@@ -30,9 +30,48 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at)
-				VALUES (:id, :rule_id, :domain_id, :channel_id, :client_id, :subtopic, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :assignee_id, :metadata, :created_at)
-				RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at;`
+	query := `
+	WITH existing AS (
+		SELECT status, severity
+		FROM alarms
+		WHERE domain_id = :domain_id
+			AND rule_id = :rule_id
+			AND channel_id = :channel_id
+			AND client_id = :client_id
+			AND subtopic = :subtopic
+			AND measurement = :measurement
+			AND created_at <= :created_at
+		ORDER BY created_at DESC
+		LIMIT 1
+	)
+	INSERT INTO alarms (
+		id, rule_id, domain_id, channel_id, client_id, subtopic, measurement,
+		value, unit, threshold, cause, status, severity, assignee_id,
+		created_at, updated_at, updated_by, assigned_at, assigned_by,
+		acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
+	)
+	SELECT
+		:id, :rule_id, :domain_id, :channel_id, :client_id, :subtopic, :measurement,
+		:value, :unit, :threshold, :cause, :status, :severity, :assignee_id,
+		:created_at, :updated_at, :updated_by, :assigned_at, :assigned_by,
+		:acknowledged_at, :acknowledged_by, :resolved_at, :resolved_by, :metadata
+	WHERE (
+		EXISTS (
+			SELECT 1 FROM existing
+			WHERE existing.status IS DISTINCT FROM :status
+			OR (:status = 0 AND existing.status = 0 AND existing.severity IS DISTINCT FROM :severity)
+		)
+		OR (
+			NOT EXISTS (SELECT 1 FROM existing) AND :status = 0
+		)
+	)
+	RETURNING
+		id, rule_id, domain_id, channel_id, client_id, subtopic, measurement,
+		value, unit, threshold, cause, status, severity, created_at,
+		assignee_id, updated_at, updated_by, assigned_at, assigned_by,
+		acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
+	;
+	`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)

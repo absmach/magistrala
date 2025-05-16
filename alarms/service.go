@@ -5,11 +5,11 @@ package alarms
 
 import (
 	"context"
-	"math"
 	"time"
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 )
 
 type service struct {
@@ -40,43 +40,10 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 		return err
 	}
 
-	pm := PageMetadata{
-		Limit:       1,
-		Offset:      0,
-		DomainID:    alarm.DomainID,
-		RuleID:      alarm.RuleID,
-		ChannelID:   alarm.ChannelID,
-		ClientID:    alarm.ClientID,
-		Subtopic:    alarm.Subtopic,
-		Measurement: alarm.Measurement,
-		Status:      AllStatus,
-		Severity:    math.MaxUint8,
-		CreatedTo:   alarm.CreatedAt,
-	}
-
-	// Retrieve the last alarm of (DomainID, RuleID, ChannelID, ClientID, Subtopic, Measurement)
-	lastAlarms, err := s.repo.ListAlarms(ctx, pm)
-	if err != nil {
+	if _, err = s.repo.CreateAlarm(ctx, alarm); err != nil && err != repoerr.ErrNotFound {
 		return err
 	}
-
-	// Exit conditions
-	switch alarm.Status {
-	case ClearedStatus:
-		// No alarm created yet and received alarm cleared status
-		// Which mean no alarm created yet.
-		if len(lastAlarms.Alarms) == 0 || lastAlarms.Alarms[0].Status == ClearedStatus {
-			return nil
-		}
-	case ActiveStatus:
-		if len(lastAlarms.Alarms) > 0 && lastAlarms.Alarms[0].Status == ActiveStatus && lastAlarms.Alarms[0].Severity == alarm.Severity {
-			return nil
-		}
-	}
-
-	_, err = s.repo.CreateAlarm(ctx, alarm)
-
-	return err
+	return nil
 }
 
 func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {

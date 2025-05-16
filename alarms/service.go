@@ -9,6 +9,7 @@ import (
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 )
 
 type service struct {
@@ -39,29 +40,10 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 		return err
 	}
 
-	pm := PageMetadata{
-		Limit:     1,
-		Offset:    0,
-		DomainID:  alarm.DomainID,
-		ChannelID: alarm.ChannelID,
-		ClientID:  alarm.ClientID,
-		Subtopic:  alarm.Subtopic,
-		RuleID:    alarm.RuleID,
-		Severity:  alarm.Severity,
-		Status:    alarm.Status,
-	}
-	lastAlarms, err := s.repo.ListAlarms(ctx, pm)
-	if err != nil {
+	if _, err = s.repo.CreateAlarm(ctx, alarm); err != nil && err != repoerr.ErrNotFound {
 		return err
 	}
-
-	if len(lastAlarms.Alarms) > 0 {
-		return nil
-	}
-
-	_, err = s.repo.CreateAlarm(ctx, alarm)
-
-	return err
+	return nil
 }
 
 func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {

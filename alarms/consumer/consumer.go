@@ -40,10 +40,7 @@ func (h handler) Handle(msg *messaging.Message) (err error) {
 	alarm.ChannelID = msg.GetChannel()
 	alarm.ClientID = msg.GetPublisher()
 	alarm.Subtopic = msg.GetSubtopic()
-
-	if alarm.CreatedAt.IsZero() {
-		alarm.CreatedAt = time.Unix(0, int64(msg.GetCreated()))
-	}
+	alarm.CreatedAt = time.Unix(0, int64(msg.GetCreated()))
 
 	if err := alarm.Validate(); err != nil {
 		return err

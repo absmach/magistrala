@@ -10,6 +10,7 @@ import (
 	"math"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq"
@@ -131,6 +132,26 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	cfrom, err := apiutil.ReadStringQuery(r, "created_from", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	cto, err := apiutil.ReadStringQuery(r, "created_to", "")
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	var createdFrom, createdTo time.Time
+	if cfrom != "" {
+		if createdFrom, err = time.Parse(time.RFC3339, cfrom); err != nil {
+			return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+	}
+	if cto != "" {
+		if createdTo, err = time.Parse(time.RFC3339, cto); err != nil {
+			return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+		}
+	}
 
 	return listAlarmsReq{
 		PageMetadata: alarms.PageMetadata{
@@ -148,6 +169,8 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			UpdatedBy:      updatedBy,
 			AcknowledgedBy: acknowledgedBy,
 			AssignedBy:     assignedBy,
+			CreatedFrom:    createdFrom,
+			CreatedTo:      createdTo,
 		},
 	}, nil
 }

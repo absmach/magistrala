@@ -30,9 +30,48 @@ func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
-	query := `INSERT INTO alarms (id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at)
-				VALUES (:id, :rule_id, :domain_id, :channel_id, :client_id, :subtopic, :measurement, :value, :unit, :threshold, :cause, :status, :severity, :assignee_id, :metadata, :created_at)
-				RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, status, severity, assignee_id, metadata, created_at;`
+	query := `
+	WITH existing AS (
+		SELECT status, severity
+		FROM alarms
+		WHERE domain_id = :domain_id
+			AND rule_id = :rule_id
+			AND channel_id = :channel_id
+			AND client_id = :client_id
+			AND subtopic = :subtopic
+			AND measurement = :measurement
+			AND created_at <= :created_at
+		ORDER BY created_at DESC
+		LIMIT 1
+	)
+	INSERT INTO alarms (
+		id, rule_id, domain_id, channel_id, client_id, subtopic, measurement,
+		value, unit, threshold, cause, status, severity, assignee_id,
+		created_at, updated_at, updated_by, assigned_at, assigned_by,
+		acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
+	)
+	SELECT
+		:id, :rule_id, :domain_id, :channel_id, :client_id, :subtopic, :measurement,
+		:value, :unit, :threshold, :cause, :status, :severity, :assignee_id,
+		:created_at, :updated_at, :updated_by, :assigned_at, :assigned_by,
+		:acknowledged_at, :acknowledged_by, :resolved_at, :resolved_by, :metadata
+	WHERE (
+		EXISTS (
+			SELECT 1 FROM existing
+			WHERE existing.status IS DISTINCT FROM :status
+			OR (:status = 0 AND existing.status = 0 AND existing.severity IS DISTINCT FROM :severity)
+		)
+		OR (
+			NOT EXISTS (SELECT 1 FROM existing) AND :status = 0
+		)
+	)
+	RETURNING
+		id, rule_id, domain_id, channel_id, client_id, subtopic, measurement,
+		value, unit, threshold, cause, status, severity, created_at,
+		assignee_id, updated_at, updated_by, assigned_at, assigned_by,
+		acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
+	;
+	`
 	dba, err := toDBAlarm(alarm)
 	if err != nil {
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrCreateEntity, err)
@@ -147,7 +186,11 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	q := fmt.Sprintf(`SELECT * FROM alarms %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset;`, query)
+	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,
+			threshold, cause, status, severity, assignee_id, created_at, updated_at, updated_by, assigned_at,
+			assigned_by, acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
+			FROM alarms %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset;`, query)
+
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -384,26 +427,29 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	if pm.DomainID != "" {
 		query = append(query, "domain_id = :domain_id")
 	}
+	if pm.RuleID != "" {
+		query = append(query, "rule_id = :rule_id")
+	}
 	if pm.ChannelID != "" {
 		query = append(query, "channel_id = :channel_id")
-	}
-	if pm.ClientID != "" {
-		query = append(query, "client_id = :client_id")
 	}
 	if pm.Subtopic != "" {
 		query = append(query, "subtopic = :subtopic")
 	}
-	if pm.RuleID != "" {
-		query = append(query, "rule_id = :rule_id")
+	if pm.ClientID != "" {
+		query = append(query, "client_id = :client_id")
+	}
+	if pm.Measurement != "" {
+		query = append(query, "measurement = :measurement")
 	}
 	if pm.Status != alarms.AllStatus {
 		query = append(query, "status = :status")
 	}
-	if pm.AssigneeID != "" {
-		query = append(query, "assignee_id = :assignee_id")
-	}
 	if pm.Severity != math.MaxUint8 {
 		query = append(query, "severity = :severity")
+	}
+	if pm.AssigneeID != "" {
+		query = append(query, "assignee_id = :assignee_id")
 	}
 	if pm.UpdatedBy != "" {
 		query = append(query, "updated_by = :updated_by")
@@ -416,6 +462,12 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	}
 	if pm.AssignedBy != "" {
 		query = append(query, "assigned_by = :assigned_by")
+	}
+	if !pm.CreatedFrom.IsZero() {
+		query = append(query, "created_at >= :created_from")
+	}
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "created_at <= :created_to")
 	}
 
 	var emq string

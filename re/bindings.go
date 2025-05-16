@@ -61,7 +61,7 @@ func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.
 			m := &messaging.Message{
 				Domain:    original.Domain,
 				Publisher: original.Publisher,
-				Created:   alarm.CreatedAt.UnixNano(),
+				Created:   original.Created,
 				Channel:   original.Channel,
 				Subtopic:  original.Subtopic,
 				Protocol:  original.Protocol,

@@ -136,19 +136,19 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	ctill, err := apiutil.ReadStringQuery(r, "created_till", "")
+	cto, err := apiutil.ReadStringQuery(r, "created_to", "")
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	var createdFrom, createdTill time.Time
+	var createdFrom, createdTo time.Time
 	if cfrom != "" {
 		if createdFrom, err = time.Parse(time.RFC3339, cfrom); err != nil {
 			return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 	}
-	if ctill != "" {
-		if createdTill, err = time.Parse(time.RFC3339, ctill); err != nil {
+	if cto != "" {
+		if createdTo, err = time.Parse(time.RFC3339, cto); err != nil {
 			return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 	}
@@ -170,7 +170,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			AcknowledgedBy: acknowledgedBy,
 			AssignedBy:     assignedBy,
 			CreatedFrom:    createdFrom,
-			CreatedTill:    createdTill,
+			CreatedTo:      createdTo,
 		},
 	}, nil
 }

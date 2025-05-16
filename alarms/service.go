@@ -51,7 +51,7 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 		Measurement: alarm.Measurement,
 		Status:      AllStatus,
 		Severity:    math.MaxUint8,
-		CreatedTill: alarm.CreatedAt,
+		CreatedTo:   alarm.CreatedAt,
 	}
 
 	// Retrieve the last alarm of (DomainID, RuleID, ChannelID, ClientID, Subtopic, Measurement)

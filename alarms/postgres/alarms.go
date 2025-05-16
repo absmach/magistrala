@@ -427,8 +427,8 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	if !pm.CreatedFrom.IsZero() {
 		query = append(query, "created_at >= :created_from")
 	}
-	if !pm.CreatedTill.IsZero() {
-		query = append(query, "created_at <= :created_till")
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "created_at <= :created_to")
 	}
 
 	var emq string

@@ -79,7 +79,7 @@ func TestCreateAlarm(t *testing.T) {
 				RuleID:      tc.alarm.RuleID,
 				Status:      alarms.AllStatus,
 				Severity:    math.MaxUint8,
-				CreatedTill: tc.alarm.CreatedAt,
+				CreatedTo:   tc.alarm.CreatedAt,
 			}).Return(alarms.AlarmsPage{}, tc.err)
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
 			if tc.err != nil {

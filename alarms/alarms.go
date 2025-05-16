@@ -63,7 +63,7 @@ type PageMetadata struct {
 	Measurement    string    `json:"measurement"     db:"measurement"`
 	Status         Status    `json:"status"          db:"status"`
 	CreatedFrom    time.Time `json:"created_from"    db:"created_from"`
-	CreatedTill    time.Time `json:"created_till"    db:"created_till"`
+	CreatedTo      time.Time `json:"created_to"      db:"created_to"`
 	AssigneeID     string    `json:"assignee_id"     db:"assignee_id"`
 	Severity       uint8     `json:"severity"        db:"severity"`
 	UpdatedBy      string    `json:"updated_by"      db:"updated_by"`

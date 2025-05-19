@@ -78,6 +78,11 @@ type (
 	}
 )
 
+const (
+	LuaType ScriptType = iota
+	GoType
+)
+
 type Rule struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`

@@ -21,7 +21,7 @@ require (
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/jackc/pgerrcode v0.0.0-20240316143900-6e2875d9b438
 	github.com/jackc/pgtype v1.14.4
-	github.com/jackc/pgx/v5 v5.7.4
+	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/johnfercher/maroto v1.0.0
 	github.com/lib/pq v1.10.9

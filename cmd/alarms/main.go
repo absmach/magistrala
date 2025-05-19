@@ -170,6 +170,7 @@ func main() {
 		Topic:          brokers.AllTopic,
 		DeliveryPolicy: messaging.DeliverAllPolicy,
 		Handler:        consumer,
+		AckErr:         true,
 	}
 	if err := pubSub.Subscribe(ctx, subCfg); err != nil {
 		logger.Error(fmt.Sprintf("failed to subscribe to message broker: %s", err))

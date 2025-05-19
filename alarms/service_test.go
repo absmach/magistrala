@@ -6,7 +6,9 @@ package alarms_test
 import (
 	"context"
 	"fmt"
+	"math"
 	"testing"
+	"time"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/magistrala/alarms/mocks"
@@ -23,7 +25,7 @@ var idp = uuid.New()
 func TestCreateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
 	svc := alarms.NewService(idp, repo)
-
+	ts := time.Now()
 	cases := []struct {
 		desc  string
 		alarm alarms.Alarm
@@ -42,6 +44,7 @@ func TestCreateAlarm(t *testing.T) {
 				Unit:        "unit",
 				Cause:       "cause",
 				Severity:    100,
+				CreatedAt:   ts,
 			},
 			err: nil,
 		},
@@ -57,6 +60,7 @@ func TestCreateAlarm(t *testing.T) {
 				Unit:        "unit",
 				Cause:       "cause",
 				Severity:    100,
+				CreatedAt:   ts,
 			},
 			err: errors.New("rule_id is required"),
 		},
@@ -67,13 +71,15 @@ func TestCreateAlarm(t *testing.T) {
 			repoCall := repo.On("CreateAlarm", context.Background(), mock.Anything).Return(tc.alarm, tc.err)
 			repoCall1 := repo.On("ListAlarms", context.Background(), alarms.PageMetadata{
 				Offset: 0, Limit: 1,
-				DomainID:  tc.alarm.DomainID,
-				ChannelID: tc.alarm.ChannelID,
-				ClientID:  tc.alarm.ClientID,
-				Subtopic:  tc.alarm.Subtopic,
-				RuleID:    tc.alarm.RuleID,
-				Severity:  tc.alarm.Severity,
-				Status:    tc.alarm.Status,
+				DomainID:    tc.alarm.DomainID,
+				ChannelID:   tc.alarm.ChannelID,
+				ClientID:    tc.alarm.ClientID,
+				Subtopic:    tc.alarm.Subtopic,
+				Measurement: tc.alarm.Measurement,
+				RuleID:      tc.alarm.RuleID,
+				Status:      alarms.AllStatus,
+				Severity:    math.MaxUint8,
+				CreatedTo:   tc.alarm.CreatedAt,
 			}).Return(alarms.AlarmsPage{}, tc.err)
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
 			if tc.err != nil {

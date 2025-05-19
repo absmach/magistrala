@@ -53,20 +53,23 @@ type AlarmsPage struct {
 }
 
 type PageMetadata struct {
-	Offset         uint64 `json:"offset"          db:"offset"`
-	Limit          uint64 `json:"limit"           db:"limit"`
-	DomainID       string `json:"domain_id"       db:"domain_id"`
-	ChannelID      string `json:"channel_id"      db:"channel_id"`
-	ClientID       string `json:"client_id"       db:"client_id"`
-	Subtopic       string `json:"subtopic"        db:"subtopic"`
-	RuleID         string `json:"rule_id"         db:"rule_id"`
-	Status         Status `json:"status"          db:"status"`
-	AssigneeID     string `json:"assignee_id"     db:"assignee_id"`
-	Severity       uint8  `json:"severity"        db:"severity"`
-	UpdatedBy      string `json:"updated_by"      db:"updated_by"`
-	AssignedBy     string `json:"assigned_by"     db:"assigned_by"`
-	AcknowledgedBy string `json:"acknowledged_by" db:"acknowledged_by"`
-	ResolvedBy     string `json:"resolved_by"     db:"resolved_by"`
+	Offset         uint64    `json:"offset"          db:"offset"`
+	Limit          uint64    `json:"limit"           db:"limit"`
+	DomainID       string    `json:"domain_id"       db:"domain_id"`
+	RuleID         string    `json:"rule_id"         db:"rule_id"`
+	ChannelID      string    `json:"channel_id"      db:"channel_id"`
+	ClientID       string    `json:"client_id"       db:"client_id"`
+	Subtopic       string    `json:"subtopic"        db:"subtopic"`
+	Measurement    string    `json:"measurement"     db:"measurement"`
+	Status         Status    `json:"status"          db:"status"`
+	CreatedFrom    time.Time `json:"created_from"    db:"created_from"`
+	CreatedTo      time.Time `json:"created_to"      db:"created_to"`
+	AssigneeID     string    `json:"assignee_id"     db:"assignee_id"`
+	Severity       uint8     `json:"severity"        db:"severity"`
+	UpdatedBy      string    `json:"updated_by"      db:"updated_by"`
+	AssignedBy     string    `json:"assigned_by"     db:"assigned_by"`
+	AcknowledgedBy string    `json:"acknowledged_by" db:"acknowledged_by"`
+	ResolvedBy     string    `json:"resolved_by"     db:"resolved_by"`
 }
 
 func (a Alarm) Validate() error {

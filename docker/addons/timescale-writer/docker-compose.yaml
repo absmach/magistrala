@@ -29,7 +29,7 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - magistrala-timescale-writer-volume:/var/lib/timescalesql/data
+      - magistrala-timescale-writer-volume:/var/lib/postgresql/data
 
   timescale-writer:
     image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}

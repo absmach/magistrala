@@ -56,7 +56,6 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 			return err
 		}
 	default:
-
 		l := lua.NewState()
 		defer l.Close()
 		preload(l)
@@ -95,6 +94,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 		}
 		return err
 	}
+	return nil
 }
 
 func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {

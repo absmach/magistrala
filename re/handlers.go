@@ -10,6 +10,8 @@ import (
 
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/traefik/yaegi/interp"
+	"github.com/traefik/yaegi/stdlib"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -45,43 +47,54 @@ func (re *re) Handle(msg *messaging.Message) error {
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
-	l := lua.NewState()
-	defer l.Close()
-	preload(l)
-	message := prepareMsg(l, msg)
+	switch r.Logic.Type {
+	case GoType:
+		i := interp.New(interp.Options{})
 
-	// Set the message object as a Lua global variable.
-	l.SetGlobal("message", message)
+		i.Use(stdlib.Symbols)
+		if _, err := i.Eval(r.Logic.Value); err != nil {
+			return err
+		}
+	default:
+		l := lua.NewState()
+		defer l.Close()
+		preload(l)
+		message := prepareMsg(l, msg)
 
-	// set the email function as a Lua global function.
-	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
-	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
+		// Set the message object as a Lua global variable.
+		l.SetGlobal("message", message)
 
-	if err := l.DoString(r.Logic.Value); err != nil {
-		return err
-	}
-	// Get the last result.
-	result := l.Get(-1)
-	if result == lua.LNil {
-		return nil
-	}
-	// Converting Lua is an expensive operation, so
-	// don't do it if there are no outputs.
-	if len(r.Logic.Outputs) == 0 {
-		return nil
-	}
-	var err error
-	res := convertLua(result)
-	for _, o := range r.Logic.Outputs {
-		// If value is false, don't run the follow-up.
-		if v, ok := res.(bool); ok && !v {
+		// set the email function as a Lua global function.
+		l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
+		l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
+
+		if err := l.DoString(r.Logic.Value); err != nil {
+			return err
+		}
+		// Get the last result.
+		result := l.Get(-1)
+		if result == lua.LNil {
 			return nil
 		}
-		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
-			err = errors.Wrap(e, err)
+		// Converting Lua is an expensive operation, so
+		// don't do it if there are no outputs.
+		if len(r.Logic.Outputs) == 0 {
+			return nil
 		}
+		var err error
+		res := convertLua(result)
+		for _, o := range r.Logic.Outputs {
+			// If value is false, don't run the follow-up.
+			if v, ok := res.(bool); ok && !v {
+				return nil
+			}
+			if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
+				err = errors.Wrap(e, err)
+			}
+		}
+		return err
 	}
-	return err
+	return nil
 }
 
 func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {

@@ -12,47 +12,56 @@ import (
 	"strings"
 )
 
+func decrypt(keyHex string, iv string, encryptedHex string) string {
+	/*
+	AES CBC-128 DECRYPTION requires 3 data fields
+	1. Key (16 bytes)
+	2. Initialization Vector (16 bytes)
+	3. Encrypted Data (16 bytes or length be multiple a of 16)
 
-func hexToBytes(s string) []byte {
-	b, err := hex.DecodeString(strings.ReplaceAll(s, " ", ""))
+	The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.   
+	*/
+	
+	//convert key hex string to bytes
+	key,err := hex.DecodeString(strings.ReplaceAll(keyHex, " ", ""))
 	if err != nil {
-		log.Fatalf("hex decode error: %v", err)
+		log.Fatalf("Key Hex decode error: %v", err)
 	}
-	return b
-}
 
-
-func reverseBytes(b []byte) []byte {
-	for i := 0; i < len(b)/2; i++ {
-		b[i], b[len(b)-1-i] = b[len(b)-1-i], b[i]
-	}
-	return b
-}
-
-
-func generateIV(accessNumber byte, deviceID string) []byte {
-	idBytes := reverseBytes(hexToBytes(deviceID)) 
-	if len(idBytes) != 4 {
-		log.Fatalf("Device ID must be 4 bytes")
-	}
-	iv := make([]byte, 16)
-	copy(iv[4:], append(idBytes, []byte{accessNumber}...)) 
-	return iv
-}
-
-
-
-func decryptAES128CBC(key, iv, encrypted []byte) []byte {
-	block, err := aes.NewCipher(key)
+	//convert encrypted hex string to bytes
+	encrypted,err := hex.DecodeString(strings.ReplaceAll(encryptedHex, " ", ""))
 	if err != nil {
-		log.Fatalf("NewCipher error: %v", err)
+		log.Fatalf("Encrypted Hex decode error: %v", err)
 	}
-	if len(encrypted)%aes.BlockSize != 0 {
-		log.Fatalf("Encrypted data is not a multiple of the block size")
-	}
-	mode := cipher.NewCBCDecrypter(block, iv)
-	decrypted := make([]byte, len(encrypted))
-	mode.CryptBlocks(decrypted, encrypted)
-	return decrypted
-}
 
+		iv_bytes := []byte{}
+		// Convert hex string to bytes
+		newBytes, err := hex.DecodeString(iv)
+
+		if err != nil {
+			log.Fatalf("Failed to decode hex string: %v", err)
+		}
+		
+		//The IV bytes
+		iv_bytes = append(iv_bytes, newBytes...)
+		
+		//Create the Cipher from Key
+
+		block, err := aes.NewCipher(key)
+		if err != nil {
+			log.Fatalf("NewCipher error: %v", err)
+		}
+
+		//The encrypted block should be 16 bytes or a multiple of 16
+		if len(encrypted)%aes.BlockSize != 0 {
+			log.Fatalf("Encrypted data is not a multiple of the block size")
+		}
+
+		//decryption done with the key, IV and encrypted hex
+		mode := cipher.NewCBCDecrypter(block, iv_bytes)
+		decrypted := make([]byte, len(encrypted))
+		mode.CryptBlocks(decrypted, encrypted)
+
+	dec_result := fmt.Sprintf("Decrypted HEX: %X\n", decrypted)
+	return dec_result
+}

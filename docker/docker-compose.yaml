@@ -33,6 +33,7 @@ services:
     networks:
       - magistrala-base-net
     environment:
+      MG_AUTH_URL: ${MG_AUTH_URL}
       MG_DOMAINS_URL: ${MG_DOMAINS_URL}
       MG_USERS_URL: ${MG_USERS_URL}
       MG_CLIENTS_URL: ${MG_CLIENTS_URL}

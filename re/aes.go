@@ -12,7 +12,6 @@ import (
 	"strings"
 )
 
-func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	/*
 	AES CBC-128 DECRYPTION requires 3 data fields
 	1. Key (16 bytes)
@@ -22,20 +21,24 @@ func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.   
 	*/
 	// Create a new AES cipher object with the given key and initialization vector.
-		block, err := aes.NewCipher(key)
-		if err != nil {
-			log.Fatalf("NewCipher error: %v", err)
-		}
 
-		// Check for encrypted data length is 16bytes or a multiple of 16.
-		if len(encrypted)%aes.BlockSize != 0 {
-			log.Fatalf("Encrypted data is not a multiple of the block size")
-		}
-		// AES-128 CBC mode
-		mode := cipher.NewCBCDecrypter(block, iv)
-		decrypted := make([]byte, len(encrypted))
-		mode.CryptBlocks(decrypted, encrypted)
-	
-	// return strings.ToUpper(hex.EncodeToString(decrypted))
+	// decrypt takes key, iv, and encrypted data as hex strings and returns the decrypted result as a hex string
+// decrypt takes key, iv, and encrypted data as hex strings and returns the decrypted result as a hex string
+func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
+	// Create AES cipher
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatalf("NewCipher error: %v", err)
+	}
+
+	if len(encrypted)%aes.BlockSize != 0 {
+		log.Fatalf("Encrypted data is not a multiple of the block size")
+	}
+
+	// Decrypt using CBC mode
+	mode := cipher.NewCBCDecrypter(block, iv)
+	decrypted := make([]byte, len(encrypted))
+	mode.CryptBlocks(decrypted, encrypted)
+
 	return decrypted
 }

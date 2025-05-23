@@ -12,17 +12,14 @@ import (
 	"strings"
 )
 
-	/*
-	AES CBC-128 DECRYPTION requires 3 data fields
-	1. Key (16 bytes)
-	2. Initialization Vector (16 bytes). {Lua script generates this}
-	3. Encrypted Data (16 bytes or length be multiple a of 16) {Not the whole Telegram rather the encrypted part}
 
-	The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.   
-	*/
-	// Create a new AES cipher object with the given key and initialization vector.
+// AES CBC-128 DECRYPTION requires 3 data fields
+// 1. Key (16 bytes)
+// 2. Initialization Vector (16 bytes). {Lua script generates this}
+// 3. Encrypted Data (16 bytes or length be multiple a of 16) {Not the whole Telegram rather the encrypted part}
+// The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.   
 
-	// decrypt takes key, iv, and encrypted data as hex strings and returns the decrypted result as a hex string
+
 // decrypt takes key, iv, and encrypted data as hex strings and returns the decrypted result as a hex string
 func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	// Create AES cipher
@@ -41,4 +38,5 @@ func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	mode.CryptBlocks(decrypted, encrypted)
 
 	return decrypted
+
 }

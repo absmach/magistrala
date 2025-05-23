@@ -23,27 +23,32 @@ func (re *re) lua_decrypt(l *lua.LState) int{
 
 	key, err := hex.DecodeString(key_str)
 	if err != nil {
-		log.Fatalf("Invalid key hex: %v", err)
+		l.RaiseError()
+		return 0
 	}
 
 	iv, err := hex.DecodeString(iv_str)
 	if err != nil {
-		log.Fatalf("Invalid IV hex: %v", err)
+		l.RaiseError()
+		return 0
 	}
 
 	enc, err := hex.DecodeString(enc_str)
 	if err != nil {
-		log.Fatalf("Invalid encrypted hex: %v", err)
+		l.RaiseError()
+		return 0
 	}
 
 	dec, err := decrypt(key []byte, iv []byte, enc []byte)
 	if err != nil {
+		l.RaiseError()
 		return 0
 	}
 	
 	decrypted := strings.ToUpper(hex.EncodeToString(dec))
 	l.Push(dec)
 	return 1
+	
 }
 
 func (re *re) sendEmail(l *lua.LState) int {

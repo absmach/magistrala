@@ -8,12 +8,43 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/json"
+	"strings"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/messaging"
 	lua "github.com/yuin/gopher-lua"
 )
+
+func (re *re) lua_decrypt(l *lua.LState) int{
+	key_str := l.ToString(1)
+	iv_str := l.ToString(2)
+	enc_str := l.ToString(3)
+
+	key, err := hex.DecodeString(key_str)
+	if err != nil {
+		log.Fatalf("Invalid key hex: %v", err)
+	}
+
+	iv, err := hex.DecodeString(iv_str)
+	if err != nil {
+		log.Fatalf("Invalid IV hex: %v", err)
+	}
+
+	enc, err := hex.DecodeString(enc_str)
+	if err != nil {
+		log.Fatalf("Invalid encrypted hex: %v", err)
+	}
+
+	dec, err := decrypt(key []byte, iv []byte, enc []byte)
+	if err != nil {
+		return 0
+	}
+	
+	decrypted := strings.ToUpper(hex.EncodeToString(dec))
+	l.Push(dec)
+	return 1
+}
 
 func (re *re) sendEmail(l *lua.LState) int {
 	recipientsTable := l.ToTable(1)

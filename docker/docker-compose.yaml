@@ -33,6 +33,7 @@ services:
     networks:
       - magistrala-base-net
     environment:
+      MG_AUTH_URL: ${MG_AUTH_URL}
       MG_DOMAINS_URL: ${MG_DOMAINS_URL}
       MG_USERS_URL: ${MG_USERS_URL}
       MG_CLIENTS_URL: ${MG_CLIENTS_URL}
@@ -46,23 +47,20 @@ services:
       MG_JOURNAL_URL: ${MG_JOURNAL_URL}
       MG_BILLING_URL: ${MG_BILLING_URL}
       MG_RE_URL: ${MG_RE_URL}
-      MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
       MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
       MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
       MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
       MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
-      MG_UI_NAME: ${MG_UI_NAME}
       MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
-      NEXT_PUBLIC_MG_UI_BASE_PATH: ${NEXT_PUBLIC_MG_UI_BASE_PATH}
       MG_UI_TYPE: mg
-      NEXT_PUBLIC_BACKEND_URL: ${NEXT_PUBLIC_BACKEND_URL}
+      MG_UI_BASEURL: ${MG_UI_BASEURL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_LOG_LEVEL: "debug"
+      MG_HOST_URL: ${MG_HOST_URL}
+      MG_UI_IMAGE_URL: ${MG_UI_IMAGE_URL}
       RUNTIME_ENV: ${RUNTIME_ENV}
       MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
-      MG_PROTOCOL: ${MG_PROTOCOL}
-      MG_HOSTNAME: ${MG_HOSTNAME}
-      MG_PORT: ${MG_PORT}
-      MG_PATHNAME: ${MG_PATHNAME}
 
   ui-backend:
     image: ghcr.io/absmach/magistrala/ui-backend:latest
@@ -96,8 +94,18 @@ services:
       MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
       MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
       MG_READER_URL: ${MG_READER_URL}
-      MG_PROFILE_PICTURE_URL: ${MG_PROFILE_PICTURE_URL}
       MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      MG_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      MG_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      MG_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      MG_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      MG_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC_URL}
+      MG_TIMESCALE_READER_GRPC_TIMEOUT: ${MG_TIMESCALE_READER_GRPC_TIMEOUT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+/readers-grpc-client.crt}
+      MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
+      MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+/readers-grpc-server-ca.crt}
+
     depends_on:
       - ui-backend-db
     volumes:
@@ -115,6 +123,38 @@ services:
       - type: bind
         source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
         target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Reader gRPC client certificates
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /readers-grpc-server-ca${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 

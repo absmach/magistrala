@@ -26,6 +26,7 @@ fi
 cleanup() {
     rm -rf "$TEMP_DIR"
 }
+cleanup
 trap cleanup EXIT
 
 git clone --depth 1 --filter=blob:none --sparse "$REPO_URL"
@@ -36,6 +37,6 @@ if [ -d "$DEST_DIR" ]; then
     rm -r "$DEST_DIR"
 fi
 mkdir -p "$DEST_DIR"
-mv -f "$DOCKER_DIR"/{*,.*} "$DEST_DIR"
+mv -f "$DOCKER_DIR"/.??* "$DOCKER_DIR"/* "$DEST_DIR"/
 cd ..
 rm -rf "$TEMP_DIR"

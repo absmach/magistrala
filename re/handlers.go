@@ -57,6 +57,10 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
 
+	//set the decrypt and encrypt functions as Lua global functions.
+	l.SetGlobal("decrypt", l.NewFunction(re.luaDecrypt))
+	l.SetGlobal("encrypt", l.NewFunction(re.luaEncrypt))
+
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return err
 	}

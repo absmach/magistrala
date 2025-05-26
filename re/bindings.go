@@ -16,7 +16,6 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-
 func (re *re) luaDecrypt(l *lua.LState) int{
 	key_str := l.ToString(1)
 	iv_str := l.ToString(2)

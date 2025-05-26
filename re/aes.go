@@ -9,7 +9,6 @@ import (
 	"log"
 )
 
-
 // AES CBC-128 DECRYPTION requires 3 data fields
 // 1. Key (16 bytes)
 // 2. Initialization Vector (16 bytes). {Lua script generates this}

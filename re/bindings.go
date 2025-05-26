@@ -17,28 +17,10 @@ import (
 )
 
 func luaEncrypt(l *lua.LState) int {
-	keyStr := l.ToString(1)
-	ivStr := l.ToString(2)
-	dataStr := l.ToString(3)
-
-	key, err := hex.DecodeString(keyStr)
+	key, iv, data, err := decodeParams(l)
 	if err != nil {
-		l.RaiseError("Failed to decode key: %v", err)
-		return 0
+		return 1
 	}
-
-	iv, err := hex.DecodeString(ivStr)
-	if err != nil {
-		l.RaiseError("Failed to decode IV: %v", err)
-		return 0
-	}
-
-	data, err := hex.DecodeString(dataStr)
-	if err != nil {
-		l.RaiseError("Failed to decode data: %v", err)
-		return 0
-	}
-
 	enc, err := encrypt(key, iv, data)
 	if err != nil {
 		l.RaiseError("Falied to encrypt: %v", err)
@@ -49,26 +31,9 @@ func luaEncrypt(l *lua.LState) int {
 }
 
 func luaDecrypt(l *lua.LState) int {
-	keyStr := l.ToString(1)
-	ivStr := l.ToString(2)
-	dataStr := l.ToString(3)
-
-	key, err := hex.DecodeString(keyStr)
+	key, iv, data, err := decodeParams(l)
 	if err != nil {
-		l.RaiseError("Failed to decode Key: %v", err)
-		return 0
-	}
-
-	iv, err := hex.DecodeString(ivStr)
-	if err != nil {
-		l.RaiseError("Failed to decode IV: %v", err)
-		return 0
-	}
-
-	data, err := hex.DecodeString(dataStr)
-	if err != nil {
-		l.RaiseError("Failed to decode encrypt: %v", err)
-		return 0
+		return 1
 	}
 
 	dec, err := decrypt(key, iv, data)
@@ -79,6 +44,31 @@ func luaDecrypt(l *lua.LState) int {
 
 	l.Push(lua.LString(hex.EncodeToString(dec)))
 	return 1
+}
+
+func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
+	keyStr := l.ToString(1)
+	ivStr := l.ToString(2)
+	dataStr := l.ToString(3)
+
+	key, err = hex.DecodeString(keyStr)
+	if err != nil {
+		l.RaiseError("Failed to decode key: %v", err)
+		return
+	}
+
+	iv, err = hex.DecodeString(ivStr)
+	if err != nil {
+		l.RaiseError("Failed to decode IV: %v", err)
+		return
+	}
+
+	data, err = hex.DecodeString(dataStr)
+	if err != nil {
+		l.RaiseError("Failed to decode data: %v", err)
+		return
+	}
+	return
 }
 
 func (re *re) sendEmail(l *lua.LState) int {

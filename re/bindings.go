@@ -8,7 +8,7 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/json"
-	"strings"
+	"encoding/hex"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
@@ -23,32 +23,30 @@ func (re *re) lua_decrypt(l *lua.LState) int{
 
 	key, err := hex.DecodeString(key_str)
 	if err != nil {
-		l.RaiseError()
+		l.RaiseError("Failed to decode Key: %v", err)
 		return 0
 	}
 
 	iv, err := hex.DecodeString(iv_str)
 	if err != nil {
-		l.RaiseError()
+		l.RaiseError("Failed to decode IV: %v", err)
 		return 0
 	}
 
 	enc, err := hex.DecodeString(enc_str)
 	if err != nil {
-		l.RaiseError()
+		l.RaiseError("Failed to decode Encrypt: %v", err)
 		return 0
 	}
 
-	dec, err := decrypt(key []byte, iv []byte, enc []byte)
+	dec := decrypt(key, iv, enc)
 	if err != nil {
-		l.RaiseError()
+		l.RaiseError("Failed to decrypt: %v", err)
 		return 0
 	}
 	
-	decrypted := strings.ToUpper(hex.EncodeToString(dec))
-	l.Push(dec)
-	return 1
-	
+	l.Push(lua.LString(hex.EncodeToString(dec)))
+	return 1	
 }
 
 func (re *re) sendEmail(l *lua.LState) int {

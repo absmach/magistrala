@@ -10,7 +10,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/messaging"

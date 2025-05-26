@@ -51,7 +51,7 @@ func luaEncrypt(l *lua.LState) int {
 func luaDecrypt(l *lua.LState) int {
 	keyStr := l.ToString(1)
 	ivStr := l.ToString(2)
-	encStr := l.ToString(3)
+	dataStr := l.ToString(3)
 
 	key, err := hex.DecodeString(keyStr)
 	if err != nil {
@@ -65,13 +65,13 @@ func luaDecrypt(l *lua.LState) int {
 		return 0
 	}
 
-	enc, err := hex.DecodeString(encStr)
+	data, err := hex.DecodeString(dataStr)
 	if err != nil {
 		l.RaiseError("Failed to decode encrypt: %v", err)
 		return 0
 	}
 
-	dec, err := decrypt(key, iv, enc)
+	dec, err := decrypt(key, iv, data)
 	if err != nil {
 		l.RaiseError("Falied to decrypt: %v", err)
 		return 0

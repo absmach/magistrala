@@ -17,8 +17,8 @@ var (
 
 // AES CBC-128 DECRYPTION requires 3 data fields
 // 1. Key (16 bytes)
-// 2. Initialization Vector (16 bytes). {Lua script generates this}
-// 3. Encrypted Data (16 bytes or length be multiple a of 16) {Not the whole Telegram rather the encrypted part}
+// 2. Initialization Vector (IV) (16 bytes)
+// 3. Encrypted Data (16 bytes or length multiple a of 16)
 // The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.
 func encrypt(key []byte, iv []byte, data []byte) ([]byte, error) {
 	if len(iv) != aes.BlockSize {

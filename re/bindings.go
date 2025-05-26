@@ -16,40 +16,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func (re *re) luaDecrypt(l *lua.LState) int{
-	key_str := l.ToString(1)
-	iv_str := l.ToString(2)
-	enc_str := l.ToString(3)
-
-	key, err := hex.DecodeString(key_str)
-	if err != nil {
-		l.RaiseError("Failed to decode Key: %v", err)
-		return 0
-	}
-
-	iv, err := hex.DecodeString(iv_str)
-	if err != nil {
-		l.RaiseError("Failed to decode IV: %v", err)
-		return 0
-	}
-
-	enc, err := hex.DecodeString(enc_str)
-	if err != nil {
-		l.RaiseError("Failed to decode Encrypt: %v", err)
-		return 0
-	}
-
-	dec := decrypt(key, iv, enc)
-	if err != nil {
-		l.RaiseError("Failed to decrypt: %v", err)
-		return 0
-	}
-	
-	l.Push(lua.LString(hex.EncodeToString(dec)))
-	return 1	
-}
-
-func (re *re) luaEncrypt(l *lua.LState) int {
+func luaEncrypt(l *lua.LState) int {
 	keyStr := l.ToString(1)
 	ivStr := l.ToString(2)
 	dataStr := l.ToString(3)
@@ -72,8 +39,45 @@ func (re *re) luaEncrypt(l *lua.LState) int {
 		return 0
 	}
 
-	enc := encrypt(key, iv, data)
+	enc, err := encrypt(key, iv, data)
+	if err != nil {
+		l.RaiseError("Falied to encrypt: %v", err)
+		return 0
+	}
 	l.Push(lua.LString(hex.EncodeToString(enc)))
+	return 1
+}
+
+func luaDecrypt(l *lua.LState) int {
+	keyStr := l.ToString(1)
+	ivStr := l.ToString(2)
+	encStr := l.ToString(3)
+
+	key, err := hex.DecodeString(keyStr)
+	if err != nil {
+		l.RaiseError("Failed to decode Key: %v", err)
+		return 0
+	}
+
+	iv, err := hex.DecodeString(ivStr)
+	if err != nil {
+		l.RaiseError("Failed to decode IV: %v", err)
+		return 0
+	}
+
+	enc, err := hex.DecodeString(encStr)
+	if err != nil {
+		l.RaiseError("Failed to decode encrypt: %v", err)
+		return 0
+	}
+
+	dec, err := decrypt(key, iv, enc)
+	if err != nil {
+		l.RaiseError("Falied to decrypt: %v", err)
+		return 0
+	}
+
+	l.Push(lua.LString(hex.EncodeToString(dec)))
 	return 1
 }
 

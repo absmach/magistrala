@@ -53,9 +53,11 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
 
-	// set the email function as a Lua global function.
+	// Set binding functions as a Lua global functions.
 	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
+	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
+	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
 
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return err

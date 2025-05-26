@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
+	"encoding/hex"
 	"encoding/json"
 
 	"github.com/absmach/magistrala/alarms"
@@ -14,6 +15,61 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	lua "github.com/yuin/gopher-lua"
 )
+
+func luaEncrypt(l *lua.LState) int {
+	key, iv, data, err := decodeParams(l)
+	if err != nil {
+		return 1
+	}
+	enc, err := encrypt(key, iv, data)
+	if err != nil {
+		l.RaiseError("Falied to encrypt: %v", err)
+		return 0
+	}
+	l.Push(lua.LString(hex.EncodeToString(enc)))
+	return 1
+}
+
+func luaDecrypt(l *lua.LState) int {
+	key, iv, data, err := decodeParams(l)
+	if err != nil {
+		return 1
+	}
+
+	dec, err := decrypt(key, iv, data)
+	if err != nil {
+		l.RaiseError("Falied to decrypt: %v", err)
+		return 0
+	}
+
+	l.Push(lua.LString(hex.EncodeToString(dec)))
+	return 1
+}
+
+func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
+	keyStr := l.ToString(1)
+	ivStr := l.ToString(2)
+	dataStr := l.ToString(3)
+
+	key, err = hex.DecodeString(keyStr)
+	if err != nil {
+		l.RaiseError("Failed to decode key: %v", err)
+		return
+	}
+
+	iv, err = hex.DecodeString(ivStr)
+	if err != nil {
+		l.RaiseError("Failed to decode IV: %v", err)
+		return
+	}
+
+	data, err = hex.DecodeString(dataStr)
+	if err != nil {
+		l.RaiseError("Failed to decode data: %v", err)
+		return
+	}
+	return
+}
 
 func (re *re) sendEmail(l *lua.LState) int {
 	recipientsTable := l.ToTable(1)

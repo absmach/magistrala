@@ -42,6 +42,8 @@ readDotEnv() {
     set +o allexport
 }
 
+readDotEnv
+
 server_name="localhost"
 
 # Check if SMQ_NGINX_SERVER_NAME is set or not empty
@@ -188,6 +190,7 @@ vaultSetupServerCertsRole() {
         echo "Setup Server certificate role"
         vault write -namespace=${SMQ_VAULT_NAMESPACE} -address=${SMQ_VAULT_ADDR} ${SMQ_VAULT_PKI_INT_PATH}/roles/${SMQ_VAULT_PKI_INT_SERVER_CERTS_ROLE_NAME} \
             allow_subdomains=true \
+            allow_any_name=true \
             max_ttl="4320h"
     fi
 }
@@ -222,8 +225,6 @@ if ! command -v jq &> /dev/null; then
     echo "jq command could not be found, please install it and try again."
     exit 1
 fi
-
-readDotEnv
 
 mkdir -p "$scriptdir/data"
 

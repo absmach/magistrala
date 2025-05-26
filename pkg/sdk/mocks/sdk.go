@@ -7164,6 +7164,65 @@ func (_c *SDK_UpdateGroupRole_Call) RunAndReturn(run func(ctx context.Context, i
 	return _c
 }
 
+// UpdateGroupTags provides a mock function for the type SDK
+func (_mock *SDK) UpdateGroupTags(ctx context.Context, group sdk0.Group, domainID string, token string) (sdk0.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, group, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateGroupTags")
+	}
+
+	var r0 sdk0.Group
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk0.Group, string, string) (sdk0.Group, errors.SDKError)); ok {
+		return returnFunc(ctx, group, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk0.Group, string, string) sdk0.Group); ok {
+		r0 = returnFunc(ctx, group, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk0.Group)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk0.Group, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, group, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateGroupTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateGroupTags'
+type SDK_UpdateGroupTags_Call struct {
+	*mock.Call
+}
+
+// UpdateGroupTags is a helper method to define mock.On call
+//   - ctx
+//   - group
+//   - domainID
+//   - token
+func (_e *SDK_Expecter) UpdateGroupTags(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroupTags_Call {
+	return &SDK_UpdateGroupTags_Call{Call: _e.mock.On("UpdateGroupTags", ctx, group, domainID, token)}
+}
+
+func (_c *SDK_UpdateGroupTags_Call) Run(run func(ctx context.Context, group sdk0.Group, domainID string, token string)) *SDK_UpdateGroupTags_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(sdk0.Group), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateGroupTags_Call) Return(group1 sdk0.Group, sDKError errors.SDKError) *SDK_UpdateGroupTags_Call {
+	_c.Call.Return(group1, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateGroupTags_Call) RunAndReturn(run func(ctx context.Context, group sdk0.Group, domainID string, token string) (sdk0.Group, errors.SDKError)) *SDK_UpdateGroupTags_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePassword provides a mock function for the type SDK
 func (_mock *SDK) UpdatePassword(ctx context.Context, oldPass string, newPass string, token string) (sdk0.User, errors.SDKError) {
 	ret := _mock.Called(ctx, oldPass, newPass, token)

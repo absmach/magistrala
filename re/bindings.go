@@ -10,11 +10,10 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	lua "github.com/yuin/gopher-lua"
-
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/messaging"
+	lua "github.com/yuin/gopher-lua"
 )
 
 

@@ -12,7 +12,7 @@ import (
 
 var (
 	errInvalidDataSize = errors.New("data is not a multiple of the block size")
-	errInvalidIVSize   = errors.New("IV size is not the same as block size")
+	errInvalidIVSize   = errors.New("size of the IV is not the same as block size")
 )
 
 // AES CBC-128 DECRYPTION requires 3 data fields

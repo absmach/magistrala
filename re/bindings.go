@@ -16,7 +16,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func (re *re) lua_decrypt(l *lua.LState) int{
+func (re *re) luaDecrypt(l *lua.LState) int{
 	key_str := l.ToString(1)
 	iv_str := l.ToString(2)
 	enc_str := l.ToString(3)
@@ -47,6 +47,34 @@ func (re *re) lua_decrypt(l *lua.LState) int{
 	
 	l.Push(lua.LString(hex.EncodeToString(dec)))
 	return 1	
+}
+
+func (re *re) luaEncrypt(l *lua.LState) int {
+	keyStr := l.ToString(1)
+	ivStr := l.ToString(2)
+	dataStr := l.ToString(3)
+
+	key, err := hex.DecodeString(keyStr)
+	if err != nil {
+		l.RaiseError("Failed to decode key: %v", err)
+		return 0
+	}
+
+	iv, err := hex.DecodeString(ivStr)
+	if err != nil {
+		l.RaiseError("Failed to decode IV: %v", err)
+		return 0
+	}
+
+	data, err := hex.DecodeString(dataStr)
+	if err != nil {
+		l.RaiseError("Failed to decode data: %v", err)
+		return 0
+	}
+
+	enc := encrypt(key, iv, data)
+	l.Push(lua.LString(hex.EncodeToString(enc)))
+	return 1
 }
 
 func (re *re) sendEmail(l *lua.LState) int {

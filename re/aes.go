@@ -15,7 +15,6 @@ import (
 // 2. Initialization Vector (16 bytes). {Lua script generates this}
 // 3. Encrypted Data (16 bytes or length be multiple a of 16) {Not the whole Telegram rather the encrypted part}
 // The encrypted data is divided into blocks of 16 bytes (128 bits) which then operated on with the IV and Key.   
-
 func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	block, err := aes.NewCipher(key)
 	if err != nil {
@@ -29,6 +28,22 @@ func decrypt(key []byte, iv []byte, encrypted []byte) []byte {
 	mode := cipher.NewCBCDecrypter(block, iv)
 	decrypted := make([]byte, len(encrypted))
 	mode.CryptBlocks(decrypted, encrypted)
-
 	return decrypted
+}
+
+func encrypt(key []byte, iv []byte, data []byte) []byte {
+	if len(data)%aes.BlockSize != 0 {
+		log.Fatalf("Data is not a multiple of the block size")
+	}
+
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		log.Fatalf("NewCipher error: %v", err)
+	}
+
+	encrypted := make([]byte, len(data))
+	mode := cipher.NewCBCEncrypter(block, iv)
+	mode.CryptBlocks(encrypted, data)
+
+	return encrypted
 }

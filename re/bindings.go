@@ -7,8 +7,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/gob"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
+
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"

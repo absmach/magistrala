@@ -51,18 +51,18 @@ var (
 	}
 )
 
-func newService(t *testing.T, errs chan error) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
+func newService(t *testing.T, runInfo chan re.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(mocks.Emailer)
-	return re.NewService(repo, errs, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
+	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
 }
 
 func TestAddRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -137,7 +137,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -195,7 +195,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -280,7 +280,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestListRules(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -385,7 +385,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -425,7 +425,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	now := time.Now()
 
@@ -484,7 +484,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	now := time.Now()
 
@@ -543,7 +543,7 @@ func TestDisableRule(t *testing.T) {
 }
 
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _ := newService(t, make(chan error))
+	svc, repo, pubmocks, _ := newService(t, make(chan re.RunInfo))
 	now := time.Now()
 	empty := ""
 
@@ -627,7 +627,7 @@ func TestHandle(t *testing.T) {
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -679,7 +679,7 @@ func TestAddReportConfig(t *testing.T) {
 }
 
 func TestViewReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -724,7 +724,7 @@ func TestViewReportConfig(t *testing.T) {
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -787,7 +787,7 @@ func TestUpdateReportConfig(t *testing.T) {
 }
 
 func TestListReportsConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 	numConfigs := 50
 	now := time.Now().Add(time.Hour)
 	var configs []re.ReportConfig
@@ -893,7 +893,7 @@ func TestListReportsConfig(t *testing.T) {
 }
 
 func TestRemoveReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -933,7 +933,7 @@ func TestRemoveReportConfig(t *testing.T) {
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -981,7 +981,7 @@ func TestEnableReportConfig(t *testing.T) {
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan error))
+	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -1038,8 +1038,8 @@ func TestDisableReportConfig(t *testing.T) {
 
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
-	errs := make(chan error)
-	svc, repo, _, ticker := newService(t, errs)
+	ri := make(chan re.RunInfo)
+	svc, repo, _, ticker := newService(t, ri)
 
 	ctxCases := []struct {
 		desc     string

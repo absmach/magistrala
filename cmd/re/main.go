@@ -190,7 +190,7 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-	errs := make(chan error, channBuffer)
+	runInfo := make(chan re.RunInfo, channBuffer)
 
 	domsGrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
@@ -233,7 +233,7 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, errs, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
+	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -254,12 +254,8 @@ func main() {
 	}
 
 	go func() {
-		for err := range errs {
-			if err != nil {
-				logger.Warn("Error handling rule", slog.String("error", err.Error()))
-				continue
-			}
-			logger.Info("Handling rule completed successfully")
+		for info := range runInfo {
+			logger.LogAttrs(context.Background(), info.Level, info.Message, info.Details...)
 		}
 	}()
 
@@ -289,7 +285,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(db pgclient.Database, runInfo chan re.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -298,7 +294,7 @@ func newService(db pgclient.Database, errs chan error, rePubSub messaging.PubSub
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, errs, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Second*30), emailerClient, readersClient)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

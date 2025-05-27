@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -37,14 +38,14 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		go func(ctx context.Context) {
-			re.errors <- re.process(ctx, r, msg)
+			re.runInfo <- re.process(ctx, r, msg)
 		}(ctx)
 	}
 
 	return nil
 }
 
-func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error {
+func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunInfo {
 	l := lua.NewState()
 	defer l.Close()
 	preload(l)
@@ -59,38 +60,37 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) error
 	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
 	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
 
+	details := []slog.Attr{
+		slog.String("domain_id", r.DomainID),
+		slog.String("rule_id", r.ID),
+		slog.String("rule_name", r.Name),
+		slog.Time("time", time.Now().UTC()),
+	}
 	if err := l.DoString(r.Logic.Value); err != nil {
-		return err
+		return RunInfo{Level: slog.LevelError, Message: "failed to run rule logic" + err.Error(), Details: details}
 	}
 	// Get the last result.
 	result := l.Get(-1)
 	if result == lua.LNil {
-		return nil
+		return RunInfo{Level: slog.LevelWarn, Message: "rule with nil script result", Details: details}
 	}
 	// Converting Lua is an expensive operation, so
 	// don't do it if there are no outputs.
 	if len(r.Logic.Outputs) == 0 {
-		return nil
+		return RunInfo{Level: slog.LevelWarn, Message: "rule with no output channels", Details: details}
 	}
 	var err error
 	res := convertLua(result)
 	for _, o := range r.Logic.Outputs {
 		// If value is false, don't run the follow-up.
 		if v, ok := res.(bool); ok && !v {
-			return nil
+			return RunInfo{Level: slog.LevelInfo, Message: err.Error(), Details: details}
 		}
 		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
 			err = errors.Wrap(e, err)
 		}
 	}
-	return err
-}
-
-func (re *re) processReportConfig(ctx context.Context, cfg ReportConfig) error {
-	if _, err := re.generateReport(ctx, cfg, EmailReport); err != nil {
-		return err
-	}
-	return nil
+	return RunInfo{Level: slog.LevelInfo, Message: "rule processed successfully", Details: details}
 }
 
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
@@ -125,14 +125,19 @@ func (re *re) StartScheduler(ctx context.Context) error {
 
 			page, err := re.repo.ListRules(ctx, pm)
 			if err != nil {
-				re.errors <- err
+				re.runInfo <- RunInfo{
+					Level:   slog.LevelError,
+					Message: "failed to list rules" + err.Error(),
+					Details: []slog.Attr{slog.Time("due", due)},
+				}
+
 				continue
 			}
 
 			for _, r := range page.Rules {
 				go func(rule Rule) {
 					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-						re.errors <- err
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: "falied to update rule due" + err.Error(), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 
@@ -142,23 +147,42 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						Protocol: protocol,
 						Created:  due.Unix(),
 					}
-					re.errors <- re.process(ctx, rule, msg)
+					re.runInfo <- re.process(ctx, rule, msg)
 				}(r)
 			}
+			// Reset due, it will reset the page meta as well.
+			due = time.Now().UTC()
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				re.errors <- err
+				re.runInfo <- RunInfo{
+					Level:   slog.LevelError,
+					Message: "fiald to list reports " + err.Error(),
+					Details: []slog.Attr{slog.Time("due", due)},
+				}
 				continue
 			}
 
 			for _, c := range reportConfigs.ReportConfigs {
 				go func(cfg ReportConfig) {
 					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.errors <- err
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: "falied to update report due" + err.Error(), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
-					re.errors <- re.processReportConfig(ctx, cfg)
+					_, err := re.generateReport(ctx, cfg, EmailReport)
+					info := RunInfo{
+						Details: []slog.Attr{
+							slog.String("domain_id", cfg.DomainID),
+							slog.String("report_id", cfg.ID),
+							slog.String("report_name", cfg.Name),
+							slog.Time("time", time.Now().UTC()),
+						},
+					}
+					if err != nil {
+						info.Level = slog.LevelError
+						info.Message = "failed to generate report" + err.Error()
+					}
+					re.runInfo <- info
 				}(c)
 			}
 		}

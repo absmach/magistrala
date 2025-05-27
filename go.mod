@@ -4,6 +4,7 @@ go 1.24.4
 
 require (
 	github.com/0x6flab/namegenerator v1.4.0
+	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.3
 	github.com/absmach/callhome v0.14.0
 	github.com/absmach/supermq v0.16.1-0.20250609091017-b69947fc571c
 	github.com/authzed/authzed-go v1.4.0
@@ -23,7 +24,6 @@ require (
 	github.com/jackc/pgtype v1.14.4
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jmoiron/sqlx v1.4.0
-	github.com/johnfercher/maroto v1.0.0
 	github.com/lib/pq v1.10.9
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5

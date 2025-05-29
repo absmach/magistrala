@@ -11,6 +11,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
@@ -41,7 +42,7 @@ var (
 	}
 )
 
-func newService(t *testing.T, runInfo chan re.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
+func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(mocks.Ticker)
 	idProvider := uuid.NewMock()
@@ -52,7 +53,7 @@ func newService(t *testing.T, runInfo chan re.RunInfo) (re.Service, *mocks.Repos
 }
 
 func TestAddRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -127,7 +128,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -185,7 +186,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -270,7 +271,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestListRules(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -375,7 +376,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -415,7 +416,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -474,7 +475,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -533,7 +534,7 @@ func TestDisableRule(t *testing.T) {
 }
 
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _ := newService(t, make(chan re.RunInfo))
+	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
 	now := time.Now()
 	scheduled := false
 	cases := []struct {
@@ -604,7 +605,7 @@ func TestHandle(t *testing.T) {
 
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
-	ri := make(chan re.RunInfo)
+	ri := make(chan pkglog.RunInfo)
 	svc, repo, _, ticker := newService(t, ri)
 
 	ctxCases := []struct {

@@ -18,9 +18,10 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
-	"github.com/absmach/magistrala/re/emailer"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
@@ -294,7 +295,7 @@ func newService(db pgclient.Database, runInfo chan re.RunInfo, rePubSub messagin
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, re.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

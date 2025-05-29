@@ -5,6 +5,7 @@ package reports
 
 import (
 	"context"
+	"log/slog"
 	"time"
 )
 
@@ -25,7 +26,12 @@ func (re *report) StartScheduler(ctx context.Context) error {
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				return err
+				re.runInfo <- RunInfo{
+					Level:   slog.LevelError,
+					Message: "fiald to list reports " + err.Error(),
+					Details: []slog.Attr{slog.Time("due", due)},
+				}
+				continue
 			}
 
 			for _, cfg := range reportConfigs.ReportConfigs {

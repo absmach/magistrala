@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/lib/pq"
@@ -15,26 +16,26 @@ import (
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string         `db:"id"`
-	Name            string         `db:"name"`
-	DomainID        string         `db:"domain_id"`
-	Metadata        []byte         `db:"metadata,omitempty"`
-	InputChannel    string         `db:"input_channel"`
-	InputTopic      sql.NullString `db:"input_topic"`
-	LogicType       re.ScriptType  `db:"logic_type"`
-	LogicOutputs    pq.Int32Array  `db:"logic_output"`
-	LogicValue      string         `db:"logic_value"`
-	OutputChannel   sql.NullString `db:"output_channel"`
-	OutputTopic     sql.NullString `db:"output_topic"`
-	StartDateTime   sql.NullTime   `db:"start_datetime"`
-	Time            sql.NullTime   `db:"time"`
-	Recurring       re.Recurring   `db:"recurring"`
-	RecurringPeriod uint           `db:"recurring_period"`
-	Status          re.Status      `db:"status"`
-	CreatedAt       time.Time      `db:"created_at"`
-	CreatedBy       string         `db:"created_by"`
-	UpdatedAt       time.Time      `db:"updated_at"`
-	UpdatedBy       string         `db:"updated_by"`
+	ID              string             `db:"id"`
+	Name            string             `db:"name"`
+	DomainID        string             `db:"domain_id"`
+	Metadata        []byte             `db:"metadata,omitempty"`
+	InputChannel    string             `db:"input_channel"`
+	InputTopic      sql.NullString     `db:"input_topic"`
+	LogicType       re.ScriptType      `db:"logic_type"`
+	LogicOutputs    pq.Int32Array      `db:"logic_output"`
+	LogicValue      string             `db:"logic_value"`
+	OutputChannel   sql.NullString     `db:"output_channel"`
+	OutputTopic     sql.NullString     `db:"output_topic"`
+	StartDateTime   sql.NullTime       `db:"start_datetime"`
+	Time            sql.NullTime       `db:"time"`
+	Recurring       schedule.Recurring `db:"recurring"`
+	RecurringPeriod uint               `db:"recurring_period"`
+	Status          re.Status          `db:"status"`
+	CreatedAt       time.Time          `db:"created_at"`
+	CreatedBy       string             `db:"created_by"`
+	UpdatedAt       time.Time          `db:"updated_at"`
+	UpdatedBy       string             `db:"updated_by"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -107,7 +108,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		},
 		OutputChannel: fromNullString(dto.OutputChannel),
 		OutputTopic:   fromNullString(dto.OutputTopic),
-		Schedule: re.Schedule{
+		Schedule: schedule.Schedule{
 			StartDateTime:   dto.StartDateTime.Time,
 			Time:            dto.Time.Time,
 			Recurring:       dto.Recurring,

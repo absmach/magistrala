@@ -309,6 +309,9 @@ const (
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )
 
+// We use a buffered channel to prevent blocking, as logging is an expensive operation.
+const channBuffer = 256
+
 type config struct {
 	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
 	InstanceID    string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
@@ -450,7 +453,9 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, authz, ec, logger, readersClient)
+	runInfo := make(chan reports.RunInfo, channBuffer)
+
+	svc, err := newService(database, runInfo, authz, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -484,7 +489,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
+func newService(db pgclient.Database, runInfo chan reports.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -493,7 +498,7 @@ func newService(db pgclient.Database, authz mgauthz.Authorization, ec email.Conf
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := reports.NewService(repo, idp, re.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

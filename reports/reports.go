@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/mail"
 	"strings"
 	"time"
@@ -142,6 +143,12 @@ func (rm ReqMetric) Validate() error {
 		return errNameNotProvided
 	}
 	return nil
+}
+
+type RunInfo struct {
+	Level   slog.Level
+	Details []slog.Attr
+	Message string
 }
 
 type ReportConfig struct {

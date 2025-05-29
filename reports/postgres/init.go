@@ -24,7 +24,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						created_by			VARCHAR(254),
 						updated_at			TIMESTAMP,
 						updated_by			VARCHAR(254),
-						time              	TIMESTAMP,
+						due              	TIMESTAMPZ,
 						recurring         	SMALLINT,
 						recurring_period  	SMALLINT,
 						start_datetime    	TIMESTAMP,

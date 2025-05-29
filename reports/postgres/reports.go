@@ -9,28 +9,28 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 )
 
 // dbReport represents the database structure for a Report.
 type dbReport struct {
-	ID              string         `db:"id"`
-	Name            string         `db:"name"`
-	Description     string         `db:"description"`
-	DomainID        string         `db:"domain_id"`
-	StartDateTime   sql.NullTime   `db:"start_datetime"`
-	Time            sql.NullTime   `db:"time"`
-	Recurring       re.Recurring   `db:"recurring"`
-	RecurringPeriod uint           `db:"recurring_period"`
-	Status          reports.Status `db:"status"`
-	CreatedAt       time.Time      `db:"created_at"`
-	CreatedBy       string         `db:"created_by"`
-	UpdatedAt       time.Time      `db:"updated_at"`
-	UpdatedBy       string         `db:"updated_by"`
-	Config          []byte         `db:"config,omitempty"`
-	Metrics         []byte         `db:"metrics"`
-	Email           []byte         `db:"email"`
+	ID              string             `db:"id"`
+	Name            string             `db:"name"`
+	Description     string             `db:"description"`
+	DomainID        string             `db:"domain_id"`
+	StartDateTime   sql.NullTime       `db:"start_datetime"`
+	Due             sql.NullTime       `db:"due"`
+	Recurring       schedule.Recurring `db:"recurring"`
+	RecurringPeriod uint               `db:"recurring_period"`
+	Status          reports.Status     `db:"status"`
+	CreatedAt       time.Time          `db:"created_at"`
+	CreatedBy       string             `db:"created_by"`
+	UpdatedAt       time.Time          `db:"updated_at"`
+	UpdatedBy       string             `db:"updated_by"`
+	Config          []byte             `db:"config,omitempty"`
+	Metrics         []byte             `db:"metrics"`
+	Email           []byte             `db:"email"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -76,7 +76,7 @@ func reportToDb(r reports.ReportConfig) (dbReport, error) {
 		Description:     r.Description,
 		DomainID:        r.DomainID,
 		StartDateTime:   start,
-		Time:            t,
+		Due:             t,
 		Recurring:       r.Schedule.Recurring,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
 		Status:          r.Status,
@@ -119,9 +119,9 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 		DomainID:    dto.DomainID,
 		Config:      &config,
 		Metrics:     metrics,
-		Schedule: re.Schedule{
+		Schedule: schedule.Schedule{
 			StartDateTime:   dto.StartDateTime.Time,
-			Time:            dto.Time.Time,
+			Time:            dto.Due.Time,
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},

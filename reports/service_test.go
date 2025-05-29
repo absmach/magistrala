@@ -11,7 +11,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/re"
+	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	remocks "github.com/absmach/magistrala/re/mocks"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
 	"github.com/absmach/magistrala/reports"
@@ -29,9 +29,9 @@ var (
 	namegen  = namegenerator.NewGenerator()
 	userID   = testsutil.GenerateUUID(&testing.T{})
 	domainID = testsutil.GenerateUUID(&testing.T{})
-	schedule = re.Schedule{
+	schedule = pkgSch.Schedule{
 		StartDateTime:   time.Now().Add(-time.Hour),
-		Recurring:       re.Daily,
+		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
 	}
@@ -48,17 +48,17 @@ var (
 	}
 )
 
-func newService() (reports.Service, *mocks.Repository, *remocks.Ticker) {
+func newService(runInfo chan reports.RunInfo) (reports.Service, *mocks.Repository, *remocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(remocks.Ticker)
 	idProvider := uuid.NewMock()
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(remocks.Emailer)
-	return reports.NewService(repo, idProvider, mockTicker, e, readersSvc), repo, mockTicker
+	return reports.NewService(repo, runInfo, idProvider, mockTicker, e, readersSvc), repo, mockTicker
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -110,7 +110,7 @@ func TestAddReportConfig(t *testing.T) {
 }
 
 func TestViewReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -154,7 +154,7 @@ func TestViewReportConfig(t *testing.T) {
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -216,7 +216,7 @@ func TestUpdateReportConfig(t *testing.T) {
 }
 
 func TestListReportsConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 	numConfigs := 50
 	now := time.Now().Add(time.Hour)
 	var configs []reports.ReportConfig
@@ -321,7 +321,7 @@ func TestListReportsConfig(t *testing.T) {
 }
 
 func TestRemoveReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -361,7 +361,7 @@ func TestRemoveReportConfig(t *testing.T) {
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -409,7 +409,7 @@ func TestEnableReportConfig(t *testing.T) {
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	svc, repo, _ := newService()
+	svc, repo, _ := newService(make(chan reports.RunInfo))
 
 	cases := []struct {
 		desc    string

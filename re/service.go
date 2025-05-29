@@ -8,6 +8,8 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -72,12 +74,12 @@ type re struct {
 	rePubSub   messaging.PubSub
 	writersPub messaging.Publisher
 	alarmsPub  messaging.Publisher
-	ticker     Ticker
-	email      Emailer
+	ticker     ticker.Ticker
+	email      emailer.Emailer
 	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, runInfo chan RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
+func NewService(repo Repository, runInfo chan RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		repo:       repo,
 		idp:        idp,

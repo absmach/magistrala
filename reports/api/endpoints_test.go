@@ -15,7 +15,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/magistrala/re"
+	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/magistrala/reports/api"
 	"github.com/absmach/magistrala/reports/mocks"
@@ -41,9 +41,9 @@ var (
 	validToken   = "valid"
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
-	schedule     = re.Schedule{
+	schedule     = pkgSch.Schedule{
 		StartDateTime:   now.Add(-1 * time.Hour),
-		Recurring:       re.Daily,
+		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
 	}

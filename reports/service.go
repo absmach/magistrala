@@ -10,8 +10,9 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/emailer"
 	"github.com/absmach/magistrala/pkg/reltime"
-	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -23,16 +24,18 @@ const limit = 1000
 
 type report struct {
 	repo    Repository
+	runInfo chan RunInfo
 	idp     supermq.IDProvider
-	email   re.Emailer
-	ticker  re.Ticker
+	email   emailer.Emailer
+	ticker  ticker.Ticker
 	readers grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, idp supermq.IDProvider, tck re.Ticker, emailer re.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
+func NewService(repo Repository, runInfo chan RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &report{
 		repo:    repo,
 		idp:     idp,
+		runInfo: runInfo,
 		email:   emailer,
 		ticker:  tck,
 		readers: readers,

@@ -287,10 +287,10 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	dbr := dbReport{
 		ID:        id,
 		UpdatedAt: time.Now().UTC(),
-		Time:      sql.NullTime{Time: due},
+		Due:       sql.NullTime{Time: due},
 	}
 	if !due.IsZero() {
-		dbr.Time.Valid = true
+		dbr.Due.Valid = true
 	}
 
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)

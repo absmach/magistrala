@@ -137,8 +137,7 @@ func TestLuaEncrypt(t *testing.T) {
 		ivStr        string
 		dataStr      string
 		expectReturn int
-		shouldPanic  bool
-		panicMsg     string
+		errMsg       string
 	}{
 		{
 			name:         "successful encryption",
@@ -146,7 +145,6 @@ func TestLuaEncrypt(t *testing.T) {
 			ivStr:        validIV,
 			dataStr:      validData,
 			expectReturn: 1,
-			shouldPanic:  false,
 		},
 		{
 			name:         "successful encryption with empty data",
@@ -154,7 +152,54 @@ func TestLuaEncrypt(t *testing.T) {
 			ivStr:        validIV,
 			dataStr:      "",
 			expectReturn: 1,
-			shouldPanic:  false,
+		},
+		{
+			name:         "invalid key hex",
+			keyStr:       "invalid_hex",
+			ivStr:        validIV,
+			dataStr:      validData,
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid IV hex",
+			keyStr:       validKey,
+			ivStr:        "invalid_hex",
+			dataStr:      validData,
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid data hex",
+			keyStr:       validKey,
+			ivStr:        validIV,
+			dataStr:      "invalid_hex",
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid key size",
+			keyStr:       "0123456789abcdef", // 8 bytes, too short
+			ivStr:        validIV,
+			dataStr:      validData,
+			errMsg:       "failed to encrypt",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid IV size",
+			keyStr:       validKey,
+			ivStr:        "0123456789abcdef", // 8 bytes, too short
+			dataStr:      validData,
+			errMsg:       "failed to encrypt",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid data size",
+			keyStr:       validKey,
+			ivStr:        validIV,
+			dataStr:      "deadbeefcafebabe000011112222333", // 15 bytes, not multiple of 16
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
 		},
 	}
 
@@ -167,23 +212,16 @@ func TestLuaEncrypt(t *testing.T) {
 			L.Push(lua.LString(tt.ivStr))
 			L.Push(lua.LString(tt.dataStr))
 
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						assert.Contains(t, r.(string), tt.panicMsg)
-					} else {
-						t.Error("Expected panic but none occurred")
-					}
-				}()
-				luaEncrypt(L)
-			} else {
-				result := luaEncrypt(L)
-				assert.Equal(t, tt.expectReturn, result)
+			result := luaEncrypt(L)
+			assert.Equal(t, tt.expectReturn, result)
 
-				// Verify that a valid hex string was pushed to the stack
+			if tt.expectReturn == 1 {
 				encryptedHex := L.ToString(-1)
 				_, err := hex.DecodeString(encryptedHex)
 				assert.NoError(t, err, "Pushed value should be valid hex")
+			} else {
+				err := L.ToString(-1)
+				assert.Contains(t, err, tt.errMsg)
 			}
 		})
 	}
@@ -206,8 +244,7 @@ func TestLuaDecrypt(t *testing.T) {
 		ivStr        string
 		dataStr      string
 		expectReturn int
-		shouldPanic  bool
-		panicMsg     string
+		errMsg       string
 	}{
 		{
 			name:         "successful decryption",
@@ -215,7 +252,6 @@ func TestLuaDecrypt(t *testing.T) {
 			ivStr:        validIV,
 			dataStr:      validEncryptedStr,
 			expectReturn: 1,
-			shouldPanic:  false,
 		},
 		{
 			name:         "successful decryption with empty data",
@@ -223,7 +259,54 @@ func TestLuaDecrypt(t *testing.T) {
 			ivStr:        validIV,
 			dataStr:      "",
 			expectReturn: 1,
-			shouldPanic:  false,
+		},
+		{
+			name:         "invalid key hex",
+			keyStr:       "invalid_hex",
+			ivStr:        validIV,
+			dataStr:      validEncryptedStr,
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid IV hex",
+			keyStr:       validKey,
+			ivStr:        "invalid_hex",
+			dataStr:      validEncryptedStr,
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid encrypted data hex",
+			keyStr:       validKey,
+			ivStr:        validIV,
+			dataStr:      "invalid_hex",
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid key size",
+			keyStr:       "0123456789abcdef", // 8 bytes, too short
+			ivStr:        validIV,
+			dataStr:      validEncryptedStr,
+			errMsg:       "failed to decrypt",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid IV size",
+			keyStr:       validKey,
+			ivStr:        "0123456789abcdef", // 8 bytes, too short
+			dataStr:      validEncryptedStr,
+			errMsg:       "failed to decrypt",
+			expectReturn: 2,
+		},
+		{
+			name:         "invalid encrypted data size",
+			keyStr:       validKey,
+			ivStr:        validIV,
+			dataStr:      "deadbeefcafebabe000011112222333", // 15 bytes, not multiple of 16
+			errMsg:       "failed to decode params",
+			expectReturn: 2,
 		},
 	}
 
@@ -236,23 +319,16 @@ func TestLuaDecrypt(t *testing.T) {
 			L.Push(lua.LString(tt.ivStr))
 			L.Push(lua.LString(tt.dataStr))
 
-			if tt.shouldPanic {
-				defer func() {
-					if r := recover(); r != nil {
-						assert.Contains(t, r.(string), tt.panicMsg)
-					} else {
-						t.Error("Expected panic but none occurred")
-					}
-				}()
-				luaDecrypt(L)
-			} else {
-				result := luaDecrypt(L)
-				assert.Equal(t, tt.expectReturn, result)
+			result := luaDecrypt(L)
+			assert.Equal(t, tt.expectReturn, result)
 
-				// Verify that a valid hex string was pushed to the stack
+			if tt.expectReturn == 1 {
 				decryptedHex := L.ToString(-1)
 				_, err := hex.DecodeString(decryptedHex)
 				assert.NoError(t, err, "Pushed value should be valid hex")
+			} else {
+				err := L.ToString(-1)
+				assert.Contains(t, err, tt.errMsg)
 			}
 		})
 	}

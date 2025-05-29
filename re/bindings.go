@@ -20,15 +20,16 @@ import (
 func luaEncrypt(l *lua.LState) int {
 	key, iv, data, err := decodeParams(l)
 	if err != nil {
-		l.RaiseError("failed to decode params: %v", err)
-		return 0
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode params: %v", err)))
+		return 2
 	}
 
 	enc, err := encrypt(key, iv, data)
 	if err != nil {
-		fmt.Println(err)
-		l.RaiseError("failed to encrypt: %v", err)
-		return 0
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to encrypt: %v", err)))
+		return 2
 	}
 	l.Push(lua.LString(hex.EncodeToString(enc)))
 
@@ -38,14 +39,16 @@ func luaEncrypt(l *lua.LState) int {
 func luaDecrypt(l *lua.LState) int {
 	key, iv, data, err := decodeParams(l)
 	if err != nil {
-		l.RaiseError("failed to decode params: %v", err)
-		return 0
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode params: %v", err)))
+		return 2
 	}
 
 	dec, err := decrypt(key, iv, data)
 	if err != nil {
-		l.RaiseError("failed to decrypt: %v", err)
-		return 0
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decrypt: %v", err)))
+		return 2
 	}
 
 	l.Push(lua.LString(hex.EncodeToString(dec)))

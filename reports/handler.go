@@ -7,6 +7,8 @@ import (
 	"context"
 	"log/slog"
 	"time"
+
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 )
 
 func (re *report) StartScheduler(ctx context.Context) error {
@@ -26,7 +28,7 @@ func (re *report) StartScheduler(ctx context.Context) error {
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				re.runInfo <- RunInfo{
+				re.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelError,
 					Message: "fiald to list reports " + err.Error(),
 					Details: []slog.Attr{slog.Time("due", due)},

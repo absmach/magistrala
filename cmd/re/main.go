@@ -19,6 +19,7 @@ import (
 	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
@@ -191,7 +192,7 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-	runInfo := make(chan re.RunInfo, channBuffer)
+	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
 	domsGrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
@@ -286,7 +287,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan re.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 

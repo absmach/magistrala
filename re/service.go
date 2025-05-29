@@ -9,6 +9,7 @@ import (
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
@@ -70,7 +71,7 @@ type Service interface {
 
 type re struct {
 	repo       Repository
-	runInfo    chan RunInfo
+	runInfo    chan pkglog.RunInfo
 	idp        supermq.IDProvider
 	rePubSub   messaging.PubSub
 	writersPub messaging.Publisher
@@ -80,7 +81,7 @@ type re struct {
 	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, runInfo chan RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		repo:       repo,
 		idp:        idp,

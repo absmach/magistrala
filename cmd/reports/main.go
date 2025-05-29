@@ -17,6 +17,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/ticker"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/magistrala/reports"
@@ -195,7 +196,7 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	runInfo := make(chan reports.RunInfo, channBuffer)
+	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
 	svc, err := newService(database, runInfo, authz, ec, logger, readersClient)
 	if err != nil {
@@ -231,7 +232,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan reports.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 

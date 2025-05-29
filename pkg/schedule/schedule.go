@@ -11,7 +11,6 @@ import (
 
 var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
-
 // Type can be daily, weekly or monthly.
 type Recurring uint
 

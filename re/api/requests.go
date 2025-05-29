@@ -4,6 +4,7 @@
 package api
 
 import (
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -70,7 +71,7 @@ func (req updateRuleReq) validate() error {
 
 type updateRuleScheduleReq struct {
 	id       string
-	Schedule re.Schedule `json:"schedule,omitempty"`
+	Schedule schedule.Schedule `json:"schedule,omitempty"`
 }
 
 func (req updateRuleScheduleReq) validate() error {

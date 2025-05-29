@@ -11,6 +11,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
+	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
@@ -32,9 +33,9 @@ var (
 	ruleName     = namegen.Generate()
 	ruleID       = testsutil.GenerateUUID(&testing.T{})
 	inputChannel = "test.channel"
-	schedule     = re.Schedule{
+	schedule     = pkgSch.Schedule{
 		StartDateTime:   time.Now().Add(-time.Hour),
-		Recurring:       re.Daily,
+		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
 	}
@@ -70,8 +71,8 @@ func TestAddRule(t *testing.T) {
 			rule: re.Rule{
 				Name:         ruleName,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -80,8 +81,8 @@ func TestAddRule(t *testing.T) {
 				Name:         ruleName,
 				ID:           ruleID,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -100,8 +101,8 @@ func TestAddRule(t *testing.T) {
 			rule: re.Rule{
 				Name:         ruleName,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -147,8 +148,8 @@ func TestViewRule(t *testing.T) {
 				Name:         ruleName,
 				ID:           ruleID,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -205,8 +206,8 @@ func TestUpdateRule(t *testing.T) {
 				Name:         newName,
 				ID:           ruleID,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -218,8 +219,8 @@ func TestUpdateRule(t *testing.T) {
 				Name:         newName,
 				ID:           ruleID,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -241,8 +242,8 @@ func TestUpdateRule(t *testing.T) {
 				Name:         ruleName,
 				ID:           ruleID,
 				InputChannel: inputChannel,
-				Schedule: re.Schedule{
-					Recurring:       re.Daily,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
 					RecurringPeriod: 1,
 					Time:            now,
 				},
@@ -281,8 +282,8 @@ func TestListRules(t *testing.T) {
 			Status:    re.EnabledStatus,
 			CreatedAt: now,
 			CreatedBy: userID,
-			Schedule: re.Schedule{
-				Recurring:       re.Daily,
+			Schedule: pkgSch.Schedule{
+				Recurring:       pkgSch.Daily,
 				Time:            now.Add(1 * time.Hour),
 				RecurringPeriod: 1,
 				StartDateTime:   now.Add(-1 * time.Hour),

@@ -5,7 +5,6 @@ package re
 
 import (
 	"encoding/json"
-	"log/slog"
 	"strings"
 	"time"
 
@@ -94,10 +93,4 @@ type Rule struct {
 	CreatedBy     string            `json:"created_by"`
 	UpdatedAt     time.Time         `json:"updated_at"`
 	UpdatedBy     string            `json:"updated_by"`
-}
-
-type RunInfo struct {
-	Level   slog.Level
-	Details []slog.Attr
-	Message string
 }

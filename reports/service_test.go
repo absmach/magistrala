@@ -11,6 +11,7 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	remocks "github.com/absmach/magistrala/re/mocks"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
@@ -48,7 +49,7 @@ var (
 	}
 )
 
-func newService(runInfo chan reports.RunInfo) (reports.Service, *mocks.Repository, *remocks.Ticker) {
+func newService(runInfo chan pkglog.RunInfo) (reports.Service, *mocks.Repository, *remocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(remocks.Ticker)
 	idProvider := uuid.NewMock()
@@ -58,7 +59,7 @@ func newService(runInfo chan reports.RunInfo) (reports.Service, *mocks.Repositor
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -110,7 +111,7 @@ func TestAddReportConfig(t *testing.T) {
 }
 
 func TestViewReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -154,7 +155,7 @@ func TestViewReportConfig(t *testing.T) {
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -216,7 +217,7 @@ func TestUpdateReportConfig(t *testing.T) {
 }
 
 func TestListReportsConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 	numConfigs := 50
 	now := time.Now().Add(time.Hour)
 	var configs []reports.ReportConfig
@@ -321,7 +322,7 @@ func TestListReportsConfig(t *testing.T) {
 }
 
 func TestRemoveReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -361,7 +362,7 @@ func TestRemoveReportConfig(t *testing.T) {
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -409,7 +410,7 @@ func TestEnableReportConfig(t *testing.T) {
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan reports.RunInfo))
+	svc, repo, _ := newService(make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string

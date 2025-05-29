@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -76,7 +76,7 @@ func (req updateReportConfigReq) validate() error {
 
 type updateReportScheduleReq struct {
 	id       string
-	Schedule re.Schedule `json:"schedule,omitempty"`
+	Schedule schedule.Schedule `json:"schedule,omitempty"`
 }
 
 func (req updateReportScheduleReq) validate() error {
@@ -163,8 +163,8 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 	return validateScheduler(req.Schedule)
 }
 
-func validateScheduler(sch re.Schedule) error {
-	if sch.Recurring != re.None && sch.RecurringPeriod < 1 {
+func validateScheduler(sch schedule.Schedule) error {
+	if sch.Recurring != schedule.None && sch.RecurringPeriod < 1 {
 		return errInvalidRecurringPeriod
 	}
 	return nil

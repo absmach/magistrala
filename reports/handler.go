@@ -5,6 +5,7 @@ package reports
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -30,27 +31,34 @@ func (re *report) StartScheduler(ctx context.Context) error {
 			if err != nil {
 				re.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelError,
-					Message: "fiald to list reports " + err.Error(),
+					Message: fmt.Sprintf("failed to list reports : %s", err),
 					Details: []slog.Attr{slog.Time("due", due)},
 				}
 				continue
 			}
 
-			for _, cfg := range reportConfigs.ReportConfigs {
-				go func(config ReportConfig) {
-					err = re.processReportConfig(ctx, config)
-				}(cfg)
-				if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-					return err
-				}
+			for _, c := range reportConfigs.ReportConfigs {
+				go func(cfg ReportConfig) {
+					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
+						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						return
+					}
+					_, err := re.generateReport(ctx, cfg, EmailReport)
+					ret := pkglog.RunInfo{
+						Details: []slog.Attr{
+							slog.String("domain_id", cfg.DomainID),
+							slog.String("report_id", cfg.ID),
+							slog.String("report_name", cfg.Name),
+							slog.Time("time", time.Now().UTC()),
+						},
+					}
+					if err != nil {
+						ret.Level = slog.LevelError
+						ret.Message = fmt.Sprintf("failed to generate report: %s", err)
+					}
+					re.runInfo <- ret
+				}(c)
 			}
 		}
 	}
-}
-
-func (re *report) processReportConfig(ctx context.Context, cfg ReportConfig) error {
-	if _, err := re.generateReport(ctx, cfg, EmailReport); err != nil {
-		return err
-	}
-	return nil
 }

@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 	"time"
@@ -67,7 +68,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunIn
 		slog.Time("time", time.Now().UTC()),
 	}
 	if err := l.DoString(r.Logic.Value); err != nil {
-		return RunInfo{Level: slog.LevelError, Message: "failed to run rule logic" + err.Error(), Details: details}
+		return RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
 	}
 	// Get the last result.
 	result := l.Get(-1)
@@ -90,7 +91,12 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunIn
 			err = errors.Wrap(e, err)
 		}
 	}
-	return RunInfo{Level: slog.LevelInfo, Message: "rule processed successfully", Details: details}
+	ret := RunInfo{Level: slog.LevelInfo, Message: "rule processed successfully", Details: details}
+	if err != nil {
+		ret.Level = slog.LevelError
+		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)
+	}
+	return ret
 }
 
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
@@ -127,7 +133,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			if err != nil {
 				re.runInfo <- RunInfo{
 					Level:   slog.LevelError,
-					Message: "failed to list rules" + err.Error(),
+					Message: fmt.Sprintf("failed to list rules: %s", err),
 					Details: []slog.Attr{slog.Time("due", due)},
 				}
 
@@ -137,7 +143,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			for _, r := range page.Rules {
 				go func(rule Rule) {
 					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-						re.runInfo <- RunInfo{Level: slog.LevelError, Message: "falied to update rule due" + err.Error(), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 
@@ -157,7 +163,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			if err != nil {
 				re.runInfo <- RunInfo{
 					Level:   slog.LevelError,
-					Message: "fiald to list reports " + err.Error(),
+					Message: fmt.Sprintf("failed to list reports : %s", err),
 					Details: []slog.Attr{slog.Time("due", due)},
 				}
 				continue
@@ -166,11 +172,11 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			for _, c := range reportConfigs.ReportConfigs {
 				go func(cfg ReportConfig) {
 					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.runInfo <- RunInfo{Level: slog.LevelError, Message: "falied to update report due" + err.Error(), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 					_, err := re.generateReport(ctx, cfg, EmailReport)
-					info := RunInfo{
+					ret := RunInfo{
 						Details: []slog.Attr{
 							slog.String("domain_id", cfg.DomainID),
 							slog.String("report_id", cfg.ID),
@@ -179,10 +185,10 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						},
 					}
 					if err != nil {
-						info.Level = slog.LevelError
-						info.Message = "failed to generate report" + err.Error()
+						ret.Level = slog.LevelError
+						ret.Message = fmt.Sprintf("failed to generate report: %s", err)
 					}
-					re.runInfo <- info
+					re.runInfo <- ret
 				}(c)
 			}
 		}

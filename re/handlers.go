@@ -8,11 +8,17 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 	lua "github.com/yuin/gopher-lua"
+)
+
+var (
+	scheduledTrue  = true
+	scheduledFalse = false
 )
 
 const (
@@ -29,7 +35,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 		Domain:       msg.Domain,
 		InputChannel: msg.Channel,
 		Status:       EnabledStatus,
-		InputTopic:   &msg.Subtopic,
+		Scheduled:    &scheduledFalse,
 	}
 	ctx := context.Background()
 	page, err := re.repo.ListRules(ctx, pm)
@@ -38,12 +44,34 @@ func (re *re) Handle(msg *messaging.Message) error {
 	}
 
 	for _, r := range page.Rules {
-		go func(ctx context.Context) {
-			re.runInfo <- re.process(ctx, r, msg)
-		}(ctx)
+		if matchSubject(msg.Subtopic, r.InputTopic) {
+			go func(ctx context.Context) {
+				re.runInfo <- re.process(ctx, r, msg)
+			}(ctx)
+		}
 	}
 
 	return nil
+}
+
+// Match NATS subject to support wildcardas.
+func matchSubject(published, subscribed string) bool {
+	p := strings.Split(published, ".")
+	s := strings.Split(subscribed, ".")
+	n := len(p)
+
+	for i := range s {
+		if s[i] == ">" {
+			return true
+		}
+		if i >= n {
+			return false
+		}
+		if s[i] != "*" && p[i] != s[i] {
+			return false
+		}
+	}
+	return len(p) == n
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunInfo {
@@ -65,7 +93,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunIn
 		slog.String("domain_id", r.DomainID),
 		slog.String("rule_id", r.ID),
 		slog.String("rule_name", r.Name),
-		slog.Time("time", time.Now().UTC()),
+		slog.Time("exec_time", time.Now().UTC()),
 	}
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
@@ -116,16 +144,15 @@ func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *mes
 
 func (re *re) StartScheduler(ctx context.Context) error {
 	defer re.ticker.Stop()
-
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		case <-re.ticker.Tick():
 			due := time.Now().UTC()
-
 			pm := PageMeta{
 				Status:          EnabledStatus,
+				Scheduled:       &scheduledTrue,
 				ScheduledBefore: &due,
 			}
 
@@ -156,7 +183,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					re.runInfo <- re.process(ctx, rule, msg)
 				}(r)
 			}
-			// Reset due, it will reset the page meta as well.
+			// Reset due, it will reset in the page meta as well.
 			due = time.Now().UTC()
 
 			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
@@ -181,7 +208,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 							slog.String("domain_id", cfg.DomainID),
 							slog.String("report_id", cfg.ID),
 							slog.String("report_name", cfg.Name),
-							slog.Time("time", time.Now().UTC()),
+							slog.Time("exec_time", time.Now().UTC()),
 						},
 					}
 					if err != nil {

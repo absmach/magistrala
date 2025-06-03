@@ -74,7 +74,7 @@ func matchSubject(published, subscribed string) bool {
 			return false
 		}
 	}
-	return len(p) == n
+	return len(s) == n
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunInfo {

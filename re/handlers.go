@@ -31,6 +31,9 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if n := len(msg.Payload); n > maxPayload {
 		return errors.New(pldExceededFmt + strconv.Itoa(n))
 	}
+	// Skip filtering by message topic and fetch all non-scheduled rules instead.
+	// It's cleaner and more efficient to match wildcards in Go, but we can
+	// revisit this if it ever becomes a performance bottleneck.
 	pm := PageMeta{
 		Domain:       msg.Domain,
 		InputChannel: msg.Channel,

@@ -545,12 +545,10 @@ func TestDisableRule(t *testing.T) {
 func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t, make(chan re.RunInfo))
 	now := time.Now()
-	empty := ""
-
+	scheduled := false
 	cases := []struct {
 		desc       string
 		message    *messaging.Message
-		pageMeta   re.PageMeta
 		page       re.Page
 		listErr    error
 		publishErr error
@@ -562,11 +560,6 @@ func TestHandle(t *testing.T) {
 				Channel: inputChannel,
 				Created: now.Unix(),
 			},
-			pageMeta: re.PageMeta{
-				InputChannel: inputChannel,
-				InputTopic:   &empty,
-				Status:       re.EnabledStatus,
-			},
 			page: re.Page{
 				Rules: []re.Rule{},
 			},
@@ -577,11 +570,6 @@ func TestHandle(t *testing.T) {
 			message: &messaging.Message{
 				Channel: inputChannel,
 				Created: now.Unix(),
-			},
-			pageMeta: re.PageMeta{
-				InputChannel: inputChannel,
-				Status:       re.EnabledStatus,
-				InputTopic:   &empty,
 			},
 			page: re.Page{
 				Rules: []re.Rule{
@@ -606,7 +594,7 @@ func TestHandle(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			var err error
 
-			repoCall := repo.On("ListRules", mock.Anything, tc.pageMeta).Return(tc.page, tc.listErr).Run(func(args mock.Arguments) {
+			repoCall := repo.On("ListRules", mock.Anything, re.PageMeta{Domain: tc.message.Domain, InputChannel: tc.message.Channel, Scheduled: &scheduled}).Return(tc.page, tc.listErr).Run(func(args mock.Arguments) {
 				if tc.listErr != nil {
 					err = tc.listErr
 				}

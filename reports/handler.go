@@ -50,6 +50,7 @@ func (re *report) StartScheduler(ctx context.Context) error {
 							slog.String("report_id", cfg.ID),
 							slog.String("report_name", cfg.Name),
 							slog.Time("time", time.Now().UTC()),
+							slog.Time("exec_time", time.Now().UTC()),
 						},
 					}
 					if err != nil {

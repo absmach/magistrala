@@ -342,6 +342,9 @@ func pageRulesQuery(pm re.PageMeta) string {
 	if pm.Name != "" {
 		query = append(query, "r.name ILIKE '%' || :name || '%'")
 	}
+	if pm.Scheduled != nil && !*pm.Scheduled {
+		query = append(query, "r.time IS NULL")
+	}
 
 	var q string
 	if len(query) > 0 {

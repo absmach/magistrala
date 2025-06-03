@@ -12,6 +12,7 @@ import (
 	"github.com/vadv/gopher-lua-libs/crypto"
 	"github.com/vadv/gopher-lua-libs/db"
 	"github.com/vadv/gopher-lua-libs/filepath"
+	client "github.com/vadv/gopher-lua-libs/http/client"
 	"github.com/vadv/gopher-lua-libs/ioutil"
 	luajson "github.com/vadv/gopher-lua-libs/json"
 	"github.com/vadv/gopher-lua-libs/regexp"
@@ -37,6 +38,7 @@ func preload(l *lua.LState) {
 	argparse.Preload(l)
 	strings.Preload(l)
 	filepath.Preload(l)
+	client.Preload(l)
 }
 
 func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {

@@ -62,3 +62,59 @@ func decrypt(key []byte, iv []byte, encrypted []byte) ([]byte, error) {
 
 	return decrypted, nil
 }
+
+func dateConv(data []byte) ([]byte, error) {
+	if len(data) == 0 {
+		return []byte{}, nil
+	}
+
+	length := len(data)
+	hasSeconds := length > 5
+
+	var seconds *byte
+	var coreData []byte
+
+	if hasSeconds {
+		s := data[length-1] & 0x3F
+		seconds = &s
+		coreData = data[1 : length-1]
+	} else {
+		coreData = data
+	}
+
+	var value uint32 = 0
+	for i, b := range coreData {
+		value |= uint32(b) << (8 * uint(i))
+	}
+
+	if value == 0 {
+		return []byte{}, nil
+	}
+
+	rawDate := value >> 16
+	year := ((rawDate >> 5) & 0x7) | ((rawDate >> 9) & 0x78)
+	month := (rawDate >> 8) & 0xF
+	day := rawDate & 0x1F
+	fullYear := 1900 + int(year)
+	if year < 100 {
+		fullYear += 100
+	}
+
+	hour := (value >> 8) & 0x1F
+	minute := value & 0x3F
+
+	// Build optional components
+	extras := ""
+	if seconds != nil {
+		extras += fmt.Sprintf(":%02d", *seconds)
+	}
+	if value&0x8000 != 0 {
+		extras += " (summer)"
+	}
+	if value&0x80 != 0 {
+		extras += " (invalid)"
+	}
+
+	formatted := fmt.Sprintf("%04d-%02d-%02d %02d:%02d%s", fullYear, month, day, hour, minute, extras)
+	return []byte(formatted), nil
+}

@@ -50,6 +50,7 @@ type PageMeta struct {
 	Name            string     `json:"name" db:"name"`
 	InputChannel    string     `json:"input_channel,omitempty" db:"input_channel"`
 	InputTopic      *string    `json:"input_topic,omitempty" db:"input_topic"`
+	Scheduled       *bool      `json:"scheduled,omitempty"`
 	OutputChannel   string     `json:"output_channel,omitempty" db:"output_channel"`
 	Status          Status     `json:"status,omitempty" db:"status"`
 	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
@@ -91,7 +92,7 @@ type Service interface {
 
 type re struct {
 	repo       Repository
-	errors     chan error
+	runInfo    chan RunInfo
 	idp        supermq.IDProvider
 	rePubSub   messaging.PubSub
 	writersPub messaging.Publisher
@@ -101,11 +102,11 @@ type re struct {
 	readers    grpcReadersV1.ReadersServiceClient
 }
 
-func NewService(repo Repository, errors chan (error), idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
+func NewService(repo Repository, runInfo chan RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck Ticker, emailer Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
 	return &re{
 		repo:       repo,
 		idp:        idp,
-		errors:     errors,
+		runInfo:    runInfo,
 		rePubSub:   rePubSub,
 		writersPub: writersPub,
 		alarmsPub:  alarmsPub,

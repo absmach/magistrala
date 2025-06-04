@@ -5,6 +5,7 @@ package re
 
 import (
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -88,10 +89,16 @@ type Rule struct {
 	Logic         Script    `json:"logic"`
 	OutputChannel string    `json:"output_channel,omitempty"`
 	OutputTopic   string    `json:"output_topic,omitempty"`
-	Schedule      Schedule  `json:"schedule,omitempty"`
+	Schedule      Schedule  `json:"schedule"`
 	Status        Status    `json:"status"`
-	CreatedAt     time.Time `json:"created_at,omitempty"`
-	CreatedBy     string    `json:"created_by,omitempty"`
-	UpdatedAt     time.Time `json:"updated_at,omitempty"`
-	UpdatedBy     string    `json:"updated_by,omitempty"`
+	CreatedAt     time.Time `json:"created_at"`
+	CreatedBy     string    `json:"created_by"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	UpdatedBy     string    `json:"updated_by"`
+}
+
+type RunInfo struct {
+	Level   slog.Level
+	Details []slog.Attr
+	Message string
 }

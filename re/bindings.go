@@ -9,6 +9,7 @@ import (
 	"encoding/gob"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
@@ -19,6 +20,7 @@ import (
 func luaEncrypt(l *lua.LState) int {
 	key, iv, data, err := decodeParams(l)
 	if err != nil {
+<<<<<<< HEAD
 		return 1
 	}
 	enc, err := encrypt(key, iv, data)
@@ -27,22 +29,53 @@ func luaEncrypt(l *lua.LState) int {
 		return 0
 	}
 	l.Push(lua.LString(hex.EncodeToString(enc)))
+=======
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode params: %v", err)))
+		return 2
+	}
+
+	enc, err := encrypt(key, iv, data)
+	if err != nil {
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to encrypt: %v", err)))
+		return 2
+	}
+	l.Push(lua.LString(hex.EncodeToString(enc)))
+
+>>>>>>> upstream/main
 	return 1
 }
 
 func luaDecrypt(l *lua.LState) int {
 	key, iv, data, err := decodeParams(l)
 	if err != nil {
+<<<<<<< HEAD
 		return 1
+=======
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode params: %v", err)))
+		return 2
+>>>>>>> upstream/main
 	}
 
 	dec, err := decrypt(key, iv, data)
 	if err != nil {
+<<<<<<< HEAD
 		l.RaiseError("Falied to decrypt: %v", err)
 		return 0
 	}
 
 	l.Push(lua.LString(hex.EncodeToString(dec)))
+=======
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decrypt: %v", err)))
+		return 2
+	}
+
+	l.Push(lua.LString(hex.EncodeToString(dec)))
+
+>>>>>>> upstream/main
 	return 1
 }
 
@@ -53,22 +86,37 @@ func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
 
 	key, err = hex.DecodeString(keyStr)
 	if err != nil {
+<<<<<<< HEAD
 		l.RaiseError("Failed to decode key: %v", err)
 		return
+=======
+		return nil, nil, nil, fmt.Errorf("failed to decode key: %v", err)
+>>>>>>> upstream/main
 	}
 
 	iv, err = hex.DecodeString(ivStr)
 	if err != nil {
+<<<<<<< HEAD
 		l.RaiseError("Failed to decode IV: %v", err)
 		return
+=======
+		return nil, nil, nil, fmt.Errorf("failed to decode IV: %v", err)
+>>>>>>> upstream/main
 	}
 
 	data, err = hex.DecodeString(dataStr)
 	if err != nil {
+<<<<<<< HEAD
 		l.RaiseError("Failed to decode data: %v", err)
 		return
 	}
 	return
+=======
+		return nil, nil, nil, fmt.Errorf("failed to decode data: %v", err)
+	}
+
+	return key, iv, data, nil
+>>>>>>> upstream/main
 }
 
 func (re *re) sendEmail(l *lua.LState) int {
@@ -86,6 +134,7 @@ func (re *re) sendEmail(l *lua.LState) int {
 	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, "", make(map[string][]byte)); err != nil {
 		return 0
 	}
+
 	return 1
 }
 
@@ -169,6 +218,7 @@ func (re *re) saveSenml(ctx context.Context, val interface{}, msg *messaging.Mes
 	if err := re.writersPub.Publish(ctx, msg.Channel, m); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -190,5 +240,6 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 	if err := re.rePubSub.Publish(ctx, channel, m); err != nil {
 		return err
 	}
+
 	return nil
 }

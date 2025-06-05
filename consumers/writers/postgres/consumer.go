@@ -45,19 +45,21 @@ func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{})
 		if err != nil {
 			args := []any{
 				slog.Any("message", m),
+				slog.Any("error", err),
 			}
 			pr.logger.Warn("failed to save JSON message", args...)
 		}
-		return err
+		return nil
 	default:
 		err := pr.saveSenml(ctx, m)
 		if err != nil {
 			args := []any{
 				slog.Any("message", m),
+				slog.Any("error", err),
 			}
 			pr.logger.Warn("failed to save Senml message", args...)
 		}
-		return err
+		return nil
 	}
 }
 

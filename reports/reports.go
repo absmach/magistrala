@@ -1,9 +1,10 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package re
+package reports
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/mail"
@@ -11,6 +12,8 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/reltime"
+	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
@@ -142,19 +145,19 @@ func (rm ReqMetric) Validate() error {
 }
 
 type ReportConfig struct {
-	ID          string        `json:"id"`
-	Name        string        `json:"name"`
-	Description string        `json:"description"`
-	DomainID    string        `json:"domain_id"`
-	Schedule    Schedule      `json:"schedule,omitempty"`
-	Config      *MetricConfig `json:"config,omitempty"`
-	Email       *EmailSetting `json:"email,omitempty"`
-	Metrics     []ReqMetric   `json:"metrics,omitempty"`
-	Status      Status        `json:"status"`
-	CreatedAt   time.Time     `json:"created_at,omitempty"`
-	CreatedBy   string        `json:"created_by,omitempty"`
-	UpdatedAt   time.Time     `json:"updated_at,omitempty"`
-	UpdatedBy   string        `json:"updated_by,omitempty"`
+	ID          string            `json:"id"`
+	Name        string            `json:"name"`
+	Description string            `json:"description"`
+	DomainID    string            `json:"domain_id"`
+	Schedule    schedule.Schedule `json:"schedule,omitempty"`
+	Config      *MetricConfig     `json:"config,omitempty"`
+	Email       *EmailSetting     `json:"email,omitempty"`
+	Metrics     []ReqMetric       `json:"metrics,omitempty"`
+	Status      Status            `json:"status"`
+	CreatedAt   time.Time         `json:"created_at,omitempty"`
+	CreatedBy   string            `json:"created_by,omitempty"`
+	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
+	UpdatedBy   string            `json:"updated_by,omitempty"`
 }
 
 type ReportConfigPage struct {
@@ -369,4 +372,40 @@ func (a *Aggregation) UnmarshalJSON(data []byte) error {
 	val, err := ToAggregation(str)
 	*a = val
 	return err
+}
+
+type PageMeta struct {
+	Total           uint64     `json:"total" db:"total"`
+	Offset          uint64     `json:"offset" db:"offset"`
+	Limit           uint64     `json:"limit" db:"limit"`
+	Name            string     `json:"name" db:"name"`
+	Status          Status     `json:"status,omitempty" db:"status"`
+	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
+	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+}
+
+type Repository interface {
+	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, id string) error
+	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
+	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
+}
+
+type Service interface {
+	AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error)
+	RemoveReportConfig(ctx context.Context, session authn.Session, id string) error
+	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
+	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+
+	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)
+	StartScheduler(ctx context.Context) error
 }

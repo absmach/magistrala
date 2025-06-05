@@ -1,12 +1,15 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package re
+package schedule
 
 import (
 	"encoding/json"
+	"errors"
 	"time"
 )
+
+var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
 // Type can be daily, weekly or monthly.
 type Recurring uint

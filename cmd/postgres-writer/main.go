@@ -146,7 +146,7 @@ func main() {
 }
 
 func newService(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
-	svc := writerpg.New(db)
+	svc := writerpg.New(db, logger)
 	svc = httpapi.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("postgres", "message_writer")
 	svc = httpapi.MetricsMiddleware(svc, counter, latency)

@@ -57,7 +57,7 @@ func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{})
 				slog.Any("message", m),
 				slog.Any("error", err),
 			}
-			pr.logger.Warn("failed to save Senml message", args...)
+			pr.logger.Warn("failed to save senML message", args...)
 		}
 		return nil
 	}

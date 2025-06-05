@@ -56,7 +56,7 @@ func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{
 				slog.Any("message", m),
 				slog.Any("error", err),
 			}
-			tr.logger.Warn("failed to save Senml message", args...)
+			tr.logger.Warn("failed to save senML message", args...)
 		}
 		return nil
 	}

@@ -133,7 +133,8 @@ func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.
 				Payload:   buf.Bytes(),
 			}
 
-			if err := re.alarmsPub.Publish(ctx, original.Channel, m); err != nil {
+			topic := messaging.EncodeMessageTopic(original)
+			if err := re.alarmsPub.Publish(ctx, topic, m); err != nil {
 				return 0
 			}
 			return 1
@@ -175,7 +176,8 @@ func (re *re) saveSenml(ctx context.Context, val interface{}, msg *messaging.Mes
 		Protocol:  msg.Protocol,
 		Payload:   data,
 	}
-	if err := re.writersPub.Publish(ctx, msg.Channel, m); err != nil {
+	topic := messaging.EncodeMessageTopic(msg)
+	if err := re.writersPub.Publish(ctx, topic, m); err != nil {
 		return err
 	}
 
@@ -197,7 +199,9 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 		Protocol:  protocol,
 		Payload:   data,
 	}
-	if err := re.rePubSub.Publish(ctx, channel, m); err != nil {
+
+	topic := messaging.EncodeTopicSuffix(msg.Domain, channel, subtopic)
+	if err := re.rePubSub.Publish(ctx, topic, m); err != nil {
 		return err
 	}
 

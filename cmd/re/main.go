@@ -242,7 +242,7 @@ func main() {
 	}
 	subCfg := messaging.SubscriberConfig{
 		ID:             svcName,
-		Topic:          smqbrokers.SubjectAllChannels,
+		Topic:          smqbrokers.SubjectAllMessages,
 		DeliveryPolicy: messaging.DeliverAllPolicy,
 		Handler:        svc,
 	}

@@ -29,8 +29,8 @@ github.com/absmach/mgate v0.4.6-0.20250425104654-79c62d581921 h1:Y0M0jtSbKmfrwLW
 github.com/absmach/mgate v0.4.6-0.20250425104654-79c62d581921/go.mod h1:BYazn/DsEeZxJxWZxy/5NiaS/CfWpR/5auYmbq43VwQ=
 github.com/absmach/senml v1.0.7 h1:XLvpw0qxbP2QhOz7KLM2ZRar+vSCpSG/0o0kEvWx3No=
 github.com/absmach/senml v1.0.7/go.mod h1:3bRIiNc8hq7l3auMs8gQrpsM5hHy7iDuiLILrf/+MfA=
-github.com/absmach/supermq v0.16.1-0.20250602095825-5e96516bf6fb h1:4RGAt42da6v6CkAOb9gDUNHSIzIlo8dXtrnDlrozA+8=
-github.com/absmach/supermq v0.16.1-0.20250602095825-5e96516bf6fb/go.mod h1:WbcEX19AtubL9txRVv5wnU0xueSOOjad0JJ/1bgMntE=
+github.com/absmach/supermq v0.16.1-0.20250605074856-21c7b1019eea h1:y3ATSOOM27LCv532tPgX28svewvooOM30tCBQUh6G88=
+github.com/absmach/supermq v0.16.1-0.20250605074856-21c7b1019eea/go.mod h1:2fkFY+HtFfPsByiIGfAReleZUOiu4UX8pEMmh579zA4=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

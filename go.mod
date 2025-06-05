@@ -1,11 +1,11 @@
 module github.com/absmach/magistrala
 
-go 1.24.2
+go 1.24.3
 
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/supermq v0.16.1-0.20250602095825-5e96516bf6fb
+	github.com/absmach/supermq v0.16.1-0.20250605074856-21c7b1019eea
 	github.com/authzed/authzed-go v1.4.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1

@@ -59,8 +59,9 @@ services:
       NEXT_LOG_LEVEL: "debug"
       MG_HOST_URL: ${MG_HOST_URL}
       MG_UI_IMAGE_URL: ${MG_UI_IMAGE_URL}
-      RUNTIME_ENV: ${RUNTIME_ENV}
       MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      MG_SUPPORT_EMAIL: ${MG_SUPPORT_EMAIL}
+      MG_SUPPORT_EMAIL_PASS: ${MG_SUPPORT_EMAIL_PASS}
 
   ui-backend:
     image: ghcr.io/absmach/magistrala/ui-backend:latest

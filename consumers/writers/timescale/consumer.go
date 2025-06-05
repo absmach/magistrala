@@ -47,16 +47,17 @@ func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{
 		if err != nil {
 			args := []any{
 				slog.Any("message", m),
+				slog.Any("error", err),
 			}
 			tr.logger.Warn("failed to save JSON message", args...)
 		}
-		return err
+		return nil
 	default:
 		err := tr.saveSenml(ctx, m)
 		if err != nil && errors.Contains(err, repoerr.ErrConflict) {
 			return messaging.NewError(repoerr.ErrConflict, messaging.Term)
 		}
-		return err
+		return nil
 	}
 }
 

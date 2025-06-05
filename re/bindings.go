@@ -79,6 +79,37 @@ func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
 	return key, iv, data, nil
 }
 
+func decodeDateParams(l *lua.LState) (date_hex []byte, err error) {
+	date_hex_str := l.ToString(1)
+
+	date_bytes, err := hex.DecodeString(date_hex_str)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode date string: %v", err)
+	}
+
+	return date_bytes, nil
+}
+
+func luaDecodeDate(l *lua.LState) int {
+	date_bytes, err := decodeDateParams(l)
+	if err != nil {
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode params: %v", err)))
+		return 2
+	}
+
+	dec_date, err := dateConv(date_bytes)
+	if err != nil {
+		l.Push(lua.LNil)
+		l.Push(lua.LString(fmt.Sprintf("failed to decode date: %v", err)))
+		return 2
+	}
+
+	l.Push(lua.LString(string(dec_date)))
+
+	return 1
+}
+
 func (re *re) sendEmail(l *lua.LState) int {
 	recipientsTable := l.ToTable(1)
 	subject := l.ToString(2)

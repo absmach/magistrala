@@ -91,6 +91,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunIn
 	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
 	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
 	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
+	l.SetGlobal("date_decode", l.NewFunction(luaDecodeDate))
 
 	details := []slog.Attr{
 		slog.String("domain_id", r.DomainID),

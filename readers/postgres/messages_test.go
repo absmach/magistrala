@@ -41,7 +41,7 @@ var (
 )
 
 func TestReadSenml(t *testing.T) {
-	writer := pwriter.New(db)
+	writer := pwriter.New(db, logger)
 
 	chanID := testsutil.GenerateUUID(t)
 	pubID := testsutil.GenerateUUID(t)
@@ -519,7 +519,7 @@ func TestReadSenml(t *testing.T) {
 }
 
 func TestReadJSON(t *testing.T) {
-	writer := pwriter.New(db)
+	writer := pwriter.New(db, logger)
 
 	id1 := testsutil.GenerateUUID(t)
 	m := json.Message{

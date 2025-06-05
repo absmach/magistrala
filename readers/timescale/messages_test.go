@@ -41,7 +41,7 @@ var (
 )
 
 func TestReadSenml(t *testing.T) {
-	writer := twriter.New(db)
+	writer := twriter.New(db, logger)
 
 	chanID := testsutil.GenerateUUID(t)
 	pubID := testsutil.GenerateUUID(t)
@@ -519,7 +519,7 @@ func TestReadSenml(t *testing.T) {
 }
 
 func TestReadMessagesWithAggregation(t *testing.T) {
-	writer := twriter.New(db)
+	writer := twriter.New(db, logger)
 
 	chanID := testsutil.GenerateUUID(t)
 	pubID := testsutil.GenerateUUID(t)
@@ -645,7 +645,7 @@ func TestReadMessagesWithAggregation(t *testing.T) {
 }
 
 func TestReadJSON(t *testing.T) {
-	writer := twriter.New(db)
+	writer := twriter.New(db, logger)
 
 	id1 := testsutil.GenerateUUID(t)
 	messages1 := json.Messages{

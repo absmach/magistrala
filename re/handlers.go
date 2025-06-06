@@ -116,7 +116,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) RunIn
 	for _, o := range r.Logic.Outputs {
 		// If value is false, don't run the follow-up.
 		if v, ok := res.(bool); ok && !v {
-			return RunInfo{Level: slog.LevelInfo, Message: err.Error(), Details: details}
+			return RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}
 		}
 		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
 			err = errors.Wrap(e, err)

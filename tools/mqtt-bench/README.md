@@ -37,7 +37,7 @@ Flags:
       --mtls              Use mtls for connection
   -p, --pubs int          Number of publishers (default 10)
   -q, --qos int           QoS for published messages, values 0 1 2
-      --quiet             Supress messages
+      --quiet             Suppress messages
   -r, --retain            Retain mqtt messages
   -z, --size int          Size of message payload bytes (default 100)
   -t, --skipTLSVer        Skip tls verification

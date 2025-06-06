@@ -676,15 +676,15 @@ func TestUpdateChannel(t *testing.T) {
 
 	cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 	assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-	var retreved bootstrap.Channel
+	var retrieved bootstrap.Channel
 	for _, c := range cfg.Channels {
 		if c.ID == id {
-			retreved = c
+			retrieved = c
 			break
 		}
 	}
-	update.DomainID = retreved.DomainID
-	assert.Equal(t, update, retreved, fmt.Sprintf("expected %s, go %s", update, retreved))
+	update.DomainID = retrieved.DomainID
+	assert.Equal(t, update, retrieved, fmt.Sprintf("expected %s, go %s", update, retrieved))
 }
 
 func TestRemoveChannel(t *testing.T) {

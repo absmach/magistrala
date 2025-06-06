@@ -202,7 +202,7 @@ policies                ["default" "magistrala_things_certs_issue"]
 token_meta_role_name    magistrala_things_certs_issuer
 ```
 
-By default, the `vault_create_approle.sh` script tries to enable the AppRole authentication method. Certs service uses the approle credentials to issue and revoke things certificate from vault intermedate CA. If AppRole is already enabled, you can skip this step by passing the `--skip-enable-approle` argument:
+By default, the `vault_create_approle.sh` script tries to enable the AppRole authentication method. Certs service uses the approle credentials to issue and revoke things certificate from vault intermediate CA. If AppRole is already enabled, you can skip this step by passing the `--skip-enable-approle` argument:
 
 ```sh
 ./vault_create_approle.sh --skip-enable-approle

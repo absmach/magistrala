@@ -20,7 +20,7 @@ type handler struct {
 	logger *slog.Logger
 }
 
-func Newhandler(svc alarms.Service, logger *slog.Logger) messaging.MessageHandler {
+func NewHandler(svc alarms.Service, logger *slog.Logger) messaging.MessageHandler {
 	return &handler{svc: svc, logger: logger}
 }
 

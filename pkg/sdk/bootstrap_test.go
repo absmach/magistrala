@@ -77,7 +77,7 @@ var (
 		Content:      content,
 		State:        state,
 	}
-	sdkBootsrapConfigRes = sdk.BootstrapConfig{
+	sdkBootstrapConfigRes = sdk.BootstrapConfig{
 		ClientID:     clientId,
 		ClientSecret: clientSecret,
 		Channels: []smqSDK.Channel{
@@ -528,7 +528,7 @@ func TestViewBootstrap(t *testing.T) {
 
 	viewBoostrapRes := sdk.BootstrapConfig{
 		ClientID:    clientId,
-		Channels:    sdkBootsrapConfigRes.Channels,
+		Channels:    sdkBootstrapConfigRes.Channels,
 		ExternalID:  externalId,
 		ExternalKey: externalKey,
 		Name:        bsName,
@@ -1145,7 +1145,7 @@ func TestBoostrap(t *testing.T) {
 			svcErr:      nil,
 			readerResp:  readConfigResponse,
 			readerErr:   nil,
-			response:    sdkBootsrapConfigRes,
+			response:    sdkBootstrapConfigRes,
 			err:         nil,
 		},
 		{
@@ -1258,7 +1258,7 @@ func TestBootstrapSecure(t *testing.T) {
 			svcErr:      nil,
 			readerResp:  encResponse,
 			readerErr:   nil,
-			response:    sdkBootsrapConfigRes,
+			response:    sdkBootstrapConfigRes,
 			err:         nil,
 		},
 		{
@@ -1328,7 +1328,7 @@ func TestBootstrapSecure(t *testing.T) {
 			resp, err := mgsdk.BootstrapSecure(context.Background(), tc.externalID, tc.externalKey, tc.cryptoKey)
 			assert.Equal(t, tc.err, err)
 			if err == nil {
-				assert.Equal(t, sdkBootsrapConfigRes, resp)
+				assert.Equal(t, sdkBootstrapConfigRes, resp)
 				ok := svcCall.Parent.AssertCalled(t, "Bootstrap", mock.Anything, mock.Anything, tc.externalID, true)
 				assert.True(t, ok)
 			}

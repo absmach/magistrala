@@ -45,7 +45,7 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 	rootCmd := setFlags(bootCmd)
 
 	jsonConfig := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]}", clientID, "Test Bootstrap", channelID)
-	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]", clientID, "Test Bootdtrap", channelID)
+	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]", clientID, "Test Bootstrap", channelID)
 	cases := []struct {
 		desc          string
 		args          []string
@@ -549,7 +549,7 @@ func TestBootstrapConfigCmd(t *testing.T) {
 	rootCmd := setFlags(bootCmd)
 
 	var boot mgsdk.BootstrapConfig
-	crptoKey := "v7aT0HGxJxt2gULzr3RHwf4WIf6DusPp"
+	cryptoKey := "v7aT0HGxJxt2gULzr3RHwf4WIf6DusPp"
 	invalidKey := "invalid key"
 	cases := []struct {
 		desc          string
@@ -565,7 +565,7 @@ func TestBootstrapConfigCmd(t *testing.T) {
 				"secure",
 				bootConfig.ExternalID,
 				bootConfig.ExternalKey,
-				crptoKey,
+				cryptoKey,
 			},
 			boot:    bootConfig,
 			logType: entityLog,
@@ -582,7 +582,7 @@ func TestBootstrapConfigCmd(t *testing.T) {
 		{
 			desc: "bootstrap secure config with invalid args",
 			args: []string{
-				crptoKey,
+				cryptoKey,
 			},
 
 			logType: usageLog,
@@ -593,7 +593,7 @@ func TestBootstrapConfigCmd(t *testing.T) {
 				"secure",
 				bootConfig.ExternalID,
 				invalidKey,
-				crptoKey,
+				cryptoKey,
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized),
 			errLogMessage: fmt.Sprintf("\nerror: %s\n\n", errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusUnauthorized)),

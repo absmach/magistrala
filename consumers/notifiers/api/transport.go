@@ -55,21 +55,21 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 		), "list").ServeHTTP)
 
 		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
-			deleteSubscriptionEndpint(svc),
+			deleteSubscriptionEndpoint(svc),
 			decodeSubscription,
 			api.EncodeResponse,
 			opts...,
 		), "delete").ServeHTTP)
 
 		r.Get("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-			viewSubscriptionEndpint(svc),
+			viewSubscriptionEndpoint(svc),
 			decodeSubscription,
 			api.EncodeResponse,
 			opts...,
 		), "view").ServeHTTP)
 
 		r.Delete("/{subID}", otelhttp.NewHandler(kithttp.NewServer(
-			deleteSubscriptionEndpint(svc),
+			deleteSubscriptionEndpoint(svc),
 			decodeSubscription,
 			api.EncodeResponse,
 			opts...,

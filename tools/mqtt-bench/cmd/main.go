@@ -20,7 +20,7 @@ func main() {
 	rootCmd := &cobra.Command{
 		Use:   "mqtt-bench",
 		Short: "mqtt-bench is MQTT benchmark tool for SuperMQ",
-		Long: `Tool for exctensive load and benchmarking of MQTT brokers used within the SuperMQ platform.
+		Long: `Tool for extensive load and benchmarking of MQTT brokers used within the SuperMQ platform.
 Complete documentation is available at https://docs.supermq.abstractmachines.fr`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {

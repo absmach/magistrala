@@ -34,7 +34,7 @@ func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	}
 }
 
-func viewSubscriptionEndpint(svc notifiers.Service) endpoint.Endpoint {
+func viewSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {
@@ -89,7 +89,7 @@ func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	}
 }
 
-func deleteSubscriptionEndpint(svc notifiers.Service) endpoint.Endpoint {
+func deleteSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request interface{}) (interface{}, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {

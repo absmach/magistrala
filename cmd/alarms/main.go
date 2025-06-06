@@ -163,7 +163,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	consumer := consumer.Newhandler(svc, logger)
+	consumer := consumer.NewHandler(svc, logger)
 
 	subCfg := messaging.SubscriberConfig{
 		ID:             svcName,

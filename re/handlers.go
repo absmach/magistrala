@@ -173,7 +173,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			for _, r := range page.Rules {
 				go func(rule Rule) {
 					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 
@@ -202,7 +202,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			for _, c := range reportConfigs.ReportConfigs {
 				go func(cfg ReportConfig) {
 					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						re.runInfo <- RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 					_, err := re.generateReport(ctx, cfg, EmailReport)

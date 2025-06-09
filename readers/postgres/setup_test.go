@@ -18,7 +18,7 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-var 	db *sqlx.DB
+var db *sqlx.DB
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

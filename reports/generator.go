@@ -5,6 +5,7 @@ package reports
 
 import (
 	"bytes"
+	"context"
 	"embed"
 	"encoding/csv"
 	"fmt"
@@ -12,26 +13,42 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SebastiaanKlippert/go-wkhtmltopdf"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/chromedp"
 )
-
-type TemplateData struct {
-	Title       string
-	Reports     []Report
-	CurrentDate string
-	CurrentTime string
-}
 
 //go:embed report_template.html
 var reportTemplate embed.FS
 
-func generateHTMLReport(data TemplateData) ([]byte, error) {
-	content, err := reportTemplate.ReadFile("report_template.html")
+// ReportData holds the data for HTML template rendering
+type ReportData struct {
+	Title         string
+	GeneratedTime string
+	GeneratedDate string
+	Reports       []Report
+}
+
+func generatePDFReport(title string, reports []Report) ([]byte, error) {
+	for i := range reports {
+		sort.Slice(reports[i].Messages, func(j, k int) bool {
+			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
+		})
+	}
+
+	now := time.Now().UTC()
+	data := ReportData{
+		Title:         title,
+		GeneratedTime: now.Format("15:04:05"),
+		GeneratedDate: now.Format("02 Jan 2006"),
+		Reports:       reports,
+	}
+
+	templateContent, err := reportTemplate.ReadFile("report_template.html")
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
 	}
 
 	tmpl := template.New("report").Funcs(template.FuncMap{
@@ -39,66 +56,60 @@ func generateHTMLReport(data TemplateData) ([]byte, error) {
 		"formatValue": formatValue,
 	})
 
-	tmpl, err = tmpl.Parse(string(content))
+	tmpl, err = tmpl.Parse(string(templateContent))
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to parse template: %w", err))
 	}
 
-	var buf bytes.Buffer
-	if err := tmpl.Execute(&buf, data); err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	var htmlBuf bytes.Buffer
+	if err := tmpl.Execute(&htmlBuf, data); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to execute template: %w", err))
 	}
 
-	return buf.Bytes(), nil
-}
-
-func generatePDFReport(title string, reports []Report) ([]byte, error) {
-	data := TemplateData{
-		Title:       title,
-		Reports:     reports,
-		CurrentDate: time.Now().UTC().Format("02 Jan 2006"),
-		CurrentTime: time.Now().UTC().Format("15:04:05"),
-	}
-
-	htmlBytes, err := generateHTMLReport(data)
+	pdfBytes, err := htmlToPDF(htmlBuf.String())
 	if err != nil {
-		return nil, err
-	}
-
-	// Use your preferred HTML to PDF converter here
-	pdfBytes, err := ConvertHTMLToPDF(htmlBytes)
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to convert HTML to PDF: %w", err))
 	}
 
 	return pdfBytes, nil
 }
 
-func ConvertHTMLToPDF(html []byte) ([]byte, error) {
-	// Initialize generator
-	pdfg, err := wkhtmltopdf.NewPDFGenerator()
+func htmlToPDF(htmlContent string) ([]byte, error) {
+	// Create context
+	ctx, cancel := chromedp.NewContext(context.Background())
+	defer cancel()
+
+	// Set timeout
+	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	var pdfBuffer []byte
+
+	// Navigate to data URL and generate PDF
+	err := chromedp.Run(ctx,
+		chromedp.Navigate("data:text/html,"+htmlContent),
+		chromedp.WaitReady("body"),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			pdfBuffer, _, err = page.PrintToPDF().
+				WithPrintBackground(true).
+				WithPaperWidth(8.27).  // A4 width in inches
+				WithPaperHeight(11.7). // A4 height in inches
+				WithMarginTop(0.4).
+				WithMarginBottom(0.4).
+				WithMarginLeft(0.4).
+				WithMarginRight(0.4).
+				WithPreferCSSPageSize(true).
+				Do(ctx)
+			return err
+		}),
+	)
+
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("chromedp execution failed: %w", err)
 	}
 
-	// Configure global settings
-	pdfg.Dpi.Set(300)
-	pdfg.Orientation.Set(wkhtmltopdf.OrientationPortrait)
-	pdfg.Grayscale.Set(false)
-
-	// Add page
-	page := wkhtmltopdf.NewPageReader(bytes.NewReader(html))
-	page.FooterRight.Set("[page]")
-	page.FooterFontSize.Set(10)
-	pdfg.AddPage(page)
-
-	// Create PDF
-	err = pdfg.Create()
-	if err != nil {
-		return nil, err
-	}
-
-	return pdfg.Bytes(), nil
+	return pdfBuffer, nil
 }
 
 func formatTime(t float64) string {

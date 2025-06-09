@@ -38,7 +38,7 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0
 	go.opentelemetry.io/otel v1.36.0
 	go.opentelemetry.io/otel/trace v1.36.0
-	golang.org/x/sync v0.14.0
+	golang.org/x/sync v0.15.0
 	gonum.org/v1/gonum v0.16.0
 	google.golang.org/grpc v1.72.2
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df

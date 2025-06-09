@@ -4,12 +4,12 @@ go 1.24.4
 
 require (
 	github.com/0x6flab/namegenerator v1.4.0
-	github.com/SebastiaanKlippert/go-wkhtmltopdf v1.9.3
 	github.com/absmach/callhome v0.14.0
 	github.com/absmach/supermq v0.16.1-0.20250616095552-e98b6576f103
 	github.com/authzed/authzed-go v1.4.1
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
+	github.com/chromedp/cdproto v0.0.0-20250403032234-65de8f5d025b
 	github.com/chromedp/chromedp v0.13.6
 	github.com/eclipse/paho.mqtt.golang v1.5.0
 	github.com/fatih/color v1.18.0
@@ -54,7 +54,6 @@ require (
 )
 
 require (
-	github.com/chromedp/cdproto v0.0.0-20250403032234-65de8f5d025b // indirect
 	github.com/chromedp/sysutil v1.1.0 // indirect
 	github.com/go-json-experiment/json v0.0.0-20250211171154-1ae217ad3535 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect

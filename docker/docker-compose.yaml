@@ -375,7 +375,7 @@ services:
       - magistrala-reports-db-volume:/var/lib/postgresql/data
 
   reports:
-    image: ghcr.io/absmach/magistrala/reports:${MG_RELEASE_TAG}
+    image: chromedp/headless-shell:${MG_RELEASE_TAG}
     container_name: magistrala-reports
     depends_on:
       - reports-db
@@ -426,7 +426,7 @@ services:
       SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
       SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
     ports:
-      - ${MG_REPORTS_HTTP_PORT}:${MG_REPORTS_HTTP_PORT}
+      - 9222:${MG_REPORTS_HTTP_PORT}
     networks:
       - magistrala-base-net
     volumes:

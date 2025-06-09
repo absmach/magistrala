@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 
 	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/errors"
@@ -28,37 +27,20 @@ var (
 var _ consumers.BlockingConsumer = (*timescaleRepo)(nil)
 
 type timescaleRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 }
 
 // New returns new TimescaleSQL writer.
-func New(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
-	return &timescaleRepo{db: db, logger: logger}
+func New(db *sqlx.DB) consumers.BlockingConsumer {
+	return &timescaleRepo{db: db}
 }
 
 func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
-		err := tr.saveJSON(ctx, m)
-		if err != nil {
-			args := []any{
-				slog.Any("message", m),
-				slog.Any("error", err),
-			}
-			tr.logger.Warn("failed to save JSON message", args...)
-		}
-		return nil
+		return tr.saveJSON(ctx, m)
 	default:
-		err := tr.saveSenml(ctx, m)
-		if err != nil {
-			args := []any{
-				slog.Any("message", m),
-				slog.Any("error", err),
-			}
-			tr.logger.Warn("failed to save senML message", args...)
-		}
-		return nil
+		return tr.saveSenml(ctx, m)
 	}
 }
 

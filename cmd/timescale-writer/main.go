@@ -148,7 +148,7 @@ func main() {
 }
 
 func newService(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
-	svc := timescale.New(db, logger)
+	svc := timescale.New(db)
 	svc = httpapi.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics("timescale", "message_writer")
 	svc = httpapi.MetricsMiddleware(svc, counter, latency)

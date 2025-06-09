@@ -31,7 +31,7 @@ var (
 )
 
 func TestSaveSenml(t *testing.T) {
-	repo := postgres.New(db, logger)
+	repo := postgres.New(db)
 
 	chid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -72,7 +72,7 @@ func TestSaveSenml(t *testing.T) {
 }
 
 func TestSaveJSON(t *testing.T) {
-	repo := postgres.New(db, logger)
+	repo := postgres.New(db)
 
 	chid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))

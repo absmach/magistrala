@@ -8,7 +8,6 @@ package timescale_test
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -21,10 +20,7 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-var (
-	db     *sqlx.DB
-	logger *slog.Logger
-)
+var db *sqlx.DB
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")

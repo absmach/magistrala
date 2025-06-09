@@ -8,7 +8,6 @@ package timescale_test
 import (
 	"fmt"
 	"log"
-	"log/slog"
 	"os"
 	"testing"
 
@@ -20,8 +19,7 @@ import (
 )
 
 var (
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 )
 
 func TestMain(m *testing.M) {

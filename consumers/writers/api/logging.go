@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/consumers"
+	smqjson "github.com/absmach/supermq/pkg/transformers/json"
 )
 
 var _ consumers.BlockingConsumer = (*loggingMiddleware)(nil)
@@ -35,8 +36,15 @@ func (lm *loggingMiddleware) ConsumeBlocking(ctx context.Context, msgs interface
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 		}
+
 		if err != nil {
 			args = append(args, slog.Any("error", err))
+			switch m := msgs.(type) {
+			case smqjson.Messages:
+				args = append(args, slog.Any("failed to save JSON message", m))
+			default:
+				args = append(args, slog.Any("failed to save senML message", m))
+			}
 			lm.logger.Warn("Blocking consumer failed to consume messages successfully", args...)
 			return
 		}

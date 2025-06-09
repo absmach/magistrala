@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 
 	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/errors"
@@ -29,37 +28,20 @@ var (
 var _ consumers.BlockingConsumer = (*postgresRepo)(nil)
 
 type postgresRepo struct {
-	db     *sqlx.DB
-	logger *slog.Logger
+	db *sqlx.DB
 }
 
 // New returns new PostgreSQL writer.
-func New(db *sqlx.DB, logger *slog.Logger) consumers.BlockingConsumer {
-	return &postgresRepo{db: db, logger: logger}
+func New(db *sqlx.DB) consumers.BlockingConsumer {
+	return &postgresRepo{db: db}
 }
 
 func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
-		err := pr.saveJSON(ctx, m)
-		if err != nil {
-			args := []any{
-				slog.Any("message", m),
-				slog.Any("error", err),
-			}
-			pr.logger.Warn("failed to save JSON message", args...)
-		}
-		return nil
+		return pr.saveJSON(ctx, m)
 	default:
-		err := pr.saveSenml(ctx, m)
-		if err != nil {
-			args := []any{
-				slog.Any("message", m),
-				slog.Any("error", err),
-			}
-			pr.logger.Warn("failed to save senML message", args...)
-		}
-		return nil
+		return pr.saveSenml(ctx, m)
 	}
 }
 

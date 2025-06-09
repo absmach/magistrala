@@ -40,7 +40,7 @@ func (re *report) StartScheduler(ctx context.Context) error {
 			for _, c := range reportConfigs.ReportConfigs {
 				go func(cfg ReportConfig) {
 					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("falied to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
 					_, err := re.generateReport(ctx, cfg, EmailReport)
@@ -49,7 +49,6 @@ func (re *report) StartScheduler(ctx context.Context) error {
 							slog.String("domain_id", cfg.DomainID),
 							slog.String("report_id", cfg.ID),
 							slog.String("report_name", cfg.Name),
-							slog.Time("time", time.Now().UTC()),
 							slog.Time("exec_time", time.Now().UTC()),
 						},
 					}

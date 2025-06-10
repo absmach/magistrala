@@ -6,10 +6,10 @@ package api
 import (
 	"fmt"
 
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 )
 
@@ -140,17 +140,17 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 	}
 
 	if req.Config == nil {
-		return errMissingReportConfig
+		return errors.Wrap(errMissingReportConfig, apiutil.ErrValidation)
 	}
 	if err := req.Config.Validate(); err != nil {
-		return errors.Wrap(apiutil.ErrValidation, err)
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 
 	if skipEmailValidation {
 		return nil
 	}
 	if req.Email == nil {
-		return errMissingReportEmailConfig
+		return errors.Wrap(errMissingReportEmailConfig, apiutil.ErrValidation)
 	}
 	if err := req.Email.Validate(); err != nil {
 		return errors.Wrap(apiutil.ErrValidation, err)
@@ -165,7 +165,7 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 
 func validateScheduler(sch schedule.Schedule) error {
 	if sch.Recurring != schedule.None && sch.RecurringPeriod < 1 {
-		return errInvalidRecurringPeriod
+		return errors.Wrap(apiutil.ErrValidation, errInvalidRecurringPeriod)
 	}
 	return nil
 }

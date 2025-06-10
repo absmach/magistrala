@@ -27,11 +27,11 @@ func NewRepository(db postgres.Database) reports.Repository {
 func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	q := `
 		INSERT INTO report_config (id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
 		VALUES (:id, :name, :description, :domain_id, :config, :metrics,
-			:email, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
+			:email, :start_datetime, :due, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
 		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 	dbr, err := reportToDb(cfg)
 	if err != nil {
@@ -61,7 +61,7 @@ func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports
 func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string) (reports.ReportConfig, error) {
 	q := `
 		SELECT id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config
 		WHERE id = $1;
 	`
@@ -85,7 +85,7 @@ func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, cf
 	q := `UPDATE report_config SET status = :status, updated_at = :updated_at, updated_by = :updated_by
 		WHERE id = :id
         RETURNING id, name, description, domain_id, metrics, email, config,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
+			start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 
 	dbRpt, err := reportToDb(cfg)
 	if err != nil {
@@ -148,7 +148,7 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg repo
 			updated_at = :updated_at, updated_by = :updated_by
 		WHERE id = :id
 		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 		`, q)
 
 	dbr, err := reportToDb(cfg)
@@ -178,10 +178,10 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg repo
 func (repo *PostgresRepository) UpdateReportSchedule(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	q := `
 		UPDATE report_config
-		SET start_datetime = :start_datetime, time = :time, recurring = :recurring,
+		SET start_datetime = :start_datetime, due = :due, recurring = :recurring,
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 
 	dbr, err := reportToDb(cfg)
@@ -229,7 +229,7 @@ func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id strin
 func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	listReportsQuery := `
 		SELECT id, name, description, domain_id, metrics, email, config,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
+			start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config rc %s %s;
 	`
 
@@ -279,9 +279,9 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm report
 func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, due time.Time) (reports.ReportConfig, error) {
 	q := `
 		UPDATE report_config
-		SET time = :time, updated_at = :updated_at WHERE id = :id
+		SET due = :due, updated_at = :updated_at WHERE id = :id
 		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 
 	dbr := dbReport{
@@ -322,10 +322,10 @@ func pageReportQuery(pm reports.PageMeta) string {
 		query = append(query, "rc.domain_id = :domain_id")
 	}
 	if pm.ScheduledBefore != nil {
-		query = append(query, "rc.time < :scheduled_before")
+		query = append(query, "rc.due < :scheduled_before")
 	}
 	if pm.ScheduledAfter != nil {
-		query = append(query, "rc.time > :scheduled_after")
+		query = append(query, "rc.due > :scheduled_after")
 	}
 	if pm.Name != "" {
 		query = append(query, "rc.name ILIKE '%' || :name || '%'")

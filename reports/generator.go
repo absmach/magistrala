@@ -10,6 +10,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
+	"net/url"
 	"sort"
 	"time"
 
@@ -66,7 +67,11 @@ func generatePDFReport(title string, reports []Report) ([]byte, error) {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to execute template: %w", err))
 	}
 
-	pdfBytes, err := htmlToPDF(htmlBuf.String())
+	htmlContent := htmlBuf.String()
+	fmt.Printf("Generated HTML length: %d\n", len(htmlContent))
+	fmt.Printf("HTML preview: %+v\n", htmlContent)
+
+	pdfBytes, err := htmlToPDF(htmlContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to convert HTML to PDF: %w", err))
 	}
@@ -75,19 +80,34 @@ func generatePDFReport(title string, reports []Report) ([]byte, error) {
 }
 
 func htmlToPDF(htmlContent string) ([]byte, error) {
-	// Create context
-	ctx, cancel := chromedp.NewContext(context.Background())
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.ExecPath("/usr/bin/chromium-browser"),
+		chromedp.NoSandbox,
+		chromedp.DisableGPU,
+		chromedp.NoFirstRun,
+		chromedp.Headless,
+		chromedp.UserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"),
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("disable-background-timer-throttling", true),
+		chromedp.Flag("disable-backgrounding-occluded-windows", true),
+		chromedp.Flag("disable-renderer-backgrounding", true),
+		chromedp.Flag("disable-features", "VizDisplayCompositor"),
+	)
+
+	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
 	defer cancel()
 
-	// Set timeout
+	ctx, cancel := chromedp.NewContext(allocCtx)
+	defer cancel()
+
 	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
 	var pdfBuffer []byte
 
-	// Navigate to data URL and generate PDF
 	err := chromedp.Run(ctx,
-		chromedp.Navigate("data:text/html,"+htmlContent),
+		chromedp.Navigate("about:blank"),
+		chromedp.Navigate("data:text/html," + url.PathEscape(htmlContent)),
 		chromedp.WaitReady("body"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			var err error

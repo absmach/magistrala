@@ -8,313 +8,199 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{.Title}}</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #2c3e50;
-            background-color: #ffffff;
-        }
-        
-        .container {
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #2980b9, #1a5276);
-            color: white;
-            padding: 30px 20px;
-            margin: -20px -20px 30px -20px;
-            text-align: center;
-            position: relative;
-        }
-        
-        .header::after {
-            content: '';
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            right: 0;
-            height: 10px;
-            background: linear-gradient(90deg, 
-                #bdc3c7 0%, 
-                #ecf0f1 25%, 
-                #bdc3c7 50%, 
-                #ecf0f1 75%, 
-                #bdc3c7 100%);
-        }
-        
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
-        }
-        
-        .header .meta {
-            font-size: 14px;
-            opacity: 0.9;
-            font-style: italic;
-        }
-        
-        .report-section {
-            margin-bottom: 40px;
-            page-break-inside: avoid;
-        }
-        
-        .report-section:not(:last-child) {
-            page-break-after: always;
-        }
-        
-        .metric-info {
-            background: #f8f9fa;
-            border-left: 5px solid #2980b9;
-            padding: 20px;
-            margin-bottom: 25px;
-            border-radius: 0 8px 8px 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .metric-info h2 {
-            color: #1a5276;
-            font-size: 20px;
-            margin-bottom: 15px;
-            font-weight: 600;
-        }
-        
-        .metric-details {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-        }
-        
-        .metric-item {
-            display: flex;
-            align-items: center;
-        }
-        
-        .metric-label {
-            font-weight: 600;
-            color: #2c3e50;
-            margin-right: 10px;
-            min-width: 100px;
-        }
-        
-        .metric-value {
-            color: #34495e;
-            font-style: italic;
-            word-break: break-all;
-        }
-        
-        .records-summary {
-            text-align: right;
-            margin-bottom: 20px;
-            font-size: 14px;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-        
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        
-        .data-table thead {
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            color: white;
-        }
-        
-        .data-table th {
-            padding: 15px 12px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 13px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        
-        .data-table tbody tr {
-            transition: background-color 0.2s ease;
-        }
-        
-        .data-table tbody tr:nth-child(even) {
-            background-color: #f8f9fa;
-        }
-        
-        .data-table tbody tr:hover {
-            background-color: #e3f2fd;
-        }
-        
-        .data-table td {
-            padding: 12px;
-            text-align: center;
-            border-bottom: 1px solid #ecf0f1;
-            font-size: 12px;
-        }
-        
-        .data-table .time-col {
-            font-family: 'Courier New', monospace;
-            color: #2c3e50;
-            font-weight: 500;
-        }
-        
-        .data-table .value-col {
-            font-weight: 600;
-            color: #27ae60;
-        }
-        
-        .data-table .unit-col {
-            color: #7f8c8d;
-            font-style: italic;
-        }
-        
-        .data-table .protocol-col {
-            background-color: #ecf0f1;
-            font-weight: 500;
-            color: #2980b9;
-        }
-        
-        .data-table .subtopic-col {
-            color: #8e44ad;
-            font-weight: 500;
-        }
-        
-        .footer {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: linear-gradient(90deg, #bdc3c7, #ecf0f1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 30px;
-            font-size: 12px;
-            color: #7f8c8d;
-            border-top: 2px solid #2980b9;
-        }
-        
-        .page-number {
-            font-weight: 600;
-            color: #2c3e50;
-        }
-        
-        @media print {
-            body {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            
-            .report-section {
-                page-break-inside: avoid;
-            }
-            
-            .report-section:not(:last-child) {
-                page-break-after: always;
-            }
-            
-            .data-table {
-                page-break-inside: auto;
-            }
-            
-            .data-table tr {
-                page-break-inside: avoid;
-                page-break-after: auto;
-            }
+        :root {
+            --primary: #2980b9;
+            --secondary: #1a5276;
+            --subtle: #bdc3c7;
+            --table-header-bg: #ecf0f1;
+            --alternate-row: #f5f7f9;
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --white: #ffffff;
         }
         
         @page {
-            margin: 0.8in;
-            size: A4;
+            size: A4 portrait;
+            margin: 15mm 10mm;
+            
+            @top-left {
+                content: "{{.Title}}";
+                font-size: 20px;
+                font-weight: bold;
+                color: var(--primary);
+            }
+            
+            @top-right {
+                content: "{{.GeneratedDate}}";
+                font-size: 10px;
+                font-style: italic;
+                color: var(--text-secondary);
+            }
+            
+            @bottom-left {
+                content: "Generated: {{.GeneratedTime}}";
+                font-size: 8px;
+                font-style: italic;
+                color: var(--text-secondary);
+            }
+            
+            @bottom-center {
+                content: "Page " counter(page);
+                font-size: 9px;
+                font-weight: bold;
+                color: var(--text-primary);
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
+        }
+
+        .header-bar {
+            height: 2px;
+            background-color: var(--primary);
+            margin-top: 20px;
+        }
+
+        .report-section {
+            page-break-inside: avoid;
+        }
+
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--secondary);
+            margin: 20px 0 10px;
+        }
+
+        .report-detail {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .detail-label {
+            font-weight: bold;
+            width: 20%;
+        }
+
+        .detail-value {
+            width: 80%;
+            font-style: italic;
+        }
+
+        .divider {
+            height: 0.5px;
+            background-color: var(--alternate-row);
+            margin: 5px 0;
+        }
+
+        .record-count {
+            text-align: right;
+            font-size: 10px;
+            font-style: italic;
+            color: var(--text-secondary);
+            margin: 10px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: var(--table-header-bg);
+            color: var(--secondary);
+            font-weight: bold;
+            font-size: 11px;
+            text-align: center;
+            padding: 5px;
+        }
+
+        tr:nth-child(even) {
+            background-color: var(--alternate-row);
+        }
+
+        td {
+            font-size: 10px;
+            text-align: center;
+            padding: 5px;
+            vertical-align: middle;
+            height: 36px;
+        }
+
+        .unit {
+            font-style: italic;
+            color: var(--text-secondary);
+        }
+
+        .subtopic {
+            color: var(--secondary);
+        }
+
+        .page-break {
+            page-break-before: always;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>{{.Title}}</h1>
-            <div class="meta">
-                Generated on {{.GeneratedDate}} at {{.GeneratedTime}}
-            </div>
-        </div>
+    <div class="header-bar"></div>
+
+    {{range $index, $report := .Reports}}
+        {{if gt $index 0}}<div class="page-break"></div>{{end}}
         
-        {{range $index, $report := .Reports}}
         <div class="report-section">
-            <div class="metric-info">
-                <h2>Metrics Report</h2>
-                <div class="metric-details">
-                    <div class="metric-item">
-                        <span class="metric-label">Name:</span>
-                        <span class="metric-value">{{$report.Metric.Name}}</span>
-                    </div>
-                    {{if $report.Metric.ClientID}}
-                    <div class="metric-item">
-                        <span class="metric-label">Device ID:</span>
-                        <span class="metric-value">{{$report.Metric.ClientID}}</span>
-                    </div>
-                    {{end}}
-                    <div class="metric-item">
-                        <span class="metric-label">Channel ID:</span>
-                        <span class="metric-value">{{$report.Metric.ChannelID}}</span>
-                    </div>
-                </div>
+            <div class="section-title">Metrics</div>
+            
+            <div class="divider"></div>
+            
+            <div class="report-detail">
+                <div class="detail-label">Name:</div>
+                <div class="detail-value">{{$report.Metric.Name}}</div>
             </div>
             
-            <div class="records-summary">
-                Total Records: {{len $report.Messages}}
+            {{if $report.Metric.ClientID}}
+            <div class="report-detail">
+                <div class="detail-label">Device ID:</div>
+                <div class="detail-value">{{$report.Metric.ClientID}}</div>
+            </div>
+            {{end}}
+            
+            <div class="report-detail">
+                <div class="detail-label">Channel ID:</div>
+                <div class="detail-value">{{$report.Metric.ChannelID}}</div>
             </div>
             
-            <table class="data-table">
+            <div class="divider"></div>
+            
+            <div class="record-count">Total Records: {{len $report.Messages}}</div>
+            
+            <table>
                 <thead>
                     <tr>
-                        <th>Time</th>
-                        <th>Value</th>
-                        <th>Unit</th>
-                        <th>Protocol</th>
-                        <th>Subtopic</th>
+                        <th width="25%">Time</th>
+                        <th width="17%">Value</th>
+                        <th width="17%">Unit</th>
+                        <th width="17%">Protocol</th>
+                        <th width="24%">Subtopic</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {{range $report.Messages}}
+                    {{range $msg := $report.Messages}}
                     <tr>
-                        <td class="time-col">{{formatTime .Time}}</td>
-                        <td class="value-col">{{formatValue .}}</td>
-                        <td class="unit-col">{{.Unit}}</td>
-                        <td class="protocol-col">{{.Protocol}}</td>
-                        <td class="subtopic-col">{{.Subtopic}}</td>
+                        <td>{{formatTime $msg.Time}}</td>
+                        <td>{{formatValue $msg}}</td>
+                        <td class="unit">{{$msg.Unit}}</td>
+                        <td>{{$msg.Protocol}}</td>
+                        <td class="subtopic">{{$msg.Subtopic}}</td>
                     </tr>
                     {{end}}
                 </tbody>
             </table>
         </div>
-        {{end}}
-    </div>
-    
-    <div class="footer">
-        <span>Generated: {{.GeneratedTime}}</span>
-        <span class="page-number">Page <span class="pageNumber"></span></span>
-    </div>
-    
-    <script>
-        // Add page numbers (for print)
-        window.addEventListener('beforeprint', function() {
-            const pageNumbers = document.querySelectorAll('.pageNumber');
-            pageNumbers.forEach((el, index) => {
-                el.textContent = index + 1;
-            });
-        });
-    </script>
+    {{end}}
 </body>
 </html>

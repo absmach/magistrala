@@ -1,8 +1,31 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-FROM scratch
+FROM alpine:latest AS reports-final
 ARG SVC
+
+RUN apk add --no-cache \
+    ca-certificates \
+    chromium \
+    nss \
+    freetype \
+    harfbuzz \
+    ttf-freefont \
+    font-noto-emoji \
+    && mkdir -p /tmp
+
 COPY $SVC /exe
+
+ENV CHROME_BIN=/usr/bin/chromium-browser
+ENV CHROME_PATH=/usr/bin/chromium-browser
+
+ENTRYPOINT ["/exe"]
+
+FROM scratch AS scratch-final
+ARG SVC
+
 COPY --from=alpine:latest /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+
+COPY $SVC /exe
+
 ENTRYPOINT ["/exe"]

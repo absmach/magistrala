@@ -41,13 +41,13 @@ func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{})
 	case smqjson.Messages:
 		err := pr.saveJSON(ctx, m)
 		if err != nil {
-			return fmt.Errorf("failed saving JSON message: %w", err)
+			return fmt.Errorf("failed saving JSON message: %w, message: %+v", err, m)
 		}
 		return nil
 	default:
 		err := pr.saveSenml(ctx, m)
 		if err != nil {
-			return fmt.Errorf("failed saving senML message: %w", err)
+			return fmt.Errorf("failed saving senML message: %w, message: %+v", err, m)
 		}
 		return nil
 	}

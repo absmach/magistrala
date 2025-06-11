@@ -245,6 +245,8 @@ func main() {
 		Topic:          smqbrokers.SubjectAllMessages,
 		DeliveryPolicy: messaging.DeliverAllPolicy,
 		Handler:        svc,
+		HandlerAck:     messaging.Nack,
+		HandlerErr:     messaging.Nack,
 	}
 	if err := msgSub.Subscribe(ctx, subCfg); err != nil {
 		logger.Error(fmt.Sprintf("failed to subscribe to internal message broker: %s", err))

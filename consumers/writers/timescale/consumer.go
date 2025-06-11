@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	smqjson "github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/jackc/pgerrcode"
@@ -38,9 +39,17 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
-		return tr.saveJSON(ctx, m)
+		err := tr.saveJSON(ctx, m)
+		if err != nil {
+			return errors.Wrap(repoerr.ErrCreateEntity, fmt.Errorf("failed saving JSON message: %w", err))
+		}
+		return nil
 	default:
-		return tr.saveSenml(ctx, m)
+		err := tr.saveSenml(ctx, m)
+		if err != nil {
+			return errors.Wrap(repoerr.ErrCreateEntity, fmt.Errorf("failed saving senML message: %w", err))
+		}
+		return nil
 	}
 }
 

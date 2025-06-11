@@ -10,6 +10,9 @@ import (
 
 	"github.com/absmach/supermq/consumers"
 	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/postgres"
 	smqjson "github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/jackc/pgerrcode"
@@ -38,17 +41,13 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
-		err := tr.saveJSON(ctx, m)
-		if err != nil {
-			return fmt.Errorf("failed saving JSON message: %w, message: %+v", err, m)
-		}
-		return nil
+		return tr.saveJSON(ctx, m)
 	default:
 		err := tr.saveSenml(ctx, m)
-		if err != nil {
-			return fmt.Errorf("failed saving senML message: %w, message: %+v", err, m)
+		if err != nil && errors.Contains(err, repoerr.ErrConflict) {
+			return messaging.NewError(repoerr.ErrConflict, messaging.Term)
 		}
-		return nil
+		return err
 	}
 }
 
@@ -89,6 +88,7 @@ func (tr timescaleRepo) saveSenml(ctx context.Context, messages interface{}) (er
 				if pgErr.Code == pgerrcode.InvalidTextRepresentation {
 					return errors.Wrap(errSaveMessage, errInvalidMessage)
 				}
+				return postgres.HandleError(errSaveMessage, err)
 			}
 
 			return errors.Wrap(errSaveMessage, err)

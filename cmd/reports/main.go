@@ -47,7 +47,7 @@ const (
 	envPrefixHTTP    = "MG_REPORTS_HTTP_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
 	defDB            = "repo"
-	defSvcHTTPPort   = "9009"
+	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )

@@ -8,7 +8,7 @@ info:
     HTTP API for managing reports service.
   version: 0.15.1
 servers:
-  - url: http://localhost:9009
+  - url: http://localhost:9017
 tags:
   - name: reports
     description: Operations related to report configurations and generation

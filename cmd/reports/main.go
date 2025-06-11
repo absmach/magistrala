@@ -206,6 +206,12 @@ func main() {
 		return
 	}
 
+	go func() {
+		for info := range runInfo {
+			logger.LogAttrs(context.Background(), info.Level, info.Message, info.Details...)
+		}
+	}()
+
 	mux := chi.NewRouter()
 
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, mux, logger, cfg.InstanceID), logger)

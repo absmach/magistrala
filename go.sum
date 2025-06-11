@@ -29,13 +29,13 @@ github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a h1:1+772OQFHAS23JL
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a/go.mod h1:X2amjQg/2cnM+UKblMdpU2M4cZO74xtEHNIxtuUXCeA=
 github.com/absmach/senml v1.0.7 h1:XLvpw0qxbP2QhOz7KLM2ZRar+vSCpSG/0o0kEvWx3No=
 github.com/absmach/senml v1.0.7/go.mod h1:3bRIiNc8hq7l3auMs8gQrpsM5hHy7iDuiLILrf/+MfA=
-github.com/absmach/supermq v0.16.1-0.20250610075427-d8b7af424e6b h1:jfGGzytaWLK0CwVU1Vr3iHwdR14UFRHkkXjFVEjrp9I=
-github.com/absmach/supermq v0.16.1-0.20250610075427-d8b7af424e6b/go.mod h1:rCfG32AehCjzRxQnzD8xWF97r06S5gKITz8/yZdL650=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190717042225-c3de453c63f4/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
 github.com/alecthomas/units v0.0.0-20190924025748-f65c72e2690d/go.mod h1:rBZYJk541a8SKzHPHnH3zbiI+7dagKZ0cgpgrD7Fyho=
+github.com/arvindh123/supermq v0.0.0-20250611152246-a2b618f0f4a7 h1:3iOHd7Sy4rqyEm6lX62ms6rWW6RBHA05R5XEOzcfBjY=
+github.com/arvindh123/supermq v0.0.0-20250611152246-a2b618f0f4a7/go.mod h1:rCfG32AehCjzRxQnzD8xWF97r06S5gKITz8/yZdL650=
 github.com/authzed/authzed-go v1.4.0 h1:0LnVg/r38rJgbljBx0m9vWHvaHYEElMaomAXyEeaiI8=
 github.com/authzed/authzed-go v1.4.0/go.mod h1:iW6QQWmTbgFfn4b6zPPzbgOUOSB93/or4VdQ+zLTjeY=
 github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8 h1:y17oq4U8n+k1OcIGGDsjYdIdp4QywGcE7ZphIvtfEbo=

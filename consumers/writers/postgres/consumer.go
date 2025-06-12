@@ -39,9 +39,17 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
-		return pr.saveJSON(ctx, m)
+		err := pr.saveJSON(ctx, m)
+		if err != nil {
+			return fmt.Errorf("failed saving JSON message: %w, message: %+v", err, m)
+		}
+		return nil
 	default:
-		return pr.saveSenml(ctx, m)
+		err := pr.saveSenml(ctx, m)
+		if err != nil {
+			return fmt.Errorf("failed saving senML message: %w, message: %+v", err, m)
+		}
+		return nil
 	}
 }
 

@@ -151,6 +151,6 @@ require (
 )
 
 replace (
-	github.com/absmach/supermq => github.com/arvindh123/supermq v0.0.0-20250611152246-a2b618f0f4a7
+	github.com/absmach/supermq => github.com/arvindh123/supermq v0.0.0-20250612151732-b348a59213cf
 	github.com/vadv/gopher-lua-libs => github.com/dborovcanin/gopher-lua-libs v0.1.0
 )

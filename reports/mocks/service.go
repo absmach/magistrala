@@ -98,6 +98,53 @@ func (_c *Service_AddReportConfig_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// DeleteReportTemplate provides a mock function for the type Service
+func (_mock *Service) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteReportTemplate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_DeleteReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteReportTemplate'
+type Service_DeleteReportTemplate_Call struct {
+	*mock.Call
+}
+
+// DeleteReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - id
+func (_e *Service_Expecter) DeleteReportTemplate(ctx interface{}, session interface{}, id interface{}) *Service_DeleteReportTemplate_Call {
+	return &Service_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, session, id)}
+}
+
+func (_c *Service_DeleteReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DeleteReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Service_DeleteReportTemplate_Call) Return(err error) *Service_DeleteReportTemplate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_DeleteReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) error) *Service_DeleteReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DisableReportConfig provides a mock function for the type Service
 func (_mock *Service) DisableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
 	ret := _mock.Called(ctx, session, id)
@@ -527,6 +574,53 @@ func (_c *Service_UpdateReportSchedule_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
+// UpdateReportTemplate provides a mock function for the type Service
+func (_mock *Service) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
+	ret := _mock.Called(ctx, session, cfg)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportTemplate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, reports.ReportConfig) error); ok {
+		r0 = returnFunc(ctx, session, cfg)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_UpdateReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportTemplate'
+type Service_UpdateReportTemplate_Call struct {
+	*mock.Call
+}
+
+// UpdateReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - cfg
+func (_e *Service_Expecter) UpdateReportTemplate(ctx interface{}, session interface{}, cfg interface{}) *Service_UpdateReportTemplate_Call {
+	return &Service_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, session, cfg)}
+}
+
+func (_c *Service_UpdateReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig)) *Service_UpdateReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig))
+	})
+	return _c
+}
+
+func (_c *Service_UpdateReportTemplate_Call) Return(err error) *Service_UpdateReportTemplate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error) *Service_UpdateReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewReportConfig provides a mock function for the type Service
 func (_mock *Service) ViewReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
 	ret := _mock.Called(ctx, session, id)
@@ -579,6 +673,62 @@ func (_c *Service_ViewReportConfig_Call) Return(reportConfig reports.ReportConfi
 }
 
 func (_c *Service_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error)) *Service_ViewReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewReportTemplate provides a mock function for the type Service
+func (_mock *Service) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewReportTemplate")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (string, error)); ok {
+		return returnFunc(ctx, session, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) string); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ViewReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewReportTemplate'
+type Service_ViewReportTemplate_Call struct {
+	*mock.Call
+}
+
+// ViewReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - id
+func (_e *Service_Expecter) ViewReportTemplate(ctx interface{}, session interface{}, id interface{}) *Service_ViewReportTemplate_Call {
+	return &Service_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, session, id)}
+}
+
+func (_c *Service_ViewReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Service_ViewReportTemplate_Call) Return(s string, err error) *Service_ViewReportTemplate_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *Service_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (string, error)) *Service_ViewReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -171,7 +171,7 @@ func (re *report) GenerateReport(ctx context.Context, session authn.Session, con
 }
 
 func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
-	genReportFile, err := generateFileFunc(action, cfg.Config.FileFormat)
+	genReportFile, err := generateFileFunc(action, cfg.Config.FileFormat, cfg.ReportTemplate)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -282,7 +282,15 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 
 	switch {
 	case genReportFile != nil:
-		data, err := genReportFile(cfg.Config.Title, reports)
+		var data []byte
+		var err error
+
+		if cfg.Config.FileFormat == PDF && cfg.ReportTemplate != "" {
+			data, err = generatePDFReport(cfg.Config.Title, reports, cfg.ReportTemplate)
+		} else {
+			data, err = genReportFile(cfg.Config.Title, reports)
+		}
+
 		if err != nil {
 			return ReportPage{}, err
 		}
@@ -323,12 +331,17 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 	}
 }
 
-func generateFileFunc(action ReportAction, format Format) (func(string, []Report) ([]byte, error), error) {
+func generateFileFunc(action ReportAction, format Format, customTemplate string) (func(string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {
 		case PDF:
-			return generatePDFReport, nil
+			return func(title string, reports []Report) ([]byte, error) {
+				if customTemplate != "" {
+					return generatePDFReport(title, reports, customTemplate)
+				}
+				return generatePDFReport(title, reports)
+			}, nil
 		case CSV:
 			return generateCSVReport, nil
 		default:
@@ -415,4 +428,31 @@ func groupReportsByPublisher(metric Metric, sMsgs []senml.Message) []Report {
 	}
 
 	return groupedReports
+}
+
+func (re *report) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error {
+	err := re.repo.UpdateReportTemplate(ctx, session.DomainID, cfg.ID, cfg.ReportTemplate)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return nil
+}
+
+func (re *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+	template, err := re.repo.ViewReportTemplate(ctx, session.DomainID, id)
+	if err != nil {
+		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	return template, nil
+}
+
+func (re *report) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
+	err := re.repo.DeleteReportTemplate(ctx, session.DomainID, id)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
 }

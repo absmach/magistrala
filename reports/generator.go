@@ -32,7 +32,7 @@ type ReportData struct {
 	Reports       []Report
 }
 
-func generatePDFReport(title string, reports []Report) ([]byte, error) {
+func generatePDFReport(title string, reports []Report, htmltemplate ...string) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
@@ -55,6 +55,8 @@ func generatePDFReport(title string, reports []Report) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,
+		"add":         func(a, b int) int { return a + b },
+		"sub":         func(a, b int) int { return a - b },
 	})
 
 	tmpl, err = tmpl.Parse(string(templateContent))
@@ -68,9 +70,6 @@ func generatePDFReport(title string, reports []Report) ([]byte, error) {
 	}
 
 	htmlContent := htmlBuf.String()
-	fmt.Printf("Generated HTML length: %d\n", len(htmlContent))
-	fmt.Printf("HTML preview: %+v\n", htmlContent)
-
 	pdfBytes, err := htmlToPDF(htmlContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to convert HTML to PDF: %w", err))
@@ -107,7 +106,7 @@ func htmlToPDF(htmlContent string) ([]byte, error) {
 
 	err := chromedp.Run(ctx,
 		chromedp.Navigate("about:blank"),
-		chromedp.Navigate("data:text/html," + url.PathEscape(htmlContent)),
+		chromedp.Navigate("data:text/html,"+url.PathEscape(htmlContent)),
 		chromedp.WaitReady("body"),
 		chromedp.ActionFunc(func(ctx context.Context) error {
 			var err error

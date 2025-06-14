@@ -31,6 +31,7 @@ type dbReport struct {
 	Config          []byte             `db:"config,omitempty"`
 	Metrics         []byte             `db:"metrics"`
 	Email           []byte             `db:"email"`
+	ReportTemplate  string             `db:"report_template"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -86,6 +87,7 @@ func reportToDb(r reports.ReportConfig) (dbReport, error) {
 		Config:          config,
 		Metrics:         metrics,
 		Email:           email,
+		ReportTemplate:  r.ReportTemplate,
 	}, nil
 }
 
@@ -124,12 +126,13 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Email:     &email,
-		Status:    dto.Status,
-		CreatedAt: dto.CreatedAt,
-		CreatedBy: dto.CreatedBy,
-		UpdatedAt: dto.UpdatedAt,
-		UpdatedBy: dto.UpdatedBy,
+		Email:          &email,
+		Status:         dto.Status,
+		CreatedAt:      dto.CreatedAt,
+		CreatedBy:      dto.CreatedBy,
+		UpdatedAt:      dto.UpdatedAt,
+		UpdatedBy:      dto.UpdatedBy,
+		ReportTemplate: dto.ReportTemplate,
 	}
 
 	return rpt, nil

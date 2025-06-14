@@ -37,6 +37,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS report_config;`,
 				},
 			},
+			{
+				Id: "reports_02",
+				Up: []string{
+					`ALTER TABLE report_config ADD COLUMN report_template TEXT;`,
+				},
+				Down: []string{
+					`ALTER TABLE report_config DROP COLUMN report_template;`,
+				},
+			},
 		},
 	}
 }

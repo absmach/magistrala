@@ -236,3 +236,66 @@ func disableReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 		return updateReportConfigRes{ReportConfig: cfg}, nil
 	}
 }
+
+func updateReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(updateReportTemplateReq)
+		if err := req.validate(); err != nil {
+			return updateReportTemplateRes{false}, err
+		}
+
+		err := svc.UpdateReportTemplate(ctx, session, req.ReportConfig)
+		if err != nil {
+			return updateReportTemplateRes{false}, err
+		}
+
+		return updateReportTemplateRes{true}, nil
+	}
+}
+
+func viewReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(getReportTemplateReq)
+		if err := req.validate(); err != nil {
+			return viewReportTemplateRes{}, err
+		}
+
+		template, err := svc.ViewReportTemplate(ctx, session,req.ID)
+		if err != nil {
+			return viewReportTemplateRes{}, err
+		}
+
+		return viewReportTemplateRes{Template: template}, nil
+	}
+}
+
+func deleteReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(deleteReportTemplateReq)
+		if err := req.validate(); err != nil {
+			return deleteReportTemplateRes{false}, err
+		}
+
+		err := svc.DeleteReportTemplate(ctx, session, req.ID)
+		if err != nil {
+			return deleteReportTemplateRes{false}, err
+		}
+
+		return deleteReportTemplateRes{true}, nil
+	}
+}

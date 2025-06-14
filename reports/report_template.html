@@ -9,92 +9,154 @@
     <title>{{.Title}}</title>
     <style>
         :root {
-            --primary: #2980b9;
-            --secondary: #1a5276;
-            --subtle: #bdc3c7;
-            --table-header-bg: #ecf0f1;
-            --alternate-row: #f5f7f9;
-            --text-primary: #2c3e50;
-            --text-secondary: #7f8c8d;
+            --primary-color: rgb(41, 128, 185);
+            --secondary-color: rgb(26, 82, 118);
+            --subtle-color: rgb(189, 195, 199);
+            --table-header-bg: rgb(236, 240, 241);
+            --alternate-row: rgb(245, 247, 249);
+            --text-primary: rgb(44, 62, 80);
+            --text-secondary: rgb(127, 140, 141);
             --white: #ffffff;
+            
+            /* A4 Page constraints */
+            --header-height: 35mm;
+            --footer-height: 20mm;
+            --page-padding: 15mm;
         }
-        
-        @page {
-            size: A4 portrait;
-            margin: 15mm 10mm;
-            
-            @top-left {
-                content: "{{.Title}}";
-                font-size: 20px;
-                font-weight: bold;
-                color: var(--primary);
-            }
-            
-            @top-right {
-                content: "{{.GeneratedDate}}";
-                font-size: 10px;
-                font-style: italic;
-                color: var(--text-secondary);
-            }
-            
-            @bottom-left {
-                content: "Generated: {{.GeneratedTime}}";
-                font-size: 8px;
-                font-style: italic;
-                color: var(--text-secondary);
-            }
-            
-            @bottom-center {
-                content: "Page " counter(page);
-                font-size: 9px;
-                font-weight: bold;
-                color: var(--text-primary);
-            }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
             font-family: Arial, sans-serif;
+            background-color: var(--white);
             color: var(--text-primary);
-            margin: 0;
-            padding: 0;
+            line-height: 1.4;
         }
 
-        .header-bar {
+        .page {
+            max-width: 210mm;
+            height: 297mm;
+            padding: var(--page-padding) 10mm;
+            margin: 0 auto;
+            background: var(--white);
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            height: var(--header-height);
+            min-height: var(--header-height);
+            max-height: var(--header-height);
+            position: relative;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-top-bar {
+            height: 8px;
+            background-color: var(--primary-color);
+            margin: calc(-1 * var(--page-padding)) -10mm 0;
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .header-date {
+            font-size: 10px;
+            font-style: italic;
+            color: var(--text-secondary);
+            text-align: right;
+            width: 100px;
+        }
+
+        .header-separator {
             height: 2px;
-            background-color: var(--primary);
-            margin-top: 20px;
+            background-color: var(--subtle-color);
+            margin: 5px 0 10px 0;
+            position: relative;
+            flex-shrink: 0;
         }
 
-        .report-section {
-            page-break-inside: avoid;
+        .header-separator::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--subtle-color);
         }
 
-        .section-title {
+        .content-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; /* Important for flex child overflow */
+            overflow: hidden;
+        }
+
+        .metrics-section {
+            margin-bottom: 15px;
+            flex-shrink: 0;
+        }
+
+        .metrics-title {
             font-size: 16px;
             font-weight: bold;
-            color: var(--secondary);
-            margin: 20px 0 10px;
+            color: var(--secondary-color);
+            margin-bottom: 10px;
         }
 
-        .report-detail {
+        .metrics-info {
+            background-color: var(--alternate-row);
+            padding: 12px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+
+        .metric-row {
             display: flex;
             margin-bottom: 8px;
         }
 
-        .detail-label {
+        .metric-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .metric-label {
             font-weight: bold;
-            width: 20%;
+            color: var(--text-primary);
+            width: 120px;
+            font-size: 11px;
         }
 
-        .detail-value {
-            width: 80%;
+        .metric-value {
             font-style: italic;
-        }
-
-        .divider {
-            height: 0.5px;
-            background-color: var(--alternate-row);
-            margin: 5px 0;
+            color: var(--text-primary);
+            font-size: 11px;
+            flex-grow: 1;
         }
 
         .record-count {
@@ -102,105 +164,269 @@
             font-size: 10px;
             font-style: italic;
             color: var(--text-secondary);
-            margin: 10px 0;
+            margin-bottom: 10px;
+            flex-shrink: 0;
         }
 
-        table {
+        .table-container {
+            flex-grow: 1;
+            overflow: auto;
+            min-height: 0;
+        }
+
+        .data-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
         }
 
-        th {
+        .table-header-bar {
+            height: 4px;
+            background-color: var(--primary-color);
+        }
+
+        .data-table th {
             background-color: var(--table-header-bg);
-            color: var(--secondary);
+            color: var(--secondary-color);
             font-weight: bold;
             font-size: 11px;
+            padding: 8px;
             text-align: center;
-            padding: 5px;
+            border-bottom: 2px solid var(--subtle-color);
+            position: sticky;
+            top: 0;
         }
 
-        tr:nth-child(even) {
+        .data-table td {
+            padding: 6px 8px;
+            font-size: 10px;
+            text-align: center;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:nth-child(even) {
             background-color: var(--alternate-row);
         }
 
-        td {
-            font-size: 10px;
-            text-align: center;
-            padding: 5px;
-            vertical-align: middle;
-            height: 36px;
+        .data-table tr:hover {
+            background-color: rgba(41, 128, 185, 0.05);
         }
 
-        .unit {
+        .col-time {
+            width: 25%;
+            color: var(--text-primary);
+        }
+
+        .col-value {
+            width: 17%;
+            color: var(--text-primary);
+            font-weight: normal;
+        }
+
+        .col-unit {
+            width: 17%;
+            color: var(--text-secondary);
+            font-style: italic;
+        }
+
+        .col-protocol {
+            width: 17%;
+            color: var(--text-primary);
+        }
+
+        .col-subtopic {
+            width: 24%;
+            color: var(--secondary-color);
+        }
+
+        .footer {
+            height: var(--footer-height);
+            min-height: var(--footer-height);
+            max-height: var(--footer-height);
+            border-top: 2px solid var(--subtle-color);
+            padding-top: 8px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .footer-separator {
+            height: 1px;
+            background-color: var(--subtle-color);
+            margin-bottom: 6px;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .footer-separator::after {
+            content: '';
+            position: absolute;
+            top: 1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background-color: var(--subtle-color);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0;
+        }
+
+        .footer-generated {
+            font-size: 8px;
             font-style: italic;
             color: var(--text-secondary);
+            margin: 0;
+            padding: 0;
         }
 
-        .subtopic {
-            color: var(--secondary);
+        .footer-page {
+            font-size: 9px;
+            font-weight: bold;
+            color: var(--text-primary);
+            margin: 0;
+            padding: 0;
         }
 
-        .page-break {
-            page-break-before: always;
+        @media print {
+            .page {
+                box-shadow: none;
+                margin: 0;
+                max-width: none;
+                height: 297mm;
+                min-height: auto;
+                page-break-before: always;
+                break-before: page;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header-bar"></div>
-
+    {{$totalPages := len .Reports}}
+    {{$globalPage := 0}}
     {{range $index, $report := .Reports}}
-        {{if gt $index 0}}<div class="page-break"></div>{{end}}
-        
-        <div class="report-section">
-            <div class="section-title">Metrics</div>
-            
-            <div class="divider"></div>
-            
-            <div class="report-detail">
-                <div class="detail-label">Name:</div>
-                <div class="detail-value">{{$report.Metric.Name}}</div>
+    {{$globalPage = add $globalPage 1}}
+    <div class="page">
+        <div class="header">
+            <div class="header-top-bar"></div>
+            <div class="header-content">
+                <div style="width: 100px;"></div>
+                <div class="header-title">{{$.Title}}</div>
+                <div class="header-date">{{$.GeneratedDate}}</div>
             </div>
-            
-            {{if $report.Metric.ClientID}}
-            <div class="report-detail">
-                <div class="detail-label">Device ID:</div>
-                <div class="detail-value">{{$report.Metric.ClientID}}</div>
-            </div>
-            {{end}}
-            
-            <div class="report-detail">
-                <div class="detail-label">Channel ID:</div>
-                <div class="detail-value">{{$report.Metric.ChannelID}}</div>
-            </div>
-            
-            <div class="divider"></div>
-            
-            <div class="record-count">Total Records: {{len $report.Messages}}</div>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th width="25%">Time</th>
-                        <th width="17%">Value</th>
-                        <th width="17%">Unit</th>
-                        <th width="17%">Protocol</th>
-                        <th width="24%">Subtopic</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {{range $msg := $report.Messages}}
-                    <tr>
-                        <td>{{formatTime $msg.Time}}</td>
-                        <td>{{formatValue $msg}}</td>
-                        <td class="unit">{{$msg.Unit}}</td>
-                        <td>{{$msg.Protocol}}</td>
-                        <td class="subtopic">{{$msg.Subtopic}}</td>
-                    </tr>
-                    {{end}}
-                </tbody>
-            </table>
+            <div class="header-separator"></div>
         </div>
+
+        <div class="content-area">
+            <div class="metrics-section">
+                <div class="metrics-title">Metrics</div>
+                <div class="metrics-info">
+                    <div class="metric-row">
+                        <div class="metric-label">Name:</div>
+                        <div class="metric-value">{{.Metric.Name}}</div>
+                    </div>
+                    {{if .Metric.ClientID}}
+                    <div class="metric-row">
+                        <div class="metric-label">Device ID:</div>
+                        <div class="metric-value">{{.Metric.ClientID}}</div>
+                    </div>
+                    {{end}}
+                    <div class="metric-row">
+                        <div class="metric-label">Channel ID:</div>
+                        <div class="metric-value">{{.Metric.ChannelID}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="record-count">
+                Total Records: {{len .Messages}}
+            </div>
+
+            <div class="table-container">
+                <div class="table-header-bar"></div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-time">Time</th>
+                            <th class="col-value">Value</th>
+                            <th class="col-unit">Unit</th>
+                            <th class="col-protocol">Protocol</th>
+                            <th class="col-subtopic">Subtopic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{range .Messages}}
+                        <tr>
+                            <td class="col-time">{{formatTime .Time}}</td>
+                            <td class="col-value">{{formatValue .}}</td>
+                            <td class="col-unit">{{.Unit}}</td>
+                            <td class="col-protocol">{{.Protocol}}</td>
+                            <td class="col-subtopic">{{.Subtopic}}</td>
+                        </tr>
+                        {{end}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-separator"></div>
+            <div class="footer-content">
+                <div class="footer-generated">Generated: {{$.GeneratedTime}}</div>
+                <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
+            </div>
+        </div>
+    </div>
     {{end}}
+
+    <script>
+        function formatTime(timestamp) {
+            const date = timestamp > 9999999999 
+                ? new Date(timestamp / 1000000)  // nanoseconds
+                : new Date(timestamp * 1000);    // seconds
+            
+            return date.toISOString().slice(0, 19).replace('T', ' ');
+        }
+
+        function formatValue(message) {
+            if (message.Value !== null && message.Value !== undefined) {
+                return parseFloat(message.Value).toFixed(2);
+            } else if (message.StringValue) {
+                return message.StringValue;
+            } else if (message.BoolValue !== null && message.BoolValue !== undefined) {
+                return message.BoolValue.toString();
+            } else if (message.DataValue) {
+                return message.DataValue;
+            }
+            return "N/A";
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const now = new Date();
+            const currentDate = now.toLocaleDateString('en-GB', { 
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+            });
+            const currentTime = now.toTimeString().slice(0, 8);
+            
+            document.querySelectorAll('.header-date').forEach(el => {
+                if (el.textContent === '{{.GeneratedDate}}') {
+                    el.textContent = currentDate;
+                }
+            });
+            
+            document.querySelectorAll('.footer-generated').forEach(el => {
+                if (el.textContent.includes('{{.GeneratedTime}}')) {
+                    el.textContent = `Generated: ${currentTime}`;
+                }
+            });
+        });
+    </script>
 </body>
 </html>

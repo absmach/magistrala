@@ -145,19 +145,20 @@ func (rm ReqMetric) Validate() error {
 }
 
 type ReportConfig struct {
-	ID          string            `json:"id"`
-	Name        string            `json:"name"`
-	Description string            `json:"description"`
-	DomainID    string            `json:"domain_id"`
-	Schedule    schedule.Schedule `json:"schedule,omitempty"`
-	Config      *MetricConfig     `json:"config,omitempty"`
-	Email       *EmailSetting     `json:"email,omitempty"`
-	Metrics     []ReqMetric       `json:"metrics,omitempty"`
-	Status      Status            `json:"status"`
-	CreatedAt   time.Time         `json:"created_at"`
-	CreatedBy   string            `json:"created_by,omitempty"`
-	UpdatedAt   time.Time         `json:"updated_at"`
-	UpdatedBy   string            `json:"updated_by,omitempty"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description"`
+	DomainID       string            `json:"domain_id"`
+	Schedule       schedule.Schedule `json:"schedule,omitempty"`
+	Config         *MetricConfig     `json:"config,omitempty"`
+	Email          *EmailSetting     `json:"email,omitempty"`
+	Metrics        []ReqMetric       `json:"metrics,omitempty"`
+	ReportTemplate string            `json:"report_template,omitempty"`
+	Status         Status            `json:"status"`
+	CreatedAt      time.Time         `json:"created_at"`
+	CreatedBy      string            `json:"created_by,omitempty"`
+	UpdatedAt      time.Time         `json:"updated_at"`
+	UpdatedBy      string            `json:"updated_by,omitempty"`
 }
 
 type ReportConfigPage struct {
@@ -394,6 +395,10 @@ type Repository interface {
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
+
+	UpdateReportTemplate(ctx context.Context, domainID, reportID, template string) error
+	ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error)
+	DeleteReportTemplate(ctx context.Context, domainID, reportID string) error
 }
 
 type Service interface {
@@ -405,6 +410,10 @@ type Service interface {
 	ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error)
 	EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
+
+	UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error
+	ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error)
+	DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error
 
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)
 	StartScheduler(ctx context.Context) error

@@ -6,10 +6,10 @@ package api
 import (
 	"fmt"
 
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 )
 
@@ -27,6 +27,7 @@ var (
 	errMissingReportConfig      = errors.New("missing report config")
 	errMissingReportEmailConfig = errors.New("missing report email config")
 	errInvalidRecurringPeriod   = errors.New("invalid recurring period")
+	errMissingReportTemplate    = errors.New("missing report template")
 	errTitleSize                = errors.New("invalid title size")
 )
 
@@ -166,6 +167,42 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 func validateScheduler(sch schedule.Schedule) error {
 	if sch.Recurring != schedule.None && sch.RecurringPeriod < 1 {
 		return errInvalidRecurringPeriod
+	}
+	return nil
+}
+
+type updateReportTemplateReq struct {
+	reports.ReportConfig `json:",inline"`
+}
+
+func (req updateReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.ReportTemplate == "" {
+		return errors.Wrap(apiutil.ErrValidation, errMissingReportTemplate)
+	}
+	return nil
+}
+
+type getReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req getReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type deleteReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req deleteReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
 	}
 	return nil
 }

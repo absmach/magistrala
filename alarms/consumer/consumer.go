@@ -15,6 +15,8 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
+var errFailedToDecode = errors.New("failed to decode alarm")
+
 type handler struct {
 	svc    alarms.Service
 	logger *slog.Logger
@@ -34,7 +36,7 @@ func (h handler) Handle(msg *messaging.Message) (err error) {
 
 	var alarm alarms.Alarm
 	if err := gob.NewDecoder(bytes.NewReader(msg.GetPayload())).Decode(&alarm); err != nil {
-		return err
+		return messaging.NewError(errors.Wrap(errFailedToDecode, err), messaging.Term)
 	}
 	alarm.DomainID = msg.GetDomain()
 	alarm.ChannelID = msg.GetChannel()

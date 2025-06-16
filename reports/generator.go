@@ -149,7 +149,6 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 			return err
 		}),
 	)
-
 	if err != nil {
 		return nil, fmt.Errorf("chromedp execution failed: %w", err)
 	}

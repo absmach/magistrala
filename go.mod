@@ -5,7 +5,7 @@ go 1.24.4
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/supermq v0.16.1-0.20250610075427-d8b7af424e6b
+	github.com/absmach/supermq v0.16.1-0.20250616095552-e98b6576f103
 	github.com/authzed/authzed-go v1.4.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
@@ -150,7 +150,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace (
-	github.com/absmach/supermq => github.com/arvindh123/supermq v0.0.0-20250612151732-b348a59213cf
-	github.com/vadv/gopher-lua-libs => github.com/dborovcanin/gopher-lua-libs v0.1.0
-)
+replace github.com/vadv/gopher-lua-libs => github.com/dborovcanin/gopher-lua-libs v0.1.0

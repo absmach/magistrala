@@ -20,8 +20,6 @@ packages:
     interfaces:
       Repository:
       Service:
-      Ticker:
-      Emailer:
   github.com/absmach/magistrala/bootstrap:
     interfaces:
       ConfigRepository:

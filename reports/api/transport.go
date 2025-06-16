@@ -107,7 +107,7 @@ func MakeHandler(svc reports.Service, authn mgauthn.Authentication, mux *chi.Mux
 		})
 	})
 
-	mux.Get("/health", supermq.Health("rule_engine", instanceID))
+	mux.Get("/health", supermq.Health("reports", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

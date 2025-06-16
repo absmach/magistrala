@@ -14,18 +14,16 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	abrokers "github.com/absmach/magistrala/alarms/brokers"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	"github.com/absmach/magistrala/consumers/writers/brokers"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/ticker"
-	"github.com/absmach/magistrala/re"
-	httpapi "github.com/absmach/magistrala/re/api"
-	"github.com/absmach/magistrala/re/middleware"
-	repg "github.com/absmach/magistrala/re/postgres"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
+	"github.com/absmach/magistrala/reports"
+	httpapi "github.com/absmach/magistrala/reports/api"
+	"github.com/absmach/magistrala/reports/middleware"
+	repg "github.com/absmach/magistrala/reports/postgres"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
@@ -34,9 +32,6 @@ import (
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/messaging"
-	smqbrokers "github.com/absmach/supermq/pkg/messaging/brokers"
-	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
@@ -47,31 +42,27 @@ import (
 )
 
 const (
-	svcName          = "rules_engine"
-	envPrefixDB      = "MG_RE_DB_"
-	envPrefixHTTP    = "MG_RE_HTTP_"
+	svcName          = "reports"
+	envPrefixDB      = "MG_REPORTS_DB_"
+	envPrefixHTTP    = "MG_REPORTS_HTTP_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
-	defDB            = "r"
-	defSvcHTTPPort   = "9008"
+	defDB            = "repo"
+	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 )
 
 // We use a buffered channel to prevent blocking, as logging is an expensive operation.
-// A larger buffer size would also work, but we’d likely need another instance of RE in that case.
-// A smaller size would probably work too, but there's no need to be that frugal with resources.
 const channBuffer = 256
 
 type config struct {
-	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
-	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
-	JaegerURL        url.URL       `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry    bool          `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL            string        `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
-	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
+	InstanceID    string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
+	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
+	ESURL         string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
+	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 }
 
 func main() {
@@ -115,6 +106,7 @@ func main() {
 
 		return
 	}
+
 	db, err := pgclient.Setup(dbConfig, *repg.Migration())
 	if err != nil {
 		logger.Error(err.Error())
@@ -146,36 +138,6 @@ func main() {
 		return
 	}
 
-	msgSub, err := smqbrokers.NewPubSub(ctx, cfg.BrokerURL, logger)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for mg pubSub: %s", err))
-		exitCode = 1
-
-		return
-	}
-	defer msgSub.Close()
-	msgSub = brokerstracing.NewPubSub(httpServerConfig, tracer, msgSub)
-
-	writersPub, err := brokers.NewPublisher(ctx, cfg.BrokerURL)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for writers publisher: %s", err))
-		exitCode = 1
-
-		return
-	}
-	defer writersPub.Close()
-	writersPub = brokerstracing.NewPublisher(httpServerConfig, tracer, writersPub)
-
-	alarmsPub, err := abrokers.NewPublisher(ctx, cfg.BrokerURL)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to connect to message broker for alarms publisher: %s", err))
-		exitCode = 1
-
-		return
-	}
-	defer alarmsPub.Close()
-	alarmsPub = brokerstracing.NewPublisher(httpServerConfig, tracer, alarmsPub)
-
 	grpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
@@ -192,7 +154,6 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
 	domsGrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
@@ -235,21 +196,11 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
+	runInfo := make(chan pkglog.RunInfo, channBuffer)
+
+	svc, err := newService(database, runInfo, authz, ec, logger, readersClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
-		exitCode = 1
-
-		return
-	}
-	subCfg := messaging.SubscriberConfig{
-		ID:             svcName,
-		Topic:          smqbrokers.SubjectAllMessages,
-		DeliveryPolicy: messaging.DeliverAllPolicy,
-		Handler:        svc,
-	}
-	if err := msgSub.Subscribe(ctx, subCfg); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to internal message broker: %s", err))
 		exitCode = 1
 
 		return
@@ -287,7 +238,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -296,7 +247,7 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub mess
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

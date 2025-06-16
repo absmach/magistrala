@@ -38,6 +38,10 @@ packages:
     interfaces:
       Service:
       Repository:  
+  github.com/absmach/magistrala/reports:
+    interfaces:
+      Service:
+      Repository: 
   github.com/absmach/magistrala/api/grpc/readers/v1:
     interfaces:
       ReadersServiceClient:

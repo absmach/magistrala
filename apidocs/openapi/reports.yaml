@@ -1,0 +1,556 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.1
+info:
+  title: Magistrala Reports Service API
+  description: |
+    HTTP API for managing reports service.
+  version: 0.15.1
+servers:
+  - url: http://localhost:9017
+tags:
+  - name: reports
+    description: Operations related to report configurations and generation
+paths:
+  /{domainID}/reports:
+    post:
+      operationId: generateReport
+      summary: Generate a report
+      description: Generates a report based on the provided configuration or an existing config. The action determines the response format.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateReportRequest'
+      responses:
+        '200':
+          description: Report generated successfully (content varies by action)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateReportResponse'
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid request parameters
+        '401':
+          description: Missing or invalid access token
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/reports/configs:
+    post:
+      operationId: addReportConfig
+      summary: Create a report configuration
+      description: Creates a new report configuration.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddReportConfigRequest'
+      responses:
+        '201':
+          description: Report configuration created
+          headers:
+            Location:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '400':
+          description: Invalid request body
+        '401':
+          description: Missing or invalid access token
+        '500':
+          $ref: '#/components/responses/ServiceError'
+    get:
+      operationId: listReportConfigs
+      summary: List report configurations
+      description: Retrieves a paginated list of report configurations.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of report configurations
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListReportsConfigResponse'
+        '400':
+          description: Invalid query parameters
+        '401':
+          description: Missing or invalid access token
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/reports/configs/{reportID}:
+    get:
+      operationId: viewReportConfig
+      summary: View a report configuration
+      description: Retrieves details of a specific report configuration.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Report configuration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '404':
+          description: Report configuration not found
+        '401':
+          description: Missing or invalid access token
+        '500':
+          $ref: '#/components/responses/ServiceError'
+    patch:
+      operationId: updateReportConfig
+      summary: Update a report configuration
+      description: Updates specified fields of a report configuration.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReportConfigRequest'
+      responses:
+        '200':
+          description: Report configuration updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '400':
+          description: Invalid request body
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Report configuration not found
+        '500':
+          $ref: '#/components/responses/ServiceError'
+    delete:
+      operationId: deleteReportConfig
+      summary: Delete a report configuration
+      description: Permanently deletes a report configuration.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Report configuration deleted
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Report configuration not found
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/reports/configs/{reportID}/schedule:
+    patch:
+      operationId: updateReportSchedule
+      summary: Update report schedule
+      description: Updates the schedule of a report configuration.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Schedule'
+      responses:
+        '200':
+          description: Schedule updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '400':
+          description: Invalid schedule
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Report configuration not found
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/reports/configs/{reportID}/enable:
+    post:
+      operationId: enableReportConfig
+      summary: Enable a report configuration
+      description: Enables a report configuration to generate scheduled reports.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Report configuration enabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Report configuration not found
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/reports/configs/{reportID}/disable:
+    post:
+      operationId: disableReportConfig
+      summary: Disable a report configuration
+      description: Disables a report configuration, stopping scheduled reports.
+      tags:
+        - reports
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/ReportID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Report configuration disabled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReportConfig'
+        '401':
+          description: Missing or invalid access token
+        '404':
+          description: Report configuration not found
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /health:
+    get:
+      summary: Service health check
+      tags:
+        - health
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthRes'
+
+components:
+  schemas:
+    ReportConfig:
+      type: object
+      properties:
+        id:
+          type: string
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        domain_id:
+          type: string
+          readOnly: true
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        config:
+          $ref: '#/components/schemas/MetricConfig'
+        email:
+          $ref: '#/components/schemas/EmailSetting'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReqMetric'
+        status:
+          $ref: '#/components/schemas/Status'
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        created_by:
+          type: string
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_by:
+          type: string
+          readOnly: true
+      required:
+        - name
+        - metrics
+        - config
+
+    Schedule:
+      type: object
+      properties:
+        recurring:
+          type: string
+          enum: [None, Daily, Weekly, Monthly]
+        recurring_period:
+          type: integer
+          minimum: 1
+        start_time:
+          type: string
+          format: date-time
+        next_run:
+          type: string
+          format: date-time
+          readOnly: true
+
+    MetricConfig:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+        format:
+          type: string
+          enum: [pdf, csv, html]
+        aggregation:
+          $ref: '#/components/schemas/AggConfig'
+
+    AggConfig:
+      type: object
+      properties:
+        window:
+          type: string
+        function:
+          type: string
+          enum: [sum, average, max, min]
+
+    EmailSetting:
+      type: object
+      properties:
+        recipients:
+          type: array
+          items:
+            type: string
+            format: email
+        subject:
+          type: string
+        body_template:
+          type: string
+      required:
+        - recipients
+        - subject
+
+    ReqMetric:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+          enum: [gauge, counter, histogram]
+        parameters:
+          type: object
+      required:
+        - name
+        - type
+
+    Status:
+      type: string
+      enum: [enabled, disabled]
+
+    GenerateReportRequest:
+      type: object
+      properties:
+        action:
+          type: string
+          enum: [view, download, email]
+        config_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        config:
+          $ref: '#/components/schemas/MetricConfig'
+        email:
+          $ref: '#/components/schemas/EmailSetting'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReqMetric'
+      required:
+        - action
+
+    GenerateReportResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        from:
+          type: string
+          format: date-time
+        to:
+          type: string
+          format: date-time
+        aggregation:
+          $ref: '#/components/schemas/AggConfig'
+        reports:
+          type: array
+          items:
+            $ref: '#/components/schemas/Report'
+
+    Report:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        value:
+          type: number
+        metric_name:
+          type: string
+
+    AddReportConfigRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        config:
+          $ref: '#/components/schemas/MetricConfig'
+        email:
+          $ref: '#/components/schemas/EmailSetting'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReqMetric'
+        status:
+          $ref: '#/components/schemas/Status'
+      required:
+        - name
+        - metrics
+        - config
+
+    UpdateReportConfigRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        config:
+          $ref: '#/components/schemas/MetricConfig'
+        email:
+          $ref: '#/components/schemas/EmailSetting'
+        metrics:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReqMetric'
+        status:
+          $ref: '#/components/schemas/Status'
+
+    ListReportsConfigResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+        offset:
+          type: integer
+        limit:
+          type: integer
+        report_configs:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReportConfig'
+
+  parameters:
+    DomainID:
+      name: domainID
+      in: path
+      required: true
+      schema:
+        type: string
+    ReportID:
+      name: reportID
+      in: path
+      required: true
+      schema:
+        type: string
+    Offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 100
+
+  responses:
+    ServiceError:
+      description: Unexpected server error
+    HealthRes:
+      description: Service health status
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

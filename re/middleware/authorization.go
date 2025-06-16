@@ -15,15 +15,10 @@ import (
 )
 
 var (
-	errDomainCreateConfigs   = errors.New("not authorized to create report configs in domain")
-	errDomainViewConfigs     = errors.New("not authorized to view report configs in domain")
-	errDomainUpdateConfigs   = errors.New("not authorized to update report configs in domain")
-	errDomainDeleteConfigs   = errors.New("not authorized to delete report configs in domain")
-	errDomainCreateRules     = errors.New("not authorized to create rules in domain")
-	errDomainViewRules       = errors.New("not authorized to view rules in domain")
-	errDomainUpdateRules     = errors.New("not authorized to update rules in domain")
-	errDomainDeleteRules     = errors.New("not authorized to delete rules in domain")
-	errDomainGenerateReports = errors.New("not authorized to generate reports in domain")
+	errDomainCreateRules = errors.New("not authorized to create rules in domain")
+	errDomainViewRules   = errors.New("not authorized to view rules in domain")
+	errDomainUpdateRules = errors.New("not authorized to update rules in domain")
+	errDomainDeleteRules = errors.New("not authorized to delete rules in domain")
 )
 
 type authorizationMiddleware struct {
@@ -165,150 +160,6 @@ func (am *authorizationMiddleware) DisableRule(ctx context.Context, session auth
 	}
 
 	return am.svc.DisableRule(ctx, session, id)
-}
-
-func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainCreateConfigs, err)
-	}
-
-	return am.svc.AddReportConfig(ctx, session, cfg)
-}
-
-func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainViewConfigs, err)
-	}
-
-	return am.svc.ViewReportConfig(ctx, session, id)
-}
-
-func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
-	}
-
-	return am.svc.UpdateReportConfig(ctx, session, cfg)
-}
-
-func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg re.ReportConfig) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainDeleteConfigs, err)
-	}
-
-	return am.svc.UpdateReportSchedule(ctx, session, cfg)
-}
-
-func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return errors.Wrap(errDomainDeleteConfigs, err)
-	}
-
-	return am.svc.RemoveReportConfig(ctx, session, id)
-}
-
-func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm re.PageMeta) (re.ReportConfigPage, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
-	}
-
-	return am.svc.ListReportsConfig(ctx, session, pm)
-}
-
-func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
-	}
-
-	return am.svc.EnableReportConfig(ctx, session, id)
-}
-
-func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, session authn.Session, id string) (re.ReportConfig, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
-	}
-
-	return am.svc.DisableReportConfig(ctx, session, id)
-}
-
-func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config re.ReportConfig, action re.ReportAction) (re.ReportPage, error) {
-	if err := am.authorize(ctx, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  policies.MembershipPermission,
-	}); err != nil {
-		return re.ReportPage{}, errors.Wrap(errDomainGenerateReports, err)
-	}
-
-	return am.svc.GenerateReport(ctx, session, config, action)
 }
 
 func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {

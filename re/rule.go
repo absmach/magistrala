@@ -5,14 +5,12 @@ package re
 
 import (
 	"encoding/json"
-	"log/slog"
 	"strings"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/supermq/pkg/errors"
 )
-
-var ErrInvalidRecurringType = errors.New("invalid recurring type")
 
 const protocol = "nats"
 
@@ -80,25 +78,19 @@ type (
 )
 
 type Rule struct {
-	ID            string    `json:"id"`
-	Name          string    `json:"name"`
-	DomainID      string    `json:"domain"`
-	Metadata      Metadata  `json:"metadata,omitempty"`
-	InputChannel  string    `json:"input_channel"`
-	InputTopic    string    `json:"input_topic"`
-	Logic         Script    `json:"logic"`
-	OutputChannel string    `json:"output_channel,omitempty"`
-	OutputTopic   string    `json:"output_topic,omitempty"`
-	Schedule      Schedule  `json:"schedule"`
-	Status        Status    `json:"status"`
-	CreatedAt     time.Time `json:"created_at"`
-	CreatedBy     string    `json:"created_by"`
-	UpdatedAt     time.Time `json:"updated_at"`
-	UpdatedBy     string    `json:"updated_by"`
-}
-
-type RunInfo struct {
-	Level   slog.Level
-	Details []slog.Attr
-	Message string
+	ID            string            `json:"id"`
+	Name          string            `json:"name"`
+	DomainID      string            `json:"domain"`
+	Metadata      Metadata          `json:"metadata,omitempty"`
+	InputChannel  string            `json:"input_channel"`
+	InputTopic    string            `json:"input_topic"`
+	Logic         Script            `json:"logic"`
+	OutputChannel string            `json:"output_channel,omitempty"`
+	OutputTopic   string            `json:"output_topic,omitempty"`
+	Schedule      schedule.Schedule `json:"schedule"`
+	Status        Status            `json:"status"`
+	CreatedAt     time.Time         `json:"created_at"`
+	CreatedBy     string            `json:"created_by"`
+	UpdatedAt     time.Time         `json:"updated_at"`
+	UpdatedBy     string            `json:"updated_by"`
 }

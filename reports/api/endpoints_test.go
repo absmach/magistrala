@@ -16,9 +16,9 @@ import (
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
-	"github.com/absmach/magistrala/re"
-	"github.com/absmach/magistrala/re/api"
-	"github.com/absmach/magistrala/re/mocks"
+	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/magistrala/reports/api"
+	"github.com/absmach/magistrala/reports/mocks"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/auth"
 	smqlog "github.com/absmach/supermq/logger"
@@ -47,15 +47,31 @@ var (
 		RecurringPeriod: 1,
 		Time:            now,
 	}
-	rule = re.Rule{
+	reportConfig = reports.ReportConfig{
 		ID:       validID,
 		Name:     namegen.Generate(),
 		DomainID: domainID,
 		Schedule: schedule,
-		Metadata: re.Metadata{
-			"name": "test",
+		Status:   reports.EnabledStatus,
+		Metrics: []reports.ReqMetric{
+			{
+				ChannelID: "channel1",
+				ClientIDs: []string{"client1"},
+				Name:      "metric_name",
+			},
+		},
+		Config: &reports.MetricConfig{
+			From:        "now()-1h",
+			To:          "now()",
+			Title:       title,
+			Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+		},
+		Email: &reports.EmailSetting{
+			To:      []string{"test@example.com"},
+			Subject: "Test Report",
 		},
 	}
+	title = "test_title"
 )
 
 type testRequest struct {
@@ -86,7 +102,7 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newRuleEngineServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
+func newReportsServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 	authn := new(authnmocks.Authentication)
 
@@ -105,37 +121,36 @@ func toJSON(data any) string {
 	return string(jsonData)
 }
 
-func TestAddRuleEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
+func TestAddReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
 	defer ts.Close()
 
 	cases := []struct {
 		desc        string
-		rule        re.Rule
+		cfg         reports.ReportConfig
 		domainID    string
 		token       string
 		contentType string
 		status      int
 		authnRes    smqauthn.Session
 		authnErr    error
-		svcRes      re.Rule
+		svcRes      reports.ReportConfig
 		svcErr      error
 		err         error
-		len         int
 	}{
 		{
-			desc:        "add rule successfully",
-			rule:        rule,
+			desc:        "add report config successfully",
+			cfg:         reportConfig,
 			token:       validToken,
 			contentType: contentType,
 			domainID:    domainID,
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			status:      http.StatusCreated,
-			svcRes:      rule,
+			svcRes:      reportConfig,
 		},
 		{
-			desc:        "add rule with invalid token",
-			rule:        rule,
+			desc:        "add report config with invalid token",
+			cfg:         reportConfig,
 			token:       invalidToken,
 			authnRes:    smqauthn.Session{},
 			domainID:    domainID,
@@ -145,54 +160,38 @@ func TestAddRuleEndpoint(t *testing.T) {
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "add rule with empty token",
+			desc:        "add report config with empty token",
 			token:       "",
 			authnRes:    smqauthn.Session{},
 			domainID:    domainID,
-			rule:        rule,
+			cfg:         reportConfig,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
 			err:         apiutil.ErrBearerToken,
 		},
 		{
-			desc:  "add rule with name that is too long",
-			token: validToken,
-			rule: re.Rule{
-				ID:   validID,
-				Name: strings.Repeat("a", 1025),
-				Logic: re.Script{
-					Type:  re.ScriptType(0),
-					Value: "return `test` end",
-				},
-			},
-			domainID:    domainID,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrNameSize,
-		},
-		{
-			desc:        "add rule with empty domainID",
+			desc:        "add report config with empty domainID",
 			token:       validToken,
-			rule:        rule,
+			cfg:         reportConfig,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:        "add rule with invalid content type",
+			desc:        "add report config with invalid content type",
 			token:       validToken,
 			domainID:    domainID,
-			rule:        rule,
+			cfg:         reportConfig,
 			contentType: "application/xml",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
 		},
 		{
-			desc:        "add rule with service error",
+			desc:        "add report config with service error",
 			token:       validToken,
 			domainID:    domainID,
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
-			rule:        rule,
+			cfg:         reportConfig,
 			contentType: contentType,
 			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusForbidden,
@@ -202,18 +201,18 @@ func TestAddRuleEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			data := toJSON(tc.rule)
+			data := toJSON(tc.cfg)
 			req := testRequest{
 				client:      ts.Client(),
 				method:      http.MethodPost,
-				url:         fmt.Sprintf("%s/%s/rules", ts.URL, tc.domainID),
+				url:         fmt.Sprintf("%s/%s/reports/configs", ts.URL, tc.domainID),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(data),
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("AddRule", mock.Anything, tc.authnRes, tc.rule).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("AddReportConfig", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			res, err := req.make()
 
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -231,8 +230,8 @@ func TestAddRuleEndpoint(t *testing.T) {
 	}
 }
 
-func TestViewRuleEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
+func TestViewReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
 	defer ts.Close()
 
 	cases := []struct {
@@ -244,24 +243,23 @@ func TestViewRuleEndpoint(t *testing.T) {
 		status      int
 		authnRes    smqauthn.Session
 		authnErr    error
-		svcRes      re.Rule
+		svcRes      reports.ReportConfig
 		svcErr      error
 		err         error
-		len         int
 	}{
 		{
-			desc:        "view rule successfully",
-			id:          rule.ID,
+			desc:        "view report config successfully",
+			id:          validID,
 			token:       validToken,
 			contentType: contentType,
 			domainID:    domainID,
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			status:      http.StatusOK,
-			svcRes:      rule,
+			svcRes:      reportConfig,
 		},
 		{
-			desc:        "view rule with invalid token",
-			id:          rule.ID,
+			desc:        "view report config with invalid token",
+			id:          validID,
 			token:       invalidToken,
 			authnRes:    smqauthn.Session{},
 			domainID:    domainID,
@@ -271,29 +269,29 @@ func TestViewRuleEndpoint(t *testing.T) {
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "view rule with empty token",
+			desc:        "view report config with empty token",
 			token:       "",
 			authnRes:    smqauthn.Session{},
 			domainID:    domainID,
-			id:          rule.ID,
+			id:          validID,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
 			err:         apiutil.ErrBearerToken,
 		},
 		{
-			desc:        "view rule with empty domainID",
+			desc:        "view report config with empty domainID",
 			token:       validToken,
-			id:          rule.ID,
+			id:          validID,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:        "view rule with service error",
+			desc:        "view report config with service error",
 			token:       validToken,
 			domainID:    domainID,
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
-			id:          rule.ID,
+			id:          validID,
 			contentType: contentType,
 			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusForbidden,
@@ -304,14 +302,15 @@ func TestViewRuleEndpoint(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			req := testRequest{
-				client: ts.Client(),
-				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/%s/rules/%s", ts.URL, tc.domainID, tc.id),
-				token:  tc.token,
+				client:      ts.Client(),
+				method:      http.MethodGet,
+				url:         fmt.Sprintf("%s/%s/reports/configs/%s", ts.URL, tc.domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ViewRule", mock.Anything, tc.authnRes, tc.id).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ViewReportConfig", mock.Anything, tc.authnRes, tc.id).Return(tc.svcRes, tc.svcErr)
 			res, err := req.make()
 
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -329,172 +328,46 @@ func TestViewRuleEndpoint(t *testing.T) {
 	}
 }
 
-func TestListRulesEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
+func TestListReportsConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
 	defer ts.Close()
 
 	cases := []struct {
-		desc              string
-		query             string
-		domainID          string
-		token             string
-		session           smqauthn.Session
-		listRulesResponse re.Page
-		status            int
-		authnErr          error
-		err               error
+		desc                string
+		query               string
+		domainID            string
+		token               string
+		session             smqauthn.Session
+		listReportsResponse reports.ReportConfigPage
+		status              int
+		authnErr            error
+		err                 error
 	}{
 		{
-			desc:     "list rules successfully",
+			desc:     "list reports config successfully",
 			domainID: domainID,
 			token:    validToken,
 			status:   http.StatusOK,
-			listRulesResponse: re.Page{
-				Total: 1,
-				Rules: []re.Rule{rule},
+			listReportsResponse: reports.ReportConfigPage{
+				ReportConfigs: []reports.ReportConfig{reportConfig},
+				PageMeta:      reports.PageMeta{Total: 1},
 			},
 			err: nil,
 		},
 		{
-			desc:     "list rules with empty token",
+			desc:     "list reports config with empty token",
 			domainID: domainID,
 			token:    "",
 			status:   http.StatusUnauthorized,
 			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:     "list rules with invalid token",
+			desc:     "list reports config with invalid token",
 			domainID: domainID,
 			token:    invalidToken,
 			status:   http.StatusUnauthorized,
 			authnErr: svcerr.ErrAuthentication,
 			err:      svcerr.ErrAuthentication,
-		},
-		{
-			desc:     "list rules with offset",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-
-				Rules: []re.Rule{rule},
-			},
-			query:  "offset=1",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with invalid offset",
-			domainID: domainID,
-			token:    validToken,
-			query:    "offset=invalid",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
-		},
-		{
-			desc:     "list rules with limit",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-
-				Rules: []re.Rule{rule},
-			},
-			query:  "limit=1",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with invalid limit",
-			domainID: domainID,
-			token:    validToken,
-			query:    "limit=invalid",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
-		},
-		{
-			desc:     "list rules with invalid direction",
-			domainID: domainID,
-			token:    validToken,
-			query:    "dir=invalid",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidDirection,
-		},
-		{
-			desc:     "list rule with limit that is too big",
-			domainID: domainID,
-			token:    validToken,
-			query:    "limit=10000",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrLimitSize,
-		},
-		{
-			desc:     "list rules with input channel",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-				Rules: []re.Rule{rule},
-			},
-			query:  "input_channel=input.channel",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with duplicate input_channel",
-			domainID: domainID,
-			token:    validToken,
-			query:    "input_channel=1&input_channel=2",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:     "list rules with status",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-				Rules: []re.Rule{rule},
-			},
-			query:  "status=enabled",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with invalid status",
-			domainID: domainID,
-			token:    validToken,
-			query:    "status=invalid",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
-		},
-		{
-			desc:     "list rules with duplicate status",
-			domainID: domainID,
-			token:    validToken,
-			query:    "status=enabled&status=disabled",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidQueryParams,
-		},
-		{
-			desc:     "list rules with output channel",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-				Rules: []re.Rule{rule},
-			},
-			query:  "output_channel=output.channel",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with duplicate output channel",
-			domainID: domainID,
-			token:    validToken,
-			query:    "output_channel=1&output_channel=2",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidQueryParams,
 		},
 	}
 
@@ -503,7 +376,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			req := testRequest{
 				client:      ts.Client(),
 				method:      http.MethodGet,
-				url:         ts.URL + "/" + tc.domainID + "/rules?" + tc.query,
+				url:         ts.URL + "/" + tc.domainID + "/reports/configs?" + tc.query,
 				contentType: contentType,
 				token:       tc.token,
 			}
@@ -511,7 +384,7 @@ func TestListRulesEndpoint(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
 			}
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("ListRules", mock.Anything, tc.session, mock.Anything).Return(tc.listRulesResponse, tc.err)
+			svcCall := svc.On("ListReportsConfig", mock.Anything, tc.session, mock.Anything).Return(tc.listReportsResponse, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var bodyRes respBody
@@ -528,115 +401,86 @@ func TestListRulesEndpoint(t *testing.T) {
 	}
 }
 
-func TestUpdateRulesEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
+func TestUpdateReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
 	defer ts.Close()
-
-	updateRuleReq := re.Rule{
-		ID:   rule.ID,
-		Name: rule.Name,
-		Logic: re.Script{
-			Type:  re.ScriptType(0),
-			Value: "return `test` end",
-		},
-		Metadata: map[string]any{
-			"name": "test",
-		},
-	}
 
 	cases := []struct {
 		desc        string
 		token       string
 		id          string
 		domainID    string
-		updateReq   re.Rule
+		updateReq   reports.ReportConfig
 		contentType string
 		session     smqauthn.Session
-		svcResp     re.Rule
+		svcResp     reports.ReportConfig
 		svcErr      error
 		status      int
 		authnErr    error
 		err         error
 	}{
 		{
-			desc:        "update rule successfully",
+			desc:        "update report config successfully",
 			token:       validToken,
 			domainID:    domainID,
-			id:          rule.ID,
-			updateReq:   updateRuleReq,
+			id:          validID,
+			updateReq:   reportConfig,
 			contentType: contentType,
-			svcResp:     rule,
+			svcResp:     reportConfig,
 			status:      http.StatusOK,
 			err:         nil,
 		},
 		{
-			desc:        "update rule with invalid token",
+			desc:        "update report config with invalid token",
 			token:       invalidToken,
 			session:     smqauthn.Session{},
 			domainID:    domainID,
-			id:          rule.ID,
-			updateReq:   updateRuleReq,
+			id:          validID,
+			updateReq:   reportConfig,
 			contentType: contentType,
 			authnErr:    svcerr.ErrAuthentication,
 			status:      http.StatusUnauthorized,
 			err:         svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "update rule with empty token",
+			desc:        "update report config with empty token",
 			token:       "",
 			session:     smqauthn.Session{},
 			domainID:    domainID,
-			id:          rule.ID,
-			updateReq:   updateRuleReq,
+			id:          validID,
+			updateReq:   reportConfig,
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
 			err:         apiutil.ErrBearerToken,
 		},
 		{
-			desc:        "update rule with empty domainID",
+			desc:        "update report config with empty domainID",
 			token:       validToken,
-			id:          rule.ID,
-			updateReq:   updateRuleReq,
+			id:          validID,
+			updateReq:   reportConfig,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:     "update rule with name that is too long",
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			updateReq: re.Rule{
-				ID:   validID,
-				Name: strings.Repeat("a", 1025),
-				Logic: re.Script{
-					Type:  re.ScriptType(0),
-					Value: "return `test` end",
-				},
-			},
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrNameSize,
-		},
-		{
-			desc:        "update rule with invalid content type",
+			desc:        "update report config with invalid content type",
 			token:       validToken,
-			id:          rule.ID,
+			id:          validID,
 			domainID:    domainID,
-			updateReq:   updateRuleReq,
+			updateReq:   reportConfig,
 			contentType: "application/xml",
-			svcResp:     rule,
+			svcResp:     reportConfig,
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
 		},
 		{
-			desc:        "update rule with service error",
+			desc:        "update report config with service error",
 			token:       validToken,
-			id:          rule.ID,
+			id:          validID,
 			domainID:    domainID,
-			updateReq:   updateRuleReq,
+			updateReq:   reportConfig,
 			contentType: contentType,
-			svcResp:     re.Rule{},
+			svcResp:     reports.ReportConfig{},
 			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusForbidden,
 			err:         svcerr.ErrAuthorization,
@@ -649,7 +493,7 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			req := testRequest{
 				client:      ts.Client(),
 				method:      http.MethodPatch,
-				url:         fmt.Sprintf("%s/%s/rules/%s", ts.URL, tc.domainID, tc.id),
+				url:         fmt.Sprintf("%s/%s/reports/configs/%s", ts.URL, tc.domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
 				body:        strings.NewReader(data),
@@ -658,7 +502,7 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
 			}
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("UpdateRule", mock.Anything, tc.session, tc.updateReq).Return(tc.svcResp, tc.svcErr)
+			svcCall := svc.On("UpdateReportConfig", mock.Anything, tc.session, mock.Anything).Return(tc.svcResp, tc.svcErr)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var errRes respBody
@@ -675,210 +519,8 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 	}
 }
 
-func TestEnableRuleEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
-	defer ts.Close()
-
-	cases := []struct {
-		desc     string
-		token    string
-		id       string
-		domainID string
-		session  smqauthn.Session
-		svcResp  re.Rule
-		svcErr   error
-		status   int
-		authnErr error
-		err      error
-	}{
-		{
-			desc:     "enable rule successfully",
-			token:    validToken,
-			domainID: domainID,
-			id:       validID,
-			svcResp:  rule,
-			svcErr:   nil,
-			status:   http.StatusOK,
-			err:      nil,
-		},
-		{
-			desc:     "enable rule with invalid token",
-			token:    invalidToken,
-			session:  smqauthn.Session{},
-			domainID: domainID,
-			id:       validID,
-			authnErr: svcerr.ErrAuthentication,
-			status:   http.StatusUnauthorized,
-			err:      svcerr.ErrAuthentication,
-		},
-		{
-			desc:     "enable rule with empty token",
-			token:    "",
-			session:  smqauthn.Session{},
-			domainID: domainID,
-			id:       validID,
-			status:   http.StatusUnauthorized,
-			err:      apiutil.ErrBearerToken,
-		},
-		{
-			desc:   "enable rule with empty domainID",
-			token:  validToken,
-			id:     validID,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingDomainID,
-		},
-		{
-			desc:     "enable rule with service error",
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			svcResp:  re.Rule{},
-			svcErr:   svcerr.ErrAuthorization,
-			status:   http.StatusForbidden,
-			err:      svcerr.ErrAuthorization,
-		},
-		{
-			desc:     "enable rule with empty id",
-			token:    validToken,
-			id:       "",
-			domainID: domainID,
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrMissingID,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			req := testRequest{
-				client: ts.Client(),
-				method: http.MethodPost,
-				url:    fmt.Sprintf("%s/%s/rules/%s/enable", ts.URL, tc.domainID, tc.id),
-				token:  tc.token,
-			}
-			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
-			}
-			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("EnableRule", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
-			res, err := req.make()
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			var errRes respBody
-			err = json.NewDecoder(res.Body).Decode(&errRes)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-			if errRes.Err != "" || errRes.Message != "" {
-				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-			svcCall.Unset()
-			authCall.Unset()
-		})
-	}
-}
-
-func TestDisableRuleEndpoint(t *testing.T) {
-	gs, svc, authn := newRuleEngineServer()
-	defer gs.Close()
-
-	cases := []struct {
-		desc     string
-		token    string
-		id       string
-		domainID string
-		session  smqauthn.Session
-		svcResp  re.Rule
-		svcErr   error
-		status   int
-		authnErr error
-		err      error
-	}{
-		{
-			desc:     "disable rule successfully",
-			token:    validToken,
-			domainID: domainID,
-			id:       validID,
-			svcResp:  rule,
-			svcErr:   nil,
-			status:   http.StatusOK,
-			err:      nil,
-		},
-		{
-			desc:     "disable rule with invalid token",
-			token:    invalidToken,
-			session:  smqauthn.Session{},
-			domainID: domainID,
-			id:       validID,
-			authnErr: svcerr.ErrAuthentication,
-			status:   http.StatusUnauthorized,
-			err:      svcerr.ErrAuthentication,
-		},
-		{
-			desc:     "disable rule with empty token",
-			token:    "",
-			session:  smqauthn.Session{},
-			domainID: domainID,
-			id:       validID,
-			status:   http.StatusUnauthorized,
-			err:      apiutil.ErrBearerToken,
-		},
-		{
-			desc:   "disable rule with empty domainID",
-			token:  validToken,
-			id:     validID,
-			status: http.StatusBadRequest,
-			err:    apiutil.ErrMissingDomainID,
-		},
-		{
-			desc:     "disable rule with service error",
-			token:    validToken,
-			id:       validID,
-			domainID: domainID,
-			svcResp:  re.Rule{},
-			svcErr:   svcerr.ErrAuthorization,
-			status:   http.StatusForbidden,
-			err:      svcerr.ErrAuthorization,
-		},
-		{
-			desc:     "disable rule with empty id",
-			token:    validToken,
-			id:       "",
-			domainID: domainID,
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrMissingID,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			req := testRequest{
-				client: gs.Client(),
-				method: http.MethodPost,
-				url:    fmt.Sprintf("%s/%s/rules/%s/disable", gs.URL, tc.domainID, tc.id),
-				token:  tc.token,
-			}
-			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
-			}
-			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("DisableRule", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
-			res, err := req.make()
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			var errRes respBody
-			err = json.NewDecoder(res.Body).Decode(&errRes)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
-			if errRes.Err != "" || errRes.Message != "" {
-				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
-			}
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-			svcCall.Unset()
-			authCall.Unset()
-		})
-	}
-}
-
-func TestDeleteRuleEndpoint(t *testing.T) {
-	ts, svc, authn := newRuleEngineServer()
+func TestDeleteReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
 	defer ts.Close()
 
 	cases := []struct {
@@ -893,7 +535,7 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 		err      error
 	}{
 		{
-			desc:     "delete rule successfully",
+			desc:     "delete report config successfully",
 			token:    validToken,
 			domainID: domainID,
 			id:       validID,
@@ -902,7 +544,7 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "delete rule with invalid token",
+			desc:     "delete report config with invalid token",
 			token:    invalidToken,
 			session:  smqauthn.Session{},
 			domainID: domainID,
@@ -912,7 +554,7 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:     "delete rule with empty token",
+			desc:     "delete report config with empty token",
 			token:    "",
 			session:  smqauthn.Session{},
 			domainID: domainID,
@@ -921,14 +563,14 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:   "delete rule with empty domainID",
+			desc:   "delete report config with empty domainID",
 			token:  validToken,
 			id:     validID,
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:     "delete rule with service error",
+			desc:     "delete report config with service error",
 			token:    validToken,
 			id:       validID,
 			domainID: domainID,
@@ -943,14 +585,14 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 			req := testRequest{
 				client: ts.Client(),
 				method: http.MethodDelete,
-				url:    fmt.Sprintf("%s/%s/rules/%s", ts.URL, tc.domainID, tc.id),
+				url:    fmt.Sprintf("%s/%s/reports/configs/%s", ts.URL, tc.domainID, tc.id),
 				token:  tc.token,
 			}
 			if tc.token == validToken {
 				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
 			}
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("RemoveRule", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
+			svcCall := svc.On("RemoveReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
@@ -960,10 +602,212 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 	}
 }
 
+func TestEnableReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc     string
+		token    string
+		id       string
+		domainID string
+		session  smqauthn.Session
+		svcResp  reports.ReportConfig
+		svcErr   error
+		status   int
+		authnErr error
+		err      error
+	}{
+		{
+			desc:     "enable report config successfully",
+			token:    validToken,
+			domainID: domainID,
+			id:       validID,
+			svcResp:  reportConfig,
+			svcErr:   nil,
+			status:   http.StatusOK,
+			err:      nil,
+		},
+		{
+			desc:     "enable report config with invalid token",
+			token:    invalidToken,
+			session:  smqauthn.Session{},
+			domainID: domainID,
+			id:       validID,
+			authnErr: svcerr.ErrAuthentication,
+			status:   http.StatusUnauthorized,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "enable report config with empty token",
+			token:    "",
+			session:  smqauthn.Session{},
+			domainID: domainID,
+			id:       validID,
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:   "enable report config with empty domainID",
+			token:  validToken,
+			id:     validID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "enable report config with service error",
+			token:    validToken,
+			id:       validID,
+			domainID: domainID,
+			svcResp:  reports.ReportConfig{},
+			svcErr:   svcerr.ErrAuthorization,
+			status:   http.StatusForbidden,
+			err:      svcerr.ErrAuthorization,
+		},
+		{
+			desc:     "enable report config with empty id",
+			token:    validToken,
+			id:       "",
+			domainID: domainID,
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: ts.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/reports/configs/%s/enable", ts.URL, tc.domainID, tc.id),
+				token:  tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("EnableReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestDisableReportConfigEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc     string
+		token    string
+		id       string
+		domainID string
+		session  smqauthn.Session
+		svcResp  reports.ReportConfig
+		svcErr   error
+		status   int
+		authnErr error
+		err      error
+	}{
+		{
+			desc:     "disable report config successfully",
+			token:    validToken,
+			domainID: domainID,
+			id:       validID,
+			svcResp:  reportConfig,
+			svcErr:   nil,
+			status:   http.StatusOK,
+			err:      nil,
+		},
+		{
+			desc:     "disable report config with invalid token",
+			token:    invalidToken,
+			session:  smqauthn.Session{},
+			domainID: domainID,
+			id:       validID,
+			authnErr: svcerr.ErrAuthentication,
+			status:   http.StatusUnauthorized,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "disable report config with empty token",
+			token:    "",
+			session:  smqauthn.Session{},
+			domainID: domainID,
+			id:       validID,
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:   "disable report config with empty domainID",
+			token:  validToken,
+			id:     validID,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "disable report config with service error",
+			token:    validToken,
+			id:       validID,
+			domainID: domainID,
+			svcResp:  reports.ReportConfig{},
+			svcErr:   svcerr.ErrAuthorization,
+			status:   http.StatusForbidden,
+			err:      svcerr.ErrAuthorization,
+		},
+		{
+			desc:     "disable report config with empty id",
+			token:    validToken,
+			id:       "",
+			domainID: domainID,
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client: ts.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/reports/configs/%s/disable", ts.URL, tc.domainID, tc.id),
+				token:  tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("DisableReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
 type respBody struct {
-	Err     string    `json:"error"`
-	Message string    `json:"message"`
-	Total   uint64    `json:"total"`
-	ID      string    `json:"id"`
-	Status  re.Status `json:"status"`
+	Err     string         `json:"error"`
+	Message string         `json:"message"`
+	Total   uint64         `json:"total"`
+	ID      string         `json:"id"`
+	Status  reports.Status `json:"status"`
 }

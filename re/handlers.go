@@ -14,7 +14,6 @@ import (
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
-	lua "github.com/yuin/gopher-lua"
 )
 
 var (
@@ -79,56 +78,18 @@ func matchSubject(published, subscribed string) bool {
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglog.RunInfo {
-	l := lua.NewState()
-	defer l.Close()
-	preload(l)
-	message := prepareMsg(l, msg)
-
-	// Set the message object as a Lua global variable.
-	l.SetGlobal("message", message)
-
-	// Set binding functions as a Lua global functions.
-	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
-	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
-	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
-	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
-
 	details := []slog.Attr{
 		slog.String("domain_id", r.DomainID),
 		slog.String("rule_id", r.ID),
 		slog.String("rule_name", r.Name),
 		slog.Time("exec_time", time.Now().UTC()),
 	}
-	if err := l.DoString(r.Logic.Value); err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
+	switch r.Logic.Type {
+	case GoType:
+		return re.processGo(ctx, details, r, msg)
+	default:
+		return re.processLua(ctx, details, r, msg)
 	}
-	// Get the last result.
-	result := l.Get(-1)
-	if result == lua.LNil {
-		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with nil script result", Details: details}
-	}
-	// Converting Lua is an expensive operation, so
-	// don't do it if there are no outputs.
-	if len(r.Logic.Outputs) == 0 {
-		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no output channels", Details: details}
-	}
-	var err error
-	res := convertLua(result)
-	for _, o := range r.Logic.Outputs {
-		// If value is false, don't run the follow-up.
-		if v, ok := res.(bool); ok && !v {
-			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}
-		}
-		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
-			err = errors.Wrap(e, err)
-		}
-	}
-	ret := pkglog.RunInfo{Level: slog.LevelInfo, Message: "rule processed successfully", Details: details}
-	if err != nil {
-		ret.Level = slog.LevelError
-		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)
-	}
-	return ret
 }
 
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {

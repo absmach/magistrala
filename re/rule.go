@@ -12,6 +12,11 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 )
 
+const (
+	LuaType ScriptType = iota
+	GoType
+)
+
 const protocol = "nats"
 
 // ScriptOutput is the indicator for type of the logic

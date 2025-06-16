@@ -270,7 +270,7 @@ func viewReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 			return viewReportTemplateRes{}, err
 		}
 
-		template, err := svc.ViewReportTemplate(ctx, session,req.ID)
+		template, err := svc.ViewReportTemplate(ctx, session, req.ID)
 		if err != nil {
 			return viewReportTemplateRes{}, err
 		}

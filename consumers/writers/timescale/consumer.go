@@ -47,7 +47,7 @@ func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{
 		if err != nil && errors.Contains(err, repoerr.ErrConflict) {
 			return messaging.NewError(repoerr.ErrConflict, messaging.Term)
 		}
-		return nil
+		return err
 	}
 }
 

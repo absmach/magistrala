@@ -34,7 +34,7 @@ func (h handler) Handle(msg *messaging.Message) (err error) {
 
 	var alarm alarms.Alarm
 	if err := gob.NewDecoder(bytes.NewReader(msg.GetPayload())).Decode(&alarm); err != nil {
-		return err
+		return messaging.NewError(err, messaging.Term)
 	}
 	alarm.DomainID = msg.GetDomain()
 	alarm.ChannelID = msg.GetChannel()

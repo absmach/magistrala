@@ -42,6 +42,11 @@ func (req addReportConfigReq) validate() error {
 	if err := req.Schedule.Validate(); err != nil {
 		return errors.Wrap(err, apiutil.ErrValidation)
 	}
+	if req.ReportTemplate != "" {
+		if err := req.ReportTemplate.Validate(); err != nil {
+			return errors.Wrap(apiutil.ErrValidation, err)
+		}
+	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }
 
@@ -173,7 +178,46 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 
 func validateScheduler(sch schedule.Schedule) error {
 	if sch.Recurring != schedule.None && sch.RecurringPeriod < 1 {
-		return errors.Wrap(apiutil.ErrValidation, errInvalidRecurringPeriod)
+		return errInvalidRecurringPeriod
+	}
+	return nil
+}
+
+type updateReportTemplateReq struct {
+	reports.ReportConfig `json:",inline"`
+}
+
+func (req updateReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.ReportTemplate == "" {
+		return errors.Wrap(apiutil.ErrValidation, errMissingReportTemplate)
+	}
+	if err := req.ReportTemplate.Validate(); err != nil {
+		return errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return nil
+}
+
+type getReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req getReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type deleteReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req deleteReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
 	}
 	return nil
 }

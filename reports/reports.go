@@ -153,7 +153,7 @@ type ReportConfig struct {
 	Config         *MetricConfig     `json:"config,omitempty"`
 	Email          *EmailSetting     `json:"email,omitempty"`
 	Metrics        []ReqMetric       `json:"metrics,omitempty"`
-	ReportTemplate string            `json:"report_template,omitempty"`
+	ReportTemplate ReportTemplate    `json:"report_template,omitempty"`
 	Status         Status            `json:"status"`
 	CreatedAt      time.Time         `json:"created_at"`
 	CreatedBy      string            `json:"created_by,omitempty"`
@@ -396,7 +396,7 @@ type Repository interface {
 	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 
-	UpdateReportTemplate(ctx context.Context, domainID, reportID, template string) error
+	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error
 	ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error)
 	DeleteReportTemplate(ctx context.Context, domainID, reportID string) error
 }

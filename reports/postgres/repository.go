@@ -313,7 +313,7 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	return report, nil
 }
 
-func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domainID, reportID, template string) error {
+func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domainID, reportID string, template reports.ReportTemplate) error {
 	q := `
 		UPDATE report_configs 
 		SET report_template = :report_template, updated_at = :updated_at 

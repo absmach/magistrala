@@ -4,8 +4,13 @@
 package re
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
+	"log/slog"
 
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
@@ -25,6 +30,53 @@ import (
 )
 
 const payloadKey = "payload"
+
+func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) pkglog.RunInfo {
+	l := lua.NewState()
+	defer l.Close()
+	preload(l)
+	message := prepareMsg(l, msg)
+
+	// Set the message object as a Lua global variable.
+	l.SetGlobal("message", message)
+
+	// Set binding functions as a Lua global functions.
+	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
+	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
+	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
+	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
+
+	if err := l.DoString(r.Logic.Value); err != nil {
+		return pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
+	}
+	// Get the last result.
+	result := l.Get(-1)
+	if result == lua.LNil {
+		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with nil script result", Details: details}
+	}
+	// Converting Lua is an expensive operation, so
+	// don't do it if there are no outputs.
+	if len(r.Logic.Outputs) == 0 {
+		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no output channels", Details: details}
+	}
+	var err error
+	res := convertLua(result)
+	for _, o := range r.Logic.Outputs {
+		// If value is false, don't run the follow-up.
+		if v, ok := res.(bool); ok && !v {
+			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}
+		}
+		if e := re.handleOutput(ctx, o, r, msg, res); e != nil {
+			err = errors.Wrap(e, err)
+		}
+	}
+	ret := pkglog.RunInfo{Level: slog.LevelInfo, Message: "rule processed successfully", Details: details}
+	if err != nil {
+		ret.Level = slog.LevelError
+		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)
+	}
+	return ret
+}
 
 func preload(l *lua.LState) {
 	db.Preload(l)

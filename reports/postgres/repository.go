@@ -359,10 +359,10 @@ func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domain
 		SET custom_template = NULL, updated_at = :updated_at 
 		WHERE id = :id AND domain_id = :domain_id`
 
-		dbr := dbReport{
-		ID:             reportID,
-		DomainID:       domainID,
-		UpdatedAt:      time.Now().UTC(),
+	dbr := dbReport{
+		ID:        reportID,
+		DomainID:  domainID,
+		UpdatedAt: time.Now().UTC(),
 	}
 	result, err := repo.DB.ExecContext(ctx, q, dbr)
 	if err != nil {

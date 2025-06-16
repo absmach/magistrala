@@ -171,7 +171,7 @@ func (re *report) GenerateReport(ctx context.Context, session authn.Session, con
 }
 
 func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
-	genReportFile, err := generateFileFunc(action, cfg.Config.FileFormat, cfg.ReportTemplate)
+	genReportFile, err := generateFileFunc(ctx, action, cfg.Config.FileFormat, cfg.ReportTemplate)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -286,9 +286,9 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 		var err error
 
 		if cfg.Config.FileFormat == PDF && cfg.ReportTemplate != "" {
-			data, err = generatePDFReportWithCustom(cfg.Config.Title, reports, cfg.ReportTemplate)
+			data, err = generatePDFReportWithCustom(ctx, cfg.Config.Title, reports, cfg.ReportTemplate)
 		} else {
-			data, err = genReportFile(cfg.Config.Title, reports)
+			data, err = genReportFile(ctx, cfg.Config.Title, reports)
 		}
 
 		if err != nil {
@@ -331,16 +331,16 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 	}
 }
 
-func generateFileFunc(action ReportAction, format Format, customTemplate ReportTemplate) (func(string, []Report) ([]byte, error), error) {
+func generateFileFunc(ctx context.Context, action ReportAction, format Format, customTemplate ReportTemplate) (func(context.Context, string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {
 		case PDF:
-			return func(title string, reports []Report) ([]byte, error) {
+			return func(ctx context.Context, title string, reports []Report) ([]byte, error) {
 				if customTemplate != "" {
-					return generatePDFReportWithCustom(title, reports, customTemplate)
+					return generatePDFReportWithCustom(ctx, title, reports, customTemplate)
 				}
-				return generatePDFReportWithDefault(title, reports)
+				return generatePDFReportWithDefault(ctx, title, reports)
 			}, nil
 		case CSV:
 			return generateCSVReport, nil

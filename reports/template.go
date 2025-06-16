@@ -55,7 +55,7 @@ var (
 type ReportTemplate string
 
 func (temp ReportTemplate) String() string {
-    return string(temp)
+	return string(temp)
 }
 
 func (temp ReportTemplate) Validate() error {

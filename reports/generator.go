@@ -24,7 +24,6 @@ import (
 //go:embed report_template.html
 var reportTemplate embed.FS
 
-// ReportData holds the data for HTML template rendering
 type ReportData struct {
 	Title         string
 	GeneratedTime string
@@ -32,7 +31,7 @@ type ReportData struct {
 	Reports       []Report
 }
 
-func generatePDFReportWithDefault(title string, reports []Report) ([]byte, error) {
+func generatePDFReportWithDefault(ctx context.Context, title string, reports []Report) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
@@ -52,10 +51,10 @@ func generatePDFReportWithDefault(title string, reports []Report) ([]byte, error
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
 	}
 
-	return generator(string(templateContent), data)
+	return generator(ctx, string(templateContent), data)
 }
 
-func generatePDFReportWithCustom(title string, reports []Report, customTemplate ReportTemplate) ([]byte, error) {
+func generatePDFReportWithCustom(ctx context.Context, title string, reports []Report, customTemplate ReportTemplate) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
@@ -75,13 +74,13 @@ func generatePDFReportWithCustom(title string, reports []Report, customTemplate 
 	if customTemplate.String() != "" {
 		templateContent = customTemplate.String()
 	} else {
-		return generatePDFReportWithDefault(title, reports)
+		return generatePDFReportWithDefault(ctx, title, reports)
 	}
 
-	return generator(templateContent, data)
+	return generator(ctx, templateContent, data)
 }
 
-func generator(templateContent string, data ReportData) ([]byte, error) {
+func generator(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,
@@ -100,7 +99,7 @@ func generator(templateContent string, data ReportData) ([]byte, error) {
 	}
 
 	htmlContent := htmlBuf.String()
-	pdfBytes, err := htmlToPDF(htmlContent)
+	pdfBytes, err := htmlToPDF(ctx, htmlContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to convert HTML to PDF: %w", err))
 	}
@@ -108,7 +107,7 @@ func generator(templateContent string, data ReportData) ([]byte, error) {
 	return pdfBytes, nil
 }
 
-func htmlToPDF(htmlContent string) ([]byte, error) {
+func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 	opts := append(chromedp.DefaultExecAllocatorOptions[:],
 		chromedp.ExecPath("/usr/bin/chromium-browser"),
 		chromedp.NoSandbox,
@@ -123,13 +122,10 @@ func htmlToPDF(htmlContent string) ([]byte, error) {
 		chromedp.Flag("disable-features", "VizDisplayCompositor"),
 	)
 
-	allocCtx, cancel := chromedp.NewExecAllocator(context.Background(), opts...)
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
 	defer cancel()
 
-	ctx, cancel := chromedp.NewContext(allocCtx)
-	defer cancel()
-
-	ctx, cancel = context.WithTimeout(ctx, 30*time.Second)
+	ctx, cancel = chromedp.NewContext(allocCtx)
 	defer cancel()
 
 	var pdfBuffer []byte
@@ -183,7 +179,7 @@ func formatValue(msg senml.Message) string {
 	}
 }
 
-func generateCSVReport(title string, reports []Report) ([]byte, error) {
+func generateCSVReport(_ context.Context, title string, reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 

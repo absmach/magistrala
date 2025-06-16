@@ -32,7 +32,7 @@ type ReportData struct {
 	Reports       []Report
 }
 
-func generatePDFReport(title string, reports []Report, htmltemplate ...string) ([]byte, error) {
+func generatePDFReportWithDefault(title string, reports []Report) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
@@ -52,6 +52,36 @@ func generatePDFReport(title string, reports []Report, htmltemplate ...string) (
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
 	}
 
+	return generator(string(templateContent), data)
+}
+
+func generatePDFReportWithCustom(title string, reports []Report, customTemplate ReportTemplate) ([]byte, error) {
+	for i := range reports {
+		sort.Slice(reports[i].Messages, func(j, k int) bool {
+			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
+		})
+	}
+
+	now := time.Now().UTC()
+	data := ReportData{
+		Title:         title,
+		GeneratedTime: now.Format("15:04:05"),
+		GeneratedDate: now.Format("02 Jan 2006"),
+		Reports:       reports,
+	}
+
+	var templateContent string
+
+	if customTemplate.String() != "" {
+		templateContent = customTemplate.String()
+	} else {
+		return generatePDFReportWithDefault(title, reports)
+	}
+
+	return generator(templateContent, data)
+}
+
+func generator(templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,
@@ -59,7 +89,7 @@ func generatePDFReport(title string, reports []Report, htmltemplate ...string) (
 		"sub":         func(a, b int) int { return a - b },
 	})
 
-	tmpl, err = tmpl.Parse(string(templateContent))
+	tmpl, err := tmpl.Parse(templateContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to parse template: %w", err))
 	}

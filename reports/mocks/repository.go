@@ -467,7 +467,7 @@ func (_c *Repository_UpdateReportSchedule_Call) RunAndReturn(run func(ctx contex
 }
 
 // UpdateReportTemplate provides a mock function for the type Repository
-func (_mock *Repository) UpdateReportTemplate(ctx context.Context, domainID string, reportID string, template string) error {
+func (_mock *Repository) UpdateReportTemplate(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate) error {
 	ret := _mock.Called(ctx, domainID, reportID, template)
 
 	if len(ret) == 0 {
@@ -475,7 +475,7 @@ func (_mock *Repository) UpdateReportTemplate(ctx context.Context, domainID stri
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, reports.ReportTemplate) error); ok {
 		r0 = returnFunc(ctx, domainID, reportID, template)
 	} else {
 		r0 = ret.Error(0)
@@ -497,9 +497,9 @@ func (_e *Repository_Expecter) UpdateReportTemplate(ctx interface{}, domainID in
 	return &Repository_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, domainID, reportID, template)}
 }
 
-func (_c *Repository_UpdateReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string, template string)) *Repository_UpdateReportTemplate_Call {
+func (_c *Repository_UpdateReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate)) *Repository_UpdateReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(reports.ReportTemplate))
 	})
 	return _c
 }
@@ -509,7 +509,7 @@ func (_c *Repository_UpdateReportTemplate_Call) Return(err error) *Repository_Up
 	return _c
 }
 
-func (_c *Repository_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string, template string) error) *Repository_UpdateReportTemplate_Call {
+func (_c *Repository_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate) error) *Repository_UpdateReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

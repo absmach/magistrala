@@ -4,7 +4,9 @@
 package reports
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 )
@@ -56,6 +58,28 @@ type ReportTemplate string
 
 func (temp ReportTemplate) String() string {
 	return string(temp)
+}
+
+func (temp ReportTemplate) MarshalJSON() ([]byte, error) {
+	return json.Marshal(string(temp))
+}
+
+func (temp *ReportTemplate) UnmarshalJSON(data []byte) error {
+	var s string
+	if err := json.Unmarshal(data, &s); err != nil {
+		return err
+	}
+
+	if strings.HasSuffix(s, ".html") {
+		content, err := os.ReadFile(s)
+		if err != nil {
+			return fmt.Errorf("failed to read template file: %w", err)
+		}
+		*temp = ReportTemplate(content)
+	} else {
+		*temp = ReportTemplate(s)
+	}
+	return nil
 }
 
 func (temp ReportTemplate) Validate() error {

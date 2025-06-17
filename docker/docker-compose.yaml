@@ -431,7 +431,7 @@ services:
       - magistrala-base-net
     volumes:
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
-      - ./templates/report_template.html:/report_template.html
+      - ./templates/${MG_REPORTS_TEMPLATE}:/report_template.html
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

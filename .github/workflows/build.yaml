@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 
 name: Continuous Delivery
-
 on:
   push:
     branches:
@@ -12,6 +11,8 @@ jobs:
   build-and-push:
     name: Build and Push
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout code
@@ -52,3 +53,17 @@ jobs:
       - name: Build and push Dockers
         run: |
           make latest -j $(nproc)
+
+      - name: Notify amdm Helm Chart Repository of Magistrala Image Update
+        if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.REPO_DISPATCH_TOKEN }}
+          repository: absmach/amdm
+          event-type: magistrala-image-updated
+          client-payload: |
+            {
+              "image_repository": "ghcr.io/absmach/magistrala",
+              "image_tag": "latest",
+              "source_commit_sha": "${{ github.sha }}"
+            }

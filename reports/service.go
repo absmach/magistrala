@@ -43,8 +43,8 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 	}
 }
 
-func (re *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
-	id, err := re.idp.ID()
+func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+	id, err := r.idp.ID()
 	if err != nil {
 		return ReportConfig{}, err
 	}
@@ -61,7 +61,7 @@ func (re *report) AddReportConfig(ctx context.Context, session authn.Session, cf
 	}
 	cfg.Schedule.Time = cfg.Schedule.StartDateTime
 
-	reportConfig, err := re.repo.AddReportConfig(ctx, cfg)
+	reportConfig, err := r.repo.AddReportConfig(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
@@ -69,8 +69,8 @@ func (re *report) AddReportConfig(ctx context.Context, session authn.Session, cf
 	return reportConfig, nil
 }
 
-func (re *report) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
-	cfg, err := re.repo.ViewReportConfig(ctx, id)
+func (r *report) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+	cfg, err := r.repo.ViewReportConfig(ctx, id)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -78,10 +78,10 @@ func (re *report) ViewReportConfig(ctx context.Context, session authn.Session, i
 	return cfg, nil
 }
 
-func (re *report) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+func (r *report) UpdateReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
 	cfg.UpdatedAt = time.Now().UTC()
 	cfg.UpdatedBy = session.UserID
-	reportConfig, err := re.repo.UpdateReportConfig(ctx, cfg)
+	reportConfig, err := r.repo.UpdateReportConfig(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -89,11 +89,11 @@ func (re *report) UpdateReportConfig(ctx context.Context, session authn.Session,
 	return reportConfig, nil
 }
 
-func (re *report) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+func (r *report) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
 	cfg.UpdatedAt = time.Now().UTC()
 	cfg.UpdatedBy = session.UserID
 	cfg.Schedule.Time = cfg.Schedule.StartDateTime
-	c, err := re.repo.UpdateReportSchedule(ctx, cfg)
+	c, err := r.repo.UpdateReportSchedule(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -101,24 +101,24 @@ func (re *report) UpdateReportSchedule(ctx context.Context, session authn.Sessio
 	return c, nil
 }
 
-func (re *report) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
-	if err := re.repo.RemoveReportConfig(ctx, id); err != nil {
+func (r *report) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
+	if err := r.repo.RemoveReportConfig(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	return nil
 }
 
-func (re *report) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
+func (r *report) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
 	pm.Domain = session.DomainID
-	page, err := re.repo.ListReportsConfig(ctx, pm)
+	page, err := r.repo.ListReportsConfig(ctx, pm)
 	if err != nil {
 		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return page, nil
 }
 
-func (re *report) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+func (r *report) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
 	status, err := ToStatus(Enabled)
 	if err != nil {
 		return ReportConfig{}, err
@@ -129,7 +129,7 @@ func (re *report) EnableReportConfig(ctx context.Context, session authn.Session,
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}
-	cfg, err = re.repo.UpdateReportConfigStatus(ctx, cfg)
+	cfg, err = r.repo.UpdateReportConfigStatus(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -137,7 +137,7 @@ func (re *report) EnableReportConfig(ctx context.Context, session authn.Session,
 	return cfg, nil
 }
 
-func (re *report) DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
+func (r *report) DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
 	status, err := ToStatus(Disabled)
 	if err != nil {
 		return ReportConfig{}, err
@@ -148,14 +148,14 @@ func (re *report) DisableReportConfig(ctx context.Context, session authn.Session
 		UpdatedBy: session.UserID,
 		Status:    status,
 	}
-	cfg, err = re.repo.UpdateReportConfigStatus(ctx, cfg)
+	cfg, err = r.repo.UpdateReportConfigStatus(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return cfg, nil
 }
 
-func (re *report) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error) {
+func (r *report) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
 	if config.Status != EnabledStatus {
@@ -163,7 +163,7 @@ func (re *report) GenerateReport(ctx context.Context, session authn.Session, con
 	}
 	fmt.Printf("cofig is %+v\n", config)
 
-	reportPage, err := re.generateReport(ctx, config, action)
+	reportPage, err := r.generateReport(ctx, config, action)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -171,7 +171,7 @@ func (re *report) GenerateReport(ctx context.Context, session authn.Session, con
 	return reportPage, nil
 }
 
-func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
+func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
 	genReportFile, err := generateFileFunc(ctx, action, cfg.Config.FileFormat, cfg.ReportTemplate)
 	if err != nil {
 		return ReportPage{}, err
@@ -251,7 +251,7 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 			pm.Format = metric.Format
 		}
 
-		msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+		msgs, err := r.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
 			ChannelId:    metric.ChannelID,
 			DomainId:     cfg.DomainID,
 			PageMetadata: pm,
@@ -265,7 +265,7 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 
 		for msgs.GetTotal() > (pm.Offset + pm.Limit) {
 			pm.Offset = pm.Offset + pm.Limit
-			msgs, err := re.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
+			msgs, err := r.readers.ReadMessages(ctx, &grpcReadersV1.ReadMessagesReq{
 				ChannelId:    metric.ChannelID,
 				DomainId:     cfg.DomainID,
 				PageMetadata: pm,
@@ -310,7 +310,7 @@ func (re *report) generateReport(ctx context.Context, cfg ReportConfig, action R
 
 		switch action {
 		case EmailReport:
-			if err := re.emailReports(*cfg.Email, file); err != nil {
+			if err := r.emailReports(*cfg.Email, file); err != nil {
 				return ReportPage{}, errors.Wrap(err, svcerr.ErrCreateEntity)
 			}
 
@@ -353,7 +353,7 @@ func generateFileFunc(ctx context.Context, action ReportAction, format Format, c
 	}
 }
 
-func (re *report) emailReports(es EmailSetting, file ReportFile) error {
+func (r *report) emailReports(es EmailSetting, file ReportFile) error {
 	if err := es.Validate(); err != nil {
 		return errors.Wrap(svcerr.ErrMalformedEntity, err)
 	}
@@ -362,7 +362,7 @@ func (re *report) emailReports(es EmailSetting, file ReportFile) error {
 		file.Name: file.Data,
 	}
 
-	if err := re.email.SendEmailNotification(
+	if err := r.email.SendEmailNotification(
 		es.To,
 		"",
 		es.Subject,
@@ -431,8 +431,8 @@ func groupReportsByPublisher(metric Metric, sMsgs []senml.Message) []Report {
 	return groupedReports
 }
 
-func (re *report) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error {
-	err := re.repo.UpdateReportTemplate(ctx, session.DomainID, cfg.ID, cfg.ReportTemplate)
+func (r *report) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error {
+	err := r.repo.UpdateReportTemplate(ctx, session.DomainID, cfg.ID, cfg.ReportTemplate)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
@@ -440,8 +440,8 @@ func (re *report) UpdateReportTemplate(ctx context.Context, session authn.Sessio
 	return nil
 }
 
-func (re *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
-	template, err := re.repo.ViewReportTemplate(ctx, session.DomainID, id)
+func (r *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+	template, err := r.repo.ViewReportTemplate(ctx, session.DomainID, id)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
@@ -449,8 +449,8 @@ func (re *report) ViewReportTemplate(ctx context.Context, session authn.Session,
 	return template, nil
 }
 
-func (re *report) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
-	err := re.repo.DeleteReportTemplate(ctx, session.DomainID, id)
+func (r *report) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
+	err := r.repo.DeleteReportTemplate(ctx, session.DomainID, id)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}

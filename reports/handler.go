@@ -12,14 +12,14 @@ import (
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 )
 
-func (re *report) StartScheduler(ctx context.Context) error {
-	defer re.ticker.Stop()
+func (r *report) StartScheduler(ctx context.Context) error {
+	defer r.ticker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case <-re.ticker.Tick():
+		case <-r.ticker.Tick():
 			due := time.Now().UTC()
 
 			pm := PageMeta{
@@ -27,9 +27,9 @@ func (re *report) StartScheduler(ctx context.Context) error {
 				ScheduledBefore: &due,
 			}
 
-			reportConfigs, err := re.repo.ListReportsConfig(ctx, pm)
+			reportConfigs, err := r.repo.ListReportsConfig(ctx, pm)
 			if err != nil {
-				re.runInfo <- pkglog.RunInfo{
+				r.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelError,
 					Message: fmt.Sprintf("failed to list reports : %s", err),
 					Details: []slog.Attr{slog.Time("due", due)},
@@ -39,11 +39,11 @@ func (re *report) StartScheduler(ctx context.Context) error {
 
 			for _, c := range reportConfigs.ReportConfigs {
 				go func(cfg ReportConfig) {
-					if _, err := re.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
-						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
+					if _, err := r.repo.UpdateReportDue(ctx, cfg.ID, cfg.Schedule.NextDue()); err != nil {
+						r.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update report: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
 					}
-					_, err := re.generateReport(ctx, cfg, EmailReport)
+					_, err := r.generateReport(ctx, cfg, EmailReport)
 					ret := pkglog.RunInfo{
 						Details: []slog.Attr{
 							slog.String("domain_id", cfg.DomainID),
@@ -56,7 +56,7 @@ func (re *report) StartScheduler(ctx context.Context) error {
 						ret.Level = slog.LevelError
 						ret.Message = fmt.Sprintf("failed to generate report: %s", err)
 					}
-					re.runInfo <- ret
+					r.runInfo <- ret
 				}(c)
 			}
 		}

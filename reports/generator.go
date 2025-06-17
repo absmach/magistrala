@@ -6,11 +6,12 @@ package reports
 import (
 	"bytes"
 	"context"
-	"embed"
 	"encoding/csv"
 	"fmt"
 	"html/template"
+	"io"
 	"net/url"
+	"os"
 	"sort"
 	"time"
 
@@ -21,8 +22,7 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-//go:embed report_template.html
-var reportTemplate embed.FS
+const defaultTemplatePath = "/report_template.html"
 
 type ReportData struct {
 	Title         string
@@ -46,12 +46,12 @@ func generatePDFReportWithDefault(ctx context.Context, title string, reports []R
 		Reports:       reports,
 	}
 
-	templateContent, err := reportTemplate.ReadFile("report_template.html")
+	templateContent, err := readTemplateFile(defaultTemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
 	}
 
-	return generator(ctx, string(templateContent), data)
+	return generator(ctx, templateContent, data)
 }
 
 func generatePDFReportWithCustom(ctx context.Context, title string, reports []Report, customTemplate ReportTemplate) ([]byte, error) {
@@ -140,10 +140,10 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 				WithPrintBackground(true).
 				WithPaperWidth(8.27).  // A4 width in inches
 				WithPaperHeight(11.7). // A4 height in inches
-				WithMarginTop(0.4).
-				WithMarginBottom(0.4).
-				WithMarginLeft(0.4).
-				WithMarginRight(0.4).
+				WithMarginTop(0).
+				WithMarginBottom(0).
+				WithMarginLeft(0).
+				WithMarginRight(0).
 				WithPreferCSSPageSize(true).
 				Do(ctx)
 			return err
@@ -154,6 +154,21 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 	}
 
 	return pdfBuffer, nil
+}
+
+func readTemplateFile(path string) (string, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("failed to open template file: %w", err)
+	}
+	defer file.Close()
+
+	content, err := io.ReadAll(file)
+	if err != nil {
+		return "", fmt.Errorf("failed to read template file: %w", err)
+	}
+
+	return string(content), nil
 }
 
 func formatTime(t float64) string {

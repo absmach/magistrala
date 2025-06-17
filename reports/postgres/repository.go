@@ -60,7 +60,7 @@ func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports
 
 func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string) (reports.ReportConfig, error) {
 	q := `
-		SELECT id, name, description, domain_id, config, metrics,
+		SELECT id, name, description, domain_id, config, metrics, report_template,
 			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config
 		WHERE id = $1;

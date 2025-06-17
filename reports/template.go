@@ -13,9 +13,6 @@ import (
 
 var (
 	requiredFields = []string{
-		"{{.Title}}",
-		"{{.GeneratedDate}}",
-		"{{.GeneratedTime}}",
 		"{{$.Title}}",
 		"{{$.GeneratedDate}}",
 		"{{$.GeneratedTime}}",
@@ -101,14 +98,15 @@ func (temp ReportTemplate) Validate() error {
 		}
 	}
 
-	rangePattern := regexp.MustCompile(`\{\{range\s+\.\w+\}\}`)
-	endPattern := regexp.MustCompile(`\{\{end\}\}`)
+	blockStartPattern := regexp.MustCompile(`\{\{\s*(range|if|with)\b[^{}]*\}\}`)
+	blockEndPattern := regexp.MustCompile(`\{\{\s*end\s*\}\}`)
 
-	rangeMatches := rangePattern.FindAllString(template, -1)
-	endMatches := endPattern.FindAllString(template, -1)
+	blockStarts := blockStartPattern.FindAllString(template, -1)
+	blockEnds := blockEndPattern.FindAllString(template, -1)
 
-	if len(rangeMatches) != len(endMatches) {
-		return fmt.Errorf("unmatched {{range}} and {{end}} blocks")
+	if len(blockStarts) != len(blockEnds) {
+		return fmt.Errorf("unmatched template blocks: found %d block start(s) (range/if/with) and %d end(s)",
+			len(blockStarts), len(blockEnds))
 	}
 
 	for _, class := range requiredCSS {
@@ -137,19 +135,6 @@ func (temp ReportTemplate) Validate() error {
 	for _, header := range expectedHeaders {
 		if !strings.Contains(template, header) {
 			return fmt.Errorf("missing expected table header: %s", header)
-		}
-	}
-
-	requiredFunctions := []string{
-		"formatTime",
-		"formatValue",
-	}
-
-	for _, function := range requiredFunctions {
-		pattern := fmt.Sprintf(`function\s+%s\s*\(`, function)
-		matched, _ := regexp.MatchString(pattern, template)
-		if !matched {
-			return fmt.Errorf("missing required JavaScript function: %s", function)
 		}
 	}
 

@@ -25,13 +25,7 @@ func generateReportEndpoint(svc reports.Service) endpoint.Endpoint {
 			return generateReportResp{}, err
 		}
 
-		res, err := svc.GenerateReport(ctx, session, reports.ReportConfig{
-			Name:     req.Name,
-			DomainID: req.DomainID,
-			Config:   req.Config,
-			Metrics:  req.Metrics,
-			Email:    req.Email,
-		}, req.action)
+		res, err := svc.GenerateReport(ctx, session, req.ReportConfig, req.action)
 		if err != nil {
 			return generateReportResp{}, err
 		}

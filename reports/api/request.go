@@ -39,9 +39,9 @@ func (req addReportConfigReq) validate() error {
 	if req.Name == "" {
 		return apiutil.ErrMissingName
 	}
-	if req.ReportTemplate != "" {
+	if req.ReportTemplate.String() != "" {
 		if err := req.ReportTemplate.Validate(); err != nil {
-			return errors.Wrap(apiutil.ErrValidation, err)
+			return errors.Wrap(err, apiutil.ErrValidation)
 		}
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
@@ -112,6 +112,12 @@ type generateReportReq struct {
 func (req generateReportReq) validate() error {
 	if len(req.Config.Title) > MaxTitleSize {
 		return errors.Wrap(apiutil.ErrValidation, errTitleSize)
+	}
+
+	if req.ReportTemplate.String() != "" {
+		if err := req.ReportTemplate.Validate(); err != nil {
+			return errors.Wrap(err, apiutil.ErrValidation)
+		}
 	}
 
 	switch req.action {
@@ -188,7 +194,7 @@ func (req updateReportTemplateReq) validate() error {
 		return errors.Wrap(apiutil.ErrValidation, errMissingReportTemplate)
 	}
 	if err := req.ReportTemplate.Validate(); err != nil {
-		return errors.Wrap(apiutil.ErrValidation, err)
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 	return nil
 }

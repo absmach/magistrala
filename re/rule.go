@@ -4,12 +4,15 @@
 package re
 
 import (
+	"context"
 	"encoding/json"
 	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
 const (
@@ -99,4 +102,31 @@ type Rule struct {
 	CreatedBy     string            `json:"created_by"`
 	UpdatedAt     time.Time         `json:"updated_at"`
 	UpdatedBy     string            `json:"updated_by"`
+}
+
+type Service interface {
+	messaging.MessageHandler
+	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
+	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
+	UpdateRuleTags(ctx context.Context, session authn.Session, channel Rule) (Rule, error)
+	UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
+	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
+	RemoveRule(ctx context.Context, session authn.Session, id string) error
+	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+
+	StartScheduler(ctx context.Context) error
+}
+
+type Repository interface {
+	AddRule(ctx context.Context, r Rule) (Rule, error)
+	ViewRule(ctx context.Context, id string) (Rule, error)
+	UpdateRule(ctx context.Context, r Rule) (Rule, error)
+	UpdateRuleTags(ctx context.Context, r Rule) (Rule, error)
+	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
+	RemoveRule(ctx context.Context, id string) error
+	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
+	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 }

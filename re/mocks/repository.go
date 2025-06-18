@@ -419,6 +419,61 @@ func (_c *Repository_UpdateRuleStatus_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
+// UpdateRuleTags provides a mock function for the type Repository
+func (_mock *Repository) UpdateRuleTags(ctx context.Context, r re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, r)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleTags")
+	}
+
+	var r0 re.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) (re.Rule, error)); ok {
+		return returnFunc(ctx, r)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.Rule) re.Rule); ok {
+		r0 = returnFunc(ctx, r)
+	} else {
+		r0 = ret.Get(0).(re.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.Rule) error); ok {
+		r1 = returnFunc(ctx, r)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateRuleTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleTags'
+type Repository_UpdateRuleTags_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleTags is a helper method to define mock.On call
+//   - ctx
+//   - r
+func (_e *Repository_Expecter) UpdateRuleTags(ctx interface{}, r interface{}) *Repository_UpdateRuleTags_Call {
+	return &Repository_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r)}
+}
+
+func (_c *Repository_UpdateRuleTags_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleTags_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(re.Rule))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateRuleTags_Call) Return(rule re.Rule, err error) *Repository_UpdateRuleTags_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *Repository_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, r re.Rule) (re.Rule, error)) *Repository_UpdateRuleTags_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewRule provides a mock function for the type Repository
 func (_mock *Repository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	ret := _mock.Called(ctx, id)

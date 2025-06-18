@@ -19,17 +19,6 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
-type Repository interface {
-	AddRule(ctx context.Context, r Rule) (Rule, error)
-	ViewRule(ctx context.Context, id string) (Rule, error)
-	UpdateRule(ctx context.Context, r Rule) (Rule, error)
-	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
-	RemoveRule(ctx context.Context, id string) error
-	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
-	ListRules(ctx context.Context, pm PageMeta) (Page, error)
-	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
-}
-
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
 	Total           uint64              `json:"total" db:"total"`
@@ -54,20 +43,6 @@ type Page struct {
 	Limit  uint64 `json:"limit"`
 	Total  uint64 `json:"total"`
 	Rules  []Rule `json:"rules"`
-}
-
-type Service interface {
-	messaging.MessageHandler
-	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
-	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
-	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
-	UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
-	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
-	RemoveRule(ctx context.Context, session authn.Session, id string) error
-	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
-	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
-
-	StartScheduler(ctx context.Context) error
 }
 
 type re struct {
@@ -134,6 +109,17 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 	r.UpdatedAt = time.Now().UTC()
 	r.UpdatedBy = session.UserID
 	rule, err := re.repo.UpdateRule(ctx, r)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return rule, nil
+}
+
+func (re *re) UpdateRuleTags(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+	r.UpdatedAt = time.Now().UTC()
+	r.UpdatedBy = session.UserID
+	rule, err := re.repo.UpdateRuleTags(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}

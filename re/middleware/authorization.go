@@ -82,6 +82,22 @@ func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn
 	return am.svc.UpdateRule(ctx, session, r)
 }
 
+func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
+	}
+
+	return am.svc.UpdateRuleTags(ctx, session, r)
+}
+
 func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	if err := am.authorize(ctx, smqauthz.PolicyReq{
 		Domain:      session.DomainID,

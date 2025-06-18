@@ -82,6 +82,26 @@ func (lm *loggingMiddleware) UpdateRule(ctx context.Context, session authn.Sessi
 	return lm.svc.UpdateRule(ctx, session, r)
 }
 
+func (lm *loggingMiddleware) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.Group("rule",
+				slog.String("id", r.ID),
+				slog.String("name", r.Name),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Update rule failed", args...)
+			return
+		}
+		lm.logger.Info("Update rule tags completed successfully", args...)
+	}(time.Now())
+	return lm.svc.UpdateRuleTags(ctx, session, r)
+}
+
 func (lm *loggingMiddleware) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {
 	defer func(begin time.Time) {
 		args := []any{

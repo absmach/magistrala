@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/jackc/pgtype"
 	"github.com/lib/pq"
 )
 
@@ -19,6 +20,7 @@ type dbRule struct {
 	ID              string             `db:"id"`
 	Name            string             `db:"name"`
 	DomainID        string             `db:"domain_id"`
+	Tags            pgtype.TextArray   `db:"tags,omitempty"`
 	Metadata        []byte             `db:"metadata,omitempty"`
 	InputChannel    string             `db:"input_channel"`
 	InputTopic      sql.NullString     `db:"input_topic"`
@@ -59,10 +61,15 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	if !r.Schedule.Time.IsZero() {
 		t.Valid = true
 	}
+	var tags pgtype.TextArray
+	if err := tags.Set(r.Tags); err != nil {
+		return dbRule{}, err
+	}
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
 		DomainID:        r.DomainID,
+		Tags:            tags,
 		Metadata:        metadata,
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
@@ -94,10 +101,15 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 	for _, v := range dto.LogicOutputs {
 		lo = append(lo, re.ScriptOutput(v))
 	}
+	var tags []string
+	for _, e := range dto.Tags.Elements {
+		tags = append(tags, e.String)
+	}
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
 		DomainID:     dto.DomainID,
+		Tags:         tags,
 		Metadata:     metadata,
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),

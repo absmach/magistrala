@@ -87,6 +87,7 @@ type Rule struct {
 	Name          string            `json:"name"`
 	DomainID      string            `json:"domain"`
 	Metadata      Metadata          `json:"metadata,omitempty"`
+	Tags          []string          `json:"tags,omitempty"`
 	InputChannel  string            `json:"input_channel"`
 	InputTopic    string            `json:"input_topic"`
 	Logic         Script            `json:"logic"`

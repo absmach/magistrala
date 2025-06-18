@@ -43,6 +43,7 @@ type PageMeta struct {
 	OutputChannel   string              `json:"output_channel,omitempty" db:"output_channel"`
 	Status          Status              `json:"status,omitempty" db:"status"`
 	Domain          string              `json:"domain_id,omitempty" db:"domain_id"`
+	Tag             string              `json:"tag,omitempty"`
 	ScheduledBefore *time.Time          `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
 	ScheduledAfter  *time.Time          `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
 	Recurring       *schedule.Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type

@@ -83,7 +83,7 @@ type MetricConfig struct {
 	To    string `json:"to,omitempty"`    // Mandatory field
 	Title string `json:"title,omitempty"` // Mandatory field
 
-	FileFormat Format `json:"file_format,omitempty"` // Optional field
+	FileFormat Format `json:"file_format"` // Optional field
 
 	Aggregation AggConfig `json:"aggregation,omitempty"` // Optional field
 }

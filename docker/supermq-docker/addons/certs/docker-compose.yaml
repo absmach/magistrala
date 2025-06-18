@@ -120,7 +120,7 @@ services:
       AM_JAEGER_URL: ${SMQ_JAEGER_URL}
       AM_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
     volumes:
-      - ./config.yaml:/config/config.yml
+      - ./config.yaml:/config/config.yaml
     ports:
       - 9010:9010
       - 7012:7012

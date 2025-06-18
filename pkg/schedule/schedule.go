@@ -9,7 +9,10 @@ import (
 	"time"
 )
 
-var ErrInvalidRecurringType = errors.New("invalid recurring type")
+var (
+	ErrInvalidRecurringType = errors.New("invalid recurring type")
+	ErrStartDateTimeInPast  = errors.New("start_datetime must be greater than or equal to current time")
+)
 
 // Type can be daily, weekly or monthly.
 type Recurring uint
@@ -97,6 +100,12 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+
+	now := time.Now().UTC()
+	if startDateTime.Before(now) {
+		return ErrStartDateTimeInPast
+	}
+
 	s.StartDateTime = startDateTime
 
 	if aux.Time != "" {

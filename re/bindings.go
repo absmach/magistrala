@@ -10,12 +10,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"text/template"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
+	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
+	"github.com/jmoiron/sqlx"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -198,6 +201,74 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 	topic := messaging.EncodeTopicSuffix(msg.Domain, channel, subtopic)
 	if err := re.rePubSub.Publish(ctx, topic, m); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (re *re) saveRemotePg(ctx context.Context, rule Rule, val interface{}, msg *messaging.Message) error {
+	if rule.Outputs.PosgresDBOutput == nil {
+		return errors.New("missing postgresDB output")
+	}
+
+	data := map[string]interface{}{
+		"result": val,
+		"msg":    msg,
+	}
+
+	tmpl, err := template.New("postgres").Parse(rule.Outputs.PosgresDBOutput.Mapping)
+	if err != nil {
+		return err
+	}
+
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, data); err != nil {
+		return err
+	}
+
+	mapping := output.String()
+	var columns map[string]interface{}
+	if err = json.Unmarshal([]byte(mapping), &columns); err != nil {
+		return err
+	}
+
+	cfg := rule.Outputs.PosgresDBOutput
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database,
+	)
+
+	db, err := sqlx.Open("pgx", connStr)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		return errors.Wrap(errors.New("failed to connect to DB"), err)
+	}
+
+	cols := []string{}
+	values := []interface{}{}
+	placeholders := []string{}
+	i := 1
+	for k, v := range data {
+		cols = append(cols, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		i++
+	}
+
+	q := fmt.Sprintf(
+		`INSERT INTO %s (%s) VALUES (%s)`,
+		cfg.Table,
+		strings.Join(cols, ", "),
+		strings.Join(placeholders, ", "),
+	)
+
+	_, err = db.Exec(q, values...)
+	if err != nil {
+		return errors.Wrap(errors.New("failed to insert data"), err)
 	}
 
 	return nil

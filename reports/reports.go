@@ -154,9 +154,9 @@ type ReportConfig struct {
 	Email       *EmailSetting     `json:"email,omitempty"`
 	Metrics     []ReqMetric       `json:"metrics,omitempty"`
 	Status      Status            `json:"status"`
-	CreatedAt   time.Time         `json:"created_at,omitempty"`
+	CreatedAt   time.Time         `json:"created_at"`
 	CreatedBy   string            `json:"created_by,omitempty"`
-	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 	UpdatedBy   string            `json:"updated_by,omitempty"`
 }
 

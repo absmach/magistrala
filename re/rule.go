@@ -122,6 +122,7 @@ type PosgresDBOutput struct {
 	Password string `json:"password,omitempty"`
 	Database string `json:"database,omitempty"`
 	Table    string `json:"table,omitempty"`
+	Mapping  string `json:"mapping,omitempty"`
 }
 
 type ChannelOutput struct {

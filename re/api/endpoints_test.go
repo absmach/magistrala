@@ -815,9 +815,6 @@ func TestUpdateRuleTagsEndpoint(t *testing.T) {
 			if errRes.Err != "" || errRes.Message != "" {
 				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
 			}
-			fmt.Printf("\nreq is %+v\n", req)
-			fmt.Printf("\nerr is %+v\n", err)
-			fmt.Printf("\ntc.err is %+v\n", tc.err)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 			svcCall.Unset()

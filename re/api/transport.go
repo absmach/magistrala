@@ -75,7 +75,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						decodeUpdateRuleTags,
 						api.EncodeResponse,
 						opts...,
-					), "update_rule_tag").ServeHTTP)
+					), "update_rule_tags").ServeHTTP)
 
 					r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
 						updateRuleScheduleEndpoint(svc),

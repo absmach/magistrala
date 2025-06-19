@@ -10,7 +10,6 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
@@ -18,32 +17,6 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 )
-
-// PageMeta contains page metadata that helps navigation.
-type PageMeta struct {
-	Total           uint64              `json:"total" db:"total"`
-	Offset          uint64              `json:"offset" db:"offset"`
-	Limit           uint64              `json:"limit" db:"limit"`
-	Dir             string              `json:"dir" db:"dir"`
-	Name            string              `json:"name" db:"name"`
-	InputChannel    string              `json:"input_channel,omitempty" db:"input_channel"`
-	InputTopic      *string             `json:"input_topic,omitempty" db:"input_topic"`
-	Scheduled       *bool               `json:"scheduled,omitempty"`
-	OutputChannel   string              `json:"output_channel,omitempty" db:"output_channel"`
-	Status          Status              `json:"status,omitempty" db:"status"`
-	Domain          string              `json:"domain_id,omitempty" db:"domain_id"`
-	Tag             string              `json:"tag,omitempty"`
-	ScheduledBefore *time.Time          `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
-	ScheduledAfter  *time.Time          `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
-	Recurring       *schedule.Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
-}
-
-type Page struct {
-	Offset uint64 `json:"offset"`
-	Limit  uint64 `json:"limit"`
-	Total  uint64 `json:"total"`
-	Rules  []Rule `json:"rules"`
-}
 
 type re struct {
 	repo       Repository

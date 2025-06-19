@@ -97,6 +97,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
+
 	s.StartDateTime = startDateTime
 
 	if aux.Time != "" {

@@ -42,7 +42,7 @@ var (
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   now.Add(-1 * time.Hour),
+		StartDateTime:   now.Add(1 * time.Hour),
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -125,6 +125,16 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 	ts, svc, authn := newReportsServer()
 	defer ts.Close()
 
+	scheduleInPast := pkgSch.Schedule{
+		StartDateTime:   now.Add(-1 * time.Hour),
+		Recurring:       pkgSch.Daily,
+		RecurringPeriod: 1,
+		Time:            now,
+	}
+
+	reportInPast := reportConfig
+	reportInPast.Schedule = scheduleInPast
+
 	cases := []struct {
 		desc        string
 		cfg         reports.ReportConfig
@@ -185,6 +195,17 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 			contentType: "application/xml",
 			status:      http.StatusUnsupportedMediaType,
 			err:         apiutil.ErrUnsupportedContentType,
+		},
+		{
+			desc:        "add report config with startdatetime in past",
+			token:       validToken,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			cfg:         reportInPast,
+			contentType: contentType,
+			svcErr:      svcerr.ErrAuthorization,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
 		},
 		{
 			desc:        "add report config with service error",

@@ -70,6 +70,13 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "update_rule").ServeHTTP)
 
+					r.Patch("/tags", otelhttp.NewHandler(kithttp.NewServer(
+						updateRuleTagsEndpoint(svc),
+						decodeUpdateRuleTags,
+						api.EncodeResponse,
+						opts...,
+					), "update_rule_tag").ServeHTTP)
+
 					r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
 						updateRuleScheduleEndpoint(svc),
 						decodeUpdateRuleScheduleRequest,
@@ -134,6 +141,21 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	}
 	rule.ID = chi.URLParam(r, ruleIdKey)
 	return updateRuleReq{Rule: rule}, nil
+}
+
+func decodeUpdateRuleTags(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateRuleTagsReq{
+		id: chi.URLParam(r, "channelID"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
 }
 
 func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {

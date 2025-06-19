@@ -109,7 +109,7 @@ type Service interface {
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
-	UpdateRuleTags(ctx context.Context, session authn.Session, channel Rule) (Rule, error)
+	UpdateRuleTags(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error)
 	RemoveRule(ctx context.Context, session authn.Session, id string) error

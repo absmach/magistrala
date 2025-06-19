@@ -86,22 +86,47 @@ type (
 )
 
 type Rule struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	DomainID      string            `json:"domain"`
-	Metadata      Metadata          `json:"metadata,omitempty"`
-	Tags          []string          `json:"tags,omitempty"`
-	InputChannel  string            `json:"input_channel"`
-	InputTopic    string            `json:"input_topic"`
-	Logic         Script            `json:"logic"`
-	OutputChannel string            `json:"output_channel,omitempty"`
-	OutputTopic   string            `json:"output_topic,omitempty"`
-	Schedule      schedule.Schedule `json:"schedule"`
-	Status        Status            `json:"status"`
-	CreatedAt     time.Time         `json:"created_at"`
-	CreatedBy     string            `json:"created_by"`
-	UpdatedAt     time.Time         `json:"updated_at"`
-	UpdatedBy     string            `json:"updated_by"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	DomainID     string            `json:"domain"`
+	Metadata     Metadata          `json:"metadata,omitempty"`
+	Tags         []string          `json:"tags,omitempty"`
+	InputChannel string            `json:"input_channel"`
+	InputTopic   string            `json:"input_topic"`
+	Logic        Script            `json:"logic"`
+	Outputs      *Outputs          `json:"outputs"`
+	Schedule     schedule.Schedule `json:"schedule"`
+	Status       Status            `json:"status"`
+	CreatedAt    time.Time         `json:"created_at"`
+	CreatedBy    string            `json:"created_by"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	UpdatedBy    string            `json:"updated_by"`
+}
+
+type Outputs struct {
+	EmailOutput     *EmailOutput     `json:"email,omitempty"`
+	PosgresDBOutput *PosgresDBOutput `json:"posgres_db,omitempty"`
+	ChannelOutput   *ChannelOutput   `json:"channel,omitempty"`
+}
+
+type EmailOutput struct {
+	To      []string `json:"to,omitempty"`
+	Subject string   `json:"subject,omitempty"`
+	Content string   `json:"content,omitempty"`
+}
+
+type PosgresDBOutput struct {
+	Host     string `json:"host,omitempty"`
+	Port     int    `json:"port,omitempty"`
+	User     string `json:"user,omitempty"`
+	Password string `json:"password,omitempty"`
+	Database string `json:"database,omitempty"`
+	Table    string `json:"table,omitempty"`
+}
+
+type ChannelOutput struct {
+	Channel string `json:"channel,omitempty"`
+	Topic   string `json:"topic,omitempty"`
 }
 
 // PageMeta contains page metadata that helps navigation.

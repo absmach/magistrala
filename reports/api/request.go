@@ -43,7 +43,7 @@ func (req addReportConfigReq) validate() error {
 	}
 	now := time.Now().UTC()
 	if req.Schedule.StartDateTime.Before(now) {
-		return ErrStartDateTimeInPast
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }
@@ -93,7 +93,7 @@ func (req updateReportScheduleReq) validate() error {
 
 	now := time.Now().UTC()
 	if req.Schedule.StartDateTime.Before(now) {
-		return ErrStartDateTimeInPast
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 
 	return nil

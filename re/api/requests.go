@@ -31,7 +31,7 @@ func (req addRuleReq) validate() error {
 	}
 	now := time.Now().UTC()
 	if req.Schedule.StartDateTime.Before(now) {
-		return ErrStartDateTimeInPast
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 	return nil
 }
@@ -90,7 +90,7 @@ func (req updateRuleScheduleReq) validate() error {
 
 	now := time.Now().UTC()
 	if req.Schedule.StartDateTime.Before(now) {
-		return ErrStartDateTimeInPast
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 
 	return nil

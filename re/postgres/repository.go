@@ -88,32 +88,7 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule)
 	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 
-	dbr, err := ruleToDb(r)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
-	if err != nil {
-		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
-	}
-	defer row.Close()
-
-	var res dbRule
-	if row.Next() {
-		if err := row.StructScan(&res); err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-
-		rule, err := dbToRule(res)
-		if err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-
-		return rule, nil
-	}
-
-	return re.Rule{}, repoerr.ErrNotFound
+	return repo.update(ctx, r, q)
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -195,13 +170,14 @@ func (repo *PostgresRepository) update(ctx context.Context, r re.Rule, query str
 		if err := row.StructScan(&dbRule); err != nil {
 			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 		}
-	}
-	rule, err := dbToRule(dbRule)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		rule, err := dbToRule(dbRule)
+		if err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+		return rule, nil
 	}
 
-	return rule, nil
+	return re.Rule{}, repoerr.ErrNotFound
 }
 
 func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error {

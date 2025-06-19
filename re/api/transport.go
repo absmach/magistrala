@@ -149,7 +149,7 @@ func decodeUpdateRuleTags(_ context.Context, r *http.Request) (interface{}, erro
 	}
 
 	req := updateRuleTagsReq{
-		id: chi.URLParam(r, "channelID"),
+		id: chi.URLParam(r, ruleIdKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
@@ -213,6 +213,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	tag, err := apiutil.ReadStringQuery(r, api.TagKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return listRulesReq{
 		PageMeta: re.PageMeta{
 			Offset:        offset,
@@ -222,6 +226,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 			OutputChannel: oc,
 			Status:        st,
 			Dir:           dir,
+			Tag:           tag,
 		},
 	}, nil
 }

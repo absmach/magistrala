@@ -41,7 +41,6 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	l.SetGlobal("message", message)
 
 	// Set binding functions as a Lua global functions.
-	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
 	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
 	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
 

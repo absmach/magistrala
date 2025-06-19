@@ -95,16 +95,16 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
 	switch o {
 	case Channels:
-		if r.OutputChannel == "" {
+		if r.Outputs.ChannelOutput.Channel == "" {
 			return nil
 		}
-		return re.publishChannel(ctx, val, r.OutputChannel, r.OutputTopic, msg)
+		return re.publishChannel(ctx, val, r.Outputs.ChannelOutput.Channel, r.Outputs.ChannelOutput.Topic, msg)
 	case SaveSenML:
 		return re.saveSenml(ctx, val, msg)
 	case Alarms:
 		return re.sendAlarm(ctx, r.ID, val, msg)
 	case Email:
-		break
+		return re.sendEmail(r, val, msg)
 	}
 	return nil
 }

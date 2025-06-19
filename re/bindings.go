@@ -10,9 +10,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"text/template"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 	lua "github.com/yuin/gopher-lua"
 )
@@ -79,23 +81,33 @@ func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
 	return key, iv, data, nil
 }
 
-func (re *re) sendEmail(l *lua.LState) int {
-	recipientsTable := l.ToTable(1)
-	subject := l.ToString(2)
-	content := l.ToString(3)
-
-	var recipients []string
-	recipientsTable.ForEach(func(_, value lua.LValue) {
-		if str, ok := value.(lua.LString); ok {
-			recipients = append(recipients, string(str))
-		}
-	})
-
-	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, "", make(map[string][]byte)); err != nil {
-		return 0
+func (re *re) sendEmail(rule Rule, val interface{}, msg *messaging.Message) error {
+	if rule.Outputs.EmailOutput == nil {
+		return errors.New("missing email output")
 	}
 
-	return 1
+	data := map[string]interface{}{
+		"result": val,
+		"msg":    msg,
+	}
+
+	tmpl, err := template.New("email").Parse(rule.Outputs.EmailOutput.Content)
+	if err != nil {
+		return err
+	}
+
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, data); err != nil {
+		return err
+	}
+
+	content := output.String()
+
+	if err := re.email.SendEmailNotification(rule.Outputs.EmailOutput.To, "", rule.Outputs.EmailOutput.Subject, "", "", content, "", make(map[string][]byte)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (re *re) sendAlarm(ctx context.Context, ruleID string, val interface{}, msg *messaging.Message) error {

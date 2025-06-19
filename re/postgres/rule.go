@@ -25,8 +25,7 @@ type dbRule struct {
 	LogicType       re.ScriptType      `db:"logic_type"`
 	LogicOutputs    pq.Int32Array      `db:"logic_output"`
 	LogicValue      string             `db:"logic_value"`
-	OutputChannel   sql.NullString     `db:"output_channel"`
-	OutputTopic     sql.NullString     `db:"output_topic"`
+	Outputs         []byte             `db:"outputs"`
 	StartDateTime   sql.NullTime       `db:"start_datetime"`
 	Time            sql.NullTime       `db:"time"`
 	Recurring       schedule.Recurring `db:"recurring"`
@@ -47,6 +46,15 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		}
 		metadata = b
 	}
+	outputs := []byte("{}")
+	if r.Outputs != nil {
+		b, err := json.Marshal(r.Outputs)
+		if err != nil {
+			return dbRule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+		outputs = b
+	}
+
 	lo := pq.Int32Array{}
 	for _, v := range r.Logic.Outputs {
 		lo = append(lo, int32(v))
@@ -69,8 +77,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicType:       r.Logic.Type,
 		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
-		OutputChannel:   toNullString(r.OutputChannel),
-		OutputTopic:     toNullString(r.OutputTopic),
+		Outputs:         outputs,
 		StartDateTime:   start,
 		Time:            t,
 		Recurring:       r.Schedule.Recurring,
@@ -90,6 +97,14 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 	}
+
+	var outputs re.Outputs
+	if dto.Outputs != nil {
+		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
+			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	lo := []re.ScriptOutput{}
 	for _, v := range dto.LogicOutputs {
 		lo = append(lo, re.ScriptOutput(v))
@@ -106,8 +121,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			Type:    dto.LogicType,
 			Value:   dto.LogicValue,
 		},
-		OutputChannel: fromNullString(dto.OutputChannel),
-		OutputTopic:   fromNullString(dto.OutputTopic),
+		Outputs: &outputs,
 		Schedule: schedule.Schedule{
 			StartDateTime:   dto.StartDateTime.Time,
 			Time:            dto.Time.Time,

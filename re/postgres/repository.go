@@ -164,20 +164,18 @@ func (repo *PostgresRepository) update(ctx context.Context, r re.Rule, query str
 		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 	defer row.Close()
-
-	var dbRule dbRule
-	if row.Next() {
-		if err := row.StructScan(&dbRule); err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-		rule, err := dbToRule(dbRule)
-		if err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-		return rule, nil
+	if !row.Next() {
+		return re.Rule{}, repoerr.ErrNotFound
 	}
-
-	return re.Rule{}, repoerr.ErrNotFound
+	var dbRule dbRule
+	if err := row.StructScan(&dbRule); err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	rule, err := dbToRule(dbRule)
+	if err != nil {
+		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	return rule, nil
 }
 
 func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error {

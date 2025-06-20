@@ -10,11 +10,21 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"text/template"
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/senml"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
+	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
+	"github.com/jmoiron/sqlx"
 	lua "github.com/yuin/gopher-lua"
+)
+
+const (
+	msgKey       = "message"
+	LogicRespKey = "result"
 )
 
 func luaEncrypt(l *lua.LState) int {
@@ -79,79 +89,72 @@ func decodeParams(l *lua.LState) (key, iv, data []byte, err error) {
 	return key, iv, data, nil
 }
 
-func (re *re) sendEmail(l *lua.LState) int {
-	recipientsTable := l.ToTable(1)
-	subject := l.ToString(2)
-	content := l.ToString(3)
-
-	var recipients []string
-	recipientsTable.ForEach(func(_, value lua.LValue) {
-		if str, ok := value.(lua.LString); ok {
-			recipients = append(recipients, string(str))
-		}
-	})
-
-	if err := re.email.SendEmailNotification(recipients, "", subject, "", "", content, "", make(map[string][]byte)); err != nil {
-		return 0
+func (re *re) sendEmail(rule Rule, val interface{}, msg *messaging.Message) error {
+	if rule.Outputs.EmailOutput == nil {
+		return errors.New("missing email output")
 	}
 
-	return 1
+	data := map[string]interface{}{
+		LogicRespKey: val,
+		msgKey:       msg,
+	}
+
+	tmpl, err := template.New("email").Parse(rule.Outputs.EmailOutput.Content)
+	if err != nil {
+		return err
+	}
+
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, data); err != nil {
+		return err
+	}
+
+	content := output.String()
+
+	if err := re.email.SendEmailNotification(rule.Outputs.EmailOutput.To, "", rule.Outputs.EmailOutput.Subject, "", "", content, "", make(map[string][]byte)); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (re *re) sendAlarm(ctx context.Context, ruleID string, original *messaging.Message) lua.LGFunction {
-	return func(l *lua.LState) int {
-		processAlarm := func(alarmTable *lua.LTable) int {
-			val := convertLua(alarmTable)
-			data, err := json.Marshal(val)
-			if err != nil {
-				return 0
-			}
-
-			alarm := alarms.Alarm{
-				RuleID:    ruleID,
-				DomainID:  original.Domain,
-				ClientID:  original.Publisher,
-				ChannelID: original.Channel,
-				Subtopic:  original.Subtopic,
-			}
-			if err := json.Unmarshal(data, &alarm); err != nil {
-				return 0
-			}
-
-			var buf bytes.Buffer
-			if err := gob.NewEncoder(&buf).Encode(alarm); err != nil {
-				return 0
-			}
-
-			m := &messaging.Message{
-				Domain:    original.Domain,
-				Publisher: original.Publisher,
-				Created:   original.Created,
-				Channel:   original.Channel,
-				Subtopic:  original.Subtopic,
-				Protocol:  original.Protocol,
-				Payload:   buf.Bytes(),
-			}
-
-			topic := messaging.EncodeMessageTopic(original)
-			if err := re.alarmsPub.Publish(ctx, topic, m); err != nil {
-				return 0
-			}
-			return 1
-		}
-		table := l.ToTable(1)
-		if table.RawGetInt(1) != lua.LNil {
-			table.ForEach(func(_, value lua.LValue) {
-				if alarmTable, ok := value.(*lua.LTable); ok {
-					processAlarm(alarmTable)
-				}
-			})
-		} else {
-			processAlarm(table)
-		}
-
-		return 1
+func (re *re) sendAlarm(ctx context.Context, ruleID string, val interface{}, msg *messaging.Message) error {
+	data, err := json.Marshal(val)
+	if err != nil {
+		return err
 	}
+
+	alarm := alarms.Alarm{
+		RuleID:    ruleID,
+		DomainID:  msg.Domain,
+		ClientID:  msg.Publisher,
+		ChannelID: msg.Channel,
+		Subtopic:  msg.Subtopic,
+	}
+	if err := json.Unmarshal(data, &alarm); err != nil {
+		return err
+	}
+
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(alarm); err != nil {
+		return err
+	}
+
+	m := &messaging.Message{
+		Domain:    msg.Domain,
+		Publisher: msg.Publisher,
+		Created:   msg.Created,
+		Channel:   msg.Channel,
+		Subtopic:  msg.Subtopic,
+		Protocol:  msg.Protocol,
+		Payload:   buf.Bytes(),
+	}
+
+	topic := messaging.EncodeMessageTopic(msg)
+	if err := re.alarmsPub.Publish(ctx, topic, m); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (re *re) saveSenml(ctx context.Context, val interface{}, msg *messaging.Message) error {
@@ -203,6 +206,74 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 	topic := messaging.EncodeTopicSuffix(msg.Domain, channel, subtopic)
 	if err := re.rePubSub.Publish(ctx, topic, m); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (re *re) saveRemotePg(rule Rule, val interface{}, msg *messaging.Message) error {
+	if rule.Outputs.PosgresDBOutput == nil {
+		return errors.New("missing postgresDB output")
+	}
+
+	data := map[string]interface{}{
+		LogicRespKey: val,
+		msgKey:       msg,
+	}
+
+	tmpl, err := template.New("postgres").Parse(rule.Outputs.PosgresDBOutput.Mapping)
+	if err != nil {
+		return err
+	}
+
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, data); err != nil {
+		return err
+	}
+
+	mapping := output.String()
+	var columns map[string]interface{}
+	if err = json.Unmarshal([]byte(mapping), &columns); err != nil {
+		return err
+	}
+
+	cfg := rule.Outputs.PosgresDBOutput
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database,
+	)
+
+	db, err := sqlx.Open("pgx", connStr)
+	if err != nil {
+		return err
+	}
+	defer db.Close()
+
+	if err := db.Ping(); err != nil {
+		return errors.Wrap(errors.New("failed to connect to DB"), err)
+	}
+
+	cols := []string{}
+	values := []interface{}{}
+	placeholders := []string{}
+	i := 1
+	for k, v := range data {
+		cols = append(cols, k)
+		values = append(values, v)
+		placeholders = append(placeholders, fmt.Sprintf("$%d", i))
+		i++
+	}
+
+	q := fmt.Sprintf(
+		`INSERT INTO %s (%s) VALUES (%s)`,
+		cfg.Table,
+		strings.Join(cols, ", "),
+		strings.Join(placeholders, ", "),
+	)
+
+	_, err = db.Exec(q, values...)
+	if err != nil {
+		return errors.Wrap(errors.New("failed to insert data"), err)
 	}
 
 	return nil

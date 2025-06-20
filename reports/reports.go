@@ -122,7 +122,7 @@ type Metric struct {
 	Name      string `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string `json:"protocol,omitempty"`   // Optional field
-	Format    string `json:"format,omitiempty"`    // Optional field
+	Format    string `json:"format,omitempty"`     // Optional field
 }
 
 type ReqMetric struct {
@@ -131,7 +131,7 @@ type ReqMetric struct {
 	Name      string   `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string   `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string   `json:"protocol,omitempty"`   // Optional field
-	Format    string   `json:"format,omitiempty"`    // Optional field
+	Format    string   `json:"format,omitempty"`     // Optional field
 }
 
 func (rm ReqMetric) Validate() error {
@@ -154,9 +154,9 @@ type ReportConfig struct {
 	Email       *EmailSetting     `json:"email,omitempty"`
 	Metrics     []ReqMetric       `json:"metrics,omitempty"`
 	Status      Status            `json:"status"`
-	CreatedAt   time.Time         `json:"created_at,omitempty"`
+	CreatedAt   time.Time         `json:"created_at"`
 	CreatedBy   string            `json:"created_by,omitempty"`
-	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 	UpdatedBy   string            `json:"updated_by,omitempty"`
 }
 

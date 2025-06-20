@@ -26,11 +26,11 @@ func NewRepository(db postgres.Database) re.Repository {
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	q := `
-	INSERT INTO rules (id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+	INSERT INTO rules (id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
-	VALUES (:id, :name, :domain_id, :metadata, :input_channel, :input_topic, :logic_type, :logic_output, :logic_value,
+	VALUES (:id, :name, :domain_id, :tags, :metadata, :input_channel, :input_topic, :logic_type, :logic_output, :logic_value,
 		:output_channel, :output_topic, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
-	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 `
 	dbr, err := ruleToDb(r)
@@ -60,7 +60,7 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	q := `
-		SELECT id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
+		SELECT id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules
 		WHERE id = $1;
@@ -85,35 +85,10 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule)
 	q := `UPDATE rules
 	SET status = :status, updated_at = :updated_at, updated_by = :updated_by
 	WHERE id = :id
-	RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 
-	dbr, err := ruleToDb(r)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
-	if err != nil {
-		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
-	}
-	defer row.Close()
-
-	var res dbRule
-	if row.Next() {
-		if err := row.StructScan(&res); err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-
-		rule, err := dbToRule(res)
-		if err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-
-		return rule, nil
-	}
-
-	return re.Rule{}, repoerr.ErrNotFound
+	return repo.update(ctx, r, q)
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -150,32 +125,21 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 	q := fmt.Sprintf(`
 		UPDATE rules
 		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`, upq)
 
-	dbr, err := ruleToDb(r)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
-	if err != nil {
-		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
-	}
-	defer row.Close()
+	return repo.update(ctx, r, q)
+}
 
-	var dbRule dbRule
-	if row.Next() {
-		if err := row.StructScan(&dbRule); err != nil {
-			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-		}
-	}
-	rule, err := dbToRule(dbRule)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
+func (repo *PostgresRepository) UpdateRuleTags(ctx context.Context, r re.Rule) (re.Rule, error) {
+	q := `UPDATE rules SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
+	WHERE id = :id AND status = :status
+	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
+	r.Status = re.EnabledStatus
 
-	return rule, nil
+	return repo.update(ctx, r, q)
 }
 
 func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -183,14 +147,19 @@ func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rul
 		UPDATE rules
 		SET start_datetime = :start_datetime, time = :time, recurring = :recurring,
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
+	return repo.update(ctx, r, q)
+}
+
+func (repo *PostgresRepository) update(ctx context.Context, r re.Rule, query string) (re.Rule, error) {
 	dbr, err := ruleToDb(r)
 	if err != nil {
 		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+
+	row, err := repo.DB.NamedQueryContext(ctx, query, dbr)
 	if err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -201,13 +170,14 @@ func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rul
 		if err := row.StructScan(&dbRule); err != nil {
 			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 		}
-	}
-	rule, err := dbToRule(dbRule)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		rule, err := dbToRule(dbRule)
+		if err != nil {
+			return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		}
+		return rule, nil
 	}
 
-	return rule, nil
+	return re.Rule{}, repoerr.ErrNotFound
 }
 
 func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error {
@@ -242,7 +212,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	}
 	pq := pageRulesQuery(pm)
 	q := fmt.Sprintf(`
-		SELECT id, name, domain_id, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
+		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_output, logic_value, output_channel,
 			output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s;
 	`, pq, pgData)
@@ -285,7 +255,7 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	q := `
 		UPDATE rules
 		SET time = :time, updated_at = :updated_at WHERE id = :id
-		RETURNING id, name, domain_id, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
+		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_output, logic_value,
 			output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
 	`
 	dbr := dbRule{
@@ -332,6 +302,9 @@ func pageRulesQuery(pm re.PageMeta) string {
 	}
 	if pm.Domain != "" {
 		query = append(query, "r.domain_id = :domain_id")
+	}
+	if pm.Tag != "" {
+		query = append(query, "EXISTS (SELECT 1 FROM unnest(tags) AS tag WHERE tag ILIKE '%' || :tag || '%')")
 	}
 	if pm.ScheduledBefore != nil {
 		query = append(query, "r.time < :scheduled_before")

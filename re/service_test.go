@@ -33,6 +33,7 @@ var (
 	domainID     = testsutil.GenerateUUID(&testing.T{})
 	ruleName     = namegen.Generate()
 	ruleID       = testsutil.GenerateUUID(&testing.T{})
+	Tags         = []string{"tag1", "tag2"}
 	inputChannel = "test.channel"
 	schedule     = pkgSch.Schedule{
 		StartDateTime:   time.Now().Add(-time.Hour),
@@ -266,6 +267,62 @@ func TestUpdateRule(t *testing.T) {
 				assert.Equal(t, tc.res, res)
 			}
 			defer repoCall.Unset()
+		})
+	}
+}
+
+func TestUpdateRuleTags(t *testing.T) {
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+
+	cases := []struct {
+		desc      string
+		session   authn.Session
+		updateReq re.Rule
+		repoResp  re.Rule
+		repoErr   error
+		err       error
+	}{
+		{
+			desc: "update rule tags successfully",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			updateReq: re.Rule{
+				ID:   testsutil.GenerateUUID(t),
+				Tags: []string{"tag1", "tag2"},
+			},
+			repoResp: re.Rule{
+				ID:   testsutil.GenerateUUID(t),
+				Tags: []string{"tag1", "tag2"},
+			},
+		},
+		{
+			desc: "update rule tags with repo error",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			updateReq: re.Rule{
+				ID:   testsutil.GenerateUUID(t),
+				Tags: []string{"tag1", "tag2"},
+			},
+			repoErr: repoerr.ErrNotFound,
+			err:     svcerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := repo.On("UpdateRuleTags", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			got, err := svc.UpdateRuleTags(context.Background(), tc.session, tc.updateReq)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			if err == nil {
+				assert.Equal(t, tc.repoResp, got)
+				ok := repo.AssertCalled(t, "UpdateRuleTags", context.Background(), mock.Anything)
+				assert.True(t, ok, fmt.Sprintf("UpdateTags was not called on %s", tc.desc))
+			}
+			repoCall.Unset()
 		})
 	}
 }

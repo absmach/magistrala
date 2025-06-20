@@ -8,7 +8,9 @@ import (
 
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
+	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
@@ -67,6 +69,31 @@ func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
 			return updateRuleRes{}, err
 		}
 		return updateRuleRes{Rule: rule}, nil
+	}
+}
+
+func updateRuleTagsEndpoint(svc re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request interface{}) (interface{}, error) {
+		req := request.(updateRuleTagsReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthentication
+		}
+
+		r := re.Rule{
+			ID:   req.id,
+			Tags: req.Tags,
+		}
+		res, err := svc.UpdateRuleTags(ctx, session, r)
+		if err != nil {
+			return nil, err
+		}
+
+		return updateRuleRes{Rule: res}, nil
 	}
 }
 

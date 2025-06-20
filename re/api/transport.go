@@ -70,6 +70,13 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 						opts...,
 					), "update_rule").ServeHTTP)
 
+					r.Patch("/tags", otelhttp.NewHandler(kithttp.NewServer(
+						updateRuleTagsEndpoint(svc),
+						decodeUpdateRuleTags,
+						api.EncodeResponse,
+						opts...,
+					), "update_rule_tags").ServeHTTP)
+
 					r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
 						updateRuleScheduleEndpoint(svc),
 						decodeUpdateRuleScheduleRequest,
@@ -136,6 +143,21 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	return updateRuleReq{Rule: rule}, nil
 }
 
+func decodeUpdateRuleTags(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateRuleTagsReq{
+		id: chi.URLParam(r, ruleIdKey),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+	}
+
+	return req, nil
+}
+
 func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
@@ -191,6 +213,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	tag, err := apiutil.ReadStringQuery(r, api.TagKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	return listRulesReq{
 		PageMeta: re.PageMeta{
 			Offset:        offset,
@@ -200,6 +226,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 			OutputChannel: oc,
 			Status:        st,
 			Dir:           dir,
+			Tag:           tag,
 		},
 	}, nil
 }

@@ -43,6 +43,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS rules`,
 				},
 			},
+			{
+				Id: "rules_02",
+				Up: []string{
+					`ALTER TABLE rules ADD COLUMN tags TEXT[];`,
+				},
+				Down: []string{
+					`ALTER TABLE rules DROP COLUMN tags;`,
+				},
+			},
 		},
 	}
 }

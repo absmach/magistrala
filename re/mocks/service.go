@@ -560,6 +560,62 @@ func (_c *Service_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// UpdateRuleTags provides a mock function for the type Service
+func (_mock *Service) UpdateRuleTags(ctx context.Context, session authn.Session, channel re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, session, channel)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleTags")
+	}
+
+	var r0 re.Rule
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) (re.Rule, error)); ok {
+		return returnFunc(ctx, session, channel)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) re.Rule); ok {
+		r0 = returnFunc(ctx, session, channel)
+	} else {
+		r0 = ret.Get(0).(re.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.Rule) error); ok {
+		r1 = returnFunc(ctx, session, channel)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_UpdateRuleTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleTags'
+type Service_UpdateRuleTags_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleTags is a helper method to define mock.On call
+//   - ctx
+//   - session
+//   - channel
+func (_e *Service_Expecter) UpdateRuleTags(ctx interface{}, session interface{}, channel interface{}) *Service_UpdateRuleTags_Call {
+	return &Service_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, session, channel)}
+}
+
+func (_c *Service_UpdateRuleTags_Call) Run(run func(ctx context.Context, session authn.Session, channel re.Rule)) *Service_UpdateRuleTags_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+	})
+	return _c
+}
+
+func (_c *Service_UpdateRuleTags_Call) Return(rule re.Rule, err error) *Service_UpdateRuleTags_Call {
+	_c.Call.Return(rule, err)
+	return _c
+}
+
+func (_c *Service_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, channel re.Rule) (re.Rule, error)) *Service_UpdateRuleTags_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewRule provides a mock function for the type Service
 func (_mock *Service) ViewRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	ret := _mock.Called(ctx, session, id)

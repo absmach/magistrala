@@ -69,6 +69,19 @@ func (req updateRuleReq) validate() error {
 	return nil
 }
 
+type updateRuleTagsReq struct {
+	id   string
+	Tags []string `json:"tags,omitempty"`
+}
+
+func (req updateRuleTagsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
 type updateRuleScheduleReq struct {
 	id       string
 	Schedule schedule.Schedule `json:"schedule,omitempty"`

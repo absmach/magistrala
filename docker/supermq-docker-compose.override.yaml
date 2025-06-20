@@ -50,6 +50,10 @@ services:
     networks: !override
       - magistrala-base-net
 
+  channels-redis:
+    networks: !override
+      - magistrala-base-net
+
   channels-db:
     networks: !override
       - magistrala-base-net

@@ -13,6 +13,7 @@ volumes:
   supermq-groups-db-volume:
   supermq-clients-db-volume:
   supermq-channels-db-volume:
+  supermq-channels-redis-volume:
   supermq-clients-redis-volume:
   supermq-broker-volume:
   supermq-mqtt-broker-volume:
@@ -22,7 +23,6 @@ volumes:
   supermq-domains-db-volume:
   supermq-domains-redis-volume:
   supermq-auth-redis-volume:
-
 
 services:
   spicedb:
@@ -69,7 +69,7 @@ services:
       POSTGRES_DB: ${SMQ_SPICEDB_DB_NAME}
     volumes:
       - supermq-spicedb-db-volume:/var/lib/postgresql/data
-    command: [ "postgres", "-c", "track_commit_timestamp=on" ]
+    command: ["postgres", "-c", "track_commit_timestamp=on"]
 
   auth-db:
     image: postgres:16.2-alpine
@@ -560,11 +560,21 @@ services:
     volumes:
       - supermq-channels-db-volume:/var/lib/postgresql/data
 
+  channels-redis:
+    image: redis:7.2.4-alpine
+    container_name: supermq-channels-redis
+    restart: on-failure
+    networks:
+      - supermq-base-net
+    volumes:
+      - supermq-channels-redis-volume:/data
+
   channels:
     image: supermq/channels:${SMQ_RELEASE_TAG}
     container_name: supermq-channels
     depends_on:
       - channels-db
+      - channels-redis
       - users
       - auth
       - nats
@@ -592,6 +602,8 @@ services:
       SMQ_CHANNELS_DB_SSL_CERT: ${SMQ_CHANNELS_DB_SSL_CERT}
       SMQ_CHANNELS_DB_SSL_KEY: ${SMQ_CHANNELS_DB_SSL_KEY}
       SMQ_CHANNELS_DB_SSL_ROOT_CERT: ${SMQ_CHANNELS_DB_SSL_ROOT_CERT}
+      SMQ_CHANNELS_CACHE_URL: ${SMQ_CHANNELS_CACHE_URL}
+      SMQ_CHANNELS_CACHE_KEY_DURATION: ${SMQ_CHANNELS_CACHE_KEY_DURATION}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -975,6 +987,11 @@ services:
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
       SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
       SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
@@ -1014,6 +1031,22 @@ services:
         target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      # Domains gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
 
   http-adapter:
     image: supermq/http:${SMQ_RELEASE_TAG}
@@ -1038,6 +1071,11 @@ services:
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
       SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
       SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -1102,6 +1140,22 @@ services:
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      # Domains gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
 
   coap-adapter:
     image: supermq/coap:${SMQ_RELEASE_TAG}
@@ -1130,6 +1184,11 @@ services:
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
       SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
       SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
@@ -1179,6 +1238,22 @@ services:
         target: /channels-grpc-client-ca${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+      # Domains gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
 
   ws-adapter:
     image: supermq/ws:${SMQ_RELEASE_TAG}
@@ -1203,6 +1278,11 @@ services:
       SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
       SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
       SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -1265,6 +1345,22 @@ services:
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Domains gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 

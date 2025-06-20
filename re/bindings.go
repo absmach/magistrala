@@ -211,7 +211,7 @@ func (re *re) publishChannel(ctx context.Context, val interface{}, channel, subt
 	return nil
 }
 
-func (re *re) saveRemotePg(ctx context.Context, rule Rule, val interface{}, msg *messaging.Message) error {
+func (re *re) saveRemotePg(rule Rule, val interface{}, msg *messaging.Message) error {
 	if rule.Outputs.PosgresDBOutput == nil {
 		return errors.New("missing postgresDB output")
 	}

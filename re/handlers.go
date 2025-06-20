@@ -106,7 +106,7 @@ func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *mes
 	case Email:
 		return re.sendEmail(r, val, msg)
 	case SaveRemotePg:
-		return re.saveRemotePg(ctx, r, val, msg)
+		return re.saveRemotePg(r, val, msg)
 	}
 	return nil
 }

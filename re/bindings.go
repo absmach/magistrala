@@ -22,6 +22,11 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
+const (
+	msgKey       = "message"
+	LogicRespKey = "result"
+)
+
 func luaEncrypt(l *lua.LState) int {
 	key, iv, data, err := decodeParams(l)
 	if err != nil {
@@ -90,8 +95,8 @@ func (re *re) sendEmail(rule Rule, val interface{}, msg *messaging.Message) erro
 	}
 
 	data := map[string]interface{}{
-		"result": val,
-		"msg":    msg,
+		LogicRespKey: val,
+		msgKey:       msg,
 	}
 
 	tmpl, err := template.New("email").Parse(rule.Outputs.EmailOutput.Content)
@@ -212,8 +217,8 @@ func (re *re) saveRemotePg(ctx context.Context, rule Rule, val interface{}, msg 
 	}
 
 	data := map[string]interface{}{
-		"result": val,
-		"msg":    msg,
+		LogicRespKey: val,
+		msgKey:       msg,
 	}
 
 	tmpl, err := template.New("postgres").Parse(rule.Outputs.PosgresDBOutput.Mapping)

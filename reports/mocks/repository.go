@@ -97,6 +97,53 @@ func (_c *Repository_AddReportConfig_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// DeleteReportTemplate provides a mock function for the type Repository
+func (_mock *Repository) DeleteReportTemplate(ctx context.Context, domainID string, reportID string) error {
+	ret := _mock.Called(ctx, domainID, reportID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteReportTemplate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, domainID, reportID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_DeleteReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteReportTemplate'
+type Repository_DeleteReportTemplate_Call struct {
+	*mock.Call
+}
+
+// DeleteReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - domainID
+//   - reportID
+func (_e *Repository_Expecter) DeleteReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}) *Repository_DeleteReportTemplate_Call {
+	return &Repository_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, domainID, reportID)}
+}
+
+func (_c *Repository_DeleteReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string)) *Repository_DeleteReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Repository_DeleteReportTemplate_Call) Return(err error) *Repository_DeleteReportTemplate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_DeleteReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string) error) *Repository_DeleteReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListReportsConfig provides a mock function for the type Repository
 func (_mock *Repository) ListReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	ret := _mock.Called(ctx, pm)
@@ -419,6 +466,54 @@ func (_c *Repository_UpdateReportSchedule_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// UpdateReportTemplate provides a mock function for the type Repository
+func (_mock *Repository) UpdateReportTemplate(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate) error {
+	ret := _mock.Called(ctx, domainID, reportID, template)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportTemplate")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, reports.ReportTemplate) error); ok {
+		r0 = returnFunc(ctx, domainID, reportID, template)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_UpdateReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportTemplate'
+type Repository_UpdateReportTemplate_Call struct {
+	*mock.Call
+}
+
+// UpdateReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - domainID
+//   - reportID
+//   - template
+func (_e *Repository_Expecter) UpdateReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}, template interface{}) *Repository_UpdateReportTemplate_Call {
+	return &Repository_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, domainID, reportID, template)}
+}
+
+func (_c *Repository_UpdateReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate)) *Repository_UpdateReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(reports.ReportTemplate))
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateReportTemplate_Call) Return(err error) *Repository_UpdateReportTemplate_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate) error) *Repository_UpdateReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewReportConfig provides a mock function for the type Repository
 func (_mock *Repository) ViewReportConfig(ctx context.Context, id string) (reports.ReportConfig, error) {
 	ret := _mock.Called(ctx, id)
@@ -470,6 +565,62 @@ func (_c *Repository_ViewReportConfig_Call) Return(reportConfig reports.ReportCo
 }
 
 func (_c *Repository_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string) (reports.ReportConfig, error)) *Repository_ViewReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewReportTemplate provides a mock function for the type Repository
+func (_mock *Repository) ViewReportTemplate(ctx context.Context, domainID string, reportID string) (string, error) {
+	ret := _mock.Called(ctx, domainID, reportID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewReportTemplate")
+	}
+
+	var r0 string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+		return returnFunc(ctx, domainID, reportID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+		r0 = returnFunc(ctx, domainID, reportID)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, domainID, reportID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_ViewReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewReportTemplate'
+type Repository_ViewReportTemplate_Call struct {
+	*mock.Call
+}
+
+// ViewReportTemplate is a helper method to define mock.On call
+//   - ctx
+//   - domainID
+//   - reportID
+func (_e *Repository_Expecter) ViewReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}) *Repository_ViewReportTemplate_Call {
+	return &Repository_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, domainID, reportID)}
+}
+
+func (_c *Repository_ViewReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string)) *Repository_ViewReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *Repository_ViewReportTemplate_Call) Return(s string, err error) *Repository_ViewReportTemplate_Call {
+	_c.Call.Return(s, err)
+	return _c
+}
+
+func (_c *Repository_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string) (string, error)) *Repository_ViewReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

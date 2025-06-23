@@ -165,3 +165,57 @@ func (res emailReportResp) Headers() map[string]string {
 func (res emailReportResp) Empty() bool {
 	return true
 }
+
+type viewReportTemplateRes struct {
+	Template string `json:"html_template"`
+}
+
+func (res viewReportTemplateRes) Code() int {
+	return http.StatusOK
+}
+
+func (res viewReportTemplateRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res viewReportTemplateRes) Empty() bool {
+	return false
+}
+
+type updateReportTemplateRes struct {
+	updated bool
+}
+
+func (res updateReportTemplateRes) Code() int {
+	if res.updated {
+		return http.StatusNoContent
+	}
+	return http.StatusOK
+}
+
+func (res updateReportTemplateRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateReportTemplateRes) Empty() bool {
+	return true
+}
+
+type deleteReportTemplateRes struct {
+	deleted bool
+}
+
+func (res deleteReportTemplateRes) Code() int {
+	if res.deleted {
+		return http.StatusNoContent
+	}
+	return http.StatusOK
+}
+
+func (res deleteReportTemplateRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res deleteReportTemplateRes) Empty() bool {
+	return true
+}

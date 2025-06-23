@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package main contains rule engine main function to start the service.
+// Package main contains reports main function to start the service.
 package main
 
 import (

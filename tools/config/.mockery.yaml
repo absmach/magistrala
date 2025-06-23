@@ -39,7 +39,13 @@ packages:
   github.com/absmach/magistrala/reports:
     interfaces:
       Service:
-      Repository: 
+      Repository:
+  github.com/absmach/magistrala/pkg/emailer:
+    interfaces:
+      Emailer:
+  github.com/absmach/magistrala/pkg/ticker:
+    interfaces:
+      Ticker:
   github.com/absmach/magistrala/api/grpc/readers/v1:
     interfaces:
       ReadersServiceClient:

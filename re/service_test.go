@@ -5,6 +5,7 @@ package re_test
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
@@ -15,6 +16,7 @@ import (
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
+	"github.com/absmach/magistrala/re/outputs"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -25,6 +27,7 @@ import (
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 var (
@@ -595,6 +598,14 @@ func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
 	now := time.Now()
 	scheduled := false
+	outputs, err := json.Marshal([]outputs.Publish{
+		{
+			Channel: "output.channel",
+			Topic:   "output.topic",
+		},
+	})
+	require.NoError(t, err)
+
 	cases := []struct {
 		desc       string
 		message    *messaging.Message
@@ -630,11 +641,7 @@ func TestHandle(t *testing.T) {
 						Logic: re.Script{
 							Type: re.ScriptType(0),
 						},
-						Outputs: &re.Outputs{
-							ChannelOutput: &re.ChannelOutput{
-								Channel: "output.channel",
-							},
-						},
+						Outputs:  string(outputs),
 						Schedule: schedule,
 					},
 				},

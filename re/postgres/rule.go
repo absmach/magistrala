@@ -48,14 +48,6 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		}
 		metadata = b
 	}
-	outputs := []byte("{}")
-	if r.Outputs != nil {
-		b, err := json.Marshal(r.Outputs)
-		if err != nil {
-			return dbRule{}, errors.Wrap(errors.ErrMalformedEntity, err)
-		}
-		outputs = b
-	}
 
 	lo := pq.Int32Array{}
 	for _, v := range r.Logic.Outputs {
@@ -85,7 +77,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicType:       r.Logic.Type,
 		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
-		Outputs:         outputs,
+		Outputs:         []byte(r.Outputs),
 		StartDateTime:   start,
 		Time:            t,
 		Recurring:       r.Schedule.Recurring,
@@ -102,13 +94,6 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 	var metadata re.Metadata
 	if dto.Metadata != nil {
 		if err := json.Unmarshal(dto.Metadata, &metadata); err != nil {
-			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
-		}
-	}
-
-	var outputs re.Outputs
-	if dto.Outputs != nil {
-		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 	}
@@ -134,7 +119,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			Type:    dto.LogicType,
 			Value:   dto.LogicValue,
 		},
-		Outputs: &outputs,
+		Outputs: string(dto.Outputs),
 		Schedule: schedule.Schedule{
 			StartDateTime:   &dto.StartDateTime.Time,
 			Time:            dto.Time.Time,

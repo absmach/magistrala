@@ -30,7 +30,7 @@ func Migration() *migrate.MemoryMigrationSource {
 						outputs		        JSONB,
 						status            SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
 						logic_type        SMALLINT NOT NULL DEFAULT 0 CHECK (logic_type >= 0),
-						logic_output 	    SMALLINT[] NOT NULL DEFAULT '{}',
+						logic_output      SMALLINT[] NOT NULL DEFAULT '{}',
 						logic_value       BYTEA,
 						time              TIMESTAMP,
 						recurring         SMALLINT,

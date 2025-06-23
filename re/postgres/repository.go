@@ -106,7 +106,7 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 	if r.InputTopic != "" {
 		query = append(query, "input_topic = :input_topic,")
 	}
-	if r.Outputs != nil {
+	if r.Outputs != "" {
 		query = append(query, "outputs = :outputs, ")
 	}
 	if r.Logic.Value != "" {

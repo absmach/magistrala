@@ -12,6 +12,7 @@ import (
 	"time"
 
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/re/outputs"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 )
@@ -92,23 +93,26 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 	}
 }
 
-func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
-	switch o {
-	case Channels:
-		if r.Outputs.ChannelOutput.Channel == "" {
-			return nil
-		}
-		return re.publishChannel(ctx, val, r.Outputs.ChannelOutput.Channel, r.Outputs.ChannelOutput.Topic, msg)
-	case SaveSenML:
-		return re.saveSenml(ctx, val, msg)
-	case Alarms:
-		return re.sendAlarm(ctx, r.ID, val, msg)
-	case Email:
-		return re.sendEmail(r, val, msg)
-	case SaveRemotePg:
-		return re.saveRemotePg(r, val, msg)
+func (re *re) handleOutput(ctx context.Context, o Output, r Rule, msg *messaging.Message, val interface{}) error {
+	switch o := o.(type) {
+	case *outputs.Alarm:
+		o.AlarmsPub = re.alarmsPub
+		o.RuleID = r.ID
+		return o.Run(ctx, msg, val)
+	case *outputs.Email:
+		o.Emailer = re.email
+		return o.Run(ctx, msg, val)
+	case *outputs.Postgres:
+		return o.Run(ctx, msg, val)
+	case *outputs.Publish:
+		o.RePubSub = re.rePubSub
+		return o.Run(ctx, msg, val)
+	case *outputs.SenML:
+		o.WritersPub = re.writersPub
+		return o.Run(ctx, msg, val)
+	default:
+		return fmt.Errorf("unknown output type: %T", o)
 	}
-	return nil
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
@@ -146,7 +150,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					msg := &messaging.Message{
 						Channel:  rule.InputChannel,
 						Subtopic: rule.InputTopic,
-						Protocol: protocol,
+						Protocol: Protocol,
 						Created:  due.Unix(),
 					}
 					re.runInfo <- re.process(ctx, rule, msg)

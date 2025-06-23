@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"reflect"
@@ -33,7 +34,20 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 	if err != nil {
 		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
 	}
-	for _, o := range r.Logic.Outputs {
+	var rawList []json.RawMessage
+	if e := json.Unmarshal([]byte(r.Outputs), &rawList); e != nil {
+		err = errors.Wrap(e, err)
+	}
+	var outputs []Output
+	for _, raw := range rawList {
+		var o Output
+		if e := json.Unmarshal(raw, &o); e != nil {
+			err = errors.Wrap(e, err)
+			continue
+		}
+		outputs = append(outputs, o)
+	}
+	for _, o := range outputs {
 		if res.Kind() == reflect.Bool && !res.Bool() {
 			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}
 		}

@@ -59,7 +59,20 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	}
 	var err error
 	res := convertLua(result)
-	for _, o := range r.Logic.Outputs {
+	var rawList []json.RawMessage
+	if e := json.Unmarshal([]byte(r.Outputs), &rawList); e != nil {
+		err = errors.Wrap(e, err)
+	}
+	var outputs []Output
+	for _, raw := range rawList {
+		var o Output
+		if e := json.Unmarshal(raw, &o); e != nil {
+			err = errors.Wrap(e, err)
+			continue
+		}
+		outputs = append(outputs, o)
+	}
+	for _, o := range outputs {
 		// If value is false, don't run the follow-up.
 		if v, ok := res.(bool); ok && !v {
 			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}

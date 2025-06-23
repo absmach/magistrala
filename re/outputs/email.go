@@ -1,0 +1,41 @@
+package outputs
+
+import (
+	"bytes"
+	"context"
+	"text/template"
+
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/supermq/pkg/messaging"
+)
+
+type Email struct {
+	To      []string `json:"to"`
+	Subject string   `json:"subject"`
+	Content string   `json:"content"`
+	Emailer emailer.Emailer
+}
+
+func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+	data := map[string]interface{}{
+		LogicRespKey: val,
+		MsgKey:       msg,
+	}
+
+	tmpl, err := template.New("email").Parse(e.Content)
+	if err != nil {
+		return err
+	}
+
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, data); err != nil {
+		return err
+	}
+
+	content := output.String()
+
+	if err := e.Emailer.SendEmailNotification(e.To, "", e.Subject, "", "", content, "", make(map[string][]byte)); err != nil {
+		return err
+	}
+	return nil
+}

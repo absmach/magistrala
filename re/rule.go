@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/magistrala/re/outputs"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -20,7 +21,7 @@ const (
 	GoType
 )
 
-const protocol = "nats"
+const Protocol = "nats"
 
 // ScriptOutput is the indicator for type of the logic
 // so we can move it to the Go instead calling Go from Lua.
@@ -94,7 +95,7 @@ type Rule struct {
 	InputChannel string            `json:"input_channel"`
 	InputTopic   string            `json:"input_topic"`
 	Logic        Script            `json:"logic"`
-	Outputs      *Outputs          `json:"outputs"`
+	Outputs      string            `json:"outputs"`
 	Schedule     schedule.Schedule `json:"schedule"`
 	Status       Status            `json:"status"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -103,31 +104,56 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
-type Outputs struct {
-	EmailOutput     *EmailOutput     `json:"email,omitempty"`
-	PosgresDBOutput *PosgresDBOutput `json:"posgres_db,omitempty"`
-	ChannelOutput   *ChannelOutput   `json:"channel,omitempty"`
+type Output interface {
+	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
-type EmailOutput struct {
-	To      []string `json:"to,omitempty"`
-	Subject string   `json:"subject,omitempty"`
-	Content string   `json:"content,omitempty"`
+type RuleOutput struct {
+	Type string `json:"type"`
+	Output
 }
 
-type PosgresDBOutput struct {
-	Host     string `json:"host,omitempty"`
-	Port     int    `json:"port,omitempty"`
-	User     string `json:"user,omitempty"`
-	Password string `json:"password,omitempty"`
-	Database string `json:"database,omitempty"`
-	Table    string `json:"table,omitempty"`
-	Mapping  string `json:"mapping,omitempty"`
-}
+func (ro *RuleOutput) UnmarshalJSON(data []byte) error {
+	var typeField struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &typeField); err != nil {
+		return err
+	}
 
-type ChannelOutput struct {
-	Channel string `json:"channel,omitempty"`
-	Topic   string `json:"topic,omitempty"`
+	switch typeField.Type {
+	case "alarms":
+		var r outputs.Alarm
+		if err := json.Unmarshal(data, &r); err != nil {
+			return err
+		}
+		ro.Output = &r
+
+	case "email":
+		var r outputs.Email
+		if err := json.Unmarshal(data, &r); err != nil {
+			return err
+		}
+		ro.Output = &r
+	case "save_remote_pg":
+		var r outputs.Postgres
+		if err := json.Unmarshal(data, &r); err != nil {
+			return err
+		}
+		ro.Output = &r
+	case "channels":
+		var r outputs.Publish
+		if err := json.Unmarshal(data, &r); err != nil {
+			return err
+		}
+		ro.Output = &r
+	case "save_senml":
+		var r outputs.SenML
+		ro.Output = &r
+	default:
+		return errors.New("unknown output type: " + typeField.Type)
+	}
+	return nil
 }
 
 // PageMeta contains page metadata that helps navigation.

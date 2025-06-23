@@ -4,10 +4,13 @@
 package api
 
 import (
+	"time"
+
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 const (
@@ -16,6 +19,8 @@ const (
 	MaxTitleSize = 37
 )
 
+var ErrStartDateTimeInPast = errors.New("start_datetime must be greater than or equal to current time")
+
 type addRuleReq struct {
 	re.Rule
 }
@@ -23,6 +28,10 @@ type addRuleReq struct {
 func (req addRuleReq) validate() error {
 	if len(req.Name) > api.MaxNameSize || req.Name == "" {
 		return apiutil.ErrNameSize
+	}
+	now := time.Now().UTC()
+	if req.Schedule.StartDateTime.Before(now) {
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 	return nil
 }
@@ -90,6 +99,11 @@ type updateRuleScheduleReq struct {
 func (req updateRuleScheduleReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
+	}
+
+	now := time.Now().UTC()
+	if req.Schedule.StartDateTime.Before(now) {
+		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
 	}
 
 	return nil

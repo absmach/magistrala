@@ -43,7 +43,7 @@ func (req addReportConfigReq) validate() error {
 	}
 	now := time.Now().UTC()
 	if req.Schedule.StartDateTime.Before(now) {
-		return errors.Wrap(ErrStartDateTimeInPast, apiutil.ErrValidation)
+		return errors.Wrap(apiutil.ErrValidation, ErrStartDateTimeInPast)
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }

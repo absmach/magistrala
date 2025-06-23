@@ -161,7 +161,6 @@ func (r *report) GenerateReport(ctx context.Context, session authn.Session, conf
 	if config.Status != EnabledStatus {
 		return ReportPage{}, svcerr.ErrInvalidStatus
 	}
-	fmt.Printf("cofig is %+v\n", config)
 
 	reportPage, err := r.generateReport(ctx, config, action)
 	if err != nil {

@@ -155,8 +155,6 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 		return nil, errors.Wrap(err, apiutil.ErrValidation)
 	}
 
-	fmt.Printf("req is %+v\n", req)
-
 	return req, nil
 }
 

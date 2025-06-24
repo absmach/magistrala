@@ -574,9 +574,6 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 		},
 	}
 
-	ruleInPast := rule
-	ruleInPast.Schedule = scheduleInPast
-
 	cases := []struct {
 		desc        string
 		token       string

@@ -56,7 +56,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	r.DomainID = session.DomainID
 	r.Status = EnabledStatus
 
-	if r.Schedule.StartDateTime.IsZero() {
+	if r.Schedule.StartDateTime == nil || r.Schedule.StartDateTime.IsZero() {
 		r.Schedule.StartDateTime = &now
 	}
 	r.Schedule.Time = *r.Schedule.StartDateTime

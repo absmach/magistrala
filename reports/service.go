@@ -56,7 +56,7 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 	cfg.DomainID = session.DomainID
 	cfg.Status = EnabledStatus
 
-	if cfg.Schedule.StartDateTime.IsZero() {
+	if cfg.Schedule.StartDateTime == nil || cfg.Schedule.StartDateTime.IsZero() {
 		cfg.Schedule.StartDateTime = &now
 	}
 	cfg.Schedule.Time = *cfg.Schedule.StartDateTime

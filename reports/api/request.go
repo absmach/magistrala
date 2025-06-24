@@ -39,7 +39,7 @@ func (req addReportConfigReq) validate() error {
 		return apiutil.ErrMissingName
 	}
 	if err := req.Schedule.Validate(); err != nil {
-		return errors.Wrap(apiutil.ErrValidation, err)
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }

@@ -41,11 +41,12 @@ var (
 	validToken   = "valid"
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
+	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   &now,
+		StartDateTime:   &future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
-		Time:            now,
+		Time:            future,
 	}
 	reportConfig = reports.ReportConfig{
 		ID:       validID,

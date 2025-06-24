@@ -83,14 +83,18 @@ func (s Schedule) Validate() error {
 func (s Schedule) MarshalJSON() ([]byte, error) {
 	type Alias Schedule
 	jTimes := struct {
-		StartDateTime string `json:"start_datetime"`
-		Time          string `json:"time"`
+		StartDateTime *string `json:"start_datetime"`
+		Time          string  `json:"time"`
 		*Alias
 	}{
-		StartDateTime: s.StartDateTime.Format(time.RFC3339),
-		Time:          s.Time.Format(time.RFC3339),
-		Alias:         (*Alias)(&s),
+		Time:  s.Time.Format(time.RFC3339),
+		Alias: (*Alias)(&s),
 	}
+	if s.StartDateTime != nil {
+		formatted := s.StartDateTime.Format(time.RFC3339)
+		jTimes.StartDateTime = &formatted
+	}
+
 	return json.Marshal(jTimes)
 }
 
@@ -107,19 +111,22 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	startDateTime, err := time.Parse(time.RFC3339, aux.StartDateTime)
-	if err != nil {
-		return err
-	}
-
-	*s.StartDateTime = startDateTime
-
-	if aux.Time != "" {
-		time, err := time.Parse(time.RFC3339, aux.Time)
+	if aux.StartDateTime != "" {
+		startDateTime, err := time.Parse(time.RFC3339, aux.StartDateTime)
 		if err != nil {
 			return err
 		}
-		s.Time = time
+		s.StartDateTime = &startDateTime
+	} else {
+		s.StartDateTime = nil
+	}
+
+	if aux.Time != "" {
+		parsedTime, err := time.Parse(time.RFC3339, aux.Time)
+		if err != nil {
+			return err
+		}
+		s.Time = parsedTime
 	}
 	return nil
 }

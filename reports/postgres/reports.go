@@ -60,7 +60,11 @@ func reportToDb(r reports.ReportConfig) (dbReport, error) {
 		}
 		email = e
 	}
-
+	start := sql.NullTime{}
+	if r.Schedule.StartDateTime != nil && !r.Schedule.StartDateTime.IsZero() {
+		start.Time = *r.Schedule.StartDateTime
+		start.Valid = true
+	}
 	t := sql.NullTime{Time: r.Schedule.Time}
 	if !r.Schedule.Time.IsZero() {
 		t.Valid = true
@@ -71,7 +75,7 @@ func reportToDb(r reports.ReportConfig) (dbReport, error) {
 		Name:            r.Name,
 		Description:     r.Description,
 		DomainID:        r.DomainID,
-		StartDateTime:   sqlTime(r.Schedule.StartDateTime),
+		StartDateTime:   start,
 		Due:             t,
 		Recurring:       r.Schedule.Recurring,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
@@ -130,11 +134,4 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 	}
 
 	return rpt, nil
-}
-
-func sqlTime(t *time.Time) sql.NullTime {
-	if t == nil {
-		return sql.NullTime{Valid: true}
-	}
-	return sql.NullTime{Time: *t}
 }

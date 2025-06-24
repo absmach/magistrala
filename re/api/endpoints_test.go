@@ -41,8 +41,9 @@ var (
 	validToken   = "valid"
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
+	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   &now,
+		StartDateTime:   &future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -108,12 +109,12 @@ func toJSON(data any) string {
 func TestAddRuleEndpoint(t *testing.T) {
 	ts, svc, authn := newRuleEngineServer()
 	defer ts.Close()
-
+	past := now.Add(-1 * time.Hour)
 	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   &now,
+		StartDateTime:   &past,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
-		Time:            now,
+		Time:            past,
 	}
 
 	ruleInPast := rule

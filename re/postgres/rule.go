@@ -53,6 +53,11 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	for _, v := range r.Logic.Outputs {
 		lo = append(lo, int32(v))
 	}
+	start := sql.NullTime{}
+	if r.Schedule.StartDateTime != nil && !r.Schedule.StartDateTime.IsZero() {
+		start.Time = *r.Schedule.StartDateTime
+		start.Valid = true
+	}
 	t := sql.NullTime{Time: r.Schedule.Time}
 	if !r.Schedule.Time.IsZero() {
 		t.Valid = true
@@ -74,7 +79,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicValue:      r.Logic.Value,
 		OutputChannel:   toNullString(r.OutputChannel),
 		OutputTopic:     toNullString(r.OutputTopic),
-		StartDateTime:   sqlTime(r.Schedule.StartDateTime),
+		StartDateTime:   start,
 		Time:            t,
 		Recurring:       r.Schedule.Recurring,
 		RecurringPeriod: r.Schedule.RecurringPeriod,
@@ -142,11 +147,4 @@ func fromNullString(nullString sql.NullString) string {
 		return ""
 	}
 	return nullString.String
-}
-
-func sqlTime(t *time.Time) sql.NullTime {
-	if t == nil {
-		return sql.NullTime{Valid: true}
-	}
-	return sql.NullTime{Time: *t}
 }

@@ -26,7 +26,7 @@ func (req addRuleReq) validate() error {
 		return apiutil.ErrNameSize
 	}
 	if err := req.Rule.Schedule.Validate(); err != nil {
-		return errors.Wrap(apiutil.ErrValidation, err)
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 	return nil
 }

@@ -5,11 +5,15 @@ package schedule
 
 import (
 	"encoding/json"
-	"errors"
 	"time"
+
+	"github.com/absmach/supermq/pkg/errors"
 )
 
-var ErrInvalidRecurringType = errors.New("invalid recurring type")
+var (
+	ErrInvalidRecurringType = errors.New("invalid recurring type")
+	ErrStartDateTimeInPast  = errors.New("start_datetime must be greater than or equal to current time")
+)
 
 // Type can be daily, weekly or monthly.
 type Recurring uint
@@ -60,10 +64,20 @@ func (rt *Recurring) UnmarshalJSON(data []byte) error {
 }
 
 type Schedule struct {
-	StartDateTime   time.Time `json:"start_datetime"`   // When the schedule becomes active
-	Time            time.Time `json:"time"`             // Specific time for the rule to run
-	Recurring       Recurring `json:"recurring"`        // None, Daily, Weekly, Monthly
-	RecurringPeriod uint      `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 = every interval, 2 = every second interval, etc.
+	StartDateTime   *time.Time `json:"start_datetime"`   // When the schedule becomes active
+	Time            time.Time  `json:"time"`             // Specific time for the rule to run
+	Recurring       Recurring  `json:"recurring"`        // None, Daily, Weekly, Monthly
+	RecurringPeriod uint       `json:"recurring_period"` // Controls how many intervals to skip between executions: 1 = every interval, 2 = every second interval, etc.
+}
+
+func (s Schedule) Validate() error {
+	if s.StartDateTime != nil {
+		now := time.Now().UTC()
+		if s.StartDateTime.Before(now) {
+			return ErrStartDateTimeInPast
+		}
+	}
+	return nil
 }
 
 func (s Schedule) MarshalJSON() ([]byte, error) {
@@ -98,7 +112,7 @@ func (s *Schedule) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	s.StartDateTime = startDateTime
+	*s.StartDateTime = startDateTime
 
 	if aux.Time != "" {
 		time, err := time.Parse(time.RFC3339, aux.Time)

@@ -42,7 +42,7 @@ var (
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   now.Add(1 * time.Hour),
+		StartDateTime:   &now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -110,7 +110,7 @@ func TestAddRuleEndpoint(t *testing.T) {
 	defer ts.Close()
 
 	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   now.Add(-1 * time.Hour),
+		StartDateTime:   &now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,

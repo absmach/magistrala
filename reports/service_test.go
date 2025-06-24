@@ -30,8 +30,9 @@ var (
 	namegen  = namegenerator.NewGenerator()
 	userID   = testsutil.GenerateUUID(&testing.T{})
 	domainID = testsutil.GenerateUUID(&testing.T{})
+	now      = time.Now().UTC()
 	schedule = pkgSch.Schedule{
-		StartDateTime:   time.Now().Add(-time.Hour),
+		StartDateTime:   &now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),

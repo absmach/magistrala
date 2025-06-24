@@ -49,17 +49,17 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 		return ReportConfig{}, err
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	cfg.ID = id
 	cfg.CreatedAt = now
 	cfg.CreatedBy = session.UserID
 	cfg.DomainID = session.DomainID
 	cfg.Status = EnabledStatus
 
-	if cfg.Schedule.StartDateTime.IsZero() {
-		cfg.Schedule.StartDateTime = now
+	if cfg.Schedule.StartDateTime == nil || cfg.Schedule.StartDateTime.IsZero() {
+		cfg.Schedule.StartDateTime = &now
 	}
-	cfg.Schedule.Time = cfg.Schedule.StartDateTime
+	cfg.Schedule.Time = *cfg.Schedule.StartDateTime
 
 	reportConfig, err := r.repo.AddReportConfig(ctx, cfg)
 	if err != nil {
@@ -92,7 +92,7 @@ func (r *report) UpdateReportConfig(ctx context.Context, session authn.Session, 
 func (r *report) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
 	cfg.UpdatedAt = time.Now().UTC()
 	cfg.UpdatedBy = session.UserID
-	cfg.Schedule.Time = cfg.Schedule.StartDateTime
+	cfg.Schedule.Time = *cfg.Schedule.StartDateTime
 	c, err := r.repo.UpdateReportSchedule(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrUpdateEntity, err)

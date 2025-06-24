@@ -41,8 +41,9 @@ var (
 	validToken   = "valid"
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
+	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   now.Add(1 * time.Hour),
+		StartDateTime:   &future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -55,6 +56,13 @@ var (
 		Metadata: re.Metadata{
 			"name": "test",
 		},
+	}
+	past           = now.Add(-1 * time.Hour)
+	scheduleInPast = pkgSch.Schedule{
+		StartDateTime:   &past,
+		Recurring:       pkgSch.Daily,
+		RecurringPeriod: 1,
+		Time:            past,
 	}
 )
 
@@ -108,13 +116,6 @@ func toJSON(data any) string {
 func TestAddRuleEndpoint(t *testing.T) {
 	ts, svc, authn := newRuleEngineServer()
 	defer ts.Close()
-
-	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   now.Add(-1 * time.Hour),
-		Recurring:       pkgSch.Daily,
-		RecurringPeriod: 1,
-		Time:            now,
-	}
 
 	ruleInPast := rule
 	ruleInPast.Schedule = scheduleInPast
@@ -204,7 +205,6 @@ func TestAddRuleEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			rule:        ruleInPast,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -215,9 +215,9 @@ func TestAddRuleEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			rule:        rule,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
-			status:      http.StatusForbidden,
-			err:         svcerr.ErrAuthorization,
+			svcErr:      svcerr.ErrCreateEntity,
+			status:      http.StatusUnprocessableEntity,
+			err:         svcerr.ErrCreateEntity,
 		},
 	}
 

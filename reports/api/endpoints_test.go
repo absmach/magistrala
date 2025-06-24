@@ -41,11 +41,12 @@ var (
 	validToken   = "valid"
 	invalidToken = "invalid"
 	now          = time.Now().UTC().Truncate(time.Minute)
+	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   now.Add(1 * time.Hour),
+		StartDateTime:   &future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
-		Time:            now,
+		Time:            future,
 	}
 	reportConfig = reports.ReportConfig{
 		ID:       validID,
@@ -126,7 +127,7 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 	defer ts.Close()
 
 	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   now.Add(-1 * time.Hour),
+		StartDateTime:   &now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -203,7 +204,6 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			cfg:         reportInPast,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},
@@ -214,9 +214,9 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			cfg:         reportConfig,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
-			status:      http.StatusForbidden,
-			err:         svcerr.ErrAuthorization,
+			svcErr:      svcerr.ErrCreateEntity,
+			status:      http.StatusUnprocessableEntity,
+			err:         svcerr.ErrCreateEntity,
 		},
 	}
 

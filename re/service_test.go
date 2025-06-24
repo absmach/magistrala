@@ -28,15 +28,16 @@ import (
 )
 
 var (
-	namegen      = namegenerator.NewGenerator()
-	userID       = testsutil.GenerateUUID(&testing.T{})
-	domainID     = testsutil.GenerateUUID(&testing.T{})
-	ruleName     = namegen.Generate()
-	ruleID       = testsutil.GenerateUUID(&testing.T{})
-	Tags         = []string{"tag1", "tag2"}
-	inputChannel = "test.channel"
-	schedule     = pkgSch.Schedule{
-		StartDateTime:   time.Now().Add(-time.Hour),
+	namegen       = namegenerator.NewGenerator()
+	userID        = testsutil.GenerateUUID(&testing.T{})
+	domainID      = testsutil.GenerateUUID(&testing.T{})
+	ruleName      = namegen.Generate()
+	ruleID        = testsutil.GenerateUUID(&testing.T{})
+	Tags          = []string{"tag1", "tag2"}
+	inputChannel  = "test.channel"
+	StartDateTime = time.Now().Add(-time.Hour)
+	schedule      = pkgSch.Schedule{
+		StartDateTime:   &StartDateTime,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
@@ -344,7 +345,7 @@ func TestListRules(t *testing.T) {
 				Recurring:       pkgSch.Daily,
 				Time:            now.Add(1 * time.Hour),
 				RecurringPeriod: 1,
-				StartDateTime:   now.Add(-1 * time.Hour),
+				StartDateTime:   &now,
 			},
 		}
 		rules = append(rules, r)

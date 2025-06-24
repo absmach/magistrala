@@ -122,7 +122,7 @@ type Metric struct {
 	Name      string `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string `json:"protocol,omitempty"`   // Optional field
-	Format    string `json:"format,omitiempty"`    // Optional field
+	Format    string `json:"format,omitempty"`     // Optional field
 }
 
 type ReqMetric struct {
@@ -131,7 +131,7 @@ type ReqMetric struct {
 	Name      string   `json:"name,omitempty"`       // Mandatory field
 	Subtopic  string   `json:"subtopic,omitempty"`   // Optional field
 	Protocol  string   `json:"protocol,omitempty"`   // Optional field
-	Format    string   `json:"format,omitiempty"`    // Optional field
+	Format    string   `json:"format,omitempty"`     // Optional field
 }
 
 func (rm ReqMetric) Validate() error {

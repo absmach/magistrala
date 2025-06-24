@@ -5,7 +5,6 @@ package api
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
@@ -21,8 +20,6 @@ const (
 
 	errInvalidMetric = "invalid metric[%d]: %w"
 )
-
-var ErrStartDateTimeInPast = errors.New("start_datetime must be greater than or equal to current time")
 
 var (
 	errInvalidReportAction      = errors.New("invalid report action")
@@ -41,9 +38,8 @@ func (req addReportConfigReq) validate() error {
 	if req.Name == "" {
 		return apiutil.ErrMissingName
 	}
-	now := time.Now().UTC()
-	if req.Schedule.StartDateTime.Before(now) {
-		return errors.Wrap(apiutil.ErrValidation, ErrStartDateTimeInPast)
+	if err := req.Schedule.Validate(); err != nil {
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }
@@ -91,9 +87,8 @@ func (req updateReportScheduleReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	now := time.Now().UTC()
-	if req.Schedule.StartDateTime.Before(now) {
-		return errors.Wrap(apiutil.ErrValidation, ErrStartDateTimeInPast)
+	if err := req.Schedule.Validate(); err != nil {
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 
 	return nil

@@ -56,10 +56,10 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	r.DomainID = session.DomainID
 	r.Status = EnabledStatus
 
-	if r.Schedule.StartDateTime.IsZero() {
-		r.Schedule.StartDateTime = now
+	if r.Schedule.StartDateTime == nil || r.Schedule.StartDateTime.IsZero() {
+		r.Schedule.StartDateTime = &now
 	}
-	r.Schedule.Time = r.Schedule.StartDateTime
+	r.Schedule.Time = *r.Schedule.StartDateTime
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
@@ -103,7 +103,7 @@ func (re *re) UpdateRuleTags(ctx context.Context, session authn.Session, r Rule)
 func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
 	r.UpdatedAt = time.Now().UTC()
 	r.UpdatedBy = session.UserID
-	r.Schedule.Time = r.Schedule.StartDateTime
+	r.Schedule.Time = *r.Schedule.StartDateTime
 	rule, err := re.repo.UpdateRuleSchedule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)

@@ -214,9 +214,9 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			cfg:         reportConfig,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
-			status:      http.StatusForbidden,
-			err:         svcerr.ErrAuthorization,
+			svcErr:      svcerr.ErrCreateEntity,
+			status:      http.StatusUnprocessableEntity,
+			err:         svcerr.ErrCreateEntity,
 		},
 	}
 

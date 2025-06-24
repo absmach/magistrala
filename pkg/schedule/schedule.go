@@ -100,29 +100,27 @@ func (s Schedule) MarshalJSON() ([]byte, error) {
 
 func (s *Schedule) UnmarshalJSON(data []byte) error {
 	type Alias Schedule
-	aux := struct {
+	temp := struct {
 		StartDateTime string `json:"start_datetime"`
 		Time          string `json:"time"`
 		*Alias
 	}{
 		Alias: (*Alias)(s),
 	}
-	if err := json.Unmarshal(data, &aux); err != nil {
+	if err := json.Unmarshal(data, &temp); err != nil {
 		return err
 	}
 
-	if aux.StartDateTime != "" {
-		startDateTime, err := time.Parse(time.RFC3339, aux.StartDateTime)
+	s.StartDateTime = nil
+	if temp.StartDateTime != "" {
+		startDateTime, err := time.Parse(time.RFC3339, temp.StartDateTime)
 		if err != nil {
 			return err
 		}
 		s.StartDateTime = &startDateTime
-	} else {
-		s.StartDateTime = nil
 	}
-
-	if aux.Time != "" {
-		parsedTime, err := time.Parse(time.RFC3339, aux.Time)
+	if temp.Time != "" {
+		parsedTime, err := time.Parse(time.RFC3339, temp.Time)
 		if err != nil {
 			return err
 		}

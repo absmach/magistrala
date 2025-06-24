@@ -49,7 +49,7 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 		return ReportConfig{}, err
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	cfg.ID = id
 	cfg.CreatedAt = now
 	cfg.CreatedBy = session.UserID

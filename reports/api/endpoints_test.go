@@ -204,7 +204,6 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			cfg:         reportInPast,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},

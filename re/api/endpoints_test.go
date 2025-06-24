@@ -205,7 +205,6 @@ func TestAddRuleEndpoint(t *testing.T) {
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
 			rule:        ruleInPast,
 			contentType: contentType,
-			svcErr:      svcerr.ErrAuthorization,
 			status:      http.StatusBadRequest,
 			err:         apiutil.ErrValidation,
 		},

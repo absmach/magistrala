@@ -97,7 +97,7 @@ func (req updateRuleScheduleReq) validate() error {
 	}
 
 	if err := req.Schedule.Validate(); err != nil {
-		return errors.Wrap(apiutil.ErrValidation, err)
+		return errors.Wrap(err, apiutil.ErrValidation)
 	}
 
 	return nil

@@ -57,6 +57,13 @@ var (
 			"name": "test",
 		},
 	}
+	past           = now.Add(-1 * time.Hour)
+	scheduleInPast = pkgSch.Schedule{
+		StartDateTime:   &past,
+		Recurring:       pkgSch.Daily,
+		RecurringPeriod: 1,
+		Time:            past,
+	}
 )
 
 type testRequest struct {
@@ -109,13 +116,6 @@ func toJSON(data any) string {
 func TestAddRuleEndpoint(t *testing.T) {
 	ts, svc, authn := newRuleEngineServer()
 	defer ts.Close()
-	past := now.Add(-1 * time.Hour)
-	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   &past,
-		Recurring:       pkgSch.Daily,
-		RecurringPeriod: 1,
-		Time:            past,
-	}
 
 	ruleInPast := rule
 	ruleInPast.Schedule = scheduleInPast
@@ -573,6 +573,9 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			"name": "test",
 		},
 	}
+
+	ruleInPast := rule
+	ruleInPast.Schedule = scheduleInPast
 
 	cases := []struct {
 		desc        string

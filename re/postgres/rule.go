@@ -66,6 +66,12 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	if err := tags.Set(r.Tags); err != nil {
 		return dbRule{}, err
 	}
+
+	outputs, err := json.Marshal(r.Outputs)
+	if err != nil {
+		return dbRule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+	}
+
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -77,7 +83,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		LogicType:       r.Logic.Type,
 		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
-		Outputs:         []byte(r.Outputs),
+		Outputs:         outputs,
 		StartDateTime:   start,
 		Time:            t,
 		Recurring:       r.Schedule.Recurring,
@@ -106,6 +112,14 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 	for _, e := range dto.Tags.Elements {
 		tags = append(tags, e.String)
 	}
+
+	var outputs re.Output
+	if dto.Outputs != nil {
+		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
+			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
@@ -119,7 +133,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			Type:    dto.LogicType,
 			Value:   dto.LogicValue,
 		},
-		Outputs: string(dto.Outputs),
+		Outputs: outputs,
 		Schedule: schedule.Schedule{
 			StartDateTime:   &dto.StartDateTime.Time,
 			Time:            dto.Time.Time,

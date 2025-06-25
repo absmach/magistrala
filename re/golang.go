@@ -35,15 +35,15 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
 	}
 
-	var rawList []json.RawMessage
-	if e := json.Unmarshal([]byte(r.Outputs), &rawList); e != nil {
-		err = errors.Wrap(e, err)
-	}
-
-	var outputs []Output
-	for _, raw := range rawList {
-		var o Output
-		if e := json.Unmarshal(raw, &o); e != nil {
+	var outputs []OutputRunner
+	for _, out := range r.Outputs {
+		b, e := json.Marshal(out)
+		if e != nil {
+			err = errors.Wrap(e, err)
+			continue
+		}
+		var o OutputRunner
+		if e := json.Unmarshal(b, &o); e != nil {
 			err = errors.Wrap(e, err)
 			continue
 		}

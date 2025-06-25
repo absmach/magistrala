@@ -7,7 +7,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	lua "github.com/yuin/gopher-lua"
 )
 

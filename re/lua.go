@@ -54,25 +54,25 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	}
 	// Converting Lua is an expensive operation, so
 	// don't do it if there are no outputs.
-	if len(r.Logic.Outputs) == 0 {
-		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no output channels", Details: details}
+	if len(r.Outputs) == 0 {
+		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no outputs", Details: details}
 	}
 	var err error
 	res := convertLua(result)
 
-	var outputs []Output
+	var outputs []Runnable
 	for _, out := range r.Outputs {
 		b, e := json.Marshal(out)
 		if e != nil {
 			err = errors.Wrap(e, err)
 			continue
 		}
-		var o RuleOutput
+		var o Output
 		if e := json.Unmarshal(b, &o); e != nil {
 			err = errors.Wrap(e, err)
 			continue
 		}
-		outputs = append(outputs, o.Output)
+		outputs = append(outputs, o.Runnable)
 	}
 
 	for _, o := range outputs {

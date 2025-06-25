@@ -12,7 +12,6 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/jackc/pgtype"
-	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -25,7 +24,6 @@ type dbRule struct {
 	InputChannel    string             `db:"input_channel"`
 	InputTopic      sql.NullString     `db:"input_topic"`
 	LogicType       re.ScriptType      `db:"logic_type"`
-	LogicOutputs    pq.Int32Array      `db:"logic_output"`
 	LogicValue      string             `db:"logic_value"`
 	Outputs         []byte             `db:"outputs"`
 	StartDateTime   sql.NullTime       `db:"start_datetime"`
@@ -49,10 +47,6 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		metadata = b
 	}
 
-	lo := pq.Int32Array{}
-	for _, v := range r.Logic.Outputs {
-		lo = append(lo, int32(v))
-	}
 	start := sql.NullTime{}
 	if r.Schedule.StartDateTime != nil && !r.Schedule.StartDateTime.IsZero() {
 		start.Time = *r.Schedule.StartDateTime
@@ -81,7 +75,6 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
-		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
 		Outputs:         outputs,
 		StartDateTime:   start,
@@ -104,16 +97,12 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		}
 	}
 
-	lo := []re.OutputType{}
-	for _, v := range dto.LogicOutputs {
-		lo = append(lo, re.OutputType(v))
-	}
 	var tags []string
 	for _, e := range dto.Tags.Elements {
 		tags = append(tags, e.String)
 	}
 
-	var outputs re.Outputs
+	var outputs []re.Output
 	if dto.Outputs != nil {
 		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
@@ -129,9 +118,8 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
-			Outputs: lo,
-			Type:    dto.LogicType,
-			Value:   dto.LogicValue,
+			Type:  dto.LogicType,
+			Value: dto.LogicValue,
 		},
 		Outputs: outputs,
 		Schedule: schedule.Schedule{

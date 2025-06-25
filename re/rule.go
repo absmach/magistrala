@@ -78,12 +78,9 @@ type (
 	ScriptType uint
 
 	Metadata map[string]interface{}
-	Outputs  []map[string]interface{}
-
-	Script struct {
-		Type    ScriptType   `json:"type"`
-		Outputs []OutputType `json:"outputs"`
-		Value   string       `json:"value"`
+	Script   struct {
+		Type  ScriptType `json:"type"`
+		Value string     `json:"value"`
 	}
 )
 
@@ -96,7 +93,7 @@ type Rule struct {
 	InputChannel string            `json:"input_channel"`
 	InputTopic   string            `json:"input_topic"`
 	Logic        Script            `json:"logic"`
-	Outputs      Outputs           `json:"outputs,omitempty"`
+	Outputs      []Output          `json:"outputs,omitempty"`
 	Schedule     schedule.Schedule `json:"schedule"`
 	Status       Status            `json:"status"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -105,54 +102,54 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
-type Output interface {
+type Runnable interface {
 	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
-type RuleOutput struct {
+type Output struct {
 	Type OutputType `json:"type"`
-	Output
+	Runnable
 }
 
-func (ro *RuleOutput) UnmarshalJSON(data []byte) error {
+func (ro *Output) UnmarshalJSON(data []byte) error {
 	var typeField struct {
-		Type string `json:"type"`
+		Type OutputType `json:"type"`
 	}
 	if err := json.Unmarshal(data, &typeField); err != nil {
 		return err
 	}
 
 	switch typeField.Type {
-	case "alarms":
+	case Alarms:
 		var r outputs.Alarm
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.Output = &r
+		ro.Runnable = &r
 
-	case "email":
+	case Email:
 		var r outputs.Email
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.Output = &r
-	case "save_remote_pg":
+		ro.Runnable = &r
+	case SaveRemotePg:
 		var r outputs.Postgres
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.Output = &r
-	case "channels":
-		var r outputs.Publish
+		ro.Runnable = &r
+	case Channels:
+		var r outputs.ChannelPublisher
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.Output = &r
-	case "save_senml":
+		ro.Runnable = &r
+	case SaveSenML:
 		var r outputs.SenML
-		ro.Output = &r
+		ro.Runnable = &r
 	default:
-		return errors.New("unknown output type: " + typeField.Type)
+		return errors.New("unknown output type: " + typeField.Type.String())
 	}
 	return nil
 }

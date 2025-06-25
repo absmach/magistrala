@@ -10,13 +10,13 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
-type Publish struct {
+type ChannelPublisher struct {
 	RePubSub messaging.PubSub
 	Channel  string `json:"channel"`
 	Topic    string `json:"topic"`
 }
 
-func (p *Publish) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
 	data, err := json.Marshal(val)
 	if err != nil {
 		return err

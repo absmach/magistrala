@@ -15,6 +15,7 @@ import (
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
+	"github.com/absmach/magistrala/re/outputs"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -631,11 +632,13 @@ func TestHandle(t *testing.T) {
 						Logic: re.Script{
 							Type: re.ScriptType(0),
 						},
-						Outputs: []map[string]interface{}{
+						Outputs: []re.Output{
 							{
-								"type":     re.Channels,
-								"channel":  "some-output-channel",
-								"subtopic": "some/sub/topic",
+								Type: re.Channels,
+								Runnable: &outputs.ChannelPublisher{
+									Channel: "output.channel",
+									Topic:   "output.topic",
+								},
 							},
 						},
 						Schedule: schedule,

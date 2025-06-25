@@ -23,12 +23,12 @@ const (
 
 const Protocol = "nats"
 
-// ScriptOutput is the indicator for type of the logic
+// OutputType is the indicator for type of the output
 // so we can move it to the Go instead calling Go from Lua.
-type ScriptOutput uint
+type OutputType uint
 
 const (
-	Channels ScriptOutput = iota
+	Channels OutputType = iota
 	Alarms
 	SaveSenML
 	Email
@@ -37,7 +37,7 @@ const (
 
 var (
 	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg"}
-	stringToScriptKind = map[string]ScriptOutput{
+	stringToScriptKind = map[string]OutputType{
 		"channels":       Channels,
 		"alarms":         Alarms,
 		"save_senml":     SaveSenML,
@@ -46,20 +46,20 @@ var (
 	}
 )
 
-func (s ScriptOutput) String() string {
+func (s OutputType) String() string {
 	if int(s) < 0 || int(s) >= len(scriptKindToString) {
 		return "unknown"
 	}
 	return scriptKindToString[s]
 }
 
-// MarshalJSON converts ScriptOutput to JSON.
-func (s ScriptOutput) MarshalJSON() ([]byte, error) {
+// MarshalJSON converts OutputType to JSON.
+func (s OutputType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 
-// UnmarshalJSON parses JSON string into ScriptOutput.
-func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
+// UnmarshalJSON parses JSON string into OutputType.
+func (s *OutputType) UnmarshalJSON(data []byte) error {
 	var str string
 	if err := json.Unmarshal(data, &str); err != nil {
 		return err
@@ -69,7 +69,7 @@ func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
 		*s = val
 		return nil
 	}
-	return errors.New("invalid ScriptOutput: " + str)
+	return errors.New("invalid OutputType: " + str)
 }
 
 type (
@@ -80,9 +80,9 @@ type (
 	Metadata map[string]interface{}
 
 	Script struct {
-		Type    ScriptType     `json:"type"`
-		Outputs []ScriptOutput `json:"outputs"`
-		Value   string         `json:"value"`
+		Type    ScriptType   `json:"type"`
+		Outputs []OutputType `json:"outputs"`
+		Value   string       `json:"value"`
 	}
 )
 
@@ -109,7 +109,7 @@ type Output interface {
 }
 
 type RuleOutput struct {
-	Type string `json:"type"`
+	Type OutputType `json:"type"`
 	Output
 }
 

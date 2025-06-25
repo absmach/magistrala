@@ -98,9 +98,9 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		}
 	}
 
-	lo := []re.ScriptOutput{}
+	lo := []re.OutputType{}
 	for _, v := range dto.LogicOutputs {
-		lo = append(lo, re.ScriptOutput(v))
+		lo = append(lo, re.OutputType(v))
 	}
 	var tags []string
 	for _, e := range dto.Tags.Elements {

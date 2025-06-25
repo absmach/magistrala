@@ -59,10 +59,12 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	}
 	var err error
 	res := convertLua(result)
+
 	var rawList []json.RawMessage
 	if e := json.Unmarshal([]byte(r.Outputs), &rawList); e != nil {
 		err = errors.Wrap(e, err)
 	}
+
 	var outputs []Output
 	for _, raw := range rawList {
 		var o Output
@@ -72,6 +74,7 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 		}
 		outputs = append(outputs, o)
 	}
+
 	for _, o := range outputs {
 		// If value is false, don't run the follow-up.
 		if v, ok := res.(bool); ok && !v {

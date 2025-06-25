@@ -106,51 +106,42 @@ type Runnable interface {
 	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
-type Output struct {
-	Type OutputType `json:"type"`
-	Runnable
+type (
+	Outputs []Runnable
+	Output  struct {
+		Type OutputType `json:"type"`
+		Runnable
+	}
+)
+
+var outputRegistry = map[OutputType]func() Runnable{
+	Alarms:       func() Runnable { return &outputs.Alarm{} },
+	Email:        func() Runnable { return &outputs.Email{} },
+	SaveRemotePg: func() Runnable { return &outputs.Postgres{} },
+	Channels:     func() Runnable { return &outputs.ChannelPublisher{} },
+	SaveSenML:    func() Runnable { return &outputs.SenML{} },
 }
 
 func (ro *Output) UnmarshalJSON(data []byte) error {
-	var typeField struct {
+	var meta struct {
 		Type OutputType `json:"type"`
 	}
-	if err := json.Unmarshal(data, &typeField); err != nil {
+	if err := json.Unmarshal(data, &meta); err != nil {
 		return err
 	}
 
-	switch typeField.Type {
-	case Alarms:
-		var r outputs.Alarm
-		if err := json.Unmarshal(data, &r); err != nil {
-			return err
-		}
-		ro.Runnable = &r
-
-	case Email:
-		var r outputs.Email
-		if err := json.Unmarshal(data, &r); err != nil {
-			return err
-		}
-		ro.Runnable = &r
-	case SaveRemotePg:
-		var r outputs.Postgres
-		if err := json.Unmarshal(data, &r); err != nil {
-			return err
-		}
-		ro.Runnable = &r
-	case Channels:
-		var r outputs.ChannelPublisher
-		if err := json.Unmarshal(data, &r); err != nil {
-			return err
-		}
-		ro.Runnable = &r
-	case SaveSenML:
-		var r outputs.SenML
-		ro.Runnable = &r
-	default:
-		return errors.New("unknown output type: " + typeField.Type.String())
+	factory, ok := outputRegistry[meta.Type]
+	if !ok {
+		return errors.New("unknown output type: " + meta.Type.String())
 	}
+
+	instance := factory()
+	if err := json.Unmarshal(data, instance); err != nil {
+		return err
+	}
+
+	ro.Type = meta.Type
+	ro.Runnable = instance
 	return nil
 }
 

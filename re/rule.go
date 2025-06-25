@@ -78,7 +78,7 @@ type (
 	ScriptType uint
 
 	Metadata map[string]interface{}
-	Output   []map[string]interface{}
+	Outputs  []map[string]interface{}
 
 	Script struct {
 		Type    ScriptType   `json:"type"`
@@ -96,7 +96,7 @@ type Rule struct {
 	InputChannel string            `json:"input_channel"`
 	InputTopic   string            `json:"input_topic"`
 	Logic        Script            `json:"logic"`
-	Outputs      Output            `json:"outputs,omitempty"`
+	Outputs      Outputs           `json:"outputs,omitempty"`
 	Schedule     schedule.Schedule `json:"schedule"`
 	Status       Status            `json:"status"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -105,13 +105,13 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
-type OutputRunner interface {
+type Output interface {
 	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
 type RuleOutput struct {
 	Type OutputType `json:"type"`
-	OutputRunner
+	Output
 }
 
 func (ro *RuleOutput) UnmarshalJSON(data []byte) error {
@@ -128,29 +128,29 @@ func (ro *RuleOutput) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.OutputRunner = &r
+		ro.Output = &r
 
 	case "email":
 		var r outputs.Email
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.OutputRunner = &r
+		ro.Output = &r
 	case "save_remote_pg":
 		var r outputs.Postgres
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.OutputRunner = &r
+		ro.Output = &r
 	case "channels":
 		var r outputs.Publish
 		if err := json.Unmarshal(data, &r); err != nil {
 			return err
 		}
-		ro.OutputRunner = &r
+		ro.Output = &r
 	case "save_senml":
 		var r outputs.SenML
-		ro.OutputRunner = &r
+		ro.Output = &r
 	default:
 		return errors.New("unknown output type: " + typeField.Type)
 	}

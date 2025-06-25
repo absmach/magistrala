@@ -60,19 +60,19 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	var err error
 	res := convertLua(result)
 
-	var outputs []OutputRunner
+	var outputs []Output
 	for _, out := range r.Outputs {
 		b, e := json.Marshal(out)
 		if e != nil {
 			err = errors.Wrap(e, err)
 			continue
 		}
-		var o OutputRunner
+		var o RuleOutput
 		if e := json.Unmarshal(b, &o); e != nil {
 			err = errors.Wrap(e, err)
 			continue
 		}
-		outputs = append(outputs, o)
+		outputs = append(outputs, o.Output)
 	}
 
 	for _, o := range outputs {

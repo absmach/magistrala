@@ -113,7 +113,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		tags = append(tags, e.String)
 	}
 
-	var outputs re.Output
+	var outputs re.Outputs
 	if dto.Outputs != nil {
 		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)

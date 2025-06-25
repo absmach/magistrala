@@ -79,9 +79,9 @@ func (_e *ConfigReader_Expecter) ReadConfig(config interface{}, b interface{}) *
 	return &ConfigReader_ReadConfig_Call{Call: _e.mock.On("ReadConfig", config, b)}
 }
 
-func (_c *ConfigReader_ReadConfig_Call) run func(config bootstrap.Config, b bool)) *ConfigReader_ReadConfig_Call {
-	_c.Call.func(args mock.Arguments) {
-		args[0].(bootstrap.Config), args[1].(bool))
+func (_c *ConfigReader_ReadConfig_Call) Run(run func(config bootstrap.Config, b bool)) *ConfigReader_ReadConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bootstrap.Config), args[1].(bool))
 	})
 	return _c
 }

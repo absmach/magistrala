@@ -10,6 +10,8 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
+const protocol = "nats"
+
 type ChannelPublisher struct {
 	RePubSub messaging.PubSub `json:"-"`
 	Channel  string           `json:"channel"`
@@ -28,7 +30,7 @@ func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val 
 		Created:   msg.Created,
 		Channel:   p.Channel,
 		Subtopic:  p.Topic,
-		Protocol:  Protocol,
+		Protocol:  protocol,
 		Payload:   data,
 	}
 

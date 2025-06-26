@@ -29,8 +29,8 @@ type Postgres struct {
 
 func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
 	data := map[string]interface{}{
-		LogicRespKey: val,
-		MsgKey:       msg,
+		logicRespKey: val,
+		msgKey:       msg,
 	}
 
 	tmpl, err := template.New("postgres").Parse(p.Mapping)

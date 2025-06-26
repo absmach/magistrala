@@ -22,8 +22,8 @@ type Email struct {
 
 func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
 	data := map[string]interface{}{
-		LogicRespKey: val,
-		MsgKey:       msg,
+		logicRespKey: val,
+		msgKey:       msg,
 	}
 
 	tmpl, err := template.New("email").Parse(e.Content)

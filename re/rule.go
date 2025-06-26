@@ -20,8 +20,6 @@ const (
 	GoType
 )
 
-const Protocol = "nats"
-
 type (
 	// ScriptType indicates Runtime type for the future versions
 	// that will support JS or Go runtimes alongside Lua.
@@ -96,36 +94,6 @@ func (o *Outputs) UnmarshalJSON(data []byte) error {
 
 type Runnable interface {
 	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
-}
-
-type (
-	Output struct {
-		Type outputs.OutputType `json:"type"`
-		Runnable
-	}
-)
-
-func (ro *Output) UnmarshalJSON(data []byte) error {
-	var meta struct {
-		Type outputs.OutputType `json:"type"`
-	}
-	if err := json.Unmarshal(data, &meta); err != nil {
-		return err
-	}
-
-	factory, ok := outputRegistry[meta.Type]
-	if !ok {
-		return errors.New("unknown output type: " + meta.Type.String())
-	}
-
-	instance := factory()
-	if err := json.Unmarshal(data, instance); err != nil {
-		return err
-	}
-
-	ro.Type = meta.Type
-	ro.Runnable = instance
-	return nil
 }
 
 // PageMeta contains page metadata that helps navigation.

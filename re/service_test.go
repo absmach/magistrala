@@ -632,13 +632,10 @@ func TestHandle(t *testing.T) {
 						Logic: re.Script{
 							Type: re.ScriptType(0),
 						},
-						Outputs: []re.Output{
-							{
-								Type: re.Channels,
-								Runnable: &outputs.ChannelPublisher{
-									Channel: "output.channel",
-									Topic:   "output.topic",
-								},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
 							},
 						},
 						Schedule: schedule,

@@ -25,6 +25,7 @@ var (
 const (
 	maxPayload     = 100 * 1024
 	pldExceededFmt = "max payload size of 100kB exceeded: "
+	protocol       = "nats"
 )
 
 func (re *re) Handle(msg *messaging.Message) error {
@@ -150,7 +151,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					msg := &messaging.Message{
 						Channel:  rule.InputChannel,
 						Subtopic: rule.InputTopic,
-						Protocol: Protocol,
+						Protocol: protocol,
 						Created:  due.Unix(),
 					}
 					re.runInfo <- re.process(ctx, rule, msg)

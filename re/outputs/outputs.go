@@ -11,11 +11,9 @@ import (
 )
 
 const (
-	MsgKey       = "message"
-	LogicRespKey = "result"
+	msgKey       = "message"
+	logicRespKey = "result"
 )
-
-const Protocol = "nats"
 
 // OutputType is the indicator for type of the output
 // so we can move it to the Go instead calling Go from Lua.

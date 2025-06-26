@@ -8,12 +8,13 @@ import (
 	"strings"
 
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
-const (
-	msgKey       = "message"
-	logicRespKey = "result"
-)
+type templateVal struct {
+	Message *messaging.Message
+	Result  interface{}
+}
 
 // OutputType is the indicator for type of the output
 // so we can move it to the Go instead calling Go from Lua.

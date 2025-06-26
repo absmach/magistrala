@@ -21,9 +21,9 @@ type Email struct {
 }
 
 func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
-	data := map[string]interface{}{
-		logicRespKey: val,
-		msgKey:       msg,
+	templData := templateVal{
+		Message: msg,
+		Result:  val,
 	}
 
 	tmpl, err := template.New("email").Parse(e.Content)
@@ -32,7 +32,7 @@ func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	}
 
 	var output bytes.Buffer
-	if err := tmpl.Execute(&output, data); err != nil {
+	if err := tmpl.Execute(&output, templData); err != nil {
 		return err
 	}
 

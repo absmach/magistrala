@@ -28,9 +28,9 @@ type Postgres struct {
 }
 
 func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
-	data := map[string]interface{}{
-		logicRespKey: val,
-		msgKey:       msg,
+	templData := templateVal{
+		Message: msg,
+		Result:  val,
 	}
 
 	tmpl, err := template.New("postgres").Parse(p.Mapping)
@@ -39,7 +39,7 @@ func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface
 	}
 
 	var output bytes.Buffer
-	if err := tmpl.Execute(&output, data); err != nil {
+	if err := tmpl.Execute(&output, templData); err != nil {
 		return err
 	}
 
@@ -64,11 +64,14 @@ func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface
 		return errors.Wrap(errors.New("failed to connect to DB"), err)
 	}
 
-	cols := []string{}
-	values := []interface{}{}
-	placeholders := []string{}
+	var (
+		cols         []string
+		values       []interface{}
+		placeholders []string
+	)
+
 	i := 1
-	for k, v := range data {
+	for k, v := range columns {
 		cols = append(cols, k)
 		values = append(values, v)
 		placeholders = append(placeholders, fmt.Sprintf("$%d", i))

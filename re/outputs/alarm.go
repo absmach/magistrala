@@ -23,7 +23,6 @@ func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	if err != nil {
 		return err
 	}
-
 	alarm := alarms.Alarm{
 		RuleID:    a.RuleID,
 		DomainID:  msg.Domain,

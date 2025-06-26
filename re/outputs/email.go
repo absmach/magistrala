@@ -44,7 +44,7 @@ func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	return nil
 }
 
-func (e Email) MarshalJSON() ([]byte, error) {
+func (e *Email) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"type":    EmailType.String(),
 		"to":      e.To,

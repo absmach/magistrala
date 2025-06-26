@@ -45,7 +45,7 @@ func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	return nil
 }
 
-func (senml SenML) MarshalJSON() ([]byte, error) {
+func (senml *SenML) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{
 		"type": SaveSenMLType.String(),
 	})

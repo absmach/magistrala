@@ -14,8 +14,8 @@ import (
 )
 
 type Alarm struct {
-	AlarmsPub messaging.Publisher
-	RuleID    string `json:"rule_id"`
+	AlarmsPub messaging.Publisher `json:"-"`
+	RuleID    string              `json:"rule_id"`
 }
 
 func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
@@ -23,16 +23,31 @@ func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	if err != nil {
 		return err
 	}
-	alarm := alarms.Alarm{
-		RuleID:    a.RuleID,
-		DomainID:  msg.Domain,
-		ClientID:  msg.Publisher,
-		ChannelID: msg.Channel,
-		Subtopic:  msg.Subtopic,
+
+	var alarmsList []alarms.Alarm
+	if err := json.Unmarshal(data, &alarmsList); err != nil {
+		var single alarms.Alarm
+		if err := json.Unmarshal(data, &single); err != nil {
+			return err
+		}
+		alarmsList = []alarms.Alarm{single}
 	}
-	if err := json.Unmarshal(data, &alarm); err != nil {
-		return err
+
+	for _, alarm := range alarmsList {
+		if err := a.processAlarm(ctx, msg, alarm); err != nil {
+			return err
+		}
 	}
+
+	return nil
+}
+
+func (a *Alarm) processAlarm(ctx context.Context, msg *messaging.Message, alarm alarms.Alarm) error {
+	alarm.RuleID = a.RuleID
+	alarm.DomainID = msg.Domain
+	alarm.ClientID = msg.Publisher
+	alarm.ChannelID = msg.Channel
+	alarm.Subtopic = msg.Subtopic
 
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(alarm); err != nil {
@@ -54,4 +69,10 @@ func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val interface{}
 		return err
 	}
 	return nil
+}
+
+func (a *Alarm) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"type": AlarmsType.String(),
+	})
 }

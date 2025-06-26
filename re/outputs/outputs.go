@@ -47,7 +47,7 @@ func (s OutputType) String() string {
 }
 
 // MarshalJSON converts OutputType to JSON.
-func (s OutputType) MarshalJSON() ([]byte, error) {
+func (s *OutputType) MarshalJSON() ([]byte, error) {
 	return json.Marshal(s.String())
 }
 

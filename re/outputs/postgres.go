@@ -27,7 +27,7 @@ type Postgres struct {
 	Mapping  string `json:"mapping"`
 }
 
-func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (p *Postgres) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
 	templData := templateVal{
 		Message: msg,
 		Result:  val,
@@ -93,7 +93,7 @@ func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface
 	return nil
 }
 
-func (p Postgres) MarshalJSON() ([]byte, error) {
+func (p *Postgres) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
 		"type":     SaveRemotePgType.String(),
 		"host":     p.Host,

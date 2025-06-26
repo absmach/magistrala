@@ -6,10 +6,10 @@ package re
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/magistrala/re/outputs"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
@@ -20,88 +20,80 @@ const (
 	GoType
 )
 
-const protocol = "nats"
-
-// ScriptOutput is the indicator for type of the logic
-// so we can move it to the Go instead calling Go from Lua.
-type ScriptOutput uint
-
-const (
-	Channels ScriptOutput = iota
-	Alarms
-	SaveSenML
-	Email
-	SaveRemotePg
-)
-
-var (
-	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg"}
-	stringToScriptKind = map[string]ScriptOutput{
-		"channels":       Channels,
-		"alarms":         Alarms,
-		"save_senml":     SaveSenML,
-		"email":          Email,
-		"save_remote_pg": SaveRemotePg,
-	}
-)
-
-func (s ScriptOutput) String() string {
-	if int(s) < 0 || int(s) >= len(scriptKindToString) {
-		return "unknown"
-	}
-	return scriptKindToString[s]
-}
-
-// MarshalJSON converts ScriptOutput to JSON.
-func (s ScriptOutput) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
-}
-
-// UnmarshalJSON parses JSON string into ScriptOutput.
-func (s *ScriptOutput) UnmarshalJSON(data []byte) error {
-	var str string
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-	lower := strings.ToLower(str)
-	if val, ok := stringToScriptKind[lower]; ok {
-		*s = val
-		return nil
-	}
-	return errors.New("invalid ScriptOutput: " + str)
-}
-
 type (
 	// ScriptType indicates Runtime type for the future versions
 	// that will support JS or Go runtimes alongside Lua.
 	ScriptType uint
 
 	Metadata map[string]interface{}
-
-	Script struct {
-		Type    ScriptType     `json:"type"`
-		Outputs []ScriptOutput `json:"outputs"`
-		Value   string         `json:"value"`
+	Script   struct {
+		Type  ScriptType `json:"type"`
+		Value string     `json:"value"`
 	}
 )
 
+var outputRegistry = map[outputs.OutputType]func() Runnable{
+	outputs.AlarmsType:       func() Runnable { return &outputs.Alarm{} },
+	outputs.EmailType:        func() Runnable { return &outputs.Email{} },
+	outputs.SaveRemotePgType: func() Runnable { return &outputs.Postgres{} },
+	outputs.ChannelsType:     func() Runnable { return &outputs.ChannelPublisher{} },
+	outputs.SaveSenMLType:    func() Runnable { return &outputs.SenML{} },
+}
+
 type Rule struct {
-	ID            string            `json:"id"`
-	Name          string            `json:"name"`
-	DomainID      string            `json:"domain"`
-	Metadata      Metadata          `json:"metadata,omitempty"`
-	Tags          []string          `json:"tags,omitempty"`
-	InputChannel  string            `json:"input_channel"`
-	InputTopic    string            `json:"input_topic"`
-	Logic         Script            `json:"logic"`
-	OutputChannel string            `json:"output_channel,omitempty"`
-	OutputTopic   string            `json:"output_topic,omitempty"`
-	Schedule      schedule.Schedule `json:"schedule"`
-	Status        Status            `json:"status"`
-	CreatedAt     time.Time         `json:"created_at"`
-	CreatedBy     string            `json:"created_by"`
-	UpdatedAt     time.Time         `json:"updated_at"`
-	UpdatedBy     string            `json:"updated_by"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	DomainID     string            `json:"domain"`
+	Metadata     Metadata          `json:"metadata,omitempty"`
+	Tags         []string          `json:"tags,omitempty"`
+	InputChannel string            `json:"input_channel"`
+	InputTopic   string            `json:"input_topic"`
+	Logic        Script            `json:"logic"`
+	Outputs      Outputs           `json:"outputs,omitempty"`
+	Schedule     schedule.Schedule `json:"schedule"`
+	Status       Status            `json:"status"`
+	CreatedAt    time.Time         `json:"created_at"`
+	CreatedBy    string            `json:"created_by"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	UpdatedBy    string            `json:"updated_by"`
+}
+
+type Outputs []Runnable
+
+func (o *Outputs) UnmarshalJSON(data []byte) error {
+	var rawList []json.RawMessage
+	if err := json.Unmarshal(data, &rawList); err != nil {
+		return err
+	}
+
+	var runnables []Runnable
+	for _, raw := range rawList {
+		var meta struct {
+			Type outputs.OutputType `json:"type"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			return err
+		}
+
+		factory, ok := outputRegistry[meta.Type]
+		if !ok {
+			return errors.New("unknown output type: " + meta.Type.String())
+		}
+
+		instance := factory()
+		if err := json.Unmarshal(raw, instance); err != nil {
+			return err
+		}
+
+		runnables = append(runnables, instance)
+	}
+	v := Outputs(runnables)
+	*o = v
+	return nil
+}
+
+type Runnable interface {
+	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
 // PageMeta contains page metadata that helps navigation.

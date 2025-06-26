@@ -12,6 +12,7 @@ import (
 	"time"
 
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/re/outputs"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 )
@@ -24,6 +25,7 @@ var (
 const (
 	maxPayload     = 100 * 1024
 	pldExceededFmt = "max payload size of 100kB exceeded: "
+	protocol       = "nats"
 )
 
 func (re *re) Handle(msg *messaging.Message) error {
@@ -92,19 +94,26 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 	}
 }
 
-func (re *re) handleOutput(ctx context.Context, o ScriptOutput, r Rule, msg *messaging.Message, val interface{}) error {
-	switch o {
-	case Channels:
-		if r.OutputChannel == "" {
-			return nil
-		}
-		return re.publishChannel(ctx, val, r.OutputChannel, r.OutputTopic, msg)
-	case SaveSenML:
-		return re.saveSenml(ctx, val, msg)
-	case Email:
-		break
+func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val interface{}) error {
+	switch o := o.(type) {
+	case *outputs.Alarm:
+		o.AlarmsPub = re.alarmsPub
+		o.RuleID = r.ID
+		return o.Run(ctx, msg, val)
+	case *outputs.Email:
+		o.Emailer = re.email
+		return o.Run(ctx, msg, val)
+	case *outputs.Postgres:
+		return o.Run(ctx, msg, val)
+	case *outputs.ChannelPublisher:
+		o.RePubSub = re.rePubSub
+		return o.Run(ctx, msg, val)
+	case *outputs.SenML:
+		o.WritersPub = re.writersPub
+		return o.Run(ctx, msg, val)
+	default:
+		return fmt.Errorf("unknown output type: %T", o)
 	}
-	return nil
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {

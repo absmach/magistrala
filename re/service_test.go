@@ -15,6 +15,7 @@ import (
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
+	"github.com/absmach/magistrala/re/outputs"
 	readmocks "github.com/absmach/magistrala/readers/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -595,6 +596,7 @@ func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
 	now := time.Now()
 	scheduled := false
+
 	cases := []struct {
 		desc       string
 		message    *messaging.Message
@@ -630,8 +632,13 @@ func TestHandle(t *testing.T) {
 						Logic: re.Script{
 							Type: re.ScriptType(0),
 						},
-						OutputChannel: "output.channel",
-						Schedule:      schedule,
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
 					},
 				},
 			},

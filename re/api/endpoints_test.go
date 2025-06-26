@@ -498,26 +498,6 @@ func TestListRulesEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:     "list rules with output channel",
-			domainID: domainID,
-			token:    validToken,
-			listRulesResponse: re.Page{
-				Total: 1,
-				Rules: []re.Rule{rule},
-			},
-			query:  "output_channel=output.channel",
-			status: http.StatusOK,
-			err:    nil,
-		},
-		{
-			desc:     "list rules with duplicate output channel",
-			domainID: domainID,
-			token:    validToken,
-			query:    "output_channel=1&output_channel=2",
-			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidQueryParams,
-		},
-		{
 			desc:     "list rules with duplicate tags",
 			domainID: domainID,
 			token:    validToken,

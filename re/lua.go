@@ -41,8 +41,6 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	l.SetGlobal("message", message)
 
 	// Set binding functions as a Lua global functions.
-	l.SetGlobal("send_email", l.NewFunction(re.sendEmail))
-	l.SetGlobal("send_alarm", l.NewFunction(re.sendAlarm(ctx, r.ID, msg)))
 	l.SetGlobal("aes_encrypt", l.NewFunction(luaEncrypt))
 	l.SetGlobal("aes_decrypt", l.NewFunction(luaDecrypt))
 
@@ -56,12 +54,13 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	}
 	// Converting Lua is an expensive operation, so
 	// don't do it if there are no outputs.
-	if len(r.Logic.Outputs) == 0 {
-		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no output channels", Details: details}
+	if len(r.Outputs) == 0 {
+		return pkglog.RunInfo{Level: slog.LevelWarn, Message: "rule with no outputs", Details: details}
 	}
 	var err error
 	res := convertLua(result)
-	for _, o := range r.Logic.Outputs {
+
+	for _, o := range r.Outputs {
 		// If value is false, don't run the follow-up.
 		if v, ok := res.(bool); ok && !v {
 			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}

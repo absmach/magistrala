@@ -561,8 +561,8 @@ func (_c *Service_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Con
 }
 
 // UpdateRuleTags provides a mock function for the type Service
-func (_mock *Service) UpdateRuleTags(ctx context.Context, session authn.Session, channel re.Rule) (re.Rule, error) {
-	ret := _mock.Called(ctx, session, channel)
+func (_mock *Service) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+	ret := _mock.Called(ctx, session, r)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRuleTags")
@@ -571,15 +571,15 @@ func (_mock *Service) UpdateRuleTags(ctx context.Context, session authn.Session,
 	var r0 re.Rule
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) (re.Rule, error)); ok {
-		return returnFunc(ctx, session, channel)
+		return returnFunc(ctx, session, r)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) re.Rule); ok {
-		r0 = returnFunc(ctx, session, channel)
+		r0 = returnFunc(ctx, session, r)
 	} else {
 		r0 = ret.Get(0).(re.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.Rule) error); ok {
-		r1 = returnFunc(ctx, session, channel)
+		r1 = returnFunc(ctx, session, r)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -594,12 +594,12 @@ type Service_UpdateRuleTags_Call struct {
 // UpdateRuleTags is a helper method to define mock.On call
 //   - ctx
 //   - session
-//   - channel
-func (_e *Service_Expecter) UpdateRuleTags(ctx interface{}, session interface{}, channel interface{}) *Service_UpdateRuleTags_Call {
-	return &Service_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, session, channel)}
+//   - r
+func (_e *Service_Expecter) UpdateRuleTags(ctx interface{}, session interface{}, r interface{}) *Service_UpdateRuleTags_Call {
+	return &Service_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, session, r)}
 }
 
-func (_c *Service_UpdateRuleTags_Call) Run(run func(ctx context.Context, session authn.Session, channel re.Rule)) *Service_UpdateRuleTags_Call {
+func (_c *Service_UpdateRuleTags_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_UpdateRuleTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
 	})
@@ -611,7 +611,7 @@ func (_c *Service_UpdateRuleTags_Call) Return(rule re.Rule, err error) *Service_
 	return _c
 }
 
-func (_c *Service_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, channel re.Rule) (re.Rule, error)) *Service_UpdateRuleTags_Call {
+func (_c *Service_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error)) *Service_UpdateRuleTags_Call {
 	_c.Call.Return(run)
 	return _c
 }

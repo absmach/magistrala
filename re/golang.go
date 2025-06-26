@@ -33,7 +33,8 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 	if err != nil {
 		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
 	}
-	for _, o := range r.Logic.Outputs {
+
+	for _, o := range r.Outputs {
 		if res.Kind() == reflect.Bool && !res.Bool() {
 			return pkglog.RunInfo{Level: slog.LevelInfo, Message: "logic returned false", Details: details}
 		}

@@ -12,7 +12,6 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/jackc/pgtype"
-	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
@@ -25,10 +24,8 @@ type dbRule struct {
 	InputChannel    string             `db:"input_channel"`
 	InputTopic      sql.NullString     `db:"input_topic"`
 	LogicType       re.ScriptType      `db:"logic_type"`
-	LogicOutputs    pq.Int32Array      `db:"logic_output"`
 	LogicValue      string             `db:"logic_value"`
-	OutputChannel   sql.NullString     `db:"output_channel"`
-	OutputTopic     sql.NullString     `db:"output_topic"`
+	Outputs         []byte             `db:"outputs"`
 	StartDateTime   sql.NullTime       `db:"start_datetime"`
 	Time            sql.NullTime       `db:"time"`
 	Recurring       schedule.Recurring `db:"recurring"`
@@ -49,10 +46,7 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		}
 		metadata = b
 	}
-	lo := pq.Int32Array{}
-	for _, v := range r.Logic.Outputs {
-		lo = append(lo, int32(v))
-	}
+
 	start := sql.NullTime{}
 	if r.Schedule.StartDateTime != nil && !r.Schedule.StartDateTime.IsZero() {
 		start.Time = *r.Schedule.StartDateTime
@@ -66,6 +60,12 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	if err := tags.Set(r.Tags); err != nil {
 		return dbRule{}, err
 	}
+
+	outputs, err := json.Marshal(r.Outputs)
+	if err != nil {
+		return dbRule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+	}
+
 	return dbRule{
 		ID:              r.ID,
 		Name:            r.Name,
@@ -75,10 +75,8 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 		InputChannel:    r.InputChannel,
 		InputTopic:      toNullString(r.InputTopic),
 		LogicType:       r.Logic.Type,
-		LogicOutputs:    lo,
 		LogicValue:      r.Logic.Value,
-		OutputChannel:   toNullString(r.OutputChannel),
-		OutputTopic:     toNullString(r.OutputTopic),
+		Outputs:         outputs,
 		StartDateTime:   start,
 		Time:            t,
 		Recurring:       r.Schedule.Recurring,
@@ -98,14 +96,19 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
 		}
 	}
-	lo := []re.ScriptOutput{}
-	for _, v := range dto.LogicOutputs {
-		lo = append(lo, re.ScriptOutput(v))
-	}
+
 	var tags []string
 	for _, e := range dto.Tags.Elements {
 		tags = append(tags, e.String)
 	}
+
+	var outputs re.Outputs
+	if dto.Outputs != nil {
+		if err := json.Unmarshal(dto.Outputs, &outputs); err != nil {
+			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
@@ -115,12 +118,10 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		InputChannel: dto.InputChannel,
 		InputTopic:   fromNullString(dto.InputTopic),
 		Logic: re.Script{
-			Outputs: lo,
-			Type:    dto.LogicType,
-			Value:   dto.LogicValue,
+			Type:  dto.LogicType,
+			Value: dto.LogicValue,
 		},
-		OutputChannel: fromNullString(dto.OutputChannel),
-		OutputTopic:   fromNullString(dto.OutputTopic),
+		Outputs: outputs,
 		Schedule: schedule.Schedule{
 			StartDateTime:   &dto.StartDateTime.Time,
 			Time:            dto.Time.Time,

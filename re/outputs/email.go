@@ -6,6 +6,7 @@ package outputs
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"text/template"
 
 	"github.com/absmach/magistrala/pkg/emailer"
@@ -13,10 +14,10 @@ import (
 )
 
 type Email struct {
-	To      []string `json:"to"`
-	Subject string   `json:"subject"`
-	Content string   `json:"content"`
-	Emailer emailer.Emailer
+	To      []string        `json:"to"`
+	Subject string          `json:"subject"`
+	Content string          `json:"content"`
+	Emailer emailer.Emailer `json:"-"`
 }
 
 func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
@@ -41,4 +42,13 @@ func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}
 		return err
 	}
 	return nil
+}
+
+func (e Email) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"type":    EmailType.String(),
+		"to":      e.To,
+		"subject": e.Subject,
+		"content": e.Content,
+	})
 }

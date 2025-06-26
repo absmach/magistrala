@@ -89,3 +89,16 @@ func (p Postgres) Run(ctx context.Context, msg *messaging.Message, val interface
 
 	return nil
 }
+
+func (p Postgres) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]any{
+		"type":     SaveRemotePgType.String(),
+		"host":     p.Host,
+		"port":     p.Port,
+		"user":     p.User,
+		"password": p.Password,
+		"database": p.Database,
+		"table":    p.Table,
+		"mapping":  p.Mapping,
+	})
+}

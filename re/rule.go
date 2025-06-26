@@ -6,7 +6,6 @@ package re
 import (
 	"context"
 	"encoding/json"
-	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
@@ -23,55 +22,6 @@ const (
 
 const Protocol = "nats"
 
-// OutputType is the indicator for type of the output
-// so we can move it to the Go instead calling Go from Lua.
-type OutputType uint
-
-const (
-	Channels OutputType = iota
-	Alarms
-	SaveSenML
-	Email
-	SaveRemotePg
-)
-
-var (
-	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg"}
-	stringToScriptKind = map[string]OutputType{
-		"channels":       Channels,
-		"alarms":         Alarms,
-		"save_senml":     SaveSenML,
-		"email":          Email,
-		"save_remote_pg": SaveRemotePg,
-	}
-)
-
-func (s OutputType) String() string {
-	if int(s) < 0 || int(s) >= len(scriptKindToString) {
-		return "unknown"
-	}
-	return scriptKindToString[s]
-}
-
-// MarshalJSON converts OutputType to JSON.
-func (s OutputType) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.String())
-}
-
-// UnmarshalJSON parses JSON string into OutputType.
-func (s *OutputType) UnmarshalJSON(data []byte) error {
-	var str string
-	if err := json.Unmarshal(data, &str); err != nil {
-		return err
-	}
-	lower := strings.ToLower(str)
-	if val, ok := stringToScriptKind[lower]; ok {
-		*s = val
-		return nil
-	}
-	return errors.New("invalid OutputType: " + str)
-}
-
 type (
 	// ScriptType indicates Runtime type for the future versions
 	// that will support JS or Go runtimes alongside Lua.
@@ -84,6 +34,14 @@ type (
 	}
 )
 
+var outputRegistry = map[outputs.OutputType]func() Runnable{
+	outputs.AlarmsType:       func() Runnable { return &outputs.Alarm{} },
+	outputs.EmailType:        func() Runnable { return &outputs.Email{} },
+	outputs.SaveRemotePgType: func() Runnable { return &outputs.Postgres{} },
+	outputs.ChannelsType:     func() Runnable { return &outputs.ChannelPublisher{} },
+	outputs.SaveSenMLType:    func() Runnable { return &outputs.SenML{} },
+}
+
 type Rule struct {
 	ID           string            `json:"id"`
 	Name         string            `json:"name"`
@@ -93,7 +51,7 @@ type Rule struct {
 	InputChannel string            `json:"input_channel"`
 	InputTopic   string            `json:"input_topic"`
 	Logic        Script            `json:"logic"`
-	Outputs      []Output          `json:"outputs,omitempty"`
+	Outputs      Outputs           `json:"outputs,omitempty"`
 	Schedule     schedule.Schedule `json:"schedule"`
 	Status       Status            `json:"status"`
 	CreatedAt    time.Time         `json:"created_at"`
@@ -102,29 +60,54 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
+type Outputs []Runnable
+
+func (o *Outputs) UnmarshalJSON(data []byte) error {
+	var rawList []json.RawMessage
+	if err := json.Unmarshal(data, &rawList); err != nil {
+		return err
+	}
+
+	var runnables []Runnable
+	for _, raw := range rawList {
+		var meta struct {
+			Type outputs.OutputType `json:"type"`
+		}
+		if err := json.Unmarshal(raw, &meta); err != nil {
+			return err
+		}
+
+		factory, ok := outputRegistry[meta.Type]
+		if !ok {
+			return errors.New("unknown output type: " + meta.Type.String())
+		}
+
+		instance := factory()
+		if err := json.Unmarshal(raw, instance); err != nil {
+			return err
+		}
+
+		runnables = append(runnables, instance)
+	}
+	v := Outputs(runnables)
+	*o = v
+	return nil
+}
+
 type Runnable interface {
 	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
 }
 
 type (
-	Outputs []Runnable
-	Output  struct {
-		Type OutputType `json:"type"`
+	Output struct {
+		Type outputs.OutputType `json:"type"`
 		Runnable
 	}
 )
 
-var outputRegistry = map[OutputType]func() Runnable{
-	Alarms:       func() Runnable { return &outputs.Alarm{} },
-	Email:        func() Runnable { return &outputs.Email{} },
-	SaveRemotePg: func() Runnable { return &outputs.Postgres{} },
-	Channels:     func() Runnable { return &outputs.ChannelPublisher{} },
-	SaveSenML:    func() Runnable { return &outputs.SenML{} },
-}
-
 func (ro *Output) UnmarshalJSON(data []byte) error {
 	var meta struct {
-		Type OutputType `json:"type"`
+		Type outputs.OutputType `json:"type"`
 	}
 	if err := json.Unmarshal(data, &meta); err != nil {
 		return err

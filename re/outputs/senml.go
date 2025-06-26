@@ -12,7 +12,7 @@ import (
 )
 
 type SenML struct {
-	WritersPub messaging.Publisher
+	WritersPub messaging.Publisher `json:"-"`
 }
 
 func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
@@ -43,4 +43,10 @@ func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val interface{}
 	}
 
 	return nil
+}
+
+func (senml SenML) MarshalJSON() ([]byte, error) {
+	return json.Marshal(map[string]string{
+		"type": SaveSenMLType.String(),
+	})
 }

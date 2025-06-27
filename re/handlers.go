@@ -59,7 +59,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 	return nil
 }
 
-// Match NATS subject to support wildcardas.
+// Match NATS subject to support wildcards.
 func matchSubject(published, subscribed string) bool {
 	p := strings.Split(published, ".")
 	s := strings.Split(subscribed, ".")

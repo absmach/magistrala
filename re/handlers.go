@@ -94,7 +94,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 	}
 }
 
-func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val interface{}) error {
+func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val any) error {
 	switch o := o.(type) {
 	case *outputs.Alarm:
 		o.AlarmsPub = re.alarmsPub

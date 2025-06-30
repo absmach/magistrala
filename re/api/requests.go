@@ -17,8 +17,6 @@ const (
 	MaxTitleSize = 37
 )
 
-var errEmptyTrigger = errors.New("rule does not have input channel or schedule")
-
 type addRuleReq struct {
 	re.Rule
 }

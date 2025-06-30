@@ -4,8 +4,6 @@
 package api
 
 import (
-	"fmt"
-
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
@@ -76,7 +74,6 @@ func (req updateRuleReq) validate() error {
 	if err := req.Rule.Schedule.Validate(); err != nil {
 		return errors.Wrap(err, apiutil.ErrValidation)
 	}
-	fmt.Println("ic", req.Rule.InputChannel)
 	if req.Rule.InputChannel == "" && req.Rule.Schedule.StartDateTime.IsZero() {
 		return errors.Wrap(errEmptyTrigger, apiutil.ErrValidation)
 	}

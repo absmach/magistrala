@@ -50,7 +50,7 @@ type Rule struct {
 	InputTopic   string            `json:"input_topic"`
 	Logic        Script            `json:"logic"`
 	Outputs      Outputs           `json:"outputs,omitempty"`
-	Schedule     schedule.Schedule `json:"schedule"`
+	Schedule     schedule.Schedule `json:"schedule,omitempty"`
 	Status       Status            `json:"status"`
 	CreatedAt    time.Time         `json:"created_at"`
 	CreatedBy    string            `json:"created_by"`

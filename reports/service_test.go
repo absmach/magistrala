@@ -32,7 +32,7 @@ var (
 	domainID = testsutil.GenerateUUID(&testing.T{})
 	now      = time.Now().UTC()
 	schedule = pkgSch.Schedule{
-		StartDateTime:   &now,
+		StartDateTime:   now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),

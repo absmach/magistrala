@@ -43,7 +43,7 @@ var (
 	now          = time.Now().UTC().Truncate(time.Minute)
 	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   &future,
+		StartDateTime:   future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            future,
@@ -127,7 +127,7 @@ func TestAddReportConfigEndpoint(t *testing.T) {
 	defer ts.Close()
 
 	scheduleInPast := pkgSch.Schedule{
-		StartDateTime:   &now,
+		StartDateTime:   now,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,

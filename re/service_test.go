@@ -38,7 +38,7 @@ var (
 	inputChannel  = "test.channel"
 	StartDateTime = time.Now().Add(-time.Hour)
 	schedule      = pkgSch.Schedule{
-		StartDateTime:   &StartDateTime,
+		StartDateTime:   StartDateTime,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            time.Now().Add(-time.Hour),
@@ -346,7 +346,7 @@ func TestListRules(t *testing.T) {
 				Recurring:       pkgSch.Daily,
 				Time:            now.Add(1 * time.Hour),
 				RecurringPeriod: 1,
-				StartDateTime:   &now,
+				StartDateTime:   now,
 			},
 		}
 		rules = append(rules, r)

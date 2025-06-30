@@ -100,12 +100,8 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 	if r.Metadata != nil {
 		query = append(query, "metadata = :metadata,")
 	}
-	if r.InputChannel != "" {
-		query = append(query, "input_channel = :input_channel,")
-	}
-	if r.InputTopic != "" {
-		query = append(query, "input_topic = :input_topic,")
-	}
+	query = append(query, "input_channel = :input_channel,")
+	query = append(query, "input_topic = :input_topic,")
 	if r.Outputs != nil {
 		query = append(query, "outputs = :outputs, ")
 	}

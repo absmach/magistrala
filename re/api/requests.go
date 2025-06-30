@@ -17,6 +17,8 @@ const (
 	MaxTitleSize = 37
 )
 
+var errEmptyTrigger = errors.New("rule does not have input channel or schedule")
+
 type addRuleReq struct {
 	re.Rule
 }
@@ -68,6 +70,12 @@ func (req updateRuleReq) validate() error {
 	}
 	if len(req.Rule.Name) > api.MaxNameSize {
 		return apiutil.ErrNameSize
+	}
+	if err := req.Rule.Schedule.Validate(); err != nil {
+		return errors.Wrap(err, apiutil.ErrValidation)
+	}
+	if req.Rule.InputChannel == "" && req.Rule.Schedule.StartDateTime.IsZero() {
+		return errors.Wrap(errEmptyTrigger, apiutil.ErrValidation)
 	}
 
 	return nil

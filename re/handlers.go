@@ -149,6 +149,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}
 
 					msg := &messaging.Message{
+						Domain:   rule.DomainID,
 						Channel:  rule.InputChannel,
 						Subtopic: rule.InputTopic,
 						Protocol: protocol,

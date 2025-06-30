@@ -139,6 +139,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
 	}
 	rule.ID = chi.URLParam(r, ruleIdKey)
+
 	return updateRuleReq{Rule: rule}, nil
 }
 
@@ -176,6 +177,7 @@ func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interfac
 	req := updateRuleStatusReq{
 		id: chi.URLParam(r, ruleIdKey),
 	}
+
 	return req, nil
 }
 
@@ -212,6 +214,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
 	return listRulesReq{
 		PageMeta: re.PageMeta{
 			Offset:       offset,

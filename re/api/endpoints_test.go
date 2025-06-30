@@ -43,7 +43,7 @@ var (
 	now          = time.Now().UTC().Truncate(time.Minute)
 	future       = now.Add(1 * time.Hour)
 	schedule     = pkgSch.Schedule{
-		StartDateTime:   &future,
+		StartDateTime:   future,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            now,
@@ -59,7 +59,7 @@ var (
 	}
 	past           = now.Add(-1 * time.Hour)
 	scheduleInPast = pkgSch.Schedule{
-		StartDateTime:   &past,
+		StartDateTime:   past,
 		Recurring:       pkgSch.Daily,
 		RecurringPeriod: 1,
 		Time:            past,
@@ -548,11 +548,22 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			Type:  re.ScriptType(0),
 			Value: "return `test` end",
 		},
+		InputChannel: testsutil.GenerateUUID(&testing.T{}),
 		Metadata: map[string]any{
 			"name": "test",
 		},
 	}
-
+	updateNoInput := re.Rule{
+		ID:   rule.ID,
+		Name: rule.Name,
+		Logic: re.Script{
+			Type:  re.ScriptType(0),
+			Value: "return `test` end",
+		},
+		Metadata: map[string]any{
+			"name": "test",
+		},
+	}
 	cases := []struct {
 		desc        string
 		token       string
@@ -577,6 +588,17 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			svcResp:     rule,
 			status:      http.StatusOK,
 			err:         nil,
+		},
+		{
+			desc:        "update rule with no input channel or schedule",
+			token:       validToken,
+			domainID:    domainID,
+			id:          rule.ID,
+			updateReq:   updateNoInput,
+			contentType: contentType,
+			svcResp:     rule,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
 		},
 		{
 			desc:        "update rule with invalid token",

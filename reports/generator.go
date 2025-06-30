@@ -22,8 +22,6 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
-const defaultTemplatePath = "/report_template.html"
-
 type ReportData struct {
 	Title         string
 	GeneratedTime string
@@ -46,6 +44,7 @@ func generatePDFReportWithDefault(ctx context.Context, title string, reports []R
 		Reports:       reports,
 	}
 
+	defaultTemplatePath := os.Getenv("MG_REPORTS_TEMPLATE")
 	templateContent, err := readTemplateFile(defaultTemplatePath)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
@@ -138,8 +137,6 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 			var err error
 			pdfBuffer, _, err = page.PrintToPDF().
 				WithPrintBackground(true).
-				WithPaperWidth(8.27).  // A4 width in inches
-				WithPaperHeight(11.7). // A4 height in inches
 				WithMarginTop(0).
 				WithMarginBottom(0).
 				WithMarginLeft(0).

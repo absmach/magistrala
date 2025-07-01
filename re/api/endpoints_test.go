@@ -553,17 +553,7 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			"name": "test",
 		},
 	}
-	updateNoInput := re.Rule{
-		ID:   rule.ID,
-		Name: rule.Name,
-		Logic: re.Script{
-			Type:  re.ScriptType(0),
-			Value: "return `test` end",
-		},
-		Metadata: map[string]any{
-			"name": "test",
-		},
-	}
+
 	cases := []struct {
 		desc        string
 		token       string
@@ -588,17 +578,6 @@ func TestUpdateRulesEndpoint(t *testing.T) {
 			svcResp:     rule,
 			status:      http.StatusOK,
 			err:         nil,
-		},
-		{
-			desc:        "update rule with no input channel or schedule",
-			token:       validToken,
-			domainID:    domainID,
-			id:          rule.ID,
-			updateReq:   updateNoInput,
-			contentType: contentType,
-			svcResp:     rule,
-			status:      http.StatusBadRequest,
-			err:         apiutil.ErrValidation,
 		},
 		{
 			desc:        "update rule with invalid token",

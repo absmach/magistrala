@@ -88,7 +88,11 @@ func (temp ReportTemplate) Validate() error {
 		}
 	}
 
-	if !strings.HasPrefix(strings.TrimSpace(template), "<!DOCTYPE html>") {
+	cleaned := strings.TrimSpace(template)
+	commentPattern := regexp.MustCompile(`^(?s:<!--.*?-->\s*)*`)
+	cleaned = commentPattern.ReplaceAllString(cleaned, "")
+
+	if !strings.HasPrefix(cleaned, "<!DOCTYPE html>") {
 		return fmt.Errorf("template must start with <!DOCTYPE html>")
 	}
 

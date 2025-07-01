@@ -32,6 +32,7 @@ var (
 	userID   = testsutil.GenerateUUID(&testing.T{})
 	domainID = testsutil.GenerateUUID(&testing.T{})
 	now      = time.Now().UTC()
+	template = reports.ReportTemplate("")
 	schedule = pkgSch.Schedule{
 		StartDateTime:   now,
 		Recurring:       pkgSch.Daily,
@@ -57,7 +58,7 @@ func newService(runInfo chan pkglog.RunInfo) (reports.Service, *mocks.Repository
 	idProvider := uuid.NewMock()
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return reports.NewService(repo, runInfo, idProvider, mockTicker, e, readersSvc), repo, mockTicker
+	return reports.NewService(repo, runInfo, idProvider, mockTicker, e, readersSvc, template), repo, mockTicker
 }
 
 func TestAddReportConfig(t *testing.T) {

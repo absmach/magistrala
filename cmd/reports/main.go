@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -50,10 +51,14 @@ const (
 	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	templatePath     = "template/reports_default_template.html"
 )
 
 // We use a buffered channel to prevent blocking, as logging is an expensive operation.
 const channBuffer = 256
+
+//go:embed template/reports_default_template.html
+var templateFS embed.FS
 
 type config struct {
 	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
@@ -90,6 +95,22 @@ func main() {
 			return
 		}
 	}
+
+	templateData, err := templateFS.ReadFile(templatePath)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to read report template: %s", err))
+		exitCode = 1
+		return
+	}
+
+	template := reports.ReportTemplate(string(templateData))
+
+	if err := template.Validate(); err != nil {
+		logger.Error(fmt.Sprintf("failed to validate report template: %s", err))
+		exitCode = 1
+		return
+	}
+	logger.Info("Report template validated successfully")
 
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
@@ -198,7 +219,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(database, runInfo, authz, ec, logger, readersClient)
+	svc, err := newService(database, runInfo, authz, ec, logger, readersClient, template)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -238,7 +259,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -247,7 +268,7 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient, template)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

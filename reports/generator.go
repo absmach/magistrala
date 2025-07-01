@@ -9,9 +9,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
-	"io"
 	"net/url"
-	"os"
 	"sort"
 	"time"
 
@@ -29,7 +27,7 @@ type ReportData struct {
 	Reports       []Report
 }
 
-func generatePDFReportWithDefault(ctx context.Context, title string, reports []Report) ([]byte, error) {
+func (r *report) generatePDFReport(ctx context.Context, title string, reports []Report, template ReportTemplate) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
@@ -44,38 +42,10 @@ func generatePDFReportWithDefault(ctx context.Context, title string, reports []R
 		Reports:       reports,
 	}
 
-	defaultTemplatePath := os.Getenv("MG_REPORTS_TEMPLATE")
-	templateContent, err := readTemplateFile(defaultTemplatePath)
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to read template file: %w", err))
+	templateContent := r.defaultTemplate.String()
+	if template.String() != "" {
+		templateContent = template.String()
 	}
-
-	return generator(ctx, templateContent, data)
-}
-
-func generatePDFReportWithCustom(ctx context.Context, title string, reports []Report, customTemplate ReportTemplate) ([]byte, error) {
-	for i := range reports {
-		sort.Slice(reports[i].Messages, func(j, k int) bool {
-			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
-		})
-	}
-
-	now := time.Now().UTC()
-	data := ReportData{
-		Title:         title,
-		GeneratedTime: now.Format("15:04:05"),
-		GeneratedDate: now.Format("02 Jan 2006"),
-		Reports:       reports,
-	}
-
-	var templateContent string
-
-	if customTemplate.String() != "" {
-		templateContent = customTemplate.String()
-	} else {
-		return generatePDFReportWithDefault(ctx, title, reports)
-	}
-
 	return generator(ctx, templateContent, data)
 }
 
@@ -153,21 +123,6 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 	return pdfBuffer, nil
 }
 
-func readTemplateFile(path string) (string, error) {
-	file, err := os.Open(path)
-	if err != nil {
-		return "", fmt.Errorf("failed to open template file: %w", err)
-	}
-	defer file.Close()
-
-	content, err := io.ReadAll(file)
-	if err != nil {
-		return "", fmt.Errorf("failed to read template file: %w", err)
-	}
-
-	return string(content), nil
-}
-
 func formatTime(t float64) string {
 	if t > 9999999999 {
 		return time.Unix(0, int64(t)).Format("2006-01-02 15:04:05")
@@ -190,7 +145,7 @@ func formatValue(msg senml.Message) string {
 	}
 }
 
-func generateCSVReport(_ context.Context, title string, reports []Report) ([]byte, error) {
+func (r *report) generateCSVReport(_ context.Context, title string, reports []Report) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 

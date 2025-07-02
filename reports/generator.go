@@ -20,6 +20,8 @@ import (
 	"github.com/chromedp/chromedp"
 )
 
+var errChromeExecution = errors.New("chromedp execution failed")
+
 type ReportData struct {
 	Title         string
 	GeneratedTime string
@@ -59,18 +61,18 @@ func generator(ctx context.Context, templateContent string, data ReportData) ([]
 
 	tmpl, err := tmpl.Parse(templateContent)
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to parse template: %w", err))
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	var htmlBuf bytes.Buffer
 	if err := tmpl.Execute(&htmlBuf, data); err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to execute template: %w", err))
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	htmlContent := htmlBuf.String()
 	pdfBytes, err := htmlToPDF(ctx, htmlContent)
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, fmt.Errorf("failed to convert HTML to PDF: %w", err))
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	return pdfBytes, nil
@@ -117,7 +119,7 @@ func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
 		}),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("chromedp execution failed: %w", err)
+		return nil, errors.Wrap(errChromeExecution, err)
 	}
 
 	return pdfBuffer, nil

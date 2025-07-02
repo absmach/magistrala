@@ -99,10 +99,11 @@ func main() {
 
 	var templateData []byte
 
-	if cfg.DefaultTemplatePath != "" {
-		templateData, err = os.ReadFile(templatePath)
-	} else {
+	switch cfg.DefaultTemplatePath {
+	case "":
 		templateData, err = templateFS.ReadFile(templatePath)
+	default:
+		templateData, err = os.ReadFile(templatePath)
 	}
 
 	if err != nil {

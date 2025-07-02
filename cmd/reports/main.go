@@ -99,7 +99,7 @@ func main() {
 
 	var templateData []byte
 
-	if cfg.DefaultTemplatePath == "" {
+	if cfg.DefaultTemplatePath != "" {
 		templateData, err = os.ReadFile(templatePath)
 	} else {
 		templateData, err = templateFS.ReadFile(templatePath)

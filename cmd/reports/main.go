@@ -101,7 +101,6 @@ func main() {
 
 	if cfg.DefaultTemplatePath == "" {
 		templateData, err = os.ReadFile(templatePath)
-
 	} else {
 		templateData, err = templateFS.ReadFile(templatePath)
 	}

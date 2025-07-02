@@ -15,22 +15,23 @@ import (
 
 // dbReport represents the database structure for a Report.
 type dbReport struct {
-	ID              string             `db:"id"`
-	Name            string             `db:"name"`
-	Description     string             `db:"description"`
-	DomainID        string             `db:"domain_id"`
-	StartDateTime   sql.NullTime       `db:"start_datetime"`
-	Due             sql.NullTime       `db:"due"`
-	Recurring       schedule.Recurring `db:"recurring"`
-	RecurringPeriod uint               `db:"recurring_period"`
-	Status          reports.Status     `db:"status"`
-	CreatedAt       time.Time          `db:"created_at"`
-	CreatedBy       string             `db:"created_by"`
-	UpdatedAt       time.Time          `db:"updated_at"`
-	UpdatedBy       string             `db:"updated_by"`
-	Config          []byte             `db:"config,omitempty"`
-	Metrics         []byte             `db:"metrics"`
-	Email           []byte             `db:"email"`
+	ID              string                 `db:"id"`
+	Name            string                 `db:"name"`
+	Description     string                 `db:"description"`
+	DomainID        string                 `db:"domain_id"`
+	StartDateTime   sql.NullTime           `db:"start_datetime"`
+	Due             sql.NullTime           `db:"due"`
+	Recurring       schedule.Recurring     `db:"recurring"`
+	RecurringPeriod uint                   `db:"recurring_period"`
+	Status          reports.Status         `db:"status"`
+	CreatedAt       time.Time              `db:"created_at"`
+	CreatedBy       string                 `db:"created_by"`
+	UpdatedAt       time.Time              `db:"updated_at"`
+	UpdatedBy       string                 `db:"updated_by"`
+	Config          []byte                 `db:"config,omitempty"`
+	Metrics         []byte                 `db:"metrics"`
+	Email           []byte                 `db:"email"`
+	ReportTemplate  reports.ReportTemplate `db:"report_template"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -86,6 +87,7 @@ func reportToDb(r reports.ReportConfig) (dbReport, error) {
 		Config:          config,
 		Metrics:         metrics,
 		Email:           email,
+		ReportTemplate:  r.ReportTemplate,
 	}, nil
 }
 
@@ -124,12 +126,13 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Email:     &email,
-		Status:    dto.Status,
-		CreatedAt: dto.CreatedAt,
-		CreatedBy: dto.CreatedBy,
-		UpdatedAt: dto.UpdatedAt,
-		UpdatedBy: dto.UpdatedBy,
+		Email:          &email,
+		Status:         dto.Status,
+		CreatedAt:      dto.CreatedAt,
+		CreatedBy:      dto.CreatedBy,
+		UpdatedAt:      dto.UpdatedAt,
+		UpdatedBy:      dto.UpdatedBy,
+		ReportTemplate: dto.ReportTemplate,
 	}
 
 	return rpt, nil

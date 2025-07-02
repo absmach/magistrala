@@ -102,6 +102,27 @@ func MakeHandler(svc reports.Service, authn mgauthn.Authentication, mux *chi.Mux
 						api.EncodeResponse,
 						opts...,
 					), "disable_report_config").ServeHTTP)
+
+					r.Put("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
+						updateReportTemplateEndpoint(svc),
+						decodeUpdateReportTemplateRequest,
+						api.EncodeResponse,
+						opts...,
+					), "update_report_template").ServeHTTP)
+
+					r.Get("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
+						viewReportTemplateEndpoint(svc),
+						decodeGetReportTemplateRequest,
+						api.EncodeResponse,
+						opts...,
+					), "get_report_template").ServeHTTP)
+
+					r.Delete("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
+						deleteReportTemplateEndpoint(svc),
+						decodeDeleteReportTemplateRequest,
+						api.EncodeResponse,
+						opts...,
+					), "delete_report_template").ServeHTTP)
 				})
 			})
 		})
@@ -190,6 +211,29 @@ func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (interf
 func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	id := chi.URLParam(r, reportIdKey)
 	return deleteReportConfigReq{ID: id}, nil
+}
+
+func decodeUpdateReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+	}
+
+	req := updateReportTemplateReq{}
+	req.ID = chi.URLParam(r, reportIdKey)
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(err, apiutil.ErrValidation)
+	}
+
+	return req, nil
+}
+
+func decodeGetReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	return getReportTemplateReq{ID: chi.URLParam(r, reportIdKey)}, nil
+}
+
+func decodeDeleteReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+	return deleteReportTemplateReq{ID: chi.URLParam(r, reportIdKey)}, nil
 }
 
 func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {

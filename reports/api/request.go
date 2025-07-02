@@ -27,6 +27,7 @@ var (
 	errMissingReportConfig      = errors.New("missing report config")
 	errMissingReportEmailConfig = errors.New("missing report email config")
 	errInvalidRecurringPeriod   = errors.New("invalid recurring period")
+	errMissingReportTemplate    = errors.New("missing report template")
 	errTitleSize                = errors.New("invalid title size")
 )
 
@@ -40,6 +41,11 @@ func (req addReportConfigReq) validate() error {
 	}
 	if err := req.Schedule.Validate(); err != nil {
 		return errors.Wrap(err, apiutil.ErrValidation)
+	}
+	if req.ReportTemplate.String() != "" {
+		if err := req.ReportTemplate.Validate(); err != nil {
+			return errors.Wrap(err, apiutil.ErrValidation)
+		}
 	}
 	return validateReportConfig(req.ReportConfig, false, false)
 }
@@ -115,6 +121,12 @@ func (req generateReportReq) validate() error {
 		return errors.Wrap(apiutil.ErrValidation, errTitleSize)
 	}
 
+	if req.ReportTemplate.String() != "" {
+		if err := req.ReportTemplate.Validate(); err != nil {
+			return errors.Wrap(err, apiutil.ErrValidation)
+		}
+	}
+
 	switch req.action {
 	case reports.ViewReport, reports.DownloadReport:
 		return validateReportConfig(req.ReportConfig, true, true)
@@ -172,7 +184,46 @@ func validateReportConfig(req reports.ReportConfig, skipEmailValidation bool, sk
 
 func validateScheduler(sch schedule.Schedule) error {
 	if sch.Recurring != schedule.None && sch.RecurringPeriod < 1 {
-		return errors.Wrap(apiutil.ErrValidation, errInvalidRecurringPeriod)
+		return errInvalidRecurringPeriod
+	}
+	return nil
+}
+
+type updateReportTemplateReq struct {
+	reports.ReportConfig `json:",inline"`
+}
+
+func (req updateReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.ReportTemplate == "" {
+		return errors.Wrap(apiutil.ErrValidation, errMissingReportTemplate)
+	}
+	if err := req.ReportTemplate.Validate(); err != nil {
+		return errors.Wrap(err, apiutil.ErrValidation)
+	}
+	return nil
+}
+
+type getReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req getReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type deleteReportTemplateReq struct {
+	ID string `json:"id"`
+}
+
+func (req deleteReportTemplateReq) validate() error {
+	if req.ID == "" {
+		return apiutil.ErrMissingID
 	}
 	return nil
 }

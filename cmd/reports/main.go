@@ -61,13 +61,14 @@ const channBuffer = 256
 var templateFS embed.FS
 
 type config struct {
-	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
-	InstanceID    string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
-	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL         string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	LogLevel            string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
+	InstanceID          string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
+	ESURL               string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
+	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	DefaultTemplatePath string  `env:"MG_REPORT_TEMPLATE_PATH"    envDefault:""`
 }
 
 func main() {
@@ -96,7 +97,15 @@ func main() {
 		}
 	}
 
-	templateData, err := templateFS.ReadFile(templatePath)
+	var templateData []byte
+
+	if cfg.DefaultTemplatePath == "" {
+		templateData, err = os.ReadFile(templatePath)
+
+	} else {
+		templateData, err = templateFS.ReadFile(templatePath)
+	}
+
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to read report template: %s", err))
 		exitCode = 1

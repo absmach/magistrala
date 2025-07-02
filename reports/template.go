@@ -6,7 +6,6 @@ package reports
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"regexp"
 	"strings"
 )
@@ -67,15 +66,7 @@ func (temp *ReportTemplate) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	if strings.HasSuffix(s, ".html") {
-		content, err := os.ReadFile(s)
-		if err != nil {
-			return fmt.Errorf("failed to read template file: %w", err)
-		}
-		*temp = ReportTemplate(content)
-	} else {
-		*temp = ReportTemplate(s)
-	}
+	*temp = ReportTemplate(s)
 	return nil
 }
 

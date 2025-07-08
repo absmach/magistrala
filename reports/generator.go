@@ -48,10 +48,10 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 	if template.String() != "" {
 		templateContent = template.String()
 	}
-	return generator(ctx, templateContent, data)
+	return generate(ctx, templateContent, data)
 }
 
-func generator(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
+func generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,

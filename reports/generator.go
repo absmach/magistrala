@@ -20,8 +20,6 @@ import (
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 
-var errChromeExecution = errors.New("chromedp execution failed")
-
 type ReportData struct {
 	Title         string
 	GeneratedTime string

@@ -24,22 +24,26 @@ import (
 const limit = 1000
 
 type report struct {
-	repo    Repository
-	runInfo chan pkglog.RunInfo
-	idp     supermq.IDProvider
-	email   emailer.Emailer
-	ticker  ticker.Ticker
-	readers grpcReadersV1.ReadersServiceClient
+	repo            Repository
+	runInfo         chan pkglog.RunInfo
+	idp             supermq.IDProvider
+	email           emailer.Emailer
+	ticker          ticker.Ticker
+	readers         grpcReadersV1.ReadersServiceClient
+	defaultTemplate ReportTemplate
+	converterURL    string
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string) Service {
 	return &report{
-		repo:    repo,
-		idp:     idp,
-		runInfo: runInfo,
-		email:   emailer,
-		ticker:  tck,
-		readers: readers,
+		repo:            repo,
+		idp:             idp,
+		runInfo:         runInfo,
+		email:           emailer,
+		ticker:          tck,
+		readers:         readers,
+		defaultTemplate: template,
+		converterURL:    converterURL,
 	}
 }
 
@@ -171,7 +175,7 @@ func (r *report) GenerateReport(ctx context.Context, session authn.Session, conf
 }
 
 func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
-	genReportFile, err := generateFileFunc(action, cfg.Config.FileFormat)
+	genReportFile, err := r.generateFileFunc(ctx, action, cfg.Config.FileFormat, cfg.ReportTemplate)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -282,7 +286,7 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 
 	switch {
 	case genReportFile != nil:
-		data, err := genReportFile(cfg.Config.Title, reports)
+		data, err := genReportFile(ctx, cfg.Config.Title, reports)
 		if err != nil {
 			return ReportPage{}, err
 		}
@@ -323,14 +327,18 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 	}
 }
 
-func generateFileFunc(action ReportAction, format Format) (func(string, []Report) ([]byte, error), error) {
+func (r *report) generateFileFunc(ctx context.Context, action ReportAction, format Format, customTemplate ReportTemplate) (func(context.Context, string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {
 		case PDF:
-			return generatePDFReport, nil
+			return func(ctx context.Context, title string, reports []Report) ([]byte, error) {
+				return r.generatePDFReport(ctx, title, reports, customTemplate)
+			}, nil
 		case CSV:
-			return generateCSVReport, nil
+			return func(ctx context.Context, title string, reports []Report) ([]byte, error) {
+				return r.generateCSVReport(ctx, title, reports)
+			}, nil
 		default:
 			return nil, errors.New("file format not supported")
 		}
@@ -415,4 +423,31 @@ func groupReportsByPublisher(metric Metric, sMsgs []senml.Message) []Report {
 	}
 
 	return groupedReports
+}
+
+func (r *report) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error {
+	err := r.repo.UpdateReportTemplate(ctx, session.DomainID, cfg.ID, cfg.ReportTemplate)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	return nil
+}
+
+func (r *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+	template, err := r.repo.ViewReportTemplate(ctx, session.DomainID, id)
+	if err != nil {
+		return "", errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	return template, nil
+}
+
+func (r *report) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
+	err := r.repo.DeleteReportTemplate(ctx, session.DomainID, id)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
 }

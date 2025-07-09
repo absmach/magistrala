@@ -1,11 +1,12 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package main contains rule engine main function to start the service.
+// Package main contains reports main function to start the service.
 package main
 
 import (
 	"context"
+	"embed"
 	"fmt"
 	"log"
 	"log/slog"
@@ -50,19 +51,25 @@ const (
 	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	templatePath     = "template/reports_default_template.html"
 )
 
 // We use a buffered channel to prevent blocking, as logging is an expensive operation.
 const channBuffer = 256
 
+//go:embed template/reports_default_template.html
+var templateFS embed.FS
+
 type config struct {
-	LogLevel      string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
-	InstanceID    string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
-	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL         string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	LogLevel            string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
+	InstanceID          string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
+	ESURL               string  `env:"SMQ_ES_URL"                     envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
+	DefaultTemplatePath string  `env:"MG_REPORTS_DEFAULT_TEMPLATE"    envDefault:""`
+	ConverterURL        string  `env:"MG_REPORT_BROWSERLESS_URL"      envDefault:"http://localhost:4000/pdf"`
 }
 
 func main() {
@@ -90,6 +97,30 @@ func main() {
 			return
 		}
 	}
+
+	var templateData []byte
+
+	switch cfg.DefaultTemplatePath {
+	case "":
+		templateData, err = templateFS.ReadFile(templatePath)
+	default:
+		templateData, err = os.ReadFile(templatePath)
+	}
+
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to read report template: %s", err))
+		exitCode = 1
+		return
+	}
+
+	template := reports.ReportTemplate(string(templateData))
+
+	if err := template.Validate(); err != nil {
+		logger.Error(fmt.Sprintf("failed to validate report template: %s", err))
+		exitCode = 1
+		return
+	}
+	logger.Info("Report template validated successfully")
 
 	ec := email.Config{}
 	if err := env.Parse(&ec); err != nil {
@@ -198,7 +229,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(database, runInfo, authz, ec, logger, readersClient)
+	svc, err := newService(database, runInfo, authz, ec, logger, readersClient, template, cfg.ConverterURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -238,7 +269,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (reports.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, converterURL string) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -247,7 +278,7 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient, template, converterURL)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

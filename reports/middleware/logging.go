@@ -208,3 +208,57 @@ func (lm *loggingMiddleware) RemoveReportConfig(ctx context.Context, session aut
 	}(time.Now())
 	return lm.svc.RemoveReportConfig(ctx, session, id)
 }
+
+func (lm *loggingMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("report_config_id", cfg.ID),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Update report template failed", args...)
+			return
+		}
+		lm.logger.Info("Update report template completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.UpdateReportTemplate(ctx, session, cfg)
+}
+
+func (lm *loggingMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (t string, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("report_config_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("View report template failed", args...)
+			return
+		}
+		lm.logger.Info("View report template completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.ViewReportTemplate(ctx, session, id)
+}
+
+func (lm *loggingMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("report_config_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Delete report template failed", args...)
+			return
+		}
+		lm.logger.Info("Delete report template completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.DeleteReportTemplate(ctx, session, id)
+}

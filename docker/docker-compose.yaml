@@ -395,6 +395,8 @@ services:
       MG_REPORTS_DB_SSL_CERT: ${MG_REPORTS_DB_SSL_CERT}
       MG_REPORTS_DB_SSL_KEY: ${MG_REPORTS_DB_SSL_KEY}
       MG_REPORTS_DB_SSL_ROOT_CERT: ${MG_REPORTS_DB_SSL_ROOT_CERT}
+      MG_REPORT_TEMPLATE_PATH: ${MG_REPORT_TEMPLATE_PATH}
+      MG_REPORT_BROWSERLESS_URL: ${MG_REPORT_BROWSERLESS_URL}
       SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
@@ -447,3 +449,11 @@ services:
         target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
+
+  browserless:
+    image: browserless/chrome
+    container_name: magistrala-browserless
+    ports:
+      - "4000:3000"
+    networks:
+      - magistrala-base-net

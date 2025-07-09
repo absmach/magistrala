@@ -19,6 +19,10 @@ var (
 	errDomainUpdateConfigs   = errors.New("not authorized to update report configs in domain")
 	errDomainDeleteConfigs   = errors.New("not authorized to delete report configs in domain")
 	errDomainGenerateReports = errors.New("not authorized to generate reports in domain")
+
+	errDomainUpdateTemplates = errors.New("not authorized to update report templates in domain")
+	errDomainRemoveTemplates = errors.New("not authorized to delete report templates in domain")
+	errDomainViewTemplates   = errors.New("not authorized to view report templates in domain")
 )
 
 type authorizationMiddleware struct {
@@ -176,6 +180,54 @@ func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session a
 	}
 
 	return am.svc.GenerateReport(ctx, session, config, action)
+}
+
+func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return errors.Wrap(errDomainUpdateTemplates, err)
+	}
+
+	return am.svc.UpdateReportTemplate(ctx, session, cfg)
+}
+
+func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return "", errors.Wrap(errDomainViewTemplates, err)
+	}
+
+	return am.svc.ViewReportTemplate(ctx, session, id)
+}
+
+func (am *authorizationMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return errors.Wrap(errDomainRemoveTemplates, err)
+	}
+
+	return am.svc.DeleteReportTemplate(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {

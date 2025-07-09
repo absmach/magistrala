@@ -11,8 +11,10 @@ import (
 
 	"github.com/0x6flab/namegenerator"
 	"github.com/absmach/magistrala/internal/testsutil"
+	emocks "github.com/absmach/magistrala/pkg/emailer/mocks"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
+	tmocks "github.com/absmach/magistrala/pkg/ticker/mocks"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/mocks"
 	"github.com/absmach/magistrala/re/outputs"
@@ -45,13 +47,13 @@ var (
 	}
 )
 
-func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *mocks.Ticker) {
+func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker) {
 	repo := new(mocks.Repository)
-	mockTicker := new(mocks.Ticker)
+	mockTicker := new(tmocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
-	e := new(mocks.Emailer)
+	e := new(emocks.Emailer)
 	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
 }
 

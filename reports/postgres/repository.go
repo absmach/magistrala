@@ -27,11 +27,11 @@ func NewRepository(db postgres.Database) reports.Repository {
 func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	q := `
 		INSERT INTO report_config (id, name, description, domain_id, config, metrics,
-			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, report_template)
 		VALUES (:id, :name, :description, :domain_id, :config, :metrics,
-			:email, :start_datetime, :due, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
+			:email, :start_datetime, :due, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status, :report_template)
 		RETURNING id, name, description, domain_id, config, metrics,
-			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status, report_template;
 	`
 	dbr, err := reportToDb(cfg)
 	if err != nil {
@@ -60,7 +60,7 @@ func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports
 
 func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string) (reports.ReportConfig, error) {
 	q := `
-		SELECT id, name, description, domain_id, config, metrics,
+		SELECT id, name, description, domain_id, config, metrics, report_template,
 			email, start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config
 		WHERE id = $1;
@@ -311,6 +311,74 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	}
 
 	return report, nil
+}
+
+func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domainID, reportID string, template reports.ReportTemplate) error {
+	q := `
+		UPDATE report_configs 
+		SET report_template = :report_template, updated_at = :updated_at 
+		WHERE id = :id AND domain_id = :domain_id`
+
+	dbr := dbReport{
+		ID:             reportID,
+		DomainID:       domainID,
+		UpdatedAt:      time.Now().UTC(),
+		ReportTemplate: template,
+	}
+
+	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+	defer row.Close()
+
+	return nil
+}
+
+func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error) {
+	q := `
+		SELECT COALESCE(report_template, '') as report_template 
+		FROM report_configs 
+		WHERE id = $1 AND domain_id = $2`
+
+	var template string
+	err := repo.DB.QueryRowxContext(ctx, q, reportID, domainID).Scan(&template)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", repoerr.ErrNotFound
+		}
+		return "", errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return template, nil
+}
+
+func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domainID, reportID string) error {
+	q := `
+		UPDATE report_configs 
+		SET custom_template = NULL, updated_at = :updated_at 
+		WHERE id = :id AND domain_id = :domain_id`
+
+	dbr := dbReport{
+		ID:        reportID,
+		DomainID:  domainID,
+		UpdatedAt: time.Now().UTC(),
+	}
+	result, err := repo.DB.ExecContext(ctx, q, dbr)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	if rowsAffected == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
 }
 
 func pageReportQuery(pm reports.PageMeta) string {

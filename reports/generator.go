@@ -95,14 +95,13 @@ func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, err
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.browserURL, bytes.NewReader(jsonPayload))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.converterURL, bytes.NewReader(jsonPayload))
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}

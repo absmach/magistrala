@@ -63,19 +63,11 @@ endef
 define make_docker_dev
 	$(eval svc=$(subst docker_dev_,,$(1)))
 
-	$(if $(filter $(svc),reports), \
-		docker build \
-			--no-cache \
-			--build-arg SVC=$(svc) \
-			--target=reports-final \
-			--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
-			-f docker/Dockerfile.dev ./build, \
-		docker build \
-			--no-cache \
-			--build-arg SVC=$(svc) \
-			--target=scratch-final \
-			--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
-			-f docker/Dockerfile.dev ./build)
+	docker build \
+		--no-cache \
+		--build-arg SVC=$(svc) \
+		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		-f docker/Dockerfile.dev ./build
 endef
 
 ADDON_SERVICES = bootstrap provision certs timescale-reader timescale-writer postgres-reader postgres-writer

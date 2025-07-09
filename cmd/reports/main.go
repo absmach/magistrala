@@ -63,12 +63,13 @@ var templateFS embed.FS
 type config struct {
 	LogLevel            string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
 	InstanceID          string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
-	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL               string  `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
-	DefaultTemplatePath string  `env:"MG_REPORT_TEMPLATE_PATH"    envDefault:""`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
+	ESURL               string  `env:"SMQ_ES_URL"                     envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
+	DefaultTemplatePath string  `env:"MG_REPORTS_DEFAULT_TEMPLATE"    envDefault:""`
+	BrowserURL          string  `env:"MG_REPORT_BROWSERLESS_URL"      envDefault:"http://localhost:4000/pdf"`
 }
 
 func main() {
@@ -228,7 +229,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(database, runInfo, authz, ec, logger, readersClient, template)
+	svc, err := newService(database, runInfo, authz, ec, logger, readersClient, template, cfg.BrowserURL)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -268,7 +269,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate) (reports.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, browserURL string) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -277,7 +278,7 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient, template)
+	csvc := reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailerClient, readersClient, template, browserURL)
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
 	if err != nil {
 		return nil, err

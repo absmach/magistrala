@@ -31,10 +31,9 @@ type report struct {
 	ticker          ticker.Ticker
 	readers         grpcReadersV1.ReadersServiceClient
 	defaultTemplate ReportTemplate
-	converterURL    string
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string) Service {
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate) Service {
 	return &report{
 		repo:            repo,
 		idp:             idp,
@@ -43,7 +42,6 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 		ticker:          tck,
 		readers:         readers,
 		defaultTemplate: template,
-		converterURL:    converterURL,
 	}
 }
 

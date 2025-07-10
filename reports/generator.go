@@ -7,18 +7,20 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"html/template"
-	"io"
-	"net/http"
+	"net/url"
 	"sort"
 	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/chromedp/cdproto/page"
+	"github.com/chromedp/chromedp"
 )
+
+var errChromeExecution = errors.New("chromedp execution failed")
 
 type ReportData struct {
 	Title         string
@@ -46,10 +48,10 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 	if template.String() != "" {
 		templateContent = template.String()
 	}
-	return r.generate(ctx, templateContent, data)
+	return generate(ctx, templateContent, data)
 }
 
-func (r *report) generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
+func generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,
@@ -68,7 +70,7 @@ func (r *report) generate(ctx context.Context, templateContent string, data Repo
 	}
 
 	htmlContent := htmlBuf.String()
-	pdfBytes, err := r.htmlToPDF(ctx, htmlContent)
+	pdfBytes, err := htmlToPDF(ctx, htmlContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
@@ -76,42 +78,50 @@ func (r *report) generate(ctx context.Context, templateContent string, data Repo
 	return pdfBytes, nil
 }
 
-func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
-	payload := map[string]interface{}{
-		"html": htmlContent,
-		"options": map[string]interface{}{
-			"printBackground": true,
-			"margin": map[string]string{
-				"top":    "0",
-				"bottom": "0",
-				"left":   "0",
-				"right":  "0",
-			},
-			"preferCSSPageSize": true,
-		},
-	}
-	jsonPayload, err := json.Marshal(payload)
+func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
+	opts := append(chromedp.DefaultExecAllocatorOptions[:],
+		chromedp.NoSandbox,
+		chromedp.DisableGPU,
+		chromedp.NoFirstRun,
+		chromedp.Headless,
+		chromedp.UserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"),
+		chromedp.Flag("disable-dev-shm-usage", true),
+		chromedp.Flag("disable-background-timer-throttling", true),
+		chromedp.Flag("disable-backgrounding-occluded-windows", true),
+		chromedp.Flag("disable-renderer-backgrounding", true),
+		chromedp.Flag("disable-features", "VizDisplayCompositor"),
+	)
+
+	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
+	defer cancel()
+
+	ctx, cancel = chromedp.NewContext(allocCtx)
+	defer cancel()
+
+	var pdfBuffer []byte
+
+	err := chromedp.Run(ctx,
+		chromedp.Navigate("about:blank"),
+		chromedp.Navigate("data:text/html,"+url.PathEscape(htmlContent)),
+		chromedp.WaitReady("body"),
+		chromedp.ActionFunc(func(ctx context.Context) error {
+			var err error
+			pdfBuffer, _, err = page.PrintToPDF().
+				WithPrintBackground(true).
+				WithMarginTop(0).
+				WithMarginBottom(0).
+				WithMarginLeft(0).
+				WithMarginRight(0).
+				WithPreferCSSPageSize(true).
+				Do(ctx)
+			return err
+		}),
+	)
 	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return nil, errors.Wrap(errChromeExecution, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.converterURL, bytes.NewReader(jsonPayload))
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-	}
-	defer resp.Body.Close()
-
-	pdfBytes, err := io.ReadAll(resp.Body)
-	if err != nil || resp.StatusCode != http.StatusOK {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-	}
-	return pdfBytes, nil
+	return pdfBuffer, nil
 }
 
 func formatTime(t float64) string {

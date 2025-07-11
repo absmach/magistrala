@@ -67,16 +67,32 @@ type SDK_AcceptInvitation_Call struct {
 }
 
 // AcceptInvitation is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) AcceptInvitation(ctx interface{}, domainID interface{}, token interface{}) *SDK_AcceptInvitation_Call {
 	return &SDK_AcceptInvitation_Call{Call: _e.mock.On("AcceptInvitation", ctx, domainID, token)}
 }
 
 func (_c *SDK_AcceptInvitation_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_AcceptInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -125,17 +141,38 @@ type SDK_AddBootstrap_Call struct {
 }
 
 // AddBootstrap is a helper method to define mock.On call
-//   - ctx
-//   - cfg
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - cfg sdk.BootstrapConfig
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) AddBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_AddBootstrap_Call {
 	return &SDK_AddBootstrap_Call{Call: _e.mock.On("AddBootstrap", ctx, cfg, domainID, token)}
 }
 
 func (_c *SDK_AddBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_AddBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.BootstrapConfig), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -175,18 +212,44 @@ type SDK_AddChildren_Call struct {
 }
 
 // AddChildren is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupIDs
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupIDs []string
+//   - token string
 func (_e *SDK_Expecter) AddChildren(ctx interface{}, id interface{}, domainID interface{}, groupIDs interface{}, token interface{}) *SDK_AddChildren_Call {
 	return &SDK_AddChildren_Call{Call: _e.mock.On("AddChildren", ctx, id, domainID, groupIDs, token)}
 }
 
 func (_c *SDK_AddChildren_Call) Run(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string)) *SDK_AddChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -237,19 +300,50 @@ type SDK_AddClientRoleActions_Call struct {
 }
 
 // AddClientRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) AddClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_AddClientRoleActions_Call {
 	return &SDK_AddClientRoleActions_Call{Call: _e.mock.On("AddClientRoleActions", ctx, id, roleID, domainID, actions, token)}
 }
 
 func (_c *SDK_AddClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_AddClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -300,19 +394,50 @@ type SDK_AddClientRoleMembers_Call struct {
 }
 
 // AddClientRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) AddClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_AddClientRoleMembers_Call {
 	return &SDK_AddClientRoleMembers_Call{Call: _e.mock.On("AddClientRoleMembers", ctx, id, roleID, domainID, members, token)}
 }
 
 func (_c *SDK_AddClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_AddClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -363,18 +488,44 @@ type SDK_AddDomainRoleActions_Call struct {
 }
 
 // AddDomainRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) AddDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddDomainRoleActions_Call {
 	return &SDK_AddDomainRoleActions_Call{Call: _e.mock.On("AddDomainRoleActions", ctx, id, roleID, actions, token)}
 }
 
 func (_c *SDK_AddDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_AddDomainRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -425,18 +576,44 @@ type SDK_AddDomainRoleMembers_Call struct {
 }
 
 // AddDomainRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) AddDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddDomainRoleMembers_Call {
 	return &SDK_AddDomainRoleMembers_Call{Call: _e.mock.On("AddDomainRoleMembers", ctx, id, roleID, members, token)}
 }
 
 func (_c *SDK_AddDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_AddDomainRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -487,19 +664,50 @@ type SDK_AddGroupRoleActions_Call struct {
 }
 
 // AddGroupRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) AddGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_AddGroupRoleActions_Call {
 	return &SDK_AddGroupRoleActions_Call{Call: _e.mock.On("AddGroupRoleActions", ctx, id, roleID, domainID, actions, token)}
 }
 
 func (_c *SDK_AddGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_AddGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -550,19 +758,50 @@ type SDK_AddGroupRoleMembers_Call struct {
 }
 
 // AddGroupRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) AddGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_AddGroupRoleMembers_Call {
 	return &SDK_AddGroupRoleMembers_Call{Call: _e.mock.On("AddGroupRoleMembers", ctx, id, roleID, domainID, members, token)}
 }
 
 func (_c *SDK_AddGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_AddGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -613,16 +852,32 @@ type SDK_AvailableClientRoleActions_Call struct {
 }
 
 // AvailableClientRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) AvailableClientRoleActions(ctx interface{}, domainID interface{}, token interface{}) *SDK_AvailableClientRoleActions_Call {
 	return &SDK_AvailableClientRoleActions_Call{Call: _e.mock.On("AvailableClientRoleActions", ctx, domainID, token)}
 }
 
 func (_c *SDK_AvailableClientRoleActions_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_AvailableClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -673,15 +928,26 @@ type SDK_AvailableDomainRoleActions_Call struct {
 }
 
 // AvailableDomainRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - token
+//   - ctx context.Context
+//   - token string
 func (_e *SDK_Expecter) AvailableDomainRoleActions(ctx interface{}, token interface{}) *SDK_AvailableDomainRoleActions_Call {
 	return &SDK_AvailableDomainRoleActions_Call{Call: _e.mock.On("AvailableDomainRoleActions", ctx, token)}
 }
 
 func (_c *SDK_AvailableDomainRoleActions_Call) Run(run func(ctx context.Context, token string)) *SDK_AvailableDomainRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -732,16 +998,32 @@ type SDK_AvailableGroupRoleActions_Call struct {
 }
 
 // AvailableGroupRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) AvailableGroupRoleActions(ctx interface{}, id interface{}, token interface{}) *SDK_AvailableGroupRoleActions_Call {
 	return &SDK_AvailableGroupRoleActions_Call{Call: _e.mock.On("AvailableGroupRoleActions", ctx, id, token)}
 }
 
 func (_c *SDK_AvailableGroupRoleActions_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_AvailableGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -790,16 +1072,32 @@ type SDK_Bootstrap_Call struct {
 }
 
 // Bootstrap is a helper method to define mock.On call
-//   - ctx
-//   - externalID
-//   - externalKey
+//   - ctx context.Context
+//   - externalID string
+//   - externalKey string
 func (_e *SDK_Expecter) Bootstrap(ctx interface{}, externalID interface{}, externalKey interface{}) *SDK_Bootstrap_Call {
 	return &SDK_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalID, externalKey)}
 }
 
 func (_c *SDK_Bootstrap_Call) Run(run func(ctx context.Context, externalID string, externalKey string)) *SDK_Bootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -848,17 +1146,38 @@ type SDK_BootstrapSecure_Call struct {
 }
 
 // BootstrapSecure is a helper method to define mock.On call
-//   - ctx
-//   - externalID
-//   - externalKey
-//   - cryptoKey
+//   - ctx context.Context
+//   - externalID string
+//   - externalKey string
+//   - cryptoKey string
 func (_e *SDK_Expecter) BootstrapSecure(ctx interface{}, externalID interface{}, externalKey interface{}, cryptoKey interface{}) *SDK_BootstrapSecure_Call {
 	return &SDK_BootstrapSecure_Call{Call: _e.mock.On("BootstrapSecure", ctx, externalID, externalKey, cryptoKey)}
 }
 
 func (_c *SDK_BootstrapSecure_Call) Run(run func(ctx context.Context, externalID string, externalKey string, cryptoKey string)) *SDK_BootstrapSecure_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -907,17 +1226,38 @@ type SDK_Bootstraps_Call struct {
 }
 
 // Bootstraps is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Bootstraps(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Bootstraps_Call {
 	return &SDK_Bootstraps_Call{Call: _e.mock.On("Bootstraps", ctx, pm, domainID, token)}
 }
 
 func (_c *SDK_Bootstraps_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Bootstraps_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.PageMetadata), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -966,17 +1306,38 @@ type SDK_Channel_Call struct {
 }
 
 // Channel is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Channel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Channel_Call {
 	return &SDK_Channel_Call{Call: _e.mock.On("Channel", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_Channel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Channel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1025,17 +1386,38 @@ type SDK_Channels_Call struct {
 }
 
 // Channels is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Channels(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Channels_Call {
 	return &SDK_Channels_Call{Call: _e.mock.On("Channels", ctx, pm, domainID, token)}
 }
 
 func (_c *SDK_Channels_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, domainID string, token string)) *SDK_Channels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1084,18 +1466,44 @@ type SDK_Children_Call struct {
 }
 
 // Children is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Children(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_Children_Call {
 	return &SDK_Children_Call{Call: _e.mock.On("Children", ctx, id, domainID, pm, token)}
 }
 
 func (_c *SDK_Children_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_Children_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -1144,17 +1552,38 @@ type SDK_Client_Call struct {
 }
 
 // Client is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Client(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Client_Call {
 	return &SDK_Client_Call{Call: _e.mock.On("Client", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_Client_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Client_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1203,18 +1632,44 @@ type SDK_ClientRole_Call struct {
 }
 
 // ClientRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ClientRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_ClientRole_Call {
 	return &SDK_ClientRole_Call{Call: _e.mock.On("ClientRole", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_ClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_ClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -1265,18 +1720,44 @@ type SDK_ClientRoleActions_Call struct {
 }
 
 // ClientRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_ClientRoleActions_Call {
 	return &SDK_ClientRoleActions_Call{Call: _e.mock.On("ClientRoleActions", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_ClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_ClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -1325,19 +1806,50 @@ type SDK_ClientRoleMembers_Call struct {
 }
 
 // ClientRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ClientRoleMembers_Call {
 	return &SDK_ClientRoleMembers_Call{Call: _e.mock.On("ClientRoleMembers", ctx, id, roleID, domainID, pm, token)}
 }
 
 func (_c *SDK_ClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(sdk0.PageMetadata), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 sdk0.PageMetadata
+		if args[4] != nil {
+			arg4 = args[4].(sdk0.PageMetadata)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -1386,18 +1898,44 @@ type SDK_ClientRoles_Call struct {
 }
 
 // ClientRoles is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ClientRoles(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ClientRoles_Call {
 	return &SDK_ClientRoles_Call{Call: _e.mock.On("ClientRoles", ctx, id, domainID, pm, token)}
 }
 
 func (_c *SDK_ClientRoles_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ClientRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -1446,17 +1984,38 @@ type SDK_Clients_Call struct {
 }
 
 // Clients is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Clients(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Clients_Call {
 	return &SDK_Clients_Call{Call: _e.mock.On("Clients", ctx, pm, domainID, token)}
 }
 
 func (_c *SDK_Clients_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, domainID string, token string)) *SDK_Clients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1496,17 +2055,38 @@ type SDK_Connect_Call struct {
 }
 
 // Connect is a helper method to define mock.On call
-//   - ctx
-//   - conn
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - conn sdk0.Connection
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Connect(ctx interface{}, conn interface{}, domainID interface{}, token interface{}) *SDK_Connect_Call {
 	return &SDK_Connect_Call{Call: _e.mock.On("Connect", ctx, conn, domainID, token)}
 }
 
 func (_c *SDK_Connect_Call) Run(run func(ctx context.Context, conn sdk0.Connection, domainID string, token string)) *SDK_Connect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Connection), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Connection
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Connection)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1546,19 +2126,50 @@ type SDK_ConnectClients_Call struct {
 }
 
 // ConnectClients is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientIDs
-//   - connTypes
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - channelID string
+//   - clientIDs []string
+//   - connTypes []string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ConnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, domainID interface{}, token interface{}) *SDK_ConnectClients_Call {
 	return &SDK_ConnectClients_Call{Call: _e.mock.On("ConnectClients", ctx, channelID, clientIDs, connTypes, domainID, token)}
 }
 
 func (_c *SDK_ConnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string)) *SDK_ConnectClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]string), args[3].([]string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -1607,17 +2218,38 @@ type SDK_CreateChannel_Call struct {
 }
 
 // CreateChannel is a helper method to define mock.On call
-//   - ctx
-//   - channel
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - channel sdk0.Channel
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) CreateChannel(ctx interface{}, channel interface{}, domainID interface{}, token interface{}) *SDK_CreateChannel_Call {
 	return &SDK_CreateChannel_Call{Call: _e.mock.On("CreateChannel", ctx, channel, domainID, token)}
 }
 
 func (_c *SDK_CreateChannel_Call) Run(run func(ctx context.Context, channel sdk0.Channel, domainID string, token string)) *SDK_CreateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Channel), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Channel
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Channel)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1668,17 +2300,38 @@ type SDK_CreateChannels_Call struct {
 }
 
 // CreateChannels is a helper method to define mock.On call
-//   - ctx
-//   - channels
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - channels []sdk0.Channel
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) CreateChannels(ctx interface{}, channels interface{}, domainID interface{}, token interface{}) *SDK_CreateChannels_Call {
 	return &SDK_CreateChannels_Call{Call: _e.mock.On("CreateChannels", ctx, channels, domainID, token)}
 }
 
 func (_c *SDK_CreateChannels_Call) Run(run func(ctx context.Context, channels []sdk0.Channel, domainID string, token string)) *SDK_CreateChannels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]sdk0.Channel), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []sdk0.Channel
+		if args[1] != nil {
+			arg1 = args[1].([]sdk0.Channel)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1727,17 +2380,38 @@ type SDK_CreateClient_Call struct {
 }
 
 // CreateClient is a helper method to define mock.On call
-//   - ctx
-//   - client
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - client sdk0.Client
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) CreateClient(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_CreateClient_Call {
 	return &SDK_CreateClient_Call{Call: _e.mock.On("CreateClient", ctx, client, domainID, token)}
 }
 
 func (_c *SDK_CreateClient_Call) Run(run func(ctx context.Context, client sdk0.Client, domainID string, token string)) *SDK_CreateClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Client), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Client
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Client)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1786,18 +2460,44 @@ type SDK_CreateClientRole_Call struct {
 }
 
 // CreateClientRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - rq
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - rq sdk0.RoleReq
+//   - token string
 func (_e *SDK_Expecter) CreateClientRole(ctx interface{}, id interface{}, domainID interface{}, rq interface{}, token interface{}) *SDK_CreateClientRole_Call {
 	return &SDK_CreateClientRole_Call{Call: _e.mock.On("CreateClientRole", ctx, id, domainID, rq, token)}
 }
 
 func (_c *SDK_CreateClientRole_Call) Run(run func(ctx context.Context, id string, domainID string, rq sdk0.RoleReq, token string)) *SDK_CreateClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.RoleReq), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.RoleReq
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.RoleReq)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -1848,17 +2548,38 @@ type SDK_CreateClients_Call struct {
 }
 
 // CreateClients is a helper method to define mock.On call
-//   - ctx
-//   - client
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - client []sdk0.Client
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) CreateClients(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_CreateClients_Call {
 	return &SDK_CreateClients_Call{Call: _e.mock.On("CreateClients", ctx, client, domainID, token)}
 }
 
 func (_c *SDK_CreateClients_Call) Run(run func(ctx context.Context, client []sdk0.Client, domainID string, token string)) *SDK_CreateClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].([]sdk0.Client), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []sdk0.Client
+		if args[1] != nil {
+			arg1 = args[1].([]sdk0.Client)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -1907,16 +2628,32 @@ type SDK_CreateDomain_Call struct {
 }
 
 // CreateDomain is a helper method to define mock.On call
-//   - ctx
-//   - d
-//   - token
+//   - ctx context.Context
+//   - d sdk0.Domain
+//   - token string
 func (_e *SDK_Expecter) CreateDomain(ctx interface{}, d interface{}, token interface{}) *SDK_CreateDomain_Call {
 	return &SDK_CreateDomain_Call{Call: _e.mock.On("CreateDomain", ctx, d, token)}
 }
 
 func (_c *SDK_CreateDomain_Call) Run(run func(ctx context.Context, d sdk0.Domain, token string)) *SDK_CreateDomain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Domain), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Domain
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Domain)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -1965,17 +2702,38 @@ type SDK_CreateDomainRole_Call struct {
 }
 
 // CreateDomainRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - rq
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - rq sdk0.RoleReq
+//   - token string
 func (_e *SDK_Expecter) CreateDomainRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateDomainRole_Call {
 	return &SDK_CreateDomainRole_Call{Call: _e.mock.On("CreateDomainRole", ctx, id, rq, token)}
 }
 
 func (_c *SDK_CreateDomainRole_Call) Run(run func(ctx context.Context, id string, rq sdk0.RoleReq, token string)) *SDK_CreateDomainRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(sdk0.RoleReq), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk0.RoleReq
+		if args[2] != nil {
+			arg2 = args[2].(sdk0.RoleReq)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2024,17 +2782,38 @@ type SDK_CreateGroup_Call struct {
 }
 
 // CreateGroup is a helper method to define mock.On call
-//   - ctx
-//   - group
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - group sdk0.Group
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) CreateGroup(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_CreateGroup_Call {
 	return &SDK_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group, domainID, token)}
 }
 
 func (_c *SDK_CreateGroup_Call) Run(run func(ctx context.Context, group sdk0.Group, domainID string, token string)) *SDK_CreateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Group), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Group
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Group)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2083,18 +2862,44 @@ type SDK_CreateGroupRole_Call struct {
 }
 
 // CreateGroupRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - rq
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - rq sdk0.RoleReq
+//   - token string
 func (_e *SDK_Expecter) CreateGroupRole(ctx interface{}, id interface{}, domainID interface{}, rq interface{}, token interface{}) *SDK_CreateGroupRole_Call {
 	return &SDK_CreateGroupRole_Call{Call: _e.mock.On("CreateGroupRole", ctx, id, domainID, rq, token)}
 }
 
 func (_c *SDK_CreateGroupRole_Call) Run(run func(ctx context.Context, id string, domainID string, rq sdk0.RoleReq, token string)) *SDK_CreateGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.RoleReq), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.RoleReq
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.RoleReq)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -2143,17 +2948,38 @@ type SDK_CreateSubscription_Call struct {
 }
 
 // CreateSubscription is a helper method to define mock.On call
-//   - ctx
-//   - topic
-//   - contact
-//   - token
+//   - ctx context.Context
+//   - topic string
+//   - contact string
+//   - token string
 func (_e *SDK_Expecter) CreateSubscription(ctx interface{}, topic interface{}, contact interface{}, token interface{}) *SDK_CreateSubscription_Call {
 	return &SDK_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, topic, contact, token)}
 }
 
 func (_c *SDK_CreateSubscription_Call) Run(run func(ctx context.Context, topic string, contact string, token string)) *SDK_CreateSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2202,15 +3028,26 @@ type SDK_CreateToken_Call struct {
 }
 
 // CreateToken is a helper method to define mock.On call
-//   - ctx
-//   - lt
+//   - ctx context.Context
+//   - lt sdk0.Login
 func (_e *SDK_Expecter) CreateToken(ctx interface{}, lt interface{}) *SDK_CreateToken_Call {
 	return &SDK_CreateToken_Call{Call: _e.mock.On("CreateToken", ctx, lt)}
 }
 
 func (_c *SDK_CreateToken_Call) Run(run func(ctx context.Context, lt sdk0.Login)) *SDK_CreateToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Login))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Login
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Login)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -2259,16 +3096,32 @@ type SDK_CreateUser_Call struct {
 }
 
 // CreateUser is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) CreateUser(ctx interface{}, user interface{}, token interface{}) *SDK_CreateUser_Call {
 	return &SDK_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user, token)}
 }
 
 func (_c *SDK_CreateUser_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -2308,17 +3161,38 @@ type SDK_DeleteChannel_Call struct {
 }
 
 // DeleteChannel is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteChannel_Call {
 	return &SDK_DeleteChannel_Call{Call: _e.mock.On("DeleteChannel", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DeleteChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2358,17 +3232,38 @@ type SDK_DeleteClient_Call struct {
 }
 
 // DeleteClient is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteClient_Call {
 	return &SDK_DeleteClient_Call{Call: _e.mock.On("DeleteClient", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DeleteClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2408,18 +3303,44 @@ type SDK_DeleteClientRole_Call struct {
 }
 
 // DeleteClientRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteClientRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_DeleteClientRole_Call {
 	return &SDK_DeleteClientRole_Call{Call: _e.mock.On("DeleteClientRole", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_DeleteClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_DeleteClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -2459,17 +3380,38 @@ type SDK_DeleteDomainRole_Call struct {
 }
 
 // DeleteDomainRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
 func (_e *SDK_Expecter) DeleteDomainRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteDomainRole_Call {
 	return &SDK_DeleteDomainRole_Call{Call: _e.mock.On("DeleteDomainRole", ctx, id, roleID, token)}
 }
 
 func (_c *SDK_DeleteDomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DeleteDomainRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2509,17 +3451,38 @@ type SDK_DeleteGroup_Call struct {
 }
 
 // DeleteGroup is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteGroup_Call {
 	return &SDK_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DeleteGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2559,18 +3522,44 @@ type SDK_DeleteGroupRole_Call struct {
 }
 
 // DeleteGroupRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteGroupRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_DeleteGroupRole_Call {
 	return &SDK_DeleteGroupRole_Call{Call: _e.mock.On("DeleteGroupRole", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_DeleteGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_DeleteGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -2608,17 +3597,38 @@ type SDK_DeleteInvitation_Call struct {
 }
 
 // DeleteInvitation is a helper method to define mock.On call
-//   - ctx
-//   - userID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - userID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DeleteInvitation(ctx interface{}, userID interface{}, domainID interface{}, token interface{}) *SDK_DeleteInvitation_Call {
 	return &SDK_DeleteInvitation_Call{Call: _e.mock.On("DeleteInvitation", ctx, userID, domainID, token)}
 }
 
 func (_c *SDK_DeleteInvitation_Call) Run(run func(ctx context.Context, userID string, domainID string, token string)) *SDK_DeleteInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2658,16 +3668,32 @@ type SDK_DeleteSubscription_Call struct {
 }
 
 // DeleteSubscription is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) DeleteSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_DeleteSubscription_Call {
 	return &SDK_DeleteSubscription_Call{Call: _e.mock.On("DeleteSubscription", ctx, id, token)}
 }
 
 func (_c *SDK_DeleteSubscription_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_DeleteSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -2707,16 +3733,32 @@ type SDK_DeleteUser_Call struct {
 }
 
 // DeleteUser is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) DeleteUser(ctx interface{}, id interface{}, token interface{}) *SDK_DeleteUser_Call {
 	return &SDK_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, id, token)}
 }
 
 func (_c *SDK_DeleteUser_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_DeleteUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -2765,17 +3807,38 @@ type SDK_DisableChannel_Call struct {
 }
 
 // DisableChannel is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DisableChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableChannel_Call {
 	return &SDK_DisableChannel_Call{Call: _e.mock.On("DisableChannel", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DisableChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2824,17 +3887,38 @@ type SDK_DisableClient_Call struct {
 }
 
 // DisableClient is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DisableClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableClient_Call {
 	return &SDK_DisableClient_Call{Call: _e.mock.On("DisableClient", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DisableClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2874,16 +3958,32 @@ type SDK_DisableDomain_Call struct {
 }
 
 // DisableDomain is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DisableDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_DisableDomain_Call {
 	return &SDK_DisableDomain_Call{Call: _e.mock.On("DisableDomain", ctx, domainID, token)}
 }
 
 func (_c *SDK_DisableDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_DisableDomain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -2932,17 +4032,38 @@ type SDK_DisableGroup_Call struct {
 }
 
 // DisableGroup is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DisableGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableGroup_Call {
 	return &SDK_DisableGroup_Call{Call: _e.mock.On("DisableGroup", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_DisableGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -2991,16 +4112,32 @@ type SDK_DisableUser_Call struct {
 }
 
 // DisableUser is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) DisableUser(ctx interface{}, id interface{}, token interface{}) *SDK_DisableUser_Call {
 	return &SDK_DisableUser_Call{Call: _e.mock.On("DisableUser", ctx, id, token)}
 }
 
 func (_c *SDK_DisableUser_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_DisableUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3040,17 +4177,38 @@ type SDK_Disconnect_Call struct {
 }
 
 // Disconnect is a helper method to define mock.On call
-//   - ctx
-//   - conn
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - conn sdk0.Connection
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Disconnect(ctx interface{}, conn interface{}, domainID interface{}, token interface{}) *SDK_Disconnect_Call {
 	return &SDK_Disconnect_Call{Call: _e.mock.On("Disconnect", ctx, conn, domainID, token)}
 }
 
 func (_c *SDK_Disconnect_Call) Run(run func(ctx context.Context, conn sdk0.Connection, domainID string, token string)) *SDK_Disconnect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Connection), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Connection
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Connection)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3090,19 +4248,50 @@ type SDK_DisconnectClients_Call struct {
 }
 
 // DisconnectClients is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientIDs
-//   - connTypes
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - channelID string
+//   - clientIDs []string
+//   - connTypes []string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) DisconnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, domainID interface{}, token interface{}) *SDK_DisconnectClients_Call {
 	return &SDK_DisconnectClients_Call{Call: _e.mock.On("DisconnectClients", ctx, channelID, clientIDs, connTypes, domainID, token)}
 }
 
 func (_c *SDK_DisconnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string)) *SDK_DisconnectClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]string), args[3].([]string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -3151,16 +4340,32 @@ type SDK_Domain_Call struct {
 }
 
 // Domain is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Domain(ctx interface{}, domainID interface{}, token interface{}) *SDK_Domain_Call {
 	return &SDK_Domain_Call{Call: _e.mock.On("Domain", ctx, domainID, token)}
 }
 
 func (_c *SDK_Domain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_Domain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3209,17 +4414,38 @@ type SDK_DomainRole_Call struct {
 }
 
 // DomainRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
 func (_e *SDK_Expecter) DomainRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DomainRole_Call {
 	return &SDK_DomainRole_Call{Call: _e.mock.On("DomainRole", ctx, id, roleID, token)}
 }
 
 func (_c *SDK_DomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DomainRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3270,17 +4496,38 @@ type SDK_DomainRoleActions_Call struct {
 }
 
 // DomainRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
 func (_e *SDK_Expecter) DomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DomainRoleActions_Call {
 	return &SDK_DomainRoleActions_Call{Call: _e.mock.On("DomainRoleActions", ctx, id, roleID, token)}
 }
 
 func (_c *SDK_DomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DomainRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3329,18 +4576,44 @@ type SDK_DomainRoleMembers_Call struct {
 }
 
 // DomainRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) DomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_DomainRoleMembers_Call {
 	return &SDK_DomainRoleMembers_Call{Call: _e.mock.On("DomainRoleMembers", ctx, id, roleID, pm, token)}
 }
 
 func (_c *SDK_DomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, pm sdk0.PageMetadata, token string)) *SDK_DomainRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -3389,17 +4662,38 @@ type SDK_DomainRoles_Call struct {
 }
 
 // DomainRoles is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) DomainRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_DomainRoles_Call {
 	return &SDK_DomainRoles_Call{Call: _e.mock.On("DomainRoles", ctx, id, pm, token)}
 }
 
 func (_c *SDK_DomainRoles_Call) Run(run func(ctx context.Context, id string, pm sdk0.PageMetadata, token string)) *SDK_DomainRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(sdk0.PageMetadata), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk0.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(sdk0.PageMetadata)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3448,16 +4742,32 @@ type SDK_Domains_Call struct {
 }
 
 // Domains is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Domains(ctx interface{}, pm interface{}, token interface{}) *SDK_Domains_Call {
 	return &SDK_Domains_Call{Call: _e.mock.On("Domains", ctx, pm, token)}
 }
 
 func (_c *SDK_Domains_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, token string)) *SDK_Domains_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3506,17 +4816,38 @@ type SDK_EnableChannel_Call struct {
 }
 
 // EnableChannel is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) EnableChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableChannel_Call {
 	return &SDK_EnableChannel_Call{Call: _e.mock.On("EnableChannel", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_EnableChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3565,17 +4896,38 @@ type SDK_EnableClient_Call struct {
 }
 
 // EnableClient is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) EnableClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableClient_Call {
 	return &SDK_EnableClient_Call{Call: _e.mock.On("EnableClient", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_EnableClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3615,16 +4967,32 @@ type SDK_EnableDomain_Call struct {
 }
 
 // EnableDomain is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) EnableDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_EnableDomain_Call {
 	return &SDK_EnableDomain_Call{Call: _e.mock.On("EnableDomain", ctx, domainID, token)}
 }
 
 func (_c *SDK_EnableDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_EnableDomain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3673,17 +5041,38 @@ type SDK_EnableGroup_Call struct {
 }
 
 // EnableGroup is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) EnableGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableGroup_Call {
 	return &SDK_EnableGroup_Call{Call: _e.mock.On("EnableGroup", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_EnableGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3732,16 +5121,32 @@ type SDK_EnableUser_Call struct {
 }
 
 // EnableUser is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) EnableUser(ctx interface{}, id interface{}, token interface{}) *SDK_EnableUser_Call {
 	return &SDK_EnableUser_Call{Call: _e.mock.On("EnableUser", ctx, id, token)}
 }
 
 func (_c *SDK_EnableUser_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_EnableUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3781,16 +5186,32 @@ type SDK_FreezeDomain_Call struct {
 }
 
 // FreezeDomain is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) FreezeDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_FreezeDomain_Call {
 	return &SDK_FreezeDomain_Call{Call: _e.mock.On("FreezeDomain", ctx, domainID, token)}
 }
 
 func (_c *SDK_FreezeDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_FreezeDomain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -3839,17 +5260,38 @@ type SDK_Group_Call struct {
 }
 
 // Group is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Group(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Group_Call {
 	return &SDK_Group_Call{Call: _e.mock.On("Group", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_Group_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Group_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -3898,18 +5340,44 @@ type SDK_GroupRole_Call struct {
 }
 
 // GroupRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) GroupRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_GroupRole_Call {
 	return &SDK_GroupRole_Call{Call: _e.mock.On("GroupRole", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_GroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_GroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -3960,18 +5428,44 @@ type SDK_GroupRoleActions_Call struct {
 }
 
 // GroupRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) GroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_GroupRoleActions_Call {
 	return &SDK_GroupRoleActions_Call{Call: _e.mock.On("GroupRoleActions", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_GroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_GroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4020,19 +5514,50 @@ type SDK_GroupRoleMembers_Call struct {
 }
 
 // GroupRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) GroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_GroupRoleMembers_Call {
 	return &SDK_GroupRoleMembers_Call{Call: _e.mock.On("GroupRoleMembers", ctx, id, roleID, domainID, pm, token)}
 }
 
 func (_c *SDK_GroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_GroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(sdk0.PageMetadata), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 sdk0.PageMetadata
+		if args[4] != nil {
+			arg4 = args[4].(sdk0.PageMetadata)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -4081,18 +5606,44 @@ type SDK_GroupRoles_Call struct {
 }
 
 // GroupRoles is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) GroupRoles(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_GroupRoles_Call {
 	return &SDK_GroupRoles_Call{Call: _e.mock.On("GroupRoles", ctx, id, domainID, pm, token)}
 }
 
 func (_c *SDK_GroupRoles_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_GroupRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4141,17 +5692,38 @@ type SDK_Groups_Call struct {
 }
 
 // Groups is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Groups(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Groups_Call {
 	return &SDK_Groups_Call{Call: _e.mock.On("Groups", ctx, pm, domainID, token)}
 }
 
 func (_c *SDK_Groups_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, domainID string, token string)) *SDK_Groups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -4200,14 +5772,20 @@ type SDK_Health_Call struct {
 }
 
 // Health is a helper method to define mock.On call
-//   - service
+//   - service string
 func (_e *SDK_Expecter) Health(service interface{}) *SDK_Health_Call {
 	return &SDK_Health_Call{Call: _e.mock.On("Health", service)}
 }
 
 func (_c *SDK_Health_Call) Run(run func(service string)) *SDK_Health_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -4256,18 +5834,44 @@ type SDK_Hierarchy_Call struct {
 }
 
 // Hierarchy is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Hierarchy(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_Hierarchy_Call {
 	return &SDK_Hierarchy_Call{Call: _e.mock.On("Hierarchy", ctx, id, domainID, pm, token)}
 }
 
 func (_c *SDK_Hierarchy_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_Hierarchy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4314,17 +5918,38 @@ type SDK_Invitation_Call struct {
 }
 
 // Invitation is a helper method to define mock.On call
-//   - ctx
-//   - userID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - userID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Invitation(ctx interface{}, userID interface{}, domainID interface{}, token interface{}) *SDK_Invitation_Call {
 	return &SDK_Invitation_Call{Call: _e.mock.On("Invitation", ctx, userID, domainID, token)}
 }
 
 func (_c *SDK_Invitation_Call) Run(run func(ctx context.Context, userID string, domainID string, token string)) *SDK_Invitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -4371,16 +5996,32 @@ type SDK_Invitations_Call struct {
 }
 
 // Invitations is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Invitations(ctx interface{}, pm interface{}, token interface{}) *SDK_Invitations_Call {
 	return &SDK_Invitations_Call{Call: _e.mock.On("Invitations", ctx, pm, token)}
 }
 
 func (_c *SDK_Invitations_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, token string)) *SDK_Invitations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -4429,18 +6070,44 @@ type SDK_IssueCert_Call struct {
 }
 
 // IssueCert is a helper method to define mock.On call
-//   - ctx
-//   - clientID
-//   - validity
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - clientID string
+//   - validity string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) IssueCert(ctx interface{}, clientID interface{}, validity interface{}, domainID interface{}, token interface{}) *SDK_IssueCert_Call {
 	return &SDK_IssueCert_Call{Call: _e.mock.On("IssueCert", ctx, clientID, validity, domainID, token)}
 }
 
 func (_c *SDK_IssueCert_Call) Run(run func(ctx context.Context, clientID string, validity string, domainID string, token string)) *SDK_IssueCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4487,19 +6154,50 @@ type SDK_Journal_Call struct {
 }
 
 // Journal is a helper method to define mock.On call
-//   - ctx
-//   - entityType
-//   - entityID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - entityType string
+//   - entityID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Journal(ctx interface{}, entityType interface{}, entityID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_Journal_Call {
 	return &SDK_Journal_Call{Call: _e.mock.On("Journal", ctx, entityType, entityID, domainID, pm, token)}
 }
 
 func (_c *SDK_Journal_Call) Run(run func(ctx context.Context, entityType string, entityID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_Journal_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(sdk0.PageMetadata), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 sdk0.PageMetadata
+		if args[4] != nil {
+			arg4 = args[4].(sdk0.PageMetadata)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -4548,18 +6246,44 @@ type SDK_ListChannelMembers_Call struct {
 }
 
 // ListChannelMembers is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - channelID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ListChannelMembers(ctx interface{}, channelID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListChannelMembers_Call {
 	return &SDK_ListChannelMembers_Call{Call: _e.mock.On("ListChannelMembers", ctx, channelID, domainID, pm, token)}
 }
 
 func (_c *SDK_ListChannelMembers_Call) Run(run func(ctx context.Context, channelID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ListChannelMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4608,18 +6332,44 @@ type SDK_ListClientMembers_Call struct {
 }
 
 // ListClientMembers is a helper method to define mock.On call
-//   - ctx
-//   - clientID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - clientID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ListClientMembers(ctx interface{}, clientID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListClientMembers_Call {
 	return &SDK_ListClientMembers_Call{Call: _e.mock.On("ListClientMembers", ctx, clientID, domainID, pm, token)}
 }
 
 func (_c *SDK_ListClientMembers_Call) Run(run func(ctx context.Context, clientID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ListClientMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4668,17 +6418,38 @@ type SDK_ListDomainMembers_Call struct {
 }
 
 // ListDomainMembers is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ListDomainMembers(ctx interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListDomainMembers_Call {
 	return &SDK_ListDomainMembers_Call{Call: _e.mock.On("ListDomainMembers", ctx, domainID, pm, token)}
 }
 
 func (_c *SDK_ListDomainMembers_Call) Run(run func(ctx context.Context, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ListDomainMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(sdk0.PageMetadata), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk0.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(sdk0.PageMetadata)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -4727,18 +6498,44 @@ type SDK_ListGroupMembers_Call struct {
 }
 
 // ListGroupMembers is a helper method to define mock.On call
-//   - ctx
-//   - groupID
-//   - domainID
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - groupID string
+//   - domainID string
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ListGroupMembers(ctx interface{}, groupID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListGroupMembers_Call {
 	return &SDK_ListGroupMembers_Call{Call: _e.mock.On("ListGroupMembers", ctx, groupID, domainID, pm, token)}
 }
 
 func (_c *SDK_ListGroupMembers_Call) Run(run func(ctx context.Context, groupID string, domainID string, pm sdk0.PageMetadata, token string)) *SDK_ListGroupMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(sdk0.PageMetadata), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk0.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk0.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4787,16 +6584,32 @@ type SDK_ListSubscriptions_Call struct {
 }
 
 // ListSubscriptions is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) ListSubscriptions(ctx interface{}, pm interface{}, token interface{}) *SDK_ListSubscriptions_Call {
 	return &SDK_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, pm, token)}
 }
 
 func (_c *SDK_ListSubscriptions_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_ListSubscriptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.PageMetadata), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -4845,18 +6658,44 @@ type SDK_ReadMessages_Call struct {
 }
 
 // ReadMessages is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - chanID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - pm sdk.MessagePageMetadata
+//   - chanID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ReadMessages(ctx interface{}, pm interface{}, chanID interface{}, domainID interface{}, token interface{}) *SDK_ReadMessages_Call {
 	return &SDK_ReadMessages_Call{Call: _e.mock.On("ReadMessages", ctx, pm, chanID, domainID, token)}
 }
 
 func (_c *SDK_ReadMessages_Call) Run(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string)) *SDK_ReadMessages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.MessagePageMetadata), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.MessagePageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.MessagePageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -4905,15 +6744,26 @@ type SDK_RefreshToken_Call struct {
 }
 
 // RefreshToken is a helper method to define mock.On call
-//   - ctx
-//   - token
+//   - ctx context.Context
+//   - token string
 func (_e *SDK_Expecter) RefreshToken(ctx interface{}, token interface{}) *SDK_RefreshToken_Call {
 	return &SDK_RefreshToken_Call{Call: _e.mock.On("RefreshToken", ctx, token)}
 }
 
 func (_c *SDK_RefreshToken_Call) Run(run func(ctx context.Context, token string)) *SDK_RefreshToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -4951,16 +6801,32 @@ type SDK_RejectInvitation_Call struct {
 }
 
 // RejectInvitation is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RejectInvitation(ctx interface{}, domainID interface{}, token interface{}) *SDK_RejectInvitation_Call {
 	return &SDK_RejectInvitation_Call{Call: _e.mock.On("RejectInvitation", ctx, domainID, token)}
 }
 
 func (_c *SDK_RejectInvitation_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_RejectInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -5000,17 +6866,38 @@ type SDK_RemoveAllChildren_Call struct {
 }
 
 // RemoveAllChildren is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllChildren(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllChildren_Call {
 	return &SDK_RemoveAllChildren_Call{Call: _e.mock.On("RemoveAllChildren", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_RemoveAllChildren_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveAllChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -5050,18 +6937,44 @@ type SDK_RemoveAllClientRoleActions_Call struct {
 }
 
 // RemoveAllClientRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllClientRoleActions_Call {
 	return &SDK_RemoveAllClientRoleActions_Call{Call: _e.mock.On("RemoveAllClientRoleActions", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_RemoveAllClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5101,18 +7014,44 @@ type SDK_RemoveAllClientRoleMembers_Call struct {
 }
 
 // RemoveAllClientRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllClientRoleMembers_Call {
 	return &SDK_RemoveAllClientRoleMembers_Call{Call: _e.mock.On("RemoveAllClientRoleMembers", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_RemoveAllClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5152,17 +7091,38 @@ type SDK_RemoveAllDomainRoleActions_Call struct {
 }
 
 // RemoveAllDomainRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllDomainRoleActions_Call {
 	return &SDK_RemoveAllDomainRoleActions_Call{Call: _e.mock.On("RemoveAllDomainRoleActions", ctx, id, roleID, token)}
 }
 
 func (_c *SDK_RemoveAllDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllDomainRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -5202,17 +7162,38 @@ type SDK_RemoveAllDomainRoleMembers_Call struct {
 }
 
 // RemoveAllDomainRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllDomainRoleMembers_Call {
 	return &SDK_RemoveAllDomainRoleMembers_Call{Call: _e.mock.On("RemoveAllDomainRoleMembers", ctx, id, roleID, token)}
 }
 
 func (_c *SDK_RemoveAllDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllDomainRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -5252,18 +7233,44 @@ type SDK_RemoveAllGroupRoleActions_Call struct {
 }
 
 // RemoveAllGroupRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllGroupRoleActions_Call {
 	return &SDK_RemoveAllGroupRoleActions_Call{Call: _e.mock.On("RemoveAllGroupRoleActions", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_RemoveAllGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5303,18 +7310,44 @@ type SDK_RemoveAllGroupRoleMembers_Call struct {
 }
 
 // RemoveAllGroupRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveAllGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllGroupRoleMembers_Call {
 	return &SDK_RemoveAllGroupRoleMembers_Call{Call: _e.mock.On("RemoveAllGroupRoleMembers", ctx, id, roleID, domainID, token)}
 }
 
 func (_c *SDK_RemoveAllGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5354,17 +7387,38 @@ type SDK_RemoveBootstrap_Call struct {
 }
 
 // RemoveBootstrap is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RemoveBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrap_Call {
 	return &SDK_RemoveBootstrap_Call{Call: _e.mock.On("RemoveBootstrap", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_RemoveBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -5404,18 +7458,44 @@ type SDK_RemoveChannelParent_Call struct {
 }
 
 // RemoveChannelParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) RemoveChannelParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveChannelParent_Call {
 	return &SDK_RemoveChannelParent_Call{Call: _e.mock.On("RemoveChannelParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_RemoveChannelParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveChannelParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5455,18 +7535,44 @@ type SDK_RemoveChildren_Call struct {
 }
 
 // RemoveChildren is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupIDs
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupIDs []string
+//   - token string
 func (_e *SDK_Expecter) RemoveChildren(ctx interface{}, id interface{}, domainID interface{}, groupIDs interface{}, token interface{}) *SDK_RemoveChildren_Call {
 	return &SDK_RemoveChildren_Call{Call: _e.mock.On("RemoveChildren", ctx, id, domainID, groupIDs, token)}
 }
 
 func (_c *SDK_RemoveChildren_Call) Run(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string)) *SDK_RemoveChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5506,18 +7612,44 @@ type SDK_RemoveClientParent_Call struct {
 }
 
 // RemoveClientParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) RemoveClientParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveClientParent_Call {
 	return &SDK_RemoveClientParent_Call{Call: _e.mock.On("RemoveClientParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_RemoveClientParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveClientParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5557,19 +7689,50 @@ type SDK_RemoveClientRoleActions_Call struct {
 }
 
 // RemoveClientRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) RemoveClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_RemoveClientRoleActions_Call {
 	return &SDK_RemoveClientRoleActions_Call{Call: _e.mock.On("RemoveClientRoleActions", ctx, id, roleID, domainID, actions, token)}
 }
 
 func (_c *SDK_RemoveClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_RemoveClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -5609,19 +7772,50 @@ type SDK_RemoveClientRoleMembers_Call struct {
 }
 
 // RemoveClientRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) RemoveClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_RemoveClientRoleMembers_Call {
 	return &SDK_RemoveClientRoleMembers_Call{Call: _e.mock.On("RemoveClientRoleMembers", ctx, id, roleID, domainID, members, token)}
 }
 
 func (_c *SDK_RemoveClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_RemoveClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -5661,18 +7855,44 @@ type SDK_RemoveDomainRoleActions_Call struct {
 }
 
 // RemoveDomainRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) RemoveDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveDomainRoleActions_Call {
 	return &SDK_RemoveDomainRoleActions_Call{Call: _e.mock.On("RemoveDomainRoleActions", ctx, id, roleID, actions, token)}
 }
 
 func (_c *SDK_RemoveDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_RemoveDomainRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5712,18 +7932,44 @@ type SDK_RemoveDomainRoleMembers_Call struct {
 }
 
 // RemoveDomainRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) RemoveDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveDomainRoleMembers_Call {
 	return &SDK_RemoveDomainRoleMembers_Call{Call: _e.mock.On("RemoveDomainRoleMembers", ctx, id, roleID, members, token)}
 }
 
 func (_c *SDK_RemoveDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_RemoveDomainRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5763,18 +8009,44 @@ type SDK_RemoveGroupParent_Call struct {
 }
 
 // RemoveGroupParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) RemoveGroupParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveGroupParent_Call {
 	return &SDK_RemoveGroupParent_Call{Call: _e.mock.On("RemoveGroupParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_RemoveGroupParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveGroupParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -5814,19 +8086,50 @@ type SDK_RemoveGroupRoleActions_Call struct {
 }
 
 // RemoveGroupRoleActions is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - actions
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - actions []string
+//   - token string
 func (_e *SDK_Expecter) RemoveGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_RemoveGroupRoleActions_Call {
 	return &SDK_RemoveGroupRoleActions_Call{Call: _e.mock.On("RemoveGroupRoleActions", ctx, id, roleID, domainID, actions, token)}
 }
 
 func (_c *SDK_RemoveGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_RemoveGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -5866,19 +8169,50 @@ type SDK_RemoveGroupRoleMembers_Call struct {
 }
 
 // RemoveGroupRoleMembers is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - domainID
-//   - members
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - domainID string
+//   - members []string
+//   - token string
 func (_e *SDK_Expecter) RemoveGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_RemoveGroupRoleMembers_Call {
 	return &SDK_RemoveGroupRoleMembers_Call{Call: _e.mock.On("RemoveGroupRoleMembers", ctx, id, roleID, domainID, members, token)}
 }
 
 func (_c *SDK_RemoveGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_RemoveGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].([]string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -5918,17 +8252,38 @@ type SDK_ResetPassword_Call struct {
 }
 
 // ResetPassword is a helper method to define mock.On call
-//   - ctx
-//   - password
-//   - confPass
-//   - token
+//   - ctx context.Context
+//   - password string
+//   - confPass string
+//   - token string
 func (_e *SDK_Expecter) ResetPassword(ctx interface{}, password interface{}, confPass interface{}, token interface{}) *SDK_ResetPassword_Call {
 	return &SDK_ResetPassword_Call{Call: _e.mock.On("ResetPassword", ctx, password, confPass, token)}
 }
 
 func (_c *SDK_ResetPassword_Call) Run(run func(ctx context.Context, password string, confPass string, token string)) *SDK_ResetPassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -5968,15 +8323,26 @@ type SDK_ResetPasswordRequest_Call struct {
 }
 
 // ResetPasswordRequest is a helper method to define mock.On call
-//   - ctx
-//   - email
+//   - ctx context.Context
+//   - email string
 func (_e *SDK_Expecter) ResetPasswordRequest(ctx interface{}, email interface{}) *SDK_ResetPasswordRequest_Call {
 	return &SDK_ResetPasswordRequest_Call{Call: _e.mock.On("ResetPasswordRequest", ctx, email)}
 }
 
 func (_c *SDK_ResetPasswordRequest_Call) Run(run func(ctx context.Context, email string)) *SDK_ResetPasswordRequest_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -6025,17 +8391,38 @@ type SDK_RevokeCert_Call struct {
 }
 
 // RevokeCert is a helper method to define mock.On call
-//   - ctx
-//   - clientID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - clientID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) RevokeCert(ctx interface{}, clientID interface{}, domainID interface{}, token interface{}) *SDK_RevokeCert_Call {
 	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, clientID, domainID, token)}
 }
 
 func (_c *SDK_RevokeCert_Call) Run(run func(ctx context.Context, clientID string, domainID string, token string)) *SDK_RevokeCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6084,16 +8471,32 @@ type SDK_SearchUsers_Call struct {
 }
 
 // SearchUsers is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) SearchUsers(ctx interface{}, pm interface{}, token interface{}) *SDK_SearchUsers_Call {
 	return &SDK_SearchUsers_Call{Call: _e.mock.On("SearchUsers", ctx, pm, token)}
 }
 
 func (_c *SDK_SearchUsers_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, token string)) *SDK_SearchUsers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -6131,16 +8534,32 @@ type SDK_SendInvitation_Call struct {
 }
 
 // SendInvitation is a helper method to define mock.On call
-//   - ctx
-//   - invitation
-//   - token
+//   - ctx context.Context
+//   - invitation sdk0.Invitation
+//   - token string
 func (_e *SDK_Expecter) SendInvitation(ctx interface{}, invitation interface{}, token interface{}) *SDK_SendInvitation_Call {
 	return &SDK_SendInvitation_Call{Call: _e.mock.On("SendInvitation", ctx, invitation, token)}
 }
 
 func (_c *SDK_SendInvitation_Call) Run(run func(ctx context.Context, invitation sdk0.Invitation, token string)) *SDK_SendInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Invitation), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Invitation
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Invitation)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -6180,18 +8599,44 @@ type SDK_SendMessage_Call struct {
 }
 
 // SendMessage is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - topic
-//   - msg
-//   - secret
+//   - ctx context.Context
+//   - domainID string
+//   - topic string
+//   - msg string
+//   - secret string
 func (_e *SDK_Expecter) SendMessage(ctx interface{}, domainID interface{}, topic interface{}, msg interface{}, secret interface{}) *SDK_SendMessage_Call {
 	return &SDK_SendMessage_Call{Call: _e.mock.On("SendMessage", ctx, domainID, topic, msg, secret)}
 }
 
 func (_c *SDK_SendMessage_Call) Run(run func(ctx context.Context, domainID string, topic string, msg string, secret string)) *SDK_SendMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6231,18 +8676,44 @@ type SDK_SetChannelParent_Call struct {
 }
 
 // SetChannelParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) SetChannelParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetChannelParent_Call {
 	return &SDK_SetChannelParent_Call{Call: _e.mock.On("SetChannelParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_SetChannelParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetChannelParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6282,18 +8753,44 @@ type SDK_SetClientParent_Call struct {
 }
 
 // SetClientParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) SetClientParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetClientParent_Call {
 	return &SDK_SetClientParent_Call{Call: _e.mock.On("SetClientParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_SetClientParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetClientParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6333,14 +8830,20 @@ type SDK_SetContentType_Call struct {
 }
 
 // SetContentType is a helper method to define mock.On call
-//   - ct
+//   - ct sdk0.ContentType
 func (_e *SDK_Expecter) SetContentType(ct interface{}) *SDK_SetContentType_Call {
 	return &SDK_SetContentType_Call{Call: _e.mock.On("SetContentType", ct)}
 }
 
 func (_c *SDK_SetContentType_Call) Run(run func(ct sdk0.ContentType)) *SDK_SetContentType_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(sdk0.ContentType))
+		var arg0 sdk0.ContentType
+		if args[0] != nil {
+			arg0 = args[0].(sdk0.ContentType)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -6380,18 +8883,44 @@ type SDK_SetGroupParent_Call struct {
 }
 
 // SetGroupParent is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - groupID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - groupID string
+//   - token string
 func (_e *SDK_Expecter) SetGroupParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetGroupParent_Call {
 	return &SDK_SetGroupParent_Call{Call: _e.mock.On("SetGroupParent", ctx, id, domainID, groupID, token)}
 }
 
 func (_c *SDK_SetGroupParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetGroupParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6431,17 +8960,38 @@ type SDK_UpdateBootstrap_Call struct {
 }
 
 // UpdateBootstrap is a helper method to define mock.On call
-//   - ctx
-//   - cfg
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - cfg sdk.BootstrapConfig
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrap_Call {
 	return &SDK_UpdateBootstrap_Call{Call: _e.mock.On("UpdateBootstrap", ctx, cfg, domainID, token)}
 }
 
 func (_c *SDK_UpdateBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_UpdateBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.BootstrapConfig), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6490,20 +9040,56 @@ type SDK_UpdateBootstrapCerts_Call struct {
 }
 
 // UpdateBootstrapCerts is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - clientCert
-//   - clientKey
-//   - ca
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - clientCert string
+//   - clientKey string
+//   - ca string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx interface{}, id interface{}, clientCert interface{}, clientKey interface{}, ca interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapCerts_Call {
 	return &SDK_UpdateBootstrapCerts_Call{Call: _e.mock.On("UpdateBootstrapCerts", ctx, id, clientCert, clientKey, ca, domainID, token)}
 }
 
 func (_c *SDK_UpdateBootstrapCerts_Call) Run(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string)) *SDK_UpdateBootstrapCerts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		var arg6 string
+		if args[6] != nil {
+			arg6 = args[6].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+			arg6,
+		)
 	})
 	return _c
 }
@@ -6543,18 +9129,44 @@ type SDK_UpdateBootstrapConnection_Call struct {
 }
 
 // UpdateBootstrapConnection is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - channels
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - channels []string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx interface{}, id interface{}, channels interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapConnection_Call {
 	return &SDK_UpdateBootstrapConnection_Call{Call: _e.mock.On("UpdateBootstrapConnection", ctx, id, channels, domainID, token)}
 }
 
 func (_c *SDK_UpdateBootstrapConnection_Call) Run(run func(ctx context.Context, id string, channels []string, domainID string, token string)) *SDK_UpdateBootstrapConnection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6603,17 +9215,38 @@ type SDK_UpdateChannel_Call struct {
 }
 
 // UpdateChannel is a helper method to define mock.On call
-//   - ctx
-//   - channel
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - channel sdk0.Channel
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateChannel(ctx interface{}, channel interface{}, domainID interface{}, token interface{}) *SDK_UpdateChannel_Call {
 	return &SDK_UpdateChannel_Call{Call: _e.mock.On("UpdateChannel", ctx, channel, domainID, token)}
 }
 
 func (_c *SDK_UpdateChannel_Call) Run(run func(ctx context.Context, channel sdk0.Channel, domainID string, token string)) *SDK_UpdateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Channel), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Channel
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Channel)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6662,17 +9295,38 @@ type SDK_UpdateChannelTags_Call struct {
 }
 
 // UpdateChannelTags is a helper method to define mock.On call
-//   - ctx
-//   - c
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - c sdk0.Channel
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateChannelTags(ctx interface{}, c interface{}, domainID interface{}, token interface{}) *SDK_UpdateChannelTags_Call {
 	return &SDK_UpdateChannelTags_Call{Call: _e.mock.On("UpdateChannelTags", ctx, c, domainID, token)}
 }
 
 func (_c *SDK_UpdateChannelTags_Call) Run(run func(ctx context.Context, c sdk0.Channel, domainID string, token string)) *SDK_UpdateChannelTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Channel), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Channel
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Channel)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6721,17 +9375,38 @@ type SDK_UpdateClient_Call struct {
 }
 
 // UpdateClient is a helper method to define mock.On call
-//   - ctx
-//   - client
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - client sdk0.Client
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateClient(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_UpdateClient_Call {
 	return &SDK_UpdateClient_Call{Call: _e.mock.On("UpdateClient", ctx, client, domainID, token)}
 }
 
 func (_c *SDK_UpdateClient_Call) Run(run func(ctx context.Context, client sdk0.Client, domainID string, token string)) *SDK_UpdateClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Client), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Client
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Client)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6780,19 +9455,50 @@ type SDK_UpdateClientRole_Call struct {
 }
 
 // UpdateClientRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - newName
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - newName string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateClientRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientRole_Call {
 	return &SDK_UpdateClientRole_Call{Call: _e.mock.On("UpdateClientRole", ctx, id, roleID, newName, domainID, token)}
 }
 
 func (_c *SDK_UpdateClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string)) *SDK_UpdateClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -6841,18 +9547,44 @@ type SDK_UpdateClientSecret_Call struct {
 }
 
 // UpdateClientSecret is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - secret
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - secret string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateClientSecret(ctx interface{}, id interface{}, secret interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientSecret_Call {
 	return &SDK_UpdateClientSecret_Call{Call: _e.mock.On("UpdateClientSecret", ctx, id, secret, domainID, token)}
 }
 
 func (_c *SDK_UpdateClientSecret_Call) Run(run func(ctx context.Context, id string, secret string, domainID string, token string)) *SDK_UpdateClientSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -6901,17 +9633,38 @@ type SDK_UpdateClientTags_Call struct {
 }
 
 // UpdateClientTags is a helper method to define mock.On call
-//   - ctx
-//   - client
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - client sdk0.Client
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateClientTags(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientTags_Call {
 	return &SDK_UpdateClientTags_Call{Call: _e.mock.On("UpdateClientTags", ctx, client, domainID, token)}
 }
 
 func (_c *SDK_UpdateClientTags_Call) Run(run func(ctx context.Context, client sdk0.Client, domainID string, token string)) *SDK_UpdateClientTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Client), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Client
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Client)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -6960,16 +9713,32 @@ type SDK_UpdateDomain_Call struct {
 }
 
 // UpdateDomain is a helper method to define mock.On call
-//   - ctx
-//   - d
-//   - token
+//   - ctx context.Context
+//   - d sdk0.Domain
+//   - token string
 func (_e *SDK_Expecter) UpdateDomain(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateDomain_Call {
 	return &SDK_UpdateDomain_Call{Call: _e.mock.On("UpdateDomain", ctx, d, token)}
 }
 
 func (_c *SDK_UpdateDomain_Call) Run(run func(ctx context.Context, d sdk0.Domain, token string)) *SDK_UpdateDomain_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Domain), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Domain
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Domain)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7018,18 +9787,44 @@ type SDK_UpdateDomainRole_Call struct {
 }
 
 // UpdateDomainRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - newName
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - newName string
+//   - token string
 func (_e *SDK_Expecter) UpdateDomainRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateDomainRole_Call {
 	return &SDK_UpdateDomainRole_Call{Call: _e.mock.On("UpdateDomainRole", ctx, id, roleID, newName, token)}
 }
 
 func (_c *SDK_UpdateDomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, token string)) *SDK_UpdateDomainRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -7078,17 +9873,38 @@ type SDK_UpdateGroup_Call struct {
 }
 
 // UpdateGroup is a helper method to define mock.On call
-//   - ctx
-//   - group
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - group sdk0.Group
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateGroup(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroup_Call {
 	return &SDK_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group, domainID, token)}
 }
 
 func (_c *SDK_UpdateGroup_Call) Run(run func(ctx context.Context, group sdk0.Group, domainID string, token string)) *SDK_UpdateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Group), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Group
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Group)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -7137,19 +9953,50 @@ type SDK_UpdateGroupRole_Call struct {
 }
 
 // UpdateGroupRole is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - roleID
-//   - newName
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - newName string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateGroupRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroupRole_Call {
 	return &SDK_UpdateGroupRole_Call{Call: _e.mock.On("UpdateGroupRole", ctx, id, roleID, newName, domainID, token)}
 }
 
 func (_c *SDK_UpdateGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string)) *SDK_UpdateGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -7198,17 +10045,38 @@ type SDK_UpdateGroupTags_Call struct {
 }
 
 // UpdateGroupTags is a helper method to define mock.On call
-//   - ctx
-//   - group
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - group sdk0.Group
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) UpdateGroupTags(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroupTags_Call {
 	return &SDK_UpdateGroupTags_Call{Call: _e.mock.On("UpdateGroupTags", ctx, group, domainID, token)}
 }
 
 func (_c *SDK_UpdateGroupTags_Call) Run(run func(ctx context.Context, group sdk0.Group, domainID string, token string)) *SDK_UpdateGroupTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.Group), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.Group
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.Group)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -7257,17 +10125,38 @@ type SDK_UpdatePassword_Call struct {
 }
 
 // UpdatePassword is a helper method to define mock.On call
-//   - ctx
-//   - oldPass
-//   - newPass
-//   - token
+//   - ctx context.Context
+//   - oldPass string
+//   - newPass string
+//   - token string
 func (_e *SDK_Expecter) UpdatePassword(ctx interface{}, oldPass interface{}, newPass interface{}, token interface{}) *SDK_UpdatePassword_Call {
 	return &SDK_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, oldPass, newPass, token)}
 }
 
 func (_c *SDK_UpdatePassword_Call) Run(run func(ctx context.Context, oldPass string, newPass string, token string)) *SDK_UpdatePassword_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -7316,16 +10205,32 @@ type SDK_UpdateProfilePicture_Call struct {
 }
 
 // UpdateProfilePicture is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateProfilePicture(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateProfilePicture_Call {
 	return &SDK_UpdateProfilePicture_Call{Call: _e.mock.On("UpdateProfilePicture", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateProfilePicture_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateProfilePicture_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7374,16 +10279,32 @@ type SDK_UpdateUser_Call struct {
 }
 
 // UpdateUser is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateUser(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUser_Call {
 	return &SDK_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateUser_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7432,16 +10353,32 @@ type SDK_UpdateUserEmail_Call struct {
 }
 
 // UpdateUserEmail is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateUserEmail(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserEmail_Call {
 	return &SDK_UpdateUserEmail_Call{Call: _e.mock.On("UpdateUserEmail", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateUserEmail_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateUserEmail_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7490,16 +10427,32 @@ type SDK_UpdateUserRole_Call struct {
 }
 
 // UpdateUserRole is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateUserRole(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserRole_Call {
 	return &SDK_UpdateUserRole_Call{Call: _e.mock.On("UpdateUserRole", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateUserRole_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateUserRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7548,16 +10501,32 @@ type SDK_UpdateUserTags_Call struct {
 }
 
 // UpdateUserTags is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateUserTags(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserTags_Call {
 	return &SDK_UpdateUserTags_Call{Call: _e.mock.On("UpdateUserTags", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateUserTags_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateUserTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7606,16 +10575,32 @@ type SDK_UpdateUsername_Call struct {
 }
 
 // UpdateUsername is a helper method to define mock.On call
-//   - ctx
-//   - user
-//   - token
+//   - ctx context.Context
+//   - user sdk0.User
+//   - token string
 func (_e *SDK_Expecter) UpdateUsername(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUsername_Call {
 	return &SDK_UpdateUsername_Call{Call: _e.mock.On("UpdateUsername", ctx, user, token)}
 }
 
 func (_c *SDK_UpdateUsername_Call) Run(run func(ctx context.Context, user sdk0.User, token string)) *SDK_UpdateUsername_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.User), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.User
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.User)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7664,16 +10649,32 @@ type SDK_User_Call struct {
 }
 
 // User is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) User(ctx interface{}, id interface{}, token interface{}) *SDK_User_Call {
 	return &SDK_User_Call{Call: _e.mock.On("User", ctx, id, token)}
 }
 
 func (_c *SDK_User_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_User_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7722,15 +10723,26 @@ type SDK_UserProfile_Call struct {
 }
 
 // UserProfile is a helper method to define mock.On call
-//   - ctx
-//   - token
+//   - ctx context.Context
+//   - token string
 func (_e *SDK_Expecter) UserProfile(ctx interface{}, token interface{}) *SDK_UserProfile_Call {
 	return &SDK_UserProfile_Call{Call: _e.mock.On("UserProfile", ctx, token)}
 }
 
 func (_c *SDK_UserProfile_Call) Run(run func(ctx context.Context, token string)) *SDK_UserProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -7779,16 +10791,32 @@ type SDK_Users_Call struct {
 }
 
 // Users is a helper method to define mock.On call
-//   - ctx
-//   - pm
-//   - token
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - token string
 func (_e *SDK_Expecter) Users(ctx interface{}, pm interface{}, token interface{}) *SDK_Users_Call {
 	return &SDK_Users_Call{Call: _e.mock.On("Users", ctx, pm, token)}
 }
 
 func (_c *SDK_Users_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, token string)) *SDK_Users_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk0.PageMetadata), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -7837,17 +10865,38 @@ type SDK_ViewBootstrap_Call struct {
 }
 
 // ViewBootstrap is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ViewBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrap_Call {
 	return &SDK_ViewBootstrap_Call{Call: _e.mock.On("ViewBootstrap", ctx, id, domainID, token)}
 }
 
 func (_c *SDK_ViewBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -7896,17 +10945,38 @@ type SDK_ViewCert_Call struct {
 }
 
 // ViewCert is a helper method to define mock.On call
-//   - ctx
-//   - certID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - certID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ViewCert(ctx interface{}, certID interface{}, domainID interface{}, token interface{}) *SDK_ViewCert_Call {
 	return &SDK_ViewCert_Call{Call: _e.mock.On("ViewCert", ctx, certID, domainID, token)}
 }
 
 func (_c *SDK_ViewCert_Call) Run(run func(ctx context.Context, certID string, domainID string, token string)) *SDK_ViewCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -7955,17 +11025,38 @@ type SDK_ViewCertByClient_Call struct {
 }
 
 // ViewCertByClient is a helper method to define mock.On call
-//   - ctx
-//   - clientID
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - clientID string
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) ViewCertByClient(ctx interface{}, clientID interface{}, domainID interface{}, token interface{}) *SDK_ViewCertByClient_Call {
 	return &SDK_ViewCertByClient_Call{Call: _e.mock.On("ViewCertByClient", ctx, clientID, domainID, token)}
 }
 
 func (_c *SDK_ViewCertByClient_Call) Run(run func(ctx context.Context, clientID string, domainID string, token string)) *SDK_ViewCertByClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -8014,16 +11105,32 @@ type SDK_ViewSubscription_Call struct {
 }
 
 // ViewSubscription is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - token
+//   - ctx context.Context
+//   - id string
+//   - token string
 func (_e *SDK_Expecter) ViewSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_ViewSubscription_Call {
 	return &SDK_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, id, token)}
 }
 
 func (_c *SDK_ViewSubscription_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_ViewSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -8063,18 +11170,44 @@ type SDK_Whitelist_Call struct {
 }
 
 // Whitelist is a helper method to define mock.On call
-//   - ctx
-//   - clientID
-//   - state
-//   - domainID
-//   - token
+//   - ctx context.Context
+//   - clientID string
+//   - state int
+//   - domainID string
+//   - token string
 func (_e *SDK_Expecter) Whitelist(ctx interface{}, clientID interface{}, state interface{}, domainID interface{}, token interface{}) *SDK_Whitelist_Call {
 	return &SDK_Whitelist_Call{Call: _e.mock.On("Whitelist", ctx, clientID, state, domainID, token)}
 }
 
 func (_c *SDK_Whitelist_Call) Run(run func(ctx context.Context, clientID string, state int, domainID string, token string)) *SDK_Whitelist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(int), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }

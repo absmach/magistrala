@@ -335,13 +335,13 @@ func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domain
 	return nil
 }
 
-func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error) {
+func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID, reportID string) (reports.ReportTemplate, error) {
 	q := `
 		SELECT COALESCE(report_template, '') as report_template 
 		FROM report_config 
 		WHERE id = $1 AND domain_id = $2`
 
-	var template string
+	var template reports.ReportTemplate
 	err := repo.DB.QueryRowxContext(ctx, q, reportID, domainID).Scan(&template)
 	if err != nil {
 		if err == sql.ErrNoRows {

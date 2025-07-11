@@ -10,12 +10,6 @@ template-data:
   boilerplate-file: ./tools/config/boilerplate.txt
   with-expecter: true
 packages:
-  github.com/absmach/magistrala/pkg/sdk:
-    interfaces:
-      SDK:
-        config:
-          mockname: "SDK"
-          filename: "sdk.go"
   github.com/absmach/magistrala/re:
     interfaces:
       Repository:
@@ -46,10 +40,4 @@ packages:
   github.com/absmach/magistrala/pkg/ticker:
     interfaces:
       Ticker:
-  github.com/absmach/magistrala/api/grpc/readers/v1:
-    interfaces:
-      ReadersServiceClient:
-        config:
-          dir: "./readers/mocks"
-          mockname: "ReadersServiceClient"
-          filename: "readers_client.go"
+

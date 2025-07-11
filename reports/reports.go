@@ -397,7 +397,7 @@ type Repository interface {
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 
 	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error
-	ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error)
+	ViewReportTemplate(ctx context.Context, domainID, reportID string) (ReportTemplate, error)
 	DeleteReportTemplate(ctx context.Context, domainID, reportID string) error
 }
 
@@ -412,7 +412,7 @@ type Service interface {
 	DisableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error)
 
 	UpdateReportTemplate(ctx context.Context, session authn.Session, cfg ReportConfig) error
-	ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error)
+	ViewReportTemplate(ctx context.Context, session authn.Session, id string) (ReportTemplate, error)
 	DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error
 
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)

@@ -678,22 +678,22 @@ func (_c *Service_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // ViewReportTemplate provides a mock function for the type Service
-func (_mock *Service) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+func (_mock *Service) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
 	ret := _mock.Called(ctx, session, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewReportTemplate")
 	}
 
-	var r0 string
+	var r0 reports.ReportTemplate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (reports.ReportTemplate, error)); ok {
 		return returnFunc(ctx, session, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) reports.ReportTemplate); ok {
 		r0 = returnFunc(ctx, session, id)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(reports.ReportTemplate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
 		r1 = returnFunc(ctx, session, id)
@@ -723,12 +723,12 @@ func (_c *Service_ViewReportTemplate_Call) Run(run func(ctx context.Context, ses
 	return _c
 }
 
-func (_c *Service_ViewReportTemplate_Call) Return(s string, err error) *Service_ViewReportTemplate_Call {
-	_c.Call.Return(s, err)
+func (_c *Service_ViewReportTemplate_Call) Return(reportTemplate reports.ReportTemplate, err error) *Service_ViewReportTemplate_Call {
+	_c.Call.Return(reportTemplate, err)
 	return _c
 }
 
-func (_c *Service_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (string, error)) *Service_ViewReportTemplate_Call {
+func (_c *Service_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error)) *Service_ViewReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

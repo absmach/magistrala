@@ -198,7 +198,7 @@ func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, ses
 	return am.svc.UpdateReportTemplate(ctx, session, cfg)
 }
 
-func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
 	if err := am.authorize(ctx, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,

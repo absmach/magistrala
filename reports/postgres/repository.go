@@ -356,7 +356,7 @@ func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID
 func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domainID, reportID string) error {
 	q := `
 		UPDATE report_config 
-		SET custom_template = NULL, updated_at = :updated_at 
+		SET report_template = NULL, updated_at = :updated_at 
 		WHERE id = :id AND domain_id = :domain_id`
 
 	dbr := dbReport{

@@ -2,19 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 pkgname: mocks
 template: testify
-mockname: "{{.InterfaceName}}"
+structname: "{{.InterfaceName}}"
 filename: "{{snakecase .InterfaceName}}.go"
 dir: "{{.InterfaceDirRelative}}/mocks"
 force-file-write: true
 template-data:
   boilerplate-file: ./tools/config/boilerplate.txt
-  with-expecter: true
 packages:
   github.com/absmach/magistrala/pkg/sdk:
     interfaces:
       SDK:
         config:
-          mockname: "SDK"
+          structname: "SDK"
           filename: "sdk.go"
   github.com/absmach/magistrala/re:
     interfaces:
@@ -51,5 +50,5 @@ packages:
       ReadersServiceClient:
         config:
           dir: "./readers/mocks"
-          mockname: "ReadersServiceClient"
+          structname: "ReadersServiceClient"
           filename: "readers_client.go"

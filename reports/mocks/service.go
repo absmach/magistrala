@@ -74,16 +74,32 @@ type Service_AddReportConfig_Call struct {
 }
 
 // AddReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - cfg reports.ReportConfig
 func (_e *Service_Expecter) AddReportConfig(ctx interface{}, session interface{}, cfg interface{}) *Service_AddReportConfig_Call {
 	return &Service_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, session, cfg)}
 }
 
 func (_c *Service_AddReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig)) *Service_AddReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.ReportConfig
+		if args[2] != nil {
+			arg2 = args[2].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -121,16 +137,32 @@ type Service_DeleteReportTemplate_Call struct {
 }
 
 // DeleteReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) DeleteReportTemplate(ctx interface{}, session interface{}, id interface{}) *Service_DeleteReportTemplate_Call {
 	return &Service_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, session, id)}
 }
 
 func (_c *Service_DeleteReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DeleteReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -177,16 +209,32 @@ type Service_DisableReportConfig_Call struct {
 }
 
 // DisableReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) DisableReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_DisableReportConfig_Call {
 	return &Service_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, session, id)}
 }
 
 func (_c *Service_DisableReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DisableReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -233,16 +281,32 @@ type Service_EnableReportConfig_Call struct {
 }
 
 // EnableReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) EnableReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_EnableReportConfig_Call {
 	return &Service_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, session, id)}
 }
 
 func (_c *Service_EnableReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_EnableReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -289,17 +353,38 @@ type Service_GenerateReport_Call struct {
 }
 
 // GenerateReport is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - config
-//   - action
+//   - ctx context.Context
+//   - session authn.Session
+//   - config reports.ReportConfig
+//   - action reports.ReportAction
 func (_e *Service_Expecter) GenerateReport(ctx interface{}, session interface{}, config interface{}, action interface{}) *Service_GenerateReport_Call {
 	return &Service_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, session, config, action)}
 }
 
 func (_c *Service_GenerateReport_Call) Run(run func(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction)) *Service_GenerateReport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig), args[3].(reports.ReportAction))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.ReportConfig
+		if args[2] != nil {
+			arg2 = args[2].(reports.ReportConfig)
+		}
+		var arg3 reports.ReportAction
+		if args[3] != nil {
+			arg3 = args[3].(reports.ReportAction)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -346,16 +431,32 @@ type Service_ListReportsConfig_Call struct {
 }
 
 // ListReportsConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - pm
+//   - ctx context.Context
+//   - session authn.Session
+//   - pm reports.PageMeta
 func (_e *Service_Expecter) ListReportsConfig(ctx interface{}, session interface{}, pm interface{}) *Service_ListReportsConfig_Call {
 	return &Service_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, session, pm)}
 }
 
 func (_c *Service_ListReportsConfig_Call) Run(run func(ctx context.Context, session authn.Session, pm reports.PageMeta)) *Service_ListReportsConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.PageMeta))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.PageMeta
+		if args[2] != nil {
+			arg2 = args[2].(reports.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -393,16 +494,32 @@ type Service_RemoveReportConfig_Call struct {
 }
 
 // RemoveReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) RemoveReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_RemoveReportConfig_Call {
 	return &Service_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, session, id)}
 }
 
 func (_c *Service_RemoveReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_RemoveReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -440,14 +557,20 @@ type Service_StartScheduler_Call struct {
 }
 
 // StartScheduler is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *Service_Expecter) StartScheduler(ctx interface{}) *Service_StartScheduler_Call {
 	return &Service_StartScheduler_Call{Call: _e.mock.On("StartScheduler", ctx)}
 }
 
 func (_c *Service_StartScheduler_Call) Run(run func(ctx context.Context)) *Service_StartScheduler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -494,16 +617,32 @@ type Service_UpdateReportConfig_Call struct {
 }
 
 // UpdateReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - cfg reports.ReportConfig
 func (_e *Service_Expecter) UpdateReportConfig(ctx interface{}, session interface{}, cfg interface{}) *Service_UpdateReportConfig_Call {
 	return &Service_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, session, cfg)}
 }
 
 func (_c *Service_UpdateReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig)) *Service_UpdateReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.ReportConfig
+		if args[2] != nil {
+			arg2 = args[2].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -550,16 +689,32 @@ type Service_UpdateReportSchedule_Call struct {
 }
 
 // UpdateReportSchedule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - cfg reports.ReportConfig
 func (_e *Service_Expecter) UpdateReportSchedule(ctx interface{}, session interface{}, cfg interface{}) *Service_UpdateReportSchedule_Call {
 	return &Service_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, session, cfg)}
 }
 
 func (_c *Service_UpdateReportSchedule_Call) Run(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig)) *Service_UpdateReportSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.ReportConfig
+		if args[2] != nil {
+			arg2 = args[2].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -597,16 +752,32 @@ type Service_UpdateReportTemplate_Call struct {
 }
 
 // UpdateReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - cfg reports.ReportConfig
 func (_e *Service_Expecter) UpdateReportTemplate(ctx interface{}, session interface{}, cfg interface{}) *Service_UpdateReportTemplate_Call {
 	return &Service_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, session, cfg)}
 }
 
 func (_c *Service_UpdateReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig)) *Service_UpdateReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 reports.ReportConfig
+		if args[2] != nil {
+			arg2 = args[2].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -653,16 +824,32 @@ type Service_ViewReportConfig_Call struct {
 }
 
 // ViewReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) ViewReportConfig(ctx interface{}, session interface{}, id interface{}) *Service_ViewReportConfig_Call {
 	return &Service_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, session, id)}
 }
 
 func (_c *Service_ViewReportConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -709,16 +896,32 @@ type Service_ViewReportTemplate_Call struct {
 }
 
 // ViewReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) ViewReportTemplate(ctx interface{}, session interface{}, id interface{}) *Service_ViewReportTemplate_Call {
 	return &Service_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, session, id)}
 }
 
 func (_c *Service_ViewReportTemplate_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

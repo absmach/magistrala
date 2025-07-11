@@ -74,15 +74,26 @@ type Repository_AddRule_Call struct {
 }
 
 // AddRule is a helper method to define mock.On call
-//   - ctx
-//   - r
+//   - ctx context.Context
+//   - r re.Rule
 func (_e *Repository_Expecter) AddRule(ctx interface{}, r interface{}) *Repository_AddRule_Call {
 	return &Repository_AddRule_Call{Call: _e.mock.On("AddRule", ctx, r)}
 }
 
 func (_c *Repository_AddRule_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_AddRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.Rule
+		if args[1] != nil {
+			arg1 = args[1].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -129,15 +140,26 @@ type Repository_ListRules_Call struct {
 }
 
 // ListRules is a helper method to define mock.On call
-//   - ctx
-//   - pm
+//   - ctx context.Context
+//   - pm re.PageMeta
 func (_e *Repository_Expecter) ListRules(ctx interface{}, pm interface{}) *Repository_ListRules_Call {
 	return &Repository_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm)}
 }
 
 func (_c *Repository_ListRules_Call) Run(run func(ctx context.Context, pm re.PageMeta)) *Repository_ListRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.PageMeta))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.PageMeta
+		if args[1] != nil {
+			arg1 = args[1].(re.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -175,15 +197,26 @@ type Repository_RemoveRule_Call struct {
 }
 
 // RemoveRule is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Repository_Expecter) RemoveRule(ctx interface{}, id interface{}) *Repository_RemoveRule_Call {
 	return &Repository_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, id)}
 }
 
 func (_c *Repository_RemoveRule_Call) Run(run func(ctx context.Context, id string)) *Repository_RemoveRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -230,15 +263,26 @@ type Repository_UpdateRule_Call struct {
 }
 
 // UpdateRule is a helper method to define mock.On call
-//   - ctx
-//   - r
+//   - ctx context.Context
+//   - r re.Rule
 func (_e *Repository_Expecter) UpdateRule(ctx interface{}, r interface{}) *Repository_UpdateRule_Call {
 	return &Repository_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, r)}
 }
 
 func (_c *Repository_UpdateRule_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.Rule
+		if args[1] != nil {
+			arg1 = args[1].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -285,16 +329,32 @@ type Repository_UpdateRuleDue_Call struct {
 }
 
 // UpdateRuleDue is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - due
+//   - ctx context.Context
+//   - id string
+//   - due time.Time
 func (_e *Repository_Expecter) UpdateRuleDue(ctx interface{}, id interface{}, due interface{}) *Repository_UpdateRuleDue_Call {
 	return &Repository_UpdateRuleDue_Call{Call: _e.mock.On("UpdateRuleDue", ctx, id, due)}
 }
 
 func (_c *Repository_UpdateRuleDue_Call) Run(run func(ctx context.Context, id string, due time.Time)) *Repository_UpdateRuleDue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(time.Time))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Time
+		if args[2] != nil {
+			arg2 = args[2].(time.Time)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -341,15 +401,26 @@ type Repository_UpdateRuleSchedule_Call struct {
 }
 
 // UpdateRuleSchedule is a helper method to define mock.On call
-//   - ctx
-//   - r
+//   - ctx context.Context
+//   - r re.Rule
 func (_e *Repository_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}) *Repository_UpdateRuleSchedule_Call {
 	return &Repository_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r)}
 }
 
 func (_c *Repository_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.Rule
+		if args[1] != nil {
+			arg1 = args[1].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -396,15 +467,26 @@ type Repository_UpdateRuleStatus_Call struct {
 }
 
 // UpdateRuleStatus is a helper method to define mock.On call
-//   - ctx
-//   - r
+//   - ctx context.Context
+//   - r re.Rule
 func (_e *Repository_Expecter) UpdateRuleStatus(ctx interface{}, r interface{}) *Repository_UpdateRuleStatus_Call {
 	return &Repository_UpdateRuleStatus_Call{Call: _e.mock.On("UpdateRuleStatus", ctx, r)}
 }
 
 func (_c *Repository_UpdateRuleStatus_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.Rule
+		if args[1] != nil {
+			arg1 = args[1].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -451,15 +533,26 @@ type Repository_UpdateRuleTags_Call struct {
 }
 
 // UpdateRuleTags is a helper method to define mock.On call
-//   - ctx
-//   - r
+//   - ctx context.Context
+//   - r re.Rule
 func (_e *Repository_Expecter) UpdateRuleTags(ctx interface{}, r interface{}) *Repository_UpdateRuleTags_Call {
 	return &Repository_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r)}
 }
 
 func (_c *Repository_UpdateRuleTags_Call) Run(run func(ctx context.Context, r re.Rule)) *Repository_UpdateRuleTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.Rule
+		if args[1] != nil {
+			arg1 = args[1].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -506,15 +599,26 @@ type Repository_ViewRule_Call struct {
 }
 
 // ViewRule is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Repository_Expecter) ViewRule(ctx interface{}, id interface{}) *Repository_ViewRule_Call {
 	return &Repository_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, id)}
 }
 
 func (_c *Repository_ViewRule_Call) Run(run func(ctx context.Context, id string)) *Repository_ViewRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

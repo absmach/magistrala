@@ -79,18 +79,44 @@ type Service_Cert_Call struct {
 }
 
 // Cert is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
-//   - clientID
-//   - duration
+//   - ctx context.Context
+//   - domainID string
+//   - token string
+//   - clientID string
+//   - duration string
 func (_e *Service_Expecter) Cert(ctx interface{}, domainID interface{}, token interface{}, clientID interface{}, duration interface{}) *Service_Cert_Call {
 	return &Service_Cert_Call{Call: _e.mock.On("Cert", ctx, domainID, token, clientID, duration)}
 }
 
 func (_c *Service_Cert_Call) Run(run func(ctx context.Context, domainID string, token string, clientID string, duration string)) *Service_Cert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -139,15 +165,26 @@ type Service_Mapping_Call struct {
 }
 
 // Mapping is a helper method to define mock.On call
-//   - ctx
-//   - token
+//   - ctx context.Context
+//   - token string
 func (_e *Service_Expecter) Mapping(ctx interface{}, token interface{}) *Service_Mapping_Call {
 	return &Service_Mapping_Call{Call: _e.mock.On("Mapping", ctx, token)}
 }
 
 func (_c *Service_Mapping_Call) Run(run func(ctx context.Context, token string)) *Service_Mapping_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -194,19 +231,50 @@ type Service_Provision_Call struct {
 }
 
 // Provision is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - token
-//   - name
-//   - externalID
-//   - externalKey
+//   - ctx context.Context
+//   - domainID string
+//   - token string
+//   - name string
+//   - externalID string
+//   - externalKey string
 func (_e *Service_Expecter) Provision(ctx interface{}, domainID interface{}, token interface{}, name interface{}, externalID interface{}, externalKey interface{}) *Service_Provision_Call {
 	return &Service_Provision_Call{Call: _e.mock.On("Provision", ctx, domainID, token, name, externalID, externalKey)}
 }
 
 func (_c *Service_Provision_Call) Run(run func(ctx context.Context, domainID string, token string, name string, externalID string, externalKey string)) *Service_Provision_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }

@@ -75,16 +75,32 @@ type Service_AddRule_Call struct {
 }
 
 // AddRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - r
+//   - ctx context.Context
+//   - session authn.Session
+//   - r re.Rule
 func (_e *Service_Expecter) AddRule(ctx interface{}, session interface{}, r interface{}) *Service_AddRule_Call {
 	return &Service_AddRule_Call{Call: _e.mock.On("AddRule", ctx, session, r)}
 }
 
 func (_c *Service_AddRule_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_AddRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 re.Rule
+		if args[2] != nil {
+			arg2 = args[2].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -175,16 +191,32 @@ type Service_DisableRule_Call struct {
 }
 
 // DisableRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) DisableRule(ctx interface{}, session interface{}, id interface{}) *Service_DisableRule_Call {
 	return &Service_DisableRule_Call{Call: _e.mock.On("DisableRule", ctx, session, id)}
 }
 
 func (_c *Service_DisableRule_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DisableRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -231,16 +263,32 @@ type Service_EnableRule_Call struct {
 }
 
 // EnableRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) EnableRule(ctx interface{}, session interface{}, id interface{}) *Service_EnableRule_Call {
 	return &Service_EnableRule_Call{Call: _e.mock.On("EnableRule", ctx, session, id)}
 }
 
 func (_c *Service_EnableRule_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_EnableRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -278,14 +326,20 @@ type Service_Handle_Call struct {
 }
 
 // Handle is a helper method to define mock.On call
-//   - msg
+//   - msg *messaging.Message
 func (_e *Service_Expecter) Handle(msg interface{}) *Service_Handle_Call {
 	return &Service_Handle_Call{Call: _e.mock.On("Handle", msg)}
 }
 
 func (_c *Service_Handle_Call) Run(run func(msg *messaging.Message)) *Service_Handle_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*messaging.Message))
+		var arg0 *messaging.Message
+		if args[0] != nil {
+			arg0 = args[0].(*messaging.Message)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -332,16 +386,32 @@ type Service_ListRules_Call struct {
 }
 
 // ListRules is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - pm
+//   - ctx context.Context
+//   - session authn.Session
+//   - pm re.PageMeta
 func (_e *Service_Expecter) ListRules(ctx interface{}, session interface{}, pm interface{}) *Service_ListRules_Call {
 	return &Service_ListRules_Call{Call: _e.mock.On("ListRules", ctx, session, pm)}
 }
 
 func (_c *Service_ListRules_Call) Run(run func(ctx context.Context, session authn.Session, pm re.PageMeta)) *Service_ListRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.PageMeta))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 re.PageMeta
+		if args[2] != nil {
+			arg2 = args[2].(re.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -379,16 +449,32 @@ type Service_RemoveRule_Call struct {
 }
 
 // RemoveRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) RemoveRule(ctx interface{}, session interface{}, id interface{}) *Service_RemoveRule_Call {
 	return &Service_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, session, id)}
 }
 
 func (_c *Service_RemoveRule_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_RemoveRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -426,14 +512,20 @@ type Service_StartScheduler_Call struct {
 }
 
 // StartScheduler is a helper method to define mock.On call
-//   - ctx
+//   - ctx context.Context
 func (_e *Service_Expecter) StartScheduler(ctx interface{}) *Service_StartScheduler_Call {
 	return &Service_StartScheduler_Call{Call: _e.mock.On("StartScheduler", ctx)}
 }
 
 func (_c *Service_StartScheduler_Call) Run(run func(ctx context.Context)) *Service_StartScheduler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
@@ -480,16 +572,32 @@ type Service_UpdateRule_Call struct {
 }
 
 // UpdateRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - r
+//   - ctx context.Context
+//   - session authn.Session
+//   - r re.Rule
 func (_e *Service_Expecter) UpdateRule(ctx interface{}, session interface{}, r interface{}) *Service_UpdateRule_Call {
 	return &Service_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, session, r)}
 }
 
 func (_c *Service_UpdateRule_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_UpdateRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 re.Rule
+		if args[2] != nil {
+			arg2 = args[2].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -536,16 +644,32 @@ type Service_UpdateRuleSchedule_Call struct {
 }
 
 // UpdateRuleSchedule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - r
+//   - ctx context.Context
+//   - session authn.Session
+//   - r re.Rule
 func (_e *Service_Expecter) UpdateRuleSchedule(ctx interface{}, session interface{}, r interface{}) *Service_UpdateRuleSchedule_Call {
 	return &Service_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, session, r)}
 }
 
 func (_c *Service_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_UpdateRuleSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 re.Rule
+		if args[2] != nil {
+			arg2 = args[2].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -592,16 +716,32 @@ type Service_UpdateRuleTags_Call struct {
 }
 
 // UpdateRuleTags is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - r
+//   - ctx context.Context
+//   - session authn.Session
+//   - r re.Rule
 func (_e *Service_Expecter) UpdateRuleTags(ctx interface{}, session interface{}, r interface{}) *Service_UpdateRuleTags_Call {
 	return &Service_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, session, r)}
 }
 
 func (_c *Service_UpdateRuleTags_Call) Run(run func(ctx context.Context, session authn.Session, r re.Rule)) *Service_UpdateRuleTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(re.Rule))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 re.Rule
+		if args[2] != nil {
+			arg2 = args[2].(re.Rule)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -648,16 +788,32 @@ type Service_ViewRule_Call struct {
 }
 
 // ViewRule is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) ViewRule(ctx interface{}, session interface{}, id interface{}) *Service_ViewRule_Call {
 	return &Service_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, session, id)}
 }
 
 func (_c *Service_ViewRule_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

@@ -74,15 +74,26 @@ type Repository_AddReportConfig_Call struct {
 }
 
 // AddReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - cfg
+//   - ctx context.Context
+//   - cfg reports.ReportConfig
 func (_e *Repository_Expecter) AddReportConfig(ctx interface{}, cfg interface{}) *Repository_AddReportConfig_Call {
 	return &Repository_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, cfg)}
 }
 
 func (_c *Repository_AddReportConfig_Call) Run(run func(ctx context.Context, cfg reports.ReportConfig)) *Repository_AddReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -120,16 +131,32 @@ type Repository_DeleteReportTemplate_Call struct {
 }
 
 // DeleteReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - reportID
+//   - ctx context.Context
+//   - domainID string
+//   - reportID string
 func (_e *Repository_Expecter) DeleteReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}) *Repository_DeleteReportTemplate_Call {
 	return &Repository_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, domainID, reportID)}
 }
 
 func (_c *Repository_DeleteReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string)) *Repository_DeleteReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -176,15 +203,26 @@ type Repository_ListReportsConfig_Call struct {
 }
 
 // ListReportsConfig is a helper method to define mock.On call
-//   - ctx
-//   - pm
+//   - ctx context.Context
+//   - pm reports.PageMeta
 func (_e *Repository_Expecter) ListReportsConfig(ctx interface{}, pm interface{}) *Repository_ListReportsConfig_Call {
 	return &Repository_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm)}
 }
 
 func (_c *Repository_ListReportsConfig_Call) Run(run func(ctx context.Context, pm reports.PageMeta)) *Repository_ListReportsConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reports.PageMeta))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.PageMeta
+		if args[1] != nil {
+			arg1 = args[1].(reports.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -222,15 +260,26 @@ type Repository_RemoveReportConfig_Call struct {
 }
 
 // RemoveReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Repository_Expecter) RemoveReportConfig(ctx interface{}, id interface{}) *Repository_RemoveReportConfig_Call {
 	return &Repository_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, id)}
 }
 
 func (_c *Repository_RemoveReportConfig_Call) Run(run func(ctx context.Context, id string)) *Repository_RemoveReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -277,15 +326,26 @@ type Repository_UpdateReportConfig_Call struct {
 }
 
 // UpdateReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - cfg
+//   - ctx context.Context
+//   - cfg reports.ReportConfig
 func (_e *Repository_Expecter) UpdateReportConfig(ctx interface{}, cfg interface{}) *Repository_UpdateReportConfig_Call {
 	return &Repository_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, cfg)}
 }
 
 func (_c *Repository_UpdateReportConfig_Call) Run(run func(ctx context.Context, cfg reports.ReportConfig)) *Repository_UpdateReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -332,15 +392,26 @@ type Repository_UpdateReportConfigStatus_Call struct {
 }
 
 // UpdateReportConfigStatus is a helper method to define mock.On call
-//   - ctx
-//   - cfg
+//   - ctx context.Context
+//   - cfg reports.ReportConfig
 func (_e *Repository_Expecter) UpdateReportConfigStatus(ctx interface{}, cfg interface{}) *Repository_UpdateReportConfigStatus_Call {
 	return &Repository_UpdateReportConfigStatus_Call{Call: _e.mock.On("UpdateReportConfigStatus", ctx, cfg)}
 }
 
 func (_c *Repository_UpdateReportConfigStatus_Call) Run(run func(ctx context.Context, cfg reports.ReportConfig)) *Repository_UpdateReportConfigStatus_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -387,16 +458,32 @@ type Repository_UpdateReportDue_Call struct {
 }
 
 // UpdateReportDue is a helper method to define mock.On call
-//   - ctx
-//   - id
-//   - due
+//   - ctx context.Context
+//   - id string
+//   - due time.Time
 func (_e *Repository_Expecter) UpdateReportDue(ctx interface{}, id interface{}, due interface{}) *Repository_UpdateReportDue_Call {
 	return &Repository_UpdateReportDue_Call{Call: _e.mock.On("UpdateReportDue", ctx, id, due)}
 }
 
 func (_c *Repository_UpdateReportDue_Call) Run(run func(ctx context.Context, id string, due time.Time)) *Repository_UpdateReportDue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(time.Time))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 time.Time
+		if args[2] != nil {
+			arg2 = args[2].(time.Time)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -443,15 +530,26 @@ type Repository_UpdateReportSchedule_Call struct {
 }
 
 // UpdateReportSchedule is a helper method to define mock.On call
-//   - ctx
-//   - cfg
+//   - ctx context.Context
+//   - cfg reports.ReportConfig
 func (_e *Repository_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}) *Repository_UpdateReportSchedule_Call {
 	return &Repository_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg)}
 }
 
 func (_c *Repository_UpdateReportSchedule_Call) Run(run func(ctx context.Context, cfg reports.ReportConfig)) *Repository_UpdateReportSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(reports.ReportConfig))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(reports.ReportConfig)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -489,17 +587,38 @@ type Repository_UpdateReportTemplate_Call struct {
 }
 
 // UpdateReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - reportID
-//   - template
+//   - ctx context.Context
+//   - domainID string
+//   - reportID string
+//   - template reports.ReportTemplate
 func (_e *Repository_Expecter) UpdateReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}, template interface{}) *Repository_UpdateReportTemplate_Call {
 	return &Repository_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, domainID, reportID, template)}
 }
 
 func (_c *Repository_UpdateReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string, template reports.ReportTemplate)) *Repository_UpdateReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(reports.ReportTemplate))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 reports.ReportTemplate
+		if args[3] != nil {
+			arg3 = args[3].(reports.ReportTemplate)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -546,15 +665,26 @@ type Repository_ViewReportConfig_Call struct {
 }
 
 // ViewReportConfig is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Repository_Expecter) ViewReportConfig(ctx interface{}, id interface{}) *Repository_ViewReportConfig_Call {
 	return &Repository_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, id)}
 }
 
 func (_c *Repository_ViewReportConfig_Call) Run(run func(ctx context.Context, id string)) *Repository_ViewReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -601,16 +731,32 @@ type Repository_ViewReportTemplate_Call struct {
 }
 
 // ViewReportTemplate is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - reportID
+//   - ctx context.Context
+//   - domainID string
+//   - reportID string
 func (_e *Repository_Expecter) ViewReportTemplate(ctx interface{}, domainID interface{}, reportID interface{}) *Repository_ViewReportTemplate_Call {
 	return &Repository_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, domainID, reportID)}
 }
 
 func (_c *Repository_ViewReportTemplate_Call) Run(run func(ctx context.Context, domainID string, reportID string)) *Repository_ViewReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

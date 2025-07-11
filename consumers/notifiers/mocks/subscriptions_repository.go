@@ -64,15 +64,26 @@ type SubscriptionsRepository_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *SubscriptionsRepository_Expecter) Remove(ctx interface{}, id interface{}) *SubscriptionsRepository_Remove_Call {
 	return &SubscriptionsRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, id)}
 }
 
 func (_c *SubscriptionsRepository_Remove_Call) Run(run func(ctx context.Context, id string)) *SubscriptionsRepository_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -119,15 +130,26 @@ type SubscriptionsRepository_Retrieve_Call struct {
 }
 
 // Retrieve is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *SubscriptionsRepository_Expecter) Retrieve(ctx interface{}, id interface{}) *SubscriptionsRepository_Retrieve_Call {
 	return &SubscriptionsRepository_Retrieve_Call{Call: _e.mock.On("Retrieve", ctx, id)}
 }
 
 func (_c *SubscriptionsRepository_Retrieve_Call) Run(run func(ctx context.Context, id string)) *SubscriptionsRepository_Retrieve_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -174,15 +196,26 @@ type SubscriptionsRepository_RetrieveAll_Call struct {
 }
 
 // RetrieveAll is a helper method to define mock.On call
-//   - ctx
-//   - pm
+//   - ctx context.Context
+//   - pm notifiers.PageMetadata
 func (_e *SubscriptionsRepository_Expecter) RetrieveAll(ctx interface{}, pm interface{}) *SubscriptionsRepository_RetrieveAll_Call {
 	return &SubscriptionsRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, pm)}
 }
 
 func (_c *SubscriptionsRepository_RetrieveAll_Call) Run(run func(ctx context.Context, pm notifiers.PageMetadata)) *SubscriptionsRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(notifiers.PageMetadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notifiers.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(notifiers.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -229,15 +262,26 @@ type SubscriptionsRepository_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - ctx
-//   - sub
+//   - ctx context.Context
+//   - sub notifiers.Subscription
 func (_e *SubscriptionsRepository_Expecter) Save(ctx interface{}, sub interface{}) *SubscriptionsRepository_Save_Call {
 	return &SubscriptionsRepository_Save_Call{Call: _e.mock.On("Save", ctx, sub)}
 }
 
 func (_c *SubscriptionsRepository_Save_Call) Run(run func(ctx context.Context, sub notifiers.Subscription)) *SubscriptionsRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(notifiers.Subscription))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 notifiers.Subscription
+		if args[1] != nil {
+			arg1 = args[1].(notifiers.Subscription)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

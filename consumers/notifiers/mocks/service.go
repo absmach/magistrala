@@ -64,15 +64,26 @@ type Service_ConsumeBlocking_Call struct {
 }
 
 // ConsumeBlocking is a helper method to define mock.On call
-//   - ctx
-//   - messages
+//   - ctx context.Context
+//   - messages interface{}
 func (_e *Service_Expecter) ConsumeBlocking(ctx interface{}, messages interface{}) *Service_ConsumeBlocking_Call {
 	return &Service_ConsumeBlocking_Call{Call: _e.mock.On("ConsumeBlocking", ctx, messages)}
 }
 
 func (_c *Service_ConsumeBlocking_Call) Run(run func(ctx context.Context, messages interface{})) *Service_ConsumeBlocking_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(interface{}))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 interface{}
+		if args[1] != nil {
+			arg1 = args[1].(interface{})
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -119,16 +130,32 @@ type Service_CreateSubscription_Call struct {
 }
 
 // CreateSubscription is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - sub
+//   - ctx context.Context
+//   - token string
+//   - sub notifiers.Subscription
 func (_e *Service_Expecter) CreateSubscription(ctx interface{}, token interface{}, sub interface{}) *Service_CreateSubscription_Call {
 	return &Service_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, token, sub)}
 }
 
 func (_c *Service_CreateSubscription_Call) Run(run func(ctx context.Context, token string, sub notifiers.Subscription)) *Service_CreateSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(notifiers.Subscription))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 notifiers.Subscription
+		if args[2] != nil {
+			arg2 = args[2].(notifiers.Subscription)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -175,16 +202,32 @@ type Service_ListSubscriptions_Call struct {
 }
 
 // ListSubscriptions is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - pm
+//   - ctx context.Context
+//   - token string
+//   - pm notifiers.PageMetadata
 func (_e *Service_Expecter) ListSubscriptions(ctx interface{}, token interface{}, pm interface{}) *Service_ListSubscriptions_Call {
 	return &Service_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, token, pm)}
 }
 
 func (_c *Service_ListSubscriptions_Call) Run(run func(ctx context.Context, token string, pm notifiers.PageMetadata)) *Service_ListSubscriptions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(notifiers.PageMetadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 notifiers.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(notifiers.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -222,16 +265,32 @@ type Service_RemoveSubscription_Call struct {
 }
 
 // RemoveSubscription is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - id
+//   - ctx context.Context
+//   - token string
+//   - id string
 func (_e *Service_Expecter) RemoveSubscription(ctx interface{}, token interface{}, id interface{}) *Service_RemoveSubscription_Call {
 	return &Service_RemoveSubscription_Call{Call: _e.mock.On("RemoveSubscription", ctx, token, id)}
 }
 
 func (_c *Service_RemoveSubscription_Call) Run(run func(ctx context.Context, token string, id string)) *Service_RemoveSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -278,16 +337,32 @@ type Service_ViewSubscription_Call struct {
 }
 
 // ViewSubscription is a helper method to define mock.On call
-//   - ctx
-//   - token
-//   - id
+//   - ctx context.Context
+//   - token string
+//   - id string
 func (_e *Service_Expecter) ViewSubscription(ctx interface{}, token interface{}, id interface{}) *Service_ViewSubscription_Call {
 	return &Service_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, token, id)}
 }
 
 func (_c *Service_ViewSubscription_Call) Run(run func(ctx context.Context, token string, id string)) *Service_ViewSubscription_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

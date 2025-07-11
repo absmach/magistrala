@@ -61,21 +61,62 @@ type Emailer_SendEmailNotification_Call struct {
 }
 
 // SendEmailNotification is a helper method to define mock.On call
-//   - to
-//   - from
-//   - subject
-//   - header
-//   - user
-//   - content
-//   - footer
-//   - attachments
+//   - to []string
+//   - from string
+//   - subject string
+//   - header string
+//   - user string
+//   - content string
+//   - footer string
+//   - attachments map[string][]byte
 func (_e *Emailer_Expecter) SendEmailNotification(to interface{}, from interface{}, subject interface{}, header interface{}, user interface{}, content interface{}, footer interface{}, attachments interface{}) *Emailer_SendEmailNotification_Call {
 	return &Emailer_SendEmailNotification_Call{Call: _e.mock.On("SendEmailNotification", to, from, subject, header, user, content, footer, attachments)}
 }
 
 func (_c *Emailer_SendEmailNotification_Call) Run(run func(to []string, from string, subject string, header string, user string, content string, footer string, attachments map[string][]byte)) *Emailer_SendEmailNotification_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]string), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string), args[6].(string), args[7].(map[string][]byte))
+		var arg0 []string
+		if args[0] != nil {
+			arg0 = args[0].([]string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		var arg6 string
+		if args[6] != nil {
+			arg6 = args[6].(string)
+		}
+		var arg7 map[string][]byte
+		if args[7] != nil {
+			arg7 = args[7].(map[string][]byte)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+			arg6,
+			arg7,
+		)
 	})
 	return _c
 }

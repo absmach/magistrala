@@ -570,22 +570,22 @@ func (_c *Repository_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Co
 }
 
 // ViewReportTemplate provides a mock function for the type Repository
-func (_mock *Repository) ViewReportTemplate(ctx context.Context, domainID string, reportID string) (string, error) {
+func (_mock *Repository) ViewReportTemplate(ctx context.Context, domainID string, reportID string) (reports.ReportTemplate, error) {
 	ret := _mock.Called(ctx, domainID, reportID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewReportTemplate")
 	}
 
-	var r0 string
+	var r0 reports.ReportTemplate
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (reports.ReportTemplate, error)); ok {
 		return returnFunc(ctx, domainID, reportID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) reports.ReportTemplate); ok {
 		r0 = returnFunc(ctx, domainID, reportID)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(reports.ReportTemplate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, domainID, reportID)
@@ -615,12 +615,12 @@ func (_c *Repository_ViewReportTemplate_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *Repository_ViewReportTemplate_Call) Return(s string, err error) *Repository_ViewReportTemplate_Call {
-	_c.Call.Return(s, err)
+func (_c *Repository_ViewReportTemplate_Call) Return(reportTemplate reports.ReportTemplate, err error) *Repository_ViewReportTemplate_Call {
+	_c.Call.Return(reportTemplate, err)
 	return _c
 }
 
-func (_c *Repository_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string) (string, error)) *Repository_ViewReportTemplate_Call {
+func (_c *Repository_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, domainID string, reportID string) (reports.ReportTemplate, error)) *Repository_ViewReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }

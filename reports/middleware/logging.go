@@ -227,7 +227,7 @@ func (lm *loggingMiddleware) UpdateReportTemplate(ctx context.Context, session a
 	return lm.svc.UpdateReportTemplate(ctx, session, cfg)
 }
 
-func (lm *loggingMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (t string, err error) {
+func (lm *loggingMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (t reports.ReportTemplate, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

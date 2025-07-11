@@ -167,7 +167,7 @@ func (res emailReportResp) Empty() bool {
 }
 
 type viewReportTemplateRes struct {
-	Template string `json:"html_template"`
+	Template reports.ReportTemplate `json:"html_template"`
 }
 
 func (res viewReportTemplateRes) Code() int {

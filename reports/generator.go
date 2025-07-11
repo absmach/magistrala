@@ -9,18 +9,16 @@ import (
 	"encoding/csv"
 	"fmt"
 	"html/template"
-	"net/url"
+	"io"
+	"mime/multipart"
+	"net/http"
 	"sort"
 	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/chromedp/cdproto/page"
-	"github.com/chromedp/chromedp"
 )
-
-var errChromeExecution = errors.New("chromedp execution failed")
 
 type ReportData struct {
 	Title         string
@@ -48,10 +46,10 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 	if template.String() != "" {
 		templateContent = template.String()
 	}
-	return generate(ctx, templateContent, data)
+	return r.generate(ctx, templateContent, data)
 }
 
-func generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
+func (r *report) generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
 		"formatTime":  formatTime,
 		"formatValue": formatValue,
@@ -70,7 +68,7 @@ func generate(ctx context.Context, templateContent string, data ReportData) ([]b
 	}
 
 	htmlContent := htmlBuf.String()
-	pdfBytes, err := htmlToPDF(ctx, htmlContent)
+	pdfBytes, err := r.htmlToPDF(ctx, htmlContent)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
@@ -78,50 +76,61 @@ func generate(ctx context.Context, templateContent string, data ReportData) ([]b
 	return pdfBytes, nil
 }
 
-func htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
-	opts := append(chromedp.DefaultExecAllocatorOptions[:],
-		chromedp.NoSandbox,
-		chromedp.DisableGPU,
-		chromedp.NoFirstRun,
-		chromedp.Headless,
-		chromedp.UserAgent("Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36"),
-		chromedp.Flag("disable-dev-shm-usage", true),
-		chromedp.Flag("disable-background-timer-throttling", true),
-		chromedp.Flag("disable-backgrounding-occluded-windows", true),
-		chromedp.Flag("disable-renderer-backgrounding", true),
-		chromedp.Flag("disable-features", "VizDisplayCompositor"),
-	)
+func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
 
-	allocCtx, cancel := chromedp.NewExecAllocator(ctx, opts...)
-	defer cancel()
-
-	ctx, cancel = chromedp.NewContext(allocCtx)
-	defer cancel()
-
-	var pdfBuffer []byte
-
-	err := chromedp.Run(ctx,
-		chromedp.Navigate("about:blank"),
-		chromedp.Navigate("data:text/html,"+url.PathEscape(htmlContent)),
-		chromedp.WaitReady("body"),
-		chromedp.ActionFunc(func(ctx context.Context) error {
-			var err error
-			pdfBuffer, _, err = page.PrintToPDF().
-				WithPrintBackground(true).
-				WithMarginTop(0).
-				WithMarginBottom(0).
-				WithMarginLeft(0).
-				WithMarginRight(0).
-				WithPreferCSSPageSize(true).
-				Do(ctx)
-			return err
-		}),
-	)
+	htmlPart, err := writer.CreateFormFile("files", "index.html")
 	if err != nil {
-		return nil, errors.Wrap(errChromeExecution, err)
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if _, err := htmlPart.Write([]byte(htmlContent)); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
-	return pdfBuffer, nil
+	if err := writer.WriteField("marginTop", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginBottom", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginLeft", "0."); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginRight", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("printBackground", "true"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("waitForSelector", "body"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.converterURL, &requestBody)
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	defer resp.Body.Close()
+
+	pdfBytes, err := io.ReadAll(resp.Body)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	return pdfBytes, nil
 }
 
 func formatTime(t float64) string {

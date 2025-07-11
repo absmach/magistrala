@@ -315,7 +315,7 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 
 func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domainID, reportID string, template reports.ReportTemplate) error {
 	q := `
-		UPDATE report_configs 
+		UPDATE report_config 
 		SET report_template = :report_template, updated_at = :updated_at 
 		WHERE id = :id AND domain_id = :domain_id`
 
@@ -338,7 +338,7 @@ func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domain
 func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID, reportID string) (string, error) {
 	q := `
 		SELECT COALESCE(report_template, '') as report_template 
-		FROM report_configs 
+		FROM report_config 
 		WHERE id = $1 AND domain_id = $2`
 
 	var template string
@@ -355,7 +355,7 @@ func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID
 
 func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domainID, reportID string) error {
 	q := `
-		UPDATE report_configs 
+		UPDATE report_config 
 		SET custom_template = NULL, updated_at = :updated_at 
 		WHERE id = :id AND domain_id = :domain_id`
 

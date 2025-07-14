@@ -434,7 +434,7 @@ func (r *report) UpdateReportTemplate(ctx context.Context, session authn.Session
 	return nil
 }
 
-func (r *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (string, error) {
+func (r *report) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (ReportTemplate, error) {
 	template, err := r.repo.ViewReportTemplate(ctx, session.DomainID, id)
 	if err != nil {
 		return "", errors.Wrap(svcerr.ErrCreateEntity, err)

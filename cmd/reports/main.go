@@ -69,7 +69,7 @@ type config struct {
 	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
 	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
 	DefaultTemplatePath string  `env:"MG_REPORTS_DEFAULT_TEMPLATE"    envDefault:""`
-	ConverterURL        string  `env:"MG_REPORT_BROWSERLESS_URL"      envDefault:"http://localhost:4000/pdf"`
+	ConverterURL        string  `env:"MG_PDF_CONVERTER_URL"           envDefault:"http://localhost:4000/pdf"`
 }
 
 func main() {

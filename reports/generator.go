@@ -7,10 +7,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/csv"
-	"encoding/json"
 	"fmt"
 	"html/template"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"sort"
 	"time"
@@ -77,29 +77,48 @@ func (r *report) generate(ctx context.Context, templateContent string, data Repo
 }
 
 func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, error) {
-	payload := map[string]interface{}{
-		"html": htmlContent,
-		"options": map[string]interface{}{
-			"printBackground": true,
-			"margin": map[string]string{
-				"top":    "0",
-				"bottom": "0",
-				"left":   "0",
-				"right":  "0",
-			},
-			"preferCSSPageSize": true,
-		},
+	var requestBody bytes.Buffer
+	writer := multipart.NewWriter(&requestBody)
+
+	htmlPart, err := writer.CreateFormFile("files", "index.html")
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
-	jsonPayload, err := json.Marshal(payload)
+	if _, err := htmlPart.Write([]byte(htmlContent)); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("marginTop", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginBottom", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginLeft", "0."); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("marginRight", "0"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("printBackground", "true"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("waitForSelector", "body"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.Close(); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.converterURL, &requestBody)
 	if err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, r.converterURL, bytes.NewReader(jsonPayload))
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
-	}
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", writer.FormDataContentType())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

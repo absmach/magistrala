@@ -74,17 +74,38 @@ type Service_Add_Call struct {
 }
 
 // Add is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - token
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - token string
+//   - cfg bootstrap.Config
 func (_e *Service_Expecter) Add(ctx interface{}, session interface{}, token interface{}, cfg interface{}) *Service_Add_Call {
 	return &Service_Add_Call{Call: _e.mock.On("Add", ctx, session, token, cfg)}
 }
 
 func (_c *Service_Add_Call) Run(run func(ctx context.Context, session authn.Session, token string, cfg bootstrap.Config)) *Service_Add_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string), args[3].(bootstrap.Config))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 bootstrap.Config
+		if args[3] != nil {
+			arg3 = args[3].(bootstrap.Config)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -131,17 +152,38 @@ type Service_Bootstrap_Call struct {
 }
 
 // Bootstrap is a helper method to define mock.On call
-//   - ctx
-//   - externalKey
-//   - externalID
-//   - secure
+//   - ctx context.Context
+//   - externalKey string
+//   - externalID string
+//   - secure bool
 func (_e *Service_Expecter) Bootstrap(ctx interface{}, externalKey interface{}, externalID interface{}, secure interface{}) *Service_Bootstrap_Call {
 	return &Service_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalKey, externalID, secure)}
 }
 
 func (_c *Service_Bootstrap_Call) Run(run func(ctx context.Context, externalKey string, externalID string, secure bool)) *Service_Bootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(bool))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 bool
+		if args[3] != nil {
+			arg3 = args[3].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -179,18 +221,44 @@ type Service_ChangeState_Call struct {
 }
 
 // ChangeState is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - token
-//   - id
-//   - state
+//   - ctx context.Context
+//   - session authn.Session
+//   - token string
+//   - id string
+//   - state bootstrap.State
 func (_e *Service_Expecter) ChangeState(ctx interface{}, session interface{}, token interface{}, id interface{}, state interface{}) *Service_ChangeState_Call {
 	return &Service_ChangeState_Call{Call: _e.mock.On("ChangeState", ctx, session, token, id, state)}
 }
 
 func (_c *Service_ChangeState_Call) Run(run func(ctx context.Context, session authn.Session, token string, id string, state bootstrap.State)) *Service_ChangeState_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string), args[3].(string), args[4].(bootstrap.State))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 bootstrap.State
+		if args[4] != nil {
+			arg4 = args[4].(bootstrap.State)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -228,16 +296,32 @@ type Service_ConnectClientHandler_Call struct {
 }
 
 // ConnectClientHandler is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientID
+//   - ctx context.Context
+//   - channelID string
+//   - clientID string
 func (_e *Service_Expecter) ConnectClientHandler(ctx interface{}, channelID interface{}, clientID interface{}) *Service_ConnectClientHandler_Call {
 	return &Service_ConnectClientHandler_Call{Call: _e.mock.On("ConnectClientHandler", ctx, channelID, clientID)}
 }
 
 func (_c *Service_ConnectClientHandler_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *Service_ConnectClientHandler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -275,16 +359,32 @@ type Service_DisconnectClientHandler_Call struct {
 }
 
 // DisconnectClientHandler is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientID
+//   - ctx context.Context
+//   - channelID string
+//   - clientID string
 func (_e *Service_Expecter) DisconnectClientHandler(ctx interface{}, channelID interface{}, clientID interface{}) *Service_DisconnectClientHandler_Call {
 	return &Service_DisconnectClientHandler_Call{Call: _e.mock.On("DisconnectClientHandler", ctx, channelID, clientID)}
 }
 
 func (_c *Service_DisconnectClientHandler_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *Service_DisconnectClientHandler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -331,18 +431,44 @@ type Service_List_Call struct {
 }
 
 // List is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - filter
-//   - offset
-//   - limit
+//   - ctx context.Context
+//   - session authn.Session
+//   - filter bootstrap.Filter
+//   - offset uint64
+//   - limit uint64
 func (_e *Service_Expecter) List(ctx interface{}, session interface{}, filter interface{}, offset interface{}, limit interface{}) *Service_List_Call {
 	return &Service_List_Call{Call: _e.mock.On("List", ctx, session, filter, offset, limit)}
 }
 
 func (_c *Service_List_Call) Run(run func(ctx context.Context, session authn.Session, filter bootstrap.Filter, offset uint64, limit uint64)) *Service_List_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(bootstrap.Filter), args[3].(uint64), args[4].(uint64))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 bootstrap.Filter
+		if args[2] != nil {
+			arg2 = args[2].(bootstrap.Filter)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		var arg4 uint64
+		if args[4] != nil {
+			arg4 = args[4].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -380,16 +506,32 @@ type Service_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) Remove(ctx interface{}, session interface{}, id interface{}) *Service_Remove_Call {
 	return &Service_Remove_Call{Call: _e.mock.On("Remove", ctx, session, id)}
 }
 
 func (_c *Service_Remove_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -427,15 +569,26 @@ type Service_RemoveChannelHandler_Call struct {
 }
 
 // RemoveChannelHandler is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Service_Expecter) RemoveChannelHandler(ctx interface{}, id interface{}) *Service_RemoveChannelHandler_Call {
 	return &Service_RemoveChannelHandler_Call{Call: _e.mock.On("RemoveChannelHandler", ctx, id)}
 }
 
 func (_c *Service_RemoveChannelHandler_Call) Run(run func(ctx context.Context, id string)) *Service_RemoveChannelHandler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -473,15 +626,26 @@ type Service_RemoveConfigHandler_Call struct {
 }
 
 // RemoveConfigHandler is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Service_Expecter) RemoveConfigHandler(ctx interface{}, id interface{}) *Service_RemoveConfigHandler_Call {
 	return &Service_RemoveConfigHandler_Call{Call: _e.mock.On("RemoveConfigHandler", ctx, id)}
 }
 
 func (_c *Service_RemoveConfigHandler_Call) Run(run func(ctx context.Context, id string)) *Service_RemoveConfigHandler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -519,16 +683,32 @@ type Service_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - cfg
+//   - ctx context.Context
+//   - session authn.Session
+//   - cfg bootstrap.Config
 func (_e *Service_Expecter) Update(ctx interface{}, session interface{}, cfg interface{}) *Service_Update_Call {
 	return &Service_Update_Call{Call: _e.mock.On("Update", ctx, session, cfg)}
 }
 
 func (_c *Service_Update_Call) Run(run func(ctx context.Context, session authn.Session, cfg bootstrap.Config)) *Service_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(bootstrap.Config))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 bootstrap.Config
+		if args[2] != nil {
+			arg2 = args[2].(bootstrap.Config)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -575,19 +755,50 @@ type Service_UpdateCert_Call struct {
 }
 
 // UpdateCert is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - clientID
-//   - clientCert
-//   - clientKey
-//   - caCert
+//   - ctx context.Context
+//   - session authn.Session
+//   - clientID string
+//   - clientCert string
+//   - clientKey string
+//   - caCert string
 func (_e *Service_Expecter) UpdateCert(ctx interface{}, session interface{}, clientID interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *Service_UpdateCert_Call {
 	return &Service_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, session, clientID, clientCert, clientKey, caCert)}
 }
 
 func (_c *Service_UpdateCert_Call) Run(run func(ctx context.Context, session authn.Session, clientID string, clientCert string, clientKey string, caCert string)) *Service_UpdateCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -625,15 +836,26 @@ type Service_UpdateChannelHandler_Call struct {
 }
 
 // UpdateChannelHandler is a helper method to define mock.On call
-//   - ctx
-//   - channel
+//   - ctx context.Context
+//   - channel bootstrap.Channel
 func (_e *Service_Expecter) UpdateChannelHandler(ctx interface{}, channel interface{}) *Service_UpdateChannelHandler_Call {
 	return &Service_UpdateChannelHandler_Call{Call: _e.mock.On("UpdateChannelHandler", ctx, channel)}
 }
 
 func (_c *Service_UpdateChannelHandler_Call) Run(run func(ctx context.Context, channel bootstrap.Channel)) *Service_UpdateChannelHandler_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bootstrap.Channel))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bootstrap.Channel
+		if args[1] != nil {
+			arg1 = args[1].(bootstrap.Channel)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -671,18 +893,44 @@ type Service_UpdateConnections_Call struct {
 }
 
 // UpdateConnections is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - token
-//   - id
-//   - connections
+//   - ctx context.Context
+//   - session authn.Session
+//   - token string
+//   - id string
+//   - connections []string
 func (_e *Service_Expecter) UpdateConnections(ctx interface{}, session interface{}, token interface{}, id interface{}, connections interface{}) *Service_UpdateConnections_Call {
 	return &Service_UpdateConnections_Call{Call: _e.mock.On("UpdateConnections", ctx, session, token, id, connections)}
 }
 
 func (_c *Service_UpdateConnections_Call) Run(run func(ctx context.Context, session authn.Session, token string, id string, connections []string)) *Service_UpdateConnections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string), args[3].(string), args[4].([]string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }
@@ -729,16 +977,32 @@ type Service_View_Call struct {
 }
 
 // View is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) View(ctx interface{}, session interface{}, id interface{}) *Service_View_Call {
 	return &Service_View_Call{Call: _e.mock.On("View", ctx, session, id)}
 }
 
 func (_c *Service_View_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_View_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

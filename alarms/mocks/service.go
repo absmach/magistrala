@@ -65,15 +65,26 @@ type Service_CreateAlarm_Call struct {
 }
 
 // CreateAlarm is a helper method to define mock.On call
-//   - ctx
-//   - alarm
+//   - ctx context.Context
+//   - alarm alarms.Alarm
 func (_e *Service_Expecter) CreateAlarm(ctx interface{}, alarm interface{}) *Service_CreateAlarm_Call {
 	return &Service_CreateAlarm_Call{Call: _e.mock.On("CreateAlarm", ctx, alarm)}
 }
 
 func (_c *Service_CreateAlarm_Call) Run(run func(ctx context.Context, alarm alarms.Alarm)) *Service_CreateAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(alarms.Alarm))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 alarms.Alarm
+		if args[1] != nil {
+			arg1 = args[1].(alarms.Alarm)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -111,16 +122,32 @@ type Service_DeleteAlarm_Call struct {
 }
 
 // DeleteAlarm is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) DeleteAlarm(ctx interface{}, session interface{}, id interface{}) *Service_DeleteAlarm_Call {
 	return &Service_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, session, id)}
 }
 
 func (_c *Service_DeleteAlarm_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DeleteAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -167,16 +194,32 @@ type Service_ListAlarms_Call struct {
 }
 
 // ListAlarms is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - pm
+//   - ctx context.Context
+//   - session authn.Session
+//   - pm alarms.PageMetadata
 func (_e *Service_Expecter) ListAlarms(ctx interface{}, session interface{}, pm interface{}) *Service_ListAlarms_Call {
 	return &Service_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, session, pm)}
 }
 
 func (_c *Service_ListAlarms_Call) Run(run func(ctx context.Context, session authn.Session, pm alarms.PageMetadata)) *Service_ListAlarms_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(alarms.PageMetadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 alarms.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(alarms.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -223,16 +266,32 @@ type Service_UpdateAlarm_Call struct {
 }
 
 // UpdateAlarm is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - alarm
+//   - ctx context.Context
+//   - session authn.Session
+//   - alarm alarms.Alarm
 func (_e *Service_Expecter) UpdateAlarm(ctx interface{}, session interface{}, alarm interface{}) *Service_UpdateAlarm_Call {
 	return &Service_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, session, alarm)}
 }
 
 func (_c *Service_UpdateAlarm_Call) Run(run func(ctx context.Context, session authn.Session, alarm alarms.Alarm)) *Service_UpdateAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(alarms.Alarm))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 alarms.Alarm
+		if args[2] != nil {
+			arg2 = args[2].(alarms.Alarm)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -279,16 +338,32 @@ type Service_ViewAlarm_Call struct {
 }
 
 // ViewAlarm is a helper method to define mock.On call
-//   - ctx
-//   - session
-//   - id
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
 func (_e *Service_Expecter) ViewAlarm(ctx interface{}, session interface{}, id interface{}) *Service_ViewAlarm_Call {
 	return &Service_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, session, id)}
 }
 
 func (_c *Service_ViewAlarm_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_ViewAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(authn.Session), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

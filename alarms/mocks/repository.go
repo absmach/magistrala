@@ -73,15 +73,26 @@ type Repository_CreateAlarm_Call struct {
 }
 
 // CreateAlarm is a helper method to define mock.On call
-//   - ctx
-//   - alarm
+//   - ctx context.Context
+//   - alarm alarms.Alarm
 func (_e *Repository_Expecter) CreateAlarm(ctx interface{}, alarm interface{}) *Repository_CreateAlarm_Call {
 	return &Repository_CreateAlarm_Call{Call: _e.mock.On("CreateAlarm", ctx, alarm)}
 }
 
 func (_c *Repository_CreateAlarm_Call) Run(run func(ctx context.Context, alarm alarms.Alarm)) *Repository_CreateAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(alarms.Alarm))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 alarms.Alarm
+		if args[1] != nil {
+			arg1 = args[1].(alarms.Alarm)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -119,15 +130,26 @@ type Repository_DeleteAlarm_Call struct {
 }
 
 // DeleteAlarm is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *Repository_Expecter) DeleteAlarm(ctx interface{}, id interface{}) *Repository_DeleteAlarm_Call {
 	return &Repository_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, id)}
 }
 
 func (_c *Repository_DeleteAlarm_Call) Run(run func(ctx context.Context, id string)) *Repository_DeleteAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -174,15 +196,26 @@ type Repository_ListAlarms_Call struct {
 }
 
 // ListAlarms is a helper method to define mock.On call
-//   - ctx
-//   - pm
+//   - ctx context.Context
+//   - pm alarms.PageMetadata
 func (_e *Repository_Expecter) ListAlarms(ctx interface{}, pm interface{}) *Repository_ListAlarms_Call {
 	return &Repository_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, pm)}
 }
 
 func (_c *Repository_ListAlarms_Call) Run(run func(ctx context.Context, pm alarms.PageMetadata)) *Repository_ListAlarms_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(alarms.PageMetadata))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 alarms.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(alarms.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -229,15 +262,26 @@ type Repository_UpdateAlarm_Call struct {
 }
 
 // UpdateAlarm is a helper method to define mock.On call
-//   - ctx
-//   - alarm
+//   - ctx context.Context
+//   - alarm alarms.Alarm
 func (_e *Repository_Expecter) UpdateAlarm(ctx interface{}, alarm interface{}) *Repository_UpdateAlarm_Call {
 	return &Repository_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm)}
 }
 
 func (_c *Repository_UpdateAlarm_Call) Run(run func(ctx context.Context, alarm alarms.Alarm)) *Repository_UpdateAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(alarms.Alarm))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 alarms.Alarm
+		if args[1] != nil {
+			arg1 = args[1].(alarms.Alarm)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -284,16 +328,32 @@ type Repository_ViewAlarm_Call struct {
 }
 
 // ViewAlarm is a helper method to define mock.On call
-//   - ctx
-//   - alarmID
-//   - domainID
+//   - ctx context.Context
+//   - alarmID string
+//   - domainID string
 func (_e *Repository_Expecter) ViewAlarm(ctx interface{}, alarmID interface{}, domainID interface{}) *Repository_ViewAlarm_Call {
 	return &Repository_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, alarmID, domainID)}
 }
 
 func (_c *Repository_ViewAlarm_Call) Run(run func(ctx context.Context, alarmID string, domainID string)) *Repository_ViewAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }

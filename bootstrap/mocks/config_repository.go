@@ -64,17 +64,38 @@ type ConfigRepository_ChangeState_Call struct {
 }
 
 // ChangeState is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - id
-//   - state
+//   - ctx context.Context
+//   - domainID string
+//   - id string
+//   - state bootstrap.State
 func (_e *ConfigRepository_Expecter) ChangeState(ctx interface{}, domainID interface{}, id interface{}, state interface{}) *ConfigRepository_ChangeState_Call {
 	return &ConfigRepository_ChangeState_Call{Call: _e.mock.On("ChangeState", ctx, domainID, id, state)}
 }
 
 func (_c *ConfigRepository_ChangeState_Call) Run(run func(ctx context.Context, domainID string, id string, state bootstrap.State)) *ConfigRepository_ChangeState_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(bootstrap.State))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 bootstrap.State
+		if args[3] != nil {
+			arg3 = args[3].(bootstrap.State)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
 	})
 	return _c
 }
@@ -112,16 +133,32 @@ type ConfigRepository_ConnectClient_Call struct {
 }
 
 // ConnectClient is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientID
+//   - ctx context.Context
+//   - channelID string
+//   - clientID string
 func (_e *ConfigRepository_Expecter) ConnectClient(ctx interface{}, channelID interface{}, clientID interface{}) *ConfigRepository_ConnectClient_Call {
 	return &ConfigRepository_ConnectClient_Call{Call: _e.mock.On("ConnectClient", ctx, channelID, clientID)}
 }
 
 func (_c *ConfigRepository_ConnectClient_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *ConfigRepository_ConnectClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -159,16 +196,32 @@ type ConfigRepository_DisconnectClient_Call struct {
 }
 
 // DisconnectClient is a helper method to define mock.On call
-//   - ctx
-//   - channelID
-//   - clientID
+//   - ctx context.Context
+//   - channelID string
+//   - clientID string
 func (_e *ConfigRepository_Expecter) DisconnectClient(ctx interface{}, channelID interface{}, clientID interface{}) *ConfigRepository_DisconnectClient_Call {
 	return &ConfigRepository_DisconnectClient_Call{Call: _e.mock.On("DisconnectClient", ctx, channelID, clientID)}
 }
 
 func (_c *ConfigRepository_DisconnectClient_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *ConfigRepository_DisconnectClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -217,16 +270,32 @@ type ConfigRepository_ListExisting_Call struct {
 }
 
 // ListExisting is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - ids
+//   - ctx context.Context
+//   - domainID string
+//   - ids []string
 func (_e *ConfigRepository_Expecter) ListExisting(ctx interface{}, domainID interface{}, ids interface{}) *ConfigRepository_ListExisting_Call {
 	return &ConfigRepository_ListExisting_Call{Call: _e.mock.On("ListExisting", ctx, domainID, ids)}
 }
 
 func (_c *ConfigRepository_ListExisting_Call) Run(run func(ctx context.Context, domainID string, ids []string)) *ConfigRepository_ListExisting_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -264,16 +333,32 @@ type ConfigRepository_Remove_Call struct {
 }
 
 // Remove is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - id
+//   - ctx context.Context
+//   - domainID string
+//   - id string
 func (_e *ConfigRepository_Expecter) Remove(ctx interface{}, domainID interface{}, id interface{}) *ConfigRepository_Remove_Call {
 	return &ConfigRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, domainID, id)}
 }
 
 func (_c *ConfigRepository_Remove_Call) Run(run func(ctx context.Context, domainID string, id string)) *ConfigRepository_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -311,15 +396,26 @@ type ConfigRepository_RemoveChannel_Call struct {
 }
 
 // RemoveChannel is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *ConfigRepository_Expecter) RemoveChannel(ctx interface{}, id interface{}) *ConfigRepository_RemoveChannel_Call {
 	return &ConfigRepository_RemoveChannel_Call{Call: _e.mock.On("RemoveChannel", ctx, id)}
 }
 
 func (_c *ConfigRepository_RemoveChannel_Call) Run(run func(ctx context.Context, id string)) *ConfigRepository_RemoveChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -357,15 +453,26 @@ type ConfigRepository_RemoveClient_Call struct {
 }
 
 // RemoveClient is a helper method to define mock.On call
-//   - ctx
-//   - id
+//   - ctx context.Context
+//   - id string
 func (_e *ConfigRepository_Expecter) RemoveClient(ctx interface{}, id interface{}) *ConfigRepository_RemoveClient_Call {
 	return &ConfigRepository_RemoveClient_Call{Call: _e.mock.On("RemoveClient", ctx, id)}
 }
 
 func (_c *ConfigRepository_RemoveClient_Call) Run(run func(ctx context.Context, id string)) *ConfigRepository_RemoveClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -403,19 +510,50 @@ type ConfigRepository_RetrieveAll_Call struct {
 }
 
 // RetrieveAll is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - clientIDs
-//   - filter
-//   - offset
-//   - limit
+//   - ctx context.Context
+//   - domainID string
+//   - clientIDs []string
+//   - filter bootstrap.Filter
+//   - offset uint64
+//   - limit uint64
 func (_e *ConfigRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, clientIDs interface{}, filter interface{}, offset interface{}, limit interface{}) *ConfigRepository_RetrieveAll_Call {
 	return &ConfigRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, clientIDs, filter, offset, limit)}
 }
 
 func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset uint64, limit uint64)) *ConfigRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].([]string), args[3].(bootstrap.Filter), args[4].(uint64), args[5].(uint64))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 bootstrap.Filter
+		if args[3] != nil {
+			arg3 = args[3].(bootstrap.Filter)
+		}
+		var arg4 uint64
+		if args[4] != nil {
+			arg4 = args[4].(uint64)
+		}
+		var arg5 uint64
+		if args[5] != nil {
+			arg5 = args[5].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -462,15 +600,26 @@ type ConfigRepository_RetrieveByExternalID_Call struct {
 }
 
 // RetrieveByExternalID is a helper method to define mock.On call
-//   - ctx
-//   - externalID
+//   - ctx context.Context
+//   - externalID string
 func (_e *ConfigRepository_Expecter) RetrieveByExternalID(ctx interface{}, externalID interface{}) *ConfigRepository_RetrieveByExternalID_Call {
 	return &ConfigRepository_RetrieveByExternalID_Call{Call: _e.mock.On("RetrieveByExternalID", ctx, externalID)}
 }
 
 func (_c *ConfigRepository_RetrieveByExternalID_Call) Run(run func(ctx context.Context, externalID string)) *ConfigRepository_RetrieveByExternalID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -517,16 +666,32 @@ type ConfigRepository_RetrieveByID_Call struct {
 }
 
 // RetrieveByID is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - id
+//   - ctx context.Context
+//   - domainID string
+//   - id string
 func (_e *ConfigRepository_Expecter) RetrieveByID(ctx interface{}, domainID interface{}, id interface{}) *ConfigRepository_RetrieveByID_Call {
 	return &ConfigRepository_RetrieveByID_Call{Call: _e.mock.On("RetrieveByID", ctx, domainID, id)}
 }
 
 func (_c *ConfigRepository_RetrieveByID_Call) Run(run func(ctx context.Context, domainID string, id string)) *ConfigRepository_RetrieveByID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -573,16 +738,32 @@ type ConfigRepository_Save_Call struct {
 }
 
 // Save is a helper method to define mock.On call
-//   - ctx
-//   - cfg
-//   - chsConnIDs
+//   - ctx context.Context
+//   - cfg bootstrap.Config
+//   - chsConnIDs []string
 func (_e *ConfigRepository_Expecter) Save(ctx interface{}, cfg interface{}, chsConnIDs interface{}) *ConfigRepository_Save_Call {
 	return &ConfigRepository_Save_Call{Call: _e.mock.On("Save", ctx, cfg, chsConnIDs)}
 }
 
 func (_c *ConfigRepository_Save_Call) Run(run func(ctx context.Context, cfg bootstrap.Config, chsConnIDs []string)) *ConfigRepository_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bootstrap.Config), args[2].([]string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bootstrap.Config
+		if args[1] != nil {
+			arg1 = args[1].(bootstrap.Config)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
 	})
 	return _c
 }
@@ -620,15 +801,26 @@ type ConfigRepository_Update_Call struct {
 }
 
 // Update is a helper method to define mock.On call
-//   - ctx
-//   - cfg
+//   - ctx context.Context
+//   - cfg bootstrap.Config
 func (_e *ConfigRepository_Expecter) Update(ctx interface{}, cfg interface{}) *ConfigRepository_Update_Call {
 	return &ConfigRepository_Update_Call{Call: _e.mock.On("Update", ctx, cfg)}
 }
 
 func (_c *ConfigRepository_Update_Call) Run(run func(ctx context.Context, cfg bootstrap.Config)) *ConfigRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bootstrap.Config))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bootstrap.Config
+		if args[1] != nil {
+			arg1 = args[1].(bootstrap.Config)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -675,19 +867,50 @@ type ConfigRepository_UpdateCert_Call struct {
 }
 
 // UpdateCert is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - clientID
-//   - clientCert
-//   - clientKey
-//   - caCert
+//   - ctx context.Context
+//   - domainID string
+//   - clientID string
+//   - clientCert string
+//   - clientKey string
+//   - caCert string
 func (_e *ConfigRepository_Expecter) UpdateCert(ctx interface{}, domainID interface{}, clientID interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *ConfigRepository_UpdateCert_Call {
 	return &ConfigRepository_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, domainID, clientID, clientCert, clientKey, caCert)}
 }
 
 func (_c *ConfigRepository_UpdateCert_Call) Run(run func(ctx context.Context, domainID string, clientID string, clientCert string, clientKey string, caCert string)) *ConfigRepository_UpdateCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(string), args[5].(string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
 	})
 	return _c
 }
@@ -725,15 +948,26 @@ type ConfigRepository_UpdateChannel_Call struct {
 }
 
 // UpdateChannel is a helper method to define mock.On call
-//   - ctx
-//   - c
+//   - ctx context.Context
+//   - c bootstrap.Channel
 func (_e *ConfigRepository_Expecter) UpdateChannel(ctx interface{}, c interface{}) *ConfigRepository_UpdateChannel_Call {
 	return &ConfigRepository_UpdateChannel_Call{Call: _e.mock.On("UpdateChannel", ctx, c)}
 }
 
 func (_c *ConfigRepository_UpdateChannel_Call) Run(run func(ctx context.Context, c bootstrap.Channel)) *ConfigRepository_UpdateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(bootstrap.Channel))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 bootstrap.Channel
+		if args[1] != nil {
+			arg1 = args[1].(bootstrap.Channel)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }
@@ -771,18 +1005,44 @@ type ConfigRepository_UpdateConnections_Call struct {
 }
 
 // UpdateConnections is a helper method to define mock.On call
-//   - ctx
-//   - domainID
-//   - id
-//   - channels
-//   - connections
+//   - ctx context.Context
+//   - domainID string
+//   - id string
+//   - channels []bootstrap.Channel
+//   - connections []string
 func (_e *ConfigRepository_Expecter) UpdateConnections(ctx interface{}, domainID interface{}, id interface{}, channels interface{}, connections interface{}) *ConfigRepository_UpdateConnections_Call {
 	return &ConfigRepository_UpdateConnections_Call{Call: _e.mock.On("UpdateConnections", ctx, domainID, id, channels, connections)}
 }
 
 func (_c *ConfigRepository_UpdateConnections_Call) Run(run func(ctx context.Context, domainID string, id string, channels []bootstrap.Channel, connections []string)) *ConfigRepository_UpdateConnections_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].([]bootstrap.Channel), args[4].([]string))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []bootstrap.Channel
+		if args[3] != nil {
+			arg3 = args[3].([]bootstrap.Channel)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
 	})
 	return _c
 }

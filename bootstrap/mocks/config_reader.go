@@ -73,15 +73,26 @@ type ConfigReader_ReadConfig_Call struct {
 }
 
 // ReadConfig is a helper method to define mock.On call
-//   - config
-//   - b
+//   - config bootstrap.Config
+//   - b bool
 func (_e *ConfigReader_Expecter) ReadConfig(config interface{}, b interface{}) *ConfigReader_ReadConfig_Call {
 	return &ConfigReader_ReadConfig_Call{Call: _e.mock.On("ReadConfig", config, b)}
 }
 
 func (_c *ConfigReader_ReadConfig_Call) Run(run func(config bootstrap.Config, b bool)) *ConfigReader_ReadConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bootstrap.Config), args[1].(bool))
+		var arg0 bootstrap.Config
+		if args[0] != nil {
+			arg0 = args[0].(bootstrap.Config)
+		}
+		var arg1 bool
+		if args[1] != nil {
+			arg1 = args[1].(bool)
+		}
+		run(
+			arg0,
+			arg1,
+		)
 	})
 	return _c
 }

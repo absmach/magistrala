@@ -190,5 +190,4 @@ jobs:
         with:
           token: ${{ secrets.CODECOV }}
           files: ./coverage/*.out
-          codecov_yml_path: tools/.codecov.yaml
           verbose: true

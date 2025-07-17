@@ -3,6 +3,7 @@
 
 coverage:
   ignore:
+    - "api/grpc/*"
     - "tools/*"
     - "**/mocks*"
     - "*/middleware/*"

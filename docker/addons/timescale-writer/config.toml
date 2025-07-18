@@ -1,7 +1,7 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-# To listen all messsage broker subjects use default value "writers.>".
+# To listen all message broker subjects use default value "writers.>".
 # To subscribe to specific subjects use values starting by "writers." and
 # followed by a subtopic (e.g ["writers.<channel_id>.sub.topic.x", ...]).
 ["subscriber"]

@@ -120,7 +120,7 @@ services:
 
   am-certs:
     volumes: !override
-      - ./addons/certs/config.yaml:/config/config.yaml
+      - ./addons/certs/config.yaml:/config/config.yml
     networks: !override
       - magistrala-base-net
 

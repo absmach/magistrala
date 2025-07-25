@@ -128,7 +128,7 @@ func (repo *PostgresRepository) UpdateRuleTags(ctx context.Context, r re.Rule) (
 	q := `UPDATE rules SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
 	WHERE id = :id AND status = :status
 	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-		output_channel, output_topic, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
+		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
 	r.Status = re.EnabledStatus
 
 	return repo.update(ctx, r, q)

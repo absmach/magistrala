@@ -114,13 +114,13 @@ services:
     networks: !override
       - magistrala-base-net
 
-  am-certs-db:
+  openbao:
+    volumes:
+      - ./addons/certs/prod-entrypoint.sh:/entrypoint.sh
     networks: !override
       - magistrala-base-net
 
-  am-certs:
-    volumes: !override
-      - ./addons/certs/config.yaml:/config/config.yaml
+  certs-db:
     networks: !override
       - magistrala-base-net
 

@@ -11,21 +11,27 @@ import (
 )
 
 var (
-	requiredFields = []string{
+	essentialFields = []string{
 		"{{$.Title}}",
-		"{{$.GeneratedDate}}",
-		"{{$.GeneratedTime}}",
-		"{{.Metric.Name}}",
-		"{{.Metric.ClientID}}",
-		"{{.Metric.ChannelID}}",
-		"{{len .Messages}}",
 		"{{range .Messages}}",
 		"{{formatTime .Time}}",
 		"{{formatValue .}}",
+		"{{end}}",
+	}
+
+	recommendedFields = []string{
+		"{{$.GeneratedDate}}",
+		"{{$.GeneratedTime}}",
+		"{{.Metric.Name}}",
+		"{{.Metric.ChannelID}}",
+		"{{len .Messages}}",
+	}
+
+	conditionalFields = []string{
+		"{{.Metric.ClientID}}",
 		"{{.Unit}}",
 		"{{.Protocol}}",
 		"{{.Subtopic}}",
-		"{{end}}",
 	}
 
 	requiredStructure = []string{
@@ -40,12 +46,15 @@ var (
 		"</html>",
 	}
 
-	requiredCSS = []string{
+	essentialCSS = []string{
 		".page",
+		".data-table",
+	}
+
+	recommendedCSS = []string{
 		".header",
 		".content-area",
 		".metrics-section",
-		".data-table",
 		".footer",
 	}
 )
@@ -87,9 +96,9 @@ func (temp ReportTemplate) Validate() error {
 		return fmt.Errorf("template must start with <!DOCTYPE html>")
 	}
 
-	for _, field := range requiredFields {
+	for _, field := range essentialFields {
 		if !strings.Contains(template, field) {
-			return fmt.Errorf("missing required template field: %s", field)
+			return fmt.Errorf("missing essential template field: %s", field)
 		}
 	}
 
@@ -104,34 +113,54 @@ func (temp ReportTemplate) Validate() error {
 			len(blockStarts), len(blockEnds))
 	}
 
-	for _, class := range requiredCSS {
+	for _, class := range essentialCSS {
 		pattern := fmt.Sprintf(`\.%s\s*\{`, strings.TrimPrefix(class, "."))
 		matched, _ := regexp.MatchString(pattern, template)
 		if !matched {
-			return fmt.Errorf("missing required CSS class: %s", class)
+			return fmt.Errorf("missing essential CSS class: %s", class)
 		}
 	}
 
-	requiredTableElements := []string{
-		"<table",
-		"<thead>",
-		"<tbody>",
-		"<th",
-		"<td",
-	}
-
-	for _, element := range requiredTableElements {
-		if !strings.Contains(template, element) {
-			return fmt.Errorf("missing required table element: %s", element)
+	if strings.Contains(template, ".data-table") {
+		requiredTableElements := []string{
+			"<table",
+			"<thead>",
+			"<tbody>",
+			"<th",
+			"<td",
 		}
-	}
 
-	expectedHeaders := []string{"Time", "Value", "Unit", "Protocol", "Subtopic"}
-	for _, header := range expectedHeaders {
-		if !strings.Contains(template, header) {
-			return fmt.Errorf("missing expected table header: %s", header)
+		for _, element := range requiredTableElements {
+			if !strings.Contains(template, element) {
+				return fmt.Errorf("missing required table element: %s", element)
+			}
 		}
 	}
 
 	return nil
+}
+
+func (temp ReportTemplate) ValidateWithRecommendations() ([]string, error) {
+	if err := temp.Validate(); err != nil {
+		return nil, err
+	}
+
+	var warnings []string
+	template := string(temp)
+
+	for _, field := range recommendedFields {
+		if !strings.Contains(template, field) {
+			warnings = append(warnings, fmt.Sprintf("recommended field missing: %s", field))
+		}
+	}
+
+	for _, class := range recommendedCSS {
+		pattern := fmt.Sprintf(`\.%s\s*\{`, strings.TrimPrefix(class, "."))
+		matched, _ := regexp.MatchString(pattern, template)
+		if !matched {
+			warnings = append(warnings, fmt.Sprintf("recommended CSS class missing: %s", class))
+		}
+	}
+
+	return warnings, nil
 }

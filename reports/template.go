@@ -27,13 +27,6 @@ var (
 		"{{len .Messages}}",
 	}
 
-	conditionalFields = []string{
-		"{{.Metric.ClientID}}",
-		"{{.Unit}}",
-		"{{.Protocol}}",
-		"{{.Subtopic}}",
-	}
-
 	requiredStructure = []string{
 		"<!DOCTYPE html>",
 		"<html",

@@ -11,16 +11,31 @@ networks:
     name: supermq-base-net
     external: true
 
+# Volumes for OpenBao data and configuration
 volumes:
+  supermq-openbao-volume:
   supermq-certs-db-volume:
 
-
 services:
+  certs-db:
+    image: postgres:16.1-alpine
+    container_name: supermq-certs-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${SMQ_CERTS_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_CERTS_DB_PASS}
+      POSTGRES_DB: ${SMQ_CERTS_DB_NAME}
+    networks:
+      - supermq-base-net
+    volumes:
+      - supermq-certs-db-volume:/var/lib/postgresql/data
+
   certs:
     image: supermq/certs:${SMQ_RELEASE_TAG}
     container_name: supermq-certs
     depends_on:
-      - am-certs
+      - openbao
+      - certs-db
     restart: on-failure
     networks:
       - supermq-base-net
@@ -30,12 +45,12 @@ services:
       SMQ_CERTS_LOG_LEVEL: ${SMQ_CERTS_LOG_LEVEL}
       SMQ_CERTS_SIGN_CA_PATH: ${SMQ_CERTS_SIGN_CA_PATH}
       SMQ_CERTS_SIGN_CA_KEY_PATH: ${SMQ_CERTS_SIGN_CA_KEY_PATH}
-      SMQ_CERTS_VAULT_HOST: ${SMQ_CERTS_VAULT_HOST}
-      SMQ_CERTS_VAULT_NAMESPACE: ${SMQ_CERTS_VAULT_NAMESPACE}
-      SMQ_CERTS_VAULT_APPROLE_ROLEID: ${SMQ_CERTS_VAULT_APPROLE_ROLEID}
-      SMQ_CERTS_VAULT_APPROLE_SECRET: ${SMQ_CERTS_VAULT_APPROLE_SECRET}
-      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_PATH: ${SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_PATH}
-      SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_ROLE_NAME: ${SMQ_CERTS_VAULT_CLIENTS_CERTS_PKI_ROLE_NAME}
+      SMQ_CERTS_OPENBAO_HOST: http://${SMQ_OPENBAO_HOST}:${SMQ_OPENBAO_PORT}
+      SMQ_CERTS_OPENBAO_APP_ROLE: ${SMQ_OPENBAO_APP_ROLE}
+      SMQ_CERTS_OPENBAO_APP_SECRET: ${SMQ_OPENBAO_APP_SECRET}
+      SMQ_CERTS_OPENBAO_NAMESPACE: ${SMQ_OPENBAO_NAMESPACE}
+      SMQ_CERTS_OPENBAO_PKI_PATH: ${SMQ_OPENBAO_PKI_PATH}
+      SMQ_CERTS_OPENBAO_ROLE: ${SMQ_OPENBAO_PKI_ROLE}
       SMQ_CERTS_HTTP_HOST: ${SMQ_CERTS_HTTP_HOST}
       SMQ_CERTS_HTTP_PORT: ${SMQ_CERTS_HTTP_PORT}
       SMQ_CERTS_HTTP_SERVER_CERT: ${SMQ_CERTS_HTTP_SERVER_CERT}
@@ -49,9 +64,6 @@ services:
       SMQ_CERTS_DB_SSL_CERT: ${SMQ_CERTS_DB_SSL_CERT}
       SMQ_CERTS_DB_SSL_KEY: ${SMQ_CERTS_DB_SSL_KEY}
       SMQ_CERTS_DB_SSL_ROOT_CERT: ${SMQ_CERTS_DB_SSL_ROOT_CERT}
-      SMQ_CERTS_SDK_HOST: ${SMQ_CERTS_SDK_HOST}
-      SMQ_CERTS_SDK_CERTS_URL: ${SMQ_CERTS_SDK_CERTS_URL}
-      SMQ_CERTS_SDK_TLS_VERIFICATION: ${SMQ_CERTS_SDK_TLS_VERIFICATION}
       SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
       SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
@@ -81,46 +93,41 @@ services:
         bind:
           create_host_path: true
 
-  am-certs-db:
-    image: postgres:16.2-alpine
-    container_name: supermq-am-certs-db
+  openbao:
+    image: openbao/openbao:latest
+    container_name: supermq-openbao
     restart: on-failure
     networks:
       - supermq-base-net
-    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
-    environment:
-      POSTGRES_USER: ${SMQ_CERTS_DB_USER}
-      POSTGRES_PASSWORD: ${SMQ_CERTS_DB_PASS}
-      POSTGRES_DB: ${SMQ_CERTS_DB_NAME}
     ports:
-      - 5454:5432
-    volumes:
-      - supermq-certs-db-volume:/var/lib/postgresql/data
-
-  am-certs:
-    image: ghcr.io/absmach/certs:${SMQ_RELEASE_TAG}
-    container_name: supermq-am-certs
-    depends_on:
-      - am-certs-db
-    restart: on-failure
-    networks:
-      - supermq-base-net
+      - ${SMQ_OPENBAO_PORT}:${SMQ_OPENBAO_PORT}
     environment:
-      AM_CERTS_LOG_LEVEL: ${SMQ_CERTS_LOG_LEVEL}
-      AM_CERTS_DB_HOST: ${SMQ_CERTS_DB_HOST}
-      AM_CERTS_DB_PORT: ${SMQ_CERTS_DB_PORT}
-      AM_CERTS_DB_USER: ${SMQ_CERTS_DB_USER}
-      AM_CERTS_DB_PASS: ${SMQ_CERTS_DB_PASS}
-      AM_CERTS_DB: ${SMQ_CERTS_DB_NAME}
-      AM_CERTS_DB_SSL_MODE: ${SMQ_CERTS_DB_SSL_MODE}
-      AM_CERTS_HTTP_HOST: supermq-am-certs
-      AM_CERTS_HTTP_PORT: 9010
-      AM_CERTS_GRPC_HOST: supermq-am-certs
-      AM_CERTS_GRPC_PORT: 7012
-      AM_JAEGER_URL: ${SMQ_JAEGER_URL}
-      AM_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      - BAO_DEV_ROOT_TOKEN_ID=${SMQ_OPENBAO_ROOT_TOKEN}
+      - BAO_ADDR=http://127.0.0.1:${SMQ_OPENBAO_PORT}
+      - SMQ_OPENBAO_PKI_ROLE=${SMQ_OPENBAO_PKI_ROLE}
+      - SMQ_OPENBAO_APP_ROLE=${SMQ_OPENBAO_APP_ROLE}
+      - SMQ_OPENBAO_APP_SECRET=${SMQ_OPENBAO_APP_SECRET}
+      - SMQ_OPENBAO_PORT=${SMQ_OPENBAO_PORT}
+      - SMQ_OPENBAO_NAMESPACE=${SMQ_OPENBAO_NAMESPACE}
+      - SMQ_OPENBAO_UNSEAL_KEY_1=${SMQ_OPENBAO_UNSEAL_KEY_1}
+      - SMQ_OPENBAO_UNSEAL_KEY_2=${SMQ_OPENBAO_UNSEAL_KEY_2}
+      - SMQ_OPENBAO_UNSEAL_KEY_3=${SMQ_OPENBAO_UNSEAL_KEY_3}
+      - SMQ_OPENBAO_TOKEN=${SMQ_OPENBAO_TOKEN}
+      - SMQ_OPENBAO_PKI_CA_CN=${SMQ_OPENBAO_PKI_CA_CN}
+      - SMQ_OPENBAO_PKI_CA_OU=${SMQ_OPENBAO_PKI_CA_OU}
+      - SMQ_OPENBAO_PKI_CA_O=${SMQ_OPENBAO_PKI_CA_O}
+      - SMQ_OPENBAO_PKI_CA_C=${SMQ_OPENBAO_PKI_CA_C}
+      - SMQ_OPENBAO_PKI_CA_L=${SMQ_OPENBAO_PKI_CA_L}
+      - SMQ_OPENBAO_PKI_CA_ST=${SMQ_OPENBAO_PKI_CA_ST}
+      - SMQ_OPENBAO_PKI_CA_ADDR=${SMQ_OPENBAO_PKI_CA_ADDR}
+      - SMQ_OPENBAO_PKI_CA_PO=${SMQ_OPENBAO_PKI_CA_PO}
+      - SMQ_OPENBAO_PKI_ROLE_NAME=${SMQ_OPENBAO_PKI_ROLE_NAME}
+    cap_add:
+      - IPC_LOCK
+    mem_swappiness: 0
     volumes:
-      - ./config.yaml:/config/config.yaml
-    ports:
-      - 9010:9010
-      - 7012:7012
+      - supermq-openbao-volume:/opt/openbao/data
+      - supermq-openbao-volume:/opt/openbao/config
+      - ./prod-entrypoint.sh:/entrypoint.sh
+    entrypoint: /bin/sh
+    command: /entrypoint.sh

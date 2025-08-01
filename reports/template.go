@@ -6,48 +6,10 @@ package reports
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"strings"
-)
+	"text/template"
+	"text/template/parse"
 
-var (
-	requiredFields = []string{
-		"{{$.Title}}",
-		"{{$.GeneratedDate}}",
-		"{{$.GeneratedTime}}",
-		"{{.Metric.Name}}",
-		"{{.Metric.ClientID}}",
-		"{{.Metric.ChannelID}}",
-		"{{len .Messages}}",
-		"{{range .Messages}}",
-		"{{formatTime .Time}}",
-		"{{formatValue .}}",
-		"{{.Unit}}",
-		"{{.Protocol}}",
-		"{{.Subtopic}}",
-		"{{end}}",
-	}
-
-	requiredStructure = []string{
-		"<!DOCTYPE html>",
-		"<html",
-		"<head>",
-		"<body>",
-		"<style>",
-		"</style>",
-		"</head>",
-		"</body>",
-		"</html>",
-	}
-
-	requiredCSS = []string{
-		".page",
-		".header",
-		".content-area",
-		".metrics-section",
-		".data-table",
-		".footer",
-	}
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 type ReportTemplate string
@@ -71,66 +33,91 @@ func (temp *ReportTemplate) UnmarshalJSON(data []byte) error {
 }
 
 func (temp ReportTemplate) Validate() error {
-	template := string(temp)
+	tmpl := template.New("validate").Funcs(template.FuncMap{
+		"add":         func(a, b int) int { return a + b },
+		"formatTime":  func(t interface{}) string { return "" },
+		"formatValue": func(v interface{}) string { return "" },
+	})
 
-	for _, required := range requiredStructure {
-		if !strings.Contains(template, required) {
-			return fmt.Errorf("missing required HTML element: %s", required)
+	parsedTmpl, err := tmpl.Parse(string(temp))
+	if err != nil {
+		return fmt.Errorf("template parsing error: %w", err)
+	}
+
+	if err := walkNode(parsedTmpl.Tree.Root); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func walkNode(node parse.Node) error {
+	switch n := node.(type) {
+	case *parse.ListNode:
+		for _, sub := range n.Nodes {
+			if err := walkNode(sub); err != nil {
+				return err
+			}
 		}
-	}
 
-	cleaned := strings.TrimSpace(template)
-	commentPattern := regexp.MustCompile(`^(?s:<!--.*?-->\s*)*`)
-	cleaned = commentPattern.ReplaceAllString(cleaned, "")
-
-	if !strings.HasPrefix(cleaned, "<!DOCTYPE html>") {
-		return fmt.Errorf("template must start with <!DOCTYPE html>")
-	}
-
-	for _, field := range requiredFields {
-		if !strings.Contains(template, field) {
-			return fmt.Errorf("missing required template field: %s", field)
+	case *parse.ActionNode:
+		fmt.Printf("Action: %s\n", n.String())
+		if len(n.Pipe.Cmds) == 0 {
+			return fmt.Errorf("empty action command: %s", n.String())
 		}
-	}
 
-	blockStartPattern := regexp.MustCompile(`\{\{\s*(range|if|with)\b[^{}]*\}\}`)
-	blockEndPattern := regexp.MustCompile(`\{\{\s*end\s*\}\}`)
-
-	blockStarts := blockStartPattern.FindAllString(template, -1)
-	blockEnds := blockEndPattern.FindAllString(template, -1)
-
-	if len(blockStarts) != len(blockEnds) {
-		return fmt.Errorf("unmatched template blocks: found %d block start(s) (range/if/with) and %d end(s)",
-			len(blockStarts), len(blockEnds))
-	}
-
-	for _, class := range requiredCSS {
-		pattern := fmt.Sprintf(`\.%s\s*\{`, strings.TrimPrefix(class, "."))
-		matched, _ := regexp.MatchString(pattern, template)
-		if !matched {
-			return fmt.Errorf("missing required CSS class: %s", class)
+	case *parse.IfNode:
+		fmt.Printf("If block: %s\n", n.String())
+		if err := walkNode(n.List); err != nil {
+			return err
 		}
-	}
-
-	requiredTableElements := []string{
-		"<table",
-		"<thead>",
-		"<tbody>",
-		"<th",
-		"<td",
-	}
-
-	for _, element := range requiredTableElements {
-		if !strings.Contains(template, element) {
-			return fmt.Errorf("missing required table element: %s", element)
+		if n.ElseList != nil {
+			if err := walkNode(n.ElseList); err != nil {
+				return err
+			}
 		}
-	}
 
-	expectedHeaders := []string{"Time", "Value", "Unit", "Protocol", "Subtopic"}
-	for _, header := range expectedHeaders {
-		if !strings.Contains(template, header) {
-			return fmt.Errorf("missing expected table header: %s", header)
+	case *parse.RangeNode:
+		if n.Pipe != nil && len(n.Pipe.Cmds) == 1 {
+			cmdStr := n.Pipe.Cmds[0].String()
+			if cmdStr != ".Reports" && cmdStr != ".Messages" {
+				return errors.New("range allowed only on Reports or Messages")
+			}
 		}
+		if err := walkNode(n.List); err != nil {
+			return err
+		}
+		if n.ElseList != nil {
+			if err := walkNode(n.ElseList); err != nil {
+				return err
+			}
+		}
+
+	case *parse.TemplateNode:
+		fmt.Printf("Template call: %s\n", n.String())
+
+	case *parse.TextNode:
+		fmt.Printf("Text: %q\n", string(n.Text))
+
+	case *parse.WithNode:
+		fmt.Printf("With block: %s\n", n.String())
+		if err := walkNode(n.List); err != nil {
+			return err
+		}
+		if n.ElseList != nil {
+			if err := walkNode(n.ElseList); err != nil {
+				return err
+			}
+		}
+
+	case *parse.VariableNode:
+		fmt.Printf("Variable: %s\n", n.Ident)
+
+	case *parse.CommandNode:
+		fmt.Printf("Command: %s\n", n.String())
+
+	default:
+		return fmt.Errorf("unknown node type: %T", n)
 	}
 
 	return nil

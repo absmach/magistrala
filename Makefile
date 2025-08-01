@@ -72,7 +72,7 @@ endef
 
 ADDON_SERVICES = bootstrap provision certs timescale-reader timescale-writer postgres-reader postgres-writer
 
-EXTERNAL_SERVICES = vault prometheus
+EXTERNAL_SERVICES = prometheus
 
 ifneq ($(filter run%,$(firstword $(MAKECMDGOALS))),)
   temp_args := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))

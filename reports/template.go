@@ -53,7 +53,6 @@ func (temp ReportTemplate) Validate() error {
 
 func walkNode(node parse.Node) error {
 	switch n := node.(type) {
-
 	case *parse.ListNode:
 		for _, sub := range n.Nodes {
 			if err := walkNode(sub); err != nil {

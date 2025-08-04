@@ -6,48 +6,8 @@ package reports
 import (
 	"encoding/json"
 	"fmt"
-	"regexp"
-	"strings"
-)
-
-var (
-	requiredFields = []string{
-		"{{$.Title}}",
-		"{{$.GeneratedDate}}",
-		"{{$.GeneratedTime}}",
-		"{{.Metric.Name}}",
-		"{{.Metric.ClientID}}",
-		"{{.Metric.ChannelID}}",
-		"{{len .Messages}}",
-		"{{range .Messages}}",
-		"{{formatTime .Time}}",
-		"{{formatValue .}}",
-		"{{.Unit}}",
-		"{{.Protocol}}",
-		"{{.Subtopic}}",
-		"{{end}}",
-	}
-
-	requiredStructure = []string{
-		"<!DOCTYPE html>",
-		"<html",
-		"<head>",
-		"<body>",
-		"<style>",
-		"</style>",
-		"</head>",
-		"</body>",
-		"</html>",
-	}
-
-	requiredCSS = []string{
-		".page",
-		".header",
-		".content-area",
-		".metrics-section",
-		".data-table",
-		".footer",
-	}
+	"text/template"
+	"text/template/parse"
 )
 
 type ReportTemplate string
@@ -71,65 +31,112 @@ func (temp *ReportTemplate) UnmarshalJSON(data []byte) error {
 }
 
 func (temp ReportTemplate) Validate() error {
-	template := string(temp)
+	templateStr := string(temp)
 
-	for _, required := range requiredStructure {
-		if !strings.Contains(template, required) {
-			return fmt.Errorf("missing required HTML element: %s", required)
+	// Validate template syntax using Go's template parser
+	tmpl := template.New("validate").Funcs(template.FuncMap{
+		"add":         func(a, b int) int { return a + b },
+		"formatTime":  func(t interface{}) string { return "" },
+		"formatValue": func(v interface{}) string { return "" },
+	})
+
+	parsed, err := tmpl.Parse(templateStr)
+	if err != nil {
+		return fmt.Errorf("template syntax error: %w", err)
+	}
+
+	var hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd bool
+	// Validate essential fields are present using template parsing
+	if err := validateEssentialFields(parsed.Tree.Root, &hasTitle, &hasRange, &hasFormatTime, &hasFormatValue, &hasEnd); err != nil {
+		return err
+	}
+
+	if !hasTitle {
+		return fmt.Errorf("missing essential template field: {{$.Title}}")
+	}
+	if !hasRange {
+		return fmt.Errorf("missing essential template field: {{range .Messages}}")
+	}
+	if !hasFormatTime {
+		return fmt.Errorf("missing essential template field: {{formatTime .Time}}")
+	}
+	if !hasFormatValue {
+		return fmt.Errorf("missing essential template field: {{formatValue .}}")
+	}
+	if !hasEnd {
+		return fmt.Errorf("missing essential template field: {{end}}")
+	}
+
+	return nil
+}
+
+func validateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd *bool) error {
+	if node == nil {
+		return nil
+	}
+
+	switch n := node.(type) {
+	case *parse.ListNode:
+		for _, sub := range n.Nodes {
+			if err := validateEssentialFields(sub, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+				return err
+			}
 		}
-	}
 
-	cleaned := strings.TrimSpace(template)
-	commentPattern := regexp.MustCompile(`^(?s:<!--.*?-->\s*)*`)
-	cleaned = commentPattern.ReplaceAllString(cleaned, "")
-
-	if !strings.HasPrefix(cleaned, "<!DOCTYPE html>") {
-		return fmt.Errorf("template must start with <!DOCTYPE html>")
-	}
-
-	for _, field := range requiredFields {
-		if !strings.Contains(template, field) {
-			return fmt.Errorf("missing required template field: %s", field)
+	case *parse.ActionNode:
+		if n.Pipe != nil {
+			for _, cmd := range n.Pipe.Cmds {
+				cmdStr := cmd.String()
+				if cmdStr == "$.Title" {
+					*hasTitle = true
+				}
+				if len(cmd.Args) > 0 {
+					firstArg := cmd.Args[0].String()
+					if firstArg == "formatTime" {
+						*hasFormatTime = true
+					}
+					if firstArg == "formatValue" {
+						*hasFormatValue = true
+					}
+				}
+			}
 		}
-	}
 
-	blockStartPattern := regexp.MustCompile(`\{\{\s*(range|if|with)\b[^{}]*\}\}`)
-	blockEndPattern := regexp.MustCompile(`\{\{\s*end\s*\}\}`)
-
-	blockStarts := blockStartPattern.FindAllString(template, -1)
-	blockEnds := blockEndPattern.FindAllString(template, -1)
-
-	if len(blockStarts) != len(blockEnds) {
-		return fmt.Errorf("unmatched template blocks: found %d block start(s) (range/if/with) and %d end(s)",
-			len(blockStarts), len(blockEnds))
-	}
-
-	for _, class := range requiredCSS {
-		pattern := fmt.Sprintf(`\.%s\s*\{`, strings.TrimPrefix(class, "."))
-		matched, _ := regexp.MatchString(pattern, template)
-		if !matched {
-			return fmt.Errorf("missing required CSS class: %s", class)
+	case *parse.RangeNode:
+		if n.Pipe != nil && len(n.Pipe.Cmds) > 0 {
+			cmdStr := n.Pipe.Cmds[0].String()
+			if cmdStr == ".Messages" {
+				*hasRange = true
+			}
 		}
-	}
-
-	requiredTableElements := []string{
-		"<table",
-		"<thead>",
-		"<tbody>",
-		"<th",
-		"<td",
-	}
-
-	for _, element := range requiredTableElements {
-		if !strings.Contains(template, element) {
-			return fmt.Errorf("missing required table element: %s", element)
+		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			return err
 		}
-	}
+		if n.ElseList != nil {
+			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+				return err
+			}
+		}
+		*hasEnd = true
 
-	expectedHeaders := []string{"Time", "Value", "Unit", "Protocol", "Subtopic"}
-	for _, header := range expectedHeaders {
-		if !strings.Contains(template, header) {
-			return fmt.Errorf("missing expected table header: %s", header)
+	case *parse.IfNode:
+		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			return err
+		}
+		if n.ElseList != nil {
+			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+				return err
+			}
+		}
+
+	case *parse.WithNode:
+		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			return err
+		}
+		if n.ElseList != nil {
+			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+				return err
+			}
 		}
 	}
 

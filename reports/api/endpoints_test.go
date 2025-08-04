@@ -832,3 +832,575 @@ type respBody struct {
 	ID      string         `json:"id"`
 	Status  reports.Status `json:"status"`
 }
+
+const (
+	validTemplate = `<!DOCTYPE html>
+<html>
+<head>
+    <title>{{$.Title}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .header { background-color: #f0f0f0; padding: 10px; }
+        .content { padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{$.Title}}</h1>
+        <p>Generated on: {{$.GeneratedDate}}</p>
+    </div>
+    <div class="content">
+        <h2>Messages</h2>
+        {{range .Messages}}
+        <div class="message">
+            <p>Time: {{formatTime .Time}}</p>
+            <p>Value: {{formatValue .}}</p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>`
+
+	templateWithoutTitle = `<!DOCTYPE html>
+<html>
+<head>
+    <title>Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+    </style>
+</head>
+<body>
+    <h1>Report</h1>
+    {{range .Messages}}
+    <p>Time: {{formatTime .Time}}</p>
+    <p>Value: {{formatValue .}}</p>
+    {{end}}
+</body>
+</html>`
+
+	templateWithSyntaxError = `<!DOCTYPE html>
+<html>
+<head>
+    <title>{{$.Title}}</title>
+</head>
+<body>
+    <h1>{{$.Title}}</h1>
+    {{range .Messages}}
+    <p>Time: {{formatTime .Time}}</p>
+    <p>Value: {{formatValue .}}</p>
+    {{end
+</body>
+</html>`
+)
+
+func TestUpdateReportTemplateEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc        string
+		id          string
+		template    reports.ReportTemplate
+		domainID    string
+		token       string
+		contentType string
+		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
+		svcErr      error
+		err         error
+	}{
+		{
+			desc:        "update report template successfully",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			status:      http.StatusNoContent,
+		},
+		{
+			desc:        "update report template with invalid token",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       invalidToken,
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			contentType: contentType,
+			authnErr:    svcerr.ErrAuthentication,
+			status:      http.StatusUnauthorized,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:        "update report template with empty token",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       "",
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:        "update report template with empty domainID",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       validToken,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:        "update report template with invalid content type",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       validToken,
+			domainID:    domainID,
+			contentType: "application/xml",
+			status:      http.StatusUnsupportedMediaType,
+			err:         apiutil.ErrUnsupportedContentType,
+		},
+		{
+			desc:        "update report template with empty ID",
+			id:          "",
+			template:    reports.ReportTemplate(validTemplate),
+			token:       validToken,
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingID,
+		},
+		{
+			desc:        "update report template with empty template",
+			id:          validID,
+			token:       validToken,
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc:        "update report template without title field",
+			id:          validID,
+			template:    reports.ReportTemplate(templateWithoutTitle),
+			token:       validToken,
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc:        "update report template with syntax error",
+			id:          validID,
+			template:    reports.ReportTemplate(templateWithSyntaxError),
+			token:       validToken,
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc:        "update report template with service error",
+			id:          validID,
+			template:    reports.ReportTemplate(validTemplate),
+			token:       validToken,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			contentType: contentType,
+			svcErr:      svcerr.ErrUpdateEntity,
+			status:      http.StatusUnprocessableEntity,
+			err:         svcerr.ErrUpdateEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(map[string]interface{}{
+				"report_template": tc.template,
+			})
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodPut,
+				url:         fmt.Sprintf("%s/%s/reports/configs/%s/template", ts.URL, tc.domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
+
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("UpdateReportTemplate", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			
+			// Only try to decode response body if it's not empty (status code 204 has empty body)
+			if res.StatusCode != http.StatusNoContent {
+				var errRes respBody
+				err = json.NewDecoder(res.Body).Decode(&errRes)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if errRes.Err != "" || errRes.Message != "" {
+					err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+				}
+			}
+
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestViewReportTemplateEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc        string
+		id          string
+		domainID    string
+		token       string
+		contentType string
+		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
+		svcRes      reports.ReportTemplate
+		svcErr      error
+		err         error
+	}{
+		{
+			desc:        "view report template successfully",
+			id:          validID,
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			status:      http.StatusOK,
+			svcRes:      reports.ReportTemplate(validTemplate),
+		},
+		{
+			desc:        "view report template with invalid token",
+			id:          validID,
+			token:       invalidToken,
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			contentType: contentType,
+			authnErr:    svcerr.ErrAuthentication,
+			status:      http.StatusUnauthorized,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:        "view report template with empty token",
+			token:       "",
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			id:          validID,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:        "view report template with empty domainID",
+			token:       validToken,
+			id:          validID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:        "view report template with empty ID",
+			token:       validToken,
+			id:          "",
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingID,
+		},
+		{
+			desc:        "view report template with service error",
+			token:       validToken,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			id:          validID,
+			contentType: contentType,
+			svcErr:      svcerr.ErrViewEntity,
+			status:      http.StatusBadRequest,
+			err:         svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodGet,
+				url:         fmt.Sprintf("%s/%s/reports/configs/%s/template", ts.URL, tc.domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+			}
+
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ViewReportTemplate", mock.Anything, tc.authnRes, tc.id).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestDeleteReportTemplateEndpoint(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc        string
+		id          string
+		domainID    string
+		token       string
+		contentType string
+		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
+		svcErr      error
+		err         error
+	}{
+		{
+			desc:        "delete report template successfully",
+			id:          validID,
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			status:      http.StatusNoContent,
+		},
+		{
+			desc:        "delete report template with invalid token",
+			id:          validID,
+			token:       invalidToken,
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			contentType: contentType,
+			authnErr:    svcerr.ErrAuthentication,
+			status:      http.StatusUnauthorized,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:        "delete report template with empty token",
+			token:       "",
+			authnRes:    smqauthn.Session{},
+			domainID:    domainID,
+			id:          validID,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:        "delete report template with empty domainID",
+			token:       validToken,
+			id:          validID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:        "delete report template with empty ID",
+			token:       validToken,
+			id:          "",
+			domainID:    domainID,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingID,
+		},
+		{
+			desc:        "delete report template with service error",
+			token:       validToken,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			id:          validID,
+			contentType: contentType,
+			svcErr:      svcerr.ErrRemoveEntity,
+			status:      http.StatusUnprocessableEntity,
+			err:         svcerr.ErrRemoveEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodDelete,
+				url:         fmt.Sprintf("%s/%s/reports/configs/%s/template", ts.URL, tc.domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+			}
+
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("DeleteReportTemplate", mock.Anything, tc.authnRes, tc.id).Return(tc.svcErr)
+			res, err := req.make()
+
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+
+			// Only try to decode response body if it's not empty (status code 204 has empty body)
+			if res.StatusCode != http.StatusNoContent {
+				var errRes respBody
+				err = json.NewDecoder(res.Body).Decode(&errRes)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if errRes.Err != "" || errRes.Message != "" {
+					err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+				}
+			}
+
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestGenerateReportWithTemplateValidation(t *testing.T) {
+	ts, svc, authn := newReportsServer()
+	defer ts.Close()
+
+	cases := []struct {
+		desc        string
+		cfg         reports.ReportConfig
+		action      string
+		domainID    string
+		token       string
+		contentType string
+		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
+		svcRes      reports.ReportPage
+		svcErr      error
+		err         error
+	}{
+		{
+			desc: "generate report with valid template successfully",
+			cfg: reports.ReportConfig{
+				ID:       validID,
+				Name:     namegen.Generate(),
+				DomainID: domainID,
+				Metrics: []reports.ReqMetric{
+					{
+						ChannelID: "channel1",
+						ClientIDs: []string{"client1"},
+						Name:      "metric_name",
+					},
+				},
+				Config: &reports.MetricConfig{
+					From:        "now()-1h",
+					To:          "now()",
+					Title:       title,
+					Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+				},
+				ReportTemplate: reports.ReportTemplate(validTemplate),
+			},
+			action:      "view",
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
+			status:      http.StatusCreated,
+			svcRes:      reports.ReportPage{},
+		},
+		{
+			desc: "generate report with invalid template",
+			cfg: reports.ReportConfig{
+				ID:       validID,
+				Name:     namegen.Generate(),
+				DomainID: domainID,
+				Metrics: []reports.ReqMetric{
+					{
+						ChannelID: "channel1",
+						ClientIDs: []string{"client1"},
+						Name:      "metric_name",
+					},
+				},
+				Config: &reports.MetricConfig{
+					From:        "now()-1h",
+					To:          "now()",
+					Title:       title,
+					Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+				},
+				ReportTemplate: reports.ReportTemplate(templateWithoutTitle),
+			},
+			action:      "view",
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc: "generate report with template syntax error",
+			cfg: reports.ReportConfig{
+				ID:       validID,
+				Name:     namegen.Generate(),
+				DomainID: domainID,
+				Metrics: []reports.ReqMetric{
+					{
+						ChannelID: "channel1",
+						ClientIDs: []string{"client1"},
+						Name:      "metric_name",
+					},
+				},
+				Config: &reports.MetricConfig{
+					From:        "now()-1h",
+					To:          "now()",
+					Title:       title,
+					Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+				},
+				ReportTemplate: reports.ReportTemplate(templateWithSyntaxError),
+			},
+			action:      "view",
+			token:       validToken,
+			contentType: contentType,
+			domainID:    domainID,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(tc.cfg)
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/%s/reports?action=%s", ts.URL, tc.domainID, tc.action),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
+
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("GenerateReport", mock.Anything, tc.authnRes, mock.Anything, mock.Anything).Return(tc.svcRes, tc.svcErr)
+			res, err := req.make()
+
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var errRes respBody
+			err = json.NewDecoder(res.Body).Decode(&errRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if errRes.Err != "" || errRes.Message != "" {
+				err = errors.Wrap(errors.New(errRes.Err), errors.New(errRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}

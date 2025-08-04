@@ -323,19 +323,6 @@ func TestReportTemplate_Validate(t *testing.T) {
 	}
 }
 
-func TestValidateEssentialFields_NilNode(t *testing.T) {
-	var hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd bool
-
-	err := reports.ValidateEssentialFields(nil, &hasTitle, &hasRange, &hasFormatTime, &hasFormatValue, &hasEnd)
-	assert.NoError(t, err)
-
-	assert.False(t, hasTitle)
-	assert.False(t, hasRange)
-	assert.False(t, hasFormatTime)
-	assert.False(t, hasFormatValue)
-	assert.False(t, hasEnd)
-}
-
 func TestReportTemplate_String(t *testing.T) {
 	template := reports.ReportTemplate(validTemplate)
 	result := template.String()

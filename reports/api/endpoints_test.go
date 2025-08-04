@@ -1033,8 +1033,6 @@ func TestUpdateReportTemplateEndpoint(t *testing.T) {
 			svcCall := svc.On("UpdateReportTemplate", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			
-			// Only try to decode response body if it's not empty (status code 204 has empty body)
 			if res.StatusCode != http.StatusNoContent {
 				var errRes respBody
 				err = json.NewDecoder(res.Body).Decode(&errRes)
@@ -1251,7 +1249,6 @@ func TestDeleteReportTemplateEndpoint(t *testing.T) {
 
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 
-			// Only try to decode response body if it's not empty (status code 204 has empty body)
 			if res.StatusCode != http.StatusNoContent {
 				var errRes respBody
 				err = json.NewDecoder(res.Body).Decode(&errRes)

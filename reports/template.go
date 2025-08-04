@@ -47,7 +47,7 @@ func (temp ReportTemplate) Validate() error {
 
 	var hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd bool
 	// Validate essential fields are present using template parsing
-	if err := validateEssentialFields(parsed.Tree.Root, &hasTitle, &hasRange, &hasFormatTime, &hasFormatValue, &hasEnd); err != nil {
+	if err := ValidateEssentialFields(parsed.Tree.Root, &hasTitle, &hasRange, &hasFormatTime, &hasFormatValue, &hasEnd); err != nil {
 		return err
 	}
 
@@ -70,7 +70,7 @@ func (temp ReportTemplate) Validate() error {
 	return nil
 }
 
-func validateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd *bool) error {
+func ValidateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd *bool) error {
 	if node == nil {
 		return nil
 	}
@@ -78,7 +78,7 @@ func validateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime,
 	switch n := node.(type) {
 	case *parse.ListNode:
 		for _, sub := range n.Nodes {
-			if err := validateEssentialFields(sub, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			if err := ValidateEssentialFields(sub, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 				return err
 			}
 		}
@@ -109,32 +109,32 @@ func validateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime,
 				*hasRange = true
 			}
 		}
-		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+		if err := ValidateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 			return err
 		}
 		if n.ElseList != nil {
-			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			if err := ValidateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 				return err
 			}
 		}
 		*hasEnd = true
 
 	case *parse.IfNode:
-		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+		if err := ValidateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 			return err
 		}
 		if n.ElseList != nil {
-			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			if err := ValidateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 				return err
 			}
 		}
 
 	case *parse.WithNode:
-		if err := validateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+		if err := ValidateEssentialFields(n.List, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 			return err
 		}
 		if n.ElseList != nil {
-			if err := validateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
+			if err := ValidateEssentialFields(n.ElseList, hasTitle, hasRange, hasFormatTime, hasFormatValue, hasEnd); err != nil {
 				return err
 			}
 		}

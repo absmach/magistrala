@@ -180,6 +180,11 @@ jobs:
         run: |
           go test --race -v -count=1 -coverprofile=coverage/re.out ./re/...
 
+      - name: Run reports tests
+        if: steps.changes.outputs.reports == 'true' || steps.changes.outputs.workflow == 'true'
+        run: |
+          go test --race -v -count=1 -coverprofile=coverage/reports.out ./reports/...
+
       - name: Run alarms tests
         if: steps.changes.outputs.alarms == 'true' || steps.changes.outputs.workflow == 'true'
         run: |

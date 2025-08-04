@@ -594,7 +594,7 @@ func sendHTTPMessage(ctx context.Context, s sdk.SDK, msg string, client sdk.Clie
 }
 
 func sendCoAPMessage(msg string, client sdk.Client, chanID string) error {
-	cmd := exec.Command("coap-cli", "post", fmt.Sprintf("channels/%s/messages", chanID), "--auth", client.Credentials.Secret, "-d", msg)
+	cmd := exec.Command("coap-cli", "post", fmt.Sprintf("m/%s/c/%s", client.DomainID, chanID), "--auth", client.Credentials.Secret, "-d", msg)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("CoAP failed to send message from client %s to channel %s: %w", client.ID, chanID, err)
 	}
@@ -603,7 +603,7 @@ func sendCoAPMessage(msg string, client sdk.Client, chanID string) error {
 }
 
 func sendMQTTMessage(msg string, client sdk.Client, chanID string) error {
-	cmd := exec.Command("mosquitto_pub", "--id-prefix", "supermq", "-u", client.ID, "-P", client.Credentials.Secret, "-t", fmt.Sprintf("channels/%s/messages", chanID), "-h", "localhost", "-m", msg)
+	cmd := exec.Command("mosquitto_pub", "--id-prefix", "supermq", "-u", client.ID, "-P", client.Credentials.Secret, "-t", fmt.Sprintf("m/%s/c/%s", client.DomainID, chanID), "-h", "localhost", "-m", msg)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("MQTT failed to send message from client %s to channel %s: %w", client.ID, chanID, err)
 	}
@@ -612,7 +612,7 @@ func sendMQTTMessage(msg string, client sdk.Client, chanID string) error {
 }
 
 func sendWSMessage(conf Config, msg string, client sdk.Client, chanID string) error {
-	socketURL := fmt.Sprintf("ws://%s:%s/channels/%s/messages", conf.Host, defWSPort, chanID)
+	socketURL := fmt.Sprintf("ws://%s:%s/m/%s/c/%s", conf.Host, defWSPort, client.DomainID, chanID)
 	header := http.Header{"Authorization": []string{client.Credentials.Secret}}
 	conn, _, err := websocket.DefaultDialer.Dial(socketURL, header)
 	if err != nil {

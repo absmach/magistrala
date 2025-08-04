@@ -289,7 +289,7 @@ func TestReportTemplate_Validate(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "validate template with with condition successfully",
+			desc:     "validate template `with` with condition successfully",
 			template: reports.ReportTemplate(templateWithWithCondition),
 			err:      nil,
 		},
@@ -304,7 +304,7 @@ func TestReportTemplate_Validate(t *testing.T) {
 			err:      fmt.Errorf("missing essential template field: {{formatTime .Time}}"),
 		},
 		{
-			desc:     "validate template with with condition missing formatTime",
+			desc:     "validate template `with` with condition missing formatTime",
 			template: reports.ReportTemplate(templateWithWithMissingFields),
 			err:      fmt.Errorf("missing essential template field: {{formatTime .Time}}"),
 		},

@@ -102,6 +102,7 @@ type PageMeta struct {
 	Offset          uint64              `json:"offset" db:"offset"`
 	Limit           uint64              `json:"limit" db:"limit"`
 	Dir             string              `json:"dir" db:"dir"`
+	Order           string              `json:"order" db:"order"`
 	Name            string              `json:"name" db:"name"`
 	InputChannel    string              `json:"input_channel,omitempty" db:"input_channel"`
 	InputTopic      *string             `json:"input_topic,omitempty" db:"input_topic"`

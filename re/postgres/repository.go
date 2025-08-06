@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/re"
+	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
@@ -201,11 +202,20 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 		pgData += " OFFSET :offset"
 	}
 	pq := pageRulesQuery(pm)
+
+	orderClause := ""
+	switch pm.Order {
+	case "name", "created_at", "updated_at":
+		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
+		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
+			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)
+		}
+	}
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_value, outputs,
 			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
-		FROM rules r %s %s;
-	`, pq, pgData)
+		FROM rules r %s %s %s;
+	`, pq, orderClause, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.Page{}, err

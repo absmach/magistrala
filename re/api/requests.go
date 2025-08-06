@@ -55,6 +55,9 @@ func (req listRulesReq) validate() error {
 	if req.Dir != "" && (req.Dir != api.AscDir && req.Dir != api.DescDir) {
 		return apiutil.ErrInvalidDirection
 	}
+	if req.Order != "" && req.Order != "name" && req.Order != "created_at" && req.Order != "updated_at" {
+		return apiutil.ErrInvalidOrder
+	}
 
 	return nil
 }

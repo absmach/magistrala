@@ -24,11 +24,7 @@ import (
 
 const (
 	ruleIdKey       = "ruleID"
-	reportIdKey     = "reportID"
 	inputChannelKey = "input_channel"
-	statusKey       = "status"
-	actionKey       = "action"
-	defAction       = "view"
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
@@ -206,6 +202,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return nil, errors.Wrap((apiutil.ErrValidation), err)
+	}
 	st, err := re.ToStatus(s)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -223,6 +223,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 			InputChannel: ic,
 			Status:       st,
 			Dir:          dir,
+			Order:        order,
 			Tag:          tag,
 		},
 	}, nil

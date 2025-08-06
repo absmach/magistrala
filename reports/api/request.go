@@ -198,7 +198,7 @@ func (req updateReportTemplateReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 	if req.ReportTemplate == "" {
-		return errors.Wrap(apiutil.ErrValidation, errMissingReportTemplate)
+		return errors.Wrap(errMissingReportTemplate, apiutil.ErrValidation)
 	}
 	if err := req.ReportTemplate.Validate(); err != nil {
 		return errors.Wrap(err, apiutil.ErrValidation)

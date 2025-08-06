@@ -5,7 +5,7 @@ go 1.24.5
 require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.14.0
-	github.com/absmach/supermq v0.17.0-rc.2
+	github.com/absmach/supermq v0.17.0
 	github.com/authzed/authzed-go v1.4.1
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
@@ -51,6 +51,7 @@ require (
 	github.com/dgraph-io/ristretto/v2 v2.2.0 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/lib/pq v1.10.9 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
 )
 
 require (
@@ -59,7 +60,6 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
-	github.com/absmach/certs v0.0.0-20250602111612-89538302ad6a // indirect
 	github.com/absmach/senml v1.0.8
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect

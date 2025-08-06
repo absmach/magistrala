@@ -24,14 +24,12 @@ github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrd
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/absmach/callhome v0.14.0 h1:zB4tIZJ1YUmZ1VGHFPfMA/Lo6/Mv19y2dvoOiXj2BWs=
 github.com/absmach/callhome v0.14.0/go.mod h1:l12UJOfibK4Muvg/AbupHuquNV9qSz/ROdTEPg7f2Vk=
-github.com/absmach/certs v0.0.0-20250602111612-89538302ad6a h1:swYXNJaGVQS35CeuXqPp1JAzyFmTZ8sCHWJP3kjilzU=
-github.com/absmach/certs v0.0.0-20250602111612-89538302ad6a/go.mod h1:tEat7G8BzyWbFIFojqdzWSD6RZNFyEuUHBdnD0J+rZA=
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a h1:1+772OQFHAS23JLAHrCZxO+DnGoiMllKcSwLQy74y+k=
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a/go.mod h1:X2amjQg/2cnM+UKblMdpU2M4cZO74xtEHNIxtuUXCeA=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
-github.com/absmach/supermq v0.17.0-rc.2 h1:pLPRspnNvltkc+19pk1KXyDwoxzJxQmC1pY8OAKc7Fc=
-github.com/absmach/supermq v0.17.0-rc.2/go.mod h1:l10u8vYa/axKpYnVRK4756KydJjqQTWcEcSBRsl/iII=
+github.com/absmach/supermq v0.17.0 h1:l8XkoPJ2GIs3od4FBUu52DJRuzUIcVfScj7UkXr4/3w=
+github.com/absmach/supermq v0.17.0/go.mod h1:BTpQiHHevhP5ahA34vhyeLK8YIJsx+7gYUFpqgMGSAI=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
@@ -164,8 +162,6 @@ github.com/gofrs/uuid/v5 v5.3.2/go.mod h1:CDOjlDMVAtN56jqyRUZh58JT31Tiw7/oQyEXZV
 github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
 github.com/gogo/protobuf v1.3.2 h1:Ov1cvc58UF3b5XjBnZv7+opcTcQFZebYjWzi34vdm4Q=
 github.com/gogo/protobuf v1.3.2/go.mod h1:P1XiOD3dCwIKUDQYPy72D8LYyHL2YPYrpS2s69NZV8Q=
-github.com/golang-jwt/jwt v3.2.2+incompatible h1:IfV12K8xAKAnZqdXVzCZ+TOjboZ2keLg81eXfW3O+oY=
-github.com/golang-jwt/jwt v3.2.2+incompatible/go.mod h1:8pz2t5EyA70fFQQSrl6XZXzqecmYZeUEB8OUGHkxJ+I=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
 github.com/golang/mock v1.1.1/go.mod h1:oTYuIxOrZwtPieC+H1uAHpcLFnEyAGVDL/k47Jfbm0A=
 github.com/golang/protobuf v1.2.0/go.mod h1:6lQm79b+lXiMfvg/cZm0SGofjICqVBUtrP5yJMmIC1U=

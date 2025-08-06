@@ -259,7 +259,7 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 		return session.UserID, policies.UserType, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
-			ClientSecret: req.key,
+			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.chanID, req.key),
 		})
 		if err != nil {
 			return "", "", err

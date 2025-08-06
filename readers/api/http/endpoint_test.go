@@ -978,7 +978,7 @@ func TestReadAll(t *testing.T) {
 		authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(validSession, tc.authnErr)
 		if tc.key != "" {
 			authnCall = clients.On("Authenticate", mock.Anything, &grpcClientsV1.AuthnReq{
-				ClientSecret: tc.key,
+				Token: smqauthn.AuthPack(smqauthn.DomainAuth, chanID, tc.key),
 			}).Return(&grpcClientsV1.AuthnRes{Id: testsutil.GenerateUUID(t), Authenticated: true}, tc.authnErr)
 		}
 		authzCall := channels.On("Authorize", mock.Anything, mock.Anything).Return(&grpcChannelsV1.AuthzRes{Authorized: true}, tc.err)

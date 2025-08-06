@@ -4380,6 +4380,84 @@ func (_c *SDK_Domain_Call) RunAndReturn(run func(ctx context.Context, domainID s
 	return _c
 }
 
+// DomainInvitations provides a mock function for the type SDK
+func (_mock *SDK) DomainInvitations(ctx context.Context, pm sdk0.PageMetadata, token string, domainID string) (sdk0.InvitationPage, error) {
+	ret := _mock.Called(ctx, pm, token, domainID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DomainInvitations")
+	}
+
+	var r0 sdk0.InvitationPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk0.PageMetadata, string, string) (sdk0.InvitationPage, error)); ok {
+		return returnFunc(ctx, pm, token, domainID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk0.PageMetadata, string, string) sdk0.InvitationPage); ok {
+		r0 = returnFunc(ctx, pm, token, domainID)
+	} else {
+		r0 = ret.Get(0).(sdk0.InvitationPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk0.PageMetadata, string, string) error); ok {
+		r1 = returnFunc(ctx, pm, token, domainID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// SDK_DomainInvitations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainInvitations'
+type SDK_DomainInvitations_Call struct {
+	*mock.Call
+}
+
+// DomainInvitations is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk0.PageMetadata
+//   - token string
+//   - domainID string
+func (_e *SDK_Expecter) DomainInvitations(ctx interface{}, pm interface{}, token interface{}, domainID interface{}) *SDK_DomainInvitations_Call {
+	return &SDK_DomainInvitations_Call{Call: _e.mock.On("DomainInvitations", ctx, pm, token, domainID)}
+}
+
+func (_c *SDK_DomainInvitations_Call) Run(run func(ctx context.Context, pm sdk0.PageMetadata, token string, domainID string)) *SDK_DomainInvitations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk0.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk0.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DomainInvitations_Call) Return(invitations sdk0.InvitationPage, err error) *SDK_DomainInvitations_Call {
+	_c.Call.Return(invitations, err)
+	return _c
+}
+
+func (_c *SDK_DomainInvitations_Call) RunAndReturn(run func(ctx context.Context, pm sdk0.PageMetadata, token string, domainID string) (sdk0.InvitationPage, error)) *SDK_DomainInvitations_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DomainRole provides a mock function for the type SDK
 func (_mock *SDK) DomainRole(ctx context.Context, id string, roleID string, token string) (sdk0.Role, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, token)
@@ -8357,12 +8435,12 @@ func (_c *SDK_ResetPasswordRequest_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// RevokeCert provides a mock function for the type SDK
-func (_mock *SDK) RevokeCert(ctx context.Context, clientID string, domainID string, token string) (time.Time, errors.SDKError) {
+// RevokeAllCerts provides a mock function for the type SDK
+func (_mock *SDK) RevokeAllCerts(ctx context.Context, clientID string, domainID string, token string) (time.Time, errors.SDKError) {
 	ret := _mock.Called(ctx, clientID, domainID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RevokeCert")
+		panic("no return value specified for RevokeAllCerts")
 	}
 
 	var r0 time.Time
@@ -8385,6 +8463,86 @@ func (_mock *SDK) RevokeCert(ctx context.Context, clientID string, domainID stri
 	return r0, r1
 }
 
+// SDK_RevokeAllCerts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeAllCerts'
+type SDK_RevokeAllCerts_Call struct {
+	*mock.Call
+}
+
+// RevokeAllCerts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - clientID string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RevokeAllCerts(ctx interface{}, clientID interface{}, domainID interface{}, token interface{}) *SDK_RevokeAllCerts_Call {
+	return &SDK_RevokeAllCerts_Call{Call: _e.mock.On("RevokeAllCerts", ctx, clientID, domainID, token)}
+}
+
+func (_c *SDK_RevokeAllCerts_Call) Run(run func(ctx context.Context, clientID string, domainID string, token string)) *SDK_RevokeAllCerts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RevokeAllCerts_Call) Return(time1 time.Time, sDKError errors.SDKError) *SDK_RevokeAllCerts_Call {
+	_c.Call.Return(time1, sDKError)
+	return _c
+}
+
+func (_c *SDK_RevokeAllCerts_Call) RunAndReturn(run func(ctx context.Context, clientID string, domainID string, token string) (time.Time, errors.SDKError)) *SDK_RevokeAllCerts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeCert provides a mock function for the type SDK
+func (_mock *SDK) RevokeCert(ctx context.Context, certID string, domainID string, token string) (time.Time, errors.SDKError) {
+	ret := _mock.Called(ctx, certID, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeCert")
+	}
+
+	var r0 time.Time
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (time.Time, errors.SDKError)); ok {
+		return returnFunc(ctx, certID, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) time.Time); ok {
+		r0 = returnFunc(ctx, certID, domainID, token)
+	} else {
+		r0 = ret.Get(0).(time.Time)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, certID, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
 // SDK_RevokeCert_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeCert'
 type SDK_RevokeCert_Call struct {
 	*mock.Call
@@ -8392,14 +8550,14 @@ type SDK_RevokeCert_Call struct {
 
 // RevokeCert is a helper method to define mock.On call
 //   - ctx context.Context
-//   - clientID string
+//   - certID string
 //   - domainID string
 //   - token string
-func (_e *SDK_Expecter) RevokeCert(ctx interface{}, clientID interface{}, domainID interface{}, token interface{}) *SDK_RevokeCert_Call {
-	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, clientID, domainID, token)}
+func (_e *SDK_Expecter) RevokeCert(ctx interface{}, certID interface{}, domainID interface{}, token interface{}) *SDK_RevokeCert_Call {
+	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, certID, domainID, token)}
 }
 
-func (_c *SDK_RevokeCert_Call) Run(run func(ctx context.Context, clientID string, domainID string, token string)) *SDK_RevokeCert_Call {
+func (_c *SDK_RevokeCert_Call) Run(run func(ctx context.Context, certID string, domainID string, token string)) *SDK_RevokeCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8432,7 +8590,7 @@ func (_c *SDK_RevokeCert_Call) Return(time1 time.Time, sDKError errors.SDKError)
 	return _c
 }
 
-func (_c *SDK_RevokeCert_Call) RunAndReturn(run func(ctx context.Context, clientID string, domainID string, token string) (time.Time, errors.SDKError)) *SDK_RevokeCert_Call {
+func (_c *SDK_RevokeCert_Call) RunAndReturn(run func(ctx context.Context, certID string, domainID string, token string) (time.Time, errors.SDKError)) *SDK_RevokeCert_Call {
 	_c.Call.Return(run)
 	return _c
 }

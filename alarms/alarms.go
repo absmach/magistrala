@@ -61,6 +61,8 @@ type PageMetadata struct {
 	ClientID       string    `json:"client_id"       db:"client_id"`
 	Subtopic       string    `json:"subtopic"        db:"subtopic"`
 	Measurement    string    `json:"measurement"     db:"measurement"`
+	Dir             string              `json:"dir" db:"dir"`
+	Order           string              `json:"order" db:"order"`
 	Status         Status    `json:"status"          db:"status"`
 	CreatedFrom    time.Time `json:"created_from"    db:"created_from"`
 	CreatedTo      time.Time `json:"created_to"      db:"created_to"`

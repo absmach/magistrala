@@ -257,12 +257,22 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return nil, errors.Wrap((apiutil.ErrValidation), err)
+	}
 	return listReportsConfigReq{
 		PageMeta: reports.PageMeta{
 			Offset: offset,
 			Limit:  limit,
 			Status: st,
 			Name:   name,
+			Dir:    dir,
+			Order:  order,
 		},
 	}, nil
 }

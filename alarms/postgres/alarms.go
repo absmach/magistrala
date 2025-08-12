@@ -17,6 +17,7 @@ import (
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/jmoiron/sqlx"
+	api "github.com/absmach/supermq/api/http"
 )
 
 type repository struct {
@@ -186,10 +187,19 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
+	orderClause := ""
+	switch pm.Order {
+	case "created_at", "updated_at":
+		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
+		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
+			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)
+		}
+	}
+
 	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,
 			threshold, cause, status, severity, assignee_id, created_at, updated_at, updated_by, assigned_at,
 			assigned_by, acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
-			FROM alarms %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset;`, query)
+			FROM alarms %s %s LIMIT :limit OFFSET :offset;`, query, orderClause)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {

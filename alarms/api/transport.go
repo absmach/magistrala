@@ -140,6 +140,14 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	dir, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	var createdFrom, createdTo time.Time
 	if cfrom != "" {
@@ -171,6 +179,8 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			AssignedBy:     assignedBy,
 			CreatedFrom:    createdFrom,
 			CreatedTo:      createdTo,
+			Dir: dir,
+			Order: order,
 		},
 	}, nil
 }

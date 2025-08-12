@@ -13,11 +13,11 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/alarms"
+	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/jmoiron/sqlx"
-	api "github.com/absmach/supermq/api/http"
 )
 
 type repository struct {

@@ -179,8 +179,8 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 			AssignedBy:     assignedBy,
 			CreatedFrom:    createdFrom,
 			CreatedTo:      createdTo,
-			Dir: dir,
-			Order: order,
+			Dir:            dir,
+			Order:          order,
 		},
 	}, nil
 }

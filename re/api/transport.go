@@ -204,7 +204,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	}
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
-		return nil, errors.Wrap((apiutil.ErrValidation), err)
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	st, err := re.ToStatus(s)
 	if err != nil {

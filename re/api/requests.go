@@ -52,14 +52,16 @@ func (req listRulesReq) validate() error {
 	if req.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
 	}
-	if req.Dir != "" && (req.Dir != api.AscDir && req.Dir != api.DescDir) {
-		return apiutil.ErrInvalidDirection
-	}
-	if req.Order != "" && (req.Order != api.NameKey && req.Order != "created_at" && req.Order != "updated_at") {
+
+	switch req.Order {
+	case "", api.NameKey, "created_at", "updated_at":
+	default:
 		return apiutil.ErrInvalidOrder
 	}
 
-	if req.Dir != "" && (req.Dir != api.AscDir && req.Dir != api.DescDir) {
+	switch req.Dir {
+	case "", api.AscDir, api.DescDir:
+	default:
 		return apiutil.ErrInvalidDirection
 	}
 

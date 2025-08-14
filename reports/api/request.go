@@ -70,12 +70,19 @@ func (req listReportsConfigReq) validate() error {
 	if req.Limit > maxLimitSize {
 		return svcerr.ErrMalformedEntity
 	}
-	if req.Dir != "" && (req.Dir != api.AscDir && req.Dir != api.DescDir) {
-		return apiutil.ErrInvalidDirection
-	}
-	if req.Order != "" && (req.Order != api.NameKey && req.Order != "created_at" && req.Order != "updated_at") {
+
+	switch req.Order {
+	case "", api.NameKey, "created_at", "updated_at":
+	default:
 		return apiutil.ErrInvalidOrder
 	}
+
+	switch req.Dir {
+	case "", api.AscDir, api.DescDir:
+	default:
+		return apiutil.ErrInvalidDirection
+	}
+
 	return nil
 }
 

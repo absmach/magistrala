@@ -64,15 +64,15 @@ type ThrottlingMetrics struct {
 }
 
 type ThrottlingConfig struct {
-	RateLimit         int
-	MaxPending        int
-	BackoffInitial    time.Duration
-	BackoffMax        time.Duration
-	MaxFailures       int
-	ResetTime         time.Duration
-	LoopThreshold     int
-	LoopWindow        time.Duration
-	PatternRateLimit  int
+	RateLimit        int
+	MaxPending       int
+	BackoffInitial   time.Duration
+	BackoffMax       time.Duration
+	MaxFailures      int
+	ResetTime        time.Duration
+	LoopThreshold    int
+	LoopWindow       time.Duration
+	PatternRateLimit int
 }
 
 func NewThrottledHandler(svc Service, config ThrottlingConfig, logger *slog.Logger) *ThrottledHandler {
@@ -109,7 +109,7 @@ func (th *ThrottledHandler) Handle(msg *messaging.Message) error {
 	}
 
 	msgKey := th.generateMessageKey(msg)
-	
+
 	if th.isLoopPattern(msgKey) {
 		th.incrementThrottled()
 		th.logger.Warn("Potential loop detected, dropping message",
@@ -165,7 +165,7 @@ func (th *ThrottledHandler) isLoopPattern(msgKey string) bool {
 
 	now := time.Now().UTC()
 	pattern, exists := th.messageTracker.patterns[msgKey]
-	
+
 	if !exists {
 		th.messageTracker.patterns[msgKey] = &PatternInfo{
 			count:       1,
@@ -180,7 +180,7 @@ func (th *ThrottledHandler) isLoopPattern(msgKey string) bool {
 	pattern.lastSeen = now
 
 	timeDiff := now.Sub(pattern.firstSeen)
-	
+
 	if pattern.count > th.loopThreshold && timeDiff < th.loopWindow {
 		th.logger.Warn("Loop pattern detected",
 			slog.String("pattern", msgKey),

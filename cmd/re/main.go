@@ -72,6 +72,14 @@ type config struct {
 	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+
+	// NATS Throttling Configuration
+	MaxPending     int           `env:"MG_RE_MAX_PENDING"         envDefault:"1000"`
+	AckWait        time.Duration `env:"MG_RE_ACK_WAIT"            envDefault:"30s"`
+	MaxDeliver     int           `env:"MG_RE_MAX_DELIVER"         envDefault:"3"`
+	RateLimit      int           `env:"MG_RE_RATE_LIMIT"          envDefault:"100"`
+	BackoffInitial time.Duration `env:"MG_RE_BACKOFF_INITIAL"     envDefault:"1s"`
+	BackoffMax     time.Duration `env:"MG_RE_BACKOFF_MAX"         envDefault:"30s"`
 }
 
 func main() {
@@ -235,7 +243,16 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
+	throttlingConfig := re.ThrottlingConfig{
+		RateLimit:      cfg.RateLimit,
+		MaxPending:     cfg.MaxPending,
+		BackoffInitial: cfg.BackoffInitial,
+		BackoffMax:     cfg.BackoffMax,
+		MaxFailures:    10,
+		ResetTime:      time.Minute * 5,
+	}
+
+	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, throttlingConfig)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -287,7 +304,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, throttlingConfig re.ThrottlingConfig) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -296,8 +313,11 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub mess
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
-	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	baseSvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+
+	throttledSvc := re.NewThrottledHandler(baseSvc, throttlingConfig, logger)
+
+	csvc, err := middleware.AuthorizationMiddleware(throttledSvc, authz)
 	if err != nil {
 		return nil, err
 	}

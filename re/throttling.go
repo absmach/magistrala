@@ -14,7 +14,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// ThrottledHandler wraps a service with throttling capabilities to prevent loops
 type ThrottledHandler struct {
 	svc         Service
 	rateLimiter *rate.Limiter
@@ -34,13 +33,11 @@ type ThrottledHandler struct {
 	patternRateLimit int
 }
 
-// MessageTracker tracks message patterns to detect loops
 type MessageTracker struct {
 	patterns map[string]*PatternInfo
 	mutex    sync.RWMutex
 }
 
-// PatternInfo tracks information about a message pattern
 type PatternInfo struct {
 	count       int
 	firstSeen   time.Time
@@ -48,7 +45,6 @@ type PatternInfo struct {
 	rateLimiter *rate.Limiter
 }
 
-// BackoffManager handles exponential backoff for failed processing
 type BackoffManager struct {
 	initial    time.Duration
 	max        time.Duration
@@ -58,7 +54,6 @@ type BackoffManager struct {
 	mutex      sync.RWMutex
 }
 
-// ThrottlingMetrics tracks performance and throttling statistics
 type ThrottlingMetrics struct {
 	ProcessedMessages   int64
 	ThrottledMessages   int64
@@ -136,7 +131,6 @@ func (th *ThrottledHandler) Handle(msg *messaging.Message) error {
 		return nil
 	}
 
-	// Check if we should apply backoff for this message pattern
 	if th.shouldBackoff(msgKey) {
 		th.incrementThrottled()
 		th.logger.Debug("Applying backoff, dropping message",

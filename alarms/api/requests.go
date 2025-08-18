@@ -32,7 +32,7 @@ func (req listAlarmsReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
-	if req.Order != "" && req.Order != "updated_at" && req.Order != "created_at" {
+	if req.Order != "" && req.Order != api.UpdatedAtOrder && req.Order != api.CreatedAtOrder {
 		return apiutil.ErrInvalidOrder
 	}
 

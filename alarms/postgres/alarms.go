@@ -189,7 +189,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 
 	orderClause := ""
 	switch pm.Order {
-	case "created_at", "updated_at":
+	case api.UpdatedAtOrder, api.CreatedAtOrder:
 		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
 		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
 			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)

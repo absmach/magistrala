@@ -72,7 +72,7 @@ func (req listReportsConfigReq) validate() error {
 	}
 
 	switch req.Order {
-	case "", api.NameKey, "created_at", "updated_at":
+	case "", api.NameKey, api.CreatedAtOrder, api.UpdatedAtOrder:
 	default:
 		return apiutil.ErrInvalidOrder
 	}

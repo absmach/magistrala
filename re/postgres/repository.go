@@ -205,7 +205,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 
 	orderClause := ""
 	switch pm.Order {
-	case "name", "created_at", "updated_at":
+	case api.NameKey, api.CreatedAtOrder, api.UpdatedAtOrder:
 		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
 		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
 			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)

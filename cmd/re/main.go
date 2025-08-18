@@ -73,15 +73,9 @@ type config struct {
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
 
-	MaxPending       int           `env:"MG_RE_MAX_PENDING"         envDefault:"1000"`
-	AckWait          time.Duration `env:"MG_RE_ACK_WAIT"            envDefault:"30s"`
-	MaxDeliver       int           `env:"MG_RE_MAX_DELIVER"         envDefault:"3"`
 	RateLimit        int           `env:"MG_RE_RATE_LIMIT"          envDefault:"100"`
-	BackoffInitial   time.Duration `env:"MG_RE_BACKOFF_INITIAL"     envDefault:"1s"`
-	BackoffMax       time.Duration `env:"MG_RE_BACKOFF_MAX"         envDefault:"30s"`
 	LoopThreshold    int           `env:"MG_RE_LOOP_THRESHOLD"      envDefault:"5"`
 	LoopWindow       time.Duration `env:"MG_RE_LOOP_WINDOW"         envDefault:"5s"`
-	PatternRateLimit int           `env:"MG_RE_PATTERN_RATE_LIMIT"  envDefault:"2"`
 }
 
 func main() {
@@ -246,15 +240,9 @@ func main() {
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
 	throttlingConfig := re.ThrottlingConfig{
-		RateLimit:        cfg.RateLimit,
-		MaxPending:       cfg.MaxPending,
-		BackoffInitial:   cfg.BackoffInitial,
-		BackoffMax:       cfg.BackoffMax,
-		MaxFailures:      10,
-		ResetTime:        time.Minute * 5,
-		LoopThreshold:    cfg.LoopThreshold,
-		LoopWindow:       cfg.LoopWindow,
-		PatternRateLimit: cfg.PatternRateLimit,
+		RateLimit:     cfg.RateLimit,
+		LoopThreshold: cfg.LoopThreshold,
+		LoopWindow:    cfg.LoopWindow,
 	}
 
 	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, throttlingConfig)

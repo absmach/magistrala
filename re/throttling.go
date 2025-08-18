@@ -14,345 +14,96 @@ import (
 	"golang.org/x/time/rate"
 )
 
+type ThrottlingConfig struct {
+	RateLimit     int
+	LoopThreshold int
+	LoopWindow    time.Duration
+}
+
 type ThrottledHandler struct {
 	svc         Service
 	rateLimiter *rate.Limiter
-	backoff     *BackoffManager
-	metrics     *ThrottlingMetrics
 	logger      *slog.Logger
 
-	failures    int
-	lastFailure time.Time
-	maxFailures int
-	resetTime   time.Duration
-	mutex       sync.RWMutex
-
-	messageTracker   *MessageTracker
-	loopThreshold    int
-	loopWindow       time.Duration
-	patternRateLimit int
-}
-
-type MessageTracker struct {
-	patterns map[string]*PatternInfo
-	mutex    sync.RWMutex
-}
-
-type PatternInfo struct {
-	count       int
-	firstSeen   time.Time
-	lastSeen    time.Time
-	rateLimiter *rate.Limiter
-}
-
-type BackoffManager struct {
-	initial    time.Duration
-	max        time.Duration
-	multiplier float64
-	attempts   map[string]int
-	lastTry    map[string]time.Time
-	mutex      sync.RWMutex
-}
-
-type ThrottlingMetrics struct {
-	ProcessedMessages   int64
-	ThrottledMessages   int64
-	FailedMessages      int64
-	AverageProcessTime  time.Duration
-	CircuitBreakerTrips int64
-	mutex               sync.RWMutex
-}
-
-type ThrottlingConfig struct {
-	RateLimit        int
-	MaxPending       int
-	BackoffInitial   time.Duration
-	BackoffMax       time.Duration
-	MaxFailures      int
-	ResetTime        time.Duration
-	LoopThreshold    int
-	LoopWindow       time.Duration
-	PatternRateLimit int
+	messageCount map[string]int
+	lastSeen     map[string]time.Time
+	threshold    int
+	window       time.Duration
+	mutex        sync.RWMutex
 }
 
 func NewThrottledHandler(svc Service, config ThrottlingConfig, logger *slog.Logger) *ThrottledHandler {
 	return &ThrottledHandler{
-		svc:         svc,
-		rateLimiter: rate.NewLimiter(rate.Limit(config.RateLimit), config.RateLimit),
-		backoff: &BackoffManager{
-			initial:    config.BackoffInitial,
-			max:        config.BackoffMax,
-			multiplier: 2.0,
-			attempts:   make(map[string]int),
-			lastTry:    make(map[string]time.Time),
-		},
-		metrics:          &ThrottlingMetrics{},
-		logger:           logger,
-		maxFailures:      config.MaxFailures,
-		resetTime:        config.ResetTime,
-		loopThreshold:    config.LoopThreshold,
-		loopWindow:       config.LoopWindow,
-		patternRateLimit: config.PatternRateLimit,
-		messageTracker: &MessageTracker{
-			patterns: make(map[string]*PatternInfo),
-		},
+		svc:          svc,
+		rateLimiter:  rate.NewLimiter(rate.Limit(config.RateLimit), config.RateLimit),
+		logger:       logger,
+		messageCount: make(map[string]int),
+		lastSeen:     make(map[string]time.Time),
+		threshold:    config.LoopThreshold,
+		window:       config.LoopWindow,
 	}
 }
 
 func (th *ThrottledHandler) Handle(msg *messaging.Message) error {
-	if th.isCircuitOpen() {
-		th.incrementThrottled()
-		th.logger.Warn("Circuit breaker open, dropping message",
+	if !th.rateLimiter.Allow() {
+		th.logger.Warn("Rate limit exceeded, dropping message",
 			slog.String("channel", msg.Channel),
 			slog.String("subtopic", msg.Subtopic))
 		return nil
 	}
 
-	msgKey := th.generateMessageKey(msg)
-
-	if th.isLoopPattern(msgKey) {
-		th.incrementThrottled()
+	msgKey := msg.Domain + ":" + msg.Channel + ":" + msg.Subtopic
+	if th.isLoop(msgKey) {
 		th.logger.Warn("Potential loop detected, dropping message",
-			slog.String("message_key", msgKey),
-			slog.String("channel", msg.Channel),
-			slog.String("subtopic", msg.Subtopic))
+			slog.String("message_key", msgKey))
 		return nil
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
-	defer cancel()
-	defer cancel()
-
-	if err := th.rateLimiter.Wait(ctx); err != nil {
-		th.incrementThrottled()
-		th.logger.Warn("Global rate limit exceeded, dropping message",
-			slog.String("channel", msg.Channel),
-			slog.String("subtopic", msg.Subtopic))
-		return nil
-	}
-
-	if th.shouldBackoff(msgKey) {
-		th.incrementThrottled()
-		th.logger.Debug("Applying backoff, dropping message",
-			slog.String("message_key", msgKey),
-			slog.Duration("backoff_time", th.getBackoffDelay(msgKey)))
-		return nil
-	}
-
-	start := time.Now().UTC()
-	err := th.svc.Handle(msg)
-	processingTime := time.Since(start)
-
-	if err != nil {
-		th.handleFailure(msgKey, err)
-		th.incrementFailed()
-	} else {
-		th.handleSuccess(msgKey)
-		th.incrementProcessed()
-		th.updateProcessingTime(processingTime)
-	}
-
-	return err
+	return th.svc.Handle(msg)
 }
 
-func (th *ThrottledHandler) generateMessageKey(msg *messaging.Message) string {
-	return msg.Domain + ":" + msg.Channel + ":" + msg.Subtopic
-}
+func (th *ThrottledHandler) isLoop(msgKey string) bool {
+	th.mutex.Lock()
+	defer th.mutex.Unlock()
 
-func (th *ThrottledHandler) isLoopPattern(msgKey string) bool {
-	th.messageTracker.mutex.Lock()
-	defer th.messageTracker.mutex.Unlock()
+	now := time.Now()
+	lastTime, exists := th.lastSeen[msgKey]
 
-	now := time.Now().UTC()
-	pattern, exists := th.messageTracker.patterns[msgKey]
-
-	if !exists {
-		th.messageTracker.patterns[msgKey] = &PatternInfo{
-			count:       1,
-			firstSeen:   now,
-			lastSeen:    now,
-			rateLimiter: rate.NewLimiter(rate.Limit(th.patternRateLimit), th.patternRateLimit),
-		}
+	if !exists || now.Sub(lastTime) > th.window {
+		th.messageCount[msgKey] = 1
+		th.lastSeen[msgKey] = now
 		return false
 	}
 
-	pattern.count++
-	pattern.lastSeen = now
+	th.messageCount[msgKey]++
+	th.lastSeen[msgKey] = now
 
-	timeDiff := now.Sub(pattern.firstSeen)
-
-	if pattern.count > th.loopThreshold && timeDiff < th.loopWindow {
-		th.logger.Warn("Loop pattern detected",
-			slog.String("pattern", msgKey),
-			slog.Int("count", pattern.count),
-			slog.Duration("time_window", timeDiff))
+	if th.messageCount[msgKey] > th.threshold {
+		th.logger.Warn("Loop threshold exceeded",
+			slog.String("message_key", msgKey),
+			slog.Int("count", th.messageCount[msgKey]),
+			slog.Int("threshold", th.threshold))
 		return true
-	}
-
-	if !pattern.rateLimiter.Allow() {
-		th.logger.Debug("Pattern rate limit exceeded",
-			slog.String("pattern", msgKey))
-		return true
-	}
-
-	if timeDiff > 30*time.Second {
-		pattern.count = 1
-		pattern.firstSeen = now
 	}
 
 	return false
 }
 
-func (th *ThrottledHandler) shouldBackoff(msgKey string) bool {
-	th.backoff.mutex.RLock()
-	defer th.backoff.mutex.RUnlock()
-
-	attempts, exists := th.backoff.attempts[msgKey]
-	if !exists || attempts == 0 {
-		return false
-	}
-
-	lastTry, exists := th.backoff.lastTry[msgKey]
-	if !exists {
-		return false
-	}
-
-	backoffDelay := th.calculateBackoffDelay(attempts)
-	return time.Since(lastTry) < backoffDelay
-}
-
-func (th *ThrottledHandler) getBackoffDelay(msgKey string) time.Duration {
-	th.backoff.mutex.RLock()
-	defer th.backoff.mutex.RUnlock()
-
-	attempts := th.backoff.attempts[msgKey]
-	return th.calculateBackoffDelay(attempts)
-}
-
-func (th *ThrottledHandler) calculateBackoffDelay(attempts int) time.Duration {
-	if attempts == 0 {
-		return 0
-	}
-
-	delay := th.backoff.initial
-	for i := 1; i < attempts; i++ {
-		delay = time.Duration(float64(delay) * th.backoff.multiplier)
-		if delay > th.backoff.max {
-			delay = th.backoff.max
-			break
-		}
-	}
-	return delay
-}
-
-func (th *ThrottledHandler) handleFailure(msgKey string, err error) {
-	th.backoff.mutex.Lock()
-	defer th.backoff.mutex.Unlock()
-
-	th.backoff.attempts[msgKey]++
-	th.backoff.lastTry[msgKey] = time.Now().UTC()
-
-	th.mutex.Lock()
-	th.failures++
-	th.lastFailure = time.Now().UTC()
-	th.mutex.Unlock()
-
-	th.logger.Error("Message processing failed",
-		slog.String("message_key", msgKey),
-		slog.Int("attempts", th.backoff.attempts[msgKey]),
-		slog.Any("error", err))
-}
-
-func (th *ThrottledHandler) handleSuccess(msgKey string) {
-	th.backoff.mutex.Lock()
-	defer th.backoff.mutex.Unlock()
-
-	delete(th.backoff.attempts, msgKey)
-	delete(th.backoff.lastTry, msgKey)
-
-	th.mutex.Lock()
-	th.failures = 0
-	th.mutex.Unlock()
-}
-
-func (th *ThrottledHandler) isCircuitOpen() bool {
-	th.mutex.RLock()
-	defer th.mutex.RUnlock()
-
-	if th.failures < th.maxFailures {
-		return false
-	}
-
-	return time.Since(th.lastFailure) < th.resetTime
-}
-
-func (th *ThrottledHandler) incrementProcessed() {
-	th.metrics.mutex.Lock()
-	defer th.metrics.mutex.Unlock()
-	th.metrics.ProcessedMessages++
-}
-
-func (th *ThrottledHandler) incrementThrottled() {
-	th.metrics.mutex.Lock()
-	defer th.metrics.mutex.Unlock()
-	th.metrics.ThrottledMessages++
-}
-
-func (th *ThrottledHandler) incrementFailed() {
-	th.metrics.mutex.Lock()
-	defer th.metrics.mutex.Unlock()
-	th.metrics.FailedMessages++
-}
-
-func (th *ThrottledHandler) updateProcessingTime(duration time.Duration) {
-	th.metrics.mutex.Lock()
-	defer th.metrics.mutex.Unlock()
-
-	if th.metrics.ProcessedMessages == 1 {
-		th.metrics.AverageProcessTime = duration
-	} else {
-		th.metrics.AverageProcessTime = time.Duration(
-			(int64(th.metrics.AverageProcessTime) + int64(duration)) / 2)
-	}
-}
-
-func (th *ThrottledHandler) GetMetrics() ThrottlingMetrics {
-	th.metrics.mutex.RLock()
-	defer th.metrics.mutex.RUnlock()
-
-	return ThrottlingMetrics{
-		ProcessedMessages:   th.metrics.ProcessedMessages,
-		ThrottledMessages:   th.metrics.ThrottledMessages,
-		FailedMessages:      th.metrics.FailedMessages,
-		AverageProcessTime:  th.metrics.AverageProcessTime,
-		CircuitBreakerTrips: th.metrics.CircuitBreakerTrips,
-	}
-}
-
 func (th *ThrottledHandler) Cleanup() {
-	th.backoff.mutex.Lock()
-	cutoff := time.Now().UTC().Add(-th.backoff.max * 2)
+	th.mutex.Lock()
+	defer th.mutex.Unlock()
 
-	for key, lastTry := range th.backoff.lastTry {
-		if lastTry.Before(cutoff) {
-			delete(th.backoff.attempts, key)
-			delete(th.backoff.lastTry, key)
+	cutoff := time.Now().Add(-th.window * 2)
+	for key, lastTime := range th.lastSeen {
+		if lastTime.Before(cutoff) {
+			delete(th.messageCount, key)
+			delete(th.lastSeen, key)
 		}
 	}
-	th.backoff.mutex.Unlock()
-
-	th.messageTracker.mutex.Lock()
-	patternCutoff := time.Now().UTC().Add(-time.Minute * 5)
-	for key, pattern := range th.messageTracker.patterns {
-		if pattern.lastSeen.Before(patternCutoff) {
-			delete(th.messageTracker.patterns, key)
-		}
-	}
-	th.messageTracker.mutex.Unlock()
 }
 
 func (th *ThrottledHandler) StartCleanupTask(ctx context.Context) {
-	ticker := time.NewTicker(th.backoff.max)
+	ticker := time.NewTicker(th.window)
 	defer ticker.Stop()
 
 	for {
@@ -361,13 +112,6 @@ func (th *ThrottledHandler) StartCleanupTask(ctx context.Context) {
 			return
 		case <-ticker.C:
 			th.Cleanup()
-
-			metrics := th.GetMetrics()
-			th.logger.Info("Throttling metrics",
-				slog.Int64("processed", metrics.ProcessedMessages),
-				slog.Int64("throttled", metrics.ThrottledMessages),
-				slog.Int64("failed", metrics.FailedMessages),
-				slog.Duration("avg_process_time", metrics.AverageProcessTime))
 		}
 	}
 }

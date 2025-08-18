@@ -59,9 +59,7 @@ func (req listRulesReq) validate() error {
 		return apiutil.ErrInvalidOrder
 	}
 
-	switch req.Dir {
-	case "", api.AscDir, api.DescDir:
-	default:
+	if req.Dir != "" && req.Dir != api.AscDir && req.Dir != api.DescDir {
 		return apiutil.ErrInvalidDirection
 	}
 

@@ -28,8 +28,8 @@ github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a h1:1+772OQFHAS23JL
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a/go.mod h1:X2amjQg/2cnM+UKblMdpU2M4cZO74xtEHNIxtuUXCeA=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
-github.com/absmach/supermq v0.17.0 h1:l8XkoPJ2GIs3od4FBUu52DJRuzUIcVfScj7UkXr4/3w=
-github.com/absmach/supermq v0.17.0/go.mod h1:BTpQiHHevhP5ahA34vhyeLK8YIJsx+7gYUFpqgMGSAI=
+github.com/absmach/supermq v0.17.1-0.20250818125426-2e3f52fdbf60 h1:OwYrR0yKVlqZZ04JW55Hyc2ah4cqL6SGhUfntvBC8xQ=
+github.com/absmach/supermq v0.17.1-0.20250818125426-2e3f52fdbf60/go.mod h1:BTpQiHHevhP5ahA34vhyeLK8YIJsx+7gYUFpqgMGSAI=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

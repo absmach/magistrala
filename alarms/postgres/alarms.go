@@ -187,13 +187,20 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
 	orderClause := ""
+	
 	switch pm.Order {
-	case api.UpdatedAtOrder, api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
-		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
-			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)
-		}
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
 	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,

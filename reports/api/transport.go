@@ -256,7 +256,7 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, "desc")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}

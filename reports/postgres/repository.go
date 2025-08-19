@@ -243,13 +243,22 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm report
 	}
 	pq := pageReportQuery(pm)
 
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
 	orderClause := ""
+
 	switch pm.Order {
-	case api.NameKey, api.CreatedAtOrder, api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
-		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
-			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)
-		}
+	case api.NameKey:
+		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
 	q := fmt.Sprintf(listReportsQuery, pq, orderClause, pgData)

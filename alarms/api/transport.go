@@ -144,7 +144,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, "desc")
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}

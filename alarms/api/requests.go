@@ -36,7 +36,7 @@ func (req listAlarmsReq) validate() error {
 		return apiutil.ErrInvalidOrder
 	}
 
-	if req.Dir != "" && req.Dir != api.AscDir && req.Dir != api.DescDir {
+	if req.Dir != api.AscDir && req.Dir != api.DescDir {
 		return apiutil.ErrInvalidDirection
 	}
 

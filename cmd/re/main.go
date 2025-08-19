@@ -72,7 +72,6 @@ type config struct {
 	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
 	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
 	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
-
 	RateLimit        int           `env:"MG_RE_RATE_LIMIT"          envDefault:"100"`
 	LoopThreshold    int           `env:"MG_RE_LOOP_THRESHOLD"      envDefault:"5"`
 	LoopWindow       time.Duration `env:"MG_RE_LOOP_WINDOW"         envDefault:"5s"`

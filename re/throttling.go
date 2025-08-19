@@ -44,8 +44,7 @@ func NewThrottledHandler(svc Service, config ThrottlingConfig) *ThrottledHandler
 
 func (th *ThrottledHandler) Handle(msg *messaging.Message) error {
 	if !th.rateLimiter.Allow() {
-		fmt.Printf("Rate limit exceeded, dropping message: channel=%s, subtopic=%s\n", 
-			msg.Channel, msg.Subtopic)
+		fmt.Printf("Rate limit exceeded, dropping message: channel=%s, subtopic=%s\n", msg.Channel, msg.Subtopic)
 		return nil
 	}
 

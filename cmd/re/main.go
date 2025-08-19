@@ -308,7 +308,7 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub mess
 
 	baseSvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
 
-	throttledSvc := re.NewThrottledHandler(baseSvc, throttlingConfig, logger)
+	throttledSvc := re.NewThrottledHandler(baseSvc, throttlingConfig)
 
 	csvc, err := middleware.AuthorizationMiddleware(throttledSvc, authz)
 	if err != nil {

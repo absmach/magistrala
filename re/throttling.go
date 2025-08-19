@@ -5,7 +5,7 @@ package re
 
 import (
 	"context"
-	"log/slog"
+	"fmt"
 	"sync"
 	"time"
 
@@ -23,7 +23,6 @@ type ThrottlingConfig struct {
 type ThrottledHandler struct {
 	svc         Service
 	rateLimiter *rate.Limiter
-	logger      *slog.Logger
 
 	messageCount map[string]int
 	lastSeen     map[string]time.Time
@@ -32,11 +31,10 @@ type ThrottledHandler struct {
 	mutex        sync.RWMutex
 }
 
-func NewThrottledHandler(svc Service, config ThrottlingConfig, logger *slog.Logger) *ThrottledHandler {
+func NewThrottledHandler(svc Service, config ThrottlingConfig) *ThrottledHandler {
 	return &ThrottledHandler{
 		svc:          svc,
 		rateLimiter:  rate.NewLimiter(rate.Limit(config.RateLimit), config.RateLimit),
-		logger:       logger,
 		messageCount: make(map[string]int),
 		lastSeen:     make(map[string]time.Time),
 		threshold:    config.LoopThreshold,
@@ -46,16 +44,14 @@ func NewThrottledHandler(svc Service, config ThrottlingConfig, logger *slog.Logg
 
 func (th *ThrottledHandler) Handle(msg *messaging.Message) error {
 	if !th.rateLimiter.Allow() {
-		th.logger.Warn("Rate limit exceeded, dropping message",
-			slog.String("channel", msg.Channel),
-			slog.String("subtopic", msg.Subtopic))
+		fmt.Printf("Rate limit exceeded, dropping message: channel=%s, subtopic=%s\n", 
+			msg.Channel, msg.Subtopic)
 		return nil
 	}
 
 	msgKey := msg.Domain + ":" + msg.Channel + ":" + msg.Subtopic
 	if th.isLoop(msgKey) {
-		th.logger.Warn("Potential loop detected, dropping message",
-			slog.String("message_key", msgKey))
+		fmt.Printf("Potential loop detected, dropping message: message_key=%s\n", msgKey)
 		return nil
 	}
 
@@ -79,10 +75,8 @@ func (th *ThrottledHandler) isLoop(msgKey string) bool {
 	th.lastSeen[msgKey] = now
 
 	if th.messageCount[msgKey] > th.threshold {
-		th.logger.Warn("Loop threshold exceeded",
-			slog.String("message_key", msgKey),
-			slog.Int("count", th.messageCount[msgKey]),
-			slog.Int("threshold", th.threshold))
+		fmt.Printf("Loop threshold exceeded: message_key=%s, count=%d, threshold=%d\n",
+			msgKey, th.messageCount[msgKey], th.threshold)
 		return true
 	}
 

@@ -12,6 +12,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/reports"
+	api "github.com/absmach/supermq/api/http"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
 )
@@ -230,7 +231,7 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm report
 	listReportsQuery := `
 		SELECT id, name, description, domain_id, metrics, email, config,
 			start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
-		FROM report_config rc %s %s;
+		FROM report_config rc %s %s %s;
 	`
 
 	pgData := ""
@@ -241,7 +242,26 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm report
 		pgData += " OFFSET :offset"
 	}
 	pq := pageReportQuery(pm)
-	q := fmt.Sprintf(listReportsQuery, pq, pgData)
+
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	orderClause := ""
+
+	switch pm.Order {
+	case api.NameKey:
+		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+
+	q := fmt.Sprintf(listReportsQuery, pq, orderClause, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return reports.ReportConfigPage{}, err

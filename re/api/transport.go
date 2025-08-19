@@ -198,13 +198,13 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, "desc")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.DefOrder)
 	if err != nil {
-		return nil, errors.Wrap((apiutil.ErrValidation), err)
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 	st, err := re.ToStatus(s)
 	if err != nil {

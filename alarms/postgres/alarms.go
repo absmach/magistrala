@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/alarms"
+	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
@@ -186,10 +187,26 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	orderClause := ""
+
+	switch pm.Order {
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+
 	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,
 			threshold, cause, status, severity, assignee_id, created_at, updated_at, updated_by, assigned_at,
 			assigned_by, acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
-			FROM alarms %s ORDER BY created_at DESC LIMIT :limit OFFSET :offset;`, query)
+			FROM alarms %s %s LIMIT :limit OFFSET :offset;`, query, orderClause)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {

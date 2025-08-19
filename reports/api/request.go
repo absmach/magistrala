@@ -8,6 +8,7 @@ import (
 
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
+	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -69,6 +70,17 @@ func (req listReportsConfigReq) validate() error {
 	if req.Limit > maxLimitSize {
 		return svcerr.ErrMalformedEntity
 	}
+
+	switch req.Order {
+	case "", api.NameKey, api.CreatedAtOrder, api.UpdatedAtOrder:
+	default:
+		return apiutil.ErrInvalidOrder
+	}
+
+	if req.Dir != api.AscDir && req.Dir != api.DescDir {
+		return apiutil.ErrInvalidDirection
+	}
+
 	return nil
 }
 

@@ -32,5 +32,13 @@ func (req listAlarmsReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
+	if req.Order != "" && req.Order != api.UpdatedAtOrder && req.Order != api.CreatedAtOrder {
+		return apiutil.ErrInvalidOrder
+	}
+
+	if req.Dir != api.AscDir && req.Dir != api.DescDir {
+		return apiutil.ErrInvalidDirection
+	}
+
 	return nil
 }

@@ -203,14 +203,24 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	}
 	pq := pageRulesQuery(pm)
 
-	orderClause := ""
-	switch pm.Order {
-	case "name", "created_at", "updated_at":
-		orderClause = fmt.Sprintf("ORDER BY %s", pm.Order)
-		if pm.Dir == api.AscDir || pm.Dir == api.DescDir {
-			orderClause = fmt.Sprintf("%s %s", orderClause, pm.Dir)
-		}
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
 	}
+
+	orderClause := ""
+
+	switch pm.Order {
+	case api.NameKey:
+		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_value, outputs,
 			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status

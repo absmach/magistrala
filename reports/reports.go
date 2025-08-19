@@ -376,14 +376,16 @@ func (a *Aggregation) UnmarshalJSON(data []byte) error {
 }
 
 type PageMeta struct {
-	Total           uint64     `json:"total" db:"total"`
-	Offset          uint64     `json:"offset" db:"offset"`
-	Limit           uint64     `json:"limit" db:"limit"`
-	Name            string     `json:"name" db:"name"`
-	Status          Status     `json:"status,omitempty" db:"status"`
-	Domain          string     `json:"domain_id,omitempty" db:"domain_id"`
-	ScheduledBefore *time.Time `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
-	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
+	Total           uint64     `json:"total"                       db:"total"`
+	Offset          uint64     `json:"offset"                      db:"offset"`
+	Limit           uint64     `json:"limit"                       db:"limit"`
+	Name            string     `json:"name"                        db:"name"`
+	Dir             string     `json:"dir"                         db:"dir"`
+	Order           string     `json:"order"                       db:"order"`
+	Status          Status     `json:"status,omitempty"            db:"status"`
+	Domain          string     `json:"domain_id,omitempty"         db:"domain_id"`
+	ScheduledBefore *time.Time `json:"scheduled_before,omitempty"  db:"scheduled_before"` // Filter rules scheduled before this time
+	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty"   db:"scheduled_after"`  // Filter rules scheduled after this time
 }
 
 type Repository interface {

@@ -327,7 +327,7 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 	}
 }
 
-func (r *report) generateFileFunc(ctx context.Context, action ReportAction, format Format, customTemplate ReportTemplate) (func(context.Context, string, []Report) ([]byte, error), error) {
+func (r *report) generateFileFunc(_ context.Context, action ReportAction, format Format, customTemplate ReportTemplate) (func(context.Context, string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {

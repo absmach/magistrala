@@ -38,6 +38,7 @@ var (
 	ruleID        = testsutil.GenerateUUID(&testing.T{})
 	Tags          = []string{"tag1", "tag2"}
 	inputChannel  = "test.channel"
+	testSubtopic  = "test"
 	StartDateTime = time.Now().Add(-time.Hour)
 	schedule      = pkgSch.Schedule{
 		StartDateTime:   StartDateTime,
@@ -736,31 +737,31 @@ func TestThrottledHandler(t *testing.T) {
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 			},
@@ -798,19 +799,19 @@ func TestThrottledHandler(t *testing.T) {
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 				{
 					Channel:  inputChannel,
 					Domain:   domainID,
-					Subtopic: "test",
+					Subtopic: testSubtopic,
 					Created:  now.Unix(),
 				},
 			},

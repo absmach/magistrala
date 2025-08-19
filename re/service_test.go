@@ -949,7 +949,7 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		DomainID:     domainID,
 	}
 
-	t.Run("AddRule delegation", func(t *testing.T) {
+	t.Run("AddRule", func(t *testing.T) {
 		repoCall := repo.On("AddRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
 		res, err := throttledSvc.AddRule(context.Background(), session, rule)
 		assert.Nil(t, err)
@@ -957,7 +957,7 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		repoCall.Unset()
 	})
 
-	t.Run("ViewRule delegation", func(t *testing.T) {
+	t.Run("ViewRule", func(t *testing.T) {
 		repoCall := repo.On("ViewRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
 		res, err := throttledSvc.ViewRule(context.Background(), session, ruleID)
 		assert.Nil(t, err)
@@ -965,7 +965,7 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		repoCall.Unset()
 	})
 
-	t.Run("UpdateRule delegation", func(t *testing.T) {
+	t.Run("UpdateRule", func(t *testing.T) {
 		repoCall := repo.On("UpdateRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
 		res, err := throttledSvc.UpdateRule(context.Background(), session, rule)
 		assert.Nil(t, err)
@@ -973,14 +973,14 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		repoCall.Unset()
 	})
 
-	t.Run("RemoveRule delegation", func(t *testing.T) {
+	t.Run("RemoveRule", func(t *testing.T) {
 		repoCall := repo.On("RemoveRule", mock.Anything, mock.Anything).Return(nil)
 		err := throttledSvc.RemoveRule(context.Background(), session, ruleID)
 		assert.Nil(t, err)
 		repoCall.Unset()
 	})
 
-	t.Run("EnableRule delegation", func(t *testing.T) {
+	t.Run("EnableRule", func(t *testing.T) {
 		repoCall := repo.On("UpdateRuleStatus", mock.Anything, mock.Anything).Return(expectedRule, nil)
 		res, err := throttledSvc.EnableRule(context.Background(), session, ruleID)
 		assert.Nil(t, err)
@@ -988,15 +988,15 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		repoCall.Unset()
 	})
 
-	t.Run("DisableRule delegation", func(t *testing.T) {
+	t.Run("DisableRule", func(t *testing.T) {
 		repoCall := repo.On("UpdateRuleStatus", mock.Anything, mock.Anything).Return(expectedRule, nil)
 		res, err := throttledSvc.DisableRule(context.Background(), session, ruleID)
 		assert.Nil(t, err)
 		assert.Equal(t, expectedRule, res)
 		repoCall.Unset()
 	})
-	
-	t.Run("UpdateRuleTags delegation", func(t *testing.T) {
+
+	t.Run("UpdateRuleTags", func(t *testing.T) {
 		ruleWithTags := re.Rule{
 			ID:   ruleID,
 			Tags: []string{"tag1", "tag2"},
@@ -1011,8 +1011,8 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		assert.Equal(t, expectedRuleWithTags, res)
 		repoCall.Unset()
 	})
-	
-	t.Run("ListRules delegation", func(t *testing.T) {
+
+	t.Run("ListRules", func(t *testing.T) {
 		pageMeta := re.PageMeta{
 			Limit:  10,
 			Offset: 0,
@@ -1029,8 +1029,8 @@ func TestThrottledHandlerDelegation(t *testing.T) {
 		assert.Equal(t, expectedPage, res)
 		repoCall.Unset()
 	})
-	
-	t.Run("UpdateRuleSchedule delegation", func(t *testing.T) {
+
+	t.Run("UpdateRuleSchedule", func(t *testing.T) {
 		ruleWithSchedule := re.Rule{
 			ID:       ruleID,
 			Schedule: schedule,

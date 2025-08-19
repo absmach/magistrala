@@ -670,6 +670,383 @@ func TestHandle(t *testing.T) {
 	}
 }
 
+func TestThrottledHandler(t *testing.T) {
+	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
+	now := time.Now()
+
+	cases := []struct {
+		desc        string
+		config      re.ThrottlingConfig
+		messages    []*messaging.Message
+		page        re.Page
+		listErr     error
+		publishErr  error
+		shouldBlock []bool
+	}{
+		{
+			desc: "throttled handler allows messages under rate limit",
+			config: re.ThrottlingConfig{
+				RateLimit:     100,
+				LoopThreshold: 5,
+				LoopWindow:    5 * time.Second,
+			},
+			messages: []*messaging.Message{
+				{
+					Channel: inputChannel,
+					Domain:  domainID,
+					Created: now.Unix(),
+				},
+				{
+					Channel: inputChannel,
+					Domain:  domainID,
+					Created: now.Unix(),
+				},
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type: re.ScriptType(0),
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr:     nil,
+			shouldBlock: []bool{false, false},
+		},
+		{
+			desc: "throttled handler detects loops and blocks messages",
+			config: re.ThrottlingConfig{
+				RateLimit:     100,
+				LoopThreshold: 3,
+				LoopWindow:    5 * time.Second,
+			},
+			messages: []*messaging.Message{
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type: re.ScriptType(0),
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr:     nil,
+			shouldBlock: []bool{false, false, false, true, true},
+		},
+		{
+			desc: "throttled handler allows messages after window reset",
+			config: re.ThrottlingConfig{
+				RateLimit:     100,
+				LoopThreshold: 2,
+				LoopWindow:    100 * time.Millisecond,
+			},
+			messages: []*messaging.Message{
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+				{
+					Channel:  inputChannel,
+					Domain:   domainID,
+					Subtopic: "test",
+					Created:  now.Unix(),
+				},
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type: re.ScriptType(0),
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr:     nil,
+			shouldBlock: []bool{false, false, false},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			throttledSvc := re.NewThrottledHandler(svc, tc.config)
+			callCount := 0
+
+			repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(tc.page, tc.listErr).Run(func(args mock.Arguments) {
+				callCount++
+			})
+			pubCall := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
+
+			for i, msg := range tc.messages {
+				err := throttledSvc.Handle(msg)
+				assert.Nil(t, err)
+
+				if tc.desc == "throttled handler allows messages after window reset" && i == 1 {
+					time.Sleep(150 * time.Millisecond)
+				}
+			}
+
+			expectedCalls := 0
+			for _, blocked := range tc.shouldBlock {
+				if !blocked {
+					expectedCalls++
+				}
+			}
+			assert.Equal(t, expectedCalls, callCount)
+
+			repoCall.Unset()
+			pubCall.Unset()
+		})
+	}
+}
+
+func TestThrottledHandlerRateLimit(t *testing.T) {
+	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
+
+	config := re.ThrottlingConfig{
+		RateLimit:     1,
+		LoopThreshold: 10,
+		LoopWindow:    5 * time.Second,
+	}
+
+	throttledSvc := re.NewThrottledHandler(svc, config)
+
+	message := &messaging.Message{
+		Channel: inputChannel,
+		Domain:  domainID,
+		Created: time.Now().Unix(),
+	}
+
+	page := re.Page{
+		Rules: []re.Rule{
+			{
+				ID:           testsutil.GenerateUUID(t),
+				Name:         namegen.Generate(),
+				InputChannel: inputChannel,
+				Status:       re.EnabledStatus,
+			},
+		},
+	}
+
+	callCount := 0
+	repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(page, nil).Run(func(args mock.Arguments) {
+		callCount++
+	})
+	pubCall := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	for i := 0; i < 2; i++ {
+		err := throttledSvc.Handle(message)
+		assert.Nil(t, err)
+	}
+
+	assert.Equal(t, 1, callCount)
+
+	repoCall.Unset()
+	pubCall.Unset()
+}
+
+func TestThrottledHandlerDelegation(t *testing.T) {
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+
+	config := re.ThrottlingConfig{
+		RateLimit:     100,
+		LoopThreshold: 5,
+		LoopWindow:    5 * time.Second,
+	}
+
+	throttledSvc := re.NewThrottledHandler(svc, config)
+
+	session := authn.Session{
+		UserID:   userID,
+		DomainID: domainID,
+	}
+
+	rule := re.Rule{
+		Name:         ruleName,
+		InputChannel: inputChannel,
+		Schedule:     schedule,
+	}
+
+	expectedRule := re.Rule{
+		Name:         ruleName,
+		ID:           ruleID,
+		InputChannel: inputChannel,
+		Schedule:     schedule,
+		Status:       re.EnabledStatus,
+		CreatedBy:    userID,
+		DomainID:     domainID,
+	}
+
+	t.Run("AddRule delegation", func(t *testing.T) {
+		repoCall := repo.On("AddRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
+		res, err := throttledSvc.AddRule(context.Background(), session, rule)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRule, res)
+		repoCall.Unset()
+	})
+
+	t.Run("ViewRule delegation", func(t *testing.T) {
+		repoCall := repo.On("ViewRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
+		res, err := throttledSvc.ViewRule(context.Background(), session, ruleID)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRule, res)
+		repoCall.Unset()
+	})
+
+	t.Run("UpdateRule delegation", func(t *testing.T) {
+		repoCall := repo.On("UpdateRule", mock.Anything, mock.Anything).Return(expectedRule, nil)
+		res, err := throttledSvc.UpdateRule(context.Background(), session, rule)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRule, res)
+		repoCall.Unset()
+	})
+
+	t.Run("RemoveRule delegation", func(t *testing.T) {
+		repoCall := repo.On("RemoveRule", mock.Anything, mock.Anything).Return(nil)
+		err := throttledSvc.RemoveRule(context.Background(), session, ruleID)
+		assert.Nil(t, err)
+		repoCall.Unset()
+	})
+
+	t.Run("EnableRule delegation", func(t *testing.T) {
+		repoCall := repo.On("UpdateRuleStatus", mock.Anything, mock.Anything).Return(expectedRule, nil)
+		res, err := throttledSvc.EnableRule(context.Background(), session, ruleID)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRule, res)
+		repoCall.Unset()
+	})
+
+	t.Run("DisableRule delegation", func(t *testing.T) {
+		repoCall := repo.On("UpdateRuleStatus", mock.Anything, mock.Anything).Return(expectedRule, nil)
+		res, err := throttledSvc.DisableRule(context.Background(), session, ruleID)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRule, res)
+		repoCall.Unset()
+	})
+	
+	t.Run("UpdateRuleTags delegation", func(t *testing.T) {
+		ruleWithTags := re.Rule{
+			ID:   ruleID,
+			Tags: []string{"tag1", "tag2"},
+		}
+		expectedRuleWithTags := re.Rule{
+			ID:   ruleID,
+			Tags: []string{"tag1", "tag2"},
+		}
+		repoCall := repo.On("UpdateRuleTags", context.Background(), mock.Anything).Return(expectedRuleWithTags, nil)
+		res, err := throttledSvc.UpdateRuleTags(context.Background(), session, ruleWithTags)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRuleWithTags, res)
+		repoCall.Unset()
+	})
+	
+	t.Run("ListRules delegation", func(t *testing.T) {
+		pageMeta := re.PageMeta{
+			Limit:  10,
+			Offset: 0,
+		}
+		expectedPage := re.Page{
+			Total:  1,
+			Offset: 0,
+			Limit:  10,
+			Rules:  []re.Rule{expectedRule},
+		}
+		repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(expectedPage, nil)
+		res, err := throttledSvc.ListRules(context.Background(), session, pageMeta)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedPage, res)
+		repoCall.Unset()
+	})
+	
+	t.Run("UpdateRuleSchedule delegation", func(t *testing.T) {
+		ruleWithSchedule := re.Rule{
+			ID:       ruleID,
+			Schedule: schedule,
+		}
+		expectedRuleWithSchedule := re.Rule{
+			ID:       ruleID,
+			Schedule: schedule,
+		}
+		repoCall := repo.On("UpdateRuleSchedule", mock.Anything, mock.Anything).Return(expectedRuleWithSchedule, nil)
+		res, err := throttledSvc.UpdateRuleSchedule(context.Background(), session, ruleWithSchedule)
+		assert.Nil(t, err)
+		assert.Equal(t, expectedRuleWithSchedule, res)
+		repoCall.Unset()
+	})
+}
+
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)

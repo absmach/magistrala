@@ -277,7 +277,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, pr smqauthz.Po
 
 func (am *authorizationMiddleware) callOut(ctx context.Context, session authn.Session, op string, params map[string]interface{}) error {
 	pl := map[string]any{
-		"entity_type":  policies.ClientType,
+		"entity_type":  "re",
 		"subject_type": policies.UserType,
 		"subject_id":   session.UserID,
 		"domain":       session.DomainID,

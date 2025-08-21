@@ -20,6 +20,18 @@ const (
 	GoType
 )
 
+const (
+	OpAddRule            = "add_rule"
+	OpViewRule           = "view_rule"
+	OpUpdateRule         = "update_rule"
+	OpUpdateRuleTags     = "update_rule_tags"
+	OpUpdateRuleSchedule = "update_rule_schedule"
+	OpListRules          = "list_rules"
+	OpRemoveRule         = "remove_rule"
+	OpEnableRule         = "enable_rule"
+	OpDisableRule        = "disable_rule"
+)
+
 type (
 	// ScriptType indicates Runtime type for the future versions
 	// that will support JS or Go runtimes alongside Lua.

@@ -33,8 +33,9 @@ type authorizationMiddleware struct {
 // AuthorizationMiddleware adds authorization to the re service.
 func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, callout callout.Callout) (re.Service, error) {
 	return &authorizationMiddleware{
-		svc:   svc,
-		authz: authz,
+		svc:     svc,
+		authz:   authz,
+		callout: callout,
 	}, nil
 }
 

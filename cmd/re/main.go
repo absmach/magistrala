@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
+	"github.com/absmach/magistrala/re/events"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
@@ -251,7 +252,7 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, callout)
+	svc, err := newService(ctx, database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, callout, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -303,7 +304,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, callout callout.Callout) (re.Service, error) {
+func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, callout callout.Callout, cfg config) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -313,10 +314,16 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub mess
 	}
 
 	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+	csvc, err = events.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init re event store middleware: %w", err)
+	}
+
 	csvc, err = middleware.AuthorizationMiddleware(csvc, authz, callout)
 	if err != nil {
 		return nil, err
 	}
+
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

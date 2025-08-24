@@ -21,15 +21,15 @@ const (
 )
 
 const (
-	OpAddRule            = "add_rule"
-	OpViewRule           = "view_rule"
-	OpUpdateRule         = "update_rule"
-	OpUpdateRuleTags     = "update_rule_tags"
-	OpUpdateRuleSchedule = "update_rule_schedule"
-	OpListRules          = "list_rules"
-	OpRemoveRule         = "remove_rule"
-	OpEnableRule         = "enable_rule"
-	OpDisableRule        = "disable_rule"
+	OpAddRule            = "OpAddRule"
+	OpViewRule           = "OpViewRule"
+	OpUpdateRule         = "OpUpdateRule"
+	OpUpdateRuleTags     = "OpUpdateRuleTags"
+	OpUpdateRuleSchedule = "OpUpdateRuleSchedule"
+	OpListRules          = "OpListRules"
+	OpRemoveRule         = "OpRemoveRule"
+	OpEnableRule         = "OpEnableRule"
+	OpDisableRule        = "OpDisableRule"
 )
 
 type (

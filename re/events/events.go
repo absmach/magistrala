@@ -50,23 +50,23 @@ var AllOperations = [...]string{
 }
 
 type baseRuleEvent struct {
-	authn.Session
+	session   authn.Session
 	requestID string
 }
 
 func newBaseRuleEvent(session authn.Session, requestID string) baseRuleEvent {
 	return baseRuleEvent{
-		Session:   session,
+		session:   session,
 		requestID: requestID,
 	}
 }
 
 func (bre baseRuleEvent) Encode() map[string]interface{} {
 	return map[string]interface{}{
-		"domain":      bre.Session.DomainID,
-		"user_id":     bre.Session.UserID,
-		"token_type":  bre.Session.Type.String(),
-		"super_admin": bre.SuperAdmin,
+		"domain":      bre.session.DomainID,
+		"user_id":     bre.session.UserID,
+		"token_type":  bre.session.Type.String(),
+		"super_admin": bre.session.SuperAdmin,
 		"request_id":  bre.requestID,
 	}
 }

@@ -16,15 +16,15 @@ import (
 
 const (
 	supermqPrefix        = "supermq."
-	CreateStream         = supermqPrefix + RuleCreate
-	ListStream           = supermqPrefix + RuleList
-	ViewStream           = supermqPrefix + RuleView
-	UpdateStream         = supermqPrefix + RuleUpdate
-	UpdateTagsStream     = supermqPrefix + RuleUpdateTags
-	UpdateScheduleStream = supermqPrefix + RuleUpdateSchedule
-	EnableStream         = supermqPrefix + RuleEnable
-	DisableStream        = supermqPrefix + RuleDisable
-	RemoveStream         = supermqPrefix + RuleRemove
+	CreateStream         = supermqPrefix + ruleCreate
+	ListStream           = supermqPrefix + ruleList
+	ViewStream           = supermqPrefix + ruleView
+	UpdateStream         = supermqPrefix + ruleUpdate
+	UpdateTagsStream     = supermqPrefix + ruleUpdateTags
+	UpdateScheduleStream = supermqPrefix + ruleUpdateSchedule
+	EnableStream         = supermqPrefix + ruleEnable
+	DisableStream        = supermqPrefix + ruleDisable
+	RemoveStream         = supermqPrefix + ruleRemove
 )
 
 var (
@@ -56,7 +56,7 @@ func (es *eventStore) AddRule(ctx context.Context, session authn.Session, r re.R
 		return rule, err
 	}
 	event := createRuleEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, CreateStream, event); err != nil {
@@ -87,7 +87,7 @@ func (es *eventStore) ViewRule(ctx context.Context, session authn.Session, id st
 		return rule, err
 	}
 	event := viewRuleEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, ViewStream, event); err != nil {
@@ -102,8 +102,8 @@ func (es *eventStore) UpdateRule(ctx context.Context, session authn.Session, r r
 		return rule, err
 	}
 	event := updateRuleEvent{
-		Rule:          rule,
-		operation:     RuleUpdate,
+		rule:          rule,
+		operation:     ruleUpdate,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, UpdateStream, event); err != nil {
@@ -118,7 +118,7 @@ func (es *eventStore) UpdateRuleTags(ctx context.Context, session authn.Session,
 		return rule, err
 	}
 	event := updateRuleTagsEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, UpdateTagsStream, event); err != nil {
@@ -133,7 +133,7 @@ func (es *eventStore) UpdateRuleSchedule(ctx context.Context, session authn.Sess
 		return rule, err
 	}
 	event := updateRuleScheduleEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, UpdateScheduleStream, event); err != nil {
@@ -163,7 +163,7 @@ func (es *eventStore) EnableRule(ctx context.Context, session authn.Session, id 
 		return rule, err
 	}
 	event := enableRuleEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, EnableStream, event); err != nil {
@@ -178,7 +178,7 @@ func (es *eventStore) DisableRule(ctx context.Context, session authn.Session, id
 		return rule, err
 	}
 	event := disableRuleEvent{
-		Rule:          rule,
+		rule:          rule,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, DisableStream, event); err != nil {

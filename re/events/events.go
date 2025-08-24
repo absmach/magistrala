@@ -13,15 +13,15 @@ import (
 
 const (
 	rulePrefix         = "rule."
-	RuleCreate         = rulePrefix + "create"
-	RuleList           = rulePrefix + "list"
-	RuleView           = rulePrefix + "view"
-	RuleUpdate         = rulePrefix + "update"
-	RuleUpdateTags     = rulePrefix + "update_tags"
-	RuleUpdateSchedule = rulePrefix + "update_schedule"
-	RuleEnable         = rulePrefix + "enable"
-	RuleDisable        = rulePrefix + "disable"
-	RuleRemove         = rulePrefix + "remove"
+	ruleCreate         = rulePrefix + "create"
+	ruleList           = rulePrefix + "list"
+	ruleView           = rulePrefix + "view"
+	ruleUpdate         = rulePrefix + "update"
+	ruleUpdateTags     = rulePrefix + "update_tags"
+	ruleUpdateSchedule = rulePrefix + "update_schedule"
+	ruleEnable         = rulePrefix + "enable"
+	ruleDisable        = rulePrefix + "disable"
+	ruleRemove         = rulePrefix + "remove"
 )
 
 var (
@@ -38,15 +38,15 @@ var (
 
 // AllOperations is a list of all rule operations.
 var AllOperations = [...]string{
-	RuleCreate,
-	RuleList,
-	RuleView,
-	RuleUpdate,
-	RuleUpdateTags,
-	RuleUpdateSchedule,
-	RuleEnable,
-	RuleDisable,
-	RuleRemove,
+	ruleCreate,
+	ruleList,
+	ruleView,
+	ruleUpdate,
+	ruleUpdateTags,
+	ruleUpdateSchedule,
+	ruleEnable,
+	ruleDisable,
+	ruleRemove,
 }
 
 type baseRuleEvent struct {
@@ -72,15 +72,15 @@ func (bre baseRuleEvent) Encode() map[string]interface{} {
 }
 
 type createRuleEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (cre createRuleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleCreate,
+		"operation": ruleCreate,
 	}
-	rule, err := cre.Rule.EventEncode()
+	rule, err := cre.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -99,12 +99,12 @@ type listRuleEvent struct {
 // Encode implements the events.Event interface for listRuleEvent.
 func (lre listRuleEvent) Encode() (map[string]interface{}, error) {
 	return map[string]interface{}{
-		"operation": RuleList,
+		"operation": ruleList,
 	}, nil
 }
 
 type updateRuleEvent struct {
-	re.Rule
+	rule      re.Rule
 	operation string
 	baseRuleEvent
 }
@@ -114,7 +114,7 @@ func (ure updateRuleEvent) Encode() (map[string]interface{}, error) {
 		"operation": ure.operation,
 	}
 
-	rule, err := ure.Rule.EventEncode()
+	rule, err := ure.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -125,15 +125,15 @@ func (ure updateRuleEvent) Encode() (map[string]interface{}, error) {
 }
 
 type viewRuleEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (vre viewRuleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleView,
+		"operation": ruleView,
 	}
-	rule, err := vre.Rule.EventEncode()
+	rule, err := vre.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -143,15 +143,15 @@ func (vre viewRuleEvent) Encode() (map[string]interface{}, error) {
 }
 
 type updateRuleTagsEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (urte updateRuleTagsEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleUpdateTags,
+		"operation": ruleUpdateTags,
 	}
-	rule, err := urte.Rule.EventEncode()
+	rule, err := urte.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -161,15 +161,15 @@ func (urte updateRuleTagsEvent) Encode() (map[string]interface{}, error) {
 }
 
 type updateRuleScheduleEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (urse updateRuleScheduleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleUpdateSchedule,
+		"operation": ruleUpdateSchedule,
 	}
-	rule, err := urse.Rule.EventEncode()
+	rule, err := urse.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -179,15 +179,15 @@ func (urse updateRuleScheduleEvent) Encode() (map[string]interface{}, error) {
 }
 
 type disableRuleEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (dre disableRuleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleDisable,
+		"operation": ruleDisable,
 	}
-	rule, err := dre.Rule.EventEncode()
+	rule, err := dre.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -197,15 +197,15 @@ func (dre disableRuleEvent) Encode() (map[string]interface{}, error) {
 }
 
 type enableRuleEvent struct {
-	re.Rule
+	rule re.Rule
 	baseRuleEvent
 }
 
 func (ere enableRuleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleEnable,
+		"operation": ruleEnable,
 	}
-	rule, err := ere.Rule.EventEncode()
+	rule, err := ere.rule.EventEncode()
 	if err != nil {
 		return map[string]interface{}{}, err
 	}
@@ -221,7 +221,7 @@ type removeRuleEvent struct {
 
 func (rre removeRuleEvent) Encode() (map[string]interface{}, error) {
 	val := map[string]interface{}{
-		"operation": RuleRemove,
+		"operation": ruleRemove,
 		"id":        rre.id,
 	}
 	maps.Copy(val, rre.baseRuleEvent.Encode())

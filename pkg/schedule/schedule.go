@@ -147,3 +147,54 @@ func (s Schedule) NextDue() time.Time {
 		return time.Time{}
 	}
 }
+
+// EventEncode converts a schedule.Schedule struct to map[string]interface{}
+func (s Schedule) EventEncode() (map[string]interface{}, error) {
+	m := map[string]interface{}{
+		"start_datetime":   s.StartDateTime.Format(time.RFC3339),
+		"time":             s.Time.Format(time.RFC3339),
+		"recurring":        s.Recurring.String(),
+		"recurring_period": s.RecurringPeriod,
+	}
+	return m, nil
+}
+
+// EventDecode converts a map[string]interface{} to Schedule struct
+func (s *Schedule) EventDecode(m map[string]interface{}) error {
+	if startDateTime, ok := m["start_datetime"].(string); ok {
+		t, err := time.Parse(time.RFC3339, startDateTime)
+		if err != nil {
+			return err
+		}
+		s.StartDateTime = t
+	}
+
+	if timeStr, ok := m["time"].(string); ok {
+		t, err := time.Parse(time.RFC3339, timeStr)
+		if err != nil {
+			return err
+		}
+		s.Time = t
+	}
+
+	if recurring, ok := m["recurring"].(string); ok {
+		switch recurring {
+		case "hourly":
+			s.Recurring = Hourly
+		case "daily":
+			s.Recurring = Daily
+		case "weekly":
+			s.Recurring = Weekly
+		case "monthly":
+			s.Recurring = Monthly
+		default:
+			s.Recurring = None
+		}
+	}
+
+	if period, ok := m["recurring_period"].(float64); ok {
+		s.RecurringPeriod = uint(period)
+	}
+
+	return nil
+}

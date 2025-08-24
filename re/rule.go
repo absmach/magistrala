@@ -70,6 +70,140 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
+// EventEncode converts a Rule struct to map[string]interface{} at event producer
+func (r Rule) EventEncode() (map[string]interface{}, error) {
+	m := map[string]interface{}{
+		"id":         r.ID,
+		"name":       r.Name,
+		"created_at": r.CreatedAt.Format(time.RFC3339Nano),
+		"created_by": r.CreatedBy,
+	}
+
+	if r.Name != "" {
+		m["name"] = r.Name
+	}
+
+	if r.DomainID != "" {
+		m["domain"] = r.DomainID
+	}
+
+	if !r.UpdatedAt.IsZero() {
+		m["updated_at"] = r.UpdatedAt.Format(time.RFC3339Nano)
+	}
+
+	if r.UpdatedBy != "" {
+		m["updated_by"] = r.UpdatedBy
+	}
+
+	if len(r.Metadata) > 0 {
+		m["metadata"] = r.Metadata
+	}
+
+	if len(r.Tags) > 0 {
+		m["tags"] = r.Tags
+	}
+
+	if r.InputChannel != "" {
+		m["input_channel"] = r.InputChannel
+	}
+
+	if r.InputTopic != "" {
+		m["input_topic"] = r.InputTopic
+	}
+
+	if r.Logic.Value != "" {
+		m["logic"] = map[string]interface{}{
+			"type":  r.Logic.Type,
+			"value": r.Logic.Value,
+		}
+	}
+
+	// Outputs
+	if r.Outputs != nil {
+		var outs []map[string]interface{}
+		for _, o := range r.Outputs {
+			if enc, ok := o.(interface {
+				Encode() (map[string]interface{}, error)
+			}); ok {
+				outMap, err := enc.Encode()
+				if err != nil {
+					return nil, err
+				}
+				outs = append(outs, outMap)
+			}
+		}
+		if len(outs) > 0 {
+			m["outputs"] = outs
+		}
+	}
+
+	// Schedule
+	if sched, err := r.Schedule.EventEncode(); err != nil {
+		return nil, err
+	} else if sched != nil {
+		m["schedule"] = sched
+	}
+
+	if r.Status != 0 {
+		m["status"] = r.Status
+	}
+
+	return m, nil
+}
+
+// EventDecode decodes a map[string]interface{} into the Rule at event receiver
+func (r *Rule) EventDecode(m map[string]interface{}) error {
+	if v, ok := m["id"].(string); ok {
+		r.ID = v
+	}
+	if v, ok := m["name"].(string); ok {
+		r.Name = v
+	}
+	if v, ok := m["domain"].(string); ok {
+		r.DomainID = v
+	}
+	if v, ok := m["metadata"].(map[string]interface{}); ok {
+		r.Metadata = v
+	}
+	if v, ok := m["tags"].([]interface{}); ok {
+		var tags []string
+		for _, t := range v {
+			if s, ok := t.(string); ok {
+				tags = append(tags, s)
+			}
+		}
+		r.Tags = tags
+	}
+	if v, ok := m["schedule"].(map[string]interface{}); ok {
+		var sched schedule.Schedule
+		if err := sched.EventDecode(v); err != nil {
+			return err
+		}
+		r.Schedule = sched
+	}
+	if v, ok := m["status"].(float64); ok {
+		r.Status = Status(uint(v))
+	}
+	if v, ok := m["created_at"].(string); ok {
+		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
+			r.CreatedAt = t
+		}
+	}
+	if v, ok := m["created_by"].(string); ok {
+		r.CreatedBy = v
+	}
+	if v, ok := m["updated_at"].(string); ok {
+		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
+			r.UpdatedAt = t
+		}
+	}
+	if v, ok := m["updated_by"].(string); ok {
+		r.UpdatedBy = v
+	}
+
+	return nil
+}
+
 type Outputs []Runnable
 
 func (o *Outputs) UnmarshalJSON(data []byte) error {

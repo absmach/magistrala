@@ -24,6 +24,8 @@ var (
 	errDomainDeleteRules = errors.New("not authorized to delete rules in domain")
 )
 
+const entityType = "rule"
+
 type authorizationMiddleware struct {
 	svc     re.Service
 	authz   smqauthz.Authorization
@@ -277,7 +279,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, pr smqauthz.Po
 
 func (am *authorizationMiddleware) callOut(ctx context.Context, session authn.Session, op string, params map[string]interface{}) error {
 	pl := map[string]any{
-		"entity_type":  "rule",
+		"entity_type":  entityType,
 		"subject_type": policies.UserType,
 		"subject_id":   session.UserID,
 		"domain":       session.DomainID,

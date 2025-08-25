@@ -70,8 +70,8 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
-// EventEncode converts a Rule struct to map[string]interface{} at event producer.
-func (r Rule) EventEncode() (map[string]interface{}, error) {
+// EventEncode converts a Rule struct to map[string]any at event producer.
+func (r Rule) EventEncode() (map[string]any, error) {
 	m := map[string]interface{}{
 		"id":         r.ID,
 		"name":       r.Name,
@@ -112,27 +112,9 @@ func (r Rule) EventEncode() (map[string]interface{}, error) {
 	}
 
 	if r.Logic.Value != "" {
-		m["logic"] = map[string]interface{}{
+		m["logic"] = map[string]any{
 			"type":  r.Logic.Type,
 			"value": r.Logic.Value,
-		}
-	}
-
-	if r.Outputs != nil {
-		var outs []map[string]interface{}
-		for _, o := range r.Outputs {
-			if enc, ok := o.(interface {
-				Encode() (map[string]interface{}, error)
-			}); ok {
-				outMap, err := enc.Encode()
-				if err != nil {
-					return nil, err
-				}
-				outs = append(outs, outMap)
-			}
-		}
-		if len(outs) > 0 {
-			m["outputs"] = outs
 		}
 	}
 

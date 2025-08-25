@@ -48,8 +48,8 @@ func newBaseRuleEvent(session authn.Session, requestID string) baseRuleEvent {
 	}
 }
 
-func (bre baseRuleEvent) Encode() map[string]interface{} {
-	return map[string]interface{}{
+func (bre baseRuleEvent) Encode() map[string]any {
+	return map[string]any{
 		"domain":      bre.session.DomainID,
 		"user_id":     bre.session.UserID,
 		"token_type":  bre.session.Type.String(),
@@ -63,13 +63,13 @@ type createRuleEvent struct {
 	baseRuleEvent
 }
 
-func (cre createRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (cre createRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleCreate,
 	}
 	rule, err := cre.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, cre.baseRuleEvent.Encode())
@@ -84,8 +84,8 @@ type listRuleEvent struct {
 }
 
 // Encode implements the events.Event interface for listRuleEvent.
-func (lre listRuleEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (lre listRuleEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"operation": ruleList,
 	}, nil
 }
@@ -96,14 +96,14 @@ type updateRuleEvent struct {
 	baseRuleEvent
 }
 
-func (ure updateRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (ure updateRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ure.operation,
 	}
 
 	rule, err := ure.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, ure.baseRuleEvent.Encode())
@@ -116,13 +116,13 @@ type viewRuleEvent struct {
 	baseRuleEvent
 }
 
-func (vre viewRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (vre viewRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleView,
 	}
 	rule, err := vre.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, vre.baseRuleEvent.Encode())
@@ -134,13 +134,13 @@ type updateRuleTagsEvent struct {
 	baseRuleEvent
 }
 
-func (urte updateRuleTagsEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (urte updateRuleTagsEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleUpdateTags,
 	}
 	rule, err := urte.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, urte.baseRuleEvent.Encode())
@@ -152,13 +152,13 @@ type updateRuleScheduleEvent struct {
 	baseRuleEvent
 }
 
-func (urse updateRuleScheduleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (urse updateRuleScheduleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleUpdateSchedule,
 	}
 	rule, err := urse.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, urse.baseRuleEvent.Encode())
@@ -170,13 +170,13 @@ type disableRuleEvent struct {
 	baseRuleEvent
 }
 
-func (dre disableRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (dre disableRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleDisable,
 	}
 	rule, err := dre.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, dre.baseRuleEvent.Encode())
@@ -188,13 +188,13 @@ type enableRuleEvent struct {
 	baseRuleEvent
 }
 
-func (ere enableRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (ere enableRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleEnable,
 	}
 	rule, err := ere.rule.EventEncode()
 	if err != nil {
-		return map[string]interface{}{}, err
+		return map[string]any{}, err
 	}
 	maps.Copy(val, rule)
 	maps.Copy(val, ere.baseRuleEvent.Encode())
@@ -206,8 +206,8 @@ type removeRuleEvent struct {
 	baseRuleEvent
 }
 
-func (rre removeRuleEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (rre removeRuleEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": ruleRemove,
 		"id":        rre.id,
 	}

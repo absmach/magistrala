@@ -156,9 +156,9 @@ func (s Schedule) NextDue() time.Time {
 	}
 }
 
-// EventEncode converts a schedule.Schedule struct to map[string]interface{}.
-func (s Schedule) EventEncode() (map[string]interface{}, error) {
-	m := map[string]interface{}{
+// EventEncode converts a schedule.Schedule struct to map[string]any.
+func (s Schedule) EventEncode() (map[string]any, error) {
+	m := map[string]any{
 		"start_datetime":   s.StartDateTime.Format(time.RFC3339),
 		"time":             s.Time.Format(time.RFC3339),
 		"recurring":        s.Recurring.String(),

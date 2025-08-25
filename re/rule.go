@@ -37,7 +37,7 @@ type (
 	// that will support JS or Go runtimes alongside Lua.
 	ScriptType uint
 
-	Metadata map[string]interface{}
+	Metadata map[string]any
 	Script   struct {
 		Type  ScriptType `json:"type"`
 		Value string     `json:"value"`
@@ -72,7 +72,7 @@ type Rule struct {
 
 // EventEncode converts a Rule struct to map[string]any at event producer.
 func (r Rule) EventEncode() (map[string]any, error) {
-	m := map[string]interface{}{
+	m := map[string]any{
 		"id":         r.ID,
 		"name":       r.Name,
 		"created_at": r.CreatedAt.Format(time.RFC3339Nano),
@@ -166,7 +166,7 @@ func (o *Outputs) UnmarshalJSON(data []byte) error {
 }
 
 type Runnable interface {
-	Run(ctx context.Context, msg *messaging.Message, val interface{}) error
+	Run(ctx context.Context, msg *messaging.Message, val any) error
 }
 
 // PageMeta contains page metadata that helps navigation.

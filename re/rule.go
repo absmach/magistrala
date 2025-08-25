@@ -118,7 +118,6 @@ func (r Rule) EventEncode() (map[string]interface{}, error) {
 		}
 	}
 
-	// Outputs
 	if r.Outputs != nil {
 		var outs []map[string]interface{}
 		for _, o := range r.Outputs {
@@ -137,7 +136,6 @@ func (r Rule) EventEncode() (map[string]interface{}, error) {
 		}
 	}
 
-	// Schedule
 	if sched, err := r.Schedule.EventEncode(); err != nil {
 		return nil, err
 	} else if sched != nil {
@@ -149,59 +147,6 @@ func (r Rule) EventEncode() (map[string]interface{}, error) {
 	}
 
 	return m, nil
-}
-
-// EventDecode decodes a map[string]interface{} into the Rule at event receiver.
-func (r *Rule) EventDecode(m map[string]interface{}) error {
-	if v, ok := m["id"].(string); ok {
-		r.ID = v
-	}
-	if v, ok := m["name"].(string); ok {
-		r.Name = v
-	}
-	if v, ok := m["domain"].(string); ok {
-		r.DomainID = v
-	}
-	if v, ok := m["metadata"].(map[string]interface{}); ok {
-		r.Metadata = v
-	}
-	if v, ok := m["tags"].([]interface{}); ok {
-		var tags []string
-		for _, t := range v {
-			if s, ok := t.(string); ok {
-				tags = append(tags, s)
-			}
-		}
-		r.Tags = tags
-	}
-	if v, ok := m["schedule"].(map[string]interface{}); ok {
-		var sched schedule.Schedule
-		if err := sched.EventDecode(v); err != nil {
-			return err
-		}
-		r.Schedule = sched
-	}
-	if v, ok := m["status"].(float64); ok {
-		r.Status = Status(uint(v))
-	}
-	if v, ok := m["created_at"].(string); ok {
-		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
-			r.CreatedAt = t
-		}
-	}
-	if v, ok := m["created_by"].(string); ok {
-		r.CreatedBy = v
-	}
-	if v, ok := m["updated_at"].(string); ok {
-		if t, err := time.Parse(time.RFC3339Nano, v); err == nil {
-			r.UpdatedAt = t
-		}
-	}
-	if v, ok := m["updated_by"].(string); ok {
-		r.UpdatedBy = v
-	}
-
-	return nil
 }
 
 type Outputs []Runnable

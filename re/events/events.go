@@ -64,51 +64,32 @@ type createRuleEvent struct {
 }
 
 func (cre createRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleCreate,
-	}
 	rule, err := cre.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
+	val := cre.baseRuleEvent.Encode()
+	val["operation"] = ruleCreate
 	maps.Copy(val, rule)
-	maps.Copy(val, cre.baseRuleEvent.Encode())
-
 	return val, nil
 }
 
 type listRuleEvent struct {
 	re.PageMeta
-	authn.Session
-	requestID string
+	baseRuleEvent
 }
 
 // Encode implements the events.Event interface for listRuleEvent.
 func (lre listRuleEvent) Encode() (map[string]any, error) {
-	return map[string]any{
-		"operation": ruleList,
-	}, nil
+	val := lre.PageMeta.EventEncode()
+	maps.Copy(val, lre.baseRuleEvent.Encode())
+	val["operation"] = ruleList
+	return val, nil
 }
 
 type updateRuleEvent struct {
-	rule      re.Rule
-	operation string
+	rule re.Rule
 	baseRuleEvent
-}
-
-func (ure updateRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ure.operation,
-	}
-
-	rule, err := ure.rule.EventEncode()
-	if err != nil {
-		return map[string]any{}, err
-	}
-	maps.Copy(val, rule)
-	maps.Copy(val, ure.baseRuleEvent.Encode())
-
-	return val, nil
 }
 
 type viewRuleEvent struct {
@@ -117,15 +98,22 @@ type viewRuleEvent struct {
 }
 
 func (vre viewRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleView,
-	}
-	rule, err := vre.rule.EventEncode()
+	val, err := vre.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	maps.Copy(val, rule)
 	maps.Copy(val, vre.baseRuleEvent.Encode())
+	val["operation"] = ruleView
+	return val, nil
+}
+
+func (ure updateRuleEvent) Encode() (map[string]any, error) {
+	val, err := ure.rule.EventEncode()
+	if err != nil {
+		return map[string]any{}, err
+	}
+	maps.Copy(val, ure.baseRuleEvent.Encode())
+	val["operation"] = ruleUpdate
 	return val, nil
 }
 
@@ -135,15 +123,12 @@ type updateRuleTagsEvent struct {
 }
 
 func (urte updateRuleTagsEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleUpdateTags,
-	}
-	rule, err := urte.rule.EventEncode()
+	val, err := urte.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	maps.Copy(val, rule)
 	maps.Copy(val, urte.baseRuleEvent.Encode())
+	val["operation"] = ruleUpdateTags
 	return val, nil
 }
 
@@ -153,15 +138,12 @@ type updateRuleScheduleEvent struct {
 }
 
 func (urse updateRuleScheduleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleUpdateSchedule,
-	}
-	rule, err := urse.rule.EventEncode()
+	val, err := urse.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	maps.Copy(val, rule)
 	maps.Copy(val, urse.baseRuleEvent.Encode())
+	val["operation"] = ruleUpdateSchedule
 	return val, nil
 }
 
@@ -171,15 +153,12 @@ type disableRuleEvent struct {
 }
 
 func (dre disableRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleDisable,
-	}
-	rule, err := dre.rule.EventEncode()
+	val, err := dre.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	maps.Copy(val, rule)
 	maps.Copy(val, dre.baseRuleEvent.Encode())
+	val["operation"] = ruleDisable
 	return val, nil
 }
 
@@ -189,15 +168,12 @@ type enableRuleEvent struct {
 }
 
 func (ere enableRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleEnable,
-	}
-	rule, err := ere.rule.EventEncode()
+	val, err := ere.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	maps.Copy(val, rule)
 	maps.Copy(val, ere.baseRuleEvent.Encode())
+	val["operation"] = ruleEnable
 	return val, nil
 }
 
@@ -207,10 +183,8 @@ type removeRuleEvent struct {
 }
 
 func (rre removeRuleEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": ruleRemove,
-		"id":        rre.id,
-	}
-	maps.Copy(val, rre.baseRuleEvent.Encode())
+	val := rre.baseRuleEvent.Encode()
+	val["id"] = rre.id
+	val["operation"] = ruleRemove
 	return val, nil
 }

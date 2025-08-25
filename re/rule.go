@@ -77,6 +77,8 @@ func (r Rule) EventEncode() (map[string]any, error) {
 		"name":       r.Name,
 		"created_at": r.CreatedAt.Format(time.RFC3339Nano),
 		"created_by": r.CreatedBy,
+		"schedule":   r.Schedule.EventEncode(),
+		"status":     r.Status.String(),
 	}
 
 	if r.Name != "" {
@@ -116,16 +118,6 @@ func (r Rule) EventEncode() (map[string]any, error) {
 			"type":  r.Logic.Type,
 			"value": r.Logic.Value,
 		}
-	}
-
-	if sched, err := r.Schedule.EventEncode(); err != nil {
-		return nil, err
-	} else if sched != nil {
-		m["schedule"] = sched
-	}
-
-	if r.Status != 0 {
-		m["status"] = r.Status
 	}
 
 	return m, nil
@@ -186,6 +178,50 @@ type PageMeta struct {
 	ScheduledBefore *time.Time          `json:"scheduled_before,omitempty" db:"scheduled_before"` // Filter rules scheduled before this time
 	ScheduledAfter  *time.Time          `json:"scheduled_after,omitempty" db:"scheduled_after"`   // Filter rules scheduled after this time
 	Recurring       *schedule.Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
+}
+
+// EventEncode converts a PageMeta struct to map[string]any
+func (pm PageMeta) EventEncode() map[string]any {
+	m := map[string]any{
+		"total":     pm.Total,
+		"offset":    pm.Offset,
+		"limit":     pm.Limit,
+		"status":    pm.Status.String(),
+		"domain_id": pm.Domain,
+	}
+
+	if pm.Dir != "" {
+		m["dir"] = pm.Dir
+	}
+	if pm.Name != "" {
+		m["name"] = pm.Name
+	}
+	if pm.InputChannel != "" {
+		m["input_channel"] = pm.InputChannel
+	}
+	if pm.InputTopic != nil {
+		m["input_topic"] = *pm.InputTopic
+	}
+	if pm.Scheduled != nil {
+		m["scheduled"] = *pm.Scheduled
+	}
+	if pm.OutputChannel != "" {
+		m["output_channel"] = pm.OutputChannel
+	}
+	if pm.Tag != "" {
+		m["tag"] = pm.Tag
+	}
+	if pm.ScheduledBefore != nil {
+		m["scheduled_before"] = pm.ScheduledBefore.Format(time.RFC3339Nano)
+	}
+	if pm.ScheduledAfter != nil {
+		m["scheduled_after"] = pm.ScheduledAfter.Format(time.RFC3339Nano)
+	}
+	if pm.Recurring != nil {
+		m["recurring"] = pm.Recurring.String()
+	}
+
+	return m
 }
 
 type Page struct {

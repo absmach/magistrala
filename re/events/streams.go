@@ -69,9 +69,8 @@ func (es *eventStore) ListRules(ctx context.Context, session authn.Session, pm r
 		return page, err
 	}
 	event := listRuleEvent{
-		PageMeta:  pm,
-		Session:   session,
-		requestID: middleware.GetReqID(ctx),
+		PageMeta:      pm,
+		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, ListStream, event); err != nil {
 		return page, err
@@ -101,7 +100,6 @@ func (es *eventStore) UpdateRule(ctx context.Context, session authn.Session, r r
 	}
 	event := updateRuleEvent{
 		rule:          rule,
-		operation:     ruleUpdate,
 		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, UpdateStream, event); err != nil {

@@ -36,19 +36,6 @@ var (
 	_ events.Event = (*removeRuleEvent)(nil)
 )
 
-// AllOperations is a list of all rule operations.
-var AllOperations = [...]string{
-	ruleCreate,
-	ruleList,
-	ruleView,
-	ruleUpdate,
-	ruleUpdateTags,
-	ruleUpdateSchedule,
-	ruleEnable,
-	ruleDisable,
-	ruleRemove,
-}
-
 type baseRuleEvent struct {
 	session   authn.Session
 	requestID string

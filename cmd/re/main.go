@@ -323,7 +323,6 @@ func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.R
 	if err != nil {
 		return nil, err
 	}
-
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil

@@ -180,7 +180,7 @@ type PageMeta struct {
 	Recurring       *schedule.Recurring `json:"recurring,omitempty" db:"recurring"`               // Filter by recurring type
 }
 
-// EventEncode converts a PageMeta struct to map[string]any
+// EventEncode converts a PageMeta struct to map[string]any.
 func (pm PageMeta) EventEncode() map[string]any {
 	m := map[string]any{
 		"total":     pm.Total,

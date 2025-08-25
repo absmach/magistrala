@@ -27,9 +27,7 @@ const (
 	RemoveStream         = supermqPrefix + ruleRemove
 )
 
-var (
-	_ re.Service = (*eventStore)(nil)
-)
+var _ re.Service = (*eventStore)(nil)
 
 type eventStore struct {
 	events.Publisher

@@ -10,6 +10,14 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 )
 
+const (
+	noneType    = "none"
+	hourlyType  = "hourly"
+	dailyType   = "daily"
+	weeklyType  = "weekly"
+	monthlyType = "monthly"
+)
+
 var (
 	ErrInvalidRecurringType = errors.New("invalid recurring type")
 	ErrStartDateTimeInPast  = errors.New("start_datetime must be greater than or equal to current time")
@@ -29,15 +37,15 @@ const (
 func (rt Recurring) String() string {
 	switch rt {
 	case Hourly:
-		return "hourly"
+		return hourlyType
 	case Daily:
-		return "daily"
+		return dailyType
 	case Weekly:
-		return "weekly"
+		return weeklyType
 	case Monthly:
-		return "monthly"
+		return monthlyType
 	default:
-		return "none"
+		return noneType
 	}
 }
 
@@ -52,15 +60,15 @@ func (rt *Recurring) UnmarshalJSON(data []byte) error {
 	}
 
 	switch s {
-	case "hourly":
+	case hourlyType:
 		*rt = Hourly
-	case "daily":
+	case dailyType:
 		*rt = Daily
-	case "weekly":
+	case weeklyType:
 		*rt = Weekly
-	case "monthly":
+	case monthlyType:
 		*rt = Monthly
-	case "none":
+	case noneType:
 		*rt = None
 	default:
 		return ErrInvalidRecurringType
@@ -148,7 +156,7 @@ func (s Schedule) NextDue() time.Time {
 	}
 }
 
-// EventEncode converts a schedule.Schedule struct to map[string]interface{}
+// EventEncode converts a schedule.Schedule struct to map[string]interface{}.
 func (s Schedule) EventEncode() (map[string]interface{}, error) {
 	m := map[string]interface{}{
 		"start_datetime":   s.StartDateTime.Format(time.RFC3339),
@@ -159,7 +167,7 @@ func (s Schedule) EventEncode() (map[string]interface{}, error) {
 	return m, nil
 }
 
-// EventDecode converts a map[string]interface{} to Schedule struct
+// EventDecode converts a map[string]interface{} to Schedule struct.
 func (s *Schedule) EventDecode(m map[string]interface{}) error {
 	if startDateTime, ok := m["start_datetime"].(string); ok {
 		t, err := time.Parse(time.RFC3339, startDateTime)
@@ -176,16 +184,15 @@ func (s *Schedule) EventDecode(m map[string]interface{}) error {
 		}
 		s.Time = t
 	}
-
 	if recurring, ok := m["recurring"].(string); ok {
 		switch recurring {
-		case "hourly":
+		case hourlyType:
 			s.Recurring = Hourly
-		case "daily":
+		case dailyType:
 			s.Recurring = Daily
-		case "weekly":
+		case weeklyType:
 			s.Recurring = Weekly
-		case "monthly":
+		case monthlyType:
 			s.Recurring = Monthly
 		default:
 			s.Recurring = None

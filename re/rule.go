@@ -70,7 +70,7 @@ type Rule struct {
 	UpdatedBy    string            `json:"updated_by"`
 }
 
-// EventEncode converts a Rule struct to map[string]interface{} at event producer
+// EventEncode converts a Rule struct to map[string]interface{} at event producer.
 func (r Rule) EventEncode() (map[string]interface{}, error) {
 	m := map[string]interface{}{
 		"id":         r.ID,
@@ -151,7 +151,7 @@ func (r Rule) EventEncode() (map[string]interface{}, error) {
 	return m, nil
 }
 
-// EventDecode decodes a map[string]interface{} into the Rule at event receiver
+// EventDecode decodes a map[string]interface{} into the Rule at event receiver.
 func (r *Rule) EventDecode(m map[string]interface{}) error {
 	if v, ok := m["id"].(string); ok {
 		r.ID = v

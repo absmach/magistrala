@@ -64,13 +64,12 @@ type createRuleEvent struct {
 }
 
 func (cre createRuleEvent) Encode() (map[string]any, error) {
-	rule, err := cre.rule.EventEncode()
+	val, err := cre.rule.EventEncode()
 	if err != nil {
 		return map[string]any{}, err
 	}
-	val := cre.baseRuleEvent.Encode()
+	maps.Copy(val, cre.baseRuleEvent.Encode())
 	val["operation"] = ruleCreate
-	maps.Copy(val, rule)
 	return val, nil
 }
 

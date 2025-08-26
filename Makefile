@@ -116,9 +116,6 @@ install:
 		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
 	done
 
-mocks: $(MOCKERY)
-	@$(MOCKERY) --config ./tools/config/.mockery.yaml
-
 $(MOCKERY):
 	@mkdir -p $(GOBIN)
 	@mkdir -p mockery

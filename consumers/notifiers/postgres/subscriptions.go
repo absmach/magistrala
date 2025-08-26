@@ -66,7 +66,7 @@ func (repo subscriptionsRepo) Retrieve(ctx context.Context, id string) (notifier
 
 func (repo subscriptionsRepo) RetrieveAll(ctx context.Context, pm notifiers.PageMetadata) (notifiers.Page, error) {
 	q := `SELECT id, owner_id, contact, topic FROM subscriptions`
-	args := make(map[string]interface{})
+	args := make(map[string]any)
 	if pm.Topic != "" {
 		args["topic"] = pm.Topic
 	}
@@ -132,7 +132,7 @@ func (repo subscriptionsRepo) Remove(ctx context.Context, id string) error {
 	return nil
 }
 
-func total(ctx context.Context, db Database, query string, params interface{}) (uint, error) {
+func total(ctx context.Context, db Database, query string, params any) (uint, error) {
 	rows, err := db.NamedQueryContext(ctx, query, params)
 	if err != nil {
 		return 0, err

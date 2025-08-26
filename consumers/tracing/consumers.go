@@ -66,7 +66,7 @@ func NewBlocking(tracer trace.Tracer, consumerBlock consumers.BlockingConsumer, 
 }
 
 // ConsumeBlocking  traces consume operations for message/s consumed.
-func (tm *tracingMiddlewareBlock) ConsumeBlocking(ctx context.Context, messages interface{}) error {
+func (tm *tracingMiddlewareBlock) ConsumeBlocking(ctx context.Context, messages any) error {
 	var span trace.Span
 	switch m := messages.(type) {
 	case smqjson.Messages:
@@ -86,7 +86,7 @@ func (tm *tracingMiddlewareBlock) ConsumeBlocking(ctx context.Context, messages 
 }
 
 // ConsumeAsync traces consume operations for message/s consumed.
-func (tm *tracingMiddlewareAsync) ConsumeAsync(ctx context.Context, messages interface{}) {
+func (tm *tracingMiddlewareAsync) ConsumeAsync(ctx context.Context, messages any) {
 	var span trace.Span
 	switch m := messages.(type) {
 	case smqjson.Messages:

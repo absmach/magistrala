@@ -22,10 +22,10 @@ type database struct {
 
 // Database provides a database interface.
 type Database interface {
-	NamedExecContext(context.Context, string, interface{}) (sql.Result, error)
-	QueryRowxContext(context.Context, string, ...interface{}) *sqlx.Row
-	NamedQueryContext(context.Context, string, interface{}) (*sqlx.Rows, error)
-	GetContext(context.Context, interface{}, string, ...interface{}) error
+	NamedExecContext(context.Context, string, any) (sql.Result, error)
+	QueryRowxContext(context.Context, string, ...any) *sqlx.Row
+	NamedQueryContext(context.Context, string, any) (*sqlx.Rows, error)
+	GetContext(context.Context, any, string, ...any) error
 }
 
 // NewDatabase creates a SubscriptionsDatabase instance.
@@ -36,25 +36,25 @@ func NewDatabase(db *sqlx.DB, tracer trace.Tracer) Database {
 	}
 }
 
-func (dm database) NamedExecContext(ctx context.Context, query string, args interface{}) (sql.Result, error) {
+func (dm database) NamedExecContext(ctx context.Context, query string, args any) (sql.Result, error) {
 	ctx, span := dm.addSpanTags(ctx, "NamedExecContext", query)
 	defer span.End()
 	return dm.db.NamedExecContext(ctx, query, args)
 }
 
-func (dm database) QueryRowxContext(ctx context.Context, query string, args ...interface{}) *sqlx.Row {
+func (dm database) QueryRowxContext(ctx context.Context, query string, args ...any) *sqlx.Row {
 	ctx, span := dm.addSpanTags(ctx, "QueryRowxContext", query)
 	defer span.End()
 	return dm.db.QueryRowxContext(ctx, query, args...)
 }
 
-func (dm database) NamedQueryContext(ctx context.Context, query string, args interface{}) (*sqlx.Rows, error) {
+func (dm database) NamedQueryContext(ctx context.Context, query string, args any) (*sqlx.Rows, error) {
 	ctx, span := dm.addSpanTags(ctx, "NamedQueryContext", query)
 	defer span.End()
 	return dm.db.NamedQueryContext(ctx, query, args)
 }
 
-func (dm database) GetContext(ctx context.Context, dest interface{}, query string, args ...interface{}) error {
+func (dm database) GetContext(ctx context.Context, dest any, query string, args ...any) error {
 	ctx, span := dm.addSpanTags(ctx, "GetContext", query)
 	defer span.End()
 	return dm.db.GetContext(ctx, dest, query, args...)

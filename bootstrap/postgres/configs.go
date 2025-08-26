@@ -478,8 +478,8 @@ func (cr configRepository) DisconnectClient(ctx context.Context, channelID, clie
 	return nil
 }
 
-func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootstrap.Filter) (string, []interface{}) {
-	params := []interface{}{}
+func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootstrap.Filter) (string, []any) {
+	params := []any{}
 	queries := []string{}
 
 	if len(clientIDs) != 0 {

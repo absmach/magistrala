@@ -61,7 +61,7 @@ func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID
 	return lm.svc.Cert(ctx, domainID, token, clientID, duration)
 }
 
-func (lm *loggingMiddleware) Mapping(ctx context.Context, token string) (res map[string]interface{}, err error) {
+func (lm *loggingMiddleware) Mapping(ctx context.Context, token string) (res map[string]any, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

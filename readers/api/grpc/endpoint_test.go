@@ -61,20 +61,20 @@ func TestReadMessages(t *testing.T) {
 			Limit:  10,
 		},
 		Messages: []readers.Message{
-			map[string]interface{}{
+			map[string]any{
 				"channel":   "testChannel",
 				"created":   int64(123456789),
 				"subtopic":  "testSubtopic",
 				"publisher": "testPublisher",
 				"protocol":  "testProtocol",
-				"payload": map[string]interface{}{
+				"payload": map[string]any{
 					"temp": 23.5,
 				},
 			},
 		},
 	}
 
-	expectedPayload, err := json.Marshal(tmp.Messages[0].(map[string]interface{})["payload"])
+	expectedPayload, err := json.Marshal(tmp.Messages[0].(map[string]any)["payload"])
 	require.NoError(t, err)
 
 	expectedRes := &grpcReadersV1.ReadMessagesRes{

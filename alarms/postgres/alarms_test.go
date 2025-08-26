@@ -48,7 +48,7 @@ func TestCreateAlarm(t *testing.T) {
 		Status:      0,
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"key": "value",
 		},
 	}
@@ -85,7 +85,7 @@ func TestCreateAlarm(t *testing.T) {
 				AssigneeID:  generateUUID(&testing.T{}),
 				CreatedAt:   time.Now().Local(),
 
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"key": "value",
 				},
 			},
@@ -108,7 +108,7 @@ func TestCreateAlarm(t *testing.T) {
 				AssigneeID:  generateUUID(&testing.T{}),
 				CreatedAt:   time.Now().Local(),
 
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"key": make(chan int),
 				},
 			},
@@ -166,7 +166,7 @@ func TestUpdateAlarm(t *testing.T) {
 		Status:      0,
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"key": "value",
 		},
 	}
@@ -190,7 +190,7 @@ func TestUpdateAlarm(t *testing.T) {
 				UpdatedBy:  generateUUID(&testing.T{}),
 				ResolvedAt: time.Now().Local(),
 				ResolvedBy: generateUUID(&testing.T{}),
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"key": "value",
 				},
 			},
@@ -212,7 +212,7 @@ func TestUpdateAlarm(t *testing.T) {
 				DomainID:   generateUUID(&testing.T{}),
 				AssigneeID: strings.Repeat("a", 40),
 				CreatedAt:  time.Now().Local(),
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"key": "value",
 				},
 			},
@@ -265,7 +265,7 @@ func TestViewAlarm(t *testing.T) {
 		Status:      0,
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"key": "value",
 		},
 	}
@@ -335,7 +335,7 @@ func TestListAlarms(t *testing.T) {
 			Status:      0,
 			AssigneeID:  generateUUID(&testing.T{}),
 			CreatedAt:   time.Now().Local(),
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"key": "value",
 			},
 		}
@@ -430,7 +430,7 @@ func TestDeleteAlarm(t *testing.T) {
 		Status:      0,
 		AssigneeID:  generateUUID(&testing.T{}),
 		CreatedAt:   time.Now().Local(),
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"key": "value",
 		},
 	}

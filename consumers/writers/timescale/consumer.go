@@ -38,7 +38,7 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &timescaleRepo{db: db}
 }
 
-func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
+func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message any) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
 		return tr.saveJSON(ctx, m)
@@ -51,7 +51,7 @@ func (tr *timescaleRepo) ConsumeBlocking(ctx context.Context, message interface{
 	}
 }
 
-func (tr timescaleRepo) saveSenml(ctx context.Context, messages interface{}) (err error) {
+func (tr timescaleRepo) saveSenml(ctx context.Context, messages any) (err error) {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage

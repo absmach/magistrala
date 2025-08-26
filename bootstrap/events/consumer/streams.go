@@ -89,14 +89,14 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	return nil
 }
 
-func decodeRemoveClient(event map[string]interface{}) removeEvent {
+func decodeRemoveClient(event map[string]any) removeEvent {
 	return removeEvent{
 		id: events.Read(event, "id", ""),
 	}
 }
 
-func decodeUpdateChannel(event map[string]interface{}) updateChannelEvent {
-	metadata := events.Read(event, "metadata", map[string]interface{}{})
+func decodeUpdateChannel(event map[string]any) updateChannelEvent {
+	metadata := events.Read(event, "metadata", map[string]any{})
 
 	return updateChannelEvent{
 		id:        events.Read(event, "id", ""),
@@ -107,13 +107,13 @@ func decodeUpdateChannel(event map[string]interface{}) updateChannelEvent {
 	}
 }
 
-func decodeRemoveChannel(event map[string]interface{}) removeEvent {
+func decodeRemoveChannel(event map[string]any) removeEvent {
 	return removeEvent{
 		id: events.Read(event, "id", ""),
 	}
 }
 
-func decodeConnectClient(event map[string]interface{}) connectionEvent {
+func decodeConnectClient(event map[string]any) connectionEvent {
 	if events.Read(event, "memberKind", "") != memberKind && events.Read(event, "relation", "") != relation {
 		return connectionEvent{}
 	}
@@ -124,7 +124,7 @@ func decodeConnectClient(event map[string]interface{}) connectionEvent {
 	}
 }
 
-func decodeDisconnectClient(event map[string]interface{}) connectionEvent {
+func decodeDisconnectClient(event map[string]any) connectionEvent {
 	if events.Read(event, "memberKind", "") != memberKind && events.Read(event, "relation", "") != relation {
 		return connectionEvent{}
 	}

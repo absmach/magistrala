@@ -15,7 +15,7 @@ const SeverityMax uint8 = 100
 
 var ErrInvalidSeverity = errors.New("invalid severity. Must be between 0 and 100")
 
-type Metadata map[string]interface{}
+type Metadata map[string]any
 
 // Alarm represents an alarm instance.
 type Alarm struct {

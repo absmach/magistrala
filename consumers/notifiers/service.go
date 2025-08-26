@@ -103,7 +103,7 @@ func (ns *notifierService) RemoveSubscription(ctx context.Context, token, id str
 	return ns.subs.Remove(ctx, id)
 }
 
-func (ns *notifierService) ConsumeBlocking(ctx context.Context, message interface{}) error {
+func (ns *notifierService) ConsumeBlocking(ctx context.Context, message any) error {
 	msg, ok := message.(*messaging.Message)
 	if !ok {
 		return ErrMessage
@@ -136,7 +136,7 @@ func (ns *notifierService) ConsumeBlocking(ctx context.Context, message interfac
 	return nil
 }
 
-func (ns *notifierService) ConsumeAsync(ctx context.Context, message interface{}) {
+func (ns *notifierService) ConsumeAsync(ctx context.Context, message any) {
 	msg, ok := message.(*messaging.Message)
 	if !ok {
 		ns.errCh <- ErrMessage

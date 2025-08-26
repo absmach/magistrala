@@ -67,7 +67,7 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 	return mux
 }
 
-func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeList(_ context.Context, r *http.Request) (any, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -178,7 +178,7 @@ func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func encodeResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeResponse(_ context.Context, w http.ResponseWriter, response any) error {
 	w.Header().Set("Content-Type", contentType)
 
 	if ar, ok := response.(supermq.Response); ok {

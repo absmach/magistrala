@@ -156,7 +156,7 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 
 func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (alarms.Alarm, error) {
 	query := `SELECT * FROM alarms WHERE id = :id AND domain_id = :domain_id;`
-	row, err := r.db.NamedQueryContext(ctx, query, map[string]interface{}{
+	row, err := r.db.NamedQueryContext(ctx, query, map[string]any{
 		"id": alarmID, "domain_id": domainID,
 	})
 	if err != nil {
@@ -245,7 +245,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 
 func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 	query := `DELETE FROM alarms WHERE id = :id;`
-	result, err := r.db.NamedExecContext(ctx, query, map[string]interface{}{"id": id})
+	result, err := r.db.NamedExecContext(ctx, query, map[string]any{"id": id})
 	if err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
@@ -403,7 +403,7 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		resolvedAt = dbr.ResolvedAt.Time
 	}
 
-	var metadata map[string]interface{}
+	var metadata map[string]any
 	if len(dbr.Metadata) > 0 {
 		err := json.Unmarshal(dbr.Metadata, &metadata)
 		if err != nil {

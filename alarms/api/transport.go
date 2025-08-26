@@ -71,7 +71,7 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	return mux
 }
 
-func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListAlarmsReq(_ context.Context, r *http.Request) (any, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -185,7 +185,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (interface{}, error
 	}, nil
 }
 
-func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeAlarmReq(_ context.Context, r *http.Request) (any, error) {
 	return alarmReq{
 		Alarm: alarms.Alarm{
 			ID: chi.URLParam(r, "alarmID"),
@@ -193,7 +193,7 @@ func decodeAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
 	}, nil
 }
 
-func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return alarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}

@@ -256,7 +256,7 @@ func setConfigValue(key, value string) error {
 		}
 	}
 
-	configKeyToField := map[string]interface{}{
+	configKeyToField := map[string]any{
 		"channels_url":     &config.Remotes.ChannelsURL,
 		"clients_url":      &config.Remotes.ClientsURL,
 		"groups_url":       &config.Remotes.GroupsURL,

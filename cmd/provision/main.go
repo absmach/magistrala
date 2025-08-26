@@ -129,7 +129,7 @@ func loadConfig() (provision.Config, error) {
 		return provision.Config{}, errors.New("Can't auto whitelist if auto config save is off")
 	}
 
-	var content map[string]interface{}
+	var content map[string]any
 	if cfg.BSContent != "" {
 		if err := json.Unmarshal([]byte(cfg.BSContent), &content); err != nil {
 			return provision.Config{}, errFailedToReadBootstrapContent
@@ -141,23 +141,23 @@ func loadConfig() (provision.Config, error) {
 	cfg.Channels = []channels.Channel{
 		{
 			Name:     "control-channel",
-			Metadata: map[string]interface{}{"type": "control"},
+			Metadata: map[string]any{"type": "control"},
 		}, {
 			Name:     "data-channel",
-			Metadata: map[string]interface{}{"type": "data"},
+			Metadata: map[string]any{"type": "data"},
 		},
 	}
 	cfg.Clients = []clients.Client{
 		{
 			Name:     "client",
-			Metadata: map[string]interface{}{"external_id": "xxxxxx"},
+			Metadata: map[string]any{"external_id": "xxxxxx"},
 		},
 	}
 
 	return cfg, nil
 }
 
-func mergeConfigs(dst, src interface{}) interface{} {
+func mergeConfigs(dst, src any) any {
 	d := reflect.ValueOf(dst).Elem()
 	s := reflect.ValueOf(src).Elem()
 

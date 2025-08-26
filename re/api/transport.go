@@ -110,7 +110,7 @@ func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, log
 	return mux
 }
 
-func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeAddRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -121,12 +121,12 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (interface{}, erro
 	return addRuleReq{Rule: rule}, nil
 }
 
-func decodeViewRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeViewRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
 	return viewRuleReq{id: id}, nil
 }
 
-func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -139,7 +139,7 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (interface{}, e
 	return updateRuleReq{Rule: rule}, nil
 }
 
-func decodeUpdateRuleTags(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateRuleTags(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -154,7 +154,7 @@ func decodeUpdateRuleTags(_ context.Context, r *http.Request) (interface{}, erro
 	return req, nil
 }
 
-func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -169,7 +169,7 @@ func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (interf
 	return req, nil
 }
 
-func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (any, error) {
 	req := updateRuleStatusReq{
 		id: chi.URLParam(r, ruleIdKey),
 	}
@@ -177,7 +177,7 @@ func decodeUpdateRuleStatusRequest(_ context.Context, r *http.Request) (interfac
 	return req, nil
 }
 
-func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListRulesRequest(_ context.Context, r *http.Request) (any, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -229,7 +229,7 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (interface{}, er
 	}, nil
 }
 
-func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil

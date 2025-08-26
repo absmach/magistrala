@@ -133,7 +133,7 @@ func MakeHandler(svc reports.Service, authn mgauthn.Authentication, mux *chi.Mux
 	return mux
 }
 
-func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeGenerateReportRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -157,7 +157,7 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (interface{
 	return req, nil
 }
 
-func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -168,12 +168,12 @@ func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (interface
 	return addReportConfigReq{ReportConfig: config}, nil
 }
 
-func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, reportIdKey)
 	return viewReportConfigReq{ID: id}, nil
 }
 
-func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -185,7 +185,7 @@ func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (interf
 	return updateReportConfigReq{ReportConfig: config}, nil
 }
 
-func decodeUpdateReportScheduleRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateReportScheduleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -200,19 +200,19 @@ func decodeUpdateReportScheduleRequest(_ context.Context, r *http.Request) (inte
 	return req, nil
 }
 
-func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateReportStatusRequest(_ context.Context, r *http.Request) (any, error) {
 	req := updateReportStatusReq{
 		id: chi.URLParam(r, reportIdKey),
 	}
 	return req, nil
 }
 
-func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, reportIdKey)
 	return deleteReportConfigReq{ID: id}, nil
 }
 
-func decodeUpdateReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateReportTemplateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -227,15 +227,15 @@ func decodeUpdateReportTemplateRequest(_ context.Context, r *http.Request) (inte
 	return req, nil
 }
 
-func decodeGetReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeGetReportTemplateRequest(_ context.Context, r *http.Request) (any, error) {
 	return getReportTemplateReq{ID: chi.URLParam(r, reportIdKey)}, nil
 }
 
-func decodeDeleteReportTemplateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeDeleteReportTemplateRequest(_ context.Context, r *http.Request) (any, error) {
 	return deleteReportTemplateReq{ID: chi.URLParam(r, reportIdKey)}, nil
 }
 
-func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -276,7 +276,7 @@ func decodeListReportsConfigRequest(_ context.Context, r *http.Request) (interfa
 	}, nil
 }
 
-func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, response any) error {
 	switch resp := response.(type) {
 	case downloadReportResp:
 		w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", resp.File.Name))

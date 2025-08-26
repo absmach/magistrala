@@ -128,9 +128,9 @@ var (
 )
 
 type readerChannelRes struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Metadata any    `json:"metadata,omitempty"`
 }
 
 func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, *authnmocks.Authentication) {
@@ -196,7 +196,7 @@ func TestAddBootstrap(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
-				Channels: map[string]interface{}{
+				Channels: map[string]any{
 					"channel1": make(chan int),
 				},
 				ExternalID:   externalId,
@@ -294,7 +294,7 @@ func TestListBootstraps(t *testing.T) {
 	unmarshalableConfig.Channels = []bootstrap.Channel{
 		{
 			ID: channel1Id,
-			Metadata: map[string]interface{}{
+			Metadata: map[string]any{
 				"test": make(chan int),
 			},
 		},
@@ -366,7 +366,7 @@ func TestListBootstraps(t *testing.T) {
 			pageMeta: sdk.PageMetadata{
 				Offset: 1,
 				Limit:  10,
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"test": make(chan int),
 				},
 			},
@@ -598,7 +598,7 @@ func TestViewBootstrap(t *testing.T) {
 				Channels: []bootstrap.Channel{
 					{
 						ID: channel1Id,
-						Metadata: map[string]interface{}{
+						Metadata: map[string]any{
 							"test": make(chan int),
 						},
 					},
@@ -699,7 +699,7 @@ func TestUpdateBootstrap(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			cfg: sdk.BootstrapConfig{
-				Channels: map[string]interface{}{
+				Channels: map[string]any{
 					"channel1": make(chan int),
 				},
 				ExternalID:   externalId,
@@ -1131,7 +1131,7 @@ func TestBoostrap(t *testing.T) {
 		externalKey string
 		svcResp     bootstrap.Config
 		svcErr      error
-		readerResp  interface{}
+		readerResp  any
 		readerErr   error
 		response    sdk.BootstrapConfig
 		err         errors.SDKError

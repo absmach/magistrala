@@ -50,7 +50,7 @@ const (
 
 var (
 	encKey          = []byte("1234567891011121")
-	metadata        = map[string]interface{}{"meta": "data"}
+	metadata        = map[string]any{"meta": "data"}
 	addExternalID   = testsutil.GenerateUUID(&testing.T{})
 	addExternalKey  = testsutil.GenerateUUID(&testing.T{})
 	addClientID     = testsutil.GenerateUUID(&testing.T{})
@@ -184,7 +184,7 @@ func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authent
 	return httptest.NewServer(mux), svc, authn
 }
 
-func toJSON(data interface{}) string {
+func toJSON(data any) string {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return ""
@@ -1394,9 +1394,9 @@ func TestChangeState(t *testing.T) {
 }
 
 type channel struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Metadata any    `json:"metadata,omitempty"`
 }
 
 type config struct {

@@ -29,8 +29,8 @@ var (
 		ExternalKey:  "external-key",
 		DomainID:     testsutil.GenerateUUID(&testing.T{}),
 		Channels: []bootstrap.Channel{
-			{ID: "1", Name: "name 1", Metadata: map[string]interface{}{"meta": 1.0}},
-			{ID: "2", Name: "name 2", Metadata: map[string]interface{}{"meta": 2.0}},
+			{ID: "1", Name: "name 1", Metadata: map[string]any{"meta": 1.0}},
+			{ID: "2", Name: "name 2", Metadata: map[string]any{"meta": 2.0}},
 		},
 		Content: "content",
 		State:   bootstrap.Inactive,
@@ -669,7 +669,7 @@ func TestUpdateChannel(t *testing.T) {
 	update := bootstrap.Channel{
 		ID:       id,
 		Name:     "update name",
-		Metadata: map[string]interface{}{"update": "metadata update"},
+		Metadata: map[string]any{"update": "metadata update"},
 	}
 	err = repo.UpdateChannel(context.Background(), update)
 	assert.Nil(t, err, fmt.Sprintf("updating config expected to succeed: %s.\n", err))

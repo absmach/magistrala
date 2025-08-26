@@ -36,8 +36,8 @@ func (temp ReportTemplate) Validate() error {
 	// Validate template syntax using Go's template parser
 	tmpl := template.New("validate").Funcs(template.FuncMap{
 		"add":         func(a, b int) int { return a + b },
-		"formatTime":  func(t interface{}) string { return "" },
-		"formatValue": func(v interface{}) string { return "" },
+		"formatTime":  func(t any) string { return "" },
+		"formatValue": func(v any) string { return "" },
 	})
 
 	parsed, err := tmpl.Parse(templateStr)

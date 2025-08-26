@@ -36,10 +36,10 @@ type ServiceConf struct {
 
 // Bootstrap represetns the Bootstrap config.
 type Bootstrap struct {
-	X509Provision bool                   `toml:"x509_provision" env:"SMQ_PROVISION_X509_PROVISIONING"      envDefault:"false"`
-	Provision     bool                   `toml:"provision"      env:"SMQ_PROVISION_BS_CONFIG_PROVISIONING" envDefault:"true"`
-	AutoWhiteList bool                   `toml:"autowhite_list" env:"SMQ_PROVISION_BS_AUTO_WHITELIST"      envDefault:"true"`
-	Content       map[string]interface{} `toml:"content"`
+	X509Provision bool           `toml:"x509_provision" env:"SMQ_PROVISION_X509_PROVISIONING"      envDefault:"false"`
+	Provision     bool           `toml:"provision"      env:"SMQ_PROVISION_BS_CONFIG_PROVISIONING" envDefault:"true"`
+	AutoWhiteList bool           `toml:"autowhite_list" env:"SMQ_PROVISION_BS_AUTO_WHITELIST"      envDefault:"true"`
+	Content       map[string]any `toml:"content"`
 }
 
 // Gateway represetns the Gateway config.

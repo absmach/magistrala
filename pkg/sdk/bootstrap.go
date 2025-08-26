@@ -35,17 +35,17 @@ const (
 // MGKey is key of corresponding SuperMQ Client.
 // MGChannels is a list of SuperMQ Channels corresponding SuperMQ Client connects to.
 type BootstrapConfig struct {
-	Channels     interface{} `json:"channels,omitempty"`
-	ExternalID   string      `json:"external_id,omitempty"`
-	ExternalKey  string      `json:"external_key,omitempty"`
-	ClientID     string      `json:"client_id,omitempty"`
-	ClientSecret string      `json:"client_secret,omitempty"`
-	Name         string      `json:"name,omitempty"`
-	ClientCert   string      `json:"client_cert,omitempty"`
-	ClientKey    string      `json:"client_key,omitempty"`
-	CACert       string      `json:"ca_cert,omitempty"`
-	Content      string      `json:"content,omitempty"`
-	State        int         `json:"state,omitempty"`
+	Channels     any    `json:"channels,omitempty"`
+	ExternalID   string `json:"external_id,omitempty"`
+	ExternalKey  string `json:"external_key,omitempty"`
+	ClientID     string `json:"client_id,omitempty"`
+	ClientSecret string `json:"client_secret,omitempty"`
+	Name         string `json:"name,omitempty"`
+	ClientCert   string `json:"client_cert,omitempty"`
+	ClientKey    string `json:"client_key,omitempty"`
+	CACert       string `json:"ca_cert,omitempty"`
+	Content      string `json:"content,omitempty"`
+	State        int    `json:"state,omitempty"`
 }
 
 func (ts *BootstrapConfig) UnmarshalJSON(data []byte) error {

@@ -42,7 +42,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
     WHERE %s ORDER BY %s DESC
 	LIMIT :limit OFFSET :offset;`, format, cond, order)
 
-	params := map[string]interface{}{
+	params := map[string]any{
 		"channel":      chanID,
 		"limit":        rpm.Limit,
 		"offset":       rpm.Offset,
@@ -117,7 +117,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	condition := `channel = :channel`
 
-	var query map[string]interface{}
+	var query map[string]any
 	meta, err := json.Marshal(rpm)
 	if err != nil {
 		return condition
@@ -180,17 +180,17 @@ type jsonMessage struct {
 	Payload   []byte `db:"payload"`
 }
 
-func (msg jsonMessage) toMap() (map[string]interface{}, error) {
-	ret := map[string]interface{}{
+func (msg jsonMessage) toMap() (map[string]any, error) {
+	ret := map[string]any{
 		"id":        msg.ID,
 		"channel":   msg.Channel,
 		"created":   msg.Created,
 		"subtopic":  msg.Subtopic,
 		"publisher": msg.Publisher,
 		"protocol":  msg.Protocol,
-		"payload":   map[string]interface{}{},
+		"payload":   map[string]any{},
 	}
-	pld := make(map[string]interface{})
+	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {
 		return nil, err
 	}

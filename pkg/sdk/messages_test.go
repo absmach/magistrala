@@ -190,7 +190,7 @@ func TestReadMessages(t *testing.T) {
 				PageMetadata: sdk.PageMetadata{
 					Offset: 0,
 					Limit:  10,
-					Metadata: map[string]interface{}{
+					Metadata: map[string]any{
 						"key": make(chan int),
 					},
 				},

@@ -81,7 +81,7 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 	return mux
 }
 
-func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeCreate(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -94,7 +94,7 @@ func decodeCreate(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeSubscription(_ context.Context, r *http.Request) (any, error) {
 	req := subReq{
 		id:    chi.URLParam(r, "subID"),
 		token: apiutil.ExtractBearerToken(r),
@@ -103,7 +103,7 @@ func decodeSubscription(_ context.Context, r *http.Request) (interface{}, error)
 	return req, nil
 }
 
-func decodeList(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeList(_ context.Context, r *http.Request) (any, error) {
 	req := listSubsReq{token: apiutil.ExtractBearerToken(r)}
 	vals := r.URL.Query()[topicKey]
 	if len(vals) > 0 {

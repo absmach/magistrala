@@ -74,7 +74,7 @@ func newServer() (*httptest.Server, *mocks.Service) {
 	return httptest.NewServer(mux), svc
 }
 
-func toJSON(data interface{}) string {
+func toJSON(data any) string {
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return ""

@@ -18,7 +18,7 @@ type Alarm struct {
 	RuleID    string              `json:"rule_id"`
 }
 
-func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val any) error {
 	data, err := json.Marshal(val)
 	if err != nil {
 		return err

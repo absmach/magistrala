@@ -20,7 +20,7 @@ type Email struct {
 	Emailer emailer.Emailer `json:"-"`
 }
 
-func (e *Email) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (e *Email) Run(ctx context.Context, msg *messaging.Message, val any) error {
 	templData := templateVal{
 		Message: msg,
 		Result:  val,

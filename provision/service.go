@@ -61,7 +61,7 @@ type Service interface {
 	// Mapping returns current configuration used for provision
 	// useful for using in ui to create configuration that matches
 	// one created with Provision method.
-	Mapping(ctx context.Context, token string) (map[string]interface{}, error)
+	Mapping(ctx context.Context, token string) (map[string]any, error)
 
 	// Certs creates certificate for clients that communicate over mTLS
 	// A duration string is a possibly signed sequence of decimal numbers,
@@ -97,14 +97,14 @@ func New(cfg Config, mgsdk sdk.SDK, logger *slog.Logger) Service {
 }
 
 // Mapping retrieves current configuration.
-func (ps *provisionService) Mapping(ctx context.Context, token string) (map[string]interface{}, error) {
+func (ps *provisionService) Mapping(ctx context.Context, token string) (map[string]any, error) {
 	pm := smqSDK.PageMetadata{
 		Offset: uint64(offset),
 		Limit:  uint64(limit),
 	}
 
 	if _, err := ps.sdk.Users(ctx, pm, token); err != nil {
-		return map[string]interface{}{}, errors.Wrap(ErrUnauthorized, err)
+		return map[string]any{}, errors.Wrap(ErrUnauthorized, err)
 	}
 
 	return ps.conf.Bootstrap.Content, nil

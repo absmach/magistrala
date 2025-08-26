@@ -23,7 +23,7 @@ import (
 
 var _ SDK = (*mgSDK)(nil)
 
-type Metadata map[string]interface{}
+type Metadata map[string]any
 
 type PageMetadata struct {
 	Total    uint64   `json:"total"`

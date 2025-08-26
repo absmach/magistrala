@@ -32,16 +32,16 @@ type Config struct {
 
 // Channel represents SuperMQ channel corresponding SuperMQ Client is connected to.
 type Channel struct {
-	ID          string                 `json:"id"`
-	Name        string                 `json:"name,omitempty"`
-	Metadata    map[string]interface{} `json:"metadata,omitempty"`
-	DomainID    string                 `json:"domain_id"`
-	Parent      string                 `json:"parent_id,omitempty"`
-	Description string                 `json:"description,omitempty"`
-	CreatedAt   time.Time              `json:"created_at"`
-	UpdatedAt   time.Time              `json:"updated_at,omitempty"`
-	UpdatedBy   string                 `json:"updated_by,omitempty"`
-	Status      clients.Status         `json:"status"`
+	ID          string         `json:"id"`
+	Name        string         `json:"name,omitempty"`
+	Metadata    map[string]any `json:"metadata,omitempty"`
+	DomainID    string         `json:"domain_id"`
+	Parent      string         `json:"parent_id,omitempty"`
+	Description string         `json:"description,omitempty"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at,omitempty"`
+	UpdatedBy   string         `json:"updated_by,omitempty"`
+	Status      clients.Status `json:"status"`
 }
 
 // Filter is used for the search filters.

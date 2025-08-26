@@ -12,7 +12,7 @@ type removeEvent struct {
 type updateChannelEvent struct {
 	id        string
 	name      string
-	metadata  map[string]interface{}
+	metadata  map[string]any
 	updatedAt time.Time
 	updatedBy string
 }

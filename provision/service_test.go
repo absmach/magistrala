@@ -29,7 +29,7 @@ func TestMapping(t *testing.T) {
 	cases := []struct {
 		desc    string
 		token   string
-		content map[string]interface{}
+		content map[string]any
 		sdkerr  error
 		err     error
 	}{
@@ -43,7 +43,7 @@ func TestMapping(t *testing.T) {
 		{
 			desc:    "invalid token",
 			token:   "invalid",
-			content: map[string]interface{}{},
+			content: map[string]any{},
 			sdkerr:  errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, 401),
 			err:     provision.ErrUnauthorized,
 		},

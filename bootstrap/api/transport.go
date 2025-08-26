@@ -128,7 +128,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bo
 	return r
 }
 
-func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeAddRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -143,7 +143,7 @@ func decodeAddRequest(_ context.Context, r *http.Request) (interface{}, error) {
 	return req, nil
 }
 
-func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -158,7 +158,7 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (interface{}, error
 	return req, nil
 }
 
-func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -173,7 +173,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (interface{}, e
 	return req, nil
 }
 
-func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeUpdateConnRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -189,7 +189,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (interface{}, e
 	return req, nil
 }
 
-func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeListRequest(_ context.Context, r *http.Request) (any, error) {
 	o, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -214,7 +214,7 @@ func decodeListRequest(_ context.Context, r *http.Request) (interface{}, error) 
 	return req, nil
 }
 
-func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeBootstrapRequest(_ context.Context, r *http.Request) (any, error) {
 	req := bootstrapReq{
 		id:  chi.URLParam(r, "externalID"),
 		key: apiutil.ExtractClientSecret(r),
@@ -223,7 +223,7 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (interface{}, er
 	return req, nil
 }
 
-func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeStateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -239,7 +239,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (interface{}, error)
 	return req, nil
 }
 
-func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeEntityRequest(_ context.Context, r *http.Request) (any, error) {
 	req := entityReq{
 		id: chi.URLParam(r, "configID"),
 	}
@@ -247,7 +247,7 @@ func decodeEntityRequest(_ context.Context, r *http.Request) (interface{}, error
 	return req, nil
 }
 
-func encodeSecureRes(_ context.Context, w http.ResponseWriter, response interface{}) error {
+func encodeSecureRes(_ context.Context, w http.ResponseWriter, response any) error {
 	w.Header().Set("Content-Type", byteContentType)
 	w.WriteHeader(http.StatusOK)
 	if b, ok := response.([]byte); ok {

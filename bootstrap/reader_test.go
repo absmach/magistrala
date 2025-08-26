@@ -18,9 +18,9 @@ import (
 )
 
 type readChan struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Metadata any    `json:"metadata,omitempty"`
 }
 
 type readResp struct {
@@ -59,7 +59,7 @@ func TestReadConfig(t *testing.T) {
 			{
 				ID:       "smq_id",
 				Name:     "smq_name",
-				Metadata: map[string]interface{}{"key": "value}"},
+				Metadata: map[string]any{"key": "value}"},
 			},
 		},
 		Content: "content",
@@ -71,7 +71,7 @@ func TestReadConfig(t *testing.T) {
 			{
 				ID:       "smq_id",
 				Name:     "smq_name",
-				Metadata: map[string]interface{}{"key": "value}"},
+				Metadata: map[string]any{"key": "value}"},
 			},
 		},
 		Content:    "content",

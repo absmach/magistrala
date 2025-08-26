@@ -16,7 +16,7 @@ import (
 )
 
 func addRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -35,7 +35,7 @@ func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func viewRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -54,7 +54,7 @@ func viewRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -73,7 +73,7 @@ func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func updateRuleTagsEndpoint(svc re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(updateRuleTagsReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -98,7 +98,7 @@ func updateRuleTagsEndpoint(svc re.Service) endpoint.Endpoint {
 }
 
 func updateRuleScheduleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -123,7 +123,7 @@ func updateRuleScheduleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func listRulesEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -145,7 +145,7 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -164,7 +164,7 @@ func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func enableRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
@@ -185,7 +185,7 @@ func enableRuleEndpoint(s re.Service) endpoint.Endpoint {
 }
 
 func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		session, ok := ctx.Value(api.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization

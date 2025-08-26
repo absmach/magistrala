@@ -61,9 +61,9 @@ func (res configRes) Empty() bool {
 }
 
 type channelRes struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Metadata any    `json:"metadata,omitempty"`
 }
 
 type viewRes struct {

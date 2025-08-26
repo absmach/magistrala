@@ -36,7 +36,7 @@ func New(db *sqlx.DB) consumers.BlockingConsumer {
 	return &postgresRepo{db: db}
 }
 
-func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{}) (err error) {
+func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message any) (err error) {
 	switch m := message.(type) {
 	case smqjson.Messages:
 		return pr.saveJSON(ctx, m)
@@ -45,7 +45,7 @@ func (pr postgresRepo) ConsumeBlocking(ctx context.Context, message interface{})
 	}
 }
 
-func (pr postgresRepo) saveSenml(ctx context.Context, messages interface{}) (err error) {
+func (pr postgresRepo) saveSenml(ctx context.Context, messages any) (err error) {
 	msgs, ok := messages.([]senml.Message)
 	if !ok {
 		return errSaveMessage

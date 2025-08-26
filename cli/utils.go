@@ -43,7 +43,7 @@ var (
 	LastName string = ""
 )
 
-func logJSONCmd(cmd cobra.Command, iList ...interface{}) {
+func logJSONCmd(cmd cobra.Command, iList ...any) {
 	for _, i := range iList {
 		m, err := json.Marshal(i)
 		if err != nil {

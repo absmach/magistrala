@@ -114,7 +114,7 @@ type Service interface {
 // is to provide convenient way to generate custom configuration response
 // based on the specific Config which will be consumed by the client.
 type ConfigReader interface {
-	ReadConfig(Config, bool) (interface{}, error)
+	ReadConfig(Config, bool) (any, error)
 }
 
 type bootstrapService struct {

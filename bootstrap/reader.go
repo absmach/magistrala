@@ -26,9 +26,9 @@ type bootstrapRes struct {
 }
 
 type channelRes struct {
-	ID       string      `json:"id"`
-	Name     string      `json:"name,omitempty"`
-	Metadata interface{} `json:"metadata,omitempty"`
+	ID       string `json:"id"`
+	Name     string `json:"name,omitempty"`
+	Metadata any    `json:"metadata,omitempty"`
 }
 
 func (res bootstrapRes) Code() int {
@@ -53,7 +53,7 @@ func NewConfigReader(encKey []byte) ConfigReader {
 	return reader{encKey: encKey}
 }
 
-func (r reader) ReadConfig(cfg Config, secure bool) (interface{}, error) {
+func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
 	var channels []channelRes
 	for _, ch := range cfg.Channels {
 		channels = append(channels, channelRes{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})

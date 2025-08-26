@@ -114,7 +114,7 @@ func (lm *loggingMiddleware) RemoveSubscription(ctx context.Context, token, id s
 
 // ConsumeBlocking logs the consume_blocking request. It logs the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) ConsumeBlocking(ctx context.Context, msg interface{}) (err error) {
+func (lm *loggingMiddleware) ConsumeBlocking(ctx context.Context, msg any) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

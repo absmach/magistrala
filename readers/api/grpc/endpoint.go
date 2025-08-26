@@ -11,7 +11,7 @@ import (
 )
 
 func readMessagesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(readMessagesReq)
 		if err := req.validate(); err != nil {
 			return readMessagesRes{}, err

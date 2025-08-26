@@ -87,7 +87,7 @@ func (client readersGrpcClient) ReadMessages(ctx context.Context, in *grpcReader
 	}, nil
 }
 
-func decodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+func decodeReadMessagesResponse(_ context.Context, grpcRes any) (any, error) {
 	res := grpcRes.(*grpcReadersV1.ReadMessagesRes)
 	return readMessagesRes{
 		Total:    res.Total,
@@ -99,7 +99,7 @@ func decodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interfa
 	}, nil
 }
 
-func encodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+func encodeReadMessagesRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(readMessagesReq)
 	return &grpcReadersV1.ReadMessagesReq{
 		ChannelId: req.chanID,
@@ -151,11 +151,11 @@ func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Mess
 		case *grpcReadersV1.Message_Json:
 			j := msg.Json
 			base := j.GetBase()
-			var p map[string]interface{}
+			var p map[string]any
 			if err := json.Unmarshal(j.GetPayload(), &p); err != nil {
 				continue
 			}
-			messages = append(messages, map[string]interface{}{
+			messages = append(messages, map[string]any{
 				"channel":   base.GetChannel(),
 				"created":   j.GetCreated(),
 				"subtopic":  base.GetSubtopic(),

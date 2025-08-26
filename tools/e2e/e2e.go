@@ -627,7 +627,7 @@ func sendWSMessage(conf Config, msg string, client sdk.Client, chanID string) er
 }
 
 // getIDS returns a list of IDs of the given objects.
-func getIDS(objects interface{}) string {
+func getIDS(objects any) string {
 	v := reflect.ValueOf(objects)
 	if v.Kind() != reflect.Slice {
 		panic("objects argument must be a slice")

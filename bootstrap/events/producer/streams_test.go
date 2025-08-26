@@ -72,7 +72,7 @@ var (
 	channel = bootstrap.Channel{
 		ID:       testsutil.GenerateUUID(&testing.T{}),
 		Name:     "name",
-		Metadata: map[string]interface{}{"name": "value"},
+		Metadata: map[string]any{"name": "value"},
 	}
 
 	config = bootstrap.Config{
@@ -136,7 +136,7 @@ func TestAdd(t *testing.T) {
 		listErr   error
 		saveErr   error
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:     "create config successfully",
@@ -145,7 +145,7 @@ func TestAdd(t *testing.T) {
 			id:       validID,
 			domainID: domainID,
 			channel:  config.Channels,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id":   "1",
 				"domain_id":   domainID,
 				"name":        config.Name,
@@ -205,7 +205,7 @@ func TestAdd(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -237,7 +237,7 @@ func TestView(t *testing.T) {
 		domainID    string
 		retrieveErr error
 		err         error
-		event       map[string]interface{}
+		event       map[string]any
 	}{
 		{
 			desc:     "view successfully",
@@ -246,7 +246,7 @@ func TestView(t *testing.T) {
 			id:       validID,
 			domainID: domainID,
 			err:      nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id":   config.ClientID,
 				"domain_id":   config.DomainID,
 				"name":        config.Name,
@@ -282,7 +282,7 @@ func TestView(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -329,7 +329,7 @@ func TestUpdate(t *testing.T) {
 		domainID  string
 		updateErr error
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:     "update config successfully",
@@ -338,7 +338,7 @@ func TestUpdate(t *testing.T) {
 			id:       validID,
 			domainID: domainID,
 			err:      nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"name":        modified.Name,
 				"content":     modified.Content,
 				"timestamp":   time.Now().UnixNano(),
@@ -376,7 +376,7 @@ func TestUpdate(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -409,7 +409,7 @@ func TestUpdateConnections(t *testing.T) {
 		listErr     error
 		updateErr   error
 		err         error
-		event       map[string]interface{}
+		event       map[string]any
 	}{
 		{
 			desc:        "update connections successfully",
@@ -419,7 +419,7 @@ func TestUpdateConnections(t *testing.T) {
 			domainID:    domainID,
 			connections: []string{config.Channels[0].ID},
 			err:         nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id": config.ClientID,
 				"channels":  "2",
 				"timestamp": time.Now().Unix(),
@@ -488,7 +488,7 @@ func TestUpdateConnections(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -520,7 +520,7 @@ func TestUpdateCert(t *testing.T) {
 		caCert     string
 		updateErr  error
 		err        error
-		event      map[string]interface{}
+		event      map[string]any
 	}{
 		{
 			desc:       "update cert successfully",
@@ -532,7 +532,7 @@ func TestUpdateCert(t *testing.T) {
 			clientKey:  "clientKey",
 			caCert:     "caCert",
 			err:        nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_secret": config.ClientSecret,
 				"client_cert":   "clientCert",
 				"client_key":    "clientKey",
@@ -599,7 +599,7 @@ func TestUpdateCert(t *testing.T) {
 			clientKey:  "clientKey",
 			caCert:     "",
 			err:        nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_secret": config.ClientSecret,
 				"client_cert":   "clientCert",
 				"client_key":    "clientKey",
@@ -624,7 +624,7 @@ func TestUpdateCert(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -667,7 +667,7 @@ func TestList(t *testing.T) {
 		listObjectsErr      error
 		retrieveErr         error
 		err                 error
-		event               map[string]interface{}
+		event               map[string]any
 	}{
 		{
 			desc:     "list successfully as super admin",
@@ -686,7 +686,7 @@ func TestList(t *testing.T) {
 			limit:               10,
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id":   c.ClientID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
@@ -714,7 +714,7 @@ func TestList(t *testing.T) {
 			limit:               10,
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id":   c.ClientID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
@@ -742,7 +742,7 @@ func TestList(t *testing.T) {
 			limit:               10,
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id":   c.ClientID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
@@ -831,7 +831,7 @@ func TestList(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -862,7 +862,7 @@ func TestRemove(t *testing.T) {
 		session   smqauthn.Session
 		removeErr error
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:     "remove config successfully",
@@ -871,7 +871,7 @@ func TestRemove(t *testing.T) {
 			userID:   validID,
 			domainID: domainID,
 			err:      nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id": config.ClientID,
 				"timestamp": time.Now().Unix(),
 				"operation": configRemove,
@@ -902,7 +902,7 @@ func TestRemove(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -925,14 +925,14 @@ func TestBootstrap(t *testing.T) {
 		externalKey string
 		err         error
 		retrieveErr error
-		event       map[string]interface{}
+		event       map[string]any
 	}{
 		{
 			desc:        "bootstrap successfully",
 			externalID:  config.ExternalID,
 			externalKey: config.ExternalKey,
 			err:         nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"external_id": config.ExternalID,
 				"success":     "1",
 				"timestamp":   time.Now().Unix(),
@@ -945,7 +945,7 @@ func TestBootstrap(t *testing.T) {
 			externalKey: "external_id",
 			retrieveErr: bootstrap.ErrBootstrap,
 			err:         bootstrap.ErrBootstrap,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"external_id": "external_id",
 				"success":     "0",
 				"timestamp":   time.Now().Unix(),
@@ -966,7 +966,7 @@ func TestBootstrap(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -997,7 +997,7 @@ func TestChangeState(t *testing.T) {
 		stateErr        error
 		authenticateErr error
 		err             error
-		event           map[string]interface{}
+		event           map[string]any
 	}{
 		{
 			desc:         "change state to active",
@@ -1008,7 +1008,7 @@ func TestChangeState(t *testing.T) {
 			state:        bootstrap.Active,
 			authResponse: authn.Session{},
 			err:          nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"client_id": config.ClientID,
 				"state":     bootstrap.Active.String(),
 				"timestamp": time.Now().Unix(),
@@ -1065,7 +1065,7 @@ func TestChangeState(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			event := streams[0].Messages
 			lastID = event[0].ID
@@ -1088,13 +1088,13 @@ func TestUpdateChannelHandler(t *testing.T) {
 		desc    string
 		channel bootstrap.Channel
 		err     error
-		event   map[string]interface{}
+		event   map[string]any
 	}{
 		{
 			desc:    "update channel handler successfully",
 			channel: channel,
 			err:     nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"channel_id":  channel.ID,
 				"metadata":    "{\"name\":\"value\"}",
 				"name":        channel.Name,
@@ -1125,7 +1125,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 			desc:    "update channel handler successfully with modified fields",
 			channel: channel,
 			err:     nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"channel_id":  channel.ID,
 				"metadata":    "{\"name\":\"value\"}",
 				"name":        channel.Name,
@@ -1148,7 +1148,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -1170,13 +1170,13 @@ func TestRemoveChannelHandler(t *testing.T) {
 		desc      string
 		channelID string
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:      "remove channel handler successfully",
 			channelID: channel.ID,
 			err:       nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"config_id":   channel.ID,
 				"operation":   channelHandlerRemove,
 				"timestamp":   time.Now().UnixNano(),
@@ -1209,7 +1209,7 @@ func TestRemoveChannelHandler(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -1232,13 +1232,13 @@ func TestRemoveConfigHandler(t *testing.T) {
 		desc     string
 		configID string
 		err      error
-		event    map[string]interface{}
+		event    map[string]any
 	}{
 		{
 			desc:     "remove config handler successfully",
 			configID: channel.ID,
 			err:      nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"config_id":   channel.ID,
 				"operation":   configHandlerRemove,
 				"timestamp":   time.Now().UnixNano(),
@@ -1271,7 +1271,7 @@ func TestRemoveConfigHandler(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -1295,14 +1295,14 @@ func TestConnectClientHandler(t *testing.T) {
 		channelID string
 		clientID  string
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:      "connect client handler successfully",
 			channelID: channel.ID,
 			clientID:  "1",
 			err:       nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"channel_id":  channel.ID,
 				"client_id":   "1",
 				"operation":   clientConnect,
@@ -1345,7 +1345,7 @@ func TestConnectClientHandler(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -1369,14 +1369,14 @@ func TestDisconnectClientHandler(t *testing.T) {
 		channelID string
 		clientID  string
 		err       error
-		event     map[string]interface{}
+		event     map[string]any
 	}{
 		{
 			desc:      "disconnect client handler successfully",
 			channelID: channel.ID,
 			clientID:  "1",
 			err:       nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"channel_id":  channel.ID,
 				"client_id":   "1",
 				"operation":   clientDisconnect,
@@ -1407,7 +1407,7 @@ func TestDisconnectClientHandler(t *testing.T) {
 			channelID: channel.ID,
 			clientID:  "1",
 			err:       nil,
-			event: map[string]interface{}{
+			event: map[string]any{
 				"channel_id":  channel.ID,
 				"client_id":   "1",
 				"operation":   clientDisconnect,
@@ -1429,7 +1429,7 @@ func TestDisconnectClientHandler(t *testing.T) {
 			Block:   time.Second,
 		}).Val()
 
-		var event map[string]interface{}
+		var event map[string]any
 		if len(streams) > 0 && len(streams[0].Messages) > 0 {
 			msg := streams[0].Messages[0]
 			event = msg.Values
@@ -1442,7 +1442,7 @@ func TestDisconnectClientHandler(t *testing.T) {
 	}
 }
 
-func test(t *testing.T, expected, actual map[string]interface{}, description string) {
+func test(t *testing.T, expected, actual map[string]any, description string) {
 	if expected != nil && actual != nil {
 		ts1 := expected["timestamp"].(int64)
 		ats := actual["timestamp"].(string)
@@ -1466,8 +1466,8 @@ func test(t *testing.T, expected, actual map[string]interface{}, description str
 			delete(actual, "occurred_at")
 		}
 
-		exchs := expected["channels"].([]interface{})
-		achs := actual["channels"].([]interface{})
+		exchs := expected["channels"].([]any)
+		achs := actual["channels"].([]any)
 
 		if exchs != nil && achs != nil {
 			if assert.Len(t, exchs, len(achs), fmt.Sprintf("%s: got incorrect number of channels\n", description)) {

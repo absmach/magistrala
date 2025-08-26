@@ -18,7 +18,7 @@ type ChannelPublisher struct {
 	Topic    string           `json:"topic"`
 }
 
-func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val any) error {
 	data, err := json.Marshal(val)
 	if err != nil {
 		return err

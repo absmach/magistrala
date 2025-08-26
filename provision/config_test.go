@@ -28,7 +28,7 @@ var (
 			X509Provision: true,
 			Provision:     true,
 			AutoWhiteList: true,
-			Content: map[string]interface{}{
+			Content: map[string]any{
 				"test": "test",
 			},
 		},
@@ -37,7 +37,7 @@ var (
 				ID:   "1234567890",
 				Name: "test",
 				Tags: []string{"test"},
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"test": "test",
 				},
 				Actions:                   []string{},
@@ -50,7 +50,7 @@ var (
 				ID:   "1234567890",
 				Name: "test",
 				Tags: []string{"test"},
-				Metadata: map[string]interface{}{
+				Metadata: map[string]any{
 					"test": "test",
 				},
 				Actions:                   []string{},
@@ -65,7 +65,7 @@ var (
 	validConfigFile = "./config.toml"
 	invalidConfig   = provision.Config{
 		Bootstrap: provision.Bootstrap{
-			Content: map[string]interface{}{
+			Content: map[string]any{
 				"invalid": make(chan int),
 			},
 		},
@@ -74,7 +74,7 @@ var (
 )
 
 func createInvalidConfigFile() error {
-	config := map[string]interface{}{
+	config := map[string]any{
 		"invalid": "invalid",
 	}
 	b, err := toml.Marshal(config)
@@ -166,7 +166,7 @@ func TestSave(t *testing.T) {
 
 				cfg, err := provision.Read(c.file)
 				if c.cfg.Bootstrap.Content == nil {
-					c.cfg.Bootstrap.Content = map[string]interface{}{}
+					c.cfg.Bootstrap.Content = map[string]any{}
 				}
 				assert.Equal(t, c.err, err)
 				assert.Equal(t, c.cfg, cfg)

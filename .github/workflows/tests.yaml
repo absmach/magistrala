@@ -20,8 +20,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.24.x
+          go-version: 1.25.x
           cache-dependency-path: "go.sum"
+
+      - name: Set GOBIN
+        run: echo "GOBIN=$HOME/.local/bin" >> $GITHUB_ENV
+
+      - name: Add GOBIN to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Fetch SuperMQ
         run: |
@@ -41,7 +47,7 @@ jobs:
       - name: Run linters
         uses: golangci/golangci-lint-action@v8
         with:
-          version: v2.1.6
+          version: v2.4.0
           args: --config ./tools/config/.golangci.yaml
 
   run-tests:
@@ -58,7 +64,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: 1.25.x
           cache-dependency-path: "go.sum"
 
       - name: Check for changes in specific paths

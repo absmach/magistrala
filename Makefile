@@ -19,7 +19,8 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-z
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 GRPC_MTLS_CERT_FILES_EXISTS = 0
-MOCKERY_VERSION=v3.5.0
+MOCKERY = $(GOBIN)/mockery
+MOCKERY_VERSION=3.5.3
 PKG_PROTO_GEN_OUT_DIR=api/grpc
 INTERNAL_PROTO_DIR=internal/proto
 INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
@@ -115,10 +116,19 @@ install:
 		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
 	done
 
-mocks:
-	@which mockery > /dev/null || go install github.com/vektra/mockery/v3@$(MOCKERY_VERSION)
-	mockery --config ./tools/config/.mockery.yaml
+mocks: $(MOCKERY)
+	@$(MOCKERY) --config ./tools/config/.mockery.yaml
 
+$(MOCKERY):
+	@mkdir -p $(GOBIN)
+	@mkdir -p mockery
+	@echo ">> downloading mockery $(MOCKERY_VERSION)..."
+	@curl -sL https://github.com/vektra/mockery/releases/download/v$(MOCKERY_VERSION)/mockery_$(MOCKERY_VERSION)_Linux_x86_64.tar.gz | tar -xz -C mockery
+	@mv mockery/mockery $(GOBIN)
+	@rm -r mockery
+
+mocks: $(MOCKERY)
+	@$(MOCKERY) --config ./tools/config/.mockery.yaml
 
 DIRS = consumers readers postgres internal
 test: mocks

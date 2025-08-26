@@ -23,6 +23,7 @@ import (
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re"
 	httpapi "github.com/absmach/magistrala/re/api"
+	"github.com/absmach/magistrala/re/events"
 	"github.com/absmach/magistrala/re/middleware"
 	repg "github.com/absmach/magistrala/re/postgres"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
@@ -31,6 +32,7 @@ import (
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/supermq/pkg/authz"
 	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
+	"github.com/absmach/supermq/pkg/callout"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
@@ -50,6 +52,7 @@ const (
 	svcName          = "rules_engine"
 	envPrefixDB      = "MG_RE_DB_"
 	envPrefixHTTP    = "MG_RE_HTTP_"
+	envPrefixCallout = "MG_RE_CALLOUT_"
 	envPrefixAuth    = "SMQ_AUTH_GRPC_"
 	defDB            = "r"
 	defSvcHTTPPort   = "9008"
@@ -108,6 +111,13 @@ func main() {
 		return
 	}
 
+	callCfg := callout.Config{}
+	if err := env.ParseWithOptions(&callCfg, env.Options{Prefix: envPrefixCallout}); err != nil {
+		logger.Error(fmt.Sprintf("failed to parse callout config : %s", err))
+		exitCode = 1
+		return
+	}
+
 	dbConfig := pgclient.Config{Name: defDB}
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(err.Error())
@@ -143,6 +153,13 @@ func main() {
 		logger.Error(fmt.Sprintf("failed to load %s HTTP server configuration : %s", svcName, err))
 		exitCode = 1
 
+		return
+	}
+
+	callout, err := callout.New(callCfg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create new callout: %s", err))
+		exitCode = 1
 		return
 	}
 
@@ -235,7 +252,7 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient)
+	svc, err := newService(ctx, database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, callout, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -287,7 +304,7 @@ func main() {
 	}
 }
 
-func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient) (re.Service, error) {
+func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, callout callout.Callout, cfg config) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -297,7 +314,12 @@ func newService(db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub mess
 	}
 
 	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
-	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	csvc, err = events.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init re event store middleware: %w", err)
+	}
+
+	csvc, err = middleware.AuthorizationMiddleware(csvc, authz, callout)
 	if err != nil {
 		return nil, err
 	}

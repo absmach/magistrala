@@ -10,6 +10,14 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 )
 
+const (
+	noneType    = "none"
+	hourlyType  = "hourly"
+	dailyType   = "daily"
+	weeklyType  = "weekly"
+	monthlyType = "monthly"
+)
+
 var (
 	ErrInvalidRecurringType = errors.New("invalid recurring type")
 	ErrStartDateTimeInPast  = errors.New("start_datetime must be greater than or equal to current time")
@@ -29,15 +37,15 @@ const (
 func (rt Recurring) String() string {
 	switch rt {
 	case Hourly:
-		return "hourly"
+		return hourlyType
 	case Daily:
-		return "daily"
+		return dailyType
 	case Weekly:
-		return "weekly"
+		return weeklyType
 	case Monthly:
-		return "monthly"
+		return monthlyType
 	default:
-		return "none"
+		return noneType
 	}
 }
 
@@ -52,15 +60,15 @@ func (rt *Recurring) UnmarshalJSON(data []byte) error {
 	}
 
 	switch s {
-	case "hourly":
+	case hourlyType:
 		*rt = Hourly
-	case "daily":
+	case dailyType:
 		*rt = Daily
-	case "weekly":
+	case weeklyType:
 		*rt = Weekly
-	case "monthly":
+	case monthlyType:
 		*rt = Monthly
-	case "none":
+	case noneType:
 		*rt = None
 	default:
 		return ErrInvalidRecurringType
@@ -146,4 +154,19 @@ func (s Schedule) NextDue() time.Time {
 	default:
 		return time.Time{}
 	}
+}
+
+// EventEncode converts a schedule.Schedule struct to map[string]any.
+func (s Schedule) EventEncode() map[string]any {
+	m := map[string]any{
+		"recurring":        s.Recurring.String(),
+		"recurring_period": s.RecurringPeriod,
+	}
+	if !s.StartDateTime.IsZero() {
+		m["start_datetime"] = s.StartDateTime.Format(time.RFC3339)
+	}
+	if !s.Time.IsZero() {
+		m["time"] = s.Time.Format(time.RFC3339)
+	}
+	return m
 }

@@ -5,10 +5,13 @@ package middleware
 
 import (
 	"context"
+	"maps"
+	"time"
 
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
+	"github.com/absmach/supermq/pkg/callout"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/policies"
@@ -21,16 +24,20 @@ var (
 	errDomainDeleteRules = errors.New("not authorized to delete rules in domain")
 )
 
+const entityType = "rule"
+
 type authorizationMiddleware struct {
-	svc   re.Service
-	authz smqauthz.Authorization
+	svc     re.Service
+	authz   smqauthz.Authorization
+	callout callout.Callout
 }
 
 // AuthorizationMiddleware adds authorization to the re service.
-func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization) (re.Service, error) {
+func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, callout callout.Callout) (re.Service, error) {
 	return &authorizationMiddleware{
-		svc:   svc,
-		authz: authz,
+		svc:     svc,
+		authz:   authz,
+		callout: callout,
 	}, nil
 }
 
@@ -45,6 +52,15 @@ func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Se
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
+	}
+
+	params := map[string]any{
+		"entities": r,
+		"count":    1,
+	}
+
+	if err := am.callOut(ctx, session, re.OpAddRule, params); err != nil {
+		return re.Rule{}, err
 	}
 
 	return am.svc.AddRule(ctx, session, r)
@@ -63,6 +79,14 @@ func (am *authorizationMiddleware) ViewRule(ctx context.Context, session authn.S
 		return re.Rule{}, errors.Wrap(errDomainViewRules, err)
 	}
 
+	params := map[string]any{
+		"entity_id": id,
+	}
+
+	if err := am.callOut(ctx, session, re.OpViewRule, params); err != nil {
+		return re.Rule{}, err
+	}
+
 	return am.svc.ViewRule(ctx, session, id)
 }
 
@@ -77,6 +101,14 @@ func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
+	}
+
+	params := map[string]any{
+		"entity_id": r.ID,
+	}
+
+	if err := am.callOut(ctx, session, re.OpUpdateRule, params); err != nil {
+		return re.Rule{}, err
 	}
 
 	return am.svc.UpdateRule(ctx, session, r)
@@ -95,6 +127,14 @@ func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session a
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
+	params := map[string]any{
+		"entity_id": r.ID,
+	}
+
+	if err := am.callOut(ctx, session, re.OpUpdateRuleTags, params); err != nil {
+		return re.Rule{}, err
+	}
+
 	return am.svc.UpdateRuleTags(ctx, session, r)
 }
 
@@ -109,6 +149,14 @@ func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, sessi
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
+	}
+
+	params := map[string]any{
+		"entity_id": r.ID,
+	}
+
+	if err := am.callOut(ctx, session, re.OpUpdateRuleSchedule, params); err != nil {
+		return re.Rule{}, err
 	}
 
 	return am.svc.UpdateRuleSchedule(ctx, session, r)
@@ -127,6 +175,14 @@ func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.
 		return re.Page{}, errors.Wrap(errDomainViewRules, err)
 	}
 
+	params := map[string]any{
+		"pagemeta": pm,
+	}
+
+	if err := am.callOut(ctx, session, re.OpListRules, params); err != nil {
+		return re.Page{}, err
+	}
+
 	return am.svc.ListRules(ctx, session, pm)
 }
 
@@ -141,6 +197,14 @@ func (am *authorizationMiddleware) RemoveRule(ctx context.Context, session authn
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
 		return errors.Wrap(errDomainDeleteRules, err)
+	}
+
+	params := map[string]any{
+		"entity_id": id,
+	}
+
+	if err := am.callOut(ctx, session, re.OpRemoveRule, params); err != nil {
+		return err
 	}
 
 	return am.svc.RemoveRule(ctx, session, id)
@@ -159,6 +223,14 @@ func (am *authorizationMiddleware) EnableRule(ctx context.Context, session authn
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
+	params := map[string]any{
+		"entity_id": id,
+	}
+
+	if err := am.callOut(ctx, session, re.OpEnableRule, params); err != nil {
+		return re.Rule{}, err
+	}
+
 	return am.svc.EnableRule(ctx, session, id)
 }
 
@@ -173,6 +245,14 @@ func (am *authorizationMiddleware) DisableRule(ctx context.Context, session auth
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
+	}
+
+	params := map[string]any{
+		"entity_id": id,
+	}
+
+	if err := am.callOut(ctx, session, re.OpDisableRule, params); err != nil {
+		return re.Rule{}, err
 	}
 
 	return am.svc.DisableRule(ctx, session, id)
@@ -194,5 +274,23 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, pr smqauthz.Po
 	if err := am.authz.Authorize(ctx, pr); err != nil {
 		return err
 	}
+	return nil
+}
+
+func (am *authorizationMiddleware) callOut(ctx context.Context, session authn.Session, op string, params map[string]any) error {
+	pl := map[string]any{
+		"entity_type":  entityType,
+		"subject_type": policies.UserType,
+		"subject_id":   session.UserID,
+		"domain":       session.DomainID,
+		"time":         time.Now().UTC(),
+	}
+
+	maps.Copy(params, pl)
+
+	if err := am.callout.Callout(ctx, op, params); err != nil {
+		return err
+	}
+
 	return nil
 }

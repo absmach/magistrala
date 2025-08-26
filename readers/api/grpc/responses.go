@@ -13,4 +13,4 @@ type readMessagesRes struct {
 	readers.PageMetadata
 }
 
-type Message interface{}
+type Message any

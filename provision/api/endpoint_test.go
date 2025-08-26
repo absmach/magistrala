@@ -206,7 +206,7 @@ func TestMapping(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repocall := svc.On("Mapping", mock.Anything, tc.token).Return(map[string]interface{}{}, tc.svcErr)
+			repocall := svc.On("Mapping", mock.Anything, tc.token).Return(map[string]any{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodGet,

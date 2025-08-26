@@ -53,7 +53,7 @@ func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) 
 	return r
 }
 
-func decodeProvisionRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
@@ -69,7 +69,7 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (interface{}, er
 	return req, nil
 }
 
-func decodeMappingRequest(_ context.Context, r *http.Request) (interface{}, error) {
+func decodeMappingRequest(_ context.Context, r *http.Request) (any, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}

@@ -99,7 +99,7 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	message.RawSetString("protocol", lua.LString(msg.Protocol))
 	message.RawSetString("created", lua.LNumber(msg.Created))
 
-	var payload interface{}
+	var payload any
 	if err := json.Unmarshal(msg.GetPayload(), &payload); err != nil {
 		pld := l.NewTable()
 		// If message is not JSON, set binary payload and exit.
@@ -116,7 +116,7 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	return message
 }
 
-func traverseJson(l *lua.LState, value interface{}) lua.LValue {
+func traverseJson(l *lua.LState, value any) lua.LValue {
 	switch val := value.(type) {
 	case string:
 		return lua.LString(val)
@@ -131,13 +131,13 @@ func traverseJson(l *lua.LState, value interface{}) lua.LValue {
 		return lua.LNil
 	case bool:
 		return lua.LBool(val)
-	case []interface{}:
+	case []any:
 		t := l.NewTable()
 		for i, j := range val {
 			t.RawSetInt(i+1, traverseJson(l, j))
 		}
 		return t
-	case map[string]interface{}:
+	case map[string]any:
 		t := l.NewTable()
 		for k, v := range val {
 			t.RawSetString(k, traverseJson(l, v))
@@ -148,7 +148,7 @@ func traverseJson(l *lua.LState, value interface{}) lua.LValue {
 	}
 }
 
-func convertLua(lv lua.LValue) interface{} {
+func convertLua(lv lua.LValue) any {
 	switch v := lv.(type) {
 	case *lua.LTable:
 		isArray := true
@@ -159,14 +159,14 @@ func convertLua(lv lua.LValue) interface{} {
 		})
 
 		if isArray {
-			arr := []interface{}{}
+			arr := []any{}
 			v.ForEach(func(key, value lua.LValue) {
 				arr = append(arr, convertLua(value))
 			})
 			return arr
 		}
 
-		obj := map[string]interface{}{}
+		obj := map[string]any{}
 		v.ForEach(func(key, value lua.LValue) {
 			obj[key.String()] = convertLua(value)
 		})

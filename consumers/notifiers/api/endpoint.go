@@ -13,7 +13,7 @@ import (
 )
 
 func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(createSubReq)
 		if err := req.validate(); err != nil {
 			return createSubRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -35,7 +35,7 @@ func createSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 }
 
 func viewSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {
 			return viewSubRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -55,7 +55,7 @@ func viewSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
 }
 
 func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listSubsReq)
 		if err := req.validate(); err != nil {
 			return listSubsRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -90,7 +90,7 @@ func listSubscriptionsEndpoint(svc notifiers.Service) endpoint.Endpoint {
 }
 
 func deleteSubscriptionEndpoint(svc notifiers.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(subReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)

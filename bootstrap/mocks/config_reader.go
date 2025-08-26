@@ -40,23 +40,23 @@ func (_m *ConfigReader) EXPECT() *ConfigReader_Expecter {
 }
 
 // ReadConfig provides a mock function for the type ConfigReader
-func (_mock *ConfigReader) ReadConfig(config bootstrap.Config, b bool) (interface{}, error) {
+func (_mock *ConfigReader) ReadConfig(config bootstrap.Config, b bool) (any, error) {
 	ret := _mock.Called(config, b)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadConfig")
 	}
 
-	var r0 interface{}
+	var r0 any
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) (interface{}, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) (any, error)); ok {
 		return returnFunc(config, b)
 	}
-	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) interface{}); ok {
+	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) any); ok {
 		r0 = returnFunc(config, b)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(interface{})
+			r0 = ret.Get(0).(any)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(bootstrap.Config, bool) error); ok {
@@ -97,12 +97,12 @@ func (_c *ConfigReader_ReadConfig_Call) Run(run func(config bootstrap.Config, b 
 	return _c
 }
 
-func (_c *ConfigReader_ReadConfig_Call) Return(ifaceVal interface{}, err error) *ConfigReader_ReadConfig_Call {
-	_c.Call.Return(ifaceVal, err)
+func (_c *ConfigReader_ReadConfig_Call) Return(v any, err error) *ConfigReader_ReadConfig_Call {
+	_c.Call.Return(v, err)
 	return _c
 }
 
-func (_c *ConfigReader_ReadConfig_Call) RunAndReturn(run func(config bootstrap.Config, b bool) (interface{}, error)) *ConfigReader_ReadConfig_Call {
+func (_c *ConfigReader_ReadConfig_Call) RunAndReturn(run func(config bootstrap.Config, b bool) (any, error)) *ConfigReader_ReadConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

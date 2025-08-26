@@ -189,7 +189,7 @@ func Provision(ctx context.Context, conf Config) error {
 		key := ""
 
 		if conf.SSL {
-			var priv interface{}
+			var priv any
 			priv, _ = rsa.GenerateKey(rand.Reader, rsaBits)
 
 			notBefore := time.Now()
@@ -273,7 +273,7 @@ func Provision(ctx context.Context, conf Config) error {
 	return nil
 }
 
-func publicKey(priv interface{}) interface{} {
+func publicKey(priv any) any {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &k.PublicKey
@@ -284,7 +284,7 @@ func publicKey(priv interface{}) interface{} {
 	}
 }
 
-func pemBlockForKey(priv interface{}) *pem.Block {
+func pemBlockForKey(priv any) *pem.Block {
 	switch k := priv.(type) {
 	case *rsa.PrivateKey:
 		return &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(k)}

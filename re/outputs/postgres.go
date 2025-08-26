@@ -27,7 +27,7 @@ type Postgres struct {
 	Mapping  string `json:"mapping"`
 }
 
-func (p *Postgres) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (p *Postgres) Run(ctx context.Context, msg *messaging.Message, val any) error {
 	templData := templateVal{
 		Message: msg,
 		Result:  val,
@@ -44,7 +44,7 @@ func (p *Postgres) Run(ctx context.Context, msg *messaging.Message, val interfac
 	}
 
 	mapping := output.String()
-	var columns map[string]interface{}
+	var columns map[string]any
 	if err = json.Unmarshal([]byte(mapping), &columns); err != nil {
 		return err
 	}
@@ -66,7 +66,7 @@ func (p *Postgres) Run(ctx context.Context, msg *messaging.Message, val interfac
 
 	var (
 		cols         []string
-		values       []interface{}
+		values       []any
 		placeholders []string
 	)
 

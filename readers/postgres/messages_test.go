@@ -528,12 +528,12 @@ func TestReadJSON(t *testing.T) {
 		Created:   time.Now().Unix(),
 		Subtopic:  "subtopic/format/some_json",
 		Protocol:  "coap",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"field_1": 123.0,
 			"field_2": "value",
 			"field_3": false,
 			"field_4": 12.344,
-			"field_5": map[string]interface{}{
+			"field_5": map[string]any{
 				"field_1": "value",
 				"field_2": 42.0,
 			},
@@ -542,7 +542,7 @@ func TestReadJSON(t *testing.T) {
 	messages1 := json.Messages{
 		Format: format1,
 	}
-	msgs1 := []map[string]interface{}{}
+	msgs1 := []map[string]any{}
 	for i := 0; i < msgsNum; i++ {
 		msg := m
 		messages1.Data = append(messages1.Data, msg)
@@ -560,7 +560,7 @@ func TestReadJSON(t *testing.T) {
 		Created:   time.Now().Unix(),
 		Subtopic:  "subtopic/other_format/some_other_json",
 		Protocol:  "udp",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"field_1":     "other_value",
 			"false_value": false,
 			"field_pi":    3.14159265,
@@ -569,7 +569,7 @@ func TestReadJSON(t *testing.T) {
 	messages2 := json.Messages{
 		Format: format2,
 	}
-	msgs2 := []map[string]interface{}{}
+	msgs2 := []map[string]any{}
 	for i := 0; i < msgsNum; i++ {
 		msg := m
 		if i%2 == 0 {
@@ -583,7 +583,7 @@ func TestReadJSON(t *testing.T) {
 	err = writer.ConsumeBlocking(context.TODO(), messages2)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
-	httpMsgs := []map[string]interface{}{}
+	httpMsgs := []map[string]any{}
 	for i := 0; i < msgsNum; i += 2 {
 		httpMsgs = append(httpMsgs, msgs2[i])
 	}
@@ -650,7 +650,7 @@ func TestReadJSON(t *testing.T) {
 		for i := 0; i < len(result.Messages); i++ {
 			m := result.Messages[i]
 			// Remove id as it is not sent by the client.
-			delete(m.(map[string]interface{}), "id")
+			delete(m.(map[string]any), "id")
 			result.Messages[i] = m
 		}
 		assert.Nil(t, err, fmt.Sprintf("%s: expected no error got %s", desc, err))
@@ -667,7 +667,7 @@ func fromSenml(msg []senml.Message) []readers.Message {
 	return ret
 }
 
-func fromJSON(msg []map[string]interface{}) []readers.Message {
+func fromJSON(msg []map[string]any) []readers.Message {
 	var ret []readers.Message
 	for _, m := range msg {
 		ret = append(ret, m)
@@ -675,13 +675,13 @@ func fromJSON(msg []map[string]interface{}) []readers.Message {
 	return ret
 }
 
-func toMap(msg json.Message) map[string]interface{} {
-	return map[string]interface{}{
+func toMap(msg json.Message) map[string]any {
+	return map[string]any{
 		"channel":   msg.Channel,
 		"created":   msg.Created,
 		"subtopic":  msg.Subtopic,
 		"publisher": msg.Publisher,
 		"protocol":  msg.Protocol,
-		"payload":   map[string]interface{}(msg.Payload),
+		"payload":   map[string]any(msg.Payload),
 	}
 }

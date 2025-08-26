@@ -70,7 +70,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
 	}
 
-	params := map[string]interface{}{
+	params := map[string]any{
 		"channel":      chanID,
 		"limit":        rpm.Limit,
 		"offset":       rpm.Offset,
@@ -146,7 +146,7 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	// Indexed columns conditions based on indices order.
 	chCondition := " channel = :channel "
 
-	var query map[string]interface{}
+	var query map[string]any
 	meta, err := json.Marshal(rpm)
 	if err != nil {
 		return chCondition
@@ -226,16 +226,16 @@ type jsonMessage struct {
 	Payload   []byte `db:"payload"`
 }
 
-func (msg jsonMessage) toMap() (map[string]interface{}, error) {
-	ret := map[string]interface{}{
+func (msg jsonMessage) toMap() (map[string]any, error) {
+	ret := map[string]any{
 		"channel":   msg.Channel,
 		"created":   msg.Created,
 		"subtopic":  msg.Subtopic,
 		"publisher": msg.Publisher,
 		"protocol":  msg.Protocol,
-		"payload":   map[string]interface{}{},
+		"payload":   map[string]any{},
 	}
-	pld := make(map[string]interface{})
+	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {
 		return nil, err
 	}

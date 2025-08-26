@@ -13,7 +13,7 @@ import (
 
 type templateVal struct {
 	Message *messaging.Message
-	Result  interface{}
+	Result  any
 }
 
 // OutputType is the indicator for type of the output

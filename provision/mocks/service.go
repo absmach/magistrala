@@ -132,23 +132,23 @@ func (_c *Service_Cert_Call) RunAndReturn(run func(ctx context.Context, domainID
 }
 
 // Mapping provides a mock function for the type Service
-func (_mock *Service) Mapping(ctx context.Context, token string) (map[string]interface{}, error) {
+func (_mock *Service) Mapping(ctx context.Context, token string) (map[string]any, error) {
 	ret := _mock.Called(ctx, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Mapping")
 	}
 
-	var r0 map[string]interface{}
+	var r0 map[string]any
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]interface{}, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]any, error)); ok {
 		return returnFunc(ctx, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]interface{}); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]any); ok {
 		r0 = returnFunc(ctx, token)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(map[string]interface{})
+			r0 = ret.Get(0).(map[string]any)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -189,12 +189,12 @@ func (_c *Service_Mapping_Call) Run(run func(ctx context.Context, token string))
 	return _c
 }
 
-func (_c *Service_Mapping_Call) Return(stringToIfaceVal map[string]interface{}, err error) *Service_Mapping_Call {
-	_c.Call.Return(stringToIfaceVal, err)
+func (_c *Service_Mapping_Call) Return(stringToV map[string]any, err error) *Service_Mapping_Call {
+	_c.Call.Return(stringToV, err)
 	return _c
 }
 
-func (_c *Service_Mapping_Call) RunAndReturn(run func(ctx context.Context, token string) (map[string]interface{}, error)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) RunAndReturn(run func(ctx context.Context, token string) (map[string]any, error)) *Service_Mapping_Call {
 	_c.Call.Return(run)
 	return _c
 }

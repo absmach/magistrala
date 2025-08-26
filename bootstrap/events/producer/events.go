@@ -47,8 +47,8 @@ type configEvent struct {
 	operation string
 }
 
-func (ce configEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (ce configEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"state":     ce.State.String(),
 		"operation": ce.operation,
 	}
@@ -94,8 +94,8 @@ type removeConfigEvent struct {
 	client string
 }
 
-func (rce removeConfigEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (rce removeConfigEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id": rce.client,
 		"operation": configRemove,
 	}, nil
@@ -108,8 +108,8 @@ type listConfigsEvent struct {
 	partialMatch map[string]string
 }
 
-func (rce listConfigsEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (rce listConfigsEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"offset":    rce.offset,
 		"limit":     rce.limit,
 		"operation": configList,
@@ -130,8 +130,8 @@ type bootstrapEvent struct {
 	success    bool
 }
 
-func (be bootstrapEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (be bootstrapEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"external_id": be.externalID,
 		"success":     be.success,
 		"operation":   clientBootstrap,
@@ -179,8 +179,8 @@ type changeStateEvent struct {
 	state    bootstrap.State
 }
 
-func (cse changeStateEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (cse changeStateEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id": cse.mgClient,
 		"state":     cse.state.String(),
 		"operation": clientStateChange,
@@ -192,8 +192,8 @@ type updateConnectionsEvent struct {
 	mgChannels []string
 }
 
-func (uce updateConnectionsEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (uce updateConnectionsEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id": uce.mgClient,
 		"channels":  uce.mgChannels,
 		"operation": clientUpdateConnections,
@@ -207,8 +207,8 @@ type updateCertEvent struct {
 	caCert     string
 }
 
-func (uce updateCertEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (uce updateCertEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id":   uce.clientID,
 		"client_cert": uce.clientCert,
 		"client_key":  uce.clientKey,
@@ -222,8 +222,8 @@ type removeHandlerEvent struct {
 	operation string
 }
 
-func (rhe removeHandlerEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (rhe removeHandlerEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"config_id": rhe.id,
 		"operation": rhe.operation,
 	}, nil
@@ -233,8 +233,8 @@ type updateChannelHandlerEvent struct {
 	bootstrap.Channel
 }
 
-func (uche updateChannelHandlerEvent) Encode() (map[string]interface{}, error) {
-	val := map[string]interface{}{
+func (uche updateChannelHandlerEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
 		"operation": channelUpdateHandler,
 	}
 
@@ -255,8 +255,8 @@ type connectClientEvent struct {
 	channelID string
 }
 
-func (cte connectClientEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (cte connectClientEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id":  cte.clientID,
 		"channel_id": cte.channelID,
 		"operation":  clientConnect,
@@ -268,8 +268,8 @@ type disconnectClientEvent struct {
 	channelID string
 }
 
-func (dte disconnectClientEvent) Encode() (map[string]interface{}, error) {
-	return map[string]interface{}{
+func (dte disconnectClientEvent) Encode() (map[string]any, error) {
+	return map[string]any{
 		"client_id":  dte.clientID,
 		"channel_id": dte.channelID,
 		"operation":  clientDisconnect,

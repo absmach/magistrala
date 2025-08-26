@@ -51,7 +51,7 @@ func (sdk mgSDK) withMessageQueryParams(baseURL, endpoint string, mpm MessagePag
 	if err != nil {
 		return "", err
 	}
-	q := map[string]interface{}{}
+	q := map[string]any{}
 	if err := json.Unmarshal(b, &q); err != nil {
 		return "", err
 	}

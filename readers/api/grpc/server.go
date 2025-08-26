@@ -31,7 +31,7 @@ func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServic
 	}
 }
 
-func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interface{}, error) {
+func decodeReadMessagesRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(*grpcReadersV1.ReadMessagesReq)
 	return readMessagesReq{
 		chanID: req.GetChannelId(),
@@ -57,7 +57,7 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq interface{}) (interfac
 	}, nil
 }
 
-func encodeReadMessagesResponse(_ context.Context, grpcRes interface{}) (interface{}, error) {
+func encodeReadMessagesResponse(_ context.Context, grpcRes any) (any, error) {
 	res := grpcRes.(readMessagesRes)
 
 	resp := &grpcReadersV1.ReadMessagesRes{
@@ -105,7 +105,7 @@ func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {
 					},
 				},
 			})
-		case map[string]interface{}:
+		case map[string]any:
 			payload := typed["payload"]
 			data, err := json.Marshal(payload)
 			if err != nil {
@@ -149,14 +149,14 @@ func stringifyAggregation(agg grpcReadersV1.Aggregation) string {
 	}
 }
 
-func safeString(v interface{}) string {
+func safeString(v any) string {
 	if s, ok := v.(string); ok {
 		return s
 	}
 	return ""
 }
 
-func safeInt64(v interface{}) int64 {
+func safeInt64(v any) int64 {
 	switch v := v.(type) {
 	case float64:
 		return int64(v)

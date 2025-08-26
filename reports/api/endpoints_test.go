@@ -1017,7 +1017,7 @@ func TestUpdateReportTemplateEndpoint(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			data := toJSON(map[string]interface{}{
+			data := toJSON(map[string]any{
 				"report_template": tc.template,
 			})
 			req := testRequest{

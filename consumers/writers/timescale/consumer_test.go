@@ -85,12 +85,12 @@ func TestSaveJSON(t *testing.T) {
 		Created:   time.Now().Unix(),
 		Subtopic:  "subtopic/format/some_json",
 		Protocol:  "mqtt",
-		Payload: map[string]interface{}{
+		Payload: map[string]any{
 			"field_1": 123,
 			"field_2": "value",
 			"field_3": false,
 			"field_4": 12.344,
-			"field_5": map[string]interface{}{
+			"field_5": map[string]any{
 				"field_1": "value",
 				"field_2": 42,
 			},

@@ -15,7 +15,7 @@ type SenML struct {
 	WritersPub messaging.Publisher `json:"-"`
 }
 
-func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val interface{}) error {
+func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val any) error {
 	// In case there is a single SenML value, convert to slice so we can decode.
 	if _, ok := val.([]any); !ok {
 		val = []any{val}

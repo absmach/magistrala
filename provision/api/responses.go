@@ -35,7 +35,7 @@ func (res provisionRes) Empty() bool {
 }
 
 type mappingRes struct {
-	Data interface{}
+	Data any
 }
 
 func (res mappingRes) Code() int {

@@ -16,7 +16,7 @@ import (
 )
 
 func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(addReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -59,7 +59,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(updateCertReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -87,7 +87,7 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(entityReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -128,7 +128,7 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(updateReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -159,7 +159,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(updateConnReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -184,7 +184,7 @@ func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -234,7 +234,7 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(entityReq)
 		if err := req.validate(); err != nil {
 			return removeRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -254,7 +254,7 @@ func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 }
 
 func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, secure bool) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(bootstrapReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -270,7 +270,7 @@ func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, sec
 }
 
 func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(changeStateReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)

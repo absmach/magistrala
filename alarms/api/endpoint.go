@@ -16,7 +16,7 @@ import (
 )
 
 func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -39,7 +39,7 @@ func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 }
 
 func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -62,7 +62,7 @@ func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 }
 
 func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listAlarmsReq)
 		if err := req.validate(); err != nil {
 			return alarmsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
@@ -85,7 +85,7 @@ func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
 }
 
 func deleteAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request interface{}) (interface{}, error) {
+	return func(ctx context.Context, request any) (any, error) {
 		req := request.(alarmReq)
 		if err := req.validate(); err != nil {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)

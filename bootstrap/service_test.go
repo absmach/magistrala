@@ -46,7 +46,7 @@ var (
 	channel  = bootstrap.Channel{
 		ID:       testsutil.GenerateUUID(&testing.T{}),
 		Name:     "name",
-		Metadata: map[string]interface{}{"name": "value"},
+		Metadata: map[string]any{"name": "value"},
 	}
 
 	config = bootstrap.Config{
@@ -956,7 +956,7 @@ func TestUpdateChannelHandler(t *testing.T) {
 	ch := bootstrap.Channel{
 		ID:       channel.ID,
 		Name:     "new name",
-		Metadata: map[string]interface{}{"meta": "new"},
+		Metadata: map[string]any{"meta": "new"},
 	}
 
 	cases := []struct {

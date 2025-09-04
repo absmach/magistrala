@@ -100,7 +100,8 @@ func newRuleEngineServer() (*httptest.Server, *mocks.Service, *authnmocks.Authen
 
 	logger := smqlog.NewMock()
 	mux := chi.NewRouter()
-	api.MakeHandler(svc, authn, mux, logger, "")
+	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
+	api.MakeHandler(svc, am, mux, logger, "")
 
 	return httptest.NewServer(mux), svc, authn
 }

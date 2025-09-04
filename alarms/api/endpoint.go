@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/alarms"
-	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -22,7 +21,7 @@ func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return alarmRes{}, svcerr.ErrAuthorization
 		}
@@ -45,7 +44,7 @@ func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return alarmRes{}, svcerr.ErrAuthorization
 		}
@@ -68,7 +67,7 @@ func listAlarmsEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmsPageRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return alarmsPageRes{}, svcerr.ErrAuthorization
 		}
@@ -91,7 +90,7 @@ func deleteAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return alarmRes{}, svcerr.ErrAuthorization
 		}

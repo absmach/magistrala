@@ -138,7 +138,8 @@ func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, 
 	reader := new(bmocks.ConfigReader)
 	logger := smqlog.NewMock()
 	authn := new(authnmocks.Authentication)
-	mux := api.MakeHandler(bsvc, authn, reader, logger, "")
+	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
+	mux := api.MakeHandler(bsvc, am, reader, logger, "")
 
 	return httptest.NewServer(mux), bsvc, reader, authn
 }

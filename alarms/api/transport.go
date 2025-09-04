@@ -24,7 +24,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider, instanceID string, authn smqauthn.Authentication) http.Handler {
+func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider, instanceID string, authnMW smqauthn.AuthNMiddleware) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -33,7 +33,7 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 
 	mux.Route("/{domainID}/alarms", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(api.AuthenticateMiddleware(authn, true))
+			r.Use(authnMW.Middleware())
 			r.Use(api.RequestIDMiddleware(idp))
 
 			r.Get("/", otelhttp.NewHandler(kithttp.NewServer(

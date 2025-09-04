@@ -28,12 +28,12 @@ const (
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
-func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc re.Service, authnMW mgauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 	mux.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn, true))
+		r.Use(authnMW.Middleware())
 		r.Route("/{domainID}", func(r chi.Router) {
 			r.Route("/rules", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(

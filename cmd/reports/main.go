@@ -27,6 +27,7 @@ import (
 	repg "github.com/absmach/magistrala/reports/postgres"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
 	mgauthz "github.com/absmach/supermq/pkg/authz"
 	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
@@ -185,6 +186,7 @@ func main() {
 	}
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
+	authnMW := smqauthn.NewAuthNMiddleware(authn)
 
 	domsGrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
@@ -245,7 +247,7 @@ func main() {
 
 	mux := chi.NewRouter()
 
-	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, mux, logger, cfg.InstanceID), logger)
+	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authnMW, mux, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)

@@ -42,7 +42,7 @@ func (_m *Service) EXPECT() *Service_Expecter {
 }
 
 // ConsumeBlocking provides a mock function for the type Service
-func (_mock *Service) ConsumeBlocking(ctx context.Context, messages interface{}) error {
+func (_mock *Service) ConsumeBlocking(ctx context.Context, messages any) error {
 	ret := _mock.Called(ctx, messages)
 
 	if len(ret) == 0 {
@@ -50,7 +50,7 @@ func (_mock *Service) ConsumeBlocking(ctx context.Context, messages interface{})
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, interface{}) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, any) error); ok {
 		r0 = returnFunc(ctx, messages)
 	} else {
 		r0 = ret.Error(0)
@@ -65,20 +65,20 @@ type Service_ConsumeBlocking_Call struct {
 
 // ConsumeBlocking is a helper method to define mock.On call
 //   - ctx context.Context
-//   - messages interface{}
+//   - messages any
 func (_e *Service_Expecter) ConsumeBlocking(ctx interface{}, messages interface{}) *Service_ConsumeBlocking_Call {
 	return &Service_ConsumeBlocking_Call{Call: _e.mock.On("ConsumeBlocking", ctx, messages)}
 }
 
-func (_c *Service_ConsumeBlocking_Call) Run(run func(ctx context.Context, messages interface{})) *Service_ConsumeBlocking_Call {
+func (_c *Service_ConsumeBlocking_Call) Run(run func(ctx context.Context, messages any)) *Service_ConsumeBlocking_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 interface{}
+		var arg1 any
 		if args[1] != nil {
-			arg1 = args[1].(interface{})
+			arg1 = args[1].(any)
 		}
 		run(
 			arg0,
@@ -93,7 +93,7 @@ func (_c *Service_ConsumeBlocking_Call) Return(err error) *Service_ConsumeBlocki
 	return _c
 }
 
-func (_c *Service_ConsumeBlocking_Call) RunAndReturn(run func(ctx context.Context, messages interface{}) error) *Service_ConsumeBlocking_Call {
+func (_c *Service_ConsumeBlocking_Call) RunAndReturn(run func(ctx context.Context, messages any) error) *Service_ConsumeBlocking_Call {
 	_c.Call.Return(run)
 	return _c
 }

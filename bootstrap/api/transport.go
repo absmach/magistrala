@@ -50,7 +50,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 
 	r.Route("/{domainID}/clients", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(false)).Middleware())
+			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 			r.Route("/configs", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					addEndpoint(svc),
@@ -96,7 +96,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 			})
 		})
 
-		r.With(authn.WithOptions(smqauthn.WithDomainCheck(false)).Middleware()).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
+		r.With(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware()).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
 			api.EncodeResponse,

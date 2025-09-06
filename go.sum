@@ -22,8 +22,8 @@ github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5/go.mod h1:lmUJ/7eu/Q8
 github.com/VividCortex/ewma v1.1.1/go.mod h1:2Tkkvm3sRDVXaiyucHiACn4cqf7DpdyLvmxzcbUokwA=
 github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrdtl/UvroE=
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
-github.com/absmach/callhome v0.14.0 h1:zB4tIZJ1YUmZ1VGHFPfMA/Lo6/Mv19y2dvoOiXj2BWs=
-github.com/absmach/callhome v0.14.0/go.mod h1:l12UJOfibK4Muvg/AbupHuquNV9qSz/ROdTEPg7f2Vk=
+github.com/absmach/callhome v0.18.1 h1:s/dN/MxqJ4rbau5rnKzzK1oXIw5KvOMECf9fh0Ct9eg=
+github.com/absmach/callhome v0.18.1/go.mod h1:rPn/Ggxv6drskz3V0TJJApsQEeiIeK0V/dt079ckCiM=
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a h1:1+772OQFHAS23JLAHrCZxO+DnGoiMllKcSwLQy74y+k=
 github.com/absmach/mgate v0.4.6-0.20250605150648-edf967fbb46a/go.mod h1:X2amjQg/2cnM+UKblMdpU2M4cZO74xtEHNIxtuUXCeA=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=

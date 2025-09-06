@@ -8731,6 +8731,65 @@ func (_c *SDK_SendMessage_Call) RunAndReturn(run func(ctx context.Context, domai
 	return _c
 }
 
+// SendVerification provides a mock function for the type SDK
+func (_mock *SDK) SendVerification(ctx context.Context, token string) errors.SDKError {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SendVerification")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_SendVerification_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SendVerification'
+type SDK_SendVerification_Call struct {
+	*mock.Call
+}
+
+// SendVerification is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *SDK_Expecter) SendVerification(ctx interface{}, token interface{}) *SDK_SendVerification_Call {
+	return &SDK_SendVerification_Call{Call: _e.mock.On("SendVerification", ctx, token)}
+}
+
+func (_c *SDK_SendVerification_Call) Run(run func(ctx context.Context, token string)) *SDK_SendVerification_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_SendVerification_Call) Return(sDKError errors.SDKError) *SDK_SendVerification_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_SendVerification_Call) RunAndReturn(run func(ctx context.Context, token string) errors.SDKError) *SDK_SendVerification_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SetChannelParent provides a mock function for the type SDK
 func (_mock *SDK) SetChannelParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, domainID, groupID, token)
@@ -10907,6 +10966,65 @@ func (_c *SDK_Users_Call) Return(usersPage sdk0.UsersPage, sDKError errors.SDKEr
 }
 
 func (_c *SDK_Users_Call) RunAndReturn(run func(ctx context.Context, pm sdk0.PageMetadata, token string) (sdk0.UsersPage, errors.SDKError)) *SDK_Users_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// VerifyEmail provides a mock function for the type SDK
+func (_mock *SDK) VerifyEmail(ctx context.Context, verificationToken string) errors.SDKError {
+	ret := _mock.Called(ctx, verificationToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for VerifyEmail")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, verificationToken)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_VerifyEmail_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'VerifyEmail'
+type SDK_VerifyEmail_Call struct {
+	*mock.Call
+}
+
+// VerifyEmail is a helper method to define mock.On call
+//   - ctx context.Context
+//   - verificationToken string
+func (_e *SDK_Expecter) VerifyEmail(ctx interface{}, verificationToken interface{}) *SDK_VerifyEmail_Call {
+	return &SDK_VerifyEmail_Call{Call: _e.mock.On("VerifyEmail", ctx, verificationToken)}
+}
+
+func (_c *SDK_VerifyEmail_Call) Run(run func(ctx context.Context, verificationToken string)) *SDK_VerifyEmail_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_VerifyEmail_Call) Return(sDKError errors.SDKError) *SDK_VerifyEmail_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_VerifyEmail_Call) RunAndReturn(run func(ctx context.Context, verificationToken string) errors.SDKError) *SDK_VerifyEmail_Call {
 	_c.Call.Return(run)
 	return _c
 }

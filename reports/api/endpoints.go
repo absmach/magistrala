@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/reports"
-	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/authn"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
@@ -15,7 +14,7 @@ import (
 
 func generateReportEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -51,7 +50,7 @@ func generateReportEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func listReportsConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -79,7 +78,7 @@ func listReportsConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func deleteReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -100,7 +99,7 @@ func deleteReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func updateReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -121,7 +120,7 @@ func updateReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func updateReportScheduleEndpoint(s reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -146,7 +145,7 @@ func updateReportScheduleEndpoint(s reports.Service) endpoint.Endpoint {
 
 func viewReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -167,7 +166,7 @@ func viewReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func addReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -191,7 +190,7 @@ func addReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func enableReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -212,7 +211,7 @@ func enableReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func disableReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -233,7 +232,7 @@ func disableReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func updateReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -254,7 +253,7 @@ func updateReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func viewReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -275,7 +274,7 @@ func viewReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 
 func deleteReportTemplateEndpoint(svc reports.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}

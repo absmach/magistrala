@@ -41,7 +41,7 @@ var (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, mgapi.EncodeError)),
 	}
@@ -50,8 +50,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bo
 
 	r.Route("/{domainID}/clients", func(r chi.Router) {
 		r.Group(func(r chi.Router) {
-			r.Use(api.AuthenticateMiddleware(authn, true))
-
+			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 			r.Route("/configs", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					addEndpoint(svc),
@@ -97,7 +96,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.Authentication, reader bo
 			})
 		})
 
-		r.With(api.AuthenticateMiddleware(authn, true)).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
+		r.With(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware()).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
 			stateEndpoint(svc),
 			decodeStateRequest,
 			api.EncodeResponse,

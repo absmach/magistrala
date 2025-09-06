@@ -7,7 +7,6 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/re"
-	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -17,7 +16,7 @@ import (
 
 func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -36,7 +35,7 @@ func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 
 func viewRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -55,7 +54,7 @@ func viewRuleEndpoint(s re.Service) endpoint.Endpoint {
 
 func updateRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -79,7 +78,7 @@ func updateRuleTagsEndpoint(svc re.Service) endpoint.Endpoint {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthentication
 		}
@@ -99,7 +98,7 @@ func updateRuleTagsEndpoint(svc re.Service) endpoint.Endpoint {
 
 func updateRuleScheduleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -124,7 +123,7 @@ func updateRuleScheduleEndpoint(s re.Service) endpoint.Endpoint {
 
 func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -146,7 +145,7 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 
 func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -165,7 +164,7 @@ func deleteRuleEndpoint(s re.Service) endpoint.Endpoint {
 
 func enableRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
@@ -186,7 +185,7 @@ func enableRuleEndpoint(s re.Service) endpoint.Endpoint {
 
 func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(api.SessionKey).(authn.Session)
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}

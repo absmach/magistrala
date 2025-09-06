@@ -18,6 +18,7 @@ import (
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
@@ -108,6 +109,7 @@ func main() {
 		exitCode = 1
 		return
 	}
+	am := smqauthn.NewAuthNMiddleware(authn)
 	defer authnClient.Close()
 	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
 
@@ -152,7 +154,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpAPI.MakeHandler(svc, logger, idp, cfg.InstanceID, authn), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpAPI.MakeHandler(svc, logger, idp, cfg.InstanceID, am), logger)
 
 	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
 	if err != nil {

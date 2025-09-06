@@ -22,6 +22,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap/tracing"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
@@ -148,6 +149,7 @@ func main() {
 		exitCode = 1
 		return
 	}
+	am := smqauthn.NewAuthNMiddleware(authn)
 	logger.Info("AuthN successfully connected to auth gRPC server " + authnClient.Secure())
 	defer authnClient.Close()
 
@@ -196,7 +198,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authn, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)

@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
-	mgauthn "github.com/absmach/supermq/pkg/authn"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -28,12 +28,12 @@ const (
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
-func MakeHandler(svc re.Service, authn mgauthn.Authentication, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 	mux.Group(func(r chi.Router) {
-		r.Use(api.AuthenticateMiddleware(authn, true))
+		r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 		r.Route("/{domainID}", func(r chi.Router) {
 			r.Route("/rules", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(

@@ -18,7 +18,11 @@ import (
 )
 
 // Table for SenML messages.
-const defTable = "messages"
+const (
+	defTable       = "messages"
+	orderByTime    = "time"
+	orderByCreated = "created"
+)
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
@@ -48,9 +52,9 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	if rpm.Order == "" {
 		if isSenml {
-			rpm.Order = "time"
+			rpm.Order = orderByTime
 		} else {
-			rpm.Order = "created"
+			rpm.Order = orderByCreated
 		}
 	}
 
@@ -272,9 +276,9 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 }
 
 func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) string {
-	timeCol := "time"
+	timeCol := orderByTime
 	if !isSenml {
-		timeCol = "created"
+		timeCol = orderByCreated
 	}
 
 	dir := pm.Dir
@@ -282,14 +286,30 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 		dir = api.DescDir
 	}
 
+	aggCols := map[string]bool{
+		orderByTime: true, "value": true, "publisher": true, "protocol": true,
+		"subtopic": true, "name": true, "unit": true,
+	}
+
 	senmlCols := map[string]bool{
-		"time": true, "value": true, "publisher": true, "name": true,
+		orderByTime: true, "value": true, "publisher": true, "name": true,
 		"protocol": true, "channel": true, "subtopic": true, "unit": true,
 	}
 
 	jsonCols := map[string]bool{
-		"created": true, "publisher": true, "protocol": true,
+		orderByCreated: true, "publisher": true, "protocol": true,
 		"channel": true, "subtopic": true,
+	}
+
+	if isAggregated {
+		col := pm.Order
+		if !aggCols[col] {
+			col = "time"
+		}
+		if col == "time" {
+			return fmt.Sprintf("ORDER BY time %s", dir)
+		}
+		return fmt.Sprintf("ORDER BY %s %s, time %s", col, dir, dir)
 	}
 
 	col := pm.Order

@@ -158,7 +158,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -170,7 +170,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -247,7 +247,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -259,7 +259,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -271,7 +271,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -283,7 +283,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Subtopic: subtopic, Format: "messages", Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Subtopic: subtopic, Format: "messages", Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -295,7 +295,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Subtopic: subtopic, Format: "messages", Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Subtopic: subtopic, Format: "messages", Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -307,7 +307,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Publisher: pubID2},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Publisher: pubID2, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -319,7 +319,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -331,7 +331,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Name: msgName},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Name: msgName, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -343,7 +343,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -355,7 +355,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Comparator: readers.EqualKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Comparator: readers.EqualKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -367,7 +367,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -379,7 +379,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanEqualKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanEqualKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -391,7 +391,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -403,7 +403,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanEqualKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanEqualKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -429,7 +429,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", BoolValue: true},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", BoolValue: true, Order: "time", Dir: "desc"},
 				Total:        uint64(len(boolMsgs)),
 				Messages:     boolMsgs[0:10],
 			},
@@ -448,7 +448,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", StringValue: vs},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", StringValue: vs, Order: "time", Dir: "desc"},
 				Total:        uint64(len(stringMsgs)),
 				Messages:     stringMsgs[0:10],
 			},
@@ -460,7 +460,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", DataValue: vd},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", DataValue: vd, Order: "time", Dir: "desc"},
 				Total:        uint64(len(dataMsgs)),
 				Messages:     dataMsgs[0:10],
 			},
@@ -486,7 +486,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", From: messages[19].Time, To: messages[4].Time},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", From: messages[19].Time, To: messages[4].Time, Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages[5:20])),
 				Messages:     messages[5:15],
 			},
@@ -505,7 +505,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -517,6 +517,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusBadRequest,
 		},
+
 		{
 			desc:         "read page with aggregation, interval, to and from as client",
 			url:          fmt.Sprintf("%s/%s/channels/%s/messages?aggregation=MAX&interval=10h&from=%f&to=%f", ts.URL, domainID, chanID, messages[19].Time, messages[4].Time),
@@ -524,11 +525,12 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Aggregation: "MAX", Interval: "10h", From: messages[19].Time, To: messages[4].Time},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Aggregation: "MAX", Interval: "10h", From: messages[19].Time, To: messages[4].Time, Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages[5:20])),
 				Messages:     messages[5:15],
 			},
 		},
+
 		{
 			desc:         "read page with invalid aggregation and valid interval, to and from as client",
 			url:          fmt.Sprintf("%s/%s/channels/%s/messages?aggregation=invalid&interval=10h&from=%f&to=%f", ts.URL, domainID, chanID, messages[19].Time, messages[4].Time),
@@ -571,7 +573,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -655,7 +657,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -667,7 +669,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -679,7 +681,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -691,7 +693,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Subtopic: subtopic, Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Subtopic: subtopic, Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -703,7 +705,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Subtopic: subtopic, Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Subtopic: subtopic, Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -715,7 +717,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Publisher: pubID2},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Publisher: pubID2, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -727,7 +729,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Protocol: httpProt},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Protocol: httpProt, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -739,7 +741,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Name: msgName},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Name: msgName, Order: "time", Dir: "desc"},
 				Total:        uint64(len(queryMsgs)),
 				Messages:     queryMsgs[0:10],
 			},
@@ -751,7 +753,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -763,7 +765,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Comparator: readers.EqualKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v, Comparator: readers.EqualKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -775,7 +777,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -787,7 +789,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanEqualKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v + 1, Comparator: readers.LowerThanEqualKey, Order: "time", Dir: "desc"},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -799,7 +801,7 @@ func TestReadAll(t *testing.T) {
 			status:       http.StatusOK,
 			authResponse: true,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanKey},
+				PageMetadata: readers.PageMetadata{Limit: 10, Order: "time", Dir: "desc", Format: "messages", Value: v - 1, Comparator: readers.GreaterThanKey},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -811,7 +813,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanEqualKey},
+				PageMetadata: readers.PageMetadata{Order: "time", Dir: "desc", Limit: 10, Format: "messages", Value: v - 1, Comparator: readers.GreaterThanEqualKey},
 				Total:        uint64(len(valueMsgs)),
 				Messages:     valueMsgs[0:10],
 			},
@@ -837,7 +839,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", BoolValue: true},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", BoolValue: true, Order: "time", Dir: "desc"},
 				Total:        uint64(len(boolMsgs)),
 				Messages:     boolMsgs[0:10],
 			},
@@ -856,7 +858,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", StringValue: vs},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", StringValue: vs, Order: "time", Dir: "desc"},
 				Total:        uint64(len(stringMsgs)),
 				Messages:     stringMsgs[0:10],
 			},
@@ -868,7 +870,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", DataValue: vd},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", DataValue: vd, Order: "time", Dir: "desc"},
 				Total:        uint64(len(dataMsgs)),
 				Messages:     dataMsgs[0:10],
 			},
@@ -894,7 +896,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", From: messages[19].Time, To: messages[4].Time},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", From: messages[19].Time, To: messages[4].Time, Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages[5:20])),
 				Messages:     messages[5:15],
 			},
@@ -913,7 +915,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages"},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages)),
 				Messages:     messages[0:10],
 			},
@@ -932,7 +934,7 @@ func TestReadAll(t *testing.T) {
 			authResponse: true,
 			status:       http.StatusOK,
 			res: pageRes{
-				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Aggregation: "MAX", Interval: "10h", From: messages[19].Time, To: messages[4].Time},
+				PageMetadata: readers.PageMetadata{Limit: 10, Format: "messages", Aggregation: "MAX", Interval: "10h", From: messages[19].Time, To: messages[4].Time, Order: "time", Dir: "desc"},
 				Total:        uint64(len(messages[5:20])),
 				Messages:     messages[5:15],
 			},

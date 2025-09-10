@@ -304,9 +304,9 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 	if isAggregated {
 		col := pm.Order
 		if !aggCols[col] {
-			col = "time"
+			col = orderByTime
 		}
-		if col == "time" {
+		if col == orderByTime {
 			return fmt.Sprintf("ORDER BY time %s", dir)
 		}
 		return fmt.Sprintf("ORDER BY %s %s, time %s", col, dir, dir)
@@ -315,7 +315,7 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 	col := pm.Order
 	if isSenml {
 		if !senmlCols[col] {
-			col = "time"
+			col = orderByTime
 		}
 	} else {
 		if !jsonCols[col] {

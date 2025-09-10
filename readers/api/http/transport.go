@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/supermq"
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
+	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/connections"
@@ -143,6 +144,16 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, "time")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, "desc")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
 	var interval string
 	if aggregation != "" {
 		interval, err = apiutil.ReadStringQuery(r, intervalKey, defInterval)
@@ -173,6 +184,8 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 			To:          to,
 			Aggregation: aggregation,
 			Interval:    interval,
+			Order:       order,
+			Dir:         dir,
 		},
 	}
 	return req, nil

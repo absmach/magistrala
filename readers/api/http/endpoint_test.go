@@ -33,8 +33,6 @@ const (
 	clientToken   = "1"
 	userToken     = "token"
 	invalidToken  = "invalid"
-	email         = "user@example.com"
-	invalid       = "invalid"
 	numOfMessages = 100
 	valueFields   = 5
 	subtopic      = "topic"

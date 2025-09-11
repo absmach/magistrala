@@ -51,9 +51,10 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	isAggregated := isSenml && rpm.Aggregation != "" && rpm.Interval != ""
 
 	if rpm.Order == "" {
-		if isSenml {
+		switch {
+		case isSenml:
 			rpm.Order = orderByTime
-		} else {
+		default:
 			rpm.Order = orderByCreated
 		}
 	}
@@ -313,13 +314,14 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 	}
 
 	col := pm.Order
-	if isSenml {
+	switch {
+	case isSenml:
 		if !senmlCols[col] {
 			col = orderByTime
 		}
-	} else {
+	case !isSenml:
 		if !jsonCols[col] {
-			col = "created"
+			col = orderByCreated
 		}
 	}
 

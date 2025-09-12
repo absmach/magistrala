@@ -422,6 +422,13 @@ func groupReportsByPublisher(metric Metric, sMsgs []senml.Message) []Report {
 		})
 	}
 
+	if len(groupedReports) == 0 {
+		groupedReports = append(groupedReports, Report{
+			Metric:   metric,
+			Messages: []senml.Message{},
+		})
+	}
+
 	return groupedReports
 }
 

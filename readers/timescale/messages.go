@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 
+	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
@@ -17,7 +18,11 @@ import (
 )
 
 // Table for SenML messages.
-const defTable = "messages"
+const (
+	defTable       = "messages"
+	orderByTime    = "time"
+	orderByCreated = "created"
+)
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
@@ -33,21 +38,46 @@ func New(db *sqlx.DB) readers.MessageRepository {
 }
 
 func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
-	order := "time"
 	format := defTable
 
 	if rpm.Format != "" && rpm.Format != defTable {
-		order = "created"
 		format = rpm.Format
 	}
 
-	q := fmt.Sprintf(`SELECT * FROM %s WHERE %s ORDER BY %s DESC LIMIT :limit OFFSET :offset;`, format, fmtCondition(rpm), order)
-	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, fmtCondition(rpm))
+	isSenml := (format == defTable)
 
 	// If aggregation is provided, add time_bucket and aggregation to the query
 	const timeDivisor = 1000000000
+	isAggregated := isSenml && rpm.Aggregation != "" && rpm.Interval != ""
 
-	if rpm.Aggregation != "" {
+	if rpm.Order == "" {
+		switch {
+		case isSenml:
+			rpm.Order = orderByTime
+		default:
+			rpm.Order = orderByCreated
+		}
+	}
+
+	orderClause := applyOrdering(rpm, isAggregated, isSenml)
+
+	pgData := ""
+	if rpm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if rpm.Offset != 0 {
+		if pgData != "" {
+			pgData += " "
+		}
+		pgData += "OFFSET :offset"
+	}
+
+	where := fmtCondition(rpm)
+
+	var q string
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, where)
+
+	if isAggregated {
 		q = fmt.Sprintf(`
 			SELECT
 				EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time,
@@ -62,12 +92,14 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			WHERE
 				%s
 			GROUP BY 1
-			ORDER BY time DESC
-			LIMIT :limit OFFSET :offset;
+			%s
+			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, where, orderClause, pgData)
 
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, fmtCondition(rpm))
+		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, where)
+	} else {
+		q = fmt.Sprintf(`SELECT * FROM %s WHERE %s %s %s;`, format, where, orderClause, pgData)
 	}
 
 	params := map[string]any{
@@ -101,6 +133,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		PageMetadata: rpm,
 		Messages:     []readers.Message{},
 	}
+
 	switch format {
 	case defTable:
 		for rows.Next() {
@@ -241,4 +274,61 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 	}
 	ret["payload"] = pld
 	return ret, nil
+}
+
+func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) string {
+	timeCol := orderByTime
+	if !isSenml {
+		timeCol = orderByCreated
+	}
+
+	dir := pm.Dir
+	if dir != api.AscDir && dir != api.DescDir {
+		dir = api.DescDir
+	}
+
+	aggCols := map[string]bool{
+		orderByTime: true, "value": true, "publisher": true, "protocol": true,
+		"subtopic": true, "name": true, "unit": true,
+	}
+
+	senmlCols := map[string]bool{
+		orderByTime: true, "value": true, "publisher": true, "name": true,
+		"protocol": true, "channel": true, "subtopic": true, "unit": true,
+	}
+
+	jsonCols := map[string]bool{
+		orderByCreated: true, "publisher": true, "protocol": true,
+		"channel": true, "subtopic": true,
+	}
+
+	if isAggregated {
+		col := pm.Order
+		if !aggCols[col] {
+			col = orderByTime
+		}
+		if col == orderByTime {
+			return fmt.Sprintf("ORDER BY time %s", dir)
+		}
+		return fmt.Sprintf("ORDER BY %s %s, time %s", col, dir, dir)
+	}
+
+	col := pm.Order
+	switch {
+	case isSenml:
+		if !senmlCols[col] {
+			col = orderByTime
+		}
+	case !isSenml:
+		if !jsonCols[col] {
+			col = orderByCreated
+		}
+	}
+
+	secondary := fmt.Sprintf("%s DESC", timeCol)
+
+	if col == timeCol {
+		return fmt.Sprintf("ORDER BY %s %s", col, dir)
+	}
+	return fmt.Sprintf("ORDER BY %s %s, %s", col, dir, secondary)
 }

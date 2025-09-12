@@ -309,7 +309,11 @@
 </head>
 <body>
     {{$totalPages := len .Reports}}
+    {{if eq $totalPages 0}}
+    {{$totalPages = 1}}
+    {{end}}
     {{$globalPage := 0}}
+    {{if gt (len .Reports) 0}}
     {{range $index, $report := .Reports}}
     {{$globalPage = add $globalPage 1}}
     <div class="page">
@@ -379,6 +383,68 @@
             <div class="footer-separator"></div>
             <div class="footer-content">
                 <div class="footer-generated">Generated: {{$.GeneratedTime}}</div>
+                <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
+            </div>
+        </div>
+    </div>
+    {{end}}
+    {{else}}
+    {{$globalPage = 1}}
+    <div class="page">
+        <div class="header">
+            <div class="header-top-bar"></div>
+            <div class="header-content">
+                <div style="width: 100px;"></div>
+                <div class="header-title">{{.Title}}</div>
+                <div class="header-date">{{.GeneratedDate}}</div>
+            </div>
+            <div class="header-separator"></div>
+        </div>
+
+        <div class="content-area">
+            <div class="metrics-section">
+                <div class="metrics-title">Metrics</div>
+                <div class="metrics-info">
+                    <div class="metric-row">
+                        <div class="metric-label">Name:</div>
+                        <div class="metric-value">{{.Metric.Name}}</div>
+                    </div>
+                    <div class="metric-row">
+                        <div class="metric-label">Channel ID:</div>
+                        <div class="metric-value">{{.Metric.ChannelID}}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="record-count">
+                Total Records: 0
+            </div>
+
+            <div class="table-container">
+                <div class="table-header-bar"></div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="col-time">Time</th>
+                            <th class="col-value">Value</th>
+                            <th class="col-unit">Unit</th>
+                            <th class="col-protocol">Protocol</th>
+                            <th class="col-subtopic">Subtopic</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colspan="5" style="text-align: center; font-style: italic; color: #888;">No data available</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <div class="footer-separator"></div>
+            <div class="footer-content">
+                <div class="footer-generated">Generated: {{.GeneratedTime}}</div>
                 <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
             </div>
         </div>

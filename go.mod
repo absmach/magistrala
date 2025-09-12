@@ -26,7 +26,7 @@ require (
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5
 	github.com/prometheus/client_golang v1.23.2
-	github.com/redis/go-redis/v9 v9.13.0
+	github.com/redis/go-redis/v9 v9.14.0
 	github.com/rubenv/sql-migrate v1.8.0
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0

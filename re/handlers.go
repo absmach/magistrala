@@ -111,6 +111,8 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 	case *outputs.SenML:
 		o.WritersPub = re.writersPub
 		return o.Run(ctx, msg, val)
+	case *outputs.Slack:
+		return o.Run(ctx, msg, val)
 	default:
 		return fmt.Errorf("unknown output type: %T", o)
 	}

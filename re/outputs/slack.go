@@ -4,8 +4,10 @@
 package outputs
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"text/template"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/slack-go/slack"
@@ -14,16 +16,29 @@ import (
 type Slack struct {
 	Token     string `json:"token"`
 	ChannelID string `json:"channel_id"`
+	Message   string `json:"message"`
 }
 
 func (s *Slack) Run(ctx context.Context, msg *messaging.Message, val any) error {
-	b, err := json.Marshal(val)
+	templData := templateVal{
+		Message: msg,
+		Result:  val,
+	}
+
+	tmpl, err := template.New("postgres").Parse(s.Message)
 	if err != nil {
 		return err
 	}
 
+	var output bytes.Buffer
+	if err := tmpl.Execute(&output, templData); err != nil {
+		return err
+	}
+
+	mapping := output.String()
+
 	var message slack.Msg
-	if err := json.Unmarshal(b, &message); err != nil {
+	if err := json.Unmarshal([]byte(mapping), &message); err != nil {
 		return err
 	}
 
@@ -52,5 +67,6 @@ func (s *Slack) MarshalJSON() ([]byte, error) {
 		"type":       SlackType.String(),
 		"token":      s.Token,
 		"channel_id": s.ChannelID,
+		"message":    s.Message,
 	})
 }

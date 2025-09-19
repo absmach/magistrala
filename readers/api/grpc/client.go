@@ -95,6 +95,8 @@ func decodeReadMessagesResponse(_ context.Context, grpcRes any) (any, error) {
 		PageMetadata: readers.PageMetadata{
 			Offset: res.GetPageMetadata().GetOffset(),
 			Limit:  res.GetPageMetadata().GetLimit(),
+			Order:  res.GetPageMetadata().GetOrder(),
+			Dir:    res.GetPageMetadata().GetDir(),
 		},
 	}, nil
 }
@@ -121,6 +123,8 @@ func encodeReadMessagesRequest(_ context.Context, grpcReq any) (any, error) {
 			StringValue: req.pageMeta.StringValue,
 			DataValue:   req.pageMeta.DataValue,
 			Format:      req.pageMeta.Format,
+			Order:       req.pageMeta.Order,
+			Dir:         req.pageMeta.Dir,
 		},
 	}, nil
 }

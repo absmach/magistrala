@@ -32,6 +32,8 @@ message PageMetadata {
   Aggregation aggregation    = 15;
   string comparator          = 16;
   string format              = 17;
+  string order               = 18;
+  string dir                 = 19;
 }
 
 message ReadMessagesRes {

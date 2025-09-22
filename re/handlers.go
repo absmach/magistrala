@@ -33,12 +33,11 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if n := len(msg.Payload); n > maxPayload {
 		return errors.New(pldExceededFmt + strconv.Itoa(n))
 	}
-	
-	// If WorkerManager is not initialized yet, fall back to old behavior
+
 	if re.workerMgr == nil {
 		return re.handleWithoutWorkers(msg)
 	}
-	
+
 	// Skip filtering by message topic and fetch all non-scheduled rules instead.
 	// It's cleaner and more efficient to match wildcards in Go, but we can
 	// revisit this if it ever becomes a performance bottleneck.
@@ -56,9 +55,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
-			// Send message to the appropriate worker
 			if !re.workerMgr.SendMessage(msg, r) {
-				// Worker not found or busy, fall back to direct processing
 				go func(ctx context.Context, rule Rule) {
 					re.runInfo <- re.process(ctx, rule, msg)
 				}(ctx, r)
@@ -152,10 +149,8 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
-	// Initialize WorkerManager with context
 	re.workerMgr = NewWorkerManager(re, ctx)
-	
-	// Load and start workers for existing enabled rules
+
 	pm := PageMeta{
 		Status: EnabledStatus,
 	}
@@ -165,8 +160,16 @@ func (re *re) StartScheduler(ctx context.Context) error {
 	}
 
 	defer re.ticker.Stop()
-	defer re.workerMgr.StopAll()
-	
+	defer func() {
+		if stopErr := re.workerMgr.StopAll(); stopErr != nil {
+			re.runInfo <- pkglog.RunInfo{
+				Level:   slog.LevelError,
+				Message: fmt.Sprintf("failed to stop worker manager: %s", stopErr),
+				Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():

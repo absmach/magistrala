@@ -20,16 +20,16 @@ import (
 )
 
 type re struct {
-	repo         Repository
-	runInfo      chan pkglog.RunInfo
-	idp          supermq.IDProvider
-	rePubSub     messaging.PubSub
-	writersPub   messaging.Publisher
-	alarmsPub    messaging.Publisher
-	ticker       ticker.Ticker
-	email        emailer.Emailer
-	readers      grpcReadersV1.ReadersServiceClient
-	workerMgr    *WorkerManager
+	repo       Repository
+	runInfo    chan pkglog.RunInfo
+	idp        supermq.IDProvider
+	rePubSub   messaging.PubSub
+	writersPub messaging.Publisher
+	alarmsPub  messaging.Publisher
+	ticker     ticker.Ticker
+	email      emailer.Emailer
+	readers    grpcReadersV1.ReadersServiceClient
+	workerMgr  *WorkerManager
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
@@ -123,10 +123,12 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if rule.Schedule.Recurring == schedule.None && rule.Status == EnabledStatus {
-		re.workerMgr.UpdateWorker(ctx, rule)
-	} else {
-		re.workerMgr.RemoveWorker(rule.ID)
+	if re.workerMgr != nil {
+		if rule.Schedule.Recurring == schedule.None && rule.Status == EnabledStatus {
+			re.workerMgr.UpdateWorker(ctx, rule)
+		} else {
+			re.workerMgr.RemoveWorker(rule.ID)
+		}
 	}
 
 	return rule, nil
@@ -146,8 +148,9 @@ func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) 
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
-	// Remove worker for the deleted rule
-	re.workerMgr.RemoveWorker(id)
+	if re.workerMgr != nil {
+		re.workerMgr.RemoveWorker(id)
+	}
 
 	return nil
 }
@@ -168,8 +171,7 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	// Add worker for enabled rule if it's not scheduled
-	if rule.Schedule.Recurring == schedule.None {
+	if re.workerMgr != nil && rule.Schedule.Recurring == schedule.None {
 		re.workerMgr.AddWorker(ctx, rule)
 	}
 
@@ -192,14 +194,16 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	// Remove worker for disabled rule
-	re.workerMgr.RemoveWorker(id)
+	if re.workerMgr != nil {
+		re.workerMgr.RemoveWorker(id)
+	}
 
 	return rule, nil
 }
 
 func (re *re) Cancel() error {
-	// Stop all workers when the service is cancelled
-	re.workerMgr.StopAll()
+	if re.workerMgr != nil {
+		return re.workerMgr.StopAll()
+	}
 	return nil
 }

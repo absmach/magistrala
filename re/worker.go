@@ -89,10 +89,8 @@ func (w *RuleWorker) UpdateRule(rule Rule) {
 	select {
 	case w.updateChan <- rule:
 	default:
-		// If channel is full, just overwrite the current rule
-		// This ensures we always have the latest rule
 		select {
-		case <-w.updateChan: // drain the channel
+		case <-w.updateChan:
 		default:
 		}
 		w.updateChan <- rule
@@ -101,7 +99,7 @@ func (w *RuleWorker) UpdateRule(rule Rule) {
 
 // GetRule returns the current rule configuration.
 func (w *RuleWorker) GetRule() Rule {
-	return w.rule // Since rule updates happen via channels in the worker loop, this is safe
+	return w.rule
 }
 
 // run is the main worker loop that processes messages.
@@ -115,7 +113,6 @@ func (w *RuleWorker) run(ctx context.Context) error {
 		case <-ctx.Done():
 			return ctx.Err()
 		case rule := <-w.updateChan:
-			// Update the rule configuration
 			w.rule = rule
 		case workerMsg := <-w.msgChan:
 			w.processMessage(ctx, workerMsg)
@@ -139,9 +136,44 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 	}
 }
 
+// WorkerCommandType represents the type of worker management command
+type WorkerCommandType uint8
+
+const (
+	CmdAdd WorkerCommandType = iota
+	CmdRemove
+	CmdUpdate
+	CmdSend
+	CmdStopAll
+	CmdCount
+	CmdList
+)
+
+// String returns a string representation of the command type
+func (c WorkerCommandType) String() string {
+	switch c {
+	case CmdAdd:
+		return "add"
+	case CmdRemove:
+		return "remove"
+	case CmdUpdate:
+		return "update"
+	case CmdSend:
+		return "send"
+	case CmdStopAll:
+		return "stop_all"
+	case CmdCount:
+		return "count"
+	case CmdList:
+		return "list"
+	default:
+		return "unknown"
+	}
+}
+
 // WorkerManagerCommand represents commands for worker management
 type WorkerManagerCommand struct {
-	Type     string // "add", "remove", "update", "send", "stop_all"
+	Type     WorkerCommandType
 	Rule     Rule
 	RuleID   string
 	Message  *messaging.Message
@@ -169,12 +201,12 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 		commandCh: make(chan WorkerManagerCommand, 100),
 		running:   0,
 	}
-	
+
 	// Start the worker manager goroutine
 	wm.g.Go(func() error {
 		return wm.manageWorkers(ctx)
 	})
-	
+
 	atomic.StoreInt32(&wm.running, 1)
 	return wm
 }
@@ -182,7 +214,7 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 // manageWorkers is the main loop that handles all worker management operations
 func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
 	defer atomic.StoreInt32(&wm.running, 0)
-	
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -192,7 +224,7 @@ func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
 			}
 			wm.workers = make(map[string]*RuleWorker)
 			return ctx.Err()
-			
+
 		case cmd := <-wm.commandCh:
 			wm.handleCommand(cmd)
 		}
@@ -202,27 +234,27 @@ func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
 // handleCommand processes worker management commands
 func (wm *WorkerManager) handleCommand(cmd WorkerManagerCommand) {
 	switch cmd.Type {
-	case "add":
+	case CmdAdd:
 		wm.addWorkerUnsafe(cmd.Rule)
-	case "remove":
+	case CmdRemove:
 		wm.removeWorkerUnsafe(cmd.RuleID)
-	case "update":
+	case CmdUpdate:
 		wm.updateWorkerUnsafe(cmd.Rule)
-	case "send":
+	case CmdSend:
 		result := wm.sendMessageUnsafe(cmd.Message, cmd.Rule)
 		if cmd.Response != nil {
 			cmd.Response <- result
 		}
-	case "stop_all":
+	case CmdStopAll:
 		wm.stopAllUnsafe()
 		if cmd.Response != nil {
 			cmd.Response <- true
 		}
-	case "count":
+	case CmdCount:
 		if cmd.Response != nil {
 			cmd.Response <- len(wm.workers)
 		}
-	case "list":
+	case CmdList:
 		if cmd.Response != nil {
 			ruleIDs := make([]string, 0, len(wm.workers))
 			for ruleID := range wm.workers {
@@ -302,12 +334,12 @@ func (wm *WorkerManager) AddWorker(ctx context.Context, rule Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
 	}
-	
+
 	cmd := WorkerManagerCommand{
-		Type: "add",
+		Type: CmdAdd,
 		Rule: rule,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 	case <-ctx.Done():
@@ -319,12 +351,12 @@ func (wm *WorkerManager) RemoveWorker(ruleID string) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
 	}
-	
+
 	cmd := WorkerManagerCommand{
-		Type:   "remove",
+		Type:   CmdRemove,
 		RuleID: ruleID,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 	default:
@@ -337,12 +369,12 @@ func (wm *WorkerManager) UpdateWorker(ctx context.Context, rule Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
 	}
-	
+
 	cmd := WorkerManagerCommand{
-		Type: "update",
+		Type: CmdUpdate,
 		Rule: rule,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 	case <-ctx.Done():
@@ -354,15 +386,15 @@ func (wm *WorkerManager) SendMessage(msg *messaging.Message, rule Rule) bool {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return false
 	}
-	
+
 	responseCh := make(chan interface{}, 1)
 	cmd := WorkerManagerCommand{
-		Type:     "send",
+		Type:     CmdSend,
 		Rule:     rule,
 		Message:  msg,
 		Response: responseCh,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 		select {
@@ -384,34 +416,34 @@ func (wm *WorkerManager) StopAll() error {
 	if !atomic.CompareAndSwapInt32(&wm.running, 1, 0) {
 		return nil
 	}
-	
+
 	responseCh := make(chan interface{}, 1)
 	cmd := WorkerManagerCommand{
-		Type:     "stop_all",
+		Type:     CmdStopAll,
 		Response: responseCh,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 		<-responseCh // Wait for completion
 	default:
 		// Channel full, force stop
 	}
-	
+
 	// Wait for all workers to finish
 	return wm.g.Wait()
-}// GetWorkerCount returns the number of active workers.
+} // GetWorkerCount returns the number of active workers.
 func (wm *WorkerManager) GetWorkerCount() int {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return 0
 	}
-	
+
 	responseCh := make(chan interface{}, 1)
 	cmd := WorkerManagerCommand{
-		Type:     "count",
+		Type:     CmdCount,
 		Response: responseCh,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 		if result := <-responseCh; result != nil {
@@ -429,13 +461,13 @@ func (wm *WorkerManager) ListWorkers() []string {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return nil
 	}
-	
+
 	responseCh := make(chan interface{}, 1)
 	cmd := WorkerManagerCommand{
-		Type:     "list",
+		Type:     CmdList,
 		Response: responseCh,
 	}
-	
+
 	select {
 	case wm.commandCh <- cmd:
 		if result := <-responseCh; result != nil {
@@ -453,7 +485,7 @@ func (wm *WorkerManager) RefreshWorkers(ctx context.Context, rules []Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
 	}
-	
+
 	// For simplicity, let's process refresh by individual add/update/remove commands
 	// First get current workers, then sync
 	for _, rule := range rules {

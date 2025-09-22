@@ -33,6 +33,12 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if n := len(msg.Payload); n > maxPayload {
 		return errors.New(pldExceededFmt + strconv.Itoa(n))
 	}
+	
+	// If WorkerManager is not initialized yet, fall back to old behavior
+	if re.workerMgr == nil {
+		return re.handleWithoutWorkers(msg)
+	}
+	
 	// Skip filtering by message topic and fetch all non-scheduled rules instead.
 	// It's cleaner and more efficient to match wildcards in Go, but we can
 	// revisit this if it ever becomes a performance bottleneck.
@@ -50,9 +56,38 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
-			go func(ctx context.Context) {
-				re.runInfo <- re.process(ctx, r, msg)
-			}(ctx)
+			// Send message to the appropriate worker
+			if !re.workerMgr.SendMessage(msg, r) {
+				// Worker not found or busy, fall back to direct processing
+				go func(ctx context.Context, rule Rule) {
+					re.runInfo <- re.process(ctx, rule, msg)
+				}(ctx, r)
+			}
+		}
+	}
+
+	return nil
+}
+
+// handleWithoutWorkers processes messages using the legacy direct goroutine approach
+func (re *re) handleWithoutWorkers(msg *messaging.Message) error {
+	pm := PageMeta{
+		Domain:       msg.Domain,
+		InputChannel: msg.Channel,
+		Status:       EnabledStatus,
+		Scheduled:    &scheduledFalse,
+	}
+	ctx := context.Background()
+	page, err := re.repo.ListRules(ctx, pm)
+	if err != nil {
+		return err
+	}
+
+	for _, r := range page.Rules {
+		if matchSubject(msg.Subtopic, r.InputTopic) {
+			go func(ctx context.Context, rule Rule) {
+				re.runInfo <- re.process(ctx, rule, msg)
+			}(ctx, r)
 		}
 	}
 
@@ -117,7 +152,21 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
+	// Initialize WorkerManager with context
+	re.workerMgr = NewWorkerManager(re, ctx)
+	
+	// Load and start workers for existing enabled rules
+	pm := PageMeta{
+		Status: EnabledStatus,
+	}
+	page, err := re.repo.ListRules(ctx, pm)
+	if err == nil {
+		re.workerMgr.RefreshWorkers(ctx, page.Rules)
+	}
+
 	defer re.ticker.Stop()
+	defer re.workerMgr.StopAll()
+	
 	for {
 		select {
 		case <-ctx.Done():

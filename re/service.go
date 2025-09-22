@@ -44,7 +44,6 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 		email:      emailer,
 		readers:    readers,
 	}
-	reEngine.workerMgr = NewWorkerManager(reEngine)
 	return reEngine
 }
 
@@ -70,7 +69,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
-	if rule.Status == EnabledStatus && rule.Schedule.Recurring == schedule.None {
+	if rule.Status == EnabledStatus && rule.Schedule.Recurring == schedule.None && re.workerMgr != nil {
 		re.workerMgr.AddWorker(ctx, rule)
 	}
 
@@ -94,10 +93,12 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if rule.Schedule.Recurring == schedule.None {
-		re.workerMgr.UpdateWorker(ctx, rule)
-	} else {
-		re.workerMgr.RemoveWorker(rule.ID)
+	if re.workerMgr != nil {
+		if rule.Schedule.Recurring == schedule.None {
+			re.workerMgr.UpdateWorker(ctx, rule)
+		} else {
+			re.workerMgr.RemoveWorker(rule.ID)
+		}
 	}
 
 	return rule, nil
@@ -122,11 +123,9 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	// Update worker based on schedule
 	if rule.Schedule.Recurring == schedule.None && rule.Status == EnabledStatus {
 		re.workerMgr.UpdateWorker(ctx, rule)
 	} else {
-		// Rule is scheduled or disabled, remove from workers
 		re.workerMgr.RemoveWorker(rule.ID)
 	}
 
@@ -200,5 +199,7 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 }
 
 func (re *re) Cancel() error {
+	// Stop all workers when the service is cancelled
+	re.workerMgr.StopAll()
 	return nil
 }

@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 
 	"github.com/absmach/supermq/pkg/messaging"
@@ -136,7 +137,6 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 	}
 }
 
-// WorkerCommandType represents the type of worker management command
 type WorkerCommandType uint8
 
 const (
@@ -149,7 +149,6 @@ const (
 	CmdList
 )
 
-// String returns a string representation of the command type
 func (c WorkerCommandType) String() string {
 	switch c {
 	case CmdAdd:
@@ -171,22 +170,24 @@ func (c WorkerCommandType) String() string {
 	}
 }
 
-// WorkerManagerCommand represents commands for worker management
+// WorkerManagerCommand represents commands for worker management.
 type WorkerManagerCommand struct {
 	Type     WorkerCommandType
 	Rule     Rule
 	RuleID   string
 	Message  *messaging.Message
-	Response chan interface{} // For responses (e.g., SendMessage result)
+	Response chan interface{}
 }
 
-// WorkerManager manages all rule workers using channels instead of mutex
+// WorkerManager manages all rule workers.
 type WorkerManager struct {
 	workers   map[string]*RuleWorker
 	engine    *re
 	g         *errgroup.Group
 	ctx       context.Context
 	commandCh chan WorkerManagerCommand
+	errorCh   chan error
+	mu        sync.RWMutex
 	running   int32
 }
 
@@ -199,6 +200,7 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 		g:         g,
 		ctx:       ctx,
 		commandCh: make(chan WorkerManagerCommand, 100),
+		errorCh:   make(chan error, 100),
 		running:   0,
 	}
 
@@ -211,16 +213,19 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 	return wm
 }
 
-// manageWorkers is the main loop that handles all worker management operations
 func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
 	defer atomic.StoreInt32(&wm.running, 0)
 
 	for {
 		select {
 		case <-ctx.Done():
-			// Stop all workers before exiting
 			for _, worker := range wm.workers {
-				worker.Stop()
+				if err := worker.Stop(); err != nil {
+					select {
+					case wm.errorCh <- err:
+					default:
+					}
+				}
 			}
 			wm.workers = make(map[string]*RuleWorker)
 			return ctx.Err()
@@ -231,86 +236,125 @@ func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
 	}
 }
 
-// handleCommand processes worker management commands
 func (wm *WorkerManager) handleCommand(cmd WorkerManagerCommand) {
 	switch cmd.Type {
 	case CmdAdd:
-		wm.addWorkerUnsafe(cmd.Rule)
+		if err := wm.addWorker(cmd.Rule); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
 	case CmdRemove:
-		wm.removeWorkerUnsafe(cmd.RuleID)
+		if err := wm.removeWorker(cmd.RuleID); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
 	case CmdUpdate:
-		wm.updateWorkerUnsafe(cmd.Rule)
+		if err := wm.updateWorker(cmd.Rule); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
 	case CmdSend:
-		result := wm.sendMessageUnsafe(cmd.Message, cmd.Rule)
+		result := wm.sendMessage(cmd.Message, cmd.Rule)
 		if cmd.Response != nil {
 			cmd.Response <- result
 		}
 	case CmdStopAll:
-		wm.stopAllUnsafe()
+		if err := wm.stopAll(); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
 		if cmd.Response != nil {
 			cmd.Response <- true
 		}
 	case CmdCount:
+		wm.mu.RLock()
+		count := len(wm.workers)
+		wm.mu.RUnlock()
 		if cmd.Response != nil {
-			cmd.Response <- len(wm.workers)
+			cmd.Response <- count
 		}
 	case CmdList:
+		wm.mu.RLock()
+		ruleIDs := make([]string, 0, len(wm.workers))
+		for ruleID := range wm.workers {
+			ruleIDs = append(ruleIDs, ruleID)
+		}
+		wm.mu.RUnlock()
 		if cmd.Response != nil {
-			ruleIDs := make([]string, 0, len(wm.workers))
-			for ruleID := range wm.workers {
-				ruleIDs = append(ruleIDs, ruleID)
-			}
 			cmd.Response <- ruleIDs
 		}
 	}
 }
 
-// addWorkerUnsafe adds a worker without locking (called from manager goroutine)
-func (wm *WorkerManager) addWorkerUnsafe(rule Rule) {
+func (wm *WorkerManager) addWorker(rule Rule) error {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
 	if existing, ok := wm.workers[rule.ID]; ok {
-		existing.Stop()
+		if err := existing.Stop(); err != nil {
+			return err
+		}
 	}
 
 	if rule.Status != EnabledStatus {
 		delete(wm.workers, rule.ID)
-		return
+		return nil
 	}
 
 	worker := NewRuleWorker(rule, wm.engine)
 	worker.Start(wm.ctx)
 	wm.workers[rule.ID] = worker
+	return nil
 }
 
-// removeWorkerUnsafe removes a worker without locking (called from manager goroutine)
-func (wm *WorkerManager) removeWorkerUnsafe(ruleID string) {
+func (wm *WorkerManager) removeWorker(ruleID string) error {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
 	if worker, ok := wm.workers[ruleID]; ok {
-		worker.Stop()
+		if err := worker.Stop(); err != nil {
+			return err
+		}
 		delete(wm.workers, ruleID)
 	}
+	return nil
 }
 
-// updateWorkerUnsafe updates a worker without locking (called from manager goroutine)
-func (wm *WorkerManager) updateWorkerUnsafe(rule Rule) {
-	if rule.Status != EnabledStatus {
-		if worker, ok := wm.workers[rule.ID]; ok {
-			worker.Stop()
-			delete(wm.workers, rule.ID)
-		}
-		return
-	}
+func (wm *WorkerManager) updateWorker(rule Rule) error {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
 
 	if worker, ok := wm.workers[rule.ID]; ok {
-		worker.UpdateRule(rule)
-	} else {
-		worker := NewRuleWorker(rule, wm.engine)
-		worker.Start(wm.ctx)
-		wm.workers[rule.ID] = worker
+		if err := worker.Stop(); err != nil {
+			return err
+		}
+		delete(wm.workers, rule.ID)
 	}
+
+	if rule.Status != EnabledStatus {
+		delete(wm.workers, rule.ID)
+		return nil
+	}
+
+	worker := NewRuleWorker(rule, wm.engine)
+	worker.Start(wm.ctx)
+	wm.workers[rule.ID] = worker
+	return nil
 }
 
-// sendMessageUnsafe sends a message to a worker without locking (called from manager goroutine)
-func (wm *WorkerManager) sendMessageUnsafe(msg *messaging.Message, rule Rule) bool {
+func (wm *WorkerManager) sendMessage(msg *messaging.Message, rule Rule) bool {
+	wm.mu.RLock()
 	worker, ok := wm.workers[rule.ID]
+	wm.mu.RUnlock()
+
 	if !ok || !worker.IsRunning() {
 		return false
 	}
@@ -321,15 +365,19 @@ func (wm *WorkerManager) sendMessageUnsafe(msg *messaging.Message, rule Rule) bo
 	})
 }
 
-// stopAllUnsafe stops all workers without locking (called from manager goroutine)
-func (wm *WorkerManager) stopAllUnsafe() {
+func (wm *WorkerManager) stopAll() error {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
 	for _, worker := range wm.workers {
-		worker.Stop()
+		if err := worker.Stop(); err != nil {
+			return err
+		}
 	}
 	wm.workers = make(map[string]*RuleWorker)
+	return nil
 }
 
-// AddWorker adds a new worker for the given rule.
 func (wm *WorkerManager) AddWorker(ctx context.Context, rule Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
@@ -346,7 +394,6 @@ func (wm *WorkerManager) AddWorker(ctx context.Context, rule Rule) {
 	}
 }
 
-// RemoveWorker removes and stops the worker for the given rule ID.
 func (wm *WorkerManager) RemoveWorker(ruleID string) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
@@ -357,14 +404,9 @@ func (wm *WorkerManager) RemoveWorker(ruleID string) {
 		RuleID: ruleID,
 	}
 
-	select {
-	case wm.commandCh <- cmd:
-	default:
-		// Non-blocking, if channel is full, skip
-	}
+	wm.commandCh <- cmd
 }
 
-// UpdateWorker updates the rule configuration for an existing worker.
 func (wm *WorkerManager) UpdateWorker(ctx context.Context, rule Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
@@ -381,7 +423,6 @@ func (wm *WorkerManager) UpdateWorker(ctx context.Context, rule Rule) {
 	}
 }
 
-// SendMessage sends a message to the appropriate worker for processing.
 func (wm *WorkerManager) SendMessage(msg *messaging.Message, rule Rule) bool {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return false
@@ -411,7 +452,6 @@ func (wm *WorkerManager) SendMessage(msg *messaging.Message, rule Rule) bool {
 	}
 }
 
-// StopAll stops all workers and waits for them to finish.
 func (wm *WorkerManager) StopAll() error {
 	if !atomic.CompareAndSwapInt32(&wm.running, 1, 0) {
 		return nil
@@ -423,16 +463,12 @@ func (wm *WorkerManager) StopAll() error {
 		Response: responseCh,
 	}
 
-	select {
-	case wm.commandCh <- cmd:
-		<-responseCh // Wait for completion
-	default:
-		// Channel full, force stop
-	}
+	wm.commandCh <- cmd
+	<-responseCh
 
-	// Wait for all workers to finish
 	return wm.g.Wait()
-} // GetWorkerCount returns the number of active workers.
+}
+
 func (wm *WorkerManager) GetWorkerCount() int {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return 0
@@ -456,7 +492,6 @@ func (wm *WorkerManager) GetWorkerCount() int {
 	return 0
 }
 
-// ListWorkers returns a slice of rule IDs that have active workers.
 func (wm *WorkerManager) ListWorkers() []string {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return nil
@@ -480,14 +515,15 @@ func (wm *WorkerManager) ListWorkers() []string {
 	return nil
 }
 
-// RefreshWorkers synchronizes workers with the current set of enabled rules.
+func (wm *WorkerManager) ErrorChan() <-chan error {
+	return wm.errorCh
+}
+
 func (wm *WorkerManager) RefreshWorkers(ctx context.Context, rules []Rule) {
 	if atomic.LoadInt32(&wm.running) == 0 {
 		return
 	}
 
-	// For simplicity, let's process refresh by individual add/update/remove commands
-	// First get current workers, then sync
 	for _, rule := range rules {
 		if rule.Status == EnabledStatus {
 			wm.UpdateWorker(ctx, rule)

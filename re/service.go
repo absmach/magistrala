@@ -58,11 +58,11 @@ func shouldCreateWorker(rule Rule) bool {
 
 	now := time.Now().UTC()
 	dueTime := rule.Schedule.Time
-	
+
 	if dueTime.IsZero() || dueTime.Before(now) {
 		return true
 	}
-	
+
 	return dueTime.Sub(now) <= time.Hour
 }
 

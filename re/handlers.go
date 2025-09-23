@@ -35,7 +35,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 	}
 
 	if re.workerMgr == nil {
-		return re.handleWithoutWorkers(msg)
+		return errors.New("worker manager not initialized - scheduler must be started first")
 	}
 
 	// Skip filtering by message topic and fetch all non-scheduled rules instead.
@@ -56,35 +56,17 @@ func (re *re) Handle(msg *messaging.Message) error {
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
 			if !re.workerMgr.SendMessage(msg, r) {
-				go func(ctx context.Context, rule Rule) {
-					re.runInfo <- re.process(ctx, rule, msg)
-				}(ctx, r)
+				re.runInfo <- pkglog.RunInfo{
+					Level:   slog.LevelWarn,
+					Message: fmt.Sprintf("failed to send message to worker for rule %s", r.ID),
+					Details: []slog.Attr{
+						slog.String("rule_id", r.ID),
+						slog.String("rule_name", r.Name),
+						slog.String("channel", msg.Channel),
+						slog.Time("time", time.Now().UTC()),
+					},
+				}
 			}
-		}
-	}
-
-	return nil
-}
-
-// handleWithoutWorkers processes messages using the legacy direct goroutine approach
-func (re *re) handleWithoutWorkers(msg *messaging.Message) error {
-	pm := PageMeta{
-		Domain:       msg.Domain,
-		InputChannel: msg.Channel,
-		Status:       EnabledStatus,
-		Scheduled:    &scheduledFalse,
-	}
-	ctx := context.Background()
-	page, err := re.repo.ListRules(ctx, pm)
-	if err != nil {
-		return err
-	}
-
-	for _, r := range page.Rules {
-		if matchSubject(msg.Subtopic, r.InputTopic) {
-			go func(ctx context.Context, rule Rule) {
-				re.runInfo <- re.process(ctx, rule, msg)
-			}(ctx, r)
 		}
 	}
 
@@ -150,6 +132,24 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 
 func (re *re) StartScheduler(ctx context.Context) error {
 	re.workerMgr = NewWorkerManager(re, ctx)
+
+	// Start goroutine to monitor worker manager errors
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-re.workerMgr.ErrorChan():
+				if err != nil {
+					re.runInfo <- pkglog.RunInfo{
+						Level:   slog.LevelError,
+						Message: fmt.Sprintf("worker management error: %s", err),
+						Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+					}
+				}
+			}
+		}
+	}()
 
 	pm := PageMeta{
 		Status: EnabledStatus,

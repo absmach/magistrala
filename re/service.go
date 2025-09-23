@@ -47,6 +47,25 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 	return reEngine
 }
 
+func shouldCreateWorker(rule Rule) bool {
+	if rule.Status != EnabledStatus {
+		return false
+	}
+
+	if rule.Schedule.Recurring == schedule.None {
+		return true
+	}
+
+	now := time.Now().UTC()
+	dueTime := rule.Schedule.Time
+	
+	if dueTime.IsZero() || dueTime.Before(now) {
+		return true
+	}
+	
+	return dueTime.Sub(now) <= time.Hour
+}
+
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
 	id, err := re.idp.ID()
 	if err != nil {
@@ -69,7 +88,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
-	if rule.Status == EnabledStatus && rule.Schedule.Recurring == schedule.None && re.workerMgr != nil {
+	if shouldCreateWorker(rule) {
 		re.workerMgr.AddWorker(ctx, rule)
 	}
 
@@ -93,12 +112,10 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if re.workerMgr != nil {
-		if rule.Schedule.Recurring == schedule.None {
-			re.workerMgr.UpdateWorker(ctx, rule)
-		} else {
-			re.workerMgr.RemoveWorker(rule.ID)
-		}
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
 	}
 
 	return rule, nil
@@ -123,12 +140,10 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if re.workerMgr != nil {
-		if rule.Schedule.Recurring == schedule.None && rule.Status == EnabledStatus {
-			re.workerMgr.UpdateWorker(ctx, rule)
-		} else {
-			re.workerMgr.RemoveWorker(rule.ID)
-		}
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
 	}
 
 	return rule, nil
@@ -148,9 +163,7 @@ func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) 
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
-	if re.workerMgr != nil {
-		re.workerMgr.RemoveWorker(id)
-	}
+	re.workerMgr.RemoveWorker(id)
 
 	return nil
 }
@@ -171,7 +184,7 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if re.workerMgr != nil && rule.Schedule.Recurring == schedule.None {
+	if shouldCreateWorker(rule) {
 		re.workerMgr.AddWorker(ctx, rule)
 	}
 
@@ -194,16 +207,11 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
-	if re.workerMgr != nil {
-		re.workerMgr.RemoveWorker(id)
-	}
+	re.workerMgr.RemoveWorker(id)
 
 	return rule, nil
 }
 
 func (re *re) Cancel() error {
-	if re.workerMgr != nil {
-		return re.workerMgr.StopAll()
-	}
-	return nil
+	return re.workerMgr.StopAll()
 }

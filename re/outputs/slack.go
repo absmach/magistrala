@@ -25,7 +25,7 @@ func (s *Slack) Run(ctx context.Context, msg *messaging.Message, val any) error 
 		Result:  val,
 	}
 
-	tmpl, err := template.New("postgres").Parse(s.Message)
+	tmpl, err := template.New("slack").Parse(s.Message)
 	if err != nil {
 		return err
 	}

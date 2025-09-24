@@ -20,24 +20,22 @@ type WorkerMessage struct {
 
 // RuleWorker manages execution of a single rule in its own goroutine.
 type RuleWorker struct {
-	rule       Rule
-	engine     *re
-	msgChan    chan WorkerMessage
-	updateChan chan Rule
-	ctx        context.Context
-	cancel     context.CancelFunc
-	g          *errgroup.Group
-	running    int32
+	rule    Rule
+	engine  *re
+	msgChan chan WorkerMessage
+	ctx     context.Context
+	cancel  context.CancelFunc
+	g       *errgroup.Group
+	running int32
 }
 
 // NewRuleWorker creates a new rule worker for the given rule.
 func NewRuleWorker(rule Rule, engine *re) *RuleWorker {
 	return &RuleWorker{
-		rule:       rule,
-		engine:     engine,
-		msgChan:    make(chan WorkerMessage, 100),
-		updateChan: make(chan Rule, 1),
-		running:    0, // 0 = not running, 1 = running
+		rule:    rule,
+		engine:  engine,
+		msgChan: make(chan WorkerMessage, 100),
+		running: 0, // 0 = not running, 1 = running
 	}
 }
 
@@ -85,19 +83,6 @@ func (w *RuleWorker) IsRunning() bool {
 	return atomic.LoadInt32(&w.running) == 1
 }
 
-// UpdateRule updates the rule configuration for this worker.
-func (w *RuleWorker) UpdateRule(rule Rule) {
-	select {
-	case w.updateChan <- rule:
-	default:
-		select {
-		case <-w.updateChan:
-		default:
-		}
-		w.updateChan <- rule
-	}
-}
-
 // GetRule returns the current rule configuration.
 func (w *RuleWorker) GetRule() Rule {
 	return w.rule
@@ -113,8 +98,6 @@ func (w *RuleWorker) run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case rule := <-w.updateChan:
-			w.rule = rule
 		case workerMsg := <-w.msgChan:
 			w.processMessage(ctx, workerMsg)
 		}
@@ -143,7 +126,6 @@ const (
 	CmdAdd WorkerCommandType = iota
 	CmdRemove
 	CmdUpdate
-	CmdSend
 	CmdStopAll
 	CmdCount
 	CmdList
@@ -157,8 +139,6 @@ func (c WorkerCommandType) String() string {
 		return "remove"
 	case CmdUpdate:
 		return "update"
-	case CmdSend:
-		return "send"
 	case CmdStopAll:
 		return "stop_all"
 	case CmdCount:
@@ -175,7 +155,6 @@ type WorkerManagerCommand struct {
 	Type     WorkerCommandType
 	Rule     Rule
 	RuleID   string
-	Message  *messaging.Message
 	Response chan interface{}
 }
 
@@ -204,7 +183,6 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 		running:   0,
 	}
 
-	// Start the worker manager goroutine
 	wm.g.Go(func() error {
 		return wm.manageWorkers(ctx)
 	})
@@ -214,7 +192,9 @@ func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
 }
 
 func (wm *WorkerManager) manageWorkers(ctx context.Context) error {
-	defer atomic.StoreInt32(&wm.running, 0)
+	defer func() {
+		atomic.StoreInt32(&wm.running, 0)
+	}()
 
 	for {
 		select {
@@ -259,11 +239,6 @@ func (wm *WorkerManager) handleCommand(cmd WorkerManagerCommand) {
 			default:
 			}
 		}
-	case CmdSend:
-		result := wm.sendMessage(cmd.Message, cmd.Rule)
-		if cmd.Response != nil {
-			cmd.Response <- result
-		}
 	case CmdStopAll:
 		if err := wm.stopAll(); err != nil {
 			select {
@@ -298,20 +273,32 @@ func (wm *WorkerManager) addWorker(rule Rule) error {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 
-	if existing, ok := wm.workers[rule.ID]; ok {
-		if err := existing.Stop(); err != nil {
-			return err
-		}
-	}
+	oldWorker, exists := wm.workers[rule.ID]
 
 	if rule.Status != EnabledStatus {
+		if exists {
+			if err := oldWorker.Stop(); err != nil {
+				return err
+			}
+		}
 		delete(wm.workers, rule.ID)
 		return nil
 	}
 
-	worker := NewRuleWorker(rule, wm.engine)
-	worker.Start(wm.ctx)
-	wm.workers[rule.ID] = worker
+	newWorker := NewRuleWorker(rule, wm.engine)
+	newWorker.Start(wm.ctx)
+
+	wm.workers[rule.ID] = newWorker
+
+	if exists {
+		if err := oldWorker.Stop(); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -332,21 +319,32 @@ func (wm *WorkerManager) updateWorker(rule Rule) error {
 	wm.mu.Lock()
 	defer wm.mu.Unlock()
 
-	if worker, ok := wm.workers[rule.ID]; ok {
-		if err := worker.Stop(); err != nil {
-			return err
-		}
-		delete(wm.workers, rule.ID)
-	}
+	oldWorker, exists := wm.workers[rule.ID]
 
 	if rule.Status != EnabledStatus {
+		if exists {
+			if err := oldWorker.Stop(); err != nil {
+				return err
+			}
+		}
 		delete(wm.workers, rule.ID)
 		return nil
 	}
 
-	worker := NewRuleWorker(rule, wm.engine)
-	worker.Start(wm.ctx)
-	wm.workers[rule.ID] = worker
+	newWorker := NewRuleWorker(rule, wm.engine)
+	newWorker.Start(wm.ctx)
+
+	wm.workers[rule.ID] = newWorker
+
+	if exists {
+		if err := oldWorker.Stop(); err != nil {
+			select {
+			case wm.errorCh <- err:
+			default:
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -428,28 +426,7 @@ func (wm *WorkerManager) SendMessage(msg *messaging.Message, rule Rule) bool {
 		return false
 	}
 
-	responseCh := make(chan interface{}, 1)
-	cmd := WorkerManagerCommand{
-		Type:     CmdSend,
-		Rule:     rule,
-		Message:  msg,
-		Response: responseCh,
-	}
-
-	select {
-	case wm.commandCh <- cmd:
-		select {
-		case result := <-responseCh:
-			if b, ok := result.(bool); ok {
-				return b
-			}
-			return false
-		case <-wm.ctx.Done():
-			return false
-		}
-	default:
-		return false
-	}
+	return wm.sendMessage(msg, rule)
 }
 
 func (wm *WorkerManager) StopAll() error {

@@ -35,7 +35,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 	}
 
 	if re.workerMgr == nil {
-		return errors.New("worker manager not initialized - scheduler must be started first")
+		return errors.New("worker manager not initialized")
 	}
 
 	// Skip filtering by message topic and fetch all non-scheduled rules instead.
@@ -133,7 +133,6 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 func (re *re) StartScheduler(ctx context.Context) error {
 	re.workerMgr = NewWorkerManager(re, ctx)
 
-	// Start goroutine to monitor worker manager errors
 	go func() {
 		for {
 			select {

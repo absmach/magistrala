@@ -131,7 +131,7 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
-	re.workerMgr = NewWorkerManager(re, ctx)
+	re.workerMgr = NewWorkerManager(ctx, re)
 
 	go func() {
 		for {
@@ -193,21 +193,39 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, r := range page.Rules {
-				go func(rule Rule) {
-					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
-						return
+				msg := &messaging.Message{
+					Domain:   r.DomainID,
+					Channel:  r.InputChannel,
+					Subtopic: r.InputTopic,
+					Protocol: protocol,
+					Created:  due.Unix(),
+				}
+				
+				if !re.workerMgr.SendMessage(msg, r) {
+					re.runInfo <- pkglog.RunInfo{
+						Level:   slog.LevelWarn,
+						Message: fmt.Sprintf("failed to send scheduled message to worker for rule %s", r.ID),
+						Details: []slog.Attr{
+							slog.String("rule_id", r.ID),
+							slog.String("rule_name", r.Name),
+							slog.String("channel", msg.Channel),
+							slog.Time("scheduled_time", due),
+						},
 					}
-
-					msg := &messaging.Message{
-						Domain:   rule.DomainID,
-						Channel:  rule.InputChannel,
-						Subtopic: rule.InputTopic,
-						Protocol: protocol,
-						Created:  due.Unix(),
+				}
+				
+				go func(ruleID string, nextDue time.Time) {
+					if _, err := re.repo.UpdateRuleDue(ctx, ruleID, nextDue); err != nil {
+						re.runInfo <- pkglog.RunInfo{
+							Level:   slog.LevelError,
+							Message: fmt.Sprintf("failed to update rule due time: %s", err),
+							Details: []slog.Attr{
+								slog.String("rule_id", ruleID),
+								slog.Time("time", time.Now().UTC()),
+							},
+						}
 					}
-					re.runInfo <- re.process(ctx, rule, msg)
-				}(r)
+				}(r.ID, r.Schedule.NextDue())
 			}
 			// Reset due, it will reset in the page meta as well.
 			due = time.Now().UTC()

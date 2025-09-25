@@ -718,11 +718,6 @@ func TestHandle(t *testing.T) {
 		},
 	}
 
-	// go func() {
-	// 	for range runInfo {
-	// 	}
-	// }()
-
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var err error

@@ -24,8 +24,6 @@ type RuleWorker struct {
 	engine  *re
 	msgChan chan WorkerMessage
 	ctx     context.Context
-	cancel  context.CancelFunc
-	g       *errgroup.Group
 	running int32
 }
 
@@ -45,12 +43,11 @@ func (w *RuleWorker) Start(ctx context.Context) {
 		return
 	}
 
-	w.ctx, w.cancel = context.WithCancel(ctx)
-	w.g, w.ctx = errgroup.WithContext(w.ctx)
-
-	w.g.Go(func() error {
-		return w.run(w.ctx)
-	})
+	w.ctx = ctx
+	go func() {
+		defer atomic.StoreInt32(&w.running, 0)
+		w.run(w.ctx)
+	}()
 }
 
 // Stop stops the worker goroutine and waits for it to finish.
@@ -59,9 +56,7 @@ func (w *RuleWorker) Stop() error {
 		return nil
 	}
 
-	w.cancel()
-
-	return w.g.Wait()
+	return nil
 }
 
 // Send sends a message to the worker for processing.
@@ -89,15 +84,11 @@ func (w *RuleWorker) GetRule() Rule {
 }
 
 // run is the main worker loop that processes messages.
-func (w *RuleWorker) run(ctx context.Context) error {
-	defer func() {
-		atomic.StoreInt32(&w.running, 0)
-	}()
-
+func (w *RuleWorker) run(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
+			return
 		case workerMsg := <-w.msgChan:
 			w.processMessage(ctx, workerMsg)
 		}
@@ -171,7 +162,7 @@ type WorkerManager struct {
 }
 
 // NewWorkerManager creates a new worker manager.
-func NewWorkerManager(engine *re, ctx context.Context) *WorkerManager {
+func NewWorkerManager(ctx context.Context, engine *re) *WorkerManager {
 	g, ctx := errgroup.WithContext(ctx)
 	wm := &WorkerManager{
 		workers:   make(map[string]*RuleWorker),

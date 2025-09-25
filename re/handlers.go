@@ -200,7 +200,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					Protocol: protocol,
 					Created:  due.Unix(),
 				}
-				
+
 				if !re.workerMgr.SendMessage(msg, r) {
 					re.runInfo <- pkglog.RunInfo{
 						Level:   slog.LevelWarn,
@@ -213,7 +213,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						},
 					}
 				}
-				
+
 				go func(ruleID string, nextDue time.Time) {
 					if _, err := re.repo.UpdateRuleDue(ctx, ruleID, nextDue); err != nil {
 						re.runInfo <- pkglog.RunInfo{

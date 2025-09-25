@@ -133,12 +133,14 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 func (re *re) StartScheduler(ctx context.Context) error {
 	re.workerMgr = NewWorkerManager(ctx, re)
 
+	workerMgr := re.workerMgr
+
 	go func() {
 		for {
 			select {
 			case <-ctx.Done():
 				return
-			case err := <-re.workerMgr.ErrorChan():
+			case err := <-workerMgr.ErrorChan():
 				if err != nil {
 					re.runInfo <- pkglog.RunInfo{
 						Level:   slog.LevelError,

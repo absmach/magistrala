@@ -50,6 +50,7 @@ var outputRegistry = map[outputs.OutputType]func() Runnable{
 	outputs.SaveRemotePgType: func() Runnable { return &outputs.Postgres{} },
 	outputs.ChannelsType:     func() Runnable { return &outputs.ChannelPublisher{} },
 	outputs.SaveSenMLType:    func() Runnable { return &outputs.SenML{} },
+	outputs.SlackType:        func() Runnable { return &outputs.Slack{} },
 }
 
 type Rule struct {

@@ -26,16 +26,18 @@ const (
 	SaveSenMLType
 	EmailType
 	SaveRemotePgType
+	SlackType
 )
 
 var (
-	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg"}
+	scriptKindToString = [...]string{"channels", "alarms", "save_senml", "email", "save_remote_pg", "slack"}
 	stringToScriptKind = map[string]OutputType{
 		"channels":       ChannelsType,
 		"alarms":         AlarmsType,
 		"save_senml":     SaveSenMLType,
 		"email":          EmailType,
 		"save_remote_pg": SaveRemotePgType,
+		"slack":          SlackType,
 	}
 )
 

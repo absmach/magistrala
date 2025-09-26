@@ -103,15 +103,13 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 	case *outputs.Email:
 		o.Emailer = re.email
 		return o.Run(ctx, msg, val)
-	case *outputs.Postgres:
-		return o.Run(ctx, msg, val)
 	case *outputs.ChannelPublisher:
 		o.RePubSub = re.rePubSub
 		return o.Run(ctx, msg, val)
 	case *outputs.SenML:
 		o.WritersPub = re.writersPub
 		return o.Run(ctx, msg, val)
-	case *outputs.Slack:
+	case *outputs.Postgres, *outputs.Slack:
 		return o.Run(ctx, msg, val)
 	default:
 		return fmt.Errorf("unknown output type: %T", o)

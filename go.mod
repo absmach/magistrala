@@ -28,6 +28,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.14.0
 	github.com/rubenv/sql-migrate v1.8.0
+	github.com/slack-go/slack v0.17.3
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
 	github.com/stretchr/testify v1.11.1
@@ -45,7 +46,6 @@ require (
 )
 
 require (
-	github.com/slack-go/slack v0.17.3 // indirect
 	go.yaml.in/yaml/v2 v2.4.2 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 )

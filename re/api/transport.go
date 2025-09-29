@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	ruleIdKey       = "ruleID"
-	inputChannelKey = "input_channel"
+	ruleIdKey        = "ruleID"
+	inputChannelKey  = "input_channel"
+	lastRunStatusKey = "last_run_status"
 )
 
 // MakeHandler creates an HTTP handler for the service endpoints.
@@ -198,6 +199,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (any, error) {
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	lrs, err := apiutil.ReadStringQuery(r, lastRunStatusKey, re.NeverRun)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	dir, err := apiutil.ReadStringQuery(r, api.DirKey, "desc")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -210,6 +215,10 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (any, error) {
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+	lrst, err := re.ToExecutionStatus(lrs)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
 	tag, err := apiutil.ReadStringQuery(r, api.TagKey, "")
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -217,14 +226,15 @@ func decodeListRulesRequest(_ context.Context, r *http.Request) (any, error) {
 
 	return listRulesReq{
 		PageMeta: re.PageMeta{
-			Offset:       offset,
-			Limit:        limit,
-			Name:         name,
-			InputChannel: ic,
-			Status:       st,
-			Dir:          dir,
-			Order:        order,
-			Tag:          tag,
+			Offset:        offset,
+			Limit:         limit,
+			Name:          name,
+			InputChannel:  ic,
+			Status:        st,
+			LastRunStatus: lrst,
+			Dir:           dir,
+			Order:         order,
+			Tag:           tag,
 		},
 	}, nil
 }

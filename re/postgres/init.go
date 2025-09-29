@@ -50,6 +50,21 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE rules DROP COLUMN tags;`,
 				},
 			},
+			{
+				Id: "rules_03",
+				Up: []string{
+					`ALTER TABLE rules ADD COLUMN last_run_status SMALLINT NOT NULL DEFAULT 6 CHECK (last_run_status >= 0);`, // 6 = NeverRunStatus
+					`ALTER TABLE rules ADD COLUMN last_run_time TIMESTAMP;`,
+					`ALTER TABLE rules ADD COLUMN last_run_error_message TEXT;`,
+					`ALTER TABLE rules ADD COLUMN execution_count BIGINT NOT NULL DEFAULT 0;`,
+				},
+				Down: []string{
+					`ALTER TABLE rules DROP COLUMN last_run_status;`,
+					`ALTER TABLE rules DROP COLUMN last_run_time;`,
+					`ALTER TABLE rules DROP COLUMN last_run_error_message;`,
+					`ALTER TABLE rules DROP COLUMN execution_count;`,
+				},
+			},
 		},
 	}
 }

@@ -28,11 +28,14 @@ func NewRepository(db postgres.Database) re.Repository {
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	q := `
 	INSERT INTO rules (id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status)
+		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+		last_run_status, last_run_time, last_run_error_message, execution_count)
 	VALUES (:id, :name, :domain_id, :tags, :metadata, :input_channel, :input_topic, :logic_type, :logic_value,
-		:outputs, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status)
+		:outputs, :start_datetime, :time, :recurring, :recurring_period, :created_at, :created_by, :updated_at, :updated_by, :status,
+		:last_run_status, :last_run_time, :last_run_error_message, :execution_count)
 	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+		last_run_status, last_run_time, last_run_error_message, execution_count;
 `
 	dbr, err := ruleToDb(r)
 	if err != nil {
@@ -62,7 +65,8 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rule, error) {
 	q := `
 		SELECT id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value, outputs,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count
 		FROM rules
 		WHERE id = $1;
 	`
@@ -87,9 +91,29 @@ func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule)
 	SET status = :status, updated_at = :updated_at, updated_by = :updated_by
 	WHERE id = :id
 	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
+			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count;`
 
 	return repo.update(ctx, r, q)
+}
+
+func (repo *PostgresRepository) UpdateRuleExecutionStatus(ctx context.Context, r re.Rule) error {
+	q := `UPDATE rules
+	SET last_run_status = :last_run_status, last_run_time = :last_run_time, 
+		last_run_error_message = :last_run_error_message, execution_count = :execution_count
+	WHERE id = :id;`
+
+	dbr, err := ruleToDb(r)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	_, err = repo.DB.NamedExecContext(ctx, q, dbr)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
+	}
+
+	return nil
 }
 
 func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -119,7 +143,8 @@ func (repo *PostgresRepository) UpdateRule(ctx context.Context, r re.Rule) (re.R
 		UPDATE rules
 		SET %s updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count;
 	`, upq)
 
 	return repo.update(ctx, r, q)
@@ -129,7 +154,8 @@ func (repo *PostgresRepository) UpdateRuleTags(ctx context.Context, r re.Rule) (
 	q := `UPDATE rules SET tags = :tags, updated_at = :updated_at, updated_by = :updated_by
 	WHERE id = :id AND status = :status
 	RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;`
+		outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+		last_run_status, last_run_time, last_run_error_message, execution_count;`
 	r.Status = re.EnabledStatus
 
 	return repo.update(ctx, r, q)
@@ -141,7 +167,8 @@ func (repo *PostgresRepository) UpdateRuleSchedule(ctx context.Context, r re.Rul
 		SET start_datetime = :start_datetime, time = :time, recurring = :recurring,
 			recurring_period = :recurring_period, updated_at = :updated_at, updated_by = :updated_by WHERE id = :id
 		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count;
 	`
 	return repo.update(ctx, r, q)
 }
@@ -223,7 +250,8 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_value, outputs,
-			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
+			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count
 		FROM rules r %s %s %s;
 	`, pq, orderClause, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
@@ -266,7 +294,8 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 		UPDATE rules
 		SET time = :time, updated_at = :updated_at WHERE id = :id
 		RETURNING id, name, domain_id, tags, metadata, input_channel, input_topic, logic_type, logic_value,
-			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status;
+			outputs, start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status,
+			last_run_status, last_run_time, last_run_error_message, execution_count;
 	`
 	dbr := dbRule{
 		ID:        id,
@@ -303,6 +332,9 @@ func pageRulesQuery(pm re.PageMeta) string {
 	}
 	if pm.Status != re.AllStatus {
 		query = append(query, "r.status = :status")
+	}
+	if pm.LastRunStatus != re.NeverRunStatus {
+		query = append(query, "r.last_run_status = :last_run_status")
 	}
 	if pm.Domain != "" {
 		query = append(query, "r.domain_id = :domain_id")

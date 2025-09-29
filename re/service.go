@@ -5,6 +5,8 @@ package re
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
@@ -77,6 +79,8 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	r.CreatedBy = session.UserID
 	r.DomainID = session.DomainID
 	r.Status = EnabledStatus
+	r.LastRunStatus = NeverRunStatus
+	r.ExecutionCount = 0
 
 	if !r.Schedule.StartDateTime.IsZero() {
 		r.Schedule.StartDateTime = now
@@ -214,4 +218,33 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 
 func (re *re) Cancel() error {
 	return re.workerMgr.StopAll()
+}
+
+// updateRuleExecutionStatus updates the execution status of a rule
+func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, errorMessage string) {
+	now := time.Now().UTC()
+	rule := Rule{
+		ID:                  ruleID,
+		LastRunStatus:       status,
+		LastRunTime:         &now,
+		LastRunErrorMessage: errorMessage,
+	}
+
+	if status == SuccessStatus || status == PartialSuccessStatus {
+		currentRule, err := re.repo.ViewRule(ctx, ruleID)
+		if err == nil {
+			rule.ExecutionCount = currentRule.ExecutionCount + 1
+		}
+	}
+
+	if err := re.repo.UpdateRuleExecutionStatus(ctx, rule); err != nil {
+		re.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to update rule execution status: %s", err),
+			Details: []slog.Attr{
+				slog.String("rule_id", ruleID),
+				slog.String("status", status.String()),
+			},
+		}
+	}
 }

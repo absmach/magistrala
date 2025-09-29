@@ -65,21 +65,28 @@ type Rule struct {
 	Outputs      Outputs           `json:"outputs,omitempty"`
 	Schedule     schedule.Schedule `json:"schedule,omitempty"`
 	Status       Status            `json:"status"`
-	CreatedAt    time.Time         `json:"created_at"`
-	CreatedBy    string            `json:"created_by"`
-	UpdatedAt    time.Time         `json:"updated_at"`
-	UpdatedBy    string            `json:"updated_by"`
+	// Last execution tracking
+	LastRunStatus       ExecutionStatus `json:"last_run_status"`
+	LastRunTime         *time.Time      `json:"last_run_time,omitempty"`
+	LastRunErrorMessage string          `json:"last_run_error_message,omitempty"`
+	ExecutionCount      uint64          `json:"execution_count"`
+	CreatedAt           time.Time       `json:"created_at"`
+	CreatedBy           string          `json:"created_by"`
+	UpdatedAt           time.Time       `json:"updated_at"`
+	UpdatedBy           string          `json:"updated_by"`
 }
 
 // EventEncode converts a Rule struct to map[string]any at event producer.
 func (r Rule) EventEncode() (map[string]any, error) {
 	m := map[string]any{
-		"id":         r.ID,
-		"name":       r.Name,
-		"created_at": r.CreatedAt.Format(time.RFC3339Nano),
-		"created_by": r.CreatedBy,
-		"schedule":   r.Schedule.EventEncode(),
-		"status":     r.Status.String(),
+		"id":                 r.ID,
+		"name":               r.Name,
+		"created_at":         r.CreatedAt.Format(time.RFC3339Nano),
+		"created_by":         r.CreatedBy,
+		"schedule":           r.Schedule.EventEncode(),
+		"status":             r.Status.String(),
+		"last_run_status":    r.LastRunStatus.String(),
+		"execution_count":    r.ExecutionCount,
 	}
 
 	if r.Name != "" {
@@ -96,6 +103,14 @@ func (r Rule) EventEncode() (map[string]any, error) {
 
 	if r.UpdatedBy != "" {
 		m["updated_by"] = r.UpdatedBy
+	}
+
+	if r.LastRunTime != nil {
+		m["last_run_time"] = r.LastRunTime.Format(time.RFC3339Nano)
+	}
+
+	if r.LastRunErrorMessage != "" {
+		m["last_run_error_message"] = r.LastRunErrorMessage
 	}
 
 	if len(r.Metadata) > 0 {
@@ -175,6 +190,7 @@ type PageMeta struct {
 	Scheduled       *bool               `json:"scheduled,omitempty"`
 	OutputChannel   string              `json:"output_channel,omitempty"    db:"output_channel"`
 	Status          Status              `json:"status,omitempty"            db:"status"`
+	LastRunStatus   ExecutionStatus     `json:"last_run_status,omitempty"   db:"last_run_status"`
 	Domain          string              `json:"domain_id,omitempty"         db:"domain_id"`
 	Tag             string              `json:"tag,omitempty"`
 	ScheduledBefore *time.Time          `json:"scheduled_before,omitempty"  db:"scheduled_before"` // Filter rules scheduled before this time
@@ -185,11 +201,12 @@ type PageMeta struct {
 // EventEncode converts a PageMeta struct to map[string]any.
 func (pm PageMeta) EventEncode() map[string]any {
 	m := map[string]any{
-		"total":     pm.Total,
-		"offset":    pm.Offset,
-		"limit":     pm.Limit,
-		"status":    pm.Status.String(),
-		"domain_id": pm.Domain,
+		"total":          pm.Total,
+		"offset":         pm.Offset,
+		"limit":          pm.Limit,
+		"status":         pm.Status.String(),
+		"last_run_status": pm.LastRunStatus.String(),
+		"domain_id":      pm.Domain,
 	}
 
 	if pm.Dir != "" {
@@ -256,6 +273,7 @@ type Repository interface {
 	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
+	UpdateRuleExecutionStatus(ctx context.Context, r Rule) error
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 }

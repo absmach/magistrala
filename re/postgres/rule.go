@@ -16,25 +16,29 @@ import (
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string             `db:"id"`
-	Name            string             `db:"name"`
-	DomainID        string             `db:"domain_id"`
-	Tags            pgtype.TextArray   `db:"tags,omitempty"`
-	Metadata        []byte             `db:"metadata,omitempty"`
-	InputChannel    string             `db:"input_channel"`
-	InputTopic      sql.NullString     `db:"input_topic"`
-	LogicType       re.ScriptType      `db:"logic_type"`
-	LogicValue      string             `db:"logic_value"`
-	Outputs         []byte             `db:"outputs"`
-	StartDateTime   sql.NullTime       `db:"start_datetime"`
-	Time            sql.NullTime       `db:"time"`
-	Recurring       schedule.Recurring `db:"recurring"`
-	RecurringPeriod uint               `db:"recurring_period"`
-	Status          re.Status          `db:"status"`
-	CreatedAt       time.Time          `db:"created_at"`
-	CreatedBy       string             `db:"created_by"`
-	UpdatedAt       time.Time          `db:"updated_at"`
-	UpdatedBy       string             `db:"updated_by"`
+	ID                  string             `db:"id"`
+	Name                string             `db:"name"`
+	DomainID            string             `db:"domain_id"`
+	Tags                pgtype.TextArray   `db:"tags,omitempty"`
+	Metadata            []byte             `db:"metadata,omitempty"`
+	InputChannel        string             `db:"input_channel"`
+	InputTopic          sql.NullString     `db:"input_topic"`
+	LogicType           re.ScriptType      `db:"logic_type"`
+	LogicValue          string             `db:"logic_value"`
+	Outputs             []byte             `db:"outputs"`
+	StartDateTime       sql.NullTime       `db:"start_datetime"`
+	Time                sql.NullTime       `db:"time"`
+	Recurring           schedule.Recurring `db:"recurring"`
+	RecurringPeriod     uint               `db:"recurring_period"`
+	Status              re.Status          `db:"status"`
+	LastRunStatus       re.ExecutionStatus `db:"last_run_status"`
+	LastRunTime         sql.NullTime       `db:"last_run_time"`
+	LastRunErrorMessage sql.NullString     `db:"last_run_error_message"`
+	ExecutionCount      uint64             `db:"execution_count"`
+	CreatedAt           time.Time          `db:"created_at"`
+	CreatedBy           string             `db:"created_by"`
+	UpdatedAt           time.Time          `db:"updated_at"`
+	UpdatedBy           string             `db:"updated_by"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -55,6 +59,13 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	if !r.Schedule.Time.IsZero() {
 		t.Valid = true
 	}
+	
+	lastRunTime := sql.NullTime{}
+	if r.LastRunTime != nil && !r.LastRunTime.IsZero() {
+		lastRunTime.Time = *r.LastRunTime
+		lastRunTime.Valid = true
+	}
+	
 	var tags pgtype.TextArray
 	if err := tags.Set(r.Tags); err != nil {
 		return dbRule{}, err
@@ -66,25 +77,29 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	}
 
 	return dbRule{
-		ID:              r.ID,
-		Name:            r.Name,
-		DomainID:        r.DomainID,
-		Tags:            tags,
-		Metadata:        metadata,
-		InputChannel:    r.InputChannel,
-		InputTopic:      toNullString(r.InputTopic),
-		LogicType:       r.Logic.Type,
-		LogicValue:      r.Logic.Value,
-		Outputs:         outputs,
-		StartDateTime:   start,
-		Time:            t,
-		Recurring:       r.Schedule.Recurring,
-		RecurringPeriod: r.Schedule.RecurringPeriod,
-		Status:          r.Status,
-		CreatedAt:       r.CreatedAt,
-		CreatedBy:       r.CreatedBy,
-		UpdatedAt:       r.UpdatedAt,
-		UpdatedBy:       r.UpdatedBy,
+		ID:                  r.ID,
+		Name:                r.Name,
+		DomainID:            r.DomainID,
+		Tags:                tags,
+		Metadata:            metadata,
+		InputChannel:        r.InputChannel,
+		InputTopic:          toNullString(r.InputTopic),
+		LogicType:           r.Logic.Type,
+		LogicValue:          r.Logic.Value,
+		Outputs:             outputs,
+		StartDateTime:       start,
+		Time:                t,
+		Recurring:           r.Schedule.Recurring,
+		RecurringPeriod:     r.Schedule.RecurringPeriod,
+		Status:              r.Status,
+		LastRunStatus:       r.LastRunStatus,
+		LastRunTime:         lastRunTime,
+		LastRunErrorMessage: toNullString(r.LastRunErrorMessage),
+		ExecutionCount:      r.ExecutionCount,
+		CreatedAt:           r.CreatedAt,
+		CreatedBy:           r.CreatedBy,
+		UpdatedAt:           r.UpdatedAt,
+		UpdatedBy:           r.UpdatedBy,
 	}, nil
 }
 
@@ -108,6 +123,11 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		}
 	}
 
+	var lastRunTime *time.Time
+	if dto.LastRunTime.Valid {
+		lastRunTime = &dto.LastRunTime.Time
+	}
+
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
@@ -127,11 +147,15 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Status:    dto.Status,
-		CreatedAt: dto.CreatedAt,
-		CreatedBy: dto.CreatedBy,
-		UpdatedAt: dto.UpdatedAt,
-		UpdatedBy: dto.UpdatedBy,
+		Status:              dto.Status,
+		LastRunStatus:       dto.LastRunStatus,
+		LastRunTime:         lastRunTime,
+		LastRunErrorMessage: fromNullString(dto.LastRunErrorMessage),
+		ExecutionCount:      dto.ExecutionCount,
+		CreatedAt:           dto.CreatedAt,
+		CreatedBy:           dto.CreatedBy,
+		UpdatedAt:           dto.UpdatedAt,
+		UpdatedBy:           dto.UpdatedBy,
 	}, nil
 }
 

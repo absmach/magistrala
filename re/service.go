@@ -220,7 +220,6 @@ func (re *re) Cancel() error {
 	return re.workerMgr.StopAll()
 }
 
-// updateRuleExecutionStatus updates the execution status of a rule
 func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, errorMessage string) {
 	now := time.Now().UTC()
 	rule := Rule{

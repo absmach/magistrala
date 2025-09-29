@@ -101,7 +101,6 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 		slog.Time("exec_time", time.Now().UTC()),
 	}
 
-	// Set rule status to in progress
 	re.updateRuleExecutionStatus(ctx, r.ID, InProgressStatus, "")
 
 	var result pkglog.RunInfo
@@ -112,14 +111,12 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 		result = re.processLua(ctx, details, r, msg)
 	}
 
-	// Update execution status based on result
 	var execStatus ExecutionStatus
 	var errorMsg string
 	switch result.Level {
 	case slog.LevelInfo:
 		execStatus = SuccessStatus
 	case slog.LevelWarn:
-		// Check if it's a partial success case
 		if strings.Contains(result.Message, "logic returned false") || strings.Contains(result.Message, "no outputs") {
 			execStatus = SuccessStatus
 		} else {

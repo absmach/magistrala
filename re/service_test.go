@@ -636,6 +636,50 @@ func TestDisableRule(t *testing.T) {
 	}
 }
 
+func TestAbortRuleExecution(t *testing.T) {
+	cases := []struct {
+		desc    string
+		session authn.Session
+		id      string
+		rule    re.Rule
+		repoErr error
+		err     error
+	}{
+		{
+			desc: "abort rule execution successfully",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id:      ruleID,
+			rule:    re.Rule{ID: ruleID},
+			repoErr: nil,
+			err:     nil,
+		},
+		{
+			desc: "abort rule execution with non-existent rule",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id:      "non-existent-rule",
+			rule:    re.Rule{},
+			repoErr: svcerr.ErrNotFound,
+			err:     svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
+			repo.On("ViewRule", mock.Anything, tc.id).Return(tc.rule, tc.repoErr)
+			err := svc.AbortRuleExecution(context.Background(), tc.session, tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
 func TestHandle(t *testing.T) {
 	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo, 100))
 	now := time.Now()

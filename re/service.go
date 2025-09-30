@@ -220,13 +220,28 @@ func (re *re) Cancel() error {
 	return re.workerMgr.StopAll()
 }
 
-func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, errorMessage string) {
+func (re *re) AbortRuleExecution(ctx context.Context, session authn.Session, id string) error {
+	if _, err := re.repo.ViewRule(ctx, id); err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	if re.workerMgr != nil {
+		re.workerMgr.AbortRule(id)
+	}
+
+	return nil
+}
+
+func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, err error) {
 	now := time.Now().UTC()
 	rule := Rule{
 		ID:                  ruleID,
 		LastRunStatus:       status,
 		LastRunTime:         &now,
-		LastRunErrorMessage: errorMessage,
+	}
+
+	if err != nil {
+		rule.LastRunErrorMessage = err.Error()
 	}
 
 	if status == SuccessStatus || status == PartialSuccessStatus {

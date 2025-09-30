@@ -200,6 +200,23 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 	return lm.svc.DisableRule(ctx, session, id)
 }
 
+func (lm *loggingMiddleware) AbortRuleExecution(ctx context.Context, session authn.Session, id string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("rule_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Abort rule execution failed", args...)
+			return
+		}
+		lm.logger.Info("Abort rule execution completed successfully", args...)
+	}(time.Now())
+	return lm.svc.AbortRuleExecution(ctx, session, id)
+}
+
 func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
@@ -238,5 +255,5 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 }
 
 func (lm *loggingMiddleware) Cancel() error {
-	return lm.Cancel()
+	return lm.svc.Cancel()
 }

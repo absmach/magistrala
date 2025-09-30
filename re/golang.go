@@ -31,6 +31,12 @@ type message struct {
 }
 
 func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) pkglog.RunInfo {
+	select {
+	case <-ctx.Done():
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: "rule execution was cancelled"}
+	default:
+	}
+
 	i := golang.New(golang.Options{})
 	if err := i.Use(stdlib.Symbols); err != nil {
 		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}

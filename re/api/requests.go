@@ -134,3 +134,15 @@ func (req deleteRuleReq) validate() error {
 
 	return nil
 }
+
+type abortRuleExecutionReq struct {
+	id string
+}
+
+func (req abortRuleExecutionReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}

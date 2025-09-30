@@ -5,6 +5,7 @@ package re
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"sync/atomic"
 
@@ -20,20 +21,23 @@ type WorkerMessage struct {
 
 // RuleWorker manages execution of a single rule in its own goroutine.
 type RuleWorker struct {
-	rule    Rule
-	engine  *re
-	msgChan chan WorkerMessage
-	ctx     context.Context
-	running int32
+	rule         Rule
+	engine       *re
+	msgChan      chan WorkerMessage
+	ctx          context.Context
+	cancel       context.CancelFunc
+	running      int32
+	maxQueueSize int
 }
 
 // NewRuleWorker creates a new rule worker for the given rule.
 func NewRuleWorker(rule Rule, engine *re) *RuleWorker {
 	return &RuleWorker{
-		rule:    rule,
-		engine:  engine,
-		msgChan: make(chan WorkerMessage, 100),
-		running: 0, // 0 = not running, 1 = running
+		rule:         rule,
+		engine:       engine,
+		msgChan:      make(chan WorkerMessage, 100),
+		running:      0, // 0 = not running, 1 = running
+		maxQueueSize: 100,
 	}
 }
 
@@ -43,7 +47,7 @@ func (w *RuleWorker) Start(ctx context.Context) {
 		return
 	}
 
-	w.ctx = ctx
+	w.ctx, w.cancel = context.WithCancel(ctx)
 	go func() {
 		defer atomic.StoreInt32(&w.running, 0)
 		w.run(w.ctx)
@@ -56,13 +60,37 @@ func (w *RuleWorker) Stop() error {
 		return nil
 	}
 
+	if w.cancel != nil {
+		w.cancel()
+	}
+
 	return nil
+}
+
+// AbortExecution aborts the current execution if the worker is running.
+func (w *RuleWorker) AbortExecution(ctx context.Context) {
+	if atomic.LoadInt32(&w.running) == 1 {
+		if w.cancel != nil {
+			w.cancel()
+		}
+
+		w.engine.updateRuleExecutionStatus(ctx, w.rule.ID, AbortedStatus, fmt.Errorf("rule execution manually aborted"))
+	}
 }
 
 // Send sends a message to the worker for processing.
 func (w *RuleWorker) Send(msg WorkerMessage) bool {
 	if atomic.LoadInt32(&w.running) == 0 {
 		return false
+	}
+
+	queueLen := len(w.msgChan)
+	if queueLen >= w.maxQueueSize {
+		return false
+	}
+
+	if queueLen > 0 {
+		w.engine.updateRuleExecutionStatus(context.Background(), msg.Rule.ID, QueuedStatus, nil)
 	}
 
 	select {
@@ -76,6 +104,11 @@ func (w *RuleWorker) Send(msg WorkerMessage) bool {
 // IsRunning returns true if the worker is currently running.
 func (w *RuleWorker) IsRunning() bool {
 	return atomic.LoadInt32(&w.running) == 1
+}
+
+// GetQueueLength returns the current number of queued messages.
+func (w *RuleWorker) GetQueueLength() int {
+	return len(w.msgChan)
 }
 
 // GetRule returns the current rule configuration.
@@ -103,7 +136,21 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 		return
 	}
 
-	runInfo := w.engine.process(ctx, currentRule, workerMsg.Message)
+	w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, InProgressStatus, nil)
+
+	select {
+	case <-w.ctx.Done():
+		w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, AbortedStatus, w.ctx.Err())
+		return
+	default:
+	}
+
+	runInfo := w.engine.process(w.ctx, currentRule, workerMsg.Message)
+
+	if w.ctx.Err() == context.Canceled {
+		w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, AbortedStatus, w.ctx.Err())
+		return
+	}
 
 	select {
 	case w.engine.runInfo <- runInfo:
@@ -120,6 +167,8 @@ const (
 	CmdStopAll
 	CmdCount
 	CmdList
+	CmdAbort
+	CmdGetStatus
 )
 
 func (c WorkerCommandType) String() string {
@@ -136,6 +185,10 @@ func (c WorkerCommandType) String() string {
 		return "count"
 	case CmdList:
 		return "list"
+	case CmdAbort:
+		return "abort"
+	case CmdGetStatus:
+		return "get_status"
 	default:
 		return "unknown"
 	}
@@ -230,6 +283,8 @@ func (wm *WorkerManager) handleCommand(cmd WorkerManagerCommand) {
 			default:
 			}
 		}
+	case CmdAbort:
+		wm.abortWorker(cmd.RuleID)
 	case CmdStopAll:
 		if err := wm.stopAll(); err != nil {
 			select {
@@ -256,6 +311,19 @@ func (wm *WorkerManager) handleCommand(cmd WorkerManagerCommand) {
 		wm.mu.RUnlock()
 		if cmd.Response != nil {
 			cmd.Response <- ruleIDs
+		}
+	case CmdGetStatus:
+		wm.mu.RLock()
+		var status map[string]interface{}
+		if worker, exists := wm.workers[cmd.RuleID]; exists {
+			status = map[string]interface{}{
+				"running":      worker.IsRunning(),
+				"queue_length": worker.GetQueueLength(),
+			}
+		}
+		wm.mu.RUnlock()
+		if cmd.Response != nil {
+			cmd.Response <- status
 		}
 	}
 }
@@ -337,6 +405,32 @@ func (wm *WorkerManager) updateWorker(rule Rule) error {
 	}
 
 	return nil
+}
+
+func (wm *WorkerManager) abortWorker(ruleID string) {
+	wm.mu.Lock()
+	defer wm.mu.Unlock()
+
+	worker, exists := wm.workers[ruleID]
+	if !exists {
+		return
+	}
+
+	worker.AbortExecution(wm.ctx)
+
+	rule := worker.GetRule()
+	if rule.Status == EnabledStatus {
+		newWorker := NewRuleWorker(rule, wm.engine)
+		newWorker.Start(wm.ctx)
+		wm.workers[ruleID] = newWorker
+	}
+
+	if err := worker.Stop(); err != nil {
+		select {
+		case wm.errorCh <- err:
+		default:
+		}
+	}
 }
 
 func (wm *WorkerManager) sendMessage(msg *messaging.Message, rule Rule) bool {
@@ -499,4 +593,41 @@ func (wm *WorkerManager) RefreshWorkers(ctx context.Context, rules []Rule) {
 			wm.RemoveWorker(rule.ID)
 		}
 	}
+}
+
+func (wm *WorkerManager) AbortRule(ruleID string) {
+	if atomic.LoadInt32(&wm.running) == 0 {
+		return
+	}
+
+	cmd := WorkerManagerCommand{
+		Type:   CmdAbort,
+		RuleID: ruleID,
+	}
+
+	wm.commandCh <- cmd
+}
+
+func (wm *WorkerManager) GetWorkerStatus(ruleID string) map[string]interface{} {
+	if atomic.LoadInt32(&wm.running) == 0 {
+		return nil
+	}
+
+	responseCh := make(chan interface{}, 1)
+	cmd := WorkerManagerCommand{
+		Type:     CmdGetStatus,
+		RuleID:   ruleID,
+		Response: responseCh,
+	}
+
+	select {
+	case wm.commandCh <- cmd:
+		if result := <-responseCh; result != nil {
+			if status, ok := result.(map[string]interface{}); ok {
+				return status
+			}
+		}
+	default:
+	}
+	return nil
 }

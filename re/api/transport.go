@@ -100,6 +100,13 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 						api.EncodeResponse,
 						opts...,
 					), "disable_rule").ServeHTTP)
+
+					r.Post("/abort", otelhttp.NewHandler(kithttp.NewServer(
+						abortRuleExecutionEndpoint(svc),
+						decodeAbortRuleExecutionRequest,
+						api.EncodeResponse,
+						opts...,
+					), "abort_rule_execution").ServeHTTP)
 				})
 			})
 		})
@@ -243,4 +250,10 @@ func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil
+}
+
+func decodeAbortRuleExecutionRequest(_ context.Context, r *http.Request) (any, error) {
+	id := chi.URLParam(r, ruleIdKey)
+
+	return abortRuleExecutionReq{id: id}, nil
 }

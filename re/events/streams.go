@@ -24,6 +24,7 @@ const (
 	UpdateScheduleStream = supermqPrefix + ruleUpdateSchedule
 	EnableStream         = supermqPrefix + ruleEnable
 	DisableStream        = supermqPrefix + ruleDisable
+	AbortStream          = supermqPrefix + ruleAbort
 	RemoveStream         = supermqPrefix + ruleRemove
 )
 
@@ -181,6 +182,21 @@ func (es *eventStore) DisableRule(ctx context.Context, session authn.Session, id
 		return rule, err
 	}
 	return rule, nil
+}
+
+func (es *eventStore) AbortRuleExecution(ctx context.Context, session authn.Session, id string) error {
+	err := es.svc.AbortRuleExecution(ctx, session, id)
+	if err != nil {
+		return err
+	}
+	event := abortRuleExecutionEvent{
+		id:            id,
+		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
+	}
+	if err := es.Publish(ctx, AbortStream, event); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (es *eventStore) StartScheduler(ctx context.Context) error {

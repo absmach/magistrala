@@ -32,6 +32,12 @@ import (
 const payloadKey = "payload"
 
 func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) pkglog.RunInfo {
+	select {
+	case <-ctx.Done():
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: "rule execution was cancelled"}
+	default:
+	}
+
 	l := lua.NewState()
 	defer l.Close()
 	preload(l)

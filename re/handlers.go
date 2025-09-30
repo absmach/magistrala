@@ -55,6 +55,12 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
+			if workerStatus := re.workerMgr.GetWorkerStatus(r.ID); workerStatus != nil {
+				if processing, ok := workerStatus["processing"].(bool); ok && processing {
+					re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
+				}
+			}
+
 			if !re.workerMgr.SendMessage(msg, r) {
 				re.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelWarn,
@@ -101,7 +107,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 		slog.Time("exec_time", time.Now().UTC()),
 	}
 
-	re.updateRuleExecutionStatus(ctx, r.ID, InProgressStatus, "")
+	re.updateRuleExecutionStatus(ctx, r.ID, InProgressStatus, nil)
 
 	var result pkglog.RunInfo
 	switch r.Logic.Type {
@@ -131,12 +137,24 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 		errorMsg = result.Message
 	}
 
-	re.updateRuleExecutionStatus(ctx, r.ID, execStatus, errorMsg)
+	var execError error
+	if errorMsg != "" {
+		execError = fmt.Errorf("%s", errorMsg)
+	}
+
+	re.updateRuleExecutionStatus(ctx, r.ID, execStatus, execError)
 
 	return result
 }
 
 func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val any) error {
+	// Check if context is cancelled before handling output
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	switch o := o.(type) {
 	case *outputs.Alarm:
 		o.AlarmsPub = re.alarmsPub
@@ -229,6 +247,14 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					Subtopic: r.InputTopic,
 					Protocol: protocol,
 					Created:  due.Unix(),
+				}
+
+				// Check worker status for scheduled rules too
+				if workerStatus := re.workerMgr.GetWorkerStatus(r.ID); workerStatus != nil {
+					if processing, ok := workerStatus["processing"].(bool); ok && processing {
+						// Worker is busy, scheduled message will be queued
+						re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
+					}
 				}
 
 				if !re.workerMgr.SendMessage(msg, r) {

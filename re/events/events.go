@@ -21,6 +21,7 @@ const (
 	ruleUpdateSchedule = rulePrefix + "update_schedule"
 	ruleEnable         = rulePrefix + "enable"
 	ruleDisable        = rulePrefix + "disable"
+	ruleAbort          = rulePrefix + "abort"
 	ruleRemove         = rulePrefix + "remove"
 )
 
@@ -33,6 +34,7 @@ var (
 	_ events.Event = (*updateRuleScheduleEvent)(nil)
 	_ events.Event = (*enableRuleEvent)(nil)
 	_ events.Event = (*disableRuleEvent)(nil)
+	_ events.Event = (*abortRuleExecutionEvent)(nil)
 	_ events.Event = (*removeRuleEvent)(nil)
 )
 
@@ -185,5 +187,17 @@ func (rre removeRuleEvent) Encode() (map[string]any, error) {
 	val := rre.baseRuleEvent.Encode()
 	val["id"] = rre.id
 	val["operation"] = ruleRemove
+	return val, nil
+}
+
+type abortRuleExecutionEvent struct {
+	id string
+	baseRuleEvent
+}
+
+func (aree abortRuleExecutionEvent) Encode() (map[string]any, error) {
+	val := aree.baseRuleEvent.Encode()
+	val["id"] = aree.id
+	val["operation"] = ruleAbort
 	return val, nil
 }

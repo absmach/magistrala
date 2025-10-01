@@ -139,7 +139,7 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 
 	var execError error
 	if errorMsg != "" {
-		execError = fmt.Errorf("%s", errorMsg)
+		execError = errors.New(errorMsg)
 	}
 
 	re.updateRuleExecutionStatus(ctx, r.ID, execStatus, execError)
@@ -249,10 +249,8 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					Created:  due.Unix(),
 				}
 
-				// Check worker status for scheduled rules too
 				if workerStatus := re.workerMgr.GetWorkerStatus(r.ID); workerStatus != nil {
 					if processing, ok := workerStatus["processing"].(bool); ok && processing {
-						// Worker is busy, scheduled message will be queued
 						re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
 					}
 				}

@@ -235,9 +235,9 @@ func (re *re) AbortRuleExecution(ctx context.Context, session authn.Session, id 
 func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, err error) {
 	now := time.Now().UTC()
 	rule := Rule{
-		ID:                  ruleID,
-		LastRunStatus:       status,
-		LastRunTime:         &now,
+		ID:            ruleID,
+		LastRunStatus: status,
+		LastRunTime:   &now,
 	}
 
 	if err != nil {

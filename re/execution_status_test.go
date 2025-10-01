@@ -4,9 +4,9 @@
 package re
 
 import (
-"testing"
+	"testing"
 
-"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestExecutionStatusString(t *testing.T) {
@@ -64,7 +64,7 @@ func TestExecutionStatusString(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-got := tc.status.String()
+			got := tc.status.String()
 			assert.Equal(t, tc.want, got)
 		})
 	}
@@ -132,14 +132,14 @@ func TestToExecutionStatus(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-got, err := ToExecutionStatus(tc.status)
-if tc.wantErr {
-assert.Error(t, err)
-} else {
-assert.NoError(t, err)
-}
-assert.Equal(t, tc.want, got)
-})
+			got, err := ToExecutionStatus(tc.status)
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.want, got)
+		})
 	}
 }
 
@@ -193,7 +193,7 @@ func TestExecutionStatusMarshalJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-got, err := tc.status.MarshalJSON()
+			got, err := tc.status.MarshalJSON()
 			assert.NoError(t, err)
 			assert.Equal(t, tc.want, string(got))
 		})
@@ -262,14 +262,14 @@ func TestExecutionStatusUnmarshalJSON(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-var status ExecutionStatus
-err := status.UnmarshalJSON([]byte(tc.data))
-if tc.wantErr {
-assert.Error(t, err)
-} else {
-assert.NoError(t, err)
-}
-assert.Equal(t, tc.want, status)
-})
+			var status ExecutionStatus
+			err := status.UnmarshalJSON([]byte(tc.data))
+			if tc.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equal(t, tc.want, status)
+		})
 	}
 }

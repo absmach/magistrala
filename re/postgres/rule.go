@@ -59,13 +59,13 @@ func ruleToDb(r re.Rule) (dbRule, error) {
 	if !r.Schedule.Time.IsZero() {
 		t.Valid = true
 	}
-	
+
 	lastRunTime := sql.NullTime{}
 	if r.LastRunTime != nil && !r.LastRunTime.IsZero() {
 		lastRunTime.Time = *r.LastRunTime
 		lastRunTime.Valid = true
 	}
-	
+
 	var tags pgtype.TextArray
 	if err := tags.Set(r.Tags); err != nil {
 		return dbRule{}, err

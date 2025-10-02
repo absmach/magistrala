@@ -18,6 +18,7 @@ var (
 	_ supermq.Response = (*rulesPageRes)(nil)
 	_ supermq.Response = (*updateRuleRes)(nil)
 	_ supermq.Response = (*deleteRuleRes)(nil)
+	_ supermq.Response = (*abortRuleExecutionRes)(nil)
 )
 
 type pageRes struct {
@@ -134,5 +135,19 @@ func (res deleteRuleRes) Headers() map[string]string {
 }
 
 func (res deleteRuleRes) Empty() bool {
+	return true
+}
+
+type abortRuleExecutionRes struct{}
+
+func (res abortRuleExecutionRes) Code() int {
+	return http.StatusAccepted
+}
+
+func (res abortRuleExecutionRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res abortRuleExecutionRes) Empty() bool {
 	return true
 }

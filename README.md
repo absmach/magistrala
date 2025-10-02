@@ -13,9 +13,9 @@
   [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
   [![Matrix](https://img.shields.io/matrix/magistrala:matrix.org?style=flat-square)](https://matrix.to/#/#magistrala:matrix.org)
   
-  ### [Guide](https://docs.magistrala.absmach.eu/) | [Contributing](CONTRIBUTING.md) | [Website](https://www.absmach.eu/magistrala) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
+  ### [Guide](https://docs.magistrala.absmach.eu) | [Contributing](CONTRIBUTING.md) | [Website](https://www.absmach.eu/magistrala) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
 
-  Made with ❤️ by [Abstract Machines](https://abstractmachines.fr/)
+  Made with ❤️ by [Abstract Machines](https://www.absmach.eu)
 
 </div>
 
@@ -89,14 +89,14 @@ Alternatively, use a simple HTTP GET request to check the platform's health:
 curl -X GET http://localhost:8080/health
 ```
 
-For additional usage examples and advanced configurations, visit the [official documentation](https://docs.magistrala.abstractmachines.fr).
+For additional usage examples and advanced configurations, visit the [official documentation](https://docs.magistrala.absmach.eu).
 
 
 ## 📚 Documentation
 
-Complete documentation is available at the [Magistrala official docs page](https://docs.magistrala.abstractmachines.fr).
+Complete documentation is available at the [Magistrala official docs page](https://docs.magistrala.absmach.eu).
 
-For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.abstractmachines.fr/cli).
+For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.absmach.eu/cli).
 
 
 ## 🌐 Community and Contributing
@@ -115,4 +115,4 @@ Magistrala is open-source software licensed under the [Apache-2.0](LICENSE) lice
 
 ## 💼 Professional Support
 
-Need help deploying Magistrala or integrating it into your systems? Contact **[Abstract Machines](https://abstractmachines.fr/)** for expert guidance and support.
+Need help deploying Magistrala or integrating it into your systems? Contact **[Abstract Machines](https://www.absmach.eu)** for expert guidance and support.

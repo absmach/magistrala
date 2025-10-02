@@ -13,7 +13,7 @@
   [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
   [![Matrix](https://img.shields.io/matrix/magistrala:matrix.org?style=flat-square)](https://matrix.to/#/#magistrala:matrix.org)
   
-  ### [Guide](https://docs.magistrala.abstractmachines.fr) | [Contributing](CONTRIBUTING.md) | [Website](https://abstractmachines.fr/magistrala.html) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
+  ### [Guide](https://docs.magistrala.abstractmachines.fr) | [Contributing](CONTRIBUTING.md) | [Website](https://www.absmach.eu/magistrala) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
 
   Made with ❤️ by [Abstract Machines](https://abstractmachines.fr/)
 

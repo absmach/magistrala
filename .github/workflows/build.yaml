@@ -61,7 +61,7 @@ jobs:
 
       - name: Trigger Helm Chart Deployment
         if: success() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: peter-evans/repository-dispatch@v3
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.REPO_DISPATCH_TOKEN }}
           repository: absmach/amdm

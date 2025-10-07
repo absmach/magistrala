@@ -94,7 +94,7 @@ func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, err
 	if err := writer.WriteField("marginBottom", "0"); err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
-	if err := writer.WriteField("marginLeft", "0."); err != nil {
+	if err := writer.WriteField("marginLeft", "0"); err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 	if err := writer.WriteField("marginRight", "0"); err != nil {
@@ -102,6 +102,13 @@ func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, err
 	}
 
 	if err := writer.WriteField("printBackground", "true"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if err := writer.WriteField("preferCSSPageSize", "true"); err != nil {
+		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+	if err := writer.WriteField("emulatedMediaType", "print"); err != nil {
 		return nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 

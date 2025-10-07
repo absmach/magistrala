@@ -292,18 +292,51 @@
         }
 
         @media print {
+            @page {
+                size: A4;
+                margin: 0;
+            }
+
+            html, body {
+                width: 210mm;
+                height: auto;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+
             .page {
                 box-shadow: none;
-                margin: 0;
                 max-width: none;
+                width: 210mm;
                 height: 297mm;
-                min-height: auto;
+                min-height: 297mm;
+                margin: 0;
+                display: block;
                 page-break-after: always;
+                break-inside: avoid;
             }
             
             .page:last-child {
                 page-break-after: auto;
             }
+
+            .header, .footer {
+                break-inside: avoid;
+            }
+
+            .content-area {
+                overflow: hidden;
+                padding-bottom: calc(var(--footer-height) + 6mm);
+            }
+
+            .footer {
+                position: absolute;
+                left: var(--page-padding);
+                right: var(--page-padding);
+                bottom: var(--page-padding);
+            }
+
+            .table-container { overflow: hidden; }
         }
     </style>
 </head>

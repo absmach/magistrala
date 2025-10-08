@@ -46,7 +46,10 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 		r.runInfo <- pkglog.RunInfo{
 			Level:   slog.LevelWarn,
 			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", timezone, err),
-			Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+			Details: []slog.Attr{
+				slog.String("report_title", title),
+				slog.Time("time", time.Now().UTC()),
+			},
 		}
 	}
 

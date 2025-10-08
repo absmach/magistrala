@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"sort"
@@ -17,10 +18,13 @@ import (
 	"time"
 	_ "time/tzdata" // Embed timezone database
 
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
+
+const nanosecondThreshold = float64(10 * time.Second / time.Nanosecond)
 
 type ReportData struct {
 	Title         string
@@ -37,7 +41,14 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 		})
 	}
 
-	loc := resolveTimezone(timezone)
+	loc, err := resolveTimezone(timezone)
+	if err != nil {
+		r.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", timezone, err),
+			Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+		}
+	}
 
 	now := time.Now().In(loc)
 	displayTZ := timezone
@@ -62,7 +73,7 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 
 func (r *report) generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
-		"formatTime":  func(t float64) string { return formatTimeWithTimezone(t, data.Timezone) },
+		"formatTime":  func(t float64) string { return r.formatTimeWithTimezone(t, data.Timezone) },
 		"formatValue": formatValue,
 		"add":         func(a, b int) int { return a + b },
 		"sub":         func(a, b int) int { return a - b },
@@ -151,13 +162,21 @@ func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, err
 	return pdfBytes, nil
 }
 
-func formatTimeWithTimezone(t float64, timezone string) string {
-	loc := resolveTimezone(timezone)
+func (r *report) formatTimeWithTimezone(t float64, timezone string) string {
+	loc, err := resolveTimezone(timezone)
+	if err != nil {
+		r.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", timezone, err),
+			Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+		}
+	}
 
 	var timeVal time.Time
-	if t > 9999999999 {
+	switch {
+	case t > nanosecondThreshold:
 		timeVal = time.Unix(0, int64(t)).In(loc)
-	} else {
+	default:
 		timeVal = time.Unix(int64(t), 0).In(loc)
 	}
 
@@ -234,7 +253,7 @@ func (r *report) generateCSVReport(_ context.Context, title string, reports []Re
 		})
 
 		for _, msg := range report.Messages {
-			timeStr := formatTimeWithTimezone(msg.Time, timezone)
+			timeStr := r.formatTimeWithTimezone(msg.Time, timezone)
 
 			var valueStr string
 			if msg.Value != nil {

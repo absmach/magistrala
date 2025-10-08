@@ -12,13 +12,14 @@ import (
 // Supported inputs:
 // - IANA names (e.g., "Europe/Paris", "America/New_York").
 // - Empty string defaults to UTC.
-func resolveTimezone(s string) *time.Location {
+func resolveTimezone(s string) (*time.Location, error) {
 	s = strings.TrimSpace(s)
 	if s == "" {
-		return time.UTC
+		return time.UTC, nil
 	}
-	if loc, err := time.LoadLocation(s); err == nil {
-		return loc
+	loc, err := time.LoadLocation(s)
+	if err != nil {
+		return time.UTC, err
 	}
-	return time.UTC
+	return loc, nil
 }

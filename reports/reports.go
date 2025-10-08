@@ -115,9 +115,6 @@ func (mc MetricConfig) Validate() error {
 	}
 
 	if tz := strings.TrimSpace(mc.Timezone); tz != "" {
-		if !strings.Contains(tz, "/") {
-			return errors.New("invalid timezone: must be in 'Continent/City' format")
-		}
 		if _, err := time.LoadLocation(tz); err != nil {
 			return errors.Wrap(fmt.Errorf("invalid timezone: %s", tz), err)
 		}

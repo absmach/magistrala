@@ -467,3 +467,104 @@ func TestDisableReportConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestGenerateInstantEmailReport(t *testing.T) {
+	svc, _, _ := newService(make(chan pkglog.RunInfo))
+
+	validEmailConfig := reports.EmailSetting{
+		To:      []string{"test@example.com"},
+		Subject: "Test Report",
+		Content: "Please find the attached report.",
+	}
+
+	validConfig := reports.ReportConfig{
+		ID:       testsutil.GenerateUUID(&testing.T{}),
+		Name:     "Test Report",
+		DomainID: domainID,
+		Status:   reports.DisabledStatus,
+		Email:    &validEmailConfig,
+		Config: &reports.MetricConfig{
+			Title:      "Test Report",
+			FileFormat: reports.PDF,
+			From:       "now-1h",
+			To:         "now",
+			Aggregation: reports.AggConfig{
+				AggType:  reports.AggregationAVG,
+				Interval: "1h",
+			},
+		},
+		Metrics: []reports.ReqMetric{
+			{
+				ChannelID: testsutil.GenerateUUID(&testing.T{}),
+				Name:      "temperature",
+				ClientIDs: []string{testsutil.GenerateUUID(&testing.T{})},
+			},
+		},
+		ReportTemplate: template,
+	}
+
+	cases := []struct {
+		desc    string
+		session authn.Session
+		config  reports.ReportConfig
+		action  reports.ReportAction
+		err     error
+	}{
+		{
+			desc: "Generate instant email report with disabled config should succeed",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			config: validConfig,
+			action: reports.EmailReport,
+			err:    nil,
+		},
+		{
+			desc: "Generate instant email report with enabled config should succeed",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			config: func() reports.ReportConfig {
+				cfg := validConfig
+				cfg.Status = reports.EnabledStatus
+				return cfg
+			}(),
+			action: reports.EmailReport,
+			err:    nil,
+		},
+		{
+			desc: "Generate view report with disabled config should succeed",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			config: validConfig,
+			action: reports.ViewReport,
+			err:    nil,
+		},
+		{
+			desc: "Generate download report with disabled config should succeed",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			config: validConfig,
+			action: reports.DownloadReport,
+			err:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			_, err := svc.GenerateReport(context.Background(), tc.session, tc.config, tc.action)
+
+			if tc.err != nil {
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			} else {
+				assert.False(t, errors.Contains(err, svcerr.ErrInvalidStatus), fmt.Sprintf("%s: should not get ErrInvalidStatus for instant reports, got %s\n", tc.desc, err))
+			}
+		})
+	}
+}

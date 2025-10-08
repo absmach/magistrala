@@ -162,8 +162,10 @@ func (r *report) DisableReportConfig(ctx context.Context, session authn.Session,
 func (r *report) GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error) {
 	config.DomainID = session.DomainID
 
-	if config.Status != EnabledStatus {
-		return ReportPage{}, svcerr.ErrInvalidStatus
+	if action != ViewReport && action != DownloadReport && action != EmailReport {
+		if config.Status != EnabledStatus {
+			return ReportPage{}, svcerr.ErrInvalidStatus
+		}
 	}
 
 	reportPage, err := r.generateReport(ctx, config, action)
@@ -175,7 +177,7 @@ func (r *report) GenerateReport(ctx context.Context, session authn.Session, conf
 }
 
 func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action ReportAction) (ReportPage, error) {
-	genReportFile, err := r.generateFileFunc(ctx, action, cfg.Config.FileFormat, cfg.ReportTemplate)
+	genReportFile, err := r.generateFileFunc(ctx, action, cfg.Config.FileFormat, cfg.ReportTemplate, cfg.Config.Timezone)
 	if err != nil {
 		return ReportPage{}, err
 	}
@@ -327,17 +329,17 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 	}
 }
 
-func (r *report) generateFileFunc(_ context.Context, action ReportAction, format Format, customTemplate ReportTemplate) (func(context.Context, string, []Report) ([]byte, error), error) {
+func (r *report) generateFileFunc(_ context.Context, action ReportAction, format Format, customTemplate ReportTemplate, timezone string) (func(context.Context, string, []Report) ([]byte, error), error) {
 	switch action {
 	case DownloadReport, EmailReport:
 		switch format {
 		case PDF:
 			return func(ctx context.Context, title string, reports []Report) ([]byte, error) {
-				return r.generatePDFReport(ctx, title, reports, customTemplate)
+				return r.generatePDFReport(ctx, title, reports, customTemplate, timezone)
 			}, nil
 		case CSV:
 			return func(ctx context.Context, title string, reports []Report) ([]byte, error) {
-				return r.generateCSVReport(ctx, title, reports)
+				return r.generateCSVReport(ctx, title, reports, timezone)
 			}, nil
 		default:
 			return nil, errors.New("file format not supported")

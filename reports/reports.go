@@ -83,7 +83,8 @@ type MetricConfig struct {
 	To    string `json:"to,omitempty"`    // Mandatory field
 	Title string `json:"title,omitempty"` // Mandatory field
 
-	FileFormat Format `json:"file_format"` // Optional field
+	FileFormat Format `json:"file_format"`        // Optional field
+	Timezone   string `json:"timezone,omitempty"` // Optional field, defaults to UTC
 
 	Aggregation AggConfig `json:"aggregation,omitempty"` // Optional field
 }
@@ -111,6 +112,15 @@ func (mc MetricConfig) Validate() error {
 
 	if err := mc.Aggregation.Validate(); err != nil {
 		return err
+	}
+
+	if tz := strings.TrimSpace(mc.Timezone); tz != "" {
+		if !strings.Contains(tz, "/") {
+			return errors.New("invalid timezone: must be in 'Continent/City' format")
+		}
+		if _, err := time.LoadLocation(tz); err != nil {
+			return errors.Wrap(fmt.Errorf("invalid timezone: %s", tz), err)
+		}
 	}
 
 	return nil

@@ -270,7 +270,10 @@ if [ ! -f /opt/openbao/data/configured ]; then
     key_usage=\"DigitalSignature,KeyEncipherment,KeyAgreement\" \
     ext_key_usage=\"ServerAuth,ClientAuth,OCSPSigning\" \
     use_csr_common_name=true \
-    use_csr_sans=false \
+    use_csr_sans=true \
+    copy_extensions=true \
+    allowed_extensions=\"*\" \
+    basic_constraints_valid_for_non_ca=true \
     max_ttl=720h \
     ttl=720h"
 
@@ -282,6 +285,9 @@ path "pki_int/issue/${AM_CERTS_OPENBAO_PKI_ROLE}" {
   capabilities = ["create", "update"]
 }
 path "pki_int/sign/${AM_CERTS_OPENBAO_PKI_ROLE}" {
+  capabilities = ["create", "update"]
+}
+path "pki_int/sign-verbatim/${AM_CERTS_OPENBAO_PKI_ROLE}" {
   capabilities = ["create", "update"]
 }
 path "pki_int/certs" {

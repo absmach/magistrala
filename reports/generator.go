@@ -10,36 +10,61 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log/slog"
 	"mime/multipart"
 	"net/http"
 	"sort"
+	"strings"
 	"time"
+	_ "time/tzdata" // Embed timezone database
 
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
+
+const nanosecondThreshold = float64(10 * time.Second / time.Nanosecond)
 
 type ReportData struct {
 	Title         string
 	GeneratedTime string
 	GeneratedDate string
 	Reports       []Report
+	Timezone      string
 }
 
-func (r *report) generatePDFReport(ctx context.Context, title string, reports []Report, template ReportTemplate) ([]byte, error) {
+func (r *report) generatePDFReport(ctx context.Context, title string, reports []Report, template ReportTemplate, timezone string) ([]byte, error) {
 	for i := range reports {
 		sort.Slice(reports[i].Messages, func(j, k int) bool {
 			return reports[i].Messages[j].Time < reports[i].Messages[k].Time
 		})
 	}
 
-	now := time.Now().UTC()
+	loc, err := resolveTimezone(timezone)
+	if err != nil {
+		r.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", timezone, err),
+			Details: []slog.Attr{
+				slog.String("report_title", title),
+				slog.Time("time", time.Now().UTC()),
+			},
+		}
+	}
+
+	now := time.Now().In(loc)
+	displayTZ := timezone
+	if strings.TrimSpace(displayTZ) == "" {
+		displayTZ = "UTC"
+	}
+
 	data := ReportData{
 		Title:         title,
 		GeneratedTime: now.Format("15:04:05"),
 		GeneratedDate: now.Format("02 Jan 2006"),
 		Reports:       reports,
+		Timezone:      displayTZ,
 	}
 
 	templateContent := r.defaultTemplate.String()
@@ -51,7 +76,7 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 
 func (r *report) generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
-		"formatTime":  formatTime,
+		"formatTime":  func(t float64) string { return r.formatTimeWithTimezone(t, data.Timezone) },
 		"formatValue": formatValue,
 		"add":         func(a, b int) int { return a + b },
 		"sub":         func(a, b int) int { return a - b },
@@ -140,11 +165,25 @@ func (r *report) htmlToPDF(ctx context.Context, htmlContent string) ([]byte, err
 	return pdfBytes, nil
 }
 
-func formatTime(t float64) string {
-	if t > 9999999999 {
-		return time.Unix(0, int64(t)).Format("2006-01-02 15:04:05")
+func (r *report) formatTimeWithTimezone(t float64, timezone string) string {
+	loc, err := resolveTimezone(timezone)
+	if err != nil {
+		r.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", timezone, err),
+			Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+		}
 	}
-	return time.Unix(int64(t), 0).Format("2006-01-02 15:04:05")
+
+	var timeVal time.Time
+	switch {
+	case t > nanosecondThreshold:
+		timeVal = time.Unix(0, int64(t)).In(loc)
+	default:
+		timeVal = time.Unix(int64(t), 0).In(loc)
+	}
+
+	return timeVal.Format("2006-01-02 15:04:05")
 }
 
 func formatValue(msg senml.Message) string {
@@ -162,7 +201,7 @@ func formatValue(msg senml.Message) string {
 	}
 }
 
-func (r *report) generateCSVReport(_ context.Context, title string, reports []Report) ([]byte, error) {
+func (r *report) generateCSVReport(_ context.Context, title string, reports []Report, timezone string) ([]byte, error) {
 	var buf bytes.Buffer
 	writer := csv.NewWriter(&buf)
 
@@ -217,7 +256,7 @@ func (r *report) generateCSVReport(_ context.Context, title string, reports []Re
 		})
 
 		for _, msg := range report.Messages {
-			timeStr := formatTime(msg.Time)
+			timeStr := r.formatTimeWithTimezone(msg.Time, timezone)
 
 			var valueStr string
 			if msg.Value != nil {

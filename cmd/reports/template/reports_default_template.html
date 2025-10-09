@@ -293,10 +293,29 @@
 </head>
 <body>
     {{if gt (len .Reports) 0}}
-    {{range $reportIndex, $report := .Reports}}
-    {{$totalMessages := len .Messages}}
     {{$firstPageRows := 24}}
     {{$continuationPageRows := 32}}
+    {{$totalPages := 0}}
+    
+    {{/* Calculate total pages across all reports */}}
+    {{range $report := .Reports}}
+        {{$totalMessages := len .Messages}}
+        {{$reportPages := 1}}
+        {{if gt $totalMessages $firstPageRows}}
+            {{$remaining := sub $totalMessages $firstPageRows}}
+            {{$additionalPages := div $remaining $continuationPageRows}}
+            {{if gt (mod $remaining $continuationPageRows) 0}}
+                {{$additionalPages = add $additionalPages 1}}
+            {{end}}
+            {{$reportPages = add 1 $additionalPages}}
+        {{end}}
+        {{$totalPages = add $totalPages $reportPages}}
+    {{end}}
+    
+    {{$globalPage := 0}}
+    
+    {{range $reportIndex, $report := .Reports}}
+    {{$totalMessages := len .Messages}}
     {{$pageCount := 1}}
     {{if gt $totalMessages $firstPageRows}}
         {{$remaining := sub $totalMessages $firstPageRows}}
@@ -308,7 +327,7 @@
     {{end}}
     
     {{range $pageNum := iterate $pageCount}}
-    {{$currentPage := add $pageNum 1}}
+    {{$globalPage = add $globalPage 1}}
     {{$isFirstPage := eq $pageNum 0}}
     {{$startRow := getStartRow $pageNum $firstPageRows $continuationPageRows}}
     {{$endRow := getEndRow $pageNum $firstPageRows $continuationPageRows $totalMessages}}
@@ -388,7 +407,7 @@
             <div class="footer-separator"></div>
             <div class="footer-content">
                 <div class="footer-generated">Generated: {{$.GeneratedTime}}{{if $.Timezone}} ({{$.Timezone}}){{end}}</div>
-                <div class="footer-page">Page {{$currentPage}} of {{$pageCount}}</div>
+                <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
             </div>
         </div>
     </div>

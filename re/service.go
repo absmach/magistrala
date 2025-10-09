@@ -49,7 +49,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	if err != nil {
 		return Rule{}, err
 	}
-	now := time.Now()
+	now := time.Now().UTC()
 	r.CreatedAt = now
 	r.ID = id
 	r.CreatedBy = session.UserID

@@ -84,8 +84,18 @@ func (r *report) generate(ctx context.Context, templateContent string, data Repo
 		"ge":          func(a, b int) bool { return a >= b },
 		"lt":          func(a, b int) bool { return a < b },
 		"eq":          func(a, b int) bool { return a == b },
-		"div":         func(a, b int) int { if b == 0 { return 0 }; return a / b },
-		"mod":         func(a, b int) int { if b == 0 { return 0 }; return a % b },
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"mod": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a % b
+		},
 		"getStartRow": getStartRow,
 		"getEndRow":   getEndRow,
 	})
@@ -232,7 +242,7 @@ func getEndRow(pageNum, firstPageRows, continuationPageRows, totalMessages int) 
 		start := firstPageRows + (pageNum-1)*continuationPageRows
 		end = start + continuationPageRows
 	}
-	
+
 	if end > totalMessages {
 		end = totalMessages
 	}

@@ -213,13 +213,14 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 	if err != nil {
 		return ReportPage{}, err
 	}
-	from = time.Date(from.Year(), from.Month(), from.Day(), from.Hour(), from.Minute(), from.Second(), from.Nanosecond(), loc).UTC()
 
 	to, err := reltime.Parse(cfg.Config.To)
 	if err != nil {
 		return ReportPage{}, err
 	}
-	to = time.Date(to.Year(), to.Month(), to.Day(), to.Hour(), to.Minute(), to.Second(), to.Nanosecond(), loc).UTC()
+
+	fromDisplay := from.In(loc)
+	toDisplay := to.In(loc)
 
 	pm := &grpcReadersV1.PageMetadata{
 		Aggregation: agg,
@@ -337,8 +338,8 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 
 	default:
 		return ReportPage{
-			From:        from,
-			To:          to,
+			From:        fromDisplay,
+			To:          toDisplay,
 			Aggregation: cfg.Config.Aggregation,
 			Total:       uint64(len(reports)),
 			Reports:     reports,

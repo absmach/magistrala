@@ -17,10 +17,6 @@
             --text-primary: rgb(44, 62, 80);
             --text-secondary: rgb(127, 140, 141);
             --white: #ffffff;
-            
-            --header-height: 35mm;
-            --footer-height: 20mm;
-            --page-padding: 15mm;
         }
 
         * {
@@ -37,40 +33,38 @@
         }
 
         .page {
-            max-width: 210mm;
-            min-height: 297mm;
-            padding: var(--page-padding) 10mm;
-            margin: 5mm auto 0 auto;
+            width: 210mm;
+            height: 297mm;
+            padding: 15mm 10mm;
+            margin: 0 auto;
             background: var(--white);
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             position: relative;
+            page-break-after: always;
             display: flex;
             flex-direction: column;
         }
 
+        .page:last-child {
+            page-break-after: auto;
+        }
+
         .header {
-            height: var(--header-height);
-            min-height: var(--header-height);
-            max-height: var(--header-height);
-            position: relative;
             flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
+            margin-bottom: 8mm;
         }
 
         .header-top-bar {
             height: 8px;
             background-color: var(--primary-color);
-            margin: 5px 0 10px 0;
-            flex-shrink: 0;
+            margin: 0 0 8px 0;
         }
 
         .header-content {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 10px;
-            flex-shrink: 0;
+            margin-bottom: 8px;
         }
 
         .header-title {
@@ -92,9 +86,8 @@
         .header-separator {
             height: 2px;
             background-color: var(--subtle-color);
-            margin: 5px 0 10px 0;
+            margin: 5px 0;
             position: relative;
-            flex-shrink: 0;
         }
 
         .header-separator::after {
@@ -111,32 +104,35 @@
             flex-grow: 1;
             display: flex;
             flex-direction: column;
-            min-height: 0;
             overflow: hidden;
         }
 
         .metrics-section {
-            margin-bottom: 15px;
             flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+
+        .metrics-section.continuation {
+            display: none;
         }
 
         .metrics-title {
             font-size: 16px;
             font-weight: bold;
             color: var(--secondary-color);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .metrics-info {
             background-color: var(--alternate-row);
-            padding: 12px;
+            padding: 10px;
             border-radius: 4px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         .metric-row {
             display: flex;
-            margin-bottom: 8px;
+            margin-bottom: 6px;
         }
 
         .metric-row:last-child {
@@ -162,14 +158,13 @@
             font-size: 10px;
             font-style: italic;
             color: var(--text-secondary);
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             flex-shrink: 0;
         }
 
         .table-container {
             flex-grow: 1;
-            overflow: auto;
-            min-height: 0;
+            overflow: hidden;
         }
 
         .data-table {
@@ -190,8 +185,6 @@
             padding: 8px;
             text-align: center;
             border-bottom: 2px solid var(--subtle-color);
-            position: sticky;
-            top: 0;
         }
 
         .data-table td {
@@ -237,23 +230,17 @@
         }
 
         .footer {
-            height: var(--footer-height);
-            min-height: var(--footer-height);
-            max-height: var(--footer-height);
-            border-top: 2px solid var(--subtle-color);
-            padding-top: 8px;
             flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-start;
+            border-top: 2px solid var(--subtle-color);
+            padding-top: 6px;
+            margin-top: 8mm;
         }
 
         .footer-separator {
             height: 1px;
             background-color: var(--subtle-color);
-            margin-bottom: 6px;
+            margin-bottom: 4px;
             position: relative;
-            flex-shrink: 0;
         }
 
         .footer-separator::after {
@@ -270,25 +257,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin: 0;
-            padding: 0;
-            flex-shrink: 0;
         }
 
         .footer-generated {
             font-size: 8px;
             font-style: italic;
             color: var(--text-secondary);
-            margin: 0;
-            padding: 0;
         }
 
         .footer-page {
             font-size: 9px;
             font-weight: bold;
             color: var(--text-primary);
-            margin: 0;
-            padding: 0;
         }
 
         @media print {
@@ -299,56 +279,40 @@
 
             html, body {
                 width: 210mm;
-                height: auto;
-                margin: 0 !important;
-                padding: 0 !important;
+                height: 297mm;
+                margin: 0;
+                padding: 0;
             }
 
             .page {
-                box-shadow: none;
-                max-width: none;
-                width: 210mm;
-                height: 297mm;
-                min-height: 297mm;
                 margin: 0;
-                display: block;
-                page-break-after: always;
-                break-inside: avoid;
+                box-shadow: none;
             }
-            
-            .page:last-child {
-                page-break-after: auto;
-            }
-
-            .header, .footer {
-                break-inside: avoid;
-            }
-
-            .content-area {
-                overflow: hidden;
-                padding-bottom: calc(var(--footer-height) + 6mm);
-            }
-
-            .footer {
-                position: absolute;
-                left: var(--page-padding);
-                right: var(--page-padding);
-                bottom: var(--page-padding);
-            }
-
-            .table-container { overflow: hidden; }
         }
     </style>
 </head>
 <body>
-    {{$totalPages := len .Reports}}
-    {{if eq $totalPages 0}}
-    {{$totalPages = 1}}
-    {{end}}
-    {{$globalPage := 0}}
     {{if gt (len .Reports) 0}}
-    {{range $index, $report := .Reports}}
-    {{$globalPage = add $globalPage 1}}
+    {{range $reportIndex, $report := .Reports}}
+    {{$totalMessages := len .Messages}}
+    {{$firstPageRows := 24}}
+    {{$continuationPageRows := 32}}
+    {{$pageCount := 1}}
+    {{if gt $totalMessages $firstPageRows}}
+        {{$remaining := sub $totalMessages $firstPageRows}}
+        {{$additionalPages := div $remaining $continuationPageRows}}
+        {{if gt (mod $remaining $continuationPageRows) 0}}
+            {{$additionalPages = add $additionalPages 1}}
+        {{end}}
+        {{$pageCount = add 1 $additionalPages}}
+    {{end}}
+    
+    {{range $pageNum := iterate $pageCount}}
+    {{$currentPage := add $pageNum 1}}
+    {{$isFirstPage := eq $pageNum 0}}
+    {{$startRow := getStartRow $pageNum $firstPageRows $continuationPageRows}}
+    {{$endRow := getEndRow $pageNum $firstPageRows $continuationPageRows $totalMessages}}
+    
     <div class="page">
         <div class="header">
             <div class="header-top-bar"></div>
@@ -361,29 +325,35 @@
         </div>
 
         <div class="content-area">
+            {{if $isFirstPage}}
             <div class="metrics-section">
                 <div class="metrics-title">Metrics</div>
                 <div class="metrics-info">
                     <div class="metric-row">
                         <div class="metric-label">Name:</div>
-                        <div class="metric-value">{{.Metric.Name}}</div>
+                        <div class="metric-value">{{$report.Metric.Name}}</div>
                     </div>
-                    {{if .Metric.ClientID}}
+                    {{if $report.Metric.ClientID}}
                     <div class="metric-row">
                         <div class="metric-label">Device ID:</div>
-                        <div class="metric-value">{{.Metric.ClientID}}</div>
+                        <div class="metric-value">{{$report.Metric.ClientID}}</div>
                     </div>
                     {{end}}
                     <div class="metric-row">
                         <div class="metric-label">Channel ID:</div>
-                        <div class="metric-value">{{.Metric.ChannelID}}</div>
+                        <div class="metric-value">{{$report.Metric.ChannelID}}</div>
                     </div>
                 </div>
             </div>
 
             <div class="record-count">
-                Total Records: {{len .Messages}}
+                Total Records: {{$totalMessages}}
             </div>
+            {{else}}
+            <div class="metrics-section continuation">
+                <div class="metrics-title">Metrics (continued)</div>
+            </div>
+            {{end}}
 
             <div class="table-container">
                 <div class="table-header-bar"></div>
@@ -398,14 +368,16 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {{range .Messages}}
+                        {{range $msgIndex, $msg := $report.Messages}}
+                        {{if and (ge $msgIndex $startRow) (lt $msgIndex $endRow)}}
                         <tr>
-                            <td class="col-time">{{formatTime .Time}}</td>
-                            <td class="col-value">{{formatValue .}}</td>
-                            <td class="col-unit">{{.Unit}}</td>
-                            <td class="col-protocol">{{.Protocol}}</td>
-                            <td class="col-subtopic">{{.Subtopic}}</td>
+                            <td class="col-time">{{formatTime $msg.Time}}</td>
+                            <td class="col-value">{{formatValue $msg}}</td>
+                            <td class="col-unit">{{$msg.Unit}}</td>
+                            <td class="col-protocol">{{$msg.Protocol}}</td>
+                            <td class="col-subtopic">{{$msg.Subtopic}}</td>
                         </tr>
+                        {{end}}
                         {{end}}
                     </tbody>
                 </table>
@@ -416,13 +388,13 @@
             <div class="footer-separator"></div>
             <div class="footer-content">
                 <div class="footer-generated">Generated: {{$.GeneratedTime}}{{if $.Timezone}} ({{$.Timezone}}){{end}}</div>
-                <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
+                <div class="footer-page">Page {{$currentPage}} of {{$pageCount}}</div>
             </div>
         </div>
     </div>
     {{end}}
+    {{end}}
     {{else}}
-    {{$globalPage = 1}}
     <div class="page">
         <div class="header">
             <div class="header-top-bar"></div>
@@ -440,11 +412,11 @@
                 <div class="metrics-info">
                     <div class="metric-row">
                         <div class="metric-label">Name:</div>
-                        <div class="metric-value">{{.Metric.Name}}</div>
+                        <div class="metric-value">No Report</div>
                     </div>
                     <div class="metric-row">
                         <div class="metric-label">Channel ID:</div>
-                        <div class="metric-value">{{.Metric.ChannelID}}</div>
+                        <div class="metric-value">N/A</div>
                     </div>
                 </div>
             </div>
@@ -478,7 +450,7 @@
             <div class="footer-separator"></div>
             <div class="footer-content">
                 <div class="footer-generated">Generated: {{.GeneratedTime}}{{if .Timezone}} ({{.Timezone}}){{end}}</div>
-                <div class="footer-page">Page {{$globalPage}} of {{$totalPages}}</div>
+                <div class="footer-page">Page 1 of 1</div>
             </div>
         </div>
     </div>

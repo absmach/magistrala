@@ -35,10 +35,20 @@ func (temp ReportTemplate) Validate() error {
 
 	// Validate template syntax using Go's template parser
 	tmpl := template.New("validate").Funcs(template.FuncMap{
-		"add":         func(a, b int) int { return a + b },
-		"sub":         func(a, b int) int { return a - b },
-		"div":         func(a, b int) int { if b == 0 { return 0 }; return a / b },
-		"mod":         func(a, b int) int { if b == 0 { return 0 }; return a % b },
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"mod": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a % b
+		},
 		"eq":          func(a, b int) bool { return a == b },
 		"ge":          func(a, b int) bool { return a >= b },
 		"lt":          func(a, b int) bool { return a < b },

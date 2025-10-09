@@ -6,6 +6,7 @@ package reports
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -196,18 +197,35 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 		agg = grpcReadersV1.Aggregation_SUM
 	}
 
+	loc, err := resolveTimezone(cfg.Config.Timezone)
+	if err != nil {
+		r.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to resolve timezone '%s', falling back to UTC: %s", cfg.Config.Timezone, err),
+			Details: []slog.Attr{
+				slog.String("report_name", cfg.Name),
+				slog.String("timezone", cfg.Config.Timezone),
+			},
+		}
+	}
+
 	from, err := reltime.Parse(cfg.Config.From)
 	if err != nil {
 		return ReportPage{}, err
 	}
+
 	to, err := reltime.Parse(cfg.Config.To)
 	if err != nil {
 		return ReportPage{}, err
 	}
+
+	fromDisplay := from.In(loc)
+	toDisplay := to.In(loc)
+
 	pm := &grpcReadersV1.PageMetadata{
 		Aggregation: agg,
 		Limit:       limit,
-		From:        float64(from.UnixMicro()),
+		From:        float64(from.UnixNano()),
 		To:          float64(to.UnixNano()),
 		Interval:    cfg.Config.Aggregation.Interval,
 	}
@@ -320,8 +338,8 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 
 	default:
 		return ReportPage{
-			From:        from,
-			To:          to,
+			From:        fromDisplay,
+			To:          toDisplay,
 			Aggregation: cfg.Config.Aggregation,
 			Total:       uint64(len(reports)),
 			Reports:     reports,

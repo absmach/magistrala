@@ -22,7 +22,7 @@ var (
 )
 
 func Parse(expr string) (time.Time, error) {
-	now := time.Now()
+	now := time.Now().UTC()
 	expr = strings.ReplaceAll(expr, " ", "")
 
 	if strings.EqualFold(expr, "now()") {

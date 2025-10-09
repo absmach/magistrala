@@ -80,6 +80,24 @@ func (r *report) generate(ctx context.Context, templateContent string, data Repo
 		"formatValue": formatValue,
 		"add":         func(a, b int) int { return a + b },
 		"sub":         func(a, b int) int { return a - b },
+		"iterate":     func(count int) []int { return makeRange(count) },
+		"ge":          func(a, b int) bool { return a >= b },
+		"lt":          func(a, b int) bool { return a < b },
+		"eq":          func(a, b int) bool { return a == b },
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"mod": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a % b
+		},
+		"getStartRow": getStartRow,
+		"getEndRow":   getEndRow,
 	})
 
 	tmpl, err := tmpl.Parse(templateContent)
@@ -199,6 +217,36 @@ func formatValue(msg senml.Message) string {
 	default:
 		return "N/A"
 	}
+}
+
+func makeRange(n int) []int {
+	result := make([]int, n)
+	for i := range result {
+		result[i] = i
+	}
+	return result
+}
+
+func getStartRow(pageNum, firstPageRows, continuationPageRows int) int {
+	if pageNum == 0 {
+		return 0
+	}
+	return firstPageRows + (pageNum-1)*continuationPageRows
+}
+
+func getEndRow(pageNum, firstPageRows, continuationPageRows, totalMessages int) int {
+	var end int
+	if pageNum == 0 {
+		end = firstPageRows
+	} else {
+		start := firstPageRows + (pageNum-1)*continuationPageRows
+		end = start + continuationPageRows
+	}
+
+	if end > totalMessages {
+		end = totalMessages
+	}
+	return end
 }
 
 func (r *report) generateCSVReport(_ context.Context, title string, reports []Report, timezone string) ([]byte, error) {

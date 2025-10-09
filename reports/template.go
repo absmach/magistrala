@@ -35,7 +35,26 @@ func (temp ReportTemplate) Validate() error {
 
 	// Validate template syntax using Go's template parser
 	tmpl := template.New("validate").Funcs(template.FuncMap{
-		"add":         func(a, b int) int { return a + b },
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+		"div": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a / b
+		},
+		"mod": func(a, b int) int {
+			if b == 0 {
+				return 0
+			}
+			return a % b
+		},
+		"eq":          func(a, b int) bool { return a == b },
+		"ge":          func(a, b int) bool { return a >= b },
+		"lt":          func(a, b int) bool { return a < b },
+		"iterate":     func(count int) []int { return make([]int, count) },
+		"getStartRow": func(pageNum, firstPageRows, continuationPageRows int) int { return 0 },
+		"getEndRow":   func(pageNum, firstPageRows, continuationPageRows, totalMessages int) int { return 0 },
 		"formatTime":  func(t any) string { return "" },
 		"formatValue": func(v any) string { return "" },
 	})
@@ -55,7 +74,7 @@ func (temp ReportTemplate) Validate() error {
 		return fmt.Errorf("missing essential template field: {{$.Title}}")
 	}
 	if !hasRange {
-		return fmt.Errorf("missing essential template field: {{range .Messages}}")
+		return fmt.Errorf("missing essential template field: {{range .Messages}} or {{range .Reports}}")
 	}
 	if !hasFormatTime {
 		return fmt.Errorf("missing essential template field: {{formatTime .Time}}")
@@ -105,7 +124,8 @@ func validateEssentialFields(node parse.Node, hasTitle, hasRange, hasFormatTime,
 	case *parse.RangeNode:
 		if n.Pipe != nil && len(n.Pipe.Cmds) > 0 {
 			cmdStr := n.Pipe.Cmds[0].String()
-			if cmdStr == ".Messages" {
+			// Accept .Messages, .Reports, or $report.Messages
+			if cmdStr == ".Messages" || cmdStr == ".Reports" || cmdStr == "$report.Messages" {
 				*hasRange = true
 			}
 		}

@@ -10,6 +10,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
@@ -28,10 +29,11 @@ type re struct {
 	ticker     ticker.Ticker
 	email      emailer.Emailer
 	readers    grpcReadersV1.ReadersServiceClient
+	workerMgr  *WorkerManager
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
-	return &re{
+	reEngine := &re{
 		repo:       repo,
 		idp:        idp,
 		runInfo:    runInfo,
@@ -42,6 +44,26 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 		email:      emailer,
 		readers:    readers,
 	}
+	return reEngine
+}
+
+func shouldCreateWorker(rule Rule) bool {
+	if rule.Status != EnabledStatus {
+		return false
+	}
+
+	if rule.Schedule.Recurring == schedule.None {
+		return true
+	}
+
+	now := time.Now().UTC()
+	dueTime := rule.Schedule.Time
+
+	if dueTime.IsZero() || dueTime.Before(now) {
+		return true
+	}
+
+	return dueTime.Sub(now) <= time.Hour
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
@@ -66,6 +88,10 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
+	if shouldCreateWorker(rule) {
+		re.workerMgr.AddWorker(ctx, rule)
+	}
+
 	return rule, nil
 }
 
@@ -84,6 +110,12 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 	rule, err := re.repo.UpdateRule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
 	}
 
 	return rule, nil
@@ -108,6 +140,12 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
+	}
+
 	return rule, nil
 }
 
@@ -124,6 +162,8 @@ func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) 
 	if err := re.repo.RemoveRule(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
+
+	re.workerMgr.RemoveWorker(id)
 
 	return nil
 }
@@ -143,6 +183,11 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
+	if shouldCreateWorker(rule) {
+		re.workerMgr.AddWorker(ctx, rule)
+	}
+
 	return rule, nil
 }
 
@@ -161,9 +206,12 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
+	re.workerMgr.RemoveWorker(id)
+
 	return rule, nil
 }
 
 func (re *re) Cancel() error {
-	return nil
+	return re.workerMgr.StopAll()
 }

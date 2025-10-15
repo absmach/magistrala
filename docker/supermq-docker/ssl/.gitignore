@@ -5,3 +5,5 @@
 *grpc-client*
 *srl
 *conf
+client.crt
+client.key

@@ -417,6 +417,10 @@ services:
       - http-adapter
       - ws-adapter
       - coap-adapter
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   clients-db:
     image: postgres:16.2-alpine

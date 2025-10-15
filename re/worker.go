@@ -143,7 +143,7 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 	default:
 	}
 
-	runInfo := w.engine.process(w.ctx, currentRule, workerMsg.Message)
+	runInfo := w.engine.process(ctx, currentRule, workerMsg.Message)
 
 	if w.ctx.Err() == context.Canceled {
 		w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, AbortedStatus, w.ctx.Err())

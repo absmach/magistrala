@@ -254,7 +254,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
 					}
 				}
-
+				//nolint:contextcheck
 				if !re.workerMgr.SendMessage(msg, r) {
 					re.runInfo <- pkglog.RunInfo{
 						Level:   slog.LevelWarn,

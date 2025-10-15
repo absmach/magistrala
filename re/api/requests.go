@@ -146,3 +146,15 @@ func (req abortRuleExecutionReq) validate() error {
 
 	return nil
 }
+
+type getRuleExecutionStatusReq struct {
+	id string
+}
+
+func (req getRuleExecutionStatusReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}

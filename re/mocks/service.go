@@ -366,6 +366,78 @@ func (_c *Service_EnableRule_Call) RunAndReturn(run func(ctx context.Context, se
 	return _c
 }
 
+// GetRuleExecutionStatus provides a mock function for the type Service
+func (_mock *Service) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (re.RuleExecutionStatus, error) {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRuleExecutionStatus")
+	}
+
+	var r0 re.RuleExecutionStatus
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (re.RuleExecutionStatus, error)); ok {
+		return returnFunc(ctx, session, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) re.RuleExecutionStatus); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(re.RuleExecutionStatus)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_GetRuleExecutionStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRuleExecutionStatus'
+type Service_GetRuleExecutionStatus_Call struct {
+	*mock.Call
+}
+
+// GetRuleExecutionStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
+func (_e *Service_Expecter) GetRuleExecutionStatus(ctx interface{}, session interface{}, id interface{}) *Service_GetRuleExecutionStatus_Call {
+	return &Service_GetRuleExecutionStatus_Call{Call: _e.mock.On("GetRuleExecutionStatus", ctx, session, id)}
+}
+
+func (_c *Service_GetRuleExecutionStatus_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_GetRuleExecutionStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_GetRuleExecutionStatus_Call) Return(ruleExecutionStatus re.RuleExecutionStatus, err error) *Service_GetRuleExecutionStatus_Call {
+	_c.Call.Return(ruleExecutionStatus, err)
+	return _c
+}
+
+func (_c *Service_GetRuleExecutionStatus_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (re.RuleExecutionStatus, error)) *Service_GetRuleExecutionStatus_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Handle provides a mock function for the type Service
 func (_mock *Service) Handle(msg *messaging.Message) error {
 	ret := _mock.Called(msg)

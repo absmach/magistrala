@@ -282,6 +282,22 @@ func (am *authorizationMiddleware) AbortRuleExecution(ctx context.Context, sessi
 	return am.svc.AbortRuleExecution(ctx, session, id)
 }
 
+func (am *authorizationMiddleware) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (re.RuleExecutionStatus, error) {
+	if err := am.authorize(ctx, smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.MembershipPermission,
+	}); err != nil {
+		return re.RuleExecutionStatus{}, errors.Wrap(errDomainViewRules, err)
+	}
+
+	return am.svc.GetRuleExecutionStatus(ctx, session, id)
+}
+
 func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 	return am.svc.StartScheduler(ctx)
 }

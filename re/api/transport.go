@@ -107,6 +107,13 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 						api.EncodeResponse,
 						opts...,
 					), "abort_rule_execution").ServeHTTP)
+
+					r.Get("/execution-status", otelhttp.NewHandler(kithttp.NewServer(
+						getRuleExecutionStatusEndpoint(svc),
+						decodeGetRuleExecutionStatusRequest,
+						api.EncodeResponse,
+						opts...,
+					), "get_rule_execution_status").ServeHTTP)
 				})
 			})
 		})
@@ -256,4 +263,10 @@ func decodeAbortRuleExecutionRequest(_ context.Context, r *http.Request) (any, e
 	id := chi.URLParam(r, ruleIdKey)
 
 	return abortRuleExecutionReq{id: id}, nil
+}
+
+func decodeGetRuleExecutionStatusRequest(_ context.Context, r *http.Request) (any, error) {
+	id := chi.URLParam(r, ruleIdKey)
+
+	return getRuleExecutionStatusReq{id: id}, nil
 }

@@ -199,6 +199,10 @@ func (es *eventStore) AbortRuleExecution(ctx context.Context, session authn.Sess
 	return nil
 }
 
+func (es *eventStore) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (re.RuleExecutionStatus, error) {
+	return es.svc.GetRuleExecutionStatus(ctx, session, id)
+}
+
 func (es *eventStore) StartScheduler(ctx context.Context) error {
 	return es.svc.StartScheduler(ctx)
 }

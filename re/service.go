@@ -221,15 +221,64 @@ func (re *re) Cancel() error {
 }
 
 func (re *re) AbortRuleExecution(ctx context.Context, session authn.Session, id string) error {
-	if _, err := re.repo.ViewRule(ctx, id); err != nil {
+	rule, err := re.repo.ViewRule(ctx, id)
+	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
+	if rule.LastRunStatus != InProgressStatus && rule.LastRunStatus != QueuedStatus {
+		return errors.Wrap(errors.New(fmt.Sprintf("cannot abort rule with status '%s': rule must be in 'in_progress' or 'queued' status",
+			rule.LastRunStatus.String())), svcerr.ErrMalformedEntity)
+	}
+
 	if re.workerMgr != nil {
+		// Also check if worker actually exists and is running
+		workerStatus := re.workerMgr.GetWorkerStatus(id)
+		if workerStatus == nil {
+			return errors.Wrap(errors.New("no active worker found for this rule"), svcerr.ErrNotFound)
+		}
+
+		running, ok := workerStatus["running"].(bool)
+		if !ok || !running {
+			return errors.Wrap(errors.New("cannot abort: worker is not currently running"), svcerr.ErrMalformedEntity)
+		}
+
+		queueLen, _ := workerStatus["queue_length"].(int)
+		if queueLen == 0 && rule.LastRunStatus != InProgressStatus {
+			return errors.Wrap(errors.New("cannot abort: no execution in progress"), svcerr.ErrMalformedEntity)
+		}
+
 		re.workerMgr.AbortRule(id)
 	}
 
 	return nil
+}
+
+func (re *re) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (RuleExecutionStatus, error) {
+	rule, err := re.repo.ViewRule(ctx, id)
+	if err != nil {
+		return RuleExecutionStatus{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	status := RuleExecutionStatus{
+		Rule:          rule,
+		WorkerRunning: false,
+		QueueLength:   0,
+	}
+
+	if re.workerMgr != nil {
+		workerStatus := re.workerMgr.GetWorkerStatus(id)
+		if workerStatus != nil {
+			if running, ok := workerStatus["running"].(bool); ok {
+				status.WorkerRunning = running
+			}
+			if queueLen, ok := workerStatus["queue_length"].(int); ok {
+				status.QueueLength = queueLen
+			}
+		}
+	}
+
+	return status, nil
 }
 
 func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, err error) {
@@ -244,14 +293,39 @@ func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, stat
 		rule.LastRunErrorMessage = err.Error()
 	}
 
-	if status == SuccessStatus || status == PartialSuccessStatus {
-		currentRule, err := re.repo.ViewRule(ctx, ruleID)
-		if err == nil {
+	// Debug: Log the status being set
+	fmt.Printf("[DEBUG] updateRuleExecutionStatus: rule_id=%s, status=%s, has_error=%v\n", ruleID, status.String(), err != nil)
+
+	// Always fetch the current rule to get the current execution count
+	currentRule, viewErr := re.repo.ViewRule(ctx, ruleID)
+	if viewErr != nil {
+		fmt.Printf("[WARN] Failed to retrieve current rule: rule_id=%s, error=%v\n", ruleID, viewErr)
+		// If we can't fetch the rule, set count based on status
+		switch status {
+		case SuccessStatus, PartialSuccessStatus, FailureStatus:
+			rule.ExecutionCount = 1
+		default:
+			rule.ExecutionCount = 0
+		}
+	} else {
+		// Start with current count
+		rule.ExecutionCount = currentRule.ExecutionCount
+
+		// Add 1 if completed successfully, add 0 otherwise (preserve count)
+		switch status {
+		case SuccessStatus, PartialSuccessStatus, FailureStatus:
 			rule.ExecutionCount = currentRule.ExecutionCount + 1
+			fmt.Printf("[DEBUG] Incremented execution count: rule_id=%s, old_count=%d, new_count=%d\n", ruleID, currentRule.ExecutionCount, rule.ExecutionCount)
+		default:
+			fmt.Printf("[DEBUG] Preserving execution count: rule_id=%s, status=%s, count=%d\n", ruleID, status.String(), rule.ExecutionCount)
 		}
 	}
 
+	fmt.Printf("[DEBUG] About to update rule execution status in database: rule_id=%s, status=%s, execution_count=%d\n", ruleID, status.String(), rule.ExecutionCount)
+
 	if err := re.repo.UpdateRuleExecutionStatus(ctx, rule); err != nil {
+		fmt.Printf("[ERROR] Failed to update rule execution status in database: rule_id=%s, error=%v\n", ruleID, err)
+
 		re.runInfo <- pkglog.RunInfo{
 			Level:   slog.LevelWarn,
 			Message: fmt.Sprintf("failed to update rule execution status: %s", err),
@@ -260,5 +334,7 @@ func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, stat
 				slog.String("status", status.String()),
 			},
 		}
+	} else {
+		fmt.Printf("[DEBUG] Successfully updated rule execution status in database: rule_id=%s, status=%s, execution_count=%d\n", ruleID, status.String(), rule.ExecutionCount)
 	}
 }

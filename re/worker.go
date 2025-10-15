@@ -136,7 +136,6 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 		return
 	}
 
-	w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, InProgressStatus, nil)
 
 	select {
 	case <-w.ctx.Done():
@@ -419,17 +418,20 @@ func (wm *WorkerManager) abortWorker(ruleID string) {
 	worker.AbortExecution(wm.ctx)
 
 	rule := worker.GetRule()
-	if rule.Status == EnabledStatus {
-		newWorker := NewRuleWorker(rule, wm.engine)
-		newWorker.Start(wm.ctx)
-		wm.workers[ruleID] = newWorker
-	}
 
 	if err := worker.Stop(); err != nil {
 		select {
 		case wm.errorCh <- err:
 		default:
 		}
+	}
+
+	delete(wm.workers, ruleID)
+
+	if rule.Status == EnabledStatus {
+		newWorker := NewRuleWorker(rule, wm.engine)
+		newWorker.Start(wm.ctx)
+		wm.workers[ruleID] = newWorker
 	}
 }
 

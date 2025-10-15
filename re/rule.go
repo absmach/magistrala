@@ -250,7 +250,13 @@ type Page struct {
 	Rules  []Rule `json:"rules"`
 }
 
-type Service interface {
+type RuleExecutionStatus struct {
+	Rule          Rule `json:"rule"`
+	WorkerRunning bool `json:"worker_running"`
+	QueueLength   int  `json:"queue_length"`
+}
+
+type Service interface{
 	messaging.MessageHandler
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)
@@ -262,6 +268,7 @@ type Service interface {
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	AbortRuleExecution(ctx context.Context, session authn.Session, id string) error
+	GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (RuleExecutionStatus, error)
 
 	StartScheduler(ctx context.Context) error
 }

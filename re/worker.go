@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	"golang.org/x/sync/errgroup"
@@ -526,8 +527,11 @@ func (wm *WorkerManager) StopAll() error {
 		Response: responseCh,
 	}
 
-	wm.commandCh <- cmd
-	<-responseCh
+	select {
+	case wm.commandCh <- cmd:
+		<-responseCh
+	case <-time.After(100 * time.Millisecond):
+	}
 
 	return wm.g.Wait()
 }

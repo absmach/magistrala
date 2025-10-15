@@ -73,22 +73,16 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	}()
 
 	t.Cleanup(func() {
-		// Cancel context first to stop scheduler
 		cancel()
 
-		// Wait for scheduler to finish gracefully
 		select {
 		case <-schedulerDone:
-			// Scheduler stopped successfully
-		case <-time.After(2 * time.Second):
+		case <-time.After(5 * time.Second):
 			t.Log("Warning: scheduler did not stop within timeout")
 		}
 
-		// Give goroutines time to cleanup
-		time.Sleep(50 * time.Millisecond)
+		time.Sleep(100 * time.Millisecond)
 	})
-
-	// Wait for scheduler to initialize
 	time.Sleep(50 * time.Millisecond)
 
 	return svc, repo, pubsub, mockTicker

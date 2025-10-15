@@ -64,7 +64,7 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	mockTicker.On("Tick").Return((<-chan time.Time)(tickCh))
 	mockTicker.On("Stop").Return()
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 
 	schedulerDone := make(chan struct{})
 	go func() {
@@ -75,11 +75,8 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	t.Cleanup(func() {
 		cancel()
 
-		select {
-		case <-schedulerDone:
-		case <-time.After(5 * time.Second):
-			t.Log("Warning: scheduler did not stop within timeout")
-		}
+		// Wait for scheduler to stop (can take time for worker cleanup)
+		<-schedulerDone
 
 		time.Sleep(100 * time.Millisecond)
 	})

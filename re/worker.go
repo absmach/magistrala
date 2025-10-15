@@ -521,6 +521,13 @@ func (wm *WorkerManager) StopAll() error {
 		return nil
 	}
 
+	// If context is already cancelled, manageWorkers is stopping, just wait
+	select {
+	case <-wm.ctx.Done():
+		return wm.g.Wait()
+	default:
+	}
+
 	responseCh := make(chan interface{}, 1)
 	cmd := WorkerManagerCommand{
 		Type:     CmdStopAll,
@@ -529,7 +536,11 @@ func (wm *WorkerManager) StopAll() error {
 
 	select {
 	case wm.commandCh <- cmd:
-		<-responseCh
+		select {
+		case <-responseCh:
+		case <-wm.ctx.Done():
+		case <-time.After(100 * time.Millisecond):
+		}
 	case <-time.After(100 * time.Millisecond):
 	}
 

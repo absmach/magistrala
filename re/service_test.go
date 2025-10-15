@@ -646,15 +646,32 @@ func TestAbortRuleExecution(t *testing.T) {
 		err     error
 	}{
 		{
-			desc: "abort rule execution successfully",
+			desc: "abort rule execution with wrong status",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			id:      ruleID,
-			rule:    re.Rule{ID: ruleID},
+			id: ruleID,
+			rule: re.Rule{
+				ID:            ruleID,
+				LastRunStatus: re.SuccessStatus,
+			},
 			repoErr: nil,
-			err:     nil,
+			err:     svcerr.ErrMalformedEntity,
+		},
+		{
+			desc: "abort rule execution with never_run status",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id: ruleID,
+			rule: re.Rule{
+				ID:            ruleID,
+				LastRunStatus: re.NeverRunStatus,
+			},
+			repoErr: nil,
+			err:     svcerr.ErrMalformedEntity,
 		},
 		{
 			desc: "abort rule execution with non-existent rule",

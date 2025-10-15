@@ -108,19 +108,10 @@ func (repo *PostgresRepository) UpdateRuleExecutionStatus(ctx context.Context, r
 		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	// Debug: Log what we're about to write to the database
-	fmt.Printf("[DEBUG-DB] UpdateRuleExecutionStatus: rule_id=%s, execution_count_in=%d, db_execution_count=%d, last_run_status=%s\n",
-		r.ID, r.ExecutionCount, dbr.ExecutionCount, r.LastRunStatus.String())
-
-	result, err := repo.DB.NamedExecContext(ctx, q, dbr)
+	_, err = repo.DB.NamedExecContext(ctx, q, dbr)
 	if err != nil {
-		fmt.Printf("[ERROR-DB] UpdateRuleExecutionStatus failed: rule_id=%s, error=%v\n", r.ID, err)
 		return postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
-
-	rowsAffected, _ := result.RowsAffected()
-	fmt.Printf("[DEBUG-DB] UpdateRuleExecutionStatus completed: rule_id=%s, rows_affected=%d, execution_count=%d\n",
-		r.ID, rowsAffected, r.ExecutionCount)
 
 	return nil
 }

@@ -136,7 +136,6 @@ func (w *RuleWorker) processMessage(ctx context.Context, workerMsg WorkerMessage
 		return
 	}
 
-
 	select {
 	case <-w.ctx.Done():
 		w.engine.updateRuleExecutionStatus(ctx, currentRule.ID, AbortedStatus, w.ctx.Err())

@@ -256,7 +256,7 @@ type RuleExecutionStatus struct {
 	QueueLength   int  `json:"queue_length"`
 }
 
-type Service interface{
+type Service interface {
 	messaging.MessageHandler
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string) (Rule, error)

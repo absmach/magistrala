@@ -232,7 +232,6 @@ func (re *re) AbortRuleExecution(ctx context.Context, session authn.Session, id 
 	}
 
 	if re.workerMgr != nil {
-		// Also check if worker actually exists and is running
 		workerStatus := re.workerMgr.GetWorkerStatus(id)
 		if workerStatus == nil {
 			return errors.Wrap(errors.New("no active worker found for this rule"), svcerr.ErrNotFound)
@@ -293,14 +292,8 @@ func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, stat
 		rule.LastRunErrorMessage = err.Error()
 	}
 
-	// Debug: Log the status being set
-	fmt.Printf("[DEBUG] updateRuleExecutionStatus: rule_id=%s, status=%s, has_error=%v\n", ruleID, status.String(), err != nil)
-
-	// Always fetch the current rule to get the current execution count
 	currentRule, viewErr := re.repo.ViewRule(ctx, ruleID)
 	if viewErr != nil {
-		fmt.Printf("[WARN] Failed to retrieve current rule: rule_id=%s, error=%v\n", ruleID, viewErr)
-		// If we can't fetch the rule, set count based on status
 		switch status {
 		case SuccessStatus, PartialSuccessStatus, FailureStatus:
 			rule.ExecutionCount = 1
@@ -308,24 +301,15 @@ func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, stat
 			rule.ExecutionCount = 0
 		}
 	} else {
-		// Start with current count
 		rule.ExecutionCount = currentRule.ExecutionCount
 
-		// Add 1 if completed successfully, add 0 otherwise (preserve count)
 		switch status {
 		case SuccessStatus, PartialSuccessStatus, FailureStatus:
 			rule.ExecutionCount = currentRule.ExecutionCount + 1
-			fmt.Printf("[DEBUG] Incremented execution count: rule_id=%s, old_count=%d, new_count=%d\n", ruleID, currentRule.ExecutionCount, rule.ExecutionCount)
-		default:
-			fmt.Printf("[DEBUG] Preserving execution count: rule_id=%s, status=%s, count=%d\n", ruleID, status.String(), rule.ExecutionCount)
 		}
 	}
 
-	fmt.Printf("[DEBUG] About to update rule execution status in database: rule_id=%s, status=%s, execution_count=%d\n", ruleID, status.String(), rule.ExecutionCount)
-
 	if err := re.repo.UpdateRuleExecutionStatus(ctx, rule); err != nil {
-		fmt.Printf("[ERROR] Failed to update rule execution status in database: rule_id=%s, error=%v\n", ruleID, err)
-
 		re.runInfo <- pkglog.RunInfo{
 			Level:   slog.LevelWarn,
 			Message: fmt.Sprintf("failed to update rule execution status: %s", err),
@@ -334,7 +318,5 @@ func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, stat
 				slog.String("status", status.String()),
 			},
 		}
-	} else {
-		fmt.Printf("[DEBUG] Successfully updated rule execution status in database: rule_id=%s, status=%s, execution_count=%d\n", ruleID, status.String(), rule.ExecutionCount)
 	}
 }

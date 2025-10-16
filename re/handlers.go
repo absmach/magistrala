@@ -53,7 +53,6 @@ func (re *re) Handle(msg *messaging.Message) error {
 			go func(ctx context.Context, rule Rule) {
 				info := re.process(ctx, rule, msg)
 				re.runInfo <- info
-				// Persist log to database
 				re.saveLog(ctx, rule, info)
 			}(ctx, r)
 		}

@@ -148,3 +148,33 @@ func fromNullString(nullString sql.NullString) string {
 	}
 	return nullString.String
 }
+
+type dbRuleLog struct {
+	ID        string    `db:"id"`
+	RuleID    string    `db:"rule_id"`
+	DomainID  string    `db:"domain_id"`
+	Level     string    `db:"level"`
+	Message   string    `db:"message"`
+	Details   []byte    `db:"details"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+func dbToRuleLog(dto dbRuleLog) (re.RuleLog, error) {
+	var details map[string]any
+	if dto.Details != nil {
+		if err := json.Unmarshal(dto.Details, &details); err != nil {
+			return re.RuleLog{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
+	return re.RuleLog{
+		ID:        dto.ID,
+		RuleID:    dto.RuleID,
+		DomainID:  dto.DomainID,
+		Level:     dto.Level,
+		Message:   dto.Message,
+		Details:   details,
+		CreatedAt: dto.CreatedAt,
+	}, nil
+}
+

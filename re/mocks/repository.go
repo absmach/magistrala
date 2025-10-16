@@ -42,6 +42,63 @@ func (_m *Repository) EXPECT() *Repository_Expecter {
 	return &Repository_Expecter{mock: &_m.Mock}
 }
 
+// AddLog provides a mock function for the type Repository
+func (_mock *Repository) AddLog(ctx context.Context, log re.RuleLog) error {
+	ret := _mock.Called(ctx, log)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddLog")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.RuleLog) error); ok {
+		r0 = returnFunc(ctx, log)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_AddLog_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddLog'
+type Repository_AddLog_Call struct {
+	*mock.Call
+}
+
+// AddLog is a helper method to define mock.On call
+//   - ctx context.Context
+//   - log re.RuleLog
+func (_e *Repository_Expecter) AddLog(ctx interface{}, log interface{}) *Repository_AddLog_Call {
+	return &Repository_AddLog_Call{Call: _e.mock.On("AddLog", ctx, log)}
+}
+
+func (_c *Repository_AddLog_Call) Run(run func(ctx context.Context, log re.RuleLog)) *Repository_AddLog_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.RuleLog
+		if args[1] != nil {
+			arg1 = args[1].(re.RuleLog)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_AddLog_Call) Return(err error) *Repository_AddLog_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_AddLog_Call) RunAndReturn(run func(ctx context.Context, log re.RuleLog) error) *Repository_AddLog_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddRule provides a mock function for the type Repository
 func (_mock *Repository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
 	ret := _mock.Called(ctx, r)
@@ -104,6 +161,72 @@ func (_c *Repository_AddRule_Call) Return(rule re.Rule, err error) *Repository_A
 }
 
 func (_c *Repository_AddRule_Call) RunAndReturn(run func(ctx context.Context, r re.Rule) (re.Rule, error)) *Repository_AddRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListLogs provides a mock function for the type Repository
+func (_mock *Repository) ListLogs(ctx context.Context, pm re.LogPageMeta) (re.LogPage, error) {
+	ret := _mock.Called(ctx, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLogs")
+	}
+
+	var r0 re.LogPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.LogPageMeta) (re.LogPage, error)); ok {
+		return returnFunc(ctx, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.LogPageMeta) re.LogPage); ok {
+		r0 = returnFunc(ctx, pm)
+	} else {
+		r0 = ret.Get(0).(re.LogPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.LogPageMeta) error); ok {
+		r1 = returnFunc(ctx, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_ListLogs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListLogs'
+type Repository_ListLogs_Call struct {
+	*mock.Call
+}
+
+// ListLogs is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm re.LogPageMeta
+func (_e *Repository_Expecter) ListLogs(ctx interface{}, pm interface{}) *Repository_ListLogs_Call {
+	return &Repository_ListLogs_Call{Call: _e.mock.On("ListLogs", ctx, pm)}
+}
+
+func (_c *Repository_ListLogs_Call) Run(run func(ctx context.Context, pm re.LogPageMeta)) *Repository_ListLogs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.LogPageMeta
+		if args[1] != nil {
+			arg1 = args[1].(re.LogPageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_ListLogs_Call) Return(logPage re.LogPage, err error) *Repository_ListLogs_Call {
+	_c.Call.Return(logPage, err)
+	return _c
+}
+
+func (_c *Repository_ListLogs_Call) RunAndReturn(run func(ctx context.Context, pm re.LogPageMeta) (re.LogPage, error)) *Repository_ListLogs_Call {
 	_c.Call.Return(run)
 	return _c
 }

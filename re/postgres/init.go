@@ -50,6 +50,30 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE rules DROP COLUMN tags;`,
 				},
 			},
+			{
+				Id: "rule_logs_01",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS rule_logs (
+						id            VARCHAR(36) PRIMARY KEY,
+						rule_id       VARCHAR(36) NOT NULL,
+						domain_id     VARCHAR(36) NOT NULL,
+						level         VARCHAR(10) NOT NULL,
+						message       TEXT NOT NULL,
+						details       JSONB,
+						created_at    TIMESTAMP NOT NULL,
+						FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE
+					)`,
+					`CREATE INDEX idx_rule_logs_rule_id ON rule_logs(rule_id)`,
+					`CREATE INDEX idx_rule_logs_domain_id ON rule_logs(domain_id)`,
+					`CREATE INDEX idx_rule_logs_created_at ON rule_logs(created_at DESC)`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_rule_logs_created_at`,
+					`DROP INDEX IF EXISTS idx_rule_logs_domain_id`,
+					`DROP INDEX IF EXISTS idx_rule_logs_rule_id`,
+					`DROP TABLE IF EXISTS rule_logs`,
+				},
+			},
 		},
 	}
 }

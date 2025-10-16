@@ -6,6 +6,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -329,4 +330,101 @@ func pageRulesQuery(pm re.PageMeta) string {
 	}
 
 	return q
+}
+
+func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
+	q := `
+		INSERT INTO rule_logs (id, rule_id, domain_id, level, message, details, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7);
+	`
+	details := []byte("{}")
+	if len(log.Details) > 0 {
+		var err error
+		details, err = json.Marshal(log.Details)
+		if err != nil {
+			return errors.Wrap(repoerr.ErrCreateEntity, err)
+		}
+	}
+
+	_, err := repo.DB.ExecContext(ctx, q, log.ID, log.RuleID, log.DomainID, log.Level, log.Message, details, log.CreatedAt)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrCreateEntity, err)
+	}
+
+	return nil
+}
+
+func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta) (re.LogPage, error) {
+	var conditions []string
+	params := make(map[string]any)
+
+	if pm.RuleID != "" {
+		conditions = append(conditions, "rule_id = :rule_id")
+		params["rule_id"] = pm.RuleID
+	}
+	if pm.DomainID != "" {
+		conditions = append(conditions, "domain_id = :domain_id")
+		params["domain_id"] = pm.DomainID
+	}
+	if pm.Level != "" {
+		conditions = append(conditions, "level = :level")
+		params["level"] = pm.Level
+	}
+	if pm.FromTime != nil {
+		conditions = append(conditions, "created_at >= :from_time")
+		params["from_time"] = pm.FromTime
+	}
+	if pm.ToTime != nil {
+		conditions = append(conditions, "created_at <= :to_time")
+		params["to_time"] = pm.ToTime
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	params["limit"] = pm.Limit
+	params["offset"] = pm.Offset
+
+	q := fmt.Sprintf(`
+		SELECT id, rule_id, domain_id, level, message, details, created_at
+		FROM rule_logs
+		%s
+		ORDER BY created_at DESC
+		LIMIT :limit OFFSET :offset;
+	`, whereClause)
+
+	rows, err := repo.DB.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return re.LogPage{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	var logs []re.RuleLog
+	for rows.Next() {
+		var log dbRuleLog
+		if err := rows.StructScan(&log); err != nil {
+			return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		ruleLog, err := dbToRuleLog(log)
+		if err != nil {
+			return re.LogPage{}, err
+		}
+		logs = append(logs, ruleLog)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rule_logs %s;`, whereClause)
+	total, err := postgres.Total(ctx, repo.DB, cq, params)
+	if err != nil {
+		return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return re.LogPage{
+		Total:  total,
+		Offset: pm.Offset,
+		Limit:  pm.Limit,
+		Logs:   logs,
+	}, nil
 }

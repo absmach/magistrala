@@ -22,6 +22,7 @@ const (
 	ruleEnable         = rulePrefix + "enable"
 	ruleDisable        = rulePrefix + "disable"
 	ruleRemove         = rulePrefix + "remove"
+	ruleListLogs       = rulePrefix + "list_logs"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 	_ events.Event = (*enableRuleEvent)(nil)
 	_ events.Event = (*disableRuleEvent)(nil)
 	_ events.Event = (*removeRuleEvent)(nil)
+	_ events.Event = (*listRuleLogsEvent)(nil)
 )
 
 type baseRuleEvent struct {
@@ -185,5 +187,25 @@ func (rre removeRuleEvent) Encode() (map[string]any, error) {
 	val := rre.baseRuleEvent.Encode()
 	val["id"] = rre.id
 	val["operation"] = ruleRemove
+	return val, nil
+}
+
+type listRuleLogsEvent struct {
+	re.LogPageMeta
+	baseRuleEvent
+}
+
+func (lrle listRuleLogsEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
+		"rule_id": lrle.RuleID,
+		"offset":  lrle.Offset,
+		"limit":   lrle.Limit,
+		"total":   lrle.Total,
+	}
+	if lrle.Level != "" {
+		val["level"] = lrle.Level
+	}
+	maps.Copy(val, lrle.baseRuleEvent.Encode())
+	val["operation"] = ruleListLogs
 	return val, nil
 }

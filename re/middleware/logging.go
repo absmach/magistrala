@@ -200,6 +200,28 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 	return lm.svc.DisableRule(ctx, session, id)
 }
 
+func (lm *loggingMiddleware) ListRuleLogs(ctx context.Context, session authn.Session, pm re.LogPageMeta) (pg re.LogPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("rule_id", pm.RuleID),
+			slog.Group("page",
+				slog.Uint64("offset", pm.Offset),
+				slog.Uint64("limit", pm.Limit),
+				slog.Uint64("total", pg.Total),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("List rule logs failed", args...)
+			return
+		}
+		lm.logger.Info("List rule logs completed successfully", args...)
+	}(time.Now())
+	return lm.svc.ListRuleLogs(ctx, session, pm)
+}
+
 func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 	defer func(begin time.Time) {
 		args := []any{

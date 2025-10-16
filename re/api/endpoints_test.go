@@ -1112,6 +1112,202 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 	}
 }
 
+func TestListRuleLogsEndpoint(t *testing.T) {
+	ts, svc, authn := newRuleEngineServer()
+	defer ts.Close()
+
+	numLogs := 10
+	now := time.Now().UTC()
+	var logs []re.RuleLog
+	for i := 0; i < numLogs; i++ {
+		log := re.RuleLog{
+			ID:        testsutil.GenerateUUID(&testing.T{}),
+			RuleID:    validID,
+			DomainID:  domainID,
+			Level:     "INFO",
+			Message:   "rule processed successfully",
+			CreatedAt: now,
+		}
+		logs = append(logs, log)
+	}
+
+	cases := []struct {
+		desc              string
+		query             string
+		ruleID            string
+		domainID          string
+		token             string
+		session           smqauthn.Session
+		listLogsResponse  re.LogPage
+		status            int
+		authnErr          error
+		err               error
+	}{
+		{
+			desc:     "list rule logs successfully",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			status:   http.StatusOK,
+			listLogsResponse: re.LogPage{
+				Total: uint64(numLogs),
+				Logs:  logs,
+			},
+			err: nil,
+		},
+		{
+			desc:     "list rule logs with empty token",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    "",
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "list rule logs with invalid token",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    invalidToken,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:   "list rule logs with empty domainID",
+			ruleID: validID,
+			token:  validToken,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "list rule logs with offset",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listLogsResponse: re.LogPage{
+				Total: uint64(numLogs),
+				Logs:  logs[5:],
+			},
+			query:  "offset=5",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule logs with invalid offset",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "offset=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrValidation,
+		},
+		{
+			desc:     "list rule logs with limit",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listLogsResponse: re.LogPage{
+				Total: uint64(numLogs),
+				Logs:  logs[0:5],
+			},
+			query:  "limit=5",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule logs with invalid limit",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "limit=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrValidation,
+		},
+		{
+			desc:     "list rule logs with limit that is too big",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "limit=10000",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrLimitSize,
+		},
+		{
+			desc:     "list rule logs with level filter",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listLogsResponse: re.LogPage{
+				Total: 0,
+				Logs:  []re.RuleLog{},
+			},
+			query:  "level=ERROR",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule logs with level filter case insensitive",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listLogsResponse: re.LogPage{
+				Total: 0,
+				Logs:  []re.RuleLog{},
+			},
+			query:  "level=error",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule logs with invalid level",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "level=INVALID",
+			status:   http.StatusBadRequest,
+			err:      re.ErrInvalidLogLevel,
+		},
+		{
+			desc:     "list rule logs with duplicate level",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "level=INFO&level=ERROR",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodGet,
+				url:         fmt.Sprintf("%s/%s/rules/%s/logs?%s", ts.URL, tc.domainID, tc.ruleID, tc.query),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("ListRuleLogs", mock.Anything, tc.session, mock.Anything).Return(tc.listLogsResponse, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var bodyRes respBody
+			err = json.NewDecoder(res.Body).Decode(&bodyRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if bodyRes.Err != "" || bodyRes.Message != "" {
+				err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
 type respBody struct {
 	Err     string    `json:"error"`
 	Message string    `json:"message"`

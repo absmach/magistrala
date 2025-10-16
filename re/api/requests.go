@@ -134,3 +134,24 @@ func (req deleteRuleReq) validate() error {
 
 	return nil
 }
+
+type listRuleLogsReq struct {
+	id string
+	re.LogPageMeta
+}
+
+func (req listRuleLogsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if req.Limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+
+	if req.Level != "" && !re.ValidLogLevels[req.Level] {
+		return re.ErrInvalidLogLevel
+	}
+
+	return nil
+}

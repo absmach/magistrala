@@ -25,6 +25,7 @@ const (
 	EnableStream         = supermqPrefix + ruleEnable
 	DisableStream        = supermqPrefix + ruleDisable
 	RemoveStream         = supermqPrefix + ruleRemove
+	ListLogsStream       = supermqPrefix + ruleListLogs
 )
 
 var _ re.Service = (*eventStore)(nil)
@@ -181,6 +182,21 @@ func (es *eventStore) DisableRule(ctx context.Context, session authn.Session, id
 		return rule, err
 	}
 	return rule, nil
+}
+
+func (es *eventStore) ListRuleLogs(ctx context.Context, session authn.Session, pm re.LogPageMeta) (re.LogPage, error) {
+	page, err := es.svc.ListRuleLogs(ctx, session, pm)
+	if err != nil {
+		return page, err
+	}
+	event := listRuleLogsEvent{
+		LogPageMeta:   pm,
+		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
+	}
+	if err := es.Publish(ctx, ListLogsStream, event); err != nil {
+		return page, err
+	}
+	return page, nil
 }
 
 func (es *eventStore) StartScheduler(ctx context.Context) error {

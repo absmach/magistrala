@@ -670,6 +670,129 @@ func TestHandle(t *testing.T) {
 	}
 }
 
+func TestListRuleLogs(t *testing.T) {
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	numLogs := 10
+	now := time.Now().UTC()
+	var logs []re.RuleLog
+	for i := 0; i < numLogs; i++ {
+		log := re.RuleLog{
+			ID:        testsutil.GenerateUUID(t),
+			RuleID:    ruleID,
+			DomainID:  domainID,
+			Level:     "INFO",
+			Message:   "rule processed successfully",
+			CreatedAt: now,
+		}
+		logs = append(logs, log)
+	}
+
+	cases := []struct {
+		desc        string
+		session     authn.Session
+		logPageMeta re.LogPageMeta
+		res         re.LogPage
+		err         error
+	}{
+		{
+			desc: "list rule logs successfully",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			logPageMeta: re.LogPageMeta{
+				RuleID: ruleID,
+			},
+			res: re.LogPage{
+				Total:  uint64(numLogs),
+				Offset: 0,
+				Limit:  10,
+				Logs:   logs[0:10],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule logs with limit",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			logPageMeta: re.LogPageMeta{
+				RuleID: ruleID,
+				Limit:  5,
+			},
+			res: re.LogPage{
+				Total:  uint64(numLogs),
+				Offset: 0,
+				Limit:  5,
+				Logs:   logs[0:5],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule logs with offset",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			logPageMeta: re.LogPageMeta{
+				RuleID: ruleID,
+				Offset: 5,
+				Limit:  5,
+			},
+			res: re.LogPage{
+				Total:  uint64(numLogs),
+				Offset: 5,
+				Limit:  5,
+				Logs:   logs[5:10],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule logs with level filter",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			logPageMeta: re.LogPageMeta{
+				RuleID: ruleID,
+				Level:  "ERROR",
+			},
+			res: re.LogPage{
+				Total:  0,
+				Offset: 0,
+				Limit:  10,
+				Logs:   []re.RuleLog{},
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule logs with failed repo",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			logPageMeta: re.LogPageMeta{
+				RuleID: ruleID,
+			},
+			err: svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := repo.On("ListLogs", mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			res, err := svc.ListRuleLogs(context.Background(), tc.session, tc.logPageMeta)
+
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.res, res)
+			}
+			defer repoCall.Unset()
+		})
+	}
+}
+
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)

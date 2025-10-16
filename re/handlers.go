@@ -50,9 +50,12 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
-			go func(ctx context.Context) {
-				re.runInfo <- re.process(ctx, r, msg)
-			}(ctx)
+			go func(ctx context.Context, rule Rule) {
+				info := re.process(ctx, rule, msg)
+				re.runInfo <- info
+				// Persist log to database
+				re.saveLog(ctx, rule, info)
+			}(ctx, r)
 		}
 	}
 
@@ -116,6 +119,36 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 	}
 }
 
+func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
+	id, err := re.idp.ID()
+	if err != nil {
+		return
+	}
+
+	details := make(map[string]any)
+	for _, attr := range info.Details {
+		details[attr.Key] = attr.Value.Any()
+	}
+
+	log := RuleLog{
+		ID:        id,
+		RuleID:    r.ID,
+		DomainID:  r.DomainID,
+		Level:     info.Level.String(),
+		Message:   info.Message,
+		Details:   details,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	if err := re.repo.AddLog(ctx, log); err != nil {
+		re.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelError,
+			Message: fmt.Sprintf("failed to persist log: %s", err),
+			Details: []slog.Attr{slog.String("rule_id", r.ID)},
+		}
+	}
+}
+
 func (re *re) StartScheduler(ctx context.Context) error {
 	defer re.ticker.Stop()
 	for {
@@ -155,7 +188,9 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						Protocol: protocol,
 						Created:  due.Unix(),
 					}
-					re.runInfo <- re.process(ctx, rule, msg)
+					info := re.process(ctx, rule, msg)
+					re.runInfo <- info
+					re.saveLog(ctx, rule, info)
 				}(r)
 			}
 			// Reset due, it will reset in the page meta as well.

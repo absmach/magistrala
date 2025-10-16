@@ -6,6 +6,7 @@ package re
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/absmach/magistrala/pkg/schedule"
@@ -18,6 +19,16 @@ import (
 const (
 	LuaType ScriptType = iota
 	GoType
+)
+
+var (
+	ErrInvalidLogLevel = errors.New("invalid log level: must be INFO, WARN, or ERROR")
+
+	ValidLogLevels = map[string]bool{
+		slog.LevelInfo.String():  true,
+		slog.LevelWarn.String():  true,
+		slog.LevelError.String(): true,
+	}
 )
 
 const (
@@ -233,6 +244,34 @@ type Page struct {
 	Rules  []Rule `json:"rules"`
 }
 
+type RuleLog struct {
+	ID        string         `json:"id"`
+	RuleID    string         `json:"rule_id"`
+	DomainID  string         `json:"domain_id"`
+	Level     string         `json:"level"`
+	Message   string         `json:"message"`
+	Details   map[string]any `json:"details,omitempty"`
+	CreatedAt time.Time      `json:"created_at"`
+}
+
+type LogPageMeta struct {
+	Total    uint64     `json:"total"       db:"total"`
+	Offset   uint64     `json:"offset"      db:"offset"`
+	Limit    uint64     `json:"limit"       db:"limit"`
+	RuleID   string     `json:"rule_id"     db:"rule_id"`
+	DomainID string     `json:"domain_id"   db:"domain_id"`
+	Level    string     `json:"level,omitempty" db:"level"`
+	FromTime *time.Time `json:"from_time,omitempty" db:"from_time"`
+	ToTime   *time.Time `json:"to_time,omitempty"   db:"to_time"`
+}
+
+type LogPage struct {
+	Offset uint64    `json:"offset"`
+	Limit  uint64    `json:"limit"`
+	Total  uint64    `json:"total"`
+	Logs   []RuleLog `json:"logs"`
+}
+
 type Service interface {
 	messaging.MessageHandler
 	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -244,6 +283,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
+	ListRuleLogs(ctx context.Context, session authn.Session, pm LogPageMeta) (LogPage, error)
 
 	StartScheduler(ctx context.Context) error
 }
@@ -258,4 +298,6 @@ type Repository interface {
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
+	AddLog(ctx context.Context, log RuleLog) error
+	ListLogs(ctx context.Context, pm LogPageMeta) (LogPage, error)
 }

@@ -99,6 +99,13 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 						api.EncodeResponse,
 						opts...,
 					), "disable_rule").ServeHTTP)
+
+					r.Get("/logs", otelhttp.NewHandler(kithttp.NewServer(
+						listRuleLogsEndpoint(svc),
+						decodeListRuleLogsRequest,
+						api.EncodeResponse,
+						opts...,
+					), "list_rule_logs").ServeHTTP)
 				})
 			})
 		})
@@ -233,4 +240,32 @@ func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil
+}
+
+func decodeListRuleLogsRequest(_ context.Context, r *http.Request) (any, error) {
+	id := chi.URLParam(r, ruleIdKey)
+
+	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	limit, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	level, err := apiutil.ReadStringQuery(r, api.LevelKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	level = strings.ToUpper(level)
+
+	return listRuleLogsReq{
+		id: id,
+		LogPageMeta: re.LogPageMeta{
+			RuleID: id,
+			Offset: offset,
+			Limit:  limit,
+			Level:  level,
+		},
+	}, nil
 }

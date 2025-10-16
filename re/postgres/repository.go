@@ -335,18 +335,27 @@ func pageRulesQuery(pm re.PageMeta) string {
 func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
 	q := `
 		INSERT INTO rule_logs (id, rule_id, domain_id, level, message, details, created_at)
-		VALUES ($1, $2, $3, $4, $5, $6, $7);
+		VALUES (:id, :rule_id, :domain_id, :level, :message, :details, :created_at);
 	`
-	details := []byte("{}")
+	dbLog := dbRuleLog{
+		ID:        log.ID,
+		RuleID:    log.RuleID,
+		DomainID:  log.DomainID,
+		Level:     log.Level,
+		Message:   log.Message,
+		Details:   []byte("{}"),
+		CreatedAt: log.CreatedAt,
+	}
+
 	if len(log.Details) > 0 {
 		var err error
-		details, err = json.Marshal(log.Details)
+		dbLog.Details, err = json.Marshal(log.Details)
 		if err != nil {
 			return errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
 	}
 
-	_, err := repo.DB.ExecContext(ctx, q, log.ID, log.RuleID, log.DomainID, log.Level, log.Message, details, log.CreatedAt)
+	_, err := repo.DB.NamedExecContext(ctx, q, dbLog)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}

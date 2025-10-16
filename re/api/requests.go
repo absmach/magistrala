@@ -150,7 +150,7 @@ func (req listRuleLogsReq) validate() error {
 	}
 
 	if req.Level != "" && !re.ValidLogLevels[req.Level] {
-		return re.ErrInvalidLogLevel
+		return errors.Wrap(re.ErrInvalidLogLevel, apiutil.ErrValidation)
 	}
 
 	return nil

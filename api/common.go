@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
@@ -45,8 +44,7 @@ func toStatus(err error) (int, error) {
 		return http.StatusForbidden, err
 
 	case errors.Contains(err, bootstrap.ErrBootstrapState),
-		errors.Contains(err, bootstrap.ErrAddBootstrap),
-		errors.Contains(err, re.ErrInvalidLogLevel):
+		errors.Contains(err, bootstrap.ErrAddBootstrap):
 		return http.StatusBadRequest, err
 
 	case errors.Contains(err, bootstrap.ErrBootstrap):

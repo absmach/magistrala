@@ -153,5 +153,15 @@ func (req listRuleLogsReq) validate() error {
 		return errors.Wrap(re.ErrInvalidLogLevel, apiutil.ErrValidation)
 	}
 
+	switch req.Order {
+	case "", api.CreatedAtOrder, api.NameKey:
+	default:
+		return errors.Wrap(apiutil.ErrInvalidOrder, apiutil.ErrValidation)
+	}
+
+	if req.Dir != "" && req.Dir != api.AscDir && req.Dir != api.DescDir {
+		return errors.Wrap(apiutil.ErrInvalidDirection, apiutil.ErrValidation)
+	}
+
 	return nil
 }

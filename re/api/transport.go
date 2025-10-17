@@ -259,6 +259,16 @@ func decodeListRuleLogsRequest(_ context.Context, r *http.Request) (any, error) 
 	}
 	level = strings.ToUpper(level)
 
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.CreatedAtOrder)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
 	return listRuleLogsReq{
 		id: id,
 		LogPageMeta: re.LogPageMeta{
@@ -266,6 +276,8 @@ func decodeListRuleLogsRequest(_ context.Context, r *http.Request) (any, error) 
 			Offset: offset,
 			Limit:  limit,
 			Level:  level,
+			Order:  order,
+			Dir:    dir,
 		},
 	}, nil
 }

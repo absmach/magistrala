@@ -263,13 +263,15 @@ type LogPageMeta struct {
 	Level    string     `json:"level,omitempty" db:"level"`
 	FromTime *time.Time `json:"from_time,omitempty" db:"from_time"`
 	ToTime   *time.Time `json:"to_time,omitempty"   db:"to_time"`
+	Order    string     `json:"order,omitempty"`
+	Dir      string     `json:"dir,omitempty"`
 }
 
 type LogPage struct {
+	Total  uint64    `json:"total"`
 	Offset uint64    `json:"offset"`
 	Limit  uint64    `json:"limit"`
-	Total  uint64    `json:"total"`
-	Logs   []RuleLog `json:"logs"`
+	Logs   []RuleLog `json:"logs,omitempty"`
 }
 
 type Service interface {

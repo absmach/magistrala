@@ -177,4 +177,3 @@ func dbToRuleLog(dto dbRuleLog) (re.RuleLog, error) {
 		CreatedAt: dto.CreatedAt,
 	}, nil
 }
-

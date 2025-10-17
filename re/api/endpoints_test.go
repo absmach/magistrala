@@ -1132,16 +1132,16 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc              string
-		query             string
-		ruleID            string
-		domainID          string
-		token             string
-		session           smqauthn.Session
-		listLogsResponse  re.LogPage
-		status            int
-		authnErr          error
-		err               error
+		desc             string
+		query            string
+		ruleID           string
+		domainID         string
+		token            string
+		session          smqauthn.Session
+		listLogsResponse re.LogPage
+		status           int
+		authnErr         error
+		err              error
 	}{
 		{
 			desc:     "list rule logs successfully",

@@ -334,7 +334,7 @@ func pageRulesQuery(pm re.PageMeta) string {
 
 func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
 	q := `
-		INSERT INTO rule_logs (id, rule_id, domain_id, level, message, details, created_at)
+		INSERT INTO rules_logs (id, rule_id, domain_id, level, message, details, created_at)
 		VALUES (:id, :rule_id, :domain_id, :level, :message, :details, :created_at);
 	`
 	dbLog := dbRuleLog{
@@ -398,7 +398,7 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 
 	q := fmt.Sprintf(`
 		SELECT id, rule_id, domain_id, level, message, details, created_at
-		FROM rule_logs
+		FROM rules_logs
 		%s
 		ORDER BY created_at DESC
 		LIMIT :limit OFFSET :offset;
@@ -424,7 +424,7 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 		logs = append(logs, ruleLog)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rule_logs %s;`, whereClause)
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rules_logs %s;`, whereClause)
 	total, err := postgres.Total(ctx, repo.DB, cq, params)
 	if err != nil {
 		return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)

@@ -51,9 +51,9 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 			},
 			{
-				Id: "rule_logs_01",
+				Id: "rules_03",
 				Up: []string{
-					`CREATE TABLE IF NOT EXISTS rule_logs (
+					`CREATE TABLE IF NOT EXISTS rules_logs (
 						id            VARCHAR(36) PRIMARY KEY,
 						rule_id       VARCHAR(36) NOT NULL,
 						domain_id     VARCHAR(36) NOT NULL,
@@ -63,15 +63,15 @@ func Migration() *migrate.MemoryMigrationSource {
 						created_at    TIMESTAMP NOT NULL,
 						FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE
 					)`,
-					`CREATE INDEX idx_rule_logs_rule_id ON rule_logs(rule_id)`,
-					`CREATE INDEX idx_rule_logs_domain_id ON rule_logs(domain_id)`,
-					`CREATE INDEX idx_rule_logs_created_at ON rule_logs(created_at DESC)`,
+					`CREATE INDEX idx_rules_logs_rule_id ON rules_logs(rule_id)`,
+					`CREATE INDEX idx_rules_logs_domain_id ON rules_logs(domain_id)`,
+					`CREATE INDEX idx_rules_logs_created_at ON rules_logs(created_at DESC)`,
 				},
 				Down: []string{
-					`DROP INDEX IF EXISTS idx_rule_logs_created_at`,
-					`DROP INDEX IF EXISTS idx_rule_logs_domain_id`,
-					`DROP INDEX IF EXISTS idx_rule_logs_rule_id`,
-					`DROP TABLE IF EXISTS rule_logs`,
+					`DROP INDEX IF EXISTS idx_rules_logs_created_at`,
+					`DROP INDEX IF EXISTS idx_rules_logs_domain_id`,
+					`DROP INDEX IF EXISTS idx_rules_logs_rule_id`,
+					`DROP TABLE IF EXISTS rules_logs`,
 				},
 			},
 		},

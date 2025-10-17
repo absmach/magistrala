@@ -1118,14 +1118,17 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 
 	numLogs := 10
 	now := time.Now().UTC()
+	execTime := now
 	var logs []re.RuleLog
 	for i := 0; i < numLogs; i++ {
 		log := re.RuleLog{
 			ID:        testsutil.GenerateUUID(&testing.T{}),
 			RuleID:    validID,
+			RuleName:  "Test Rule",
 			DomainID:  domainID,
 			Level:     "INFO",
 			Message:   "rule processed successfully",
+			ExecTime:  execTime,
 			CreatedAt: now,
 		}
 		logs = append(logs, log)

@@ -245,13 +245,14 @@ type Page struct {
 }
 
 type RuleLog struct {
-	ID        string         `json:"id"`
-	RuleID    string         `json:"rule_id"`
-	DomainID  string         `json:"domain_id"`
-	Level     string         `json:"level"`
-	Message   string         `json:"message"`
-	Details   map[string]any `json:"details,omitempty"`
-	CreatedAt time.Time      `json:"created_at"`
+	ID        string    `json:"id"`
+	RuleID    string    `json:"rule_id"`
+	RuleName  string    `json:"rule_name"`
+	DomainID  string    `json:"domain_id"`
+	Level     string    `json:"level"`
+	Message   string    `json:"message"`
+	ExecTime  time.Time `json:"exec_time"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type LogPageMeta struct {

@@ -56,18 +56,21 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS rules_logs (
 						id            VARCHAR(36) PRIMARY KEY,
 						rule_id       VARCHAR(36) NOT NULL,
+						rule_name     VARCHAR(1024) NOT NULL,
 						domain_id     VARCHAR(36) NOT NULL,
 						level         VARCHAR(10) NOT NULL,
 						message       TEXT NOT NULL,
-						details       JSONB,
+						exec_time     TIMESTAMP NOT NULL,
 						created_at    TIMESTAMP NOT NULL,
 						FOREIGN KEY (rule_id) REFERENCES rules(id) ON DELETE CASCADE
 					)`,
 					`CREATE INDEX idx_rules_logs_rule_id ON rules_logs(rule_id)`,
 					`CREATE INDEX idx_rules_logs_domain_id ON rules_logs(domain_id)`,
 					`CREATE INDEX idx_rules_logs_created_at ON rules_logs(created_at DESC)`,
+					`CREATE INDEX idx_rules_logs_exec_time ON rules_logs(exec_time DESC)`,
 				},
 				Down: []string{
+					`DROP INDEX IF EXISTS idx_rules_logs_exec_time`,
 					`DROP INDEX IF EXISTS idx_rules_logs_created_at`,
 					`DROP INDEX IF EXISTS idx_rules_logs_domain_id`,
 					`DROP INDEX IF EXISTS idx_rules_logs_rule_id`,

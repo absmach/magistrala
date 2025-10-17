@@ -6,7 +6,6 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -334,25 +333,18 @@ func pageRulesQuery(pm re.PageMeta) string {
 
 func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
 	q := `
-		INSERT INTO rules_logs (id, rule_id, domain_id, level, message, details, created_at)
-		VALUES (:id, :rule_id, :domain_id, :level, :message, :details, :created_at);
+		INSERT INTO rules_logs (id, rule_id, rule_name, domain_id, level, message, exec_time, created_at)
+		VALUES (:id, :rule_id, :rule_name, :domain_id, :level, :message, :exec_time, :created_at);
 	`
 	dbLog := dbRuleLog{
 		ID:        log.ID,
 		RuleID:    log.RuleID,
+		RuleName:  log.RuleName,
 		DomainID:  log.DomainID,
 		Level:     log.Level,
 		Message:   log.Message,
-		Details:   []byte("{}"),
+		ExecTime:  log.ExecTime,
 		CreatedAt: log.CreatedAt,
-	}
-
-	if len(log.Details) > 0 {
-		var err error
-		dbLog.Details, err = json.Marshal(log.Details)
-		if err != nil {
-			return errors.Wrap(repoerr.ErrCreateEntity, err)
-		}
 	}
 
 	_, err := repo.DB.NamedExecContext(ctx, q, dbLog)
@@ -368,23 +360,23 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	params := make(map[string]any)
 
 	if pm.RuleID != "" {
-		conditions = append(conditions, "rl.rule_id = :rule_id")
+		conditions = append(conditions, "rule_id = :rule_id")
 		params["rule_id"] = pm.RuleID
 	}
 	if pm.DomainID != "" {
-		conditions = append(conditions, "rl.domain_id = :domain_id")
+		conditions = append(conditions, "domain_id = :domain_id")
 		params["domain_id"] = pm.DomainID
 	}
 	if pm.Level != "" {
-		conditions = append(conditions, "rl.level = :level")
+		conditions = append(conditions, "level = :level")
 		params["level"] = pm.Level
 	}
 	if pm.FromTime != nil {
-		conditions = append(conditions, "rl.created_at >= :from_time")
+		conditions = append(conditions, "created_at >= :from_time")
 		params["from_time"] = pm.FromTime
 	}
 	if pm.ToTime != nil {
-		conditions = append(conditions, "rl.created_at <= :to_time")
+		conditions = append(conditions, "created_at <= :to_time")
 		params["to_time"] = pm.ToTime
 	}
 
@@ -396,12 +388,12 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	params["limit"] = pm.Limit
 	params["offset"] = pm.Offset
 
-	order := "rl.created_at"
+	order := "created_at"
 	if pm.Order != "" {
 		if pm.Order == "name" {
-			order = "r.name"
+			order = "rule_name"
 		} else {
-			order = "rl." + pm.Order
+			order = pm.Order
 		}
 	}
 
@@ -410,11 +402,9 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 		dir = strings.ToUpper(pm.Dir)
 	}
 
-	// Use LEFT JOIN to include logs even if rule is deleted
 	q := fmt.Sprintf(`
-		SELECT rl.id, rl.rule_id, rl.domain_id, rl.level, rl.message, rl.details, rl.created_at
-		FROM rules_logs rl
-		LEFT JOIN rules r ON rl.rule_id = r.id
+		SELECT id, rule_id, rule_name, domain_id, level, message, exec_time, created_at
+		FROM rules_logs
 		%s
 		ORDER BY %s %s
 		LIMIT :limit OFFSET :offset;
@@ -433,19 +423,10 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 			return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
-		ruleLog, err := dbToRuleLog(log)
-		if err != nil {
-			return re.LogPage{}, err
-		}
-		logs = append(logs, ruleLog)
+		logs = append(logs, dbToRuleLog(log))
 	}
 
-	cq := fmt.Sprintf(`
-		SELECT COUNT(*) 
-		FROM rules_logs rl
-		LEFT JOIN rules r ON rl.rule_id = r.id
-		%s;
-	`, whereClause)
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rules_logs %s;`, whereClause)
 	total, err := postgres.Total(ctx, repo.DB, cq, params)
 	if err != nil {
 		return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)

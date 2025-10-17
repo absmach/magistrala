@@ -154,7 +154,7 @@ func (req listRuleLogsReq) validate() error {
 	}
 
 	switch req.Order {
-	case "", api.CreatedAtOrder, api.NameKey:
+	case "", api.CreatedAtOrder, api.NameKey, "exec_time":
 	default:
 		return errors.Wrap(apiutil.ErrInvalidOrder, apiutil.ErrValidation)
 	}

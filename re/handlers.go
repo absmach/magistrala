@@ -124,18 +124,22 @@ func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
 		return
 	}
 
-	details := make(map[string]any)
+	var execTime time.Time
 	for _, attr := range info.Details {
-		details[attr.Key] = attr.Value.Any()
+		if attr.Key == "exec_time" {
+			execTime = attr.Value.Any().(time.Time)
+			break
+		}
 	}
 
 	log := RuleLog{
 		ID:        id,
 		RuleID:    r.ID,
+		RuleName:  r.Name,
 		DomainID:  r.DomainID,
 		Level:     info.Level.String(),
 		Message:   info.Message,
-		Details:   details,
+		ExecTime:  execTime,
 		CreatedAt: time.Now().UTC(),
 	}
 

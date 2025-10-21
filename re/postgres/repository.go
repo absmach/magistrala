@@ -347,10 +347,11 @@ func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) erro
 		CreatedAt: log.CreatedAt,
 	}
 
-	_, err := repo.db.NamedExecContext(ctx, q, dbLog)
+	row, err := repo.db.NamedQueryContext(ctx, q, dbLog)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
+	defer row.Close()
 
 	return nil
 }

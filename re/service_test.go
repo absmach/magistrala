@@ -680,10 +680,9 @@ func TestListRuleLogs(t *testing.T) {
 		log := re.RuleLog{
 			ID:        testsutil.GenerateUUID(t),
 			RuleID:    ruleID,
-			RuleName:  "Test Rule",
-			DomainID:  domainID,
 			Level:     "INFO",
 			Message:   "rule processed successfully",
+			Error:     "",
 			ExecTime:  execTime,
 			CreatedAt: now,
 		}

@@ -150,25 +150,23 @@ func fromNullString(nullString sql.NullString) string {
 }
 
 type dbRuleLog struct {
-	ID        string    `db:"id"`
-	RuleID    string    `db:"rule_id"`
-	RuleName  string    `db:"rule_name"`
-	DomainID  string    `db:"domain_id"`
-	Level     string    `db:"level"`
-	Message   string    `db:"message"`
-	ExecTime  time.Time `db:"exec_time"`
-	CreatedAt time.Time `db:"created_at"`
+	ID        string         `db:"id"`
+	RuleID    string         `db:"rule_id"`
+	Level     string         `db:"level"`
+	Message   string         `db:"message"`
+	Error     sql.NullString `db:"error"`
+	ExecTime  time.Time      `db:"exec_time"`
+	CreatedAt time.Time      `db:"created_at"`
 }
 
-func dbToRuleLog(dto dbRuleLog) re.RuleLog {
+func dbToRuleLog(dbl dbRuleLog) re.RuleLog {
 	return re.RuleLog{
-		ID:        dto.ID,
-		RuleID:    dto.RuleID,
-		RuleName:  dto.RuleName,
-		DomainID:  dto.DomainID,
-		Level:     dto.Level,
-		Message:   dto.Message,
-		ExecTime:  dto.ExecTime,
-		CreatedAt: dto.CreatedAt,
+		ID:        dbl.ID,
+		RuleID:    dbl.RuleID,
+		Level:     dbl.Level,
+		Message:   dbl.Message,
+		Error:     fromNullString(dbl.Error),
+		ExecTime:  dbl.ExecTime,
+		CreatedAt: dbl.CreatedAt,
 	}
 }

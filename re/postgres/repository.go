@@ -333,16 +333,15 @@ func pageRulesQuery(pm re.PageMeta) string {
 
 func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
 	q := `
-		INSERT INTO rules_logs (id, rule_id, rule_name, domain_id, level, message, exec_time, created_at)
-		VALUES (:id, :rule_id, :rule_name, :domain_id, :level, :message, :exec_time, :created_at);
+		INSERT INTO rule_executions (id, rule_id, level, message, error, exec_time, created_at)
+		VALUES (:id, :rule_id, :level, :message, :error, :exec_time, :created_at);
 	`
 	dbLog := dbRuleLog{
 		ID:        log.ID,
 		RuleID:    log.RuleID,
-		RuleName:  log.RuleName,
-		DomainID:  log.DomainID,
 		Level:     log.Level,
 		Message:   log.Message,
+		Error:     toNullString(log.Error),
 		ExecTime:  log.ExecTime,
 		CreatedAt: log.CreatedAt,
 	}
@@ -361,23 +360,23 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	params := make(map[string]any)
 
 	if pm.RuleID != "" {
-		conditions = append(conditions, "rule_id = :rule_id")
+		conditions = append(conditions, "rl.rule_id = :rule_id")
 		params["rule_id"] = pm.RuleID
 	}
 	if pm.DomainID != "" {
-		conditions = append(conditions, "domain_id = :domain_id")
+		conditions = append(conditions, "r.domain_id = :domain_id")
 		params["domain_id"] = pm.DomainID
 	}
 	if pm.Level != "" {
-		conditions = append(conditions, "level = :level")
+		conditions = append(conditions, "rl.level = :level")
 		params["level"] = pm.Level
 	}
 	if pm.FromTime != nil {
-		conditions = append(conditions, "created_at >= :from_time")
+		conditions = append(conditions, "rl.created_at >= :from_time")
 		params["from_time"] = pm.FromTime
 	}
 	if pm.ToTime != nil {
-		conditions = append(conditions, "created_at <= :to_time")
+		conditions = append(conditions, "rl.created_at <= :to_time")
 		params["to_time"] = pm.ToTime
 	}
 
@@ -389,12 +388,12 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	params["limit"] = pm.Limit
 	params["offset"] = pm.Offset
 
-	order := "created_at"
+	order := "rl.created_at"
 	if pm.Order != "" {
 		if pm.Order == "name" {
-			order = "rule_name"
+			order = "r.name"
 		} else {
-			order = pm.Order
+			order = "rl." + pm.Order
 		}
 	}
 
@@ -404,8 +403,9 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	}
 
 	q := fmt.Sprintf(`
-		SELECT id, rule_id, rule_name, domain_id, level, message, exec_time, created_at
-		FROM rules_logs
+		SELECT rl.id, rl.rule_id, rl.level, rl.message, rl.error, rl.exec_time, rl.created_at
+		FROM rule_executions rl
+		INNER JOIN rules r ON rl.rule_id = r.id
 		%s
 		ORDER BY %s %s
 		LIMIT :limit OFFSET :offset;
@@ -427,7 +427,12 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 		logs = append(logs, dbToRuleLog(log))
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rules_logs %s;`, whereClause)
+	cq := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM rule_executions rl
+		INNER JOIN rules r ON rl.rule_id = r.id
+		%s;
+	`, whereClause)
 	total, err := postgres.Total(ctx, repo.db, cq, params)
 	if err != nil {
 		return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)

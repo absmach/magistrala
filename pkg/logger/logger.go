@@ -12,5 +12,6 @@ type RunInfo struct {
 	Level    slog.Level
 	Details  []slog.Attr
 	Message  string
+	Error    error
 	ExecTime time.Time
 }

@@ -247,10 +247,9 @@ type Page struct {
 type RuleLog struct {
 	ID        string    `json:"id"`
 	RuleID    string    `json:"rule_id"`
-	RuleName  string    `json:"rule_name"`
-	DomainID  string    `json:"domain_id"`
 	Level     string    `json:"level"`
 	Message   string    `json:"message"`
+	Error     string    `json:"error,omitempty"`
 	ExecTime  time.Time `json:"exec_time"`
 	CreatedAt time.Time `json:"created_at"`
 }

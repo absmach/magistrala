@@ -1124,10 +1124,9 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 		log := re.RuleLog{
 			ID:        testsutil.GenerateUUID(&testing.T{}),
 			RuleID:    validID,
-			RuleName:  "Test Rule",
-			DomainID:  domainID,
 			Level:     "INFO",
 			Message:   "rule processed successfully",
+			Error:     "",
 			ExecTime:  execTime,
 			CreatedAt: now,
 		}

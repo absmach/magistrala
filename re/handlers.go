@@ -127,13 +127,17 @@ func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
 		return
 	}
 
+	errMsg := ""
+	if info.Error != nil {
+		errMsg = info.Error.Error()
+	}
+
 	log := RuleLog{
 		ID:        id,
 		RuleID:    r.ID,
-		RuleName:  r.Name,
-		DomainID:  r.DomainID,
 		Level:     info.Level.String(),
 		Message:   info.Message,
+		Error:     errMsg,
 		ExecTime:  info.ExecTime,
 		CreatedAt: time.Now().UTC(),
 	}

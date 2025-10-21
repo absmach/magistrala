@@ -41,7 +41,7 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	l.SetGlobal("message", message)
 
 	if err := l.DoString(r.Logic.Value); err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
+		return pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details, Error: err}
 	}
 	// Get the last result.
 	result := l.Get(-1)
@@ -69,6 +69,7 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 	if err != nil {
 		ret.Level = slog.LevelError
 		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)
+		ret.Error = err
 	}
 	return ret
 }

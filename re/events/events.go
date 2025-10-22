@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	rulePrefix              = "rule."
-	ruleCreate              = rulePrefix + "create"
-	ruleList                = rulePrefix + "list"
-	ruleView                = rulePrefix + "view"
-	ruleUpdate              = rulePrefix + "update"
-	ruleUpdateTags          = rulePrefix + "update_tags"
-	ruleUpdateSchedule      = rulePrefix + "update_schedule"
-	ruleEnable              = rulePrefix + "enable"
-	ruleDisable             = rulePrefix + "disable"
-	ruleRemove              = rulePrefix + "remove"
-	ruleListExecutions      = rulePrefix + "list_executions"
+	rulePrefix         = "rule."
+	ruleCreate         = rulePrefix + "create"
+	ruleList           = rulePrefix + "list"
+	ruleView           = rulePrefix + "view"
+	ruleUpdate         = rulePrefix + "update"
+	ruleUpdateTags     = rulePrefix + "update_tags"
+	ruleUpdateSchedule = rulePrefix + "update_schedule"
+	ruleEnable         = rulePrefix + "enable"
+	ruleDisable        = rulePrefix + "disable"
+	ruleRemove         = rulePrefix + "remove"
+	ruleListExecutions = rulePrefix + "list_executions"
 )
 
 var (

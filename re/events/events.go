@@ -12,17 +12,17 @@ import (
 )
 
 const (
-	rulePrefix         = "rule."
-	ruleCreate         = rulePrefix + "create"
-	ruleList           = rulePrefix + "list"
-	ruleView           = rulePrefix + "view"
-	ruleUpdate         = rulePrefix + "update"
-	ruleUpdateTags     = rulePrefix + "update_tags"
-	ruleUpdateSchedule = rulePrefix + "update_schedule"
-	ruleEnable         = rulePrefix + "enable"
-	ruleDisable        = rulePrefix + "disable"
-	ruleRemove         = rulePrefix + "remove"
-	ruleListLogs       = rulePrefix + "list_logs"
+	rulePrefix              = "rule."
+	ruleCreate              = rulePrefix + "create"
+	ruleList                = rulePrefix + "list"
+	ruleView                = rulePrefix + "view"
+	ruleUpdate              = rulePrefix + "update"
+	ruleUpdateTags          = rulePrefix + "update_tags"
+	ruleUpdateSchedule      = rulePrefix + "update_schedule"
+	ruleEnable              = rulePrefix + "enable"
+	ruleDisable             = rulePrefix + "disable"
+	ruleRemove              = rulePrefix + "remove"
+	ruleListExecutions      = rulePrefix + "list_executions"
 )
 
 var (
@@ -35,7 +35,7 @@ var (
 	_ events.Event = (*enableRuleEvent)(nil)
 	_ events.Event = (*disableRuleEvent)(nil)
 	_ events.Event = (*removeRuleEvent)(nil)
-	_ events.Event = (*listRuleLogsEvent)(nil)
+	_ events.Event = (*listRuleExecutionsEvent)(nil)
 )
 
 type baseRuleEvent struct {
@@ -190,22 +190,22 @@ func (rre removeRuleEvent) Encode() (map[string]any, error) {
 	return val, nil
 }
 
-type listRuleLogsEvent struct {
-	re.LogPageMeta
+type listRuleExecutionsEvent struct {
+	re.RuleExecutionPageMeta
 	baseRuleEvent
 }
 
-func (lrle listRuleLogsEvent) Encode() (map[string]any, error) {
+func (lree listRuleExecutionsEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
-		"rule_id": lrle.RuleID,
-		"offset":  lrle.Offset,
-		"limit":   lrle.Limit,
-		"total":   lrle.Total,
+		"rule_id": lree.RuleID,
+		"offset":  lree.Offset,
+		"limit":   lree.Limit,
+		"total":   lree.Total,
 	}
-	if lrle.Level != "" {
-		val["level"] = lrle.Level
+	if lree.Level != "" {
+		val["level"] = lree.Level
 	}
-	maps.Copy(val, lrle.baseRuleEvent.Encode())
-	val["operation"] = ruleListLogs
+	maps.Copy(val, lree.baseRuleEvent.Encode())
+	val["operation"] = ruleListExecutions
 	return val, nil
 }

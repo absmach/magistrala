@@ -22,9 +22,9 @@ const (
 )
 
 var (
-	ErrInvalidLogLevel = errors.New("invalid log level: must be INFO, WARN, or ERROR")
+	ErrInvalidExecutionLevel = errors.New("invalid execution level: must be INFO, WARN, or ERROR")
 
-	ValidLogLevels = map[string]bool{
+	ValidExecutionLevels = map[string]bool{
 		slog.LevelInfo.String():  true,
 		slog.LevelWarn.String():  true,
 		slog.LevelError.String(): true,
@@ -244,7 +244,7 @@ type Page struct {
 	Rules  []Rule `json:"rules"`
 }
 
-type RuleLog struct {
+type RuleExecution struct {
 	ID        string    `json:"id"`
 	RuleID    string    `json:"rule_id"`
 	Level     string    `json:"level"`
@@ -254,7 +254,7 @@ type RuleLog struct {
 	CreatedAt time.Time `json:"created_at"`
 }
 
-type LogPageMeta struct {
+type RuleExecutionPageMeta struct {
 	Total    uint64     `json:"total"       db:"total"`
 	Offset   uint64     `json:"offset"      db:"offset"`
 	Limit    uint64     `json:"limit"       db:"limit"`
@@ -267,11 +267,11 @@ type LogPageMeta struct {
 	Dir      string     `json:"dir,omitempty"`
 }
 
-type LogPage struct {
-	Total  uint64    `json:"total"`
-	Offset uint64    `json:"offset"`
-	Limit  uint64    `json:"limit"`
-	Logs   []RuleLog `json:"logs,omitempty"`
+type RuleExecutionPage struct {
+	Total      uint64          `json:"total"`
+	Offset     uint64          `json:"offset"`
+	Limit      uint64          `json:"limit"`
+	Executions []RuleExecution `json:"executions,omitempty"`
 }
 
 type Service interface {
@@ -285,7 +285,7 @@ type Service interface {
 	RemoveRule(ctx context.Context, session authn.Session, id string) error
 	EnableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
-	ListRuleLogs(ctx context.Context, session authn.Session, pm LogPageMeta) (LogPage, error)
+	ListRuleExecutions(ctx context.Context, session authn.Session, pm RuleExecutionPageMeta) (RuleExecutionPage, error)
 
 	StartScheduler(ctx context.Context) error
 }
@@ -300,6 +300,6 @@ type Repository interface {
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
-	AddLog(ctx context.Context, log RuleLog) error
-	ListLogs(ctx context.Context, pm LogPageMeta) (LogPage, error)
+	AddExecution(ctx context.Context, exec RuleExecution) error
+	ListExecutions(ctx context.Context, pm RuleExecutionPageMeta) (RuleExecutionPage, error)
 }

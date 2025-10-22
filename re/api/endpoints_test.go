@@ -1112,16 +1112,16 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 	}
 }
 
-func TestListRuleLogsEndpoint(t *testing.T) {
+func TestListRuleExecutionsEndpoint(t *testing.T) {
 	ts, svc, authn := newRuleEngineServer()
 	defer ts.Close()
 
 	numLogs := 10
 	now := time.Now().UTC()
 	execTime := now
-	var logs []re.RuleLog
+	var executions []re.RuleExecution
 	for i := 0; i < numLogs; i++ {
-		log := re.RuleLog{
+		execution := re.RuleExecution{
 			ID:        testsutil.GenerateUUID(&testing.T{}),
 			RuleID:    validID,
 			Level:     "INFO",
@@ -1130,35 +1130,35 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			ExecTime:  execTime,
 			CreatedAt: now,
 		}
-		logs = append(logs, log)
+		executions = append(executions, execution)
 	}
 
 	cases := []struct {
-		desc             string
-		query            string
-		ruleID           string
-		domainID         string
-		token            string
-		session          smqauthn.Session
-		listLogsResponse re.LogPage
-		status           int
-		authnErr         error
-		err              error
+		desc                   string
+		query                  string
+		ruleID                 string
+		domainID               string
+		token                  string
+		session                smqauthn.Session
+		listExecutionsResponse re.RuleExecutionPage
+		status                 int
+		authnErr               error
+		err                    error
 	}{
 		{
-			desc:     "list rule logs successfully",
+			desc:     "list rule executions successfully",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
 			status:   http.StatusOK,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			err: nil,
 		},
 		{
-			desc:     "list rule logs with empty token",
+			desc:     "list rule executions with empty token",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    "",
@@ -1166,7 +1166,7 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrBearerToken,
 		},
 		{
-			desc:     "list rule logs with invalid token",
+			desc:     "list rule executions with invalid token",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    invalidToken,
@@ -1175,27 +1175,27 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      svcerr.ErrAuthentication,
 		},
 		{
-			desc:   "list rule logs with empty domainID",
+			desc:   "list rule executions with empty domainID",
 			ruleID: validID,
 			token:  validToken,
 			status: http.StatusBadRequest,
 			err:    apiutil.ErrMissingDomainID,
 		},
 		{
-			desc:     "list rule logs with offset",
+			desc:     "list rule executions with offset",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs[5:],
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions[5:],
 			},
 			query:  "offset=5",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with invalid offset",
+			desc:     "list rule executions with invalid offset",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1204,20 +1204,20 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrValidation,
 		},
 		{
-			desc:     "list rule logs with limit",
+			desc:     "list rule executions with limit",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs[0:5],
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions[0:5],
 			},
 			query:  "limit=5",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with invalid limit",
+			desc:     "list rule executions with invalid limit",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1226,7 +1226,7 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrValidation,
 		},
 		{
-			desc:     "list rule logs with limit that is too big",
+			desc:     "list rule executions with limit that is too big",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1235,42 +1235,42 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrLimitSize,
 		},
 		{
-			desc:     "list rule logs with level filter",
+			desc:     "list rule executions with level filter",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: 0,
-				Logs:  []re.RuleLog{},
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      0,
+				Executions: []re.RuleExecution{},
 			},
 			query:  "level=ERROR",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with level filter case insensitive",
+			desc:     "list rule executions with level filter case insensitive",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: 0,
-				Logs:  []re.RuleLog{},
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      0,
+				Executions: []re.RuleExecution{},
 			},
 			query:  "level=error",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with invalid level",
+			desc:     "list rule executions with invalid level",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
 			query:    "level=INVALID",
 			status:   http.StatusBadRequest,
-			err:      re.ErrInvalidLogLevel,
+			err:      re.ErrInvalidExecutionLevel,
 		},
 		{
-			desc:     "list rule logs with duplicate level",
+			desc:     "list rule executions with duplicate level",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1279,33 +1279,33 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:     "list rule logs with order by created_at",
+			desc:     "list rule executions with order by created_at",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			query:  "order=created_at",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with order by name",
+			desc:     "list rule executions with order by name",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			query:  "order=name",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with invalid order",
+			desc:     "list rule executions with invalid order",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1314,33 +1314,33 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidOrder,
 		},
 		{
-			desc:     "list rule logs with ascending direction",
+			desc:     "list rule executions with ascending direction",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			query:  "dir=asc",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with descending direction",
+			desc:     "list rule executions with descending direction",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			query:  "dir=desc",
 			status: http.StatusOK,
 			err:    nil,
 		},
 		{
-			desc:     "list rule logs with invalid direction",
+			desc:     "list rule executions with invalid direction",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
@@ -1349,13 +1349,13 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidDirection,
 		},
 		{
-			desc:     "list rule logs with order and direction",
+			desc:     "list rule executions with order and direction",
 			domainID: domainID,
 			ruleID:   validID,
 			token:    validToken,
-			listLogsResponse: re.LogPage{
-				Total: uint64(numLogs),
-				Logs:  logs,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
 			},
 			query:  "order=created_at&dir=asc",
 			status: http.StatusOK,
@@ -1368,7 +1368,7 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 			req := testRequest{
 				client:      ts.Client(),
 				method:      http.MethodGet,
-				url:         fmt.Sprintf("%s/%s/rules/%s/logs?%s", ts.URL, tc.domainID, tc.ruleID, tc.query),
+				url:         fmt.Sprintf("%s/%s/rules/%s/executions?%s", ts.URL, tc.domainID, tc.ruleID, tc.query),
 				contentType: contentType,
 				token:       tc.token,
 			}
@@ -1376,7 +1376,7 @@ func TestListRuleLogsEndpoint(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
 			}
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
-			svcCall := svc.On("ListRuleLogs", mock.Anything, tc.session, mock.Anything).Return(tc.listLogsResponse, tc.err)
+			svcCall := svc.On("ListRuleExecutions", mock.Anything, tc.session, mock.Anything).Return(tc.listExecutionsResponse, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var bodyRes respBody

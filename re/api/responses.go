@@ -18,7 +18,7 @@ var (
 	_ supermq.Response = (*rulesPageRes)(nil)
 	_ supermq.Response = (*updateRuleRes)(nil)
 	_ supermq.Response = (*deleteRuleRes)(nil)
-	_ supermq.Response = (*logsPageRes)(nil)
+	_ supermq.Response = (*executionsPageRes)(nil)
 )
 
 type pageRes struct {
@@ -138,18 +138,18 @@ func (res deleteRuleRes) Empty() bool {
 	return true
 }
 
-type logsPageRes struct {
-	re.LogPage `json:",inline"`
+type executionsPageRes struct {
+	re.RuleExecutionPage `json:",inline"`
 }
 
-func (res logsPageRes) Code() int {
+func (res executionsPageRes) Code() int {
 	return http.StatusOK
 }
 
-func (res logsPageRes) Headers() map[string]string {
+func (res executionsPageRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res logsPageRes) Empty() bool {
+func (res executionsPageRes) Empty() bool {
 	return false
 }

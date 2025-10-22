@@ -331,22 +331,22 @@ func pageRulesQuery(pm re.PageMeta) string {
 	return q
 }
 
-func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) error {
+func (repo *PostgresRepository) AddExecution(ctx context.Context, exec re.RuleExecution) error {
 	q := `
 		INSERT INTO rule_executions (id, rule_id, level, message, error, exec_time, created_at)
 		VALUES (:id, :rule_id, :level, :message, :error, :exec_time, :created_at);
 	`
-	dbLog := dbRuleLog{
-		ID:        log.ID,
-		RuleID:    log.RuleID,
-		Level:     log.Level,
-		Message:   log.Message,
-		Error:     toNullString(log.Error),
-		ExecTime:  log.ExecTime,
-		CreatedAt: log.CreatedAt,
+	dbExec := dbRuleExecution{
+		ID:        exec.ID,
+		RuleID:    exec.RuleID,
+		Level:     exec.Level,
+		Message:   exec.Message,
+		Error:     toNullString(exec.Error),
+		ExecTime:  exec.ExecTime,
+		CreatedAt: exec.CreatedAt,
 	}
 
-	row, err := repo.db.NamedQueryContext(ctx, q, dbLog)
+	row, err := repo.db.NamedQueryContext(ctx, q, dbExec)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
@@ -355,7 +355,7 @@ func (repo *PostgresRepository) AddLog(ctx context.Context, log re.RuleLog) erro
 	return nil
 }
 
-func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta) (re.LogPage, error) {
+func (repo *PostgresRepository) ListExecutions(ctx context.Context, pm re.RuleExecutionPageMeta) (re.RuleExecutionPage, error) {
 	var conditions []string
 	params := make(map[string]any)
 
@@ -413,18 +413,18 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, params)
 	if err != nil {
-		return re.LogPage{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+		return re.RuleExecutionPage{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
 	defer rows.Close()
 
-	var logs []re.RuleLog
+	var executions []re.RuleExecution
 	for rows.Next() {
-		var log dbRuleLog
-		if err := rows.StructScan(&log); err != nil {
-			return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		var exec dbRuleExecution
+		if err := rows.StructScan(&exec); err != nil {
+			return re.RuleExecutionPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 
-		logs = append(logs, dbToRuleLog(log))
+		executions = append(executions, dbToRuleExecution(exec))
 	}
 
 	cq := fmt.Sprintf(`
@@ -435,13 +435,13 @@ func (repo *PostgresRepository) ListLogs(ctx context.Context, pm re.LogPageMeta)
 	`, whereClause)
 	total, err := postgres.Total(ctx, repo.db, cq, params)
 	if err != nil {
-		return re.LogPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		return re.RuleExecutionPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	return re.LogPage{
-		Total:  total,
-		Offset: pm.Offset,
-		Limit:  pm.Limit,
-		Logs:   logs,
+	return re.RuleExecutionPage{
+		Total:      total,
+		Offset:     pm.Offset,
+		Limit:      pm.Limit,
+		Executions: executions,
 	}, nil
 }

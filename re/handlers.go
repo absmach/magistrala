@@ -53,7 +53,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 			go func(ctx context.Context, rule Rule) {
 				info := re.process(ctx, rule, msg)
 				re.runInfo <- info
-				re.saveLog(ctx, rule, info)
+				re.saveExecution(ctx, rule, info)
 			}(ctx, r)
 		}
 	}
@@ -121,7 +121,7 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 	}
 }
 
-func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
+func (re *re) saveExecution(ctx context.Context, r Rule, info pkglog.RunInfo) {
 	id, err := re.idp.ID()
 	if err != nil {
 		return
@@ -132,7 +132,7 @@ func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
 		errMsg = info.Error.Error()
 	}
 
-	log := RuleLog{
+	exec := RuleExecution{
 		ID:        id,
 		RuleID:    r.ID,
 		Level:     info.Level.String(),
@@ -142,10 +142,10 @@ func (re *re) saveLog(ctx context.Context, r Rule, info pkglog.RunInfo) {
 		CreatedAt: time.Now().UTC(),
 	}
 
-	if err := re.repo.AddLog(ctx, log); err != nil {
+	if err := re.repo.AddExecution(ctx, exec); err != nil {
 		re.runInfo <- pkglog.RunInfo{
 			Level:   slog.LevelError,
-			Message: fmt.Sprintf("failed to persist log: %s", err),
+			Message: fmt.Sprintf("failed to persist execution: %s", err),
 			Details: []slog.Attr{slog.String("rule_id", r.ID)},
 		}
 	}
@@ -192,7 +192,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 					}
 					info := re.process(ctx, rule, msg)
 					re.runInfo <- info
-					re.saveLog(ctx, rule, info)
+					re.saveExecution(ctx, rule, info)
 				}(r)
 			}
 			// Reset due, it will reset in the page meta as well.

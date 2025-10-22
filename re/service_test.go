@@ -670,14 +670,14 @@ func TestHandle(t *testing.T) {
 	}
 }
 
-func TestListRuleLogs(t *testing.T) {
+func TestListRuleExecutions(t *testing.T) {
 	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 	numLogs := 10
 	now := time.Now().UTC()
 	execTime := now
-	var logs []re.RuleLog
+	var executions []re.RuleExecution
 	for i := 0; i < numLogs; i++ {
-		log := re.RuleLog{
+		execution := re.RuleExecution{
 			ID:        testsutil.GenerateUUID(t),
 			RuleID:    ruleID,
 			Level:     "INFO",
@@ -686,95 +686,95 @@ func TestListRuleLogs(t *testing.T) {
 			ExecTime:  execTime,
 			CreatedAt: now,
 		}
-		logs = append(logs, log)
+		executions = append(executions, execution)
 	}
 
 	cases := []struct {
-		desc        string
-		session     authn.Session
-		logPageMeta re.LogPageMeta
-		res         re.LogPage
-		err         error
+		desc         string
+		session      authn.Session
+		execPageMeta re.RuleExecutionPageMeta
+		res          re.RuleExecutionPage
+		err          error
 	}{
 		{
-			desc: "list rule logs successfully",
+			desc: "list rule executions successfully",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			logPageMeta: re.LogPageMeta{
+			execPageMeta: re.RuleExecutionPageMeta{
 				RuleID: ruleID,
 			},
-			res: re.LogPage{
-				Total:  uint64(numLogs),
-				Offset: 0,
-				Limit:  10,
-				Logs:   logs[0:10],
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     0,
+				Limit:      10,
+				Executions: executions[0:10],
 			},
 			err: nil,
 		},
 		{
-			desc: "list rule logs with limit",
+			desc: "list rule executions with limit",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			logPageMeta: re.LogPageMeta{
+			execPageMeta: re.RuleExecutionPageMeta{
 				RuleID: ruleID,
 				Limit:  5,
 			},
-			res: re.LogPage{
-				Total:  uint64(numLogs),
-				Offset: 0,
-				Limit:  5,
-				Logs:   logs[0:5],
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     0,
+				Limit:      5,
+				Executions: executions[0:5],
 			},
 			err: nil,
 		},
 		{
-			desc: "list rule logs with offset",
+			desc: "list rule executions with offset",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			logPageMeta: re.LogPageMeta{
+			execPageMeta: re.RuleExecutionPageMeta{
 				RuleID: ruleID,
 				Offset: 5,
 				Limit:  5,
 			},
-			res: re.LogPage{
-				Total:  uint64(numLogs),
-				Offset: 5,
-				Limit:  5,
-				Logs:   logs[5:10],
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     5,
+				Limit:      5,
+				Executions: executions[5:10],
 			},
 			err: nil,
 		},
 		{
-			desc: "list rule logs with level filter",
+			desc: "list rule executions with level filter",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			logPageMeta: re.LogPageMeta{
+			execPageMeta: re.RuleExecutionPageMeta{
 				RuleID: ruleID,
 				Level:  "ERROR",
 			},
-			res: re.LogPage{
-				Total:  0,
-				Offset: 0,
-				Limit:  10,
-				Logs:   []re.RuleLog{},
+			res: re.RuleExecutionPage{
+				Total:      0,
+				Offset:     0,
+				Limit:      10,
+				Executions: []re.RuleExecution{},
 			},
 			err: nil,
 		},
 		{
-			desc: "list rule logs with failed repo",
+			desc: "list rule executions with failed repo",
 			session: authn.Session{
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			logPageMeta: re.LogPageMeta{
+			execPageMeta: re.RuleExecutionPageMeta{
 				RuleID: ruleID,
 			},
 			err: svcerr.ErrViewEntity,
@@ -783,8 +783,8 @@ func TestListRuleLogs(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("ListLogs", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			res, err := svc.ListRuleLogs(context.Background(), tc.session, tc.logPageMeta)
+			repoCall := repo.On("ListExecutions", mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			res, err := svc.ListRuleExecutions(context.Background(), tc.session, tc.execPageMeta)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {

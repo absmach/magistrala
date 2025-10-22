@@ -149,7 +149,7 @@ func fromNullString(nullString sql.NullString) string {
 	return nullString.String
 }
 
-type dbRuleLog struct {
+type dbRuleExecution struct {
 	ID        string         `db:"id"`
 	RuleID    string         `db:"rule_id"`
 	Level     string         `db:"level"`
@@ -159,14 +159,14 @@ type dbRuleLog struct {
 	CreatedAt time.Time      `db:"created_at"`
 }
 
-func dbToRuleLog(dbl dbRuleLog) re.RuleLog {
-	return re.RuleLog{
-		ID:        dbl.ID,
-		RuleID:    dbl.RuleID,
-		Level:     dbl.Level,
-		Message:   dbl.Message,
-		Error:     fromNullString(dbl.Error),
-		ExecTime:  dbl.ExecTime,
-		CreatedAt: dbl.CreatedAt,
+func dbToRuleExecution(dbe dbRuleExecution) re.RuleExecution {
+	return re.RuleExecution{
+		ID:        dbe.ID,
+		RuleID:    dbe.RuleID,
+		Level:     dbe.Level,
+		Message:   dbe.Message,
+		Error:     fromNullString(dbe.Error),
+		ExecTime:  dbe.ExecTime,
+		CreatedAt: dbe.CreatedAt,
 	}
 }

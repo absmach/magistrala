@@ -164,11 +164,11 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	return rule, nil
 }
 
-func (re *re) ListRuleLogs(ctx context.Context, session authn.Session, pm LogPageMeta) (LogPage, error) {
+func (re *re) ListRuleExecutions(ctx context.Context, session authn.Session, pm RuleExecutionPageMeta) (RuleExecutionPage, error) {
 	pm.DomainID = session.DomainID
-	page, err := re.repo.ListLogs(ctx, pm)
+	page, err := re.repo.ListExecutions(ctx, pm)
 	if err != nil {
-		return LogPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		return RuleExecutionPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	return page, nil
 }

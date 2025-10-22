@@ -135,12 +135,12 @@ func (req deleteRuleReq) validate() error {
 	return nil
 }
 
-type listRuleLogsReq struct {
+type listRuleExecutionsReq struct {
 	id string
-	re.LogPageMeta
+	re.RuleExecutionPageMeta
 }
 
-func (req listRuleLogsReq) validate() error {
+func (req listRuleExecutionsReq) validate() error {
 	if req.id == "" {
 		return apiutil.ErrMissingID
 	}
@@ -149,8 +149,8 @@ func (req listRuleLogsReq) validate() error {
 		return apiutil.ErrLimitSize
 	}
 
-	if req.Level != "" && !re.ValidLogLevels[req.Level] {
-		return errors.Wrap(re.ErrInvalidLogLevel, apiutil.ErrValidation)
+	if req.Level != "" && !re.ValidExecutionLevels[req.Level] {
+		return errors.Wrap(re.ErrInvalidExecutionLevel, apiutil.ErrValidation)
 	}
 
 	switch req.Order {

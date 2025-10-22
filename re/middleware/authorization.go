@@ -258,7 +258,7 @@ func (am *authorizationMiddleware) DisableRule(ctx context.Context, session auth
 	return am.svc.DisableRule(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) ListRuleLogs(ctx context.Context, session authn.Session, pm re.LogPageMeta) (re.LogPage, error) {
+func (am *authorizationMiddleware) ListRuleExecutions(ctx context.Context, session authn.Session, pm re.RuleExecutionPageMeta) (re.RuleExecutionPage, error) {
 	if err := am.authorize(ctx, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
@@ -268,10 +268,10 @@ func (am *authorizationMiddleware) ListRuleLogs(ctx context.Context, session aut
 		ObjectType:  policies.DomainType,
 		Permission:  policies.MembershipPermission,
 	}); err != nil {
-		return re.LogPage{}, errors.Wrap(errDomainViewRules, err)
+		return re.RuleExecutionPage{}, errors.Wrap(errDomainViewRules, err)
 	}
 
-	return am.svc.ListRuleLogs(ctx, session, pm)
+	return am.svc.ListRuleExecutions(ctx, session, pm)
 }
 
 func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {

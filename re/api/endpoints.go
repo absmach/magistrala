@@ -203,3 +203,24 @@ func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 		return updateRuleStatusRes{Rule: rule}, err
 	}
 }
+
+func listRuleExecutionsEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(listRuleExecutionsReq)
+		if err := req.validate(); err != nil {
+			return executionsPageRes{}, err
+		}
+
+		page, err := s.ListRuleExecutions(ctx, session, req.RuleExecutionPageMeta)
+		if err != nil {
+			return executionsPageRes{}, err
+		}
+
+		return executionsPageRes{RuleExecutionPage: page}, nil
+	}
+}

@@ -18,11 +18,11 @@ import (
 )
 
 type PostgresRepository struct {
-	DB postgres.Database
+	db postgres.Database
 }
 
 func NewRepository(db postgres.Database) re.Repository {
-	return &PostgresRepository{DB: db}
+	return &PostgresRepository{db: db}
 }
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -38,7 +38,7 @@ func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule
 	if err != nil {
 		return re.Rule{}, err
 	}
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	row, err := repo.db.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
@@ -66,7 +66,7 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 		FROM rules
 		WHERE id = $1;
 	`
-	row := repo.DB.QueryRowxContext(ctx, q, id)
+	row := repo.db.QueryRowxContext(ctx, q, id)
 	if err := row.Err(); err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 	}
@@ -152,7 +152,7 @@ func (repo *PostgresRepository) update(ctx context.Context, r re.Rule, query str
 		return re.Rule{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	row, err := repo.DB.NamedQueryContext(ctx, query, dbr)
+	row, err := repo.db.NamedQueryContext(ctx, query, dbr)
 	if err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -176,7 +176,7 @@ func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error
 	DELETE FROM rules
 	WHERE id = $1;
 `
-	result, err := repo.DB.ExecContext(ctx, q, id)
+	result, err := repo.db.ExecContext(ctx, q, id)
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrRemoveEntity, err)
 	}
@@ -226,7 +226,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 			start_datetime, time, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM rules r %s %s %s;
 	`, pq, orderClause, pgData)
-	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
+	rows, err := repo.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
 		return re.Page{}, err
 	}
@@ -247,7 +247,7 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) FROM rules r %s;`, pq)
 
-	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	total, err := postgres.Total(ctx, repo.db, cq, pm)
 	if err != nil {
 		return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -276,7 +276,7 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	if !due.IsZero() {
 		dbr.Time.Valid = true
 	}
-	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
+	row, err := repo.db.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
 		return re.Rule{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
@@ -329,4 +329,119 @@ func pageRulesQuery(pm re.PageMeta) string {
 	}
 
 	return q
+}
+
+func (repo *PostgresRepository) AddExecution(ctx context.Context, exec re.RuleExecution) error {
+	q := `
+		INSERT INTO rule_executions (id, rule_id, level, message, error, exec_time, created_at)
+		VALUES (:id, :rule_id, :level, :message, :error, :exec_time, :created_at);
+	`
+	dbExec := dbRuleExecution{
+		ID:        exec.ID,
+		RuleID:    exec.RuleID,
+		Level:     exec.Level,
+		Message:   exec.Message,
+		Error:     toNullString(exec.Error),
+		ExecTime:  exec.ExecTime,
+		CreatedAt: exec.CreatedAt,
+	}
+
+	row, err := repo.db.NamedQueryContext(ctx, q, dbExec)
+	if err != nil {
+		return postgres.HandleError(repoerr.ErrCreateEntity, err)
+	}
+	defer row.Close()
+
+	return nil
+}
+
+func (repo *PostgresRepository) ListExecutions(ctx context.Context, pm re.RuleExecutionPageMeta) (re.RuleExecutionPage, error) {
+	var conditions []string
+	params := make(map[string]any)
+
+	if pm.RuleID != "" {
+		conditions = append(conditions, "rl.rule_id = :rule_id")
+		params["rule_id"] = pm.RuleID
+	}
+	if pm.DomainID != "" {
+		conditions = append(conditions, "r.domain_id = :domain_id")
+		params["domain_id"] = pm.DomainID
+	}
+	if pm.Level != "" {
+		conditions = append(conditions, "rl.level = :level")
+		params["level"] = pm.Level
+	}
+	if pm.FromTime != nil {
+		conditions = append(conditions, "rl.created_at >= :from_time")
+		params["from_time"] = pm.FromTime
+	}
+	if pm.ToTime != nil {
+		conditions = append(conditions, "rl.created_at <= :to_time")
+		params["to_time"] = pm.ToTime
+	}
+
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = "WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	params["limit"] = pm.Limit
+	params["offset"] = pm.Offset
+
+	order := "rl.created_at"
+	if pm.Order != "" {
+		if pm.Order == "name" {
+			order = "r.name"
+		} else {
+			order = "rl." + pm.Order
+		}
+	}
+
+	dir := "DESC"
+	if pm.Dir != "" {
+		dir = strings.ToUpper(pm.Dir)
+	}
+
+	q := fmt.Sprintf(`
+		SELECT rl.id, rl.rule_id, rl.level, rl.message, rl.error, rl.exec_time, rl.created_at
+		FROM rule_executions rl
+		INNER JOIN rules r ON rl.rule_id = r.id
+		%s
+		ORDER BY %s %s
+		LIMIT :limit OFFSET :offset;
+	`, whereClause, order, dir)
+
+	rows, err := repo.db.NamedQueryContext(ctx, q, params)
+	if err != nil {
+		return re.RuleExecutionPage{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	var executions []re.RuleExecution
+	for rows.Next() {
+		var exec dbRuleExecution
+		if err := rows.StructScan(&exec); err != nil {
+			return re.RuleExecutionPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		executions = append(executions, dbToRuleExecution(exec))
+	}
+
+	cq := fmt.Sprintf(`
+		SELECT COUNT(*)
+		FROM rule_executions rl
+		INNER JOIN rules r ON rl.rule_id = r.id
+		%s;
+	`, whereClause)
+	total, err := postgres.Total(ctx, repo.db, cq, params)
+	if err != nil {
+		return re.RuleExecutionPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return re.RuleExecutionPage{
+		Total:      total,
+		Offset:     pm.Offset,
+		Limit:      pm.Limit,
+		Executions: executions,
+	}, nil
 }

@@ -670,6 +670,131 @@ func TestHandle(t *testing.T) {
 	}
 }
 
+func TestListRuleExecutions(t *testing.T) {
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	numLogs := 10
+	now := time.Now().UTC()
+	execTime := now
+	var executions []re.RuleExecution
+	for i := 0; i < numLogs; i++ {
+		execution := re.RuleExecution{
+			ID:        testsutil.GenerateUUID(t),
+			RuleID:    ruleID,
+			Level:     "INFO",
+			Message:   "rule processed successfully",
+			Error:     "",
+			ExecTime:  execTime,
+			CreatedAt: now,
+		}
+		executions = append(executions, execution)
+	}
+
+	cases := []struct {
+		desc         string
+		session      authn.Session
+		execPageMeta re.RuleExecutionPageMeta
+		res          re.RuleExecutionPage
+		err          error
+	}{
+		{
+			desc: "list rule executions successfully",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			execPageMeta: re.RuleExecutionPageMeta{
+				RuleID: ruleID,
+			},
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     0,
+				Limit:      10,
+				Executions: executions[0:10],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule executions with limit",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			execPageMeta: re.RuleExecutionPageMeta{
+				RuleID: ruleID,
+				Limit:  5,
+			},
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     0,
+				Limit:      5,
+				Executions: executions[0:5],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule executions with offset",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			execPageMeta: re.RuleExecutionPageMeta{
+				RuleID: ruleID,
+				Offset: 5,
+				Limit:  5,
+			},
+			res: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Offset:     5,
+				Limit:      5,
+				Executions: executions[5:10],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule executions with level filter",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			execPageMeta: re.RuleExecutionPageMeta{
+				RuleID: ruleID,
+				Level:  "ERROR",
+			},
+			res: re.RuleExecutionPage{
+				Total:      0,
+				Offset:     0,
+				Limit:      10,
+				Executions: []re.RuleExecution{},
+			},
+			err: nil,
+		},
+		{
+			desc: "list rule executions with failed repo",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			execPageMeta: re.RuleExecutionPageMeta{
+				RuleID: ruleID,
+			},
+			err: svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := repo.On("ListExecutions", mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			res, err := svc.ListRuleExecutions(context.Background(), tc.session, tc.execPageMeta)
+
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.res, res)
+			}
+			defer repoCall.Unset()
+		})
+	}
+}
+
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)

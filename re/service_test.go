@@ -54,11 +54,56 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
+
+	svc := re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc)
+
+	repocall1 := repo.On("ListRules", mock.Anything, mock.Anything).Return(re.Page{Rules: []re.Rule{}}, nil)
+	defer repocall1.Unset()
+
+	tickCh := make(chan time.Time)
+	mockTicker.On("Tick").Return((<-chan time.Time)(tickCh))
+	mockTicker.On("Stop").Return()
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+
+	schedulerDone := make(chan struct{})
+	go func() {
+		_ = svc.StartScheduler(ctx)
+		close(schedulerDone)
+	}()
+
+	t.Cleanup(func() {
+		cancel()
+
+		// Wait for scheduler to stop (can take time for worker cleanup)
+		<-schedulerDone
+
+		time.Sleep(100 * time.Millisecond)
+	})
+	time.Sleep(50 * time.Millisecond)
+
+	return svc, repo, pubsub, mockTicker
+}
+
+func newServiceForSchedulerTest(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker) {
+	repo := new(mocks.Repository)
+	mockTicker := new(tmocks.Ticker)
+	idProvider := uuid.NewMock()
+	pubsub := pubsubmocks.NewPubSub(t)
+	readersSvc := new(readmocks.ReadersServiceClient)
+	e := new(emocks.Emailer)
+
+	svc := re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc)
+
+	tickCh := make(chan time.Time)
+	mockTicker.On("Tick").Return((<-chan time.Time)(tickCh))
+	mockTicker.On("Stop").Return()
+
+	return svc, repo, pubsub, mockTicker
 }
 
 func TestAddRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -133,7 +178,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -191,7 +236,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -276,7 +321,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestUpdateRuleTags(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	cases := []struct {
 		desc      string
@@ -332,7 +377,7 @@ func TestUpdateRuleTags(t *testing.T) {
 }
 
 func TestListRules(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -418,7 +463,10 @@ func TestListRules(t *testing.T) {
 				DomainID: domainID,
 			},
 			pageMeta: re.PageMeta{},
-			err:      svcerr.ErrViewEntity,
+			res: re.Page{
+				Rules: []re.Rule{},
+			},
+			err: svcerr.ErrViewEntity,
 		},
 	}
 
@@ -437,7 +485,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	cases := []struct {
 		desc    string
@@ -477,7 +525,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	now := time.Now()
 
@@ -536,7 +584,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
 
 	now := time.Now()
 
@@ -594,8 +642,69 @@ func TestDisableRule(t *testing.T) {
 	}
 }
 
+func TestAbortRuleExecution(t *testing.T) {
+	cases := []struct {
+		desc    string
+		session authn.Session
+		id      string
+		rule    re.Rule
+		repoErr error
+		err     error
+	}{
+		{
+			desc: "abort rule execution with wrong status",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id: ruleID,
+			rule: re.Rule{
+				ID:            ruleID,
+				LastRunStatus: re.SuccessStatus,
+			},
+			repoErr: nil,
+			err:     svcerr.ErrMalformedEntity,
+		},
+		{
+			desc: "abort rule execution with never_run status",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id: ruleID,
+			rule: re.Rule{
+				ID:            ruleID,
+				LastRunStatus: re.NeverRunStatus,
+			},
+			repoErr: nil,
+			err:     svcerr.ErrMalformedEntity,
+		},
+		{
+			desc: "abort rule execution with non-existent rule",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			id:      "non-existent-rule",
+			rule:    re.Rule{},
+			repoErr: svcerr.ErrNotFound,
+			err:     svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo, 100))
+			repo.On("ViewRule", mock.Anything, tc.id).Return(tc.rule, tc.repoErr)
+			err := svc.AbortRuleExecution(context.Background(), tc.session, tc.id)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			repo.AssertExpectations(t)
+		})
+	}
+}
+
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo, 100))
 	now := time.Now()
 	scheduled := false
 
@@ -619,7 +728,7 @@ func TestHandle(t *testing.T) {
 			listErr: nil,
 		},
 		{
-			desc: "consume message with rules",
+			desc: "consume message with enabled rules",
 			message: &messaging.Message{
 				Channel: inputChannel,
 				Created: now.Unix(),
@@ -646,6 +755,34 @@ func TestHandle(t *testing.T) {
 			},
 			listErr: nil,
 		},
+		{
+			desc: "consume message with disabled rules",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.DisabledStatus,
+						Logic: re.Script{
+							Type: re.ScriptType(0),
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -657,23 +794,36 @@ func TestHandle(t *testing.T) {
 					err = tc.listErr
 				}
 			})
-			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
+
+			enabledRulesCount := 0
+			for _, rule := range tc.page.Rules {
+				if rule.Status == re.EnabledStatus {
+					enabledRulesCount++
+				}
+			}
+
+			if enabledRulesCount > 0 {
+				repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr).Times(enabledRulesCount)
+				defer repoCall1.Unset()
+			}
 
 			err = svc.Handle(tc.message)
-			assert.Nil(t, err)
 
-			assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
+			assert.NoError(t, err, "Handle should not return errors with worker architecture")
+
+			if tc.listErr != nil {
+				assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
+			}
 
 			repoCall.Unset()
-			repoCall1.Unset()
 		})
 	}
 }
 
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
-	ri := make(chan pkglog.RunInfo)
-	svc, repo, _, ticker := newService(t, ri)
+	ri := make(chan pkglog.RunInfo, 100)
+	svc, repo, _, ticker := newServiceForSchedulerTest(t, ri)
 
 	ctxCases := []struct {
 		desc     string

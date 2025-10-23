@@ -203,3 +203,41 @@ func disableRuleEndpoint(s re.Service) endpoint.Endpoint {
 		return updateRuleStatusRes{Rule: rule}, err
 	}
 }
+
+func abortRuleExecutionEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(abortRuleExecutionReq)
+		if err := req.validate(); err != nil {
+			return abortRuleExecutionRes{}, err
+		}
+		err := s.AbortRuleExecution(ctx, session, req.id)
+		if err != nil {
+			return abortRuleExecutionRes{}, err
+		}
+		return abortRuleExecutionRes{}, nil
+	}
+}
+
+func getRuleExecutionStatusEndpoint(s re.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		req := request.(getRuleExecutionStatusReq)
+		if err := req.validate(); err != nil {
+			return getRuleExecutionStatusRes{}, err
+		}
+		status, err := s.GetRuleExecutionStatus(ctx, session, req.id)
+		if err != nil {
+			return getRuleExecutionStatusRes{}, err
+		}
+		return getRuleExecutionStatusRes{RuleExecutionStatus: status}, nil
+	}
+}

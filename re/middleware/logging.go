@@ -200,6 +200,44 @@ func (lm *loggingMiddleware) DisableRule(ctx context.Context, session authn.Sess
 	return lm.svc.DisableRule(ctx, session, id)
 }
 
+func (lm *loggingMiddleware) AbortRuleExecution(ctx context.Context, session authn.Session, id string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.String("rule_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Abort rule execution failed", args...)
+			return
+		}
+		lm.logger.Info("Abort rule execution completed successfully", args...)
+	}(time.Now())
+	return lm.svc.AbortRuleExecution(ctx, session, id)
+}
+
+func (lm *loggingMiddleware) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (res re.RuleExecutionStatus, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("domain_id", session.DomainID),
+			slog.Group("rule",
+				slog.String("id", id),
+				slog.Bool("worker_running", res.WorkerRunning),
+				slog.Int("queue_length", res.QueueLength),
+			),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Get rule execution status failed", args...)
+			return
+		}
+		lm.logger.Info("Get rule execution status completed successfully", args...)
+	}(time.Now())
+	return lm.svc.GetRuleExecutionStatus(ctx, session, id)
+}
+
 func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
@@ -238,5 +276,5 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 }
 
 func (lm *loggingMiddleware) Cancel() error {
-	return lm.Cancel()
+	return lm.svc.Cancel()
 }

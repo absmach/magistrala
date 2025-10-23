@@ -33,6 +33,11 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if n := len(msg.Payload); n > maxPayload {
 		return errors.New(pldExceededFmt + strconv.Itoa(n))
 	}
+
+	if re.workerMgr == nil {
+		return errors.New("worker manager not initialized")
+	}
+
 	// Skip filtering by message topic and fetch all non-scheduled rules instead.
 	// It's cleaner and more efficient to match wildcards in Go, but we can
 	// revisit this if it ever becomes a performance bottleneck.
@@ -50,9 +55,24 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
-			go func(ctx context.Context) {
-				re.runInfo <- re.process(ctx, r, msg)
-			}(ctx)
+			if workerStatus := re.workerMgr.GetWorkerStatus(r.ID); workerStatus != nil {
+				if processing, ok := workerStatus["processing"].(bool); ok && processing {
+					re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
+				}
+			}
+
+			if !re.workerMgr.SendMessage(msg, r) {
+				re.runInfo <- pkglog.RunInfo{
+					Level:   slog.LevelWarn,
+					Message: fmt.Sprintf("failed to send message to worker for rule %s", r.ID),
+					Details: []slog.Attr{
+						slog.String("rule_id", r.ID),
+						slog.String("rule_name", r.Name),
+						slog.String("channel", msg.Channel),
+						slog.Time("time", time.Now().UTC()),
+					},
+				}
+			}
 		}
 	}
 
@@ -86,15 +106,55 @@ func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglo
 		slog.String("rule_name", r.Name),
 		slog.Time("exec_time", time.Now().UTC()),
 	}
+
+	re.updateRuleExecutionStatus(ctx, r.ID, InProgressStatus, nil)
+
+	var result pkglog.RunInfo
 	switch r.Logic.Type {
 	case GoType:
-		return re.processGo(ctx, details, r, msg)
+		result = re.processGo(ctx, details, r, msg)
 	default:
-		return re.processLua(ctx, details, r, msg)
+		result = re.processLua(ctx, details, r, msg)
 	}
+
+	var execStatus ExecutionStatus
+	var errorMsg string
+	switch result.Level {
+	case slog.LevelInfo:
+		execStatus = SuccessStatus
+	case slog.LevelWarn:
+		if strings.Contains(result.Message, "logic returned false") || strings.Contains(result.Message, "no outputs") {
+			execStatus = SuccessStatus
+		} else {
+			execStatus = PartialSuccessStatus
+			errorMsg = result.Message
+		}
+	case slog.LevelError:
+		execStatus = FailureStatus
+		errorMsg = result.Message
+	default:
+		execStatus = FailureStatus
+		errorMsg = result.Message
+	}
+
+	var execError error
+	if errorMsg != "" {
+		execError = errors.New(errorMsg)
+	}
+
+	re.updateRuleExecutionStatus(ctx, r.ID, execStatus, execError)
+
+	return result
 }
 
 func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val any) error {
+	// Check if context is cancelled before handling output
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	switch o := o.(type) {
 	case *outputs.Alarm:
 		o.AlarmsPub = re.alarmsPub
@@ -117,7 +177,46 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 }
 
 func (re *re) StartScheduler(ctx context.Context) error {
+	re.workerMgr = NewWorkerManager(ctx, re)
+
+	workerMgr := re.workerMgr
+
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case err := <-workerMgr.ErrorChan():
+				if err != nil {
+					re.runInfo <- pkglog.RunInfo{
+						Level:   slog.LevelError,
+						Message: fmt.Sprintf("worker management error: %s", err),
+						Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+					}
+				}
+			}
+		}
+	}()
+
+	pm := PageMeta{
+		Status: EnabledStatus,
+	}
+	page, err := re.repo.ListRules(ctx, pm)
+	if err == nil {
+		re.workerMgr.RefreshWorkers(ctx, page.Rules)
+	}
+
 	defer re.ticker.Stop()
+	defer func() {
+		if stopErr := re.workerMgr.StopAll(); stopErr != nil {
+			re.runInfo <- pkglog.RunInfo{
+				Level:   slog.LevelError,
+				Message: fmt.Sprintf("failed to stop worker manager: %s", stopErr),
+				Details: []slog.Attr{slog.Time("time", time.Now().UTC())},
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -142,21 +241,45 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, r := range page.Rules {
-				go func(rule Rule) {
-					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
-						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
-						return
-					}
+				msg := &messaging.Message{
+					Domain:   r.DomainID,
+					Channel:  r.InputChannel,
+					Subtopic: r.InputTopic,
+					Protocol: protocol,
+					Created:  due.Unix(),
+				}
 
-					msg := &messaging.Message{
-						Domain:   rule.DomainID,
-						Channel:  rule.InputChannel,
-						Subtopic: rule.InputTopic,
-						Protocol: protocol,
-						Created:  due.Unix(),
+				if workerStatus := re.workerMgr.GetWorkerStatus(r.ID); workerStatus != nil {
+					if processing, ok := workerStatus["processing"].(bool); ok && processing {
+						re.updateRuleExecutionStatus(ctx, r.ID, QueuedStatus, nil)
 					}
-					re.runInfo <- re.process(ctx, rule, msg)
-				}(r)
+				}
+				//nolint:contextcheck
+				if !re.workerMgr.SendMessage(msg, r) {
+					re.runInfo <- pkglog.RunInfo{
+						Level:   slog.LevelWarn,
+						Message: fmt.Sprintf("failed to send scheduled message to worker for rule %s", r.ID),
+						Details: []slog.Attr{
+							slog.String("rule_id", r.ID),
+							slog.String("rule_name", r.Name),
+							slog.String("channel", msg.Channel),
+							slog.Time("scheduled_time", due),
+						},
+					}
+				}
+
+				go func(ruleID string, nextDue time.Time) {
+					if _, err := re.repo.UpdateRuleDue(ctx, ruleID, nextDue); err != nil {
+						re.runInfo <- pkglog.RunInfo{
+							Level:   slog.LevelError,
+							Message: fmt.Sprintf("failed to update rule due time: %s", err),
+							Details: []slog.Attr{
+								slog.String("rule_id", ruleID),
+								slog.Time("time", time.Now().UTC()),
+							},
+						}
+					}
+				}(r.ID, r.Schedule.NextDue())
 			}
 			// Reset due, it will reset in the page meta as well.
 			due = time.Now().UTC()

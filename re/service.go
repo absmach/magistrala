@@ -5,11 +5,14 @@ package re
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
@@ -28,10 +31,11 @@ type re struct {
 	ticker     ticker.Ticker
 	email      emailer.Emailer
 	readers    grpcReadersV1.ReadersServiceClient
+	workerMgr  *WorkerManager
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
-	return &re{
+	reEngine := &re{
 		repo:       repo,
 		idp:        idp,
 		runInfo:    runInfo,
@@ -42,6 +46,26 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 		email:      emailer,
 		readers:    readers,
 	}
+	return reEngine
+}
+
+func shouldCreateWorker(rule Rule) bool {
+	if rule.Status != EnabledStatus {
+		return false
+	}
+
+	if rule.Schedule.Recurring == schedule.None {
+		return true
+	}
+
+	now := time.Now().UTC()
+	dueTime := rule.Schedule.Time
+
+	if dueTime.IsZero() || dueTime.Before(now) {
+		return true
+	}
+
+	return dueTime.Sub(now) <= time.Hour
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
@@ -55,6 +79,8 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	r.CreatedBy = session.UserID
 	r.DomainID = session.DomainID
 	r.Status = EnabledStatus
+	r.LastRunStatus = NeverRunStatus
+	r.ExecutionCount = 0
 
 	if !r.Schedule.StartDateTime.IsZero() {
 		r.Schedule.StartDateTime = now
@@ -64,6 +90,10 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	if shouldCreateWorker(rule) {
+		re.workerMgr.AddWorker(ctx, rule)
 	}
 
 	return rule, nil
@@ -84,6 +114,12 @@ func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Ru
 	rule, err := re.repo.UpdateRule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
 	}
 
 	return rule, nil
@@ -108,6 +144,12 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 
+	if shouldCreateWorker(rule) {
+		re.workerMgr.UpdateWorker(ctx, rule)
+	} else {
+		re.workerMgr.RemoveWorker(rule.ID)
+	}
+
 	return rule, nil
 }
 
@@ -124,6 +166,8 @@ func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) 
 	if err := re.repo.RemoveRule(ctx, id); err != nil {
 		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
+
+	re.workerMgr.RemoveWorker(id)
 
 	return nil
 }
@@ -143,6 +187,11 @@ func (re *re) EnableRule(ctx context.Context, session authn.Session, id string) 
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
+	if shouldCreateWorker(rule) {
+		re.workerMgr.AddWorker(ctx, rule)
+	}
+
 	return rule, nil
 }
 
@@ -161,9 +210,113 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+
+	re.workerMgr.RemoveWorker(id)
+
 	return rule, nil
 }
 
 func (re *re) Cancel() error {
+	return re.workerMgr.StopAll()
+}
+
+func (re *re) AbortRuleExecution(ctx context.Context, session authn.Session, id string) error {
+	rule, err := re.repo.ViewRule(ctx, id)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	if rule.LastRunStatus != InProgressStatus && rule.LastRunStatus != QueuedStatus {
+		return errors.Wrap(errors.New(fmt.Sprintf("cannot abort rule with status '%s': rule must be in 'in_progress' or 'queued' status",
+			rule.LastRunStatus.String())), svcerr.ErrMalformedEntity)
+	}
+
+	if re.workerMgr != nil {
+		workerStatus := re.workerMgr.GetWorkerStatus(id)
+		if workerStatus == nil {
+			return errors.Wrap(errors.New("no active worker found for this rule"), svcerr.ErrNotFound)
+		}
+
+		running, ok := workerStatus["running"].(bool)
+		if !ok || !running {
+			return errors.Wrap(errors.New("cannot abort: worker is not currently running"), svcerr.ErrMalformedEntity)
+		}
+
+		queueLen, _ := workerStatus["queue_length"].(int)
+		if queueLen == 0 && rule.LastRunStatus != InProgressStatus {
+			return errors.Wrap(errors.New("cannot abort: no execution in progress"), svcerr.ErrMalformedEntity)
+		}
+
+		re.workerMgr.AbortRule(id)
+	}
+
 	return nil
+}
+
+func (re *re) GetRuleExecutionStatus(ctx context.Context, session authn.Session, id string) (RuleExecutionStatus, error) {
+	rule, err := re.repo.ViewRule(ctx, id)
+	if err != nil {
+		return RuleExecutionStatus{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	status := RuleExecutionStatus{
+		Rule:          rule,
+		WorkerRunning: false,
+		QueueLength:   0,
+	}
+
+	if re.workerMgr != nil {
+		workerStatus := re.workerMgr.GetWorkerStatus(id)
+		if workerStatus != nil {
+			if running, ok := workerStatus["running"].(bool); ok {
+				status.WorkerRunning = running
+			}
+			if queueLen, ok := workerStatus["queue_length"].(int); ok {
+				status.QueueLength = queueLen
+			}
+		}
+	}
+
+	return status, nil
+}
+
+func (re *re) updateRuleExecutionStatus(ctx context.Context, ruleID string, status ExecutionStatus, err error) {
+	now := time.Now().UTC()
+	rule := Rule{
+		ID:            ruleID,
+		LastRunStatus: status,
+		LastRunTime:   &now,
+	}
+
+	if err != nil {
+		rule.LastRunErrorMessage = err.Error()
+	}
+
+	currentRule, viewErr := re.repo.ViewRule(ctx, ruleID)
+	if viewErr != nil {
+		switch status {
+		case SuccessStatus, PartialSuccessStatus, FailureStatus:
+			rule.ExecutionCount = 1
+		default:
+			rule.ExecutionCount = 0
+		}
+	} else {
+		rule.ExecutionCount = currentRule.ExecutionCount
+
+		switch status {
+		case SuccessStatus, PartialSuccessStatus, FailureStatus:
+			rule.ExecutionCount = currentRule.ExecutionCount + 1
+		}
+	}
+
+	if err := re.repo.UpdateRuleExecutionStatus(ctx, rule); err != nil {
+		re.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelWarn,
+			Message: fmt.Sprintf("failed to update rule execution status: %s", err),
+			Details: []slog.Attr{
+				slog.String("rule_id", ruleID),
+				slog.String("status", status.String()),
+			},
+		}
+	}
 }

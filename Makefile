@@ -262,6 +262,7 @@ fetch_supermq:
  run: check_certs
 	MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
 		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/seaweedfs-compose.yaml \
 		-f docker/addons/timescale-writer/docker-compose.yaml \
 		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 

@@ -1,0 +1,16 @@
+{
+  "identities": [
+    {
+      "name": "localuser",
+      "credentials": [
+        {
+          "accessKey": "localKey",
+          "secretKey": "localSecret"
+        }
+      ]
+    }
+  ],
+  "s3": {
+    "region": "fra1"
+  }
+}

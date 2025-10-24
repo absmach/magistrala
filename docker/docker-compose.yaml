@@ -110,9 +110,16 @@ services:
       MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+/readers-grpc-client.crt}
       MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
       MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+/readers-grpc-server-ca.crt}
+      MG_BACKEND_OBJECT_STORAGE_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      MG_BACKEND_OBJECT_STORAGE_BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      MG_BACKEND_OBJECT_STORAGE_ENDPOINT: ${MG_BACKEND_OBJECT_STORAGE_ENDPOINT}
+      MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      MG_BACKEND_OBJECT_STORAGE_SECRET_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
+      MG_BACKEND_OBJECT_STORAGE_TTL:  ${MG_BACKEND_OBJECT_STORAGE_TTL}
 
     depends_on:
       - ui-backend-db
+      - seaweed-s3
     volumes:
       # Auth gRPC client certificates
       - type: bind
@@ -179,6 +186,58 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
+
+  seaweed-master:
+    image: chrislusf/seaweedfs:latest
+    command: "master -ip=seaweed-master -port=9333 -defaultReplication=000"
+    ports:
+      - "9333:9333"
+    volumes:
+      - ./data/seaweed-master:/data
+
+  seaweed-volume:
+    image: chrislusf/seaweedfs:latest
+    command: 'volume -max=5 -mserver="seaweed-master:9333" -port=8080 -dir="/data"'
+    depends_on:
+      - seaweed-master
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./data/seaweed-volume:/data
+
+  seaweed-s3:
+    image: chrislusf/seaweedfs:latest
+    command: 's3 -port=8333 -config=/etc/seaweedfs/s3.json -filer="seaweed-master:9333"'
+    depends_on:
+      - seaweed-master
+      - seaweed-volume
+    ports:
+      - "8333:8333"
+    volumes:
+      - ./data/seaweed-s3:/data
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json
+  
+  seaweed-init:
+    image: amazon/aws-cli:latest
+    depends_on:
+      - seaweed-s3
+    entrypoint: >
+      sh -c "
+        echo 'Waiting for SeaweedFS S3 gateway...' &&
+        until curl -s http://seaweed-s3:8333 > /dev/null; do sleep 1; done &&
+        echo 'Creating buckets...' &&
+        aws --endpoint-url http://seaweed-s3:8333 \
+          --region $(REGION) \
+          --no-verify-ssl \
+          --output text \
+          s3 mb s3://$(BUCKET) &&
+        echo 'Buckets ready.'
+      "
+    environment:
+      REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      AWS_ACCESS_KEY_ID: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
 
   re-db:
     image: postgres:16.2-alpine

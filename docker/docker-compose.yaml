@@ -218,7 +218,7 @@ services:
 
   seaweedfs-filer:
     image: chrislusf/seaweedfs
-    container_name: magistrala-seaweedfs-filler
+    container_name: magistrala-seaweedfs-filer
     ports:
       - 8888:8888
       - 18888:18888
@@ -252,12 +252,24 @@ services:
       - magistrala-base-net
 
   seaweedfs-init:
-    image: chrislusf/seaweedfs
+    image: curlimages/curl
+    container_name: magistrala-seaweedfs-init
     depends_on:
       - seaweedfs-s3
-    entrypoint: >
-      sh -c "sleep 3 &&
-             weed shell -master=seaweedfs-master:9333 's3.bucket.create $(BUCKET)'"
+    command: >
+      /bin/sh -c "
+      echo 'Creating buckets, wait for 20s...';
+      sleep 20;
+      HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -f -X PUT http://seaweedfs-s3:8333/$${BUCKET});
+      if [ $${HTTP_CODE} = '200' ] || [ $${HTTP_CODE} = '201' ]; then
+        echo \"[INIT] Bucket $${BUCKET} created successfully!\";
+        curl -s http://seaweedfs-s3:8333/ | grep -o '<Name>[^<]*</Name>';
+        exit 0;
+      else
+        echo \"[INIT] Failed to create bucket $${BUCKET}! HTTP code $${HTTP_CODE}\" >&2;
+        exit 1;
+      fi
+      "
     networks:
       - magistrala-base-net
     environment:

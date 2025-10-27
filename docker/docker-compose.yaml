@@ -266,7 +266,7 @@ services:
         curl -s http://seaweedfs-s3:8333/ | grep -o '<Name>[^<]*</Name>';
         exit 0;
       else
-        echo \"[INIT] Failed to create bucket $${BUCKET}! HTTP code $${HTTP_CODE}\" >&2;
+        echo \"[INIT] Failed to create bucket $${BUCKET}! HTTP code $${HTTP_CODE}.\" >&2;
         exit 1;
       fi
       "

@@ -1346,8 +1346,9 @@ services:
       SMQ_COAP_ADAPTER_LOG_LEVEL: ${SMQ_COAP_ADAPTER_LOG_LEVEL}
       SMQ_COAP_ADAPTER_HOST: ${SMQ_COAP_ADAPTER_HOST}
       SMQ_COAP_ADAPTER_PORT: ${SMQ_COAP_ADAPTER_PORT}
-      SMQ_COAP_ADAPTER_SERVER_CERT: ${SMQ_COAP_ADAPTER_SERVER_CERT}
-      SMQ_COAP_ADAPTER_SERVER_KEY: ${SMQ_COAP_ADAPTER_SERVER_KEY}
+      SMQ_COAP_ADAPTER_SERVER_CERT_FILE: ${SMQ_COAP_ADAPTER_SERVER_CERT_FILE:+/coap-server.crt}
+      SMQ_COAP_ADAPTER_SERVER_KEY_FILE: ${SMQ_COAP_ADAPTER_SERVER_KEY_FILE:+/coap-server.key}
+      SMQ_COAP_ADAPTER_SERVER_CA_FILE: ${SMQ_COAP_ADAPTER_SERVER_CA_FILE:+/coap-server-ca.crt}
       SMQ_COAP_ADAPTER_HTTP_HOST: ${SMQ_COAP_ADAPTER_HTTP_HOST}
       SMQ_COAP_ADAPTER_HTTP_PORT: ${SMQ_COAP_ADAPTER_HTTP_PORT}
       SMQ_COAP_ADAPTER_HTTP_SERVER_CERT: ${SMQ_COAP_ADAPTER_HTTP_SERVER_CERT}
@@ -1382,6 +1383,22 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      # DTLS certificates for CoAP
+      - type: bind
+        source: ${SMQ_COAP_ADAPTER_SERVER_CERT_FILE:-ssl/certs/dummy/server_cert}
+        target: /coap-server${SMQ_COAP_ADAPTER_SERVER_CERT_FILE:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_COAP_ADAPTER_SERVER_KEY_FILE:-ssl/certs/dummy/server_key}
+        target: /coap-server${SMQ_COAP_ADAPTER_SERVER_KEY_FILE:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_COAP_ADAPTER_SERVER_CA_FILE:-ssl/certs/dummy/server_ca}
+        target: /coap-server-ca${SMQ_COAP_ADAPTER_SERVER_CA_FILE:+.crt}
+        bind:
+          create_host_path: true
       # Clients gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

@@ -40,6 +40,9 @@ CHANNELS_GRPC_SERVER_CN=channels
 CHANNELS_GRPC_CLIENT_CN=channels-client
 CHANNELS_GRPC_SERVER_CRT_FILE_NAME=channels-grpc-server
 CHANNELS_GRPC_CLIENT_CRT_FILE_NAME=channels-grpc-client
+COAP_DTLS_SERVER_CONF_FILE_NAME=coap-server.conf
+COAP_DTLS_SERVER_CN=coap
+COAP_DTLS_SERVER_CRT_FILE_NAME=coap-server
 
 define GRPC_CERT_CONFIG
 [req]
@@ -69,7 +72,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs
+all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs
 
 # CA name and key is "ca".
 ca:
@@ -146,6 +149,9 @@ clients_grpc_certs:
 
 channels_grpc_certs:
 	$(call gen_grpc_cert_pair,$(CHANNELS_GRPC_SERVER_CRT_FILE_NAME),$(CHANNELS_GRPC_SERVER_CN),$(CHANNELS_GRPC_CLIENT_CRT_FILE_NAME),$(CHANNELS_GRPC_CLIENT_CN))
+
+coap_dtls_certs:
+	$(call gen_grpc_cert,$(COAP_DTLS_SERVER_CRT_FILE_NAME),$(COAP_DTLS_SERVER_CN))
 
 clean_certs:
 	rm -r $(CRT_LOCATION)/*.crt

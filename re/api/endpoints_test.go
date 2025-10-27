@@ -1112,6 +1112,287 @@ func TestDeleteRuleEndpoint(t *testing.T) {
 	}
 }
 
+func TestListRuleExecutionsEndpoint(t *testing.T) {
+	ts, svc, authn := newRuleEngineServer()
+	defer ts.Close()
+
+	numLogs := 10
+	now := time.Now().UTC()
+	execTime := now
+	var executions []re.RuleExecution
+	for i := 0; i < numLogs; i++ {
+		execution := re.RuleExecution{
+			ID:        testsutil.GenerateUUID(&testing.T{}),
+			RuleID:    validID,
+			Level:     "INFO",
+			Message:   "rule processed successfully",
+			Error:     "",
+			ExecTime:  execTime,
+			CreatedAt: now,
+		}
+		executions = append(executions, execution)
+	}
+
+	cases := []struct {
+		desc                   string
+		query                  string
+		ruleID                 string
+		domainID               string
+		token                  string
+		session                smqauthn.Session
+		listExecutionsResponse re.RuleExecutionPage
+		status                 int
+		authnErr               error
+		err                    error
+	}{
+		{
+			desc:     "list rule executions successfully",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			status:   http.StatusOK,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			err: nil,
+		},
+		{
+			desc:     "list rule executions with empty token",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    "",
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "list rule executions with invalid token",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    invalidToken,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:   "list rule executions with empty domainID",
+			ruleID: validID,
+			token:  validToken,
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:     "list rule executions with offset",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions[5:],
+			},
+			query:  "offset=5",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with invalid offset",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "offset=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrValidation,
+		},
+		{
+			desc:     "list rule executions with limit",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions[0:5],
+			},
+			query:  "limit=5",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with invalid limit",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "limit=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrValidation,
+		},
+		{
+			desc:     "list rule executions with limit that is too big",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "limit=10000",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrLimitSize,
+		},
+		{
+			desc:     "list rule executions with level filter",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      0,
+				Executions: []re.RuleExecution{},
+			},
+			query:  "level=ERROR",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with level filter case insensitive",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      0,
+				Executions: []re.RuleExecution{},
+			},
+			query:  "level=error",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with invalid level",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "level=INVALID",
+			status:   http.StatusBadRequest,
+			err:      re.ErrInvalidExecutionLevel,
+		},
+		{
+			desc:     "list rule executions with duplicate level",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "level=INFO&level=ERROR",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list rule executions with order by created_at",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			query:  "order=created_at",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with order by name",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			query:  "order=name",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with invalid order",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "order=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidOrder,
+		},
+		{
+			desc:     "list rule executions with ascending direction",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			query:  "dir=asc",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with descending direction",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			query:  "dir=desc",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list rule executions with invalid direction",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			query:    "dir=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidDirection,
+		},
+		{
+			desc:     "list rule executions with order and direction",
+			domainID: domainID,
+			ruleID:   validID,
+			token:    validToken,
+			listExecutionsResponse: re.RuleExecutionPage{
+				Total:      uint64(numLogs),
+				Executions: executions,
+			},
+			query:  "order=created_at&dir=asc",
+			status: http.StatusOK,
+			err:    nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodGet,
+				url:         fmt.Sprintf("%s/%s/rules/%s/executions?%s", ts.URL, tc.domainID, tc.ruleID, tc.query),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID}
+			}
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("ListRuleExecutions", mock.Anything, tc.session, mock.Anything).Return(tc.listExecutionsResponse, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			var bodyRes respBody
+			err = json.NewDecoder(res.Body).Decode(&bodyRes)
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+			if bodyRes.Err != "" || bodyRes.Message != "" {
+				err = errors.Wrap(errors.New(bodyRes.Err), errors.New(bodyRes.Message))
+			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
 type respBody struct {
 	Err     string    `json:"error"`
 	Message string    `json:"message"`

@@ -148,3 +148,25 @@ func fromNullString(nullString sql.NullString) string {
 	}
 	return nullString.String
 }
+
+type dbRuleExecution struct {
+	ID        string         `db:"id"`
+	RuleID    string         `db:"rule_id"`
+	Level     string         `db:"level"`
+	Message   string         `db:"message"`
+	Error     sql.NullString `db:"error"`
+	ExecTime  time.Time      `db:"exec_time"`
+	CreatedAt time.Time      `db:"created_at"`
+}
+
+func dbToRuleExecution(dbe dbRuleExecution) re.RuleExecution {
+	return re.RuleExecution{
+		ID:        dbe.ID,
+		RuleID:    dbe.RuleID,
+		Level:     dbe.Level,
+		Message:   dbe.Message,
+		Error:     fromNullString(dbe.Error),
+		ExecTime:  dbe.ExecTime,
+		CreatedAt: dbe.CreatedAt,
+	}
+}

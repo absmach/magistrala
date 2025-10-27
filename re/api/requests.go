@@ -134,3 +134,34 @@ func (req deleteRuleReq) validate() error {
 
 	return nil
 }
+
+type listRuleExecutionsReq struct {
+	id string
+	re.RuleExecutionPageMeta
+}
+
+func (req listRuleExecutionsReq) validate() error {
+	if req.id == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if req.Limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+
+	if req.Level != "" && !re.ValidExecutionLevels[req.Level] {
+		return errors.Wrap(re.ErrInvalidExecutionLevel, apiutil.ErrValidation)
+	}
+
+	switch req.Order {
+	case "", api.CreatedAtOrder, api.NameKey, "exec_time":
+	default:
+		return errors.Wrap(apiutil.ErrInvalidOrder, apiutil.ErrValidation)
+	}
+
+	if req.Dir != "" && req.Dir != api.AscDir && req.Dir != api.DescDir {
+		return errors.Wrap(apiutil.ErrInvalidDirection, apiutil.ErrValidation)
+	}
+
+	return nil
+}

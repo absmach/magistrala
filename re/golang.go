@@ -33,7 +33,7 @@ type message struct {
 func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) pkglog.RunInfo {
 	i := golang.New(golang.Options{})
 	if err := i.Use(stdlib.Symbols); err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error(), Error: err}
 	}
 	m := message{
 		Created:   msg.Created,
@@ -55,18 +55,19 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 		},
 	})
 	if err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error(), Error: err}
 	}
 	if _, err = i.Eval(r.Logic.Value); err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error(), Error: err}
 	}
 	ifc, err := i.Eval(logicFunction)
 	if err != nil {
-		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
+		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error(), Error: err}
 	}
 	f, ok := ifc.Interface().(func() any)
 	if !ok {
-		return pkglog.RunInfo{Level: slog.LevelError, Message: "invalid logic function signature", Details: details}
+		err := fmt.Errorf("invalid logic function signature")
+		return pkglog.RunInfo{Level: slog.LevelError, Message: err.Error(), Details: details, Error: err}
 	}
 	res := f()
 	if b, ok := res.(bool); ok && !b {
@@ -81,6 +82,7 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 	if err != nil {
 		ret.Level = slog.LevelError
 		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)
+		ret.Error = err
 	}
 	return ret
 }

@@ -3,10 +3,15 @@
 
 package logger
 
-import "log/slog"
+import (
+	"log/slog"
+	"time"
+)
 
 type RunInfo struct {
-	Level   slog.Level
-	Details []slog.Attr
-	Message string
+	Level    slog.Level
+	Details  []slog.Attr
+	Message  string
+	Error    error
+	ExecTime time.Time
 }

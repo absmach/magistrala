@@ -99,6 +99,13 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 						api.EncodeResponse,
 						opts...,
 					), "disable_rule").ServeHTTP)
+
+					r.Get("/executions", otelhttp.NewHandler(kithttp.NewServer(
+						listRuleExecutionsEndpoint(svc),
+						decodeListRuleExecutionsRequest,
+						api.EncodeResponse,
+						opts...,
+					), "list_rule_executions").ServeHTTP)
 				})
 			})
 		})
@@ -233,4 +240,44 @@ func decodeDeleteRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
 
 	return deleteRuleReq{id: id}, nil
+}
+
+func decodeListRuleExecutionsRequest(_ context.Context, r *http.Request) (any, error) {
+	id := chi.URLParam(r, ruleIdKey)
+
+	offset, err := apiutil.ReadNumQuery[uint64](r, api.OffsetKey, api.DefOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	limit, err := apiutil.ReadNumQuery[uint64](r, api.LimitKey, api.DefLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	level, err := apiutil.ReadStringQuery(r, api.LevelKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	level = strings.ToUpper(level)
+
+	order, err := apiutil.ReadStringQuery(r, api.OrderKey, api.CreatedAtOrder)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	dir, err := apiutil.ReadStringQuery(r, api.DirKey, api.DefDir)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	return listRuleExecutionsReq{
+		id: id,
+		RuleExecutionPageMeta: re.RuleExecutionPageMeta{
+			RuleID: id,
+			Offset: offset,
+			Limit:  limit,
+			Level:  level,
+			Order:  order,
+			Dir:    dir,
+		},
+	}, nil
 }

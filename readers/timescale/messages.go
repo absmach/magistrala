@@ -288,13 +288,28 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 	}
 
 	aggCols := map[string]bool{
-		orderByTime: true, "value": true, "publisher": true, "protocol": true,
-		"subtopic": true, "name": true, "unit": true,
+		orderByTime: true,
+		"value":     true,
+		"sum":       true,
+		"publisher": true,
+		"protocol":  true,
+		"subtopic":  true,
+		"name":      true,
+		"unit":      true,
 	}
 
 	senmlCols := map[string]bool{
-		orderByTime: true, "value": true, "publisher": true, "name": true,
-		"protocol": true, "channel": true, "subtopic": true, "unit": true,
+		orderByTime:    true,
+		"value":        true,
+		"bool_value":   true,
+		"string_value": true,
+		"data_value":   true,
+		"publisher":    true,
+		"name":         true,
+		"protocol":     true,
+		"channel":      true,
+		"subtopic":     true,
+		"unit":         true,
 	}
 
 	jsonCols := map[string]bool{

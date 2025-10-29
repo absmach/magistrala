@@ -110,9 +110,17 @@ services:
       MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+/readers-grpc-client.crt}
       MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
       MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+/readers-grpc-server-ca.crt}
-
+      MG_BACKEND_OBJECT_STORAGE_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      MG_BACKEND_OBJECT_STORAGE_BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      MG_BACKEND_OBJECT_STORAGE_ENDPOINT: ${MG_BACKEND_OBJECT_STORAGE_ENDPOINT}
+      MG_BACKEND_OBJECT_STORAGE_USE_PATH_STYLE: ${MG_BACKEND_OBJECT_STORAGE_USE_PATH_STYLE}
+      MG_BACKEND_OBJECT_STORAGE_REWRITE_URL: ${MG_BACKEND_OBJECT_STORAGE_REWRITE_URL}
+      MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      MG_BACKEND_OBJECT_STORAGE_SECRET_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
+      MG_BACKEND_OBJECT_STORAGE_TTL: ${MG_BACKEND_OBJECT_STORAGE_TTL}
     depends_on:
       - ui-backend-db
+      - seaweedfs-s3
     volumes:
       # Auth gRPC client certificates
       - type: bind
@@ -179,6 +187,93 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs # use a remote image
+    container_name: magistrala-seaweedfs-master
+    ports:
+      - 9333:9333
+      - 19333:19333
+      - 9324:9324
+    command: "master -ip=seaweedfs-master -ip.bind=0.0.0.0 -metricsPort=9324"
+    volumes:
+      - ./data/seaweed-master:/data
+    networks:
+      - magistrala-base-net
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs # use a remote image
+    container_name: magistrala-seaweedfs-volume
+    ports:
+      - 9000:8080
+      - 18080:18080
+      - 9325:9325
+    command: 'volume -mserver="seaweedfs-master:9333" -ip.bind=0.0.0.0 -port=8080  -metricsPort=9325'
+    depends_on:
+      - seaweedfs-master
+    volumes:
+      - ./data/seaweed-volumes:/data
+    networks:
+      - magistrala-base-net
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs
+    container_name: magistrala-seaweedfs-filer
+    ports:
+      - 8888:8888
+      - 18888:18888
+      - 9326:9326
+    command: 'filer -master="seaweedfs-master:9333" -ip.bind=0.0.0.0 -metricsPort=9326'
+    tty: true
+    stdin_open: true
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    volumes:
+    - ./data/seaweed-filer:/data
+    networks:
+      - magistrala-base-net
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs # use a remote image
+    container_name: magistrala-seaweedfs-s3
+    ports:
+      - 8333:8333
+      - 9327:9327
+    command: 's3 -filer="seaweedfs-filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327'
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+      - seaweedfs-filer
+    volumes:
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json
+      - ./data/seaweed-s3:/data
+    networks:
+      - magistrala-base-net
+
+  seaweedfs-init:
+    image: curlimages/curl
+    container_name: magistrala-seaweedfs-init
+    depends_on:
+      - seaweedfs-s3
+    command: >
+      /bin/sh -c "
+      echo 'Creating buckets, wait for 20s...';
+      sleep 20;
+      HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -f -X PUT http://seaweedfs-s3:8333/$${BUCKET});
+      if [ $${HTTP_CODE} = '200' ] || [ $${HTTP_CODE} = '201' ]; then
+        echo \"[INIT] Bucket $${BUCKET} created successfully!\";
+        curl -s http://seaweedfs-s3:8333/ | grep -o '<Name>[^<]*</Name>';
+        exit 0;
+      else
+        echo \"[INIT] Failed to create bucket $${BUCKET}! HTTP code $${HTTP_CODE}.\" >&2;
+        exit 1;
+      fi
+      "
+    networks:
+      - magistrala-base-net
+    environment:
+      BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
 
   re-db:
     image: postgres:16.2-alpine

@@ -15,3 +15,6 @@ coverage
 
 # Schemathesis
 .hypothesis
+
+# Docker volume mounted data
+docker/data/*

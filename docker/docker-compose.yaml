@@ -117,7 +117,7 @@ services:
       MG_BACKEND_OBJECT_STORAGE_REWRITE_URL: ${MG_BACKEND_OBJECT_STORAGE_REWRITE_URL}
       MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
       MG_BACKEND_OBJECT_STORAGE_SECRET_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
-      MG_BACKEND_OBJECT_STORAGE_TTL:  ${MG_BACKEND_OBJECT_STORAGE_TTL}
+      MG_BACKEND_OBJECT_STORAGE_TTL: ${MG_BACKEND_OBJECT_STORAGE_TTL}
     depends_on:
       - ui-backend-db
       - seaweedfs-s3
@@ -230,7 +230,7 @@ services:
       - seaweedfs-master
       - seaweedfs-volume
     volumes:
-    - ./data/seaweed-filler:/data
+    - ./data/seaweed-filer:/data
     networks:
       - magistrala-base-net
 

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	csdk "github.com/absmach/certs/sdk"
+	csdkmocks "github.com/absmach/certs/sdk/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/provision"
@@ -25,7 +26,8 @@ var validToken = "valid"
 
 func TestMapping(t *testing.T) {
 	mgsdk := new(sdkmocks.SDK)
-	svc := provision.New(validConfig, mgsdk, smqlog.NewMock())
+	certs := new(csdkmocks.SDK)
+	svc := provision.New(validConfig, mgsdk, certs, smqlog.NewMock())
 
 	cases := []struct {
 		desc    string
@@ -215,7 +217,8 @@ func TestCert(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
 			mgsdk := new(sdkmocks.SDK)
-			svc := provision.New(c.config, mgsdk, smqlog.NewMock())
+			certs := new(csdkmocks.SDK)
+			svc := provision.New(c.config, mgsdk, certs, smqlog.NewMock())
 
 			mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
 			mgsdk.On("IssueCert", mock.Anything, c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)

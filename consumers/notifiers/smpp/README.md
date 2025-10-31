@@ -47,5 +47,5 @@ default values.
 
 Starting service will start consuming messages and sending SMS when a message is received.
 
-[doc]: https://docs.magistrala.abstractmachines.fr
+[doc]: https://docs.magistrala.absmach.eu
 

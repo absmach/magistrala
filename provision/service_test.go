@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"testing"
 
+	csdk "github.com/absmach/certs/sdk"
 	"github.com/absmach/magistrala/internal/testsutil"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/provision"
@@ -217,8 +218,8 @@ func TestCert(t *testing.T) {
 			svc := provision.New(c.config, mgsdk, smqlog.NewMock())
 
 			mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
-			mgsdk.On("IssueCert", mock.Anything, c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(smqSDK.Cert{SerialNumber: c.serial}, c.sdkCertErr)
-			mgsdk.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(smqSDK.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
+			mgsdk.On("IssueCert", mock.Anything, c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
+			mgsdk.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(csdk.Certificate{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 			login := smqSDK.Login{
 				Username: c.config.Server.MgUsername,
 				Password: c.config.Server.MgPass,

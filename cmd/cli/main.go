@@ -7,6 +7,7 @@ package main
 import (
 	"log"
 
+	certscli "github.com/absmach/certs/cli"
 	"github.com/absmach/magistrala/cli"
 	mgcli "github.com/absmach/magistrala/cli"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
@@ -57,7 +58,7 @@ func main() {
 	groupsCmd := smqcli.NewGroupsCmd()
 	channelsCmd := smqcli.NewChannelsCmd()
 	messagesCmd := smqcli.NewMessagesCmd()
-	certsCmd := smqcli.NewCertsCmd()
+	certsCmd := certscli.NewCertsCmd()
 	configCmd := smqcli.NewConfigCmd()
 	invitationsCmd := smqcli.NewInvitationsCmd()
 	journalCmd := smqcli.NewJournalCmd()

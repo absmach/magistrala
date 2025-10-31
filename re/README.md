@@ -197,5 +197,5 @@ This command starts the Rules Engine service using Docker Compose with the confi
 - [Magistrala Documentation][doc]
 - [Docker Compose][compose]
 
-[doc]: https://docs.magistrala.abstractmachines.fr
+[doc]: https://docs.magistrala.absmach.eu
 [compose]: ../docker/docker-compose.yaml

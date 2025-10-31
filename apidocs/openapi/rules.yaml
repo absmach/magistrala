@@ -24,7 +24,7 @@ tags:
     description: Everything about your Rules Engine
     externalDocs:
       description: Find out more about rules engine
-      url: https://docs.magistrala.abstractmachines.fr/
+      url: https://docs.magistrala.absmach.eu
 
 paths:
   /{domainID}/rules:
@@ -40,7 +40,7 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
-        - $ref: '#/components/requestBodies/RuleCreateReq'
+        $ref: '#/components/requestBodies/RuleCreateReq'
       responses:
         '201':
           $ref: '#/components/responses/RuleCreateRes'
@@ -121,7 +121,7 @@ paths:
       security:
         - bearerAuth: []
       requestBody:
-        $ref: '#/components/schemas/Rule'
+        $ref: '#/components/requestBodies/RuleUpdateReq'
       responses:
         '200':
           $ref: '#/components/responses/RuleRes'
@@ -469,6 +469,65 @@ components:
               - input_topic
               - logic
               - schedule
+    RuleUpdateReq:
+      description: JSON-formatted document describing the rule update
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              name:
+                type: string
+                description: Rule name
+              metadata:
+                type: object
+                description: Custom metadata
+                additionalProperties:
+                  type: string
+              input_channel:
+                type: string
+                description: Input channel for receiving messages
+              input_topic:
+                type: string
+                description: Input topic for receiving messages
+              logic:
+                type: object
+                description: Rule processing logic script
+                properties:
+                  script:
+                    type: string
+                    description: Script content
+              output_channel:
+                type: string
+                description: Output channel for processed messages
+              output_topic:
+                type: string
+                description: Output topic for processed messages
+              schedule:
+                type: object
+                description: Rule execution schedule
+                properties:
+                  start_datetime:
+                    type: string
+                    format: date-time
+                    description: When the schedule becomes active
+                  time:
+                    type: string
+                    format: date-time
+                    description: Specific time for the rule to run
+                  recurring:
+                    type: string
+                    description: Schedule recurrence pattern
+                    enum: [None, Daily, Weekly, Monthly]
+                  recurring_period:
+                    type: integer
+                    minimum: 1
+                    description: Controls how many intervals to skip between executions
+              status:
+                type: string
+                description: Rule status
+                enum: [enabled, disabled]
 
   responses:
     RuleCreateRes:

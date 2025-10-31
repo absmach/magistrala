@@ -1,0 +1,508 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.1
+info:
+  title: Magistrala Alarms API
+  description: |
+    HTTP API for managing alarms service.
+    Some useful links:
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
+  contact:
+    email: info@abstractmachines.fr
+  license:
+    name: Apache 2.0
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
+  version: 0.15.1
+
+servers:
+  - url: http://localhost:8050
+  - url: https://localhost:8050
+
+tags:
+  - name: alarms
+    description: Everything about your Alarms
+    externalDocs:
+      description: Find out more about alarms
+      url: https://docs.magistrala.absmach.eu
+
+paths:
+  /{domainID}/alarms:
+    get:
+      operationId: listAlarms
+      summary: List Alarms
+      description: |
+        Retrieves a list of alarms with optional filtering
+      tags:
+        - alarms
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Dir'
+        - $ref: '#/components/parameters/ChannelID'
+        - $ref: '#/components/parameters/ClientID'
+        - $ref: '#/components/parameters/Subtopic'
+        - $ref: '#/components/parameters/RuleID'
+        - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/AssigneeID'
+        - $ref: '#/components/parameters/Severity'
+        - $ref: '#/components/parameters/UpdatedBy'
+        - $ref: '#/components/parameters/AssignedBy'
+        - $ref: '#/components/parameters/AcknowledgedBy'
+        - $ref: '#/components/parameters/ResolvedBy'
+        - $ref: '#/components/parameters/CreatedFrom'
+        - $ref: '#/components/parameters/CreatedTo'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AlarmsPageRes'
+        '400':
+          description: Failed due to malformed query parameters
+        '401':
+          description: Missing or invalid access token
+        '422':
+          description: Database can't process request
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /{domainID}/alarms/{alarmID}:
+    get:
+      operationId: viewAlarm
+      summary: View Alarm
+      description: Retrieves an alarm by ID
+      tags:
+        - alarms
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/AlarmID'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          $ref: '#/components/responses/AlarmRes'
+        '400':
+          description: Missing or invalid alarm ID
+        '401':
+          description: Missing or invalid access token
+        '403':
+          description: Failed to perform authorization over the entity
+        '404':
+          description: Alarm does not exist
+        '422':
+          description: Database can't process request
+        '500':
+          $ref: '#/components/responses/ServiceError'
+    put:
+      operationId: updateAlarm
+      summary: Update Alarm
+      description: Updates an existing alarm
+      tags:
+        - alarms
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/AlarmID'
+      security:
+        - bearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/AlarmUpdateReq'
+      responses:
+        '200':
+          $ref: '#/components/responses/AlarmRes'
+        '400':
+          description: Failed due to malformed JSON
+        '401':
+          description: Missing or invalid access token
+        '403':
+          description: Failed to perform authorization over the entity
+        '404':
+          description: Alarm does not exist
+        '415':
+          description: Missing or invalid content type
+        '422':
+          description: Database can't process request
+        '500':
+          $ref: '#/components/responses/ServiceError'
+    delete:
+      operationId: deleteAlarm
+      summary: Delete Alarm
+      description: Deletes an alarm
+      tags:
+        - alarms
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/AlarmID'
+      security:
+        - bearerAuth: []
+      responses:
+        '204':
+          description: Alarm deleted successfully
+        '400':
+          description: Failed due to malformed alarm ID
+        '401':
+          description: Missing or invalid access token
+        '403':
+          description: Failed to perform authorization over the entity
+        '404':
+          description: Alarm does not exist
+        '422':
+          description: Database can't process request
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+  /health:
+    get:
+      summary: Retrieves service health check info
+      tags:
+        - health
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthRes'
+        '500':
+          $ref: '#/components/responses/ServiceError'
+
+components:
+  schemas:
+    Alarm:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Unique alarm identifier
+          readOnly: true
+        rule_id:
+          type: string
+          description: Rule ID that triggered this alarm
+        domain_id:
+          type: string
+          description: Domain ID this alarm belongs to
+        channel_id:
+          type: string
+          description: Channel ID where the alarm was triggered
+        client_id:
+          type: string
+          description: Client ID that triggered the alarm
+        subtopic:
+          type: string
+          description: Subtopic associated with the alarm
+        status:
+          type: string
+          description: Alarm status
+          enum: [active, cleared]
+        measurement:
+          type: string
+          description: Measurement that triggered the alarm
+        value:
+          type: string
+          description: Value that triggered the alarm
+        unit:
+          type: string
+          description: Unit of measurement
+        threshold:
+          type: string
+          description: Threshold value that was exceeded
+        cause:
+          type: string
+          description: Cause or description of the alarm
+        severity:
+          type: integer
+          description: Severity level (0-100)
+          minimum: 0
+          maximum: 100
+        assignee_id:
+          type: string
+          description: ID of the user assigned to this alarm
+        created_at:
+          type: string
+          format: date-time
+          description: Creation timestamp
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          description: Last update timestamp
+          readOnly: true
+        updated_by:
+          type: string
+          description: User who last updated the alarm
+          readOnly: true
+        assigned_at:
+          type: string
+          format: date-time
+          description: When the alarm was assigned
+          readOnly: true
+        assigned_by:
+          type: string
+          description: User who assigned the alarm
+          readOnly: true
+        acknowledged_at:
+          type: string
+          format: date-time
+          description: When the alarm was acknowledged
+          readOnly: true
+        acknowledged_by:
+          type: string
+          description: User who acknowledged the alarm
+          readOnly: true
+        resolved_at:
+          type: string
+          format: date-time
+          description: When the alarm was resolved
+          readOnly: true
+        resolved_by:
+          type: string
+          description: User who resolved the alarm
+          readOnly: true
+        metadata:
+          type: object
+          description: Custom metadata
+          additionalProperties: true
+
+    AlarmsPage:
+      type: object
+      properties:
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval
+          minimum: 0
+          default: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve
+          minimum: 1
+          maximum: 1000
+          default: 10
+        total:
+          type: integer
+          description: Total number of results
+          minimum: 0
+        alarms:
+          type: array
+          minItems: 0
+          items:
+            $ref: '#/components/schemas/Alarm'
+      required:
+        - alarms
+        - total
+        - offset
+        - limit
+
+  parameters:
+    DomainID:
+      name: domainID
+      description: Domain ID
+      in: path
+      required: true
+      schema:
+        type: string
+    AlarmID:
+      name: alarmID
+      description: Alarm ID
+      in: path
+      required: true
+      schema:
+        type: string
+    Offset:
+      name: offset
+      description: Number of items to skip
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve
+      in: query
+      required: false
+      schema:
+        type: integer
+        default: 10
+        minimum: 1
+        maximum: 1000
+    Order:
+      name: order
+      description: Order by field
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [created_at, updated_at]
+        default: created_at
+    Dir:
+      name: dir
+      description: Sort direction
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [asc, desc]
+        default: desc
+    ChannelID:
+      name: channel_id
+      description: Filter by channel ID
+      in: query
+      required: false
+      schema:
+        type: string
+    ClientID:
+      name: client_id
+      description: Filter by client ID
+      in: query
+      required: false
+      schema:
+        type: string
+    Subtopic:
+      name: subtopic
+      description: Filter by subtopic
+      in: query
+      required: false
+      schema:
+        type: string
+    RuleID:
+      name: rule_id
+      description: Filter by rule ID
+      in: query
+      required: false
+      schema:
+        type: string
+    Status:
+      name: status
+      description: Filter by alarm status
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [active, cleared, all]
+        default: all
+    AssigneeID:
+      name: assignee_id
+      description: Filter by assignee ID
+      in: query
+      required: false
+      schema:
+        type: string
+    Severity:
+      name: severity
+      description: Filter by severity level
+      in: query
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+        maximum: 100
+    UpdatedBy:
+      name: updated_by
+      description: Filter by user who updated
+      in: query
+      required: false
+      schema:
+        type: string
+    AssignedBy:
+      name: assigned_by
+      description: Filter by user who assigned
+      in: query
+      required: false
+      schema:
+        type: string
+    AcknowledgedBy:
+      name: acknowledged_by
+      description: Filter by user who acknowledged
+      in: query
+      required: false
+      schema:
+        type: string
+    ResolvedBy:
+      name: resolved_by
+      description: Filter by user who resolved
+      in: query
+      required: false
+      schema:
+        type: string
+    CreatedFrom:
+      name: created_from
+      description: Filter alarms created after this time (RFC3339 format)
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+    CreatedTo:
+      name: created_to
+      description: Filter alarms created before this time (RFC3339 format)
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+
+  requestBodies:
+    AlarmUpdateReq:
+      description: JSON-formatted document describing the alarm update
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              status:
+                type: string
+                description: Alarm status
+                enum: [active, cleared]
+              assignee_id:
+                type: string
+                description: ID of the user assigned to this alarm
+              severity:
+                type: integer
+                description: Severity level (0-100)
+                minimum: 0
+                maximum: 100
+              metadata:
+                type: object
+                description: Custom metadata
+                additionalProperties: true
+
+  responses:
+    AlarmRes:
+      description: Alarm data retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Alarm'
+      links:
+        update:
+          operationId: updateAlarm
+          parameters:
+            alarmID: $response.body#/id
+            domainID: $response.body#/domain_id
+        delete:
+          operationId: deleteAlarm
+          parameters:
+            alarmID: $response.body#/id
+            domainID: $response.body#/domain_id
+    AlarmsPageRes:
+      description: Alarms page retrieved
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/AlarmsPage'
+    ServiceError:
+      description: Unexpected server-side error occurred
+    HealthRes:
+      description: Service Health Check
+      content:
+        application/health+json:
+          schema:
+            $ref: "./schemas/health_info.yaml"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"

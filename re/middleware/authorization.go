@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"context"
-	"maps"
 	"time"
 
 	"github.com/absmach/magistrala/re"
@@ -278,17 +277,18 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, pr smqauthz.Po
 }
 
 func (am *authorizationMiddleware) callOut(ctx context.Context, session authn.Session, op string, params map[string]any) error {
-	pl := map[string]any{
-		"entity_type":  entityType,
-		"subject_type": policies.UserType,
-		"subject_id":   session.UserID,
-		"domain":       session.DomainID,
-		"time":         time.Now().UTC(),
+	req := callout.Request{
+		BaseRequest: callout.BaseRequest{
+			EntityType: entityType,
+			CallerID:   session.UserID,
+			CallerType: policies.UserType,
+			DomainID:   session.DomainID,
+			Time:       time.Now().UTC(),
+			Operation:  op,
+		},
 	}
 
-	maps.Copy(params, pl)
-
-	if err := am.callout.Callout(ctx, op, params); err != nil {
+	if err := am.callout.Callout(ctx, req); err != nil {
 		return err
 	}
 

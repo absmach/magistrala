@@ -17,21 +17,22 @@ var errFailedToReadConfig = errors.New("failed to read config file")
 
 // ServiceConf represents service config.
 type ServiceConf struct {
-	Port       string `toml:"port"          env:"SMQ_PROVISION_HTTP_PORT"            envDefault:"9016"`
-	LogLevel   string `toml:"log_level"     env:"SMQ_PROVISION_LOG_LEVEL"            envDefault:"info"`
-	TLS        bool   `toml:"tls"           env:"SMQ_PROVISION_ENV_CLIENTS_TLS"      envDefault:"false"`
-	ServerCert string `toml:"server_cert"   env:"SMQ_PROVISION_SERVER_CERT"          envDefault:""`
-	ServerKey  string `toml:"server_key"    env:"SMQ_PROVISION_SERVER_KEY"           envDefault:""`
-	ClientsURL string `toml:"clients_url"    env:"SMQ_PROVISION_CLIENTS_LOCATION"      envDefault:"http://localhost"`
-	UsersURL   string `toml:"users_url"     env:"SMQ_PROVISION_USERS_LOCATION"       envDefault:"http://localhost"`
-	HTTPPort   string `toml:"http_port"     env:"SMQ_PROVISION_HTTP_PORT"            envDefault:"9016"`
-	MgEmail    string `toml:"smq_email"      env:"SMQ_PROVISION_EMAIL"                envDefault:"test@example.com"`
-	MgUsername string `toml:"smq_username"   env:"SMQ_PROVISION_USERNAME"             envDefault:"user"`
-	MgPass     string `toml:"smq_pass"       env:"SMQ_PROVISION_PASS"                 envDefault:"test"`
-	MgDomainID string `toml:"smq_domain_id"  env:"SMQ_PROVISION_DOMAIN_ID"            envDefault:""`
-	MgAPIKey   string `toml:"smq_api_key"    env:"SMQ_PROVISION_API_KEY"              envDefault:""`
-	MgBSURL    string `toml:"smq_bs_url"     env:"SMQ_PROVISION_BS_SVC_URL"           envDefault:"http://localhost:9000"`
-	MgCertsURL string `toml:"smq_certs_url"  env:"SMQ_PROVISION_CERTS_SVC_URL"        envDefault:"http://localhost:9019"`
+	Port       string `toml:"port"          env:"SMQ_PROVISION_HTTP_PORT"           envDefault:"9016"`
+	LogLevel   string `toml:"log_level"     env:"SMQ_PROVISION_LOG_LEVEL"           envDefault:"info"`
+	TLS        bool   `toml:"tls"           env:"SMQ_PROVISION_ENV_CLIENTS_TLS"     envDefault:"false"`
+	ServerCert string `toml:"server_cert"   env:"SMQ_PROVISION_SERVER_CERT"         envDefault:""`
+	ServerKey  string `toml:"server_key"    env:"SMQ_PROVISION_SERVER_KEY"          envDefault:""`
+	ClientsURL string `toml:"clients_url"   env:"SMQ_PROVISION_CLIENTS_LOCATION"    envDefault:"http://localhost"`
+	UsersURL   string `toml:"users_url"     env:"SMQ_PROVISION_USERS_LOCATION"      envDefault:"http://localhost"`
+	CertsURL   string `toml:"certs_url"     env:"SMQ_PROVISION_CERTS_LOCATION"      envDefault:"http://localhost"`
+	HTTPPort   string `toml:"http_port"     env:"SMQ_PROVISION_HTTP_PORT"           envDefault:"9016"`
+	MgEmail    string `toml:"smq_email"     env:"SMQ_PROVISION_EMAIL"               envDefault:"test@example.com"`
+	MgUsername string `toml:"smq_username"  env:"SMQ_PROVISION_USERNAME"            envDefault:"user"`
+	MgPass     string `toml:"smq_pass"      env:"SMQ_PROVISION_PASS"                envDefault:"test"`
+	MgDomainID string `toml:"smq_domain_id" env:"SMQ_PROVISION_DOMAIN_ID"           envDefault:""`
+	MgAPIKey   string `toml:"smq_api_key"   env:"SMQ_PROVISION_API_KEY"             envDefault:""`
+	MgBSURL    string `toml:"smq_bs_url"    env:"SMQ_PROVISION_BS_SVC_URL"          envDefault:"http://localhost:9000"`
+	MgCertsURL string `toml:"smq_certs_url" env:"SMQ_PROVISION_CERTS_SVC_URL"       envDefault:"http://localhost:9019"`
 }
 
 // Bootstrap represetns the Bootstrap config.

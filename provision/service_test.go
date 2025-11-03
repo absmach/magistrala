@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	csdk "github.com/absmach/certs/sdk"
+	csdkmocks "github.com/absmach/certs/sdk/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/provision"
@@ -24,7 +26,8 @@ var validToken = "valid"
 
 func TestMapping(t *testing.T) {
 	mgsdk := new(sdkmocks.SDK)
-	svc := provision.New(validConfig, mgsdk, smqlog.NewMock())
+	certs := new(csdkmocks.SDK)
+	svc := provision.New(validConfig, mgsdk, certs, smqlog.NewMock())
 
 	cases := []struct {
 		desc    string
@@ -63,19 +66,20 @@ func TestMapping(t *testing.T) {
 
 func TestCert(t *testing.T) {
 	cases := []struct {
-		desc         string
-		config       provision.Config
-		domainID     string
-		token        string
-		clientID     string
-		ttl          string
-		serial       string
-		cert         string
-		key          string
-		sdkClientErr error
-		sdkCertErr   error
-		sdkTokenErr  error
-		err          error
+		desc          string
+		config        provision.Config
+		domainID      string
+		token         string
+		returnedToken string
+		clientID      string
+		ttl           string
+		serial        string
+		cert          string
+		key           string
+		sdkClientErr  error
+		sdkCertErr    error
+		sdkTokenErr   error
+		err           error
 	}{
 		{
 			desc:         "valid",
@@ -97,16 +101,17 @@ func TestCert(t *testing.T) {
 				Server: provision.ServiceConf{MgAPIKey: "key"},
 				Cert:   provision.Cert{TTL: "1h"},
 			},
-			domainID:     testsutil.GenerateUUID(t),
-			token:        "",
-			clientID:     testsutil.GenerateUUID(t),
-			ttl:          "1h",
-			cert:         "cert",
-			key:          "key",
-			sdkClientErr: nil,
-			sdkCertErr:   nil,
-			sdkTokenErr:  nil,
-			err:          nil,
+			domainID:      testsutil.GenerateUUID(t),
+			token:         "",
+			returnedToken: "key",
+			clientID:      testsutil.GenerateUUID(t),
+			ttl:           "1h",
+			cert:          "cert",
+			key:           "key",
+			sdkClientErr:  nil,
+			sdkCertErr:    nil,
+			sdkTokenErr:   nil,
+			err:           nil,
 		},
 		{
 			desc: "empty token with username and password",
@@ -118,16 +123,17 @@ func TestCert(t *testing.T) {
 				},
 				Cert: provision.Cert{TTL: "1h"},
 			},
-			domainID:     testsutil.GenerateUUID(t),
-			token:        "",
-			clientID:     testsutil.GenerateUUID(t),
-			ttl:          "1h",
-			cert:         "cert",
-			key:          "key",
-			sdkClientErr: nil,
-			sdkCertErr:   nil,
-			sdkTokenErr:  nil,
-			err:          nil,
+			domainID:      testsutil.GenerateUUID(t),
+			token:         "",
+			returnedToken: validToken,
+			clientID:      testsutil.GenerateUUID(t),
+			ttl:           "1h",
+			cert:          "cert",
+			key:           "key",
+			sdkClientErr:  nil,
+			sdkCertErr:    nil,
+			sdkTokenErr:   nil,
+			err:           nil,
 		},
 		{
 			desc: "empty token with username and invalid password",
@@ -210,24 +216,35 @@ func TestCert(t *testing.T) {
 			err:          repoerr.ErrCreateEntity,
 		},
 	}
-
+	mgsdk := new(sdkmocks.SDK)
+	certs := new(csdkmocks.SDK)
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			mgsdk := new(sdkmocks.SDK)
-			svc := provision.New(c.config, mgsdk, smqlog.NewMock())
+			svc := provision.New(c.config, mgsdk, certs, smqlog.NewMock())
 
-			mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
-			mgsdk.On("IssueCert", mock.Anything, c.clientID, c.config.Cert.TTL, c.domainID, mock.Anything).Return(smqSDK.Cert{SerialNumber: c.serial}, c.sdkCertErr)
-			mgsdk.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(smqSDK.Cert{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
+			call1 := mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
+			var call2 *mock.Call
+			switch c.token {
+			case "":
+				call2 = certs.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, csdk.Options{}, c.domainID, c.returnedToken).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
+			default:
+				call2 = certs.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, csdk.Options{}, c.domainID, c.token).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
+			}
+			call3 := certs.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(csdk.Certificate{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
+
 			login := smqSDK.Login{
 				Username: c.config.Server.MgUsername,
 				Password: c.config.Server.MgPass,
 			}
-			mgsdk.On("CreateToken", mock.Anything, login).Return(smqSDK.Token{AccessToken: validToken}, c.sdkTokenErr)
+			call4 := mgsdk.On("CreateToken", mock.Anything, login).Return(smqSDK.Token{AccessToken: validToken}, c.sdkTokenErr)
 			cert, key, err := svc.Cert(context.Background(), c.domainID, c.token, c.clientID, c.ttl)
 			assert.Equal(t, c.cert, cert)
 			assert.Equal(t, c.key, key)
 			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))
+			call1.Unset()
+			call2.Unset()
+			call3.Unset()
+			call4.Unset()
 		})
 	}
 }

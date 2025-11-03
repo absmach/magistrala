@@ -270,8 +270,7 @@ func (ps *provisionService) Cert(ctx context.Context, domainID, token, clientID,
 	if err != nil {
 		return "", "", errors.Wrap(ErrUnauthorized, err)
 	}
-	context.Background()
-	cert, err := ps.csdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, nil, csdk.Options{}, domainID, token)
+	cert, err := ps.csdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, []string{}, csdk.Options{}, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}

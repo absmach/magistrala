@@ -21,6 +21,15 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const (
+	ascDir  = "asc"
+	descDir = "desc"
+
+	nameOrder      = "name"
+	createdAtOrder = "created_at"
+	updatedAtOrder = "updated_at"
+)
+
 var (
 	namegen    = namegenerator.NewGenerator()
 	idProvider = uuid.New()
@@ -752,6 +761,88 @@ func TestListRules(t *testing.T) {
 			count: 0,
 			err:   nil,
 		},
+		{
+			desc: "list ordered by name ascending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  nameOrder,
+				Dir:    ascDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list ordered by name descending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  nameOrder,
+				Dir:    descDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list ordered by created_at ascending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  createdAtOrder,
+				Dir:    ascDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list ordered by created_at descending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  createdAtOrder,
+				Dir:    descDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list ordered by updated_at ascending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  updatedAtOrder,
+				Dir:    ascDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list ordered by updated_at descending",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+				Order:  updatedAtOrder,
+				Dir:    descDir,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc: "list with default order (updated_at desc)",
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  10,
+				Status: re.AllStatus,
+			},
+			count: 10,
+			err:   nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -763,6 +854,32 @@ func TestListRules(t *testing.T) {
 			}
 			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 			require.Equal(t, tc.count, len(page.Rules), fmt.Sprintf("%s: expected %d rules, got %d", tc.desc, tc.count, len(page.Rules)))
+			
+			if len(page.Rules) > 1 {
+				switch tc.pm.Order {
+				case nameOrder:
+					switch tc.pm.Dir {
+					case ascDir:
+						require.True(t, page.Rules[0].Name <= page.Rules[1].Name, "Expected ascending name order")
+					case descDir:
+						require.True(t, page.Rules[0].Name >= page.Rules[1].Name, "Expected descending name order")
+					}
+				case createdAtOrder:
+					switch tc.pm.Dir {
+					case ascDir:
+						require.True(t, !page.Rules[0].CreatedAt.After(page.Rules[1].CreatedAt), "Expected ascending created_at order")
+					case descDir:
+						require.True(t, !page.Rules[0].CreatedAt.Before(page.Rules[1].CreatedAt), "Expected descending created_at order")
+					}
+				case updatedAtOrder:
+					switch tc.pm.Dir {
+					case ascDir:
+						require.True(t, !page.Rules[0].UpdatedAt.After(page.Rules[1].UpdatedAt), "Expected ascending updated_at order")
+					case descDir:
+						require.True(t, !page.Rules[0].UpdatedAt.Before(page.Rules[1].UpdatedAt), "Expected descending updated_at order")
+					}
+				}
+			}
 		})
 	}
 }

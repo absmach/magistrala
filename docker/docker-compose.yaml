@@ -188,66 +188,17 @@ services:
     volumes:
       - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
 
-  seaweedfs-master:
-    image: chrislusf/seaweedfs # use a remote image
-    container_name: magistrala-seaweedfs-master
-    ports:
-      - 9333:9333
-      - 19333:19333
-      - 9324:9324
-    command: "master -ip=seaweedfs-master -ip.bind=0.0.0.0 -metricsPort=9324"
-    volumes:
-      - ./data/seaweed-master:/data
-    networks:
-      - magistrala-base-net
-
-  seaweedfs-volume:
-    image: chrislusf/seaweedfs # use a remote image
-    container_name: magistrala-seaweedfs-volume
-    ports:
-      - 9000:8080
-      - 18080:18080
-      - 9325:9325
-    command: 'volume -mserver="seaweedfs-master:9333" -ip.bind=0.0.0.0 -port=8080  -metricsPort=9325'
-    depends_on:
-      - seaweedfs-master
-    volumes:
-      - ./data/seaweed-volumes:/data
-    networks:
-      - magistrala-base-net
-
-  seaweedfs-filer:
-    image: chrislusf/seaweedfs
-    container_name: magistrala-seaweedfs-filer
-    ports:
-      - 8888:8888
-      - 18888:18888
-      - 9326:9326
-    command: 'filer -master="seaweedfs-master:9333" -ip.bind=0.0.0.0 -metricsPort=9326'
-    tty: true
-    stdin_open: true
-    depends_on:
-      - seaweedfs-master
-      - seaweedfs-volume
-    volumes:
-    - ./data/seaweed-filer:/data
-    networks:
-      - magistrala-base-net
-
   seaweedfs-s3:
-    image: chrislusf/seaweedfs # use a remote image
+    image: chrislusf/seaweedfs:latest
     container_name: magistrala-seaweedfs-s3
+    command: server -s3 -dir=/data
     ports:
-      - 8333:8333
-      - 9327:9327
-    command: 's3 -filer="seaweedfs-filer:8888" -ip.bind=0.0.0.0 -metricsPort=9327'
-    depends_on:
-      - seaweedfs-master
-      - seaweedfs-volume
-      - seaweedfs-filer
+      - "8333:8333" # S3 endpoint
+      - "9333:9333" # master UI
+      - "19333:19333" # volume server
+      - "8888:8888" # filer UI
     volumes:
-      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json
-      - ./data/seaweed-s3:/data
+      - ./data/seaweedfs:/data
     networks:
       - magistrala-base-net
 
@@ -258,8 +209,8 @@ services:
       - seaweedfs-s3
     command: >
       /bin/sh -c "
-      echo 'Creating buckets, wait for 20s...';
-      sleep 20;
+      echo \"Creating bucket $${BUCKET}, wait for 25s...\";
+      sleep 25;
       HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -f -X PUT http://seaweedfs-s3:8333/$${BUCKET});
       if [ $${HTTP_CODE} = '200' ] || [ $${HTTP_CODE} = '201' ]; then
         echo \"[INIT] Bucket $${BUCKET} created successfully!\";

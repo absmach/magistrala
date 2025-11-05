@@ -30,6 +30,17 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+// unknownOutput is a mock output type that doesn't match any known output type
+type unknownOutput struct{}
+
+func (u *unknownOutput) Run(ctx context.Context, msg *messaging.Message, val any) error {
+	return nil
+}
+
+func (u *unknownOutput) MarshalJSON() ([]byte, error) {
+	return []byte(`{"type": "unknown"}`), nil
+}
+
 var (
 	namegen       = namegenerator.NewGenerator()
 	userID        = testsutil.GenerateUUID(&testing.T{})
@@ -47,18 +58,18 @@ var (
 	}
 )
 
-func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker) {
+func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker, *emocks.Emailer) {
 	repo := new(mocks.Repository)
 	mockTicker := new(tmocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker
+	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker, e
 }
 
 func TestAddRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -115,6 +126,38 @@ func TestAddRule(t *testing.T) {
 			},
 			err: repoerr.ErrCreateEntity,
 		},
+		{
+			desc: "Add rule with non-zero StartDateTime",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					StartDateTime:   now,
+					Recurring:       pkgSch.Weekly,
+					RecurringPeriod: 2,
+					Time:            now.Add(2 * time.Hour),
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					StartDateTime:   now,
+					Recurring:       pkgSch.Weekly,
+					RecurringPeriod: 2,
+					Time:            now.Add(2 * time.Hour),
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			err: nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -133,7 +176,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -191,7 +234,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -276,7 +319,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestUpdateRuleTags(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc      string
@@ -331,8 +374,75 @@ func TestUpdateRuleTags(t *testing.T) {
 	}
 }
 
+func TestUpdateRuleSchedule(t *testing.T) {
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+
+	now := time.Now().UTC()
+	future := now.Add(2 * time.Hour)
+	newSchedule := pkgSch.Schedule{
+		StartDateTime:   future,
+		Time:            future.Add(time.Hour),
+		Recurring:       pkgSch.Weekly,
+		RecurringPeriod: 2,
+	}
+
+	cases := []struct {
+		desc      string
+		session   authn.Session
+		updateReq re.Rule
+		repoResp  re.Rule
+		repoErr   error
+		err       error
+	}{
+		{
+			desc: "update rule schedule successfully",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			updateReq: re.Rule{
+				ID:       testsutil.GenerateUUID(t),
+				Schedule: newSchedule,
+			},
+			repoResp: re.Rule{
+				ID:        testsutil.GenerateUUID(t),
+				Schedule:  newSchedule,
+				UpdatedAt: now,
+				UpdatedBy: userID,
+			},
+		},
+		{
+			desc: "update rule schedule with repo error",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			updateReq: re.Rule{
+				ID:       testsutil.GenerateUUID(t),
+				Schedule: newSchedule,
+			},
+			repoErr: repoerr.ErrNotFound,
+			err:     svcerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := repo.On("UpdateRuleSchedule", context.Background(), mock.Anything).Return(tc.repoResp, tc.repoErr)
+			got, err := svc.UpdateRuleSchedule(context.Background(), tc.session, tc.updateReq)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v to contain %v", err, tc.err))
+			if err == nil {
+				assert.Equal(t, tc.repoResp, got)
+				ok := repo.AssertCalled(t, "UpdateRuleSchedule", context.Background(), mock.Anything)
+				assert.True(t, ok, fmt.Sprintf("UpdateRuleSchedule was not called on %s", tc.desc))
+			}
+			repoCall.Unset()
+		})
+	}
+}
+
 func TestListRules(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -354,6 +464,19 @@ func TestListRules(t *testing.T) {
 		rules = append(rules, r)
 	}
 
+	goRule := re.Rule{
+		ID:        testsutil.GenerateUUID(t),
+		Name:      namegen.Generate(),
+		DomainID:  domainID,
+		Status:    re.EnabledStatus,
+		CreatedAt: now,
+		CreatedBy: userID,
+		Logic: re.Script{
+			Type:  re.GoType,
+			Value: "func() bool { return true }",
+		},
+	}
+
 	cases := []struct {
 		desc     string
 		session  authn.Session
@@ -373,6 +496,21 @@ func TestListRules(t *testing.T) {
 				Offset: 0,
 				Limit:  10,
 				Rules:  rules[0:10],
+			},
+			err: nil,
+		},
+		{
+			desc: "list rules with go type",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			pageMeta: re.PageMeta{},
+			res: re.Page{
+				Total:  1,
+				Offset: 0,
+				Limit:  10,
+				Rules:  []re.Rule{goRule},
 			},
 			err: nil,
 		},
@@ -437,7 +575,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -477,7 +615,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -536,7 +674,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
-	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -595,7 +733,7 @@ func TestDisableRule(t *testing.T) {
 }
 
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, pubmocks, _, emailer := newService(t, make(chan pkglog.RunInfo))
 	now := time.Now()
 	scheduled := false
 
@@ -619,7 +757,239 @@ func TestHandle(t *testing.T) {
 			listErr: nil,
 		},
 		{
-			desc: "consume message with rules",
+			desc: "consume message with Lua script returning true",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: "return message.payload",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script returning false",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: "return false",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script with no outputs",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: "return message.payload",
+						},
+						Outputs:  re.Outputs{},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script returning nil",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: "return nil",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script with invalid syntax",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: "invalid lua syntax {{{",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and Alarm output",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 30.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return {severity = 2, description = "High temperature"}`,
+						},
+						Outputs: re.Outputs{
+							&outputs.Alarm{
+								RuleID: testsutil.GenerateUUID(t),
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and SenML output",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return {bn = "sensor1", n = "temperature", v = 25.5}`,
+						},
+						Outputs: re.Outputs{
+							&outputs.SenML{},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and Email output",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return message.payload`,
+						},
+						Outputs: re.Outputs{
+							&outputs.Email{
+								To:      []string{"test@example.com"},
+								Subject: "Temperature Alert",
+								Content: "Temperature: {{.Result}}",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with rules using GoType",
 			message: &messaging.Message{
 				Channel: inputChannel,
 				Created: now.Unix(),
@@ -632,13 +1002,341 @@ func TestHandle(t *testing.T) {
 						InputChannel: inputChannel,
 						Status:       re.EnabledStatus,
 						Logic: re.Script{
-							Type: re.ScriptType(0),
+							Type:  re.GoType,
+							Value: "func() bool { return true }",
 						},
 						Outputs: re.Outputs{
 							&outputs.ChannelPublisher{
 								Channel: "output.channel",
 								Topic:   "output.topic",
 							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType logic returning false",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func() bool { return false }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType invalid logic value",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "invalid go code {{{",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType missing logicFunction",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func someOtherFunc() bool { return true }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType invalid function signature",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "var logicFunction = 42",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType function logicFunction properly named",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func logicFunction() any { return true }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType returning non-bool",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func() any { return \"not a bool\" }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType and JSON payload",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25, "humidity": 60}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func() bool { return true }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType and invalid JSON payload",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`invalid json {{{`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: "func() bool { return true }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and Postgres output",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5, "humidity": 60}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return message.payload`,
+						},
+						Outputs: re.Outputs{
+							&outputs.Postgres{
+								Host:     "localhost",
+								Port:     5432,
+								User:     "test",
+								Password: "test",
+								Database: "testdb",
+								Table:    "sensor_data",
+								Mapping:  `{"temperature": {{.Result.temperature}}, "humidity": {{.Result.humidity}}}`,
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and Slack output",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return message.payload`,
+						},
+						Outputs: re.Outputs{
+							&outputs.Slack{
+								Token:     "xoxb-test-token",
+								ChannelID: "C12345678",
+								Message:   `{"text": "Temperature: {{.Result.temperature}}"}`,
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with Lua script and unknown output type",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"temperature": 25.5}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.LuaType,
+							Value: `return message.payload`,
+						},
+						Outputs: re.Outputs{
+							&unknownOutput{},
 						},
 						Schedule: schedule,
 					},
@@ -657,15 +1355,20 @@ func TestHandle(t *testing.T) {
 					err = tc.listErr
 				}
 			})
-			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
+			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr).Maybe()
+			repoCall2 := emailer.On("SendEmailNotification", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			err = svc.Handle(tc.message)
 			assert.Nil(t, err)
+
+			// Wait for goroutines to complete
+			time.Sleep(100 * time.Millisecond)
 
 			assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
 
 			repoCall.Unset()
 			repoCall1.Unset()
+			repoCall2.Unset()
 		})
 	}
 }
@@ -673,7 +1376,7 @@ func TestHandle(t *testing.T) {
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)
-	svc, repo, _, ticker := newService(t, ri)
+	svc, repo, _, ticker, _ := newService(t, ri)
 
 	ctxCases := []struct {
 		desc     string

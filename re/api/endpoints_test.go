@@ -516,12 +516,12 @@ func TestListRulesEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:     "list rules with service error",
-			domainID: domainID,
-			token:    validToken,
+			desc:              "list rules with service error",
+			domainID:          domainID,
+			token:             validToken,
 			listRulesResponse: re.Page{},
-			status:   http.StatusForbidden,
-			err:      svcerr.ErrAuthorization,
+			status:            http.StatusForbidden,
+			err:               svcerr.ErrAuthorization,
 		},
 	}
 

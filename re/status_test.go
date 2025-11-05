@@ -151,10 +151,10 @@ func TestStatusMarshalJSON(t *testing.T) {
 
 func TestStatusUnmarshalJSON(t *testing.T) {
 	cases := []struct {
-		desc   string
-		data   string
-		res    re.Status
-		err    error
+		desc string
+		data string
+		res  re.Status
+		err  error
 	}{
 		{
 			desc: "unmarshal enabled status",

@@ -31,7 +31,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// unknownOutput is a mock output type that doesn't match any known output type
+// unknownOutput is a mock output type that doesn't match any known output type.
 type unknownOutput struct{}
 
 func (u *unknownOutput) Run(ctx context.Context, msg *messaging.Message, val any) error {

@@ -22,9 +22,8 @@ import (
 )
 
 const (
-	ascDir  = "asc"
-	descDir = "desc"
-
+	ascDir         = "asc"
+	descDir        = "desc"
 	nameOrder      = "name"
 	createdAtOrder = "created_at"
 	updatedAtOrder = "updated_at"
@@ -854,7 +853,6 @@ func TestListRules(t *testing.T) {
 			}
 			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 			require.Equal(t, tc.count, len(page.Rules), fmt.Sprintf("%s: expected %d rules, got %d", tc.desc, tc.count, len(page.Rules)))
-			
 			if len(page.Rules) > 1 {
 				switch tc.pm.Order {
 				case nameOrder:

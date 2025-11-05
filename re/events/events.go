@@ -22,6 +22,7 @@ const (
 	ruleEnable         = rulePrefix + "enable"
 	ruleDisable        = rulePrefix + "disable"
 	ruleRemove         = rulePrefix + "remove"
+	ruleListExecutions = rulePrefix + "list_executions"
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 	_ events.Event = (*enableRuleEvent)(nil)
 	_ events.Event = (*disableRuleEvent)(nil)
 	_ events.Event = (*removeRuleEvent)(nil)
+	_ events.Event = (*listRuleExecutionsEvent)(nil)
 )
 
 type baseRuleEvent struct {
@@ -185,5 +187,25 @@ func (rre removeRuleEvent) Encode() (map[string]any, error) {
 	val := rre.baseRuleEvent.Encode()
 	val["id"] = rre.id
 	val["operation"] = ruleRemove
+	return val, nil
+}
+
+type listRuleExecutionsEvent struct {
+	re.RuleExecutionPageMeta
+	baseRuleEvent
+}
+
+func (lree listRuleExecutionsEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
+		"rule_id": lree.RuleID,
+		"offset":  lree.Offset,
+		"limit":   lree.Limit,
+		"total":   lree.Total,
+	}
+	if lree.Level != "" {
+		val["level"] = lree.Level
+	}
+	maps.Copy(val, lree.baseRuleEvent.Encode())
+	val["operation"] = ruleListExecutions
 	return val, nil
 }

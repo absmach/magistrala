@@ -164,6 +164,15 @@ func (re *re) DisableRule(ctx context.Context, session authn.Session, id string)
 	return rule, nil
 }
 
+func (re *re) ListRuleExecutions(ctx context.Context, session authn.Session, pm RuleExecutionPageMeta) (RuleExecutionPage, error) {
+	pm.DomainID = session.DomainID
+	page, err := re.repo.ListExecutions(ctx, pm)
+	if err != nil {
+		return RuleExecutionPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	return page, nil
+}
+
 func (re *re) Cancel() error {
 	return nil
 }

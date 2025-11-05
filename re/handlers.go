@@ -50,9 +50,11 @@ func (re *re) Handle(msg *messaging.Message) error {
 
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
-			go func(ctx context.Context) {
-				re.runInfo <- re.process(ctx, r, msg)
-			}(ctx)
+			go func(ctx context.Context, rule Rule) {
+				info := re.process(ctx, rule, msg)
+				re.runInfo <- info
+				re.saveExecution(ctx, rule, info)
+			}(ctx, r)
 		}
 	}
 
@@ -80,18 +82,21 @@ func matchSubject(published, subscribed string) bool {
 }
 
 func (re *re) process(ctx context.Context, r Rule, msg *messaging.Message) pkglog.RunInfo {
+	execTime := time.Now().UTC()
 	details := []slog.Attr{
 		slog.String("domain_id", r.DomainID),
 		slog.String("rule_id", r.ID),
 		slog.String("rule_name", r.Name),
-		slog.Time("exec_time", time.Now().UTC()),
 	}
+	var info pkglog.RunInfo
 	switch r.Logic.Type {
 	case GoType:
-		return re.processGo(ctx, details, r, msg)
+		info = re.processGo(ctx, details, r, msg)
 	default:
-		return re.processLua(ctx, details, r, msg)
+		info = re.processLua(ctx, details, r, msg)
 	}
+	info.ExecTime = execTime
+	return info
 }
 
 func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messaging.Message, val any) error {
@@ -113,6 +118,36 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 		return o.Run(ctx, msg, val)
 	default:
 		return fmt.Errorf("unknown output type: %T", o)
+	}
+}
+
+func (re *re) saveExecution(ctx context.Context, r Rule, info pkglog.RunInfo) {
+	id, err := re.idp.ID()
+	if err != nil {
+		return
+	}
+
+	errMsg := ""
+	if info.Error != nil {
+		errMsg = info.Error.Error()
+	}
+
+	exec := RuleExecution{
+		ID:        id,
+		RuleID:    r.ID,
+		Level:     info.Level.String(),
+		Message:   info.Message,
+		Error:     errMsg,
+		ExecTime:  info.ExecTime,
+		CreatedAt: time.Now().UTC(),
+	}
+
+	if err := re.repo.AddExecution(ctx, exec); err != nil {
+		re.runInfo <- pkglog.RunInfo{
+			Level:   slog.LevelError,
+			Message: fmt.Sprintf("failed to persist execution: %s", err),
+			Details: []slog.Attr{slog.String("rule_id", r.ID)},
+		}
 	}
 }
 
@@ -155,7 +190,9 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						Protocol: protocol,
 						Created:  due.Unix(),
 					}
-					re.runInfo <- re.process(ctx, rule, msg)
+					info := re.process(ctx, rule, msg)
+					re.runInfo <- info
+					re.saveExecution(ctx, rule, info)
 				}(r)
 			}
 			// Reset due, it will reset in the page meta as well.

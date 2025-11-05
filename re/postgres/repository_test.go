@@ -18,7 +18,6 @@ import (
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -37,7 +36,7 @@ var (
 func TestAddRule(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -54,9 +53,9 @@ func TestAddRule(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 		Metadata: map[string]any{
 			"key": "value",
@@ -66,16 +65,19 @@ func TestAddRule(t *testing.T) {
 	cases := []struct {
 		desc string
 		rule re.Rule
+		resp re.Rule
 		err  error
 	}{
 		{
 			desc: "valid rule",
 			rule: rule,
+			resp: rule,
 			err:  nil,
 		},
 		{
 			desc: "duplicate rule",
 			rule: rule,
+			resp: re.Rule{},
 			err:  repoerr.ErrConflict,
 		},
 		{
@@ -91,18 +93,19 @@ func TestAddRule(t *testing.T) {
 					Value: "return value > 50",
 				},
 				Schedule: schedule.Schedule{
-					StartDateTime:   time.Now().UTC().Add(time.Hour),
-					Time:            time.Now().UTC().Add(2 * time.Hour),
+					StartDateTime:   time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond),
+					Time:            time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond),
 					Recurring:       schedule.Daily,
 					RecurringPeriod: 1,
 				},
 				Status:    re.EnabledStatus,
-				CreatedAt: time.Now().UTC(),
+				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				CreatedBy: generateUUID(t),
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
-			err: nil,
+			resp: re.Rule{},
+			err:  nil,
 		},
 		{
 			desc: "rule with outputs",
@@ -121,12 +124,13 @@ func TestAddRule(t *testing.T) {
 					},
 				},
 				Status:    re.EnabledStatus,
-				CreatedAt: time.Now().UTC(),
+				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				CreatedBy: generateUUID(t),
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
-			err: nil,
+			resp: re.Rule{},
+			err:  nil,
 		},
 		{
 			desc: "invalid metadata",
@@ -143,28 +147,38 @@ func TestAddRule(t *testing.T) {
 					"key": make(chan int),
 				},
 				Status:    re.EnabledStatus,
-				CreatedAt: time.Now().UTC(),
+				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				CreatedBy: generateUUID(t),
 			},
-			err: errors.ErrMalformedEntity,
+			resp: re.Rule{},
+			err:  errors.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.AddRule(context.Background(), tc.rule)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			addedRule, err := repo.AddRule(context.Background(), tc.rule)
+			if tc.err == nil {
+				tc.resp = tc.rule
+				tc.resp.ID = addedRule.ID
+				if tc.resp.Metadata == nil {
+					tc.resp.Metadata = re.Metadata{}
+				}
+				if len(tc.resp.Outputs) > 0 {
+					for i, output := range addedRule.Outputs {
+						switch o := output.(type) {
+						case *outputs.Alarm:
+							if i < len(tc.resp.Outputs) {
+								if expectedAlarm, ok := tc.resp.Outputs[i].(*outputs.Alarm); ok {
+									expectedAlarm.RuleID = o.RuleID
+								}
+							}
+						}
+					}
+				}
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.rule.Name, rule.Name)
-			require.Equal(t, tc.rule.DomainID, rule.DomainID)
-			require.Equal(t, tc.rule.InputChannel, rule.InputChannel)
-			require.Equal(t, tc.rule.Logic.Type, rule.Logic.Type)
-			require.Equal(t, tc.rule.Logic.Value, rule.Logic.Value)
-			require.Equal(t, tc.rule.Status, rule.Status)
+			assert.Equal(t, tc.resp, addedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, addedRule))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
@@ -172,7 +186,7 @@ func TestAddRule(t *testing.T) {
 func TestViewRule(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -188,49 +202,48 @@ func TestViewRule(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 		Metadata: map[string]any{
 			"key": "value",
 		},
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc string
 		id   string
+		resp re.Rule
 		err  error
 	}{
 		{
 			desc: "valid rule",
 			id:   rule.ID,
+			resp: rule,
 			err:  nil,
 		},
 		{
 			desc: "non existing rule",
 			id:   generateUUID(t),
+			resp: re.Rule{},
 			err:  repoerr.ErrViewEntity,
 		},
 		{
 			desc: "empty id",
 			id:   "",
+			resp: re.Rule{},
 			err:  repoerr.ErrViewEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.ViewRule(context.Background(), tc.id)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
-			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.id, rule.ID)
+			retrievedRule, err := repo.ViewRule(context.Background(), tc.id)
+			assert.Equal(t, tc.resp, retrievedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, retrievedRule))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
@@ -238,7 +251,7 @@ func TestViewRule(t *testing.T) {
 func TestUpdateRule(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -254,20 +267,24 @@ func TestUpdateRule(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 		Metadata: map[string]any{
 			"key": "value",
 		},
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+
+	newInputChannel := generateUUID(t)
+	newUpdatedBy := generateUUID(t)
 
 	cases := []struct {
 		desc string
 		rule re.Rule
+		resp re.Rule
 		err  error
 	}{
 		{
@@ -275,14 +292,33 @@ func TestUpdateRule(t *testing.T) {
 			rule: re.Rule{
 				ID:           rule.ID,
 				Name:         "updated-name",
-				InputChannel: generateUUID(t),
+				InputChannel: newInputChannel,
 				InputTopic:   "humidity",
 				Logic: re.Script{
 					Type:  re.LuaType,
 					Value: "return value > 30",
 				},
-				UpdatedAt: time.Now().UTC(),
-				UpdatedBy: generateUUID(t),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedBy: newUpdatedBy,
+				Metadata: map[string]any{
+					"updated": "metadata",
+				},
+			},
+			resp: re.Rule{
+				ID:           rule.ID,
+				Name:         "updated-name",
+				DomainID:     rule.DomainID,
+				InputChannel: newInputChannel,
+				InputTopic:   "humidity",
+				Logic: re.Script{
+					Type:  re.LuaType,
+					Value: "return value > 30",
+				},
+				Status:    rule.Status,
+				CreatedAt: rule.CreatedAt,
+				CreatedBy: rule.CreatedBy,
+				UpdatedAt: time.Time{},
+				UpdatedBy: newUpdatedBy,
 				Metadata: map[string]any{
 					"updated": "metadata",
 				},
@@ -295,10 +331,11 @@ func TestUpdateRule(t *testing.T) {
 				ID:           generateUUID(t),
 				Name:         namegen.Generate(),
 				InputChannel: generateUUID(t),
-				UpdatedAt:    time.Now().UTC(),
+				UpdatedAt:    time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy:    generateUUID(t),
 			},
-			err: repoerr.ErrNotFound,
+			resp: re.Rule{},
+			err:  repoerr.ErrNotFound,
 		},
 		{
 			desc: "update with invalid metadata",
@@ -308,26 +345,22 @@ func TestUpdateRule(t *testing.T) {
 				Metadata: map[string]any{
 					"key": make(chan int),
 				},
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
-			err: repoerr.ErrUpdateEntity,
+			resp: re.Rule{},
+			err:  repoerr.ErrUpdateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.UpdateRule(context.Background(), tc.rule)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			updatedRule, err := repo.UpdateRule(context.Background(), tc.rule)
+			if tc.err == nil {
+				tc.resp.UpdatedAt = updatedRule.UpdatedAt
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.rule.ID, rule.ID)
-			if tc.rule.Name != "" {
-				require.Equal(t, tc.rule.Name, rule.Name)
-			}
+			assert.Equal(t, tc.resp, updatedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, updatedRule))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
@@ -335,7 +368,7 @@ func TestUpdateRule(t *testing.T) {
 func TestUpdateRuleStatus(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -350,13 +383,13 @@ func TestUpdateRuleStatus(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc   string
@@ -369,7 +402,7 @@ func TestUpdateRuleStatus(t *testing.T) {
 			rule: re.Rule{
 				ID:        rule.ID,
 				Status:    re.DisabledStatus,
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			status: re.DisabledStatus,
@@ -380,7 +413,7 @@ func TestUpdateRuleStatus(t *testing.T) {
 			rule: re.Rule{
 				ID:        rule.ID,
 				Status:    re.EnabledStatus,
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			status: re.EnabledStatus,
@@ -391,7 +424,7 @@ func TestUpdateRuleStatus(t *testing.T) {
 			rule: re.Rule{
 				ID:        generateUUID(t),
 				Status:    re.DisabledStatus,
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -400,14 +433,13 @@ func TestUpdateRuleStatus(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.UpdateRuleStatus(context.Background(), tc.rule)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			updatedRule, err := repo.UpdateRuleStatus(context.Background(), tc.rule)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.rule.ID, updatedRule.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.ID, updatedRule.ID))
+				assert.Equal(t, tc.status, updatedRule.Status, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.status, updatedRule.Status))
+				assert.Equal(t, tc.rule.UpdatedBy, updatedRule.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.UpdatedBy, updatedRule.UpdatedBy))
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.status, rule.Status)
 		})
 	}
 }
@@ -415,7 +447,7 @@ func TestUpdateRuleStatus(t *testing.T) {
 func TestUpdateRuleTags(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -431,13 +463,13 @@ func TestUpdateRuleTags(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc string
@@ -450,7 +482,7 @@ func TestUpdateRuleTags(t *testing.T) {
 			rule: re.Rule{
 				ID:        rule.ID,
 				Tags:      []string{"newtag1", "newtag2", "newtag3"},
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			tags: []string{"newtag1", "newtag2", "newtag3"},
@@ -461,7 +493,7 @@ func TestUpdateRuleTags(t *testing.T) {
 			rule: re.Rule{
 				ID:        generateUUID(t),
 				Tags:      []string{"tag"},
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -470,14 +502,13 @@ func TestUpdateRuleTags(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.UpdateRuleTags(context.Background(), tc.rule)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			updatedRule, err := repo.UpdateRuleTags(context.Background(), tc.rule)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.rule.ID, updatedRule.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.ID, updatedRule.ID))
+				assert.Equal(t, tc.tags, updatedRule.Tags, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.tags, updatedRule.Tags))
+				assert.Equal(t, tc.rule.UpdatedBy, updatedRule.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.UpdatedBy, updatedRule.UpdatedBy))
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.tags, rule.Tags)
 		})
 	}
 }
@@ -485,7 +516,7 @@ func TestUpdateRuleTags(t *testing.T) {
 func TestUpdateRuleSchedule(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -500,17 +531,17 @@ func TestUpdateRuleSchedule(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	newSchedule := schedule.Schedule{
-		StartDateTime:   time.Now().UTC().Add(time.Hour),
-		Time:            time.Now().UTC().Add(2 * time.Hour),
+		StartDateTime:   time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond),
+		Time:            time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond),
 		Recurring:       schedule.Weekly,
 		RecurringPeriod: 2,
 	}
@@ -526,7 +557,7 @@ func TestUpdateRuleSchedule(t *testing.T) {
 			rule: re.Rule{
 				ID:        rule.ID,
 				Schedule:  newSchedule,
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			schedule: newSchedule,
@@ -537,7 +568,7 @@ func TestUpdateRuleSchedule(t *testing.T) {
 			rule: re.Rule{
 				ID:        generateUUID(t),
 				Schedule:  newSchedule,
-				UpdatedAt: time.Now().UTC(),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				UpdatedBy: generateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
@@ -546,15 +577,14 @@ func TestUpdateRuleSchedule(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.UpdateRuleSchedule(context.Background(), tc.rule)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			updatedRule, err := repo.UpdateRuleSchedule(context.Background(), tc.rule)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.rule.ID, updatedRule.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.ID, updatedRule.ID))
+				assert.Equal(t, tc.schedule.Recurring, updatedRule.Schedule.Recurring, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.schedule.Recurring, updatedRule.Schedule.Recurring))
+				assert.Equal(t, tc.schedule.RecurringPeriod, updatedRule.Schedule.RecurringPeriod, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.schedule.RecurringPeriod, updatedRule.Schedule.RecurringPeriod))
+				assert.Equal(t, tc.rule.UpdatedBy, updatedRule.UpdatedBy, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.rule.UpdatedBy, updatedRule.UpdatedBy))
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.Equal(t, tc.schedule.Recurring, rule.Schedule.Recurring)
-			require.Equal(t, tc.schedule.RecurringPeriod, rule.Schedule.RecurringPeriod)
 		})
 	}
 }
@@ -562,7 +592,7 @@ func TestUpdateRuleSchedule(t *testing.T) {
 func TestUpdateRuleDue(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -577,18 +607,18 @@ func TestUpdateRuleDue(t *testing.T) {
 			Value: "return true",
 		},
 		Schedule: schedule.Schedule{
-			Time: time.Now().UTC().Add(time.Hour),
+			Time: time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond),
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	newDue := time.Now().UTC().Add(3 * time.Hour)
+	newDue := time.Now().UTC().Add(3 * time.Hour).Truncate(time.Microsecond)
 
 	cases := []struct {
 		desc string
@@ -606,14 +636,12 @@ func TestUpdateRuleDue(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			rule, err := repo.UpdateRuleDue(context.Background(), tc.id, tc.due)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
+			updatedRule, err := repo.UpdateRuleDue(context.Background(), tc.id, tc.due)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.Equal(t, tc.id, updatedRule.ID, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.id, updatedRule.ID))
+				assert.True(t, updatedRule.Schedule.Time.Sub(tc.due) < time.Second, fmt.Sprintf("%s: expected due time close to %v got %v\n", tc.desc, tc.due, updatedRule.Schedule.Time))
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, rule.ID)
-			require.True(t, rule.Schedule.Time.Sub(tc.due) < time.Second)
 		})
 	}
 }
@@ -621,12 +649,11 @@ func TestUpdateRuleDue(t *testing.T) {
 func TestListRules(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
 
-	// Create test data
 	domainID := generateUUID(t)
 	channelID := generateUUID(t)
 	items := make([]re.Rule, 100)
@@ -643,9 +670,9 @@ func TestListRules(t *testing.T) {
 				Value: "return true",
 			},
 			Status:    re.EnabledStatus,
-			CreatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute),
+			CreatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute).Truncate(time.Microsecond),
 			CreatedBy: generateUUID(t),
-			UpdatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute),
+			UpdatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute).Truncate(time.Microsecond),
 			UpdatedBy: generateUUID(t),
 		}
 		if i%2 == 0 {
@@ -658,7 +685,7 @@ func TestListRules(t *testing.T) {
 			}
 		}
 		rule, err := repo.AddRule(context.Background(), items[i])
-		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		items[i].ID = rule.ID
 	}
 
@@ -851,30 +878,30 @@ func TestListRules(t *testing.T) {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.Equal(t, tc.count, len(page.Rules), fmt.Sprintf("%s: expected %d rules, got %d", tc.desc, tc.count, len(page.Rules)))
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.Equal(t, tc.count, len(page.Rules), fmt.Sprintf("%s: expected %d rules, got %d", tc.desc, tc.count, len(page.Rules)))
 			if len(page.Rules) > 1 {
 				switch tc.pm.Order {
 				case nameOrder:
 					switch tc.pm.Dir {
 					case ascDir:
-						require.True(t, page.Rules[0].Name <= page.Rules[1].Name, "Expected ascending name order")
+						assert.True(t, page.Rules[0].Name <= page.Rules[1].Name, "Expected ascending name order")
 					case descDir:
-						require.True(t, page.Rules[0].Name >= page.Rules[1].Name, "Expected descending name order")
+						assert.True(t, page.Rules[0].Name >= page.Rules[1].Name, "Expected descending name order")
 					}
 				case createdAtOrder:
 					switch tc.pm.Dir {
 					case ascDir:
-						require.True(t, !page.Rules[0].CreatedAt.After(page.Rules[1].CreatedAt), "Expected ascending created_at order")
+						assert.True(t, !page.Rules[0].CreatedAt.After(page.Rules[1].CreatedAt), "Expected ascending created_at order")
 					case descDir:
-						require.True(t, !page.Rules[0].CreatedAt.Before(page.Rules[1].CreatedAt), "Expected descending created_at order")
+						assert.True(t, !page.Rules[0].CreatedAt.Before(page.Rules[1].CreatedAt), "Expected descending created_at order")
 					}
 				case updatedAtOrder:
 					switch tc.pm.Dir {
 					case ascDir:
-						require.True(t, !page.Rules[0].UpdatedAt.After(page.Rules[1].UpdatedAt), "Expected ascending updated_at order")
+						assert.True(t, !page.Rules[0].UpdatedAt.After(page.Rules[1].UpdatedAt), "Expected ascending updated_at order")
 					case descDir:
-						require.True(t, !page.Rules[0].UpdatedAt.Before(page.Rules[1].UpdatedAt), "Expected descending updated_at order")
+						assert.True(t, !page.Rules[0].UpdatedAt.Before(page.Rules[1].UpdatedAt), "Expected descending updated_at order")
 					}
 				}
 			}
@@ -885,7 +912,7 @@ func TestListRules(t *testing.T) {
 func TestRemoveRule(t *testing.T) {
 	t.Cleanup(func() {
 		_, err := db.Exec("DELETE FROM rules")
-		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
@@ -900,13 +927,13 @@ func TestRemoveRule(t *testing.T) {
 			Value: "return true",
 		},
 		Status:    re.EnabledStatus,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
-		UpdatedAt: time.Now().UTC(),
+		UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		UpdatedBy: generateUUID(t),
 	}
 	rule, err := repo.AddRule(context.Background(), rule)
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
 	cases := []struct {
 		desc string
@@ -933,17 +960,13 @@ func TestRemoveRule(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := repo.RemoveRule(context.Background(), tc.id)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-				return
-			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }
 
 func generateUUID(t *testing.T) string {
 	ulid, err := idProvider.ID()
-	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+	assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 	return ulid
 }

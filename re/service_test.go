@@ -70,6 +70,7 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 }
 
 func TestAddRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -177,6 +178,7 @@ func TestAddRule(t *testing.T) {
 }
 
 func TestViewRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().Add(time.Hour)
@@ -235,6 +237,7 @@ func TestViewRule(t *testing.T) {
 }
 
 func TestUpdateRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
@@ -320,6 +323,7 @@ func TestUpdateRule(t *testing.T) {
 }
 
 func TestUpdateRuleTags(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
@@ -376,6 +380,7 @@ func TestUpdateRuleTags(t *testing.T) {
 }
 
 func TestUpdateRuleSchedule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().UTC()
@@ -443,6 +448,7 @@ func TestUpdateRuleSchedule(t *testing.T) {
 }
 
 func TestListRules(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
@@ -576,6 +582,7 @@ func TestListRules(t *testing.T) {
 }
 
 func TestRemoveRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
@@ -616,6 +623,7 @@ func TestRemoveRule(t *testing.T) {
 }
 
 func TestEnableRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
@@ -675,6 +683,7 @@ func TestEnableRule(t *testing.T) {
 }
 
 func TestDisableRule(t *testing.T) {
+	// nolint:dogsled
 	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()

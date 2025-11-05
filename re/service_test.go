@@ -6,6 +6,7 @@ package re_test
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -1361,7 +1362,6 @@ func TestHandle(t *testing.T) {
 			err = svc.Handle(tc.message)
 			assert.Nil(t, err)
 
-			// Wait for goroutines to complete
 			time.Sleep(100 * time.Millisecond)
 
 			assert.True(t, errors.Contains(err, tc.listErr), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.listErr, err))
@@ -1441,6 +1441,166 @@ func TestStartScheduler(t *testing.T) {
 			err := <-errc
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("expected error %v but got %v", tc.err, err))
 			repoCall.Unset()
+			tickCall.Unset()
+			tickCall1.Unset()
+		})
+	}
+
+	schedulerCases := []struct {
+		desc            string
+		rules           []re.Rule
+		listErr         error
+		updateDueErr    error
+		expectedRunInfo int
+	}{
+		{
+			desc: "start scheduler with successful rule processing",
+			rules: []re.Rule{
+				{
+					ID:           testsutil.GenerateUUID(t),
+					Name:         namegen.Generate(),
+					DomainID:     domainID,
+					InputChannel: inputChannel,
+					Status:       re.EnabledStatus,
+					Schedule: pkgSch.Schedule{
+						StartDateTime:   now.Add(-time.Hour),
+						Time:            now.Add(time.Hour),
+						Recurring:       pkgSch.Daily,
+						RecurringPeriod: 1,
+					},
+					Logic: re.Script{
+						Type:  re.LuaType,
+						Value: "return true",
+					},
+				},
+			},
+			listErr:         nil,
+			updateDueErr:    nil,
+			expectedRunInfo: 1,
+		},
+		{
+			desc: "start scheduler with multiple rules",
+			rules: []re.Rule{
+				{
+					ID:           testsutil.GenerateUUID(t),
+					Name:         namegen.Generate(),
+					DomainID:     domainID,
+					InputChannel: inputChannel,
+					Status:       re.EnabledStatus,
+					Schedule: pkgSch.Schedule{
+						StartDateTime:   now.Add(-time.Hour),
+						Time:            now.Add(time.Hour),
+						Recurring:       pkgSch.Daily,
+						RecurringPeriod: 1,
+					},
+					Logic: re.Script{
+						Type:  re.LuaType,
+						Value: "return true",
+					},
+				},
+				{
+					ID:           testsutil.GenerateUUID(t),
+					Name:         namegen.Generate(),
+					DomainID:     domainID,
+					InputChannel: inputChannel,
+					Status:       re.EnabledStatus,
+					Schedule: pkgSch.Schedule{
+						StartDateTime:   now.Add(-time.Hour),
+						Time:            now.Add(time.Hour),
+						Recurring:       pkgSch.Weekly,
+						RecurringPeriod: 1,
+					},
+					Logic: re.Script{
+						Type:  re.GoType,
+						Value: "func() bool { return true }",
+					},
+				},
+			},
+			listErr:         nil,
+			updateDueErr:    nil,
+			expectedRunInfo: 2,
+		},
+		{
+			desc:            "start scheduler with list rules error",
+			rules:           []re.Rule{},
+			listErr:         repoerr.ErrViewEntity,
+			updateDueErr:    nil,
+			expectedRunInfo: 1,
+		},
+		{
+			desc: "start scheduler with update due error",
+			rules: []re.Rule{
+				{
+					ID:           testsutil.GenerateUUID(t),
+					Name:         namegen.Generate(),
+					DomainID:     domainID,
+					InputChannel: inputChannel,
+					Status:       re.EnabledStatus,
+					Schedule: pkgSch.Schedule{
+						StartDateTime:   now.Add(-time.Hour),
+						Time:            now.Add(time.Hour),
+						Recurring:       pkgSch.Daily,
+						RecurringPeriod: 1,
+					},
+					Logic: re.Script{
+						Type:  re.LuaType,
+						Value: "return true",
+					},
+				},
+			},
+			listErr:         nil,
+			updateDueErr:    repoerr.ErrUpdateEntity,
+			expectedRunInfo: 1,
+		},
+	}
+
+	for _, tc := range schedulerCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			page := re.Page{
+				Rules: tc.rules,
+				Total: uint64(len(tc.rules)),
+			}
+
+			repoCall := repo.On("ListRules", mock.Anything, mock.Anything).Return(page, tc.listErr)
+			repoCall2 := repo.On("UpdateRuleDue", mock.Anything, mock.Anything, mock.Anything).Return(re.Rule{}, tc.updateDueErr)
+			tickChan := make(chan time.Time, 1)
+			tickCall := ticker.On("Tick").Return((<-chan time.Time)(tickChan))
+			tickCall1 := ticker.On("Stop").Return()
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			go func() {
+				_ = svc.StartScheduler(ctx)
+			}()
+
+			tickChan <- now
+
+			collected := 0
+			timeout := time.After(500 * time.Millisecond)
+			for collected < tc.expectedRunInfo {
+				select {
+				case info := <-ri:
+					collected++
+					if tc.listErr != nil {
+						assert.Equal(t, slog.LevelError, info.Level)
+						assert.Contains(t, info.Message, "failed to list rules")
+					} else if tc.updateDueErr != nil {
+						assert.Equal(t, slog.LevelError, info.Level)
+						assert.Contains(t, info.Message, "failed to update rule")
+					} else {
+						assert.True(t, info.Level == slog.LevelInfo || info.Level == slog.LevelWarn || info.Level == slog.LevelError)
+					}
+				case <-timeout:
+					t.Fatalf("timeout waiting for runInfo messages, expected %d got %d", tc.expectedRunInfo, collected)
+				}
+			}
+
+			cancel()
+			time.Sleep(50 * time.Millisecond)
+
+			repoCall.Unset()
+			repoCall2.Unset()
 			tickCall.Unset()
 			tickCall1.Unset()
 		})

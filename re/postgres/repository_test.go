@@ -52,6 +52,9 @@ func TestAddRule(t *testing.T) {
 			Type:  re.LuaType,
 			Value: "return true",
 		},
+		Outputs: re.Outputs{
+			&outputs.Alarm{},
+		},
 		Status:    re.EnabledStatus,
 		CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 		CreatedBy: generateUUID(t),
@@ -158,27 +161,16 @@ func TestAddRule(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			addedRule, err := repo.AddRule(context.Background(), tc.rule)
-			if tc.err == nil {
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
 				tc.resp = tc.rule
 				tc.resp.ID = addedRule.ID
 				if tc.resp.Metadata == nil {
 					tc.resp.Metadata = re.Metadata{}
 				}
-				if len(tc.resp.Outputs) > 0 {
-					for i, output := range addedRule.Outputs {
-						switch o := output.(type) {
-						case *outputs.Alarm:
-							if i < len(tc.resp.Outputs) {
-								if expectedAlarm, ok := tc.resp.Outputs[i].(*outputs.Alarm); ok {
-									expectedAlarm.RuleID = o.RuleID
-								}
-							}
-						}
-					}
-				}
+				tc.resp.Outputs = addedRule.Outputs
+				assert.Equal(t, tc.resp, addedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, addedRule))
 			}
-			assert.Equal(t, tc.resp, addedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, addedRule))
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		})
 	}
 }

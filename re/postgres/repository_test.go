@@ -65,6 +65,73 @@ func TestAddRule(t *testing.T) {
 		},
 	}
 
+	scheduleName := namegen.Generate()
+	scheduleDomain := generateUUID(t)
+	scheduleChannel := generateUUID(t)
+	scheduleCreatedBy := generateUUID(t)
+	scheduleCreatedAt := time.Now().UTC().Truncate(time.Microsecond)
+	scheduleUpdatedBy := generateUUID(t)
+	scheduleUpdatedAt := time.Now().UTC().Truncate(time.Microsecond)
+	scheduleStartTime := time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond)
+	scheduleTime := time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond)
+
+	scheduleRule := re.Rule{
+		ID:           generateUUID(t),
+		Name:         scheduleName,
+		DomainID:     scheduleDomain,
+		InputChannel: scheduleChannel,
+		InputTopic:   "humidity",
+		Logic: re.Script{
+			Type:  re.LuaType,
+			Value: "return value > 50",
+		},
+		Schedule: schedule.Schedule{
+			StartDateTime:   scheduleStartTime,
+			Time:            scheduleTime,
+			Recurring:       schedule.Daily,
+			RecurringPeriod: 1,
+		},
+		Status:    re.EnabledStatus,
+		CreatedAt: scheduleCreatedAt,
+		CreatedBy: scheduleCreatedBy,
+		UpdatedAt: scheduleUpdatedAt,
+		UpdatedBy: scheduleUpdatedBy,
+		Metadata:  re.Metadata{},
+	}
+
+	outputsName := namegen.Generate()
+	outputsDomain := generateUUID(t)
+	outputsChannel := generateUUID(t)
+	outputsCreatedBy := generateUUID(t)
+	outputsCreatedAt := time.Now().UTC().Truncate(time.Microsecond)
+	outputsUpdatedBy := generateUUID(t)
+	outputsUpdatedAt := time.Now().UTC().Truncate(time.Microsecond)
+	outputsRuleID := generateUUID(t)
+
+	outputsRule := re.Rule{
+		ID:           outputsRuleID,
+		Name:         outputsName,
+		DomainID:     outputsDomain,
+		InputChannel: outputsChannel,
+		Logic: re.Script{
+			Type:  re.GoType,
+			Value: "func() bool { return true }",
+		},
+		Outputs: re.Outputs{
+			&outputs.ChannelPublisher{
+				Channel: generateUUID(t),
+				Topic:   "alerts",
+			},
+			&outputs.SenML{},
+		},
+		Status:    re.EnabledStatus,
+		CreatedAt: outputsCreatedAt,
+		CreatedBy: outputsCreatedBy,
+		UpdatedAt: outputsUpdatedAt,
+		UpdatedBy: outputsUpdatedBy,
+		Metadata:  re.Metadata{},
+	}
+
 	cases := []struct {
 		desc string
 		rule re.Rule
@@ -83,56 +150,17 @@ func TestAddRule(t *testing.T) {
 			resp: re.Rule{},
 			err:  repoerr.ErrConflict,
 		},
+
 		{
 			desc: "rule with schedule",
-			rule: re.Rule{
-				ID:           generateUUID(t),
-				Name:         namegen.Generate(),
-				DomainID:     generateUUID(t),
-				InputChannel: generateUUID(t),
-				InputTopic:   "humidity",
-				Logic: re.Script{
-					Type:  re.LuaType,
-					Value: "return value > 50",
-				},
-				Schedule: schedule.Schedule{
-					StartDateTime:   time.Now().UTC().Add(time.Hour).Truncate(time.Microsecond),
-					Time:            time.Now().UTC().Add(2 * time.Hour).Truncate(time.Microsecond),
-					Recurring:       schedule.Daily,
-					RecurringPeriod: 1,
-				},
-				Status:    re.EnabledStatus,
-				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
-				CreatedBy: generateUUID(t),
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
-				UpdatedBy: generateUUID(t),
-			},
-			resp: re.Rule{},
+			rule: scheduleRule,
+			resp: scheduleRule,
 			err:  nil,
 		},
 		{
 			desc: "rule with outputs",
-			rule: re.Rule{
-				ID:           generateUUID(t),
-				Name:         namegen.Generate(),
-				DomainID:     generateUUID(t),
-				InputChannel: generateUUID(t),
-				Logic: re.Script{
-					Type:  re.GoType,
-					Value: "func() bool { return true }",
-				},
-				Outputs: re.Outputs{
-					&outputs.Alarm{
-						RuleID: generateUUID(t),
-					},
-				},
-				Status:    re.EnabledStatus,
-				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
-				CreatedBy: generateUUID(t),
-				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
-				UpdatedBy: generateUUID(t),
-			},
-			resp: re.Rule{},
+			rule: outputsRule,
+			resp: outputsRule,
 			err:  nil,
 		},
 		{
@@ -152,23 +180,19 @@ func TestAddRule(t *testing.T) {
 				Status:    re.EnabledStatus,
 				CreatedAt: time.Now().UTC().Truncate(time.Microsecond),
 				CreatedBy: generateUUID(t),
+				UpdatedAt: time.Now().UTC().Truncate(time.Microsecond),
+				UpdatedBy: generateUUID(t),
 			},
 			resp: re.Rule{},
-			err:  errors.ErrMalformedEntity,
+			err:  repoerr.ErrMalformedEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			addedRule, err := repo.AddRule(context.Background(), tc.rule)
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
-				tc.resp = tc.rule
 				tc.resp.ID = addedRule.ID
-				if tc.resp.Metadata == nil {
-					tc.resp.Metadata = re.Metadata{}
-				}
-				tc.resp.Outputs = addedRule.Outputs
 				assert.Equal(t, tc.resp, addedRule, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, addedRule))
 			}
 		})
@@ -877,9 +901,9 @@ func TestListRules(t *testing.T) {
 				case nameOrder:
 					switch tc.pm.Dir {
 					case ascDir:
-						assert.True(t, page.Rules[0].Name <= page.Rules[1].Name, "Expected ascending name order")
+						assert.LessOrEqual(t, page.Rules[0].Name, page.Rules[1].Name, "Expected ascending name order")
 					case descDir:
-						assert.True(t, page.Rules[0].Name >= page.Rules[1].Name, "Expected descending name order")
+						assert.GreaterOrEqual(t, page.Rules[0].Name, page.Rules[1].Name, "Expected descending name order")
 					}
 				case createdAtOrder:
 					switch tc.pm.Dir {

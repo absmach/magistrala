@@ -134,7 +134,7 @@ func listRulesEndpoint(s re.Service) endpoint.Endpoint {
 		}
 		page, err := s.ListRules(ctx, session, req.PageMeta)
 		if err != nil {
-			return rulesPageRes{}, nil
+			return rulesPageRes{}, err
 		}
 		ret := rulesPageRes{
 			Page: page,

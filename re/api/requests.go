@@ -56,7 +56,7 @@ func (req listRulesReq) validate() error {
 	switch req.Order {
 	case "", api.NameKey, api.CreatedAtOrder, api.UpdatedAtOrder:
 	default:
-		return apiutil.ErrInvalidOrder
+		return errors.Wrap(apiutil.ErrInvalidOrder, apiutil.ErrValidation)
 	}
 
 	if req.Dir != api.AscDir && req.Dir != api.DescDir {

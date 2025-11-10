@@ -444,6 +444,14 @@ func TestListRulesEndpoint(t *testing.T) {
 			err:      apiutil.ErrInvalidDirection,
 		},
 		{
+			desc:     "list rules with invalid order",
+			domainID: domainID,
+			token:    validToken,
+			query:    "order=invalid",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidOrder,
+		},
+		{
 			desc:     "list rule with limit that is too big",
 			domainID: domainID,
 			token:    validToken,
@@ -506,6 +514,14 @@ func TestListRulesEndpoint(t *testing.T) {
 			query:    "tag=tag1&tag=tag2",
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:              "list rules with service error",
+			domainID:          domainID,
+			token:             validToken,
+			listRulesResponse: re.Page{},
+			status:            http.StatusForbidden,
+			err:               svcerr.ErrAuthorization,
 		},
 	}
 
@@ -821,6 +837,153 @@ func TestUpdateRuleTagsEndpoint(t *testing.T) {
 			}
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestUpdateRuleScheduleEndpoint(t *testing.T) {
+	ts, svc, authn := newRuleEngineServer()
+	defer ts.Close()
+
+	updateScheduleReq := pkgSch.Schedule{
+		StartDateTime:   future,
+		Time:            future.Add(2 * time.Hour),
+		Recurring:       pkgSch.Weekly,
+		RecurringPeriod: 2,
+	}
+
+	ruleWithSchedule := rule
+	ruleWithSchedule.Schedule = updateScheduleReq
+
+	cases := []struct {
+		desc        string
+		token       string
+		id          string
+		domainID    string
+		schedule    pkgSch.Schedule
+		contentType string
+		session     smqauthn.Session
+		svcResp     re.Rule
+		svcErr      error
+		status      int
+		authnErr    error
+		err         error
+	}{
+		{
+			desc:        "update rule schedule successfully",
+			token:       validToken,
+			domainID:    domainID,
+			id:          validID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			svcResp:     ruleWithSchedule,
+			status:      http.StatusOK,
+			err:         nil,
+		},
+		{
+			desc:        "update rule schedule with invalid token",
+			token:       invalidToken,
+			session:     smqauthn.Session{},
+			domainID:    domainID,
+			id:          validID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			authnErr:    svcerr.ErrAuthentication,
+			status:      http.StatusUnauthorized,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:        "update rule schedule with empty token",
+			token:       "",
+			session:     smqauthn.Session{},
+			domainID:    domainID,
+			id:          validID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			status:      http.StatusUnauthorized,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:        "update rule schedule with empty domainID",
+			token:       validToken,
+			id:          validID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingDomainID,
+		},
+		{
+			desc:        "update rule schedule with invalid content type",
+			token:       validToken,
+			id:          validID,
+			domainID:    domainID,
+			schedule:    updateScheduleReq,
+			contentType: "application/xml",
+			status:      http.StatusUnsupportedMediaType,
+			err:         apiutil.ErrUnsupportedContentType,
+		},
+		{
+			desc:     "update rule schedule with start_datetime in past",
+			token:    validToken,
+			id:       validID,
+			domainID: domainID,
+			schedule: pkgSch.Schedule{
+				StartDateTime:   past,
+				Time:            future,
+				Recurring:       pkgSch.Daily,
+				RecurringPeriod: 1,
+			},
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrValidation,
+		},
+		{
+			desc:        "update rule schedule with service error",
+			token:       validToken,
+			id:          validID,
+			domainID:    domainID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			svcErr:      svcerr.ErrAuthorization,
+			status:      http.StatusForbidden,
+			err:         svcerr.ErrAuthorization,
+		},
+		{
+			desc:        "update rule schedule with empty id",
+			token:       validToken,
+			id:          "",
+			domainID:    domainID,
+			schedule:    updateScheduleReq,
+			contentType: contentType,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			data := toJSON(map[string]any{
+				"schedule": tc.schedule,
+			})
+
+			req := testRequest{
+				client:      ts.Client(),
+				method:      http.MethodPatch,
+				url:         fmt.Sprintf("%s/%s/rules/%s/schedule", ts.URL, tc.domainID, tc.id),
+				contentType: tc.contentType,
+				token:       tc.token,
+				body:        strings.NewReader(data),
+			}
+
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("UpdateRuleSchedule", mock.Anything, mock.Anything, mock.Anything).Return(tc.svcResp, tc.svcErr)
+
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+
 			svcCall.Unset()
 			authCall.Unset()
 		})

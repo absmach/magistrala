@@ -142,7 +142,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 			}
 
 			for _, r := range page.Rules {
-				go func(rule Rule) {
+				go func(rule Rule, dueTime time.Time) {
 					if _, err := re.repo.UpdateRuleDue(ctx, rule.ID, rule.Schedule.NextDue()); err != nil {
 						re.runInfo <- pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to update rule: %s", err), Details: []slog.Attr{slog.Time("time", time.Now().UTC())}}
 						return
@@ -153,10 +153,10 @@ func (re *re) StartScheduler(ctx context.Context) error {
 						Channel:  rule.InputChannel,
 						Subtopic: rule.InputTopic,
 						Protocol: protocol,
-						Created:  due.Unix(),
+						Created:  dueTime.Unix(),
 					}
 					re.runInfo <- re.process(ctx, rule, msg)
-				}(r)
+				}(r, due)
 			}
 			// Reset due, it will reset in the page meta as well.
 			due = time.Now().UTC()

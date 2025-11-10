@@ -26,7 +26,7 @@ volumes:
 
 services:
   spicedb:
-    image: "authzed/spicedb:v1.37.0"
+    image: docker.io/authzed/spicedb:v1.37.0
     container_name: supermq-spicedb
     command: "serve"
     restart: "always"
@@ -44,7 +44,7 @@ services:
       - spicedb-migrate
 
   spicedb-migrate:
-    image: "authzed/spicedb:v1.37.0"
+    image: docker.io/authzed/spicedb:v1.37.0
     container_name: supermq-spicedb-migrate
     command: "migrate head"
     restart: "on-failure"
@@ -57,7 +57,7 @@ services:
       - spicedb-db
 
   spicedb-db:
-    image: "postgres:16.2-alpine"
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-spicedb-db
     networks:
       - supermq-base-net
@@ -72,7 +72,7 @@ services:
     command: ["postgres", "-c", "track_commit_timestamp=on"]
 
   auth-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-auth-db
     restart: on-failure
     ports:
@@ -87,7 +87,7 @@ services:
       - supermq-auth-db-volume:/var/lib/postgresql/data
 
   auth-redis:
-    image: redis:7.2.4-alpine
+    image: docker.io/redis:8.2.2-alpine3.22
     container_name: supermq-auth-redis
     restart: on-failure
     networks:
@@ -96,7 +96,7 @@ services:
       - supermq-auth-redis-volume:/data
 
   auth:
-    image: supermq/auth:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/auth:${SMQ_RELEASE_TAG}
     container_name: supermq-auth
     depends_on:
       - auth-db
@@ -189,7 +189,7 @@ services:
           create_host_path: true
 
   domains-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-domains-db
     restart: on-failure
     ports:
@@ -204,7 +204,7 @@ services:
       - supermq-domains-db-volume:/var/lib/postgresql/data
 
   domains-redis:
-    image: redis:7.2.4-alpine
+    image: docker.io/redis:8.2.2-alpine3.22
     container_name: supermq-domains-redis
     restart: on-failure
     networks:
@@ -213,7 +213,7 @@ services:
       - supermq-domains-redis-volume:/data
 
   domains:
-    image: supermq/domains:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/domains:${SMQ_RELEASE_TAG}
     container_name: supermq-domains
     depends_on:
       - domains-db
@@ -380,7 +380,7 @@ services:
           create_host_path: true
 
   nginx:
-    image: nginx:1.25.4-alpine
+    image: docker.io/nginx:1.29.2-alpine3.22
     container_name: supermq-nginx
     restart: on-failure
     volumes:
@@ -423,7 +423,7 @@ services:
         hard: 65536
 
   clients-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-clients-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -440,7 +440,7 @@ services:
       - supermq-clients-db-volume:/var/lib/postgresql/data
 
   clients-redis:
-    image: redis:7.2.4-alpine
+    image: docker.io/redis:8.2.2-alpine3.22
     container_name: supermq-clients-redis
     restart: on-failure
     networks:
@@ -449,7 +449,7 @@ services:
       - supermq-clients-redis-volume:/data
 
   clients:
-    image: supermq/clients:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/clients:${SMQ_RELEASE_TAG}
     container_name: supermq-clients
     depends_on:
       - clients-db
@@ -616,7 +616,7 @@ services:
           create_host_path: true
 
   channels-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-channels-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -633,7 +633,7 @@ services:
       - supermq-channels-db-volume:/var/lib/postgresql/data
 
   channels-redis:
-    image: redis:7.2.4-alpine
+    image: docker.io/redis:8.2.2-alpine3.22
     container_name: supermq-channels-redis
     restart: on-failure
     networks:
@@ -642,7 +642,7 @@ services:
       - supermq-channels-redis-volume:/data
 
   channels:
-    image: supermq/channels:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/channels:${SMQ_RELEASE_TAG}
     container_name: supermq-channels
     depends_on:
       - channels-db
@@ -807,7 +807,7 @@ services:
           create_host_path: true
 
   users-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-users-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -824,7 +824,7 @@ services:
       - supermq-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: supermq/users:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/users:${SMQ_RELEASE_TAG}
     container_name: supermq-users
     depends_on:
       - users-db
@@ -933,7 +933,7 @@ services:
           create_host_path: true
 
   groups-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: supermq-groups-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -950,7 +950,7 @@ services:
       - supermq-groups-db-volume:/var/lib/postgresql/data
 
   groups:
-    image: supermq/groups:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/groups:${SMQ_RELEASE_TAG}
     container_name: supermq-groups
     depends_on:
       - groups-db
@@ -1113,7 +1113,7 @@ services:
           create_host_path: true
 
   jaeger:
-    image: jaegertracing/all-in-one:1.66.0
+    image: docker.io/jaegertracing/all-in-one:1.74.0
     container_name: supermq-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: ${SMQ_JAEGER_COLLECTOR_OTLP_ENABLED}
@@ -1125,7 +1125,7 @@ services:
       - supermq-base-net
 
   mqtt-adapter:
-    image: supermq/mqtt:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/mqtt:${SMQ_RELEASE_TAG}
     container_name: supermq-mqtt
     depends_on:
       - clients
@@ -1224,7 +1224,7 @@ services:
           create_host_path: true
 
   http-adapter:
-    image: supermq/http:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/http:${SMQ_RELEASE_TAG}
     container_name: supermq-http
     depends_on:
       - clients
@@ -1336,7 +1336,7 @@ services:
           create_host_path: true
 
   coap-adapter:
-    image: supermq/coap:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/coap:${SMQ_RELEASE_TAG}
     container_name: supermq-coap
     depends_on:
       - clients
@@ -1454,7 +1454,7 @@ services:
           create_host_path: true
 
   ws-adapter:
-    image: supermq/ws:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/ws:${SMQ_RELEASE_TAG}
     container_name: supermq-ws
     depends_on:
       - clients
@@ -1566,7 +1566,7 @@ services:
           create_host_path: true
 
   rabbitmq:
-    image: rabbitmq:4.0.5-management-alpine
+    image: docker.io/rabbitmq:4.1.4-management-alpine
     container_name: supermq-rabbitmq
     restart: on-failure
     environment:
@@ -1587,7 +1587,7 @@ services:
       - supermq-base-net
 
   nats:
-    image: nats:2.10.25-alpine
+    image: docker.io/nats:2.12.0-alpine3.22
     container_name: supermq-nats
     restart: on-failure
     command: "--config=/etc/nats/nats.conf"

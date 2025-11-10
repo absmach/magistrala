@@ -497,8 +497,8 @@ github.com/technoweenie/multipartstreamer v1.0.1/go.mod h1:jNVxdtShOxzAsukZwTSw6
 github.com/traefik/yaegi v0.16.1 h1:f1De3DVJqIDKmnasUF6MwmWv1dSEEat0wcpXhD2On3E=
 github.com/traefik/yaegi v0.16.1/go.mod h1:4eVhbPb3LnD2VigQjhYbEJ69vDRFdT2HQNrXx8eEwUY=
 github.com/urfave/cli v1.22.5/go.mod h1:Gos4lmkARVdJ6EkW0WaNv/tZAAMe9V7XWyB60NtXRu0=
-github.com/vadv/gopher-lua-libs v0.7.0 h1:2svzL0ElKm9HH7fOEfIpM6D7VMOj9gCYrvfqRo4aPJI=
-github.com/vadv/gopher-lua-libs v0.7.0/go.mod h1:iNYvPoNV6ur7xJj4Uj3hEVebv8Z0/MoeM1igsXQbv8g=
+github.com/vadv/gopher-lua-libs v0.8.0 h1:u2GVTj32Wnmu8RpSxeAdlTf9mYZrrm9ALKGYmvnvvZQ=
+github.com/vadv/gopher-lua-libs v0.8.0/go.mod h1:iNYvPoNV6ur7xJj4Uj3hEVebv8Z0/MoeM1igsXQbv8g=
 github.com/x448/float16 v0.8.4 h1:qLwI1I70+NjRFUR3zs1JPUCgaCXSh3SW62uAKT1mSBM=
 github.com/x448/float16 v0.8.4/go.mod h1:14CWIYCyZA/cWjXOioeEpHeN/83MdbZDRQHoFcYsOfg=
 github.com/xeipuuv/gojsonpointer v0.0.0-20180127040702-4e3ac2762d5f/go.mod h1:N2zxlSyiKSe5eX1tZViRH5QA0qijqEDrYZiPEAiq3wU=

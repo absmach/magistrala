@@ -6,6 +6,7 @@ package postgres_test
 import (
 	"context"
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -899,25 +900,34 @@ func TestListRules(t *testing.T) {
 			if len(page.Rules) > 1 {
 				switch tc.pm.Order {
 				case nameOrder:
-					switch tc.pm.Dir {
-					case ascDir:
-						assert.LessOrEqual(t, page.Rules[0].Name, page.Rules[1].Name, "Expected ascending name order")
-					case descDir:
-						assert.GreaterOrEqual(t, page.Rules[0].Name, page.Rules[1].Name, "Expected descending name order")
+					if tc.pm.Dir == ascDir {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].Name <= page.Rules[j].Name
+						}), "Expected names to be sorted ascending")
+					} else {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].Name >= page.Rules[j].Name
+						}), "Expected names to be sorted descending")
 					}
 				case createdAtOrder:
-					switch tc.pm.Dir {
-					case ascDir:
-						assert.True(t, !page.Rules[0].CreatedAt.After(page.Rules[1].CreatedAt), "Expected ascending created_at order")
-					case descDir:
-						assert.True(t, !page.Rules[0].CreatedAt.Before(page.Rules[1].CreatedAt), "Expected descending created_at order")
+					if tc.pm.Dir == ascDir {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].CreatedAt.Before(page.Rules[j].CreatedAt)
+						}), "Expected created_at to be sorted ascending")
+					} else {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].CreatedAt.After(page.Rules[j].CreatedAt)
+						}), "Expected created_at to be sorted descending")
 					}
 				case updatedAtOrder:
-					switch tc.pm.Dir {
-					case ascDir:
-						assert.True(t, !page.Rules[0].UpdatedAt.After(page.Rules[1].UpdatedAt), "Expected ascending updated_at order")
-					case descDir:
-						assert.True(t, !page.Rules[0].UpdatedAt.Before(page.Rules[1].UpdatedAt), "Expected descending updated_at order")
+					if tc.pm.Dir == ascDir {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].UpdatedAt.Before(page.Rules[j].UpdatedAt)
+						}), "Expected updated_at to be sorted ascending")
+					} else {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].UpdatedAt.After(page.Rules[j].UpdatedAt)
+						}), "Expected updated_at to be sorted descending")
 					}
 				}
 			}

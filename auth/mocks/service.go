@@ -1350,6 +1350,63 @@ func (_c *Service_RevokePATSecret_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// RevokeToken provides a mock function for the type Service
+func (_mock *Service) RevokeToken(ctx context.Context, token string) error {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RevokeToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeToken'
+type Service_RevokeToken_Call struct {
+	*mock.Call
+}
+
+// RevokeToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *Service_Expecter) RevokeToken(ctx interface{}, token interface{}) *Service_RevokeToken_Call {
+	return &Service_RevokeToken_Call{Call: _e.mock.On("RevokeToken", ctx, token)}
+}
+
+func (_c *Service_RevokeToken_Call) Run(run func(ctx context.Context, token string)) *Service_RevokeToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RevokeToken_Call) Return(err error) *Service_RevokeToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RevokeToken_Call) RunAndReturn(run func(ctx context.Context, token string) error) *Service_RevokeToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdatePATDescription provides a mock function for the type Service
 func (_mock *Service) UpdatePATDescription(ctx context.Context, token string, patID string, description string) (auth.PAT, error) {
 	ret := _mock.Called(ctx, token, patID, description)

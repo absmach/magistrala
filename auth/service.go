@@ -67,6 +67,9 @@ type Authn interface {
 	// Issue issues a new Key, returning its token value alongside.
 	Issue(ctx context.Context, token string, key Key) (Token, error)
 
+	// RevokeToken revokes the token.
+	RevokeToken(ctx context.Context, token string) error
+
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
 	Revoke(ctx context.Context, token, id string) error
@@ -141,6 +144,10 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 	default:
 		return svc.accessKey(ctx, key)
 	}
+}
+
+func (svc service) RevokeToken(ctx context.Context, token string) error {
+	return svc.tokenizer.Revoke(ctx, token)
 }
 
 func (svc service) Revoke(ctx context.Context, token, id string) error {

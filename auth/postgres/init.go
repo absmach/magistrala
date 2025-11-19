@@ -134,6 +134,17 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE pat_scopes RENAME COLUMN domain_id TO optional_domain_id;`,
 				},
 			},
+			{
+				Id: "auth_7",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS tokens (
+						id          VARCHAR(36) PRIMARY KEY
+					);`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS tokens`,
+				},
+			},
 		},
 	}
 }

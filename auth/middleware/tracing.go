@@ -36,6 +36,13 @@ func (tm *tracingMiddleware) Issue(ctx context.Context, token string, key auth.K
 	return tm.svc.Issue(ctx, token, key)
 }
 
+func (tm *tracingMiddleware) RevokeToken(ctx context.Context, token string) error {
+	ctx, span := tm.tracer.Start(ctx, "revoke_token")
+	defer span.End()
+
+	return tm.svc.RevokeToken(ctx, token)
+}
+
 func (tm *tracingMiddleware) Revoke(ctx context.Context, token, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "revoke", trace.WithAttributes(
 		attribute.String("id", id),

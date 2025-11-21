@@ -296,7 +296,8 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
-	patsRepo := apostgres.NewPatRepo(database, cache)
+	patsRepo := apostgres.NewPatRepo(database, patsCache)
+	tokensRepo := apostgres.NewTokensRepository(database)
 	hasher := hasher.New()
 
 	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)

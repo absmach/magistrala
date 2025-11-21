@@ -142,7 +142,7 @@ func Migration() *migrate.MemoryMigrationSource {
 					);`,
 				},
 				Down: []string{
-					`DROP TABLE IF EXISTS tokens`,
+					`DROP TABLE IF EXISTS revoked_tokens`,
 				},
 			},
 		},

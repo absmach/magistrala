@@ -26,7 +26,7 @@ func NewTokensRepository(db postgres.Database) auth.TokensRepository {
 }
 
 func (repo *tokenRepo) Save(ctx context.Context, id string) error {
-	q := `INSERT INTO tokens (id) VALUES ($1);`
+	q := `INSERT INTO revoked_tokens (id) VALUES ($1);`
 
 	result, err := repo.db.ExecContext(ctx, q, id)
 	if err != nil {
@@ -40,7 +40,7 @@ func (repo *tokenRepo) Save(ctx context.Context, id string) error {
 }
 
 func (repo *tokenRepo) Contains(ctx context.Context, id string) bool {
-	q := `SELECT * FROM tokens WHERE id = $1;`
+	q := `SELECT * FROM revoked_tokens WHERE id = $1;`
 
 	rows, err := repo.db.QueryContext(ctx, q, id)
 	if err != nil {

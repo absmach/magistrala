@@ -7,7 +7,7 @@ require (
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.2
 	github.com/absmach/supermq v0.18.2
-	github.com/authzed/authzed-go v1.6.0
+	github.com/authzed/authzed-go v1.7.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/eclipse/paho.mqtt.golang v1.5.1

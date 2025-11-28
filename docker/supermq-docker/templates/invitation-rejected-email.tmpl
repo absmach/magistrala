@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{.Subject}}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 30px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+            padding: 30px 40px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #ffffff;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 40px;
+        }
+        .content p {
+            margin: 0 0 15px 0;
+            font-size: 15px;
+        }
+        .rejection-details {
+            background-color: #fadbd8;
+            border-left: 4px solid #e74c3c;
+            padding: 20px;
+            margin: 25px 0;
+            border-radius: 4px;
+        }
+        .rejection-details p {
+            margin: 0;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+        .footer {
+            background-color: #f8f9fb;
+            padding: 25px 40px;
+            text-align: center;
+            font-size: 13px;
+            color: #666;
+        }
+        .footer-divider {
+            border: none;
+            border-top: 1px solid #e0e3e8;
+            margin: 30px 0 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Invitation Declined</h1>
+        </div>
+
+        <div class="content">
+            <p>Dear <strong>{{.User}}</strong>,</p>
+
+            <div class="rejection-details">
+                <p>{{.Content}}</p>
+            </div>
+
+            <p>If you would like to extend another invitation or have any questions, please don't hesitate to contact us.</p>
+
+            <hr class="footer-divider">
+
+            <p>Best regards,<br><strong>{{.Footer}}</strong></p>
+        </div>
+
+        <div class="footer">
+            <p>This is an automated email. Please do not reply directly to this message.</p>
+            <p style="margin-top: 10px; color: #999;">Powered by Magistrala</p>
+        </div>
+    </div>
+</body>
+</html>

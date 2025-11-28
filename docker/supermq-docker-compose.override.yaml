@@ -114,6 +114,11 @@ services:
     networks: !override
       - magistrala-base-net
 
+
+  notifications:
+    networks: !override
+      - magistrala-base-net
+
   openbao:
     volumes:
       - ./addons/certs/openbao-entrypoint.sh:/entrypoint.sh

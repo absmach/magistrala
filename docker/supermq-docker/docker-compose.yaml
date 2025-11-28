@@ -846,6 +846,15 @@ services:
       SMQ_USERS_HTTP_PORT: ${SMQ_USERS_HTTP_PORT}
       SMQ_USERS_HTTP_SERVER_CERT: ${SMQ_USERS_HTTP_SERVER_CERT}
       SMQ_USERS_HTTP_SERVER_KEY: ${SMQ_USERS_HTTP_SERVER_KEY}
+      SMQ_USERS_GRPC_HOST: ${SMQ_USERS_GRPC_HOST}
+      SMQ_USERS_GRPC_PORT: ${SMQ_USERS_GRPC_PORT}
+      ## Compose supports parameter expansion in environment,
+      ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
+      ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
+      SMQ_USERS_GRPC_SERVER_CERT: ${SMQ_USERS_GRPC_SERVER_CERT:+/users-grpc-server.crt}
+      SMQ_USERS_GRPC_SERVER_KEY: ${SMQ_USERS_GRPC_SERVER_KEY:+/users-grpc-server.key}
+      SMQ_USERS_GRPC_SERVER_CA_CERTS: ${SMQ_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+      SMQ_USERS_GRPC_CLIENT_CA_CERTS: ${SMQ_USERS_GRPC_CLIENT_CA_CERTS:+/users-grpc-client-ca.crt}
       SMQ_USERS_DB_HOST: ${SMQ_USERS_DB_HOST}
       SMQ_USERS_DB_PORT: ${SMQ_USERS_DB_PORT}
       SMQ_USERS_DB_USER: ${SMQ_USERS_DB_USER}
@@ -894,6 +903,7 @@ services:
       SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
     ports:
       - ${SMQ_USERS_HTTP_PORT}:${SMQ_USERS_HTTP_PORT}
+      - ${SMQ_USERS_GRPC_PORT}:${SMQ_USERS_GRPC_PORT}
     networks:
       - supermq-base-net
     volumes:
@@ -929,6 +939,56 @@ services:
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
         target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  notifications:
+    image: docker.io/supermq/notifications:${SMQ_RELEASE_TAG}
+    container_name: supermq-notifications
+    depends_on:
+      - nats
+    restart: on-failure
+    environment:
+      SMQ_NOTIFICATIONS_LOG_LEVEL: ${SMQ_NOTIFICATIONS_LOG_LEVEL}
+      SMQ_NOTIFICATIONS_INSTANCE_ID: ${SMQ_NOTIFICATIONS_INSTANCE_ID}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_EMAIL_HOST: ${SMQ_EMAIL_HOST}
+      SMQ_EMAIL_PORT: ${SMQ_EMAIL_PORT}
+      SMQ_EMAIL_USERNAME: ${SMQ_EMAIL_USERNAME}
+      SMQ_EMAIL_PASSWORD: ${SMQ_EMAIL_PASSWORD}
+      SMQ_EMAIL_FROM_ADDRESS: ${SMQ_EMAIL_FROM_ADDRESS}
+      SMQ_EMAIL_FROM_NAME: ${SMQ_EMAIL_FROM_NAME}
+      SMQ_EMAIL_INVITATION_TEMPLATE: ${SMQ_EMAIL_INVITATION_TEMPLATE}
+      SMQ_EMAIL_ACCEPTANCE_TEMPLATE: ${SMQ_EMAIL_ACCEPTANCE_TEMPLATE}
+      SMQ_EMAIL_REJECTION_TEMPLATE: ${SMQ_EMAIL_REJECTION_TEMPLATE}
+      SMQ_USERS_GRPC_URL: ${SMQ_USERS_GRPC_URL}
+      SMQ_USERS_GRPC_TIMEOUT: ${SMQ_USERS_GRPC_TIMEOUT}
+      SMQ_USERS_GRPC_CLIENT_CERT: ${SMQ_USERS_GRPC_CLIENT_CERT:+/users-grpc-client.crt}
+      SMQ_USERS_GRPC_CLIENT_KEY: ${SMQ_USERS_GRPC_CLIENT_KEY:+/users-grpc-client.key}
+      SMQ_USERS_GRPC_SERVER_CA_CERTS: ${SMQ_USERS_GRPC_SERVER_CA_CERTS:+/users-grpc-server-ca.crt}
+    networks:
+      - supermq-base-net
+    volumes:
+      - ./templates/${SMQ_EMAIL_INVITATION_TEMPLATE}:/${SMQ_EMAIL_INVITATION_TEMPLATE}
+      - ./templates/${SMQ_EMAIL_ACCEPTANCE_TEMPLATE}:/${SMQ_EMAIL_ACCEPTANCE_TEMPLATE}
+      - ./templates/${SMQ_EMAIL_REJECTION_TEMPLATE}:/${SMQ_EMAIL_REJECTION_TEMPLATE}
+      # Users gRPC client certificates
+      - type: bind
+        source: ${SMQ_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /users-grpc-client${SMQ_USERS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /users-grpc-client${SMQ_USERS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /users-grpc-server-ca${SMQ_USERS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
 

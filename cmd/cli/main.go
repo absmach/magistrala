@@ -8,7 +8,6 @@ import (
 	"log"
 
 	certscli "github.com/absmach/certs/cli"
-	"github.com/absmach/magistrala/cli"
 	mgcli "github.com/absmach/magistrala/cli"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	smqcli "github.com/absmach/supermq/cli"
@@ -174,18 +173,18 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.ConfigPath,
+		&mgcli.ConfigPath,
 		"config",
 		"c",
-		cli.ConfigPath,
+		mgcli.ConfigPath,
 		"Config path",
 	)
 
 	rootCmd.PersistentFlags().BoolVarP(
-		&cli.RawOutput,
+		&mgcli.RawOutput,
 		"raw",
 		"r",
-		cli.RawOutput,
+		mgcli.RawOutput,
 		"Enables raw output mode for easier parsing of output",
 	)
 	rootCmd.PersistentFlags().BoolVarP(
@@ -198,7 +197,7 @@ func main() {
 
 	// Client and Channels Flags
 	rootCmd.PersistentFlags().Uint64VarP(
-		&cli.Limit,
+		&mgcli.Limit,
 		"limit",
 		"l",
 		10,
@@ -206,7 +205,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().Uint64VarP(
-		&cli.Offset,
+		&mgcli.Offset,
 		"offset",
 		"o",
 		0,
@@ -214,7 +213,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Name,
+		&mgcli.Name,
 		"name",
 		"n",
 		"",
@@ -222,7 +221,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Identity,
+		&mgcli.Identity,
 		"identity",
 		"I",
 		"",
@@ -230,7 +229,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Metadata,
+		&mgcli.Metadata,
 		"metadata",
 		"m",
 		"",
@@ -238,7 +237,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Status,
+		&mgcli.Status,
 		"status",
 		"S",
 		"",
@@ -246,7 +245,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.State,
+		&mgcli.State,
 		"state",
 		"z",
 		"",
@@ -254,7 +253,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Topic,
+		&mgcli.Topic,
 		"topic",
 		"T",
 		"",
@@ -262,7 +261,7 @@ func main() {
 	)
 
 	rootCmd.PersistentFlags().StringVarP(
-		&cli.Contact,
+		&mgcli.Contact,
 		"contact",
 		"C",
 		"",

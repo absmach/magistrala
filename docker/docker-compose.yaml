@@ -509,7 +509,7 @@ services:
           create_host_path: true
 
   pdf-generator:
-    image: gotenberg/gotenberg:${MG_RELEASE_TAG}
+    image: gotenberg/gotenberg:8.25.1
     container_name: magistrala-pdf
     ports:
       - "4000:3000"

@@ -9,7 +9,6 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/authz"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/policies"
 )
 
@@ -23,11 +22,11 @@ var _ bootstrap.Service = (*authorizationMiddleware)(nil)
 
 type authorizationMiddleware struct {
 	svc   bootstrap.Service
-	authz smqauthz.Authorization
+	authz authz.Authorization
 }
 
 // AuthorizationMiddleware adds authorization to the clients service.
-func AuthorizationMiddleware(svc bootstrap.Service, authz smqauthz.Authorization) bootstrap.Service {
+func AuthorizationMiddleware(svc bootstrap.Service, authz authz.Authorization) bootstrap.Service {
 	return &authorizationMiddleware{
 		svc:   svc,
 		authz: authz,

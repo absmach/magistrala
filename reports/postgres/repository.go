@@ -140,7 +140,7 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg repo
 
 	var q string
 	if len(query) > 0 {
-		q = fmt.Sprintf("%s", strings.Join(query, ", "))
+		q = strings.Join(query, ", ")
 	}
 
 	q = fmt.Sprintf(`

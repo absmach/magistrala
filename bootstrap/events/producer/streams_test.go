@@ -15,7 +15,6 @@ import (
 	"github.com/absmach/magistrala/bootstrap/events/producer"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
-	"github.com/absmach/supermq/pkg/authn"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -990,7 +989,7 @@ func TestChangeState(t *testing.T) {
 		token           string
 		session         smqauthn.Session
 		state           bootstrap.State
-		authResponse    authn.Session
+		authResponse    smqauthn.Session
 		authorizeErr    error
 		connectErr      error
 		retrieveErr     error
@@ -1006,7 +1005,7 @@ func TestChangeState(t *testing.T) {
 			userID:       validID,
 			domainID:     domainID,
 			state:        bootstrap.Active,
-			authResponse: authn.Session{},
+			authResponse: smqauthn.Session{},
 			err:          nil,
 			event: map[string]any{
 				"client_id": config.ClientID,

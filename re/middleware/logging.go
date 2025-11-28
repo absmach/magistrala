@@ -238,5 +238,5 @@ func (lm *loggingMiddleware) Handle(msg *messaging.Message) (err error) {
 }
 
 func (lm *loggingMiddleware) Cancel() error {
-	return lm.Cancel()
+	return lm.svc.Cancel()
 }

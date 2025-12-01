@@ -8,6 +8,9 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+
 jobs:
   swagger-ui:
     runs-on: ubuntu-latest
@@ -15,17 +18,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v6
 
-      - name: Swagger UI action
-        id: swagger-ui-action
-        uses: blokovi/swagger-ui-action@main
-        with:
-          dir: "./apidocs/openapi"
-          pattern: "*.yaml"
-          debug: "true"
+      - name: Build Swagger UI
+        run: |
+          # Create output directory
+          mkdir -p swagger-ui
+
+          # Copy OpenAPI YAML files and schemas directory
+          cp apidocs/openapi/*.yaml swagger-ui/
+          cp -r apidocs/openapi/schemas swagger-ui/
+
+          # Get list of YAML files
+          cd apidocs/openapi
+          YAML_FILES=$(ls *.yaml | jq -R -s -c 'split("\n")[:-1]')
+          cd ../..
+
+          # Generate index.html from template
+          sed "s|APIS_PLACEHOLDER|$YAML_FILES|g" .github/swagger-ui-template.html > swagger-ui/index.html
+
+          echo "Generated Swagger UI with APIs: $YAML_FILES"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: swagger-ui
-          cname: docs.api.magistrala.absmach.eu
+          publish_dir: ./swagger-ui
+          cname: docs.api.supermq.absmach.eu

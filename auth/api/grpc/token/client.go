@@ -20,6 +20,7 @@ const tokenSvcName = "token.v1.TokenService"
 type tokenGrpcClient struct {
 	issue   endpoint.Endpoint
 	refresh endpoint.Endpoint
+	revoke  endpoint.Endpoint
 	timeout time.Duration
 }
 
@@ -43,6 +44,14 @@ func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) grpcTokenV1.To
 			encodeRefreshRequest,
 			decodeRefreshResponse,
 			grpcTokenV1.Token{},
+		).Endpoint(),
+		revoke: kitgrpc.NewClient(
+			conn,
+			tokenSvcName,
+			"Revoke",
+			encodeRevokeRequest,
+			decodeRevokeResponse,
+			grpcTokenV1.RevokeRes{},
 		).Endpoint(),
 		timeout: timeout,
 	}
@@ -95,5 +104,25 @@ func encodeRefreshRequest(_ context.Context, grpcReq any) (any, error) {
 }
 
 func decodeRefreshResponse(_ context.Context, grpcRes any) (any, error) {
+	return grpcRes, nil
+}
+
+func (client tokenGrpcClient) Revoke(ctx context.Context, req *grpcTokenV1.RevokeReq, _ ...grpc.CallOption) (*grpcTokenV1.RevokeRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	res, err := client.revoke(ctx, revokeReq{token: req.GetToken()})
+	if err != nil {
+		return &grpcTokenV1.RevokeRes{}, grpcapi.DecodeError(err)
+	}
+	return res.(*grpcTokenV1.RevokeRes), nil
+}
+
+func encodeRevokeRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(revokeReq)
+	return &grpcTokenV1.RevokeReq{Token: req.token}, nil
+}
+
+func decodeRevokeResponse(_ context.Context, grpcRes any) (any, error) {
 	return grpcRes, nil
 }

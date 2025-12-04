@@ -18,6 +18,7 @@ type tokenGrpcServer struct {
 	grpcTokenV1.UnimplementedTokenServiceServer
 	issue   kitgrpc.Handler
 	refresh kitgrpc.Handler
+	revoke  kitgrpc.Handler
 }
 
 // NewAuthServer returns new AuthnServiceServer instance.
@@ -32,6 +33,11 @@ func NewTokenServer(svc auth.Service) grpcTokenV1.TokenServiceServer {
 			(refreshEndpoint(svc)),
 			decodeRefreshRequest,
 			encodeIssueResponse,
+		),
+		revoke: kitgrpc.NewServer(
+			(revokeEndpoint(svc)),
+			decodeRevokeRequest,
+			encodeRevokeResponse,
 		),
 	}
 }
@@ -75,4 +81,21 @@ func encodeIssueResponse(_ context.Context, grpcRes any) (any, error) {
 		RefreshToken: &res.refreshToken,
 		AccessType:   res.accessType,
 	}, nil
+}
+
+func (s *tokenGrpcServer) Revoke(ctx context.Context, req *grpcTokenV1.RevokeReq) (*grpcTokenV1.RevokeRes, error) {
+	_, res, err := s.revoke.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, grpcapi.EncodeError(err)
+	}
+	return res.(*grpcTokenV1.RevokeRes), nil
+}
+
+func decodeRevokeRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(*grpcTokenV1.RevokeReq)
+	return revokeReq{token: req.GetToken()}, nil
+}
+
+func encodeRevokeResponse(_ context.Context, grpcRes any) (any, error) {
+	return &grpcTokenV1.RevokeRes{}, nil
 }

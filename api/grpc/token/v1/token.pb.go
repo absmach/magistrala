@@ -144,6 +144,50 @@ func (x *RefreshReq) GetVerified() bool {
 	return false
 }
 
+type RevokeReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeReq) Reset() {
+	*x = RevokeReq{}
+	mi := &file_token_v1_token_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeReq) ProtoMessage() {}
+
+func (x *RevokeReq) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeReq.ProtoReflect.Descriptor instead.
+func (*RevokeReq) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RevokeReq) GetToken() string {
+	if x != nil {
+		return x.Token
+	}
+	return ""
+}
+
 // If a token is not carrying any information itself, the type
 // field can be used to determine how to validate the token.
 // Also, different tokens can be encoded in different ways.
@@ -158,7 +202,7 @@ type Token struct {
 
 func (x *Token) Reset() {
 	*x = Token{}
-	mi := &file_token_v1_token_proto_msgTypes[2]
+	mi := &file_token_v1_token_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -170,7 +214,7 @@ func (x *Token) String() string {
 func (*Token) ProtoMessage() {}
 
 func (x *Token) ProtoReflect() protoreflect.Message {
-	mi := &file_token_v1_token_proto_msgTypes[2]
+	mi := &file_token_v1_token_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +227,7 @@ func (x *Token) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Token.ProtoReflect.Descriptor instead.
 func (*Token) Descriptor() ([]byte, []int) {
-	return file_token_v1_token_proto_rawDescGZIP(), []int{2}
+	return file_token_v1_token_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Token) GetAccessToken() string {
@@ -207,6 +251,42 @@ func (x *Token) GetAccessType() string {
 	return ""
 }
 
+type RevokeRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeRes) Reset() {
+	*x = RevokeRes{}
+	mi := &file_token_v1_token_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeRes) ProtoMessage() {}
+
+func (x *RevokeRes) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeRes.ProtoReflect.Descriptor instead.
+func (*RevokeRes) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{4}
+}
+
 var File_token_v1_token_proto protoreflect.FileDescriptor
 
 const file_token_v1_token_proto_rawDesc = "" +
@@ -220,16 +300,20 @@ const file_token_v1_token_proto_rawDesc = "" +
 	"\n" +
 	"RefreshReq\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1a\n" +
-	"\bverified\x18\x02 \x01(\bR\bverified\"\x87\x01\n" +
+	"\bverified\x18\x02 \x01(\bR\bverified\"!\n" +
+	"\tRevokeReq\x12\x14\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"\x87\x01\n" +
 	"\x05Token\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12(\n" +
 	"\rrefresh_token\x18\x02 \x01(\tH\x00R\frefreshToken\x88\x01\x01\x12\x1f\n" +
 	"\vaccess_type\x18\x03 \x01(\tR\n" +
 	"accessTypeB\x10\n" +
-	"\x0e_refresh_token2r\n" +
+	"\x0e_refresh_token\"\v\n" +
+	"\tRevokeRes2\xa8\x01\n" +
 	"\fTokenService\x12.\n" +
 	"\x05Issue\x12\x12.token.v1.IssueReq\x1a\x0f.token.v1.Token\"\x00\x122\n" +
-	"\aRefresh\x12\x14.token.v1.RefreshReq\x1a\x0f.token.v1.Token\"\x00B.Z,github.com/absmach/supermq/api/grpc/token/v1b\x06proto3"
+	"\aRefresh\x12\x14.token.v1.RefreshReq\x1a\x0f.token.v1.Token\"\x00\x124\n" +
+	"\x06Revoke\x12\x13.token.v1.RevokeReq\x1a\x13.token.v1.RevokeRes\"\x00B.Z,github.com/absmach/supermq/api/grpc/token/v1b\x06proto3"
 
 var (
 	file_token_v1_token_proto_rawDescOnce sync.Once
@@ -243,19 +327,23 @@ func file_token_v1_token_proto_rawDescGZIP() []byte {
 	return file_token_v1_token_proto_rawDescData
 }
 
-var file_token_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_token_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file_token_v1_token_proto_goTypes = []any{
 	(*IssueReq)(nil),   // 0: token.v1.IssueReq
 	(*RefreshReq)(nil), // 1: token.v1.RefreshReq
-	(*Token)(nil),      // 2: token.v1.Token
+	(*RevokeReq)(nil),  // 2: token.v1.RevokeReq
+	(*Token)(nil),      // 3: token.v1.Token
+	(*RevokeRes)(nil),  // 4: token.v1.RevokeRes
 }
 var file_token_v1_token_proto_depIdxs = []int32{
 	0, // 0: token.v1.TokenService.Issue:input_type -> token.v1.IssueReq
 	1, // 1: token.v1.TokenService.Refresh:input_type -> token.v1.RefreshReq
-	2, // 2: token.v1.TokenService.Issue:output_type -> token.v1.Token
-	2, // 3: token.v1.TokenService.Refresh:output_type -> token.v1.Token
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
+	2, // 2: token.v1.TokenService.Revoke:input_type -> token.v1.RevokeReq
+	3, // 3: token.v1.TokenService.Issue:output_type -> token.v1.Token
+	3, // 4: token.v1.TokenService.Refresh:output_type -> token.v1.Token
+	4, // 5: token.v1.TokenService.Revoke:output_type -> token.v1.RevokeRes
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -266,14 +354,14 @@ func file_token_v1_token_proto_init() {
 	if File_token_v1_token_proto != nil {
 		return
 	}
-	file_token_v1_token_proto_msgTypes[2].OneofWrappers = []any{}
+	file_token_v1_token_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_token_v1_token_proto_rawDesc), len(file_token_v1_token_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

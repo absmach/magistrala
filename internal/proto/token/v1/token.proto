@@ -9,6 +9,7 @@ option go_package = "github.com/absmach/supermq/api/grpc/token/v1";
 service TokenService {
   rpc Issue(IssueReq) returns (Token) {}
   rpc Refresh(RefreshReq) returns (Token) {}
+  rpc Revoke(RevokeReq) returns (RevokeRes) {}
 }
 
 message IssueReq {
@@ -23,6 +24,10 @@ message RefreshReq {
   bool verified = 2;
 }
 
+message RevokeReq {
+  string token = 1;
+}
+
 // If a token is not carrying any information itself, the type
 // field can be used to determine how to validate the token.
 // Also, different tokens can be encoded in different ways.
@@ -30,4 +35,8 @@ message Token {
   string access_token = 1;
   optional string refresh_token = 2;
   string access_type = 3;
+}
+
+message RevokeRes{
+
 }

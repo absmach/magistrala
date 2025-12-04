@@ -56,3 +56,18 @@ func refreshEndpoint(svc auth.Service) endpoint.Endpoint {
 		return ret, nil
 	}
 }
+
+func revokeEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(revokeReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+		err := svc.RevokeToken(ctx, req.token)
+		if err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	}
+}

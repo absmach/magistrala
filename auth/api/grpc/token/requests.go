@@ -38,3 +38,15 @@ func (req refreshReq) validate() error {
 
 	return nil
 }
+
+type revokeReq struct {
+	token string
+}
+
+func (req revokeReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrMissingSecret
+	}
+
+	return nil
+}

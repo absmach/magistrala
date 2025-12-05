@@ -31,7 +31,7 @@ func NewTokensCache(client *redis.Client, duration time.Duration) auth.TokensCac
 }
 
 func (tc *tokensCache) Save(ctx context.Context, _, value string) error {
-	if err := tc.client.SAdd(ctx, defKey, value, tc.keyDuration).Err(); err != nil {
+	if err := tc.client.SAdd(ctx, defKey, value).Err(); err != nil {
 		return errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 

@@ -17,7 +17,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-var redisURL string
+var (
+	redisURL    string
+	redisClient *redis.Client
+)
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
@@ -45,7 +48,7 @@ func TestMain(m *testing.M) {
 	}
 
 	if err := pool.Retry(func() error {
-		redisClient := redis.NewClient(opts)
+		redisClient = redis.NewClient(opts)
 
 		return redisClient.Ping(context.Background()).Err()
 	}); err != nil {

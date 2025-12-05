@@ -32,8 +32,12 @@ func (repo *tokenRepo) Save(ctx context.Context, id string) error {
 	if err != nil {
 		return postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
-	if rows, err := result.RowsAffected(); rows == 0 {
+	rows, err := result.RowsAffected()
+	if err != nil {
 		return errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
+	if rows == 0 {
+		return repoerr.ErrCreateEntity
 	}
 
 	return nil

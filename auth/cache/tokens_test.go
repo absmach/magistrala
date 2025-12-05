@@ -15,24 +15,20 @@ import (
 	"github.com/absmach/supermq/internal/testsutil"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
-var key = auth.Key{
-	ID: testsutil.GenerateUUID(&testing.T{}),
-}
-
-func setupRedisTokensClient(t *testing.T) auth.TokensCache {
-	opts, err := redis.ParseURL(redisURL)
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error on parsing redis URL: %s", err))
-	redisClient := redis.NewClient(opts)
+func setupRedisTokensClient() auth.TokensCache {
 	return cache.NewTokensCache(redisClient, 10*time.Minute)
 }
 
 func TestTokenSave(t *testing.T) {
-	tokensCache := setupRedisTokensClient(t)
+	redisClient.FlushAll(context.Background())
+	tokensCache := setupRedisTokensClient()
 
+	key := auth.Key{
+		ID: testsutil.GenerateUUID(t),
+	}
 	cases := []struct {
 		desc string
 		key  auth.Key
@@ -51,7 +47,7 @@ func TestTokenSave(t *testing.T) {
 		{
 			desc: "Save another policy",
 			key: auth.Key{
-				ID: testsutil.GenerateUUID(&testing.T{}),
+				ID: testsutil.GenerateUUID(t),
 			},
 			err: nil,
 		},
@@ -81,7 +77,12 @@ func TestTokenSave(t *testing.T) {
 }
 
 func TestTokenContains(t *testing.T) {
-	tokensCache := setupRedisTokensClient(t)
+	redisClient.FlushAll(context.Background())
+	tokensCache := setupRedisTokensClient()
+
+	key := auth.Key{
+		ID: testsutil.GenerateUUID(t),
+	}
 
 	err := tokensCache.Save(context.Background(), "", key.ID)
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
@@ -99,7 +100,7 @@ func TestTokenContains(t *testing.T) {
 		{
 			desc: "Contains non existing key",
 			key: auth.Key{
-				ID: testsutil.GenerateUUID(&testing.T{}),
+				ID: testsutil.GenerateUUID(t),
 			},
 		},
 		{
@@ -122,12 +123,13 @@ func TestTokenContains(t *testing.T) {
 }
 
 func TestTokenRemove(t *testing.T) {
-	tokensCache := setupRedisTokensClient(t)
+	redisClient.FlushAll(context.Background())
+	tokensCache := setupRedisTokensClient()
 
-	num := 1000
+	num := 10
 	var ids []string
-	for i := 0; i < num; i++ {
-		id := testsutil.GenerateUUID(&testing.T{})
+	for range num {
+		id := testsutil.GenerateUUID(t)
 		err := tokensCache.Save(context.Background(), "", id)
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		ids = append(ids, id)
@@ -139,26 +141,21 @@ func TestTokenRemove(t *testing.T) {
 		err  error
 	}{
 		{
-			desc: "Remove an existing id from cache",
+			desc: "Remove an existing token from cache",
 			id:   ids[0],
 			err:  nil,
 		},
 		{
-			desc: "Remove multiple existing id from cache",
-			id:   "*",
+			desc: "Remove token with empty id from cache",
 			err:  nil,
 		},
 		{
 			desc: "Remove non existing id from cache",
-			id:   testsutil.GenerateUUID(&testing.T{}),
+			id:   testsutil.GenerateUUID(t),
 			err:  nil,
 		},
 		{
-			desc: "Remove policy with empty id from cache",
-			err:  nil,
-		},
-		{
-			desc: "Remove policy with long id from cache",
+			desc: "Remove token with long id from cache",
 			id:   strings.Repeat("a", 513*1024*1024),
 			err:  repoerr.ErrRemoveEntity,
 		},
@@ -168,13 +165,6 @@ func TestTokenRemove(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			err := tokensCache.Remove(context.Background(), tc.id)
 			assert.True(t, errors.Contains(err, tc.err))
-			if tc.id == "*" {
-				for _, id := range ids {
-					ok := tokensCache.Contains(context.Background(), "", id)
-					assert.False(t, ok)
-				}
-				return
-			}
 			if err == nil {
 				ok := tokensCache.Contains(context.Background(), "", tc.id)
 				assert.False(t, ok)

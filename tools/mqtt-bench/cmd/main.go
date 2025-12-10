@@ -21,7 +21,7 @@ func main() {
 		Use:   "mqtt-bench",
 		Short: "mqtt-bench is MQTT benchmark tool for SuperMQ",
 		Long: `Tool for extensive load and benchmarking of MQTT brokers used within the SuperMQ platform.
-Complete documentation is available at https://docs.supermq.abstractmachines.fr`,
+Complete documentation is available at https://docs.supermq.absmach.eu`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if confFile != "" {
 				viper.SetConfigFile(confFile)

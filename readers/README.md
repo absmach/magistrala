@@ -4,4 +4,4 @@ Readers provide implementations of various `message readers`. Message readers ar
 
 For an in-depth explanation of the usage of `reader`, as well as thorough understanding of SuperMQ, please check out the [official documentation][doc].
 
-[doc]: https://docs.supermq.abstractmachines.fr
+[doc]: https://docs.supermq.absmach.eu

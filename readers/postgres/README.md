@@ -98,4 +98,4 @@ Comparator Usage Guide:
 | le         | Return values that are superstrings of the query                            | le["active"] -> "tiv"              |
 | lt         | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |
 
-Official docs can be found [here](https://docs.supermq.abstractmachines.fr).
+Official docs can be found [here](https://docs.supermq.absmach.eu).

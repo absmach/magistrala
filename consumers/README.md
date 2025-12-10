@@ -13,6 +13,6 @@ For an in-depth explanation of the usage of `consumers`, as well as thorough
 understanding of SuperMQ, please check out the [official documentation][doc].
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](https://docs.api.supermq.abstractmachines.fr/?urls.primaryName=consumers-notifiers-openapi.yaml).
+the [API documentation](https://docs.api.supermq.absmach.eu/?urls.primaryName=consumers-notifiers-openapi.yaml).
 
-[doc]: https://docs.supermq.abstractmachines.fr
+[doc]: https://docs.supermq.absmach.eu

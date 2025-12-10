@@ -119,4 +119,4 @@ Setting `SMQ_AUTH_GRPC_CLIENT_CERT` and `SMQ_AUTH_GRPC_CLIENT_KEY` will enable T
 
 ## Usage
 
-For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.abstractmachines.fr/?urls.primaryName=bootstrap.yaml).
+For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.absmach.eu/?urls.primaryName=bootstrap.yaml).

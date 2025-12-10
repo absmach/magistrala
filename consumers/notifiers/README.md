@@ -20,4 +20,4 @@ default values.
 
 Subscriptions service will start consuming messages and sending notifications when a message is received.
 
-[doc]: https://docs.supermq.abstractmachines.fr
+[doc]: https://docs.supermq.absmach.eu

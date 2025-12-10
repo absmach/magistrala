@@ -24,7 +24,7 @@ func main() {
 			"1. Creating, viewing, updating and changing status of users, groups, clients and channels.\n" +
 			"2. Connecting users and groups to each other and clients and channels to each other.\n" +
 			"3. Sending messages from clients to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).\n" +
-			"Complete documentation is available at https://docs.supermq.abstractmachines.fr",
+			"Complete documentation is available at https://docs.supermq.absmach.eu",
 		Example: "Here is a simple example of using e2e tool.\n" +
 			"Use the following commands from the root supermq directory:\n\n" +
 			"go run tools/e2e/cmd/main.go\n" +

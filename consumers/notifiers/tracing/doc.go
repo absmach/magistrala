@@ -8,5 +8,5 @@
 // SuperMQ WebSocket adapter service.
 //
 // For more details about tracing instrumentation for SuperMQ messaging refer
-// to the documentation at https://docs.supermq.abstractmachines.fr/tracing/.
+// to the documentation at https://docs.supermq.absmach.eu/tracing/.
 package tracing

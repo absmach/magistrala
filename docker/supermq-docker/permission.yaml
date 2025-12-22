@@ -1,0 +1,134 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+clients:
+  operations:
+    - view: read_permission
+    - update: update_permission
+    - update_tags: update_permission
+    - update_secret: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+    - set_parent_group: set_parent_group_permission
+    - remove_parent_group: set_parent_group_permission
+    - connect_to_channel: connect_to_channel_permission
+    - disconnect_from_channel: connect_to_channel_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+channels:
+  operations:
+    - view: read_permission
+    - update: update_permission
+    - update_tags: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+    - set_parent_group: set_parent_group_permission
+    - remove_parent_group: set_parent_group_permission
+    - connect_client: connect_to_client_permission
+    - disconnect_client: connect_to_client_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+groups:
+  operations:
+    - view: read_permission
+    - update: update_permission
+    - update_tags: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+    - retrieve_group_hierarchy: read_permission
+    - add_parent_group: set_parent_permission
+    - remove_parent_group: set_parent_permission
+    - add_children_groups: set_child_permission
+    - remove_children_groups: set_child_permission
+    - remove_all_children_groups: set_child_permission
+    - list_children_groups: read_permission
+    - set_child_client: set_child_permission
+    - remove_child_client: set_child_permission
+    - set_child_channel: set_child_permission
+    - remove_child_channel: set_child_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+domains:
+  operations:
+    - create: create_permission
+    - update: update_permission
+    - read: read_permission
+    - enable: enable_permission
+    - disable: disable_permission
+    - list: read_permission
+    - send_invitation: manage_role_permission
+    - list_invitation: membership_permission
+    - list_domain_invitation: manage_role_permission
+    - delete_invitation: manage_role_permission
+    - create_clients: client_create_permission
+    - list_clients: client_read_permission
+    - create_channels: channel_create_permission
+    - list_channels: channel_read_permission
+    - create_groups: group_create_permission
+    - list_groups: group_read_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+

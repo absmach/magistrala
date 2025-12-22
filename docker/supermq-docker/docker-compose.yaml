@@ -292,6 +292,7 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       # Auth gRPC mTLS server certificates
       - type: bind
@@ -528,6 +529,7 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       # Clients gRPC server certificates
       - type: bind
@@ -719,6 +721,7 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       # Channels gRPC server certificates
       - type: bind
@@ -1085,6 +1088,7 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       # Groups gRPC server certificates
       - type: bind

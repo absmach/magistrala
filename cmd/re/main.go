@@ -322,7 +322,11 @@ func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.R
 		return nil, fmt.Errorf("failed to init re event store middleware: %w", err)
 	}
 
-	csvc, err = middleware.AuthorizationMiddleware(csvc, authz, callout)
+	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	if err != nil {
+		return nil, err
+	}
+	csvc, err = middleware.NewCallout(csvc, callout)
 	if err != nil {
 		return nil, err
 	}

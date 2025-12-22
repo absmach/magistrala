@@ -235,7 +235,7 @@ func TestReadAll(t *testing.T) {
 			token:        "",
 			authResponse: false,
 			authnErr:     svcerr.ErrAuthentication,
-			status:       http.StatusUnauthorized,
+			status:       http.StatusBadRequest,
 			err:          svcerr.ErrAuthentication,
 		},
 		{
@@ -623,7 +623,7 @@ func TestReadAll(t *testing.T) {
 			url:          fmt.Sprintf("%s/%s/channels/%s/messages?offset=0&limit=10", ts.URL, domainID, chanID),
 			token:        invalidToken,
 			authResponse: false,
-			status:       http.StatusUnauthorized,
+			status:       http.StatusForbidden,
 			err:          svcerr.ErrAuthorization,
 		},
 		{
@@ -645,7 +645,7 @@ func TestReadAll(t *testing.T) {
 			url:          fmt.Sprintf("%s/%s/channels/%s/messages?offset=0&limit=10", ts.URL, domainID, chanID),
 			token:        "",
 			authResponse: false,
-			status:       http.StatusUnauthorized,
+			status:       http.StatusBadRequest,
 			err:          svcerr.ErrAuthorization,
 		},
 		{

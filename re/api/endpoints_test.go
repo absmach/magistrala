@@ -412,7 +412,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			query:    "offset=invalid",
 			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
+			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
 			desc:     "list rules with limit",
@@ -433,7 +433,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			query:    "limit=invalid",
 			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
+			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
 			desc:     "list rules with invalid direction",
@@ -449,7 +449,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			query:    "order=invalid",
 			status:   http.StatusBadRequest,
-			err:      apiutil.ErrInvalidOrder,
+			err:      apiutil.ErrValidation,
 		},
 		{
 			desc:     "list rule with limit that is too big",
@@ -497,7 +497,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			query:    "status=invalid",
 			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
+			err:      svcerr.ErrInvalidStatus,
 		},
 		{
 			desc:     "list rules with duplicate status",

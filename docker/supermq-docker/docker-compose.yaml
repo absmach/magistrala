@@ -23,6 +23,7 @@ volumes:
   supermq-domains-db-volume:
   supermq-domains-redis-volume:
   supermq-auth-redis-volume:
+  supermq-auth-keys-volume:
 
 services:
   spicedb:
@@ -110,16 +111,17 @@ services:
       SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
       SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
       SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
-      SMQ_AUTH_ACCESS_TOKEN_DURATION: ${SMQ_AUTH_ACCESS_TOKEN_DURATION}
-      SMQ_AUTH_REFRESH_TOKEN_DURATION: ${SMQ_AUTH_REFRESH_TOKEN_DURATION}
       SMQ_AUTH_INVITATION_DURATION: ${SMQ_AUTH_INVITATION_DURATION}
-      SMQ_AUTH_SECRET_KEY: ${SMQ_AUTH_SECRET_KEY}
       SMQ_AUTH_HTTP_HOST: ${SMQ_AUTH_HTTP_HOST}
       SMQ_AUTH_HTTP_PORT: ${SMQ_AUTH_HTTP_PORT}
       SMQ_AUTH_HTTP_SERVER_CERT: ${SMQ_AUTH_HTTP_SERVER_CERT}
       SMQ_AUTH_HTTP_SERVER_KEY: ${SMQ_AUTH_HTTP_SERVER_KEY}
       SMQ_AUTH_GRPC_HOST: ${SMQ_AUTH_GRPC_HOST}
       SMQ_AUTH_GRPC_PORT: ${SMQ_AUTH_GRPC_PORT}
+      SMQ_AUTH_ACCESS_TOKEN_DURATION: ${SMQ_AUTH_ACCESS_TOKEN_DURATION}
+      SMQ_AUTH_REFRESH_TOKEN_DURATION: ${SMQ_AUTH_REFRESH_TOKEN_DURATION}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
+      SMQ_AUTH_KEYS_PRIVATE_KEY_PATH: ${SMQ_AUTH_KEYS_PRIVATE_KEY_PATH:+/keys/private.key}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
@@ -150,6 +152,13 @@ services:
     volumes:
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - supermq-pat-db-volume:/supermq-data
+      - supermq-auth-keys-volume:/keys
+      # Auth private key file
+      - type: bind
+        source: ${SMQ_AUTH_KEYS_PRIVATE_KEY_PATH:-ssl/certs/dummy/private_key}
+        target: /keys/private.key
+        bind:
+          create_host_path: true
       # Auth gRPC mTLS server certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
@@ -258,6 +267,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_GROUPS_GRPC_URL: ${SMQ_GROUPS_GRPC_URL}
       SMQ_GROUPS_GRPC_TIMEOUT: ${SMQ_GROUPS_GRPC_TIMEOUT}
       SMQ_GROUPS_GRPC_CLIENT_CERT: ${SMQ_GROUPS_GRPC_CLIENT_CERT:+/groups-grpc-client.crt}
@@ -490,6 +500,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
       SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
       SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
@@ -683,6 +694,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_CLIENTS_GRPC_URL: ${SMQ_CLIENTS_GRPC_URL}
       SMQ_CLIENTS_GRPC_TIMEOUT: ${SMQ_CLIENTS_GRPC_TIMEOUT}
       SMQ_CLIENTS_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
@@ -883,6 +895,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
       SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
       SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
@@ -1069,6 +1082,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
       SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
       SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
@@ -1323,6 +1337,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
@@ -1553,6 +1568,7 @@ services:
       SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
       SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
       SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
       SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
       SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
       SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}

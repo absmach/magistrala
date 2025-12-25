@@ -10,7 +10,15 @@ import (
 	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
+	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+)
+
+var (
+	errDomainUpdateAlarms = errors.New("not authorized to update alarms in domain")
+	errDomainDeleteAlarms = errors.New("not authorized to delete alarms in domain")
+	errDomainViewAlarms   = errors.New("not authorized to view alarms in domain")
 )
 
 type authorizationMiddleware struct {
@@ -32,20 +40,10 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 }
 
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
-	// if assignee is present check if assignee is member of domain
+	// If assignee is present, check if assignee is member of domain
 
-	req := smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Permission:  policies.AdminPermission,
-		ObjectType:  policies.DomainType,
-		Object:      session.DomainID,
-	}
-
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		return alarms.Alarm{}, err
+	if err := am.authorize(ctx, alarms.OpUpdateAlarm, session); err != nil {
+		return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 	}
 
 	if alarm.AssigneeID != "" {
@@ -67,17 +65,8 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	req := smqauthz.PolicyReq{
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Permission:  policies.AdminPermission,
-		ObjectType:  policies.DomainType,
-		Object:      session.DomainID,
-	}
-
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		return err
+	if err := am.authorize(ctx, alarms.OpDeleteAlarm, session); err != nil {
+		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
 
 	return am.svc.DeleteAlarm(ctx, session, id)
@@ -88,37 +77,36 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	req := smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
-		Permission:  policies.MembershipPermission,
-		ObjectType:  policies.DomainType,
-		Object:      session.DomainID,
-	}
-
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		return alarms.AlarmsPage{}, err
+	if err := am.authorize(ctx, alarms.OpListAlarms, session); err != nil {
+		return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
 	return am.svc.ListAlarms(ctx, session, pm)
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	req := smqauthz.PolicyReq{
+	if err := am.authorize(ctx, alarms.OpViewAlarm, session); err != nil {
+		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
+	}
+
+	return am.svc.ViewAlarm(ctx, session, id)
+}
+
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
+	perm, err := alarms.GetPermission(op)
+	if err != nil {
+		return err
+	}
+
+	pr := smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Permission:  policies.MembershipPermission,
-		ObjectType:  policies.DomainType,
 		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  perm,
 	}
 
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		return alarms.Alarm{}, err
-	}
-
-	return am.svc.ViewAlarm(ctx, session, id)
+	return am.authz.Authorize(ctx, pr)
 }

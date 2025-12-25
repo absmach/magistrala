@@ -210,15 +210,14 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 }
 
 func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	var wrapper error
-	if errors.Contains(err, apiutil.ErrValidation) {
-		wrapper, err = errors.Unwrap(err)
-	}
+	w.Header().Set("Content-Type", contentType)
 
 	switch {
 	case errors.Contains(err, nil):
+		w.WriteHeader(http.StatusOK)
 	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
 		errors.Contains(err, svcerr.ErrMalformedEntity),
+		errors.Contains(err, apiutil.ErrValidation),
 		errors.Contains(err, apiutil.ErrMissingID),
 		errors.Contains(err, apiutil.ErrLimitSize),
 		errors.Contains(err, apiutil.ErrOffsetSize),
@@ -230,20 +229,17 @@ func encodeError(_ context.Context, err error, w http.ResponseWriter) {
 		errors.Contains(err, apiutil.ErrMissingDomainID):
 		w.WriteHeader(http.StatusBadRequest)
 	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, svcerr.ErrAuthorization),
 		errors.Contains(err, apiutil.ErrBearerToken):
 		w.WriteHeader(http.StatusUnauthorized)
+	case errors.Contains(err, svcerr.ErrAuthorization):
+		w.WriteHeader(http.StatusForbidden)
 	case errors.Contains(err, readers.ErrReadMessages):
 		w.WriteHeader(http.StatusInternalServerError)
 	default:
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 
-	if wrapper != nil {
-		err = errors.Wrap(wrapper, err)
-	}
 	if errorVal, ok := err.(errors.Error); ok {
-		w.Header().Set("Content-Type", contentType)
 		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 		}

@@ -121,7 +121,8 @@ services:
       SMQ_AUTH_ACCESS_TOKEN_DURATION: ${SMQ_AUTH_ACCESS_TOKEN_DURATION}
       SMQ_AUTH_REFRESH_TOKEN_DURATION: ${SMQ_AUTH_REFRESH_TOKEN_DURATION}
       SMQ_AUTH_KEYS_ALGORITHM: ${SMQ_AUTH_KEYS_ALGORITHM}
-      SMQ_AUTH_KEYS_PRIVATE_KEY_PATH: ${SMQ_AUTH_KEYS_PRIVATE_KEY_PATH:+/keys/private.key}
+      SMQ_AUTH_KEYS_ACTIVE_KEY_PATH: ${SMQ_AUTH_KEYS_ACTIVE_KEY_PATH:+/keys/active.key}
+      SMQ_AUTH_KEYS_RETIRING_KEY_PATH: ${SMQ_AUTH_KEYS_RETIRING_KEY_PATH:+/keys/retiring.key}
       ## Compose supports parameter expansion in environment,
       ## Eg: ${VAR:+replacement} or ${VAR+replacement} -> replacement if VAR is set and non-empty, otherwise empty
       ## Eg :${VAR:-default} or ${VAR-default}  -> value of VAR if set and non-empty, otherwise default
@@ -152,11 +153,16 @@ services:
     volumes:
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - supermq-pat-db-volume:/supermq-data
-      - supermq-auth-keys-volume:/keys
-      # Auth private key file
+      # Auth active private key file
       - type: bind
-        source: ${SMQ_AUTH_KEYS_PRIVATE_KEY_PATH:-ssl/certs/dummy/private_key}
-        target: /keys/private.key
+        source: ${SMQ_AUTH_KEYS_ACTIVE_KEY_PATH}
+        target: /keys/active.key
+        read_only: true
+      # Auth retiring private key file (optional, for key rotation)
+      - type: bind
+        source: ${SMQ_AUTH_KEYS_RETIRING_KEY_PATH:-ssl/certs/dummy/retiring_key}
+        target: /keys/retiring${SMQ_AUTH_KEYS_RETIRING_KEY_PATH:+.key}
+        read_only: true
         bind:
           create_host_path: true
       # Auth gRPC mTLS server certificates

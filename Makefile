@@ -97,7 +97,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release run_latest run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -259,11 +259,23 @@ endif
 fetch_supermq:
 	@./scripts/supermq.sh
 
- run: check_certs
+run_latest: check_certs
 	MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
 		-f docker/addons/timescale-reader/docker-compose.yaml \
 		-f docker/addons/timescale-writer/docker-compose.yaml \
 		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+run_stable: check_certs
+	$(eval version = $(shell git describe --abbrev=0 --tags))
+	git checkout $(version)
+	sed -i 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=$(version)/' docker/supermq-docker/.env
+	sed -i 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(version)/' docker/.env
+	docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+	-f docker/addons/timescale-reader/docker-compose.yaml \
+	-f docker/addons/timescale-writer/docker-compose.yaml \
+	--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))

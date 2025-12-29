@@ -53,21 +53,41 @@ Magistrala is a cutting-edge, open-source IoT cloud platform built on top of [Su
 - 🏗️ **Domain-Driven Design**: High-quality codebase and extensive test coverage.
 
 
-## 🔧 Install
+## Installation 🛠️
 
-Clone the repository and start the services:
+There are multiple ways to run Magistrala.
+First, clone the repository and position to it:
 
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-docker compose -f docker/docker-compose.yaml --env-file docker/.env up
 ```
 
-Alternatively, use the Makefile for a simpler command:
+To run the latest stable (tagged) version, use:
 
 ```bash
-make run args=-d
+# Run with latest stable tagged version
+make run_stable
 ```
+
+To run the latest version, use:
+
+```bash
+# Run with latest development version (from main branch)
+make run_latest
+```
+
+The `make run_stable` command will:
+- Checkout the repository to the latest git tag
+- Update the version in the environment configuration
+- Start the services with the stable release
+
+**Note:** After running `make run_stable`, you'll be on a detached HEAD state. To return to your working branch:
+
+```bash
+git checkout main
+```
+
 
 ## 📤 Usage
 

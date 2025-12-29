@@ -22,7 +22,7 @@ require (
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
 	github.com/jackc/pgtype v1.14.4
-	github.com/jackc/pgx/v5 v5.7.6
+	github.com/jackc/pgx/v5 v5.8.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5

@@ -1002,7 +1002,7 @@
             "uid": "PBFA97CFB590B2093"
           },
           "exemplar": true,
-          "expr": "http_adapter_api_request_count{}",
+          "expr": "ws_adapter_api_request_count{}",
           "interval": "",
           "legendFormat": "{{method}}",
           "refId": "A"
@@ -1107,7 +1107,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "label_replace(label_replace(label_replace(http_adapter_api_request_latency_microseconds, \"quantile\", \"50th percentile\", \"quantile\", \"0.5\"), \"quantile\", \"90th percentile\", \"quantile\", \"0.9\"), \"quantile\", \"99th percentile\", \"quantile\", \"0.99\")",
+          "expr": "label_replace(label_replace(label_replace(ws_adapter_api_request_latency_microseconds, \"quantile\", \"50th percentile\", \"quantile\", \"0.5\"), \"quantile\", \"90th percentile\", \"quantile\", \"0.9\"), \"quantile\", \"99th percentile\", \"quantile\", \"0.99\")",
           "format": "time_series",
           "instant": false,
           "interval": "",

@@ -97,7 +97,7 @@ func TestProvision(t *testing.T) {
 			token:       validToken,
 			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s"}`, validID),
-			status:      http.StatusBadRequest,
+			status:      http.StatusUnauthorized,
 			contentType: validContenType,
 			svcErr:      nil,
 		},

@@ -19,8 +19,8 @@ const (
 )
 
 var (
-	ErrInvalidRecurringType = errors.New("invalid recurring type")
-	ErrStartDateTimeInPast  = errors.New("start_datetime must be greater than or equal to current time")
+	ErrInvalidRecurringType = errors.NewRequestError("invalid recurring type")
+	ErrStartDateTimeInPast  = errors.NewRequestError("start_datetime must be greater than or equal to current time")
 )
 
 // Type can be daily, weekly or monthly.

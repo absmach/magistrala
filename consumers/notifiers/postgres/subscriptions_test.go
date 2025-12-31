@@ -60,7 +60,7 @@ func TestSave(t *testing.T) {
 			desc: "save duplicate",
 			sub:  sub2,
 			id:   "",
-			err:  repoerr.ErrConflict,
+			err:  notifiers.ErrSubscriptionsAlreadyExists,
 		},
 	}
 

@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 // dbReport represents the database structure for a Report.

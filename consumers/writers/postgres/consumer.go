@@ -137,6 +137,9 @@ func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) er
 		}
 
 		if _, err = tx.NamedExec(q, dbmsg); err != nil {
+			if preErr, ok := err.(*pgconn.PrepareError); ok {
+				err = preErr.Unwrap()
+			}
 			pgErr, ok := err.(*pgconn.PgError)
 			if ok {
 				switch pgErr.Code {

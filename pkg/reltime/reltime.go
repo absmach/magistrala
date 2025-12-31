@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 var (

@@ -94,10 +94,6 @@ services:
     networks: !override
       - magistrala-base-net
 
-  ws-adapter:
-    networks: !override
-      - magistrala-base-net
-
   rabbitmq:
     networks: !override
       - magistrala-base-net

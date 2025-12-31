@@ -6,7 +6,7 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.3
-	github.com/absmach/supermq v0.18.4-0.20251223143751-59f8d4e4d7b1
+	github.com/absmach/supermq v0.18.4
 	github.com/authzed/authzed-go v1.7.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1

@@ -24,19 +24,19 @@ var (
 	ErrClients = errors.New("failed to receive response from Clients service")
 
 	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key.
-	ErrExternalKey = errors.New("failed to get bootstrap configuration for given external key")
+	ErrExternalKey = errors.NewAuthZError("failed to get bootstrap configuration for given external key")
 
 	// ErrExternalKeySecure indicates error in getting bootstrap configuration for given encrypted external key.
-	ErrExternalKeySecure = errors.New("failed to get bootstrap configuration for given encrypted external key")
+	ErrExternalKeySecure = errors.NewAuthZError("failed to get bootstrap configuration for given encrypted external key")
 
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
 
 	// ErrAddBootstrap indicates error in adding bootstrap configuration.
-	ErrAddBootstrap = errors.New("failed to add bootstrap configuration")
+	ErrAddBootstrap = errors.NewServiceError("failed to add bootstrap configuration")
 
 	// ErrBootstrapState indicates an invalid bootstrap state.
-	ErrBootstrapState = errors.New("invalid bootstrap state")
+	ErrBootstrapState = errors.NewRequestError("invalid bootstrap state")
 
 	// ErrNotInSameDomain indicates entities are not in the same domain.
 	errNotInSameDomain = errors.New("entities are not in the same domain")

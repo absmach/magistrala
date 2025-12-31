@@ -55,7 +55,7 @@ func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) 
 
 func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 	if r.Header.Get("Content-Type") != contentType {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := provisionReq{
@@ -63,7 +63,7 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 		domainID: chi.URLParam(r, "domainID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -71,7 +71,7 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeMappingRequest(_ context.Context, r *http.Request) (any, error) {
 	if r.Header.Get("Content-Type") != contentType {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := mappingReq{

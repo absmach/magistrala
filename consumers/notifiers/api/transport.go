@@ -83,12 +83,12 @@ func MakeHandler(svc notifiers.Service, logger *slog.Logger, instanceID string) 
 
 func decodeCreate(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := createSubReq{token: apiutil.ExtractBearerToken(r)}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil

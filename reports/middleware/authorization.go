@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/supermq/pkg/authn"
@@ -50,9 +49,6 @@ func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session 
 
 func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
 	if err := am.authorize(ctx, reports.OpViewReportConfig, session); err != nil {
-		fmt.Println(err)
-		fmt.Printf("%T\n", err)
-		fmt.Printf("%+v\n", err)
 		return reports.ReportConfig{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 
@@ -85,9 +81,6 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 
 func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	if err := am.authorize(ctx, reports.OpListReportsConfig, session); err != nil {
-		fmt.Println(err)
-		fmt.Printf("%T\n", err)
-		fmt.Printf("%+v\n", err)
 		return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 

@@ -51,7 +51,7 @@ const (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(encodeError),
+		kithttp.ServerErrorEncoder(api.EncodeError),
 	}
 
 	mux := chi.NewRouter()
@@ -207,43 +207,6 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 	}
 
 	return json.NewEncoder(w).Encode(response)
-}
-
-func encodeError(_ context.Context, err error, w http.ResponseWriter) {
-	w.Header().Set("Content-Type", contentType)
-
-	switch {
-	case errors.Contains(err, nil):
-		w.WriteHeader(http.StatusOK)
-	case errors.Contains(err, apiutil.ErrInvalidQueryParams),
-		errors.Contains(err, svcerr.ErrMalformedEntity),
-		errors.Contains(err, apiutil.ErrValidation),
-		errors.Contains(err, apiutil.ErrMissingID),
-		errors.Contains(err, apiutil.ErrLimitSize),
-		errors.Contains(err, apiutil.ErrOffsetSize),
-		errors.Contains(err, apiutil.ErrInvalidComparator),
-		errors.Contains(err, apiutil.ErrInvalidAggregation),
-		errors.Contains(err, apiutil.ErrInvalidInterval),
-		errors.Contains(err, apiutil.ErrMissingFrom),
-		errors.Contains(err, apiutil.ErrMissingTo),
-		errors.Contains(err, apiutil.ErrMissingDomainID):
-		w.WriteHeader(http.StatusBadRequest)
-	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, apiutil.ErrBearerToken):
-		w.WriteHeader(http.StatusUnauthorized)
-	case errors.Contains(err, svcerr.ErrAuthorization):
-		w.WriteHeader(http.StatusForbidden)
-	case errors.Contains(err, readers.ErrReadMessages):
-		w.WriteHeader(http.StatusInternalServerError)
-	default:
-		w.WriteHeader(http.StatusInternalServerError)
-	}
-
-	if errorVal, ok := err.(errors.Error); ok {
-		if err := json.NewEncoder(w).Encode(errorVal); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-	}
 }
 
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) error {

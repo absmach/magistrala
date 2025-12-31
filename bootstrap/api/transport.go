@@ -11,7 +11,6 @@ import (
 	"net/url"
 	"strings"
 
-	mgapi "github.com/absmach/magistrala/api"
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
@@ -43,7 +42,7 @@ var (
 // MakeHandler returns a HTTP handler for API endpoints.
 func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader bootstrap.ConfigReader, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
-		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, mgapi.EncodeError)),
+		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
 
 	r := chi.NewRouter()
@@ -129,14 +128,14 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 
 func decodeAddRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := addReq{
 		token: apiutil.ExtractBearerToken(r),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -144,14 +143,14 @@ func decodeAddRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateReq{
 		id: chi.URLParam(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -159,14 +158,14 @@ func decodeUpdateRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateCertReq{
 		clientID: chi.URLParam(r, "certID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -174,7 +173,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateConnRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateConnReq{
@@ -182,7 +181,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (any, error) {
 		id:    chi.URLParam(r, "connID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -224,7 +223,7 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeStateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := changeStateReq{
@@ -232,7 +231,7 @@ func decodeStateRequest(_ context.Context, r *http.Request) (any, error) {
 		id:    chi.URLParam(r, "clientID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(err, errors.ErrMalformedEntity))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil

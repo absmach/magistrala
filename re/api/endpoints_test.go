@@ -798,7 +798,7 @@ func TestUpdateRuleTagsEndpoint(t *testing.T) {
 			contentType: contentType,
 			data:        fmt.Sprintf(`{"tags":["%s"}`, newTag),
 			status:      http.StatusBadRequest,
-			err:         errors.ErrMalformedEntity,
+			err:         apiutil.ErrMalformedRequestBody,
 		},
 		{
 			desc:        "update rule with empty id",

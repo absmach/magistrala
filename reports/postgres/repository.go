@@ -30,7 +30,6 @@ func NewRepository(db postgres.Database) reports.Repository {
 		DB: db,
 		eh: postgres.NewErrorHandler(errHandlerOptions...),
 	}
-
 }
 
 func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {

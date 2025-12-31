@@ -12,8 +12,8 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/magistrala/alarms/mocks"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"

@@ -224,7 +224,7 @@ func TestAddBootstrap(t *testing.T) {
 			svcReq:   bootstrapConfig,
 			svcRes:   bootstrap.Config{},
 			svcErr:   svcerr.ErrConflict,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrConflict, http.StatusConflict),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrConflict, http.StatusBadRequest),
 		},
 		{
 			desc:     "add empty config",
@@ -234,7 +234,7 @@ func TestAddBootstrap(t *testing.T) {
 			svcReq:   bootstrap.Config{},
 			svcRes:   bootstrap.Config{},
 			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 		{
 			desc:     "add with non-existent client Id",
@@ -487,7 +487,7 @@ func TestWhiteList(t *testing.T) {
 			state:    -1,
 			svcReq:   bootstrap.Active,
 			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, bootstrap.ErrBootstrapState), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(bootstrap.ErrBootstrapState, http.StatusBadRequest),
 		},
 		{
 			desc:     "whitelist with empty client Id",
@@ -586,9 +586,9 @@ func TestViewBootstrap(t *testing.T) {
 			token:    validToken,
 			id:       invalid,
 			svcResp:  bootstrap.Config{},
-			svcErr:   svcerr.ErrViewEntity,
+			svcErr:   svcerr.ErrNotFound,
 			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrViewEntity, http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
 			desc:     "view with response that cannot be unmarshalled",
@@ -1203,7 +1203,7 @@ func TestBoostrap(t *testing.T) {
 			svcErr:      nil,
 			readerResp:  bootstrap.Config{},
 			readerErr:   nil,
-			err:         errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerKey), http.StatusBadRequest),
+			err:         errors.NewSDKErrorWithStatus(apiutil.ErrBearerKey, http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {

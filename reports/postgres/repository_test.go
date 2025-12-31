@@ -292,6 +292,7 @@ func TestUpdateReportConfigStatus(t *testing.T) {
 		CreatedBy: generateUUID(t),
 		UpdatedAt: time.Now().UTC(),
 		UpdatedBy: generateUUID(t),
+		Metrics:   []reports.ReqMetric{},
 	}
 
 	saved, err := repo.AddReportConfig(context.Background(), reportConfig)
@@ -361,6 +362,7 @@ func TestRemoveReportConfig(t *testing.T) {
 		Status:    reports.EnabledStatus,
 		CreatedAt: time.Now().UTC(),
 		UpdatedAt: time.Now().UTC(),
+		Metrics:   []reports.ReqMetric{},
 	}
 
 	saved, err := repo.AddReportConfig(context.Background(), reportConfig)
@@ -414,6 +416,7 @@ func TestListReportsConfig(t *testing.T) {
 			Status:    reports.EnabledStatus,
 			CreatedAt: time.Now().UTC(),
 			UpdatedAt: time.Now().UTC(),
+			Metrics:   []reports.ReqMetric{},
 		}
 		_, err := repo.AddReportConfig(context.Background(), reportConfig)
 		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
@@ -589,7 +592,7 @@ func TestUpdateReportDue(t *testing.T) {
 	saved, err := repo.AddReportConfig(context.Background(), reportConfig)
 	require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 
-	newDue := time.Now().UTC().Add(24 * time.Hour)
+	newDue := time.Now().UTC().Add(24 * time.Hour).Truncate(time.Microsecond)
 
 	cases := []struct {
 		desc string

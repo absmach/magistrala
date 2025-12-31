@@ -3,7 +3,9 @@
 
 package api
 
-import apiutil "github.com/absmach/supermq/api/http/util"
+import (
+	apiutil "github.com/absmach/supermq/api/http/util"
+)
 
 type provisionReq struct {
 	token       string

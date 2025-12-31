@@ -135,7 +135,7 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 
 func decodeGenerateReportRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	a, err := apiutil.ReadStringQuery(r, actionKey, defAction)
@@ -159,7 +159,7 @@ func decodeGenerateReportRequest(_ context.Context, r *http.Request) (any, error
 
 func decodeAddReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 	var config reports.ReportConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
@@ -175,7 +175,7 @@ func decodeViewReportConfigRequest(_ context.Context, r *http.Request) (any, err
 
 func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 	var config reports.ReportConfig
 	if err := json.NewDecoder(r.Body).Decode(&config); err != nil {
@@ -187,14 +187,14 @@ func decodeUpdateReportConfigRequest(_ context.Context, r *http.Request) (any, e
 
 func decodeUpdateReportScheduleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateReportScheduleReq{
 		id: chi.URLParam(r, reportIdKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -214,7 +214,7 @@ func decodeDeleteReportConfigRequest(_ context.Context, r *http.Request) (any, e
 
 func decodeUpdateReportTemplateRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateReportTemplateReq{}

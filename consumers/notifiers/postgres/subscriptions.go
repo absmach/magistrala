@@ -42,7 +42,7 @@ func (repo subscriptionsRepo) Save(ctx context.Context, sub notifiers.Subscripti
 	row, err := repo.db.NamedQueryContext(ctx, q, dbSub)
 	if err != nil {
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
-			return "", errors.Wrap(repoerr.ErrConflict, err)
+			return "", errors.Wrap(notifiers.ErrSubscriptionsAlreadyExists, err)
 		}
 		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}

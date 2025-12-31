@@ -15,9 +15,13 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
-// ErrMessage indicates an error converting a message to SuperMQ message.
-var ErrMessage = errors.New("failed to convert to SuperMQ message")
+var (
+	// ErrMessage indicates an error converting a message to SuperMQ message.
+	ErrMessage = errors.New("failed to convert to SuperMQ message")
 
+	// ErrSubscriptionsAlreadyExists indicates subscription already exists.
+	ErrSubscriptionsAlreadyExists = errors.NewRequestError("subscription already exists")
+)
 var _ consumers.AsyncConsumer = (*notifierService)(nil)
 
 // Service reprents a notification service.

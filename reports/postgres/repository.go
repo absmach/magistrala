@@ -10,19 +10,26 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/reports"
 	api "github.com/absmach/supermq/api/http"
+	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
+	eh errors.Handler
 }
 
 func NewRepository(db postgres.Database) reports.Repository {
-	return &PostgresRepository{DB: db}
+	errHandlerOptions := []errors.HandlerOption{
+		postgres.WithDuplicateErrors(NewDuplicateErrors()),
+	}
+	return &PostgresRepository{
+		DB: db,
+		eh: postgres.NewErrorHandler(errHandlerOptions...),
+	}
 }
 
 func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {
@@ -36,24 +43,24 @@ func (repo *PostgresRepository) AddReportConfig(ctx context.Context, cfg reports
 	`
 	dbr, err := reportToDb(cfg)
 	if err != nil {
-		return reports.ReportConfig{}, err
+		return reports.ReportConfig{}, repo.eh.HandleError(repoerr.ErrCreateEntity, err)
 	}
 	row, err := repo.DB.NamedQueryContext(ctx, q, dbr)
 	if err != nil {
-		return reports.ReportConfig{}, err
+		return reports.ReportConfig{}, repo.eh.HandleError(repoerr.ErrCreateEntity, err)
 	}
 	defer row.Close()
 
 	var dbReport dbReport
 	if row.Next() {
 		if err := row.StructScan(&dbReport); err != nil {
-			return reports.ReportConfig{}, err
+			return reports.ReportConfig{}, repo.eh.HandleError(repoerr.ErrCreateEntity, err)
 		}
 	}
 
 	report, err := dbToReport(dbReport)
 	if err != nil {
-		return reports.ReportConfig{}, err
+		return reports.ReportConfig{}, repo.eh.HandleError(repoerr.ErrCreateEntity, err)
 	}
 
 	return report, nil
@@ -72,6 +79,9 @@ func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string)
 	}
 	var dbr dbReport
 	if err := row.StructScan(&dbr); err != nil {
+		if err == sql.ErrNoRows {
+			return reports.ReportConfig{}, repoerr.ErrNotFound
+		}
 		return reports.ReportConfig{}, err
 	}
 	rpt, err := dbToReport(dbr)
@@ -163,10 +173,14 @@ func (repo *PostgresRepository) UpdateReportConfig(ctx context.Context, cfg repo
 	defer row.Close()
 
 	var dbReport dbReport
-	if row.Next() {
-		if err := row.StructScan(&dbReport); err != nil {
+	if !row.Next() {
+		if err := row.Err(); err != nil {
 			return reports.ReportConfig{}, err
 		}
+		return reports.ReportConfig{}, repoerr.ErrNotFound
+	}
+	if err := row.StructScan(&dbReport); err != nil {
+		return reports.ReportConfig{}, err
 	}
 	rpt, err := dbToReport(dbReport)
 	if err != nil {
@@ -196,10 +210,14 @@ func (repo *PostgresRepository) UpdateReportSchedule(ctx context.Context, cfg re
 	defer row.Close()
 
 	var dbReport dbReport
-	if row.Next() {
-		if err := row.StructScan(&dbReport); err != nil {
-			return reports.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	if !row.Next() {
+		if err := row.Err(); err != nil {
+			return reports.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 		}
+		return reports.ReportConfig{}, repoerr.ErrNotFound
+	}
+	if err := row.StructScan(&dbReport); err != nil {
+		return reports.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 	report, err := dbToReport(dbReport)
 	if err != nil {
@@ -320,10 +338,14 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 	defer row.Close()
 
 	var dbReport dbReport
-	if row.Next() {
-		if err := row.StructScan(&dbReport); err != nil {
-			return reports.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+	if !row.Next() {
+		if err := row.Err(); err != nil {
+			return reports.ReportConfig{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 		}
+		return reports.ReportConfig{}, repoerr.ErrNotFound
+	}
+	if err := row.StructScan(&dbReport); err != nil {
+		return reports.ReportConfig{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 	report, err := dbToReport(dbReport)
 	if err != nil {
@@ -335,8 +357,8 @@ func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, 
 
 func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domainID, reportID string, template reports.ReportTemplate) error {
 	q := `
-		UPDATE report_config 
-		SET report_template = :report_template, updated_at = :updated_at 
+		UPDATE report_config
+		SET report_template = :report_template, updated_at = :updated_at
 		WHERE id = :id AND domain_id = :domain_id`
 
 	dbr := dbReport{
@@ -357,8 +379,8 @@ func (repo *PostgresRepository) UpdateReportTemplate(ctx context.Context, domain
 
 func (repo *PostgresRepository) ViewReportTemplate(ctx context.Context, domainID, reportID string) (reports.ReportTemplate, error) {
 	q := `
-		SELECT COALESCE(report_template, '') as report_template 
-		FROM report_config 
+		SELECT COALESCE(report_template, '') as report_template
+		FROM report_config
 		WHERE id = $1 AND domain_id = $2`
 
 	var template reports.ReportTemplate

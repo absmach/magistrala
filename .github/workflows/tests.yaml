@@ -100,9 +100,6 @@ jobs:
             internal:
               - "internal/**"
 
-            pkg-errors:
-              - "pkg/errors/**"
-
             pkg-events:
               - "pkg/events/**"
               - "pkg/messaging/**"
@@ -160,11 +157,6 @@ jobs:
         if: steps.changes.outputs.internal == 'true' || steps.changes.outputs.workflow == 'true'
         run: |
           go test --race -v -count=1 -coverprofile=coverage/internal.out ./internal/...
-
-      - name: Run pkg errors tests
-        if: steps.changes.outputs.pkg-errors == 'true' || steps.changes.outputs.workflow == 'true'
-        run: |
-          go test --race -v -count=1 -coverprofile=coverage/pkg-errors.out ./pkg/errors/...
 
       - name: Run pkg sdk tests
         if: steps.changes.outputs.pkg-sdk == 'true' || steps.changes.outputs.workflow == 'true'

@@ -101,7 +101,7 @@ func TestCreateSubscription(t *testing.T) {
 			svcReq:       notifiers.Subscription{},
 			svcRes:       "",
 			svcErr:       nil,
-			err:          errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:          errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:         "create new subscription with invalid token",
@@ -124,7 +124,7 @@ func TestCreateSubscription(t *testing.T) {
 			svcReq: notifiers.Subscription{},
 			svcErr: nil,
 			svcRes: "",
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidTopic), http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrInvalidTopic, http.StatusBadRequest),
 		},
 		{
 			desc: "create new subscription with empty contact",
@@ -137,7 +137,7 @@ func TestCreateSubscription(t *testing.T) {
 			svcReq: notifiers.Subscription{},
 			svcErr: nil,
 			svcRes: "",
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidContact), http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrInvalidContact, http.StatusBadRequest),
 		},
 	}
 	for _, tc := range cases {
@@ -209,7 +209,7 @@ func TestViewSubscription(t *testing.T) {
 			svcRes:   notifiers.Subscription{},
 			svcErr:   nil,
 			response: sdk.Subscription{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {
@@ -368,7 +368,7 @@ func TestListSubscription(t *testing.T) {
 			svcRes:   notifiers.Page{},
 			svcErr:   nil,
 			response: sdk.SubscriptionPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 	}
 
@@ -431,14 +431,14 @@ func TestDeleteSubscription(t *testing.T) {
 			subID:  subID,
 			token:  "",
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:   "delete subscription with empty subID",
 			subID:  "",
 			token:  validToken,
 			svcErr: nil,
-			err:    errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+			err:    errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 	}
 

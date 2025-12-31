@@ -195,12 +195,12 @@ func decodeAlarmReq(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateAlarmReq(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return alarmReq{}, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return alarmReq{}, apiutil.ErrUnsupportedContentType
 	}
 
 	req := alarmReq{}
 	if err := json.NewDecoder(r.Body).Decode(&req.Alarm); err != nil {
-		return alarmReq{}, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return alarmReq{}, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	req.Alarm.ID = chi.URLParam(r, "alarmID")

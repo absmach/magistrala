@@ -12,9 +12,9 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	"github.com/absmach/magistrala/pkg/errors"
 	grpcapi "github.com/absmach/magistrala/readers/api/grpc"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
 	"github.com/stretchr/testify/assert"

@@ -112,11 +112,11 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 
 func decodeAddRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 	return addRuleReq{Rule: rule}, nil
 }
@@ -128,11 +128,11 @@ func decodeViewRuleRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 	var rule re.Rule
 	if err := json.NewDecoder(r.Body).Decode(&rule); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 	rule.ID = chi.URLParam(r, ruleIdKey)
 
@@ -141,14 +141,14 @@ func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateRuleTags(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateRuleTagsReq{
 		id: chi.URLParam(r, ruleIdKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil
@@ -156,14 +156,14 @@ func decodeUpdateRuleTags(_ context.Context, r *http.Request) (any, error) {
 
 func decodeUpdateRuleScheduleRequest(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
-		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
+		return nil, apiutil.ErrUnsupportedContentType
 	}
 
 	req := updateRuleScheduleReq{
 		id: chi.URLParam(r, ruleIdKey),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrValidation, errors.Wrap(errors.ErrMalformedEntity, err))
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil

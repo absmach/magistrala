@@ -59,6 +59,9 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == pgerrcode.UndefinedTable {
 				return readers.MessagesPage{}, nil

@@ -38,10 +38,10 @@ const (
 )
 
 var (
-	notFoundRes   = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrNotFound.Error()})
-	unauthRes     = toJSON(apiutil.ErrorRes{Msg: svcerr.ErrAuthentication.Error()})
-	invalidRes    = toJSON(apiutil.ErrorRes{Err: apiutil.ErrInvalidQueryParams.Error(), Msg: apiutil.ErrValidation.Error()})
-	missingTokRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerToken.Error(), Msg: apiutil.ErrValidation.Error()})
+	notFoundRes   = toJSON(svcerr.ErrNotFound)
+	unauthRes     = toJSON(svcerr.ErrAuthentication)
+	invalidRes    = toJSON(apiutil.ErrInvalidQueryParams)
+	missingTokRes = toJSON(apiutil.ErrBearerToken)
 )
 
 type testRequest struct {
@@ -119,7 +119,7 @@ func TestCreate(t *testing.T) {
 			req:         data,
 			contentType: contentType,
 			auth:        token,
-			status:      http.StatusConflict,
+			status:      http.StatusBadRequest,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},

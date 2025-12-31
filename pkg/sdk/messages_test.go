@@ -143,7 +143,7 @@ func TestReadMessages(t *testing.T) {
 			authzErr: svcerr.ErrAuthorization,
 			repoRes:  readers.MessagesPage{},
 			response: sdk.MessagesPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrAuthorization), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(svcerr.ErrAuthorization, http.StatusForbidden),
 		},
 		{
 			desc:     "read messages with empty token",
@@ -161,7 +161,7 @@ func TestReadMessages(t *testing.T) {
 			authnErr: svcerr.ErrAuthentication,
 			repoRes:  readers.MessagesPage{},
 			response: sdk.MessagesPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrBearerToken), http.StatusUnauthorized),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
 		},
 		{
 			desc:     "read messages with empty channel ID",
@@ -179,7 +179,7 @@ func TestReadMessages(t *testing.T) {
 			repoRes:  readers.MessagesPage{},
 			repoErr:  nil,
 			response: sdk.MessagesPage{},
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(apiutil.ErrValidation, apiutil.ErrMissingID), http.StatusBadRequest),
+			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 		{
 			desc:     "read messages with invalid message page metadata",

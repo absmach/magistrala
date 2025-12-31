@@ -1125,7 +1125,7 @@ func TestViewReportTemplateEndpoint(t *testing.T) {
 			id:          validID,
 			contentType: contentType,
 			svcErr:      svcerr.ErrViewEntity,
-			status:      http.StatusBadRequest,
+			status:      http.StatusUnprocessableEntity,
 			err:         svcerr.ErrViewEntity,
 		},
 	}

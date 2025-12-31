@@ -89,11 +89,11 @@ var (
 		CACert:       "newca",
 	}
 
-	missingIDRes  = toJSON(apiutil.ErrorRes{Err: apiutil.ErrMissingID.Error(), Msg: apiutil.ErrValidation.Error()})
-	missingKeyRes = toJSON(apiutil.ErrorRes{Err: apiutil.ErrBearerKey.Error(), Msg: apiutil.ErrValidation.Error()})
-	bsErrorRes    = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrBootstrap.Error()})
-	extKeyRes     = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrExternalKey.Error()})
-	extSecKeyRes  = toJSON(apiutil.ErrorRes{Msg: bootstrap.ErrExternalKeySecure.Error()})
+	missingIDRes              = toJSON(apiutil.ErrMissingID)
+	missingKeyRes             = toJSON(apiutil.ErrBearerKey)
+	unknownExternalIDErrorRes = toJSON(svcerr.ErrNotFound)
+	extKeyRes                 = toJSON(bootstrap.ErrExternalKey)
+	extSecKeyRes              = toJSON(bootstrap.ErrExternalKeySecure)
 )
 
 type testRequest struct {
@@ -257,7 +257,7 @@ func TestAdd(t *testing.T) {
 			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusConflict,
+			status:      http.StatusBadRequest,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},
@@ -267,7 +267,7 @@ func TestAdd(t *testing.T) {
 			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusConflict,
+			status:      http.StatusBadRequest,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},
@@ -277,7 +277,7 @@ func TestAdd(t *testing.T) {
 			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
-			status:      http.StatusConflict,
+			status:      http.StatusBadRequest,
 			location:    "",
 			err:         svcerr.ErrConflict,
 		},
@@ -1190,9 +1190,9 @@ func TestBootstrap(t *testing.T) {
 			externalID:  unknown,
 			externalKey: c.ExternalKey,
 			status:      http.StatusNotFound,
-			res:         bsErrorRes,
+			res:         unknownExternalIDErrorRes,
 			secure:      false,
-			err:         bootstrap.ErrBootstrap,
+			err:         svcerr.ErrNotFound,
 		},
 		{
 			desc:        "bootstrap a Client with an empty ID",
@@ -1201,7 +1201,7 @@ func TestBootstrap(t *testing.T) {
 			status:      http.StatusBadRequest,
 			res:         missingIDRes,
 			secure:      false,
-			err:         errors.Wrap(bootstrap.ErrBootstrap, svcerr.ErrMalformedEntity),
+			err:         apiutil.ErrMissingID,
 		},
 		{
 			desc:        "bootstrap a Client with unknown key",
@@ -1210,16 +1210,16 @@ func TestBootstrap(t *testing.T) {
 			status:      http.StatusForbidden,
 			res:         extKeyRes,
 			secure:      false,
-			err:         errors.Wrap(bootstrap.ErrExternalKey, errors.New("")),
+			err:         bootstrap.ErrExternalKey,
 		},
 		{
 			desc:        "bootstrap a Client with an empty key",
 			externalID:  c.ExternalID,
 			externalKey: "",
-			status:      http.StatusBadRequest,
+			status:      http.StatusUnauthorized,
 			res:         missingKeyRes,
 			secure:      false,
-			err:         errors.Wrap(bootstrap.ErrBootstrap, svcerr.ErrAuthentication),
+			err:         apiutil.ErrBearerKey,
 		},
 		{
 			desc:        "bootstrap known Client",

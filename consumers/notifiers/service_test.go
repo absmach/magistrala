@@ -16,7 +16,6 @@ import (
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/uuid"
@@ -66,7 +65,7 @@ func TestCreateSubscription(t *testing.T) {
 			token:           exampleUser1,
 			sub:             notifiers.Subscription{Contact: exampleUser1, Topic: "valid.topic"},
 			id:              "",
-			err:             repoerr.ErrConflict,
+			err:             notifiers.ErrSubscriptionsAlreadyExists,
 			authenticateErr: nil,
 			userID:          validID,
 		},

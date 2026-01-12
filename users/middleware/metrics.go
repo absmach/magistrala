@@ -75,6 +75,15 @@ func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 	return ms.svc.RefreshToken(ctx, session, refreshToken)
 }
 
+// RevokeRefreshToken instruments RevokeRefreshToken method with metrics.
+func (ms *metricsMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "revoke_refresh_token").Add(1)
+		ms.latency.With("method", "revoke_refresh_token").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.RevokeRefreshToken(ctx, session, refreshToken)
+}
+
 // View instruments View method with metrics.
 func (ms *metricsMiddleware) View(ctx context.Context, session authn.Session, id string) (users.User, error) {
 	defer func(begin time.Time) {

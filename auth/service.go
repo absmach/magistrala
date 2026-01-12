@@ -272,6 +272,11 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 
 	key.ExpiresAt = time.Now().UTC().Add(svc.refreshDuration)
 	key.Type = RefreshKey
+	id, err := svc.idProvider.ID()
+	if err != nil {
+		return Token{}, errors.Wrap(errIssueTmp, err)
+	}
+	key.ID = id
 	refresh, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)

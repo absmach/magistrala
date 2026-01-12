@@ -165,17 +165,20 @@ func main() {
 		return
 	}
 
+	tokensRepo := apostgres.NewTokensRepository(db)
+	tokensCache := cache.NewTokensCache(cacheclient, cfg.CacheKeyDuration)
+
 	var tokenizer auth.Tokenizer
 	switch {
 	case isSymmetric:
-		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey))
+		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey), tokensRepo, tokensCache)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create symmetric key manager: %s", err.Error()))
 			exitCode = 1
 			return
 		}
 	default:
-		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, logger)
+		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, tokensRepo, tokensCache, logger)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create asymmetric key manager: %s", err.Error()))
 			exitCode = 1
@@ -292,12 +295,11 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 }
 
 func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider supermq.IDProvider) (auth.Service, error) {
-	cache := cache.NewPatsCache(cacheClient, keyDuration)
+	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
 	patsRepo := apostgres.NewPatRepo(database, patsCache)
-	tokensRepo := apostgres.NewTokensRepository(database)
 	hasher := hasher.New()
 
 	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)

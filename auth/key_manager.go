@@ -5,13 +5,15 @@ package auth
 
 import (
 	"context"
-	"errors"
+
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 var (
 	ErrUnsupportedKeyAlgorithm = errors.New("unsupported key algorithm")
 	ErrInvalidSymmetricKey     = errors.New("invalid symmetric key")
 	ErrPublicKeysNotSupported  = errors.New("public keys not supported for symmetric algorithm")
+	ErrRevokedToken            = errors.NewAuthNError("token is revoked")
 )
 
 // PublicKeyInfo represents a public key for external distribution via JWKS.
@@ -43,6 +45,30 @@ type Tokenizer interface {
 	// RetrieveJWKS returns public keys for distribution via JWKS endpoint.
 	// Returns ErrPublicKeysNotSupported for symmetric tokenizers (HMAC).
 	RetrieveJWKS() ([]PublicKeyInfo, error)
+
+	// Revoke revokes a refresh token.
+	Revoke(ctx context.Context, token string) error
+}
+
+// TokensCache represents a cache repository. It allows saving, checking, and removing refresh tokens.
+type TokensCache interface {
+	// Save saves the value in the cache.
+	Save(ctx context.Context, value string) error
+
+	// Contains checks if the value exists in the cache.
+	Contains(ctx context.Context, value string) bool
+
+	// Remove removes the value from the cache.
+	Remove(ctx context.Context, value string) error
+}
+
+// TokensRepository specifies methods for persisting and checking refresh tokens in the repository.
+type TokensRepository interface {
+	// Save persists the token.
+	Save(ctx context.Context, id string) error
+
+	// Contains checks if token with provided ID exists.
+	Contains(ctx context.Context, id string) bool
 }
 
 // IsSymmetricAlgorithm determines if the given algorithm is symmetric (HMAC-based).

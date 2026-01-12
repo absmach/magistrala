@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/auth"
+	"github.com/absmach/supermq/auth/mocks"
 	"github.com/absmach/supermq/auth/tokenizer/asymmetric"
 	smqerrors "github.com/absmach/supermq/pkg/errors"
 	"github.com/lestrrat-go/jwx/v2/jwa"
@@ -40,6 +41,8 @@ func newTestLogger() *slog.Logger {
 
 func TestNewKeyManager(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
+	repo := new(mocks.TokensRepository)
+	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
 	keyPath := filepath.Join(tmpDir, "private.key")
@@ -105,7 +108,7 @@ func TestNewKeyManager(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			path := tc.setupKey()
 
-			km, err := asymmetric.NewTokenizer(path, "", idProvider, newTestLogger())
+			km, err := asymmetric.NewTokenizer(path, "", idProvider, repo, cache, newTestLogger())
 
 			if tc.expectErr {
 				assert.Error(t, err)
@@ -123,6 +126,8 @@ func TestNewKeyManager(t *testing.T) {
 
 func TestSign(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
+	repo := new(mocks.TokensRepository)
+	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
 	keyPath := filepath.Join(tmpDir, "private.key")
@@ -141,7 +146,7 @@ func TestSign(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -199,6 +204,8 @@ func TestSign(t *testing.T) {
 
 func TestVerify(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
+	repo := new(mocks.TokensRepository)
+	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
 	keyPath := filepath.Join(tmpDir, "private.key")
@@ -218,7 +225,7 @@ func TestVerify(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
 	require.NoError(t, err)
 
 	validKey := auth.Key{
@@ -317,6 +324,8 @@ func TestVerify(t *testing.T) {
 
 func TestPublicKeys(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
+	repo := new(mocks.TokensRepository)
+	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
 	keyPath := filepath.Join(tmpDir, "private.key")
@@ -336,7 +345,7 @@ func TestPublicKeys(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
 	require.NoError(t, err)
 
 	keys, err := km.RetrieveJWKS()
@@ -358,6 +367,8 @@ func TestPublicKeys(t *testing.T) {
 
 func TestSignAndVerifyRoundTrip(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
+	repo := new(mocks.TokensRepository)
+	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
 	keyPath := filepath.Join(tmpDir, "private.key")
@@ -376,7 +387,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
 	require.NoError(t, err)
 
 	originalKey := auth.Key{

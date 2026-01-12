@@ -13,7 +13,10 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const defKey = "revoked_tokens"
+const (
+	defKey      = "revoked_tokens"
+	defDuration = 15 * time.Minute
+)
 
 var _ auth.TokensCache = (*tokensCache)(nil)
 
@@ -24,13 +27,16 @@ type tokensCache struct {
 
 // NewTokensCache returns redis auth cache implementation.
 func NewTokensCache(client *redis.Client, duration time.Duration) auth.TokensCache {
+	if duration == 0 {
+		duration = defDuration
+	}
 	return &tokensCache{
 		client:      client,
 		keyDuration: duration,
 	}
 }
 
-func (tc *tokensCache) Save(ctx context.Context, _, value string) error {
+func (tc *tokensCache) Save(ctx context.Context, value string) error {
 	if err := tc.client.SAdd(ctx, defKey, value).Err(); err != nil {
 		return errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
@@ -38,7 +44,7 @@ func (tc *tokensCache) Save(ctx context.Context, _, value string) error {
 	return nil
 }
 
-func (tc *tokensCache) Contains(ctx context.Context, _, value string) bool {
+func (tc *tokensCache) Contains(ctx context.Context, value string) bool {
 	ok, err := tc.client.SIsMember(ctx, defKey, value).Result()
 	if err != nil {
 		return false

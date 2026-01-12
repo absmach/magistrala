@@ -129,6 +129,24 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 	return lm.svc.RefreshToken(ctx, session, refreshToken)
 }
 
+// RevokeRefreshToken logs the revoke_refresh_token request. It logs the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("request_id", middleware.GetReqID(ctx)),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Revoke refresh token failed", args...)
+			return
+		}
+		lm.logger.Info("Revoke refresh token completed successfully", args...)
+	}(time.Now())
+	return lm.svc.RevokeRefreshToken(ctx, session, refreshToken)
+}
+
 // View logs the view_user request. It logs the user id and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) View(ctx context.Context, session authn.Session, id string) (c users.User, err error) {

@@ -801,6 +801,69 @@ func (_c *Service_ResetSecret_Call) RunAndReturn(run func(ctx context.Context, s
 	return _c
 }
 
+// RevokeRefreshToken provides a mock function for the type Service
+func (_mock *Service) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+	ret := _mock.Called(ctx, session, refreshToken)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeRefreshToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, refreshToken)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RevokeRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRefreshToken'
+type Service_RevokeRefreshToken_Call struct {
+	*mock.Call
+}
+
+// RevokeRefreshToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - refreshToken string
+func (_e *Service_Expecter) RevokeRefreshToken(ctx interface{}, session interface{}, refreshToken interface{}) *Service_RevokeRefreshToken_Call {
+	return &Service_RevokeRefreshToken_Call{Call: _e.mock.On("RevokeRefreshToken", ctx, session, refreshToken)}
+}
+
+func (_c *Service_RevokeRefreshToken_Call) Run(run func(ctx context.Context, session authn.Session, refreshToken string)) *Service_RevokeRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RevokeRefreshToken_Call) Return(err error) *Service_RevokeRefreshToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, refreshToken string) error) *Service_RevokeRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SearchUsers provides a mock function for the type Service
 func (_mock *Service) SearchUsers(ctx context.Context, pm users.Page) (users.UsersPage, error) {
 	ret := _mock.Called(ctx, pm)

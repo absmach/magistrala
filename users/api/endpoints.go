@@ -454,6 +454,27 @@ func refreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 	}
 }
 
+func revokeRefreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(tokenReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthentication
+		}
+
+		err := svc.RevokeRefreshToken(ctx, session, req.RefreshToken)
+		if err != nil {
+			return nil, err
+		}
+
+		return revokeRes{revoked: true}, nil
+	}
+}
+
 func enableEndpoint(svc users.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(changeUserStatusReq)

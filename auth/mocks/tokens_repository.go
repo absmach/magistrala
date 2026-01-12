@@ -88,8 +88,8 @@ func (_c *TokensRepository_Contains_Call) Run(run func(ctx context.Context, id s
 	return _c
 }
 
-func (_c *TokensRepository_Contains_Call) Return(ok bool) *TokensRepository_Contains_Call {
-	_c.Call.Return(ok)
+func (_c *TokensRepository_Contains_Call) Return(b bool) *TokensRepository_Contains_Call {
+	_c.Call.Return(b)
 	return _c
 }
 

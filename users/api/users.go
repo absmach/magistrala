@@ -78,6 +78,12 @@ func usersHandler(svc users.Service, authn smqauthn.AuthNMiddleware, tokenClient
 				api.EncodeResponse,
 				opts...,
 			), "refresh_token").ServeHTTP)
+			r.Post("/tokens/revoke", otelhttp.NewHandler(kithttp.NewServer(
+				revokeRefreshTokenEndpoint(svc),
+				decodeRevokeRefreshToken,
+				api.EncodeResponse,
+				opts...,
+			), "revoke_refresh_token").ServeHTTP)
 			r.Patch("/{id}/email", otelhttp.NewHandler(kithttp.NewServer(
 				updateEmailEndpoint(svc),
 				decodeUpdateUserEmail,
@@ -527,6 +533,12 @@ func decodeRefreshToken(_ context.Context, r *http.Request) (any, error) {
 	if !strings.Contains(r.Header.Get("Content-Type"), api.ContentType) {
 		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrUnsupportedContentType)
 	}
+	req := tokenReq{RefreshToken: apiutil.ExtractBearerToken(r)}
+
+	return req, nil
+}
+
+func decodeRevokeRefreshToken(_ context.Context, r *http.Request) (any, error) {
 	req := tokenReq{RefreshToken: apiutil.ExtractBearerToken(r)}
 
 	return req, nil

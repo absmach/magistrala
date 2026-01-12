@@ -271,6 +271,9 @@ type Service interface {
 	// a new pair of access and refresh tokens.
 	RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error)
 
+	// RevokeRefreshToken revokes a refresh token.
+	RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error
+
 	// OAuthCallback handles the callback from any supported OAuth provider.
 	// It processes the OAuth tokens and either signs in or signs up the user based on the provided state.
 	OAuthCallback(ctx context.Context, user User) (User, error)

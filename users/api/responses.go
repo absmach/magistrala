@@ -80,6 +80,22 @@ func (res tokenRes) Empty() bool {
 	return res.AccessToken == "" || res.RefreshToken == ""
 }
 
+type revokeRes struct {
+	revoked bool
+}
+
+func (res revokeRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res revokeRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res revokeRes) Empty() bool {
+	return false
+}
+
 type sendVerificationRes struct{}
 
 func (res sendVerificationRes) Code() int {

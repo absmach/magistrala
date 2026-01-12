@@ -42,16 +42,16 @@ func (_m *TokensCache) EXPECT() *TokensCache_Expecter {
 }
 
 // Contains provides a mock function for the type TokensCache
-func (_mock *TokensCache) Contains(ctx context.Context, key string, value string) bool {
-	ret := _mock.Called(ctx, key, value)
+func (_mock *TokensCache) Contains(ctx context.Context, value string) bool {
+	ret := _mock.Called(ctx, value)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Contains")
 	}
 
 	var r0 bool
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
-		r0 = returnFunc(ctx, key, value)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
+		r0 = returnFunc(ctx, value)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
@@ -65,13 +65,12 @@ type TokensCache_Contains_Call struct {
 
 // Contains is a helper method to define mock.On call
 //   - ctx context.Context
-//   - key string
 //   - value string
-func (_e *TokensCache_Expecter) Contains(ctx interface{}, key interface{}, value interface{}) *TokensCache_Contains_Call {
-	return &TokensCache_Contains_Call{Call: _e.mock.On("Contains", ctx, key, value)}
+func (_e *TokensCache_Expecter) Contains(ctx interface{}, value interface{}) *TokensCache_Contains_Call {
+	return &TokensCache_Contains_Call{Call: _e.mock.On("Contains", ctx, value)}
 }
 
-func (_c *TokensCache_Contains_Call) Run(run func(ctx context.Context, key string, value string)) *TokensCache_Contains_Call {
+func (_c *TokensCache_Contains_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Contains_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -81,14 +80,9 @@ func (_c *TokensCache_Contains_Call) Run(run func(ctx context.Context, key strin
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -99,14 +93,14 @@ func (_c *TokensCache_Contains_Call) Return(b bool) *TokensCache_Contains_Call {
 	return _c
 }
 
-func (_c *TokensCache_Contains_Call) RunAndReturn(run func(ctx context.Context, key string, value string) bool) *TokensCache_Contains_Call {
+func (_c *TokensCache_Contains_Call) RunAndReturn(run func(ctx context.Context, value string) bool) *TokensCache_Contains_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Remove provides a mock function for the type TokensCache
-func (_mock *TokensCache) Remove(ctx context.Context, key string) error {
-	ret := _mock.Called(ctx, key)
+func (_mock *TokensCache) Remove(ctx context.Context, value string) error {
+	ret := _mock.Called(ctx, value)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Remove")
@@ -114,7 +108,7 @@ func (_mock *TokensCache) Remove(ctx context.Context, key string) error {
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, key)
+		r0 = returnFunc(ctx, value)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -128,12 +122,12 @@ type TokensCache_Remove_Call struct {
 
 // Remove is a helper method to define mock.On call
 //   - ctx context.Context
-//   - key string
-func (_e *TokensCache_Expecter) Remove(ctx interface{}, key interface{}) *TokensCache_Remove_Call {
-	return &TokensCache_Remove_Call{Call: _e.mock.On("Remove", ctx, key)}
+//   - value string
+func (_e *TokensCache_Expecter) Remove(ctx interface{}, value interface{}) *TokensCache_Remove_Call {
+	return &TokensCache_Remove_Call{Call: _e.mock.On("Remove", ctx, value)}
 }
 
-func (_c *TokensCache_Remove_Call) Run(run func(ctx context.Context, key string)) *TokensCache_Remove_Call {
+func (_c *TokensCache_Remove_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Remove_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -156,22 +150,22 @@ func (_c *TokensCache_Remove_Call) Return(err error) *TokensCache_Remove_Call {
 	return _c
 }
 
-func (_c *TokensCache_Remove_Call) RunAndReturn(run func(ctx context.Context, key string) error) *TokensCache_Remove_Call {
+func (_c *TokensCache_Remove_Call) RunAndReturn(run func(ctx context.Context, value string) error) *TokensCache_Remove_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Save provides a mock function for the type TokensCache
-func (_mock *TokensCache) Save(ctx context.Context, key string, value string) error {
-	ret := _mock.Called(ctx, key, value)
+func (_mock *TokensCache) Save(ctx context.Context, value string) error {
+	ret := _mock.Called(ctx, value)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Save")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, key, value)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, value)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -185,13 +179,12 @@ type TokensCache_Save_Call struct {
 
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
-//   - key string
 //   - value string
-func (_e *TokensCache_Expecter) Save(ctx interface{}, key interface{}, value interface{}) *TokensCache_Save_Call {
-	return &TokensCache_Save_Call{Call: _e.mock.On("Save", ctx, key, value)}
+func (_e *TokensCache_Expecter) Save(ctx interface{}, value interface{}) *TokensCache_Save_Call {
+	return &TokensCache_Save_Call{Call: _e.mock.On("Save", ctx, value)}
 }
 
-func (_c *TokensCache_Save_Call) Run(run func(ctx context.Context, key string, value string)) *TokensCache_Save_Call {
+func (_c *TokensCache_Save_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Save_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -201,14 +194,9 @@ func (_c *TokensCache_Save_Call) Run(run func(ctx context.Context, key string, v
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
 		run(
 			arg0,
 			arg1,
-			arg2,
 		)
 	})
 	return _c
@@ -219,7 +207,7 @@ func (_c *TokensCache_Save_Call) Return(err error) *TokensCache_Save_Call {
 	return _c
 }
 
-func (_c *TokensCache_Save_Call) RunAndReturn(run func(ctx context.Context, key string, value string) error) *TokensCache_Save_Call {
+func (_c *TokensCache_Save_Call) RunAndReturn(run func(ctx context.Context, value string) error) *TokensCache_Save_Call {
 	_c.Call.Return(run)
 	return _c
 }

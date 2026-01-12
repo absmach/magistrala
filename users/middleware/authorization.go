@@ -170,6 +170,10 @@ func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session aut
 	return am.svc.RefreshToken(ctx, session, refreshToken)
 }
 
+func (am *authorizationMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+	return am.svc.RevokeRefreshToken(ctx, session, refreshToken)
+}
+
 func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, user users.User) (users.User, error) {
 	return am.svc.OAuthCallback(ctx, user)
 }

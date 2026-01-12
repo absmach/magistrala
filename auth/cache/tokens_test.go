@@ -6,6 +6,7 @@ package cache_test
 import (
 	"context"
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -15,15 +16,26 @@ import (
 	"github.com/absmach/supermq/internal/testsutil"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	storeClient *redis.Client
+	storeURL    string
+)
+
+func TestMain(m *testing.M) {
+	code := testsutil.RunRedisTest(m, &storeClient, &storeURL)
+	os.Exit(code)
+}
+
 func setupRedisTokensClient() auth.TokensCache {
-	return cache.NewTokensCache(redisClient, 10*time.Minute)
+	return cache.NewTokensCache(storeClient, 10*time.Minute)
 }
 
 func TestTokenSave(t *testing.T) {
-	redisClient.FlushAll(context.Background())
+	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
 	key := auth.Key{
@@ -66,9 +78,9 @@ func TestTokenSave(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.Save(context.Background(), "", tc.key.ID)
+			err := tokensCache.Save(context.Background(), tc.key.ID)
 			if err == nil {
-				ok := tokensCache.Contains(context.Background(), "", tc.key.ID)
+				ok := tokensCache.Contains(context.Background(), tc.key.ID)
 				assert.True(t, ok)
 			}
 			assert.True(t, errors.Contains(err, tc.err))
@@ -77,14 +89,14 @@ func TestTokenSave(t *testing.T) {
 }
 
 func TestTokenContains(t *testing.T) {
-	redisClient.FlushAll(context.Background())
+	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
 	key := auth.Key{
 		ID: testsutil.GenerateUUID(t),
 	}
 
-	err := tokensCache.Save(context.Background(), "", key.ID)
+	err := tokensCache.Save(context.Background(), key.ID)
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {
@@ -116,21 +128,21 @@ func TestTokenContains(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ok := tokensCache.Contains(context.Background(), "", tc.key.ID)
+			ok := tokensCache.Contains(context.Background(), tc.key.ID)
 			assert.Equal(t, tc.ok, ok)
 		})
 	}
 }
 
 func TestTokenRemove(t *testing.T) {
-	redisClient.FlushAll(context.Background())
+	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
 	num := 10
 	var ids []string
 	for range num {
 		id := testsutil.GenerateUUID(t)
-		err := tokensCache.Save(context.Background(), "", id)
+		err := tokensCache.Save(context.Background(), id)
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		ids = append(ids, id)
 	}
@@ -166,7 +178,7 @@ func TestTokenRemove(t *testing.T) {
 			err := tokensCache.Remove(context.Background(), tc.id)
 			assert.True(t, errors.Contains(err, tc.err))
 			if err == nil {
-				ok := tokensCache.Contains(context.Background(), "", tc.id)
+				ok := tokensCache.Contains(context.Background(), tc.id)
 				assert.False(t, ok)
 			}
 		})

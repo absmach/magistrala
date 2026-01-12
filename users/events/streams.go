@@ -15,31 +15,32 @@ import (
 )
 
 const (
-	supermqPrefix           = "supermq."
-	createStream            = supermqPrefix + userCreate
-	sendVerificationStream  = supermqPrefix + userSendVerification
-	verifyEmailStream       = supermqPrefix + userVerifyEmail
-	updateStream            = supermqPrefix + userUpdate
-	updateRoleStream        = supermqPrefix + userUpdateRole
-	updateTagsStream        = supermqPrefix + userUpdateTags
-	updateSecretStream      = supermqPrefix + userUpdateSecret
-	updateUsernameStream    = supermqPrefix + userUpdateUsername
-	updatePictureStream     = supermqPrefix + userUpdateProfilePicture
-	UpdateEmailStream       = supermqPrefix + userUpdateEmail
-	enableStream            = supermqPrefix + userEnable
-	disableStream           = supermqPrefix + userDisable
-	viewStream              = supermqPrefix + userView
-	viewProfileStream       = supermqPrefix + profileView
-	listStream              = supermqPrefix + userList
-	searchStream            = supermqPrefix + userSearch
-	identifyStream          = supermqPrefix + userIdentify
-	issueTokenStream        = supermqPrefix + issueToken
-	refreshTokenStream      = supermqPrefix + refreshToken
-	resetSecretStream       = supermqPrefix + resetSecret
-	sendPasswordResetStream = supermqPrefix + sendPasswordReset
-	oauthStream             = supermqPrefix + oauthCallback
-	addPolicyStream         = supermqPrefix + addClientPolicy
-	deleteStream            = supermqPrefix + deleteUser
+	supermqPrefix            = "supermq."
+	createStream             = supermqPrefix + userCreate
+	sendVerificationStream   = supermqPrefix + userSendVerification
+	verifyEmailStream        = supermqPrefix + userVerifyEmail
+	updateStream             = supermqPrefix + userUpdate
+	updateRoleStream         = supermqPrefix + userUpdateRole
+	updateTagsStream         = supermqPrefix + userUpdateTags
+	updateSecretStream       = supermqPrefix + userUpdateSecret
+	updateUsernameStream     = supermqPrefix + userUpdateUsername
+	updatePictureStream      = supermqPrefix + userUpdateProfilePicture
+	UpdateEmailStream        = supermqPrefix + userUpdateEmail
+	enableStream             = supermqPrefix + userEnable
+	disableStream            = supermqPrefix + userDisable
+	viewStream               = supermqPrefix + userView
+	viewProfileStream        = supermqPrefix + profileView
+	listStream               = supermqPrefix + userList
+	searchStream             = supermqPrefix + userSearch
+	identifyStream           = supermqPrefix + userIdentify
+	issueTokenStream         = supermqPrefix + issueToken
+	refreshTokenStream       = supermqPrefix + refreshToken
+	revokeRefreshTokenStream = supermqPrefix + revokeRefreshToken
+	resetSecretStream        = supermqPrefix + resetSecret
+	sendPasswordResetStream  = supermqPrefix + sendPasswordReset
+	oauthStream              = supermqPrefix + oauthCallback
+	addPolicyStream          = supermqPrefix + addClientPolicy
+	deleteStream             = supermqPrefix + deleteUser
 )
 
 var _ users.Service = (*eventStore)(nil)
@@ -383,6 +384,19 @@ func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, r
 	}
 
 	return token, nil
+}
+
+func (es *eventStore) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+	err := es.svc.RevokeRefreshToken(ctx, session, refreshToken)
+	if err != nil {
+		return err
+	}
+
+	event := revokeRefreshTokenEvent{
+		requestID: middleware.GetReqID(ctx),
+	}
+
+	return es.Publish(ctx, revokeRefreshTokenStream, event)
 }
 
 func (es *eventStore) ResetSecret(ctx context.Context, session authn.Session, secret string) error {

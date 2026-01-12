@@ -229,6 +229,22 @@ func (svc service) RefreshToken(ctx context.Context, session authn.Session, refr
 	return token, nil
 }
 
+func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+	dbUser, err := svc.users.RetrieveByID(ctx, session.UserID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+	if dbUser.Status == DisabledStatus {
+		return errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
+	}
+	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{Token: refreshToken})
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAuthorization, err)
+	}
+
+	return nil
+}
+
 func (svc service) View(ctx context.Context, session authn.Session, id string) (User, error) {
 	user, err := svc.users.RetrieveByID(ctx, id)
 	if err != nil {

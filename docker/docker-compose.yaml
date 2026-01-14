@@ -119,8 +119,10 @@ services:
       MG_BACKEND_OBJECT_STORAGE_SECRET_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
       MG_BACKEND_OBJECT_STORAGE_TTL: ${MG_BACKEND_OBJECT_STORAGE_TTL}
     depends_on:
-      - ui-backend-db
-      - seaweedfs-s3
+      ui-backend-db:
+        condition: service_healthy
+      seaweedfs-s3:
+        condition: service_started
     volumes:
       # Auth gRPC client certificates
       - type: bind
@@ -187,7 +189,11 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
-
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
   seaweedfs-s3:
     image: chrislusf/seaweedfs:latest
     container_name: magistrala-seaweedfs-s3

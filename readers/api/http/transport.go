@@ -227,8 +227,11 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 		if err != nil {
 			return "", "", err
 		}
+		if session.Role == smqauthn.AdminRole {
+			return session.UserID, policies.UserType, nil
+		}
 
-		return session.UserID, policies.UserType, nil
+		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
 			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.chanID, req.key),

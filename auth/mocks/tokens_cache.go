@@ -10,6 +10,7 @@ package mocks
 
 import (
 	"context"
+	"time"
 
 	mock "github.com/stretchr/testify/mock"
 )
@@ -41,36 +42,37 @@ func (_m *TokensCache) EXPECT() *TokensCache_Expecter {
 	return &TokensCache_Expecter{mock: &_m.Mock}
 }
 
-// Contains provides a mock function for the type TokensCache
-func (_mock *TokensCache) Contains(ctx context.Context, value string) bool {
-	ret := _mock.Called(ctx, value)
+// IsActive provides a mock function for the type TokensCache
+func (_mock *TokensCache) IsActive(ctx context.Context, userID string, tokenID string) bool {
+	ret := _mock.Called(ctx, userID, tokenID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Contains")
+		panic("no return value specified for IsActive")
 	}
 
 	var r0 bool
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) bool); ok {
-		r0 = returnFunc(ctx, value)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) bool); ok {
+		r0 = returnFunc(ctx, userID, tokenID)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 	return r0
 }
 
-// TokensCache_Contains_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Contains'
-type TokensCache_Contains_Call struct {
+// TokensCache_IsActive_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsActive'
+type TokensCache_IsActive_Call struct {
 	*mock.Call
 }
 
-// Contains is a helper method to define mock.On call
+// IsActive is a helper method to define mock.On call
 //   - ctx context.Context
-//   - value string
-func (_e *TokensCache_Expecter) Contains(ctx interface{}, value interface{}) *TokensCache_Contains_Call {
-	return &TokensCache_Contains_Call{Call: _e.mock.On("Contains", ctx, value)}
+//   - userID string
+//   - tokenID string
+func (_e *TokensCache_Expecter) IsActive(ctx interface{}, userID interface{}, tokenID interface{}) *TokensCache_IsActive_Call {
+	return &TokensCache_IsActive_Call{Call: _e.mock.On("IsActive", ctx, userID, tokenID)}
 }
 
-func (_c *TokensCache_Contains_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Contains_Call {
+func (_c *TokensCache_IsActive_Call) Run(run func(ctx context.Context, userID string, tokenID string)) *TokensCache_IsActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -80,54 +82,122 @@ func (_c *TokensCache_Contains_Call) Run(run func(ctx context.Context, value str
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *TokensCache_Contains_Call) Return(b bool) *TokensCache_Contains_Call {
+func (_c *TokensCache_IsActive_Call) Return(b bool) *TokensCache_IsActive_Call {
 	_c.Call.Return(b)
 	return _c
 }
 
-func (_c *TokensCache_Contains_Call) RunAndReturn(run func(ctx context.Context, value string) bool) *TokensCache_Contains_Call {
+func (_c *TokensCache_IsActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string) bool) *TokensCache_IsActive_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Remove provides a mock function for the type TokensCache
-func (_mock *TokensCache) Remove(ctx context.Context, value string) error {
-	ret := _mock.Called(ctx, value)
+// RemoveActive provides a mock function for the type TokensCache
+func (_mock *TokensCache) RemoveActive(ctx context.Context, userID string, tokenID string) error {
+	ret := _mock.Called(ctx, userID, tokenID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Remove")
+		panic("no return value specified for RemoveActive")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, value)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// TokensCache_Remove_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Remove'
-type TokensCache_Remove_Call struct {
+// TokensCache_RemoveActive_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveActive'
+type TokensCache_RemoveActive_Call struct {
 	*mock.Call
 }
 
-// Remove is a helper method to define mock.On call
+// RemoveActive is a helper method to define mock.On call
 //   - ctx context.Context
-//   - value string
-func (_e *TokensCache_Expecter) Remove(ctx interface{}, value interface{}) *TokensCache_Remove_Call {
-	return &TokensCache_Remove_Call{Call: _e.mock.On("Remove", ctx, value)}
+//   - userID string
+//   - tokenID string
+func (_e *TokensCache_Expecter) RemoveActive(ctx interface{}, userID interface{}, tokenID interface{}) *TokensCache_RemoveActive_Call {
+	return &TokensCache_RemoveActive_Call{Call: _e.mock.On("RemoveActive", ctx, userID, tokenID)}
 }
 
-func (_c *TokensCache_Remove_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Remove_Call {
+func (_c *TokensCache_RemoveActive_Call) Run(run func(ctx context.Context, userID string, tokenID string)) *TokensCache_RemoveActive_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *TokensCache_RemoveActive_Call) Return(err error) *TokensCache_RemoveActive_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *TokensCache_RemoveActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string) error) *TokensCache_RemoveActive_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveAllActive provides a mock function for the type TokensCache
+func (_mock *TokensCache) RemoveAllActive(ctx context.Context, userID string) error {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveAllActive")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// TokensCache_RemoveAllActive_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllActive'
+type TokensCache_RemoveAllActive_Call struct {
+	*mock.Call
+}
+
+// RemoveAllActive is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *TokensCache_Expecter) RemoveAllActive(ctx interface{}, userID interface{}) *TokensCache_RemoveAllActive_Call {
+	return &TokensCache_RemoveAllActive_Call{Call: _e.mock.On("RemoveAllActive", ctx, userID)}
+}
+
+func (_c *TokensCache_RemoveAllActive_Call) Run(run func(ctx context.Context, userID string)) *TokensCache_RemoveAllActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -145,46 +215,48 @@ func (_c *TokensCache_Remove_Call) Run(run func(ctx context.Context, value strin
 	return _c
 }
 
-func (_c *TokensCache_Remove_Call) Return(err error) *TokensCache_Remove_Call {
+func (_c *TokensCache_RemoveAllActive_Call) Return(err error) *TokensCache_RemoveAllActive_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *TokensCache_Remove_Call) RunAndReturn(run func(ctx context.Context, value string) error) *TokensCache_Remove_Call {
+func (_c *TokensCache_RemoveAllActive_Call) RunAndReturn(run func(ctx context.Context, userID string) error) *TokensCache_RemoveAllActive_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Save provides a mock function for the type TokensCache
-func (_mock *TokensCache) Save(ctx context.Context, value string) error {
-	ret := _mock.Called(ctx, value)
+// SaveActive provides a mock function for the type TokensCache
+func (_mock *TokensCache) SaveActive(ctx context.Context, userID string, tokenID string, ttl time.Duration) error {
+	ret := _mock.Called(ctx, userID, tokenID, ttl)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Save")
+		panic("no return value specified for SaveActive")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, value)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID, ttl)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// TokensCache_Save_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Save'
-type TokensCache_Save_Call struct {
+// TokensCache_SaveActive_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SaveActive'
+type TokensCache_SaveActive_Call struct {
 	*mock.Call
 }
 
-// Save is a helper method to define mock.On call
+// SaveActive is a helper method to define mock.On call
 //   - ctx context.Context
-//   - value string
-func (_e *TokensCache_Expecter) Save(ctx interface{}, value interface{}) *TokensCache_Save_Call {
-	return &TokensCache_Save_Call{Call: _e.mock.On("Save", ctx, value)}
+//   - userID string
+//   - tokenID string
+//   - ttl time.Duration
+func (_e *TokensCache_Expecter) SaveActive(ctx interface{}, userID interface{}, tokenID interface{}, ttl interface{}) *TokensCache_SaveActive_Call {
+	return &TokensCache_SaveActive_Call{Call: _e.mock.On("SaveActive", ctx, userID, tokenID, ttl)}
 }
 
-func (_c *TokensCache_Save_Call) Run(run func(ctx context.Context, value string)) *TokensCache_Save_Call {
+func (_c *TokensCache_SaveActive_Call) Run(run func(ctx context.Context, userID string, tokenID string, ttl time.Duration)) *TokensCache_SaveActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -194,20 +266,30 @@ func (_c *TokensCache_Save_Call) Run(run func(ctx context.Context, value string)
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 time.Duration
+		if args[3] != nil {
+			arg3 = args[3].(time.Duration)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *TokensCache_Save_Call) Return(err error) *TokensCache_Save_Call {
+func (_c *TokensCache_SaveActive_Call) Return(err error) *TokensCache_SaveActive_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *TokensCache_Save_Call) RunAndReturn(run func(ctx context.Context, value string) error) *TokensCache_Save_Call {
+func (_c *TokensCache_SaveActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string, ttl time.Duration) error) *TokensCache_SaveActive_Call {
 	_c.Call.Return(run)
 	return _c
 }

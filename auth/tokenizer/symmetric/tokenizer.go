@@ -5,6 +5,7 @@ package symmetric
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/supermq/auth"
 	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
@@ -21,13 +22,12 @@ var errJWTExpiryKey = errors.New(`"exp" not satisfied`)
 type tokenizer struct {
 	algorithm jwa.KeyAlgorithm
 	secret    []byte
-	repo      auth.TokensRepository
 	cache     auth.TokensCache
 }
 
 var _ auth.Tokenizer = (*tokenizer)(nil)
 
-func NewTokenizer(algorithm string, secret []byte, repo auth.TokensRepository, cache auth.TokensCache) (auth.Tokenizer, error) {
+func NewTokenizer(algorithm string, secret []byte, cache auth.TokensCache) (auth.Tokenizer, error) {
 	alg := jwa.KeyAlgorithmFrom(algorithm)
 	if _, ok := alg.(jwa.InvalidKeyAlgorithm); ok {
 		return nil, auth.ErrUnsupportedKeyAlgorithm
@@ -38,12 +38,11 @@ func NewTokenizer(algorithm string, secret []byte, repo auth.TokensRepository, c
 	return &tokenizer{
 		secret:    secret,
 		algorithm: alg,
-		repo:      repo,
 		cache:     cache,
 	}, nil
 }
 
-func (tok *tokenizer) Issue(key auth.Key) (string, error) {
+func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
 	tkn, err := smqjwt.BuildToken(key)
 	if err != nil {
 		return "", err
@@ -52,6 +51,16 @@ func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(tok.algorithm, tok.secret))
 	if err != nil {
 		return "", err
+	}
+
+	// Store refresh tokens as active with TTL
+	if key.Type == auth.RefreshKey && key.ID != "" && key.Subject != "" {
+		ttl := time.Until(key.ExpiresAt)
+		if ttl > 0 {
+			if err := tok.cache.SaveActive(ctx, key.Subject, key.ID, ttl); err != nil {
+				return "", err
+			}
+		}
 	}
 
 	return string(signedBytes), nil
@@ -63,17 +72,9 @@ func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, 
 		return auth.Key{}, err
 	}
 	if key.Type == auth.RefreshKey {
-		switch tok.cache.Contains(ctx, key.ID) {
-		case true:
+		// Check if the refresh token is active for this user
+		if !tok.cache.IsActive(ctx, key.Subject, key.ID) {
 			return auth.Key{}, auth.ErrRevokedToken
-		default:
-			if ok := tok.repo.Contains(ctx, key.ID); ok {
-				if err := tok.cache.Save(ctx, key.ID); err != nil {
-					return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
-				}
-
-				return auth.Key{}, auth.ErrRevokedToken
-			}
 		}
 	}
 
@@ -91,11 +92,8 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 	}
 
 	if key.Type == auth.RefreshKey {
-		if err := tok.repo.Save(ctx, key.ID); err != nil {
-			return errors.Wrap(svcerr.ErrAuthentication, err)
-		}
-
-		if err := tok.cache.Save(ctx, key.ID); err != nil {
+		// Remove the refresh token from active tokens
+		if err := tok.cache.RemoveActive(ctx, key.Subject, key.ID); err != nil {
 			return errors.Wrap(svcerr.ErrAuthentication, err)
 		}
 	}

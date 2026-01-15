@@ -38,49 +38,58 @@ func TestTokenSave(t *testing.T) {
 	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
-	key := auth.Key{
-		ID: testsutil.GenerateUUID(t),
-	}
+	userID := testsutil.GenerateUUID(t)
+	tokenID := testsutil.GenerateUUID(t)
+
 	cases := []struct {
-		desc string
-		key  auth.Key
-		err  error
+		desc    string
+		userID  string
+		tokenID string
+		ttl     time.Duration
+		err     error
 	}{
 		{
-			desc: "Save token",
-			key:  key,
-			err:  nil,
+			desc:    "Save active token",
+			userID:  userID,
+			tokenID: tokenID,
+			ttl:     10 * time.Minute,
+			err:     nil,
 		},
 		{
-			desc: "Save already cached policy",
-			key:  key,
-			err:  nil,
+			desc:    "Save already cached token",
+			userID:  userID,
+			tokenID: tokenID,
+			ttl:     10 * time.Minute,
+			err:     nil,
 		},
 		{
-			desc: "Save another policy",
-			key: auth.Key{
-				ID: testsutil.GenerateUUID(t),
-			},
-			err: nil,
+			desc:    "Save another token for same user",
+			userID:  userID,
+			tokenID: testsutil.GenerateUUID(t),
+			ttl:     10 * time.Minute,
+			err:     nil,
 		},
 		{
-			desc: "Save policy with long key",
-			key: auth.Key{
-				ID: strings.Repeat("a", 513*1024*1024),
-			},
-			err: repoerr.ErrCreateEntity,
+			desc:    "Save token with long id",
+			userID:  userID,
+			tokenID: strings.Repeat("a", 513*1024*1024),
+			ttl:     10 * time.Minute,
+			err:     repoerr.ErrCreateEntity,
 		},
 		{
-			desc: "Save policy with empty key",
-			err:  nil,
+			desc:    "Save token with empty id",
+			userID:  userID,
+			tokenID: "",
+			ttl:     10 * time.Minute,
+			err:     nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.Save(context.Background(), tc.key.ID)
+			err := tokensCache.SaveActive(context.Background(), tc.userID, tc.tokenID, tc.ttl)
 			if err == nil {
-				ok := tokensCache.Contains(context.Background(), tc.key.ID)
+				ok := tokensCache.IsActive(context.Background(), tc.userID, tc.tokenID)
 				assert.True(t, ok)
 			}
 			assert.True(t, errors.Contains(err, tc.err))
@@ -92,43 +101,49 @@ func TestTokenContains(t *testing.T) {
 	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
-	key := auth.Key{
-		ID: testsutil.GenerateUUID(t),
-	}
+	userID := testsutil.GenerateUUID(t)
+	tokenID := testsutil.GenerateUUID(t)
 
-	err := tokensCache.Save(context.Background(), key.ID)
+	err := tokensCache.SaveActive(context.Background(), userID, tokenID, 10*time.Minute)
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {
-		desc string
-		key  auth.Key
-		ok   bool
+		desc    string
+		userID  string
+		tokenID string
+		ok      bool
 	}{
 		{
-			desc: "Contains existing key",
-			key:  key,
-			ok:   true,
+			desc:    "IsActive for existing token",
+			userID:  userID,
+			tokenID: tokenID,
+			ok:      true,
 		},
 		{
-			desc: "Contains non existing key",
-			key: auth.Key{
-				ID: testsutil.GenerateUUID(t),
-			},
+			desc:    "IsActive for non existing token",
+			userID:  userID,
+			tokenID: testsutil.GenerateUUID(t),
 		},
 		{
-			desc: "Contains key with long id",
-			key: auth.Key{
-				ID: strings.Repeat("a", 513*1024*1024),
-			},
+			desc:    "IsActive for different user",
+			userID:  testsutil.GenerateUUID(t),
+			tokenID: tokenID,
 		},
 		{
-			desc: "Contains key with empty id",
+			desc:    "IsActive with long token id",
+			userID:  userID,
+			tokenID: strings.Repeat("a", 513*1024*1024),
+		},
+		{
+			desc:    "IsActive with empty token id",
+			userID:  userID,
+			tokenID: "",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ok := tokensCache.Contains(context.Background(), tc.key.ID)
+			ok := tokensCache.IsActive(context.Background(), tc.userID, tc.tokenID)
 			assert.Equal(t, tc.ok, ok)
 		})
 	}
@@ -138,47 +153,54 @@ func TestTokenRemove(t *testing.T) {
 	storeClient.FlushAll(context.Background())
 	tokensCache := setupRedisTokensClient()
 
+	userID := testsutil.GenerateUUID(t)
 	num := 10
-	var ids []string
+	var tokenIDs []string
 	for range num {
-		id := testsutil.GenerateUUID(t)
-		err := tokensCache.Save(context.Background(), id)
+		tokenID := testsutil.GenerateUUID(t)
+		err := tokensCache.SaveActive(context.Background(), userID, tokenID, 10*time.Minute)
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
-		ids = append(ids, id)
+		tokenIDs = append(tokenIDs, tokenID)
 	}
 
 	cases := []struct {
-		desc string
-		id   string
-		err  error
+		desc    string
+		userID  string
+		tokenID string
+		err     error
 	}{
 		{
-			desc: "Remove an existing token from cache",
-			id:   ids[0],
-			err:  nil,
+			desc:    "Remove an existing token from cache",
+			userID:  userID,
+			tokenID: tokenIDs[0],
+			err:     nil,
 		},
 		{
-			desc: "Remove token with empty id from cache",
-			err:  nil,
+			desc:    "Remove token with empty id from cache",
+			userID:  userID,
+			tokenID: "",
+			err:     nil,
 		},
 		{
-			desc: "Remove non existing id from cache",
-			id:   testsutil.GenerateUUID(t),
-			err:  nil,
+			desc:    "Remove non existing id from cache",
+			userID:  userID,
+			tokenID: testsutil.GenerateUUID(t),
+			err:     nil,
 		},
 		{
-			desc: "Remove token with long id from cache",
-			id:   strings.Repeat("a", 513*1024*1024),
-			err:  repoerr.ErrRemoveEntity,
+			desc:    "Remove token with long id from cache",
+			userID:  userID,
+			tokenID: strings.Repeat("a", 513*1024*1024),
+			err:     repoerr.ErrRemoveEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.Remove(context.Background(), tc.id)
+			err := tokensCache.RemoveActive(context.Background(), tc.userID, tc.tokenID)
 			assert.True(t, errors.Contains(err, tc.err))
 			if err == nil {
-				ok := tokensCache.Contains(context.Background(), tc.id)
+				ok := tokensCache.IsActive(context.Background(), tc.userID, tc.tokenID)
 				assert.False(t, ok)
 			}
 		})

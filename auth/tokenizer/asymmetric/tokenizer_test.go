@@ -41,7 +41,6 @@ func newTestLogger() *slog.Logger {
 
 func TestNewKeyManager(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
-	repo := new(mocks.TokensRepository)
 	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
@@ -108,7 +107,7 @@ func TestNewKeyManager(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			path := tc.setupKey()
 
-			km, err := asymmetric.NewTokenizer(path, "", idProvider, repo, cache, newTestLogger())
+			km, err := asymmetric.NewTokenizer(path, "", idProvider, cache, newTestLogger())
 
 			if tc.expectErr {
 				assert.Error(t, err)
@@ -126,7 +125,6 @@ func TestNewKeyManager(t *testing.T) {
 
 func TestSign(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
-	repo := new(mocks.TokensRepository)
 	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
@@ -146,7 +144,7 @@ func TestSign(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, cache, newTestLogger())
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -192,7 +190,7 @@ func TestSign(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			token, err := km.Issue(tc.key)
+			token, err := km.Issue(context.Background(), tc.key)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, token)
 
@@ -204,7 +202,6 @@ func TestSign(t *testing.T) {
 
 func TestVerify(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
-	repo := new(mocks.TokensRepository)
 	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
@@ -225,7 +222,7 @@ func TestVerify(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, cache, newTestLogger())
 	require.NoError(t, err)
 
 	validKey := auth.Key{
@@ -239,12 +236,12 @@ func TestVerify(t *testing.T) {
 		Verified:  true,
 	}
 
-	validToken, err := km.Issue(validKey)
+	validToken, err := km.Issue(context.Background(), validKey)
 	require.NoError(t, err, "Signing a valid token should succeed")
 
 	expiredKey := validKey
 	expiredKey.ExpiresAt = time.Now().Add(-1 * time.Hour).UTC()
-	expiredToken, err := km.Issue(expiredKey)
+	expiredToken, err := km.Issue(context.Background(), expiredKey)
 	require.NoError(t, err, "Creating an expired token should succeed")
 
 	wrongIssuerKey := validKey
@@ -324,7 +321,6 @@ func TestVerify(t *testing.T) {
 
 func TestPublicKeys(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
-	repo := new(mocks.TokensRepository)
 	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
@@ -345,7 +341,7 @@ func TestPublicKeys(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, cache, newTestLogger())
 	require.NoError(t, err)
 
 	keys, err := km.RetrieveJWKS()
@@ -367,7 +363,6 @@ func TestPublicKeys(t *testing.T) {
 
 func TestSignAndVerifyRoundTrip(t *testing.T) {
 	idProvider := &mockIDProvider{id: "unused"}
-	repo := new(mocks.TokensRepository)
 	cache := new(mocks.TokensCache)
 
 	tmpDir := t.TempDir()
@@ -387,7 +382,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 	err = os.WriteFile(keyPath, pem.EncodeToMemory(pemBlock), 0o600)
 	require.NoError(t, err)
 
-	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, repo, cache, newTestLogger())
+	km, err := asymmetric.NewTokenizer(keyPath, "", idProvider, cache, newTestLogger())
 	require.NoError(t, err)
 
 	originalKey := auth.Key{
@@ -401,7 +396,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 		Verified:  true,
 	}
 
-	token, err := km.Issue(originalKey)
+	token, err := km.Issue(context.Background(), originalKey)
 	require.NoError(t, err)
 
 	verifiedKey, err := km.Parse(context.Background(), token)

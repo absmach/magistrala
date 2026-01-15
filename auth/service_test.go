@@ -133,7 +133,7 @@ func TestIssue(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			tokenizerCall := tokenizer.On("Issue", mock.Anything).Return(tc.token, tc.tokenizerErr)
+			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.tokenizerErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
@@ -172,7 +172,7 @@ func TestIssue(t *testing.T) {
 	}
 	for _, tc := range cases2 {
 		t.Run(tc.desc, func(t *testing.T) {
-			tokenizerCall := tokenizer.On("Issue", mock.Anything).Return(tc.token, tc.tokenizerErr)
+			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.tokenizerErr)
 			repoCall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
@@ -265,7 +265,7 @@ func TestIssue(t *testing.T) {
 	}
 	for _, tc := range cases3 {
 		t.Run(tc.desc, func(t *testing.T) {
-			tokenizerCall := tokenizer.On("Issue", mock.Anything).Return(tc.token, tc.issueErr)
+			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.issueErr)
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
 			repoCall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
@@ -346,8 +346,9 @@ func TestIssue(t *testing.T) {
 	}
 	for _, tc := range cases4 {
 		t.Run(tc.desc, func(t *testing.T) {
-			tokenizerCall := tokenizer.On("Issue", mock.Anything).Return(tc.token, tc.issueErr)
+			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.issueErr)
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
+			tokenizerCall2 := tokenizer.On("Revoke", mock.Anything, tc.token).Return(tc.parseErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
@@ -359,6 +360,7 @@ func TestIssue(t *testing.T) {
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			tokenizerCall.Unset()
 			tokenizerCall1.Unset()
+			tokenizerCall2.Unset()
 			policyCall.Unset()
 		})
 	}

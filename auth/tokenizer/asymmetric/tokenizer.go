@@ -13,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/auth"
@@ -48,7 +49,6 @@ type keyPair struct {
 type tokenizer struct {
 	activeKey   *keyPair
 	retiringKey *keyPair // Optional, for key rotation grace period
-	repo        auth.TokensRepository
 	cache       auth.TokensCache
 }
 
@@ -59,7 +59,7 @@ var _ auth.Tokenizer = (*tokenizer)(nil)
 // If retiringKeyPath is provided but the file doesn't exist or is invalid, a warning is logged
 // but the tokenizer is still created with just the active key.
 // Key IDs are derived from filenames to ensure consistency across multiple service instances.
-func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDProvider, repo auth.TokensRepository, cache auth.TokensCache, logger *slog.Logger) (auth.Tokenizer, error) {
+func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDProvider, cache auth.TokensCache, logger *slog.Logger) (auth.Tokenizer, error) {
 	activeKID := keyIDFromPath(activeKeyPath)
 
 	activePrivateJwk, activePublicJwk, err := loadKeyPair(activeKeyPath, activeKID)
@@ -73,7 +73,6 @@ func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDPr
 			privateKey: activePrivateJwk,
 			publicKey:  activePublicJwk,
 		},
-		repo:  repo,
 		cache: cache,
 	}
 
@@ -100,7 +99,7 @@ func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDPr
 	return mgr, nil
 }
 
-func (tok *tokenizer) Issue(key auth.Key) (string, error) {
+func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
 	if tok.activeKey == nil {
 		return "", errNoActiveKey
 	}
@@ -119,6 +118,15 @@ func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 		return "", err
 	}
 
+	if key.Type == auth.RefreshKey && key.ID != "" && key.Subject != "" {
+		ttl := time.Until(key.ExpiresAt)
+		if ttl > 0 {
+			if err := tok.cache.SaveActive(ctx, key.Subject, key.ID, ttl); err != nil {
+				return "", err
+			}
+		}
+	}
+
 	return string(signedBytes), nil
 }
 
@@ -128,17 +136,8 @@ func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, 
 		return auth.Key{}, err
 	}
 	if key.Type == auth.RefreshKey {
-		switch tok.cache.Contains(ctx, key.ID) {
-		case true:
+		if !tok.cache.IsActive(ctx, key.Subject, key.ID) {
 			return auth.Key{}, auth.ErrRevokedToken
-		default:
-			if ok := tok.repo.Contains(ctx, key.ID); ok {
-				if err := tok.cache.Save(ctx, key.ID); err != nil {
-					return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
-				}
-
-				return auth.Key{}, auth.ErrRevokedToken
-			}
 		}
 	}
 
@@ -174,11 +173,8 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 	}
 
 	if key.Type == auth.RefreshKey {
-		if err := tok.repo.Save(ctx, key.ID); err != nil {
-			return errors.Wrap(svcerr.ErrAuthentication, err)
-		}
-
-		if err := tok.cache.Save(ctx, key.ID); err != nil {
+		// Remove the refresh token from active tokens
+		if err := tok.cache.RemoveActive(ctx, key.Subject, key.ID); err != nil {
 			return errors.Wrap(svcerr.ErrAuthentication, err)
 		}
 	}

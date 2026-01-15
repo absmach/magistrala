@@ -165,20 +165,19 @@ func main() {
 		return
 	}
 
-	tokensRepo := apostgres.NewTokensRepository(db)
 	tokensCache := cache.NewTokensCache(cacheclient, cfg.CacheKeyDuration)
 
 	var tokenizer auth.Tokenizer
 	switch {
 	case isSymmetric:
-		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey), tokensRepo, tokensCache)
+		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey), tokensCache)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create symmetric key manager: %s", err.Error()))
 			exitCode = 1
 			return
 		}
 	default:
-		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, tokensRepo, tokensCache, logger)
+		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, tokensCache, logger)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create asymmetric key manager: %s", err.Error()))
 			exitCode = 1

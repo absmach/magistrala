@@ -5,6 +5,7 @@ package auth
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 )
@@ -35,7 +36,8 @@ type PublicKeyInfo struct {
 // Implementations manage underlying cryptographic operations and key distribution.
 type Tokenizer interface {
 	// Issue creates a signed token string from the given key claims.
-	Issue(key Key) (token string, err error)
+	// For RefreshKey types, the token ID is stored as active in the cache.
+	Issue(ctx context.Context, key Key) (token string, err error)
 
 	// Parse verifies and parses a token string (JWT or PAT), returning the extracted claims.
 	// For PAT tokens (prefix "pat"), returns a Key with Type set to PersonalAccessToken.
@@ -50,25 +52,19 @@ type Tokenizer interface {
 	Revoke(ctx context.Context, token string) error
 }
 
-// TokensCache represents a cache repository. It allows saving, checking, and removing refresh tokens.
+// TokensCache represents a cache repository for managing active refresh tokens per user.
 type TokensCache interface {
-	// Save saves the value in the cache.
-	Save(ctx context.Context, value string) error
+	// SaveActive saves an active refresh token ID for a user with TTL.
+	SaveActive(ctx context.Context, userID, tokenID string, ttl time.Duration) error
 
-	// Contains checks if the value exists in the cache.
-	Contains(ctx context.Context, value string) bool
+	// IsActive checks if the token ID is active for the given user.
+	IsActive(ctx context.Context, userID, tokenID string) bool
 
-	// Remove removes the value from the cache.
-	Remove(ctx context.Context, value string) error
-}
+	// RemoveActive removes an active refresh token ID for a user.
+	RemoveActive(ctx context.Context, userID, tokenID string) error
 
-// TokensRepository specifies methods for persisting and checking refresh tokens in the repository.
-type TokensRepository interface {
-	// Save persists the token.
-	Save(ctx context.Context, id string) error
-
-	// Contains checks if token with provided ID exists.
-	Contains(ctx context.Context, id string) bool
+	// RemoveAllActive removes all active refresh tokens for a user.
+	RemoveAllActive(ctx context.Context, userID string) error
 }
 
 // IsSymmetricAlgorithm determines if the given algorithm is symmetric (HMAC-based).

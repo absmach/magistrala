@@ -325,20 +325,8 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
 
-	// Generate new refresh token
-	key.ExpiresAt = time.Now().UTC().Add(svc.refreshDuration)
+	key.ExpiresAt = k.ExpiresAt
 	key.Type = RefreshKey
-	newRefreshID, err := svc.idProvider.ID()
-	if err != nil {
-		return Token{}, errors.Wrap(errIssueTmp, err)
-	}
-	key.ID = newRefreshID
-
-	// Revoke old refresh token before issuing new one
-	if err := svc.tokenizer.Revoke(ctx, token); err != nil {
-		return Token{}, errors.Wrap(errIssueTmp, err)
-	}
-
 	refresh, err := svc.tokenizer.Issue(ctx, key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)

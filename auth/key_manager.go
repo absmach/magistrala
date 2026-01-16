@@ -58,13 +58,13 @@ type TokensCache interface {
 	SaveActive(ctx context.Context, userID, tokenID string, ttl time.Duration) error
 
 	// IsActive checks if the token ID is active for the given user.
-	IsActive(ctx context.Context, userID, tokenID string) bool
+	IsActive(ctx context.Context, tokenID string) (bool, error)
 
-	// RemoveActive removes an active refresh token ID for a user.
-	RemoveActive(ctx context.Context, userID, tokenID string) error
+	// ListUserTokens lists all active token IDs for a given user.
+	ListUserTokens(ctx context.Context, userID string) ([]string, error)
 
-	// RemoveAllActive removes all active refresh tokens for a user.
-	RemoveAllActive(ctx context.Context, userID string) error
+	// Remove removes an active refresh token ID for a user.
+	RemoveActive(ctx context.Context, tokenID string) error
 }
 
 // IsSymmetricAlgorithm determines if the given algorithm is symmetric (HMAC-based).

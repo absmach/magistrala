@@ -5,17 +5,16 @@ package cache
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/redis/go-redis/v9"
 )
 
 const (
-	activeTokensKeyPrefix = "active_refresh_tokens:"
-	defDuration           = 15 * time.Minute
+	defDuration   = 15 * time.Minute
+	refreshPrefix = "refresh_tokens:"
 )
 
 var _ auth.TokensCache = (*tokensCache)(nil)
@@ -38,51 +37,90 @@ func NewTokensCache(client *redis.Client, duration time.Duration) auth.TokensCac
 
 // SaveActive saves an active refresh token ID for a user with TTL.
 func (tc *tokensCache) SaveActive(ctx context.Context, userID, tokenID string, ttl time.Duration) error {
-	key := activeTokensKeyPrefix + userID
+	pipe := tc.client.TxPipeline()
 
-	// Add token ID to the set
-	if err := tc.client.SAdd(ctx, key, tokenID).Err(); err != nil {
-		return errors.Wrap(repoerr.ErrCreateEntity, err)
-	}
+	pipe.Set(ctx, tc.tokenKey(tokenID), userID, ttl)
+	pipe.SAdd(ctx, tc.userTokensKey(userID), tokenID)
 
-	// Set expiration for the entire set
-	if err := tc.client.Expire(ctx, key, ttl).Err(); err != nil {
-		return errors.Wrap(repoerr.ErrCreateEntity, err)
-	}
+	_, err := pipe.Exec(ctx)
 
-	return nil
+	return err
 }
 
 // IsActive checks if the token ID is active for the given user.
-func (tc *tokensCache) IsActive(ctx context.Context, userID, tokenID string) bool {
-	key := activeTokensKeyPrefix + userID
-
-	ok, err := tc.client.SIsMember(ctx, key, tokenID).Result()
+func (tc *tokensCache) IsActive(ctx context.Context, tokenID string) (bool, error) {
+	count, err := tc.client.Exists(ctx, tc.tokenKey(tokenID)).Result()
 	if err != nil {
-		return false
+		return false, err
+	}
+	return count > 0, nil
+}
+
+func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]string, error) {
+	key := tc.userTokensKey(userID)
+	tokenIDs, err := tc.client.SMembers(ctx, key).Result()
+	if err != nil {
+		return nil, err
 	}
 
-	return ok
+	if len(tokenIDs) == 0 {
+		return nil, nil
+	}
+
+	valid := make([]string, 0, len(tokenIDs))
+	pipe := tc.client.Pipeline()
+
+	existsCmds := make(map[string]*redis.IntCmd, len(tokenIDs))
+	for _, tokenID := range tokenIDs {
+		existsCmds[tokenID] = pipe.Exists(ctx, tc.tokenKey(tokenID))
+	}
+
+	_, err = pipe.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cleanup := tc.client.Pipeline()
+	for tokenID, cmd := range existsCmds {
+		if cmd.Val() == 1 {
+			valid = append(valid, tokenID)
+		} else {
+			cleanup.SRem(ctx, key, tokenID)
+		}
+	}
+
+	_, err = cleanup.Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return valid, nil
 }
 
 // RemoveActive removes an active refresh token ID for a user.
-func (tc *tokensCache) RemoveActive(ctx context.Context, userID, tokenID string) error {
-	key := activeTokensKeyPrefix + userID
+func (tc *tokensCache) RemoveActive(ctx context.Context, tokenID string) error {
+	tokenKey := tc.tokenKey(tokenID)
 
-	if err := tc.client.SRem(ctx, key, tokenID).Err(); err != nil {
-		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	userID, err := tc.client.Get(ctx, tokenKey).Result()
+	if err == redis.Nil {
+		return nil
+	}
+	if err != nil {
+		return err
 	}
 
-	return nil
+	pipe := tc.client.TxPipeline()
+	pipe.Del(ctx, tokenKey)
+	pipe.SRem(ctx, tc.userTokensKey(userID), tokenID)
+
+	_, err = pipe.Exec(ctx)
+	return err
 }
 
-// RemoveAllActive removes all active refresh tokens for a user.
-func (tc *tokensCache) RemoveAllActive(ctx context.Context, userID string) error {
-	key := activeTokensKeyPrefix + userID
+func (tc *tokensCache) tokenKey(tokenID string) string {
+	return fmt.Sprintf("%s:token:%s", refreshPrefix, tokenID)
+}
 
-	if err := tc.client.Del(ctx, key).Err(); err != nil {
-		return errors.Wrap(repoerr.ErrRemoveEntity, err)
-	}
-
-	return nil
+func (tc *tokensCache) userTokensKey(userID string) string {
+	return fmt.Sprintf("%s:user_tokens:%s", refreshPrefix, userID)
 }

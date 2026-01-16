@@ -136,7 +136,11 @@ func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, 
 		return auth.Key{}, err
 	}
 	if key.Type == auth.RefreshKey {
-		if !tok.cache.IsActive(ctx, key.Subject, key.ID) {
+		found, err := tok.cache.IsActive(ctx, key.ID)
+		if err != nil {
+			return auth.Key{}, err
+		}
+		if !found {
 			return auth.Key{}, auth.ErrRevokedToken
 		}
 	}
@@ -174,7 +178,7 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 
 	if key.Type == auth.RefreshKey {
 		// Remove the refresh token from active tokens
-		if err := tok.cache.RemoveActive(ctx, key.Subject, key.ID); err != nil {
+		if err := tok.cache.RemoveActive(ctx, key.ID); err != nil {
 			return errors.Wrap(svcerr.ErrAuthentication, err)
 		}
 	}

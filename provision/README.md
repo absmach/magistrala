@@ -8,7 +8,7 @@ You can create bootstrap configuration directly via [Bootstrap][bootstrap] or th
 
 ## Configuration
 
-The service is configured using environment variables and/or a TOML config file. Defaults below are from `provision/config.go`. Docker add-on examples are in `docker/addons/provision/docker-compose.yaml` and `docker/.env`. The binary reads `SMQ_PROVISION_*` variables; the add-on compose file uses `MG_PROVISION_*`, so ensure the container receives the expected names.
+The service is configured using environment variables and/or a TOML config file. Defaults below are from `provision/config.go`. Docker add-on examples are in `docker/addons/provision/docker-compose.yaml` and [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env). The binary reads `SMQ_PROVISION_*` variables; the add-on compose file uses `MG_PROVISION_*`, so ensure the container receives the expected names.
 
 ### Core service
 
@@ -222,6 +222,9 @@ When `SMQ_PROVISION_X509_PROVISIONING=true`, the provisioning flow issues certif
 go test ./provision/...
 ```
 
+For an in-depth explanation of our Provision Service, see the [official documentation][doc].
+
+[doc]: https://docs.magistrala.absmach.eu/dev-guide/provision/
 [supermq]: https://github.com/absmach/supermq
 [bootstrap]: https://github.com/absmach/supermq/tree/main/bootstrap
 [export]: https://github.com/absmach/export

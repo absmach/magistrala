@@ -4,7 +4,7 @@ The Reports service generates time-series reports from stored messages. It fetch
 
 ## Configuration
 
-The service is configured using the following environment variables (values shown are from `docker/.env` where available, otherwise from service defaults):
+The service is configured using the following environment variables (values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env) where available, otherwise from service defaults):
 
 ### Core service
 
@@ -173,7 +173,7 @@ MG_TIMESCALE_READER_GRPC_TIMEOUT=300s \
 
 ### Docker Compose
 
-The service is available as a Docker container. Refer to `docker/docker-compose.yaml` for the `reports`, `reports-db`, and `pdf-generator` services and their environment variables. For a full local stack, ensure auth, domains, readers, and the PDF generator are running.
+The service is available as a Docker container. Refer to [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) for the `reports`, `reports-db`, and `pdf-generator` services and their environment variables. For a full local stack, ensure auth, domains, readers, and the PDF generator are running.
 
 ```bash
 docker compose -f docker/docker-compose.yaml up reports reports-db pdf-generator
@@ -342,3 +342,7 @@ curl -X PUT http://localhost:9017/<domainID>/reports/configs/<reportID>/template
 curl -X POST http://localhost:9017/<domainID>/reports/configs/<reportID>/enable \
   -H "Authorization: Bearer <your_access_token>"
 ```
+
+For an in-depth explanation of our Reports Service, see the see the [official documentation][doc].
+
+[doc]: https://docs.magistrala.absmach.eu/dev-guide/reports/

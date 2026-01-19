@@ -1,10 +1,10 @@
 # Alarms
 
-The Alarms service stores, manages, and exposes alarms raised by rules and device activity. It consumes alarm events from the message broker, persists them to PostgreSQL, and provides an HTTP API for listing, viewing, updating, and deleting alarms with full authn/authz, metrics, and tracing support.
+The Alarms service stores, manages and exposes alarms raised by rules and device activity. It consumes alarm events from the message broker, persists them to PostgreSQL, and provides an HTTP API for listing, viewing, updating, and deleting alarms with full authn/authz, metrics, and tracing support.
 
 ## Configuration
 
-The service is configured using the following environment variables (values shown are from `docker/.env` as consumed by `docker/docker-compose.yaml`):
+The service is configured using the following environment variables (values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env) as consumed by [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml)):
 
 | Variable | Description | Default |
 | --- | --- | --- |
@@ -121,7 +121,7 @@ SMQ_DOMAINS_GRPC_TIMEOUT=300s \
 
 ### Docker Compose
 
-The service is available as a Docker container. Refer to `docker/docker-compose.yaml` for the `alarms` and `alarms-db` services and their environment variables. For a full local stack, make sure the auth, domains, and message broker services are also running.
+The service is available as a Docker container. Refer to [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) for the `alarms` and `alarms-db` services and their environment variables. For a full local stack, make sure the auth, domains, and message broker services are also running.
 
 ```bash
 docker compose -f docker/docker-compose.yaml up alarms alarms-db

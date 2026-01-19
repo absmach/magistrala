@@ -33,7 +33,7 @@ Events store: This is used by Magistrala services to store events for distribute
 
 This is the same as MESSAGE_BROKER. This can either be 'NATS' or 'RabbitMQ' or 'Redis'.  If Redis is used as an events store, then RabbitMQ or NATS is used as a message broker.
 
-The current deployment strategy for Magistrala in `docker/docker-compose.yaml` is to use VerneMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
+The current deployment strategy for Magistrala in [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) is to use VerneMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
 
 Therefore, the following combinations are possible:
 
@@ -46,7 +46,7 @@ Therefore, the following combinations are possible:
 - MQTT_BROKER: NATS, MESSAGE_BROKER: NATS, EVENTS_STORE: NATS
 - MQTT_BROKER: NATS, MESSAGE_BROKER: NATS, EVENTS_STORE: Redis
 
-For Message brokers other than NATS, you would need to build the docker images with RabbitMQ as the build tag and change the `docker/.env`. For example, to use RabbitMQ as a message broker:
+For Message brokers other than NATS, you would need to build the docker images with RabbitMQ as the build tag and change the [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env). For example, to use RabbitMQ as a message broker:
 
 ```bash
 MG_MESSAGE_BROKER_TYPE=rabbitmq make dockers
@@ -70,7 +70,7 @@ MG_ES_TYPE=redis
 MG_ES_URL=${MG_REDIS_URL}
 ```
 
-For MQTT broker other than VerneMQ, you would need to change the `docker/.env`. For example, to use NATS as a MQTT broker:
+For MQTT broker other than VerneMQ, you would need to change the [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env). For example, to use NATS as a MQTT broker:
 
 ```env
 MG_MQTT_BROKER_TYPE=nats
@@ -121,7 +121,7 @@ services:
 ## Nginx Configuration
 
 Nginx is the entry point for all traffic to Magistrala.
-By using environment variables file at `docker/.env` you can modify the below given Nginx directive.
+By using environment variables file at [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env) you can modify the below given Nginx directive.
 
 `SMQ_NGINX_SERVER_NAME` environmental variable is used to configure nginx directive `server_name`. If environmental variable `SMQ_NGINX_SERVER_NAME` is empty then default value `localhost` will set to `server_name`.
 

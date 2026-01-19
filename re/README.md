@@ -4,7 +4,7 @@ The Magistrala Rules Engine (RE) processes incoming messages using user-defined 
 
 ## Configuration
 
-The service is configured using the following environment variables (values shown are from `docker/.env` as consumed by `docker/docker-compose.yaml`):
+The service is configured using the following environment variables (values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/main/docker/.env) as consumed by [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml)):
 
 ### Core service
 
@@ -211,7 +211,7 @@ MG_TIMESCALE_READER_GRPC_TIMEOUT=300s \
 
 ### Docker Compose
 
-The service is available as a Docker container. Refer to `docker/docker-compose.yaml` for the `re` and `re-db` services and their environment variables. For a full local stack, ensure auth, domains, readers, and the message broker are running.
+The service is available as a Docker container. Refer to [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) for the `re` and `re-db` services and their environment variables. For a full local stack, ensure auth, domains, readers, and the message broker are running.
 
 ```bash
 docker compose -f docker/docker-compose.yaml up re re-db
@@ -317,3 +317,7 @@ curl -X POST http://localhost:9008/<domainID>/rules/<ruleID>/enable \
 curl -X DELETE http://localhost:9008/<domainID>/rules/<ruleID> \
   -H "Authorization: Bearer <your_access_token>"
 ```
+
+For an in-depth explanation of our Rules Engine Service, see the [official documentation][doc].
+
+[doc]: https://docs.magistrala.absmach.eu/dev-guide/rules-engine/

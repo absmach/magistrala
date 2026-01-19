@@ -27,6 +27,66 @@ EOF
 
 export BAO_ADDR=http://127.0.0.1:8200
 
+create_pki_policy() {
+  cat > /opt/openbao/config/pki-policy.hcl << EOF
+path "pki_int/issue/${AM_CERTS_OPENBAO_PKI_ROLE}" {
+  capabilities = ["create", "update"]
+}
+path "pki_int/sign/${AM_CERTS_OPENBAO_PKI_ROLE}" {
+  capabilities = ["create", "update"]
+}
+path "pki_int/sign-verbatim/${AM_CERTS_OPENBAO_PKI_ROLE}" {
+  capabilities = ["create", "update"]
+}
+path "pki_int/certs" {
+  capabilities = ["list"]
+}
+path "pki_int/cert/*" {
+  capabilities = ["read"]
+}
+path "pki_int/revoke" {
+  capabilities = ["create", "update"]
+}
+path "pki_int/ca" {
+  capabilities = ["read"]
+}
+path "pki_int/ca_chain" {
+  capabilities = ["read"]
+}
+path "pki_int/crl" {
+  capabilities = ["read"]
+}
+path "pki/ca" {
+  capabilities = ["read"]
+}
+path "pki/ca_chain" {
+  capabilities = ["read"]
+}
+path "pki/crl" {
+  capabilities = ["read"]
+}
+path "auth/token/renew-self" {
+  capabilities = ["update"]
+}
+path "auth/token/lookup-self" {
+  capabilities = ["read"]
+}
+path "sys/renew/*" {
+  capabilities = ["update"]
+}
+path "auth/approle/role/${AM_CERTS_OPENBAO_PKI_ROLE}/secret-id" {
+  capabilities = ["create", "update"]
+}
+path "auth/approle/role/${AM_CERTS_OPENBAO_PKI_ROLE}/secret-id-accessor/lookup" {
+  capabilities = ["create", "update"]
+}
+path "auth/approle/role/${AM_CERTS_OPENBAO_PKI_ROLE}/secret-id-accessor/destroy" {
+  capabilities = ["create", "update"]
+}
+EOF
+  bao policy write pki-policy /opt/openbao/config/pki-policy.hcl > /dev/null
+}
+
 # Check if we have pre-configured unseal keys and root token
 if [ -n "$AM_CERTS_OPENBAO_UNSEAL_KEY_1" ] && [ -n "$AM_CERTS_OPENBAO_UNSEAL_KEY_2" ] && [ -n "$AM_CERTS_OPENBAO_UNSEAL_KEY_3" ] && [ -n "$AM_CERTS_OPENBAO_ROOT_TOKEN" ]; then
   echo "Using pre-configured unseal keys and root token..."
@@ -229,6 +289,16 @@ if [ ! -f /opt/openbao/data/configured ]; then
 
   echo "Intermediate CA certificate signed successfully!"
 
+  bao write pki/config/urls \
+    issuing_certificates='http://127.0.0.1:8200/v1/pki/ca' \
+    crl_distribution_points='http://127.0.0.1:8200/v1/pki/crl' \
+    ocsp_servers='http://127.0.0.1:8200/v1/pki/ocsp' > /dev/null
+
+  bao write pki_int/config/urls \
+    issuing_certificates='http://127.0.0.1:8200/v1/pki_int/ca' \
+    crl_distribution_points='http://127.0.0.1:8200/v1/pki_int/crl' \
+    ocsp_servers='http://127.0.0.1:8200/v1/pki_int/ocsp' > /dev/null
+
   bao write pki_int/intermediate/set-signed certificate="$INTERMEDIATE_CERT" > /dev/null
 
   if [ $? -eq 0 ]; then
@@ -239,16 +309,6 @@ if [ ! -f /opt/openbao/data/configured ]; then
   fi
 
   echo "$INTERMEDIATE_CERT" > /opt/openbao/data/intermediate_ca.pem
-
-  bao write pki/config/urls \
-    issuing_certificates='http://127.0.0.1:8200/v1/pki/ca' \
-    crl_distribution_points='http://127.0.0.1:8200/v1/pki/crl' \
-    ocsp_servers='http://127.0.0.1:8200/v1/pki/ocsp' > /dev/null
-
-  bao write pki_int/config/urls \
-    issuing_certificates='http://127.0.0.1:8200/v1/pki_int/ca' \
-    crl_distribution_points='http://127.0.0.1:8200/v1/pki_int/crl' \
-    ocsp_servers='http://127.0.0.1:8200/v1/pki_int/ocsp' > /dev/null
 
   ROLE_CMD="bao write pki_int/roles/${AM_CERTS_OPENBAO_PKI_ROLE} \
     allow_any_name=true \
@@ -271,66 +331,13 @@ if [ ! -f /opt/openbao/data/configured ]; then
     ext_key_usage=\"ServerAuth,ClientAuth,OCSPSigning\" \
     use_csr_common_name=true \
     use_csr_sans=true \
-    copy_extensions=true \
-    allowed_extensions=\"*\" \
     basic_constraints_valid_for_non_ca=true \
     max_ttl=720h \
     ttl=720h"
 
   eval "$ROLE_CMD" > /dev/null
 
-  # Create PKI policy
-  cat > /opt/openbao/config/pki-policy.hcl << EOF
-path "pki_int/issue/${AM_CERTS_OPENBAO_PKI_ROLE}" {
-  capabilities = ["create", "update"]
-}
-path "pki_int/sign/${AM_CERTS_OPENBAO_PKI_ROLE}" {
-  capabilities = ["create", "update"]
-}
-path "pki_int/sign-verbatim/${AM_CERTS_OPENBAO_PKI_ROLE}" {
-  capabilities = ["create", "update"]
-}
-path "pki_int/certs" {
-  capabilities = ["list"]
-}
-path "pki_int/cert/*" {
-  capabilities = ["read"]
-}
-path "pki_int/revoke" {
-  capabilities = ["create", "update"]
-}
-path "pki_int/ca" {
-  capabilities = ["read"]
-}
-path "pki_int/ca_chain" {
-  capabilities = ["read"]
-}
-path "pki_int/crl" {
-  capabilities = ["read"]
-}
-path "pki/ca" {
-  capabilities = ["read"]
-}
-path "pki/ca_chain" {
-  capabilities = ["read"]
-}
-path "pki/crl" {
-  capabilities = ["read"]
-}
-# Token management
-path "auth/token/renew-self" {
-  capabilities = ["update"]
-}
-path "auth/token/lookup-self" {
-  capabilities = ["read"]
-}
-# System lease renewal
-path "sys/renew/*" {
-  capabilities = ["update"]
-}
-EOF
-
-  bao policy write pki-policy /opt/openbao/config/pki-policy.hcl > /dev/null
+  create_pki_policy
 
   # Create AppRole
   SECRET_ID_TTL="${AM_CERTS_OPENBAO_SECRET_ID_TTL}"
@@ -346,9 +353,13 @@ EOF
     bao write auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/role-id role_id="$AM_CERTS_OPENBAO_APP_ROLE" > /dev/null
   fi
 
-  # Set custom secret ID if provided
+  # Set custom secret ID if provided, otherwise generate one
   if [ -n "$AM_CERTS_OPENBAO_APP_SECRET" ]; then
     bao write auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/custom-secret-id secret_id="$AM_CERTS_OPENBAO_APP_SECRET" > /dev/null
+    echo "$AM_CERTS_OPENBAO_APP_SECRET" > /opt/openbao/data/secret_id
+  else
+    GENERATED_SECRET_ID=$(bao write -field=secret_id -force auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/secret-id)
+    echo "$GENERATED_SECRET_ID" > /opt/openbao/data/secret_id
   fi
 
   # Generate service token for additional access
@@ -364,7 +375,7 @@ EOF
   touch /opt/openbao/data/configured
   echo "OpenBao configuration completed successfully!"
 else
-  echo "OpenBao already configured, skipping setup..."
+  echo "OpenBao already configured, verifying and updating configuration..."
   
   # Restore namespace if it exists
   if [ -f /opt/openbao/data/namespace ] && [ -n "$AM_CERTS_OPENBAO_NAMESPACE" ]; then
@@ -374,17 +385,68 @@ else
     fi
   fi
   
-  if [ -n "$AM_CERTS_OPENBAO_APP_SECRET" ]; then
-    echo "Verifying existing secret ID validity..."
-    if ! bao write -field=client_token auth/approle/login role_id="$AM_CERTS_OPENBAO_APP_ROLE" secret_id="$AM_CERTS_OPENBAO_APP_SECRET" > /dev/null 2>&1; then
-      echo "================================"
-      echo "ERROR: Secret ID has expired!"
-      echo "Please regenerate AM_CERTS_OPENBAO_APP_SECRET"
-      echo "and update your environment configuration"
-      echo "================================"
-    else
-      echo "Existing secret ID is valid"
+  # Check if AppRole role exists, create if missing
+  if ! bao read auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}" > /dev/null 2>&1; then
+    if ! bao auth enable approle > /tmp/auth_success 2>/tmp/auth_error; then
+      if ! grep -q "already in use" /tmp/auth_error; then
+        echo "ERROR: Failed to enable AppRole auth method:" >&2
+        cat /tmp/auth_error >&2
+        exit 1
+      fi
     fi
+    rm -f /tmp/auth_error /tmp/auth_success
+    
+    create_pki_policy
+    
+    SECRET_ID_TTL="${AM_CERTS_OPENBAO_SECRET_ID_TTL}"
+    bao write auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}" \
+      token_policies=pki-policy \
+      token_ttl=1h \
+      token_max_ttl=4h \
+      bind_secret_id=true \
+      secret_id_ttl="$SECRET_ID_TTL" > /dev/null
+    
+    if [ -n "$AM_CERTS_OPENBAO_APP_ROLE" ]; then
+      bao write auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/role-id role_id="$AM_CERTS_OPENBAO_APP_ROLE" > /dev/null
+    fi
+  fi
+  
+  SECRET_ID_VALID=false
+  if [ -n "$AM_CERTS_OPENBAO_APP_SECRET" ]; then
+    if bao write -field=client_token auth/approle/login role_id="$AM_CERTS_OPENBAO_APP_ROLE" secret_id="$AM_CERTS_OPENBAO_APP_SECRET" > /dev/null 2>&1; then
+      SECRET_ID_VALID=true
+      echo "$AM_CERTS_OPENBAO_APP_SECRET" > /opt/openbao/data/secret_id
+    fi
+  elif [ -f /opt/openbao/data/secret_id ]; then
+    STORED_SECRET_ID=$(cat /opt/openbao/data/secret_id)
+    if [ -n "$STORED_SECRET_ID" ]; then
+      ROLE_ID=$(bao read -field=role_id auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/role-id)
+      if bao write -field=client_token auth/approle/login role_id="$ROLE_ID" secret_id="$STORED_SECRET_ID" > /dev/null 2>&1; then
+        SECRET_ID_VALID=true
+      fi
+    fi
+  fi
+  
+  if [ "$SECRET_ID_VALID" = "false" ]; then
+    NEW_SECRET_ID=$(bao write -field=secret_id -force auth/approle/role/"${AM_CERTS_OPENBAO_PKI_ROLE}"/secret-id)
+    
+    if [ -z "$NEW_SECRET_ID" ]; then
+      echo "ERROR: Failed to generate new secret ID" >&2
+    else
+      echo "$NEW_SECRET_ID" > /opt/openbao/data/secret_id
+      echo "Generated new secret ID for certs service"
+    fi
+  fi
+  
+  # Regenerate service token
+  SERVICE_TOKEN=$(bao write -field=token auth/token/create \
+    policies=pki-policy \
+    ttl=24h \
+    renewable=true \
+    display_name="certs-service" 2>/dev/null)
+  
+  if [ -n "$SERVICE_TOKEN" ]; then
+    echo "SERVICE_TOKEN=$SERVICE_TOKEN" > /opt/openbao/data/service_token
   fi
 fi
 

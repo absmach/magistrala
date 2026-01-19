@@ -16,8 +16,10 @@ services:
     image: ghcr.io/absmach/certs:${AM_CERTS_RELEASE_TAG}
     container_name: certs
     depends_on:
-      - openbao
-      - certs-db
+      openbao:
+        condition: service_healthy
+      certs-db:
+        condition: service_started
     restart: on-failure
     networks:
       - certs-base-net
@@ -35,6 +37,7 @@ services:
       AM_CERTS_OPENBAO_NAMESPACE: ${AM_CERTS_OPENBAO_NAMESPACE}
       AM_CERTS_OPENBAO_PKI_PATH: ${AM_CERTS_OPENBAO_PKI_PATH}
       AM_CERTS_OPENBAO_ROLE: ${AM_CERTS_OPENBAO_ROLE}
+      AM_CERTS_OPENBAO_SECRET_ID_TTL: ${AM_CERTS_OPENBAO_SECRET_ID_TTL}
       AM_CERTS_DB_HOST: ${AM_CERTS_DB_HOST}
       AM_CERTS_DB_PORT: ${AM_CERTS_DB_PORT}
       AM_CERTS_DB_USER: ${AM_CERTS_DB_USER}
@@ -52,9 +55,15 @@ services:
       AM_DOMAINS_GRPC_CLIENT_KEY: ${AM_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
       AM_DOMAINS_GRPC_SERVER_CA_CERTS: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       AM_CERTS_SECRET: ${AM_CERTS_SECRET}
+      AM_CERTS_SERVICE_TOKEN_PATH: ${AM_CERTS_SERVICE_TOKEN_PATH}
+      AM_CERTS_SECRET_ID_PATH: ${AM_CERTS_SECRET_ID_PATH}
+      AM_CERTS_SECRET_RENEW_THRESHOLD: ${AM_CERTS_SECRET_RENEW_THRESHOLD}
+      AM_CERTS_SECRET_CHECK_INTERVAL: ${AM_CERTS_SECRET_CHECK_INTERVAL}
     ports:
       - ${AM_CERTS_HTTP_PORT}:${AM_CERTS_HTTP_PORT}
       - ${AM_CERTS_GRPC_PORT}:${AM_CERTS_GRPC_PORT}
+    volumes:
+      - openbao-data:/openbao:ro
 
   certs-db:
     image: postgres:16.2-alpine
@@ -80,6 +89,12 @@ services:
       - certs-base-net
     ports:
       - 8200:8200
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /opt/openbao/data/service_token"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
     environment:
       - BAO_ADDR=http://127.0.0.1:8200
       - BAO_LOG_LEVEL=info

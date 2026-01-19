@@ -114,7 +114,7 @@ For additional usage examples and advanced configurations, visit the [official d
 
 Complete documentation is available at the [Magistrala official docs page](https://docs.magistrala.absmach.eu).
 
-For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.absmach.eu/cli).
+For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.absmach.eu/dev-guide/cli/introduction-to-cli).
 
 ## 🌐 Community and Contributing
 

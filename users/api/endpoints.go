@@ -471,7 +471,7 @@ func revokeRefreshTokenEndpoint(svc users.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return revokeRes{revoked: true}, nil
+		return revokeRes{}, nil
 	}
 }
 

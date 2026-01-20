@@ -67,7 +67,7 @@ func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 
 // RevokeRefreshToken traces the "RevokeRefreshToken" operation of the wrapped users.Service.
 func (tm *tracingMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
-	ctx, span := tracing.StartSpan(ctx, tm.tracer, "svc_revoke_refresh_token", trace.WithAttributes(attribute.String("refresh_token", refreshToken)))
+	ctx, span := tracing.StartSpan(ctx, tm.tracer, "svc_revoke_refresh_token")
 	defer span.End()
 
 	return tm.svc.RevokeRefreshToken(ctx, session, refreshToken)

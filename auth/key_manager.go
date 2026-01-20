@@ -57,13 +57,13 @@ type TokensCache interface {
 	// SaveActive saves an active refresh token ID for a user with TTL.
 	SaveActive(ctx context.Context, userID, tokenID string, ttl time.Duration) error
 
-	// IsActive checks if the token ID is active for the given user.
+	// IsActive checks if the token ID is active.
 	IsActive(ctx context.Context, tokenID string) (bool, error)
 
 	// ListUserTokens lists all active token IDs for a given user.
 	ListUserTokens(ctx context.Context, userID string) ([]string, error)
 
-	// Remove removes an active refresh token ID for a user.
+	// RemoveActive removes an active refresh token ID.
 	RemoveActive(ctx context.Context, tokenID string) error
 }
 

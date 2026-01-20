@@ -26,8 +26,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-const patPrefix = "pat"
-
 var (
 	errLoadingPrivateKey      = errors.New("failed to load private key")
 	errDuplicateRetiringKeyID = errors.New("retiring key ID matches active key ID")
@@ -177,7 +175,6 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 	}
 
 	if key.Type == auth.RefreshKey {
-		// Remove the refresh token from active tokens
 		if err := tok.cache.RemoveActive(ctx, key.ID); err != nil {
 			return errors.Wrap(svcerr.ErrAuthentication, err)
 		}
@@ -187,7 +184,7 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 }
 
 func (tok *tokenizer) parseToken(tokenString string) (auth.Key, error) {
-	if len(tokenString) >= 3 && tokenString[:3] == patPrefix {
+	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
 		return auth.Key{Type: auth.PersonalAccessToken}, nil
 	}
 
@@ -207,7 +204,10 @@ func (tok *tokenizer) parseToken(tokenString string) (auth.Key, error) {
 		jwt.WithKeySet(set, jws.WithInferAlgorithmFromKey(true)),
 	)
 	if err != nil {
-		return auth.Key{}, err
+		if errors.Contains(err, smqjwt.ErrJWTExpiryKey) {
+			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
+		}
+		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	if tkn.Issuer() != smqjwt.IssuerName {

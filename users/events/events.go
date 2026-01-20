@@ -55,6 +55,7 @@ var (
 	_ events.Event = (*identifyUserEvent)(nil)
 	_ events.Event = (*issueTokenEvent)(nil)
 	_ events.Event = (*refreshTokenEvent)(nil)
+	_ events.Event = (*revokeRefreshTokenEvent)(nil)
 	_ events.Event = (*resetSecretEvent)(nil)
 	_ events.Event = (*sendPasswordResetEvent)(nil)
 	_ events.Event = (*oauthCallbackEvent)(nil)

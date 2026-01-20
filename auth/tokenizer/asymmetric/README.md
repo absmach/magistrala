@@ -28,6 +28,7 @@ export SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/private.key"
 ```
 
 The tokenizer will:
+
 - Issue new tokens signed with the active key
 - Verify tokens using the active key
 - Return one public key in JWKS endpoint
@@ -42,6 +43,7 @@ export SMQ_AUTH_KEYS_RETIRING_KEY_PATH="./keys/retiring.key"
 ```
 
 The tokenizer will:
+
 - Issue new tokens signed with the active key
 - Verify tokens using both active and retiring keys
 - Return both public keys in JWKS endpoint
@@ -103,10 +105,12 @@ The grace period should be longer than your longest-lived access token duration.
 
 - Store private keys with `0600` permissions
 - Use cryptographically secure key generation:
+
   ```bash
   openssl genpkey -algorithm Ed25519 -out private.key
   chmod 600 private.key
   ```
+
 - Rotate keys regularly:
   - Standard environments: every 90 days
   - High-security environments: every 30 days
@@ -139,7 +143,7 @@ rm ./keys/key-2024.pem
 
 ### Active key not found
 
-```
+```bash
 Error: active key file not found: ./keys/active.key
 ```
 
@@ -149,7 +153,7 @@ Error: active key file not found: ./keys/active.key
 
 If the retiring key path is set but the file is missing or invalid, the tokenizer logs a warning but continues with only the active key:
 
-```
+```bash
 WARN: failed to load retiring key, continuing without it
 ```
 
@@ -157,7 +161,7 @@ This is by design - a missing retiring key won't prevent startup.
 
 ### Invalid key format
 
-```
+```bash
 Error: failed to parse private key
 ```
 

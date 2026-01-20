@@ -56,6 +56,7 @@ func (tc *tokensCache) IsActive(ctx context.Context, tokenID string) (bool, erro
 	return count > 0, nil
 }
 
+// ListUserTokens lists all active refresh token IDs for a user.
 func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]string, error) {
 	key := tc.userTokensKey(userID)
 	tokenIDs, err := tc.client.SMembers(ctx, key).Result()
@@ -82,9 +83,10 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]str
 
 	cleanup := tc.client.Pipeline()
 	for tokenID, cmd := range existsCmds {
-		if cmd.Val() == 1 {
+		switch {
+		case cmd.Val() == 1:
 			valid = append(valid, tokenID)
-		} else {
+		default:
 			cleanup.SRem(ctx, key, tokenID)
 		}
 	}

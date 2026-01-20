@@ -25,7 +25,7 @@ var (
 	_ supermq.Response = (*passResetReqRes)(nil)
 	_ supermq.Response = (*passChangeRes)(nil)
 	_ supermq.Response = (*updateUserRes)(nil)
-	_ supermq.Response = (*tokenRes)(nil)
+	_ supermq.Response = (*revokeRes)(nil)
 	_ supermq.Response = (*deleteUserRes)(nil)
 )
 
@@ -80,9 +80,7 @@ func (res tokenRes) Empty() bool {
 	return res.AccessToken == "" || res.RefreshToken == ""
 }
 
-type revokeRes struct {
-	revoked bool
-}
+type revokeRes struct{}
 
 func (res revokeRes) Code() int {
 	return http.StatusNoContent
@@ -93,7 +91,7 @@ func (res revokeRes) Headers() map[string]string {
 }
 
 func (res revokeRes) Empty() bool {
-	return false
+	return true
 }
 
 type sendVerificationRes struct{}

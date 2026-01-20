@@ -18,6 +18,9 @@ var (
 	// ErrJSONHandle indicates an error in handling JSON.
 	ErrJSONHandle = errors.New("failed to perform operation JSON")
 
+	// ErrJWTExpiryKey indicates that the "exp" claim in the JWT token is not satisfied.
+	ErrJWTExpiryKey = errors.New(`"exp" not satisfied`)
+
 	errInvalidType     = errors.New("invalid token type")
 	errInvalidRole     = errors.New("invalid role")
 	errInvalidVerified = errors.New("invalid verified")
@@ -28,6 +31,7 @@ const (
 	TokenType     = "type"
 	RoleField     = "role"
 	VerifiedField = "verified"
+	PatPrefix     = "pat"
 )
 
 // ToKey converts a JWT token to an auth.Key by extracting claims.

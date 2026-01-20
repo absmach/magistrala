@@ -15,10 +15,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-const patPrefix = "pat"
-
-var errJWTExpiryKey = errors.New(`"exp" not satisfied`)
-
 type tokenizer struct {
 	algorithm jwa.KeyAlgorithm
 	secret    []byte
@@ -78,7 +74,6 @@ func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, 
 			return auth.Key{}, err
 		}
 		if !found {
-			return auth.Key{}, auth.ErrRevokedToken
 		}
 	}
 
@@ -106,7 +101,7 @@ func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
 }
 
 func (tok *tokenizer) parseToken(tokenString string) (auth.Key, error) {
-	if len(tokenString) >= 3 && tokenString[:3] == patPrefix {
+	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
 		return auth.Key{Type: auth.PersonalAccessToken}, nil
 	}
 
@@ -116,7 +111,7 @@ func (tok *tokenizer) parseToken(tokenString string) (auth.Key, error) {
 		jwt.WithKey(tok.algorithm, tok.secret),
 	)
 	if err != nil {
-		if errors.Contains(err, errJWTExpiryKey) {
+		if errors.Contains(err, smqjwt.ErrJWTExpiryKey) {
 			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
 		}
 		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)

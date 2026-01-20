@@ -8,6 +8,8 @@ DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
 GOARCH ?= amd64
+GOOS ?= linux
+DETECTED_ARCH := $(shell uname -m)
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo 'unknown')
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
@@ -69,6 +71,31 @@ define make_docker_dev
 		--build-arg SVC=$(svc) \
 		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile.dev ./build
+endef
+
+define run_with_arch_detection
+	@echo "Detecting architecture..."
+	@if [ "$(DETECTED_ARCH)" = "arm64" ] || [ "$(DETECTED_ARCH)" = "aarch64" ]; then \
+		echo "ARM64 architecture detected."; \
+		git checkout $(1); \
+		echo "Building binaries..."; \
+		GOARCH=arm64 $(MAKE) $(SERVICES); \
+		echo "Creating Docker images..."; \
+		$(MAKE) dockers_dev; \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
+		MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+			-f docker/addons/timescale-reader/docker-compose.yaml \
+			-f docker/addons/timescale-writer/docker-compose.yaml \
+			--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
+	else \
+		echo "x86_64 architecture detected."; \
+		git checkout $(1); \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
+		MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+			-f docker/addons/timescale-reader/docker-compose.yaml \
+			-f docker/addons/timescale-writer/docker-compose.yaml \
+			--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
+	fi
 endef
 
 ADDON_SERVICES = bootstrap provision certs timescale-reader timescale-writer postgres-reader postgres-writer
@@ -260,21 +287,11 @@ fetch_supermq:
 	@./scripts/supermq.sh
 
 run_latest: check_certs
-	MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
-		-f docker/addons/timescale-reader/docker-compose.yaml \
-		-f docker/addons/timescale-writer/docker-compose.yaml \
-		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(call run_with_arch_detection,main,latest)
 
 run_stable: check_certs
 	$(eval version = $(shell git describe --abbrev=0 --tags))
-	git checkout $(version)
-	sed -i 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=$(version)/' docker/supermq-docker/.env
-	sed -i 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(version)/' docker/.env
-	docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
-	MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
-	-f docker/addons/timescale-reader/docker-compose.yaml \
-	-f docker/addons/timescale-writer/docker-compose.yaml \
-	--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(call run_with_arch_detection,$(version),$(version))
 
 
 run_addons: check_certs

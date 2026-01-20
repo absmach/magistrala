@@ -175,6 +175,7 @@ Provision service has `/certs` endpoint that can be used to generate certificate
 
 - `users_token` - users authentication token or API token
 - `client_id` - id of the client for which certificate is going to be generated
+- `ttl` - ttl of generated certificate
 
 ```bash
 curl -s  -X POST  http://localhost:8190/certs -H "Authorization: Bearer <users_token>" -H 'Content-Type: application/json'   -d '{"client_id": "<client_id>", "ttl":"2400h" }'

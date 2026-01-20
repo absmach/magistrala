@@ -8,18 +8,24 @@ import (
 
 	"github.com/absmach/magistrala/provision"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 )
 
 func doProvision(svc provision.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
 		req := request.(provisionReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		res, err := svc.Provision(ctx, req.domainID, req.token, req.Name, req.ExternalID, req.ExternalKey)
+		res, err := svc.Provision(ctx, session.DomainID, req.token, req.Name, req.ExternalID, req.ExternalKey)
 		if err != nil {
 			return nil, err
 		}
@@ -39,16 +45,34 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 
 func getMapping(svc provision.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(mappingReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		res, err := svc.Mapping(ctx, req.token)
+		res, err := svc.Mapping()
 		if err != nil {
 			return nil, err
 		}
 
 		return mappingRes{Data: res}, nil
+	}
+}
+
+func issueCert(svc provision.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		req := request.(certReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		cert, key, err := svc.Cert(ctx, session.DomainID, req.token, req.ClientID, req.TTL)
+		if err != nil {
+			return nil, err
+		}
+
+		return certRes{
+			Certificate: cert,
+			Key:         key,
+		}, nil
 	}
 }

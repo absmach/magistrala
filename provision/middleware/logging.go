@@ -1,9 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !test
-
-package api
+package middleware
 
 import (
 	"context"
@@ -20,8 +18,8 @@ type loggingMiddleware struct {
 	svc    provision.Service
 }
 
-// NewLoggingMiddleware adds logging facilities to the core service.
-func NewLoggingMiddleware(svc provision.Service, logger *slog.Logger) provision.Service {
+// NewLogging adds logging facilities to the core service.
+func NewLogging(svc provision.Service, logger *slog.Logger) provision.Service {
 	return &loggingMiddleware{logger, svc}
 }
 
@@ -33,7 +31,7 @@ func (lm *loggingMiddleware) Provision(ctx context.Context, domainID, token, nam
 			slog.String("external_id", externalID),
 		}
 		if err != nil {
-			args = append(args, slog.Any("error", err))
+			args = append(args, slog.String("error", err.Error()))
 			lm.logger.Warn("Provision failed", args...)
 			return
 		}
@@ -51,7 +49,7 @@ func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID
 			slog.String("ttl", duration),
 		}
 		if err != nil {
-			args = append(args, slog.Any("error", err))
+			args = append(args, slog.String("error", err.Error()))
 			lm.logger.Warn("Client certificate failed to create successfully", args...)
 			return
 		}
@@ -61,18 +59,13 @@ func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID
 	return lm.svc.Cert(ctx, domainID, token, clientID, duration)
 }
 
-func (lm *loggingMiddleware) Mapping(ctx context.Context, token string) (res map[string]any, err error) {
+func (lm *loggingMiddleware) Mapping() (res map[string]any, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Mapping failed", args...)
-			return
-		}
 		lm.logger.Info("Mapping completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Mapping(ctx, token)
+	return lm.svc.Mapping()
 }

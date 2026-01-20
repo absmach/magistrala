@@ -16,7 +16,11 @@ import (
 	"github.com/absmach/magistrala/provision/api"
 	mocks "github.com/absmach/magistrala/provision/mocks"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/auth"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
+	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -26,6 +30,13 @@ var (
 	validToken      = "valid"
 	validContenType = "application/json"
 	validID         = testsutil.GenerateUUID(&testing.T{})
+	userID          = testsutil.GenerateUUID(&testing.T{})
+	domainID        = testsutil.GenerateUUID(&testing.T{})
+	validSession    = smqauthn.Session{
+		DomainUserID: auth.EncodeDomainUserID(domainID, userID),
+		UserID:       userID,
+		DomainID:     domainID,
+	}
 )
 
 type testRequest struct {
@@ -54,16 +65,18 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func newProvisionServer() (*httptest.Server, *mocks.Service) {
+func newProvisionServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 
 	logger := smqlog.NewMock()
-	mux := api.MakeHandler(svc, logger, "test")
-	return httptest.NewServer(mux), svc
+	authn := new(authnmocks.Authentication)
+	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
+	mux := api.MakeHandler(svc, am, logger, "test")
+	return httptest.NewServer(mux), svc, authn
 }
 
 func TestProvision(t *testing.T) {
-	is, svc := newProvisionServer()
+	is, svc, authn := newProvisionServer()
 
 	cases := []struct {
 		desc        string
@@ -72,6 +85,8 @@ func TestProvision(t *testing.T) {
 		data        string
 		contentType string
 		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
 		svcErr      error
 	}{
 		{
@@ -81,6 +96,7 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusCreated,
 			contentType: validContenType,
+			authnRes:    validSession,
 			svcErr:      nil,
 		},
 		{
@@ -90,7 +106,7 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_key": "%s"}`, validID),
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
-			svcErr:      nil,
+			authnRes:    validSession,
 		},
 		{
 			desc:        "request with empty external key",
@@ -99,6 +115,7 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s"}`, validID),
 			status:      http.StatusUnauthorized,
 			contentType: validContenType,
+			authnRes:    validSession,
 			svcErr:      nil,
 		},
 		{
@@ -106,8 +123,10 @@ func TestProvision(t *testing.T) {
 			token:       "",
 			domainID:    validID,
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
-			status:      http.StatusCreated,
+			status:      http.StatusUnauthorized,
 			contentType: validContenType,
+			authnRes:    smqauthn.Session{},
+			authnErr:    errors.ErrAuthentication,
 			svcErr:      nil,
 		},
 		{
@@ -117,6 +136,7 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusUnsupportedMediaType,
 			contentType: "text/plain",
+			authnRes:    validSession,
 			svcErr:      nil,
 		},
 		{
@@ -126,6 +146,7 @@ func TestProvision(t *testing.T) {
 			data:        `data`,
 			status:      http.StatusBadRequest,
 			contentType: validContenType,
+			authnRes:    validSession,
 			svcErr:      nil,
 		},
 		{
@@ -135,12 +156,14 @@ func TestProvision(t *testing.T) {
 			data:        fmt.Sprintf(`{"name": "test", "external_id": "%s", "external_key": "%s"}`, validID, validID),
 			status:      http.StatusForbidden,
 			contentType: validContenType,
+			authnRes:    validSession,
 			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
 			repocall := svc.On("Provision", mock.Anything, validID, tc.token, "test", validID, validID).Return(provision.Result{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
@@ -154,13 +177,14 @@ func TestProvision(t *testing.T) {
 			resp, err := req.make()
 			assert.Nil(t, err, tc.desc)
 			assert.Equal(t, tc.status, resp.StatusCode, tc.desc)
+			authCall.Unset()
 			repocall.Unset()
 		})
 	}
 }
 
 func TestMapping(t *testing.T) {
-	is, svc := newProvisionServer()
+	is, svc, authn := newProvisionServer()
 
 	cases := []struct {
 		desc        string
@@ -168,6 +192,8 @@ func TestMapping(t *testing.T) {
 		domainID    string
 		contentType string
 		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
 		svcErr      error
 	}{
 		{
@@ -177,6 +203,8 @@ func TestMapping(t *testing.T) {
 			status:      http.StatusOK,
 			contentType: validContenType,
 			svcErr:      nil,
+			authnRes:    validSession,
+			authnErr:    nil,
 		},
 		{
 			desc:        "empty token",
@@ -185,14 +213,8 @@ func TestMapping(t *testing.T) {
 			status:      http.StatusUnauthorized,
 			contentType: validContenType,
 			svcErr:      nil,
-		},
-		{
-			desc:        "invalid content type",
-			token:       validToken,
-			domainID:    validID,
-			status:      http.StatusUnsupportedMediaType,
-			contentType: "text/plain",
-			svcErr:      nil,
+			authnRes:    smqauthn.Session{},
+			authnErr:    errors.ErrAuthentication,
 		},
 		{
 			desc:        "service error",
@@ -200,13 +222,16 @@ func TestMapping(t *testing.T) {
 			domainID:    validID,
 			status:      http.StatusForbidden,
 			contentType: validContenType,
+			authnRes:    validSession,
+			authnErr:    nil,
 			svcErr:      svcerr.ErrAuthorization,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repocall := svc.On("Mapping", mock.Anything, tc.token).Return(map[string]any{}, tc.svcErr)
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			repocall := svc.On("Mapping").Return(map[string]any{}, tc.svcErr)
 			req := testRequest{
 				client:      is.Client(),
 				method:      http.MethodGet,
@@ -218,6 +243,96 @@ func TestMapping(t *testing.T) {
 			resp, err := req.make()
 			assert.Nil(t, err, tc.desc)
 			assert.Equal(t, tc.status, resp.StatusCode, tc.desc)
+			authCall.Unset()
+			repocall.Unset()
+		})
+	}
+}
+
+func TestCert(t *testing.T) {
+	is, svc, authn := newProvisionServer()
+
+	cases := []struct {
+		desc        string
+		token       string
+		domainID    string
+		data        string
+		contentType string
+		status      int
+		authnRes    smqauthn.Session
+		authnErr    error
+		svcErr      error
+	}{
+		{
+			desc:        "valid request",
+			token:       validToken,
+			domainID:    validID,
+			data:        fmt.Sprintf(`{"client_id": "%s", "ttl": "1h"}`, validID),
+			status:      http.StatusCreated,
+			contentType: validContenType,
+			authnRes:    validSession,
+			svcErr:      nil,
+		},
+		{
+			desc:        "empty token",
+			token:       "",
+			domainID:    validID,
+			data:        fmt.Sprintf(`{"client_id": "%s", "ttl": "1h"}`, validID),
+			status:      http.StatusUnauthorized,
+			contentType: validContenType,
+			authnRes:    smqauthn.Session{},
+			authnErr:    errors.ErrAuthentication,
+			svcErr:      nil,
+		},
+		{
+			desc:        "invalid content type",
+			token:       validToken,
+			domainID:    validID,
+			data:        fmt.Sprintf(`{"client_id": "%s", "ttl": "1h"}`, validID),
+			status:      http.StatusUnsupportedMediaType,
+			contentType: "text/plain",
+			authnRes:    validSession,
+			svcErr:      nil,
+		},
+		{
+			desc:        "invalid request",
+			token:       validToken,
+			domainID:    validID,
+			data:        `data`,
+			status:      http.StatusBadRequest,
+			contentType: validContenType,
+			authnRes:    validSession,
+			svcErr:      nil,
+		},
+		{
+			desc:        "service error",
+			token:       validToken,
+			domainID:    validID,
+			data:        fmt.Sprintf(`{"client_id": "%s", "ttl": "1h"}`, validID),
+			status:      http.StatusForbidden,
+			contentType: validContenType,
+			authnRes:    validSession,
+			svcErr:      svcerr.ErrAuthorization,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			repocall := svc.On("Cert", mock.Anything, validID, tc.token, validID, "1h").Return("cert", "key", tc.svcErr)
+			req := testRequest{
+				client:      is.Client(),
+				method:      http.MethodPost,
+				url:         is.URL + fmt.Sprintf("/%s/cert", tc.domainID),
+				token:       tc.token,
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.data),
+			}
+
+			resp, err := req.make()
+			assert.Nil(t, err, tc.desc)
+			assert.Equal(t, tc.status, resp.StatusCode, tc.desc)
+			authCall.Unset()
 			repocall.Unset()
 		})
 	}

@@ -17,11 +17,15 @@ import (
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/magistrala/provision"
 	httpapi "github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/magistrala/provision/middleware"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/channels"
 	"github.com/absmach/supermq/clients"
 	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/grpcclient"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
@@ -30,8 +34,9 @@ import (
 )
 
 const (
-	svcName     = "provision"
-	contentType = "application/json"
+	svcName       = "provision"
+	contentType   = "application/json"
+	envPrefixAuth = "SMQ_AUTH_GRPC_"
 )
 
 var (
@@ -65,6 +70,24 @@ func main() {
 		}
 	}
 
+	grpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
+		exitCode = 1
+
+		return
+	}
+	authn, authnClient, err := authnsvc.NewAuthentication(ctx, grpcCfg)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+
+		return
+	}
+	defer authnClient.Close()
+	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
+	am := smqauthn.NewAuthNMiddleware(authn)
+
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
 		logger.Warn(fmt.Sprintf("Continue with settings from env, failed to load from: %s: %s", cfg.File, err))
 	} else {
@@ -73,12 +96,14 @@ func main() {
 		cfg = cfgFromFile
 		logger.Info("Continue with settings from file: " + cfg.File)
 	}
+	fmt.Printf("This is the final config: %+v\n", cfg)
 
 	SDKCfg := mgsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
+		ChannelsURL:     cfg.Server.ChannelsURL,
 		ClientsURL:      cfg.Server.ClientsURL,
 		BootstrapURL:    cfg.Server.MgBSURL,
-		CertsURL:        cfg.Server.MgCertsURL,
+		CertsURL:        cfg.Server.CertsURL,
 		MsgContentType:  contentType,
 		TLSVerification: cfg.Server.TLS,
 	}
@@ -91,10 +116,10 @@ func main() {
 	cSdk := csdk.NewSDK(csdkConf)
 
 	svc := provision.New(cfg, mgSdk, cSdk, logger)
-	svc = httpapi.NewLoggingMiddleware(svc, logger)
+	svc = middleware.NewLogging(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, supermq.Version, logger, cancel)

@@ -216,11 +216,11 @@ List filters: `offset`, `limit`, `status`, `name`, `order` (`name`, `created_at`
 
 Time ranges use relative expressions parsed by `pkg/reltime`, such as `now()` or `now()-24h` (units: `s`, `m`, `h`, `d`, `w`). Aggregation intervals use Go duration strings like `15m` or `1h`. File output formats are `pdf` and `csv`.
 
-### Example: Generate a report (view)
+### Example: Generate a report
 
 ```bash
-curl -X POST "http://localhost:9017/<domainID>/reports?action=view" \
-  -H "Authorization: Bearer <your_access_token>" \
+curl -X POST "http://localhost:9017/<domainID>/reports" \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "temperature-view",
@@ -229,15 +229,13 @@ curl -X POST "http://localhost:9017/<domainID>/reports?action=view" \
         "channel_id": "<channelID>",
         "client_ids": ["<clientID>"],
         "name": "temperature",
-        "subtopic": "sensor",
-        "protocol": "",
-        "format": ""
+        "subtopic": "sensor"
       }
     ],
     "config": {
       "from": "now()-24h",
       "to": "now()",
-      "title": "Temperature (24h)",
+      "title": "Temperature (last 24h)",
       "timezone": "UTC",
       "aggregation": {
         "agg_type": "avg",
@@ -247,36 +245,19 @@ curl -X POST "http://localhost:9017/<domainID>/reports?action=view" \
   }'
 ```
 
-### Example: Download a report (PDF)
-
-```bash
-curl -X POST "http://localhost:9017/<domainID>/reports?action=download" \
-  -H "Authorization: Bearer <your_access_token>" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "temperature-download",
-    "metrics": [
-      { "channel_id": "<channelID>", "name": "temperature" }
-    ],
-    "config": {
-      "from": "now()-7d",
-      "to": "now()",
-      "title": "Weekly Temperature",
-      "file_format": "pdf"
-    }
-  }'
-```
-
 ### Example: Generate and email a report
 
 ```bash
 curl -X POST "http://localhost:9017/<domainID>/reports?action=email" \
-  -H "Authorization: Bearer <your_access_token>" \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "temperature-email",
     "metrics": [
-      { "channel_id": "<channelID>", "name": "temperature" }
+      {
+        "channel_id": "<channelID>",
+        "name": "temperature"
+      }
     ],
     "config": {
       "from": "now()-1d",
@@ -290,26 +271,33 @@ curl -X POST "http://localhost:9017/<domainID>/reports?action=email" \
       "content": "Report attached."
     }
   }'
+
 ```
 
 ### Example: Create a scheduled report config
 
 ```bash
-curl -X POST http://localhost:9017/<domainID>/reports/configs \
-  -H "Authorization: Bearer <your_access_token>" \
+curl -X POST "http://localhost:9017/<domainID>/reports/configs" \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "daily-temperature",
     "description": "Daily temperature summary",
     "metrics": [
-      { "channel_id": "<channelID>", "name": "temperature" }
+      {
+        "channel_id": "<channelID>",
+        "name": "temperature"
+      }
     ],
     "config": {
       "from": "now()-1d",
       "to": "now()",
       "title": "Daily Temperature",
       "file_format": "pdf",
-      "aggregation": { "agg_type": "avg", "interval": "1h" }
+      "aggregation": {
+        "agg_type": "avg",
+        "interval": "1h"
+      }
     },
     "email": {
       "to": ["ops@example.com"],
@@ -318,7 +306,6 @@ curl -X POST http://localhost:9017/<domainID>/reports/configs \
     },
     "schedule": {
       "start_datetime": "2025-01-01T00:00:00Z",
-      "time": "2025-01-01T00:00:00Z",
       "recurring": "daily",
       "recurring_period": 1
     }
@@ -328,8 +315,8 @@ curl -X POST http://localhost:9017/<domainID>/reports/configs \
 ### Example: Update a report template
 
 ```bash
-curl -X PUT http://localhost:9017/<domainID>/reports/configs/<reportID>/template \
-  -H "Authorization: Bearer <your_access_token>" \
+curl -X PUT "http://localhost:9017/<domainID>/reports/configs/<reportID>/template" \
+  -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{
     "report_template": "<html><body><h1>{{$.Title}}</h1>{{range .Reports}}{{range .Messages}}{{formatTime .Time}} {{formatValue .}}{{end}}{{end}}</body></html>"
@@ -339,8 +326,8 @@ curl -X PUT http://localhost:9017/<domainID>/reports/configs/<reportID>/template
 ### Example: Enable a report config
 
 ```bash
-curl -X POST http://localhost:9017/<domainID>/reports/configs/<reportID>/enable \
-  -H "Authorization: Bearer <your_access_token>"
+curl -X POST "http://localhost:9017/<domainID>/reports/configs/<reportID>/enable" \
+  -H "Authorization: Bearer <access_token>"
 ```
 
 For an in-depth explanation of our Reports Service, see the see the [official documentation][doc].

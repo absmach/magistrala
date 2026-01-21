@@ -130,4 +130,4 @@ Magistrala is open-source software licensed under the [Apache-2.0](LICENSE) lice
 
 ## 💼 Professional Support
 
-Need help deploying Magistrala or integrating it into your systems? Contact **[Abstract Machines](https://www.absmach.eu)** for exguidance and support.
+Need help deploying Magistrala or integrating it into your systems? Contact **[Abstract Machines](https://www.absmach.eu)** for expert guidance and support.

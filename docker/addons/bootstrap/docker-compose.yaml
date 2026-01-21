@@ -8,6 +8,7 @@
 
 networks:
   magistrala-base-net:
+    driver: bridge
 
 volumes:
   magistrala-bootstrap-db-volume:

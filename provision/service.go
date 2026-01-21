@@ -27,25 +27,22 @@ const (
 )
 
 var (
-	ErrUnauthorized             = errors.New("unauthorized access")
-	ErrFailedToCreateToken      = errors.New("failed to create access token")
-	ErrEmptyClientsList         = errors.New("clients list in configuration empty")
-	ErrClientUpdate             = errors.New("failed to update client")
-	ErrEmptyChannelsList        = errors.New("channels list in configuration is empty")
-	ErrFailedChannelCreation    = errors.New("failed to create channel")
-	ErrFailedChannelRetrieval   = errors.New("failed to retrieve channel")
-	ErrFailedClientCreation     = errors.New("failed to create client")
-	ErrFailedClientRetrieval    = errors.New("failed to retrieve client")
-	ErrMissingCredentials       = errors.New("missing credentials")
-	ErrFailedBootstrapRetrieval = errors.New("failed to retrieve bootstrap")
-	ErrFailedCertCreation       = errors.New("failed to create certificates")
-	ErrFailedCertView           = errors.New("failed to view certificate")
-	ErrFailedBootstrap          = errors.New("failed to create bootstrap config")
-	ErrFailedBootstrapValidate  = errors.New("failed to validate bootstrap config creation")
-	ErrGatewayUpdate            = errors.New("failed to updated gateway metadata")
-
-	limit  uint = 10
-	offset uint = 0
+	ErrUnauthorized             = errors.NewAuthNError("unauthorized access")
+	ErrFailedToCreateToken      = errors.NewAuthNError("failed to create access token")
+	ErrEmptyClientsList         = errors.NewRequestError("clients list in configuration empty")
+	ErrClientUpdate             = errors.NewRequestError("failed to update client")
+	ErrEmptyChannelsList        = errors.NewRequestError("channels list in configuration is empty")
+	ErrFailedChannelCreation    = errors.NewRequestError("failed to create channel")
+	ErrFailedChannelRetrieval   = errors.NewRequestError("failed to retrieve channel")
+	ErrFailedClientCreation     = errors.NewRequestError("failed to create client")
+	ErrFailedClientRetrieval    = errors.NewRequestError("failed to retrieve client")
+	ErrMissingCredentials       = errors.NewRequestError("missing credentials")
+	ErrFailedBootstrapRetrieval = errors.NewServiceError("failed to retrieve bootstrap")
+	ErrFailedCertCreation       = errors.NewServiceError("failed to create certificates")
+	ErrFailedCertView           = errors.NewServiceError("failed to view certificate")
+	ErrFailedBootstrap          = errors.NewServiceError("failed to create bootstrap config")
+	ErrFailedBootstrapValidate  = errors.NewServiceError("failed to validate bootstrap config creation")
+	ErrGatewayUpdate            = errors.NewServiceError("failed to update gateway metadata")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -63,7 +60,7 @@ type Service interface {
 	// Mapping returns current configuration used for provision
 	// useful for using in ui to create configuration that matches
 	// one created with Provision method.
-	Mapping(ctx context.Context, token string) (map[string]any, error)
+	Mapping() map[string]any
 
 	// Certs creates certificate for clients that communicate over mTLS
 	// A duration string is a possibly signed sequence of decimal numbers,
@@ -101,17 +98,8 @@ func New(cfg Config, mgsdk sdk.SDK, certsSdk csdk.SDK, logger *slog.Logger) Serv
 }
 
 // Mapping retrieves current configuration.
-func (ps *provisionService) Mapping(ctx context.Context, token string) (map[string]any, error) {
-	pm := smqSDK.PageMetadata{
-		Offset: uint64(offset),
-		Limit:  uint64(limit),
-	}
-
-	if _, err := ps.sdk.Users(ctx, pm, token); err != nil {
-		return map[string]any{}, errors.Wrap(ErrUnauthorized, err)
-	}
-
-	return ps.conf.Bootstrap.Content, nil
+func (ps *provisionService) Mapping() map[string]any {
+	return ps.conf.Bootstrap.Content
 }
 
 // Provision is provision method for creating setup according to
@@ -119,7 +107,7 @@ func (ps *provisionService) Mapping(ctx context.Context, token string) (map[stri
 func (ps *provisionService) Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (res Result, err error) {
 	var channels []smqSDK.Channel
 	var clients []smqSDK.Client
-	defer ps.recover(ctx, &err, &clients, &channels, &domainID, &token)
+	defer ps.recover(ctx, &err, &clients, &channels, domainID, token)
 
 	token, err = ps.createTokenIfEmpty(ctx, token)
 	if err != nil {
@@ -360,11 +348,11 @@ func clean(ctx context.Context, ps *provisionService, clients []smqSDK.Client, c
 	}
 }
 
-func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, dm, tkn *string) {
+func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, domainID, token string) {
 	if e == nil {
 		return
 	}
-	clients, channels, domainID, token, err := *ths, *chs, *dm, *tkn, *e
+	clients, channels, err := *ths, *chs, *e
 
 	if errors.Contains(err, ErrFailedClientRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, c := range clients {

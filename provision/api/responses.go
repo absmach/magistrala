@@ -50,6 +50,23 @@ func (res mappingRes) Empty() bool {
 	return false
 }
 
+type certRes struct {
+	Certificate string `json:"certificate"`
+	Key         string `json:"key"`
+}
+
+func (res certRes) Code() int {
+	return http.StatusCreated
+}
+
+func (res certRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res certRes) Empty() bool {
+	return false
+}
+
 func (res mappingRes) MarshalJSON() ([]byte, error) {
 	return json.Marshal(res.Data)
 }

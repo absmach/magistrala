@@ -18,10 +18,11 @@ func issueEndpoint(svc auth.Service) endpoint.Endpoint {
 		}
 
 		key := auth.Key{
-			Type:     req.keyType,
-			Subject:  req.userID,
-			Role:     req.userRole,
-			Verified: req.verified,
+			Type:        req.keyType,
+			Subject:     req.userID,
+			Role:        req.userRole,
+			Verified:    req.verified,
+			Description: req.description,
 		}
 		tkn, err := svc.Issue(ctx, "", key)
 		if err != nil {
@@ -63,11 +64,27 @@ func revokeEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		err := svc.RevokeToken(ctx, req.token)
+		err := svc.RevokeToken(ctx, req.tokenID)
 		if err != nil {
 			return nil, err
 		}
 
 		return nil, nil
+	}
+}
+
+func listUserRefreshTokensEndpoint(svc auth.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(listUserRefreshTokensReq)
+		if err := req.validate(); err != nil {
+			return listUserRefreshTokensRes{}, err
+		}
+
+		refreshTokens, err := svc.ListUserRefreshTokens(ctx, req.userID)
+		if err != nil {
+			return listUserRefreshTokensRes{}, err
+		}
+
+		return listUserRefreshTokensRes{refreshTokens: refreshTokens}, nil
 	}
 }

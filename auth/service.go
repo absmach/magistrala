@@ -67,8 +67,8 @@ type Authn interface {
 	// Issue issues a new Key, returning its token value alongside.
 	Issue(ctx context.Context, token string, key Key) (Token, error)
 
-	// RevokeToken revokes the token.
-	RevokeToken(ctx context.Context, token string) error
+	// RevokeToken revokes the refresh token by its ID.
+	RevokeToken(ctx context.Context, tokenID string) error
 
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
@@ -85,6 +85,9 @@ type Authn interface {
 
 	// RetrieveJWKS retrieves public keys to validate issued tokens.
 	RetrieveJWKS() []PublicKeyInfo
+
+	// ListUserRefreshTokens lists all active refresh token sessions for a user.
+	ListUserRefreshTokens(ctx context.Context, userID string) ([]TokenInfo, error)
 }
 
 // Service specifies an API that must be fulfilled by the domain service
@@ -103,6 +106,7 @@ type service struct {
 	keys               KeyRepository
 	pats               PATSRepository
 	cache              Cache
+	tokensCache        TokensCache
 	hasher             Hasher
 	idProvider         supermq.IDProvider
 	evaluator          policies.Evaluator
@@ -114,12 +118,13 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, pats PATSRepository, cache Cache, hasher Hasher, idp supermq.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, pats PATSRepository, cache Cache, tokensCache TokensCache, hasher Hasher, idp supermq.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
 		tokenizer:          tokenizer,
 		keys:               keys,
 		pats:               pats,
 		cache:              cache,
+		tokensCache:        tokensCache,
 		hasher:             hasher,
 		idProvider:         idp,
 		evaluator:          policyEvaluator,
@@ -146,8 +151,8 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 	}
 }
 
-func (svc service) RevokeToken(ctx context.Context, token string) error {
-	return svc.tokenizer.Revoke(ctx, token)
+func (svc service) RevokeToken(ctx context.Context, tokenID string) error {
+	return svc.tokensCache.RemoveActive(ctx, tokenID)
 }
 
 func (svc service) Revoke(ctx context.Context, token, id string) error {
@@ -210,6 +215,10 @@ func (svc service) RetrieveJWKS() []PublicKeyInfo {
 		return nil
 	}
 	return keys
+}
+
+func (svc service) ListUserRefreshTokens(ctx context.Context, userID string) ([]TokenInfo, error) {
+	return svc.tokensCache.ListUserTokens(ctx, userID)
 }
 
 func (svc service) Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error {

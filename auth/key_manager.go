@@ -54,17 +54,23 @@ type Tokenizer interface {
 
 // TokensCache represents a cache repository for managing active refresh tokens per user.
 type TokensCache interface {
-	// SaveActive saves an active refresh token ID for a user with TTL.
-	SaveActive(ctx context.Context, userID, tokenID string, ttl time.Duration) error
+	// SaveActive saves an active refresh token ID for a user with TTL and optional description.
+	SaveActive(ctx context.Context, userID, tokenID, description string, ttl time.Duration) error
 
 	// IsActive checks if the token ID is active.
 	IsActive(ctx context.Context, tokenID string) (bool, error)
 
-	// ListUserTokens lists all active token IDs for a given user.
-	ListUserTokens(ctx context.Context, userID string) ([]string, error)
+	// ListUserTokens lists all active token IDs with descriptions for a given user.
+	ListUserTokens(ctx context.Context, userID string) ([]TokenInfo, error)
 
 	// RemoveActive removes an active refresh token ID.
 	RemoveActive(ctx context.Context, tokenID string) error
+}
+
+// TokenInfo represents information about an active refresh token.
+type TokenInfo struct {
+	ID          string `json:"id"`
+	Description string `json:"description,omitempty"`
 }
 
 // IsSymmetricAlgorithm determines if the given algorithm is symmetric (HMAC-based).

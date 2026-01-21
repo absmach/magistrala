@@ -9,10 +9,11 @@ import (
 )
 
 type issueReq struct {
-	userID   string
-	userRole auth.Role
-	keyType  auth.KeyType
-	verified bool
+	userID      string
+	userRole    auth.Role
+	keyType     auth.KeyType
+	verified    bool
+	description string
 }
 
 func (req issueReq) validate() error {
@@ -40,12 +41,24 @@ func (req refreshReq) validate() error {
 }
 
 type revokeReq struct {
-	token string
+	tokenID string
 }
 
 func (req revokeReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrMissingSecret
+	if req.tokenID == "" {
+		return apiutil.ErrMissingID
+	}
+
+	return nil
+}
+
+type listUserRefreshTokensReq struct {
+	userID string
+}
+
+func (req listUserRefreshTokensReq) validate() error {
+	if req.userID == "" {
+		return apiutil.ErrMissingID
 	}
 
 	return nil

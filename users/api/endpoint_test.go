@@ -2384,7 +2384,9 @@ func TestIssueToken(t *testing.T) {
 	defer us.Close()
 
 	validUsername := "valid"
+	validDescription := "test token"
 	dataFormat := `{"username": "%s", "password": "%s"}`
+	dataFormatWithDesc := `{"username": "%s", "password": "%s", "description": "test token"}`
 
 	cases := []struct {
 		desc        string
@@ -2396,6 +2398,13 @@ func TestIssueToken(t *testing.T) {
 		{
 			desc:        "issue token with valid identity and secret",
 			data:        fmt.Sprintf(dataFormat, validUsername, secret),
+			contentType: contentType,
+			status:      http.StatusCreated,
+			err:         nil,
+		},
+		{
+			desc:        "issue token with valid identity, secret and description",
+			data:        fmt.Sprintf(dataFormatWithDesc, validUsername, secret, validDescription),
 			contentType: contentType,
 			status:      http.StatusCreated,
 			err:         nil,
@@ -2447,7 +2456,7 @@ func TestIssueToken(t *testing.T) {
 				body:        strings.NewReader(tc.data),
 			}
 
-			svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&grpcTokenV1.Token{AccessToken: validToken}, tc.err)
+			svcCall := svc.On("IssueToken", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(&grpcTokenV1.Token{AccessToken: validToken}, tc.err)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			if tc.err != nil {
@@ -2547,6 +2556,206 @@ func TestRefreshToken(t *testing.T) {
 			}
 			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
 			svcCall := svc.On("RefreshToken", mock.Anything, tc.authnRes, tc.token, mock.Anything).Return(&grpcTokenV1.Token{AccessToken: validToken}, tc.err)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.err != nil {
+				var resBody respBody
+				err = json.NewDecoder(res.Body).Decode(&resBody)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if resBody.Err != "" || resBody.Message != "" {
+					err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+				}
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
+	}
+}
+
+func TestRevokeRefreshToken(t *testing.T) {
+	us, svc, authn := newUsersServer()
+	defer us.Close()
+
+	cases := []struct {
+		desc        string
+		data        string
+		contentType string
+		token       string
+		authnRes    smqauthn.Session
+		authnErr    error
+		status      int
+		svcErr      error
+		err         error
+	}{
+		{
+			desc:        "revoke refresh token with valid token",
+			data:        fmt.Sprintf(`{"token_id": "%s"}`, validToken),
+			contentType: contentType,
+			token:       validToken,
+			authnRes:    verifiedSession,
+			status:      http.StatusNoContent,
+			err:         nil,
+		},
+		{
+			desc:        "revoke refresh token with invalid token",
+			data:        fmt.Sprintf(`{"token_id": "%s"}`, validToken),
+			contentType: contentType,
+			token:       inValidToken,
+			status:      http.StatusUnauthorized,
+			authnErr:    svcerr.ErrAuthentication,
+			err:         svcerr.ErrAuthentication,
+		},
+		{
+			desc:        "revoke refresh token with empty token",
+			data:        fmt.Sprintf(`{"token_id": "%s"}`, validToken),
+			contentType: contentType,
+			token:       "",
+			status:      http.StatusUnauthorized,
+			authnErr:    svcerr.ErrAuthentication,
+			err:         apiutil.ErrBearerToken,
+		},
+		{
+			desc:        "revoke refresh token with empty token id",
+			data:        `{"token_id": ""}`,
+			contentType: contentType,
+			token:       validToken,
+			authnRes:    verifiedSession,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMissingID,
+		},
+		{
+			desc:        "revoke refresh token with malformed data",
+			data:        fmt.Sprintf(`{"token_id": %s}`, validToken),
+			contentType: contentType,
+			token:       validToken,
+			authnRes:    verifiedSession,
+			status:      http.StatusBadRequest,
+			err:         apiutil.ErrMalformedRequestBody,
+		},
+		{
+			desc:        "revoke refresh token with invalid content type",
+			data:        fmt.Sprintf(`{"token_id": "%s"}`, validToken),
+			contentType: "application/xml",
+			token:       validToken,
+			authnRes:    verifiedSession,
+			status:      http.StatusUnsupportedMediaType,
+			err:         apiutil.ErrUnsupportedContentType,
+		},
+		{
+			desc:        "revoke refresh token with service error",
+			data:        fmt.Sprintf(`{"token_id": "%s"}`, validToken),
+			contentType: contentType,
+			token:       validToken,
+			authnRes:    verifiedSession,
+			status:      http.StatusUnprocessableEntity,
+			svcErr:      svcerr.ErrViewEntity,
+			err:         svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				user:        us.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/users/tokens/revoke", us.URL),
+				contentType: tc.contentType,
+				body:        strings.NewReader(tc.data),
+				token:       tc.token,
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("RevokeRefreshToken", mock.Anything, tc.authnRes, mock.Anything).Return(tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			if tc.err != nil {
+				var resBody respBody
+				err = json.NewDecoder(res.Body).Decode(&resBody)
+				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding response body: %s", tc.desc, err))
+				if resBody.Err != "" || resBody.Message != "" {
+					err = errors.Wrap(errors.New(resBody.Err), errors.New(resBody.Message))
+				}
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			}
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authnCall.Unset()
+		})
+	}
+}
+
+func TestListActiveRefreshTokens(t *testing.T) {
+	us, svc, authn := newUsersServer()
+	defer us.Close()
+
+	cases := []struct {
+		desc     string
+		token    string
+		authnRes smqauthn.Session
+		authnErr error
+		status   int
+		svcRes   *grpcTokenV1.ListUserRefreshTokensRes
+		svcErr   error
+		err      error
+	}{
+		{
+			desc:     "list active refresh tokens with valid token",
+			token:    validToken,
+			authnRes: verifiedSession,
+			status:   http.StatusOK,
+			svcRes: &grpcTokenV1.ListUserRefreshTokensRes{
+				RefreshTokens: []*grpcTokenV1.RefreshToken{
+					{Id: "token1", Description: "token-1"},
+					{Id: "token2", Description: "token-2"},
+				},
+			},
+			err: nil,
+		},
+		{
+			desc:     "list active refresh tokens with invalid token",
+			token:    inValidToken,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "list active refresh tokens with empty token",
+			token:    "",
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "list active refresh tokens with service error",
+			token:    validToken,
+			authnRes: verifiedSession,
+			status:   http.StatusUnprocessableEntity,
+			svcErr:   svcerr.ErrViewEntity,
+			err:      svcerr.ErrViewEntity,
+		},
+		{
+			desc:     "list active refresh tokens with empty list",
+			token:    validToken,
+			authnRes: verifiedSession,
+			status:   http.StatusOK,
+			svcRes: &grpcTokenV1.ListUserRefreshTokensRes{
+				RefreshTokens: []*grpcTokenV1.RefreshToken{},
+			},
+			err: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				user:   us.Client(),
+				method: http.MethodGet,
+				url:    fmt.Sprintf("%s/users/tokens/refresh-tokens", us.URL),
+				token:  tc.token,
+			}
+			authnCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
+			svcCall := svc.On("ListActiveRefreshTokens", mock.Anything, tc.authnRes).Return(tc.svcRes, tc.svcErr)
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			if tc.err != nil {

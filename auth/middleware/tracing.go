@@ -36,13 +36,6 @@ func (tm *tracingMiddleware) Issue(ctx context.Context, token string, key auth.K
 	return tm.svc.Issue(ctx, token, key)
 }
 
-func (tm *tracingMiddleware) RevokeToken(ctx context.Context, token string) error {
-	ctx, span := tm.tracer.Start(ctx, "revoke_token")
-	defer span.End()
-
-	return tm.svc.RevokeToken(ctx, token)
-}
-
 func (tm *tracingMiddleware) Revoke(ctx context.Context, token, id string) error {
 	ctx, span := tm.tracer.Start(ctx, "revoke", trace.WithAttributes(
 		attribute.String("id", id),
@@ -70,6 +63,24 @@ func (tm *tracingMiddleware) Identify(ctx context.Context, token string) (auth.K
 
 func (tm *tracingMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 	return tm.svc.RetrieveJWKS()
+}
+
+func (tm *tracingMiddleware) RevokeToken(ctx context.Context, tokenID string) error {
+	ctx, span := tm.tracer.Start(ctx, "revoke_token", trace.WithAttributes(
+		attribute.String("token_id", tokenID),
+	))
+	defer span.End()
+
+	return tm.svc.RevokeToken(ctx, tokenID)
+}
+
+func (tm *tracingMiddleware) ListUserRefreshTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_user_refresh_tokens", trace.WithAttributes(
+		attribute.String("user_id", userID),
+	))
+	defer span.End()
+
+	return tm.svc.ListUserRefreshTokens(ctx, userID)
 }
 
 func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {

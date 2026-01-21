@@ -1615,7 +1615,7 @@ func TestIssueToken(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := cRepo.On("RetrieveByUsername", context.Background(), tc.user.Credentials.Username).Return(tc.retrieveByUsernameResponse, tc.retrieveByUsernameErr)
 			authCall := auth.On("Issue", context.Background(), &grpcTokenV1.IssueReq{UserId: tc.user.ID, UserRole: uint32(tc.user.Role + 1), Type: uint32(smqauth.AccessKey)}).Return(tc.issueResponse, tc.issueErr)
-			token, err := svc.IssueToken(context.Background(), tc.user.Credentials.Username, tc.user.Credentials.Secret)
+			token, err := svc.IssueToken(context.Background(), tc.user.Credentials.Username, tc.user.Credentials.Secret, "")
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
 				assert.NotEmpty(t, token.GetAccessToken(), fmt.Sprintf("%s: expected %s not to be empty\n", tc.desc, token.GetAccessToken()))
@@ -1706,6 +1706,172 @@ func TestRefreshToken(t *testing.T) {
 			}
 			authCall.Unset()
 			repoCall.Unset()
+		})
+	}
+}
+
+func TestRevokeRefreshToken(t *testing.T) {
+	svc, authsvc, crepo, _, _ := newService()
+
+	rUser := user
+	rUser.Credentials.Secret, _ = phasher.Hash(user.Credentials.Secret)
+
+	cases := []struct {
+		desc       string
+		session    authn.Session
+		tokenID    string
+		revokeResp *grpcTokenV1.RevokeRes
+		revokeErr  error
+		repoResp   users.User
+		repoErr    error
+		err        error
+	}{
+		{
+			desc:       "revoke refresh token successfully",
+			session:    authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			tokenID:    validToken,
+			revokeResp: &grpcTokenV1.RevokeRes{},
+			repoResp:   rUser,
+			err:        nil,
+		},
+		{
+			desc:       "revoke refresh token with empty domain id",
+			session:    authn.Session{UserID: validID},
+			tokenID:    validToken,
+			revokeResp: &grpcTokenV1.RevokeRes{},
+			repoResp:   rUser,
+			err:        nil,
+		},
+		{
+			desc:    "revoke refresh token for non-existing user",
+			session: authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			tokenID: validToken,
+			repoErr: repoerr.ErrNotFound,
+			err:     repoerr.ErrNotFound,
+		},
+		{
+			desc:     "revoke refresh token for disabled user",
+			session:  authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			tokenID:  validToken,
+			repoResp: users.User{Status: users.DisabledStatus},
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:       "revoke refresh token with revoke service error",
+			session:    authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			tokenID:    validToken,
+			revokeResp: &grpcTokenV1.RevokeRes{},
+			revokeErr:  svcerr.ErrAuthorization,
+			repoResp:   rUser,
+			err:        svcerr.ErrAuthorization,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
+			authCall := authsvc.On("Revoke", context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.tokenID}).Return(tc.revokeResp, tc.revokeErr)
+			err := svc.RevokeRefreshToken(context.Background(), tc.session, tc.tokenID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				ok := repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
+				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
+				ok = authCall.Parent.AssertCalled(t, "Revoke", context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.tokenID})
+				assert.True(t, ok, fmt.Sprintf("Revoke was not called on %s", tc.desc))
+			}
+			repoCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestListActiveRefreshTokens(t *testing.T) {
+	svc, authsvc, crepo, _, _ := newService()
+
+	rUser := user
+	rUser.Credentials.Secret, _ = phasher.Hash(user.Credentials.Secret)
+
+	cases := []struct {
+		desc           string
+		session        authn.Session
+		listResp       *grpcTokenV1.ListUserRefreshTokensRes
+		listErr        error
+		repoResp       users.User
+		repoErr        error
+		expectedTokens int
+		err            error
+	}{
+		{
+			desc:    "list active refresh tokens successfully",
+			session: authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			listResp: &grpcTokenV1.ListUserRefreshTokensRes{
+				RefreshTokens: []*grpcTokenV1.RefreshToken{
+					{Id: "token1", Description: "token1"},
+					{Id: "token2", Description: "token2"},
+				},
+			},
+			repoResp:       rUser,
+			expectedTokens: 2,
+			err:            nil,
+		},
+		{
+			desc:    "list active refresh tokens with empty domain id",
+			session: authn.Session{UserID: validID},
+			listResp: &grpcTokenV1.ListUserRefreshTokensRes{
+				RefreshTokens: []*grpcTokenV1.RefreshToken{
+					{Id: "token1", Description: "token1"},
+				},
+			},
+			repoResp:       rUser,
+			expectedTokens: 1,
+			err:            nil,
+		},
+		{
+			desc:    "list active refresh tokens for non-existing user",
+			session: authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			repoErr: repoerr.ErrNotFound,
+			err:     repoerr.ErrNotFound,
+		},
+		{
+			desc:     "list active refresh tokens for disabled user",
+			session:  authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			repoResp: users.User{Status: users.DisabledStatus},
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "list active refresh tokens with list service error",
+			session:  authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			listResp: &grpcTokenV1.ListUserRefreshTokensRes{},
+			listErr:  svcerr.ErrAuthentication,
+			repoResp: rUser,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:           "list active refresh tokens with empty list",
+			session:        authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			listResp:       &grpcTokenV1.ListUserRefreshTokensRes{RefreshTokens: []*grpcTokenV1.RefreshToken{}},
+			repoResp:       rUser,
+			expectedTokens: 0,
+			err:            nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
+			authCall := authsvc.On("ListUserRefreshTokens", context.Background(), &grpcTokenV1.ListUserRefreshTokensReq{UserId: tc.session.UserID}).Return(tc.listResp, tc.listErr)
+			tokens, err := svc.ListActiveRefreshTokens(context.Background(), tc.session)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			if err == nil {
+				assert.NotNil(t, tokens, fmt.Sprintf("%s: expected tokens not to be nil\n", tc.desc))
+				assert.Equal(t, tc.expectedTokens, len(tokens.GetRefreshTokens()), fmt.Sprintf("%s: expected %d tokens got %d\n", tc.desc, tc.expectedTokens, len(tokens.GetRefreshTokens())))
+				ok := repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
+				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
+				ok = authCall.Parent.AssertCalled(t, "ListUserRefreshTokens", context.Background(), &grpcTokenV1.ListUserRefreshTokensReq{UserId: tc.session.UserID})
+				assert.True(t, ok, fmt.Sprintf("ListUserRefreshTokens was not called on %s", tc.desc))
+			}
+			repoCall.Unset()
+			authCall.Unset()
 		})
 	}
 }

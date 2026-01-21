@@ -183,7 +183,7 @@ func (svc service) VerifyEmail(ctx context.Context, token string) (User, error) 
 	return user, nil
 }
 
-func (svc service) IssueToken(ctx context.Context, identity, secret string) (*grpcTokenV1.Token, error) {
+func (svc service) IssueToken(ctx context.Context, identity, secret, description string) (*grpcTokenV1.Token, error) {
 	var dbUser User
 	var err error
 
@@ -205,7 +205,13 @@ func (svc service) IssueToken(ctx context.Context, identity, secret string) (*gr
 		return &grpcTokenV1.Token{}, errors.Wrap(svcerr.ErrLogin, err)
 	}
 
-	token, err := svc.token.Issue(ctx, &grpcTokenV1.IssueReq{UserId: dbUser.ID, UserRole: uint32(dbUser.Role + 1), Type: uint32(smqauth.AccessKey), Verified: !dbUser.VerifiedAt.IsZero()})
+	token, err := svc.token.Issue(ctx, &grpcTokenV1.IssueReq{
+		UserId:      dbUser.ID,
+		UserRole:    uint32(dbUser.Role + 1),
+		Type:        uint32(smqauth.AccessKey),
+		Verified:    !dbUser.VerifiedAt.IsZero(),
+		Description: description,
+	})
 	if err != nil {
 		return &grpcTokenV1.Token{}, errors.Wrap(errIssueToken, err)
 	}
@@ -229,7 +235,7 @@ func (svc service) RefreshToken(ctx context.Context, session authn.Session, refr
 	return token, nil
 }
 
-func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
+func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
 	dbUser, err := svc.users.RetrieveByID(ctx, session.UserID)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthentication, err)
@@ -237,12 +243,29 @@ func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session
 	if dbUser.Status == DisabledStatus {
 		return errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
 	}
-	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{Token: refreshToken})
+	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{TokenId: tokenID})
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 
 	return nil
+}
+
+func (svc service) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error) {
+	dbUser, err := svc.users.RetrieveByID(ctx, session.UserID)
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+	if dbUser.Status == DisabledStatus {
+		return nil, errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
+	}
+
+	refreshTokens, err := svc.token.ListUserRefreshTokens(ctx, &grpcTokenV1.ListUserRefreshTokensReq{UserId: session.UserID})
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrAuthentication, err)
+	}
+
+	return refreshTokens, nil
 }
 
 func (svc service) View(ctx context.Context, session authn.Session, id string) (User, error) {
@@ -469,7 +492,7 @@ func (svc service) UpdateSecret(ctx context.Context, session authn.Session, oldS
 	if err != nil {
 		return User{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	if _, err := svc.IssueToken(ctx, dbUser.Credentials.Username, oldSecret); err != nil {
+	if _, err := svc.IssueToken(ctx, dbUser.Credentials.Username, oldSecret, ""); err != nil {
 		return User{}, err
 	}
 	newSecret, err = svc.hasher.Hash(newSecret)

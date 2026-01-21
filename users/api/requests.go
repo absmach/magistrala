@@ -270,8 +270,9 @@ func (req changeUserStatusReq) validate() error {
 }
 
 type loginUserReq struct {
-	Username string `json:"username,omitempty"`
-	Password string `json:"password,omitempty"`
+	Username    string `json:"username,omitempty"`
+	Password    string `json:"password,omitempty"`
+	Description string `json:"description,omitempty"`
 }
 
 func (req loginUserReq) validate() error {
@@ -292,6 +293,18 @@ type tokenReq struct {
 func (req tokenReq) validate() error {
 	if req.RefreshToken == "" {
 		return apiutil.ErrBearerToken
+	}
+
+	return nil
+}
+
+type revokeTokenReq struct {
+	TokenID string `json:"token_id,omitempty"`
+}
+
+func (req revokeTokenReq) validate() error {
+	if req.TokenID == "" {
+		return apiutil.ErrMissingID
 	}
 
 	return nil

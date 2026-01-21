@@ -12,6 +12,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/absmach/supermq/auth"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -109,23 +110,23 @@ func (_c *TokensCache_IsActive_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // ListUserTokens provides a mock function for the type TokensCache
-func (_mock *TokensCache) ListUserTokens(ctx context.Context, userID string) ([]string, error) {
+func (_mock *TokensCache) ListUserTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
 	ret := _mock.Called(ctx, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUserTokens")
 	}
 
-	var r0 []string
+	var r0 []auth.TokenInfo
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]auth.TokenInfo, error)); ok {
 		return returnFunc(ctx, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []auth.TokenInfo); ok {
 		r0 = returnFunc(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
+			r0 = ret.Get(0).([]auth.TokenInfo)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
@@ -166,12 +167,12 @@ func (_c *TokensCache_ListUserTokens_Call) Run(run func(ctx context.Context, use
 	return _c
 }
 
-func (_c *TokensCache_ListUserTokens_Call) Return(strings []string, err error) *TokensCache_ListUserTokens_Call {
-	_c.Call.Return(strings, err)
+func (_c *TokensCache_ListUserTokens_Call) Return(tokenInfos []auth.TokenInfo, err error) *TokensCache_ListUserTokens_Call {
+	_c.Call.Return(tokenInfos, err)
 	return _c
 }
 
-func (_c *TokensCache_ListUserTokens_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]string, error)) *TokensCache_ListUserTokens_Call {
+func (_c *TokensCache_ListUserTokens_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]auth.TokenInfo, error)) *TokensCache_ListUserTokens_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -234,16 +235,16 @@ func (_c *TokensCache_RemoveActive_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // SaveActive provides a mock function for the type TokensCache
-func (_mock *TokensCache) SaveActive(ctx context.Context, userID string, tokenID string, ttl time.Duration) error {
-	ret := _mock.Called(ctx, userID, tokenID, ttl)
+func (_mock *TokensCache) SaveActive(ctx context.Context, userID string, tokenID string, description string, ttl time.Duration) error {
+	ret := _mock.Called(ctx, userID, tokenID, description, ttl)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SaveActive")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, time.Duration) error); ok {
-		r0 = returnFunc(ctx, userID, tokenID, ttl)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, time.Duration) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID, description, ttl)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -259,12 +260,13 @@ type TokensCache_SaveActive_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - tokenID string
+//   - description string
 //   - ttl time.Duration
-func (_e *TokensCache_Expecter) SaveActive(ctx interface{}, userID interface{}, tokenID interface{}, ttl interface{}) *TokensCache_SaveActive_Call {
-	return &TokensCache_SaveActive_Call{Call: _e.mock.On("SaveActive", ctx, userID, tokenID, ttl)}
+func (_e *TokensCache_Expecter) SaveActive(ctx interface{}, userID interface{}, tokenID interface{}, description interface{}, ttl interface{}) *TokensCache_SaveActive_Call {
+	return &TokensCache_SaveActive_Call{Call: _e.mock.On("SaveActive", ctx, userID, tokenID, description, ttl)}
 }
 
-func (_c *TokensCache_SaveActive_Call) Run(run func(ctx context.Context, userID string, tokenID string, ttl time.Duration)) *TokensCache_SaveActive_Call {
+func (_c *TokensCache_SaveActive_Call) Run(run func(ctx context.Context, userID string, tokenID string, description string, ttl time.Duration)) *TokensCache_SaveActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -278,15 +280,20 @@ func (_c *TokensCache_SaveActive_Call) Run(run func(ctx context.Context, userID 
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 time.Duration
+		var arg3 string
 		if args[3] != nil {
-			arg3 = args[3].(time.Duration)
+			arg3 = args[3].(string)
+		}
+		var arg4 time.Duration
+		if args[4] != nil {
+			arg4 = args[4].(time.Duration)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -297,7 +304,7 @@ func (_c *TokensCache_SaveActive_Call) Return(err error) *TokensCache_SaveActive
 	return _c
 }
 
-func (_c *TokensCache_SaveActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string, ttl time.Duration) error) *TokensCache_SaveActive_Call {
+func (_c *TokensCache_SaveActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string, description string, ttl time.Duration) error) *TokensCache_SaveActive_Call {
 	_c.Call.Return(run)
 	return _c
 }

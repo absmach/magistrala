@@ -22,9 +22,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	TokenService_Issue_FullMethodName   = "/token.v1.TokenService/Issue"
-	TokenService_Refresh_FullMethodName = "/token.v1.TokenService/Refresh"
-	TokenService_Revoke_FullMethodName  = "/token.v1.TokenService/Revoke"
+	TokenService_Issue_FullMethodName                 = "/token.v1.TokenService/Issue"
+	TokenService_Refresh_FullMethodName               = "/token.v1.TokenService/Refresh"
+	TokenService_Revoke_FullMethodName                = "/token.v1.TokenService/Revoke"
+	TokenService_ListUserRefreshTokens_FullMethodName = "/token.v1.TokenService/ListUserRefreshTokens"
 )
 
 // TokenServiceClient is the client API for TokenService service.
@@ -34,6 +35,7 @@ type TokenServiceClient interface {
 	Issue(ctx context.Context, in *IssueReq, opts ...grpc.CallOption) (*Token, error)
 	Refresh(ctx context.Context, in *RefreshReq, opts ...grpc.CallOption) (*Token, error)
 	Revoke(ctx context.Context, in *RevokeReq, opts ...grpc.CallOption) (*RevokeRes, error)
+	ListUserRefreshTokens(ctx context.Context, in *ListUserRefreshTokensReq, opts ...grpc.CallOption) (*ListUserRefreshTokensRes, error)
 }
 
 type tokenServiceClient struct {
@@ -74,6 +76,16 @@ func (c *tokenServiceClient) Revoke(ctx context.Context, in *RevokeReq, opts ...
 	return out, nil
 }
 
+func (c *tokenServiceClient) ListUserRefreshTokens(ctx context.Context, in *ListUserRefreshTokensReq, opts ...grpc.CallOption) (*ListUserRefreshTokensRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ListUserRefreshTokensRes)
+	err := c.cc.Invoke(ctx, TokenService_ListUserRefreshTokens_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TokenServiceServer is the server API for TokenService service.
 // All implementations must embed UnimplementedTokenServiceServer
 // for forward compatibility.
@@ -81,6 +93,7 @@ type TokenServiceServer interface {
 	Issue(context.Context, *IssueReq) (*Token, error)
 	Refresh(context.Context, *RefreshReq) (*Token, error)
 	Revoke(context.Context, *RevokeReq) (*RevokeRes, error)
+	ListUserRefreshTokens(context.Context, *ListUserRefreshTokensReq) (*ListUserRefreshTokensRes, error)
 	mustEmbedUnimplementedTokenServiceServer()
 }
 
@@ -99,6 +112,9 @@ func (UnimplementedTokenServiceServer) Refresh(context.Context, *RefreshReq) (*T
 }
 func (UnimplementedTokenServiceServer) Revoke(context.Context, *RevokeReq) (*RevokeRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Revoke not implemented")
+}
+func (UnimplementedTokenServiceServer) ListUserRefreshTokens(context.Context, *ListUserRefreshTokensReq) (*ListUserRefreshTokensRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ListUserRefreshTokens not implemented")
 }
 func (UnimplementedTokenServiceServer) mustEmbedUnimplementedTokenServiceServer() {}
 func (UnimplementedTokenServiceServer) testEmbeddedByValue()                      {}
@@ -175,6 +191,24 @@ func _TokenService_Revoke_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TokenService_ListUserRefreshTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListUserRefreshTokensReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TokenServiceServer).ListUserRefreshTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TokenService_ListUserRefreshTokens_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TokenServiceServer).ListUserRefreshTokens(ctx, req.(*ListUserRefreshTokensReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TokenService_ServiceDesc is the grpc.ServiceDesc for TokenService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -193,6 +227,10 @@ var TokenService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Revoke",
 			Handler:    _TokenService_Revoke_Handler,
+		},
+		{
+			MethodName: "ListUserRefreshTokens",
+			Handler:    _TokenService_ListUserRefreshTokens_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

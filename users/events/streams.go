@@ -351,8 +351,8 @@ func (es *eventStore) SendPasswordReset(ctx context.Context, email string) error
 	return es.Publish(ctx, sendPasswordResetStream, event)
 }
 
-func (es *eventStore) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
-	token, err := es.svc.IssueToken(ctx, username, secret)
+func (es *eventStore) IssueToken(ctx context.Context, username, secret, description string) (*grpcTokenV1.Token, error) {
+	token, err := es.svc.IssueToken(ctx, username, secret, description)
 	if err != nil {
 		return token, err
 	}
@@ -386,8 +386,8 @@ func (es *eventStore) RefreshToken(ctx context.Context, session authn.Session, r
 	return token, nil
 }
 
-func (es *eventStore) RevokeRefreshToken(ctx context.Context, session authn.Session, refreshToken string) error {
-	err := es.svc.RevokeRefreshToken(ctx, session, refreshToken)
+func (es *eventStore) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
+	err := es.svc.RevokeRefreshToken(ctx, session, tokenID)
 	if err != nil {
 		return err
 	}
@@ -397,6 +397,10 @@ func (es *eventStore) RevokeRefreshToken(ctx context.Context, session authn.Sess
 	}
 
 	return es.Publish(ctx, revokeRefreshTokenStream, event)
+}
+
+func (es *eventStore) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error) {
+	return es.svc.ListActiveRefreshTokens(ctx, session)
 }
 
 func (es *eventStore) ResetSecret(ctx context.Context, session authn.Session, secret string) error {

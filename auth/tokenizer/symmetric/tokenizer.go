@@ -53,7 +53,7 @@ func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
 	if key.Type == auth.RefreshKey && key.ID != "" && key.Subject != "" {
 		ttl := time.Until(key.ExpiresAt)
 		if ttl > 0 {
-			if err := tok.cache.SaveActive(ctx, key.Subject, key.ID, ttl); err != nil {
+			if err := tok.cache.SaveActive(ctx, key.Subject, key.ID, key.Description, ttl); err != nil {
 				return "", err
 			}
 		}

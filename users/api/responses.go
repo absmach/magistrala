@@ -8,6 +8,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/supermq"
+	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
 	"github.com/absmach/supermq/users"
 )
 
@@ -92,6 +93,22 @@ func (res revokeRes) Headers() map[string]string {
 
 func (res revokeRes) Empty() bool {
 	return true
+}
+
+type listRefreshTokensRes struct {
+	RefreshTokens []*grpcTokenV1.RefreshToken `json:"refresh_tokens"`
+}
+
+func (res listRefreshTokensRes) Code() int {
+	return http.StatusOK
+}
+
+func (res listRefreshTokensRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res listRefreshTokensRes) Empty() bool {
+	return false
 }
 
 type sendVerificationRes struct{}

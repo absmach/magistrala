@@ -399,7 +399,7 @@ func createAdmin(ctx context.Context, c config, repo users.Repository, hsr users
 	if _, err = repo.Save(ctx, user); err != nil {
 		return "", err
 	}
-	if _, err = svc.IssueToken(ctx, c.AdminUsername, c.AdminPassword); err != nil {
+	if _, err = svc.IssueToken(ctx, c.AdminUsername, c.AdminPassword, ""); err != nil {
 		return "", err
 	}
 	return user.ID, nil

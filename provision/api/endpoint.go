@@ -45,10 +45,7 @@ func doProvision(svc provision.Service) endpoint.Endpoint {
 
 func getMapping(svc provision.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		res, err := svc.Mapping()
-		if err != nil {
-			return nil, err
-		}
+		res := svc.Mapping()
 
 		return mappingRes{Data: res}, nil
 	}

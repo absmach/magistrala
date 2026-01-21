@@ -85,7 +85,7 @@ func main() {
 		return
 	}
 	defer authnClient.Close()
-	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
+	logger.Info("AuthN successfully connected to auth gRPC server " + authnClient.Secure())
 	am := smqauthn.NewAuthNMiddleware(authn)
 
 	if cfgFromFile, err := loadConfigFromFile(cfg.File); err != nil {
@@ -96,7 +96,6 @@ func main() {
 		cfg = cfgFromFile
 		logger.Info("Continue with settings from file: " + cfg.File)
 	}
-	fmt.Printf("This is the final config: %+v\n", cfg)
 
 	SDKCfg := mgsdk.Config{
 		UsersURL:        cfg.Server.UsersURL,
@@ -118,7 +117,7 @@ func main() {
 	svc := provision.New(cfg, mgSdk, cSdk, logger)
 	svc = middleware.NewLogging(svc, logger)
 
-	httpServerConfig := server.Config{Host: "", Port: cfg.Server.HTTPPort, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
+	httpServerConfig := server.Config{Host: "", Port: cfg.Server.Port, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {

@@ -50,7 +50,7 @@ func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID
 		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
-			lm.logger.Warn("Client certificate failed to create successfully", args...)
+			lm.logger.Warn("Client certificate creation failed", args...)
 			return
 		}
 		lm.logger.Info("Client certificate created successfully", args...)
@@ -59,7 +59,7 @@ func (lm *loggingMiddleware) Cert(ctx context.Context, domainID, token, clientID
 	return lm.svc.Cert(ctx, domainID, token, clientID, duration)
 }
 
-func (lm *loggingMiddleware) Mapping() (res map[string]any, err error) {
+func (lm *loggingMiddleware) Mapping() (res map[string]any) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

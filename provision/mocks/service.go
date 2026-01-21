@@ -133,7 +133,7 @@ func (_c *Service_Cert_Call) RunAndReturn(run func(ctx context.Context, domainID
 }
 
 // Mapping provides a mock function for the type Service
-func (_mock *Service) Mapping() (map[string]any, error) {
+func (_mock *Service) Mapping() map[string]any {
 	ret := _mock.Called()
 
 	if len(ret) == 0 {
@@ -141,10 +141,6 @@ func (_mock *Service) Mapping() (map[string]any, error) {
 	}
 
 	var r0 map[string]any
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func() (map[string]any, error)); ok {
-		return returnFunc()
-	}
 	if returnFunc, ok := ret.Get(0).(func() map[string]any); ok {
 		r0 = returnFunc()
 	} else {
@@ -152,12 +148,7 @@ func (_mock *Service) Mapping() (map[string]any, error) {
 			r0 = ret.Get(0).(map[string]any)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func() error); ok {
-		r1 = returnFunc()
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // Service_Mapping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Mapping'
@@ -177,12 +168,12 @@ func (_c *Service_Mapping_Call) Run(run func()) *Service_Mapping_Call {
 	return _c
 }
 
-func (_c *Service_Mapping_Call) Return(stringToV map[string]any, err error) *Service_Mapping_Call {
-	_c.Call.Return(stringToV, err)
+func (_c *Service_Mapping_Call) Return(stringToV map[string]any) *Service_Mapping_Call {
+	_c.Call.Return(stringToV)
 	return _c
 }
 
-func (_c *Service_Mapping_Call) RunAndReturn(run func() (map[string]any, error)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) RunAndReturn(run func() map[string]any) *Service_Mapping_Call {
 	_c.Call.Return(run)
 	return _c
 }

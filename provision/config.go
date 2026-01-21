@@ -26,7 +26,6 @@ type ServiceConf struct {
 	ChannelsURL string `toml:"channels_url"  env:"MG_PROVISION_CHANNELS_URL"    envDefault:"http://localhost"`
 	UsersURL    string `toml:"users_url"     env:"MG_PROVISION_USERS_URL"       envDefault:"http://localhost"`
 	CertsURL    string `toml:"certs_url"     env:"MG_PROVISION_CERTS_URL"       envDefault:"http://localhost"`
-	HTTPPort    string `toml:"http_port"     env:"MG_PROVISION_HTTP_PORT"       envDefault:"9016"`
 	MgEmail     string `toml:"mg_email"      env:"MG_PROVISION_EMAIL"           envDefault:"test@example.com"`
 	MgUsername  string `toml:"mg_username"   env:"MG_PROVISION_USERNAME"        envDefault:"user"`
 	MgPass      string `toml:"mg_pass"       env:"MG_PROVISION_PASS"            envDefault:"test"`

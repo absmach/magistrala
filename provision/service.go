@@ -42,7 +42,7 @@ var (
 	ErrFailedCertView           = errors.NewServiceError("failed to view certificate")
 	ErrFailedBootstrap          = errors.NewServiceError("failed to create bootstrap config")
 	ErrFailedBootstrapValidate  = errors.NewServiceError("failed to validate bootstrap config creation")
-	ErrGatewayUpdate            = errors.NewServiceError("failed to updated gateway metadata")
+	ErrGatewayUpdate            = errors.NewServiceError("failed to update gateway metadata")
 )
 
 var _ Service = (*provisionService)(nil)
@@ -60,7 +60,7 @@ type Service interface {
 	// Mapping returns current configuration used for provision
 	// useful for using in ui to create configuration that matches
 	// one created with Provision method.
-	Mapping() (map[string]any, error)
+	Mapping() map[string]any
 
 	// Certs creates certificate for clients that communicate over mTLS
 	// A duration string is a possibly signed sequence of decimal numbers,
@@ -98,8 +98,8 @@ func New(cfg Config, mgsdk sdk.SDK, certsSdk csdk.SDK, logger *slog.Logger) Serv
 }
 
 // Mapping retrieves current configuration.
-func (ps *provisionService) Mapping() (map[string]any, error) {
-	return ps.conf.Bootstrap.Content, nil
+func (ps *provisionService) Mapping() map[string]any {
+	return ps.conf.Bootstrap.Content
 }
 
 // Provision is provision method for creating setup according to

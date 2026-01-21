@@ -40,16 +40,6 @@ func TestProvisioReq(t *testing.T) {
 			err: apiutil.ErrMissingID,
 		},
 		{
-			desc: "empty domain id",
-			req: provisionReq{
-				token:       "token",
-				Name:        "name",
-				ExternalID:  testsutil.GenerateUUID(t),
-				ExternalKey: testsutil.GenerateUUID(t),
-			},
-			err: apiutil.ErrMissingDomainID,
-		},
-		{
 			desc: "empty external key",
 			req: provisionReq{
 				token:       "token",

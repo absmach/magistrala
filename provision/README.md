@@ -229,4 +229,4 @@ For an in-depth explanation of our Provision Service, see the [official document
 [bootstrap]: https://github.com/absmach/supermq/tree/main/bootstrap
 [export]: https://github.com/absmach/export
 [agent]: https://github.com/absmach/agent
-[mgxui]: https://github.com/absmach/supermq/ui
+[mgxui]: https://github.com/absmach/magistrala/ui

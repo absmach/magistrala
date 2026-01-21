@@ -219,7 +219,7 @@ Time ranges use relative expressions parsed by `pkg/reltime`, such as `now()` or
 ### Example: Generate a report
 
 ```bash
-curl -X POST "http://localhost:9017/<domainID>/reports" \
+curl -X POST "http://localhost:9017/<domainID>/reports?action=view" \
   -H "Authorization: Bearer <access_token>" \
   -H "Content-Type: application/json" \
   -d '{

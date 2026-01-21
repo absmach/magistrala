@@ -10,7 +10,8 @@ service TokenService {
   rpc Issue(IssueReq) returns (Token) {}
   rpc Refresh(RefreshReq) returns (Token) {}
   rpc Revoke(RevokeReq) returns (RevokeRes) {}
-  rpc ListUserRefreshTokens(ListUserRefreshTokensReq) returns (ListUserRefreshTokensRes) {}
+  rpc ListUserRefreshTokens(ListUserRefreshTokensReq) 
+  returns (ListUserRefreshTokensRes) {}
 }
 
 message IssueReq {

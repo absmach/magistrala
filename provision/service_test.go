@@ -45,8 +45,7 @@ func TestMapping(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			content, err := svc.Mapping()
-			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))
+			content := svc.Mapping()
 			assert.Equal(t, c.content, content)
 		})
 	}

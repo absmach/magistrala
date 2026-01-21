@@ -216,16 +216,6 @@ func TestMapping(t *testing.T) {
 			authnRes:    smqauthn.Session{},
 			authnErr:    errors.ErrAuthentication,
 		},
-		{
-			desc:        "service error",
-			token:       validToken,
-			domainID:    validID,
-			status:      http.StatusForbidden,
-			contentType: validContenType,
-			authnRes:    validSession,
-			authnErr:    nil,
-			svcErr:      svcerr.ErrAuthorization,
-		},
 	}
 
 	for _, tc := range cases {

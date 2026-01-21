@@ -61,7 +61,6 @@ const (
 
 type config struct {
 	LogLevel                      string        `env:"SMQ_AUTH_LOG_LEVEL"                         envDefault:"info"`
-	SecretKey                     string        `env:"SMQ_AUTH_SECRET_KEY"                        envDefault:"secret"`
 	JaegerURL                     url.URL       `env:"SMQ_JAEGER_URL"                             envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry                 bool          `env:"SMQ_SEND_TELEMETRY"                         envDefault:"true"`
 	InstanceID                    string        `env:"SMQ_AUTH_ADAPTER_INSTANCE_ID"               envDefault:""`
@@ -70,6 +69,8 @@ type config struct {
 	KeyAlgorithm                  string        `env:"SMQ_AUTH_KEYS_ALGORITHM"                    envDefault:"EdDSA"`
 	ActiveKeyPath                 string        `env:"SMQ_AUTH_KEYS_ACTIVE_KEY_PATH"              envDefault:"./keys/active.key"`
 	RetiringKeyPath               string        `env:"SMQ_AUTH_KEYS_RETIRING_KEY_PATH"            envDefault:""`
+	ActiveSecretKey               string        `env:"SMQ_AUTH_ACTIVE_SECRET_KEY"                 envDefault:"secret"`
+	RetiringSecretKey             string        `env:"SMQ_AUTH_RETIRING_SECRET_KEY"               envDefault:"secret"`
 	InvitationDuration            time.Duration `env:"SMQ_AUTH_INVITATION_DURATION"               envDefault:"168h"`
 	SpicedbHost                   string        `env:"SMQ_SPICEDB_HOST"                           envDefault:"localhost"`
 	SpicedbPort                   string        `env:"SMQ_SPICEDB_PORT"                           envDefault:"50051"`
@@ -168,7 +169,7 @@ func main() {
 	var tokenizer auth.Tokenizer
 	switch {
 	case isSymmetric:
-		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey))
+		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.ActiveSecretKey), []byte(cfg.RetiringSecretKey))
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create symmetric key manager: %s", err.Error()))
 			exitCode = 1
@@ -266,8 +267,8 @@ func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, sch
 
 func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	if isSymmetric {
-		if cfg.SecretKey == "secret" {
-			return fmt.Errorf("default secret key is insecure - please set SMQ_AUTH_SECRET_KEY environment variable")
+		if cfg.ActiveSecretKey == "secret" {
+			return fmt.Errorf("default secret key is insecure - please set SMQ_AUTH_ACTIVE_SECRET_KEY environment variable")
 		}
 		return nil
 	}

@@ -18,56 +18,63 @@ import (
 
 func TestNewTokenizer(t *testing.T) {
 	cases := []struct {
-		name        string
-		algorithm   string
-		secret      []byte
-		expectErr   bool
-		errContains string
+		name           string
+		algorithm      string
+		activeSecret   []byte
+		retiringSecret []byte
+		expectErr      bool
+		errContains    string
 	}{
 		{
-			name:      "valid HS256 algorithm",
-			algorithm: "HS256",
-			secret:    []byte("my-secret-key-32-bytes-long!!"),
-			expectErr: false,
+			name:           "valid HS256 algorithm",
+			algorithm:      "HS256",
+			activeSecret:   []byte("my-secret-key-32-bytes-long!!"),
+			retiringSecret: nil,
+			expectErr:      false,
 		},
 		{
-			name:      "valid HS384 algorithm",
-			algorithm: "HS384",
-			secret:    []byte("my-secret-key-48-bytes-long-for-hs384-!!!!!!"),
-			expectErr: false,
+			name:           "valid HS384 algorithm",
+			algorithm:      "HS384",
+			activeSecret:   []byte("my-secret-key-48-bytes-long-for-hs384-!!!!!!"),
+			retiringSecret: nil,
+			expectErr:      false,
 		},
 		{
-			name:      "valid HS512 algorithm",
-			algorithm: "HS512",
-			secret:    []byte("my-secret-key-64-bytes-long-for-hs512-algorithm-testing!!!!"),
-			expectErr: false,
+			name:           "valid HS512 algorithm",
+			algorithm:      "HS512",
+			activeSecret:   []byte("my-secret-key-64-bytes-long-for-hs512-algorithm-testing!!!!"),
+			retiringSecret: nil,
+			expectErr:      false,
 		},
 		{
-			name:        "invalid algorithm",
-			algorithm:   "INVALID_ALG",
-			secret:      []byte("my-secret-key"),
-			expectErr:   true,
-			errContains: "unsupported key algorithm",
+			name:           "invalid algorithm",
+			algorithm:      "INVALID_ALG",
+			activeSecret:   []byte("my-secret-key"),
+			retiringSecret: nil,
+			expectErr:      true,
+			errContains:    "unsupported key algorithm",
 		},
 		{
-			name:        "empty secret",
-			algorithm:   "HS256",
-			secret:      []byte{},
-			expectErr:   true,
-			errContains: "invalid symmetric key",
+			name:           "empty secret",
+			algorithm:      "HS256",
+			activeSecret:   []byte{},
+			retiringSecret: nil,
+			expectErr:      true,
+			errContains:    "invalid symmetric key",
 		},
 		{
-			name:        "nil secret",
-			algorithm:   "HS256",
-			secret:      nil,
-			expectErr:   true,
-			errContains: "invalid symmetric key",
+			name:           "nil secret",
+			algorithm:      "HS256",
+			activeSecret:   nil,
+			retiringSecret: nil,
+			expectErr:      true,
+			errContains:    "invalid symmetric key",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			km, err := symmetric.NewTokenizer(tc.algorithm, tc.secret)
+			km, err := symmetric.NewTokenizer(tc.algorithm, tc.activeSecret, tc.retiringSecret)
 
 			if tc.expectErr {
 				assert.Error(t, err)
@@ -86,7 +93,7 @@ func TestNewTokenizer(t *testing.T) {
 func TestSign(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
 
-	km, err := symmetric.NewTokenizer("HS256", secret)
+	km, err := symmetric.NewTokenizer("HS256", secret, nil)
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -146,7 +153,7 @@ func TestSign(t *testing.T) {
 func TestVerify(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
 
-	km, err := symmetric.NewTokenizer("HS256", secret)
+	km, err := symmetric.NewTokenizer("HS256", secret, nil)
 	require.NoError(t, err)
 
 	validKey := auth.Key{
@@ -188,7 +195,7 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 	wrongIssuerToken := string(wrongIssuerTokenBytes)
 
-	wrongSecretKM, err := symmetric.NewTokenizer("HS256", []byte("different-secret-key-here"))
+	wrongSecretKM, err := symmetric.NewTokenizer("HS256", []byte("different-secret-key-here"), nil)
 	require.NoError(t, err)
 	wrongSecretToken, err := wrongSecretKM.Issue(validKey)
 	require.NoError(t, err)
@@ -252,7 +259,7 @@ func TestVerify(t *testing.T) {
 func TestPublicKeys(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
 
-	km, err := symmetric.NewTokenizer("HS256", secret)
+	km, err := symmetric.NewTokenizer("HS256", secret, nil)
 	require.NoError(t, err)
 
 	keys, err := km.RetrieveJWKS()
@@ -268,7 +275,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 		t.Run(alg, func(t *testing.T) {
 			secret := []byte("my-super-secret-key-for-testing-" + alg)
 
-			km, err := symmetric.NewTokenizer(alg, secret)
+			km, err := symmetric.NewTokenizer(alg, secret, nil)
 			require.NoError(t, err)
 
 			originalKey := auth.Key{
@@ -313,17 +320,17 @@ func TestDifferentAlgorithms(t *testing.T) {
 		Verified:  true,
 	}
 
-	km256, err := symmetric.NewTokenizer("HS256", secret)
+	km256, err := symmetric.NewTokenizer("HS256", secret, nil)
 	require.NoError(t, err)
 	token256, err := km256.Issue(key)
 	require.NoError(t, err)
 
-	km384, err := symmetric.NewTokenizer("HS384", secret)
+	km384, err := symmetric.NewTokenizer("HS384", secret, nil)
 	require.NoError(t, err)
 	token384, err := km384.Issue(key)
 	require.NoError(t, err)
 
-	km512, err := symmetric.NewTokenizer("HS512", secret)
+	km512, err := symmetric.NewTokenizer("HS512", secret, nil)
 	require.NoError(t, err)
 	token512, err := km512.Issue(key)
 	require.NoError(t, err)

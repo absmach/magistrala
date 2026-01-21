@@ -14,30 +14,30 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-const (
-	patPrefix = "pat"
-)
+const patPrefix = "pat"
 
 var errJWTExpiryKey = errors.New(`"exp" not satisfied`)
 
 type tokenizer struct {
-	algorithm jwa.KeyAlgorithm
-	secret    []byte
+	algorithm      jwa.KeyAlgorithm
+	activeSecret   []byte
+	retiringSecret []byte
 }
 
 var _ auth.Tokenizer = (*tokenizer)(nil)
 
-func NewTokenizer(algorithm string, secret []byte) (auth.Tokenizer, error) {
+func NewTokenizer(algorithm string, activeSecret, retiringSecret []byte) (auth.Tokenizer, error) {
 	alg := jwa.KeyAlgorithmFrom(algorithm)
 	if _, ok := alg.(jwa.InvalidKeyAlgorithm); ok {
 		return nil, auth.ErrUnsupportedKeyAlgorithm
 	}
-	if len(secret) == 0 {
+	if len(activeSecret) == 0 {
 		return nil, auth.ErrInvalidSymmetricKey
 	}
 	return &tokenizer{
-		secret:    secret,
-		algorithm: alg,
+		activeSecret:   activeSecret,
+		retiringSecret: retiringSecret,
+		algorithm:      alg,
 	}, nil
 }
 
@@ -47,7 +47,7 @@ func (km *tokenizer) Issue(key auth.Key) (string, error) {
 		return "", err
 	}
 
-	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(km.algorithm, km.secret))
+	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(km.algorithm, km.activeSecret))
 	if err != nil {
 		return "", err
 	}
@@ -63,13 +63,27 @@ func (km *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, e
 	tkn, err := jwt.Parse(
 		[]byte(tokenString),
 		jwt.WithValidate(true),
-		jwt.WithKey(km.algorithm, km.secret),
+		jwt.WithKey(km.algorithm, km.activeSecret),
 	)
 	if err != nil {
-		if errors.Contains(err, errJWTExpiryKey) {
+		switch {
+		case errors.Contains(err, errJWTExpiryKey):
 			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
+		case len(km.retiringSecret) > 0:
+			tkn, err = jwt.Parse(
+				[]byte(tokenString),
+				jwt.WithValidate(true),
+				jwt.WithKey(km.algorithm, km.retiringSecret),
+			)
+			if err != nil {
+				if errors.Contains(err, errJWTExpiryKey) {
+					return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
+				}
+				return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
+			}
+		default:
+			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
 		}
-		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 
 	if tkn.Issuer() != smqjwt.IssuerName {

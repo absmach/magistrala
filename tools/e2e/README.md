@@ -17,7 +17,7 @@ Tool for testing end-to-end flow of SuperMQ by doing a couple of operations name
 1. Creating, viewing, updating and changing status of users, groups, clients and channels.
 2. Connecting users and groups to each other and clients and channels to each other.
 3. Sending messages from clients to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).
-Complete documentation is available at https://docs.supermq.abstractmachines.fr
+Complete documentation is available at https://docs.supermq.absmach.eu
 
 
 Usage:

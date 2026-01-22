@@ -1,36 +1,35 @@
 <div align="center">
 
-  # Magistrala
-  
-  **A Modern IoT Platform Built on SuperMQ**
-  
-  **Scalable • Secure • Open-Source**
-  
-  [![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
-  [![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yaml)
-  [![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
-  [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/absmach/magistrala)
-  [![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09)](https://codecov.io/gh/absmach/magistrala)
-  [![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
-  [![Matrix](https://img.shields.io/matrix/magistrala:matrix.org?style=flat-square)](https://matrix.to/#/#magistrala:matrix.org)
-  
-  ### [Guide](https://docs.magistrala.absmach.eu) | [Contributing](CONTRIBUTING.md) | [Website](https://www.absmach.eu/magistrala) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
+# Magistrala
 
-  Made with ❤️ by [Abstract Machines](https://www.absmach.eu)
+### A Modern IoT Platform Built on SuperMQ
+
+### Scalable • Secure • Open-Source
+
+[![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
+[![Continuous Delivery](https://github.com/absmach/magistrala/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/absmach/magistrala)
+[![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=SEMDAO3L09)](https://codecov.io/gh/absmach/magistrala)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat-square)](LICENSE)
+[![Matrix](https://img.shields.io/matrix/magistrala:matrix.org?style=flat-square)](https://matrix.to/#/#magistrala:matrix.org)
+
+### [Guide](https://docs.magistrala.absmach.eu) | [Contributing](CONTRIBUTING.md) | [Website](https://www.absmach.eu/magistrala) | [Chat](https://matrix.to/#/#magistrala:matrix.org)
+
+Made with ❤️ by [Abstract Machines](https://www.absmach.eu)
 
 </div>
-
 
 ## Introduction 🌍
 
 Magistrala is a cutting-edge, open-source IoT cloud platform built on top of [SuperMQ](https://github.com/absmach/supermq). It serves as a robust middleware solution for building complex IoT applications. With Magistrala, you can connect and manage IoT devices seamlessly using multi-protocol support, all while ensuring security and scalability.
 
-### Key Benefits:
-- **Unified IoT Management**: Connect sensors, actuators, and applications over various network protocols.
+### Key Benefits
+
+- **Unified IoT Management**: Connect sensors, actuators and applications over various network protocols.
 - **Scalability and Performance**: Designed to handle enterprise-grade IoT deployments.
 - **Secure by Design**: Features such as mutual TLS authentication and fine-grained access control.
 - **Open-Source Freedom**: Patent-free, community-driven, and designed for extensibility.
-
 
 ## ✨ Features
 
@@ -51,7 +50,6 @@ Magistrala is a cutting-edge, open-source IoT cloud platform built on top of [Su
 - 🌍 **Edge and IoT Ready**: Agent and Export services for managing remote IoT gateways.
 - 🛠️ **Developer Tools**: Comprehensive SDK and CLI for efficient development.
 - 🏗️ **Domain-Driven Design**: High-quality codebase and extensive test coverage.
-
 
 ## Installation 🛠️
 
@@ -91,7 +89,7 @@ git checkout main
 
 ## 📤 Usage
 
-#### Using the CLI:
+**Using the CLI :**
 
 Check the health of a specific service using the CLI:
 
@@ -102,9 +100,9 @@ make cli
 
 Replace `<service>` with the name of the service you want to check.
 
-#### Using Curl:
+**Using Curl :**
 
-Alternatively, use a simple HTTP GET request to check the platform's health:
+Alternatively, use a simple HTTP `GET` request to check the platform's health:
 
 ```bash
 curl -X GET http://localhost:8080/health
@@ -112,13 +110,11 @@ curl -X GET http://localhost:8080/health
 
 For additional usage examples and advanced configurations, visit the [official documentation](https://docs.magistrala.absmach.eu).
 
-
 ## 📚 Documentation
 
 Complete documentation is available at the [Magistrala official docs page](https://docs.magistrala.absmach.eu).
 
-For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.absmach.eu/cli).
-
+For CLI usage details, visit the [CLI Documentation](https://docs.magistrala.absmach.eu/dev-guide/cli/introduction-to-cli).
 
 ## 🌐 Community and Contributing
 
@@ -128,11 +124,9 @@ Join the community and contribute to the future of IoT middleware:
 - [Contribution Guide](CONTRIBUTING.md)
 - [Matrix Chat](https://matrix.to/#/#magistrala:matrix.org)
 
-
 ## 📜 License
 
 Magistrala is open-source software licensed under the [Apache-2.0](LICENSE) license. Contributions are welcome and encouraged!
-
 
 ## 💼 Professional Support
 

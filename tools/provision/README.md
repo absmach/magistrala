@@ -17,7 +17,7 @@ make
 ```bash
 ./provision --help
 Tool for provisioning series of SuperMQ channels and clients and connecting them together.
-Complete documentation is available at https://docs.supermq.abstractmachines.fr
+Complete documentation is available at https://docs.supermq.absmach.eu
 
 Usage:
   provision [flags]

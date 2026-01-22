@@ -6,7 +6,7 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.4
-	github.com/absmach/supermq v0.18.5-0.20260115163411-551d44d58e72
+	github.com/absmach/supermq v0.18.5-0.20260122075525-5b913dd46bb5
 	github.com/authzed/authzed-go v1.7.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
@@ -42,13 +42,9 @@ require (
 	golang.org/x/sync v0.19.0
 	gonum.org/v1/gonum v0.17.0
 	google.golang.org/grpc v1.78.0
+	google.golang.org/protobuf v1.36.11
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	moul.io/http2curl v1.0.0
-)
-
-require (
-	go.yaml.in/yaml/v2 v2.4.3 // indirect
-	go.yaml.in/yaml/v3 v3.0.4 // indirect
 )
 
 require (
@@ -140,13 +136,14 @@ require (
 	go.opentelemetry.io/otel/metric v1.39.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.39.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.9.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	go.yaml.in/yaml/v2 v2.4.3 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/net v0.48.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251202230838-ff82c1b0f217 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251202230838-ff82c1b0f217 // indirect
-	google.golang.org/protobuf v1.36.11
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

@@ -130,7 +130,9 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	}
 
 	q := fmt.Sprintf(`UPDATE alarms SET %s updated_by = :updated_by, updated_at = :updated_at WHERE id = :id
-		RETURNING id, rule_id, measurement, value, unit, cause, status, domain_id, assignee_id, metadata, created_at, updated_by, updated_at, resolved_by, resolved_at;`, upq)
+		RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, 
+		cause, status, severity, assignee_id, assigned_at, assigned_by, acknowledged_at, acknowledged_by, 
+		resolved_by, resolved_at, metadata, created_at, updated_by, updated_at;`, upq)
 
 	dba, err := toDBAlarm(alarm)
 	if err != nil {

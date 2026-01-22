@@ -174,7 +174,7 @@ services:
           create_host_path: true
 
   ui-backend-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: magistrala-ui-backend-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -233,7 +233,7 @@ services:
       BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
 
   re-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: magistrala-re-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -333,7 +333,7 @@ services:
           create_host_path: true
 
   alarms-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: magistrala-alarms-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
@@ -422,7 +422,7 @@ services:
           create_host_path: true
 
   reports-db:
-    image: postgres:16.2-alpine
+    image: docker.io/postgres:18.0-alpine3.22
     container_name: magistrala-reports-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"

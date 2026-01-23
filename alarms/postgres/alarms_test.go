@@ -34,11 +34,11 @@ func TestCreateAlarm(t *testing.T) {
 	repo := postgres.NewAlarmsRepo(db)
 
 	alarm := alarms.Alarm{
-		ID:          generateUUID(&testing.T{}),
-		RuleID:      generateUUID(&testing.T{}),
-		DomainID:    generateUUID(&testing.T{}),
-		ChannelID:   generateUUID(&testing.T{}),
-		ClientID:    generateUUID(&testing.T{}),
+		ID:          generateUUID(t),
+		RuleID:      generateUUID(t),
+		DomainID:    generateUUID(t),
+		ChannelID:   generateUUID(t),
+		ClientID:    generateUUID(t),
 		Subtopic:    namegen.Generate(),
 		Measurement: namegen.Generate(),
 		Value:       namegen.Generate(),
@@ -46,8 +46,8 @@ func TestCreateAlarm(t *testing.T) {
 		Threshold:   namegen.Generate(),
 		Cause:       namegen.Generate(),
 		Status:      0,
-		AssigneeID:  generateUUID(&testing.T{}),
-		CreatedAt:   time.Now().Local(),
+		AssigneeID:  generateUUID(t),
+		CreatedAt:   time.Now().UTC(),
 		Metadata: map[string]any{
 			"key": "value",
 		},
@@ -71,10 +71,10 @@ func TestCreateAlarm(t *testing.T) {
 		{
 			desc: "missing rule id",
 			alarm: alarms.Alarm{
-				ID:          generateUUID(&testing.T{}),
-				DomainID:    generateUUID(&testing.T{}),
-				ChannelID:   generateUUID(&testing.T{}),
-				ClientID:    generateUUID(&testing.T{}),
+				ID:          generateUUID(t),
+				DomainID:    generateUUID(t),
+				ChannelID:   generateUUID(t),
+				ClientID:    generateUUID(t),
 				Subtopic:    namegen.Generate(),
 				Measurement: namegen.Generate(),
 				Value:       namegen.Generate(),
@@ -82,8 +82,8 @@ func TestCreateAlarm(t *testing.T) {
 				Threshold:   namegen.Generate(),
 				Cause:       namegen.Generate(),
 				Status:      0,
-				AssigneeID:  generateUUID(&testing.T{}),
-				CreatedAt:   time.Now().Local(),
+				AssigneeID:  generateUUID(t),
+				CreatedAt:   time.Now().UTC(),
 
 				Metadata: map[string]any{
 					"key": "value",
@@ -94,10 +94,10 @@ func TestCreateAlarm(t *testing.T) {
 		{
 			desc: "invalid alarm",
 			alarm: alarms.Alarm{
-				ID:          generateUUID(&testing.T{}),
-				DomainID:    generateUUID(&testing.T{}),
-				ChannelID:   generateUUID(&testing.T{}),
-				ClientID:    generateUUID(&testing.T{}),
+				ID:          generateUUID(t),
+				DomainID:    generateUUID(t),
+				ChannelID:   generateUUID(t),
+				ClientID:    generateUUID(t),
 				Subtopic:    namegen.Generate(),
 				Measurement: namegen.Generate(),
 				Value:       namegen.Generate(),
@@ -105,8 +105,8 @@ func TestCreateAlarm(t *testing.T) {
 				Threshold:   namegen.Generate(),
 				Cause:       namegen.Generate(),
 				Status:      0,
-				AssigneeID:  generateUUID(&testing.T{}),
-				CreatedAt:   time.Now().Local(),
+				AssigneeID:  generateUUID(t),
+				CreatedAt:   time.Now().UTC(),
 
 				Metadata: map[string]any{
 					"key": make(chan int),
@@ -129,17 +129,17 @@ func TestCreateAlarm(t *testing.T) {
 
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, alarm.ID)
-			require.Equal(t, tc.alarm.RuleID, alarm.RuleID)
-			require.Equal(t, tc.alarm.Measurement, alarm.Measurement)
-			require.Equal(t, tc.alarm.Value, alarm.Value)
-			require.Equal(t, tc.alarm.Unit, alarm.Unit)
-			require.Equal(t, tc.alarm.Cause, alarm.Cause)
-			require.Equal(t, tc.alarm.Status, alarm.Status)
-			require.Equal(t, tc.alarm.DomainID, alarm.DomainID)
-			require.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
-			require.Equal(t, tc.alarm.Metadata, alarm.Metadata)
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.NotEmpty(t, alarm.ID)
+			assert.Equal(t, tc.alarm.RuleID, alarm.RuleID)
+			assert.Equal(t, tc.alarm.Measurement, alarm.Measurement)
+			assert.Equal(t, tc.alarm.Value, alarm.Value)
+			assert.Equal(t, tc.alarm.Unit, alarm.Unit)
+			assert.Equal(t, tc.alarm.Cause, alarm.Cause)
+			assert.Equal(t, tc.alarm.Status, alarm.Status)
+			assert.Equal(t, tc.alarm.DomainID, alarm.DomainID)
+			assert.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
+			assert.Equal(t, tc.alarm.Metadata, alarm.Metadata)
 		})
 	}
 }
@@ -153,19 +153,19 @@ func TestUpdateAlarm(t *testing.T) {
 	repo := postgres.NewAlarmsRepo(db)
 
 	alarm := alarms.Alarm{
-		ID:          generateUUID(&testing.T{}),
-		RuleID:      generateUUID(&testing.T{}),
-		DomainID:    generateUUID(&testing.T{}),
-		ChannelID:   generateUUID(&testing.T{}),
-		ClientID:    generateUUID(&testing.T{}),
+		ID:          generateUUID(t),
+		RuleID:      generateUUID(t),
+		DomainID:    generateUUID(t),
+		ChannelID:   generateUUID(t),
+		ClientID:    generateUUID(t),
 		Measurement: namegen.Generate(),
 		Value:       namegen.Generate(),
 		Unit:        namegen.Generate(),
 		Threshold:   namegen.Generate(),
 		Cause:       namegen.Generate(),
 		Status:      0,
-		AssigneeID:  generateUUID(&testing.T{}),
-		CreatedAt:   time.Now().Local(),
+		AssigneeID:  generateUUID(t),
+		CreatedAt:   time.Now().UTC(),
 		Metadata: map[string]any{
 			"key": "value",
 		},
@@ -181,15 +181,19 @@ func TestUpdateAlarm(t *testing.T) {
 		{
 			desc: "valid alarm",
 			alarm: alarms.Alarm{
-				ID:         alarm.ID,
-				Status:     alarms.ActiveStatus,
-				DomainID:   alarm.DomainID,
-				AssigneeID: generateUUID(&testing.T{}),
-				CreatedAt:  alarm.CreatedAt,
-				UpdatedAt:  time.Now().Local(),
-				UpdatedBy:  generateUUID(&testing.T{}),
-				ResolvedAt: time.Now().Local(),
-				ResolvedBy: generateUUID(&testing.T{}),
+				ID:             alarm.ID,
+				Status:         alarms.ClearedStatus,
+				DomainID:       alarm.DomainID,
+				AssigneeID:     generateUUID(t),
+				AssignedBy:     generateUUID(t),
+				AssignedAt:     time.Now().UTC(),
+				AcknowledgedBy: generateUUID(t),
+				AcknowledgedAt: time.Now().UTC(),
+				CreatedAt:      alarm.CreatedAt,
+				UpdatedAt:      time.Now().UTC(),
+				UpdatedBy:      generateUUID(t),
+				ResolvedAt:     time.Now().UTC(),
+				ResolvedBy:     generateUUID(t),
 				Metadata: map[string]any{
 					"key": "value",
 				},
@@ -199,7 +203,7 @@ func TestUpdateAlarm(t *testing.T) {
 		{
 			desc: "non existing alarm",
 			alarm: alarms.Alarm{
-				ID: generateUUID(&testing.T{}),
+				ID: generateUUID(t),
 			},
 			err: repoerr.ErrNotFound,
 		},
@@ -207,11 +211,11 @@ func TestUpdateAlarm(t *testing.T) {
 			desc: "invalid alarm",
 			alarm: alarms.Alarm{
 				ID:         alarm.ID,
-				RuleID:     generateUUID(&testing.T{}),
+				RuleID:     generateUUID(t),
 				Status:     0,
-				DomainID:   generateUUID(&testing.T{}),
+				DomainID:   generateUUID(t),
 				AssigneeID: strings.Repeat("a", 40),
-				CreatedAt:  time.Now().Local(),
+				CreatedAt:  time.Now().UTC(),
 				Metadata: map[string]any{
 					"key": "value",
 				},
@@ -233,12 +237,15 @@ func TestUpdateAlarm(t *testing.T) {
 
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, alarm.ID)
-			require.Equal(t, tc.alarm.Status, alarm.Status)
-			require.Equal(t, tc.alarm.DomainID, alarm.DomainID)
-			require.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
-			require.Equal(t, tc.alarm.Metadata, alarm.Metadata)
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.NotEmpty(t, alarm.ID)
+			assert.Equal(t, tc.alarm.Status, alarm.Status)
+			assert.Equal(t, tc.alarm.DomainID, alarm.DomainID)
+			assert.Equal(t, tc.alarm.AssigneeID, alarm.AssigneeID)
+			assert.Equal(t, tc.alarm.UpdatedBy, alarm.UpdatedBy)
+			assert.Equal(t, tc.alarm.ResolvedBy, alarm.ResolvedBy)
+			assert.Equal(t, tc.alarm.AcknowledgedBy, alarm.AcknowledgedBy)
+			assert.Equal(t, tc.alarm.Metadata, alarm.Metadata)
 		})
 	}
 }
@@ -252,19 +259,19 @@ func TestViewAlarm(t *testing.T) {
 	repo := postgres.NewAlarmsRepo(db)
 
 	alarm := alarms.Alarm{
-		ID:          generateUUID(&testing.T{}),
-		RuleID:      generateUUID(&testing.T{}),
-		DomainID:    generateUUID(&testing.T{}),
-		ChannelID:   generateUUID(&testing.T{}),
-		ClientID:    generateUUID(&testing.T{}),
+		ID:          generateUUID(t),
+		RuleID:      generateUUID(t),
+		DomainID:    generateUUID(t),
+		ChannelID:   generateUUID(t),
+		ClientID:    generateUUID(t),
 		Measurement: namegen.Generate(),
 		Value:       namegen.Generate(),
 		Unit:        namegen.Generate(),
 		Threshold:   namegen.Generate(),
 		Cause:       namegen.Generate(),
 		Status:      0,
-		AssigneeID:  generateUUID(&testing.T{}),
-		CreatedAt:   time.Now().Local(),
+		AssigneeID:  generateUUID(t),
+		CreatedAt:   time.Now().UTC(),
 		Metadata: map[string]any{
 			"key": "value",
 		},
@@ -286,14 +293,14 @@ func TestViewAlarm(t *testing.T) {
 		},
 		{
 			desc:     "non existing alarm id",
-			id:       generateUUID(&testing.T{}),
+			id:       generateUUID(t),
 			domainID: alarm.DomainID,
 			err:      repoerr.ErrNotFound,
 		},
 		{
 			desc:     "non existing domain id",
 			id:       alarm.ID,
-			domainID: generateUUID(&testing.T{}),
+			domainID: generateUUID(t),
 			err:      repoerr.ErrNotFound,
 		},
 	}
@@ -306,9 +313,9 @@ func TestViewAlarm(t *testing.T) {
 
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.NotEmpty(t, alarm.ID)
-			require.Equal(t, tc.id, alarm.ID)
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.NotEmpty(t, alarm.ID)
+			assert.Equal(t, tc.id, alarm.ID)
 		})
 	}
 }
@@ -322,19 +329,19 @@ func TestListAlarms(t *testing.T) {
 	items := make([]alarms.Alarm, 1000)
 	for i := range 1000 {
 		items[i] = alarms.Alarm{
-			ID:          generateUUID(&testing.T{}),
-			RuleID:      generateUUID(&testing.T{}),
-			DomainID:    generateUUID(&testing.T{}),
-			ChannelID:   generateUUID(&testing.T{}),
-			ClientID:    generateUUID(&testing.T{}),
+			ID:          generateUUID(t),
+			RuleID:      generateUUID(t),
+			DomainID:    generateUUID(t),
+			ChannelID:   generateUUID(t),
+			ClientID:    generateUUID(t),
 			Measurement: namegen.Generate(),
 			Value:       namegen.Generate(),
 			Unit:        namegen.Generate(),
 			Threshold:   namegen.Generate(),
 			Cause:       namegen.Generate(),
 			Status:      0,
-			AssigneeID:  generateUUID(&testing.T{}),
-			CreatedAt:   time.Now().Local(),
+			AssigneeID:  generateUUID(t),
+			CreatedAt:   time.Now().UTC(),
 			Metadata: map[string]any{
 				"key": "value",
 			},
@@ -388,7 +395,7 @@ func TestListAlarms(t *testing.T) {
 			pm: alarms.PageMetadata{
 				Offset:     0,
 				Limit:      10,
-				AssigneeID: generateUUID(&testing.T{}),
+				AssigneeID: generateUUID(t),
 			},
 			response: []alarms.Alarm{},
 			err:      nil,
@@ -402,8 +409,8 @@ func TestListAlarms(t *testing.T) {
 
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
-			require.Equal(t, len(tc.response), len(alarms.Alarms))
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.Equal(t, len(tc.response), len(alarms.Alarms))
 		})
 	}
 }
@@ -417,19 +424,19 @@ func TestDeleteAlarm(t *testing.T) {
 	repo := postgres.NewAlarmsRepo(db)
 
 	alarm := alarms.Alarm{
-		ID:          generateUUID(&testing.T{}),
-		RuleID:      generateUUID(&testing.T{}),
-		DomainID:    generateUUID(&testing.T{}),
-		ChannelID:   generateUUID(&testing.T{}),
-		ClientID:    generateUUID(&testing.T{}),
+		ID:          generateUUID(t),
+		RuleID:      generateUUID(t),
+		DomainID:    generateUUID(t),
+		ChannelID:   generateUUID(t),
+		ClientID:    generateUUID(t),
 		Measurement: namegen.Generate(),
 		Value:       namegen.Generate(),
 		Unit:        namegen.Generate(),
 		Threshold:   namegen.Generate(),
 		Cause:       namegen.Generate(),
 		Status:      0,
-		AssigneeID:  generateUUID(&testing.T{}),
-		CreatedAt:   time.Now().Local(),
+		AssigneeID:  generateUUID(t),
+		CreatedAt:   time.Now().UTC(),
 		Metadata: map[string]any{
 			"key": "value",
 		},
@@ -449,7 +456,7 @@ func TestDeleteAlarm(t *testing.T) {
 		},
 		{
 			desc: "non existing alarm",
-			id:   generateUUID(&testing.T{}),
+			id:   generateUUID(t),
 			err:  repoerr.ErrNotFound,
 		},
 	}
@@ -462,7 +469,7 @@ func TestDeleteAlarm(t *testing.T) {
 
 				return
 			}
-			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 		})
 	}
 }

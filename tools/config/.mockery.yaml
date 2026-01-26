@@ -59,7 +59,7 @@ packages:
       Cache:
       Hasher:
       KeyRepository:
-      TokensCache:
+      UserActiveTokensCache:
       Tokenizer:
       PATS:
       PATSRepository:

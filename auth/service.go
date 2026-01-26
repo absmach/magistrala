@@ -269,7 +269,7 @@ func (svc service) tmpKey(ctx context.Context, duration time.Duration, key Key) 
 	if err := svc.checkUserRole(ctx, key); err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
-	value, err := svc.tokenizer.Issue(ctx, key)
+	value, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
@@ -286,7 +286,7 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 		return Token{}, errors.Wrap(errIssueUser, err)
 	}
 
-	access, err := svc.tokenizer.Issue(ctx, key)
+	access, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
@@ -298,7 +298,7 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
 	key.ID = id
-	refresh, err := svc.tokenizer.Issue(ctx, key)
+	refresh, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
@@ -323,7 +323,7 @@ func (svc service) invitationKey(ctx context.Context, key Key) (Token, error) {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
 
-	access, err := svc.tokenizer.Issue(ctx, key)
+	access, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
@@ -356,14 +356,14 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	key.Role = k.Role
 
 	key.ExpiresAt = time.Now().UTC().Add(svc.loginDuration)
-	access, err := svc.tokenizer.Issue(ctx, key)
+	access, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
 
 	key.ExpiresAt = k.ExpiresAt
 	key.Type = RefreshKey
-	refresh, err := svc.tokenizer.Issue(ctx, key)
+	refresh, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
@@ -439,7 +439,7 @@ func (svc service) userKey(ctx context.Context, token string, key Key) (Token, e
 		return Token{}, errors.Wrap(errIssueUser, err)
 	}
 
-	tkn, err := svc.tokenizer.Issue(ctx, key)
+	tkn, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueUser, err)
 	}

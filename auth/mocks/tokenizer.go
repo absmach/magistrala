@@ -43,8 +43,8 @@ func (_m *Tokenizer) EXPECT() *Tokenizer_Expecter {
 }
 
 // Issue provides a mock function for the type Tokenizer
-func (_mock *Tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
-	ret := _mock.Called(ctx, key)
+func (_mock *Tokenizer) Issue(key auth.Key) (string, error) {
+	ret := _mock.Called(key)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Issue")
@@ -52,16 +52,16 @@ func (_mock *Tokenizer) Issue(ctx context.Context, key auth.Key) (string, error)
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auth.Key) (string, error)); ok {
-		return returnFunc(ctx, key)
+	if returnFunc, ok := ret.Get(0).(func(auth.Key) (string, error)); ok {
+		return returnFunc(key)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, auth.Key) string); ok {
-		r0 = returnFunc(ctx, key)
+	if returnFunc, ok := ret.Get(0).(func(auth.Key) string); ok {
+		r0 = returnFunc(key)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, auth.Key) error); ok {
-		r1 = returnFunc(ctx, key)
+	if returnFunc, ok := ret.Get(1).(func(auth.Key) error); ok {
+		r1 = returnFunc(key)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -74,25 +74,19 @@ type Tokenizer_Issue_Call struct {
 }
 
 // Issue is a helper method to define mock.On call
-//   - ctx context.Context
 //   - key auth.Key
-func (_e *Tokenizer_Expecter) Issue(ctx interface{}, key interface{}) *Tokenizer_Issue_Call {
-	return &Tokenizer_Issue_Call{Call: _e.mock.On("Issue", ctx, key)}
+func (_e *Tokenizer_Expecter) Issue(key interface{}) *Tokenizer_Issue_Call {
+	return &Tokenizer_Issue_Call{Call: _e.mock.On("Issue", key)}
 }
 
-func (_c *Tokenizer_Issue_Call) Run(run func(ctx context.Context, key auth.Key)) *Tokenizer_Issue_Call {
+func (_c *Tokenizer_Issue_Call) Run(run func(key auth.Key)) *Tokenizer_Issue_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
+		var arg0 auth.Key
 		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 auth.Key
-		if args[1] != nil {
-			arg1 = args[1].(auth.Key)
+			arg0 = args[0].(auth.Key)
 		}
 		run(
 			arg0,
-			arg1,
 		)
 	})
 	return _c
@@ -103,7 +97,7 @@ func (_c *Tokenizer_Issue_Call) Return(token string, err error) *Tokenizer_Issue
 	return _c
 }
 
-func (_c *Tokenizer_Issue_Call) RunAndReturn(run func(ctx context.Context, key auth.Key) (string, error)) *Tokenizer_Issue_Call {
+func (_c *Tokenizer_Issue_Call) RunAndReturn(run func(key auth.Key) (string, error)) *Tokenizer_Issue_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -225,63 +219,6 @@ func (_c *Tokenizer_RetrieveJWKS_Call) Return(publicKeyInfos []auth.PublicKeyInf
 }
 
 func (_c *Tokenizer_RetrieveJWKS_Call) RunAndReturn(run func() ([]auth.PublicKeyInfo, error)) *Tokenizer_RetrieveJWKS_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Revoke provides a mock function for the type Tokenizer
-func (_mock *Tokenizer) Revoke(ctx context.Context, token string) error {
-	ret := _mock.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Revoke")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, token)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Tokenizer_Revoke_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Revoke'
-type Tokenizer_Revoke_Call struct {
-	*mock.Call
-}
-
-// Revoke is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-func (_e *Tokenizer_Expecter) Revoke(ctx interface{}, token interface{}) *Tokenizer_Revoke_Call {
-	return &Tokenizer_Revoke_Call{Call: _e.mock.On("Revoke", ctx, token)}
-}
-
-func (_c *Tokenizer_Revoke_Call) Run(run func(ctx context.Context, token string)) *Tokenizer_Revoke_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Tokenizer_Revoke_Call) Return(err error) *Tokenizer_Revoke_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Tokenizer_Revoke_Call) RunAndReturn(run func(ctx context.Context, token string) error) *Tokenizer_Revoke_Call {
 	_c.Call.Return(run)
 	return _c
 }

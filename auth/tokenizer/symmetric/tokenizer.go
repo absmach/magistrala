@@ -35,7 +35,7 @@ func NewTokenizer(algorithm string, secret []byte) (auth.Tokenizer, error) {
 	}, nil
 }
 
-func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
+func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 	tkn, err := smqjwt.BuildToken(key)
 	if err != nil {
 		return "", err

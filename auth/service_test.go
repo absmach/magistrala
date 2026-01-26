@@ -59,7 +59,7 @@ var (
 	pEvaluator  *policymocks.Evaluator
 	patsrepo    *mocks.PATSRepository
 	cache       *mocks.Cache
-	tokensCache *mocks.TokensCache
+	tokensCache *mocks.UserActiveTokensCache
 	hasher      *mocks.Hasher
 	tokenizer   *mocks.Tokenizer
 )
@@ -67,7 +67,7 @@ var (
 func newService(t *testing.T) (auth.Service, string) {
 	krepo = new(mocks.KeyRepository)
 	cache = new(mocks.Cache)
-	tokensCache = new(mocks.TokensCache)
+	tokensCache = new(mocks.UserActiveTokensCache)
 	pService = new(policymocks.Service)
 	pEvaluator = new(policymocks.Evaluator)
 	patsrepo = new(mocks.PATSRepository)

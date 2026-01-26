@@ -187,7 +187,7 @@ func TestSign(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			token, err := km.Issue(context.Background(), tc.key)
+			token, err := km.Issue(tc.key)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, token)
 
@@ -232,12 +232,12 @@ func TestVerify(t *testing.T) {
 		Verified:  true,
 	}
 
-	validToken, err := km.Issue(context.Background(), validKey)
+	validToken, err := km.Issue(validKey)
 	require.NoError(t, err, "Signing a valid token should succeed")
 
 	expiredKey := validKey
 	expiredKey.ExpiresAt = time.Now().Add(-1 * time.Hour).UTC()
-	expiredToken, err := km.Issue(context.Background(), expiredKey)
+	expiredToken, err := km.Issue(expiredKey)
 	require.NoError(t, err, "Creating an expired token should succeed")
 
 	wrongIssuerKey := validKey
@@ -390,7 +390,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 		Verified:  true,
 	}
 
-	token, err := km.Issue(context.Background(), originalKey)
+	token, err := km.Issue(originalKey)
 	require.NoError(t, err)
 
 	verifiedKey, err := km.Parse(context.Background(), token)

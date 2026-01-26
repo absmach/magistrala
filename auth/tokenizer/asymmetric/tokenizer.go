@@ -93,7 +93,7 @@ func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDPr
 	return mgr, nil
 }
 
-func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
+func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 	if tok.activeKey == nil {
 		return "", errNoActiveKey
 	}

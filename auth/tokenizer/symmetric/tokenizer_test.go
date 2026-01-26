@@ -132,7 +132,7 @@ func TestSign(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			token, err := km.Issue(context.Background(), tc.key)
+			token, err := km.Issue(tc.key)
 			assert.NoError(t, err)
 			assert.NotEmpty(t, token)
 
@@ -160,12 +160,12 @@ func TestVerify(t *testing.T) {
 		Verified:  true,
 	}
 
-	validToken, err := km.Issue(context.Background(), validKey)
+	validToken, err := km.Issue(validKey)
 	require.NoError(t, err, "Signing valid token should succeed")
 
 	expiredKey := validKey
 	expiredKey.ExpiresAt = time.Now().Add(-1 * time.Hour).UTC()
-	expiredToken, err := km.Issue(context.Background(), expiredKey)
+	expiredToken, err := km.Issue(expiredKey)
 	require.NoError(t, err)
 
 	wrongIssuerKey := validKey
@@ -190,7 +190,7 @@ func TestVerify(t *testing.T) {
 
 	wrongSecretKM, err := symmetric.NewTokenizer("HS256", []byte("different-secret-key-here"))
 	require.NoError(t, err)
-	wrongSecretToken, err := wrongSecretKM.Issue(context.Background(), validKey)
+	wrongSecretToken, err := wrongSecretKM.Issue(validKey)
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -282,7 +282,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 				Verified:  true,
 			}
 
-			token, err := km.Issue(context.Background(), originalKey)
+			token, err := km.Issue(originalKey)
 			require.NoError(t, err)
 
 			verifiedKey, err := km.Parse(context.Background(), token)
@@ -315,17 +315,17 @@ func TestDifferentAlgorithms(t *testing.T) {
 
 	km256, err := symmetric.NewTokenizer("HS256", secret)
 	require.NoError(t, err)
-	token256, err := km256.Issue(context.Background(), key)
+	token256, err := km256.Issue(key)
 	require.NoError(t, err)
 
 	km384, err := symmetric.NewTokenizer("HS384", secret)
 	require.NoError(t, err)
-	token384, err := km384.Issue(context.Background(), key)
+	token384, err := km384.Issue(key)
 	require.NoError(t, err)
 
 	km512, err := symmetric.NewTokenizer("HS512", secret)
 	require.NoError(t, err)
-	token512, err := km512.Issue(context.Background(), key)
+	token512, err := km512.Issue(key)
 	require.NoError(t, err)
 
 	assert.NotEqual(t, token256, token384)

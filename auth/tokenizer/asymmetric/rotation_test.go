@@ -59,7 +59,7 @@ func TestTwoKeyRotation(t *testing.T) {
 		Verified:  true,
 	}
 
-	token, err := tokenizer.Issue(context.Background(), testKey)
+	token, err := tokenizer.Issue(testKey)
 	require.NoError(t, err)
 	assert.NotEmpty(t, token)
 
@@ -100,7 +100,7 @@ func TestSingleKeyMode(t *testing.T) {
 		ExpiresAt: time.Now().Add(1 * time.Hour).UTC(),
 	}
 
-	token, err := tokenizer.Issue(context.Background(), testKey)
+	token, err := tokenizer.Issue(testKey)
 	require.NoError(t, err)
 
 	_, err = tokenizer.Parse(context.Background(), token)
@@ -135,7 +135,7 @@ func TestMissingRetiringKey(t *testing.T) {
 		ExpiresAt: time.Now().Add(1 * time.Hour).UTC(),
 	}
 
-	token, err := tokenizer.Issue(context.Background(), testKey)
+	token, err := tokenizer.Issue(testKey)
 	require.NoError(t, err)
 
 	_, err = tokenizer.Parse(context.Background(), token)

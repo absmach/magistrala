@@ -37,7 +37,7 @@ type PublicKeyInfo struct {
 type Tokenizer interface {
 	// Issue creates a signed token string from the given key claims.
 	// For RefreshKey types, the token ID is stored as active in the cache.
-	Issue(ctx context.Context, key Key) (token string, err error)
+	Issue(key Key) (token string, err error)
 
 	// Parse verifies and parses a token string (JWT or PAT), returning the extracted claims.
 	// For PAT tokens (prefix "pat"), returns a Key with Type set to PersonalAccessToken.

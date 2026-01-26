@@ -24,8 +24,8 @@ github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrd
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/absmach/callhome v0.18.2 h1:dmopRHm2qTheHN1hdUKRRYpKwRrj7X9d8AWCFrb+K6s=
 github.com/absmach/callhome v0.18.2/go.mod h1:LEXKhES9JJtj3tBgTZv7VPNjOi5ukJQB0mFic0QP60Q=
-github.com/absmach/certs v0.18.4 h1:45nocGNOt+IUqJHEM/lS3XpOYWYWdyOb61R6VPbxsFA=
-github.com/absmach/certs v0.18.4/go.mod h1:ixBMssgL8e6NjN6BGiLYBIYGDe24DqgN0UnHgFJ2fNE=
+github.com/absmach/certs v0.18.5 h1:eYlvitou+LoDtt7ETVLTp6d/1xCejGL3EmVOg+rHGTU=
+github.com/absmach/certs v0.18.5/go.mod h1:31dtVe1VYF16W+IvjAE/uPAIz4f3uLHgh+moBezjqIc=
 github.com/absmach/mgate v0.5.0 h1:RV2Aalra3xIm+XTs13TM7iE7v4WTL2SKhKcPbKr22Ac=
 github.com/absmach/mgate v0.5.0/go.mod h1:0KVq7mxM0wayosmyXPPxp1EL0c2d9kRp5V8NZCKdetA=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=

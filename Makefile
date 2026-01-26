@@ -78,17 +78,24 @@ define run_with_arch_detection
 	@if [ "$(DETECTED_ARCH)" = "arm64" ] || [ "$(DETECTED_ARCH)" = "aarch64" ]; then \
 		echo "ARM64 architecture detected."; \
 		git checkout $(1); \
-		echo "Building Docker images for ARM64..."; \
 		GOARCH=arm64 $(MAKE) dockers; \
+		for svc in $(SERVICES); do \
+			docker tag ghcr.io/absmach/magistrala/$$svc ghcr.io/absmach/magistrala/$$svc:latest; \
+		done; \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
+		MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+			-f docker/addons/timescale-reader/docker-compose.yaml \
+			-f docker/addons/timescale-writer/docker-compose.yaml \
+			--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	else \
 		echo "x86_64 architecture detected."; \
 		git checkout $(1); \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
+		MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+			-f docker/addons/timescale-reader/docker-compose.yaml \
+			-f docker/addons/timescale-writer/docker-compose.yaml \
+			--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	fi
-	@sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak
-	@MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
-		-f docker/addons/timescale-reader/docker-compose.yaml \
-		-f docker/addons/timescale-writer/docker-compose.yaml \
-		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 endef
 
 ADDON_SERVICES = bootstrap provision certs timescale-reader timescale-writer postgres-reader postgres-writer
@@ -283,7 +290,7 @@ run_latest: check_certs
 	$(call run_with_arch_detection,main,latest)
 
 run_stable: check_certs
-	$(eval version = $(shell git describe --abbrev=0 --tags))
+	$(eval version = $(shell git describe --abbrev=0 --tags 2>/dev/null || echo "main"))
 	$(call run_with_arch_detection,$(version),$(version))
 
 

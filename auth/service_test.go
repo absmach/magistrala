@@ -156,6 +156,7 @@ func TestIssue(t *testing.T) {
 		saveResponse auth.Key
 		token        string
 		tokenizerErr error
+		cacheErr     error
 		saveErr      error
 		roleCheckErr error
 		err          error
@@ -171,11 +172,24 @@ func TestIssue(t *testing.T) {
 			token: accessToken,
 			err:   nil,
 		},
+		{
+			desc: "issue access key with cache error",
+			key: auth.Key{
+				Type:     auth.AccessKey,
+				Subject:  userID,
+				Role:     auth.UserRole,
+				IssuedAt: time.Now(),
+			},
+			token:    accessToken,
+			cacheErr: svcerr.ErrCreateEntity,
+			err:      svcerr.ErrCreateEntity,
+		},
 	}
 	for _, tc := range cases2 {
 		t.Run(tc.desc, func(t *testing.T) {
 			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.tokenizerErr)
 			repoCall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
+			cacheCall := tokensCache.On("SaveActive", context.Background(), tc.key.Subject, mock.Anything, tc.key.Description, mock.Anything).Return(tc.cacheErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
@@ -188,6 +202,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall.Unset()
 			repoCall.Unset()
 			policyCall.Unset()
+			cacheCall.Unset()
 		})
 	}
 
@@ -294,6 +309,8 @@ func TestIssue(t *testing.T) {
 		parseErr     error
 		roleCheckErr error
 		issueErr     error
+		cacheRes     bool
+		cacheErr     error
 		err          error
 	}{
 		{
@@ -306,6 +323,7 @@ func TestIssue(t *testing.T) {
 			},
 			token:    refreshToken,
 			parseRes: refreshkey,
+			cacheRes: true,
 			err:      nil,
 		},
 		{
@@ -341,9 +359,38 @@ func TestIssue(t *testing.T) {
 				Role:     auth.UserRole,
 			},
 			token:        refreshToken,
+			cacheRes:     true,
 			parseRes:     refreshkey,
 			roleCheckErr: errRoleAuth,
 			err:          errRoleAuth,
+		},
+		{
+			desc: "issue refresh key with revoked refresh token",
+			key: auth.Key{
+				Type:     auth.RefreshKey,
+				IssuedAt: time.Now(),
+				Subject:  userID,
+				Role:     auth.UserRole,
+			},
+			token:    refreshToken,
+			parseRes: refreshkey,
+			cacheRes: false,
+			cacheErr: nil,
+			err:      auth.ErrRevokedToken,
+		},
+		{
+			desc: "issue refresh key with cache error",
+			key: auth.Key{
+				Type:     auth.RefreshKey,
+				IssuedAt: time.Now(),
+				Subject:  userID,
+				Role:     auth.UserRole,
+			},
+			token:    refreshToken,
+			parseRes: refreshkey,
+			cacheRes: false,
+			cacheErr: svcerr.ErrCreateEntity,
+			err:      svcerr.ErrCreateEntity,
 		},
 	}
 	for _, tc := range cases4 {
@@ -351,6 +398,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.issueErr)
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
 			tokenizerCall2 := tokenizer.On("Revoke", mock.Anything, tc.token).Return(tc.parseErr)
+			cacheCall := tokensCache.On("IsActive", context.Background(), tc.key.ID).Return(tc.cacheRes, tc.cacheErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
@@ -364,6 +412,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall1.Unset()
 			tokenizerCall2.Unset()
 			policyCall.Unset()
+			cacheCall.Unset()
 		})
 	}
 }
@@ -642,6 +691,162 @@ func TestIdentify(t *testing.T) {
 			tokenizerCall.Unset()
 			repoCall.Unset()
 			repoCall1.Unset()
+		})
+	}
+}
+
+func TestRevokeToken(t *testing.T) {
+	svc, _ := newService(t)
+
+	cases := []struct {
+		desc      string
+		tokenID   string
+		removeErr error
+		err       error
+	}{
+		{
+			desc:      "revoke token successfully",
+			tokenID:   "validTokenID",
+			removeErr: nil,
+			err:       nil,
+		},
+		{
+			desc:      "revoke token with cache error",
+			tokenID:   "validTokenID",
+			removeErr: svcerr.ErrRemoveEntity,
+			err:       svcerr.ErrRemoveEntity,
+		},
+		{
+			desc:      "revoke token with empty token ID",
+			tokenID:   "",
+			removeErr: nil,
+			err:       nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			cacheCall := tokensCache.On("RemoveActive", mock.Anything, tc.tokenID).Return(tc.removeErr)
+			err := svc.RevokeToken(context.Background(), tc.tokenID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+			cacheCall.Unset()
+		})
+	}
+}
+
+func TestRetrieveJWKS(t *testing.T) {
+	svc, _ := newService(t)
+
+	publicKeys := []auth.PublicKeyInfo{
+		{
+			KeyID:     "key1",
+			Algorithm: "RS256",
+		},
+		{
+			KeyID:     "key2",
+			Algorithm: "RS256",
+		},
+	}
+
+	cases := []struct {
+		desc           string
+		tokenizerRes   []auth.PublicKeyInfo
+		tokenizerErr   error
+		expectedResult []auth.PublicKeyInfo
+	}{
+		{
+			desc:           "retrieve JWKS successfully",
+			tokenizerRes:   publicKeys,
+			tokenizerErr:   nil,
+			expectedResult: publicKeys,
+		},
+		{
+			desc:           "retrieve JWKS with tokenizer error",
+			tokenizerRes:   nil,
+			tokenizerErr:   svcerr.ErrViewEntity,
+			expectedResult: nil,
+		},
+		{
+			desc:           "retrieve JWKS with empty keys",
+			tokenizerRes:   []auth.PublicKeyInfo{},
+			tokenizerErr:   nil,
+			expectedResult: []auth.PublicKeyInfo{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			tokenizerCall := tokenizer.On("RetrieveJWKS").Return(tc.tokenizerRes, tc.tokenizerErr)
+			result := svc.RetrieveJWKS()
+			assert.Equal(t, tc.expectedResult, result, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.expectedResult, result))
+			tokenizerCall.Unset()
+		})
+	}
+}
+
+func TestListUserRefreshTokens(t *testing.T) {
+	svc, _ := newService(t)
+
+	tokenInfos := []auth.TokenInfo{
+		{
+			ID:          "token1",
+			Description: "Session 1",
+		},
+		{
+			ID:          "token2",
+			Description: "Session 2",
+		},
+	}
+
+	cases := []struct {
+		desc        string
+		userID      string
+		cacheRes    []auth.TokenInfo
+		cacheErr    error
+		expectedRes []auth.TokenInfo
+		err         error
+	}{
+		{
+			desc:        "list user refresh tokens successfully",
+			userID:      userID,
+			cacheRes:    tokenInfos,
+			cacheErr:    nil,
+			expectedRes: tokenInfos,
+			err:         nil,
+		},
+		{
+			desc:        "list user refresh tokens with cache error",
+			userID:      userID,
+			cacheRes:    nil,
+			cacheErr:    svcerr.ErrViewEntity,
+			expectedRes: nil,
+			err:         svcerr.ErrViewEntity,
+		},
+		{
+			desc:        "list user refresh tokens with empty result",
+			userID:      userID,
+			cacheRes:    []auth.TokenInfo{},
+			cacheErr:    nil,
+			expectedRes: []auth.TokenInfo{},
+			err:         nil,
+		},
+		{
+			desc:        "list user refresh tokens with invalid user ID",
+			userID:      "",
+			cacheRes:    nil,
+			cacheErr:    svcerr.ErrViewEntity,
+			expectedRes: nil,
+			err:         svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			cacheCall := tokensCache.On("ListUserTokens", mock.Anything, tc.userID).Return(tc.cacheRes, tc.cacheErr)
+			result, err := svc.ListUserRefreshTokens(context.Background(), tc.userID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected error %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.expectedRes, result, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.expectedRes, result))
+			cacheCall.Unset()
 		})
 	}
 }

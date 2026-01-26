@@ -165,19 +165,17 @@ func main() {
 		return
 	}
 
-	tokensCache := cache.NewTokensCache(cacheclient, cfg.CacheKeyDuration)
-
 	var tokenizer auth.Tokenizer
 	switch {
 	case isSymmetric:
-		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey), tokensCache)
+		tokenizer, err = symmetric.NewTokenizer(cfg.KeyAlgorithm, []byte(cfg.SecretKey))
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create symmetric key manager: %s", err.Error()))
 			exitCode = 1
 			return
 		}
 	default:
-		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, tokensCache, logger)
+		tokenizer, err = asymmetric.NewTokenizer(cfg.ActiveKeyPath, cfg.RetiringKeyPath, idProvider, logger)
 		if err != nil {
 			logger.Error(fmt.Sprintf("failed to create asymmetric key manager: %s", err.Error()))
 			exitCode = 1
@@ -185,7 +183,7 @@ func main() {
 		}
 	}
 
-	svc, err := newService(db, tracer, cfg, dbConfig, logger, spicedbclient, cacheclient, tokensCache, cfg.CacheKeyDuration, tokenizer, idProvider)
+	svc, err := newService(db, tracer, cfg, dbConfig, logger, spicedbclient, cacheclient, cfg.CacheKeyDuration, tokenizer, idProvider)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create service : %s\n", err.Error()))
 		exitCode = 1
@@ -293,8 +291,9 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, tokensCache auth.TokensCache, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider supermq.IDProvider) (auth.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider supermq.IDProvider) (auth.Service, error) {
 	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
+	tokensCache := cache.NewUserActiveTokensCache(cacheClient, keyDuration)
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)

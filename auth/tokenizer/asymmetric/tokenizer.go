@@ -13,13 +13,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/auth"
 	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
 	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -47,7 +45,6 @@ type keyPair struct {
 type tokenizer struct {
 	activeKey   *keyPair
 	retiringKey *keyPair // Optional, for key rotation grace period
-	cache       auth.TokensCache
 }
 
 var _ auth.Tokenizer = (*tokenizer)(nil)
@@ -57,7 +54,7 @@ var _ auth.Tokenizer = (*tokenizer)(nil)
 // If retiringKeyPath is provided but the file doesn't exist or is invalid, a warning is logged
 // but the tokenizer is still created with just the active key.
 // Key IDs are derived from filenames to ensure consistency across multiple service instances.
-func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDProvider, cache auth.TokensCache, logger *slog.Logger) (auth.Tokenizer, error) {
+func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDProvider, logger *slog.Logger) (auth.Tokenizer, error) {
 	activeKID := keyIDFromPath(activeKeyPath)
 
 	activePrivateJwk, activePublicJwk, err := loadKeyPair(activeKeyPath, activeKID)
@@ -71,7 +68,6 @@ func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDPr
 			privateKey: activePrivateJwk,
 			publicKey:  activePublicJwk,
 		},
-		cache: cache,
 	}
 
 	if retiringKeyPath != "" {
@@ -116,34 +112,38 @@ func (tok *tokenizer) Issue(ctx context.Context, key auth.Key) (string, error) {
 		return "", err
 	}
 
-	if key.Type == auth.RefreshKey && key.ID != "" && key.Subject != "" {
-		ttl := time.Until(key.ExpiresAt)
-		if ttl > 0 {
-			if err := tok.cache.SaveActive(ctx, key.Subject, key.ID, key.Description, ttl); err != nil {
-				return "", err
-			}
-		}
-	}
-
 	return string(signedBytes), nil
 }
 
 func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, error) {
-	key, err := tok.parseToken(tokenString)
-	if err != nil {
+	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
+		return auth.Key{Type: auth.PersonalAccessToken}, nil
+	}
+
+	set := jwk.NewSet()
+	if err := set.AddKey(tok.activeKey.publicKey); err != nil {
 		return auth.Key{}, err
 	}
-	if key.Type == auth.RefreshKey {
-		found, err := tok.cache.IsActive(ctx, key.ID)
-		if err != nil {
+	if tok.retiringKey != nil {
+		if err := set.AddKey(tok.retiringKey.publicKey); err != nil {
 			return auth.Key{}, err
-		}
-		if !found {
-			return auth.Key{}, auth.ErrRevokedToken
 		}
 	}
 
-	return key, nil
+	tkn, err := jwt.Parse(
+		[]byte(tokenString),
+		jwt.WithValidate(true),
+		jwt.WithKeySet(set, jws.WithInferAlgorithmFromKey(true)),
+	)
+	if err != nil {
+		return auth.Key{}, err
+	}
+
+	if tkn.Issuer() != smqjwt.IssuerName {
+		return auth.Key{}, smqjwt.ErrInvalidIssuer
+	}
+
+	return smqjwt.ToKey(tkn)
 }
 
 func (tok *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
@@ -166,55 +166,6 @@ func (tok *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
 	}
 
 	return publicKeys, nil
-}
-
-func (tok *tokenizer) Revoke(ctx context.Context, token string) error {
-	key, err := tok.parseToken(token)
-	if err != nil {
-		return err
-	}
-
-	if key.Type == auth.RefreshKey {
-		if err := tok.cache.RemoveActive(ctx, key.ID); err != nil {
-			return errors.Wrap(svcerr.ErrAuthentication, err)
-		}
-	}
-
-	return nil
-}
-
-func (tok *tokenizer) parseToken(tokenString string) (auth.Key, error) {
-	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
-		return auth.Key{Type: auth.PersonalAccessToken}, nil
-	}
-
-	set := jwk.NewSet()
-	if err := set.AddKey(tok.activeKey.publicKey); err != nil {
-		return auth.Key{}, err
-	}
-	if tok.retiringKey != nil {
-		if err := set.AddKey(tok.retiringKey.publicKey); err != nil {
-			return auth.Key{}, err
-		}
-	}
-
-	tkn, err := jwt.Parse(
-		[]byte(tokenString),
-		jwt.WithValidate(true),
-		jwt.WithKeySet(set, jws.WithInferAlgorithmFromKey(true)),
-	)
-	if err != nil {
-		if errors.Contains(err, smqjwt.ErrJWTExpiryKey) {
-			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
-		}
-		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
-	}
-
-	if tkn.Issuer() != smqjwt.IssuerName {
-		return auth.Key{}, smqjwt.ErrInvalidIssuer
-	}
-
-	return smqjwt.ToKey(tkn)
 }
 
 func extractPublicKeyInfo(kp *keyPair) *auth.PublicKeyInfo {

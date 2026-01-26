@@ -29,13 +29,16 @@ var (
 	// ErrExpiry indicates that the token is expired.
 	ErrExpiry = errors.New("token is expired")
 
-	errIssueUser = errors.New("failed to issue new login key")
-	errIssueTmp  = errors.New("failed to issue new temporary key")
-	errRevoke    = errors.New("failed to remove key")
-	errRetrieve  = errors.New("failed to retrieve key data")
-	errIdentify  = errors.New("failed to validate token")
-	errPlatform  = errors.New("invalid platform id")
-	errRoleAuth  = errors.New("failed to authorize user role")
+	errIssueUser        = errors.New("failed to issue new login key")
+	errIssueTmp         = errors.New("failed to issue new temporary key")
+	errRevoke           = errors.New("failed to remove key")
+	errRetrieve         = errors.New("failed to retrieve key data")
+	errIdentify         = errors.New("failed to validate token")
+	errPlatform         = errors.New("invalid platform id")
+	errRoleAuth         = errors.New("failed to authorize user role")
+	errSaveRefreshKey   = errors.NewServiceError("failed to save refresh key")
+	errRevokeRefreshKey = errors.NewServiceError("failed to revoke refresh key")
+	errListRefreshKeys  = errors.NewServiceError("failed to list refresh keys")
 
 	errMalformedPAT        = errors.New("malformed personal access token")
 	errFailedToParseUUID   = errors.New("failed to parse string to UUID")
@@ -106,7 +109,7 @@ type service struct {
 	keys               KeyRepository
 	pats               PATSRepository
 	cache              Cache
-	tokensCache        TokensCache
+	tokensCache        UserActiveTokensCache
 	hasher             Hasher
 	idProvider         supermq.IDProvider
 	evaluator          policies.Evaluator
@@ -118,7 +121,7 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, pats PATSRepository, cache Cache, tokensCache TokensCache, hasher Hasher, idp supermq.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, pats PATSRepository, cache Cache, tokensCache UserActiveTokensCache, hasher Hasher, idp supermq.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
 		tokenizer:          tokenizer,
 		keys:               keys,
@@ -152,7 +155,11 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 }
 
 func (svc service) RevokeToken(ctx context.Context, tokenID string) error {
-	return svc.tokensCache.RemoveActive(ctx, tokenID)
+	if err := svc.tokensCache.RemoveActive(ctx, tokenID); err != nil {
+		return errors.Wrap(errRevokeRefreshKey, err)
+	}
+
+	return nil
 }
 
 func (svc service) Revoke(ctx context.Context, token, id string) error {
@@ -218,7 +225,12 @@ func (svc service) RetrieveJWKS() []PublicKeyInfo {
 }
 
 func (svc service) ListUserRefreshTokens(ctx context.Context, userID string) ([]TokenInfo, error) {
-	return svc.tokensCache.ListUserTokens(ctx, userID)
+	tokenInfo, err := svc.tokensCache.ListUserTokens(ctx, userID)
+	if err != nil {
+		return nil, errors.Wrap(errListRefreshKeys, err)
+	}
+
+	return tokenInfo, nil
 }
 
 func (svc service) Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error {
@@ -290,6 +302,14 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
+	if key.Subject != "" {
+		ttl := time.Until(key.ExpiresAt)
+		if ttl > 0 {
+			if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description, ttl); err != nil {
+				return Token{}, errors.Wrap(errSaveRefreshKey, err)
+			}
+		}
+	}
 
 	return Token{AccessToken: access, RefreshToken: refresh}, nil
 }
@@ -318,6 +338,13 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	}
 	if k.Type != RefreshKey {
 		return Token{}, errIssueUser
+	}
+	ok, err := svc.tokensCache.IsActive(ctx, key.ID)
+	if err != nil {
+		return Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	if !ok {
+		return Token{}, ErrRevokedToken
 	}
 	key.ID = k.ID
 	key.Type = AccessKey

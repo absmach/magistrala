@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/mocks"
 	"github.com/absmach/supermq/auth/tokenizer/symmetric"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -18,7 +17,6 @@ import (
 )
 
 func TestNewTokenizer(t *testing.T) {
-	cache := new(mocks.TokensCache)
 	cases := []struct {
 		name        string
 		algorithm   string
@@ -69,7 +67,7 @@ func TestNewTokenizer(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			km, err := symmetric.NewTokenizer(tc.algorithm, tc.secret, cache)
+			km, err := symmetric.NewTokenizer(tc.algorithm, tc.secret)
 
 			if tc.expectErr {
 				assert.Error(t, err)
@@ -87,9 +85,8 @@ func TestNewTokenizer(t *testing.T) {
 
 func TestSign(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
-	cache := new(mocks.TokensCache)
 
-	km, err := symmetric.NewTokenizer("HS256", secret, cache)
+	km, err := symmetric.NewTokenizer("HS256", secret)
 	require.NoError(t, err)
 
 	cases := []struct {
@@ -148,9 +145,8 @@ func TestSign(t *testing.T) {
 
 func TestVerify(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
-	cache := new(mocks.TokensCache)
 
-	km, err := symmetric.NewTokenizer("HS256", secret, cache)
+	km, err := symmetric.NewTokenizer("HS256", secret)
 	require.NoError(t, err)
 
 	validKey := auth.Key{
@@ -192,7 +188,7 @@ func TestVerify(t *testing.T) {
 	require.NoError(t, err)
 	wrongIssuerToken := string(wrongIssuerTokenBytes)
 
-	wrongSecretKM, err := symmetric.NewTokenizer("HS256", []byte("different-secret-key-here"), cache)
+	wrongSecretKM, err := symmetric.NewTokenizer("HS256", []byte("different-secret-key-here"))
 	require.NoError(t, err)
 	wrongSecretToken, err := wrongSecretKM.Issue(context.Background(), validKey)
 	require.NoError(t, err)
@@ -255,9 +251,8 @@ func TestVerify(t *testing.T) {
 
 func TestPublicKeys(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing")
-	cache := new(mocks.TokensCache)
 
-	km, err := symmetric.NewTokenizer("HS256", secret, cache)
+	km, err := symmetric.NewTokenizer("HS256", secret)
 	require.NoError(t, err)
 
 	keys, err := km.RetrieveJWKS()
@@ -268,13 +263,12 @@ func TestPublicKeys(t *testing.T) {
 
 func TestSignAndVerifyRoundTrip(t *testing.T) {
 	algorithms := []string{"HS256", "HS384", "HS512"}
-	cache := new(mocks.TokensCache)
 
 	for _, alg := range algorithms {
 		t.Run(alg, func(t *testing.T) {
 			secret := []byte("my-super-secret-key-for-testing-" + alg)
 
-			km, err := symmetric.NewTokenizer(alg, secret, cache)
+			km, err := symmetric.NewTokenizer(alg, secret)
 			require.NoError(t, err)
 
 			originalKey := auth.Key{
@@ -307,7 +301,6 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 
 func TestDifferentAlgorithms(t *testing.T) {
 	secret := []byte("my-super-secret-key-for-testing-algorithms")
-	cache := new(mocks.TokensCache)
 
 	key := auth.Key{
 		ID:        "key-id",
@@ -320,17 +313,17 @@ func TestDifferentAlgorithms(t *testing.T) {
 		Verified:  true,
 	}
 
-	km256, err := symmetric.NewTokenizer("HS256", secret, cache)
+	km256, err := symmetric.NewTokenizer("HS256", secret)
 	require.NoError(t, err)
 	token256, err := km256.Issue(context.Background(), key)
 	require.NoError(t, err)
 
-	km384, err := symmetric.NewTokenizer("HS384", secret, cache)
+	km384, err := symmetric.NewTokenizer("HS384", secret)
 	require.NoError(t, err)
 	token384, err := km384.Issue(context.Background(), key)
 	require.NoError(t, err)
 
-	km512, err := symmetric.NewTokenizer("HS512", secret, cache)
+	km512, err := symmetric.NewTokenizer("HS512", secret)
 	require.NoError(t, err)
 	token512, err := km512.Issue(context.Background(), key)
 	require.NoError(t, err)

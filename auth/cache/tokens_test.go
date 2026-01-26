@@ -28,8 +28,8 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func setupRedisTokensClient() auth.TokensCache {
-	return cache.NewTokensCache(storeClient, 10*time.Minute)
+func setupRedisTokensClient() auth.UserActiveTokensCache {
+	return cache.NewUserActiveTokensCache(storeClient, 10*time.Minute)
 }
 
 func TestTokenSave(t *testing.T) {

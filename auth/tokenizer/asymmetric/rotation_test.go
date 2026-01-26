@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/mocks"
 	"github.com/absmach/supermq/auth/tokenizer/asymmetric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,8 +46,7 @@ func TestTwoKeyRotation(t *testing.T) {
 	saveKey(t, retiringPriv, retiringKeyPath)
 
 	idProvider := &incrementingIDProvider{}
-	cache := new(mocks.TokensCache)
-	tokenizer, err := asymmetric.NewTokenizer(activeKeyPath, retiringKeyPath, idProvider, cache, newTestLogger())
+	tokenizer, err := asymmetric.NewTokenizer(activeKeyPath, retiringKeyPath, idProvider, newTestLogger())
 	require.NoError(t, err)
 
 	testKey := auth.Key{
@@ -90,8 +88,7 @@ func TestSingleKeyMode(t *testing.T) {
 	saveKey(t, privateKey, keyPath)
 
 	idProvider := &mockIDProvider{id: "single-id"}
-	cache := new(mocks.TokensCache)
-	tokenizer, err := asymmetric.NewTokenizer(keyPath, "", idProvider, cache, newTestLogger())
+	tokenizer, err := asymmetric.NewTokenizer(keyPath, "", idProvider, newTestLogger())
 	require.NoError(t, err)
 
 	testKey := auth.Key{
@@ -126,8 +123,7 @@ func TestMissingRetiringKey(t *testing.T) {
 	retiringKeyPath := filepath.Join(tmpDir, "nonexistent.key")
 
 	idProvider := &mockIDProvider{id: "test-id"}
-	cache := new(mocks.TokensCache)
-	tokenizer, err := asymmetric.NewTokenizer(activeKeyPath, retiringKeyPath, idProvider, cache, newTestLogger())
+	tokenizer, err := asymmetric.NewTokenizer(activeKeyPath, retiringKeyPath, idProvider, newTestLogger())
 	require.NoError(t, err, "Should succeed even if retiring key is missing")
 
 	testKey := auth.Key{

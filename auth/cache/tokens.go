@@ -23,15 +23,15 @@ type tokenData struct {
 	Description string `json:"description,omitempty"`
 }
 
-var _ auth.TokensCache = (*tokensCache)(nil)
+var _ auth.UserActiveTokensCache = (*tokensCache)(nil)
 
 type tokensCache struct {
 	client      *redis.Client
 	keyDuration time.Duration
 }
 
-// NewTokensCache returns redis auth cache implementation.
-func NewTokensCache(client *redis.Client, duration time.Duration) auth.TokensCache {
+// NewUserActiveTokensCache returns redis auth cache implementation.
+func NewUserActiveTokensCache(client *redis.Client, duration time.Duration) auth.UserActiveTokensCache {
 	if duration == 0 {
 		duration = defDuration
 	}

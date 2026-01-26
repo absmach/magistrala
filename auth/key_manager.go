@@ -47,13 +47,10 @@ type Tokenizer interface {
 	// RetrieveJWKS returns public keys for distribution via JWKS endpoint.
 	// Returns ErrPublicKeysNotSupported for symmetric tokenizers (HMAC).
 	RetrieveJWKS() ([]PublicKeyInfo, error)
-
-	// Revoke revokes a refresh token.
-	Revoke(ctx context.Context, token string) error
 }
 
-// TokensCache represents a cache repository for managing active refresh tokens per user.
-type TokensCache interface {
+// UserActiveTokensCache represents a cache repository for managing active refresh tokens per user.
+type UserActiveTokensCache interface {
 	// SaveActive saves an active refresh token ID for a user with TTL and optional description.
 	SaveActive(ctx context.Context, userID, tokenID, description string, ttl time.Duration) error
 

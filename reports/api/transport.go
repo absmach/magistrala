@@ -17,6 +17,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -38,12 +39,16 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 		r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 		r.Route("/{domainID}", func(r chi.Router) {
 			r.Route("/reports", func(r chi.Router) {
+				d := roleManagerHttp.NewDecoder("reportID")
+
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					generateReportEndpoint(svc),
 					decodeGenerateReportRequest,
 					encodeFileDownloadResponse,
 					opts...,
 				), "generate_report").ServeHTTP)
+
+				r = roleManagerHttp.EntityAvailableActionsRouter(svc, d, r, opts)
 
 				r.Route("/configs", func(r chi.Router) {
 					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -122,6 +127,8 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 						api.EncodeResponse,
 						opts...,
 					), "delete_report_template").ServeHTTP)
+
+					roleManagerHttp.EntityRoleMangerRouter(svc, d, r, opts)
 				})
 			})
 		})

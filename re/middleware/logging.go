@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/messaging"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var _ re.Service = (*loggingMiddleware)(nil)
@@ -19,10 +20,15 @@ var _ re.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    re.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc re.Service, logger *slog.Logger) re.Service {
-	return &loggingMiddleware{logger, svc}
+	return &loggingMiddleware{
+		logger:                       logger,
+		svc:                          svc,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("re", svc, logger),
+	}
 }
 
 func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {

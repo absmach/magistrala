@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 const SeverityMax uint8 = 100
@@ -110,6 +111,7 @@ type Service interface {
 	ViewAlarm(ctx context.Context, session authn.Session, id string) (Alarm, error)
 	ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, session authn.Session, id string) error
+	roles.RoleManager
 }
 
 type Repository interface {
@@ -118,4 +120,5 @@ type Repository interface {
 	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
 	ListAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
+	roles.Repository
 }

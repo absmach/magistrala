@@ -16,6 +16,8 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 type re struct {
@@ -28,20 +30,26 @@ type re struct {
 	ticker     ticker.Ticker
 	email      emailer.Emailer
 	readers    grpcReadersV1.ReadersServiceClient
+	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) Service {
-	return &re{
-		repo:       repo,
-		idp:        idp,
-		runInfo:    runInfo,
-		rePubSub:   rePubSub,
-		writersPub: writersPub,
-		alarmsPub:  alarmsPub,
-		ticker:     tck,
-		email:      emailer,
-		readers:    readers,
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+	rpms, err := roles.NewProvisionManageService(policies.RulesType, repo, policy, idp, availableActions, builtInRoles)
+	if err != nil {
+		return nil, err
 	}
+	return &re{
+		repo:                    repo,
+		idp:                     idp,
+		runInfo:                 runInfo,
+		rePubSub:                rePubSub,
+		writersPub:              writersPub,
+		alarmsPub:               alarmsPub,
+		ticker:                  tck,
+		email:                   emailer,
+		readers:                 readers,
+		ProvisionManageService:  rpms,
+	}, nil
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {

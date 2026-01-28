@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var _ reports.Service = (*loggingMiddleware)(nil)
@@ -17,10 +18,15 @@ var _ reports.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    reports.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc reports.Service, logger *slog.Logger) reports.Service {
-	return &loggingMiddleware{logger, svc}
+	return &loggingMiddleware{
+		logger:                       logger,
+		svc:                          svc,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("reports", svc, logger),
+	}
 }
 
 func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {

@@ -12,6 +12,7 @@ import (
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/permissions"
+	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/supermq/pkg/policies"
 )
 
@@ -24,15 +25,25 @@ var (
 type authorizationMiddleware struct {
 	svc   alarms.Service
 	authz smqauthz.Authorization
+	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 var _ alarms.Service = (*authorizationMiddleware)(nil)
 
-func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization) alarms.Service {
+func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (alarms.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+	ram, err := rolemgr.NewAuthorization(policies.AlarmsType, svc, authz, roleOps)
+	if err != nil {
+		return nil, err
+	}
+
 	return &authorizationMiddleware{
 		svc:   svc,
 		authz: authz,
-	}
+		RoleManagerAuthorizationMiddleware: ram,
+	}, nil
 }
 
 func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (err error) {

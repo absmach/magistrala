@@ -8,22 +8,30 @@ import (
 	"time"
 
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/authn"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 type service struct {
 	idp  supermq.IDProvider
 	repo Repository
+	roles.ProvisionManageService
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(idp supermq.IDProvider, repo Repository) Service {
+func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+	rpms, err := roles.NewProvisionManageService(policies.AlarmsType, repo, policy, idp, availableActions, builtInRoles)
+	if err != nil {
+		return nil, err
+	}
 	return &service{
 		idp:  idp,
 		repo: repo,
-	}
+		ProvisionManageService: rpms,
+	}, nil
 }
 
 func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {

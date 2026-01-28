@@ -19,6 +19,8 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 
@@ -33,19 +35,25 @@ type report struct {
 	readers         grpcReadersV1.ReadersServiceClient
 	defaultTemplate ReportTemplate
 	converterURL    string
+	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string) Service {
-	return &report{
-		repo:            repo,
-		idp:             idp,
-		runInfo:         runInfo,
-		email:           emailer,
-		ticker:          tck,
-		readers:         readers,
-		defaultTemplate: template,
-		converterURL:    converterURL,
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+	rpms, err := roles.NewProvisionManageService(policies.ReportsType, repo, policy, idp, availableActions, builtInRoles)
+	if err != nil {
+		return nil, err
 	}
+	return &report{
+		repo:                    repo,
+		idp:                     idp,
+		runInfo:                 runInfo,
+		email:                   emailer,
+		ticker:                  tck,
+		readers:                 readers,
+		defaultTemplate:         template,
+		converterURL:            converterURL,
+		ProvisionManageService:  rpms,
+	}, nil
 }
 
 func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {

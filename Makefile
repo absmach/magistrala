@@ -7,9 +7,31 @@ SERVICES =  bootstrap provision re postgres-writer postgres-reader timescale-wri
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
 CGO_ENABLED ?= 0
-GOARCH ?= amd64
-GOOS ?= linux
-DETECTED_ARCH := $(shell uname -m)
+# Auto-detect architecture: use arm64 for Apple Silicon, default to amd64 otherwise
+UNAME_M := $(shell uname -m)
+ifeq ($(UNAME_M),arm64)
+    GOARCH ?= arm64
+else ifeq ($(UNAME_M),aarch64)
+    GOARCH ?= arm64
+else
+    GOARCH ?= amd64
+endif
+
+# Detect OS for sed compatibility: macOS (BSD sed) vs Linux (GNU sed)
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Darwin)
+    SED_INPLACE := sed -i ''
+else
+    SED_INPLACE := sed -i
+endif
+
+# For Apple Silicon: use amd64 platform for pre-built images (emulation via Rosetta)
+# This is needed because upstream stable images may not have ARM64 builds
+ifeq ($(UNAME_M),arm64)
+    DOCKER_PLATFORM := --platform linux/amd64
+else
+    DOCKER_PLATFORM :=
+endif
 VERSION ?= $(shell git describe --abbrev=0 --tags 2>/dev/null || echo 'unknown')
 COMMIT ?= $(shell git rev-parse HEAD)
 TIME ?= $(shell date +%F_%T)
@@ -256,21 +278,21 @@ grpc_mtls_certs:
 
 check_tls:
 ifeq ($(GRPC_TLS),true)
-	@unset GRPC_MTLS
+	@bash -c 'unset GRPC_MTLS'
 	@echo "gRPC TLS is enabled"
 	GRPC_MTLS=
 else
-	@unset GRPC_TLS
+	@bash -c 'unset GRPC_TLS'
 	GRPC_TLS=
 endif
 
 check_mtls:
 ifeq ($(GRPC_MTLS),true)
-	@unset GRPC_TLS
+	@bash -c 'unset GRPC_TLS'
 	@echo "gRPC MTLS is enabled"
 	GRPC_TLS=
 else
-	@unset GRPC_MTLS
+	@bash -c 'unset GRPC_MTLS'
 	GRPC_MTLS=
 endif
 
@@ -287,15 +309,26 @@ fetch_supermq:
 	@./scripts/supermq.sh
 
 run_latest: check_certs
-	$(call run_with_arch_detection,main,latest)
+	DOCKER_DEFAULT_PLATFORM=$(if $(DOCKER_PLATFORM),linux/amd64,) MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
+		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_stable: check_certs
-	$(eval version = $(shell git describe --abbrev=0 --tags 2>/dev/null || echo "main"))
-	$(call run_with_arch_detection,$(version),$(version))
+	@version=$$(git describe --abbrev=0 --tags 2>/dev/null) || { echo "Error: No git tags found. Please create a release tag first (e.g., git tag v0.1.0) or use 'make run_latest' instead."; exit 1; }; \
+	echo "Using stable version: $$version"; \
+	git checkout $$version; \
+	$(SED_INPLACE) "s/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=$$version/" docker/supermq-docker/.env; \
+	$(SED_INPLACE) "s/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$$version/" docker/.env; \
+	DOCKER_DEFAULT_PLATFORM=$(if $(DOCKER_PLATFORM),linux/amd64,) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
+	DOCKER_DEFAULT_PLATFORM=$(if $(DOCKER_PLATFORM),linux/amd64,) MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
+		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../."  docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		DOCKER_DEFAULT_PLATFORM=$(if $(DOCKER_PLATFORM),linux/amd64,) MG_ADDONS_CERTS_PATH_PREFIX="../." docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

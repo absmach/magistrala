@@ -326,9 +326,8 @@ func (am *authorizationMiddleware) RemoveParentGroup(ctx context.Context, sessio
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
-	req.UserID = session.UserID
-	req.PatID = session.PatID
 	req.Domain = session.DomainID
+
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
 	if err != nil {
 		return err
@@ -336,14 +335,24 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	req.Permission = perm.String()
 
-	req.EntityID = req.Object
-	req.EntityType = auth.ChannelsType.String()
-	req.Operation = am.entitiesOps.OperationName(entityType, op)
-	if op == operations.OpListUserChannels || op == dOperations.OpCreateDomainChannels || op == dOperations.OpListDomainChannels {
-		req.EntityID = auth.AnyIDs
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		entityID := req.Object
+		opName := am.entitiesOps.OperationName(entityType, op)
+		if op == operations.OpListUserChannels || op == dOperations.OpCreateDomainChannels || op == dOperations.OpListDomainChannels {
+			entityID = auth.AnyIDs
+		}
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   entityID,
+			EntityType: auth.ChannelsType.String(),
+			Operation:  opName,
+			Domain:     session.DomainID,
+		}
 	}
 
-	if err := am.authz.Authorize(ctx, req); err != nil {
+	if err := am.authz.Authorize(ctx, req, pat); err != nil {
 		return err
 	}
 
@@ -360,7 +369,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
 		Object:      policies.SuperMQObject,
-	}); err != nil {
+	}, nil); err != nil {
 		return err
 	}
 	return nil

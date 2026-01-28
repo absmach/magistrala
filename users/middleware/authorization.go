@@ -190,7 +190,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
 		Object:      policies.SuperMQObject,
-	}); err != nil {
+	}, nil); err != nil {
 		return err
 	}
 	return nil
@@ -207,7 +207,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 		Object:      obj,
 	}
 
-	if err := am.authz.Authorize(ctx, req); err != nil {
+	if err := am.authz.Authorize(ctx, req, nil); err != nil {
 		return err
 	}
 	return nil

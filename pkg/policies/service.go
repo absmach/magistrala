@@ -49,19 +49,6 @@ type Policy struct {
 	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view,
 	// membership, create, admin_only, edit_only, view_only, membership_only, ext_admin, ext_edit, ext_view.
 	Permission string `json:"permission,omitempty"`
-
-	// PAT authorization fields
-
-	// PatID contains the personal access token ID.
-	PatID string `json:"pat_id,omitempty"`
-	// Operation contains the operation type for PAT authorization.
-	Operation string `json:"operation,omitempty"`
-	// UserID contains the user ID for PAT authorization.
-	UserID string `json:"user_id,omitempty"`
-	// EntityType contains the entity type for PAT authorization.
-	EntityType string `json:"entity_type,omitempty"`
-	// EntityID contains the entity ID for PAT authorization.
-	EntityID string `json:"entity_id,omitempty"`
 }
 
 func (pr Policy) String() string {

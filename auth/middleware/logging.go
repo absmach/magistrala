@@ -110,7 +110,7 @@ func (lm *loggingMiddleware) RetrieveJWKS() (jwks []auth.PublicKeyInfo) {
 	return lm.svc.RetrieveJWKS()
 }
 
-func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy) (err error) {
+func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -132,7 +132,7 @@ func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy) 
 		}
 		lm.logger.Info("Authorize completed successfully", args...)
 	}(time.Now())
-	return lm.svc.Authorize(ctx, pr)
+	return lm.svc.Authorize(ctx, pr, patAuthz)
 }
 
 func (lm *loggingMiddleware) CreatePAT(ctx context.Context, token, name, description string, duration time.Duration) (pa auth.PAT, err error) {

@@ -280,6 +280,16 @@ func (s *Scope) Validate() error {
 	return nil
 }
 
+// PATAuthz represents the PAT authorization request fields.
+type PATAuthz struct {
+	PatID      string
+	UserID     string
+	EntityType EntityType
+	EntityID   string
+	Operation  string
+	Domain     string
+}
+
 // PAT represents Personal Access Token.
 type PAT struct {
 	ID          string    `json:"id,omitempty"`

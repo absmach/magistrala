@@ -129,20 +129,22 @@ func TestAuthorize(t *testing.T) {
 	cases := []struct {
 		desc         string
 		token        string
-		authRequest  *grpcAuthV1.PolicyReq
+		authRequest  *grpcAuthV1.AuthZReq
 		authResponse *grpcAuthV1.AuthZRes
 		err          error
 	}{
 		{
 			desc:  "authorize user with authorized token",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: usersType,
-				Object:      authoritiesObj,
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: usersType,
+					Object:      authoritiesObj,
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
 			err:          nil,
@@ -150,13 +152,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with unauthorized token",
 			token: inValidToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: usersType,
-				Object:      authoritiesObj,
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: usersType,
+					Object:      authoritiesObj,
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,

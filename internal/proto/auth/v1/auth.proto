@@ -9,7 +9,7 @@ option go_package = "github.com/absmach/supermq/api/grpc/auth/v1";
 // AuthService is a service that provides authentication
 // and authorization functionalities for SuperMQ services.
 service AuthService {
-  rpc Authorize(PolicyReq) returns (AuthZRes) {}
+  rpc Authorize(AuthZReq) returns (AuthZRes) {}
   rpc Authenticate(AuthNReq) returns (AuthNRes) {}
 }
 
@@ -35,11 +35,20 @@ message PolicyReq {
   string permission = 7;
   string object = 8;
   string object_type = 9;
-  string pat_id = 10;
-  string operation = 11;
-  string user_id = 12;
-  string entity_id = 13;
-  string entity_type = 14;
+}
+
+message PATReq {
+  string pat_id = 1;
+  string domain = 2;
+  string operation = 3;
+  string user_id = 4;
+  string entity_id = 5;
+  string entity_type = 6;
+}
+
+message AuthZReq {
+  PolicyReq policy_req = 1;
+  optional PATReq pat_req = 2;
 }
 
 message AuthZRes {

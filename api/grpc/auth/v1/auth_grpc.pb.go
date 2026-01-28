@@ -33,7 +33,7 @@ const (
 // AuthService is a service that provides authentication
 // and authorization functionalities for SuperMQ services.
 type AuthServiceClient interface {
-	Authorize(ctx context.Context, in *PolicyReq, opts ...grpc.CallOption) (*AuthZRes, error)
+	Authorize(ctx context.Context, in *AuthZReq, opts ...grpc.CallOption) (*AuthZRes, error)
 	Authenticate(ctx context.Context, in *AuthNReq, opts ...grpc.CallOption) (*AuthNRes, error)
 }
 
@@ -45,7 +45,7 @@ func NewAuthServiceClient(cc grpc.ClientConnInterface) AuthServiceClient {
 	return &authServiceClient{cc}
 }
 
-func (c *authServiceClient) Authorize(ctx context.Context, in *PolicyReq, opts ...grpc.CallOption) (*AuthZRes, error) {
+func (c *authServiceClient) Authorize(ctx context.Context, in *AuthZReq, opts ...grpc.CallOption) (*AuthZRes, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AuthZRes)
 	err := c.cc.Invoke(ctx, AuthService_Authorize_FullMethodName, in, out, cOpts...)
@@ -72,7 +72,7 @@ func (c *authServiceClient) Authenticate(ctx context.Context, in *AuthNReq, opts
 // AuthService is a service that provides authentication
 // and authorization functionalities for SuperMQ services.
 type AuthServiceServer interface {
-	Authorize(context.Context, *PolicyReq) (*AuthZRes, error)
+	Authorize(context.Context, *AuthZReq) (*AuthZRes, error)
 	Authenticate(context.Context, *AuthNReq) (*AuthNRes, error)
 	mustEmbedUnimplementedAuthServiceServer()
 }
@@ -84,7 +84,7 @@ type AuthServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedAuthServiceServer struct{}
 
-func (UnimplementedAuthServiceServer) Authorize(context.Context, *PolicyReq) (*AuthZRes, error) {
+func (UnimplementedAuthServiceServer) Authorize(context.Context, *AuthZReq) (*AuthZRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authorize not implemented")
 }
 func (UnimplementedAuthServiceServer) Authenticate(context.Context, *AuthNReq) (*AuthNRes, error) {
@@ -112,7 +112,7 @@ func RegisterAuthServiceServer(s grpc.ServiceRegistrar, srv AuthServiceServer) {
 }
 
 func _AuthService_Authorize_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PolicyReq)
+	in := new(AuthZReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func _AuthService_Authorize_Handler(srv interface{}, ctx context.Context, dec fu
 		FullMethod: AuthService_Authorize_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthServiceServer).Authorize(ctx, req.(*PolicyReq))
+		return srv.(AuthServiceServer).Authorize(ctx, req.(*AuthZReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }

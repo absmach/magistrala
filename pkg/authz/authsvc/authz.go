@@ -46,7 +46,7 @@ func NewAuthorization(ctx context.Context, cfg grpcclient.Config, domainsAuthz p
 	}, client, nil
 }
 
-func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq) error {
+func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq) error {
 	if pr.SubjectType == policies.UserType && (pr.ObjectType == policies.GroupType || pr.ObjectType == policies.ClientType || pr.ObjectType == policies.DomainType) {
 		domainID := pr.Domain
 		if domainID == "" {
@@ -60,21 +60,29 @@ func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq) error 
 		}
 	}
 
-	req := grpcAuthV1.PolicyReq{
-		Domain:          pr.Domain,
-		SubjectType:     pr.SubjectType,
-		SubjectKind:     pr.SubjectKind,
-		SubjectRelation: pr.SubjectRelation,
-		Subject:         pr.Subject,
-		Relation:        pr.Relation,
-		Permission:      pr.Permission,
-		Object:          pr.Object,
-		ObjectType:      pr.ObjectType,
-		PatId:           pr.PatID,
-		Operation:       pr.Operation,
-		UserId:          pr.UserID,
-		EntityId:        pr.EntityID,
-		EntityType:      pr.EntityType,
+	req := grpcAuthV1.AuthZReq{
+		PolicyReq: &grpcAuthV1.PolicyReq{
+			Domain:          pr.Domain,
+			SubjectType:     pr.SubjectType,
+			SubjectKind:     pr.SubjectKind,
+			SubjectRelation: pr.SubjectRelation,
+			Subject:         pr.Subject,
+			Relation:        pr.Relation,
+			Permission:      pr.Permission,
+			Object:          pr.Object,
+			ObjectType:      pr.ObjectType,
+		},
+	}
+
+	if pat != nil {
+		req.PatReq = &grpcAuthV1.PATReq{
+			PatId:      pat.PatID,
+			Domain:     pat.Domain,
+			Operation:  pat.Operation,
+			UserId:     pat.UserID,
+			EntityId:   pat.EntityID,
+			EntityType: pat.EntityType,
+		}
 	}
 
 	res, err := a.authSvcClient.Authorize(ctx, &req)
@@ -95,32 +103,38 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 
 	switch status {
 	case domains.FreezeStatus:
-		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.PolicyReq{
-			Subject:     subject,
-			SubjectType: subjectType,
-			Permission:  policies.AdminPermission,
-			Object:      policies.SuperMQObject,
-			ObjectType:  policies.PlatformType,
+		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
+			PolicyReq: &grpcAuthV1.PolicyReq{
+				Subject:     subject,
+				SubjectType: subjectType,
+				Permission:  policies.AdminPermission,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformType,
+			},
 		})
 
 		return err
 	case domains.DisabledStatus:
-		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.PolicyReq{
-			Subject:     subject,
-			SubjectType: subjectType,
-			Permission:  policies.AdminPermission,
-			Object:      domainID,
-			ObjectType:  policies.DomainType,
+		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
+			PolicyReq: &grpcAuthV1.PolicyReq{
+				Subject:     subject,
+				SubjectType: subjectType,
+				Permission:  policies.AdminPermission,
+				Object:      domainID,
+				ObjectType:  policies.DomainType,
+			},
 		})
 
 		return err
 	case domains.EnabledStatus:
-		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.PolicyReq{
-			Subject:     subject,
-			SubjectType: subjectType,
-			Permission:  policies.MembershipPermission,
-			Object:      domainID,
-			ObjectType:  policies.DomainType,
+		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
+			PolicyReq: &grpcAuthV1.PolicyReq{
+				Subject:     subject,
+				SubjectType: subjectType,
+				Permission:  policies.MembershipPermission,
+				Object:      domainID,
+				ObjectType:  policies.DomainType,
+			},
 		})
 
 		return err

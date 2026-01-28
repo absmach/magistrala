@@ -58,7 +58,7 @@ func (am *authorizationMiddleware) RetrieveAll(ctx context.Context, session smqa
 		ObjectType:  objectType,
 		Object:      object,
 	}
-	if err := am.authz.Authorize(ctx, req); err != nil {
+	if err := am.authz.Authorize(ctx, req, nil); err != nil {
 		return journal.JournalsPage{}, err
 	}
 
@@ -76,7 +76,7 @@ func (am *authorizationMiddleware) RetrieveClientTelemetry(ctx context.Context, 
 		Object:      clientID,
 	}
 
-	if err := am.authz.Authorize(ctx, req); err != nil {
+	if err := am.authz.Authorize(ctx, req, nil); err != nil {
 		return journal.ClientTelemetry{}, err
 	}
 

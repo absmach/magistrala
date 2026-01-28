@@ -56,7 +56,7 @@ type Authz interface {
 	// `object`. Authorize returns a non-nil error if the subject has
 	// no relation on the object (which simply means the operation is
 	// denied).
-	Authorize(ctx context.Context, pr policies.Policy) error
+	Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error
 }
 
 // Authn specifies an API that must be fulfilled by the domain service
@@ -205,13 +205,9 @@ func (svc service) RetrieveJWKS() []PublicKeyInfo {
 	return keys
 }
 
-func (svc service) Authorize(ctx context.Context, pr policies.Policy) error {
-	if pr.PatID != "" {
-		entityType, err := ParseEntityType(pr.EntityType)
-		if err != nil {
-			return err
-		}
-		if err := svc.AuthorizePAT(ctx, pr.UserID, pr.PatID, entityType, pr.Domain, pr.Operation, pr.EntityID); err != nil {
+func (svc service) Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error {
+	if patAuthz != nil {
+		if err := svc.AuthorizePAT(ctx, patAuthz.UserID, patAuthz.PatID, patAuthz.EntityType, patAuthz.Domain, patAuthz.Operation, patAuthz.EntityID); err != nil {
 			return err
 		}
 	}
@@ -336,7 +332,7 @@ func (svc service) checkUserRole(ctx context.Context, key Key) (err error) {
 			Permission:  policies.AdminPermission,
 			Object:      policies.SuperMQObject,
 			ObjectType:  policies.PlatformType,
-		}); err != nil {
+		}, nil); err != nil {
 			return errRoleAuth
 		}
 		return nil
@@ -347,7 +343,7 @@ func (svc service) checkUserRole(ctx context.Context, key Key) (err error) {
 			Permission:  policies.MembershipPermission,
 			Object:      policies.SuperMQObject,
 			ObjectType:  policies.PlatformType,
-		}); err != nil {
+		}, nil); err != nil {
 			return errRoleAuth
 		}
 		return nil
@@ -364,7 +360,7 @@ func (svc service) getUserRole(ctx context.Context, userID string) (role Role) {
 		Permission:  policies.AdminPermission,
 		Object:      policies.SuperMQObject,
 		ObjectType:  policies.PlatformType,
-	}); err == nil {
+	}, nil); err == nil {
 		rl = AdminRole
 	}
 

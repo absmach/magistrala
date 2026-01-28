@@ -376,15 +376,13 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
 		Object:      policies.SuperMQObject,
-	}); err != nil {
+	}, nil); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, pr smqauthz.PolicyReq) error {
-	pr.UserID = session.UserID
-	pr.PatID = session.PatID
 	pr.Domain = session.DomainID
 
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
@@ -393,14 +391,24 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 	}
 	pr.Permission = perm.String()
 
-	pr.EntityID = pr.Object
-	pr.EntityType = auth.GroupsType.String()
-	pr.Operation = am.entitiesOps.OperationName(entityType, op)
-	if op == dOperations.OpListDomainGroups || op == dOperations.OpCreateDomainGroups {
-		pr.EntityID = auth.AnyIDs
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		entityID := pr.Object
+		opName := am.entitiesOps.OperationName(entityType, op)
+		if op == dOperations.OpListDomainGroups || op == dOperations.OpCreateDomainGroups {
+			entityID = auth.AnyIDs
+		}
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   entityID,
+			EntityType: auth.GroupsType.String(),
+			Operation:  opName,
+			Domain:     session.DomainID,
+		}
 	}
 
-	if err := am.authz.Authorize(ctx, pr); err != nil {
+	if err := am.authz.Authorize(ctx, pr, pat); err != nil {
 		return err
 	}
 	return nil

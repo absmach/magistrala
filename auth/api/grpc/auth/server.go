@@ -45,7 +45,7 @@ func (s *authGrpcServer) Authenticate(ctx context.Context, req *grpcAuthV1.AuthN
 	return res.(*grpcAuthV1.AuthNRes), nil
 }
 
-func (s *authGrpcServer) Authorize(ctx context.Context, req *grpcAuthV1.PolicyReq) (*grpcAuthV1.AuthZRes, error) {
+func (s *authGrpcServer) Authorize(ctx context.Context, req *grpcAuthV1.AuthZReq) (*grpcAuthV1.AuthZRes, error) {
 	_, res, err := s.authorize.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, grpcapi.EncodeError(err)
@@ -64,26 +64,38 @@ func encodeAuthenticateResponse(_ context.Context, grpcRes any) (any, error) {
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
-	req := grpcReq.(*grpcAuthV1.PolicyReq)
+	req := grpcReq.(*grpcAuthV1.AuthZReq)
 	if req == nil {
 		return authReq{}, nil
 	}
 
-	return authReq{
-		Domain:      req.GetDomain(),
-		SubjectType: req.GetSubjectType(),
-		SubjectKind: req.GetSubjectKind(),
-		Subject:     req.GetSubject(),
-		Relation:    req.GetRelation(),
-		Permission:  req.GetPermission(),
-		ObjectType:  req.GetObjectType(),
-		Object:      req.GetObject(),
-		UserID:      req.GetUserId(),
-		PatID:       req.GetPatId(),
-		EntityType:  req.GetEntityType(),
-		Operation:   req.GetOperation(),
-		EntityID:    req.GetEntityId(),
-	}, nil
+	policyReq := req.GetPolicyReq()
+	patReq := req.GetPatReq()
+
+	if policyReq == nil {
+		return authReq{}, nil
+	}
+
+	authRequest := authReq{
+		Domain:      policyReq.GetDomain(),
+		SubjectType: policyReq.GetSubjectType(),
+		SubjectKind: policyReq.GetSubjectKind(),
+		Subject:     policyReq.GetSubject(),
+		Relation:    policyReq.GetRelation(),
+		Permission:  policyReq.GetPermission(),
+		ObjectType:  policyReq.GetObjectType(),
+		Object:      policyReq.GetObject(),
+	}
+
+	if patReq != nil {
+		authRequest.UserID = patReq.GetUserId()
+		authRequest.PatID = patReq.GetPatId()
+		authRequest.EntityType = patReq.GetEntityType()
+		authRequest.Operation = patReq.GetOperation()
+		authRequest.EntityID = patReq.GetEntityId()
+	}
+
+	return authRequest, nil
 }
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes any) (any, error) {

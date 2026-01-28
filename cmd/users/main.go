@@ -412,7 +412,7 @@ func createAdminPolicy(ctx context.Context, userID string, authz smqauthz.Author
 		Permission:  policies.AdministratorRelation,
 		Object:      policies.SuperMQObject,
 		ObjectType:  policies.PlatformType,
-	}); err != nil {
+	}, nil); err != nil {
 		err := policyService.AddPolicy(ctx, policies.Policy{
 			SubjectType: policies.UserType,
 			Subject:     userID,

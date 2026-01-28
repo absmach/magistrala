@@ -65,7 +65,7 @@ func (tm *tracingMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 	return tm.svc.RetrieveJWKS()
 }
 
-func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy) error {
+func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {
 	ctx, span := tm.tracer.Start(ctx, "authorize", trace.WithAttributes(
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
@@ -77,7 +77,7 @@ func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy) 
 	))
 	defer span.End()
 
-	return tm.svc.Authorize(ctx, pr)
+	return tm.svc.Authorize(ctx, pr, patAuthz)
 }
 
 func (tm *tracingMiddleware) CreatePAT(ctx context.Context, token, name, description string, duration time.Duration) (auth.PAT, error) {

@@ -75,12 +75,12 @@ func (ms *metricsMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 	return ms.svc.RetrieveJWKS()
 }
 
-func (ms *metricsMiddleware) Authorize(ctx context.Context, pr policies.Policy) error {
+func (ms *metricsMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "authorize").Add(1)
 		ms.latency.With("method", "authorize").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.Authorize(ctx, pr)
+	return ms.svc.Authorize(ctx, pr, patAuthz)
 }
 
 func (ms *metricsMiddleware) CreatePAT(ctx context.Context, token, name, description string, duration time.Duration) (auth.PAT, error) {

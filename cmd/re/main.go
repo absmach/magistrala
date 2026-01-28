@@ -25,6 +25,7 @@ import (
 	httpapi "github.com/absmach/magistrala/re/api"
 	"github.com/absmach/magistrala/re/events"
 	"github.com/absmach/magistrala/re/middleware"
+	"github.com/absmach/magistrala/re/operations"
 	repg "github.com/absmach/magistrala/re/postgres"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/supermq"
@@ -40,13 +41,22 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	smqbrokers "github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/permissions"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/policies/spicedb"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
+	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
 	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -67,15 +77,20 @@ const (
 const channBuffer = 256
 
 type config struct {
-	LogLevel         string        `env:"MG_RE_LOG_LEVEL"           envDefault:"info"`
-	InstanceID       string        `env:"MG_RE_INSTANCE_ID"         envDefault:""`
-	JaegerURL        url.URL       `env:"SMQ_JAEGER_URL"             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry    bool          `env:"SMQ_SEND_TELEMETRY"         envDefault:"true"`
-	ESURL            string        `env:"SMQ_ES_URL"                 envDefault:"nats://localhost:4222"`
-	CacheURL         string        `env:"MG_RE_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration time.Duration `env:"MG_RE_CACHE_KEY_DURATION"  envDefault:"10m"`
-	TraceRatio       float64       `env:"SMQ_JAEGER_TRACE_RATIO"     envDefault:"1.0"`
-	BrokerURL        string        `env:"SMQ_MESSAGE_BROKER_URL"     envDefault:"nats://localhost:4222"`
+	LogLevel            string        `env:"MG_RE_LOG_LEVEL"             envDefault:"info"`
+	InstanceID          string        `env:"MG_RE_INSTANCE_ID"           envDefault:""`
+	JaegerURL           url.URL       `env:"SMQ_JAEGER_URL"              envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool          `env:"SMQ_SEND_TELEMETRY"          envDefault:"true"`
+	ESURL               string        `env:"SMQ_ES_URL"                  envDefault:"nats://localhost:4222"`
+	CacheURL            string        `env:"MG_RE_CACHE_URL"             envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration    time.Duration `env:"MG_RE_CACHE_KEY_DURATION"    envDefault:"10m"`
+	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
+	BrokerURL           string        `env:"SMQ_MESSAGE_BROKER_URL"      envDefault:"nats://localhost:4222"`
+	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"            envDefault:"localhost"`
+	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"            envDefault:"50051"`
+	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"  envDefault:"12345678"`
+	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"     envDefault:"schema.zed"`
+	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"        envDefault:"permission.yaml"`
 }
 
 func main() {
@@ -126,7 +141,14 @@ func main() {
 
 		return
 	}
-	db, err := pgclient.Setup(dbConfig, *repg.Migration())
+	migration, err := repg.Migration()
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+
+		return
+	}
+	db, err := pgclient.Setup(dbConfig, *migration)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -255,7 +277,7 @@ func main() {
 	readersClient := grpcClient.NewReadersClient(client.Connection(), regrpcCfg.Timeout)
 	logger.Info("Readers gRPC client successfully connected to readers gRPC server " + client.Secure())
 
-	svc, err := newService(ctx, database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, callout, cfg)
+	svc, err := newService(ctx, cfg, database, runInfo, msgSub, writersPub, alarmsPub, authz, ec, logger, readersClient, callout)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -307,7 +329,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, callout callout.Callout, cfg config) (re.Service, error) {
+func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, callout callout.Callout) (re.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -316,13 +338,55 @@ func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.R
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	csvc := re.NewService(repo, runInfo, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient)
+	policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
+	if err != nil {
+		return nil, err
+	}
+	logger.Info("Policy service successfully connected to SpiceDB gRPC server")
+
+	availableActions, builtInRoles, err := availableActionsAndBuiltInRoles(cfg.SpicedbSchemaFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get available actions and built-in roles: %w", err)
+	}
+
+	csvc, err := re.NewService(repo, runInfo, policyService, idp, rePubSub, writersPub, alarmsPub, ticker.NewTicker(time.Second*30), emailerClient, readersClient, availableActions, builtInRoles)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create RE service: %w", err)
+	}
+
 	csvc, err = events.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to init re event store middleware: %w", err)
 	}
 
-	csvc, err = middleware.AuthorizationMiddleware(csvc, authz)
+	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
+	}
+
+	ruleOps, ruleRoleOps, err := permConfig.GetEntityPermissions("rules")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get rule permissions: %w", err)
+	}
+
+	entitiesOps, err := permissions.NewEntitiesOperations(
+		permissions.EntitiesPermission{
+			"rules": ruleOps,
+		},
+		permissions.EntitiesOperationDetails[permissions.Operation]{
+			"rules": operations.OperationDetails(),
+		},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entities operations: %w", err)
+	}
+
+	roleOps, err := permissions.NewOperations(roles.Operations(), ruleRoleOps)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create role operations: %w", err)
+	}
+
+	csvc, err = middleware.AuthorizationMiddleware(csvc, authz, entitiesOps, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -333,4 +397,31 @@ func newService(ctx context.Context, db pgclient.Database, runInfo chan pkglog.R
 	csvc = middleware.LoggingMiddleware(csvc, logger)
 
 	return csvc, nil
+}
+
+func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Service, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ps := spicedb.NewPolicyService(client, logger)
+
+	return ps, nil
+}
+
+func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, "rules")
+	if err != nil {
+		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
+	}
+
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		re.BuiltInRoleAdmin: availableActions,
+	}
+
+	return availableActions, builtInRoles, err
 }

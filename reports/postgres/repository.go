@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
-	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -32,7 +31,7 @@ type PostgresRepository struct {
 	rolesPostgres.Repository
 }
 
-func NewRepository(db *sqlx.DB) reports.Repository {
+func NewRepository(db postgres.Database) reports.Repository {
 	rolesRepo := rolesPostgres.NewRepository(db, policies.ReportsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	errHandlerOptions := []errors.HandlerOption{
 		postgres.WithDuplicateErrors(NewDuplicateErrors()),

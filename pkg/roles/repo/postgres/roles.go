@@ -823,11 +823,122 @@ func (repo *Repository) ListEntityMembers(ctx context.Context, entityID string, 
 	}, nil
 }
 
+func (repo *Repository) RetrieveRoleByEntityMember(ctx context.Context, entityID, memberID string) (string, error) {
+	params := map[string]any{
+		"entity_id": entityID,
+		"member_id": memberID,
+	}
+
+	query := fmt.Sprintf(`SELECT role_id, entity_id, member_id FROM %s_role_members WHERE entity_id = :entity_id AND  member_id = :member_id`, repo.tableNamePrefix)
+
+	rows, err := repo.db.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return "", errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	roleID := ""
+	for rows.Next() {
+		var dbrmem dbRoleMember
+		if err := rows.StructScan(&dbrmem); err != nil {
+			return "", errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		roleID = dbrmem.RoleID
+	}
+
+	return roleID, nil
+}
+
 func (repo *Repository) RemoveEntityMembers(ctx context.Context, entityID string, memberIDs []string) error {
+	params := map[string]any{
+		"entity_id":  entityID,
+		"member_ids": memberIDs,
+	}
+
+	query := fmt.Sprintf(`DELETE FROM %s_role_members WHERE entity_id = :entity_id AND member_id = ANY(:member_ids)`, repo.tableNamePrefix)
+
+	if _, err := repo.db.NamedExecContext(ctx, query, params); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
+func (repo *Repository) RetrieveRoleByDomainMember(ctx context.Context, domainID, memberID string) (string, error) {
+	params := map[string]any{
+		"domain_id": domainID,
+		"member_id": memberID,
+	}
+
+	query := fmt.Sprintf(`
+		SELECT
+			rm.role_id,
+			rm.entity_id,
+			rm.member_id
+		FROM
+			%s_role_members rm
+		JOIN %s e ON
+			e.id = rm.entity_id
+		WHERE
+			e.domain_id = :domain_id
+			AND rm.member_id = :member_id
+		`,
+		repo.tableNamePrefix, repo.tableNamePrefix)
+
+	rows, err := repo.db.NamedQueryContext(ctx, query, params)
+	if err != nil {
+		return "", errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	roleID := ""
+	for rows.Next() {
+		dbrmems := dbRoleMember{}
+		if err := rows.StructScan(&dbrmems); err != nil {
+			return "", errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		roleID = dbrmems.RoleID
+	}
+
+	return roleID, nil
+}
+
+func (repo *Repository) RemoveMemberFromDomain(ctx context.Context, domainID string, memberID string) error {
+	params := map[string]any{
+		"domain_id": domainID,
+		"member_id": memberID,
+	}
+
+	query := fmt.Sprintf(`
+		DELETE
+		FROM
+			%s_role_members rm
+		JOIN %s e ON
+			e.id = rm.entity_id
+		WHERE
+			e.domain_id = :domain_id
+			AND rm.member_id = :member_id
+		`,
+		repo.tableNamePrefix, repo.tableNamePrefix)
+	if _, err := repo.db.NamedExecContext(ctx, query, params); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
 	return nil
 }
 
 func (repo *Repository) RemoveMemberFromAllRoles(ctx context.Context, memberID string) (err error) {
+	params := map[string]any{
+		"member_id": memberID,
+	}
+
+	query := fmt.Sprintf(`DELETE FROM %s_role_members WHERE member_id = :member_id`, repo.tableNamePrefix)
+
+	if _, err := repo.db.NamedExecContext(ctx, query, params); err != nil {
+		return errors.Wrap(repoerr.ErrRemoveEntity, err)
+	}
+
 	return nil
 }
 

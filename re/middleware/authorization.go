@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var (
@@ -25,13 +26,22 @@ var (
 type authorizationMiddleware struct {
 	svc   re.Service
 	authz smqauthz.Authorization
+	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 // AuthorizationMiddleware adds authorization to the re service.
-func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization) (re.Service, error) {
+func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+	ram, err := rolemgr.NewAuthorization(policies.RulesType, svc, authz, roleOps)
+	if err != nil {
+		return nil, err
+	}
 	return &authorizationMiddleware{
-		svc:   svc,
-		authz: authz,
+		svc:                                svc,
+		authz:                              authz,
+		RoleManagerAuthorizationMiddleware: ram,
 	}, nil
 }
 

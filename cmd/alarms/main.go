@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
@@ -26,12 +27,20 @@ import (
 	"github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/policies/spicedb"
 	"github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
+	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
 	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -50,6 +59,10 @@ type config struct {
 	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
 }
 
 func main() {
@@ -87,7 +100,14 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	db, err := postgres.Setup(dbConfig, *alarmsRepo.Migration())
+	migrations, err := alarmsRepo.Migration()
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+
+	db, err := postgres.Setup(dbConfig, *migrations)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -140,9 +160,34 @@ func main() {
 
 	idp := uuid.New()
 
-	svc := alarms.NewService(idp, repo)
+	policyEvaluator, policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	logger.Info("Policy service are successfully connected to SpiceDB gRPC server")
 
-	svc = middleware.NewAuthorizationMiddleware(svc, authz)
+	availableActions, buildInRoles, err := availableActionsAndBuiltInRoles(cfg.SpicedbSchemaFile)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to get available actions and built-in roles: %s", err))
+		exitCode = 1
+		return
+	}
+	
+	svc, err := alarms.NewService(policyService, idp, repo, availableActions, buildInRoles)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
+		exitCode = 1
+		return
+	}
+
+	svc, err = middleware.NewAuthorizationMiddleware(svc, authz)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
+		exitCode = 1
+		return
+	}
 	svc = middleware.NewLoggingMiddleware(logger, svc)
 	counter, latency := prometheus.MakeMetrics("alarms", "api")
 	svc = middleware.NewMetricsMiddleware(counter, latency, svc)
@@ -191,4 +236,32 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("billing service terminated: %s", err))
 	}
+}
+
+func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Evaluator, policies.Service, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+	ps := spicedb.NewPolicyService(client, logger)
+
+	pe := spicedb.NewPolicyEvaluator(client, logger)
+	return pe, ps, nil
+}
+
+func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, policies.AlarmsType)
+	if err != nil {
+		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
+	}
+
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		alarms.BuiltInRoleAdmin: availableActions,
+	}
+
+	return availableActions, builtInRoles, err
 }

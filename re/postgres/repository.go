@@ -14,15 +14,29 @@ import (
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
+	"github.com/jmoiron/sqlx"
+)
+
+const (
+	rolesTableNamePrefix = "rules"
+	entityTableName      = "rules"
+	entityIDColumnName   = "id"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
+	rolesPostgres.Repository
 }
 
-func NewRepository(db postgres.Database) re.Repository {
-	return &PostgresRepository{DB: db}
+func NewRepository(db *sqlx.DB) re.Repository {
+	rolesRepo := rolesPostgres.NewRepository(db, policies.RulesType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	return &PostgresRepository{
+		DB:         db,
+		Repository: rolesRepo,
+	}
 }
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {

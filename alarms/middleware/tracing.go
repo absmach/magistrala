@@ -9,6 +9,7 @@ import (
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
 	smqTracing "github.com/absmach/supermq/pkg/tracing"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
@@ -16,6 +17,7 @@ import (
 type tracingMiddleware struct {
 	tracer trace.Tracer
 	svc    alarms.Service
+	rolemw.RoleManagerTracing
 }
 
 var _ alarms.Service = (*tracingMiddleware)(nil)
@@ -24,6 +26,7 @@ func NewTracingMiddleware(tracer trace.Tracer, svc alarms.Service) alarms.Servic
 	return &tracingMiddleware{
 		tracer: tracer,
 		svc:    svc,
+		RoleManagerTracing: rolemw.NewTracing("alarms", svc, tracer),
 	}
 }
 

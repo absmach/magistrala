@@ -11,6 +11,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/policies"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -43,16 +44,16 @@ func (_m *Authz) EXPECT() *Authz_Expecter {
 }
 
 // Authorize provides a mock function for the type Authz
-func (_mock *Authz) Authorize(ctx context.Context, pr policies.Policy) error {
-	ret := _mock.Called(ctx, pr)
+func (_mock *Authz) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {
+	ret := _mock.Called(ctx, pr, patAuthz)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Authorize")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, policies.Policy) error); ok {
-		r0 = returnFunc(ctx, pr)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, policies.Policy, *auth.PATAuthz) error); ok {
+		r0 = returnFunc(ctx, pr, patAuthz)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -67,11 +68,12 @@ type Authz_Authorize_Call struct {
 // Authorize is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Authz_Expecter) Authorize(ctx interface{}, pr interface{}) *Authz_Authorize_Call {
-	return &Authz_Authorize_Call{Call: _e.mock.On("Authorize", ctx, pr)}
+//   - patAuthz *auth.PATAuthz
+func (_e *Authz_Expecter) Authorize(ctx interface{}, pr interface{}, patAuthz interface{}) *Authz_Authorize_Call {
+	return &Authz_Authorize_Call{Call: _e.mock.On("Authorize", ctx, pr, patAuthz)}
 }
 
-func (_c *Authz_Authorize_Call) Run(run func(ctx context.Context, pr policies.Policy)) *Authz_Authorize_Call {
+func (_c *Authz_Authorize_Call) Run(run func(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz)) *Authz_Authorize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -81,9 +83,14 @@ func (_c *Authz_Authorize_Call) Run(run func(ctx context.Context, pr policies.Po
 		if args[1] != nil {
 			arg1 = args[1].(policies.Policy)
 		}
+		var arg2 *auth.PATAuthz
+		if args[2] != nil {
+			arg2 = args[2].(*auth.PATAuthz)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -94,7 +101,7 @@ func (_c *Authz_Authorize_Call) Return(err error) *Authz_Authorize_Call {
 	return _c
 }
 
-func (_c *Authz_Authorize_Call) RunAndReturn(run func(ctx context.Context, pr policies.Policy) error) *Authz_Authorize_Call {
+func (_c *Authz_Authorize_Call) RunAndReturn(run func(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error) *Authz_Authorize_Call {
 	_c.Call.Return(run)
 	return _c
 }

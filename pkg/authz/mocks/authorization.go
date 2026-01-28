@@ -43,16 +43,16 @@ func (_m *Authorization) EXPECT() *Authorization_Expecter {
 }
 
 // Authorize provides a mock function for the type Authorization
-func (_mock *Authorization) Authorize(ctx context.Context, pr authz.PolicyReq) error {
-	ret := _mock.Called(ctx, pr)
+func (_mock *Authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq) error {
+	ret := _mock.Called(ctx, pr, pat)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Authorize")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authz.PolicyReq) error); ok {
-		r0 = returnFunc(ctx, pr)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authz.PolicyReq, *authz.PATReq) error); ok {
+		r0 = returnFunc(ctx, pr, pat)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -67,11 +67,12 @@ type Authorization_Authorize_Call struct {
 // Authorize is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr authz.PolicyReq
-func (_e *Authorization_Expecter) Authorize(ctx interface{}, pr interface{}) *Authorization_Authorize_Call {
-	return &Authorization_Authorize_Call{Call: _e.mock.On("Authorize", ctx, pr)}
+//   - pat *authz.PATReq
+func (_e *Authorization_Expecter) Authorize(ctx interface{}, pr interface{}, pat interface{}) *Authorization_Authorize_Call {
+	return &Authorization_Authorize_Call{Call: _e.mock.On("Authorize", ctx, pr, pat)}
 }
 
-func (_c *Authorization_Authorize_Call) Run(run func(ctx context.Context, pr authz.PolicyReq)) *Authorization_Authorize_Call {
+func (_c *Authorization_Authorize_Call) Run(run func(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq)) *Authorization_Authorize_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -81,9 +82,14 @@ func (_c *Authorization_Authorize_Call) Run(run func(ctx context.Context, pr aut
 		if args[1] != nil {
 			arg1 = args[1].(authz.PolicyReq)
 		}
+		var arg2 *authz.PATReq
+		if args[2] != nil {
+			arg2 = args[2].(*authz.PATReq)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -94,7 +100,7 @@ func (_c *Authorization_Authorize_Call) Return(err error) *Authorization_Authori
 	return _c
 }
 
-func (_c *Authorization_Authorize_Call) RunAndReturn(run func(ctx context.Context, pr authz.PolicyReq) error) *Authorization_Authorize_Call {
+func (_c *Authorization_Authorize_Call) RunAndReturn(run func(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq) error) *Authorization_Authorize_Call {
 	_c.Call.Return(run)
 	return _c
 }

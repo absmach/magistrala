@@ -125,6 +125,18 @@ func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy, 
 			),
 			slog.String("permission", pr.Permission),
 		}
+		if patAuthz != nil {
+			args = append(args,
+				slog.Group("pat",
+					slog.String("pat_id", patAuthz.PatID),
+					slog.String("user_id", patAuthz.UserID),
+					slog.String("entity_type", patAuthz.EntityType.String()),
+					slog.String("entity_id", patAuthz.EntityID),
+					slog.String("operation", patAuthz.Operation),
+					slog.String("domain", patAuthz.Domain),
+				),
+			)
+		}
 		if err != nil {
 			args = append(args, slog.String("error", err.Error()))
 			lm.logger.Warn("Authorize failed", args...)

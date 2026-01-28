@@ -66,7 +66,7 @@ func (tm *tracingMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 }
 
 func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {
-	ctx, span := tm.tracer.Start(ctx, "authorize", trace.WithAttributes(
+	attributes := []attribute.KeyValue{
 		attribute.String("subject", pr.Subject),
 		attribute.String("subject_type", pr.SubjectType),
 		attribute.String("subject_relation", pr.SubjectRelation),
@@ -74,7 +74,20 @@ func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy, 
 		attribute.String("object_type", pr.ObjectType),
 		attribute.String("relation", pr.Relation),
 		attribute.String("permission", pr.Permission),
-	))
+	}
+
+	if patAuthz != nil {
+		attributes = append(attributes,
+			attribute.String("pat_id", patAuthz.PatID),
+			attribute.String("pat_user_id", patAuthz.UserID),
+			attribute.String("pat_entity_type", patAuthz.EntityType.String()),
+			attribute.String("pat_entity_id", patAuthz.EntityID),
+			attribute.String("pat_operation", patAuthz.Operation),
+			attribute.String("pat_domain", patAuthz.Domain),
+		)
+	}
+
+	ctx, span := tm.tracer.Start(ctx, "authorize", trace.WithAttributes(attributes...))
 	defer span.End()
 
 	return tm.svc.Authorize(ctx, pr, patAuthz)

@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 
@@ -408,6 +409,7 @@ type Repository interface {
 	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error
 	ViewReportTemplate(ctx context.Context, domainID, reportID string) (ReportTemplate, error)
 	DeleteReportTemplate(ctx context.Context, domainID, reportID string) error
+	roles.Repository
 }
 
 type Service interface {
@@ -426,4 +428,5 @@ type Service interface {
 
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
+	roles.RoleManager
 }

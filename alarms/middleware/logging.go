@@ -10,20 +10,23 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 type loggingMiddleware struct {
 	logger  *slog.Logger
 	service alarms.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 var _ alarms.Service = (*loggingMiddleware)(nil)
 
 func NewLoggingMiddleware(logger *slog.Logger, service alarms.Service) alarms.Service {
 	return &loggingMiddleware{
-		logger:  logger,
-		service: service,
+		logger:                       logger,
+		service:                      service,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("alarms", service, logger),
 	}
 }
 

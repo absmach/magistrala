@@ -16,18 +16,31 @@ import (
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 	"github.com/jmoiron/sqlx"
+)
+
+const (
+	rolesTableNamePrefix = "alarms"
+	entityTableName      = "alarms"
+	entityIDColumnName   = "id"
 )
 
 type repository struct {
 	db *sqlx.DB
+	rolesPostgres.Repository
 }
 
 var _ alarms.Repository = (*repository)(nil)
 
 func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
-	return &repository{db: db}
+	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	return &repository{
+		db:         db,
+		Repository: rolesRepo,
+	}
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {

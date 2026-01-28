@@ -9,6 +9,7 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -16,6 +17,7 @@ type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
 	service alarms.Service
+	rolemw.RoleManagerMetricsMiddleware
 }
 
 var _ alarms.Service = (*metricsMiddleware)(nil)
@@ -25,6 +27,7 @@ func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, se
 		counter: counter,
 		latency: latency,
 		service: service,
+		RoleManagerMetricsMiddleware: rolemw.NewMetrics("alarms", service, counter, latency),
 	}
 }
 

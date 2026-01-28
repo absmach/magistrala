@@ -8,25 +8,41 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/callout"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var _ re.Service = (*calloutMiddleware)(nil)
 
 type calloutMiddleware struct {
-	svc     re.Service
-	callout callout.Callout
+	svc         re.Service
+	callout     callout.Callout
+	entitiesOps permissions.EntitiesOperations[permissions.Operation]
+	rolemw.RoleManagerCalloutMiddleware
 }
 
 const entityType = "rule"
 
-func NewCallout(svc re.Service, callout callout.Callout) (re.Service, error) {
+func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
+	call, err := rolemw.NewCallout(policies.RulesType, svc, callout, roleOps)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+
 	return &calloutMiddleware{
-		svc:     svc,
-		callout: callout,
+		svc:                          svc,
+		callout:                      callout,
+		entitiesOps:                  entitiesOps,
+		RoleManagerCalloutMiddleware: call,
 	}, nil
 }
 
@@ -36,7 +52,7 @@ func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session,
 		"count":    1,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpAddRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpAddRule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -48,7 +64,7 @@ func (cm *calloutMiddleware) ViewRule(ctx context.Context, session authn.Session
 		"entity_id": id,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpViewRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpViewRule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -60,7 +76,7 @@ func (cm *calloutMiddleware) UpdateRule(ctx context.Context, session authn.Sessi
 		"entity_id": r.ID,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpUpdateRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpUpdateRule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -72,7 +88,7 @@ func (cm *calloutMiddleware) UpdateRuleTags(ctx context.Context, session authn.S
 		"entity_id": r.ID,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpUpdateRuleTagsStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpUpdateRuleTags, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -84,7 +100,7 @@ func (cm *calloutMiddleware) UpdateRuleSchedule(ctx context.Context, session aut
 		"entity_id": r.ID,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpUpdateRuleScheduleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpUpdateRuleSchedule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -96,7 +112,7 @@ func (cm *calloutMiddleware) ListRules(ctx context.Context, session authn.Sessio
 		"pagemeta": pm,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpListRulesStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpListRules, params); err != nil {
 		return re.Page{}, err
 	}
 
@@ -108,7 +124,7 @@ func (cm *calloutMiddleware) RemoveRule(ctx context.Context, session authn.Sessi
 		"entity_id": id,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpRemoveRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpRemoveRule, params); err != nil {
 		return err
 	}
 
@@ -120,7 +136,7 @@ func (cm *calloutMiddleware) EnableRule(ctx context.Context, session authn.Sessi
 		"entity_id": id,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpEnableRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpEnableRule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -132,7 +148,7 @@ func (cm *calloutMiddleware) DisableRule(ctx context.Context, session authn.Sess
 		"entity_id": id,
 	}
 
-	if err := cm.callOut(ctx, session, re.OpDisableRuleStr, params); err != nil {
+	if err := cm.callOut(ctx, session, operations.OpDisableRule, params); err != nil {
 		return re.Rule{}, err
 	}
 
@@ -151,7 +167,7 @@ func (cm *calloutMiddleware) Cancel() error {
 	return cm.svc.Cancel()
 }
 
-func (cm *calloutMiddleware) callOut(ctx context.Context, session authn.Session, op string, pld map[string]any) error {
+func (cm *calloutMiddleware) callOut(ctx context.Context, session authn.Session, op permissions.Operation, pld map[string]any) error {
 	var entityID string
 	if id, ok := pld["entity_id"].(string); ok {
 		entityID = id
@@ -159,7 +175,7 @@ func (cm *calloutMiddleware) callOut(ctx context.Context, session authn.Session,
 
 	req := callout.Request{
 		BaseRequest: callout.BaseRequest{
-			Operation:  op,
+			Operation:  cm.entitiesOps.OperationName(entityType, op),
 			EntityType: entityType,
 			EntityID:   entityID,
 			CallerID:   session.UserID,

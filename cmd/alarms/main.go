@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/alarms/brokers"
 	"github.com/absmach/magistrala/alarms/consumer"
 	"github.com/absmach/magistrala/alarms/middleware"
+	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	smqlog "github.com/absmach/supermq/logger"
@@ -27,6 +28,7 @@ import (
 	"github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	"github.com/absmach/supermq/pkg/postgres"
@@ -54,15 +56,16 @@ const (
 )
 
 type config struct {
-	LogLevel   string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
-	BrokerURL  string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
-	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
-	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
-	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
+	LogLevel            string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
+	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	InstanceID          string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	SpicedbSchemaFile   string  `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
+	PermissionsFile     string  `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {
@@ -160,7 +163,7 @@ func main() {
 
 	idp := uuid.New()
 
-	policyEvaluator, policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
+	policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -174,7 +177,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	
+
 	svc, err := alarms.NewService(policyService, idp, repo, availableActions, buildInRoles)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
@@ -182,12 +185,43 @@ func main() {
 		return
 	}
 
-	svc, err = middleware.NewAuthorizationMiddleware(svc, authz)
+	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to parse permissions file: %s", err))
+		exitCode = 1
+		return
+	}
+
+	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions("alarms")
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to get alarm permissions: %s", err))
+		exitCode = 1
+		return
+	}
+
+	entitiesOps, err := permissions.NewEntitiesOperations(
+		permissions.EntitiesPermission{
+			policies.AlarmsType: alarmOps,
+		},
+		permissions.EntitiesOperationDetails[permissions.Operation]{
+			policies.AlarmsType: operations.OperationDetails(),
+		},
+	)
+
+	roleOps, err := permissions.NewOperations(roles.Operations(), alarmRoleOps)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create role operations: %s", err))
+		exitCode = 1
+		return
+	}
+
+	svc, err = middleware.NewAuthorizationMiddleware(svc, authz, entitiesOps, roleOps)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
 		exitCode = 1
 		return
 	}
+
 	svc = middleware.NewLoggingMiddleware(logger, svc)
 	counter, latency := prometheus.MakeMetrics("alarms", "api")
 	svc = middleware.NewMetricsMiddleware(counter, latency, svc)
@@ -238,19 +272,18 @@ func main() {
 	}
 }
 
-func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Evaluator, policies.Service, error) {
+func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Service, error) {
 	client, err := authzed.NewClientWithExperimentalAPIs(
 		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
 	)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	ps := spicedb.NewPolicyService(client, logger)
 
-	pe := spicedb.NewPolicyEvaluator(client, logger)
-	return pe, ps, nil
+	return ps, nil
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {

@@ -31,7 +31,7 @@ type PostgresRepository struct {
 	rolesPostgres.Repository
 }
 
-func NewRepository(db *sqlx.DB) re.Repository {
+func NewRepository(db postgres.Database) re.Repository {
 	rolesRepo := rolesPostgres.NewRepository(db, policies.RulesType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	return &PostgresRepository{
 		DB:         db,

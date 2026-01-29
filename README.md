@@ -86,6 +86,20 @@ The `make run_stable` command will:
 git checkout main
 ```
 
+### Running on Apple Silicon (M1/M2/M3) Macs
+
+When running Magistrala on Apple Silicon Macs, the Makefile will automatically detect your ARM64 architecture and build Docker images locally. 
+
+**If using Docker Desktop:**
+
+1. **Enable Apple Virtualization Framework**: In Docker Desktop, go to:
+   - Settings → General → Enable "Use the new Virtualization framework"
+   
+2. **Enable Rosetta for x86_64 Emulation**: In Docker Desktop, go to:
+   - Settings → General → Enable "Use Rosetta for x86_64/amd64 emulation on Apple Silicon"
+
+After enabling these options, restart Docker Desktop, then run `make run_stable` or `make run_latest` as usual.
+
 
 ## 📤 Usage
 

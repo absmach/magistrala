@@ -117,7 +117,6 @@ type EntityMemberRole struct {
 type Provisioner interface {
 	AddNewEntitiesRoles(ctx context.Context, domainID, userID string, entityIDs []string, optionalEntityPolicies []policies.Policy, newBuiltInRoleMembers map[BuiltInRoleName][]Member) ([]RoleProvision, error)
 	RemoveEntitiesRoles(ctx context.Context, domainID, userID string, entityIDs []string, optionalFilterDeletePolicies []policies.Policy, optionalDeletePolicies []policies.Policy) error
-	RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error
 }
 
 type RoleManager interface {
@@ -159,6 +158,8 @@ type RoleManager interface {
 	ListEntityMembers(ctx context.Context, session authn.Session, entityID string, pq MembersRolePageQuery) (MembersRolePage, error)
 
 	RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, members []string) (err error)
+
+	RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error
 
 	RemoveMemberFromAllRoles(ctx context.Context, session authn.Session, memberID string) (err error)
 }

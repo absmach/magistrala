@@ -368,6 +368,10 @@ func (lm *RoleManagerLoggingMiddleware) RemoveEntityMembers(ctx context.Context,
 	return lm.svc.RemoveEntityMembers(ctx, session, entityID, members)
 }
 
+func (lm *RoleManagerLoggingMiddleware) RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error {
+	return lm.svc.RemoveMemberFromDomain(ctx, domainID, memberID)
+}
+
 func (lm *RoleManagerLoggingMiddleware) RemoveMemberFromAllRoles(ctx context.Context, session authn.Session, memberID string) (err error) {
 	prefix := fmt.Sprintf("%s remove members from all roles", lm.svcName)
 	defer func(begin time.Time) {

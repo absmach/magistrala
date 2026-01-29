@@ -658,20 +658,23 @@ func (r ProvisionManageService) ListEntityMembers(ctx context.Context, session a
 }
 
 func (r ProvisionManageService) RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, memberIDs []string) error {
+	deletePolicies := []policies.Policy{}
 	for _, memberID := range memberIDs {
 		roleID, err := r.repo.RetrieveRoleByEntityMember(ctx, entityID, memberID)
 		if err != nil {
 			return errors.Wrap(svcerr.ErrRemoveEntity, err)
 		}
-		pr := policies.Policy{
+		deletePolicies = append(deletePolicies, policies.Policy{
+			Subject:     policies.EncodeDomainUserID(session.DomainID, memberID),
+			SubjectType: policies.UserType,
+			Relation:    policies.MemberRelation,
 			ObjectType:  policies.RoleType,
 			Object:      roleID,
-			SubjectType: policies.UserType,
-		}
+		})
+	}
 
-		if err := r.policy.DeletePolicyFilter(ctx, pr); err != nil {
-			return errors.Wrap(svcerr.ErrDeletePolicies, err)
-		}
+	if err := r.policy.DeletePolicies(ctx, deletePolicies); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 	if err := r.repo.RemoveEntityMembers(ctx, entityID, memberIDs); err != nil {
 		return err
@@ -694,5 +697,5 @@ func (r ProvisionManageService) RemoveMemberFromAllRoles(ctx context.Context, se
 		return errors.Wrap(svcerr.ErrDeletePolicies, err)
 	}
 
-	return nil
+	return fmt.Errorf("not implemented")
 }

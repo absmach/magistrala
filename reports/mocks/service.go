@@ -13,6 +13,7 @@ import (
 
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/roles"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -111,6 +112,96 @@ func (_c *Service_AddReportConfig_Call) Return(reportConfig reports.ReportConfig
 }
 
 func (_c *Service_AddReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error)) *Service_AddReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddRole provides a mock function for the type Service
+func (_mock *Service) AddRole(ctx context.Context, session authn.Session, entityID string, roleName string, optionalActions []string, optionalMembers []string) (roles.RoleProvision, error) {
+	ret := _mock.Called(ctx, session, entityID, roleName, optionalActions, optionalMembers)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddRole")
+	}
+
+	var r0 roles.RoleProvision
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string, []string) (roles.RoleProvision, error)); ok {
+		return returnFunc(ctx, session, entityID, roleName, optionalActions, optionalMembers)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string, []string) roles.RoleProvision); ok {
+		r0 = returnFunc(ctx, session, entityID, roleName, optionalActions, optionalMembers)
+	} else {
+		r0 = ret.Get(0).(roles.RoleProvision)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, []string, []string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleName, optionalActions, optionalMembers)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_AddRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRole'
+type Service_AddRole_Call struct {
+	*mock.Call
+}
+
+// AddRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleName string
+//   - optionalActions []string
+//   - optionalMembers []string
+func (_e *Service_Expecter) AddRole(ctx interface{}, session interface{}, entityID interface{}, roleName interface{}, optionalActions interface{}, optionalMembers interface{}) *Service_AddRole_Call {
+	return &Service_AddRole_Call{Call: _e.mock.On("AddRole", ctx, session, entityID, roleName, optionalActions, optionalMembers)}
+}
+
+func (_c *Service_AddRole_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleName string, optionalActions []string, optionalMembers []string)) *Service_AddRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		var arg5 []string
+		if args[5] != nil {
+			arg5 = args[5].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_AddRole_Call) Return(roleProvision roles.RoleProvision, err error) *Service_AddRole_Call {
+	_c.Call.Return(roleProvision, err)
+	return _c
+}
+
+func (_c *Service_AddRole_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleName string, optionalActions []string, optionalMembers []string) (roles.RoleProvision, error)) *Service_AddRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -400,6 +491,152 @@ func (_c *Service_GenerateReport_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
+// ListAvailableActions provides a mock function for the type Service
+func (_mock *Service) ListAvailableActions(ctx context.Context, session authn.Session) ([]string, error) {
+	ret := _mock.Called(ctx, session)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAvailableActions")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session) ([]string, error)); ok {
+		return returnFunc(ctx, session)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session) []string); ok {
+		r0 = returnFunc(ctx, session)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session) error); ok {
+		r1 = returnFunc(ctx, session)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListAvailableActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAvailableActions'
+type Service_ListAvailableActions_Call struct {
+	*mock.Call
+}
+
+// ListAvailableActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+func (_e *Service_Expecter) ListAvailableActions(ctx interface{}, session interface{}) *Service_ListAvailableActions_Call {
+	return &Service_ListAvailableActions_Call{Call: _e.mock.On("ListAvailableActions", ctx, session)}
+}
+
+func (_c *Service_ListAvailableActions_Call) Run(run func(ctx context.Context, session authn.Session)) *Service_ListAvailableActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListAvailableActions_Call) Return(strings []string, err error) *Service_ListAvailableActions_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Service_ListAvailableActions_Call) RunAndReturn(run func(ctx context.Context, session authn.Session) ([]string, error)) *Service_ListAvailableActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListEntityMembers provides a mock function for the type Service
+func (_mock *Service) ListEntityMembers(ctx context.Context, session authn.Session, entityID string, pq roles.MembersRolePageQuery) (roles.MembersRolePage, error) {
+	ret := _mock.Called(ctx, session, entityID, pq)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEntityMembers")
+	}
+
+	var r0 roles.MembersRolePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, roles.MembersRolePageQuery) (roles.MembersRolePage, error)); ok {
+		return returnFunc(ctx, session, entityID, pq)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, roles.MembersRolePageQuery) roles.MembersRolePage); ok {
+		r0 = returnFunc(ctx, session, entityID, pq)
+	} else {
+		r0 = ret.Get(0).(roles.MembersRolePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, roles.MembersRolePageQuery) error); ok {
+		r1 = returnFunc(ctx, session, entityID, pq)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListEntityMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEntityMembers'
+type Service_ListEntityMembers_Call struct {
+	*mock.Call
+}
+
+// ListEntityMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - pq roles.MembersRolePageQuery
+func (_e *Service_Expecter) ListEntityMembers(ctx interface{}, session interface{}, entityID interface{}, pq interface{}) *Service_ListEntityMembers_Call {
+	return &Service_ListEntityMembers_Call{Call: _e.mock.On("ListEntityMembers", ctx, session, entityID, pq)}
+}
+
+func (_c *Service_ListEntityMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, pq roles.MembersRolePageQuery)) *Service_ListEntityMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 roles.MembersRolePageQuery
+		if args[3] != nil {
+			arg3 = args[3].(roles.MembersRolePageQuery)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListEntityMembers_Call) Return(membersRolePage roles.MembersRolePage, err error) *Service_ListEntityMembers_Call {
+	_c.Call.Return(membersRolePage, err)
+	return _c
+}
+
+func (_c *Service_ListEntityMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, pq roles.MembersRolePageQuery) (roles.MembersRolePage, error)) *Service_ListEntityMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListReportsConfig provides a mock function for the type Service
 func (_mock *Service) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	ret := _mock.Called(ctx, session, pm)
@@ -472,6 +709,138 @@ func (_c *Service_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Cont
 	return _c
 }
 
+// RemoveEntityMembers provides a mock function for the type Service
+func (_mock *Service) RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, members []string) error {
+	ret := _mock.Called(ctx, session, entityID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveEntityMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, []string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, members)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RemoveEntityMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveEntityMembers'
+type Service_RemoveEntityMembers_Call struct {
+	*mock.Call
+}
+
+// RemoveEntityMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - members []string
+func (_e *Service_Expecter) RemoveEntityMembers(ctx interface{}, session interface{}, entityID interface{}, members interface{}) *Service_RemoveEntityMembers_Call {
+	return &Service_RemoveEntityMembers_Call{Call: _e.mock.On("RemoveEntityMembers", ctx, session, entityID, members)}
+}
+
+func (_c *Service_RemoveEntityMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, members []string)) *Service_RemoveEntityMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RemoveEntityMembers_Call) Return(err error) *Service_RemoveEntityMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RemoveEntityMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, members []string) error) *Service_RemoveEntityMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveMemberFromAllRoles provides a mock function for the type Service
+func (_mock *Service) RemoveMemberFromAllRoles(ctx context.Context, session authn.Session, memberID string) error {
+	ret := _mock.Called(ctx, session, memberID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveMemberFromAllRoles")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, memberID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RemoveMemberFromAllRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveMemberFromAllRoles'
+type Service_RemoveMemberFromAllRoles_Call struct {
+	*mock.Call
+}
+
+// RemoveMemberFromAllRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - memberID string
+func (_e *Service_Expecter) RemoveMemberFromAllRoles(ctx interface{}, session interface{}, memberID interface{}) *Service_RemoveMemberFromAllRoles_Call {
+	return &Service_RemoveMemberFromAllRoles_Call{Call: _e.mock.On("RemoveMemberFromAllRoles", ctx, session, memberID)}
+}
+
+func (_c *Service_RemoveMemberFromAllRoles_Call) Run(run func(ctx context.Context, session authn.Session, memberID string)) *Service_RemoveMemberFromAllRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RemoveMemberFromAllRoles_Call) Return(err error) *Service_RemoveMemberFromAllRoles_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RemoveMemberFromAllRoles_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, memberID string) error) *Service_RemoveMemberFromAllRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveReportConfig provides a mock function for the type Service
 func (_mock *Service) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
 	ret := _mock.Called(ctx, session, id)
@@ -531,6 +900,1035 @@ func (_c *Service_RemoveReportConfig_Call) Return(err error) *Service_RemoveRepo
 }
 
 func (_c *Service_RemoveReportConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) error) *Service_RemoveReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveRole provides a mock function for the type Service
+func (_mock *Service) RemoveRole(ctx context.Context, session authn.Session, entityID string, roleID string) error {
+	ret := _mock.Called(ctx, session, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveRole")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RemoveRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveRole'
+type Service_RemoveRole_Call struct {
+	*mock.Call
+}
+
+// RemoveRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+func (_e *Service_Expecter) RemoveRole(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}) *Service_RemoveRole_Call {
+	return &Service_RemoveRole_Call{Call: _e.mock.On("RemoveRole", ctx, session, entityID, roleID)}
+}
+
+func (_c *Service_RemoveRole_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string)) *Service_RemoveRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RemoveRole_Call) Return(err error) *Service_RemoveRole_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RemoveRole_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string) error) *Service_RemoveRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveAllRoles provides a mock function for the type Service
+func (_mock *Service) RetrieveAllRoles(ctx context.Context, session authn.Session, entityID string, limit uint64, offset uint64) (roles.RolePage, error) {
+	ret := _mock.Called(ctx, session, entityID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveAllRoles")
+	}
+
+	var r0 roles.RolePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, uint64, uint64) (roles.RolePage, error)); ok {
+		return returnFunc(ctx, session, entityID, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, uint64, uint64) roles.RolePage); ok {
+		r0 = returnFunc(ctx, session, entityID, limit, offset)
+	} else {
+		r0 = ret.Get(0).(roles.RolePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, session, entityID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RetrieveAllRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveAllRoles'
+type Service_RetrieveAllRoles_Call struct {
+	*mock.Call
+}
+
+// RetrieveAllRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - limit uint64
+//   - offset uint64
+func (_e *Service_Expecter) RetrieveAllRoles(ctx interface{}, session interface{}, entityID interface{}, limit interface{}, offset interface{}) *Service_RetrieveAllRoles_Call {
+	return &Service_RetrieveAllRoles_Call{Call: _e.mock.On("RetrieveAllRoles", ctx, session, entityID, limit, offset)}
+}
+
+func (_c *Service_RetrieveAllRoles_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, limit uint64, offset uint64)) *Service_RetrieveAllRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		var arg4 uint64
+		if args[4] != nil {
+			arg4 = args[4].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RetrieveAllRoles_Call) Return(rolePage roles.RolePage, err error) *Service_RetrieveAllRoles_Call {
+	_c.Call.Return(rolePage, err)
+	return _c
+}
+
+func (_c *Service_RetrieveAllRoles_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, limit uint64, offset uint64) (roles.RolePage, error)) *Service_RetrieveAllRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveRole provides a mock function for the type Service
+func (_mock *Service) RetrieveRole(ctx context.Context, session authn.Session, entityID string, roleID string) (roles.Role, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveRole")
+	}
+
+	var r0 roles.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) (roles.Role, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) roles.Role); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r0 = ret.Get(0).(roles.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RetrieveRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveRole'
+type Service_RetrieveRole_Call struct {
+	*mock.Call
+}
+
+// RetrieveRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+func (_e *Service_Expecter) RetrieveRole(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}) *Service_RetrieveRole_Call {
+	return &Service_RetrieveRole_Call{Call: _e.mock.On("RetrieveRole", ctx, session, entityID, roleID)}
+}
+
+func (_c *Service_RetrieveRole_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string)) *Service_RetrieveRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RetrieveRole_Call) Return(role roles.Role, err error) *Service_RetrieveRole_Call {
+	_c.Call.Return(role, err)
+	return _c
+}
+
+func (_c *Service_RetrieveRole_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string) (roles.Role, error)) *Service_RetrieveRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleAddActions provides a mock function for the type Service
+func (_mock *Service) RoleAddActions(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) ([]string, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleAddActions")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) ([]string, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, actions)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) []string); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, actions)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, actions)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleAddActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleAddActions'
+type Service_RoleAddActions_Call struct {
+	*mock.Call
+}
+
+// RoleAddActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - actions []string
+func (_e *Service_Expecter) RoleAddActions(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, actions interface{}) *Service_RoleAddActions_Call {
+	return &Service_RoleAddActions_Call{Call: _e.mock.On("RoleAddActions", ctx, session, entityID, roleID, actions)}
+}
+
+func (_c *Service_RoleAddActions_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string)) *Service_RoleAddActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleAddActions_Call) Return(ops []string, err error) *Service_RoleAddActions_Call {
+	_c.Call.Return(ops, err)
+	return _c
+}
+
+func (_c *Service_RoleAddActions_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) ([]string, error)) *Service_RoleAddActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleAddMembers provides a mock function for the type Service
+func (_mock *Service) RoleAddMembers(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) ([]string, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleAddMembers")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) ([]string, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, members)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) []string); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, members)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, members)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleAddMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleAddMembers'
+type Service_RoleAddMembers_Call struct {
+	*mock.Call
+}
+
+// RoleAddMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - members []string
+func (_e *Service_Expecter) RoleAddMembers(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, members interface{}) *Service_RoleAddMembers_Call {
+	return &Service_RoleAddMembers_Call{Call: _e.mock.On("RoleAddMembers", ctx, session, entityID, roleID, members)}
+}
+
+func (_c *Service_RoleAddMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string)) *Service_RoleAddMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleAddMembers_Call) Return(strings []string, err error) *Service_RoleAddMembers_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Service_RoleAddMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) ([]string, error)) *Service_RoleAddMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleCheckActionsExists provides a mock function for the type Service
+func (_mock *Service) RoleCheckActionsExists(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) (bool, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleCheckActionsExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) (bool, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, actions)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) bool); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, actions)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, actions)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleCheckActionsExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleCheckActionsExists'
+type Service_RoleCheckActionsExists_Call struct {
+	*mock.Call
+}
+
+// RoleCheckActionsExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - actions []string
+func (_e *Service_Expecter) RoleCheckActionsExists(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, actions interface{}) *Service_RoleCheckActionsExists_Call {
+	return &Service_RoleCheckActionsExists_Call{Call: _e.mock.On("RoleCheckActionsExists", ctx, session, entityID, roleID, actions)}
+}
+
+func (_c *Service_RoleCheckActionsExists_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string)) *Service_RoleCheckActionsExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleCheckActionsExists_Call) Return(b bool, err error) *Service_RoleCheckActionsExists_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *Service_RoleCheckActionsExists_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) (bool, error)) *Service_RoleCheckActionsExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleCheckMembersExists provides a mock function for the type Service
+func (_mock *Service) RoleCheckMembersExists(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) (bool, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleCheckMembersExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) (bool, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, members)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) bool); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, members)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, members)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleCheckMembersExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleCheckMembersExists'
+type Service_RoleCheckMembersExists_Call struct {
+	*mock.Call
+}
+
+// RoleCheckMembersExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - members []string
+func (_e *Service_Expecter) RoleCheckMembersExists(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, members interface{}) *Service_RoleCheckMembersExists_Call {
+	return &Service_RoleCheckMembersExists_Call{Call: _e.mock.On("RoleCheckMembersExists", ctx, session, entityID, roleID, members)}
+}
+
+func (_c *Service_RoleCheckMembersExists_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string)) *Service_RoleCheckMembersExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleCheckMembersExists_Call) Return(b bool, err error) *Service_RoleCheckMembersExists_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *Service_RoleCheckMembersExists_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) (bool, error)) *Service_RoleCheckMembersExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleListActions provides a mock function for the type Service
+func (_mock *Service) RoleListActions(ctx context.Context, session authn.Session, entityID string, roleID string) ([]string, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleListActions")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) ([]string, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) []string); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleListActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleListActions'
+type Service_RoleListActions_Call struct {
+	*mock.Call
+}
+
+// RoleListActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+func (_e *Service_Expecter) RoleListActions(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}) *Service_RoleListActions_Call {
+	return &Service_RoleListActions_Call{Call: _e.mock.On("RoleListActions", ctx, session, entityID, roleID)}
+}
+
+func (_c *Service_RoleListActions_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string)) *Service_RoleListActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleListActions_Call) Return(strings []string, err error) *Service_RoleListActions_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Service_RoleListActions_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string) ([]string, error)) *Service_RoleListActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleListMembers provides a mock function for the type Service
+func (_mock *Service) RoleListMembers(ctx context.Context, session authn.Session, entityID string, roleID string, limit uint64, offset uint64) (roles.MembersPage, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleListMembers")
+	}
+
+	var r0 roles.MembersPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, uint64, uint64) (roles.MembersPage, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, uint64, uint64) roles.MembersPage); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, limit, offset)
+	} else {
+		r0 = ret.Get(0).(roles.MembersPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_RoleListMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleListMembers'
+type Service_RoleListMembers_Call struct {
+	*mock.Call
+}
+
+// RoleListMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - limit uint64
+//   - offset uint64
+func (_e *Service_Expecter) RoleListMembers(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, limit interface{}, offset interface{}) *Service_RoleListMembers_Call {
+	return &Service_RoleListMembers_Call{Call: _e.mock.On("RoleListMembers", ctx, session, entityID, roleID, limit, offset)}
+}
+
+func (_c *Service_RoleListMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, limit uint64, offset uint64)) *Service_RoleListMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 uint64
+		if args[4] != nil {
+			arg4 = args[4].(uint64)
+		}
+		var arg5 uint64
+		if args[5] != nil {
+			arg5 = args[5].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleListMembers_Call) Return(membersPage roles.MembersPage, err error) *Service_RoleListMembers_Call {
+	_c.Call.Return(membersPage, err)
+	return _c
+}
+
+func (_c *Service_RoleListMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, limit uint64, offset uint64) (roles.MembersPage, error)) *Service_RoleListMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveActions provides a mock function for the type Service
+func (_mock *Service) RoleRemoveActions(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) error {
+	ret := _mock.Called(ctx, session, entityID, roleID, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveActions")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, actions)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RoleRemoveActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveActions'
+type Service_RoleRemoveActions_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - actions []string
+func (_e *Service_Expecter) RoleRemoveActions(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, actions interface{}) *Service_RoleRemoveActions_Call {
+	return &Service_RoleRemoveActions_Call{Call: _e.mock.On("RoleRemoveActions", ctx, session, entityID, roleID, actions)}
+}
+
+func (_c *Service_RoleRemoveActions_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string)) *Service_RoleRemoveActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleRemoveActions_Call) Return(err error) *Service_RoleRemoveActions_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RoleRemoveActions_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, actions []string) error) *Service_RoleRemoveActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveAllActions provides a mock function for the type Service
+func (_mock *Service) RoleRemoveAllActions(ctx context.Context, session authn.Session, entityID string, roleID string) error {
+	ret := _mock.Called(ctx, session, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveAllActions")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RoleRemoveAllActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveAllActions'
+type Service_RoleRemoveAllActions_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveAllActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+func (_e *Service_Expecter) RoleRemoveAllActions(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}) *Service_RoleRemoveAllActions_Call {
+	return &Service_RoleRemoveAllActions_Call{Call: _e.mock.On("RoleRemoveAllActions", ctx, session, entityID, roleID)}
+}
+
+func (_c *Service_RoleRemoveAllActions_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string)) *Service_RoleRemoveAllActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleRemoveAllActions_Call) Return(err error) *Service_RoleRemoveAllActions_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RoleRemoveAllActions_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string) error) *Service_RoleRemoveAllActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveAllMembers provides a mock function for the type Service
+func (_mock *Service) RoleRemoveAllMembers(ctx context.Context, session authn.Session, entityID string, roleID string) error {
+	ret := _mock.Called(ctx, session, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveAllMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RoleRemoveAllMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveAllMembers'
+type Service_RoleRemoveAllMembers_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveAllMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+func (_e *Service_Expecter) RoleRemoveAllMembers(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}) *Service_RoleRemoveAllMembers_Call {
+	return &Service_RoleRemoveAllMembers_Call{Call: _e.mock.On("RoleRemoveAllMembers", ctx, session, entityID, roleID)}
+}
+
+func (_c *Service_RoleRemoveAllMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string)) *Service_RoleRemoveAllMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleRemoveAllMembers_Call) Return(err error) *Service_RoleRemoveAllMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RoleRemoveAllMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string) error) *Service_RoleRemoveAllMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveMembers provides a mock function for the type Service
+func (_mock *Service) RoleRemoveMembers(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) error {
+	ret := _mock.Called(ctx, session, entityID, roleID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) error); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, members)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RoleRemoveMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveMembers'
+type Service_RoleRemoveMembers_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - members []string
+func (_e *Service_Expecter) RoleRemoveMembers(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, members interface{}) *Service_RoleRemoveMembers_Call {
+	return &Service_RoleRemoveMembers_Call{Call: _e.mock.On("RoleRemoveMembers", ctx, session, entityID, roleID, members)}
+}
+
+func (_c *Service_RoleRemoveMembers_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string)) *Service_RoleRemoveMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []string
+		if args[4] != nil {
+			arg4 = args[4].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RoleRemoveMembers_Call) Return(err error) *Service_RoleRemoveMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RoleRemoveMembers_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, members []string) error) *Service_RoleRemoveMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -789,6 +2187,90 @@ func (_c *Service_UpdateReportTemplate_Call) Return(err error) *Service_UpdateRe
 }
 
 func (_c *Service_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error) *Service_UpdateReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRoleName provides a mock function for the type Service
+func (_mock *Service) UpdateRoleName(ctx context.Context, session authn.Session, entityID string, roleID string, newRoleName string) (roles.Role, error) {
+	ret := _mock.Called(ctx, session, entityID, roleID, newRoleName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRoleName")
+	}
+
+	var r0 roles.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string) (roles.Role, error)); ok {
+		return returnFunc(ctx, session, entityID, roleID, newRoleName)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string) roles.Role); ok {
+		r0 = returnFunc(ctx, session, entityID, roleID, newRoleName)
+	} else {
+		r0 = ret.Get(0).(roles.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, string) error); ok {
+		r1 = returnFunc(ctx, session, entityID, roleID, newRoleName)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_UpdateRoleName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRoleName'
+type Service_UpdateRoleName_Call struct {
+	*mock.Call
+}
+
+// UpdateRoleName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - entityID string
+//   - roleID string
+//   - newRoleName string
+func (_e *Service_Expecter) UpdateRoleName(ctx interface{}, session interface{}, entityID interface{}, roleID interface{}, newRoleName interface{}) *Service_UpdateRoleName_Call {
+	return &Service_UpdateRoleName_Call{Call: _e.mock.On("UpdateRoleName", ctx, session, entityID, roleID, newRoleName)}
+}
+
+func (_c *Service_UpdateRoleName_Call) Run(run func(ctx context.Context, session authn.Session, entityID string, roleID string, newRoleName string)) *Service_UpdateRoleName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_UpdateRoleName_Call) Return(role roles.Role, err error) *Service_UpdateRoleName_Call {
+	_c.Call.Return(role, err)
+	return _c
+}
+
+func (_c *Service_UpdateRoleName_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, entityID string, roleID string, newRoleName string) (roles.Role, error)) *Service_UpdateRoleName_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -37,6 +37,7 @@ import (
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/permissions"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
@@ -339,18 +340,22 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
+	fmt.Printf("[DEBUG MAIN] Loaded permissions from file: %s\n", cfg.PermissionsFile)
+	fmt.Printf("[DEBUG MAIN] Permission config: %+v\n", permConfig)
 
-	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions("reports")
+	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions("report")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get report permissions: %w", err)
 	}
+	fmt.Printf("[DEBUG MAIN] Report ops: %+v\n", reportOps)
+	fmt.Printf("[DEBUG MAIN] Report role ops: %+v\n", reportRoleOps)
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			"reports": reportOps,
+			mgPolicies.ReportType: reportOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			"reports": operations.OperationDetails(),
+			mgPolicies.ReportType: operations.OperationDetails(),
 		},
 	)
 	if err != nil {
@@ -390,7 +395,7 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, "reports")
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.ReportType)
 	if err != nil {
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
 	}

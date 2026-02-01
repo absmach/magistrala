@@ -1,0 +1,82 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+definition alarm {
+relation domain: domain
+
+relation update: role#member
+relation read: role#member
+relation delete: role#member
+
+relation manage_role: role#member
+relation add_role_users: role#member
+relation remove_role_users: role#member
+relation view_role_users: role#member
+
+permission update_permission = update + domain->alarm_update_permission
+permission read_permission = read + domain->alarm_read_permission
+permission delete_permission = delete + domain->alarm_delete_permission
+
+permission manage_role_permission = manage_role + domain->admin
+permission add_role_users_permission = add_role_users + domain->admin
+permission remove_role_users_permission = remove_role_users + domain->admin
+permission view_role_users_permission = view_role_users + domain->admin
+}
+
+definition rule {
+relation domain: domain
+
+relation create: role#member
+relation update: role#member
+relation read: role#member
+relation delete: role#member
+relation enable: role#member
+relation disable: role#member
+
+relation manage_role: role#member
+relation add_role_users: role#member
+relation remove_role_users: role#member
+relation view_role_users: role#member
+
+permission create_permission = create + domain->rule_create_permission
+permission update_permission = update + domain->rule_update_permission
+permission read_permission = read + domain->rule_read_permission
+permission delete_permission = delete + domain->rule_delete_permission
+permission enable_permission = enable + domain->rule_update_permission
+permission disable_permission = disable + domain->rule_update_permission
+
+permission manage_role_permission = manage_role + domain->admin
+permission add_role_users_permission = add_role_users + domain->admin
+permission remove_role_users_permission = remove_role_users + domain->admin
+permission view_role_users_permission = view_role_users + domain->admin
+}
+
+definition report {
+relation domain: domain
+
+relation create: role#member
+relation update: role#member
+relation read: role#member
+relation delete: role#member
+relation generate: role#member
+relation enable: role#member
+relation disable: role#member
+
+relation manage_role: role#member
+relation add_role_users: role#member
+relation remove_role_users: role#member
+relation view_role_users: role#member
+
+permission create_permission = create + domain->report_create_permission
+permission update_permission = update + domain->report_update_permission
+permission read_permission = read + domain->report_read_permission
+permission delete_permission = delete + domain->report_delete_permission
+permission generate_permission = generate + domain->report_generate_permission
+permission enable_permission = enable + domain->report_update_permission
+permission disable_permission = disable + domain->report_update_permission
+
+permission manage_role_permission = manage_role + domain->admin
+permission add_role_users_permission = add_role_users + domain->admin
+permission remove_role_users_permission = remove_role_users + domain->admin
+permission view_role_users_permission = view_role_users + domain->admin
+}

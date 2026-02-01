@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/supermq/pkg/callout"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
@@ -29,7 +30,7 @@ type calloutMiddleware struct {
 const entityType = "rule"
 
 func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
-	call, err := rolemw.NewCallout(policies.RulesType, svc, callout, roleOps)
+	call, err := rolemw.NewCallout(mgPolicies.RuleType, svc, callout, roleOps)
 	if err != nil {
 		return nil, err
 	}

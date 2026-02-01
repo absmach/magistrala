@@ -14,10 +14,9 @@ import (
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/policies"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
-	"github.com/jmoiron/sqlx"
 )
 
 const (
@@ -32,7 +31,7 @@ type PostgresRepository struct {
 }
 
 func NewRepository(db postgres.Database) re.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, policies.RulesType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.RuleType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	return &PostgresRepository{
 		DB:         db,
 		Repository: rolesRepo,

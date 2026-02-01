@@ -42,6 +42,7 @@ import (
 	smqbrokers "github.com/absmach/supermq/pkg/messaging/brokers"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/permissions"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
@@ -364,17 +365,17 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
 
-	ruleOps, ruleRoleOps, err := permConfig.GetEntityPermissions("rules")
+	ruleOps, ruleRoleOps, err := permConfig.GetEntityPermissions("rule")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rule permissions: %w", err)
 	}
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			"rules": ruleOps,
+			"rule": ruleOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			"rules": operations.OperationDetails(),
+			"rule": operations.OperationDetails(),
 		},
 	)
 	if err != nil {
@@ -390,7 +391,7 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 	if err != nil {
 		return nil, err
 	}
-	csvc, err = middleware.NewCallout(csvc, callout)
+	csvc, err = middleware.NewCallout(csvc, callout, entitiesOps, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -414,7 +415,7 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, "rules")
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.RuleType)
 	if err != nil {
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
 	}

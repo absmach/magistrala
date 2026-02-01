@@ -2,13 +2,41 @@
 # SPDX-License-Identifier: Apache-2.0
 
 services:
-  spicedb:
-    networks: !override
+  schema-combiner:
+    image: alpine:3.18
+    container_name: magistrala-schema-combiner
+    command: >-
+      sh -c "
+      echo 'Checking source files...' &&
+      if [ ! -f /schema-supermq.zed ]; then echo 'ERROR: /schema-supermq.zed not found'; exit 1; fi &&
+      if [ ! -f /schema-magistrala.zed ]; then echo 'ERROR: /schema-magistrala.zed not found'; exit 1; fi &&
+      echo 'Both schema files found' &&
+      mkdir -p /schemas &&
+      cat /schema-supermq.zed /schema-magistrala.zed > /schemas/combined-schema.zed &&
+      echo 'Schema combined successfully' &&
+      wc -l /schemas/combined-schema.zed &&
+      echo '=== Combined Schema Contents ===' &&
+      cat /schemas/combined-schema.zed
+      "
+    volumes:
+      - ../supermq-docker/spicedb/schema.zed:/schema-supermq.zed:ro
+      - ../spicedb/schema.zed:/schema-magistrala.zed:ro
+      - schema-volume:/schemas
+    networks:
       - magistrala-base-net
 
   spicedb-migrate:
     networks: !override
       - magistrala-base-net
+    depends_on:
+      schema-combiner:
+        condition: service_completed_successfully
+
+  spicedb:
+    networks: !override
+      - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
 
   spicedb-db:
     networks: !override
@@ -25,6 +53,10 @@ services:
   auth:
     networks: !override
       - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
+      - ../supermq-docker/keys/active.key:/keys/active.key:ro
+      - ../supermq-docker/keys/retiring.key:/keys/retiring.key:ro
 
   domains-db:
     networks: !override
@@ -37,6 +69,9 @@ services:
   domains:
     networks: !override
       - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
+      - ../supermq-docker/permission.yaml:/permission.yaml:ro
 
   clients-db:
     networks: !override
@@ -49,6 +84,9 @@ services:
   clients:
     networks: !override
       - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
+      - ../supermq-docker/permission.yaml:/permission.yaml:ro
 
   channels-redis:
     networks: !override
@@ -61,6 +99,9 @@ services:
   channels:
     networks: !override
       - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
+      - ../supermq-docker/permission.yaml:/permission.yaml:ro
 
   users-db:
     networks: !override
@@ -77,6 +118,9 @@ services:
   groups:
     networks: !override
       - magistrala-base-net
+    volumes: !override
+      - schema-volume:/schemas:ro
+      - ../supermq-docker/permission.yaml:/permission.yaml:ro
 
   jaeger:
     networks: !override
@@ -209,3 +253,6 @@ services:
     env_file: !override
       - ./.env
       - ../../docker/.env
+
+volumes:
+  schema-volume:

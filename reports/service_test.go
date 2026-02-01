@@ -20,7 +20,9 @@ import (
 	"github.com/absmach/magistrala/reports/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/roles"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -58,7 +60,19 @@ func newService(runInfo chan pkglog.RunInfo) (reports.Service, *mocks.Repository
 	idProvider := uuid.NewMock()
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return reports.NewService(repo, runInfo, idProvider, mockTicker, e, readersSvc, template, ""), repo, mockTicker
+	policy := new(policymocks.Service)
+	
+	// Define available actions and built-in roles
+	availableActions := []roles.Action{}
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		"admin": availableActions,
+	}
+	
+	svc, err := reports.NewService(repo, runInfo, policy, idProvider, mockTicker, e, readersSvc, template, "", availableActions, builtInRoles)
+	if err != nil {
+		panic(err)
+	}
+	return svc, repo, mockTicker
 }
 
 func TestAddReportConfig(t *testing.T) {

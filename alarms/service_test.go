@@ -15,6 +15,8 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,9 +24,22 @@ import (
 
 var idp = uuid.New()
 
+func newService(t *testing.T, repo *mocks.Repository) alarms.Service {
+	policy := new(policymocks.Service)
+	availableActions := []roles.Action{}
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		"admin": availableActions,
+	}
+	svc, err := alarms.NewService(policy, idp, repo, availableActions, builtInRoles)
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+	return svc
+}
+
 func TestCreateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 	ts := time.Now()
 	cases := []struct {
 		desc  string
@@ -95,7 +110,7 @@ func TestCreateAlarm(t *testing.T) {
 
 func TestViewAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc     string
@@ -134,7 +149,7 @@ func TestViewAlarm(t *testing.T) {
 
 func TestUpdateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc  string
@@ -192,7 +207,7 @@ func TestUpdateAlarm(t *testing.T) {
 
 func TestListAlarms(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string
@@ -233,7 +248,7 @@ func TestListAlarms(t *testing.T) {
 
 func TestDeleteAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string

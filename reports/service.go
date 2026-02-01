@@ -13,6 +13,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/reltime"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
@@ -39,7 +40,7 @@ type report struct {
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(policies.ReportsType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}

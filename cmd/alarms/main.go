@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/magistrala/alarms/middleware"
 	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
@@ -192,7 +193,7 @@ func main() {
 		return
 	}
 
-	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions("alarms")
+	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions("alarm")
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get alarm permissions: %s", err))
 		exitCode = 1
@@ -201,10 +202,10 @@ func main() {
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			policies.AlarmsType: alarmOps,
+			mgPolicies.AlarmType: alarmOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			policies.AlarmsType: operations.OperationDetails(),
+			mgPolicies.AlarmType: operations.OperationDetails(),
 		},
 	)
 
@@ -287,7 +288,7 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, policies.AlarmsType)
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.AlarmType)
 	if err != nil {
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
 	}

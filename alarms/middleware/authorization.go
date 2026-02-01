@@ -8,6 +8,7 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/magistrala/alarms/operations"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
@@ -38,7 +39,7 @@ func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(policies.AlarmsType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(mgPolicies.AlarmType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +59,7 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
 	// If assignee is present, check if assignee is member of domain
 
-	if err := am.authorize(ctx, session, policies.AlarmsType, operations.OpUpdateAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpUpdateAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -88,7 +89,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, policies.AlarmsType, operations.OpDeleteAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpDeleteAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -111,7 +112,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, session, policies.AlarmsType, operations.OpListAlarms, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpListAlarms, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -126,7 +127,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, session, policies.AlarmsType, operations.OpViewAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpViewAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,

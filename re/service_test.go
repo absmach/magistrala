@@ -26,6 +26,8 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	pubsubmocks "github.com/absmach/supermq/pkg/messaging/mocks"
+	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -66,7 +68,16 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker, e
+	policy := new(policymocks.Service)
+	availableActions := []roles.Action{}
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		"admin": availableActions,
+	}
+	svc, err := re.NewService(repo, runInfo, policy, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc, availableActions, builtInRoles)
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+	return svc, repo, pubsub, mockTicker, e
 }
 
 func TestAddRule(t *testing.T) {

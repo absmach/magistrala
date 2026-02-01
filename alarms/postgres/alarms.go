@@ -13,10 +13,10 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/policies"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 	"github.com/jmoiron/sqlx"
@@ -36,7 +36,7 @@ type repository struct {
 var _ alarms.Repository = (*repository)(nil)
 
 func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	return &repository{
 		db:         db,
 		Repository: rolesRepo,

@@ -14,7 +14,7 @@ import (
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/policies"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 )
@@ -32,7 +32,7 @@ type PostgresRepository struct {
 }
 
 func NewRepository(db postgres.Database) reports.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, policies.ReportsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.ReportType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	errHandlerOptions := []errors.HandlerOption{
 		postgres.WithDuplicateErrors(NewDuplicateErrors()),
 	}

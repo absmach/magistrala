@@ -168,13 +168,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with empty subject",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     "",
-				SubjectType: usersType,
-				Object:      authoritiesObj,
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     "",
+					SubjectType: usersType,
+					Object:      authoritiesObj,
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicySub,
@@ -182,13 +184,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with empty subject type",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: "",
-				Object:      authoritiesObj,
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: "",
+					Object:      authoritiesObj,
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicySub,
@@ -196,13 +200,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with empty object",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: usersType,
-				Object:      "",
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: usersType,
+					Object:      "",
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicyObj,
@@ -210,13 +216,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with empty object type",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: usersType,
-				Object:      authoritiesObj,
-				ObjectType:  "",
-				Relation:    memberRelation,
-				Permission:  adminPermission,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: usersType,
+					Object:      authoritiesObj,
+					ObjectType:  "",
+					Relation:    memberRelation,
+					Permission:  adminPermission,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingPolicyObj,
@@ -224,13 +232,15 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with empty permission",
 			token: validToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: usersType,
-				Object:      authoritiesObj,
-				ObjectType:  usersType,
-				Relation:    memberRelation,
-				Permission:  "",
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: usersType,
+					Object:      authoritiesObj,
+					ObjectType:  usersType,
+					Relation:    memberRelation,
+					Permission:  "",
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMalformedPolicyPer,
@@ -238,19 +248,24 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with valid PAT token",
 			token: validPATToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Permission:  policies.ViewPermission,
-				PatId:       id,
-				ObjectType:  policies.ClientType,
-				Domain:      domainID,
-				Operation:   "view",
-				Object:      clientID,
-				UserId:      id,
-				EntityId:    clientID,
-				EntityType:  auth.ClientsScopeStr,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: policies.UserType,
+					SubjectKind: policies.UsersKind,
+					Permission:  policies.ViewPermission,
+					ObjectType:  policies.ClientType,
+					Domain:      domainID,
+					Object:      clientID,
+				},
+				PatReq: &grpcAuthV1.PATReq{
+					PatId:      id,
+					Domain:     domainID,
+					Operation:  "view",
+					UserId:     id,
+					EntityId:   clientID,
+					EntityType: auth.ClientsScopeStr,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
 			err:          nil,
@@ -258,19 +273,24 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize user with unauthorized PAT token",
 			token: inValidToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Permission:  policies.ViewPermission,
-				PatId:       id,
-				ObjectType:  policies.ClientType,
-				Domain:      domainID,
-				Operation:   "view",
-				Object:      clientID,
-				UserId:      id,
-				EntityId:    clientID,
-				EntityType:  auth.ClientsScopeStr,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: policies.UserType,
+					SubjectKind: policies.UsersKind,
+					Permission:  policies.ViewPermission,
+					ObjectType:  policies.ClientType,
+					Domain:      domainID,
+					Object:      clientID,
+				},
+				PatReq: &grpcAuthV1.PATReq{
+					PatId:      id,
+					Domain:     domainID,
+					Operation:  "view",
+					UserId:     id,
+					EntityId:   clientID,
+					EntityType: auth.ClientsScopeStr,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          svcerr.ErrAuthorization,
@@ -278,18 +298,23 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize PAT with missing user id",
 			token: validPATToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Permission:  policies.ViewPermission,
-				PatId:       id,
-				ObjectType:  policies.ClientType,
-				Domain:      domainID,
-				Operation:   "view",
-				Object:      clientID,
-				EntityId:    clientID,
-				EntityType:  auth.ClientsScopeStr,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: policies.UserType,
+					SubjectKind: policies.UsersKind,
+					Permission:  policies.ViewPermission,
+					ObjectType:  policies.ClientType,
+					Domain:      domainID,
+					Object:      clientID,
+				},
+				PatReq: &grpcAuthV1.PATReq{
+					PatId:      id,
+					Domain:     domainID,
+					Operation:  "view",
+					EntityId:   clientID,
+					EntityType: auth.ClientsScopeStr,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingUserID,
@@ -297,18 +322,23 @@ func TestAuthorize(t *testing.T) {
 		{
 			desc:  "authorize PAT with missing entity id",
 			token: validPATToken,
-			authRequest: &grpcAuthV1.PolicyReq{
-				Subject:     id,
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Permission:  policies.ViewPermission,
-				PatId:       id,
-				ObjectType:  policies.ClientType,
-				Domain:      domainID,
-				Operation:   "view",
-				Object:      clientID,
-				UserId:      id,
-				EntityType:  auth.ClientsScopeStr,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: policies.UserType,
+					SubjectKind: policies.UsersKind,
+					Permission:  policies.ViewPermission,
+					ObjectType:  policies.ClientType,
+					Domain:      domainID,
+					Object:      clientID,
+				},
+				PatReq: &grpcAuthV1.PATReq{
+					PatId:      id,
+					Domain:     domainID,
+					Operation:  "view",
+					UserId:     id,
+					EntityType: auth.ClientsScopeStr,
+				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
 			err:          apiutil.ErrMissingID,
@@ -316,7 +346,7 @@ func TestAuthorize(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("Authorize", mock.Anything, mock.Anything).Return(tc.err)
+			svcCall := svc.On("Authorize", mock.Anything, mock.Anything, mock.Anything).Return(tc.err)
 			ar, err := grpcClient.Authorize(context.Background(), tc.authRequest)
 			if ar != nil {
 				assert.Equal(t, tc.authResponse, ar, fmt.Sprintf("%s: expected %v got %v", tc.desc, tc.authResponse, ar))

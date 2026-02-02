@@ -643,24 +643,205 @@ func TestIdentify(t *testing.T) {
 }
 
 func TestAuthorize(t *testing.T) {
-	svc, _ := newService(t)
+	svc, accessToken := newService(t)
+
+	exp1 := time.Now().Add(-2 * time.Second)
+	expKey := auth.Key{Type: auth.APIKey, Role: auth.UserRole, IssuedAt: time.Now(), ExpiresAt: exp1}
+	expSecret, _, err := signToken(t, issuerName, expKey, false)
+	assert.Nil(t, err, fmt.Sprintf("Issuing expired key expected to succeed: %s", err))
+
+	emptySubjectKey := auth.Key{
+		Type:     auth.AccessKey,
+		Subject:  "",
+		Role:     auth.UserRole,
+		IssuedAt: time.Now(),
+	}
+	emptySubject, _, err := signToken(t, issuerName, emptySubjectKey, false)
+	assert.Nil(t, err, fmt.Sprintf("Issuing empty subject key expected to succeed: %s", err))
 
 	cases := []struct {
 		desc                 string
 		policyReq            policies.Policy
+		patAuthz             *auth.PATAuthz
+		checkDomainPolicyReq policies.Policy
 		checkPolicyReq       policies.Policy
-		patEntityType        auth.EntityType
-		patScopeErr          error
-		expectPATCheck       bool
-		expectCheckPolicy    bool
 		parseReq             string
 		parseRes             auth.Key
 		parseErr             error
 		callBackErr          error
 		checkPolicyErr       error
 		checkDomainPolicyErr error
+		authorizePATErr      error
 		err                  error
 	}{
+		{
+			desc: "authorize token successfully",
+			policyReq: policies.Policy{
+				Subject:     accessToken,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: accessToken,
+			parseRes: accessKey,
+			err:      nil,
+		},
+		{
+			desc: "authorize with malformed policy request",
+			policyReq: policies.Policy{
+				Subject:     accessToken,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      domainID,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			err: svcerr.ErrMalformedEntity,
+		},
+		{
+			desc: "authorize token with disabled domain",
+			policyReq: policies.Policy{
+				Subject:     accessToken,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq:             accessToken,
+			parseRes:             accessKey,
+			checkDomainPolicyErr: svcerr.ErrAuthorization,
+			err:                  svcerr.ErrDomainAuthorization,
+		},
+		{
+			desc: "authorize an expired token",
+			policyReq: policies.Policy{
+				Subject:     expSecret,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: expSecret,
+			parseRes: auth.Key{},
+			parseErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc: "authorize a token with an empty subject",
+			policyReq: policies.Policy{
+				Subject:     emptySubject,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: emptySubject,
+			parseRes: emptySubjectKey,
+			err:      svcerr.ErrDomainAuthorization,
+		},
+		{
+			desc: "authorize a token with an empty subject and invalid type",
+			policyReq: policies.Policy{
+				Subject:     emptySubject,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformKind,
+				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: emptySubject,
+			parseRes: emptySubjectKey,
+			err:      svcerr.ErrDomainAuthorization,
+		},
+		{
+			desc: "authorize a token with an empty subject and invalid object type",
+			policyReq: policies.Policy{
+				Subject:     emptySubject,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      validID,
+				ObjectType:  policies.UserType,
+				Permission:  policies.AdminPermission,
+			},
+			checkPolicyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				Object:      policies.SuperMQObject,
+				ObjectType:  policies.PlatformType,
+				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: emptySubject,
+			parseRes: emptySubjectKey,
+			err:      svcerr.ErrAuthentication,
+		},
 		{
 			desc: "authorize a user key successfully",
 			policyReq: policies.Policy{
@@ -677,164 +858,197 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
-			expectCheckPolicy: true,
-			err:               nil,
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			err: nil,
 		},
 		{
-			desc: "authorize with PAT scope successfully",
+			desc: "authorize token with empty subject and domain object type",
 			policyReq: policies.Policy{
+				Subject:     emptySubject,
 				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
+				SubjectKind: policies.TokenKind,
 				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  auth.ChannelsScopeStr,
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			checkPolicyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  auth.ChannelsScopeStr,
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			patEntityType:     auth.ChannelsType,
-			expectPATCheck:    true,
-			expectCheckPolicy: true,
-			err:               nil,
-		},
-		{
-			desc: "authorize with PAT scope check failure",
-			policyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  auth.ChannelsScopeStr,
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			checkPolicyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  auth.ChannelsScopeStr,
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			patEntityType:  auth.ChannelsType,
-			patScopeErr:    repoerr.ErrNotFound,
-			expectPATCheck: true,
-			err:            svcerr.ErrAuthorization,
-		},
-		{
-			desc: "authorize with invalid PAT entity type",
-			policyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  "invalid",
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			checkPolicyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-				PatID:       validID,
-				UserID:      userID,
-				EntityType:  "invalid",
-				Domain:      domainID,
-				Operation:   auth.OpListChannels,
-				EntityID:    auth.AnyIDs,
-			},
-			err: errors.New("unknown domain entity type invalid"),
-		},
-		{
-			desc: "authorize invalid platform object",
-			policyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      "invalid",
-				ObjectType:  policies.PlatformType,
+				ObjectType:  policies.DomainType,
 				Permission:  policies.AdminPermission,
 			},
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
-				Object:      "invalid",
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
-			},
-			err: svcerr.ErrMalformedEntity,
-		},
-		{
-			desc: "authorize with policy check error",
-			policyReq: policies.Policy{
-				SubjectType: policies.UserType,
-				SubjectKind: policies.UsersKind,
 				Object:      policies.SuperMQObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      validID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			parseReq: emptySubject,
+			parseRes: emptySubjectKey,
+			err:      svcerr.ErrDomainAuthorization,
+		},
+		{
+			desc: "authorize with PAT successfully",
+			policyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     userID,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+				Domain:      domainID,
+			},
+			patAuthz: &auth.PATAuthz{
+				PatID:      validID,
+				UserID:     userID,
+				EntityType: auth.ClientsType,
+				EntityID:   validID,
+				Operation:  "read",
+				Domain:     domainID,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      domainID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
-				ObjectType:  policies.PlatformType,
-				Permission:  policies.AdminPermission,
+				Subject:     userID,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+				Domain:      domainID,
 			},
-			checkPolicyErr:    repoerr.ErrNotFound,
-			expectCheckPolicy: true,
-			err:               svcerr.ErrAuthorization,
+			err: nil,
+		},
+		{
+			desc: "authorize with PAT but PAT authorization fails",
+			policyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     userID,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+			},
+			patAuthz: &auth.PATAuthz{
+				PatID:      validID,
+				UserID:     userID,
+				EntityType: auth.ClientsType,
+				EntityID:   validID,
+				Operation:  "read",
+				Domain:     domainID,
+			},
+			checkPolicyReq:  policies.Policy{},
+			authorizePATErr: svcerr.ErrAuthorization,
+			err:             svcerr.ErrAuthorization,
+		},
+		{
+			desc: "authorize with PAT and token successfully",
+			policyReq: policies.Policy{
+				Subject:     accessToken,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+				Domain:      domainID,
+			},
+			patAuthz: &auth.PATAuthz{
+				PatID:      validID,
+				UserID:     userID,
+				EntityType: auth.ClientsType,
+				EntityID:   validID,
+				Operation:  "read",
+				Domain:     domainID,
+			},
+			checkDomainPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				Object:      domainID,
+				ObjectType:  policies.DomainType,
+				Permission:  policies.MembershipPermission,
+			},
+			checkPolicyReq: policies.Policy{
+				Subject:     userID,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.TokenKind,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+				Domain:      domainID,
+			},
+			parseReq: accessToken,
+			parseRes: accessKey,
+			err:      nil,
+		},
+		{
+			desc: "authorize with PAT - PAT authorization fails but policy check not reached",
+			policyReq: policies.Policy{
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     userID,
+				Object:      validID,
+				ObjectType:  policies.ClientType,
+				Permission:  policies.ViewPermission,
+			},
+			patAuthz: &auth.PATAuthz{
+				PatID:      validID,
+				UserID:     userID,
+				EntityType: auth.ClientsType,
+				EntityID:   validID,
+				Operation:  "write",
+				Domain:     domainID,
+			},
+			checkPolicyReq:  policies.Policy{},
+			authorizePATErr: svcerr.ErrAuthorization,
+			err:             svcerr.ErrAuthorization,
 		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			var policyCall *mock.Call
-			if tc.expectCheckPolicy {
+			var tokenizerCall, policyCall, policyCall1, repoCall, patRepoCall *mock.Call
+
+			if tc.parseReq != "" {
+				tokenizerCall = tokenizer.On("Parse", mock.Anything, tc.parseReq).Return(tc.parseRes, tc.parseErr)
+			}
+			if tc.checkPolicyReq != (policies.Policy{}) {
 				policyCall = pEvaluator.On("CheckPolicy", mock.Anything, tc.checkPolicyReq).Return(tc.checkPolicyErr)
 			}
-			var patCall *mock.Call
-			if tc.expectPATCheck {
-				patCall = patsrepo.On("CheckScope", mock.Anything, tc.policyReq.UserID, tc.policyReq.PatID, tc.patEntityType, tc.policyReq.Domain, tc.policyReq.Operation, tc.policyReq.EntityID).Return(tc.patScopeErr)
+			if tc.checkDomainPolicyReq != (policies.Policy{}) {
+				policyCall1 = pEvaluator.On("CheckPolicy", mock.Anything, tc.checkDomainPolicyReq).Return(tc.checkDomainPolicyErr)
 			}
-			repoCall := krepo.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(nil)
-			err := svc.Authorize(context.Background(), tc.policyReq)
+			repoCall = krepo.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+			if tc.patAuthz != nil {
+				patRepoCall = patsrepo.On("CheckScope", mock.Anything, tc.patAuthz.UserID, tc.patAuthz.PatID, tc.patAuthz.EntityType, tc.patAuthz.Domain, tc.patAuthz.Operation, tc.patAuthz.EntityID).Return(tc.authorizePATErr)
+			}
+
+			err := svc.Authorize(context.Background(), tc.policyReq, tc.patAuthz)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
+
+			if tokenizerCall != nil {
+				tokenizerCall.Unset()
+			}
 			if policyCall != nil {
 				policyCall.Unset()
 			}
-			if patCall != nil {
-				patCall.Unset()
+			if policyCall1 != nil {
+				policyCall1.Unset()
 			}
 			repoCall.Unset()
+			if patRepoCall != nil {
+				patRepoCall.Unset()
+			}
 		})
 	}
 }

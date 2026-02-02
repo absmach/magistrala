@@ -299,7 +299,6 @@ definition domain {
 	relation group_remove_role_users: role#member | team#member
 	relation group_view_role_users: role#member | team#member
 
-	// Magistrala-specific relations
 	relation report_create: role#member | team#member
 	relation report_update: role#member | team#member
 	relation report_read: role#member | team#member
@@ -379,7 +378,6 @@ definition domain {
 	permission group_remove_role_users_permission = group_remove_role_users + team->group_remove_role_users + organization->admin
 	permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin
 
-	// Magistrala-specific permissions
 	permission report_create_permission = report_create + organization->admin
 	permission report_update_permission = report_update + organization->admin
 	permission report_read_permission = report_read + organization->admin

@@ -40,16 +40,16 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 		return nil, err
 	}
 	return &re{
-		repo:                    repo,
-		idp:                     idp,
-		runInfo:                 runInfo,
-		rePubSub:                rePubSub,
-		writersPub:              writersPub,
-		alarmsPub:               alarmsPub,
-		ticker:                  tck,
-		email:                   emailer,
-		readers:                 readers,
-		ProvisionManageService:  rpms,
+		repo:                   repo,
+		idp:                    idp,
+		runInfo:                runInfo,
+		rePubSub:               rePubSub,
+		writersPub:             writersPub,
+		alarmsPub:              alarmsPub,
+		ticker:                 tck,
+		email:                  emailer,
+		readers:                readers,
+		ProvisionManageService: rpms,
 	}, nil
 }
 

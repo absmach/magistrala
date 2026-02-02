@@ -6,6 +6,7 @@ package middleware
 import (
 	"context"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"
@@ -13,7 +14,6 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )

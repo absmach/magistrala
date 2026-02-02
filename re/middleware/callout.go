@@ -7,13 +7,13 @@ import (
 	"context"
 	"time"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/callout"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )

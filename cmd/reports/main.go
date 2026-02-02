@@ -19,6 +19,7 @@ import (
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/ticker"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/magistrala/reports"
@@ -37,7 +38,6 @@ import (
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/permissions"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
@@ -340,15 +340,11 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
-	fmt.Printf("[DEBUG MAIN] Loaded permissions from file: %s\n", cfg.PermissionsFile)
-	fmt.Printf("[DEBUG MAIN] Permission config: %+v\n", permConfig)
 
 	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions("report")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get report permissions: %w", err)
 	}
-	fmt.Printf("[DEBUG MAIN] Report ops: %+v\n", reportOps)
-	fmt.Printf("[DEBUG MAIN] Report role ops: %+v\n", reportRoleOps)
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{

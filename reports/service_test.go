@@ -20,10 +20,10 @@ import (
 	"github.com/absmach/magistrala/reports/mocks"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
-	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/roles"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -54,29 +54,28 @@ var (
 	}
 )
 
-func newService(runInfo chan pkglog.RunInfo) (reports.Service, *mocks.Repository, *tmocks.Ticker) {
+func newService(t *testing.T, runInfo chan pkglog.RunInfo) (reports.Service, *mocks.Repository, *tmocks.Ticker) {
 	repo := new(mocks.Repository)
 	mockTicker := new(tmocks.Ticker)
 	idProvider := uuid.NewMock()
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
 	policy := new(policymocks.Service)
-	
-	// Define available actions and built-in roles
+
 	availableActions := []roles.Action{}
 	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
 		"admin": availableActions,
 	}
-	
+
 	svc, err := reports.NewService(repo, runInfo, policy, idProvider, mockTicker, e, readersSvc, template, "", availableActions, builtInRoles)
 	if err != nil {
-		panic(err)
+		t.Fatalf("Failed to create service: %v", err)
 	}
 	return svc, repo, mockTicker
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -128,7 +127,7 @@ func TestAddReportConfig(t *testing.T) {
 }
 
 func TestViewReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -172,7 +171,7 @@ func TestViewReportConfig(t *testing.T) {
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -234,7 +233,7 @@ func TestUpdateReportConfig(t *testing.T) {
 }
 
 func TestListReportsConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 	numConfigs := 50
 	now := time.Now().Add(time.Hour)
 	var configs []reports.ReportConfig
@@ -339,7 +338,7 @@ func TestListReportsConfig(t *testing.T) {
 }
 
 func TestRemoveReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -379,7 +378,7 @@ func TestRemoveReportConfig(t *testing.T) {
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -427,7 +426,7 @@ func TestEnableReportConfig(t *testing.T) {
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	svc, repo, _ := newService(make(chan pkglog.RunInfo))
+	svc, repo, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc    string
@@ -483,7 +482,7 @@ func TestDisableReportConfig(t *testing.T) {
 }
 
 func TestGenerateInstantEmailReport(t *testing.T) {
-	svc, _, _ := newService(make(chan pkglog.RunInfo))
+	svc, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	validEmailConfig := reports.EmailSetting{
 		To:      []string{"test@example.com"},

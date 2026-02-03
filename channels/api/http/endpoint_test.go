@@ -894,7 +894,7 @@ func TestListChannels(t *testing.T) {
 			err:      apiutil.ErrInvalidQueryParams,
 		},
 		{
-			desc:     "list channels with created_from parameter",
+			desc:     "list channels with created_from",
 			domainID: validID,
 			token:    validToken,
 			listChannelsResponse: channels.ChannelsPage{
@@ -908,7 +908,7 @@ func TestListChannels(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:     "list channels with created_to parameter",
+			desc:     "list channels with created_to",
 			domainID: validID,
 			token:    validToken,
 			listChannelsResponse: channels.ChannelsPage{
@@ -922,7 +922,7 @@ func TestListChannels(t *testing.T) {
 			err:    nil,
 		},
 		{
-			desc:     "list channels with both created_from and created_to parameters",
+			desc:     "list channels with both created_from and created_to",
 			domainID: validID,
 			token:    validToken,
 			listChannelsResponse: channels.ChannelsPage{

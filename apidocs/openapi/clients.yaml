@@ -100,6 +100,8 @@ paths:
         - $ref: "#/components/parameters/ConnectionType"
         - $ref: "#/components/parameters/Group"
         - $ref: "#/components/parameters/User"
+        - $ref: "#/components/parameters/CreatedFrom"
+        - $ref: "#/components/parameters/CreatedTo"
       security:
         - bearerAuth: []
       responses:
@@ -1418,6 +1420,26 @@ components:
         minLength: 36
       required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+    
+    CreatedFrom:
+      name: created_from
+      description: Filter clients created from this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-01-01T00:00:00Z"
+
+    CreatedTo:
+      name: created_to
+      description: Filter clients created up to this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-12-31T23:59:59Z"
 
   requestBodies:
     ClientCreateReq:

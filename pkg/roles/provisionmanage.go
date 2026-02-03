@@ -228,32 +228,28 @@ func (r ProvisionManageService) AddNewEntitiesRoles(ctx context.Context, domainI
 }
 
 func (r ProvisionManageService) RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error {
-	switch r.entityType {
-	case policies.ClientType,
-		policies.ChannelType,
-		policies.GroupType:
-		role, err := r.repo.RetrieveRoleByDomainMember(ctx, domainID, memberID)
-		if err != nil {
-			return errors.Wrap(svcerr.ErrRemoveEntity, err)
-		}
-
-		pr := policies.Policy{
-			ObjectType:  policies.RoleType,
-			Object:      role,
-			SubjectType: policies.UserType,
-		}
-
-		if err := r.policy.DeletePolicyFilter(ctx, pr); err != nil {
-			return errors.Wrap(svcerr.ErrDeletePolicies, err)
-		}
-
-		if err := r.repo.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
-			return err
-		}
-		return nil
-	default:
+	if r.entityType == policies.DomainType {
 		return errInvalidOperation
 	}
+	role, err := r.repo.RetrieveRoleByDomainMember(ctx, domainID, memberID)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	pr := policies.Policy{
+		ObjectType:  policies.RoleType,
+		Object:      role,
+		SubjectType: policies.UserType,
+	}
+
+	if err := r.policy.DeletePolicyFilter(ctx, pr); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	}
+
+	if err := r.repo.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r ProvisionManageService) AddRole(ctx context.Context, session authn.Session, entityID string, roleName string, optionalActions []string, optionalMembers []string) (retRoleProvision RoleProvision, retErr error) {

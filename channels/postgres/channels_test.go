@@ -604,7 +604,7 @@ func TestRetrieveAll(t *testing.T) {
 
 	var items []channels.Channel
 	parentID := ""
-	baseTime := time.Now().UTC().Truncate(time.Microsecond)
+	baseTime := time.Now().UTC().Truncate(time.Millisecond)
 	for i := 0; i < num; i++ {
 		name := namegen.Generate()
 		channel := channels.Channel{
@@ -1136,6 +1136,112 @@ func TestRetrieveAll(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve channels with created_from",
+			page: channels.ChannelsPage{
+				Page: channels.Page{
+					Offset:      0,
+					Limit:       200,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(100 * time.Millisecond),
+				},
+			},
+			response: channels.ChannelsPage{
+				Page: channels.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Channels: items[100:],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve channels with created_to",
+			page: channels.ChannelsPage{
+				Page: channels.Page{
+					Offset:    0,
+					Limit:     200,
+					Order:     "created_at",
+					Dir:       ascDir,
+					CreatedTo: baseTime.Add(99 * time.Millisecond),
+				},
+			},
+			response: channels.ChannelsPage{
+				Page: channels.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Channels: items[:100],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve channels with both created_from and created_to",
+			page: channels.ChannelsPage{
+				Page: channels.Page{
+					Offset:      0,
+					Limit:       200,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(50 * time.Millisecond),
+					CreatedTo:   baseTime.Add(149 * time.Millisecond),
+				},
+			},
+			response: channels.ChannelsPage{
+				Page: channels.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Channels: items[50:150],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve channels with created_from returning no results",
+			page: channels.ChannelsPage{
+				Page: channels.Page{
+					Offset:      0,
+					Limit:       10,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(1000 * time.Millisecond),
+				},
+			},
+			response: channels.ChannelsPage{
+				Page: channels.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  10,
+				},
+				Channels: []channels.Channel{},
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve channels with created_to returning no results",
+			page: channels.ChannelsPage{
+				Page: channels.Page{
+					Offset:    0,
+					Limit:     10,
+					Order:     "created_at",
+					Dir:       ascDir,
+					CreatedTo: baseTime.Add(-1 * time.Millisecond),
+				},
+			},
+			response: channels.ChannelsPage{
+				Page: channels.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  10,
+				},
+				Channels: []channels.Channel{},
 			},
 			err: nil,
 		},
@@ -2728,7 +2834,7 @@ func TestRetrieveUserChannels(t *testing.T) {
 			},
 		},
 		{
-			desc:     "retrieve channels with actions filter",
+			desc:     "retrieve channels with actions",
 			domainID: domain.ID,
 			userID:   userID,
 			pm: channels.Page{
@@ -2749,7 +2855,7 @@ func TestRetrieveUserChannels(t *testing.T) {
 			},
 		},
 		{
-			desc:     "retrieve channels with non-matching actions filter",
+			desc:     "retrieve channels with non-matching actions",
 			domainID: domain.ID,
 			userID:   userID,
 			pm: channels.Page{

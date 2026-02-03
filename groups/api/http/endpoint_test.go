@@ -1121,6 +1121,64 @@ func TestListGroups(t *testing.T) {
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrInvalidQueryParams,
 		},
+		{
+			desc:     "list groups with created_from",
+			domainID: validID,
+			token:    validToken,
+			listGroupsResponse: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 1,
+				},
+				Groups: []groups.Group{validGroupResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list groups with created_to",
+			domainID: validID,
+			token:    validToken,
+			listGroupsResponse: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 1,
+				},
+				Groups: []groups.Group{validGroupResp},
+			},
+			query:  "created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list groups with both created_from and created_to",
+			domainID: validID,
+			token:    validToken,
+			listGroupsResponse: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total: 1,
+				},
+				Groups: []groups.Group{validGroupResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list groups with invalid created_from",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_from=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list groups with invalid created_to",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_to=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
 	}
 
 	for _, tc := range cases {

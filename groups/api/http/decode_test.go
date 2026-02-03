@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -67,6 +68,61 @@ func TestDecodeListGroupsRequest(t *testing.T) {
 			url:  "http://localhost:8080?metadata=random",
 			resp: nil,
 			err:  apiutil.ErrValidation,
+		},
+		{
+			desc: "valid request with created_from parameter",
+			url:  "http://localhost:8080?created_from=2024-01-01T00:00:00Z",
+			resp: listGroupsReq{
+				PageMeta: groups.PageMeta{
+					Limit:       10,
+					Actions:     []string{},
+					Dir:         "desc",
+					Order:       "updated_at",
+					CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with created_to parameter",
+			url:  "http://localhost:8080?created_to=2024-12-31T23:59:59Z",
+			resp: listGroupsReq{
+				PageMeta: groups.PageMeta{
+					Limit:     10,
+					Actions:   []string{},
+					Dir:       "desc",
+					Order:     "updated_at",
+					CreatedTo: time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "valid request with both created_from and created_to parameters",
+			url:  "http://localhost:8080?created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			resp: listGroupsReq{
+				PageMeta: groups.PageMeta{
+					Limit:       10,
+					Actions:     []string{},
+					Dir:         "desc",
+					Order:       "updated_at",
+					CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+					CreatedTo:   time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
+				},
+			},
+			err: nil,
+		},
+		{
+			desc: "invalid request with malformed created_from",
+			url:  "http://localhost:8080?created_from=invalid-timestamp",
+			resp: nil,
+			err:  apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc: "invalid request with malformed created_to",
+			url:  "http://localhost:8080?created_to=invalid-timestamp",
+			resp: nil,
+			err:  apiutil.ErrInvalidQueryParams,
 		},
 	}
 

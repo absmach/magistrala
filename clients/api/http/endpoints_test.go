@@ -759,6 +759,87 @@ func TestListClients(t *testing.T) {
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrInvalidQueryParams,
 		},
+		{
+			desc:     "list clients with created_from parameter",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			listClientsResponse: clients.ClientsPage{
+				Page: clients.Page{
+					Total: 1,
+				},
+				Clients: []clients.Client{client},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list clients with created_to parameter",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			listClientsResponse: clients.ClientsPage{
+				Page: clients.Page{
+					Total: 1,
+				},
+				Clients: []clients.Client{client},
+			},
+			query:  "created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list clients with both created_from and created_to parameters",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			listClientsResponse: clients.ClientsPage{
+				Page: clients.Page{
+					Total: 1,
+				},
+				Clients: []clients.Client{client},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list clients with invalid created_from",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			query:    "created_from=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list clients with duplicate created_from",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			query:    "created_from=2024-01-01T00:00:00Z&created_from=2024-01-01T00:00:00Z",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list clients with invalid created_to",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			query:    "created_to=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list clients with duplicate created_to",
+			domainID: domainID,
+			token:    validToken,
+			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			query:    "created_to=2024-12-31T23:59:59Z&created_to=2024-12-31T23:59:59Z",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
 	}
 
 	for _, tc := range cases {

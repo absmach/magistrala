@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -140,6 +141,27 @@ func decodeListClients(_ context.Context, r *http.Request) (any, error) {
 		return listClientsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
+	cfrom, err := apiutil.ReadStringQuery(r, "created_from", "")
+	if err != nil {
+		return listClientsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	cto, err := apiutil.ReadStringQuery(r, "created_to", "")
+	if err != nil {
+		return listClientsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	var createdFrom, createdTo time.Time
+	if cfrom != "" {
+		if createdFrom, err = time.Parse(time.RFC3339, cfrom); err != nil {
+			return listClientsReq{}, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+	if cto != "" {
+		if createdTo, err = time.Parse(time.RFC3339, cto); err != nil {
+			return listClientsReq{}, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+
 	req := listClientsReq{
 		Page: clients.Page{
 			Name:           name,
@@ -159,6 +181,8 @@ func decodeListClients(_ context.Context, r *http.Request) (any, error) {
 			ConnectionType: connType,
 			ID:             id,
 			OnlyTotal:      ot,
+			CreatedFrom:    createdFrom,
+			CreatedTo:      createdTo,
 		},
 		userID: userID,
 	}

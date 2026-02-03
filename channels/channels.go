@@ -99,6 +99,8 @@ type Page struct {
 	Actions        []string               `json:"actions,omitempty"`
 	AccessType     string                 `json:"access_type,omitempty"`
 	IDs            []string               `json:"-"`
+	CreatedFrom    time.Time              `json:"created_from,omitempty"`
+	CreatedTo      time.Time              `json:"created_to,omitempty"`
 }
 
 // ChannelsPage contains page related metadata as well as list of channels that

@@ -893,6 +893,80 @@ func TestListChannels(t *testing.T) {
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrInvalidQueryParams,
 		},
+		{
+			desc:     "list channels with created_from parameter",
+			domainID: validID,
+			token:    validToken,
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with created_to parameter",
+			domainID: validID,
+			token:    validToken,
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with both created_from and created_to parameters",
+			domainID: validID,
+			token:    validToken,
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with invalid created_from",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_from=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with duplicate created_from",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_from=2024-01-01T00:00:00Z&created_from=2024-01-02T00:00:00Z",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with invalid created_to",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_to=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with duplicate created_to",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_to=2024-12-31T23:59:59Z&created_to=2024-12-30T23:59:59Z",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
 	}
 
 	for _, tc := range cases {

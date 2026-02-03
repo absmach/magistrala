@@ -230,27 +230,29 @@ func ToTagsQuery(s string) TagsQuery {
 // Page contains the page metadata that helps navigation.
 
 type Page struct {
-	Total          uint64    `json:"total"`
-	Offset         uint64    `json:"offset"`
-	Limit          uint64    `json:"limit"`
-	OnlyTotal      bool      `json:"only_total"`
-	Order          string    `json:"order,omitempty"`
-	Dir            string    `json:"dir,omitempty"`
-	ID             string    `json:"id,omitempty"`
-	Name           string    `json:"name,omitempty"`
-	Metadata       Metadata  `json:"metadata,omitempty"`
-	Domain         string    `json:"domain,omitempty"`
-	Tags           TagsQuery `json:"tags,omitempty"`
-	Status         Status    `json:"status,omitempty"`
-	Identity       string    `json:"identity,omitempty"`
-	Group          *string   `json:"group,omitempty"`
-	Channel        string    `json:"channel,omitempty"`
-	ConnectionType string    `json:"connection_type,omitempty"`
-	RoleName       string    `json:"role_name,omitempty"`
-	RoleID         string    `json:"role_id,omitempty"`
-	Actions        []string  `json:"actions,omitempty"`
-	AccessType     string    `json:"access_type,omitempty"`
-	IDs            []string  `json:"-"`
+	Total          uint64     `json:"total"`
+	Offset         uint64     `json:"offset"`
+	Limit          uint64     `json:"limit"`
+	OnlyTotal      bool       `json:"only_total"`
+	Order          string     `json:"order,omitempty"`
+	Dir            string     `json:"dir,omitempty"`
+	ID             string     `json:"id,omitempty"`
+	Name           string     `json:"name,omitempty"`
+	Metadata       Metadata   `json:"metadata,omitempty"`
+	Domain         string     `json:"domain,omitempty"`
+	Tags           TagsQuery  `json:"tags,omitempty"`
+	Status         Status     `json:"status,omitempty"`
+	Identity       string     `json:"identity,omitempty"`
+	Group          *string    `json:"group,omitempty"`
+	Channel        string     `json:"channel,omitempty"`
+	ConnectionType string     `json:"connection_type,omitempty"`
+	RoleName       string     `json:"role_name,omitempty"`
+	RoleID         string     `json:"role_id,omitempty"`
+	Actions        []string   `json:"actions,omitempty"`
+	AccessType     string     `json:"access_type,omitempty"`
+	IDs            []string   `json:"-"`
+	CreatedFrom    time.Time `json:"created_from,omitempty"`
+	CreatedTo      time.Time `json:"created_to,omitempty"`
 }
 
 // Metadata represents arbitrary JSON.

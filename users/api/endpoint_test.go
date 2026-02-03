@@ -846,6 +846,95 @@ func TestListUsers(t *testing.T) {
 			authnRes: verifiedSession,
 			err:      apiutil.ErrInvalidQueryParams,
 		},
+		{
+			desc:  "list users with created_from",
+			token: validToken,
+			query: "created_from=2024-01-01T00:00:00Z",
+			listUsersResponse: users.UsersPage{
+				Page: users.Page{
+					Total: 1,
+				},
+				Users: []users.User{user},
+			},
+			status:   http.StatusOK,
+			authnRes: verifiedSession,
+			err:      nil,
+		},
+		{
+			desc:  "list users with created_to",
+			token: validToken,
+			query: "created_to=2024-12-31T23:59:59Z",
+			listUsersResponse: users.UsersPage{
+				Page: users.Page{
+					Total: 1,
+				},
+				Users: []users.User{user},
+			},
+			status:   http.StatusOK,
+			authnRes: verifiedSession,
+			err:      nil,
+		},
+		{
+			desc:  "list users with both created_from and created_to",
+			token: validToken,
+			query: "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			listUsersResponse: users.UsersPage{
+				Page: users.Page{
+					Total: 1,
+				},
+				Users: []users.User{user},
+			},
+			status:   http.StatusOK,
+			authnRes: verifiedSession,
+			err:      nil,
+		},
+		{
+			desc:     "list users with invalid created_from format",
+			token:    validToken,
+			query:    "created_from=invalid-date",
+			status:   http.StatusBadRequest,
+			authnRes: verifiedSession,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list users with invalid created_to format",
+			token:    validToken,
+			query:    "created_to=invalid-date",
+			status:   http.StatusBadRequest,
+			authnRes: verifiedSession,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list users with duplicate created_from",
+			token:    validToken,
+			query:    "created_from=2024-01-01T00:00:00Z&created_from=2024-01-02T00:00:00Z",
+			status:   http.StatusBadRequest,
+			authnRes: verifiedSession,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list users with duplicate created_to",
+			token:    validToken,
+			query:    "created_to=2024-12-31T23:59:59Z&created_to=2024-12-30T23:59:59Z",
+			status:   http.StatusBadRequest,
+			authnRes: verifiedSession,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:  "list users with created_from and others",
+			token: validToken,
+			query: "created_from=2024-01-01T00:00:00Z&status=enabled&limit=10",
+			listUsersResponse: users.UsersPage{
+				Page: users.Page{
+					Total: 1,
+					Limit: 10,
+				},
+				Users: []users.User{user},
+			},
+			status:   http.StatusOK,
+			authnRes: verifiedSession,
+			err:      nil,
+		},
 	}
 
 	for _, tc := range cases {

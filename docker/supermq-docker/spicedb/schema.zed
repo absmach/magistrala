@@ -361,6 +361,7 @@ definition domain {
 	permission group_add_role_users_permission = group_add_role_users + team->group_add_role_users + organization->admin
 	permission group_remove_role_users_permission = group_remove_role_users + team->group_remove_role_users + organization->admin
 	permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin
+
 }
 
 // Add this relation and permission in future while adding organization

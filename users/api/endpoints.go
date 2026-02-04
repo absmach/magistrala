@@ -127,7 +127,7 @@ func listUsersEndpoint(svc users.Service) endpoint.Endpoint {
 			Limit:     req.limit,
 			OnlyTotal: req.onlyTotal,
 			Username:  req.userName,
-			Tags:      req.tags,
+			Tag:       req.tag,
 			Metadata:  req.metadata,
 			FirstName: req.firstName,
 			LastName:  req.lastName,
@@ -135,6 +135,8 @@ func listUsersEndpoint(svc users.Service) endpoint.Endpoint {
 			Order:     req.order,
 			Dir:       req.dir,
 			Id:        req.id,
+			CreatedFrom: req.createdFrom,
+			CreatedTo:   req.createdTo,
 		}
 
 		page, err := svc.ListUsers(ctx, session, pm)

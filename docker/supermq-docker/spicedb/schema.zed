@@ -299,22 +299,6 @@ definition domain {
 	relation group_remove_role_users: role#member | team#member
 	relation group_view_role_users: role#member | team#member
 
-	relation report_create: role#member | team#member
-	relation report_update: role#member | team#member
-	relation report_read: role#member | team#member
-	relation report_delete: role#member | team#member
-	relation report_generate: role#member | team#member
-
-	relation rule_create: role#member | team#member
-	relation rule_update: role#member | team#member
-	relation rule_read: role#member | team#member
-	relation rule_delete: role#member | team#member
-
-	relation alarm_create: role#member | team#member
-	relation alarm_update: role#member | team#member
-	relation alarm_read: role#member | team#member
-	relation alarm_delete: role#member | team#member
-
 	permission update_permission = update + team->domain_update + organization->admin
 	permission read_permission = read + team->domain_read + organization->admin
 	permission enable_permission = enable + team->domain_update + organization->admin
@@ -377,23 +361,6 @@ definition domain {
 	permission group_add_role_users_permission = group_add_role_users + team->group_add_role_users + organization->admin
 	permission group_remove_role_users_permission = group_remove_role_users + team->group_remove_role_users + organization->admin
 	permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin
-
-	permission report_create_permission = report_create + organization->admin
-	permission report_update_permission = report_update + organization->admin
-	permission report_read_permission = report_read + organization->admin
-	permission report_delete_permission = report_delete + organization->admin
-	permission report_generate_permission = report_generate + organization->admin
-
-	permission rule_create_permission = rule_create + organization->admin
-	permission rule_update_permission = rule_update + organization->admin
-	permission rule_read_permission = rule_read + organization->admin
-	permission rule_delete_permission = rule_delete + organization->admin
-
-	permission alarm_create_permission = alarm_create + organization->admin
-	permission alarm_update_permission = alarm_update + organization->admin
-	permission alarm_read_permission = alarm_read + organization->admin
-	permission alarm_delete_permission = alarm_delete + organization->admin
-
 }
 
 // Add this relation and permission in future while adding organization

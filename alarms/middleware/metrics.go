@@ -24,9 +24,9 @@ var _ alarms.Service = (*metricsMiddleware)(nil)
 
 func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, service alarms.Service) alarms.Service {
 	return &metricsMiddleware{
-		counter: counter,
-		latency: latency,
-		service: service,
+		counter:                      counter,
+		latency:                      latency,
+		service:                      service,
 		RoleManagerMetricsMiddleware: rolemw.NewMetrics("alarms", service, counter, latency),
 	}
 }

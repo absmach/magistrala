@@ -40,4 +40,3 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 		},
 	}
 }
-

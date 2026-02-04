@@ -23,7 +23,6 @@ var (
 	errDomainUpdateAlarms = errors.New("not authorized to update alarms in domain")
 	errDomainDeleteAlarms = errors.New("not authorized to delete alarms in domain")
 	errDomainViewAlarms   = errors.New("not authorized to view alarms in domain")
-	errDomainCreateAlarms = errors.New("not authorized to create client in domain")
 )
 
 type authorizationMiddleware struct {

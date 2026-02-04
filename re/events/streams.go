@@ -47,8 +47,8 @@ func NewEventStoreMiddleware(ctx context.Context, svc re.Service, url string) (r
 	res := rmEvents.NewRoleManagerEventStore("alarms", supermqPrefix, svc, publisher)
 
 	return &eventStore{
-		svc:       svc,
-		Publisher: publisher,
+		svc:                   svc,
+		Publisher:             publisher,
 		RoleManagerEventStore: res,
 	}, nil
 }

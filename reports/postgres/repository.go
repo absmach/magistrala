@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/reports"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq/pkg/postgres"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 )

@@ -9,8 +9,8 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/messaging"
-	smqTracing "github.com/absmach/supermq/pkg/tracing"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	smqTracing "github.com/absmach/supermq/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

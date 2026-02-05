@@ -49,10 +49,11 @@ var (
 		UpdatedBy: testsutil.GenerateUUID(&testing.T{}),
 		Status:    groups.EnabledStatus,
 	}
-	validID      = testsutil.GenerateUUID(&testing.T{})
-	validToken   = "validToken"
-	invalidToken = "invalidToken"
-	contentType  = "application/json"
+	validID        = testsutil.GenerateUUID(&testing.T{})
+	validToken     = "validToken"
+	invalidToken   = "invalidToken"
+	contentType    = "application/json"
+	validTimeStamp = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func newGroupsServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
@@ -1125,6 +1126,14 @@ func TestListGroups(t *testing.T) {
 			desc:     "list groups with created_from",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: groups.PageMeta{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+			},
 			listGroupsResponse: groups.Page{
 				PageMeta: groups.PageMeta{
 					Total: 1,
@@ -1139,13 +1148,21 @@ func TestListGroups(t *testing.T) {
 			desc:     "list groups with created_to",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: groups.PageMeta{
+				Offset:    0,
+				Limit:     10,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				Actions:   []string{},
+				CreatedTo: validTimeStamp,
+			},
 			listGroupsResponse: groups.Page{
 				PageMeta: groups.PageMeta{
 					Total: 1,
 				},
 				Groups: []groups.Group{validGroupResp},
 			},
-			query:  "created_to=2024-12-31T23:59:59Z",
+			query:  "created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -1153,13 +1170,22 @@ func TestListGroups(t *testing.T) {
 			desc:     "list groups with both created_from and created_to",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: groups.PageMeta{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+				CreatedTo:   validTimeStamp,
+			},
 			listGroupsResponse: groups.Page{
 				PageMeta: groups.PageMeta{
 					Total: 1,
 				},
 				Groups: []groups.Group{validGroupResp},
 			},
-			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},

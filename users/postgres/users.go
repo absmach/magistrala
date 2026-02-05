@@ -634,8 +634,8 @@ type DBUsersPage struct {
 	GroupID     string           `db:"group_id"`
 	Role        users.Role       `db:"role"`
 	Status      users.Status     `db:"status"`
-	CreatedFrom time.Time    `db:"created_from"`
-	CreatedTo   time.Time    `db:"created_to"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {

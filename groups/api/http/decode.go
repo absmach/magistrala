@@ -338,7 +338,7 @@ func decodePageMeta(r *http.Request) (groups.PageMeta, error) {
 		OnlyTotal:   ot,
 		Order:       order,
 		Dir:         dir,
-		Tags:       tq,
+		Tags:        tq,
 		CreatedFrom: createdFrom,
 		CreatedTo:   createdTo,
 	}

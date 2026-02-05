@@ -1228,8 +1228,8 @@ type dbClientsPage struct {
 	RoleID      string           `db:"role_id"`
 	Actions     pq.StringArray   `db:"actions"`
 	AccessType  string           `db:"access_type"`
-	CreatedFrom time.Time      `db:"created_from"`
-	CreatedTo   time.Time      `db:"created_to"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func PageQuery(pm clients.Page) (string, error) {

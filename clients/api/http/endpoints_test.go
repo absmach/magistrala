@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/0x6flab/namegenerator"
 	api "github.com/absmach/supermq/api/http"
@@ -32,6 +33,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const contentType = "application/json"
+
 var (
 	secret        = "strongsecret"
 	validMetadata = clients.Metadata{"role": "client"}
@@ -45,15 +48,14 @@ var (
 		Metadata:        validMetadata,
 		Status:          clients.EnabledStatus,
 	}
-	validToken   = "token"
-	inValidToken = "invalid"
-	inValid      = "invalid"
-	validID      = testsutil.GenerateUUID(&testing.T{})
-	domainID     = testsutil.GenerateUUID(&testing.T{})
-	namesgen     = namegenerator.NewGenerator()
+	validToken     = "token"
+	inValidToken   = "invalid"
+	inValid        = "invalid"
+	validID        = testsutil.GenerateUUID(&testing.T{})
+	domainID       = testsutil.GenerateUUID(&testing.T{})
+	namesgen       = namegenerator.NewGenerator()
+	validTimeStamp = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 )
-
-const contentType = "application/json"
 
 type testRequest struct {
 	client      *http.Client
@@ -764,6 +766,14 @@ func TestListClients(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			pageMeta: clients.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+			},
 			listClientsResponse: clients.ClientsPage{
 				Page: clients.Page{
 					Total: 1,
@@ -779,13 +789,21 @@ func TestListClients(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			pageMeta: clients.Page{
+				Offset:    0,
+				Limit:     10,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				Actions:   []string{},
+				CreatedTo: validTimeStamp,
+			},
 			listClientsResponse: clients.ClientsPage{
 				Page: clients.Page{
 					Total: 1,
 				},
 				Clients: []clients.Client{client},
 			},
-			query:  "created_to=2024-12-31T23:59:59Z",
+			query:  "created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -794,13 +812,22 @@ func TestListClients(t *testing.T) {
 			domainID: domainID,
 			token:    validToken,
 			authnRes: smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: domainID + "_" + validID, SuperAdmin: false},
+			pageMeta: clients.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+				CreatedTo:   validTimeStamp,
+			},
 			listClientsResponse: clients.ClientsPage{
 				Page: clients.Page{
 					Total: 1,
 				},
 				Clients: []clients.Client{client},
 			},
-			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},

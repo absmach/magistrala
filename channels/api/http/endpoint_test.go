@@ -47,10 +47,11 @@ var (
 		UpdatedBy: testsutil.GenerateUUID(&testing.T{}),
 		Status:    channels.EnabledStatus,
 	}
-	validID      = testsutil.GenerateUUID(&testing.T{})
-	validToken   = "validToken"
-	invalidToken = "invalidToken"
-	contentType  = "application/json"
+	validID        = testsutil.GenerateUUID(&testing.T{})
+	validToken     = "validToken"
+	invalidToken   = "invalidToken"
+	contentType    = "application/json"
+	validTimeStamp = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func newChannelsServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
@@ -897,6 +898,14 @@ func TestListChannels(t *testing.T) {
 			desc:     "list channels with created_from",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+			},
 			listChannelsResponse: channels.ChannelsPage{
 				Page: channels.Page{
 					Total: 1,
@@ -911,13 +920,21 @@ func TestListChannels(t *testing.T) {
 			desc:     "list channels with created_to",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:    0,
+				Limit:     10,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				Actions:   []string{},
+				CreatedTo: validTimeStamp,
+			},
 			listChannelsResponse: channels.ChannelsPage{
 				Page: channels.Page{
 					Total: 1,
 				},
 				Channels: []channels.Channel{validChannelResp},
 			},
-			query:  "created_to=2024-12-31T23:59:59Z",
+			query:  "created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},
@@ -925,13 +942,22 @@ func TestListChannels(t *testing.T) {
 			desc:     "list channels with both created_from and created_to",
 			domainID: validID,
 			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+				CreatedTo:   validTimeStamp,
+			},
 			listChannelsResponse: channels.ChannelsPage{
 				Page: channels.Page{
 					Total: 1,
 				},
 				Channels: []channels.Channel{validChannelResp},
 			},
-			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-01-01T00:00:00Z",
 			status: http.StatusOK,
 			err:    nil,
 		},

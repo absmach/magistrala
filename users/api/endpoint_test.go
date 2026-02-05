@@ -13,6 +13,7 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
 	api "github.com/absmach/supermq/api/http"
@@ -56,6 +57,7 @@ var (
 	testReferer     = "http://localhost"
 	domainID        = testsutil.GenerateUUID(&testing.T{})
 	verifiedSession = smqauthn.Session{UserID: validID, DomainID: domainID, Verified: true}
+	validTimeStamp  = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 const contentType = "application/json"
@@ -850,6 +852,13 @@ func TestListUsers(t *testing.T) {
 			desc:  "list users with created_from",
 			token: validToken,
 			query: "created_from=2024-01-01T00:00:00Z",
+			pageMeta: users.Page{
+				Offset:      0,
+				Limit:       10,
+				Dir:         api.DefDir,
+				Order:       api.DefOrder,
+				CreatedFrom: validTimeStamp,
+			},
 			listUsersResponse: users.UsersPage{
 				Page: users.Page{
 					Total: 1,
@@ -863,7 +872,14 @@ func TestListUsers(t *testing.T) {
 		{
 			desc:  "list users with created_to",
 			token: validToken,
-			query: "created_to=2024-12-31T23:59:59Z",
+			query: "created_to=2024-01-01T00:00:00Z",
+			pageMeta: users.Page{
+				Offset:    0,
+				Limit:     10,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				CreatedTo: validTimeStamp,
+			},
 			listUsersResponse: users.UsersPage{
 				Page: users.Page{
 					Total: 1,
@@ -877,7 +893,15 @@ func TestListUsers(t *testing.T) {
 		{
 			desc:  "list users with both created_from and created_to",
 			token: validToken,
-			query: "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			query: "created_from=2024-01-01T00:00:00Z&created_to=2024-01-01T00:00:00Z",
+			pageMeta: users.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				CreatedFrom: validTimeStamp,
+				CreatedTo:   validTimeStamp,
+			},
 			listUsersResponse: users.UsersPage{
 				Page: users.Page{
 					Total: 1,
@@ -924,6 +948,14 @@ func TestListUsers(t *testing.T) {
 			desc:  "list users with created_from and others",
 			token: validToken,
 			query: "created_from=2024-01-01T00:00:00Z&status=enabled&limit=10",
+			pageMeta: users.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Status:      users.EnabledStatus,
+				CreatedFrom: validTimeStamp,
+			},
 			listUsersResponse: users.UsersPage{
 				Page: users.Page{
 					Total: 1,

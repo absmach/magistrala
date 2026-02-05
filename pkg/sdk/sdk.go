@@ -162,6 +162,8 @@ type PageMetadata struct {
 	Tree            bool      `json:"tree,omitempty"`
 	StartLevel      int64     `json:"start_level,omitempty"`
 	EndLevel        int64     `json:"end_level,omitempty"`
+	CreatedFrom     time.Time `json:"created_from,omitempty"`
+	CreatedTo       time.Time `json:"created_to,omitempty"`
 }
 
 type Role struct {
@@ -1701,6 +1703,12 @@ func (pm PageMetadata) query() (string, error) {
 	}
 	if pm.To != 0 {
 		q.Add("to", strconv.FormatInt(pm.To, 10))
+	}
+	if !pm.CreatedFrom.IsZero() {
+		q.Add("created_from", pm.CreatedFrom.Format(time.RFC3339))
+	}
+	if !pm.CreatedTo.IsZero() {
+		q.Add("created_to", pm.CreatedTo.Format(time.RFC3339))
 	}
 	q.Add("with_attributes", strconv.FormatBool(pm.WithAttributes))
 	q.Add("with_metadata", strconv.FormatBool(pm.WithMetadata))

@@ -1350,7 +1350,7 @@ func toDBGroupPageMeta(pm groups.PageMeta) (dbGroupPageMeta, error) {
 		ID:          pm.ID,
 		Name:        pm.Name,
 		Metadata:    data,
-		Tags:       tags,
+		Tags:        tags,
 		Total:       pm.Total,
 		Offset:      pm.Offset,
 		Limit:       pm.Limit,
@@ -1382,9 +1382,9 @@ type dbGroupPageMeta struct {
 	Actions     pq.StringArray   `db:"actions"`
 	AccessType  string           `db:"access_type"`
 	Status      groups.Status    `db:"status"`
-	Tags       pgtype.TextArray `db:"tags"`
-	CreatedFrom time.Time      `db:"created_from"`
-	CreatedTo   time.Time      `db:"created_to"`
+	Tags        pgtype.TextArray `db:"tags"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func (repo groupRepository) processRows(rows *sqlx.Rows) ([]groups.Group, error) {

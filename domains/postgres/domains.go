@@ -675,8 +675,8 @@ type dbDomainsPage struct {
 	Tags        pgtype.TextArray `db:"tags"`
 	Status      domains.Status   `db:"status"`
 	UserID      string           `db:"member_id"`
-	CreatedFrom time.Time      `db:"created_from"`
-	CreatedTo   time.Time      `db:"created_to"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func toDBDomainsPage(pm domains.Page) (dbDomainsPage, error) {

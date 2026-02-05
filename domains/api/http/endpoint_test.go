@@ -32,6 +32,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const contentType = "application/json"
+
 var (
 	validMetadata = domains.Metadata{"role": "client"}
 	ID            = testsutil.GenerateUUID(&testing.T{})
@@ -49,12 +51,6 @@ var (
 	userID       = testsutil.GenerateUUID(&testing.T{})
 	validID      = testsutil.GenerateUUID(&testing.T{})
 	domainID     = testsutil.GenerateUUID(&testing.T{})
-)
-
-const (
-	contentType     = "application/json"
-	refreshDuration = 24 * time.Hour
-	invalidDuration = 7 * 24 * time.Hour
 )
 
 type testRequest struct {

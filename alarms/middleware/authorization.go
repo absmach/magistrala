@@ -38,7 +38,7 @@ func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(mgPolicies.AlarmType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(mgPolicies.AlarmsType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -58,13 +58,13 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
 	// If assignee is present, check if assignee is member of domain
 
-	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpUpdateAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpUpdateAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.AlarmsType,
+		Object:      alarm.ID,
 	}); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 	}
@@ -88,13 +88,13 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpDeleteAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpDeleteAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.AlarmsType,
+		Object:      id,
 	}); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
@@ -111,13 +111,13 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpListAlarms, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpListAlarms, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
+		Object:      session.DomainID,
 	}); err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
 	}
@@ -126,13 +126,13 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, session, mgPolicies.AlarmType, operations.OpViewAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpViewAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.AlarmsType,
+		Object:      id,
 	}); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
@@ -141,11 +141,6 @@ func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
-	req.TokenType = session.Type
-	req.UserID = session.UserID
-	req.PatID = session.PatID
-	req.OptionalDomainID = session.DomainID
-
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
 	if err != nil {
 		return err

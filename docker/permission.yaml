@@ -60,7 +60,7 @@ report:
     - delete: report_delete_permission
     - enable: report_update_permission
     - disable: report_update_permission
-    - generate: report_generate_permission
+    - generate: report_create_permission
     - update_template: report_update_permission
     - view_template: report_read_permission
     - delete_template: report_delete_permission

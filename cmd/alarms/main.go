@@ -54,6 +54,7 @@ const (
 	defDB            = "alarms"
 	defSvcHTTPPort   = "8050"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	alarmEntity      = "alarm"
 )
 
 type config struct {
@@ -193,7 +194,7 @@ func main() {
 		return
 	}
 
-	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions("alarm")
+	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions(alarmEntity)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get alarm permissions: %s", err))
 		exitCode = 1
@@ -202,10 +203,10 @@ func main() {
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.AlarmType: alarmOps,
+			mgPolicies.AlarmsType: alarmOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.AlarmType: operations.OperationDetails(),
+			mgPolicies.AlarmsType: operations.OperationDetails(),
 		},
 	)
 
@@ -288,7 +289,7 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.AlarmType)
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, alarmEntity)
 	if err != nil {
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
 	}

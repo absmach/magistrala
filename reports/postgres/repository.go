@@ -32,7 +32,7 @@ type PostgresRepository struct {
 }
 
 func NewRepository(db postgres.Database) reports.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.ReportType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.ReportsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	errHandlerOptions := []errors.HandlerOption{
 		postgres.WithDuplicateErrors(NewDuplicateErrors()),
 	}

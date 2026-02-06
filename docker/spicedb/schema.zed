@@ -58,7 +58,6 @@ relation create: role#member
 relation update: role#member
 relation read: role#member
 relation delete: role#member
-relation generate: role#member
 relation enable: role#member
 relation disable: role#member
 
@@ -71,7 +70,6 @@ permission create_permission = create + domain->report_create_permission
 permission update_permission = update + domain->report_update_permission
 permission read_permission = read + domain->report_read_permission
 permission delete_permission = delete + domain->report_delete_permission
-permission generate_permission = generate + domain->report_generate_permission
 permission enable_permission = enable + domain->report_update_permission
 permission disable_permission = disable + domain->report_update_permission
 

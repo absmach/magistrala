@@ -24,7 +24,7 @@ type service struct {
 var _ Service = (*service)(nil)
 
 func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.AlarmType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.AlarmsType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}

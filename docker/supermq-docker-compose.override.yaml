@@ -9,6 +9,8 @@ services:
     volumes:
       - ../supermq-docker/spicedb/schema.zed:/schema-supermq.zed:ro
       - ../spicedb/schema.zed:/schema-magistrala.zed:ro
+      - ../supermq-docker/permission.yaml:/permission-supermq.yaml:ro
+      - ../permission.yaml:/permission-magistrala.yaml:ro
       - ../../scripts/combine-schema.sh:/combine-schema.sh:ro
       - schema-volume:/schemas
     networks:
@@ -49,6 +51,8 @@ services:
     depends_on:
       schema-combiner:
         condition: service_completed_successfully
+      spicedb-migrate:
+        condition: service_completed_successfully
 
   domains-db:
     networks: !override
@@ -61,9 +65,13 @@ services:
   domains:
     networks: !override
       - magistrala-base-net
-    volumes: !override
+    volumes:
       - schema-volume:/schemas:ro
-      - ../supermq-docker/permission.yaml:/permission.yaml:ro
+      - type: volume
+        source: schema-volume
+        target: /permission.yaml
+        volume:
+          subpath: permission.yaml
     depends_on:
       schema-combiner:
         condition: service_completed_successfully
@@ -79,9 +87,13 @@ services:
   clients:
     networks: !override
       - magistrala-base-net
-    volumes: !override
+    volumes:
       - schema-volume:/schemas:ro
-      - ../supermq-docker/permission.yaml:/permission.yaml:ro
+      - type: volume
+        source: schema-volume
+        target: /permission.yaml
+        volume:
+          subpath: permission.yaml
     depends_on:
       schema-combiner:
         condition: service_completed_successfully
@@ -97,9 +109,13 @@ services:
   channels:
     networks: !override
       - magistrala-base-net
-    volumes: !override
+    volumes:
       - schema-volume:/schemas:ro
-      - ../supermq-docker/permission.yaml:/permission.yaml:ro
+      - type: volume
+        source: schema-volume
+        target: /permission.yaml
+        volume:
+          subpath: permission.yaml
     depends_on:
       schema-combiner:
         condition: service_completed_successfully
@@ -119,9 +135,13 @@ services:
   groups:
     networks: !override
       - magistrala-base-net
-    volumes: !override
+    volumes:
       - schema-volume:/schemas:ro
-      - ../supermq-docker/permission.yaml:/permission.yaml:ro
+      - type: volume
+        source: schema-volume
+        target: /permission.yaml
+        volume:
+          subpath: permission.yaml
     depends_on:
       schema-combiner:
         condition: service_completed_successfully

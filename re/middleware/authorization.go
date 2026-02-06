@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 
 	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
@@ -37,7 +38,7 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(mgPolicies.RuleType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(mgPolicies.RulesType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -50,28 +51,39 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 }
 
 func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpAddRule, smqauthz.PolicyReq{
+	fmt.Printf("[DEBUG AddRule] Starting authorization check\n")
+	fmt.Printf("[DEBUG AddRule] Session: DomainID=%s, DomainUserID=%s, UserID=%s\n", session.DomainID, session.DomainUserID, session.UserID)
+	fmt.Printf("[DEBUG AddRule] Rule: ID=%s, Name=%s\n", r.ID, r.Name)
+	
+	policyReq := smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-	}); err != nil {
+	}
+	
+	fmt.Printf("[DEBUG AddRule] PolicyReq: Domain=%s, SubjectType=%s, SubjectKind=%s, Subject=%s, Object=%s, ObjectType=%s\n",
+		policyReq.Domain, policyReq.SubjectType, policyReq.SubjectKind, policyReq.Subject, policyReq.Object, policyReq.ObjectType)
+	
+	if err := am.authorize(ctx, session, operations.OpAddRule, policyReq); err != nil {
+		fmt.Printf("[DEBUG AddRule] Authorization FAILED: %v\n", err)
 		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
 	}
-
+	
+	fmt.Printf("[DEBUG AddRule] Authorization SUCCESS\n")
 	return am.svc.AddRule(ctx, session, r)
 }
 
 func (am *authorizationMiddleware) ViewRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpViewRule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpViewRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      id,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainViewRules, err)
 	}
@@ -80,13 +92,13 @@ func (am *authorizationMiddleware) ViewRule(ctx context.Context, session authn.S
 }
 
 func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpUpdateRule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpUpdateRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      r.ID,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
@@ -95,13 +107,13 @@ func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpUpdateRuleTags, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpUpdateRuleTags, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      r.ID,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
@@ -110,13 +122,13 @@ func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpUpdateRuleSchedule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpUpdateRuleSchedule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      r.ID,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
@@ -125,13 +137,13 @@ func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpListRules, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpListRules, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
+		Object:      session.DomainID,
 	}); err != nil {
 		return re.Page{}, errors.Wrap(errDomainViewRules, err)
 	}
@@ -140,13 +152,13 @@ func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.
 }
 
 func (am *authorizationMiddleware) RemoveRule(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpRemoveRule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpRemoveRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      id,
 	}); err != nil {
 		return errors.Wrap(errDomainDeleteRules, err)
 	}
@@ -155,13 +167,13 @@ func (am *authorizationMiddleware) RemoveRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) EnableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpEnableRule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpEnableRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      id,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
@@ -170,13 +182,13 @@ func (am *authorizationMiddleware) EnableRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) DisableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	if err := am.authorize(ctx, session, mgPolicies.RuleType, operations.OpDisableRule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpDisableRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		ObjectType:  mgPolicies.RulesType,
+		Object:      id,
 	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
@@ -196,22 +208,27 @@ func (am *authorizationMiddleware) Cancel() error {
 	return am.svc.Cancel()
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
-	req.TokenType = session.Type
-	req.UserID = session.UserID
-	req.PatID = session.PatID
-	req.OptionalDomainID = session.DomainID
-
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, op permissions.Operation, req smqauthz.PolicyReq) error {
+	fmt.Printf("[DEBUG authorize] EntityType=%s, Operation=%s\n", entityType, op)
+	
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
 	if err != nil {
+		fmt.Printf("[DEBUG authorize] GetPermission FAILED: %v\n", err)
 		return err
 	}
-
+	
+	fmt.Printf("[DEBUG authorize] Permission string: %s\n", perm.String())
+	
 	req.Permission = perm.String()
+	
+	fmt.Printf("[DEBUG authorize] Final PolicyReq: Domain=%s, SubjectType=%s, SubjectKind=%s, Subject=%s, Object=%s, ObjectType=%s, Permission=%s\n",
+		req.Domain, req.SubjectType, req.SubjectKind, req.Subject, req.Object, req.ObjectType, req.Permission)
 
 	if err := am.authz.Authorize(ctx, req); err != nil {
+		fmt.Printf("[DEBUG authorize] authz.Authorize FAILED: %v\n", err)
 		return err
 	}
-
+	
+	fmt.Printf("[DEBUG authorize] authz.Authorize SUCCESS\n")
 	return nil
 }

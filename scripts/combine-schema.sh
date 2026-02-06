@@ -24,7 +24,6 @@ sed -i '/relation group_view_role_users: role#member | team#member/a\
 	relation report_update: role#member | team#member\
 	relation report_read: role#member | team#member\
 	relation report_delete: role#member | team#member\
-	relation report_generate: role#member | team#member\
 \
 	relation rule_create: role#member | team#member\
 	relation rule_update: role#member | team#member\
@@ -34,7 +33,15 @@ sed -i '/relation group_view_role_users: role#member | team#member/a\
 	relation alarm_create: role#member | team#member\
 	relation alarm_update: role#member | team#member\
 	relation alarm_read: role#member | team#member\
-	relation alarm_delete: role#member | team#member' /tmp/modified-supermq.zed
+	relation alarm_delete: role#member | team#member\
+\
+	// Domain-level operations for creating and listing Magistrala entities\
+	relation create_alarms: role#member | team#member\
+	relation list_alarms: role#member | team#member\
+	relation create_rules: role#member | team#member\
+	relation list_rules: role#member | team#member\
+	relation create_reports: role#member | team#member\
+	relation list_reports: role#member | team#member' /tmp/modified-supermq.zed
 
 sed -i '/permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin/a\
 \
@@ -43,7 +50,6 @@ sed -i '/permission group_view_role_users_permission = group_view_role_users + t
 	permission report_update_permission = report_update + organization->admin\
 	permission report_read_permission = report_read + organization->admin\
 	permission report_delete_permission = report_delete + organization->admin\
-	permission report_generate_permission = report_generate + organization->admin\
 \
 	permission rule_create_permission = rule_create + organization->admin\
 	permission rule_update_permission = rule_update + organization->admin\
@@ -55,5 +61,61 @@ sed -i '/permission group_view_role_users_permission = group_view_role_users + t
 	permission alarm_read_permission = alarm_read + organization->admin\
 	permission alarm_delete_permission = alarm_delete + organization->admin' /tmp/modified-supermq.zed
 
+sed -i '/permission membership = read + update + enable + disable + delete +$/,/+ organization->admin$/ {
+	/group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users + organization->admin/s/$/ +\
+	report_create + report_update + report_read + report_delete +\
+	rule_create + rule_update + rule_read + rule_delete +\
+	alarm_create + alarm_update + alarm_read + alarm_delete +\
+	create_alarms + list_alarms + create_rules + list_rules + create_reports + list_reports/
+}' /tmp/modified-supermq.zed
+
 cat /tmp/modified-supermq.zed /schema-magistrala.zed > /schemas/combined-schema.zed
+
+# Combine permission.yaml files
+cp /permission-supermq.yaml /tmp/modified-permission.yaml
+
+# Inject Magistrala domain operations into domains operations section
+sed -i '/list_groups: group_read_permission/a\    - create_alarms: alarm_create_permission\
+    - list_alarms: alarm_read_permission\
+    - create_rules: rule_create_permission\
+    - list_rules: rule_read_permission\
+    - create_reports: report_create_permission\
+    - list_reports: report_read_permission' /tmp/modified-permission.yaml
+
+# Append Magistrala-specific entities (alarm, rule, report) from Magistrala permission.yaml
+echo "=========================================="
+echo "DEBUG: Content of /permission-magistrala.yaml:"
+echo "=========================================="
+cat /permission-magistrala.yaml | head -50
+echo "..."
+echo "=========================================="
+
+cat /permission-magistrala.yaml >> /tmp/modified-permission.yaml
+
+# Copy to both locations for different services
+cp /tmp/modified-permission.yaml /schemas/permission.yaml
+cp /tmp/modified-permission.yaml /schemas/permission-combined.yaml
+
+echo "=========================================="
+echo "Combined schema generated successfully:"
+echo "=========================================="
+cat /schemas/combined-schema.zed
+echo ""
+echo "=========================================="
+echo "Combined permission.yaml generated (full content):"
+echo "=========================================="
+cat /schemas/permission.yaml
+echo ""
+echo "=========================================="
+echo "Line count and structure check:"
+echo "=========================================="
+echo "Total lines:"
+cat /schemas/permission.yaml | grep -c ""
+echo ""
+echo "Top-level keys:"
+grep -n "^[a-z_]*:" /schemas/permission.yaml
+echo ""
+echo "=========================================="
+echo "Schema and permission combination complete"
+echo "=========================================="
 

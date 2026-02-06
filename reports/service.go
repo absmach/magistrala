@@ -40,7 +40,7 @@ type report struct {
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportsType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}

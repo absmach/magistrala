@@ -66,6 +66,7 @@ const (
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
 	templatePath     = "template/reports_default_template.html"
+	reportEntity     = "report"
 )
 
 // We use a buffered channel to prevent blocking, as logging is an expensive operation.
@@ -341,17 +342,17 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
 
-	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions("report")
+	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions(reportEntity)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get report permissions: %w", err)
 	}
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.ReportType: reportOps,
+			mgPolicies.ReportsType: reportOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.ReportType: operations.OperationDetails(),
+			mgPolicies.ReportsType: operations.OperationDetails(),
 		},
 	)
 	if err != nil {
@@ -391,14 +392,24 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.ReportType)
+	fmt.Printf("[DEBUG] Loading actions from schema file: %s, entity: %s\n", spicedbSchemaFile, reportEntity)
+	
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, reportEntity)
 	if err != nil {
+		fmt.Printf("[DEBUG] GetActionsFromSchema FAILED: %v\n", err)
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
+	}
+	
+	fmt.Printf("[DEBUG] Available actions for reports (%d total):\n", len(availableActions))
+	for i, action := range availableActions {
+		fmt.Printf("[DEBUG]   %d: %s\n", i+1, action)
 	}
 
 	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
 		reports.BuiltInRoleAdmin: availableActions,
 	}
+	
+	fmt.Printf("[DEBUG] Built-in roles configured: %v\n", builtInRoles)
 
 	return availableActions, builtInRoles, err
 }

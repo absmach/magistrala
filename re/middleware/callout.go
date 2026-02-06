@@ -30,7 +30,7 @@ type calloutMiddleware struct {
 const entityType = "rule"
 
 func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
-	call, err := rolemw.NewCallout(mgPolicies.RuleType, svc, callout, roleOps)
+	call, err := rolemw.NewCallout(mgPolicies.RulesType, svc, callout, roleOps)
 	if err != nil {
 		return nil, err
 	}

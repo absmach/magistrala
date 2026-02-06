@@ -36,7 +36,7 @@ type repository struct {
 var _ alarms.Repository = (*repository)(nil)
 
 func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	return &repository{
 		db:         db,
 		Repository: rolesRepo,

@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 
 	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
@@ -51,28 +50,17 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 }
 
 func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	fmt.Printf("[DEBUG AddRule] Starting authorization check\n")
-	fmt.Printf("[DEBUG AddRule] Session: DomainID=%s, DomainUserID=%s, UserID=%s\n", session.DomainID, session.DomainUserID, session.UserID)
-	fmt.Printf("[DEBUG AddRule] Rule: ID=%s, Name=%s\n", r.ID, r.Name)
-	
-	policyReq := smqauthz.PolicyReq{
+	if err := am.authorize(ctx, session, operations.OpAddRule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-	}
-	
-	fmt.Printf("[DEBUG AddRule] PolicyReq: Domain=%s, SubjectType=%s, SubjectKind=%s, Subject=%s, Object=%s, ObjectType=%s\n",
-		policyReq.Domain, policyReq.SubjectType, policyReq.SubjectKind, policyReq.Subject, policyReq.Object, policyReq.ObjectType)
-	
-	if err := am.authorize(ctx, session, operations.OpAddRule, policyReq); err != nil {
-		fmt.Printf("[DEBUG AddRule] Authorization FAILED: %v\n", err)
+	}); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
 	}
-	
-	fmt.Printf("[DEBUG AddRule] Authorization SUCCESS\n")
+
 	return am.svc.AddRule(ctx, session, r)
 }
 
@@ -209,26 +197,12 @@ func (am *authorizationMiddleware) Cancel() error {
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, op permissions.Operation, req smqauthz.PolicyReq) error {
-	fmt.Printf("[DEBUG authorize] EntityType=%s, Operation=%s\n", entityType, op)
-	
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
 	if err != nil {
-		fmt.Printf("[DEBUG authorize] GetPermission FAILED: %v\n", err)
 		return err
 	}
-	
-	fmt.Printf("[DEBUG authorize] Permission string: %s\n", perm.String())
-	
-	req.Permission = perm.String()
-	
-	fmt.Printf("[DEBUG authorize] Final PolicyReq: Domain=%s, SubjectType=%s, SubjectKind=%s, Subject=%s, Object=%s, ObjectType=%s, Permission=%s\n",
-		req.Domain, req.SubjectType, req.SubjectKind, req.Subject, req.Object, req.ObjectType, req.Permission)
 
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		fmt.Printf("[DEBUG authorize] authz.Authorize FAILED: %v\n", err)
-		return err
-	}
-	
-	fmt.Printf("[DEBUG authorize] authz.Authorize SUCCESS\n")
-	return nil
+	req.Permission = perm.String()
+
+	return am.authz.Authorize(ctx, req)
 }

@@ -5,7 +5,6 @@ package middleware
 
 import (
 	"context"
-	"fmt"
 
 	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/reports"
@@ -244,12 +243,5 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	req.Permission = perm.String()
 
-	fmt.Printf("[DEBUG] authorize - req is: %+v\n", req)
-	if err := am.authz.Authorize(ctx, req); err != nil {
-		fmt.Printf("[DEBUG] authorize - Authorize FAILED: %v\n", err)
-		return err
-	}
-	fmt.Printf("[DEBUG] authorize - Authorize PASSED\n")
-
-	return nil
+	return am.authz.Authorize(ctx, req)
 }

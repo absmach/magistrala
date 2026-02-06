@@ -83,39 +83,9 @@ sed -i '/list_groups: group_read_permission/a\    - create_alarms: alarm_create_
     - list_reports: report_read_permission' /tmp/modified-permission.yaml
 
 # Append Magistrala-specific entities (alarm, rule, report) from Magistrala permission.yaml
-echo "=========================================="
-echo "DEBUG: Content of /permission-magistrala.yaml:"
-echo "=========================================="
-cat /permission-magistrala.yaml | head -50
-echo "..."
-echo "=========================================="
-
 cat /permission-magistrala.yaml >> /tmp/modified-permission.yaml
 
 # Copy to both locations for different services
 cp /tmp/modified-permission.yaml /schemas/permission.yaml
 cp /tmp/modified-permission.yaml /schemas/permission-combined.yaml
-
-echo "=========================================="
-echo "Combined schema generated successfully:"
-echo "=========================================="
-cat /schemas/combined-schema.zed
-echo ""
-echo "=========================================="
-echo "Combined permission.yaml generated (full content):"
-echo "=========================================="
-cat /schemas/permission.yaml
-echo ""
-echo "=========================================="
-echo "Line count and structure check:"
-echo "=========================================="
-echo "Total lines:"
-cat /schemas/permission.yaml | grep -c ""
-echo ""
-echo "Top-level keys:"
-grep -n "^[a-z_]*:" /schemas/permission.yaml
-echo ""
-echo "=========================================="
-echo "Schema and permission combination complete"
-echo "=========================================="
 

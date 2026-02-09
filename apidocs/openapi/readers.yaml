@@ -13,7 +13,7 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.15.1
+  version: 0.18.5
 
 servers:
   - url: http://localhost:9003

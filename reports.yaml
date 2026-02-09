@@ -6,7 +6,7 @@ info:
   title: Magistrala Reports Service API
   description: |
     HTTP API for managing reports service.
-  version: 0.15.1
+  version: 0.18.5
 servers:
   - url: http://localhost:9017
 tags:

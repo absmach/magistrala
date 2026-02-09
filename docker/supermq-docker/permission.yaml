@@ -130,5 +130,3 @@ domains:
     - check_members_exists: view_role_users_permission
     - remove_members: remove_role_users_permission
     - remove_all_members: remove_role_users_permission
-
-

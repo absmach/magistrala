@@ -13,7 +13,7 @@ require (
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/fatih/color v1.18.0
 	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba
-	github.com/go-chi/chi/v5 v5.2.4
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-kit/kit v0.13.0
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/gookit/color v1.6.0

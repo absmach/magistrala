@@ -40,6 +40,7 @@ var (
 				Metadata: map[string]any{
 					"test": "test",
 				},
+				PrivateMetadata:           clients.Metadata{},
 				Actions:                   []string{},
 				AccessProviderRoleActions: []string{},
 				ConnectionTypes:           []connections.ConnType{},

@@ -126,7 +126,6 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 	}
 
 	pr := smqauthz.PolicyReq{
-		TokenType:   session.Type,
 		UserID:      session.UserID,
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,

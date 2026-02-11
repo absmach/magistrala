@@ -99,6 +99,7 @@ func (re *re) handleOutput(ctx context.Context, o Runnable, r Rule, msg *messagi
 	case *outputs.Alarm:
 		o.AlarmsPub = re.alarmsPub
 		o.RuleID = r.ID
+		o.CreatedBy = r.CreatedBy
 		return o.Run(ctx, msg, val)
 	case *outputs.Email:
 		o.Emailer = re.email

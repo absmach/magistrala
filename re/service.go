@@ -35,7 +35,7 @@ type re struct {
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.RulesType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.RuleType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +53,7 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 	}, nil
 }
 
-func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retErr error) {
 	id, err := re.idp.ID()
 	if err != nil {
 		return Rule{}, err
@@ -73,6 +73,33 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule,
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	defer func() {
+		if retErr != nil {
+			if errRollBack := re.repo.RemoveRule(ctx, rule.ID); errRollBack != nil {
+				retErr = errors.Wrap(retErr, errors.Wrap(svcerr.ErrRollbackRepo, errRollBack))
+			}
+		}
+	}()
+
+	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
+		BuiltInRoleAdmin: {roles.Member(session.UserID)},
+	}
+
+	optionalPolicies := []policies.Policy{
+		{
+			SubjectType: policies.DomainType,
+			Subject:     session.DomainID,
+			Relation:    policies.DomainRelation,
+			ObjectType:  mgPolicies.RuleType,
+			Object:      rule.ID,
+		},
+	}
+
+	_, err = re.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{rule.ID}, optionalPolicies, newBuiltInRoleMembers)
+	if err != nil {
+		return Rule{}, errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
 	return rule, nil

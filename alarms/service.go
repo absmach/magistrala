@@ -10,7 +10,9 @@ import (
 	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/roles"
 )
@@ -24,7 +26,7 @@ type service struct {
 var _ Service = (*service)(nil)
 
 func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.AlarmsType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.AlarmType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +37,7 @@ func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository
 	}, nil
 }
 
-func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
+func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
 	id, err := s.idp.ID()
 	if err != nil {
 		return err
@@ -52,6 +54,34 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 	if _, err = s.repo.CreateAlarm(ctx, alarm); err != nil && err != repoerr.ErrNotFound {
 		return err
 	}
+
+	defer func() {
+		if retErr != nil {
+			if errRollBack := s.repo.DeleteAlarm(ctx, alarm.ID); errRollBack != nil {
+				retErr = errors.Wrap(retErr, errors.Wrap(svcerr.ErrRollbackRepo, errRollBack))
+			}
+		}
+	}()
+
+	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
+		BuiltInRoleAdmin: {roles.Member(alarm.CreatedBy)},
+	}
+
+	optionalPolicies := []policies.Policy{
+		{
+			SubjectType: policies.DomainType,
+			Subject:     alarm.DomainID,
+			Relation:    policies.DomainRelation,
+			ObjectType:  mgPolicies.AlarmType,
+			Object:      alarm.ID,
+		},
+	}
+
+	_, err = s.AddNewEntitiesRoles(ctx, alarm.DomainID, alarm.CreatedBy, []string{alarm.ID}, optionalPolicies, newBuiltInRoleMembers)
+	if err != nil {
+		return errors.Wrap(svcerr.ErrAddPolicies, err)
+	}
+
 	return nil
 }
 

@@ -35,8 +35,8 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 			PermissionRequired: true,
 		},
 		OpListAlarms: {
-			Name:               "list_alarms",
-			PermissionRequired: false, // hardcoded to superadmin
+			Name:               "list",
+			PermissionRequired: true,
 		},
 	}
 }

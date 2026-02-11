@@ -46,8 +46,8 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 			PermissionRequired: true,
 		},
 		OpListReportsConfig: {
-			Name:               "list_reports",
-			PermissionRequired: false, // hardcoded to superadmin
+			Name:               "list",
+			PermissionRequired: true,
 		},
 		OpEnableReportConfig: {
 			Name:               "enable",

@@ -34,6 +34,7 @@ type Alarm struct {
 	Cause          string    `json:"cause"`
 	Severity       uint8     `json:"severity"`
 	AssigneeID     string    `json:"assignee_id"`
+	CreatedBy      string    `json:"created_by"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	UpdatedBy      string    `json:"updated_by"`

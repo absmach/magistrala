@@ -16,6 +16,7 @@ import (
 type Alarm struct {
 	AlarmsPub messaging.Publisher `json:"-"`
 	RuleID    string              `json:"rule_id"`
+	CreatedBy string              `json:"-"`
 }
 
 func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val any) error {
@@ -48,6 +49,7 @@ func (a *Alarm) processAlarm(ctx context.Context, msg *messaging.Message, alarm 
 	alarm.ClientID = msg.Publisher
 	alarm.ChannelID = msg.Channel
 	alarm.Subtopic = msg.Subtopic
+	alarm.CreatedBy = a.CreatedBy
 
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(alarm); err != nil {

@@ -38,7 +38,7 @@ func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(mgPolicies.AlarmsType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(mgPolicies.AlarmType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.AlarmsType,
+		ObjectType:  mgPolicies.AlarmType,
 		Object:      alarm.ID,
 	}); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
@@ -93,7 +93,7 @@ func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session auth
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.AlarmsType,
+		ObjectType:  mgPolicies.AlarmType,
 		Object:      id,
 	}); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
@@ -131,7 +131,7 @@ func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.AlarmsType,
+		ObjectType:  mgPolicies.AlarmType,
 		Object:      id,
 	}); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
@@ -141,7 +141,7 @@ func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
-	perm, err := am.entitiesOps.GetPermission(entityType, op)
+	perm, err := am.entitiesOps.GetPermission(mgPolicies.AlarmType, op)
 	if err != nil {
 		return err
 	}

@@ -40,7 +40,7 @@ type report struct {
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportsType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 	}, nil
 }
 
-func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (retCfg ReportConfig, retErr error) {
 	id, err := r.idp.ID()
 	if err != nil {
 		return ReportConfig{}, err
@@ -78,6 +78,33 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 	reportConfig, err := r.repo.AddReportConfig(ctx, cfg)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+	}
+
+	defer func() {
+		if retErr != nil {
+			if errRollBack := r.repo.RemoveReportConfig(ctx, reportConfig.ID); errRollBack != nil {
+				retErr = errors.Wrap(retErr, errors.Wrap(svcerr.ErrRollbackRepo, errRollBack))
+			}
+		}
+	}()
+
+	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
+		BuiltInRoleAdmin: {roles.Member(session.UserID)},
+	}
+
+	optionalPolicies := []policies.Policy{
+		{
+			SubjectType: policies.DomainType,
+			Subject:     session.DomainID,
+			Relation:    policies.DomainRelation,
+			ObjectType:  mgPolicies.ReportType,
+			Object:      reportConfig.ID,
+		},
+	}
+
+	_, err = r.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{reportConfig.ID}, optionalPolicies, newBuiltInRoleMembers)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
 	return reportConfig, nil

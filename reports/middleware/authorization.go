@@ -41,7 +41,7 @@ func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, 
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(mgPolicies.ReportsType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(mgPolicies.ReportType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainViewConfigs, err)
@@ -88,7 +88,7 @@ func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, sessi
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      cfg.ID,
 	}); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
@@ -103,7 +103,7 @@ func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, ses
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      cfg.ID,
 	}); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
@@ -118,7 +118,7 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return errors.Wrap(errDomainDeleteConfigs, err)
@@ -148,7 +148,7 @@ func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, sessi
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
@@ -163,7 +163,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
@@ -192,7 +192,7 @@ func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, ses
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      cfg.ID,
 	}); err != nil {
 		return errors.Wrap(errDomainUpdateTemplates, err)
@@ -207,7 +207,7 @@ func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, sessi
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return "", errors.Wrap(errDomainViewTemplates, err)
@@ -222,7 +222,7 @@ func (am *authorizationMiddleware) DeleteReportTemplate(ctx context.Context, ses
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		ObjectType:  mgPolicies.ReportsType,
+		ObjectType:  mgPolicies.ReportType,
 		Object:      id,
 	}); err != nil {
 		return errors.Wrap(errDomainRemoveTemplates, err)
@@ -236,7 +236,7 @@ func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
-	perm, err := am.entitiesOps.GetPermission(entityType, op)
+	perm, err := am.entitiesOps.GetPermission(mgPolicies.ReportType, op)
 	if err != nil {
 		return err
 	}

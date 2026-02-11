@@ -203,10 +203,10 @@ func main() {
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.AlarmsType: alarmOps,
+			mgPolicies.AlarmType: alarmOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.AlarmsType: operations.OperationDetails(),
+			mgPolicies.AlarmType: operations.OperationDetails(),
 		},
 	)
 

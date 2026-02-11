@@ -89,3 +89,11 @@ cat /permission-magistrala.yaml >> /tmp/modified-permission.yaml
 cp /tmp/modified-permission.yaml /schemas/permission.yaml
 cp /tmp/modified-permission.yaml /schemas/permission-combined.yaml
 
+echo "=========================================="
+echo "Combined permission.yaml:"
+echo "=========================================="
+cat /schemas/permission.yaml
+echo ""
+echo "=========================================="
+echo "Schema and permission combination complete"
+echo "=========================================="

@@ -7,6 +7,8 @@ alarm:
     - list: alarm_read_permission
     - view: read_permission
     - update: update_permission
+    - enable: update_permission
+    - disable: update_permission
     - delete: delete_permission
   roles_operations:
     - add: manage_role_permission
@@ -33,9 +35,9 @@ rule:
     - update: update_permission
     - update_tags: update_permission
     - update_schedule: update_permission
+    - enable: update_permission
+    - disable: update_permission
     - delete: delete_permission
-    - enable: enable_permission
-    - disable: disable_permission
   roles_operations:
     - add: manage_role_permission
     - remove: manage_role_permission
@@ -61,9 +63,9 @@ report:
     - view: read_permission
     - update: update_permission
     - update_schedule: update_permission
+    - enable: update_permission
+    - disable: update_permission
     - delete: delete_permission
-    - enable: enable_permission
-    - disable: disable_permission
     - update_template: update_permission
     - view_template: read_permission
     - delete_template: delete_permission

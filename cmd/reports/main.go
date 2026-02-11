@@ -392,24 +392,14 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	fmt.Printf("[DEBUG] Loading actions from schema file: %s, entity: %s\n", spicedbSchemaFile, reportEntity)
-	
 	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, reportEntity)
 	if err != nil {
-		fmt.Printf("[DEBUG] GetActionsFromSchema FAILED: %v\n", err)
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
-	}
-	
-	fmt.Printf("[DEBUG] Available actions for reports (%d total):\n", len(availableActions))
-	for i, action := range availableActions {
-		fmt.Printf("[DEBUG]   %d: %s\n", i+1, action)
 	}
 
 	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
 		reports.BuiltInRoleAdmin: availableActions,
 	}
-	
-	fmt.Printf("[DEBUG] Built-in roles configured: %v\n", builtInRoles)
 
 	return availableActions, builtInRoles, err
 }

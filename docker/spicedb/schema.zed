@@ -26,24 +26,18 @@ permission view_role_users_permission = view_role_users + domain->admin
 definition rule {
 relation domain: domain
 
-relation create: role#member
 relation update: role#member
 relation read: role#member
 relation delete: role#member
-relation enable: role#member
-relation disable: role#member
 
 relation manage_role: role#member
 relation add_role_users: role#member
 relation remove_role_users: role#member
 relation view_role_users: role#member
 
-permission create_permission = domain->rule_create_permission
 permission update_permission = domain->rule_update_permission
 permission read_permission = domain->rule_read_permission
 permission delete_permission = domain->rule_delete_permission
-permission enable_permission = domain->rule_update_permission
-permission disable_permission = domain->rule_update_permission
 
 permission manage_role_permission = manage_role + domain->admin
 permission add_role_users_permission = add_role_users + domain->admin
@@ -54,24 +48,18 @@ permission view_role_users_permission = view_role_users + domain->admin
 definition report {
 relation domain: domain
 
-relation create: role#member
 relation update: role#member
 relation read: role#member
 relation delete: role#member
-relation enable: role#member
-relation disable: role#member
 
 relation manage_role: role#member
 relation add_role_users: role#member
 relation remove_role_users: role#member
 relation view_role_users: role#member
 
-permission create_permission = domain->report_create_permission
 permission update_permission = domain->report_update_permission
 permission read_permission = domain->report_read_permission
 permission delete_permission = domain->report_delete_permission
-permission enable_permission = domain->report_update_permission
-permission disable_permission = domain->report_update_permission
 
 permission manage_role_permission = manage_role + domain->admin
 permission add_role_users_permission = add_role_users + domain->admin

@@ -65,7 +65,7 @@ services:
   domains:
     networks: !override
       - magistrala-base-net
-    volumes:
+    volumes: !override
       - schema-volume:/schemas:ro
       - type: volume
         source: schema-volume
@@ -87,7 +87,7 @@ services:
   clients:
     networks: !override
       - magistrala-base-net
-    volumes:
+    volumes: !override
       - schema-volume:/schemas:ro
       - type: volume
         source: schema-volume
@@ -109,7 +109,7 @@ services:
   channels:
     networks: !override
       - magistrala-base-net
-    volumes:
+    volumes: !override
       - schema-volume:/schemas:ro
       - type: volume
         source: schema-volume
@@ -135,7 +135,7 @@ services:
   groups:
     networks: !override
       - magistrala-base-net
-    volumes:
+    volumes: !override
       - schema-volume:/schemas:ro
       - type: volume
         source: schema-volume

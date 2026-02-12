@@ -1549,6 +1549,7 @@ func TestHandle(t *testing.T) {
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)
+	// nolint:dogsled
 	svc, repo, _, ticker, _, _ := newService(t, ri)
 
 	ctxCases := []struct {

@@ -180,13 +180,14 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    math.MaxUint8,
 				CreatedTo:   tc.alarm.CreatedAt,
 			}).Return(alarms.AlarmsPage{}, tc.err)
+
 			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
 			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(nil).Maybe()
 			repoCall2 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
 			repoCall3 := repo.On("DeleteAlarm", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			
+
 			policyCall.Unset()
 			policyCall2.Unset()
 			repoCall.Unset()

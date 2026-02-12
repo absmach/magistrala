@@ -10,25 +10,36 @@ import (
 	"strings"
 	"time"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/reports"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
+)
+
+const (
+	rolesTableNamePrefix = "reports"
+	entityTableName      = "report_config"
+	entityIDColumnName   = "id"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
 	eh errors.Handler
+	rolesPostgres.Repository
 }
 
 func NewRepository(db postgres.Database) reports.Repository {
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.ReportsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	errHandlerOptions := []errors.HandlerOption{
 		postgres.WithDuplicateErrors(NewDuplicateErrors()),
 	}
 	return &PostgresRepository{
-		DB: db,
-		eh: postgres.NewErrorHandler(errHandlerOptions...),
+		DB:         db,
+		eh:         postgres.NewErrorHandler(errHandlerOptions...),
+		Repository: rolesRepo,
 	}
 }
 

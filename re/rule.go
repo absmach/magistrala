@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 const (
@@ -234,6 +235,7 @@ type Service interface {
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 
 	StartScheduler(ctx context.Context) error
+	roles.RoleManager
 }
 
 type Repository interface {
@@ -246,4 +248,5 @@ type Repository interface {
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListRules(ctx context.Context, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
+	roles.Repository
 }

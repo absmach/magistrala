@@ -10,19 +10,32 @@ import (
 	"strings"
 	"time"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
+)
+
+const (
+	rolesTableNamePrefix = "rules"
+	entityTableName      = "rules"
+	entityIDColumnName   = "id"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
+	rolesPostgres.Repository
 }
 
 func NewRepository(db postgres.Database) re.Repository {
-	return &PostgresRepository{DB: db}
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.RulesType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	return &PostgresRepository{
+		DB:         db,
+		Repository: rolesRepo,
+	}
 }
 
 func (repo *PostgresRepository) AddRule(ctx context.Context, r re.Rule) (re.Rule, error) {

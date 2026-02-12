@@ -17,6 +17,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -38,12 +39,16 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 		r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 		r.Route("/{domainID}", func(r chi.Router) {
 			r.Route("/reports", func(r chi.Router) {
+				d := roleManagerHttp.NewDecoder("reportID")
+
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					generateReportEndpoint(svc),
 					decodeGenerateReportRequest,
 					encodeFileDownloadResponse,
 					opts...,
 				), "generate_report").ServeHTTP)
+
+				r = roleManagerHttp.EntityAvailableActionsRouter(svc, d, r, opts)
 
 				r.Route("/configs", func(r chi.Router) {
 					r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -53,34 +58,6 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 						opts...,
 					), "add_report_config").ServeHTTP)
 
-					r.Get("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
-						viewReportConfigEndpoint(svc),
-						decodeViewReportConfigRequest,
-						api.EncodeResponse,
-						opts...,
-					), "view_report_config").ServeHTTP)
-
-					r.Patch("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
-						updateReportConfigEndpoint(svc),
-						decodeUpdateReportConfigRequest,
-						api.EncodeResponse,
-						opts...,
-					), "update_report_config").ServeHTTP)
-
-					r.Patch("/{reportID}/schedule", otelhttp.NewHandler(kithttp.NewServer(
-						updateReportScheduleEndpoint(svc),
-						decodeUpdateReportScheduleRequest,
-						api.EncodeResponse,
-						opts...,
-					), "update_report_scheduler").ServeHTTP)
-
-					r.Delete("/{reportID}", otelhttp.NewHandler(kithttp.NewServer(
-						deleteReportConfigEndpoint(svc),
-						decodeDeleteReportConfigRequest,
-						api.EncodeResponse,
-						opts...,
-					), "delete_report_config").ServeHTTP)
-
 					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 						listReportsConfigEndpoint(svc),
 						decodeListReportsConfigRequest,
@@ -88,40 +65,72 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 						opts...,
 					), "list_reports_config").ServeHTTP)
 
-					r.Post("/{reportID}/enable", otelhttp.NewHandler(kithttp.NewServer(
-						enableReportConfigEndpoint(svc),
-						decodeUpdateReportStatusRequest,
-						api.EncodeResponse,
-						opts...,
-					), "enable_report_config").ServeHTTP)
+					r.Route("/{reportID}", func(r chi.Router) {
+						r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+							viewReportConfigEndpoint(svc),
+							decodeViewReportConfigRequest,
+							api.EncodeResponse,
+							opts...,
+						), "view_report_config").ServeHTTP)
 
-					r.Post("/{reportID}/disable", otelhttp.NewHandler(kithttp.NewServer(
-						disableReportConfigEndpoint(svc),
-						decodeUpdateReportStatusRequest,
-						api.EncodeResponse,
-						opts...,
-					), "disable_report_config").ServeHTTP)
+						r.Patch("/", otelhttp.NewHandler(kithttp.NewServer(
+							updateReportConfigEndpoint(svc),
+							decodeUpdateReportConfigRequest,
+							api.EncodeResponse,
+							opts...,
+						), "update_report_config").ServeHTTP)
 
-					r.Put("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
-						updateReportTemplateEndpoint(svc),
-						decodeUpdateReportTemplateRequest,
-						api.EncodeResponse,
-						opts...,
-					), "update_report_template").ServeHTTP)
+						r.Patch("/schedule", otelhttp.NewHandler(kithttp.NewServer(
+							updateReportScheduleEndpoint(svc),
+							decodeUpdateReportScheduleRequest,
+							api.EncodeResponse,
+							opts...,
+						), "update_report_scheduler").ServeHTTP)
 
-					r.Get("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
-						viewReportTemplateEndpoint(svc),
-						decodeGetReportTemplateRequest,
-						api.EncodeResponse,
-						opts...,
-					), "get_report_template").ServeHTTP)
+						r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+							deleteReportConfigEndpoint(svc),
+							decodeDeleteReportConfigRequest,
+							api.EncodeResponse,
+							opts...,
+						), "delete_report_config").ServeHTTP)
 
-					r.Delete("/{reportID}/template", otelhttp.NewHandler(kithttp.NewServer(
-						deleteReportTemplateEndpoint(svc),
-						decodeDeleteReportTemplateRequest,
-						api.EncodeResponse,
-						opts...,
-					), "delete_report_template").ServeHTTP)
+						r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
+							enableReportConfigEndpoint(svc),
+							decodeUpdateReportStatusRequest,
+							api.EncodeResponse,
+							opts...,
+						), "enable_report_config").ServeHTTP)
+
+						r.Post("/disable", otelhttp.NewHandler(kithttp.NewServer(
+							disableReportConfigEndpoint(svc),
+							decodeUpdateReportStatusRequest,
+							api.EncodeResponse,
+							opts...,
+						), "disable_report_config").ServeHTTP)
+
+						r.Put("/template", otelhttp.NewHandler(kithttp.NewServer(
+							updateReportTemplateEndpoint(svc),
+							decodeUpdateReportTemplateRequest,
+							api.EncodeResponse,
+							opts...,
+						), "update_report_template").ServeHTTP)
+
+						r.Get("/template", otelhttp.NewHandler(kithttp.NewServer(
+							viewReportTemplateEndpoint(svc),
+							decodeGetReportTemplateRequest,
+							api.EncodeResponse,
+							opts...,
+						), "get_report_template").ServeHTTP)
+
+						r.Delete("/template", otelhttp.NewHandler(kithttp.NewServer(
+							deleteReportTemplateEndpoint(svc),
+							decodeDeleteReportTemplateRequest,
+							api.EncodeResponse,
+							opts...,
+						), "delete_report_template").ServeHTTP)
+
+						roleManagerHttp.EntityRoleMangerRouter(svc, d, r, opts)
+					})
 				})
 			})
 		})

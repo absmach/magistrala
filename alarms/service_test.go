@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
 	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/uuid"
@@ -24,7 +25,7 @@ import (
 
 var idp = uuid.New()
 
-func newService(t *testing.T, repo *mocks.Repository) alarms.Service {
+func newService(t *testing.T, repo *mocks.Repository) (alarms.Service, *policymocks.Service) {
 	policy := new(policymocks.Service)
 	availableActions := []roles.Action{}
 	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
@@ -34,17 +35,20 @@ func newService(t *testing.T, repo *mocks.Repository) alarms.Service {
 	if err != nil {
 		t.Fatalf("Failed to create service: %v", err)
 	}
-	return svc
+	return svc, policy
 }
 
 func TestCreateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := newService(t, repo)
+	svc, policies := newService(t, repo)
 	ts := time.Now()
 	cases := []struct {
-		desc  string
-		alarm alarms.Alarm
-		err   error
+		desc           string
+		alarm          alarms.Alarm
+		err            error
+		addPoliciesErr error
+		addRoleErr     error
+		deleteErr      error
 	}{
 		{
 			desc: "valid alarm",
@@ -61,7 +65,10 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    100,
 				CreatedAt:   ts,
 			},
-			err: nil,
+			err:            nil,
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
 		},
 		{
 			desc: "missing rule_id",
@@ -77,7 +84,84 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    100,
 				CreatedAt:   ts,
 			},
-			err: errors.New("rule_id is required"),
+			err:            errors.New("rule_id is required"),
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
+		},
+		{
+			desc: "create alarm with failed to add policies",
+			alarm: alarms.Alarm{
+				RuleID:      "rule-id",
+				DomainID:    "domain-id",
+				ChannelID:   "channel-id",
+				ClientID:    "client-id",
+				Subtopic:    "subtopic",
+				Measurement: "measurement",
+				Value:       "value",
+				Unit:        "unit",
+				Cause:       "cause",
+				Severity:    100,
+				CreatedAt:   ts,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			err:            svcerr.ErrAddPolicies,
+		},
+		{
+			desc: "create alarm with failed to add policies and failed rollback",
+			alarm: alarms.Alarm{
+				RuleID:      "rule-id",
+				DomainID:    "domain-id",
+				ChannelID:   "channel-id",
+				ClientID:    "client-id",
+				Subtopic:    "subtopic",
+				Measurement: "measurement",
+				Value:       "value",
+				Unit:        "unit",
+				Cause:       "cause",
+				Severity:    100,
+				CreatedAt:   ts,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			deleteErr:      svcerr.ErrRemoveEntity,
+			err:            svcerr.ErrRollbackRepo,
+		},
+		{
+			desc: "create alarm with failed to add roles",
+			alarm: alarms.Alarm{
+				RuleID:      "rule-id",
+				DomainID:    "domain-id",
+				ChannelID:   "channel-id",
+				ClientID:    "client-id",
+				Subtopic:    "subtopic",
+				Measurement: "measurement",
+				Value:       "value",
+				Unit:        "unit",
+				Cause:       "cause",
+				Severity:    100,
+				CreatedAt:   ts,
+			},
+			addRoleErr: svcerr.ErrCreateEntity,
+			err:        svcerr.ErrAddPolicies,
+		},
+		{
+			desc: "create alarm with failed to add roles and failed to delete policies",
+			alarm: alarms.Alarm{
+				RuleID:      "rule-id",
+				DomainID:    "domain-id",
+				ChannelID:   "channel-id",
+				ClientID:    "client-id",
+				Subtopic:    "subtopic",
+				Measurement: "measurement",
+				Value:       "value",
+				Unit:        "unit",
+				Cause:       "cause",
+				Severity:    100,
+				CreatedAt:   ts,
+			},
+			addRoleErr: svcerr.ErrCreateEntity,
+			deleteErr:  svcerr.ErrRemoveEntity,
+			err:        svcerr.ErrRemoveEntity,
 		},
 	}
 
@@ -96,21 +180,26 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    math.MaxUint8,
 				CreatedTo:   tc.alarm.CreatedAt,
 			}).Return(alarms.AlarmsPage{}, tc.err)
+			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
+			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(nil).Maybe()
+			repoCall2 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
+			repoCall3 := repo.On("DeleteAlarm", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
-				return
-			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			
+			policyCall.Unset()
+			policyCall2.Unset()
 			repoCall.Unset()
 			repoCall1.Unset()
+			repoCall2.Unset()
+			repoCall3.Unset()
 		})
 	}
 }
 
 func TestViewAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := newService(t, repo)
+	svc, _ := newService(t, repo)
 
 	cases := []struct {
 		desc     string
@@ -149,7 +238,7 @@ func TestViewAlarm(t *testing.T) {
 
 func TestUpdateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := newService(t, repo)
+	svc, _ := newService(t, repo)
 
 	cases := []struct {
 		desc  string
@@ -207,7 +296,7 @@ func TestUpdateAlarm(t *testing.T) {
 
 func TestListAlarms(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := newService(t, repo)
+	svc, _ := newService(t, repo)
 
 	cases := []struct {
 		desc string
@@ -248,7 +337,7 @@ func TestListAlarms(t *testing.T) {
 
 func TestDeleteAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := newService(t, repo)
+	svc, _ := newService(t, repo)
 
 	cases := []struct {
 		desc string

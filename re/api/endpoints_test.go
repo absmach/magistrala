@@ -497,7 +497,7 @@ func TestListRulesEndpoint(t *testing.T) {
 			token:    validToken,
 			query:    "status=invalid",
 			status:   http.StatusBadRequest,
-			err:      apiutil.ErrValidation,
+			err:      svcerr.ErrInvalidStatus,
 		},
 		{
 			desc:     "list rules with duplicate status",

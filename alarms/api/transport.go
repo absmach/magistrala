@@ -18,6 +18,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -32,6 +33,8 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 	mux := chi.NewRouter()
 
 	mux.Route("/{domainID}/alarms", func(r chi.Router) {
+		d := roleManagerHttp.NewDecoder("alarmID")
+
 		r.Group(func(r chi.Router) {
 			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 			r.Use(api.RequestIDMiddleware(idp))
@@ -42,10 +45,13 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 				api.EncodeResponse,
 				opts...,
 			), "list_alarms").ServeHTTP)
+
+			r = roleManagerHttp.EntityAvailableActionsRouter(svc, d, r, opts)
+
 			r.Route("/{alarmID}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewAlarmEndpoint(svc),
-					decodeAlarmReq,
+					decodeViewAlarmRequest,
 					api.EncodeResponse,
 					opts...,
 				), "get_alarm").ServeHTTP)
@@ -61,6 +67,8 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 					api.EncodeResponse,
 					opts...,
 				), "delete_alarm").ServeHTTP)
+
+				roleManagerHttp.EntityRoleMangerRouter(svc, d, r, opts)
 			})
 		})
 	})
@@ -190,6 +198,18 @@ func decodeAlarmReq(_ context.Context, r *http.Request) (any, error) {
 		Alarm: alarms.Alarm{
 			ID: chi.URLParam(r, "alarmID"),
 		},
+	}, nil
+}
+
+func decodeViewAlarmRequest(_ context.Context, r *http.Request) (any, error) {
+	withRoles, err := apiutil.ReadBoolQuery(r, api.RolesKey, false)
+	if err != nil {
+		return nil, err
+	}
+
+	return viewAlarmReq{
+		ID:        chi.URLParam(r, "alarmID"),
+		withRoles: withRoles,
 	}, nil
 }
 

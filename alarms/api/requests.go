@@ -23,6 +23,19 @@ func (req alarmReq) validate() error {
 	return nil
 }
 
+type viewAlarmReq struct {
+	ID        string
+	withRoles bool
+}
+
+func (req viewAlarmReq) validate() error {
+	if req.ID == "" {
+		return errors.New("missing alarm id")
+	}
+
+	return nil
+}
+
 type listAlarmsReq struct {
 	alarms.PageMetadata
 }

@@ -39,7 +39,7 @@ func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 
 func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(alarmReq)
+		req := request.(viewAlarmReq)
 		if err := req.validate(); err != nil {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
@@ -49,7 +49,7 @@ func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
-		alarm, err := svc.ViewAlarm(ctx, session, req.ID)
+		alarm, err := svc.ViewAlarm(ctx, session, req.ID, req.withRoles)
 		if err != nil {
 			return alarmRes{}, err
 		}

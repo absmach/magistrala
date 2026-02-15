@@ -13,21 +13,35 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/policies"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/supermq/pkg/roles"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 	"github.com/jmoiron/sqlx"
+)
+
+const (
+	rolesTableNamePrefix = "alarms"
+	entityTableName      = "alarms"
+	entityIDColumnName   = "id"
 )
 
 type repository struct {
 	db *sqlx.DB
+	rolesPostgres.Repository
 }
 
 var _ alarms.Repository = (*repository)(nil)
 
 func NewAlarmsRepo(db *sqlx.DB) alarms.Repository {
-	return &repository{db: db}
+	rolesRepo := rolesPostgres.NewRepository(db, policies.AlarmsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
+	return &repository{
+		db:         db,
+		Repository: rolesRepo,
+	}
 }
 
 func (r *repository) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
@@ -183,6 +197,163 @@ func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (a
 	return alarm, nil
 }
 
+func (r *repository) RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (alarms.Alarm, error) {
+	query := `
+	WITH selected_alarm AS (
+		SELECT
+			a.id,
+			a.domain_id
+		FROM
+			alarms a
+		WHERE
+			a.id = :id
+		LIMIT 1
+	),
+	selected_alarm_roles AS (
+		SELECT
+			ar.entity_id AS alarm_id,
+			arm.member_id AS member_id,
+			ar.id AS role_id,
+			ar."name" AS role_name,
+			jsonb_agg(DISTINCT ara."action") AS actions,
+			'direct' AS access_type,
+			'' AS access_provider_id
+		FROM
+			alarms_roles ar
+		JOIN
+			alarms_role_members arm ON ar.id = arm.role_id
+		JOIN
+			alarms_role_actions ara ON ar.id = ara.role_id
+		JOIN
+			selected_alarm sa ON sa.id = ar.entity_id
+			AND arm.member_id = :member_id
+		GROUP BY
+			ar.entity_id, ar.id, ar.name, arm.member_id
+	),
+	selected_domain_roles AS (
+		SELECT
+			sa.id AS alarm_id,
+			drm.member_id AS member_id,
+			dr.id AS role_id,
+			dr."name" AS role_name,
+			jsonb_agg(DISTINCT all_actions."action") AS actions,
+			'domain' AS access_type,
+			dr.entity_id AS access_provider_id
+		FROM
+			domains d
+		JOIN
+			selected_alarm sa ON sa.domain_id = d.id
+		JOIN
+			domains_roles dr ON dr.entity_id = d.id
+		JOIN
+			domains_role_members drm ON dr.id = drm.role_id
+		JOIN
+			domains_role_actions dra ON dr.id = dra.role_id
+		JOIN
+			domains_role_actions all_actions ON dr.id = all_actions.role_id
+		WHERE
+			drm.member_id = :member_id
+			AND dra."action" LIKE 'alarm%'
+		GROUP BY
+			sa.id, dr.entity_id, dr.id, dr."name", drm.member_id
+	),
+	all_roles AS (
+		SELECT
+			sar.alarm_id,
+			sar.member_id,
+			sar.role_id,
+			sar.role_name,
+			sar.actions,
+			sar.access_type,
+			sar.access_provider_id
+		FROM
+			selected_alarm_roles sar
+		UNION
+		SELECT
+			sdr.alarm_id,
+			sdr.member_id,
+			sdr.role_id,
+			sdr.role_name,
+			sdr.actions,
+			sdr.access_type,
+			sdr.access_provider_id
+		FROM
+			selected_domain_roles sdr
+	),
+	final_roles AS (
+		SELECT
+			ar.alarm_id,
+			ar.member_id,
+			jsonb_agg(
+				jsonb_build_object(
+					'role_id', ar.role_id,
+					'role_name', ar.role_name,
+					'actions', ar.actions,
+					'access_type', ar.access_type,
+					'access_provider_id', ar.access_provider_id
+				)
+			) AS roles
+		FROM all_roles ar
+		GROUP BY
+			ar.alarm_id, ar.member_id
+	)
+	SELECT
+		a2.id,
+		a2.rule_id,
+		a2.domain_id,
+		a2.channel_id,
+		a2.subtopic,
+		a2.client_id,
+		a2.measurement,
+		a2.value,
+		a2.unit,
+		a2.threshold,
+		a2.cause,
+		a2.status,
+		a2.severity,
+		a2.assignee_id,
+		a2.created_at,
+		a2.updated_at,
+		a2.updated_by,
+		a2.assigned_at,
+		a2.assigned_by,
+		a2.acknowledged_at,
+		a2.acknowledged_by,
+		a2.resolved_at,
+		a2.resolved_by,
+		a2.metadata,
+		fr.member_id,
+		fr.roles
+	FROM alarms a2
+	JOIN final_roles fr ON fr.alarm_id = a2.id
+	`
+	parameters := map[string]any{
+		"id":        id,
+		"member_id": memberID,
+	}
+	row, err := r.db.NamedQueryContext(ctx, query, parameters)
+	if err != nil {
+		return alarms.Alarm{}, postgres.HandleError(repoerr.ErrViewEntity, err)
+	}
+	defer row.Close()
+
+	if !row.Next() {
+		return alarms.Alarm{}, repoerr.ErrNotFound
+	}
+
+	dba := dbAlarm{}
+	if err := row.StructScan(&dba); err != nil {
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	alarm, err := toAlarm(dba)
+	if err != nil {
+		return alarms.Alarm{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return alarm, nil
+}
+
 func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
 	query, err := pageQuery(pm)
 	if err != nil {
@@ -289,6 +460,8 @@ type dbAlarm struct {
 	ResolvedAt     sql.NullTime  `db:"resolved_at,omitempty"`
 	ResolvedBy     *string       `db:"resolved_by,omitempty"`
 	Metadata       []byte        `db:"metadata,omitempty"`
+	MemberID       string        `db:"member_id,omitempty"`
+	Roles          json.RawMessage `db:"roles,omitempty"`
 }
 
 func toDBAlarm(a alarms.Alarm) (dbAlarm, error) {
@@ -413,6 +586,13 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		}
 	}
 
+	var roles []roles.MemberRoleActions
+	if dbr.Roles != nil {
+		if err := json.Unmarshal(dbr.Roles, &roles); err != nil {
+			return alarms.Alarm{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
+		}
+	}
+
 	return alarms.Alarm{
 		ID:             dbr.ID,
 		RuleID:         dbr.RuleID,
@@ -438,6 +618,7 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		ResolvedAt:     resolvedAt,
 		ResolvedBy:     resolvedBy,
 		Metadata:       metadata,
+		Roles:          roles,
 	}, nil
 }
 

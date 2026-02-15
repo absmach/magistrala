@@ -7,11 +7,11 @@ services:
     container_name: magistrala-schema-combiner
     command: sh /combine-schema.sh
     volumes:
-      - ../supermq-docker/spicedb/schema.zed:/schema-supermq.zed:ro
-      - ../spicedb/schema.zed:/schema-magistrala.zed:ro
-      - ../supermq-docker/permission.yaml:/permission-supermq.yaml:ro
-      - ../permission.yaml:/permission-magistrala.yaml:ro
-      - ../../scripts/combine-schema.sh:/combine-schema.sh:ro
+      - ../supermq-docker/spicedb/schema.zed:/schema-supermq.zed
+      - ../spicedb/schema.zed:/schema-magistrala.zed
+      - ../supermq-docker/permission.yaml:/permission-supermq.yaml
+      - ../permission.yaml:/permission-magistrala.yaml
+      - ../../scripts/combine-schema.sh:/combine-schema.sh
       - schema-volume:/schemas
     networks:
       - magistrala-base-net

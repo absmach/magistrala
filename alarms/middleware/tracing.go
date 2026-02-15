@@ -8,6 +8,7 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	smqTracing "github.com/absmach/supermq/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -16,14 +17,16 @@ import (
 type tracingMiddleware struct {
 	tracer trace.Tracer
 	svc    alarms.Service
+	rolemw.RoleManagerTracing
 }
 
 var _ alarms.Service = (*tracingMiddleware)(nil)
 
 func NewTracingMiddleware(tracer trace.Tracer, svc alarms.Service) alarms.Service {
 	return &tracingMiddleware{
-		tracer: tracer,
-		svc:    svc,
+		tracer:             tracer,
+		svc:                svc,
+		RoleManagerTracing: rolemw.NewTracing("alarms", svc, tracer),
 	}
 }
 
@@ -55,13 +58,13 @@ func (tm *tracingMiddleware) UpdateAlarm(ctx context.Context, session authn.Sess
 	return tm.svc.UpdateAlarm(ctx, session, alarm)
 }
 
-func (tm *tracingMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
+func (tm *tracingMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (alarms.Alarm, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "get_alarm", trace.WithAttributes(
 		attribute.String("id", id),
 	))
 	defer span.End()
 
-	return tm.svc.ViewAlarm(ctx, session, id)
+	return tm.svc.ViewAlarm(ctx, session, id, withRoles)
 }
 
 func (tm *tracingMiddleware) ListAlarms(ctx context.Context, session authn.Session, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {

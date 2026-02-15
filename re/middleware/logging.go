@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/messaging"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var _ re.Service = (*loggingMiddleware)(nil)
@@ -19,10 +20,15 @@ var _ re.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    re.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc re.Service, logger *slog.Logger) re.Service {
-	return &loggingMiddleware{logger, svc}
+	return &loggingMiddleware{
+		logger:                       logger,
+		svc:                          svc,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("re", svc, logger),
+	}
 }
 
 func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {
@@ -42,7 +48,7 @@ func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session,
 	return lm.svc.AddRule(ctx, session, r)
 }
 
-func (lm *loggingMiddleware) ViewRule(ctx context.Context, session authn.Session, id string) (res re.Rule, err error) {
+func (lm *loggingMiddleware) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (res re.Rule, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -59,7 +65,7 @@ func (lm *loggingMiddleware) ViewRule(ctx context.Context, session authn.Session
 		}
 		lm.logger.Info("View rule completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ViewRule(ctx, session, id)
+	return lm.svc.ViewRule(ctx, session, id, withRoles)
 }
 
 func (lm *loggingMiddleware) UpdateRule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {

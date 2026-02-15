@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	"github.com/absmach/supermq/pkg/messaging"
+	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
@@ -32,6 +33,7 @@ var _ re.Service = (*eventStore)(nil)
 type eventStore struct {
 	events.Publisher
 	svc re.Service
+	rmEvents.RoleManagerEventStore
 }
 
 // NewEventStoreMiddleware returns wrapper around rules service that sends
@@ -42,9 +44,12 @@ func NewEventStoreMiddleware(ctx context.Context, svc re.Service, url string) (r
 		return nil, err
 	}
 
+	res := rmEvents.NewRoleManagerEventStore("alarms", supermqPrefix, svc, publisher)
+
 	return &eventStore{
-		svc:       svc,
-		Publisher: publisher,
+		svc:                   svc,
+		Publisher:             publisher,
+		RoleManagerEventStore: res,
 	}, nil
 }
 
@@ -78,8 +83,8 @@ func (es *eventStore) ListRules(ctx context.Context, session authn.Session, pm r
 	return page, nil
 }
 
-func (es *eventStore) ViewRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	rule, err := es.svc.ViewRule(ctx, session, id)
+func (es *eventStore) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (re.Rule, error) {
+	rule, err := es.svc.ViewRule(ctx, session, id, withRoles)
 	if err != nil {
 		return rule, err
 	}

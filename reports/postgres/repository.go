@@ -110,7 +110,7 @@ func (repo *PostgresRepository) RetrieveByIDWithRoles(ctx context.Context, id, m
 			r.id,
 			r.domain_id
 		FROM
-			reports r
+			report_config r
 		WHERE
 			r.id = :id
 		LIMIT 1

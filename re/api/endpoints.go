@@ -44,7 +44,7 @@ func viewRuleEndpoint(s re.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return viewRuleRes{}, err
 		}
-		rule, err := s.ViewRule(ctx, session, req.id)
+		rule, err := s.ViewRule(ctx, session, req.id, req.withRoles)
 		if err != nil {
 			return viewRuleRes{}, err
 		}

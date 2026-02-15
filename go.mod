@@ -6,7 +6,7 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.5
-	github.com/absmach/supermq v0.18.6-0.20260210121246-e3a3e052d283
+	github.com/absmach/supermq v0.18.6-0.20260204195641-20bafe00776f
 	github.com/authzed/authzed-go v1.7.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
@@ -48,8 +48,21 @@ require (
 )
 
 require (
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/authzed/cel-go v0.20.2 // indirect
+	github.com/authzed/spicedb v1.48.0 // indirect
+	github.com/ccoveille/go-safecast/v2 v2.0.0 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
+	github.com/go-logr/zerologr v1.2.3 // indirect
+	github.com/rs/zerolog v1.34.0 // indirect
+	github.com/stoewer/go-strcase v1.3.1 // indirect
+	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
+	sigs.k8s.io/controller-runtime v0.22.4 // indirect
+)
+
+require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
-	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20250102033503-faa5f7b0171c // indirect

@@ -6,4 +6,5 @@ package policies
 const (
 	RulesType   = "rules"
 	ReportsType = "reports"
+	AlarmsType  = "alarms"
 )

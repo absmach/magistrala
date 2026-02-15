@@ -58,7 +58,7 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
 	// If assignee is present, check if assignee is member of domain
 
-	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpUpdateAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, operations.OpUpdateAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -88,7 +88,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpDeleteAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, operations.OpDeleteAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -111,7 +111,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpListAlarms, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, operations.OpListAlarms, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -126,7 +126,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, session, mgPolicies.AlarmsType, operations.OpViewAlarm, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, operations.OpViewAlarm, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -137,10 +137,10 @@ func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
-	return am.svc.ViewAlarm(ctx, session, id, false)
+	return am.svc.ViewAlarm(ctx, session, id, withRoles)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, req smqauthz.PolicyReq) error {
 	perm, err := am.entitiesOps.GetPermission(mgPolicies.AlarmType, op)
 	if err != nil {
 		return err

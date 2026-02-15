@@ -6,6 +6,7 @@ package middleware
 import (
 	"context"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"
@@ -32,11 +33,18 @@ type authorizationMiddleware struct {
 }
 
 // AuthorizationMiddleware adds authorization to the re service.
-func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
+func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation], entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
 	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
+	if err != nil {
+		return nil, err
+	}
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+	ram, err := rolemgr.NewAuthorization(mgPolicies.RuleType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}

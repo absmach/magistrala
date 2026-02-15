@@ -12,6 +12,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/supermq/pkg/roles"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -40,6 +41,74 @@ type Repository_Expecter struct {
 
 func (_m *Repository) EXPECT() *Repository_Expecter {
 	return &Repository_Expecter{mock: &_m.Mock}
+}
+
+// AddRoles provides a mock function for the type Repository
+func (_mock *Repository) AddRoles(ctx context.Context, rps []roles.RoleProvision) ([]roles.RoleProvision, error) {
+	ret := _mock.Called(ctx, rps)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddRoles")
+	}
+
+	var r0 []roles.RoleProvision
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []roles.RoleProvision) ([]roles.RoleProvision, error)); ok {
+		return returnFunc(ctx, rps)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []roles.RoleProvision) []roles.RoleProvision); ok {
+		r0 = returnFunc(ctx, rps)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]roles.RoleProvision)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []roles.RoleProvision) error); ok {
+		r1 = returnFunc(ctx, rps)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_AddRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRoles'
+type Repository_AddRoles_Call struct {
+	*mock.Call
+}
+
+// AddRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - rps []roles.RoleProvision
+func (_e *Repository_Expecter) AddRoles(ctx interface{}, rps interface{}) *Repository_AddRoles_Call {
+	return &Repository_AddRoles_Call{Call: _e.mock.On("AddRoles", ctx, rps)}
+}
+
+func (_c *Repository_AddRoles_Call) Run(run func(ctx context.Context, rps []roles.RoleProvision)) *Repository_AddRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []roles.RoleProvision
+		if args[1] != nil {
+			arg1 = args[1].([]roles.RoleProvision)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_AddRoles_Call) Return(roleProvisions []roles.RoleProvision, err error) *Repository_AddRoles_Call {
+	_c.Call.Return(roleProvisions, err)
+	return _c
+}
+
+func (_c *Repository_AddRoles_Call) RunAndReturn(run func(ctx context.Context, rps []roles.RoleProvision) ([]roles.RoleProvision, error)) *Repository_AddRoles_Call {
+	_c.Call.Return(run)
+	return _c
 }
 
 // CreateAlarm provides a mock function for the type Repository
@@ -231,6 +300,1297 @@ func (_c *Repository_ListAlarms_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// ListEntityMembers provides a mock function for the type Repository
+func (_mock *Repository) ListEntityMembers(ctx context.Context, entityID string, pageQuery roles.MembersRolePageQuery) (roles.MembersRolePage, error) {
+	ret := _mock.Called(ctx, entityID, pageQuery)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListEntityMembers")
+	}
+
+	var r0 roles.MembersRolePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, roles.MembersRolePageQuery) (roles.MembersRolePage, error)); ok {
+		return returnFunc(ctx, entityID, pageQuery)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, roles.MembersRolePageQuery) roles.MembersRolePage); ok {
+		r0 = returnFunc(ctx, entityID, pageQuery)
+	} else {
+		r0 = ret.Get(0).(roles.MembersRolePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, roles.MembersRolePageQuery) error); ok {
+		r1 = returnFunc(ctx, entityID, pageQuery)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_ListEntityMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListEntityMembers'
+type Repository_ListEntityMembers_Call struct {
+	*mock.Call
+}
+
+// ListEntityMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entityID string
+//   - pageQuery roles.MembersRolePageQuery
+func (_e *Repository_Expecter) ListEntityMembers(ctx interface{}, entityID interface{}, pageQuery interface{}) *Repository_ListEntityMembers_Call {
+	return &Repository_ListEntityMembers_Call{Call: _e.mock.On("ListEntityMembers", ctx, entityID, pageQuery)}
+}
+
+func (_c *Repository_ListEntityMembers_Call) Run(run func(ctx context.Context, entityID string, pageQuery roles.MembersRolePageQuery)) *Repository_ListEntityMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 roles.MembersRolePageQuery
+		if args[2] != nil {
+			arg2 = args[2].(roles.MembersRolePageQuery)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_ListEntityMembers_Call) Return(membersRolePage roles.MembersRolePage, err error) *Repository_ListEntityMembers_Call {
+	_c.Call.Return(membersRolePage, err)
+	return _c
+}
+
+func (_c *Repository_ListEntityMembers_Call) RunAndReturn(run func(ctx context.Context, entityID string, pageQuery roles.MembersRolePageQuery) (roles.MembersRolePage, error)) *Repository_ListEntityMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveEntityMembers provides a mock function for the type Repository
+func (_mock *Repository) RemoveEntityMembers(ctx context.Context, entityID string, members []string) error {
+	ret := _mock.Called(ctx, entityID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveEntityMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) error); ok {
+		r0 = returnFunc(ctx, entityID, members)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RemoveEntityMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveEntityMembers'
+type Repository_RemoveEntityMembers_Call struct {
+	*mock.Call
+}
+
+// RemoveEntityMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entityID string
+//   - members []string
+func (_e *Repository_Expecter) RemoveEntityMembers(ctx interface{}, entityID interface{}, members interface{}) *Repository_RemoveEntityMembers_Call {
+	return &Repository_RemoveEntityMembers_Call{Call: _e.mock.On("RemoveEntityMembers", ctx, entityID, members)}
+}
+
+func (_c *Repository_RemoveEntityMembers_Call) Run(run func(ctx context.Context, entityID string, members []string)) *Repository_RemoveEntityMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RemoveEntityMembers_Call) Return(err error) *Repository_RemoveEntityMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RemoveEntityMembers_Call) RunAndReturn(run func(ctx context.Context, entityID string, members []string) error) *Repository_RemoveEntityMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveMemberFromAllRoles provides a mock function for the type Repository
+func (_mock *Repository) RemoveMemberFromAllRoles(ctx context.Context, memberID string) error {
+	ret := _mock.Called(ctx, memberID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveMemberFromAllRoles")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, memberID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RemoveMemberFromAllRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveMemberFromAllRoles'
+type Repository_RemoveMemberFromAllRoles_Call struct {
+	*mock.Call
+}
+
+// RemoveMemberFromAllRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - memberID string
+func (_e *Repository_Expecter) RemoveMemberFromAllRoles(ctx interface{}, memberID interface{}) *Repository_RemoveMemberFromAllRoles_Call {
+	return &Repository_RemoveMemberFromAllRoles_Call{Call: _e.mock.On("RemoveMemberFromAllRoles", ctx, memberID)}
+}
+
+func (_c *Repository_RemoveMemberFromAllRoles_Call) Run(run func(ctx context.Context, memberID string)) *Repository_RemoveMemberFromAllRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RemoveMemberFromAllRoles_Call) Return(err error) *Repository_RemoveMemberFromAllRoles_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RemoveMemberFromAllRoles_Call) RunAndReturn(run func(ctx context.Context, memberID string) error) *Repository_RemoveMemberFromAllRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveRoles provides a mock function for the type Repository
+func (_mock *Repository) RemoveRoles(ctx context.Context, roleIDs []string) error {
+	ret := _mock.Called(ctx, roleIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveRoles")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) error); ok {
+		r0 = returnFunc(ctx, roleIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RemoveRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveRoles'
+type Repository_RemoveRoles_Call struct {
+	*mock.Call
+}
+
+// RemoveRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleIDs []string
+func (_e *Repository_Expecter) RemoveRoles(ctx interface{}, roleIDs interface{}) *Repository_RemoveRoles_Call {
+	return &Repository_RemoveRoles_Call{Call: _e.mock.On("RemoveRoles", ctx, roleIDs)}
+}
+
+func (_c *Repository_RemoveRoles_Call) Run(run func(ctx context.Context, roleIDs []string)) *Repository_RemoveRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RemoveRoles_Call) Return(err error) *Repository_RemoveRoles_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RemoveRoles_Call) RunAndReturn(run func(ctx context.Context, roleIDs []string) error) *Repository_RemoveRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveAllRoles provides a mock function for the type Repository
+func (_mock *Repository) RetrieveAllRoles(ctx context.Context, entityID string, limit uint64, offset uint64) (roles.RolePage, error) {
+	ret := _mock.Called(ctx, entityID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveAllRoles")
+	}
+
+	var r0 roles.RolePage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) (roles.RolePage, error)); ok {
+		return returnFunc(ctx, entityID, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) roles.RolePage); ok {
+		r0 = returnFunc(ctx, entityID, limit, offset)
+	} else {
+		r0 = ret.Get(0).(roles.RolePage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, entityID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RetrieveAllRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveAllRoles'
+type Repository_RetrieveAllRoles_Call struct {
+	*mock.Call
+}
+
+// RetrieveAllRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entityID string
+//   - limit uint64
+//   - offset uint64
+func (_e *Repository_Expecter) RetrieveAllRoles(ctx interface{}, entityID interface{}, limit interface{}, offset interface{}) *Repository_RetrieveAllRoles_Call {
+	return &Repository_RetrieveAllRoles_Call{Call: _e.mock.On("RetrieveAllRoles", ctx, entityID, limit, offset)}
+}
+
+func (_c *Repository_RetrieveAllRoles_Call) Run(run func(ctx context.Context, entityID string, limit uint64, offset uint64)) *Repository_RetrieveAllRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RetrieveAllRoles_Call) Return(rolePage roles.RolePage, err error) *Repository_RetrieveAllRoles_Call {
+	_c.Call.Return(rolePage, err)
+	return _c
+}
+
+func (_c *Repository_RetrieveAllRoles_Call) RunAndReturn(run func(ctx context.Context, entityID string, limit uint64, offset uint64) (roles.RolePage, error)) *Repository_RetrieveAllRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveByIDWithRoles provides a mock function for the type Repository
+func (_mock *Repository) RetrieveByIDWithRoles(ctx context.Context, id string, memberID string) (alarms.Alarm, error) {
+	ret := _mock.Called(ctx, id, memberID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveByIDWithRoles")
+	}
+
+	var r0 alarms.Alarm
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (alarms.Alarm, error)); ok {
+		return returnFunc(ctx, id, memberID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) alarms.Alarm); ok {
+		r0 = returnFunc(ctx, id, memberID)
+	} else {
+		r0 = ret.Get(0).(alarms.Alarm)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, id, memberID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RetrieveByIDWithRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveByIDWithRoles'
+type Repository_RetrieveByIDWithRoles_Call struct {
+	*mock.Call
+}
+
+// RetrieveByIDWithRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - memberID string
+func (_e *Repository_Expecter) RetrieveByIDWithRoles(ctx interface{}, id interface{}, memberID interface{}) *Repository_RetrieveByIDWithRoles_Call {
+	return &Repository_RetrieveByIDWithRoles_Call{Call: _e.mock.On("RetrieveByIDWithRoles", ctx, id, memberID)}
+}
+
+func (_c *Repository_RetrieveByIDWithRoles_Call) Run(run func(ctx context.Context, id string, memberID string)) *Repository_RetrieveByIDWithRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RetrieveByIDWithRoles_Call) Return(alarm alarms.Alarm, err error) *Repository_RetrieveByIDWithRoles_Call {
+	_c.Call.Return(alarm, err)
+	return _c
+}
+
+func (_c *Repository_RetrieveByIDWithRoles_Call) RunAndReturn(run func(ctx context.Context, id string, memberID string) (alarms.Alarm, error)) *Repository_RetrieveByIDWithRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveEntitiesRolesActionsMembers provides a mock function for the type Repository
+func (_mock *Repository) RetrieveEntitiesRolesActionsMembers(ctx context.Context, entityIDs []string) ([]roles.EntityActionRole, []roles.EntityMemberRole, error) {
+	ret := _mock.Called(ctx, entityIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveEntitiesRolesActionsMembers")
+	}
+
+	var r0 []roles.EntityActionRole
+	var r1 []roles.EntityMemberRole
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) ([]roles.EntityActionRole, []roles.EntityMemberRole, error)); ok {
+		return returnFunc(ctx, entityIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, []string) []roles.EntityActionRole); ok {
+		r0 = returnFunc(ctx, entityIDs)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]roles.EntityActionRole)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, []string) []roles.EntityMemberRole); ok {
+		r1 = returnFunc(ctx, entityIDs)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]roles.EntityMemberRole)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, []string) error); ok {
+		r2 = returnFunc(ctx, entityIDs)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
+}
+
+// Repository_RetrieveEntitiesRolesActionsMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveEntitiesRolesActionsMembers'
+type Repository_RetrieveEntitiesRolesActionsMembers_Call struct {
+	*mock.Call
+}
+
+// RetrieveEntitiesRolesActionsMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entityIDs []string
+func (_e *Repository_Expecter) RetrieveEntitiesRolesActionsMembers(ctx interface{}, entityIDs interface{}) *Repository_RetrieveEntitiesRolesActionsMembers_Call {
+	return &Repository_RetrieveEntitiesRolesActionsMembers_Call{Call: _e.mock.On("RetrieveEntitiesRolesActionsMembers", ctx, entityIDs)}
+}
+
+func (_c *Repository_RetrieveEntitiesRolesActionsMembers_Call) Run(run func(ctx context.Context, entityIDs []string)) *Repository_RetrieveEntitiesRolesActionsMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 []string
+		if args[1] != nil {
+			arg1 = args[1].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RetrieveEntitiesRolesActionsMembers_Call) Return(entityActionRoles []roles.EntityActionRole, entityMemberRoles []roles.EntityMemberRole, err error) *Repository_RetrieveEntitiesRolesActionsMembers_Call {
+	_c.Call.Return(entityActionRoles, entityMemberRoles, err)
+	return _c
+}
+
+func (_c *Repository_RetrieveEntitiesRolesActionsMembers_Call) RunAndReturn(run func(ctx context.Context, entityIDs []string) ([]roles.EntityActionRole, []roles.EntityMemberRole, error)) *Repository_RetrieveEntitiesRolesActionsMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveEntityRole provides a mock function for the type Repository
+func (_mock *Repository) RetrieveEntityRole(ctx context.Context, entityID string, roleID string) (roles.Role, error) {
+	ret := _mock.Called(ctx, entityID, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveEntityRole")
+	}
+
+	var r0 roles.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (roles.Role, error)); ok {
+		return returnFunc(ctx, entityID, roleID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) roles.Role); ok {
+		r0 = returnFunc(ctx, entityID, roleID)
+	} else {
+		r0 = ret.Get(0).(roles.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = returnFunc(ctx, entityID, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RetrieveEntityRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveEntityRole'
+type Repository_RetrieveEntityRole_Call struct {
+	*mock.Call
+}
+
+// RetrieveEntityRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - entityID string
+//   - roleID string
+func (_e *Repository_Expecter) RetrieveEntityRole(ctx interface{}, entityID interface{}, roleID interface{}) *Repository_RetrieveEntityRole_Call {
+	return &Repository_RetrieveEntityRole_Call{Call: _e.mock.On("RetrieveEntityRole", ctx, entityID, roleID)}
+}
+
+func (_c *Repository_RetrieveEntityRole_Call) Run(run func(ctx context.Context, entityID string, roleID string)) *Repository_RetrieveEntityRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RetrieveEntityRole_Call) Return(role roles.Role, err error) *Repository_RetrieveEntityRole_Call {
+	_c.Call.Return(role, err)
+	return _c
+}
+
+func (_c *Repository_RetrieveEntityRole_Call) RunAndReturn(run func(ctx context.Context, entityID string, roleID string) (roles.Role, error)) *Repository_RetrieveEntityRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RetrieveRole provides a mock function for the type Repository
+func (_mock *Repository) RetrieveRole(ctx context.Context, roleID string) (roles.Role, error) {
+	ret := _mock.Called(ctx, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RetrieveRole")
+	}
+
+	var r0 roles.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (roles.Role, error)); ok {
+		return returnFunc(ctx, roleID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) roles.Role); ok {
+		r0 = returnFunc(ctx, roleID)
+	} else {
+		r0 = ret.Get(0).(roles.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RetrieveRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RetrieveRole'
+type Repository_RetrieveRole_Call struct {
+	*mock.Call
+}
+
+// RetrieveRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID string
+func (_e *Repository_Expecter) RetrieveRole(ctx interface{}, roleID interface{}) *Repository_RetrieveRole_Call {
+	return &Repository_RetrieveRole_Call{Call: _e.mock.On("RetrieveRole", ctx, roleID)}
+}
+
+func (_c *Repository_RetrieveRole_Call) Run(run func(ctx context.Context, roleID string)) *Repository_RetrieveRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RetrieveRole_Call) Return(role roles.Role, err error) *Repository_RetrieveRole_Call {
+	_c.Call.Return(role, err)
+	return _c
+}
+
+func (_c *Repository_RetrieveRole_Call) RunAndReturn(run func(ctx context.Context, roleID string) (roles.Role, error)) *Repository_RetrieveRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleAddActions provides a mock function for the type Repository
+func (_mock *Repository) RoleAddActions(ctx context.Context, role roles.Role, actions []string) ([]string, error) {
+	ret := _mock.Called(ctx, role, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleAddActions")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) ([]string, error)); ok {
+		return returnFunc(ctx, role, actions)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) []string); ok {
+		r0 = returnFunc(ctx, role, actions)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, roles.Role, []string) error); ok {
+		r1 = returnFunc(ctx, role, actions)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleAddActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleAddActions'
+type Repository_RoleAddActions_Call struct {
+	*mock.Call
+}
+
+// RoleAddActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+//   - actions []string
+func (_e *Repository_Expecter) RoleAddActions(ctx interface{}, role interface{}, actions interface{}) *Repository_RoleAddActions_Call {
+	return &Repository_RoleAddActions_Call{Call: _e.mock.On("RoleAddActions", ctx, role, actions)}
+}
+
+func (_c *Repository_RoleAddActions_Call) Run(run func(ctx context.Context, role roles.Role, actions []string)) *Repository_RoleAddActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleAddActions_Call) Return(ops []string, err error) *Repository_RoleAddActions_Call {
+	_c.Call.Return(ops, err)
+	return _c
+}
+
+func (_c *Repository_RoleAddActions_Call) RunAndReturn(run func(ctx context.Context, role roles.Role, actions []string) ([]string, error)) *Repository_RoleAddActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleAddMembers provides a mock function for the type Repository
+func (_mock *Repository) RoleAddMembers(ctx context.Context, role roles.Role, members []string) ([]string, error) {
+	ret := _mock.Called(ctx, role, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleAddMembers")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) ([]string, error)); ok {
+		return returnFunc(ctx, role, members)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) []string); ok {
+		r0 = returnFunc(ctx, role, members)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, roles.Role, []string) error); ok {
+		r1 = returnFunc(ctx, role, members)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleAddMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleAddMembers'
+type Repository_RoleAddMembers_Call struct {
+	*mock.Call
+}
+
+// RoleAddMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+//   - members []string
+func (_e *Repository_Expecter) RoleAddMembers(ctx interface{}, role interface{}, members interface{}) *Repository_RoleAddMembers_Call {
+	return &Repository_RoleAddMembers_Call{Call: _e.mock.On("RoleAddMembers", ctx, role, members)}
+}
+
+func (_c *Repository_RoleAddMembers_Call) Run(run func(ctx context.Context, role roles.Role, members []string)) *Repository_RoleAddMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleAddMembers_Call) Return(strings []string, err error) *Repository_RoleAddMembers_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Repository_RoleAddMembers_Call) RunAndReturn(run func(ctx context.Context, role roles.Role, members []string) ([]string, error)) *Repository_RoleAddMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleCheckActionsExists provides a mock function for the type Repository
+func (_mock *Repository) RoleCheckActionsExists(ctx context.Context, roleID string, actions []string) (bool, error) {
+	ret := _mock.Called(ctx, roleID, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleCheckActionsExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) (bool, error)); ok {
+		return returnFunc(ctx, roleID, actions)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) bool); ok {
+		r0 = returnFunc(ctx, roleID, actions)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []string) error); ok {
+		r1 = returnFunc(ctx, roleID, actions)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleCheckActionsExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleCheckActionsExists'
+type Repository_RoleCheckActionsExists_Call struct {
+	*mock.Call
+}
+
+// RoleCheckActionsExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID string
+//   - actions []string
+func (_e *Repository_Expecter) RoleCheckActionsExists(ctx interface{}, roleID interface{}, actions interface{}) *Repository_RoleCheckActionsExists_Call {
+	return &Repository_RoleCheckActionsExists_Call{Call: _e.mock.On("RoleCheckActionsExists", ctx, roleID, actions)}
+}
+
+func (_c *Repository_RoleCheckActionsExists_Call) Run(run func(ctx context.Context, roleID string, actions []string)) *Repository_RoleCheckActionsExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleCheckActionsExists_Call) Return(b bool, err error) *Repository_RoleCheckActionsExists_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *Repository_RoleCheckActionsExists_Call) RunAndReturn(run func(ctx context.Context, roleID string, actions []string) (bool, error)) *Repository_RoleCheckActionsExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleCheckMembersExists provides a mock function for the type Repository
+func (_mock *Repository) RoleCheckMembersExists(ctx context.Context, roleID string, members []string) (bool, error) {
+	ret := _mock.Called(ctx, roleID, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleCheckMembersExists")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) (bool, error)); ok {
+		return returnFunc(ctx, roleID, members)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string) bool); ok {
+		r0 = returnFunc(ctx, roleID, members)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, []string) error); ok {
+		r1 = returnFunc(ctx, roleID, members)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleCheckMembersExists_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleCheckMembersExists'
+type Repository_RoleCheckMembersExists_Call struct {
+	*mock.Call
+}
+
+// RoleCheckMembersExists is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID string
+//   - members []string
+func (_e *Repository_Expecter) RoleCheckMembersExists(ctx interface{}, roleID interface{}, members interface{}) *Repository_RoleCheckMembersExists_Call {
+	return &Repository_RoleCheckMembersExists_Call{Call: _e.mock.On("RoleCheckMembersExists", ctx, roleID, members)}
+}
+
+func (_c *Repository_RoleCheckMembersExists_Call) Run(run func(ctx context.Context, roleID string, members []string)) *Repository_RoleCheckMembersExists_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleCheckMembersExists_Call) Return(b bool, err error) *Repository_RoleCheckMembersExists_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *Repository_RoleCheckMembersExists_Call) RunAndReturn(run func(ctx context.Context, roleID string, members []string) (bool, error)) *Repository_RoleCheckMembersExists_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleListActions provides a mock function for the type Repository
+func (_mock *Repository) RoleListActions(ctx context.Context, roleID string) ([]string, error) {
+	ret := _mock.Called(ctx, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleListActions")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+		return returnFunc(ctx, roleID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = returnFunc(ctx, roleID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleListActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleListActions'
+type Repository_RoleListActions_Call struct {
+	*mock.Call
+}
+
+// RoleListActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID string
+func (_e *Repository_Expecter) RoleListActions(ctx interface{}, roleID interface{}) *Repository_RoleListActions_Call {
+	return &Repository_RoleListActions_Call{Call: _e.mock.On("RoleListActions", ctx, roleID)}
+}
+
+func (_c *Repository_RoleListActions_Call) Run(run func(ctx context.Context, roleID string)) *Repository_RoleListActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleListActions_Call) Return(strings []string, err error) *Repository_RoleListActions_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *Repository_RoleListActions_Call) RunAndReturn(run func(ctx context.Context, roleID string) ([]string, error)) *Repository_RoleListActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleListMembers provides a mock function for the type Repository
+func (_mock *Repository) RoleListMembers(ctx context.Context, roleID string, limit uint64, offset uint64) (roles.MembersPage, error) {
+	ret := _mock.Called(ctx, roleID, limit, offset)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleListMembers")
+	}
+
+	var r0 roles.MembersPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) (roles.MembersPage, error)); ok {
+		return returnFunc(ctx, roleID, limit, offset)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) roles.MembersPage); ok {
+		r0 = returnFunc(ctx, roleID, limit, offset)
+	} else {
+		r0 = ret.Get(0).(roles.MembersPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, roleID, limit, offset)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_RoleListMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleListMembers'
+type Repository_RoleListMembers_Call struct {
+	*mock.Call
+}
+
+// RoleListMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID string
+//   - limit uint64
+//   - offset uint64
+func (_e *Repository_Expecter) RoleListMembers(ctx interface{}, roleID interface{}, limit interface{}, offset interface{}) *Repository_RoleListMembers_Call {
+	return &Repository_RoleListMembers_Call{Call: _e.mock.On("RoleListMembers", ctx, roleID, limit, offset)}
+}
+
+func (_c *Repository_RoleListMembers_Call) Run(run func(ctx context.Context, roleID string, limit uint64, offset uint64)) *Repository_RoleListMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleListMembers_Call) Return(membersPage roles.MembersPage, err error) *Repository_RoleListMembers_Call {
+	_c.Call.Return(membersPage, err)
+	return _c
+}
+
+func (_c *Repository_RoleListMembers_Call) RunAndReturn(run func(ctx context.Context, roleID string, limit uint64, offset uint64) (roles.MembersPage, error)) *Repository_RoleListMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveActions provides a mock function for the type Repository
+func (_mock *Repository) RoleRemoveActions(ctx context.Context, role roles.Role, actions []string) error {
+	ret := _mock.Called(ctx, role, actions)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveActions")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) error); ok {
+		r0 = returnFunc(ctx, role, actions)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RoleRemoveActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveActions'
+type Repository_RoleRemoveActions_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+//   - actions []string
+func (_e *Repository_Expecter) RoleRemoveActions(ctx interface{}, role interface{}, actions interface{}) *Repository_RoleRemoveActions_Call {
+	return &Repository_RoleRemoveActions_Call{Call: _e.mock.On("RoleRemoveActions", ctx, role, actions)}
+}
+
+func (_c *Repository_RoleRemoveActions_Call) Run(run func(ctx context.Context, role roles.Role, actions []string)) *Repository_RoleRemoveActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleRemoveActions_Call) Return(err error) *Repository_RoleRemoveActions_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RoleRemoveActions_Call) RunAndReturn(run func(ctx context.Context, role roles.Role, actions []string) error) *Repository_RoleRemoveActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveAllActions provides a mock function for the type Repository
+func (_mock *Repository) RoleRemoveAllActions(ctx context.Context, role roles.Role) error {
+	ret := _mock.Called(ctx, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveAllActions")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role) error); ok {
+		r0 = returnFunc(ctx, role)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RoleRemoveAllActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveAllActions'
+type Repository_RoleRemoveAllActions_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveAllActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+func (_e *Repository_Expecter) RoleRemoveAllActions(ctx interface{}, role interface{}) *Repository_RoleRemoveAllActions_Call {
+	return &Repository_RoleRemoveAllActions_Call{Call: _e.mock.On("RoleRemoveAllActions", ctx, role)}
+}
+
+func (_c *Repository_RoleRemoveAllActions_Call) Run(run func(ctx context.Context, role roles.Role)) *Repository_RoleRemoveAllActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleRemoveAllActions_Call) Return(err error) *Repository_RoleRemoveAllActions_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RoleRemoveAllActions_Call) RunAndReturn(run func(ctx context.Context, role roles.Role) error) *Repository_RoleRemoveAllActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveAllMembers provides a mock function for the type Repository
+func (_mock *Repository) RoleRemoveAllMembers(ctx context.Context, role roles.Role) error {
+	ret := _mock.Called(ctx, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveAllMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role) error); ok {
+		r0 = returnFunc(ctx, role)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RoleRemoveAllMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveAllMembers'
+type Repository_RoleRemoveAllMembers_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveAllMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+func (_e *Repository_Expecter) RoleRemoveAllMembers(ctx interface{}, role interface{}) *Repository_RoleRemoveAllMembers_Call {
+	return &Repository_RoleRemoveAllMembers_Call{Call: _e.mock.On("RoleRemoveAllMembers", ctx, role)}
+}
+
+func (_c *Repository_RoleRemoveAllMembers_Call) Run(run func(ctx context.Context, role roles.Role)) *Repository_RoleRemoveAllMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleRemoveAllMembers_Call) Return(err error) *Repository_RoleRemoveAllMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RoleRemoveAllMembers_Call) RunAndReturn(run func(ctx context.Context, role roles.Role) error) *Repository_RoleRemoveAllMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RoleRemoveMembers provides a mock function for the type Repository
+func (_mock *Repository) RoleRemoveMembers(ctx context.Context, role roles.Role, members []string) error {
+	ret := _mock.Called(ctx, role, members)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RoleRemoveMembers")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role, []string) error); ok {
+		r0 = returnFunc(ctx, role, members)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Repository_RoleRemoveMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RoleRemoveMembers'
+type Repository_RoleRemoveMembers_Call struct {
+	*mock.Call
+}
+
+// RoleRemoveMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - role roles.Role
+//   - members []string
+func (_e *Repository_Expecter) RoleRemoveMembers(ctx interface{}, role interface{}, members interface{}) *Repository_RoleRemoveMembers_Call {
+	return &Repository_RoleRemoveMembers_Call{Call: _e.mock.On("RoleRemoveMembers", ctx, role, members)}
+}
+
+func (_c *Repository_RoleRemoveMembers_Call) Run(run func(ctx context.Context, role roles.Role, members []string)) *Repository_RoleRemoveMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_RoleRemoveMembers_Call) Return(err error) *Repository_RoleRemoveMembers_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Repository_RoleRemoveMembers_Call) RunAndReturn(run func(ctx context.Context, role roles.Role, members []string) error) *Repository_RoleRemoveMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateAlarm provides a mock function for the type Repository
 func (_mock *Repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ret := _mock.Called(ctx, alarm)
@@ -293,6 +1653,72 @@ func (_c *Repository_UpdateAlarm_Call) Return(alarm1 alarms.Alarm, err error) *R
 }
 
 func (_c *Repository_UpdateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error)) *Repository_UpdateAlarm_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRole provides a mock function for the type Repository
+func (_mock *Repository) UpdateRole(ctx context.Context, ro roles.Role) (roles.Role, error) {
+	ret := _mock.Called(ctx, ro)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRole")
+	}
+
+	var r0 roles.Role
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role) (roles.Role, error)); ok {
+		return returnFunc(ctx, ro)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, roles.Role) roles.Role); ok {
+		r0 = returnFunc(ctx, ro)
+	} else {
+		r0 = ret.Get(0).(roles.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, roles.Role) error); ok {
+		r1 = returnFunc(ctx, ro)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_UpdateRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRole'
+type Repository_UpdateRole_Call struct {
+	*mock.Call
+}
+
+// UpdateRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - ro roles.Role
+func (_e *Repository_Expecter) UpdateRole(ctx interface{}, ro interface{}) *Repository_UpdateRole_Call {
+	return &Repository_UpdateRole_Call{Call: _e.mock.On("UpdateRole", ctx, ro)}
+}
+
+func (_c *Repository_UpdateRole_Call) Run(run func(ctx context.Context, ro roles.Role)) *Repository_UpdateRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 roles.Role
+		if args[1] != nil {
+			arg1 = args[1].(roles.Role)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_UpdateRole_Call) Return(role roles.Role, err error) *Repository_UpdateRole_Call {
+	_c.Call.Return(role, err)
+	return _c
+}
+
+func (_c *Repository_UpdateRole_Call) RunAndReturn(run func(ctx context.Context, ro roles.Role) (roles.Role, error)) *Repository_UpdateRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

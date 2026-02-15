@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 const SeverityMax uint8 = 100
@@ -19,30 +20,32 @@ type Metadata map[string]any
 
 // Alarm represents an alarm instance.
 type Alarm struct {
-	ID             string    `json:"id"`
-	RuleID         string    `json:"rule_id"`
-	DomainID       string    `json:"domain_id"`
-	ChannelID      string    `json:"channel_id"`
-	ClientID       string    `json:"client_id"`
-	Subtopic       string    `json:"subtopic"`
-	Status         Status    `json:"status"`
-	Measurement    string    `json:"measurement"`
-	Value          string    `json:"value"`
-	Unit           string    `json:"unit"`
-	Threshold      string    `json:"threshold"`
-	Cause          string    `json:"cause"`
-	Severity       uint8     `json:"severity"`
-	AssigneeID     string    `json:"assignee_id"`
-	CreatedAt      time.Time `json:"created_at"`
-	UpdatedAt      time.Time `json:"updated_at"`
-	UpdatedBy      string    `json:"updated_by"`
-	AssignedAt     time.Time `json:"assigned_at,omitempty"`
-	AssignedBy     string    `json:"assigned_by,omitempty"`
-	AcknowledgedAt time.Time `json:"acknowledged_at,omitempty"`
-	AcknowledgedBy string    `json:"acknowledged_by,omitempty"`
-	ResolvedAt     time.Time `json:"resolved_at,omitempty"`
-	ResolvedBy     string    `json:"resolved_by,omitempty"`
-	Metadata       Metadata  `json:"metadata,omitempty"`
+	ID             string                    `json:"id"`
+	RuleID         string                    `json:"rule_id"`
+	DomainID       string                    `json:"domain_id"`
+	ChannelID      string                    `json:"channel_id"`
+	ClientID       string                    `json:"client_id"`
+	Subtopic       string                    `json:"subtopic"`
+	Status         Status                    `json:"status"`
+	Measurement    string                    `json:"measurement"`
+	Value          string                    `json:"value"`
+	Unit           string                    `json:"unit"`
+	Threshold      string                    `json:"threshold"`
+	Cause          string                    `json:"cause"`
+	Severity       uint8                     `json:"severity"`
+	AssigneeID     string                    `json:"assignee_id"`
+	CreatedBy      string                    `json:"created_by"`
+	CreatedAt      time.Time                 `json:"created_at"`
+	UpdatedAt      time.Time                 `json:"updated_at"`
+	UpdatedBy      string                    `json:"updated_by"`
+	AssignedAt     time.Time                 `json:"assigned_at,omitempty"`
+	AssignedBy     string                    `json:"assigned_by,omitempty"`
+	AcknowledgedAt time.Time                 `json:"acknowledged_at,omitempty"`
+	AcknowledgedBy string                    `json:"acknowledged_by,omitempty"`
+	ResolvedAt     time.Time                 `json:"resolved_at,omitempty"`
+	ResolvedBy     string                    `json:"resolved_by,omitempty"`
+	Metadata       Metadata                  `json:"metadata,omitempty"`
+	Roles          []roles.MemberRoleActions `json:"roles,omitempty"`
 }
 
 type AlarmsPage struct {
@@ -107,15 +110,18 @@ func (a Alarm) Validate() error {
 type Service interface {
 	CreateAlarm(ctx context.Context, alarm Alarm) error
 	UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)
-	ViewAlarm(ctx context.Context, session authn.Session, id string) (Alarm, error)
+	ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (Alarm, error)
 	ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, session authn.Session, id string) error
+	roles.RoleManager
 }
 
 type Repository interface {
 	CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	UpdateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
+	RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (Alarm, error)
 	ListAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
+	roles.Repository
 }

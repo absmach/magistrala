@@ -6,6 +6,7 @@ package middleware
 import (
 	"context"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"

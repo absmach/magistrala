@@ -50,6 +50,20 @@ require (
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/authzed/cel-go v0.20.2 // indirect
+	github.com/authzed/spicedb v1.48.0 // indirect
+	github.com/ccoveille/go-safecast/v2 v2.0.0 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/go-errors/errors v1.5.1 // indirect
+	github.com/go-logr/zerologr v1.2.3 // indirect
+	github.com/rs/zerolog v1.34.0 // indirect
+	github.com/stoewer/go-strcase v1.3.1 // indirect
+	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
+	sigs.k8s.io/controller-runtime v0.22.4 // indirect
+)
+
+require (
+	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
+	github.com/authzed/cel-go v0.20.2 // indirect
 	github.com/authzed/spicedb v1.49.2 // indirect
 	github.com/ccoveille/go-safecast/v2 v2.0.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect

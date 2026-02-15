@@ -240,7 +240,15 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 		return err
 	}
 
-	req.Permission = perm.String()
+	pr := smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      session.DomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  perm.String(),
+	}
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {

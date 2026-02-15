@@ -54,7 +54,7 @@ func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, 
 }
 
 func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpAddReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpAddReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		Subject:     session.DomainUserID,
@@ -68,7 +68,7 @@ func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session 
 }
 
 func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpViewReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpViewReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -83,7 +83,7 @@ func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session
 }
 
 func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpUpdateReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpUpdateReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -98,7 +98,7 @@ func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpUpdateReportSchedule, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpUpdateReportSchedule, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -113,7 +113,7 @@ func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, ses
 }
 
 func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpRemoveReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpRemoveReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -128,7 +128,7 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpListReportsConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpListReportsConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -143,7 +143,7 @@ func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, sessio
 }
 
 func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpEnableReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpEnableReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -158,7 +158,7 @@ func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpDisableReportConfig, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpDisableReportConfig, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -173,7 +173,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 }
 
 func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction) (reports.ReportPage, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpGenerateReport, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpGenerateReport, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		Subject:     session.DomainUserID,
@@ -187,7 +187,7 @@ func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpUpdateReportTemplate, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpUpdateReportTemplate, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -202,7 +202,7 @@ func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, ses
 }
 
 func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpViewReportTemplate, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpViewReportTemplate, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -217,7 +217,7 @@ func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, mgPolicies.ReportsType, operations.OpDeleteReportTemplate, smqauthz.PolicyReq{
+	if err := am.authorize(ctx, mgPolicies.ReportsType, operations.OpDeleteReportTemplate, smqauthz.PolicyReq{
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -235,7 +235,7 @@ func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 	return am.svc.StartScheduler(ctx)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
 	perm, err := am.entitiesOps.GetPermission(mgPolicies.ReportType, op)
 	if err != nil {
 		return err

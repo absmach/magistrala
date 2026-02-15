@@ -10,6 +10,7 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq"

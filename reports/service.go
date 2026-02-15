@@ -13,12 +13,15 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/reltime"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 
@@ -33,22 +36,28 @@ type report struct {
 	readers         grpcReadersV1.ReadersServiceClient
 	defaultTemplate ReportTemplate
 	converterURL    string
+	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string) Service {
-	return &report{
-		repo:            repo,
-		idp:             idp,
-		runInfo:         runInfo,
-		email:           emailer,
-		ticker:          tck,
-		readers:         readers,
-		defaultTemplate: template,
-		converterURL:    converterURL,
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+	rpms, err := roles.NewProvisionManageService(mgPolicies.ReportType, repo, policy, idp, availableActions, builtInRoles)
+	if err != nil {
+		return nil, err
 	}
+	return &report{
+		repo:                   repo,
+		idp:                    idp,
+		runInfo:                runInfo,
+		email:                  emailer,
+		ticker:                 tck,
+		readers:                readers,
+		defaultTemplate:        template,
+		converterURL:           converterURL,
+		ProvisionManageService: rpms,
+	}, nil
 }
 
-func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (ReportConfig, error) {
+func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg ReportConfig) (retCfg ReportConfig, retErr error) {
 	id, err := r.idp.ID()
 	if err != nil {
 		return ReportConfig{}, err
@@ -71,11 +80,45 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 		return ReportConfig{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
+	defer func() {
+		if retErr != nil {
+			if errRollBack := r.repo.RemoveReportConfig(ctx, reportConfig.ID); errRollBack != nil {
+				retErr = errors.Wrap(retErr, errors.Wrap(svcerr.ErrRollbackRepo, errRollBack))
+			}
+		}
+	}()
+
+	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
+		BuiltInRoleAdmin: {roles.Member(session.UserID)},
+	}
+
+	optionalPolicies := []policies.Policy{
+		{
+			SubjectType: policies.DomainType,
+			Subject:     session.DomainID,
+			Relation:    policies.DomainRelation,
+			ObjectType:  mgPolicies.ReportType,
+			Object:      reportConfig.ID,
+		},
+	}
+
+	_, err = r.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{reportConfig.ID}, optionalPolicies, newBuiltInRoleMembers)
+	if err != nil {
+		return ReportConfig{}, errors.Wrap(svcerr.ErrAddPolicies, err)
+	}
+
 	return reportConfig, nil
 }
 
-func (r *report) ViewReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {
-	cfg, err := r.repo.ViewReportConfig(ctx, id)
+func (r *report) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (ReportConfig, error) {
+	var cfg ReportConfig
+	var err error
+	switch withRoles {
+	case true:
+		cfg, err = r.repo.RetrieveByIDWithRoles(ctx, id, session.UserID)
+	default:
+		cfg, err = r.repo.ViewReportConfig(ctx, id)
+	}
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

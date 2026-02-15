@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/roles"
 )
 
 // dbReport represents the database structure for a Report.
@@ -32,6 +33,8 @@ type dbReport struct {
 	Metrics         []byte                 `db:"metrics"`
 	Email           []byte                 `db:"email"`
 	ReportTemplate  reports.ReportTemplate `db:"report_template"`
+	MemberID        string                 `db:"member_id,omitempty"`
+	Roles           json.RawMessage        `db:"roles,omitempty"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -113,6 +116,13 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 		}
 	}
 
+	var roles []roles.MemberRoleActions
+	if dto.Roles != nil {
+		if err := json.Unmarshal(dto.Roles, &roles); err != nil {
+			return reports.ReportConfig{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	rpt := reports.ReportConfig{
 		ID:          dto.ID,
 		Name:        dto.Name,
@@ -133,6 +143,7 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 		UpdatedAt:      dto.UpdatedAt,
 		UpdatedBy:      dto.UpdatedBy,
 		ReportTemplate: dto.ReportTemplate,
+		Roles:          roles,
 	}
 
 	return rpt, nil

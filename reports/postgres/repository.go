@@ -10,25 +10,36 @@ import (
 	"strings"
 	"time"
 
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/reports"
 	api "github.com/absmach/supermq/api/http"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/postgres"
+	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
+)
+
+const (
+	rolesTableNamePrefix = "reports"
+	entityTableName      = "report_config"
+	entityIDColumnName   = "id"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
 	eh errors.Handler
+	rolesPostgres.Repository
 }
 
 func NewRepository(db postgres.Database) reports.Repository {
+	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.ReportsType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	errHandlerOptions := []errors.HandlerOption{
 		postgres.WithDuplicateErrors(NewDuplicateErrors()),
 	}
 	return &PostgresRepository{
-		DB: db,
-		eh: postgres.NewErrorHandler(errHandlerOptions...),
+		DB:         db,
+		eh:         postgres.NewErrorHandler(errHandlerOptions...),
+		Repository: rolesRepo,
 	}
 }
 
@@ -90,6 +101,155 @@ func (repo *PostgresRepository) ViewReportConfig(ctx context.Context, id string)
 	}
 
 	return rpt, nil
+}
+
+func (repo *PostgresRepository) RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (reports.ReportConfig, error) {
+	query := `
+	WITH selected_report AS (
+		SELECT
+			r.id,
+			r.domain_id
+		FROM
+			report_config r
+		WHERE
+			r.id = :id
+		LIMIT 1
+	),
+	selected_report_roles AS (
+		SELECT
+			rr.entity_id AS report_id,
+			rrm.member_id AS member_id,
+			rr.id AS role_id,
+			rr."name" AS role_name,
+			jsonb_agg(DISTINCT rra."action") AS actions,
+			'direct' AS access_type,
+			'' AS access_provider_id
+		FROM
+			reports_roles rr
+		JOIN
+			reports_role_members rrm ON rr.id = rrm.role_id
+		JOIN
+			reports_role_actions rra ON rr.id = rra.role_id
+		JOIN
+			selected_report sr ON sr.id = rr.entity_id
+			AND rrm.member_id = :member_id
+		GROUP BY
+			rr.entity_id, rr.id, rr.name, rrm.member_id
+	),
+	selected_domain_roles AS (
+		SELECT
+			sr.id AS report_id,
+			drm.member_id AS member_id,
+			dr.id AS role_id,
+			dr."name" AS role_name,
+			jsonb_agg(DISTINCT all_actions."action") AS actions,
+			'domain' AS access_type,
+			dr.entity_id AS access_provider_id
+		FROM
+			domains d
+		JOIN
+			selected_report sr ON sr.domain_id = d.id
+		JOIN
+			domains_roles dr ON dr.entity_id = d.id
+		JOIN
+			domains_role_members drm ON dr.id = drm.role_id
+		JOIN
+			domains_role_actions dra ON dr.id = dra.role_id
+		JOIN
+			domains_role_actions all_actions ON dr.id = all_actions.role_id
+		WHERE
+			drm.member_id = :member_id
+			AND dra."action" LIKE 'report%'
+		GROUP BY
+			sr.id, dr.entity_id, dr.id, dr."name", drm.member_id
+	),
+	all_roles AS (
+		SELECT
+			srr.report_id,
+			srr.member_id,
+			srr.role_id,
+			srr.role_name,
+			srr.actions,
+			srr.access_type,
+			srr.access_provider_id
+		FROM
+			selected_report_roles srr
+		UNION
+		SELECT
+			sdr.report_id,
+			sdr.member_id,
+			sdr.role_id,
+			sdr.role_name,
+			sdr.actions,
+			sdr.access_type,
+			sdr.access_provider_id
+		FROM
+			selected_domain_roles sdr
+	),
+	final_roles AS (
+		SELECT
+			ar.report_id,
+			ar.member_id,
+			jsonb_agg(
+				jsonb_build_object(
+					'role_id', ar.role_id,
+					'role_name', ar.role_name,
+					'actions', ar.actions,
+					'access_type', ar.access_type,
+					'access_provider_id', ar.access_provider_id
+				)
+			) AS roles
+		FROM all_roles ar
+		GROUP BY
+			ar.report_id, ar.member_id
+	)
+	SELECT
+		r2.id,
+		r2."name",
+		r2.description,
+		r2.domain_id,
+		r2.status,
+		r2.created_at,
+		r2.created_by,
+		r2.updated_at,
+		r2.updated_by,
+		r2.due,
+		r2.recurring,
+		r2.recurring_period,
+		r2.start_datetime,
+		r2.config,
+		r2.email,
+		r2.metrics,
+		r2.report_template,
+		fr.member_id,
+		fr.roles
+	FROM report_config r2
+	JOIN final_roles fr ON fr.report_id = r2.id
+	`
+	parameters := map[string]any{
+		"id":        id,
+		"member_id": memberID,
+	}
+	row, err := repo.DB.NamedQueryContext(ctx, query, parameters)
+	if err != nil {
+		return reports.ReportConfig{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer row.Close()
+
+	dbreport := dbReport{}
+	if !row.Next() {
+		return reports.ReportConfig{}, repoerr.ErrNotFound
+	}
+
+	if err := row.StructScan(&dbreport); err != nil {
+		return reports.ReportConfig{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	cfg, err := dbToReport(dbreport)
+	if err != nil {
+		return reports.ReportConfig{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	return cfg, nil
 }
 
 func (repo *PostgresRepository) UpdateReportConfigStatus(ctx context.Context, cfg reports.ReportConfig) (reports.ReportConfig, error) {

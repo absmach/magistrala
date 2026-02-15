@@ -10,20 +10,23 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 type loggingMiddleware struct {
 	logger  *slog.Logger
 	service alarms.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 var _ alarms.Service = (*loggingMiddleware)(nil)
 
 func NewLoggingMiddleware(logger *slog.Logger, service alarms.Service) alarms.Service {
 	return &loggingMiddleware{
-		logger:  logger,
-		service: service,
+		logger:                       logger,
+		service:                      service,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("alarms", service, logger),
 	}
 }
 
@@ -92,7 +95,7 @@ func (lm *loggingMiddleware) UpdateAlarm(ctx context.Context, session authn.Sess
 	return lm.service.UpdateAlarm(ctx, session, alarm)
 }
 
-func (lm *loggingMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (dba alarms.Alarm, err error) {
+func (lm *loggingMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (dba alarms.Alarm, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -107,7 +110,7 @@ func (lm *loggingMiddleware) ViewAlarm(ctx context.Context, session authn.Sessio
 		lm.logger.Info("View alarm completed successfully", args...)
 	}(time.Now())
 
-	return lm.service.ViewAlarm(ctx, session, id)
+	return lm.service.ViewAlarm(ctx, session, id, false)
 }
 
 func (lm *loggingMiddleware) ListAlarms(ctx context.Context, session authn.Session, pm alarms.PageMetadata) (dbp alarms.AlarmsPage, err error) {

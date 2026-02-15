@@ -10,6 +10,7 @@ import (
 
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/supermq/pkg/authn"
+	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var _ reports.Service = (*loggingMiddleware)(nil)
@@ -17,10 +18,15 @@ var _ reports.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    reports.Service
+	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc reports.Service, logger *slog.Logger) reports.Service {
-	return &loggingMiddleware{logger, svc}
+	return &loggingMiddleware{
+		logger:                       logger,
+		svc:                          svc,
+		RoleManagerLoggingMiddleware: rolemw.NewLogging("reports", svc, logger),
+	}
 }
 
 func (lm *loggingMiddleware) StartScheduler(ctx context.Context) (err error) {
@@ -71,7 +77,7 @@ func (lm *loggingMiddleware) AddReportConfig(ctx context.Context, session authn.
 	return lm.svc.AddReportConfig(ctx, session, config)
 }
 
-func (lm *loggingMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string) (res reports.ReportConfig, err error) {
+func (lm *loggingMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (res reports.ReportConfig, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -88,7 +94,7 @@ func (lm *loggingMiddleware) ViewReportConfig(ctx context.Context, session authn
 		}
 		lm.logger.Info("View report config completed successfully", args...)
 	}(time.Now())
-	return lm.svc.ViewReportConfig(ctx, session, id)
+	return lm.svc.ViewReportConfig(ctx, session, id, withRoles)
 }
 
 func (lm *loggingMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, config reports.ReportConfig) (res reports.ReportConfig, err error) {

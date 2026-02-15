@@ -436,31 +436,31 @@ func (r *repository) DeleteAlarm(ctx context.Context, id string) error {
 }
 
 type dbAlarm struct {
-	ID             string        `db:"id"`
-	RuleID         string        `db:"rule_id"`
-	DomainID       string        `db:"domain_id"`
-	ChannelID      string        `db:"channel_id"`
-	ClientID       string        `db:"client_id"`
-	Subtopic       string        `db:"subtopic"`
-	Measurement    string        `db:"measurement"`
-	Value          string        `db:"value"`
-	Unit           string        `db:"unit"`
-	Cause          string        `db:"cause"`
-	Threshold      string        `db:"threshold"`
-	Status         alarms.Status `db:"status"`
-	Severity       uint8         `db:"severity"`
-	AssigneeID     string        `db:"assignee_id"`
-	CreatedAt      time.Time     `db:"created_at"`
-	UpdatedAt      sql.NullTime  `db:"updated_at,omitempty"`
-	UpdatedBy      *string       `db:"updated_by,omitempty"`
-	AssignedAt     sql.NullTime  `db:"assigned_at,omitempty"`
-	AssignedBy     *string       `db:"assigned_by,omitempty"`
-	AcknowledgedAt sql.NullTime  `db:"acknowledged_at,omitempty"`
-	AcknowledgedBy *string       `db:"acknowledged_by,omitempty"`
-	ResolvedAt     sql.NullTime  `db:"resolved_at,omitempty"`
-	ResolvedBy     *string       `db:"resolved_by,omitempty"`
-	Metadata       []byte        `db:"metadata,omitempty"`
-	MemberID       string        `db:"member_id,omitempty"`
+	ID             string          `db:"id"`
+	RuleID         string          `db:"rule_id"`
+	DomainID       string          `db:"domain_id"`
+	ChannelID      string          `db:"channel_id"`
+	ClientID       string          `db:"client_id"`
+	Subtopic       string          `db:"subtopic"`
+	Measurement    string          `db:"measurement"`
+	Value          string          `db:"value"`
+	Unit           string          `db:"unit"`
+	Cause          string          `db:"cause"`
+	Threshold      string          `db:"threshold"`
+	Status         alarms.Status   `db:"status"`
+	Severity       uint8           `db:"severity"`
+	AssigneeID     string          `db:"assignee_id"`
+	CreatedAt      time.Time       `db:"created_at"`
+	UpdatedAt      sql.NullTime    `db:"updated_at,omitempty"`
+	UpdatedBy      *string         `db:"updated_by,omitempty"`
+	AssignedAt     sql.NullTime    `db:"assigned_at,omitempty"`
+	AssignedBy     *string         `db:"assigned_by,omitempty"`
+	AcknowledgedAt sql.NullTime    `db:"acknowledged_at,omitempty"`
+	AcknowledgedBy *string         `db:"acknowledged_by,omitempty"`
+	ResolvedAt     sql.NullTime    `db:"resolved_at,omitempty"`
+	ResolvedBy     *string         `db:"resolved_by,omitempty"`
+	Metadata       []byte          `db:"metadata,omitempty"`
+	MemberID       string          `db:"member_id,omitempty"`
 	Roles          json.RawMessage `db:"roles,omitempty"`
 }
 

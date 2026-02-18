@@ -1277,7 +1277,7 @@ func TestHandle(t *testing.T) {
 						Status:       re.EnabledStatus,
 						Logic: re.Script{
 							Type:  re.GoType,
-							Value: `func logicFunction() any { panic("intentional panic in test") }`,
+							Value: `func logicFunction() any { panic("test") }`,
 						},
 						Outputs: re.Outputs{
 							&outputs.ChannelPublisher{

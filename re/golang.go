@@ -30,7 +30,17 @@ type message struct {
 	Payload   any    `json:"payload,omitempty"`
 }
 
-func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) pkglog.RunInfo {
+func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) (ret pkglog.RunInfo) {
+	defer func() {
+		if r := recover(); r != nil {
+			ret = pkglog.RunInfo{
+				Level:   slog.LevelError,
+				Details: details,
+				Message: fmt.Sprintf("panic in Go script: %v", r),
+			}
+		}
+	}()
+
 	i := golang.New(golang.Options{})
 	if err := i.Use(stdlib.Symbols); err != nil {
 		return pkglog.RunInfo{Level: slog.LevelError, Details: details, Message: err.Error()}
@@ -77,7 +87,7 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 			err = errors.Wrap(e, err)
 		}
 	}
-	ret := pkglog.RunInfo{Level: slog.LevelInfo, Details: details, Message: "rule processed successfully"}
+	ret = pkglog.RunInfo{Level: slog.LevelInfo, Details: details, Message: "rule processed successfully"}
 	if err != nil {
 		ret.Level = slog.LevelError
 		ret.Message = fmt.Sprintf("failed to handle rule output: %s", err)

@@ -6,6 +6,7 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"io"
 	"log"
@@ -22,6 +23,7 @@ import (
 	mgatemqtt "github.com/absmach/mgate/pkg/mqtt"
 	"github.com/absmach/mgate/pkg/mqtt/websocket"
 	"github.com/absmach/mgate/pkg/session"
+	mgtls "github.com/absmach/mgate/pkg/tls"
 	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/mqtt"
@@ -51,6 +53,7 @@ const (
 	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
 	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
 	envPrefixDomains  = "SMQ_DOMAINS_GRPC_"
+	envPrefixMQTT     = "SMQ_MQTT_ADAPTER_"
 	wsPathPrefix      = "/mqtt"
 )
 
@@ -120,6 +123,13 @@ func main() {
 	serverConfig := server.Config{
 		Host: cfg.HTTPTargetHost,
 		Port: cfg.HTTPTargetPort,
+	}
+
+	tlsCfg, err := mgtls.NewConfig(env.Options{Prefix: envPrefixMQTT})
+	if err != nil {
+		logger.Error(fmt.Sprintf("Failed to load TLS config: %s", err))
+		exitCode = 1
+		return
 	}
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
@@ -261,12 +271,12 @@ func main() {
 	}
 	logger.Info(fmt.Sprintf("Starting MQTT proxy on port %s", cfg.MQTTPort))
 	g.Go(func() error {
-		return proxyMQTT(ctx, cfg, logger, h, beforeHandler, afterHandler)
+		return proxyMQTT(ctx, cfg, tlsCfg, logger, h, beforeHandler, afterHandler)
 	})
 
 	logger.Info(fmt.Sprintf("Starting MQTT over WS  proxy on port %s", cfg.HTTPPort))
 	g.Go(func() error {
-		return proxyWS(ctx, cfg, logger, h, afterHandler)
+		return proxyWS(ctx, cfg, tlsCfg, logger, h, afterHandler)
 	})
 
 	g.Go(func() error {
@@ -278,17 +288,24 @@ func main() {
 	}
 }
 
-func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, beforeHandler, afterHandler session.Interceptor) error {
+func proxyMQTT(ctx context.Context, cfg config, tlsCfg mgtls.Config, logger *slog.Logger, sessionHandler session.Handler, beforeHandler, afterHandler session.Interceptor) error {
+	var err error
 	config := mgate.Config{
 		Port:       cfg.MQTTPort,
 		TargetHost: cfg.MQTTTargetHost,
 		TargetPort: cfg.MQTTTargetPort,
 	}
-	mproxy := mgatemqtt.New(config, sessionHandler, beforeHandler, afterHandler, logger)
-
 	errCh := make(chan error)
+
+	config.TLSConfig, err = mgtls.LoadTLSConfig(&tlsCfg, &tls.Config{})
+	if err != nil {
+		return err
+	}
+
+	mgate := mgatemqtt.New(config, sessionHandler, beforeHandler, afterHandler, logger)
+
 	go func() {
-		errCh <- mproxy.Listen(ctx)
+		errCh <- mgate.Listen(ctx)
 	}()
 
 	select {
@@ -300,7 +317,8 @@ func proxyMQTT(ctx context.Context, cfg config, logger *slog.Logger, sessionHand
 	}
 }
 
-func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
+func proxyWS(ctx context.Context, cfg config, tlsCfg mgtls.Config, logger *slog.Logger, sessionHandler session.Handler, interceptor session.Interceptor) error {
+	var err error
 	config := mgate.Config{
 		Port:           cfg.HTTPPort,
 		TargetProtocol: "ws",
@@ -308,6 +326,10 @@ func proxyWS(ctx context.Context, cfg config, logger *slog.Logger, sessionHandle
 		TargetPort:     cfg.HTTPTargetPort,
 		TargetPath:     cfg.HTTPTargetPath,
 		PathPrefix:     wsPathPrefix,
+	}
+	config.TLSConfig, err = mgtls.LoadTLSConfig(&tlsCfg, &tls.Config{})
+	if err != nil {
+		return err
 	}
 
 	wp := websocket.New(config, sessionHandler, nil, interceptor, logger)

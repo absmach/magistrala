@@ -1292,6 +1292,36 @@ func TestHandle(t *testing.T) {
 			listErr: nil,
 		},
 		{
+			desc: "consume message with GoType script using goroutines",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"value": 42}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: `func logicFunction() any { go func() { }(); return true }`,
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
 			desc: "consume message with Lua script and Postgres output",
 			message: &messaging.Message{
 				Channel: inputChannel,

@@ -34,14 +34,6 @@ type message struct {
 }
 
 func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *messaging.Message) (ret pkglog.RunInfo) {
-	if goKeywordRegex.MatchString(r.Logic.Value) {
-		return pkglog.RunInfo{
-			Level:   slog.LevelError,
-			Details: details,
-			Message: "goroutines are not allowed in Go scripts",
-		}
-	}
-
 	defer func() {
 		if r := recover(); r != nil {
 			ret = pkglog.RunInfo{

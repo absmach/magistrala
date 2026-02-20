@@ -212,7 +212,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) error {
 	clientID, clientType, err := authenticate(ctx, req, authn, clients)
 	if err != nil {
-		return nil
+		return err
 	}
 	if err := authorize(ctx, clientID, clientType, req.chanID, req.domain, channels); err != nil {
 		return err
@@ -234,7 +234,7 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
-			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.chanID, req.key),
+			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.domain, req.key),
 		})
 		if err != nil {
 			return "", "", err

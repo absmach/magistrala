@@ -160,6 +160,27 @@ func TestAddRule(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "Add rule with Go script containing goroutines",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { go func() {}(); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			err: re.ErrGoroutinesNotAllowed,
+		},
 	}
 
 	for _, tc := range cases {
@@ -305,6 +326,31 @@ func TestUpdateRule(t *testing.T) {
 				DomainID:  domainID,
 			},
 			err: svcerr.ErrUpdateEntity,
+		},
+		{
+			desc: "update rule with Go script containing goroutines",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { go processData(); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			err: re.ErrGoroutinesNotAllowed,
 		},
 	}
 

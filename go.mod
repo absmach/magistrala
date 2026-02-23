@@ -9,7 +9,7 @@ require (
 	github.com/absmach/supermq v0.18.6-0.20260210121246-e3a3e052d283
 	github.com/authzed/authzed-go v1.7.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
-	github.com/caarlos0/env/v11 v11.3.1
+	github.com/caarlos0/env/v11 v11.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/fatih/color v1.18.0
 	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba

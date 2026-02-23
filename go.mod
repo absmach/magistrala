@@ -7,7 +7,7 @@ require (
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.5
 	github.com/absmach/supermq v0.18.6-0.20260210121246-e3a3e052d283
-	github.com/authzed/authzed-go v1.7.0
+	github.com/authzed/authzed-go v1.8.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/caarlos0/env/v11 v11.3.1
 	github.com/eclipse/paho.mqtt.golang v1.5.1
@@ -48,7 +48,7 @@ require (
 )
 
 require (
-	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.10-20250912141014-52f32327d4b0.1 // indirect
+	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20251209175733-2a1774d88802.1 // indirect
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	dario.cat/mergo v1.0.2 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -117,7 +117,6 @@ require (
 	github.com/prometheus/procfs v0.19.2 // indirect
 	github.com/rabbitmq/amqp091-go v1.10.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect
-	github.com/samber/lo v1.52.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect

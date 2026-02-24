@@ -28,6 +28,7 @@ var (
 	_ supermq.Response = (*updateUserRes)(nil)
 	_ supermq.Response = (*revokeRes)(nil)
 	_ supermq.Response = (*deleteUserRes)(nil)
+	_ supermq.Response = (*listRefreshTokensRes)(nil)
 )
 
 type pageRes struct {

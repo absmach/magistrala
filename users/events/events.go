@@ -493,12 +493,14 @@ func (rte refreshTokenEvent) Encode() (map[string]any, error) {
 }
 
 type revokeRefreshTokenEvent struct {
+	tokenID   string
 	requestID string
 }
 
 func (rrte revokeRefreshTokenEvent) Encode() (map[string]any, error) {
 	return map[string]any{
 		"operation":  revokeRefreshToken,
+		"token_id":   rrte.tokenID,
 		"request_id": rrte.requestID,
 	}, nil
 }

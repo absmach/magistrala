@@ -5,7 +5,6 @@ package auth
 
 import (
 	"context"
-	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 )
@@ -51,8 +50,8 @@ type Tokenizer interface {
 
 // UserActiveTokensCache represents a cache repository for managing active refresh tokens per user.
 type UserActiveTokensCache interface {
-	// SaveActive saves an active refresh token ID for a user with TTL and optional description.
-	SaveActive(ctx context.Context, userID, tokenID, description string, ttl time.Duration) error
+	// SaveActive saves an active refresh token ID for a user with optional description.
+	SaveActive(ctx context.Context, userID, tokenID, description string) error
 
 	// IsActive checks if the token ID is active.
 	IsActive(ctx context.Context, tokenID string) (bool, error)

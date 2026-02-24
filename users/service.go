@@ -245,7 +245,10 @@ func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session
 	}
 	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{TokenId: tokenID})
 	if err != nil {
-		return errors.Wrap(svcerr.ErrAuthorization, err)
+		if errors.Contains(err, svcerr.ErrNotFound) {
+			return errors.Wrap(svcerr.ErrNotFound, err)
+		}
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
 	}
 
 	return nil

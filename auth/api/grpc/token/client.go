@@ -27,7 +27,7 @@ type tokenGrpcClient struct {
 
 var _ grpcTokenV1.TokenServiceClient = (*tokenGrpcClient)(nil)
 
-// NewAuthClient returns new auth gRPC client instance.
+// NewTokenClient returns new token gRPC client instance.
 func NewTokenClient(conn *grpc.ClientConn, timeout time.Duration) grpcTokenV1.TokenServiceClient {
 	return &tokenGrpcClient{
 		issue: kitgrpc.NewClient(

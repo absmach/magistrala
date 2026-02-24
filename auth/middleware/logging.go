@@ -139,7 +139,7 @@ func (lm *loggingMiddleware) ListUserRefreshTokens(ctx context.Context, userID s
 			lm.logger.Warn("List user refresh tokens failed", args...)
 			return
 		}
-		lm.logger.Info("List user sessions completed successfully", args...)
+		lm.logger.Info("List user refresh tokens completed successfully", args...)
 	}(time.Now())
 
 	return lm.svc.ListUserRefreshTokens(ctx, userID)

@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/supermq/auth/cache"
 	"github.com/absmach/supermq/internal/testsutil"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,7 +30,11 @@ func TestMain(m *testing.M) {
 }
 
 func setupRedisTokensClient() auth.UserActiveTokensCache {
-	return cache.NewUserActiveTokensCache(storeClient, 10*time.Minute)
+	tc, err := cache.NewUserActiveTokensCache(storeClient, 10*time.Minute)
+	if err != nil {
+		panic(err)
+	}
+	return tc
 }
 
 func TestTokenSave(t *testing.T) {
@@ -44,7 +49,6 @@ func TestTokenSave(t *testing.T) {
 		userID      string
 		tokenID     string
 		description string
-		ttl         time.Duration
 		err         error
 	}{
 		{
@@ -52,7 +56,6 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     tokenID,
 			description: "Test token",
-			ttl:         10 * time.Minute,
 			err:         nil,
 		},
 		{
@@ -60,7 +63,6 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     tokenID,
 			description: "Updated token",
-			ttl:         10 * time.Minute,
 			err:         nil,
 		},
 		{
@@ -68,7 +70,6 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     testsutil.GenerateUUID(t),
 			description: "Another token",
-			ttl:         10 * time.Minute,
 			err:         nil,
 		},
 		{
@@ -76,7 +77,6 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     "",
 			description: "Empty ID token",
-			ttl:         10 * time.Minute,
 			err:         nil,
 		},
 		{
@@ -84,14 +84,13 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     testsutil.GenerateUUID(t),
 			description: "",
-			ttl:         10 * time.Minute,
 			err:         nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.SaveActive(context.Background(), tc.userID, tc.tokenID, tc.description, tc.ttl)
+			err := tokensCache.SaveActive(context.Background(), tc.userID, tc.tokenID, tc.description)
 			if err == nil {
 				ok, err := tokensCache.IsActive(context.Background(), tc.tokenID)
 				assert.NoError(t, err)
@@ -109,7 +108,7 @@ func TestTokenContains(t *testing.T) {
 	userID := testsutil.GenerateUUID(t)
 	tokenID := testsutil.GenerateUUID(t)
 
-	err := tokensCache.SaveActive(context.Background(), userID, tokenID, "Test token", 10*time.Minute)
+	err := tokensCache.SaveActive(context.Background(), userID, tokenID, "Test token")
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {
@@ -156,7 +155,7 @@ func TestTokenRemove(t *testing.T) {
 	var tokenIDs []string
 	for i := range num {
 		tokenID := testsutil.GenerateUUID(t)
-		err := tokensCache.SaveActive(context.Background(), userID, tokenID, fmt.Sprintf("Token %d", i), 10*time.Minute)
+		err := tokensCache.SaveActive(context.Background(), userID, tokenID, fmt.Sprintf("Token %d", i))
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		tokenIDs = append(tokenIDs, tokenID)
 	}
@@ -177,13 +176,13 @@ func TestTokenRemove(t *testing.T) {
 			desc:    "Remove token with empty id from cache",
 			userID:  userID,
 			tokenID: "",
-			err:     nil,
+			err:     svcerr.ErrNotFound,
 		},
 		{
 			desc:    "Remove non existing id from cache",
 			userID:  userID,
 			tokenID: testsutil.GenerateUUID(t),
-			err:     nil,
+			err:     svcerr.ErrNotFound,
 		},
 	}
 
@@ -212,7 +211,7 @@ func TestListUserTokens(t *testing.T) {
 	for i := range num {
 		tokenID := testsutil.GenerateUUID(t)
 		description := fmt.Sprintf("Token %d", i)
-		err := tokensCache.SaveActive(context.Background(), userID, tokenID, description, 10*time.Minute)
+		err := tokensCache.SaveActive(context.Background(), userID, tokenID, description)
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		expectedTokens = append(expectedTokens, auth.TokenInfo{
 			ID:          tokenID,
@@ -222,7 +221,7 @@ func TestListUserTokens(t *testing.T) {
 
 	tokenID2 := testsutil.GenerateUUID(t)
 	desc2 := "User 2 token"
-	err := tokensCache.SaveActive(context.Background(), userID2, tokenID2, desc2, 10*time.Minute)
+	err := tokensCache.SaveActive(context.Background(), userID2, tokenID2, desc2)
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {

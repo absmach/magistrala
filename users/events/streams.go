@@ -393,6 +393,7 @@ func (es *eventStore) RevokeRefreshToken(ctx context.Context, session authn.Sess
 	}
 
 	event := revokeRefreshTokenEvent{
+		tokenID:   tokenID,
 		requestID: middleware.GetReqID(ctx),
 	}
 

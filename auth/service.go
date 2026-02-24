@@ -305,7 +305,7 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 	if key.Subject != "" {
 		ttl := time.Until(key.ExpiresAt)
 		if ttl > 0 {
-			if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description, ttl); err != nil {
+			if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description); err != nil {
 				return Token{}, errors.Wrap(errSaveRefreshKey, err)
 			}
 		}

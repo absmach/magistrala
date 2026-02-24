@@ -274,7 +274,7 @@ type Service interface {
 	// RevokeRefreshToken revokes a refresh token by its ID.
 	RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error
 
-	// ListActiveSessions lists all active refresh token sessions for the authenticated user.
+	// ListActiveRefreshTokens lists all active refresh tokens for the authenticated user.
 	ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error)
 
 	// OAuthCallback handles the callback from any supported OAuth provider.

@@ -22,7 +22,7 @@ type tokenGrpcServer struct {
 	listUserRefreshTokens kitgrpc.Handler
 }
 
-// NewAuthServer returns new AuthnServiceServer instance.
+// NewTokenServer returns new TokenServiceServer instance.
 func NewTokenServer(svc auth.Service) grpcTokenV1.TokenServiceServer {
 	return &tokenGrpcServer{
 		issue: kitgrpc.NewServer(

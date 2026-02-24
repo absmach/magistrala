@@ -1765,6 +1765,15 @@ func TestRevokeRefreshToken(t *testing.T) {
 			repoResp:   rUser,
 			err:        svcerr.ErrAuthorization,
 		},
+		{
+			desc:       "revoke refresh token not found",
+			session:    authn.Session{DomainUserID: validID, UserID: validID, DomainID: validID},
+			tokenID:    validToken,
+			revokeResp: &grpcTokenV1.RevokeRes{},
+			revokeErr:  svcerr.ErrNotFound,
+			repoResp:   rUser,
+			err:        svcerr.ErrNotFound,
+		},
 	}
 
 	for _, tc := range cases {

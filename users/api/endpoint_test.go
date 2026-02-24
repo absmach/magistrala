@@ -2386,7 +2386,7 @@ func TestIssueToken(t *testing.T) {
 	validUsername := "valid"
 	validDescription := "test token"
 	dataFormat := `{"username": "%s", "password": "%s"}`
-	dataFormatWithDesc := `{"username": "%s", "password": "%s", "description": "test token"}`
+	dataFormatWithDesc := `{"username": "%s", "password": "%s", "description": "%s"}`
 
 	cases := []struct {
 		desc        string

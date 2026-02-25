@@ -15,9 +15,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const (
-	refreshPrefix = "refresh_tokens:"
-)
+const refreshPrefix = "refresh_tokens:"
 
 type tokenData struct {
 	UserID      string `json:"user_id"`

@@ -84,6 +84,17 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`ALTER TABLE groups ALTER COLUMN updated_at TYPE TIMESTAMP;`,
 				},
 			},
+			{
+				Id: "groups_06",
+				Up: []string{
+					`UPDATE groups 
+					 SET metadata = COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb) - 'ui'
+					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
+				},
+				Down: []string{
+					`SELECT 1`,
+				},
+			},
 		},
 	}
 

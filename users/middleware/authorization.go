@@ -7,6 +7,7 @@ import (
 	"context"
 
 	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
+	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -207,7 +208,19 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 		Object:      obj,
 	}
 
-	if err := am.authz.Authorize(ctx, req, nil); err != nil {
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   subj,
+			EntityType: auth.UsersType.String(),
+			Operation:  perm,
+			Domain:     domain,
+		}
+	}
+
+	if err := am.authz.Authorize(ctx, req, pat); err != nil {
 		return err
 	}
 	return nil

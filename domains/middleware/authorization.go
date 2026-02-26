@@ -6,6 +6,7 @@ package middleware
 import (
 	"context"
 
+	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/domains"
 	"github.com/absmach/supermq/domains/operations"
 	"github.com/absmach/supermq/pkg/authn"
@@ -61,7 +62,7 @@ func (am *authorizationMiddleware) RetrieveDomain(ctx context.Context, session a
 		return am.svc.RetrieveDomain(ctx, session, id, withRoles)
 	}
 
-	if err := am.authorize(ctx, policies.DomainType, operations.OpRetrieveDomain, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpRetrieveDomain, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -75,7 +76,7 @@ func (am *authorizationMiddleware) RetrieveDomain(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateDomain(ctx context.Context, session authn.Session, id string, d domains.DomainReq) (domains.Domain, error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpUpdateDomain, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpUpdateDomain, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -89,7 +90,7 @@ func (am *authorizationMiddleware) UpdateDomain(ctx context.Context, session aut
 }
 
 func (am *authorizationMiddleware) EnableDomain(ctx context.Context, session authn.Session, id string) (domains.Domain, error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpEnableDomain, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpEnableDomain, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -103,7 +104,7 @@ func (am *authorizationMiddleware) EnableDomain(ctx context.Context, session aut
 }
 
 func (am *authorizationMiddleware) DisableDomain(ctx context.Context, session authn.Session, id string) (domains.Domain, error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpDisableDomain, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpDisableDomain, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -141,7 +142,7 @@ func (am *authorizationMiddleware) ListDomains(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (domains.Invitation, error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpSendDomainInvitation, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpSendDomainInvitation, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -163,7 +164,7 @@ func (am *authorizationMiddleware) ListInvitations(ctx context.Context, session 
 }
 
 func (am *authorizationMiddleware) ListDomainInvitations(ctx context.Context, session authn.Session, page domains.InvitationPageMeta) (invs domains.InvitationPage, err error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpListDomainInvitations, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpListDomainInvitations, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -185,7 +186,7 @@ func (am *authorizationMiddleware) RejectInvitation(ctx context.Context, session
 }
 
 func (am *authorizationMiddleware) DeleteInvitation(ctx context.Context, session authn.Session, inviteeUserID, domainID string) (err error) {
-	if err := am.authorize(ctx, policies.DomainType, operations.OpDeleteDomainInvitation, authz.PolicyReq{
+	if err := am.authorize(ctx, session, policies.DomainType, operations.OpDeleteDomainInvitation, authz.PolicyReq{
 		Subject:     session.DomainUserID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
@@ -198,7 +199,9 @@ func (am *authorizationMiddleware) DeleteInvitation(ctx context.Context, session
 	return am.svc.DeleteInvitation(ctx, session, inviteeUserID, domainID)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, entityType string, op permissions.Operation, authReq authz.PolicyReq) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, authReq authz.PolicyReq) error {
+	authReq.Domain = session.DomainID
+
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
 	if err != nil {
 		return err
@@ -206,7 +209,21 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, entityType str
 
 	authReq.Permission = perm.String()
 
-	if err := am.authz.Authorize(ctx, authReq, nil); err != nil {
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		entityID := authReq.Object
+		opName := am.entitiesOps.OperationName(entityType, op)
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   entityID,
+			EntityType: auth.DomainsType.String(),
+			Operation:  opName,
+			Domain:     session.DomainID,
+		}
+	}
+
+	if err := am.authz.Authorize(ctx, authReq, pat); err != nil {
 		return err
 	}
 

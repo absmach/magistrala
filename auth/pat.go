@@ -69,6 +69,7 @@ const (
 	DashboardType
 	MessagesType
 	DomainsType
+	UsersType
 )
 
 const (
@@ -78,6 +79,7 @@ const (
 	DashboardsStr    = "dashboards"
 	MessagesStr      = "messages"
 	DomainsStr       = "domains"
+	UsersStr         = "users"
 )
 
 func (et EntityType) String() string {
@@ -94,6 +96,8 @@ func (et EntityType) String() string {
 		return MessagesStr
 	case DomainsType:
 		return DomainsStr
+	case UsersType:
+		return UsersStr
 	default:
 		return fmt.Sprintf("unknown domain entity type %d", et)
 	}
@@ -113,6 +117,8 @@ func ParseEntityType(et string) (EntityType, error) {
 		return MessagesType, nil
 	case DomainsStr:
 		return DomainsType, nil
+	case UsersStr:
+		return UsersType, nil
 	default:
 		return 0, fmt.Errorf("unknown domain entity type %s", et)
 	}

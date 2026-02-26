@@ -147,11 +147,8 @@ func (am *authorizationMiddleware) SendInvitation(ctx context.Context, session a
 		SubjectKind: policies.UsersKind,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-		Object:      invitation.DomainID,
-	}
-	if err := am.authz.Authorize(ctx, req, nil); err != nil {
-		// return error if the user is already a member of the domain
-		return domains.Invitation{}, errors.Wrap(svcerr.ErrConflict, ErrMemberExist)
+	}); err != nil {
+		return domains.Invitation{}, err
 	}
 
 	if err := am.checkAdmin(ctx, session); err != nil {

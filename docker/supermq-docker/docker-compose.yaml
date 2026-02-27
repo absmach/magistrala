@@ -1234,6 +1234,12 @@ services:
       SMQ_MQTT_ADAPTER_CACHE_NUM_COUNTERS: ${SMQ_MQTT_ADAPTER_CACHE_NUM_COUNTERS}
       SMQ_MQTT_ADAPTER_CACHE_MAX_COST: ${SMQ_MQTT_ADAPTER_CACHE_MAX_COST}
       SMQ_MQTT_ADAPTER_CACHE_BUFFER_ITEMS: ${SMQ_MQTT_ADAPTER_CACHE_BUFFER_ITEMS}
+      SMQ_MQTT_ADAPTER_CERT_FILE: ${SMQ_MQTT_ADAPTER_CERT_FILE:+/mqtt-adapter.crt}
+      SMQ_MQTT_ADAPTER_KEY_FILE: ${SMQ_MQTT_ADAPTER_KEY_FILE:+/mqtt-adapter.key}
+      SMQ_MQTT_ADAPTER_SERVER_CA_FILE: ${SMQ_MQTT_ADAPTER_SERVER_CA_FILE:+/mqtt-adapter-server-ca.crt}
+      SMQ_MQTT_ADAPTER_CLIENT_CA_FILE: ${SMQ_MQTT_ADAPTER_CLIENT_CA_FILE:+/mqtt-adapter-client-ca.crt}
+      SMQ_MQTT_ADAPTER_CERT_VERIFICATION_METHODS: ${SMQ_MQTT_ADAPTER_CERT_VERIFICATION_METHODS}
+      SMQ_MQTT_ADAPTER_OCSP_RESPONDER_URL: ${SMQ_MQTT_ADAPTER_OCSP_RESPONDER_URL}
       SMQ_ES_URL: ${SMQ_ES_URL}
       SMQ_CLIENTS_GRPC_URL: ${SMQ_CLIENTS_GRPC_URL}
       SMQ_CLIENTS_GRPC_TIMEOUT: ${SMQ_CLIENTS_GRPC_TIMEOUT}
@@ -1257,6 +1263,27 @@ services:
     networks:
       - supermq-base-net
     volumes:
+      # TLS certificate for MQTT
+      - type: bind
+        source: ${SMQ_MQTT_ADAPTER_CERT_FILE:-ssl/certs/dummy/server_cert}
+        target: /mqtt-adapter${SMQ_MQTT_ADAPTER_CERT_FILE:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_MQTT_ADAPTER_KEY_FILE:-ssl/certs/dummy/server_key}
+        target: /mqtt-adapter${SMQ_MQTT_ADAPTER_KEY_FILE:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_MQTT_ADAPTER_SERVER_CA_FILE:-ssl/certs/dummy/server_ca}
+        target: /mqtt-adapter-server-ca${SMQ_MQTT_ADAPTER_SERVER_CA_FILE:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_MQTT_ADAPTER_CLIENT_CA_FILE:-ssl/certs/dummy/client_ca}
+        target: /mqtt-adapter-client-ca${SMQ_MQTT_ADAPTER_CLIENT_CA_FILE:+.crt}
+        bind:
+          create_host_path: true
       # Clients gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}

@@ -10,6 +10,10 @@ import (
 )
 
 const (
+	EntityType = "reports"
+)
+
+const (
 	OpAddReportConfig = iota
 	OpViewReportConfig
 	OpUpdateReportConfig
@@ -24,9 +28,55 @@ const (
 	OpDeleteReportTemplate
 )
 
+const (
+	OpAddReportConfigStr      = "OpAddReportConfig"
+	OpViewReportConfigStr     = "OpViewReportConfig"
+	OpUpdateReportConfigStr   = "OpUpdateReportConfig"
+	OpUpdateReportScheduleStr = "OpUpdateReportSchedule"
+	OpRemoveReportConfigStr   = "OpRemoveReportConfig"
+	OpListReportsConfigStr    = "OpListReportsConfig"
+	OpEnableReportConfigStr   = "OpEnableReportConfig"
+	OpDisableReportConfigStr  = "OpDisableReportConfig"
+	OpGenerateReportStr       = "OpGenerateReport"
+	OpUpdateReportTemplateStr = "OpUpdateReportTemplate"
+	OpViewReportTemplateStr   = "OpViewReportTemplate"
+	OpDeleteReportTemplateStr = "OpDeleteReportTemplate"
+)
+
 func GetPermission(op permissions.Operation) (string, error) {
 	if op < OpAddReportConfig || op > OpDeleteReportTemplate {
 		return "", errors.New("invalid operation")
 	}
 	return policies.MembershipPermission, nil
+}
+
+func OperationName(op permissions.Operation) string {
+	switch op {
+	case OpAddReportConfig:
+		return OpAddReportConfigStr
+	case OpViewReportConfig:
+		return OpViewReportConfigStr
+	case OpUpdateReportConfig:
+		return OpUpdateReportConfigStr
+	case OpUpdateReportSchedule:
+		return OpUpdateReportScheduleStr
+	case OpRemoveReportConfig:
+		return OpRemoveReportConfigStr
+	case OpListReportsConfig:
+		return OpListReportsConfigStr
+	case OpEnableReportConfig:
+		return OpEnableReportConfigStr
+	case OpDisableReportConfig:
+		return OpDisableReportConfigStr
+	case OpGenerateReport:
+		return OpGenerateReportStr
+	case OpUpdateReportTemplate:
+		return OpUpdateReportTemplateStr
+	case OpViewReportTemplate:
+		return OpViewReportTemplateStr
+	case OpDeleteReportTemplate:
+		return OpDeleteReportTemplateStr
+	default:
+		return "unknown"
+	}
 }

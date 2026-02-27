@@ -89,10 +89,10 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "clients_05",
 				Up: []string{
 					`UPDATE clients 
-					 SET metadata = COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb) - 'ui'
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
 					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
 					`UPDATE clients 
-					 SET private_metadata = COALESCE(private_metadata, '{}'::jsonb) || COALESCE(private_metadata->'ui', '{}'::jsonb) - 'ui'
+					 SET private_metadata = (COALESCE(private_metadata, '{}'::jsonb) || COALESCE(private_metadata->'ui', '{}'::jsonb)) - 'ui'
 					 WHERE private_metadata ? 'ui' AND jsonb_typeof(private_metadata->'ui') = 'object'`,
 				},
 				Down: []string{

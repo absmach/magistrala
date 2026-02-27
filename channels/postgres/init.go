@@ -88,7 +88,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "channels_05",
 				Up: []string{
 					`UPDATE channels 
-					 SET metadata = COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb) - 'ui'
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
 					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
 				},
 				Down: []string{

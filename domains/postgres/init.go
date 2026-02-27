@@ -164,7 +164,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "domain_7",
 				Up: []string{
 					`UPDATE domains 
-					 SET metadata = COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb) - 'ui'
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
 					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
 				},
 				Down: []string{

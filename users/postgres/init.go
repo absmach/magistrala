@@ -145,6 +145,34 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE users DROP COLUMN private_metadata;`,
 				},
 			},
+			{
+				Id: "clients_11",
+				Up: []string{
+					`UPDATE users 
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
+					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
+					`UPDATE users 
+					 SET private_metadata = (COALESCE(private_metadata, '{}'::jsonb) || COALESCE(private_metadata->'ui', '{}'::jsonb)) - 'ui'
+					 WHERE private_metadata ? 'ui' AND jsonb_typeof(private_metadata->'ui') = 'object'`,
+				},
+				Down: []string{
+					`SELECT 1`,
+				},
+			},
+			{
+				Id: "clients_12",
+				Up: []string{
+					`UPDATE users 
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'admin', '{}'::jsonb)) - 'admin'
+					 WHERE metadata ? 'admin' AND jsonb_typeof(metadata->'admin') = 'object'`,
+					`UPDATE users 
+					 SET private_metadata = (COALESCE(private_metadata, '{}'::jsonb) || COALESCE(private_metadata->'admin', '{}'::jsonb)) - 'admin'
+					 WHERE private_metadata ? 'admin' AND jsonb_typeof(private_metadata->'admin') = 'object'`,
+				},
+				Down: []string{
+					`SELECT 1`,
+				},
+			},
 		},
 	}
 }

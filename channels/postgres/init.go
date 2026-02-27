@@ -84,6 +84,17 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`ALTER TABLE channels ALTER COLUMN updated_at TYPE TIMESTAMP;`,
 				},
 			},
+			{
+				Id: "channels_05",
+				Up: []string{
+					`UPDATE channels 
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
+					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
+				},
+				Down: []string{
+					`SELECT 1`,
+				},
+			},
 		},
 	}
 	channelsMigration.Migrations = append(channelsMigration.Migrations, rolesMigration.Migrations...)

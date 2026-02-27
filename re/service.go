@@ -18,6 +18,8 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 )
 
+var ErrGoroutinesNotAllowed = errors.New("goroutines are not allowed in Go scripts")
+
 type re struct {
 	repo       Repository
 	runInfo    chan pkglog.RunInfo
@@ -45,6 +47,10 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp supermq.IDProv
 }
 
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+	}
+
 	id, err := re.idp.ID()
 	if err != nil {
 		return Rule{}, err
@@ -79,6 +85,10 @@ func (re *re) ViewRule(ctx context.Context, session authn.Session, id string) (R
 }
 
 func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
+	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+	}
+
 	r.UpdatedAt = time.Now().UTC()
 	r.UpdatedBy = session.UserID
 	rule, err := re.repo.UpdateRule(ctx, r)

@@ -160,6 +160,27 @@ func TestAddRule(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "Add rule with Go script containing goroutines",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { go func() {}(); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			err: re.ErrGoroutinesNotAllowed,
+		},
 	}
 
 	for _, tc := range cases {
@@ -305,6 +326,31 @@ func TestUpdateRule(t *testing.T) {
 				DomainID:  domainID,
 			},
 			err: svcerr.ErrUpdateEntity,
+		},
+		{
+			desc: "update rule with Go script containing goroutines",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { go processData(); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			err: re.ErrGoroutinesNotAllowed,
 		},
 	}
 
@@ -1248,6 +1294,36 @@ func TestHandle(t *testing.T) {
 						Logic: re.Script{
 							Type:  re.GoType,
 							Value: "func() bool { return true }",
+						},
+						Outputs: re.Outputs{
+							&outputs.ChannelPublisher{
+								Channel: "output.channel",
+								Topic:   "output.topic",
+							},
+						},
+						Schedule: schedule,
+					},
+				},
+			},
+			listErr: nil,
+		},
+		{
+			desc: "consume message with GoType script that panics",
+			message: &messaging.Message{
+				Channel: inputChannel,
+				Created: now.Unix(),
+				Payload: []byte(`{"value": 42}`),
+			},
+			page: re.Page{
+				Rules: []re.Rule{
+					{
+						ID:           testsutil.GenerateUUID(t),
+						Name:         namegen.Generate(),
+						InputChannel: inputChannel,
+						Status:       re.EnabledStatus,
+						Logic: re.Script{
+							Type:  re.GoType,
+							Value: `func logicFunction() any { panic("test") }`,
 						},
 						Outputs: re.Outputs{
 							&outputs.ChannelPublisher{

@@ -10,11 +10,23 @@ import (
 )
 
 const (
+	EntityType = "alarms"
+)
+
+const (
 	OpAddAlarm = iota
 	OpViewAlarm
 	OpListAlarms
 	OpUpdateAlarm
 	OpDeleteAlarm
+)
+
+const (
+	OpAddAlarmStr    = "OpAddAlarm"
+	OpViewAlarmStr   = "OpViewAlarm"
+	OpListAlarmsStr  = "OpListAlarms"
+	OpUpdateAlarmStr = "OpUpdateAlarm"
+	OpDeleteAlarmStr = "OpDeleteAlarm"
 )
 
 func GetPermission(op permissions.Operation) (string, error) {
@@ -27,4 +39,21 @@ func GetPermission(op permissions.Operation) (string, error) {
 	}
 
 	return policies.MembershipPermission, nil
+}
+
+func OperationName(op permissions.Operation) string {
+	switch op {
+	case OpAddAlarm:
+		return OpAddAlarmStr
+	case OpViewAlarm:
+		return OpViewAlarmStr
+	case OpListAlarms:
+		return OpListAlarmsStr
+	case OpUpdateAlarm:
+		return OpUpdateAlarmStr
+	case OpDeleteAlarm:
+		return OpDeleteAlarmStr
+	default:
+		return "unknown"
+	}
 }

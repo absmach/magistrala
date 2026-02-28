@@ -9,7 +9,6 @@ import (
 
 type provisionReq struct {
 	token       string
-	domainID    string
 	Name        string `json:"name"`
 	ExternalID  string `json:"external_id"`
 	ExternalKey string `json:"external_key"`
@@ -18,9 +17,6 @@ type provisionReq struct {
 func (req provisionReq) validate() error {
 	if req.ExternalID == "" {
 		return apiutil.ErrMissingID
-	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
 	}
 
 	if req.ExternalKey == "" {
@@ -34,17 +30,16 @@ func (req provisionReq) validate() error {
 	return nil
 }
 
-type mappingReq struct {
+type certReq struct {
 	token    string
-	domainID string
+	ClientID string `json:"client_id"`
+	TTL      string `json:"ttl,omitempty"`
 }
 
-func (req mappingReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
+func (req certReq) validate() error {
+	if req.ClientID == "" {
+		return apiutil.ErrMissingID
 	}
-	if req.domainID == "" {
-		return apiutil.ErrMissingDomainID
-	}
+
 	return nil
 }

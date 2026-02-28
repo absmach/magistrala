@@ -55,10 +55,10 @@
       type = "plain"
       workers = 10
 
-[[things]]
-  name = "thing"
+[[clients]]
+  name = "client"
 
-  [things.metadata]
+  [clients.metadata]
     external_id = "xxxxxx"
 
 [[channels]]

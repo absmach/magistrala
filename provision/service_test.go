@@ -31,35 +31,22 @@ func TestMapping(t *testing.T) {
 
 	cases := []struct {
 		desc    string
-		token   string
 		content map[string]any
 		sdkerr  error
 		err     error
 	}{
 		{
-			desc:    "valid token",
-			token:   validToken,
+			desc:    "valid request",
 			content: validConfig.Bootstrap.Content,
 			sdkerr:  nil,
 			err:     nil,
-		},
-		{
-			desc:    "invalid token",
-			token:   "invalid",
-			content: map[string]any{},
-			sdkerr:  errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, 401),
-			err:     provision.ErrUnauthorized,
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			pm := smqSDK.PageMetadata{Offset: uint64(0), Limit: uint64(10)}
-			repocall := mgsdk.On("Users", mock.Anything, pm, c.token).Return(smqSDK.UsersPage{}, c.sdkerr)
-			content, err := svc.Mapping(context.Background(), c.token)
-			assert.True(t, errors.Contains(err, c.err), fmt.Sprintf("expected error %v, got %v", c.err, err))
+			content := svc.Mapping()
 			assert.Equal(t, c.content, content)
-			repocall.Unset()
 		})
 	}
 }

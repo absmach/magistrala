@@ -133,31 +133,22 @@ func (_c *Service_Cert_Call) RunAndReturn(run func(ctx context.Context, domainID
 }
 
 // Mapping provides a mock function for the type Service
-func (_mock *Service) Mapping(ctx context.Context, token string) (map[string]any, error) {
-	ret := _mock.Called(ctx, token)
+func (_mock *Service) Mapping() map[string]any {
+	ret := _mock.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for Mapping")
 	}
 
 	var r0 map[string]any
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (map[string]any, error)); ok {
-		return returnFunc(ctx, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) map[string]any); ok {
-		r0 = returnFunc(ctx, token)
+	if returnFunc, ok := ret.Get(0).(func() map[string]any); ok {
+		r0 = returnFunc()
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[string]any)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
-		r1 = returnFunc(ctx, token)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
+	return r0
 }
 
 // Service_Mapping_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Mapping'
@@ -166,36 +157,23 @@ type Service_Mapping_Call struct {
 }
 
 // Mapping is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-func (_e *Service_Expecter) Mapping(ctx interface{}, token interface{}) *Service_Mapping_Call {
-	return &Service_Mapping_Call{Call: _e.mock.On("Mapping", ctx, token)}
+func (_e *Service_Expecter) Mapping() *Service_Mapping_Call {
+	return &Service_Mapping_Call{Call: _e.mock.On("Mapping")}
 }
 
-func (_c *Service_Mapping_Call) Run(run func(ctx context.Context, token string)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) Run(run func()) *Service_Mapping_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
+		run()
 	})
 	return _c
 }
 
-func (_c *Service_Mapping_Call) Return(stringToV map[string]any, err error) *Service_Mapping_Call {
-	_c.Call.Return(stringToV, err)
+func (_c *Service_Mapping_Call) Return(stringToV map[string]any) *Service_Mapping_Call {
+	_c.Call.Return(stringToV)
 	return _c
 }
 
-func (_c *Service_Mapping_Call) RunAndReturn(run func(ctx context.Context, token string) (map[string]any, error)) *Service_Mapping_Call {
+func (_c *Service_Mapping_Call) RunAndReturn(run func() map[string]any) *Service_Mapping_Call {
 	_c.Call.Return(run)
 	return _c
 }

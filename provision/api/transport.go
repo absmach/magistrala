@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/supermq"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
@@ -24,7 +25,7 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) http.Handler {
+func MakeHandler(svc provision.Service, authn smqauthn.AuthNMiddleware, logger *slog.Logger, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -32,6 +33,7 @@ func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) 
 	r := chi.NewRouter()
 
 	r.Route("/{domainID}", func(r chi.Router) {
+		r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 		r.Route("/mapping", func(r chi.Router) {
 			r.Post("/", kithttp.NewServer(
 				doProvision(svc),
@@ -46,6 +48,12 @@ func MakeHandler(svc provision.Service, logger *slog.Logger, instanceID string) 
 				opts...,
 			).ServeHTTP)
 		})
+		r.Post("/cert", kithttp.NewServer(
+			issueCert(svc),
+			decodeCertRequest,
+			api.EncodeResponse,
+			opts...,
+		).ServeHTTP)
 	})
 	r.Handle("/metrics", promhttp.Handler())
 	r.Get("/health", supermq.Health("provision", instanceID))
@@ -59,8 +67,7 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	req := provisionReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+		token: apiutil.ExtractBearerToken(r),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
@@ -70,13 +77,19 @@ func decodeProvisionRequest(_ context.Context, r *http.Request) (any, error) {
 }
 
 func decodeMappingRequest(_ context.Context, r *http.Request) (any, error) {
+	return nil, nil
+}
+
+func decodeCertRequest(_ context.Context, r *http.Request) (any, error) {
 	if r.Header.Get("Content-Type") != contentType {
 		return nil, apiutil.ErrUnsupportedContentType
 	}
 
-	req := mappingReq{
-		token:    apiutil.ExtractBearerToken(r),
-		domainID: chi.URLParam(r, "domainID"),
+	req := certReq{
+		token: apiutil.ExtractBearerToken(r),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 	}
 
 	return req, nil

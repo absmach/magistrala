@@ -9,9 +9,7 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
-const (
-	EntityType = "alarms"
-)
+const EntityType = "alarms"
 
 const (
 	OpAddAlarm = iota

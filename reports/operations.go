@@ -9,9 +9,7 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
-const (
-	EntityType = "reports"
-)
+const EntityType = "reports"
 
 const (
 	OpAddReportConfig = iota

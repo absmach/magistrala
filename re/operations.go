@@ -9,9 +9,7 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
-const (
-	EntityType = "rules"
-)
+const EntityType = "rules"
 
 const (
 	OpAddRule permissions.Operation = iota

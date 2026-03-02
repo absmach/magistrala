@@ -16,9 +16,9 @@ import (
 )
 
 const (
-	refreshPrefix  = "refresh_tokens:"
-	scoreNegInf    = "-inf"
-	scorePosInf    = "+inf"
+	refreshPrefix = "refresh_tokens:"
+	scoreNegInf   = "-inf"
+	scorePosInf   = "+inf"
 )
 
 type tokenData struct {

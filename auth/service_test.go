@@ -189,7 +189,7 @@ func TestIssue(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.tokenizerErr)
 			repoCall := krepo.On("Save", mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
-			cacheCall := tokensCache.On("SaveActive", context.Background(), tc.key.Subject, mock.Anything, tc.key.Description).Return(tc.cacheErr)
+			cacheCall := tokensCache.On("SaveActive", context.Background(), tc.key.Subject, mock.Anything, tc.key.Description, mock.Anything).Return(tc.cacheErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,

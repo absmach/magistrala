@@ -49,6 +49,7 @@ func TestTokenSave(t *testing.T) {
 		userID      string
 		tokenID     string
 		description string
+		expiry      time.Time
 		err         error
 	}{
 		{
@@ -56,6 +57,7 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     tokenID,
 			description: "Test token",
+			expiry:      time.Now().Add(10 * time.Minute),
 			err:         nil,
 		},
 		{
@@ -63,6 +65,7 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     tokenID,
 			description: "Updated token",
+			expiry:      time.Now().Add(10 * time.Minute),
 			err:         nil,
 		},
 		{
@@ -70,6 +73,7 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     testsutil.GenerateUUID(t),
 			description: "Another token",
+			expiry:      time.Now().Add(10 * time.Minute),
 			err:         nil,
 		},
 		{
@@ -77,6 +81,7 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     "",
 			description: "Empty ID token",
+			expiry:      time.Now().Add(10 * time.Minute),
 			err:         nil,
 		},
 		{
@@ -84,13 +89,14 @@ func TestTokenSave(t *testing.T) {
 			userID:      userID,
 			tokenID:     testsutil.GenerateUUID(t),
 			description: "",
+			expiry:      time.Now().Add(10 * time.Minute),
 			err:         nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.SaveActive(context.Background(), tc.userID, tc.tokenID, tc.description)
+			err := tokensCache.SaveActive(context.Background(), tc.userID, tc.tokenID, tc.description, tc.expiry)
 			if err == nil {
 				ok, err := tokensCache.IsActive(context.Background(), tc.tokenID)
 				assert.NoError(t, err)
@@ -108,7 +114,7 @@ func TestTokenContains(t *testing.T) {
 	userID := testsutil.GenerateUUID(t)
 	tokenID := testsutil.GenerateUUID(t)
 
-	err := tokensCache.SaveActive(context.Background(), userID, tokenID, "Test token")
+	err := tokensCache.SaveActive(context.Background(), userID, tokenID, "Test token", time.Now().Add(10*time.Minute))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {
@@ -155,7 +161,7 @@ func TestTokenRemove(t *testing.T) {
 	var tokenIDs []string
 	for i := range num {
 		tokenID := testsutil.GenerateUUID(t)
-		err := tokensCache.SaveActive(context.Background(), userID, tokenID, fmt.Sprintf("Token %d", i))
+		err := tokensCache.SaveActive(context.Background(), userID, tokenID, fmt.Sprintf("Token %d", i), time.Now().Add(10*time.Minute))
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		tokenIDs = append(tokenIDs, tokenID)
 	}
@@ -211,7 +217,7 @@ func TestListUserTokens(t *testing.T) {
 	for i := range num {
 		tokenID := testsutil.GenerateUUID(t)
 		description := fmt.Sprintf("Token %d", i)
-		err := tokensCache.SaveActive(context.Background(), userID, tokenID, description)
+		err := tokensCache.SaveActive(context.Background(), userID, tokenID, description, time.Now().Add(10*time.Minute))
 		assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 		expectedTokens = append(expectedTokens, auth.TokenInfo{
 			ID:          tokenID,
@@ -221,7 +227,7 @@ func TestListUserTokens(t *testing.T) {
 
 	tokenID2 := testsutil.GenerateUUID(t)
 	desc2 := "User 2 token"
-	err := tokensCache.SaveActive(context.Background(), userID2, tokenID2, desc2)
+	err := tokensCache.SaveActive(context.Background(), userID2, tokenID2, desc2, time.Now().Add(10*time.Minute))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error while trying to save: %s", err))
 
 	cases := []struct {

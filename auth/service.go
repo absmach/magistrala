@@ -302,12 +302,9 @@ func (svc service) accessKey(ctx context.Context, key Key) (Token, error) {
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
-	if key.Subject != "" {
-		ttl := time.Until(key.ExpiresAt)
-		if ttl > 0 {
-			if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description); err != nil {
-				return Token{}, errors.Wrap(errSaveRefreshKey, err)
-			}
+	if key.Subject != "" && key.ExpiresAt.After(time.Now()) {
+		if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description, key.ExpiresAt); err != nil {
+			return Token{}, errors.Wrap(errSaveRefreshKey, err)
 		}
 	}
 

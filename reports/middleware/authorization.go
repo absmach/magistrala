@@ -155,5 +155,22 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		Permission:  perm,
 	}
 
-	return am.authz.Authorize(ctx, pr)
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		opName := reports.OperationName(op)
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   session.DomainID,
+			EntityType: reports.EntityType,
+			Operation:  opName,
+			Domain:     session.DomainID,
+		}
+	}
+
+	if err := am.authz.Authorize(ctx, pr, pat); err != nil {
+		return err
+	}
+
+	return nil
 }

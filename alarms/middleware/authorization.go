@@ -56,7 +56,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 			Permission:  policies.MembershipPermission,
 			ObjectType:  policies.DomainType,
 			Object:      session.DomainID,
-		}); err != nil {
+		}, nil); err != nil {
 			return alarms.Alarm{}, err
 		}
 	}
@@ -108,5 +108,22 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		Permission:  perm,
 	}
 
-	return am.authz.Authorize(ctx, pr)
+	var pat *smqauthz.PATReq
+	if session.PatID != "" {
+		opName := alarms.OperationName(op)
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   session.DomainID,
+			EntityType: alarms.EntityType,
+			Operation:  opName,
+			Domain:     session.DomainID,
+		}
+	}
+
+	if err := am.authz.Authorize(ctx, pr, pat); err != nil {
+		return err
+	}
+
+	return nil
 }

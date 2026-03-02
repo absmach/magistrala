@@ -9,6 +9,8 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
+const EntityType = "rules"
+
 const (
 	OpAddRule permissions.Operation = iota
 	OpViewRule
@@ -38,4 +40,29 @@ func GetPermission(op permissions.Operation) (string, error) {
 		return "", errors.New("invalid operation")
 	}
 	return policies.MembershipPermission, nil
+}
+
+func OperationName(op permissions.Operation) string {
+	switch op {
+	case OpAddRule:
+		return OpAddRuleStr
+	case OpViewRule:
+		return OpViewRuleStr
+	case OpUpdateRule:
+		return OpUpdateRuleStr
+	case OpUpdateRuleTags:
+		return OpUpdateRuleTagsStr
+	case OpUpdateRuleSchedule:
+		return OpUpdateRuleScheduleStr
+	case OpListRules:
+		return OpListRulesStr
+	case OpRemoveRule:
+		return OpRemoveRuleStr
+	case OpEnableRule:
+		return OpEnableRuleStr
+	case OpDisableRule:
+		return OpDisableRuleStr
+	default:
+		return "unknown"
+	}
 }

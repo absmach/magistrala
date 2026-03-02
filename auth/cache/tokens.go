@@ -6,6 +6,7 @@ package cache
 import (
 	"context"
 	"encoding/json"
+	"strconv"
 	"time"
 
 	"github.com/absmach/supermq/auth"
@@ -14,7 +15,11 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-const refreshPrefix = "refresh_tokens:"
+const (
+	refreshPrefix  = "refresh_tokens:"
+	scoreNegInf    = "-inf"
+	scorePosInf    = "+inf"
+)
 
 type tokenData struct {
 	UserID      string `json:"user_id"`
@@ -56,7 +61,10 @@ func (tc *tokensCache) SaveActive(ctx context.Context, userID, tokenID, descript
 	pipe := tc.client.TxPipeline()
 
 	pipe.Set(ctx, tokenKey(tokenID), dataJSON, ttl)
-	pipe.SAdd(ctx, userTokensKey(userID), tokenID)
+	pipe.ZAdd(ctx, userTokensKey(userID), redis.Z{
+		Score:  float64(expiry.Unix()),
+		Member: tokenID,
+	})
 
 	_, err = pipe.Exec(ctx)
 
@@ -75,7 +83,16 @@ func (tc *tokensCache) IsActive(ctx context.Context, tokenID string) (bool, erro
 // ListUserTokens lists all active refresh token IDs with descriptions for a user.
 func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
 	key := userTokensKey(userID)
-	tokenIDs, err := tc.client.SMembers(ctx, key).Result()
+	now := strconv.FormatInt(time.Now().Unix(), 10)
+
+	pipe := tc.client.TxPipeline()
+	pipe.ZRemRangeByScore(ctx, key, scoreNegInf, now)
+	zrangeCmd := pipe.ZRangeByScore(ctx, key, &redis.ZRangeBy{Min: "(" + now, Max: scorePosInf})
+	if _, err := pipe.Exec(ctx); err != nil && err != redis.Nil {
+		return nil, err
+	}
+
+	tokenIDs, err := zrangeCmd.Result()
 	if err != nil {
 		return nil, err
 	}
@@ -84,22 +101,20 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 		return nil, nil
 	}
 
-	pipe := tc.client.Pipeline()
+	getPipe := tc.client.Pipeline()
 	getCmds := make(map[string]*redis.StringCmd, len(tokenIDs))
 	for _, tokenID := range tokenIDs {
-		getCmds[tokenID] = pipe.Get(ctx, tokenKey(tokenID))
+		getCmds[tokenID] = getPipe.Get(ctx, tokenKey(tokenID))
 	}
 
-	if _, err = pipe.Exec(ctx); err != nil && err != redis.Nil {
+	if _, err = getPipe.Exec(ctx); err != nil && err != redis.Nil {
 		return nil, err
 	}
 
-	var stale []string
 	valid := make([]auth.TokenInfo, 0, len(tokenIDs))
 	for tokenID, cmd := range getCmds {
 		dataJSON, err := cmd.Result()
 		if err == redis.Nil {
-			stale = append(stale, tokenID)
 			continue
 		}
 		if err != nil {
@@ -108,7 +123,6 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 
 		var data tokenData
 		if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
-			stale = append(stale, tokenID)
 			continue
 		}
 
@@ -116,16 +130,6 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 			ID:          tokenID,
 			Description: data.Description,
 		})
-	}
-
-	if len(stale) > 0 {
-		cleanup := tc.client.Pipeline()
-		for _, tokenID := range stale {
-			cleanup.SRem(ctx, key, tokenID)
-		}
-		if _, err := cleanup.Exec(ctx); err != nil {
-			return nil, err
-		}
 	}
 
 	return valid, nil
@@ -157,7 +161,7 @@ func (tc *tokensCache) RemoveActive(ctx context.Context, tokenID string) (err er
 		return err
 	}
 
-	pipe.SRem(ctx, userTokensKey(data.UserID), tokenID)
+	pipe.ZRem(ctx, userTokensKey(data.UserID), tokenID)
 	return nil
 }
 

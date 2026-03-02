@@ -661,7 +661,6 @@ func TestAuthorize(t *testing.T) {
 		authorizePATErr      error
 		err                  error
 	}{
-
 		{
 			desc: "authorize a user key successfully",
 			policyReq: policies.Policy{

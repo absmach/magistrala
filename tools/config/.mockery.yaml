@@ -8,6 +8,7 @@ dir: "{{.InterfaceDirRelative}}/mocks"
 template-data:
   boilerplate-file: ./tools/config/boilerplate.txt
 force-file-write: true
+include-auto-generated: true
 
 packages:
   github.com/absmach/supermq/api/grpc/clients/v1:

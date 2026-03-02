@@ -13,8 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PROTOC_VERSION: "33.0"
-      PROTOC_GEN_GO_VERSION: "v1.36.10"
-      PROTOC_GEN_GO_GRPC_VERSION: "v1.5.1"
+      PROTOC_GEN_GO_VERSION: "v1.36.11"
+      PROTOC_GEN_GO_GRPC_VERSION: "v1.6.0"
     steps:
       - name: Checkout code
         uses: actions/checkout@v6

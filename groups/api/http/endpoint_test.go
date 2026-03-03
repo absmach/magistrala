@@ -1071,7 +1071,7 @@ func TestListGroups(t *testing.T) {
 				},
 				Groups: []groups.Group{validGroupResp},
 			},
-			query:  "tags=tag1-tag2-tag3",
+			query:  "tags=tag1%2Btag2%2Btag3",
 			status: http.StatusOK,
 			err:    nil,
 		},

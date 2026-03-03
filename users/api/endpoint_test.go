@@ -721,7 +721,7 @@ func TestListUsers(t *testing.T) {
 				},
 				Users: []users.User{user},
 			},
-			query:    "tags=tag1-tag2-tag3",
+			query:    "tags=tag1%2Btag2%2Btag3",
 			status:   http.StatusOK,
 			authnRes: verifiedSession,
 			err:      nil,

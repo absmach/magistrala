@@ -50,6 +50,19 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE rules DROP COLUMN tags;`,
 				},
 			},
+			{
+				Id: "rules_03",
+				Up: []string{
+					`UPDATE rules
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
+					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
+				},
+				Down: []string{
+					`UPDATE rules
+					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
+					 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'object'`,
+				},
+			},
 		},
 	}
 }

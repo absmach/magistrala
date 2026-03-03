@@ -55,12 +55,12 @@ func Migration() *migrate.MemoryMigrationSource {
 				Up: []string{
 					`UPDATE rules
 					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
-					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
+					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'string'`,
 				},
 				Down: []string{
 					`UPDATE rules
 					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
-					 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'object'`,
+					 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'string'`,
 				},
 			},
 		},

@@ -1282,7 +1282,7 @@ components:
 
     Tags:
       name: tags
-      description: Clients tags. Multiple tags can be specified separated by comma for OR condition and hyphen for AND condition.
+      description: Clients tags. Multiple tags can be specified separated by comma for OR condition and plus for AND condition.
       in: query
       schema:
         type: string

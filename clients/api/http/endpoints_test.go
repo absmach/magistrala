@@ -705,7 +705,7 @@ func TestListClients(t *testing.T) {
 				},
 				Clients: []clients.Client{client},
 			},
-			query:  "tags=tag1-tag2-tag3",
+			query:  "tags=tag1%2Btag2%2Btag3",
 			status: http.StatusOK,
 			err:    nil,
 		},

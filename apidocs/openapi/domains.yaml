@@ -1182,7 +1182,7 @@ components:
         additionalProperties: {}
     Tags:
       name: tags
-      description: Domain tags. Multiple tags can be specified separated by comma for OR condition and hyphen for AND condition.
+      description: Domain tags. Multiple tags can be specified separated by comma for OR condition and plus for AND condition.
       in: query
       schema:
         type: string

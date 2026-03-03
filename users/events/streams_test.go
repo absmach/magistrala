@@ -902,22 +902,24 @@ func TestIssueToken(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		username string
-		secret   string
-		svcRes   *grpcTokenV1.Token
-		svcErr   error
-		resp     *grpcTokenV1.Token
-		err      error
+		desc        string
+		username    string
+		secret      string
+		description string
+		svcRes      *grpcTokenV1.Token
+		svcErr      error
+		resp        *grpcTokenV1.Token
+		err         error
 	}{
 		{
-			desc:     "publish successfully",
-			username: validUser.Credentials.Username,
-			secret:   validUser.Credentials.Secret,
-			svcRes:   validToken,
-			svcErr:   nil,
-			resp:     validToken,
-			err:      nil,
+			desc:        "publish successfully",
+			username:    validUser.Credentials.Username,
+			secret:      validUser.Credentials.Secret,
+			description: "valid token",
+			svcRes:      validToken,
+			svcErr:      nil,
+			resp:        validToken,
+			err:         nil,
 		},
 		{
 			desc:     "failed to publish with service error",
@@ -932,8 +934,8 @@ func TestIssueToken(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("IssueToken", validCtx, tc.username, tc.secret).Return(tc.svcRes, tc.svcErr)
-			resp, err := nsvc.IssueToken(validCtx, tc.username, tc.secret)
+			svcCall := svc.On("IssueToken", validCtx, tc.username, tc.secret, tc.description).Return(tc.svcRes, tc.svcErr)
+			resp, err := nsvc.IssueToken(validCtx, tc.username, tc.secret, tc.description)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 			svcCall.Unset()
@@ -983,6 +985,93 @@ func TestRefreshToken(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := svc.On("RefreshToken", validCtx, tc.session, tc.refreshToken).Return(tc.svcRes, tc.svcErr)
 			resp, err := nsvc.RefreshToken(validCtx, tc.session, tc.refreshToken)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
+			svcCall.Unset()
+		})
+	}
+}
+
+func TestRevokeRefreshToken(t *testing.T) {
+	svc, nsvc := newEventStoreMiddleware(t)
+
+	validCtx := context.WithValue(context.Background(), middleware.RequestIDKey, testsutil.GenerateUUID(t))
+	validTokenID := "validTokenID"
+
+	cases := []struct {
+		desc    string
+		session authn.Session
+		tokenID string
+		svcErr  error
+		err     error
+	}{
+		{
+			desc:    "publish successfully",
+			session: validSession,
+			tokenID: validTokenID,
+			svcErr:  nil,
+			err:     nil,
+		},
+		{
+			desc:    "failed to publish with service error",
+			session: validSession,
+			tokenID: validTokenID,
+			svcErr:  svcerr.ErrUpdateEntity,
+			err:     svcerr.ErrUpdateEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("RevokeRefreshToken", validCtx, tc.session, tc.tokenID).Return(tc.svcErr)
+			err := nsvc.RevokeRefreshToken(validCtx, tc.session, tc.tokenID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			svcCall.Unset()
+		})
+	}
+}
+
+func TestListActiveRefreshTokens(t *testing.T) {
+	svc, nsvc := newEventStoreMiddleware(t)
+
+	validCtx := context.WithValue(context.Background(), middleware.RequestIDKey, testsutil.GenerateUUID(t))
+	validTokensList := &grpcTokenV1.ListUserRefreshTokensRes{
+		RefreshTokens: []*grpcTokenV1.RefreshToken{
+			{Id: "token1", Description: "token1"},
+			{Id: "token2", Description: "token2"},
+		},
+	}
+
+	cases := []struct {
+		desc    string
+		session authn.Session
+		svcRes  *grpcTokenV1.ListUserRefreshTokensRes
+		svcErr  error
+		resp    *grpcTokenV1.ListUserRefreshTokensRes
+		err     error
+	}{
+		{
+			desc:    "publish successfully",
+			session: validSession,
+			svcRes:  validTokensList,
+			svcErr:  nil,
+			resp:    validTokensList,
+			err:     nil,
+		},
+		{
+			desc:    "failed to publish with service error",
+			session: validSession,
+			svcRes:  nil,
+			svcErr:  svcerr.ErrViewEntity,
+			resp:    nil,
+			err:     svcerr.ErrViewEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("ListActiveRefreshTokens", validCtx, tc.session).Return(tc.svcRes, tc.svcErr)
+			resp, err := nsvc.ListActiveRefreshTokens(validCtx, tc.session)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 			svcCall.Unset()

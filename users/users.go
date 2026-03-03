@@ -264,12 +264,18 @@ type Service interface {
 	Identify(ctx context.Context, session authn.Session) (string, error)
 
 	// IssueToken issues a new access and refresh token when provided with either a username or email.
-	IssueToken(ctx context.Context, identity, secret string) (*grpcTokenV1.Token, error)
+	IssueToken(ctx context.Context, identity, secret, description string) (*grpcTokenV1.Token, error)
 
 	// RefreshToken refreshes expired access tokens.
 	// After an access token expires, the refresh token is used to get
 	// a new pair of access and refresh tokens.
 	RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error)
+
+	// RevokeRefreshToken revokes a refresh token by its ID.
+	RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error
+
+	// ListActiveRefreshTokens lists all active refresh tokens for the authenticated user.
+	ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error)
 
 	// OAuthCallback handles the callback from any supported OAuth provider.
 	// It processes the OAuth tokens and either signs in or signs up the user based on the provided state.

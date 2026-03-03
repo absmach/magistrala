@@ -14,12 +14,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-const (
-	patPrefix = "pat"
-)
-
-var errJWTExpiryKey = errors.New(`"exp" not satisfied`)
-
 type tokenizer struct {
 	algorithm jwa.KeyAlgorithm
 	secret    []byte
@@ -41,13 +35,13 @@ func NewTokenizer(algorithm string, secret []byte) (auth.Tokenizer, error) {
 	}, nil
 }
 
-func (km *tokenizer) Issue(key auth.Key) (string, error) {
+func (tok *tokenizer) Issue(key auth.Key) (string, error) {
 	tkn, err := smqjwt.BuildToken(key)
 	if err != nil {
 		return "", err
 	}
 
-	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(km.algorithm, km.secret))
+	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(tok.algorithm, tok.secret))
 	if err != nil {
 		return "", err
 	}
@@ -55,18 +49,18 @@ func (km *tokenizer) Issue(key auth.Key) (string, error) {
 	return string(signedBytes), nil
 }
 
-func (km *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, error) {
-	if len(tokenString) >= 3 && tokenString[:3] == patPrefix {
+func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, error) {
+	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
 		return auth.Key{Type: auth.PersonalAccessToken}, nil
 	}
 
 	tkn, err := jwt.Parse(
 		[]byte(tokenString),
 		jwt.WithValidate(true),
-		jwt.WithKey(km.algorithm, km.secret),
+		jwt.WithKey(tok.algorithm, tok.secret),
 	)
 	if err != nil {
-		if errors.Contains(err, errJWTExpiryKey) {
+		if errors.Contains(err, smqjwt.ErrJWTExpiryKey) {
 			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
 		}
 		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
@@ -79,6 +73,6 @@ func (km *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, e
 	return smqjwt.ToKey(tkn)
 }
 
-func (km *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
+func (tok *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
 	return nil, auth.ErrPublicKeysNotSupported
 }

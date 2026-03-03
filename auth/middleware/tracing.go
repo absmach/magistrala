@@ -65,6 +65,25 @@ func (tm *tracingMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 	return tm.svc.RetrieveJWKS()
 }
 
+func (tm *tracingMiddleware) RevokeToken(ctx context.Context, userID, tokenID string) error {
+	ctx, span := tm.tracer.Start(ctx, "revoke_token", trace.WithAttributes(
+		attribute.String("user_id", userID),
+		attribute.String("token_id", tokenID),
+	))
+	defer span.End()
+
+	return tm.svc.RevokeToken(ctx, userID, tokenID)
+}
+
+func (tm *tracingMiddleware) ListUserRefreshTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
+	ctx, span := tm.tracer.Start(ctx, "list_user_refresh_tokens", trace.WithAttributes(
+		attribute.String("user_id", userID),
+	))
+	defer span.End()
+
+	return tm.svc.ListUserRefreshTokens(ctx, userID)
+}
+
 func (tm *tracingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {
 	attributes := []attribute.KeyValue{
 		attribute.String("subject", pr.Subject),

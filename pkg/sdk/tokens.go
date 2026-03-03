@@ -21,8 +21,9 @@ type Token struct {
 }
 
 type Login struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
+	Username    string `json:"username"`
+	Password    string `json:"password"`
+	Description string `json:"description,omitempty"`
 }
 
 func (sdk mgSDK) CreateToken(ctx context.Context, lt Login) (Token, errors.SDKError) {

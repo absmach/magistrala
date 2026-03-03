@@ -59,6 +59,7 @@ packages:
       Cache:
       Hasher:
       KeyRepository:
+      UserActiveTokensCache:
       Tokenizer:
       PATS:
       PATSRepository:
@@ -145,4 +146,3 @@ packages:
   github.com/absmach/supermq/notifications:
     interfaces:
       Notifier:
-

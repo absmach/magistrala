@@ -318,8 +318,8 @@ func (_c *Service_Identify_Call) RunAndReturn(run func(ctx context.Context, sess
 }
 
 // IssueToken provides a mock function for the type Service
-func (_mock *Service) IssueToken(ctx context.Context, identity string, secret string) (*v1.Token, error) {
-	ret := _mock.Called(ctx, identity, secret)
+func (_mock *Service) IssueToken(ctx context.Context, identity string, secret string, description string) (*v1.Token, error) {
+	ret := _mock.Called(ctx, identity, secret, description)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueToken")
@@ -327,18 +327,18 @@ func (_mock *Service) IssueToken(ctx context.Context, identity string, secret st
 
 	var r0 *v1.Token
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (*v1.Token, error)); ok {
-		return returnFunc(ctx, identity, secret)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (*v1.Token, error)); ok {
+		return returnFunc(ctx, identity, secret, description)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) *v1.Token); ok {
-		r0 = returnFunc(ctx, identity, secret)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) *v1.Token); ok {
+		r0 = returnFunc(ctx, identity, secret, description)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*v1.Token)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
-		r1 = returnFunc(ctx, identity, secret)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = returnFunc(ctx, identity, secret, description)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -354,11 +354,12 @@ type Service_IssueToken_Call struct {
 //   - ctx context.Context
 //   - identity string
 //   - secret string
-func (_e *Service_Expecter) IssueToken(ctx interface{}, identity interface{}, secret interface{}) *Service_IssueToken_Call {
-	return &Service_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, identity, secret)}
+//   - description string
+func (_e *Service_Expecter) IssueToken(ctx interface{}, identity interface{}, secret interface{}, description interface{}) *Service_IssueToken_Call {
+	return &Service_IssueToken_Call{Call: _e.mock.On("IssueToken", ctx, identity, secret, description)}
 }
 
-func (_c *Service_IssueToken_Call) Run(run func(ctx context.Context, identity string, secret string)) *Service_IssueToken_Call {
+func (_c *Service_IssueToken_Call) Run(run func(ctx context.Context, identity string, secret string, description string)) *Service_IssueToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -372,10 +373,15 @@ func (_c *Service_IssueToken_Call) Run(run func(ctx context.Context, identity st
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
+			arg3,
 		)
 	})
 	return _c
@@ -386,7 +392,75 @@ func (_c *Service_IssueToken_Call) Return(token *v1.Token, err error) *Service_I
 	return _c
 }
 
-func (_c *Service_IssueToken_Call) RunAndReturn(run func(ctx context.Context, identity string, secret string) (*v1.Token, error)) *Service_IssueToken_Call {
+func (_c *Service_IssueToken_Call) RunAndReturn(run func(ctx context.Context, identity string, secret string, description string) (*v1.Token, error)) *Service_IssueToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListActiveRefreshTokens provides a mock function for the type Service
+func (_mock *Service) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*v1.ListUserRefreshTokensRes, error) {
+	ret := _mock.Called(ctx, session)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListActiveRefreshTokens")
+	}
+
+	var r0 *v1.ListUserRefreshTokensRes
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session) (*v1.ListUserRefreshTokensRes, error)); ok {
+		return returnFunc(ctx, session)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session) *v1.ListUserRefreshTokensRes); ok {
+		r0 = returnFunc(ctx, session)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.ListUserRefreshTokensRes)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session) error); ok {
+		r1 = returnFunc(ctx, session)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListActiveRefreshTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListActiveRefreshTokens'
+type Service_ListActiveRefreshTokens_Call struct {
+	*mock.Call
+}
+
+// ListActiveRefreshTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+func (_e *Service_Expecter) ListActiveRefreshTokens(ctx interface{}, session interface{}) *Service_ListActiveRefreshTokens_Call {
+	return &Service_ListActiveRefreshTokens_Call{Call: _e.mock.On("ListActiveRefreshTokens", ctx, session)}
+}
+
+func (_c *Service_ListActiveRefreshTokens_Call) Run(run func(ctx context.Context, session authn.Session)) *Service_ListActiveRefreshTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListActiveRefreshTokens_Call) Return(listUserRefreshTokensRes *v1.ListUserRefreshTokensRes, err error) *Service_ListActiveRefreshTokens_Call {
+	_c.Call.Return(listUserRefreshTokensRes, err)
+	return _c
+}
+
+func (_c *Service_ListActiveRefreshTokens_Call) RunAndReturn(run func(ctx context.Context, session authn.Session) (*v1.ListUserRefreshTokensRes, error)) *Service_ListActiveRefreshTokens_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -797,6 +871,69 @@ func (_c *Service_ResetSecret_Call) Return(err error) *Service_ResetSecret_Call 
 }
 
 func (_c *Service_ResetSecret_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, secret string) error) *Service_ResetSecret_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeRefreshToken provides a mock function for the type Service
+func (_mock *Service) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
+	ret := _mock.Called(ctx, session, tokenID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeRefreshToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, tokenID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RevokeRefreshToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeRefreshToken'
+type Service_RevokeRefreshToken_Call struct {
+	*mock.Call
+}
+
+// RevokeRefreshToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - tokenID string
+func (_e *Service_Expecter) RevokeRefreshToken(ctx interface{}, session interface{}, tokenID interface{}) *Service_RevokeRefreshToken_Call {
+	return &Service_RevokeRefreshToken_Call{Call: _e.mock.On("RevokeRefreshToken", ctx, session, tokenID)}
+}
+
+func (_c *Service_RevokeRefreshToken_Call) Run(run func(ctx context.Context, session authn.Session, tokenID string)) *Service_RevokeRefreshToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RevokeRefreshToken_Call) Return(err error) *Service_RevokeRefreshToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RevokeRefreshToken_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, tokenID string) error) *Service_RevokeRefreshToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

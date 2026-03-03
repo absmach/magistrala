@@ -24,8 +24,6 @@ import (
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
-const patPrefix = "pat"
-
 var (
 	errLoadingPrivateKey      = errors.New("failed to load private key")
 	errDuplicateRetiringKeyID = errors.New("retiring key ID matches active key ID")
@@ -95,8 +93,8 @@ func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDPr
 	return mgr, nil
 }
 
-func (km *tokenizer) Issue(key auth.Key) (string, error) {
-	if km.activeKey == nil {
+func (tok *tokenizer) Issue(key auth.Key) (string, error) {
+	if tok.activeKey == nil {
 		return "", errNoActiveKey
 	}
 
@@ -105,11 +103,11 @@ func (km *tokenizer) Issue(key auth.Key) (string, error) {
 		return "", err
 	}
 	headers := jws.NewHeaders()
-	if err := headers.Set(jwk.KeyIDKey, km.activeKey.id); err != nil {
+	if err := headers.Set(jwk.KeyIDKey, tok.activeKey.id); err != nil {
 		return "", err
 	}
 
-	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(jwa.EdDSA, km.activeKey.privateKey, jws.WithProtectedHeaders(headers)))
+	signedBytes, err := jwt.Sign(tkn, jwt.WithKey(jwa.EdDSA, tok.activeKey.privateKey, jws.WithProtectedHeaders(headers)))
 	if err != nil {
 		return "", err
 	}
@@ -117,17 +115,17 @@ func (km *tokenizer) Issue(key auth.Key) (string, error) {
 	return string(signedBytes), nil
 }
 
-func (km *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, error) {
-	if len(tokenString) >= 3 && tokenString[:3] == patPrefix {
+func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, error) {
+	if len(tokenString) >= 3 && tokenString[:3] == smqjwt.PatPrefix {
 		return auth.Key{Type: auth.PersonalAccessToken}, nil
 	}
 
 	set := jwk.NewSet()
-	if err := set.AddKey(km.activeKey.publicKey); err != nil {
+	if err := set.AddKey(tok.activeKey.publicKey); err != nil {
 		return auth.Key{}, err
 	}
-	if km.retiringKey != nil {
-		if err := set.AddKey(km.retiringKey.publicKey); err != nil {
+	if tok.retiringKey != nil {
+		if err := set.AddKey(tok.retiringKey.publicKey); err != nil {
 			return auth.Key{}, err
 		}
 	}
@@ -148,17 +146,17 @@ func (km *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, e
 	return smqjwt.ToKey(tkn)
 }
 
-func (km *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
+func (tok *tokenizer) RetrieveJWKS() ([]auth.PublicKeyInfo, error) {
 	publicKeys := make([]auth.PublicKeyInfo, 0, 2)
 
-	if km.activeKey != nil {
-		if pkInfo := extractPublicKeyInfo(km.activeKey); pkInfo != nil {
+	if tok.activeKey != nil {
+		if pkInfo := extractPublicKeyInfo(tok.activeKey); pkInfo != nil {
 			publicKeys = append(publicKeys, *pkInfo)
 		}
 	}
 
-	if km.retiringKey != nil {
-		if pkInfo := extractPublicKeyInfo(km.retiringKey); pkInfo != nil {
+	if tok.retiringKey != nil {
+		if pkInfo := extractPublicKeyInfo(tok.retiringKey); pkInfo != nil {
 			publicKeys = append(publicKeys, *pkInfo)
 		}
 	}

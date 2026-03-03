@@ -81,14 +81,15 @@ func (r Role) Validate() bool {
 
 // Key represents API key.
 type Key struct {
-	ID        string    `json:"id,omitempty"`
-	Type      KeyType   `json:"type,omitempty"`
-	Issuer    string    `json:"issuer,omitempty"`
-	Subject   string    `json:"subject,omitempty"` // user ID
-	Role      Role      `json:"role,omitempty"`
-	IssuedAt  time.Time `json:"issued_at,omitempty"`
-	ExpiresAt time.Time `json:"expires_at,omitempty"`
-	Verified  bool      `json:"verified,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	Type        KeyType   `json:"type,omitempty"`
+	Issuer      string    `json:"issuer,omitempty"`
+	Subject     string    `json:"subject,omitempty"` // user ID
+	Role        Role      `json:"role,omitempty"`
+	IssuedAt    time.Time `json:"issued_at,omitempty"`
+	ExpiresAt   time.Time `json:"expires_at,omitempty"`
+	Verified    bool      `json:"verified,omitempty"`
+	Description string    `json:"description,omitempty"` // Optional description for refresh tokens
 }
 
 func (key Key) String() string {

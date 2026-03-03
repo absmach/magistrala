@@ -758,6 +758,74 @@ func (_c *Service_ListScopes_Call) RunAndReturn(run func(ctx context.Context, to
 	return _c
 }
 
+// ListUserRefreshTokens provides a mock function for the type Service
+func (_mock *Service) ListUserRefreshTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
+	ret := _mock.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListUserRefreshTokens")
+	}
+
+	var r0 []auth.TokenInfo
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]auth.TokenInfo, error)); ok {
+		return returnFunc(ctx, userID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []auth.TokenInfo); ok {
+		r0 = returnFunc(ctx, userID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]auth.TokenInfo)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListUserRefreshTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserRefreshTokens'
+type Service_ListUserRefreshTokens_Call struct {
+	*mock.Call
+}
+
+// ListUserRefreshTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+func (_e *Service_Expecter) ListUserRefreshTokens(ctx interface{}, userID interface{}) *Service_ListUserRefreshTokens_Call {
+	return &Service_ListUserRefreshTokens_Call{Call: _e.mock.On("ListUserRefreshTokens", ctx, userID)}
+}
+
+func (_c *Service_ListUserRefreshTokens_Call) Run(run func(ctx context.Context, userID string)) *Service_ListUserRefreshTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListUserRefreshTokens_Call) Return(tokenInfos []auth.TokenInfo, err error) *Service_ListUserRefreshTokens_Call {
+	_c.Call.Return(tokenInfos, err)
+	return _c
+}
+
+func (_c *Service_ListUserRefreshTokens_Call) RunAndReturn(run func(ctx context.Context, userID string) ([]auth.TokenInfo, error)) *Service_ListUserRefreshTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveAllPAT provides a mock function for the type Service
 func (_mock *Service) RemoveAllPAT(ctx context.Context, token string) error {
 	ret := _mock.Called(ctx, token)
@@ -1346,6 +1414,69 @@ func (_c *Service_RevokePATSecret_Call) Return(err error) *Service_RevokePATSecr
 }
 
 func (_c *Service_RevokePATSecret_Call) RunAndReturn(run func(ctx context.Context, token string, patID string) error) *Service_RevokePATSecret_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RevokeToken provides a mock function for the type Service
+func (_mock *Service) RevokeToken(ctx context.Context, userID string, tokenID string) error {
+	ret := _mock.Called(ctx, userID, tokenID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RevokeToken")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RevokeToken_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RevokeToken'
+type Service_RevokeToken_Call struct {
+	*mock.Call
+}
+
+// RevokeToken is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID string
+//   - tokenID string
+func (_e *Service_Expecter) RevokeToken(ctx interface{}, userID interface{}, tokenID interface{}) *Service_RevokeToken_Call {
+	return &Service_RevokeToken_Call{Call: _e.mock.On("RevokeToken", ctx, userID, tokenID)}
+}
+
+func (_c *Service_RevokeToken_Call) Run(run func(ctx context.Context, userID string, tokenID string)) *Service_RevokeToken_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RevokeToken_Call) Return(err error) *Service_RevokeToken_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RevokeToken_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string) error) *Service_RevokeToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

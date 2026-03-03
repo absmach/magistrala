@@ -40,6 +40,15 @@ func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key auth.K
 	return ms.svc.Issue(ctx, token, key)
 }
 
+func (ms *metricsMiddleware) RevokeToken(ctx context.Context, userID, tokenID string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "revoke_token").Add(1)
+		ms.latency.With("method", "revoke_token").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.RevokeToken(ctx, userID, tokenID)
+}
+
 func (ms *metricsMiddleware) Revoke(ctx context.Context, token, id string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_key").Add(1)
@@ -73,6 +82,15 @@ func (ms *metricsMiddleware) RetrieveJWKS() []auth.PublicKeyInfo {
 		ms.latency.With("method", "retrieve_jwks").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 	return ms.svc.RetrieveJWKS()
+}
+
+func (ms *metricsMiddleware) ListUserRefreshTokens(ctx context.Context, userID string) ([]auth.TokenInfo, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_user_refresh_tokens").Add(1)
+		ms.latency.With("method", "list_user_refresh_tokens").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return ms.svc.ListUserRefreshTokens(ctx, userID)
 }
 
 func (ms *metricsMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) error {

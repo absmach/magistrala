@@ -89,7 +89,7 @@ func (lm *loggingMiddleware) VerifyEmail(ctx context.Context, verificationToken 
 
 // IssueToken logs the issue_token request. It logs the username type and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) IssueToken(ctx context.Context, username, secret string) (t *grpcTokenV1.Token, err error) {
+func (lm *loggingMiddleware) IssueToken(ctx context.Context, username, secret, description string) (t *grpcTokenV1.Token, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -105,7 +105,7 @@ func (lm *loggingMiddleware) IssueToken(ctx context.Context, username, secret st
 		}
 		lm.logger.Info("Issue token completed successfully", args...)
 	}(time.Now())
-	return lm.svc.IssueToken(ctx, username, secret)
+	return lm.svc.IssueToken(ctx, username, secret, description)
 }
 
 // RefreshToken logs the refresh_token request. It logs the refreshtoken, token type and the time it took to complete the request.
@@ -127,6 +127,45 @@ func (lm *loggingMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 		lm.logger.Info("Refresh token completed successfully", args...)
 	}(time.Now())
 	return lm.svc.RefreshToken(ctx, session, refreshToken)
+}
+
+// RevokeRefreshToken logs the revoke_refresh_token request. It logs the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("request_id", middleware.GetReqID(ctx)),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Revoke refresh token failed", args...)
+			return
+		}
+		lm.logger.Info("Revoke refresh token completed successfully", args...)
+	}(time.Now())
+	return lm.svc.RevokeRefreshToken(ctx, session, tokenID)
+}
+
+// ListActiveRefreshTokens logs the list_active_refresh_tokens request. It logs the time it took to complete the request.
+// If the request fails, it logs the error.
+func (lm *loggingMiddleware) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (tokens *grpcTokenV1.ListUserRefreshTokensRes, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("request_id", middleware.GetReqID(ctx)),
+		}
+		if tokens != nil {
+			args = append(args, slog.Int("tokens_count", len(tokens.GetRefreshTokens())))
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("List active refresh tokens failed", args...)
+			return
+		}
+		lm.logger.Info("List active refresh tokens completed successfully", args...)
+	}(time.Now())
+	return lm.svc.ListActiveRefreshTokens(ctx, session)
 }
 
 // View logs the view_user request. It logs the user id and the time it took to complete the request.

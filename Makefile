@@ -165,11 +165,8 @@ mocks: $(MOCKERY)
 
 $(MOCKERY):
 	@mkdir -p $(GOBIN)
-	@mkdir -p mockery
-	@echo ">> downloading mockery $(MOCKERY_VERSION)..."
-	@curl -sL https://github.com/vektra/mockery/releases/download/v$(MOCKERY_VERSION)/mockery_$(MOCKERY_VERSION)_Linux_x86_64.tar.gz | tar -xz -C mockery
-	@mv mockery/mockery $(GOBIN)
-	@rm -r mockery
+	@echo ">> installing mockery $(MOCKERY_VERSION)..."
+	@go install github.com/vektra/mockery/v3@v$(MOCKERY_VERSION)
 
 DIRS = consumers readers postgres internal
 test: mocks

@@ -110,6 +110,42 @@ func (lm *loggingMiddleware) RetrieveJWKS() (jwks []auth.PublicKeyInfo) {
 	return lm.svc.RetrieveJWKS()
 }
 
+func (lm *loggingMiddleware) RevokeToken(ctx context.Context, userID, tokenID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("user_id", userID),
+			slog.String("token_id", tokenID),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Revoke token failed", args...)
+			return
+		}
+		lm.logger.Info("Revoke token completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.RevokeToken(ctx, userID, tokenID)
+}
+
+func (lm *loggingMiddleware) ListUserRefreshTokens(ctx context.Context, userID string) (tokens []auth.TokenInfo, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("user_id", userID),
+			slog.Int("tokens_count", len(tokens)),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("List user refresh tokens failed", args...)
+			return
+		}
+		lm.logger.Info("List user refresh tokens completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.ListUserRefreshTokens(ctx, userID)
+}
+
 func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy, patAuthz *auth.PATAuthz) (err error) {
 	defer func(begin time.Time) {
 		args := []any{

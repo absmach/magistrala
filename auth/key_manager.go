@@ -5,13 +5,16 @@ package auth
 
 import (
 	"context"
-	"errors"
+	"time"
+
+	"github.com/absmach/supermq/pkg/errors"
 )
 
 var (
 	ErrUnsupportedKeyAlgorithm = errors.New("unsupported key algorithm")
 	ErrInvalidSymmetricKey     = errors.New("invalid symmetric key")
 	ErrPublicKeysNotSupported  = errors.New("public keys not supported for symmetric algorithm")
+	ErrRevokedToken            = errors.NewAuthNError("token is revoked")
 )
 
 // PublicKeyInfo represents a public key for external distribution via JWKS.
@@ -33,6 +36,7 @@ type PublicKeyInfo struct {
 // Implementations manage underlying cryptographic operations and key distribution.
 type Tokenizer interface {
 	// Issue creates a signed token string from the given key claims.
+	// For RefreshKey types, the token ID is stored as active in the cache.
 	Issue(key Key) (token string, err error)
 
 	// Parse verifies and parses a token string (JWT or PAT), returning the extracted claims.
@@ -43,6 +47,27 @@ type Tokenizer interface {
 	// RetrieveJWKS returns public keys for distribution via JWKS endpoint.
 	// Returns ErrPublicKeysNotSupported for symmetric tokenizers (HMAC).
 	RetrieveJWKS() ([]PublicKeyInfo, error)
+}
+
+// UserActiveTokensCache represents a cache repository for managing active refresh tokens per user.
+type UserActiveTokensCache interface {
+	// SaveActive saves an active refresh token ID for a user with optional description.
+	SaveActive(ctx context.Context, userID, tokenID, description string, expiry time.Time) error
+
+	// IsActive checks if the token ID is active.
+	IsActive(ctx context.Context, tokenID string) (bool, error)
+
+	// ListUserTokens lists all active token IDs with descriptions for a given user.
+	ListUserTokens(ctx context.Context, userID string) ([]TokenInfo, error)
+
+	// RemoveActive removes an active refresh token ID.
+	RemoveActive(ctx context.Context, userID, tokenID string) error
+}
+
+// TokenInfo represents information about an active refresh token.
+type TokenInfo struct {
+	ID          string `json:"id"`
+	Description string `json:"description,omitempty"`
 }
 
 // IsSymmetricAlgorithm determines if the given algorithm is symmetric (HMAC-based).

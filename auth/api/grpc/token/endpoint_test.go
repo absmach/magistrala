@@ -24,24 +24,10 @@ import (
 )
 
 const (
-	port            = 8082
-	secret          = "secret"
-	email           = "test@example.com"
-	id              = "testID"
-	clientsType     = "clients"
-	usersType       = "users"
-	description     = "Description"
-	groupName       = "smqx"
-	adminPermission = "admin"
-
-	authoritiesObj  = "authorities"
-	memberRelation  = "member"
-	loginDuration   = 30 * time.Minute
-	refreshDuration = 24 * time.Hour
-	invalidDuration = 7 * 24 * time.Hour
-	validToken      = "valid"
-	inValidToken    = "invalid"
-	validPolicy     = "valid"
+	port         = 8082
+	validToken   = "valid"
+	inValidToken = "invalid"
+	invalidID    = "invalid"
 )
 
 var (
@@ -63,9 +49,9 @@ func startGRPCServer(svc auth.Service, port int) *grpc.Server {
 
 func TestIssue(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer conn.Close()
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewTokenClient(conn, time.Second)
+	defer conn.Close()
 
 	cases := []struct {
 		desc          string
@@ -127,9 +113,9 @@ func TestIssue(t *testing.T) {
 
 func TestRefresh(t *testing.T) {
 	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	defer conn.Close()
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewTokenClient(conn, time.Second)
+	defer conn.Close()
 
 	cases := []struct {
 		desc          string
@@ -161,8 +147,98 @@ func TestRefresh(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
+		svcCall := svc.On("Issue", mock.Anything, mock.Anything, mock.Anything).Return(tc.issueResponse, tc.err)
 		_, err := grpcClient.Refresh(context.Background(), &grpcTokenV1.RefreshReq{RefreshToken: tc.token})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
+	}
+}
+
+func TestRevoke(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
+	grpcClient := grpcapi.NewTokenClient(conn, time.Second)
+	defer conn.Close()
+
+	cases := []struct {
+		desc string
+		id   string
+		err  error
+	}{
+		{
+			desc: "revoke token with valid id",
+			id:   validID,
+			err:  nil,
+		},
+		{
+			desc: "revoke token with invalid id",
+			id:   invalidID,
+			err:  svcerr.ErrAuthentication,
+		},
+		{
+			desc: "revoke token with empty id",
+			id:   "",
+			err:  apiutil.ErrMissingID,
+		},
+		{
+			desc: "revoke already revoked token",
+			id:   validID,
+			err:  svcerr.ErrConflict,
+		},
+	}
+
+	for _, tc := range cases {
+		svcCall := svc.On("RevokeToken", mock.Anything, mock.Anything, tc.id).Return(tc.err)
+		_, err := grpcClient.Revoke(context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.id})
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		svcCall.Unset()
+	}
+}
+
+func TestListUserRefreshTokens(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
+	grpcClient := grpcapi.NewTokenClient(conn, time.Second)
+	defer conn.Close()
+
+	cases := []struct {
+		desc         string
+		userID       string
+		listResponse []auth.TokenInfo
+		err          error
+	}{
+		{
+			desc:   "list tokens for user with valid id",
+			userID: validID,
+			listResponse: []auth.TokenInfo{
+				{ID: testsutil.GenerateUUID(&testing.T{}), Description: "Token 1"},
+				{ID: testsutil.GenerateUUID(&testing.T{}), Description: "Token 2"},
+			},
+			err: nil,
+		},
+		{
+			desc:         "list tokens for user with empty list",
+			userID:       validID,
+			listResponse: []auth.TokenInfo{},
+			err:          nil,
+		},
+		{
+			desc:         "list tokens with invalid user id",
+			userID:       invalidID,
+			listResponse: nil,
+			err:          svcerr.ErrAuthentication,
+		},
+		{
+			desc:         "list tokens with empty user id",
+			userID:       "",
+			listResponse: nil,
+			err:          apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		svcCall := svc.On("ListUserRefreshTokens", mock.Anything, tc.userID).Return(tc.listResponse, tc.err)
+		_, err := grpcClient.ListUserRefreshTokens(context.Background(), &grpcTokenV1.ListUserRefreshTokensReq{UserId: tc.userID})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		svcCall.Unset()
 	}

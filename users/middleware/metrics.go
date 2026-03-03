@@ -58,12 +58,12 @@ func (ms *metricsMiddleware) VerifyEmail(ctx context.Context, verificationToken 
 }
 
 // IssueToken instruments IssueToken method with metrics.
-func (ms *metricsMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
+func (ms *metricsMiddleware) IssueToken(ctx context.Context, username, secret, description string) (*grpcTokenV1.Token, error) {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "issue_token").Add(1)
 		ms.latency.With("method", "issue_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return ms.svc.IssueToken(ctx, username, secret)
+	return ms.svc.IssueToken(ctx, username, secret, description)
 }
 
 // RefreshToken instruments RefreshToken method with metrics.
@@ -73,6 +73,24 @@ func (ms *metricsMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 		ms.latency.With("method", "refresh_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 	return ms.svc.RefreshToken(ctx, session, refreshToken)
+}
+
+// RevokeRefreshToken instruments RevokeRefreshToken method with metrics.
+func (ms *metricsMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "revoke_refresh_token").Add(1)
+		ms.latency.With("method", "revoke_refresh_token").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.RevokeRefreshToken(ctx, session, tokenID)
+}
+
+// ListActiveRefreshTokens instruments ListActiveRefreshTokens method with metrics.
+func (ms *metricsMiddleware) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error) {
+	defer func(begin time.Time) {
+		ms.counter.With("method", "list_active_refresh_tokens").Add(1)
+		ms.latency.With("method", "list_active_refresh_tokens").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return ms.svc.ListActiveRefreshTokens(ctx, session)
 }
 
 // View instruments View method with metrics.

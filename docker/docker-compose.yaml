@@ -95,6 +95,8 @@ services:
       - supermq-base-net
     volumes:
       - supermq-auth-redis-volume:/data
+      - ./redis/redis.conf:/etc/redis/redis.conf:ro
+    command: ["redis-server", "/etc/redis/redis.conf"]
 
   auth:
     image: docker.io/supermq/auth:${SMQ_RELEASE_TAG}

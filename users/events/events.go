@@ -29,11 +29,10 @@ const (
 	profileView              = userPrefix + "view_profile"
 	userList                 = userPrefix + "list"
 	userSearch               = userPrefix + "search"
-	userListByGroup          = userPrefix + "list_by_group"
 	userIdentify             = userPrefix + "identify"
-	generateResetToken       = userPrefix + "generate_reset_token"
 	issueToken               = userPrefix + "issue_token"
 	refreshToken             = userPrefix + "refresh_token"
+	revokeRefreshToken       = userPrefix + "revoke_refresh_token"
 	resetSecret              = userPrefix + "reset_secret"
 	sendPasswordReset        = userPrefix + "send_password_reset"
 	oauthCallback            = userPrefix + "oauth_callback"
@@ -56,6 +55,7 @@ var (
 	_ events.Event = (*identifyUserEvent)(nil)
 	_ events.Event = (*issueTokenEvent)(nil)
 	_ events.Event = (*refreshTokenEvent)(nil)
+	_ events.Event = (*revokeRefreshTokenEvent)(nil)
 	_ events.Event = (*resetSecretEvent)(nil)
 	_ events.Event = (*sendPasswordResetEvent)(nil)
 	_ events.Event = (*oauthCallbackEvent)(nil)
@@ -489,6 +489,19 @@ func (rte refreshTokenEvent) Encode() (map[string]any, error) {
 	return map[string]any{
 		"operation":  refreshToken,
 		"request_id": rte.requestID,
+	}, nil
+}
+
+type revokeRefreshTokenEvent struct {
+	tokenID   string
+	requestID string
+}
+
+func (rrte revokeRefreshTokenEvent) Encode() (map[string]any, error) {
+	return map[string]any{
+		"operation":  revokeRefreshToken,
+		"token_id":   rrte.tokenID,
+		"request_id": rrte.requestID,
 	}, nil
 }
 

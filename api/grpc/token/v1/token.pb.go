@@ -30,6 +30,7 @@ type IssueReq struct {
 	UserRole      uint32                 `protobuf:"varint,2,opt,name=user_role,json=userRole,proto3" json:"user_role,omitempty"`
 	Type          uint32                 `protobuf:"varint,3,opt,name=type,proto3" json:"type,omitempty"`
 	Verified      bool                   `protobuf:"varint,4,opt,name=verified,proto3" json:"verified,omitempty"`
+	Description   string                 `protobuf:"bytes,5,opt,name=description,proto3" json:"description,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -92,6 +93,13 @@ func (x *IssueReq) GetVerified() bool {
 	return false
 }
 
+func (x *IssueReq) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 type RefreshReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	RefreshToken  string                 `protobuf:"bytes,1,opt,name=refresh_token,json=refreshToken,proto3" json:"refresh_token,omitempty"`
@@ -144,6 +152,58 @@ func (x *RefreshReq) GetVerified() bool {
 	return false
 }
 
+type RevokeReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TokenId       string                 `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeReq) Reset() {
+	*x = RevokeReq{}
+	mi := &file_token_v1_token_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeReq) ProtoMessage() {}
+
+func (x *RevokeReq) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeReq.ProtoReflect.Descriptor instead.
+func (*RevokeReq) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RevokeReq) GetTokenId() string {
+	if x != nil {
+		return x.TokenId
+	}
+	return ""
+}
+
+func (x *RevokeReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
 // If a token is not carrying any information itself, the type
 // field can be used to determine how to validate the token.
 // Also, different tokens can be encoded in different ways.
@@ -158,7 +218,7 @@ type Token struct {
 
 func (x *Token) Reset() {
 	*x = Token{}
-	mi := &file_token_v1_token_proto_msgTypes[2]
+	mi := &file_token_v1_token_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -170,7 +230,7 @@ func (x *Token) String() string {
 func (*Token) ProtoMessage() {}
 
 func (x *Token) ProtoReflect() protoreflect.Message {
-	mi := &file_token_v1_token_proto_msgTypes[2]
+	mi := &file_token_v1_token_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -183,7 +243,7 @@ func (x *Token) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Token.ProtoReflect.Descriptor instead.
 func (*Token) Descriptor() ([]byte, []int) {
-	return file_token_v1_token_proto_rawDescGZIP(), []int{2}
+	return file_token_v1_token_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *Token) GetAccessToken() string {
@@ -207,29 +267,219 @@ func (x *Token) GetAccessType() string {
 	return ""
 }
 
+type RevokeRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RevokeRes) Reset() {
+	*x = RevokeRes{}
+	mi := &file_token_v1_token_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RevokeRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RevokeRes) ProtoMessage() {}
+
+func (x *RevokeRes) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RevokeRes.ProtoReflect.Descriptor instead.
+func (*RevokeRes) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{4}
+}
+
+type ListUserRefreshTokensReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	UserId        string                 `protobuf:"bytes,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserRefreshTokensReq) Reset() {
+	*x = ListUserRefreshTokensReq{}
+	mi := &file_token_v1_token_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserRefreshTokensReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserRefreshTokensReq) ProtoMessage() {}
+
+func (x *ListUserRefreshTokensReq) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserRefreshTokensReq.ProtoReflect.Descriptor instead.
+func (*ListUserRefreshTokensReq) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *ListUserRefreshTokensReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
+	}
+	return ""
+}
+
+type ListUserRefreshTokensRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	RefreshTokens []*RefreshToken        `protobuf:"bytes,1,rep,name=refresh_tokens,json=refreshTokens,proto3" json:"refresh_tokens,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListUserRefreshTokensRes) Reset() {
+	*x = ListUserRefreshTokensRes{}
+	mi := &file_token_v1_token_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListUserRefreshTokensRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListUserRefreshTokensRes) ProtoMessage() {}
+
+func (x *ListUserRefreshTokensRes) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListUserRefreshTokensRes.ProtoReflect.Descriptor instead.
+func (*ListUserRefreshTokensRes) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ListUserRefreshTokensRes) GetRefreshTokens() []*RefreshToken {
+	if x != nil {
+		return x.RefreshTokens
+	}
+	return nil
+}
+
+type RefreshToken struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Description   string                 `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshToken) Reset() {
+	*x = RefreshToken{}
+	mi := &file_token_v1_token_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshToken) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshToken) ProtoMessage() {}
+
+func (x *RefreshToken) ProtoReflect() protoreflect.Message {
+	mi := &file_token_v1_token_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshToken.ProtoReflect.Descriptor instead.
+func (*RefreshToken) Descriptor() ([]byte, []int) {
+	return file_token_v1_token_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *RefreshToken) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *RefreshToken) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
 var File_token_v1_token_proto protoreflect.FileDescriptor
 
 const file_token_v1_token_proto_rawDesc = "" +
 	"\n" +
-	"\x14token/v1/token.proto\x12\btoken.v1\"p\n" +
+	"\x14token/v1/token.proto\x12\btoken.v1\"\x92\x01\n" +
 	"\bIssueReq\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tuser_role\x18\x02 \x01(\rR\buserRole\x12\x12\n" +
 	"\x04type\x18\x03 \x01(\rR\x04type\x12\x1a\n" +
-	"\bverified\x18\x04 \x01(\bR\bverified\"M\n" +
+	"\bverified\x18\x04 \x01(\bR\bverified\x12 \n" +
+	"\vdescription\x18\x05 \x01(\tR\vdescription\"M\n" +
 	"\n" +
 	"RefreshReq\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1a\n" +
-	"\bverified\x18\x02 \x01(\bR\bverified\"\x87\x01\n" +
+	"\bverified\x18\x02 \x01(\bR\bverified\"?\n" +
+	"\tRevokeReq\x12\x19\n" +
+	"\btoken_id\x18\x01 \x01(\tR\atokenId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x87\x01\n" +
 	"\x05Token\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12(\n" +
 	"\rrefresh_token\x18\x02 \x01(\tH\x00R\frefreshToken\x88\x01\x01\x12\x1f\n" +
 	"\vaccess_type\x18\x03 \x01(\tR\n" +
 	"accessTypeB\x10\n" +
-	"\x0e_refresh_token2r\n" +
+	"\x0e_refresh_token\"\v\n" +
+	"\tRevokeRes\"3\n" +
+	"\x18ListUserRefreshTokensReq\x12\x17\n" +
+	"\auser_id\x18\x01 \x01(\tR\x06userId\"Y\n" +
+	"\x18ListUserRefreshTokensRes\x12=\n" +
+	"\x0erefresh_tokens\x18\x01 \x03(\v2\x16.token.v1.RefreshTokenR\rrefreshTokens\"@\n" +
+	"\fRefreshToken\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12 \n" +
+	"\vdescription\x18\x02 \x01(\tR\vdescription2\x8b\x02\n" +
 	"\fTokenService\x12.\n" +
 	"\x05Issue\x12\x12.token.v1.IssueReq\x1a\x0f.token.v1.Token\"\x00\x122\n" +
-	"\aRefresh\x12\x14.token.v1.RefreshReq\x1a\x0f.token.v1.Token\"\x00B.Z,github.com/absmach/supermq/api/grpc/token/v1b\x06proto3"
+	"\aRefresh\x12\x14.token.v1.RefreshReq\x1a\x0f.token.v1.Token\"\x00\x124\n" +
+	"\x06Revoke\x12\x13.token.v1.RevokeReq\x1a\x13.token.v1.RevokeRes\"\x00\x12a\n" +
+	"\x15ListUserRefreshTokens\x12\".token.v1.ListUserRefreshTokensReq\x1a\".token.v1.ListUserRefreshTokensRes\"\x00B.Z,github.com/absmach/supermq/api/grpc/token/v1b\x06proto3"
 
 var (
 	file_token_v1_token_proto_rawDescOnce sync.Once
@@ -243,22 +493,32 @@ func file_token_v1_token_proto_rawDescGZIP() []byte {
 	return file_token_v1_token_proto_rawDescData
 }
 
-var file_token_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_token_v1_token_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_token_v1_token_proto_goTypes = []any{
-	(*IssueReq)(nil),   // 0: token.v1.IssueReq
-	(*RefreshReq)(nil), // 1: token.v1.RefreshReq
-	(*Token)(nil),      // 2: token.v1.Token
+	(*IssueReq)(nil),                 // 0: token.v1.IssueReq
+	(*RefreshReq)(nil),               // 1: token.v1.RefreshReq
+	(*RevokeReq)(nil),                // 2: token.v1.RevokeReq
+	(*Token)(nil),                    // 3: token.v1.Token
+	(*RevokeRes)(nil),                // 4: token.v1.RevokeRes
+	(*ListUserRefreshTokensReq)(nil), // 5: token.v1.ListUserRefreshTokensReq
+	(*ListUserRefreshTokensRes)(nil), // 6: token.v1.ListUserRefreshTokensRes
+	(*RefreshToken)(nil),             // 7: token.v1.RefreshToken
 }
 var file_token_v1_token_proto_depIdxs = []int32{
-	0, // 0: token.v1.TokenService.Issue:input_type -> token.v1.IssueReq
-	1, // 1: token.v1.TokenService.Refresh:input_type -> token.v1.RefreshReq
-	2, // 2: token.v1.TokenService.Issue:output_type -> token.v1.Token
-	2, // 3: token.v1.TokenService.Refresh:output_type -> token.v1.Token
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7, // 0: token.v1.ListUserRefreshTokensRes.refresh_tokens:type_name -> token.v1.RefreshToken
+	0, // 1: token.v1.TokenService.Issue:input_type -> token.v1.IssueReq
+	1, // 2: token.v1.TokenService.Refresh:input_type -> token.v1.RefreshReq
+	2, // 3: token.v1.TokenService.Revoke:input_type -> token.v1.RevokeReq
+	5, // 4: token.v1.TokenService.ListUserRefreshTokens:input_type -> token.v1.ListUserRefreshTokensReq
+	3, // 5: token.v1.TokenService.Issue:output_type -> token.v1.Token
+	3, // 6: token.v1.TokenService.Refresh:output_type -> token.v1.Token
+	4, // 7: token.v1.TokenService.Revoke:output_type -> token.v1.RevokeRes
+	6, // 8: token.v1.TokenService.ListUserRefreshTokens:output_type -> token.v1.ListUserRefreshTokensRes
+	5, // [5:9] is the sub-list for method output_type
+	1, // [1:5] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_token_v1_token_proto_init() }
@@ -266,14 +526,14 @@ func file_token_v1_token_proto_init() {
 	if File_token_v1_token_proto != nil {
 		return
 	}
-	file_token_v1_token_proto_msgTypes[2].OneofWrappers = []any{}
+	file_token_v1_token_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_token_v1_token_proto_rawDesc), len(file_token_v1_token_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -162,12 +162,20 @@ func (am *authorizationMiddleware) Identify(ctx context.Context, session authn.S
 	return am.svc.Identify(ctx, session)
 }
 
-func (am *authorizationMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
-	return am.svc.IssueToken(ctx, username, secret)
+func (am *authorizationMiddleware) IssueToken(ctx context.Context, username, secret, description string) (*grpcTokenV1.Token, error) {
+	return am.svc.IssueToken(ctx, username, secret, description)
 }
 
 func (am *authorizationMiddleware) RefreshToken(ctx context.Context, session authn.Session, refreshToken string) (*grpcTokenV1.Token, error) {
 	return am.svc.RefreshToken(ctx, session, refreshToken)
+}
+
+func (am *authorizationMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
+	return am.svc.RevokeRefreshToken(ctx, session, tokenID)
+}
+
+func (am *authorizationMiddleware) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error) {
+	return am.svc.ListActiveRefreshTokens(ctx, session)
 }
 
 func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, user users.User) (users.User, error) {

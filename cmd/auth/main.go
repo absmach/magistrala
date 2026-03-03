@@ -292,17 +292,21 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 }
 
 func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider supermq.IDProvider) (auth.Service, error) {
-	cache := cache.NewPatsCache(cacheClient, keyDuration)
+	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
+	tokensCache, err := cache.NewUserActiveTokensCache(cacheClient, keyDuration)
+	if err != nil {
+		return nil, err
+	}
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	keysRepo := apostgres.New(database)
-	patsRepo := apostgres.NewPatRepo(database, cache)
+	patsRepo := apostgres.NewPatRepo(database, patsCache)
 	hasher := hasher.New()
 
 	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)
 	pService := spicedb.NewPolicyService(spicedbClient, logger)
 
-	svc := auth.New(keysRepo, patsRepo, nil, hasher, idProvider, tokenizer, pEvaluator, pService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc := auth.New(keysRepo, patsRepo, nil, tokensCache, hasher, idProvider, tokenizer, pEvaluator, pService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc = middleware.NewLogging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("auth", "api")
 	svc = middleware.NewMetrics(svc, counter, latency)

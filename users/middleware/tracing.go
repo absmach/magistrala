@@ -50,11 +50,11 @@ func (tm *tracingMiddleware) VerifyEmail(ctx context.Context, verificationToken 
 }
 
 // IssueToken traces the "IssueToken" operation of the wrapped users.Service.
-func (tm *tracingMiddleware) IssueToken(ctx context.Context, username, secret string) (*grpcTokenV1.Token, error) {
+func (tm *tracingMiddleware) IssueToken(ctx context.Context, username, secret, description string) (*grpcTokenV1.Token, error) {
 	ctx, span := tracing.StartSpan(ctx, tm.tracer, "svc_issue_token", trace.WithAttributes(attribute.String("username", username)))
 	defer span.End()
 
-	return tm.svc.IssueToken(ctx, username, secret)
+	return tm.svc.IssueToken(ctx, username, secret, description)
 }
 
 // RefreshToken traces the "RefreshToken" operation of the wrapped users.Service.
@@ -63,6 +63,22 @@ func (tm *tracingMiddleware) RefreshToken(ctx context.Context, session authn.Ses
 	defer span.End()
 
 	return tm.svc.RefreshToken(ctx, session, refreshToken)
+}
+
+// RevokeRefreshToken traces the "RevokeRefreshToken" operation of the wrapped users.Service.
+func (tm *tracingMiddleware) RevokeRefreshToken(ctx context.Context, session authn.Session, tokenID string) error {
+	ctx, span := tracing.StartSpan(ctx, tm.tracer, "svc_revoke_refresh_token")
+	defer span.End()
+
+	return tm.svc.RevokeRefreshToken(ctx, session, tokenID)
+}
+
+// ListActiveRefreshTokens traces the "ListActiveRefreshTokens" operation of the wrapped users.Service.
+func (tm *tracingMiddleware) ListActiveRefreshTokens(ctx context.Context, session authn.Session) (*grpcTokenV1.ListUserRefreshTokensRes, error) {
+	ctx, span := tracing.StartSpan(ctx, tm.tracer, "svc_list_active_refresh_tokens")
+	defer span.End()
+
+	return tm.svc.ListActiveRefreshTokens(ctx, session)
 }
 
 // View traces the "View" operation of the wrapped users.Service.

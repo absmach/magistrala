@@ -243,7 +243,7 @@ func (svc service) RevokeRefreshToken(ctx context.Context, session authn.Session
 	if dbUser.Status == DisabledStatus {
 		return errors.Wrap(svcerr.ErrAuthentication, errLoginDisableUser)
 	}
-	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{TokenId: tokenID})
+	_, err = svc.token.Revoke(ctx, &grpcTokenV1.RevokeReq{UserId: session.UserID, TokenId: tokenID})
 	if err != nil {
 		if errors.Contains(err, svcerr.ErrNotFound) {
 			return errors.Wrap(svcerr.ErrNotFound, err)

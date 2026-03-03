@@ -122,7 +122,7 @@ func (client tokenGrpcClient) Revoke(ctx context.Context, req *grpcTokenV1.Revok
 	ctx, cancel := context.WithTimeout(ctx, client.timeout)
 	defer cancel()
 
-	res, err := client.revoke(ctx, revokeReq{tokenID: req.GetTokenId()})
+	res, err := client.revoke(ctx, revokeReq{userID: req.GetUserId(), tokenID: req.GetTokenId()})
 	if err != nil {
 		return &grpcTokenV1.RevokeRes{}, grpcapi.DecodeError(err)
 	}
@@ -131,7 +131,7 @@ func (client tokenGrpcClient) Revoke(ctx context.Context, req *grpcTokenV1.Revok
 
 func encodeRevokeRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(revokeReq)
-	return &grpcTokenV1.RevokeReq{TokenId: req.tokenID}, nil
+	return &grpcTokenV1.RevokeReq{UserId: req.userID, TokenId: req.tokenID}, nil
 }
 
 func decodeRevokeResponse(_ context.Context, grpcRes any) (any, error) {

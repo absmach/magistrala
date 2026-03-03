@@ -188,7 +188,7 @@ func TestRevoke(t *testing.T) {
 	}
 
 	for _, tc := range cases {
-		svcCall := svc.On("RevokeToken", mock.Anything, tc.id).Return(tc.err)
+		svcCall := svc.On("RevokeToken", mock.Anything, mock.Anything, tc.id).Return(tc.err)
 		_, err := grpcClient.Revoke(context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.id})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		svcCall.Unset()

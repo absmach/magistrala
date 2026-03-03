@@ -5,13 +5,11 @@ package cache
 
 import (
 	"context"
-	"encoding/json"
 	"strconv"
 	"time"
 
 	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -20,11 +18,6 @@ const (
 	scoreNegInf   = "-inf"
 	scorePosInf   = "+inf"
 )
-
-type tokenData struct {
-	UserID      string `json:"user_id"`
-	Description string `json:"description,omitempty"`
-}
 
 var _ auth.UserActiveTokensCache = (*tokensCache)(nil)
 
@@ -48,25 +41,15 @@ func NewUserActiveTokensCache(client *redis.Client, duration time.Duration) (aut
 func (tc *tokensCache) SaveActive(ctx context.Context, userID, tokenID, description string, expiry time.Time) error {
 	ttl := min(tc.keyDuration, time.Until(expiry))
 
-	data := tokenData{
-		UserID:      userID,
-		Description: description,
-	}
-
-	dataJSON, err := json.Marshal(data)
-	if err != nil {
-		return err
-	}
-
 	pipe := tc.client.TxPipeline()
 
-	pipe.Set(ctx, tokenKey(tokenID), dataJSON, ttl)
+	pipe.Set(ctx, tokenKey(tokenID), description, ttl)
 	pipe.ZAdd(ctx, userTokensKey(userID), redis.Z{
-		Score:  float64(expiry.Unix()),
+		Score:  float64(time.Now().Add(ttl).Unix()),
 		Member: tokenID,
 	})
 
-	_, err = pipe.Exec(ctx)
+	_, err := pipe.Exec(ctx)
 
 	return err
 }
@@ -113,7 +96,7 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 
 	valid := make([]auth.TokenInfo, 0, len(tokenIDs))
 	for tokenID, cmd := range getCmds {
-		dataJSON, err := cmd.Result()
+		description, err := cmd.Result()
 		if err == redis.Nil {
 			continue
 		}
@@ -121,14 +104,9 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 			return nil, err
 		}
 
-		var data tokenData
-		if err := json.Unmarshal([]byte(dataJSON), &data); err != nil {
-			continue
-		}
-
 		valid = append(valid, auth.TokenInfo{
 			ID:          tokenID,
-			Description: data.Description,
+			Description: description,
 		})
 	}
 
@@ -136,33 +114,13 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 }
 
 // RemoveActive removes an active refresh token ID for a user.
-func (tc *tokensCache) RemoveActive(ctx context.Context, tokenID string) (err error) {
-	tokenKeyStr := tokenKey(tokenID)
-
-	dataJSON, err := tc.client.Get(ctx, tokenKeyStr).Result()
-	if err == redis.Nil {
-		return svcerr.ErrNotFound
-	}
-	if err != nil {
-		return err
-	}
-
+func (tc *tokensCache) RemoveActive(ctx context.Context, userID, tokenID string) error {
 	pipe := tc.client.TxPipeline()
-	pipe.Del(ctx, tokenKeyStr)
-	defer func() {
-		_, execErr := pipe.Exec(ctx)
-		if err == nil {
-			err = execErr
-		}
-	}()
+	pipe.Del(ctx, tokenKey(tokenID))
+	pipe.ZRem(ctx, userTokensKey(userID), tokenID)
 
-	var data tokenData
-	if err = json.Unmarshal([]byte(dataJSON), &data); err != nil {
-		return err
-	}
-
-	pipe.ZRem(ctx, userTokensKey(data.UserID), tokenID)
-	return nil
+	_, err := pipe.Exec(ctx)
+	return err
 }
 
 func tokenKey(tokenID string) string {

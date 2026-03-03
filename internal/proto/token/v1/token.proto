@@ -29,6 +29,7 @@ message RefreshReq {
 
 message RevokeReq {
   string token_id = 1;
+  string user_id = 2;
 }
 
 // If a token is not carrying any information itself, the type

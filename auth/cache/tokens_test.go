@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/supermq/auth/cache"
 	"github.com/absmach/supermq/internal/testsutil"
 	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )
@@ -182,19 +181,19 @@ func TestTokenRemove(t *testing.T) {
 			desc:    "Remove token with empty id from cache",
 			userID:  userID,
 			tokenID: "",
-			err:     svcerr.ErrNotFound,
+			err:     nil,
 		},
 		{
 			desc:    "Remove non existing id from cache",
 			userID:  userID,
 			tokenID: testsutil.GenerateUUID(t),
-			err:     svcerr.ErrNotFound,
+			err:     nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			err := tokensCache.RemoveActive(context.Background(), tc.tokenID)
+			err := tokensCache.RemoveActive(context.Background(), tc.userID, tc.tokenID)
 			assert.True(t, errors.Contains(err, tc.err))
 			if err == nil {
 				ok, err := tokensCache.IsActive(context.Background(), tc.tokenID)
@@ -273,7 +272,7 @@ func TestListUserTokens(t *testing.T) {
 
 	t.Run("Cleanup expired tokens from list", func(t *testing.T) {
 		// Remove one token directly from Redis to simulate expiration
-		err := tokensCache.RemoveActive(context.Background(), expectedTokens[0].ID)
+		err := tokensCache.RemoveActive(context.Background(), userID, expectedTokens[0].ID)
 		assert.NoError(t, err)
 
 		// List should now return only valid tokens

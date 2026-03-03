@@ -40,13 +40,13 @@ func (ms *metricsMiddleware) Issue(ctx context.Context, token string, key auth.K
 	return ms.svc.Issue(ctx, token, key)
 }
 
-func (ms *metricsMiddleware) RevokeToken(ctx context.Context, tokenID string) error {
+func (ms *metricsMiddleware) RevokeToken(ctx context.Context, userID, tokenID string) error {
 	defer func(begin time.Time) {
 		ms.counter.With("method", "revoke_token").Add(1)
 		ms.latency.With("method", "revoke_token").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return ms.svc.RevokeToken(ctx, tokenID)
+	return ms.svc.RevokeToken(ctx, userID, tokenID)
 }
 
 func (ms *metricsMiddleware) Revoke(ctx context.Context, token, id string) error {

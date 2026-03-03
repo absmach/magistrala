@@ -1419,16 +1419,16 @@ func (_c *Service_RevokePATSecret_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // RevokeToken provides a mock function for the type Service
-func (_mock *Service) RevokeToken(ctx context.Context, tokenID string) error {
-	ret := _mock.Called(ctx, tokenID)
+func (_mock *Service) RevokeToken(ctx context.Context, userID string, tokenID string) error {
+	ret := _mock.Called(ctx, userID, tokenID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeToken")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, tokenID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -1442,12 +1442,13 @@ type Service_RevokeToken_Call struct {
 
 // RevokeToken is a helper method to define mock.On call
 //   - ctx context.Context
+//   - userID string
 //   - tokenID string
-func (_e *Service_Expecter) RevokeToken(ctx interface{}, tokenID interface{}) *Service_RevokeToken_Call {
-	return &Service_RevokeToken_Call{Call: _e.mock.On("RevokeToken", ctx, tokenID)}
+func (_e *Service_Expecter) RevokeToken(ctx interface{}, userID interface{}, tokenID interface{}) *Service_RevokeToken_Call {
+	return &Service_RevokeToken_Call{Call: _e.mock.On("RevokeToken", ctx, userID, tokenID)}
 }
 
-func (_c *Service_RevokeToken_Call) Run(run func(ctx context.Context, tokenID string)) *Service_RevokeToken_Call {
+func (_c *Service_RevokeToken_Call) Run(run func(ctx context.Context, userID string, tokenID string)) *Service_RevokeToken_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1457,9 +1458,14 @@ func (_c *Service_RevokeToken_Call) Run(run func(ctx context.Context, tokenID st
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -1470,7 +1476,7 @@ func (_c *Service_RevokeToken_Call) Return(err error) *Service_RevokeToken_Call 
 	return _c
 }
 
-func (_c *Service_RevokeToken_Call) RunAndReturn(run func(ctx context.Context, tokenID string) error) *Service_RevokeToken_Call {
+func (_c *Service_RevokeToken_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string) error) *Service_RevokeToken_Call {
 	_c.Call.Return(run)
 	return _c
 }

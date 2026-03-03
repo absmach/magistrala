@@ -41,6 +41,7 @@ func (req refreshReq) validate() error {
 }
 
 type revokeReq struct {
+	userID  string
 	tokenID string
 }
 

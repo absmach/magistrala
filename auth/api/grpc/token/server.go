@@ -100,7 +100,7 @@ func (s *tokenGrpcServer) Revoke(ctx context.Context, req *grpcTokenV1.RevokeReq
 
 func decodeRevokeRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(*grpcTokenV1.RevokeReq)
-	return revokeReq{tokenID: req.GetTokenId()}, nil
+	return revokeReq{userID: req.GetUserId(), tokenID: req.GetTokenId()}, nil
 }
 
 func encodeRevokeResponse(_ context.Context, grpcRes any) (any, error) {

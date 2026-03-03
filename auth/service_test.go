@@ -700,30 +700,35 @@ func TestRevokeToken(t *testing.T) {
 
 	cases := []struct {
 		desc      string
+		userID    string
 		tokenID   string
 		removeErr error
 		err       error
 	}{
 		{
 			desc:      "revoke token successfully",
+			userID:    validID,
 			tokenID:   "validTokenID",
 			removeErr: nil,
 			err:       nil,
 		},
 		{
 			desc:      "revoke token with cache error",
+			userID:    validID,
 			tokenID:   "validTokenID",
 			removeErr: svcerr.ErrRemoveEntity,
 			err:       svcerr.ErrRemoveEntity,
 		},
 		{
 			desc:      "revoke token with empty token ID",
+			userID:    validID,
 			tokenID:   "",
 			removeErr: nil,
 			err:       nil,
 		},
 		{
 			desc:      "revoke token not found",
+			userID:    validID,
 			tokenID:   "nonExistentTokenID",
 			removeErr: svcerr.ErrNotFound,
 			err:       svcerr.ErrNotFound,
@@ -732,8 +737,8 @@ func TestRevokeToken(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			cacheCall := tokensCache.On("RemoveActive", mock.Anything, tc.tokenID).Return(tc.removeErr)
-			err := svc.RevokeToken(context.Background(), tc.tokenID)
+			cacheCall := tokensCache.On("RemoveActive", mock.Anything, tc.userID, tc.tokenID).Return(tc.removeErr)
+			err := svc.RevokeToken(context.Background(), tc.userID, tc.tokenID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
 			cacheCall.Unset()
 		})

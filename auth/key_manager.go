@@ -61,7 +61,7 @@ type UserActiveTokensCache interface {
 	ListUserTokens(ctx context.Context, userID string) ([]TokenInfo, error)
 
 	// RemoveActive removes an active refresh token ID.
-	RemoveActive(ctx context.Context, tokenID string) error
+	RemoveActive(ctx context.Context, userID, tokenID string) error
 }
 
 // TokenInfo represents information about an active refresh token.

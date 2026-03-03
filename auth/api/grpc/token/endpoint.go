@@ -64,7 +64,7 @@ func revokeEndpoint(svc auth.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return nil, err
 		}
-		err := svc.RevokeToken(ctx, req.tokenID)
+		err := svc.RevokeToken(ctx, req.userID, req.tokenID)
 		if err != nil {
 			return nil, err
 		}

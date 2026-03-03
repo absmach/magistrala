@@ -155,6 +155,7 @@ func (x *RefreshReq) GetVerified() bool {
 type RevokeReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TokenId       string                 `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -192,6 +193,13 @@ func (*RevokeReq) Descriptor() ([]byte, []int) {
 func (x *RevokeReq) GetTokenId() string {
 	if x != nil {
 		return x.TokenId
+	}
+	return ""
+}
+
+func (x *RevokeReq) GetUserId() string {
+	if x != nil {
+		return x.UserId
 	}
 	return ""
 }
@@ -449,9 +457,10 @@ const file_token_v1_token_proto_rawDesc = "" +
 	"\n" +
 	"RefreshReq\x12#\n" +
 	"\rrefresh_token\x18\x01 \x01(\tR\frefreshToken\x12\x1a\n" +
-	"\bverified\x18\x02 \x01(\bR\bverified\"&\n" +
+	"\bverified\x18\x02 \x01(\bR\bverified\"?\n" +
 	"\tRevokeReq\x12\x19\n" +
-	"\btoken_id\x18\x01 \x01(\tR\atokenId\"\x87\x01\n" +
+	"\btoken_id\x18\x01 \x01(\tR\atokenId\x12\x17\n" +
+	"\auser_id\x18\x02 \x01(\tR\x06userId\"\x87\x01\n" +
 	"\x05Token\x12!\n" +
 	"\faccess_token\x18\x01 \x01(\tR\vaccessToken\x12(\n" +
 	"\rrefresh_token\x18\x02 \x01(\tH\x00R\frefreshToken\x88\x01\x01\x12\x1f\n" +

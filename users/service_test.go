@@ -1779,13 +1779,13 @@ func TestRevokeRefreshToken(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := crepo.On("RetrieveByID", context.Background(), tc.session.UserID).Return(tc.repoResp, tc.repoErr)
-			authCall := authsvc.On("Revoke", context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.tokenID}).Return(tc.revokeResp, tc.revokeErr)
+			authCall := authsvc.On("Revoke", context.Background(), &grpcTokenV1.RevokeReq{UserId: tc.session.UserID, TokenId: tc.tokenID}).Return(tc.revokeResp, tc.revokeErr)
 			err := svc.RevokeRefreshToken(context.Background(), tc.session, tc.tokenID)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
 				ok := repoCall.Parent.AssertCalled(t, "RetrieveByID", context.Background(), tc.session.UserID)
 				assert.True(t, ok, fmt.Sprintf("RetrieveByID was not called on %s", tc.desc))
-				ok = authCall.Parent.AssertCalled(t, "Revoke", context.Background(), &grpcTokenV1.RevokeReq{TokenId: tc.tokenID})
+				ok = authCall.Parent.AssertCalled(t, "Revoke", context.Background(), &grpcTokenV1.RevokeReq{UserId: tc.session.UserID, TokenId: tc.tokenID})
 				assert.True(t, ok, fmt.Sprintf("Revoke was not called on %s", tc.desc))
 			}
 			repoCall.Unset()

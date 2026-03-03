@@ -111,10 +111,10 @@ func (UnimplementedTokenServiceServer) Refresh(context.Context, *RefreshReq) (*T
 	return nil, status.Error(codes.Unimplemented, "method Refresh not implemented")
 }
 func (UnimplementedTokenServiceServer) Revoke(context.Context, *RevokeReq) (*RevokeRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Revoke not implemented")
+	return nil, status.Error(codes.Unimplemented, "method Revoke not implemented")
 }
 func (UnimplementedTokenServiceServer) ListUserRefreshTokens(context.Context, *ListUserRefreshTokensReq) (*ListUserRefreshTokensRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ListUserRefreshTokens not implemented")
+	return nil, status.Error(codes.Unimplemented, "method ListUserRefreshTokens not implemented")
 }
 func (UnimplementedTokenServiceServer) mustEmbedUnimplementedTokenServiceServer() {}
 func (UnimplementedTokenServiceServer) testEmbeddedByValue()                      {}

@@ -71,7 +71,7 @@ type Authn interface {
 	Issue(ctx context.Context, token string, key Key) (Token, error)
 
 	// RevokeToken revokes the refresh token by its ID.
-	RevokeToken(ctx context.Context, tokenID string) error
+	RevokeToken(ctx context.Context, userID, tokenID string) error
 
 	// Revoke removes the Key with the provided id that is
 	// issued by the user identified by the provided key.
@@ -154,8 +154,8 @@ func (svc service) Issue(ctx context.Context, token string, key Key) (Token, err
 	}
 }
 
-func (svc service) RevokeToken(ctx context.Context, tokenID string) error {
-	if err := svc.tokensCache.RemoveActive(ctx, tokenID); err != nil {
+func (svc service) RevokeToken(ctx context.Context, userID, tokenID string) error {
+	if err := svc.tokensCache.RemoveActive(ctx, userID, tokenID); err != nil {
 		return errors.Wrap(errRevokeRefreshKey, err)
 	}
 

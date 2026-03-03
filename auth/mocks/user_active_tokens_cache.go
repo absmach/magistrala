@@ -178,16 +178,16 @@ func (_c *UserActiveTokensCache_ListUserTokens_Call) RunAndReturn(run func(ctx c
 }
 
 // RemoveActive provides a mock function for the type UserActiveTokensCache
-func (_mock *UserActiveTokensCache) RemoveActive(ctx context.Context, tokenID string) error {
-	ret := _mock.Called(ctx, tokenID)
+func (_mock *UserActiveTokensCache) RemoveActive(ctx context.Context, userID string, tokenID string) error {
+	ret := _mock.Called(ctx, userID, tokenID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveActive")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, tokenID)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = returnFunc(ctx, userID, tokenID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -201,12 +201,13 @@ type UserActiveTokensCache_RemoveActive_Call struct {
 
 // RemoveActive is a helper method to define mock.On call
 //   - ctx context.Context
+//   - userID string
 //   - tokenID string
-func (_e *UserActiveTokensCache_Expecter) RemoveActive(ctx interface{}, tokenID interface{}) *UserActiveTokensCache_RemoveActive_Call {
-	return &UserActiveTokensCache_RemoveActive_Call{Call: _e.mock.On("RemoveActive", ctx, tokenID)}
+func (_e *UserActiveTokensCache_Expecter) RemoveActive(ctx interface{}, userID interface{}, tokenID interface{}) *UserActiveTokensCache_RemoveActive_Call {
+	return &UserActiveTokensCache_RemoveActive_Call{Call: _e.mock.On("RemoveActive", ctx, userID, tokenID)}
 }
 
-func (_c *UserActiveTokensCache_RemoveActive_Call) Run(run func(ctx context.Context, tokenID string)) *UserActiveTokensCache_RemoveActive_Call {
+func (_c *UserActiveTokensCache_RemoveActive_Call) Run(run func(ctx context.Context, userID string, tokenID string)) *UserActiveTokensCache_RemoveActive_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -216,9 +217,14 @@ func (_c *UserActiveTokensCache_RemoveActive_Call) Run(run func(ctx context.Cont
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
@@ -229,7 +235,7 @@ func (_c *UserActiveTokensCache_RemoveActive_Call) Return(err error) *UserActive
 	return _c
 }
 
-func (_c *UserActiveTokensCache_RemoveActive_Call) RunAndReturn(run func(ctx context.Context, tokenID string) error) *UserActiveTokensCache_RemoveActive_Call {
+func (_c *UserActiveTokensCache_RemoveActive_Call) RunAndReturn(run func(ctx context.Context, userID string, tokenID string) error) *UserActiveTokensCache_RemoveActive_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -137,8 +137,8 @@ type TagsQuery struct {
 
 func ToTagsQuery(s string) TagsQuery {
 	switch {
-	case strings.Contains(s, "-"):
-		elements := strings.Split(s, "-")
+	case strings.Contains(s, "+"):
+		elements := strings.Split(s, "+")
 		for i := range elements {
 			elements[i] = strings.TrimSpace(elements[i])
 		}

@@ -85,9 +85,9 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 	}
 
 	getPipe := tc.client.Pipeline()
-	getCmds := make(map[string]*redis.StringCmd, len(tokenIDs))
-	for _, tokenID := range tokenIDs {
-		getCmds[tokenID] = getPipe.Get(ctx, tokenKey(tokenID))
+	getCmds := make([]*redis.StringCmd, len(tokenIDs))
+	for i, tokenID := range tokenIDs {
+		getCmds[i] = getPipe.Get(ctx, tokenKey(tokenID))
 	}
 
 	if _, err = getPipe.Exec(ctx); err != nil && err != redis.Nil {
@@ -95,7 +95,7 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 	}
 
 	valid := make([]auth.TokenInfo, 0, len(tokenIDs))
-	for tokenID, cmd := range getCmds {
+	for i, cmd := range getCmds {
 		description, err := cmd.Result()
 		if err == redis.Nil {
 			continue
@@ -105,7 +105,7 @@ func (tc *tokensCache) ListUserTokens(ctx context.Context, userID string) ([]aut
 		}
 
 		valid = append(valid, auth.TokenInfo{
-			ID:          tokenID,
+			ID:          tokenIDs[i],
 			Description: description,
 		})
 	}

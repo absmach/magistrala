@@ -363,10 +363,10 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.ReportType: reportOps,
+			mgPolicies.ReportsType: reportOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.ReportType: operations.OperationDetails(),
+			mgPolicies.ReportsType: operations.OperationDetails(),
 		},
 	)
 	if err != nil {

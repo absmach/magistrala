@@ -50,7 +50,7 @@ require (
 require (
 	github.com/antlr4-go/antlr/v4 v4.13.1 // indirect
 	github.com/authzed/cel-go v0.20.2 // indirect
-	github.com/authzed/spicedb v1.48.0 // indirect
+	github.com/authzed/spicedb v1.49.1 // indirect
 	github.com/ccoveille/go-safecast/v2 v2.0.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect

@@ -3,4 +3,7 @@
 
 package policies
 
-const RulesType = "rules"
+const (
+	RulesType   = "rules"
+	ReportsType = "reports"
+)

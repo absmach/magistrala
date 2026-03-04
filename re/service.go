@@ -10,7 +10,6 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq"
@@ -56,7 +55,7 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 	}, nil
 }
 
-func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule retRule Rule, retErr retErr error) {
+func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retErr error) {
 	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
 		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
 	}

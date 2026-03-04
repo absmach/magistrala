@@ -10,22 +10,6 @@ alarm:
     - enable: update_permission
     - disable: update_permission
     - delete: delete_permission
-  roles_operations:
-    - add: manage_role_permission
-    - remove: manage_role_permission
-    - update: manage_role_permission
-    - retrieve: view_role_users_permission
-    - retrieve_all: view_role_users_permission
-    - add_actions: manage_role_permission
-    - list_actions: view_role_users_permission
-    - check_actions_exists: view_role_users_permission
-    - remove_actions: manage_role_permission
-    - remove_all_actions: manage_role_permission
-    - add_members: add_role_users_permission
-    - list_members: view_role_users_permission
-    - check_members_exists: view_role_users_permission
-    - remove_members: remove_role_users_permission
-    - remove_all_members: remove_role_users_permission
 
 rule:
   operations:

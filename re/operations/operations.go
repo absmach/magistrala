@@ -7,6 +7,8 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 )
 
+const EntityType = "rule"
+
 // Rule Operations.
 const (
 	OpAddRule permissions.Operation = iota

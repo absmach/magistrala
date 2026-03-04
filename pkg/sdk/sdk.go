@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
 	smqSDK "github.com/absmach/supermq/pkg/sdk"
@@ -26,16 +27,33 @@ var _ SDK = (*mgSDK)(nil)
 type Metadata map[string]any
 
 type PageMetadata struct {
-	Total    uint64   `json:"total"`
-	Offset   uint64   `json:"offset"`
-	Limit    uint64   `json:"limit"`
-	Metadata Metadata `json:"metadata,omitempty"`
-	Topic    string   `json:"topic,omitempty"`
-	Contact  string   `json:"contact,omitempty"`
-	DomainID string   `json:"domain_id,omitempty"`
-	Level    uint64   `json:"level,omitempty"`
-	State    string   `json:"state,omitempty"`
-	Name     string   `json:"name,omitempty"`
+	Total          uint64    `json:"total"`
+	Offset         uint64    `json:"offset"`
+	Limit          uint64    `json:"limit"`
+	Metadata       Metadata  `json:"metadata,omitempty"`
+	Topic          string    `json:"topic,omitempty"`
+	Contact        string    `json:"contact,omitempty"`
+	DomainID       string    `json:"domain_id,omitempty"`
+	Level          uint64    `json:"level,omitempty"`
+	State          string    `json:"state,omitempty"`
+	Name           string    `json:"name,omitempty"`
+	Status         string    `json:"status,omitempty"`
+	Dir            string    `json:"dir,omitempty"`
+	Order          string    `json:"order,omitempty"`
+	Tag            string    `json:"tag,omitempty"`
+	InputChannel   string    `json:"input_channel,omitempty"`
+	RuleID         string    `json:"rule_id,omitempty"`
+	ChannelID      string    `json:"channel_id,omitempty"`
+	ClientID       string    `json:"client_id,omitempty"`
+	Subtopic       string    `json:"subtopic,omitempty"`
+	AssigneeID     string    `json:"assignee_id,omitempty"`
+	Severity       uint8     `json:"severity,omitempty"`
+	UpdatedBy      string    `json:"updated_by,omitempty"`
+	AssignedBy     string    `json:"assigned_by,omitempty"`
+	AcknowledgedBy string    `json:"acknowledged_by,omitempty"`
+	ResolvedBy     string    `json:"resolved_by,omitempty"`
+	CreatedFrom    time.Time `json:"created_from,omitempty"`
+	CreatedTo      time.Time `json:"created_to,omitempty"`
 }
 
 type MessagePageMetadata struct {
@@ -190,12 +208,96 @@ type SDK interface {
 	//  err := sdk.DeleteSubscription(ctx, "id", "token")
 	//  fmt.Println(err)
 	DeleteSubscription(ctx context.Context, id, token string) errors.SDKError
+
+	// Alarms API
+
+	// UpdateAlarm updates an existing alarm.
+	UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, errors.SDKError)
+
+	// ViewAlarm retrieves an alarm by its ID.
+	ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, errors.SDKError)
+
+	// ListAlarms retrieves a page of alarms.
+	ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, errors.SDKError)
+
+	// DeleteAlarm deletes an alarm.
+	DeleteAlarm(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// Reports API
+
+	// AddReportConfig creates a new report configuration.
+	AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// ViewReportConfig retrieves a report config by its ID.
+	ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportConfig updates an existing report configuration.
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportSchedule updates an existing report configuration's schedule.
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// RemoveReportConfig deletes a report config.
+	RemoveReportConfig(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// ListReportsConfig retrieves a page of report configs.
+	ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, errors.SDKError)
+
+	// EnableReportConfig enables a report config.
+	EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// DisableReportConfig disables a report config.
+	DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportTemplate updates a report template.
+	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) errors.SDKError
+
+	// ViewReportTemplate retrieves a report template.
+	ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, errors.SDKError)
+
+	// DeleteReportTemplate deletes a report template.
+	DeleteReportTemplate(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// GenerateReport generates a report from a configuration.
+	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, errors.SDKError)
+
+	// Rules Engine API
+
+	// AddRule creates a new rule.
+	AddRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// ViewRule retrieves a rule by its ID.
+	ViewRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRule updates an existing rule.
+	UpdateRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRuleTags updates an existing rule's tags.
+	UpdateRuleTags(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRuleSchedule updates an existing rule's schedule.
+	UpdateRuleSchedule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// ListRules retrieves a page of rules.
+	ListRules(ctx context.Context, pm PageMetadata, domainID, token string) (Page, errors.SDKError)
+
+	// RemoveRule deletes a rule.
+	RemoveRule(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// EnableRule enables a rule.
+	EnableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// DisableRule disables a rule.
+	DisableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
 }
 
 type mgSDK struct {
 	bootstrapURL   string
 	readersURL     string
 	usersURL       string
+	alarmsURL      string
+	reportsURL     string
+	rulesEngineURL string
 	client         *http.Client
 	curlFlag       bool
 	msgContentType smqSDK.ContentType
@@ -216,6 +318,9 @@ type Config struct {
 	DomainsURL     string
 	JournalURL     string
 	HostURL        string
+	AlarmsURL      string
+	ReportsURL     string
+	RulesEngineURL string
 
 	MsgContentType  smqSDK.ContentType
 	TLSVerification bool
@@ -244,6 +349,9 @@ func NewSDK(conf Config) SDK {
 		bootstrapURL:   conf.BootstrapURL,
 		readersURL:     conf.ReaderURL,
 		usersURL:       conf.UsersURL,
+		alarmsURL:      conf.AlarmsURL,
+		reportsURL:     conf.ReportsURL,
+		rulesEngineURL: conf.RulesEngineURL,
 		msgContentType: conf.MsgContentType,
 
 		client: &http.Client{
@@ -346,6 +454,60 @@ func (pm PageMetadata) query() (string, error) {
 	}
 	if pm.Level != 0 {
 		q.Add("level", strconv.FormatUint(pm.Level, 10))
+	}
+	if pm.Name != "" {
+		q.Add("name", pm.Name)
+	}
+	if pm.Status != "" {
+		q.Add("status", pm.Status)
+	}
+	if pm.Dir != "" {
+		q.Add("dir", pm.Dir)
+	}
+	if pm.Order != "" {
+		q.Add("order", pm.Order)
+	}
+	if pm.Tag != "" {
+		q.Add("tag", pm.Tag)
+	}
+	if pm.InputChannel != "" {
+		q.Add("input_channel", pm.InputChannel)
+	}
+	if pm.RuleID != "" {
+		q.Add("rule_id", pm.RuleID)
+	}
+	if pm.ChannelID != "" {
+		q.Add("channel_id", pm.ChannelID)
+	}
+	if pm.ClientID != "" {
+		q.Add("client_id", pm.ClientID)
+	}
+	if pm.Subtopic != "" {
+		q.Add("subtopic", pm.Subtopic)
+	}
+	if pm.AssigneeID != "" {
+		q.Add("assignee_id", pm.AssigneeID)
+	}
+	if pm.Severity != 0 {
+		q.Add("severity", strconv.FormatUint(uint64(pm.Severity), 10))
+	}
+	if pm.UpdatedBy != "" {
+		q.Add("updated_by", pm.UpdatedBy)
+	}
+	if pm.AssignedBy != "" {
+		q.Add("assigned_by", pm.AssignedBy)
+	}
+	if pm.AcknowledgedBy != "" {
+		q.Add("acknowledged_by", pm.AcknowledgedBy)
+	}
+	if pm.ResolvedBy != "" {
+		q.Add("resolved_by", pm.ResolvedBy)
+	}
+	if !pm.CreatedFrom.IsZero() {
+		q.Add("created_from", pm.CreatedFrom.UTC().Format(time.RFC3339))
+	}
+	if !pm.CreatedTo.IsZero() {
+		q.Add("created_to", pm.CreatedTo.UTC().Format(time.RFC3339))
 	}
 
 	return q.Encode(), nil

@@ -52,7 +52,8 @@ func (req addReportConfigReq) validate() error {
 }
 
 type viewReportConfigReq struct {
-	ID string `json:"id"`
+	ID        string `json:"id"`
+	withRoles bool
 }
 
 func (req viewReportConfigReq) validate() error {

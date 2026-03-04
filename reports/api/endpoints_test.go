@@ -333,9 +333,8 @@ func TestViewReportConfigEndpoint(t *testing.T) {
 			}
 
 			authCall := authn.On("Authenticate", mock.Anything, tc.token).Return(tc.authnRes, tc.authnErr)
-			svcCall := svc.On("ViewReportConfig", mock.Anything, tc.authnRes, tc.id).Return(tc.svcRes, tc.svcErr)
+			svcCall := svc.On("ViewReportConfig", mock.Anything, tc.authnRes, tc.id, false).Return(tc.svcRes, tc.svcErr)
 			res, err := req.make()
-
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			var errRes respBody
 			err = json.NewDecoder(res.Body).Decode(&errRes)

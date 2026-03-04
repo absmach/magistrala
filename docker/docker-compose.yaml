@@ -317,8 +317,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - ./permission.yaml:/permission.yaml
-      - schema-volume:/schemas:ro
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
@@ -400,8 +400,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - ./permission.yaml:/permission.yaml
-      - schema-volume:/schemas
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
@@ -512,8 +512,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - ./permission.yaml:/permission.yaml
-      - schema-volume:/schemas
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind

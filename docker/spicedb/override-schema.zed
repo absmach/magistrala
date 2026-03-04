@@ -4,8 +4,8 @@
 // Merge documentation
 // - Source A (base): docker/supermq-docker/spicedb/schema.zed (SuperMQ upstream schema)
 // - Source B (overlay): docker/spicedb/override-schema.zed (Magistrala schema extensions)
-// - Merge script: scripts/combine-schema.sh
-// - Output: docker/spicedb/combaine-schema.zed
+// - Merge script: scripts/combined-schema.sh
+// - Output: docker/spicedb/combined-schema.zed
 //
 // How merge works:
 // 1. The first `definition domain { ... }` block is treated as explicit domain overlay.

@@ -19,7 +19,6 @@ import (
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/ticker"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
@@ -363,10 +362,10 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.ReportsType: reportOps,
+			operations.EntityType: reportOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.ReportsType: operations.OperationDetails(),
+			operations.EntityType: operations.OperationDetails(),
 		},
 	)
 	if err != nil {

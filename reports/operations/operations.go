@@ -7,7 +7,7 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 )
 
-const EntityType = "reports"
+const EntityType = "report"
 
 // Report Operations.
 const (

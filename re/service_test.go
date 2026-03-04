@@ -26,6 +26,8 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	pubsubmocks "github.com/absmach/supermq/pkg/messaging/mocks"
+	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -59,27 +61,40 @@ var (
 	}
 )
 
-func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker, *emocks.Emailer) {
+func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.Repository, *pubsubmocks.PubSub, *tmocks.Ticker, *emocks.Emailer, *policymocks.Service) {
 	repo := new(mocks.Repository)
 	mockTicker := new(tmocks.Ticker)
 	idProvider := uuid.NewMock()
 	pubsub := pubsubmocks.NewPubSub(t)
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
-	return re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc), repo, pubsub, mockTicker, e
+	policy := new(policymocks.Service)
+	availableActions := []roles.Action{}
+	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
+		"admin": availableActions,
+	}
+	svc, err := re.NewService(repo, runInfo, policy, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc, availableActions, builtInRoles)
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+	return svc, repo, pubsub, mockTicker, e, policy
 }
 
 func TestAddRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, policies := newService(t, make(chan pkglog.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
-		desc    string
-		session authn.Session
-		rule    re.Rule
-		res     re.Rule
-		err     error
+		desc           string
+		session        authn.Session
+		rule           re.Rule
+		res            re.Rule
+		err            error
+		addPoliciesErr error
+		deletePolicies error
+		addRoleErr     error
+		deleteErr      error
 	}{
 		{
 			desc: "Add rule successfully",
@@ -109,7 +124,10 @@ func TestAddRule(t *testing.T) {
 				CreatedBy: userID,
 				DomainID:  domainID,
 			},
-			err: nil,
+			err:            nil,
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
 		},
 		{
 			desc: "Add rule with failed repo",
@@ -126,7 +144,11 @@ func TestAddRule(t *testing.T) {
 					Time:            now,
 				},
 			},
-			err: repoerr.ErrCreateEntity,
+			err:            repoerr.ErrCreateEntity,
+			addPoliciesErr: nil,
+			deletePolicies: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
 		},
 		{
 			desc: "Add rule with non-zero StartDateTime",
@@ -158,7 +180,136 @@ func TestAddRule(t *testing.T) {
 				CreatedBy: userID,
 				DomainID:  domainID,
 			},
-			err: nil,
+			err:            nil,
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
+		},
+		{
+			desc: "Add rule with failed to add roles and failed to delete policies",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addRoleErr:     svcerr.ErrCreateEntity,
+			deletePolicies: svcerr.ErrRemoveEntity,
+			err:            svcerr.ErrRemoveEntity,
+		},
+		{
+			desc: "Add rule with failed to add policies",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			err:            svcerr.ErrAddPolicies,
+		},
+		{
+			desc: "Add rule with failed to add policies and failed rollback",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			deleteErr:      svcerr.ErrRemoveEntity,
+			err:            svcerr.ErrRollbackRepo,
+		},
+		{
+			desc: "Add rule with failed to add roles",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addRoleErr: svcerr.ErrCreateEntity,
+			err:        svcerr.ErrAddPolicies,
 		},
 		{
 			desc: "Add rule with Go script containing goroutines",
@@ -186,6 +337,10 @@ func TestAddRule(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("AddRule", mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
+			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies).Maybe()
+			repoCall1 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
+			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
 			res, err := svc.AddRule(context.Background(), tc.session, tc.rule)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
@@ -193,14 +348,18 @@ func TestAddRule(t *testing.T) {
 				assert.Equal(t, tc.rule.Name, res.Name)
 				assert.Equal(t, tc.rule.Schedule, res.Schedule)
 			}
-			defer repoCall.Unset()
+			policyCall.Unset()
+			policyCall2.Unset()
+			repoCall.Unset()
+			repoCall1.Unset()
+			repoCall2.Unset()
 		})
 	}
 }
 
 func TestViewRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
@@ -246,7 +405,7 @@ func TestViewRule(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("ViewRule", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			res, err := svc.ViewRule(context.Background(), tc.session, tc.id)
+			res, err := svc.ViewRule(context.Background(), tc.session, tc.id, false)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
@@ -259,7 +418,7 @@ func TestViewRule(t *testing.T) {
 
 func TestUpdateRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	newName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
@@ -370,7 +529,7 @@ func TestUpdateRule(t *testing.T) {
 
 func TestUpdateRuleTags(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
 		desc      string
@@ -427,7 +586,7 @@ func TestUpdateRuleTags(t *testing.T) {
 
 func TestUpdateRuleSchedule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now().UTC()
 	future := now.Add(2 * time.Hour)
@@ -495,7 +654,7 @@ func TestUpdateRuleSchedule(t *testing.T) {
 
 func TestListRules(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	numRules := 50
 	now := time.Now().Add(time.Hour)
 	var rules []re.Rule
@@ -629,13 +788,14 @@ func TestListRules(t *testing.T) {
 
 func TestRemoveRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, policies := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
-		desc    string
-		session authn.Session
-		id      string
-		err     error
+		desc              string
+		session           authn.Session
+		id                string
+		err               error
+		deletePoliciesErr error
 	}{
 		{
 			desc: "remove rule successfully",
@@ -643,8 +803,9 @@ func TestRemoveRule(t *testing.T) {
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			id:  ruleID,
-			err: nil,
+			id:                ruleID,
+			err:               nil,
+			deletePoliciesErr: nil,
 		},
 		{
 			desc: "remove rule with failed repo",
@@ -652,25 +813,28 @@ func TestRemoveRule(t *testing.T) {
 				UserID:   userID,
 				DomainID: domainID,
 			},
-			id:  ruleID,
-			err: svcerr.ErrRemoveEntity,
+			id:                ruleID,
+			err:               svcerr.ErrRemoveEntity,
+			deletePoliciesErr: nil,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("RemoveRule", mock.Anything, mock.Anything).Return(tc.err)
+			policyCall := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesErr)
 			err := svc.RemoveRule(context.Background(), tc.session, tc.id)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			defer repoCall.Unset()
+			policyCall.Unset()
+			repoCall.Unset()
 		})
 	}
 }
 
 func TestEnableRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -730,7 +894,7 @@ func TestEnableRule(t *testing.T) {
 
 func TestDisableRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _ := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	now := time.Now()
 
@@ -789,7 +953,7 @@ func TestDisableRule(t *testing.T) {
 }
 
 func TestHandle(t *testing.T) {
-	svc, repo, pubmocks, _, emailer := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, pubmocks, _, emailer, _ := newService(t, make(chan pkglog.RunInfo))
 	now := time.Now()
 	scheduled := false
 
@@ -1461,7 +1625,8 @@ func TestHandle(t *testing.T) {
 func TestStartScheduler(t *testing.T) {
 	now := time.Now().Truncate(time.Minute)
 	ri := make(chan pkglog.RunInfo)
-	svc, repo, _, ticker, _ := newService(t, ri)
+	// nolint:dogsled
+	svc, repo, _, ticker, _, _ := newService(t, ri)
 
 	ctxCases := []struct {
 		desc     string

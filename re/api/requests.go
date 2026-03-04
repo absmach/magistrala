@@ -33,7 +33,8 @@ func (req addRuleReq) validate() error {
 }
 
 type viewRuleReq struct {
-	id string
+	id        string
+	withRoles bool
 }
 
 func (req viewRuleReq) validate() error {

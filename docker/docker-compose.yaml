@@ -253,6 +253,7 @@ services:
     container_name: magistrala-re
     depends_on:
       - re-db
+      - spicedb-migrate
     restart: on-failure
     environment:
       MG_RE_LOG_LEVEL: ${MG_RE_LOG_LEVEL}
@@ -290,6 +291,8 @@ services:
       SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
       SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
       SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
       MG_RE_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
       MG_EMAIL_HOST: ${MG_EMAIL_HOST}
       MG_EMAIL_PORT: ${MG_EMAIL_PORT}
@@ -314,6 +317,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
+      - schema-volume:/schemas:ro
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
@@ -353,6 +358,7 @@ services:
     container_name: magistrala-alarms
     depends_on:
       - alarms-db
+      - spicedb-migrate
     restart: on-failure
     environment:
       MG_ALARMS_LOG_LEVEL: ${MG_ALARMS_LOG_LEVEL}
@@ -382,6 +388,11 @@ services:
       SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
       SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
       SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
       MG_ALARMS_INSTANCE_ID: ${MG_ALARMS_INSTANCE_ID}
       SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
     ports:
@@ -389,6 +400,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
+      - schema-volume:/schemas
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
@@ -442,6 +455,7 @@ services:
     container_name: magistrala-reports
     depends_on:
       - reports-db
+      - spicedb-migrate
     restart: on-failure
     environment:
       MG_REPORTS_LOG_LEVEL: ${MG_REPORTS_LOG_LEVEL}
@@ -472,6 +486,8 @@ services:
       SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
       SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
       SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
       MG_REPORTS_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
       MG_EMAIL_HOST: ${MG_EMAIL_HOST}
       MG_EMAIL_PORT: ${MG_EMAIL_PORT}
@@ -496,6 +512,8 @@ services:
     networks:
       - magistrala-base-net
     volumes:
+      - ./permission.yaml:/permission.yaml
+      - schema-volume:/schemas
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind

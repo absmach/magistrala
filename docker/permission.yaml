@@ -1,0 +1,87 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+alarm:
+  operations:
+    - add: alarm_create_permission
+    - list: alarm_read_permission
+    - view: read_permission
+    - update: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+rule:
+  operations:
+    - add: rule_create_permission
+    - list: rule_read_permission
+    - view: read_permission
+    - update: update_permission
+    - update_tags: update_permission
+    - update_schedule: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission
+
+report:
+  operations:
+    - add: report_create_permission
+    - list: report_read_permission
+    - generate: report_create_permission
+    - view: read_permission
+    - update: update_permission
+    - update_schedule: update_permission
+    - enable: update_permission
+    - disable: update_permission
+    - delete: delete_permission
+    - update_template: update_permission
+    - view_template: read_permission
+    - delete_template: delete_permission
+  roles_operations:
+    - add: manage_role_permission
+    - remove: manage_role_permission
+    - update: manage_role_permission
+    - retrieve: view_role_users_permission
+    - retrieve_all: view_role_users_permission
+    - add_actions: manage_role_permission
+    - list_actions: view_role_users_permission
+    - check_actions_exists: view_role_users_permission
+    - remove_actions: manage_role_permission
+    - remove_all_actions: manage_role_permission
+    - add_members: add_role_users_permission
+    - list_members: view_role_users_permission
+    - check_members_exists: view_role_users_permission
+    - remove_members: remove_role_users_permission
+    - remove_all_members: remove_role_users_permission

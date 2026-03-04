@@ -102,6 +102,8 @@ paths:
         - $ref: "#/components/parameters/Client"
         - $ref: "#/components/parameters/Group"
         - $ref: "#/components/parameters/User"
+        - $ref: "#/components/parameters/CreatedFrom"
+        - $ref: "#/components/parameters/CreatedTo"
       responses:
         "200":
           $ref: "#/components/responses/ChannelPageRes"
@@ -943,6 +945,26 @@ components:
         minLength: 36
       required: false
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+    CreatedFrom:
+      name: created_from
+      description: Filter channels created from this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-01-01T00:00:00Z"
+
+    CreatedTo:
+      name: created_to
+      description: Filter channels created up to this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-12-31T23:59:59Z"
 
   requestBodies:
     ChannelCreateReq:

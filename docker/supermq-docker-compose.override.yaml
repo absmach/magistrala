@@ -8,7 +8,7 @@ services:
     command: sh /combine-schema.sh
     volumes:
       - ../supermq-docker/spicedb/schema.zed:/schema-supermq.zed
-      - ../spicedb/schema.zed:/schema-magistrala.zed
+      - ../spicedb/override-schema.zed:/schema-magistrala.zed
       - ../supermq-docker/permission.yaml:/permission-supermq.yaml
       - ../permission.yaml:/permission-magistrala.yaml
       - ../../scripts/combine-schema.sh:/combine-schema.sh

@@ -10,8 +10,8 @@ import (
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/ticker"
+	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -37,7 +37,7 @@ type re struct {
 }
 
 func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.RuleType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 			SubjectType: policies.DomainType,
 			Subject:     session.DomainID,
 			Relation:    policies.DomainRelation,
-			ObjectType:  mgPolicies.RuleType,
+			ObjectType:  operations.EntityType,
 			Object:      rule.ID,
 		},
 	}

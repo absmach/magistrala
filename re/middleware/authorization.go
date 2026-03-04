@@ -6,7 +6,6 @@ package middleware
 import (
 	"context"
 
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 	"github.com/absmach/supermq/pkg/authn"
@@ -37,7 +36,7 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(mgPolicies.RuleType, svc, authz, roleOps)
+	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
 	if err != nil {
 		return nil, err
 	}
@@ -134,7 +133,7 @@ func (am *authorizationMiddleware) Cancel() error {
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
-	perm, err := am.entitiesOps.GetPermission(mgPolicies.RuleType, op)
+	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
 	}

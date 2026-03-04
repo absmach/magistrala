@@ -20,7 +20,6 @@ import (
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/pkg/emailer"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/re"
@@ -380,17 +379,17 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
 
-	ruleOps, ruleRoleOps, err := permConfig.GetEntityPermissions(mgPolicies.RuleType)
+	ruleOps, ruleRoleOps, err := permConfig.GetEntityPermissions(operations.EntityType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get rule permissions: %w", err)
 	}
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.RuleType: ruleOps,
+			operations.EntityType: ruleOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.RuleType: operations.OperationDetails(),
+			operations.EntityType: operations.OperationDetails(),
 		},
 	)
 	if err != nil {
@@ -433,7 +432,7 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 }
 
 func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, mgPolicies.RuleType)
+	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, operations.EntityType)
 	if err != nil {
 		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
 	}

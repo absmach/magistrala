@@ -49,7 +49,7 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 }
 
 func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpAddRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpAddRule, session, policies.DomainType, session.DomainID); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
 	}
 
@@ -57,7 +57,7 @@ func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Se
 }
 
 func (am *authorizationMiddleware) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpViewRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpViewRule, session, operations.EntityType, id); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainViewRules, err)
 	}
 
@@ -65,7 +65,7 @@ func (am *authorizationMiddleware) ViewRule(ctx context.Context, session authn.S
 }
 
 func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpUpdateRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateRule, session, operations.EntityType, r.ID); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
@@ -73,7 +73,7 @@ func (am *authorizationMiddleware) UpdateRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpUpdateRuleTags, session); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateRuleTags, session, operations.EntityType, r.ID); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
@@ -81,7 +81,7 @@ func (am *authorizationMiddleware) UpdateRuleTags(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpUpdateRuleSchedule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateRuleSchedule, session, operations.EntityType, r.ID); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
@@ -89,7 +89,7 @@ func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {
-	if err := am.authorize(ctx, operations.OpListRules, session); err != nil {
+	if err := am.authorize(ctx, operations.OpListRules, session, policies.DomainType, session.DomainID); err != nil {
 		return re.Page{}, errors.Wrap(errDomainViewRules, err)
 	}
 
@@ -97,7 +97,7 @@ func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.
 }
 
 func (am *authorizationMiddleware) RemoveRule(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, operations.OpRemoveRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpRemoveRule, session, operations.EntityType, id); err != nil {
 		return errors.Wrap(errDomainDeleteRules, err)
 	}
 
@@ -105,7 +105,7 @@ func (am *authorizationMiddleware) RemoveRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) EnableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpEnableRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpEnableRule, session, operations.EntityType, id); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
@@ -113,7 +113,7 @@ func (am *authorizationMiddleware) EnableRule(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) DisableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
-	if err := am.authorize(ctx, operations.OpDisableRule, session); err != nil {
+	if err := am.authorize(ctx, operations.OpDisableRule, session, operations.EntityType, id); err != nil {
 		return re.Rule{}, errors.Wrap(errDomainUpdateRules, err)
 	}
 
@@ -132,7 +132,7 @@ func (am *authorizationMiddleware) Cancel() error {
 	return am.svc.Cancel()
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
 	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
@@ -143,8 +143,8 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		Object:      obj,
+		ObjectType:  objType,
 		Permission:  perm.String(),
 	}
 

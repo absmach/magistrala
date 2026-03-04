@@ -136,10 +136,10 @@ permission update_permission = update + domain->alarm_update_permission
 permission read_permission = read + domain->alarm_read_permission
 permission delete_permission = delete + domain->alarm_delete_permission
 
-permission manage_role_permission = manage_role + domain->admin
-permission add_role_users_permission = add_role_users + domain->admin
-permission remove_role_users_permission = remove_role_users + domain->admin
-permission view_role_users_permission = view_role_users + domain->admin
+permission manage_role_permission = manage_role + domain->alarm_manage_role_permission
+permission add_role_users_permission = add_role_users + domain->alarm_add_role_users_permission
+permission remove_role_users_permission = remove_role_users + domain->alarm_remove_role_users_permission
+permission view_role_users_permission = view_role_users + domain->alarm_view_role_users_permission
 }
 
 definition rule {
@@ -158,10 +158,10 @@ permission update_permission = update + domain->rule_update_permission
 permission read_permission = read + domain->rule_read_permission
 permission delete_permission = delete + domain->rule_delete_permission
 
-permission manage_role_permission = manage_role + domain->admin
-permission add_role_users_permission = add_role_users + domain->admin
-permission remove_role_users_permission = remove_role_users + domain->admin
-permission view_role_users_permission = view_role_users + domain->admin
+permission manage_role_permission = manage_role + domain->rule_manage_role_permission
+permission add_role_users_permission = add_role_users + domain->rule_add_role_users_permission
+permission remove_role_users_permission = remove_role_users + domain->rule_remove_role_users_permission
+permission view_role_users_permission = view_role_users + domain->rule_view_role_users_permission
 }
 
 definition report {
@@ -180,8 +180,8 @@ permission update_permission = update + domain->report_update_permission
 permission read_permission = read + domain->report_read_permission
 permission delete_permission = delete + domain->report_delete_permission
 
-permission manage_role_permission = manage_role + domain->admin
-permission add_role_users_permission = add_role_users + domain->admin
-permission remove_role_users_permission = remove_role_users + domain->admin
-permission view_role_users_permission = view_role_users + domain->admin
+permission manage_role_permission = manage_role + domain->report_manage_role_permission
+permission add_role_users_permission = add_role_users + domain->report_add_role_users_permission
+permission remove_role_users_permission = remove_role_users + domain->report_remove_role_users_permission
+permission view_role_users_permission = view_role_users + domain->report_view_role_users_permission
 }

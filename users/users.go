@@ -176,26 +176,28 @@ func ToTagsQuery(s string) TagsQuery {
 
 // Page contains page metadata that helps navigation.
 type Page struct {
-	Total      uint64    `json:"total"`
-	Offset     uint64    `json:"offset"`
-	Limit      uint64    `json:"limit"`
-	OnlyTotal  bool      `json:"only_total"`
-	Id         string    `json:"id,omitempty"`
-	Order      string    `json:"order,omitempty"`
-	Dir        string    `json:"dir,omitempty"`
-	Metadata   Metadata  `json:"metadata,omitempty"`
-	Domain     string    `json:"domain,omitempty"`
-	Tags       TagsQuery `json:"tag,omitempty"`
-	Permission string    `json:"permission,omitempty"`
-	Status     Status    `json:"status,omitempty"`
-	IDs        []string  `json:"ids,omitempty"`
-	Role       Role      `json:"-"`
-	ListPerms  bool      `json:"-"`
-	Username   string    `json:"username,omitempty"`
-	FirstName  string    `json:"first_name,omitempty"`
-	LastName   string    `json:"last_name,omitempty"`
-	Email      string    `json:"email,omitempty"`
-	Verified   bool      `json:"verified,omitempty"`
+	Total       uint64    `json:"total"`
+	Offset      uint64    `json:"offset"`
+	Limit       uint64    `json:"limit"`
+	OnlyTotal   bool      `json:"only_total"`
+	Id          string    `json:"id,omitempty"`
+	Order       string    `json:"order,omitempty"`
+	Dir         string    `json:"dir,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Domain      string    `json:"domain,omitempty"`
+	Tags        TagsQuery `json:"tag,omitempty"`
+	Permission  string    `json:"permission,omitempty"`
+	Status      Status    `json:"status,omitempty"`
+	IDs         []string  `json:"ids,omitempty"`
+	Role        Role      `json:"-"`
+	ListPerms   bool      `json:"-"`
+	Username    string    `json:"username,omitempty"`
+	FirstName   string    `json:"first_name,omitempty"`
+	LastName    string    `json:"last_name,omitempty"`
+	Email       string    `json:"email,omitempty"`
+	Verified    bool      `json:"verified,omitempty"`
+	CreatedFrom time.Time `json:"created_from,omitempty"`
+	CreatedTo   time.Time `json:"created_to,omitempty"`
 }
 
 // Service specifies an API that must be fullfiled by the domain service

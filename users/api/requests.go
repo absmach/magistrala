@@ -5,6 +5,7 @@ package api
 
 import (
 	"net/url"
+	"time"
 
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -94,19 +95,21 @@ func (req viewUserReq) validate() error {
 }
 
 type listUsersReq struct {
-	status    users.Status
-	offset    uint64
-	limit     uint64
-	onlyTotal bool
-	userName  string
-	tags      users.TagsQuery
-	firstName string
-	lastName  string
-	email     string
-	metadata  users.Metadata
-	order     string
-	dir       string
-	id        string
+	status      users.Status
+	offset      uint64
+	limit       uint64
+	onlyTotal   bool
+	userName    string
+	tags        users.TagsQuery
+	firstName   string
+	lastName    string
+	email       string
+	metadata    users.Metadata
+	order       string
+	dir         string
+	id          string
+	createdFrom time.Time
+	createdTo   time.Time
 }
 
 func (req listUsersReq) validate() error {

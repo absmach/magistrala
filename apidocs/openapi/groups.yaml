@@ -103,6 +103,8 @@ paths:
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleNameQuery"
         - $ref: "#/components/parameters/AccessType"
         - $ref: "#/components/parameters/OnlyTotal"
+        - $ref: "#/components/parameters/CreatedFrom"
+        - $ref: "#/components/parameters/CreatedTo"
       responses:
         "200":
           $ref: "#/components/responses/GroupPageRes"
@@ -329,6 +331,8 @@ paths:
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Tree"
         - $ref: "#/components/parameters/Direction"
+        - $ref: "#/components/parameters/CreatedFrom"
+        - $ref: "#/components/parameters/CreatedTo"
       responses:
         "200":
           $ref: "#/components/responses/GroupsHierarchyPageRes"
@@ -1598,6 +1602,26 @@ components:
         type: boolean
         default: false
       required: false
+
+    CreatedFrom:
+      name: created_from
+      description: Filter groups created from this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-01-01T00:00:00Z"
+
+    CreatedTo:
+      name: created_to
+      description: Filter groups created up to this date (inclusive).
+      in: query
+      schema:
+        type: string
+        format: date-time
+      required: false
+      example: "2023-12-31T23:59:59Z"
 
     User:
       name: user

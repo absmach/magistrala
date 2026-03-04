@@ -1190,42 +1190,46 @@ func ToDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 		return dbClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	return dbClientsPage{
-		Offset:     pm.Offset,
-		Limit:      pm.Limit,
-		Name:       pm.Name,
-		Identity:   pm.Identity,
-		Id:         pm.ID,
-		Metadata:   data,
-		Domain:     pm.Domain,
-		Status:     pm.Status,
-		Tags:       tags,
-		GroupID:    pm.Group,
-		ChannelID:  pm.Channel,
-		RoleName:   pm.RoleName,
-		ConnType:   pm.ConnectionType,
-		RoleID:     pm.RoleID,
-		Actions:    pm.Actions,
-		AccessType: pm.AccessType,
+		Offset:      pm.Offset,
+		Limit:       pm.Limit,
+		Name:        pm.Name,
+		Identity:    pm.Identity,
+		Id:          pm.ID,
+		Metadata:    data,
+		Domain:      pm.Domain,
+		Status:      pm.Status,
+		Tags:        tags,
+		GroupID:     pm.Group,
+		ChannelID:   pm.Channel,
+		RoleName:    pm.RoleName,
+		ConnType:    pm.ConnectionType,
+		RoleID:      pm.RoleID,
+		Actions:     pm.Actions,
+		AccessType:  pm.AccessType,
+		CreatedFrom: pm.CreatedFrom,
+		CreatedTo:   pm.CreatedTo,
 	}, nil
 }
 
 type dbClientsPage struct {
-	Limit      uint64           `db:"limit"`
-	Offset     uint64           `db:"offset"`
-	Name       string           `db:"name"`
-	Id         string           `db:"id"`
-	Domain     string           `db:"domain_id"`
-	Identity   string           `db:"identity"`
-	Metadata   []byte           `db:"metadata"`
-	Tags       pgtype.TextArray `db:"tags"`
-	Status     clients.Status   `db:"status"`
-	GroupID    *string          `db:"group_id"`
-	ChannelID  string           `db:"channel_id"`
-	ConnType   string           `db:"type"`
-	RoleName   string           `db:"role_name"`
-	RoleID     string           `db:"role_id"`
-	Actions    pq.StringArray   `db:"actions"`
-	AccessType string           `db:"access_type"`
+	Limit       uint64           `db:"limit"`
+	Offset      uint64           `db:"offset"`
+	Name        string           `db:"name"`
+	Id          string           `db:"id"`
+	Domain      string           `db:"domain_id"`
+	Identity    string           `db:"identity"`
+	Metadata    []byte           `db:"metadata"`
+	Tags        pgtype.TextArray `db:"tags"`
+	Status      clients.Status   `db:"status"`
+	GroupID     *string          `db:"group_id"`
+	ChannelID   string           `db:"channel_id"`
+	ConnType    string           `db:"type"`
+	RoleName    string           `db:"role_name"`
+	RoleID      string           `db:"role_id"`
+	Actions     pq.StringArray   `db:"actions"`
+	AccessType  string           `db:"access_type"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func PageQuery(pm clients.Page) (string, error) {
@@ -1287,6 +1291,13 @@ func PageQuery(pm clients.Page) (string, error) {
 	}
 	if len(pm.Metadata) > 0 {
 		query = append(query, "c.metadata @> :metadata")
+	}
+
+	if !pm.CreatedFrom.IsZero() {
+		query = append(query, "c.created_at >= :created_from")
+	}
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "c.created_at <= :created_to")
 	}
 
 	var emq string

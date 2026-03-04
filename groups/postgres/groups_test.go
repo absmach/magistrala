@@ -675,7 +675,7 @@ func TestRetrieveAll(t *testing.T) {
 
 	repo := postgres.New(database)
 	num := 200
-	baseTime := time.Now().UTC().Truncate(time.Microsecond)
+	baseTime := time.Now().UTC().Truncate(time.Millisecond)
 
 	var items []groups.Group
 	parentID := ""
@@ -688,8 +688,8 @@ func TestRetrieveAll(t *testing.T) {
 			Name:        name,
 			Description: desc,
 			Metadata:    map[string]any{"name": name},
-			CreatedAt:   baseTime.Add(time.Duration(i) * time.Microsecond),
-			UpdatedAt:   baseTime.Add(time.Duration(i) * time.Microsecond),
+			CreatedAt:   baseTime.Add(time.Duration(i) * time.Millisecond),
+			UpdatedAt:   baseTime.Add(time.Duration(i) * time.Millisecond),
 			Status:      groups.EnabledStatus,
 			Tags:        []string{"tag1", "tag2"},
 		}
@@ -1177,6 +1177,112 @@ func TestRetrieveAll(t *testing.T) {
 				},
 				Groups: []groups.Group(nil),
 			},
+		},
+		{
+			desc: "retrieve groups with created_from",
+			page: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset:      0,
+					Limit:       200,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(100 * time.Millisecond),
+				},
+			},
+			response: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Groups: items[100:],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve groups with created_to",
+			page: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset:    0,
+					Limit:     200,
+					Order:     "created_at",
+					Dir:       ascDir,
+					CreatedTo: baseTime.Add(99 * time.Millisecond),
+				},
+			},
+			response: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Groups: items[:100],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve groups with both created_from and created_to",
+			page: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset:      0,
+					Limit:       200,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(50 * time.Millisecond),
+					CreatedTo:   baseTime.Add(149 * time.Millisecond),
+				},
+			},
+			response: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total:  100,
+					Offset: 0,
+					Limit:  200,
+				},
+				Groups: items[50:150],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve groups with created_from returning no results",
+			page: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset:      0,
+					Limit:       10,
+					Order:       "created_at",
+					Dir:         ascDir,
+					CreatedFrom: baseTime.Add(1000 * time.Millisecond),
+				},
+			},
+			response: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total:  0,
+					Offset: 0,
+					Limit:  10,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve groups with created_to returning no results",
+			page: groups.Page{
+				PageMeta: groups.PageMeta{
+					Offset:    0,
+					Limit:     10,
+					Order:     "created_at",
+					Dir:       ascDir,
+					CreatedTo: baseTime.Add(-1 * time.Millisecond),
+				},
+			},
+			response: groups.Page{
+				PageMeta: groups.PageMeta{
+					Total:  0,
+					Offset: 0,
+					Limit:  10,
+				},
+				Groups: []groups.Group(nil),
+			},
+			err: nil,
 		},
 	}
 

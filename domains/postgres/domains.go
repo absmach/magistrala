@@ -660,21 +660,23 @@ func toDomain(d dbDomain) (domains.Domain, error) {
 }
 
 type dbDomainsPage struct {
-	Total    uint64           `db:"total"`
-	Limit    uint64           `db:"limit"`
-	Offset   uint64           `db:"offset"`
-	Order    string           `db:"order"`
-	Dir      string           `db:"dir"`
-	Name     string           `db:"name"`
-	RoleID   string           `db:"role_id"`
-	RoleName string           `db:"role_name"`
-	Actions  pq.StringArray   `db:"actions"`
-	ID       string           `db:"id"`
-	IDs      []string         `db:"ids"`
-	Metadata []byte           `db:"metadata"`
-	Tags     pgtype.TextArray `db:"tags"`
-	Status   domains.Status   `db:"status"`
-	UserID   string           `db:"member_id"`
+	Total       uint64           `db:"total"`
+	Limit       uint64           `db:"limit"`
+	Offset      uint64           `db:"offset"`
+	Order       string           `db:"order"`
+	Dir         string           `db:"dir"`
+	Name        string           `db:"name"`
+	RoleID      string           `db:"role_id"`
+	RoleName    string           `db:"role_name"`
+	Actions     pq.StringArray   `db:"actions"`
+	ID          string           `db:"id"`
+	IDs         []string         `db:"ids"`
+	Metadata    []byte           `db:"metadata"`
+	Tags        pgtype.TextArray `db:"tags"`
+	Status      domains.Status   `db:"status"`
+	UserID      string           `db:"member_id"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func toDBDomainsPage(pm domains.Page) (dbDomainsPage, error) {
@@ -687,21 +689,23 @@ func toDBDomainsPage(pm domains.Page) (dbDomainsPage, error) {
 		return dbDomainsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 	return dbDomainsPage{
-		Total:    pm.Total,
-		Limit:    pm.Limit,
-		Offset:   pm.Offset,
-		Order:    pm.Order,
-		Dir:      pm.Dir,
-		Name:     pm.Name,
-		RoleID:   pm.RoleID,
-		RoleName: pm.RoleName,
-		Actions:  pm.Actions,
-		ID:       pm.ID,
-		IDs:      pm.IDs,
-		Metadata: data,
-		Tags:     tags,
-		Status:   pm.Status,
-		UserID:   pm.UserID,
+		Total:       pm.Total,
+		Limit:       pm.Limit,
+		Offset:      pm.Offset,
+		Order:       pm.Order,
+		Dir:         pm.Dir,
+		Name:        pm.Name,
+		RoleID:      pm.RoleID,
+		RoleName:    pm.RoleName,
+		Actions:     pm.Actions,
+		ID:          pm.ID,
+		IDs:         pm.IDs,
+		Metadata:    data,
+		Tags:        tags,
+		Status:      pm.Status,
+		UserID:      pm.UserID,
+		CreatedFrom: pm.CreatedFrom,
+		CreatedTo:   pm.CreatedTo,
 	}, nil
 }
 
@@ -756,6 +760,13 @@ func buildPageQuery(pm domains.Page) (string, error) {
 	}
 	if mq != "" {
 		query = append(query, mq)
+	}
+
+	if !pm.CreatedFrom.IsZero() {
+		query = append(query, "d.created_at >= :created_from")
+	}
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "d.created_at <= :created_to")
 	}
 
 	if len(query) > 0 {

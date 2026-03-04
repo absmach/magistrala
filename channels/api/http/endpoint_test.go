@@ -47,10 +47,11 @@ var (
 		UpdatedBy: testsutil.GenerateUUID(&testing.T{}),
 		Status:    channels.EnabledStatus,
 	}
-	validID      = testsutil.GenerateUUID(&testing.T{})
-	validToken   = "validToken"
-	invalidToken = "invalidToken"
-	contentType  = "application/json"
+	validID        = testsutil.GenerateUUID(&testing.T{})
+	validToken     = "validToken"
+	invalidToken   = "invalidToken"
+	contentType    = "application/json"
+	validTimeStamp = time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
 )
 
 func newChannelsServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
@@ -890,6 +891,105 @@ func TestListChannels(t *testing.T) {
 			domainID: validID,
 			token:    validToken,
 			query:    "connection_type=publish&connection_type=subscribe",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with created_from",
+			domainID: validID,
+			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+			},
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with created_to",
+			domainID: validID,
+			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:    0,
+				Limit:     10,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				Actions:   []string{},
+				CreatedTo: validTimeStamp,
+			},
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_to=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with both created_from and created_to",
+			domainID: validID,
+			token:    validToken,
+			pageMeta: channels.Page{
+				Offset:      0,
+				Limit:       10,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				Actions:     []string{},
+				CreatedFrom: validTimeStamp,
+				CreatedTo:   validTimeStamp,
+			},
+			listChannelsResponse: channels.ChannelsPage{
+				Page: channels.Page{
+					Total: 1,
+				},
+				Channels: []channels.Channel{validChannelResp},
+			},
+			query:  "created_from=2024-01-01T00:00:00Z&created_to=2024-01-01T00:00:00Z",
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:     "list channels with invalid created_from",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_from=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with duplicate created_from",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_from=2024-01-01T00:00:00Z&created_from=2024-01-02T00:00:00Z",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with invalid created_to",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_to=invalid-timestamp",
+			status:   http.StatusBadRequest,
+			err:      apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:     "list channels with duplicate created_to",
+			domainID: validID,
+			token:    validToken,
+			query:    "created_to=2024-12-31T23:59:59Z&created_to=2024-12-30T23:59:59Z",
 			status:   http.StatusBadRequest,
 			err:      apiutil.ErrInvalidQueryParams,
 		},

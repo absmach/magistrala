@@ -122,19 +122,21 @@ func listUsersEndpoint(svc users.Service) endpoint.Endpoint {
 		}
 
 		pm := users.Page{
-			Status:    req.status,
-			Offset:    req.offset,
-			Limit:     req.limit,
-			OnlyTotal: req.onlyTotal,
-			Username:  req.userName,
-			Tags:      req.tags,
-			Metadata:  req.metadata,
-			FirstName: req.firstName,
-			LastName:  req.lastName,
-			Email:     req.email,
-			Order:     req.order,
-			Dir:       req.dir,
-			Id:        req.id,
+			Status:      req.status,
+			Offset:      req.offset,
+			Limit:       req.limit,
+			OnlyTotal:   req.onlyTotal,
+			Username:    req.userName,
+			Tags:        req.tags,
+			Metadata:    req.metadata,
+			FirstName:   req.firstName,
+			LastName:    req.lastName,
+			Email:       req.email,
+			Order:       req.order,
+			Dir:         req.dir,
+			Id:          req.id,
+			CreatedFrom: req.createdFrom,
+			CreatedTo:   req.createdTo,
 		}
 
 		page, err := svc.ListUsers(ctx, session, pm)

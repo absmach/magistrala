@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strings"
+	"time"
 
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
@@ -301,22 +302,45 @@ func decodePageMeta(r *http.Request) (groups.PageMeta, error) {
 		tq = groups.ToTagsQuery(tags)
 	}
 
+	cfrom, err := apiutil.ReadStringQuery(r, "created_from", "")
+	if err != nil {
+		return groups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	cto, err := apiutil.ReadStringQuery(r, "created_to", "")
+	if err != nil {
+		return groups.PageMeta{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	var createdFrom, createdTo time.Time
+	if cfrom != "" {
+		if createdFrom, err = time.Parse(time.RFC3339, cfrom); err != nil {
+			return groups.PageMeta{}, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+	if cto != "" {
+		if createdTo, err = time.Parse(time.RFC3339, cto); err != nil {
+			return groups.PageMeta{}, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+
 	ret := groups.PageMeta{
-		Offset:     offset,
-		Limit:      limit,
-		Name:       name,
-		ID:         id,
-		Metadata:   meta,
-		Status:     st,
-		RoleName:   roleName,
-		RoleID:     roleID,
-		Actions:    actions,
-		AccessType: accessType,
-		RootGroup:  rootGroup,
-		OnlyTotal:  ot,
-		Order:      order,
-		Dir:        dir,
-		Tags:       tq,
+		Offset:      offset,
+		Limit:       limit,
+		Name:        name,
+		ID:          id,
+		Metadata:    meta,
+		Status:      st,
+		RoleName:    roleName,
+		RoleID:      roleID,
+		Actions:     actions,
+		AccessType:  accessType,
+		RootGroup:   rootGroup,
+		OnlyTotal:   ot,
+		Order:       order,
+		Dir:         dir,
+		Tags:        tq,
+		CreatedFrom: createdFrom,
+		CreatedTo:   createdTo,
 	}
 	return ret, nil
 }

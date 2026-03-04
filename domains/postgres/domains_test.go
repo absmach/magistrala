@@ -1063,6 +1063,97 @@ func TestListDomains(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "list domains with created_from filter",
+			pm: domains.Page{
+				Offset:      0,
+				Limit:       10,
+				Status:      domains.AllStatus,
+				CreatedFrom: baseTime.Add(5 * time.Millisecond),
+				Order:       "created_at",
+				Dir:         ascDir,
+			},
+			response: domains.DomainsPage{
+				Total:   5,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[5], items[6], items[7], items[8], items[9]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list domains with created_to filter",
+			pm: domains.Page{
+				Offset:    0,
+				Limit:     10,
+				Status:    domains.AllStatus,
+				CreatedTo: baseTime.Add(4 * time.Millisecond),
+				Order:     "created_at",
+				Dir:       ascDir,
+			},
+			response: domains.DomainsPage{
+				Total:   5,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[0], items[1], items[2], items[3], items[4]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list domains with both created_from and created_to filters",
+			pm: domains.Page{
+				Offset:      0,
+				Limit:       10,
+				Status:      domains.AllStatus,
+				CreatedFrom: baseTime.Add(2 * time.Millisecond),
+				CreatedTo:   baseTime.Add(7 * time.Millisecond),
+				Order:       "created_at",
+				Dir:         ascDir,
+			},
+			response: domains.DomainsPage{
+				Total:   6,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain{items[2], items[3], items[4], items[5], items[6], items[7]},
+			},
+			err: nil,
+		},
+		{
+			desc: "list domains with created_from filter returning no results",
+			pm: domains.Page{
+				Offset:      0,
+				Limit:       10,
+				Status:      domains.AllStatus,
+				CreatedFrom: baseTime.Add(20 * time.Millisecond),
+				Order:       "created_at",
+				Dir:         ascDir,
+			},
+			response: domains.DomainsPage{
+				Total:   0,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain(nil),
+			},
+			err: nil,
+		},
+		{
+			desc: "list domains with created_to filter returning no results",
+			pm: domains.Page{
+				Offset:    0,
+				Limit:     10,
+				Status:    domains.AllStatus,
+				CreatedTo: baseTime.Add(-10 * time.Millisecond),
+				Order:     "created_at",
+				Dir:       ascDir,
+			},
+			response: domains.DomainsPage{
+				Total:   0,
+				Offset:  0,
+				Limit:   10,
+				Domains: []domains.Domain(nil),
+			},
+			err: nil,
+		},
 	}
 
 	for _, tc := range cases {

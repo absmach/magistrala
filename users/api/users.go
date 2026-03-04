@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/absmach/supermq"
 	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
@@ -317,20 +318,43 @@ func decodeListUsers(_ context.Context, r *http.Request) (any, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
+	cfrom, err := apiutil.ReadStringQuery(r, "created_from", "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	cto, err := apiutil.ReadStringQuery(r, "created_to", "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	var createdFrom, createdTo time.Time
+	if cfrom != "" {
+		if createdFrom, err = time.Parse(time.RFC3339, cfrom); err != nil {
+			return nil, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+	if cto != "" {
+		if createdTo, err = time.Parse(time.RFC3339, cto); err != nil {
+			return nil, errors.Wrap(apiutil.ErrInvalidQueryParams, err)
+		}
+	}
+
 	req := listUsersReq{
-		status:    st,
-		offset:    o,
-		limit:     l,
-		onlyTotal: ot,
-		metadata:  m,
-		userName:  n,
-		firstName: i,
-		lastName:  f,
-		tags:      tq,
-		order:     order,
-		dir:       dir,
-		id:        id,
-		email:     d,
+		status:      st,
+		offset:      o,
+		limit:       l,
+		onlyTotal:   ot,
+		metadata:    m,
+		userName:    n,
+		firstName:   i,
+		lastName:    f,
+		tags:        tq,
+		order:       order,
+		dir:         dir,
+		id:          id,
+		email:       d,
+		createdFrom: createdFrom,
+		createdTo:   createdTo,
 	}
 
 	return req, nil

@@ -621,19 +621,21 @@ func ToUser(dbu DBUser) (users.User, error) {
 }
 
 type DBUsersPage struct {
-	Total     uint64           `db:"total"`
-	Limit     uint64           `db:"limit"`
-	Offset    uint64           `db:"offset"`
-	FirstName string           `db:"first_name"`
-	LastName  string           `db:"last_name"`
-	Username  string           `db:"username"`
-	Id        string           `db:"id"`
-	Email     string           `db:"email"`
-	Metadata  []byte           `db:"metadata"`
-	Tags      pgtype.TextArray `db:"tags"`
-	GroupID   string           `db:"group_id"`
-	Role      users.Role       `db:"role"`
-	Status    users.Status     `db:"status"`
+	Total       uint64           `db:"total"`
+	Limit       uint64           `db:"limit"`
+	Offset      uint64           `db:"offset"`
+	FirstName   string           `db:"first_name"`
+	LastName    string           `db:"last_name"`
+	Username    string           `db:"username"`
+	Id          string           `db:"id"`
+	Email       string           `db:"email"`
+	Metadata    []byte           `db:"metadata"`
+	Tags        pgtype.TextArray `db:"tags"`
+	GroupID     string           `db:"group_id"`
+	Role        users.Role       `db:"role"`
+	Status      users.Status     `db:"status"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {
@@ -648,18 +650,20 @@ func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {
 	}
 
 	return DBUsersPage{
-		FirstName: pm.FirstName,
-		LastName:  pm.LastName,
-		Username:  pm.Username,
-		Email:     pm.Email,
-		Id:        pm.Id,
-		Metadata:  data,
-		Total:     pm.Total,
-		Offset:    pm.Offset,
-		Limit:     pm.Limit,
-		Status:    pm.Status,
-		Tags:      tags,
-		Role:      pm.Role,
+		FirstName:   pm.FirstName,
+		LastName:    pm.LastName,
+		Username:    pm.Username,
+		Email:       pm.Email,
+		Id:          pm.Id,
+		Metadata:    data,
+		Total:       pm.Total,
+		Offset:      pm.Offset,
+		Limit:       pm.Limit,
+		Status:      pm.Status,
+		Tags:        tags,
+		Role:        pm.Role,
+		CreatedFrom: pm.CreatedFrom,
+		CreatedTo:   pm.CreatedTo,
 	}, nil
 }
 
@@ -694,12 +698,17 @@ func PageQuery(pm users.Page) (string, error) {
 	if len(pm.Metadata) > 0 {
 		query = append(query, "metadata @> :metadata")
 	}
-
 	if len(pm.IDs) != 0 {
 		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
 	}
 	if pm.Status != users.AllStatus {
 		query = append(query, "u.status = :status")
+	}
+	if !pm.CreatedFrom.IsZero() {
+		query = append(query, "created_at >= :created_from")
+	}
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "created_at <= :created_to")
 	}
 
 	var emq string

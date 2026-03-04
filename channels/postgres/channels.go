@@ -1342,6 +1342,13 @@ func PageQuery(pm channels.Page) (string, error) {
 		query = append(query, "c.metadata @> :metadata")
 	}
 
+	if !pm.CreatedFrom.IsZero() {
+		query = append(query, "c.created_at >= :created_from")
+	}
+	if !pm.CreatedTo.IsZero() {
+		query = append(query, "c.created_at <= :created_to")
+	}
+
 	var emq string
 	if len(query) > 0 {
 		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
@@ -1393,40 +1400,44 @@ func toDBChannelsPage(pm channels.Page) (dbChannelsPage, error) {
 	}
 
 	return dbChannelsPage{
-		Limit:      pm.Limit,
-		Offset:     pm.Offset,
-		Name:       pm.Name,
-		Id:         pm.ID,
-		Domain:     pm.Domain,
-		Metadata:   data,
-		Tags:       tags,
-		Status:     pm.Status,
-		GroupID:    sql.NullString{Valid: pm.Group.Valid, String: pm.Group.Value},
-		ClientID:   pm.Client,
-		ConnType:   connType,
-		RoleName:   pm.RoleName,
-		RoleID:     pm.RoleID,
-		Actions:    pm.Actions,
-		AccessType: pm.AccessType,
+		Limit:       pm.Limit,
+		Offset:      pm.Offset,
+		Name:        pm.Name,
+		Id:          pm.ID,
+		Domain:      pm.Domain,
+		Metadata:    data,
+		Tags:        tags,
+		Status:      pm.Status,
+		GroupID:     sql.NullString{Valid: pm.Group.Valid, String: pm.Group.Value},
+		ClientID:    pm.Client,
+		ConnType:    connType,
+		RoleName:    pm.RoleName,
+		RoleID:      pm.RoleID,
+		Actions:     pm.Actions,
+		AccessType:  pm.AccessType,
+		CreatedFrom: pm.CreatedFrom,
+		CreatedTo:   pm.CreatedTo,
 	}, nil
 }
 
 type dbChannelsPage struct {
-	Limit      uint64           `db:"limit"`
-	Offset     uint64           `db:"offset"`
-	Name       string           `db:"name"`
-	Id         string           `db:"id"`
-	Domain     string           `db:"domain_id"`
-	Metadata   []byte           `db:"metadata"`
-	Tags       pgtype.TextArray `db:"tags"`
-	Status     channels.Status  `db:"status"`
-	GroupID    sql.NullString   `db:"group_id"`
-	ClientID   string           `db:"client_id"`
-	ConnType   uint8            `db:"conn_type"`
-	RoleName   string           `db:"role_name"`
-	RoleID     string           `db:"role_id"`
-	Actions    pq.StringArray   `db:"actions"`
-	AccessType string           `db:"access_type"`
+	Limit       uint64           `db:"limit"`
+	Offset      uint64           `db:"offset"`
+	Name        string           `db:"name"`
+	Id          string           `db:"id"`
+	Domain      string           `db:"domain_id"`
+	Metadata    []byte           `db:"metadata"`
+	Tags        pgtype.TextArray `db:"tags"`
+	Status      channels.Status  `db:"status"`
+	GroupID     sql.NullString   `db:"group_id"`
+	ClientID    string           `db:"client_id"`
+	ConnType    uint8            `db:"conn_type"`
+	RoleName    string           `db:"role_name"`
+	RoleID      string           `db:"role_id"`
+	Actions     pq.StringArray   `db:"actions"`
+	AccessType  string           `db:"access_type"`
+	CreatedFrom time.Time        `db:"created_from"`
+	CreatedTo   time.Time        `db:"created_to"`
 }
 
 type dbConnection struct {

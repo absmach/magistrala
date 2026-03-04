@@ -3,7 +3,10 @@
 
 package groups
 
-import "strings"
+import (
+	"strings"
+	"time"
+)
 
 type Operator uint8
 
@@ -38,22 +41,24 @@ func ToTagsQuery(s string) TagsQuery {
 
 // PageMeta contains page metadata that helps navigation.
 type PageMeta struct {
-	Total      uint64    `json:"total"`
-	Offset     uint64    `json:"offset"`
-	Limit      uint64    `json:"limit"`
-	OnlyTotal  bool      `json:"only_total"`
-	Name       string    `json:"name,omitempty"`
-	ID         string    `json:"id,omitempty"`
-	Dir        string    `json:"dir,omitempty"`
-	Order      string    `json:"order,omitempty"`
-	Path       string    `json:"path,omitempty"`
-	DomainID   string    `json:"domain_id,omitempty"`
-	Tags       TagsQuery `json:"tags,omitempty"`
-	Metadata   Metadata  `json:"metadata,omitempty"`
-	Status     Status    `json:"status,omitempty"`
-	RoleName   string    `json:"role_name,omitempty"`
-	RoleID     string    `json:"role_id,omitempty"`
-	Actions    []string  `json:"actions,omitempty"`
-	AccessType string    `json:"access_type,omitempty"`
-	RootGroup  bool      `json:"root_group,omitempty"`
+	Total       uint64    `json:"total"`
+	Offset      uint64    `json:"offset"`
+	Limit       uint64    `json:"limit"`
+	OnlyTotal   bool      `json:"only_total"`
+	Name        string    `json:"name,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	Dir         string    `json:"dir,omitempty"`
+	Order       string    `json:"order,omitempty"`
+	Path        string    `json:"path,omitempty"`
+	DomainID    string    `json:"domain_id,omitempty"`
+	Tags        TagsQuery `json:"tags,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Status      Status    `json:"status,omitempty"`
+	RoleName    string    `json:"role_name,omitempty"`
+	RoleID      string    `json:"role_id,omitempty"`
+	Actions     []string  `json:"actions,omitempty"`
+	AccessType  string    `json:"access_type,omitempty"`
+	RootGroup   bool      `json:"root_group,omitempty"`
+	CreatedFrom time.Time `json:"created_from,omitempty"`
+	CreatedTo   time.Time `json:"created_to,omitempty"`
 }

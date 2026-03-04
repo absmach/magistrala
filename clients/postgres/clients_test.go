@@ -1109,7 +1109,7 @@ func TestRetrieveAll(t *testing.T) {
 	expectedClients := []clients.Client{}
 	disabledClients := []clients.Client{}
 	reversedClients := []clients.Client{}
-	baseTime := time.Now().UTC().Truncate(time.Microsecond)
+	baseTime := time.Now().UTC().Truncate(time.Millisecond)
 	for i := uint64(0); i < nClients; i++ {
 		client := clients.Client{
 			ID:     testsutil.GenerateUUID(t),
@@ -1124,8 +1124,8 @@ func TestRetrieveAll(t *testing.T) {
 				"department": namegen.Generate(),
 			},
 			Status:    clients.EnabledStatus,
-			CreatedAt: baseTime.Add(time.Duration(i) * time.Microsecond),
-			UpdatedAt: baseTime.Add(time.Duration(i) * time.Microsecond),
+			CreatedAt: baseTime.Add(time.Duration(i) * time.Millisecond),
+			UpdatedAt: baseTime.Add(time.Duration(i) * time.Millisecond),
 		}
 		if i%50 == 0 {
 			client.Status = clients.DisabledStatus
@@ -1807,6 +1807,102 @@ func TestRetrieveAll(t *testing.T) {
 					Offset: 0,
 					Limit:  10,
 				},
+			},
+		},
+		{
+			desc: "with created_from",
+			pm: clients.Page{
+				Offset:      0,
+				Limit:       nClients,
+				Status:      clients.AllStatus,
+				CreatedFrom: baseTime.Add(100 * time.Millisecond),
+				Order:       defOrder,
+				Dir:         ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  nClients,
+				},
+				Clients: expectedClients[100:],
+			},
+		},
+		{
+			desc: "with created_to",
+			pm: clients.Page{
+				Offset:    0,
+				Limit:     nClients,
+				Status:    clients.AllStatus,
+				CreatedTo: baseTime.Add(99 * time.Millisecond),
+				Order:     defOrder,
+				Dir:       ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  nClients,
+				},
+				Clients: expectedClients[:100],
+			},
+		},
+		{
+			desc: "with both created_from and created_to",
+			pm: clients.Page{
+				Offset:      0,
+				Limit:       nClients,
+				Status:      clients.AllStatus,
+				CreatedFrom: baseTime.Add(50 * time.Millisecond),
+				CreatedTo:   baseTime.Add(149 * time.Millisecond),
+				Order:       defOrder,
+				Dir:         ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  100,
+					Offset: 0,
+					Limit:  nClients,
+				},
+				Clients: expectedClients[50:150],
+			},
+		},
+		{
+			desc: "with created_from  returning no results",
+			pm: clients.Page{
+				Offset:      0,
+				Limit:       nClients,
+				Status:      clients.AllStatus,
+				CreatedFrom: baseTime.Add(500 * time.Millisecond),
+				Order:       defOrder,
+				Dir:         ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  nClients,
+				},
+				Clients: []clients.Client(nil),
+			},
+		},
+		{
+			desc: "with created_to returning no results",
+			pm: clients.Page{
+				Offset:    0,
+				Limit:     nClients,
+				Status:    clients.AllStatus,
+				CreatedTo: baseTime.Add(-10 * time.Millisecond),
+				Order:     defOrder,
+				Dir:       ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  nClients,
+				},
+				Clients: []clients.Client(nil),
 			},
 		},
 	}

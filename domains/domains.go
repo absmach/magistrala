@@ -155,23 +155,25 @@ func ToTagsQuery(s string) TagsQuery {
 }
 
 type Page struct {
-	Total     uint64    `json:"total"`
-	Offset    uint64    `json:"offset"`
-	Limit     uint64    `json:"limit"`
-	OnlyTotal bool      `json:"only_total"`
-	Name      string    `json:"name,omitempty"`
-	Order     string    `json:"-"`
-	Dir       string    `json:"-"`
-	Metadata  Metadata  `json:"metadata,omitempty"`
-	Tags      TagsQuery `json:"tags,omitempty"`
-	RoleName  string    `json:"role_name,omitempty"`
-	RoleID    string    `json:"role_id,omitempty"`
-	Actions   []string  `json:"actions,omitempty"`
-	Status    Status    `json:"status,omitempty"`
-	ID        string    `json:"id,omitempty"`
-	IDs       []string  `json:"-"`
-	Identity  string    `json:"identity,omitempty"`
-	UserID    string    `json:"user_id,omitempty"`
+	Total       uint64    `json:"total"`
+	Offset      uint64    `json:"offset"`
+	Limit       uint64    `json:"limit"`
+	OnlyTotal   bool      `json:"only_total"`
+	Name        string    `json:"name,omitempty"`
+	Order       string    `json:"-"`
+	Dir         string    `json:"-"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Tags        TagsQuery `json:"tags,omitempty"`
+	RoleName    string    `json:"role_name,omitempty"`
+	RoleID      string    `json:"role_id,omitempty"`
+	Actions     []string  `json:"actions,omitempty"`
+	Status      Status    `json:"status,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	IDs         []string  `json:"-"`
+	Identity    string    `json:"identity,omitempty"`
+	UserID      string    `json:"user_id,omitempty"`
+	CreatedFrom time.Time `json:"created_from,omitempty"`
+	CreatedTo   time.Time `json:"created_to,omitempty"`
 }
 
 type DomainsPage struct {

@@ -10,6 +10,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
 	api "github.com/absmach/supermq/api/http"
@@ -506,6 +507,98 @@ func TestListUsers(t *testing.T) {
 					Total: 1,
 				},
 				Users: []sdk.User{cls[50]},
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with CreatedFrom",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset:      offset,
+				Limit:       limit,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
+			svcReq: users.Page{
+				Offset:      offset,
+				Limit:       limit,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+			},
+			svcRes: users.UsersPage{
+				Page: users.Page{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Users: convertUsers(cls[offset:limit]),
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Users: cls[offset:limit],
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with CreatedTo",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset:    offset,
+				Limit:     limit,
+				CreatedTo: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+			},
+			svcReq: users.Page{
+				Offset:    offset,
+				Limit:     limit,
+				CreatedTo: time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+			},
+			svcRes: users.UsersPage{
+				Page: users.Page{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Users: convertUsers(cls[offset:limit]),
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: uint64(len(cls[offset:limit])),
+				},
+				Users: cls[offset:limit],
+			},
+			err: nil,
+		},
+		{
+			desc:  "list users with both CreatedFrom and CreatedTo",
+			token: validToken,
+			pageMeta: sdk.PageMetadata{
+				Offset:      offset,
+				Limit:       limit,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				CreatedTo:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+			},
+			svcReq: users.Page{
+				Offset:      offset,
+				Limit:       limit,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				CreatedTo:   time.Date(2025, 12, 31, 23, 59, 59, 0, time.UTC),
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+			},
+			svcRes: users.UsersPage{
+				Page: users.Page{
+					Total: 2,
+				},
+				Users: []users.User{convertUser(cls[10]), convertUser(cls[20])},
+			},
+			svcErr: nil,
+			response: sdk.UsersPage{
+				PageRes: sdk.PageRes{
+					Total: 2,
+				},
+				Users: []sdk.User{cls[10], cls[20]},
 			},
 			err: nil,
 		},

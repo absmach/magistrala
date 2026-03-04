@@ -1034,6 +1034,90 @@ func TestRetrieveAll(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "retrieve users created from specific time",
+			pageMeta: users.Page{
+				CreatedFrom: baseTime.Add(50 * time.Millisecond),
+				Offset:      0,
+				Limit:       200,
+				Role:        users.AllRole,
+				Status:      users.AllStatus,
+				Order:       "created_at",
+				Dir:         ascDir,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  150,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: items[50:200],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve users created to specific time",
+			pageMeta: users.Page{
+				CreatedTo: baseTime.Add(49 * time.Millisecond),
+				Offset:    0,
+				Limit:     200,
+				Role:      users.AllRole,
+				Status:    users.AllStatus,
+				Order:     "created_at",
+				Dir:       ascDir,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  50,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: items[0:50],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve users created within time range",
+			pageMeta: users.Page{
+				CreatedFrom: baseTime.Add(50 * time.Millisecond),
+				CreatedTo:   baseTime.Add(99 * time.Millisecond),
+				Offset:      0,
+				Limit:       200,
+				Role:        users.AllRole,
+				Status:      users.AllStatus,
+				Order:       "created_at",
+				Dir:         ascDir,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  50,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: items[50:100],
+			},
+			err: nil,
+		},
+		{
+			desc: "retrieve users with time range outside of all records",
+			pageMeta: users.Page{
+				CreatedFrom: baseTime.Add(300 * time.Millisecond),
+				CreatedTo:   baseTime.Add(400 * time.Millisecond),
+				Offset:      0,
+				Limit:       200,
+				Role:        users.AllRole,
+				Status:      users.AllStatus,
+			},
+			page: users.UsersPage{
+				Page: users.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  200,
+				},
+				Users: []users.User{},
+			},
+			err: nil,
+		},
 	}
 
 	for _, tc := range cases {

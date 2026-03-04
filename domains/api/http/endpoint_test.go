@@ -32,6 +32,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+const contentType = "application/json"
+
 var (
 	validMetadata = domains.Metadata{"role": "client"}
 	ID            = testsutil.GenerateUUID(&testing.T{})
@@ -49,12 +51,6 @@ var (
 	userID       = testsutil.GenerateUUID(&testing.T{})
 	validID      = testsutil.GenerateUUID(&testing.T{})
 	domainID     = testsutil.GenerateUUID(&testing.T{})
-)
-
-const (
-	contentType     = "application/json"
-	refreshDuration = 24 * time.Hour
-	invalidDuration = 7 * 24 * time.Hour
 )
 
 type testRequest struct {
@@ -618,6 +614,89 @@ func TestListDomains(t *testing.T) {
 			listDomainsResp: domains.DomainsPage{},
 			svcErr:          svcerr.ErrViewEntity,
 			err:             svcerr.ErrViewEntity,
+		},
+		{
+			desc:  "list domains with created_from parameter",
+			token: validToken,
+			query: "created_from=2024-01-01T00:00:00Z",
+			page: domains.Page{
+				Offset:      api.DefOffset,
+				Limit:       api.DefLimit,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+			},
+			listDomainsResp: domains.DomainsPage{
+				Total:   1,
+				Domains: []domains.Domain{domain},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:  "list domains with created_to parameter",
+			token: validToken,
+			query: "created_to=2024-12-31T23:59:59Z",
+			page: domains.Page{
+				Offset:    api.DefOffset,
+				Limit:     api.DefLimit,
+				Order:     api.DefOrder,
+				Dir:       api.DefDir,
+				CreatedTo: time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
+			},
+			listDomainsResp: domains.DomainsPage{
+				Total:   1,
+				Domains: []domains.Domain{domain},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:  "list domains with both created_from and created_to parameters",
+			token: validToken,
+			query: "created_from=2024-01-01T00:00:00Z&created_to=2024-12-31T23:59:59Z",
+			page: domains.Page{
+				Offset:      api.DefOffset,
+				Limit:       api.DefLimit,
+				Order:       api.DefOrder,
+				Dir:         api.DefDir,
+				CreatedFrom: time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
+				CreatedTo:   time.Date(2024, 12, 31, 23, 59, 59, 0, time.UTC),
+			},
+			listDomainsResp: domains.DomainsPage{
+				Total:   1,
+				Domains: []domains.Domain{domain},
+			},
+			status: http.StatusOK,
+			err:    nil,
+		},
+		{
+			desc:   "list domains with invalid created_from",
+			token:  validToken,
+			query:  "created_from=invalid-timestamp",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:   "list domains with duplicate created_from",
+			token:  validToken,
+			query:  "created_from=2024-01-01T00:00:00Z&created_from=2024-01-02T00:00:00Z",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:   "list domains with invalid created_to",
+			token:  validToken,
+			query:  "created_to=invalid-timestamp",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrInvalidQueryParams,
+		},
+		{
+			desc:   "list domains with duplicate created_to",
+			token:  validToken,
+			query:  "created_to=2024-12-31T23:59:59Z&created_to=2025-01-01T00:00:00Z",
+			status: http.StatusBadRequest,
+			err:    apiutil.ErrInvalidQueryParams,
 		},
 	}
 

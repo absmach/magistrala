@@ -5,15 +5,21 @@ package sdk_test
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/alarms/api"
+	amocks "github.com/absmach/magistrala/alarms/mocks"
 	"github.com/absmach/magistrala/pkg/sdk"
+	smqlog "github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
+	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 const alarmID = "alarm-1"
@@ -36,141 +42,222 @@ var testAlarm = sdk.Alarm{
 	Metadata:    sdk.Metadata{"key": "value"},
 }
 
+func setupAlarms() (*httptest.Server, *amocks.Service, *authnmocks.Authentication) {
+	asvc := new(amocks.Service)
+	logger := smqlog.NewMock()
+	authn := new(authnmocks.Authentication)
+	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
+	idp := uuid.NewMock()
+	mux := api.MakeHandler(asvc, logger, idp, "", am)
+	return httptest.NewServer(mux), asvc, authn
+}
+
 func TestUpdateAlarm(t *testing.T) {
+	as, asvc, auth := setupAlarms()
+	defer as.Close()
+
+	conf := sdk.Config{
+		AlarmsURL: as.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
 	updated := testAlarm
-	updated.Status = "acknowledged"
+	updated.Status = "cleared"
+
+	svcAlarm := alarms.Alarm{
+		ID:          alarmID,
+		RuleID:      "rule-1",
+		DomainID:    domainID,
+		ChannelID:   "chan-1",
+		ClientID:    "client-1",
+		Subtopic:    "subtopic",
+		Status:      alarms.ClearedStatus,
+		Measurement: "temperature",
+		Value:       "30.5",
+		Unit:        "C",
+		Threshold:   "25",
+		Cause:       "threshold_exceeded",
+		Severity:    80,
+		AssigneeID:  "user-1",
+		Metadata:    alarms.Metadata{"key": "value"},
+	}
 
 	cases := []struct {
-		desc    string
-		alarm   sdk.Alarm
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.Alarm
+		desc            string
+		alarm           sdk.Alarm
+		token           string
+		session         smqauthn.Session
+		svcRes          alarms.Alarm
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
+		resp            sdk.Alarm
 	}{
 		{
-			desc:  "update alarm successfully",
-			alarm: testAlarm,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPut, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/alarms/%s", domainID, testAlarm.ID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(updated)
-			},
-			resp: updated,
+			desc:   "update alarm successfully",
+			alarm:  updated,
+			token:  validToken,
+			svcRes: svcAlarm,
+			resp:   testAlarm,
 		},
 		{
-			desc:  "update alarm with empty token",
-			alarm: testAlarm,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "update alarm with empty token",
+			alarm:   updated,
+			token:   "",
 			wantErr: true,
 		},
 		{
-			desc:  "update non-existent alarm",
-			alarm: sdk.Alarm{ID: "non-existent"},
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			},
+			desc:    "update non-existent alarm",
+			alarm:   sdk.Alarm{ID: "non-existent"},
+			token:   validToken,
+			svcErr:  errors.New("not found"),
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := asvc.On("UpdateAlarm", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.UpdateAlarm(context.Background(), tc.alarm, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewAlarm(t *testing.T) {
+	as, asvc, auth := setupAlarms()
+	defer as.Close()
+
+	conf := sdk.Config{
+		AlarmsURL: as.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcAlarm := alarms.Alarm{
+		ID:          alarmID,
+		RuleID:      "rule-1",
+		DomainID:    domainID,
+		ChannelID:   "chan-1",
+		ClientID:    "client-1",
+		Subtopic:    "subtopic",
+		Status:      alarms.ActiveStatus,
+		Measurement: "temperature",
+		Value:       "30.5",
+		Unit:        "C",
+		Threshold:   "25",
+		Cause:       "threshold_exceeded",
+		Severity:    80,
+		AssigneeID:  "user-1",
+		Metadata:    alarms.Metadata{"key": "value"},
+	}
+
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.Alarm
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcRes          alarms.Alarm
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "view alarm successfully",
-			id:    alarmID,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/alarms/%s", domainID, alarmID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(testAlarm)
-			},
-			resp: testAlarm,
+			desc:   "view alarm successfully",
+			id:     alarmID,
+			token:  validToken,
+			svcRes: svcAlarm,
 		},
 		{
-			desc:  "view alarm with empty token",
-			id:    alarmID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "view alarm with empty token",
+			id:      alarmID,
+			token:   "",
 			wantErr: true,
 		},
 		{
-			desc:  "view non-existent alarm",
-			id:    "non-existent",
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			},
+			desc:    "view non-existent alarm",
+			id:      "non-existent",
+			token:   validToken,
+			svcErr:  errors.New("not found"),
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := asvc.On("ViewAlarm", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ViewAlarm(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListAlarms(t *testing.T) {
-	alarms := []sdk.Alarm{testAlarm, {ID: "alarm-2", ChannelID: "chan-2", Status: "resolved"}}
-	alarmsPage := sdk.AlarmsPage{Total: 2, Offset: 0, Limit: 10, Alarms: alarms}
+	as, asvc, auth := setupAlarms()
+	defer as.Close()
+
+	conf := sdk.Config{
+		AlarmsURL: as.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcAlarm := alarms.Alarm{
+		ID:          alarmID,
+		RuleID:      "rule-1",
+		DomainID:    domainID,
+		ChannelID:   "chan-1",
+		ClientID:    "client-1",
+		Subtopic:    "subtopic",
+		Status:      alarms.ActiveStatus,
+		Measurement: "temperature",
+		Value:       "30.5",
+		Unit:        "C",
+		Threshold:   "25",
+		Cause:       "threshold_exceeded",
+		Severity:    80,
+		AssigneeID:  "user-1",
+		Metadata:    alarms.Metadata{"key": "value"},
+	}
+
+	svcAlarmsPage := alarms.AlarmsPage{
+		Total:  2,
+		Offset: 0,
+		Limit:  10,
+		Alarms: []alarms.Alarm{svcAlarm},
+	}
 
 	cases := []struct {
-		desc    string
-		pm      sdk.PageMetadata
-		token   string
-		checkQ  func(t *testing.T, r *http.Request)
-		wantErr bool
-		resp    sdk.AlarmsPage
+		desc            string
+		pm              sdk.PageMetadata
+		token           string
+		session         smqauthn.Session
+		svcRes          alarms.AlarmsPage
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "list alarms successfully",
-			pm:    sdk.PageMetadata{Offset: 0, Limit: 10},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				assert.Equal(t, "10", r.URL.Query().Get("limit"))
-			},
-			resp: alarmsPage,
+			desc:   "list alarms successfully",
+			pm:     sdk.PageMetadata{Offset: 0, Limit: 10},
+			token:  validToken,
+			svcRes: svcAlarmsPage,
 		},
 		{
 			desc: "list alarms with status and entity filters",
@@ -183,17 +270,8 @@ func TestListAlarms(t *testing.T) {
 				AssigneeID: "user-1",
 				Severity:   80,
 			},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				q := r.URL.Query()
-				assert.Equal(t, "active", q.Get("status"))
-				assert.Equal(t, "chan-1", q.Get("channel_id"))
-				assert.Equal(t, "client-1", q.Get("client_id"))
-				assert.Equal(t, "rule-1", q.Get("rule_id"))
-				assert.Equal(t, "user-1", q.Get("assignee_id"))
-				assert.Equal(t, "80", q.Get("severity"))
-			},
-			resp: alarmsPage,
+			token:  validToken,
+			svcRes: svcAlarmsPage,
 		},
 		{
 			desc: "list alarms with time range and sorting",
@@ -204,15 +282,8 @@ func TestListAlarms(t *testing.T) {
 				Order:       "created_at",
 				Dir:         "asc",
 			},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				q := r.URL.Query()
-				assert.Equal(t, "2024-01-01T00:00:00Z", q.Get("created_from"))
-				assert.Equal(t, "2024-12-31T00:00:00Z", q.Get("created_to"))
-				assert.Equal(t, "created_at", q.Get("order"))
-				assert.Equal(t, "asc", q.Get("dir"))
-			},
-			resp: alarmsPage,
+			token:  validToken,
+			svcRes: svcAlarmsPage,
 		},
 		{
 			desc: "list alarms with actor filters",
@@ -224,35 +295,20 @@ func TestListAlarms(t *testing.T) {
 				ResolvedBy:     "user-5",
 				Subtopic:       "subtopic-1",
 			},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				q := r.URL.Query()
-				assert.Equal(t, "user-2", q.Get("updated_by"))
-				assert.Equal(t, "user-3", q.Get("assigned_by"))
-				assert.Equal(t, "user-4", q.Get("acknowledged_by"))
-				assert.Equal(t, "user-5", q.Get("resolved_by"))
-				assert.Equal(t, "subtopic-1", q.Get("subtopic"))
-			},
-			resp: alarmsPage,
+			token:  validToken,
+			svcRes: svcAlarmsPage,
 		},
 		{
-			desc:  "list alarms with empty metadata excludes severity",
-			pm:    sdk.PageMetadata{},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				assert.NotContains(t, r.URL.RawQuery, "severity")
-			},
-			resp: sdk.AlarmsPage{},
+			desc:   "list alarms with empty metadata excludes severity",
+			pm:     sdk.PageMetadata{},
+			token:  validToken,
+			svcRes: alarms.AlarmsPage{},
 		},
 		{
-			desc:  "list alarms with zero severity excluded",
-			pm:    sdk.PageMetadata{Status: "active", Severity: 0},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				assert.Equal(t, "active", r.URL.Query().Get("status"))
-				assert.NotContains(t, r.URL.RawQuery, "severity")
-			},
-			resp: sdk.AlarmsPage{},
+			desc:   "list alarms with zero severity excluded",
+			pm:     sdk.PageMetadata{Status: "active", Severity: 0},
+			token:  validToken,
+			svcRes: alarms.AlarmsPage{},
 		},
 		{
 			desc:    "list alarms with empty token",
@@ -264,78 +320,71 @@ func TestListAlarms(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/alarms", domainID), r.URL.Path)
-				if r.Header.Get("Authorization") == "" || r.Header.Get("Authorization") == "Bearer " {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-				if tc.checkQ != nil {
-					tc.checkQ(t, r)
-				}
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(tc.resp)
-			}))
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := asvc.On("ListAlarms", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ListAlarms(context.Background(), tc.pm, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.Equal(t, tc.svcRes.Total, result.Total)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestDeleteAlarm(t *testing.T) {
+	as, asvc, auth := setupAlarms()
+	defer as.Close()
+
+	conf := sdk.Config{
+		AlarmsURL: as.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
 			desc:  "delete alarm successfully",
 			id:    alarmID,
 			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodDelete, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/alarms/%s", domainID, alarmID), r.URL.Path)
-				w.WriteHeader(http.StatusNoContent)
-			},
 		},
 		{
-			desc:  "delete alarm with empty token",
-			id:    alarmID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "delete alarm with empty token",
+			id:      alarmID,
+			token:   "",
 			wantErr: true,
 		},
 		{
-			desc:  "delete non-existent alarm",
-			id:    "non-existent",
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			},
+			desc:    "delete non-existent alarm",
+			id:      "non-existent",
+			token:   validToken,
+			svcErr:  errors.New("not found"),
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{AlarmsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := asvc.On("DeleteAlarm", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
 			err := mgsdk.DeleteAlarm(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
-

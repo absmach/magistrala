@@ -259,8 +259,7 @@ type SDK interface {
 	DeleteReportTemplate(ctx context.Context, id, domainID, token string) errors.SDKError
 
 	// GenerateReport generates a report from a configuration.
-	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, errors.SDKError)
-
+	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, *ReportFile, errors.SDKError)
 	// Rules Engine API
 
 	// AddRule creates a new rule.

@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/absmach/supermq/pkg/errors"
@@ -36,9 +37,12 @@ type ReportConfig struct {
 	UpdatedBy      string         `json:"updated_by,omitempty"`
 }
 
-type ReportTemplate struct {
-	Header string `json:"header,omitempty"`
-	Footer string `json:"footer,omitempty"`
+type ReportTemplate any
+
+type ReportFile struct {
+	Name   string
+	Format string
+	Data   []byte
 }
 
 type ReportPage struct {
@@ -204,14 +208,14 @@ func (sdk mgSDK) DisableReportConfig(ctx context.Context, id, domainID, token st
 }
 
 func (sdk mgSDK) UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) errors.SDKError {
-	data, err := json.Marshal(cfg.ReportTemplate)
+	data, err := json.Marshal(cfg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, cfg.ID)
 
-	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusNoContent)
 	return sdkerr
 }
 
@@ -220,12 +224,12 @@ func (sdk mgSDK) ViewReportTemplate(ctx context.Context, id, domainID, token str
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
-		return ReportTemplate{}, sdkerr
+		return "", sdkerr
 	}
 
 	var rt ReportTemplate
 	if err := json.Unmarshal(body, &rt); err != nil {
-		return ReportTemplate{}, errors.NewSDKError(err)
+		return "", errors.NewSDKError(err)
 	}
 
 	return rt, nil
@@ -238,23 +242,61 @@ func (sdk mgSDK) DeleteReportTemplate(ctx context.Context, id, domainID, token s
 	return sdkerr
 }
 
-func (sdk mgSDK) GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, errors.SDKError) {
-	data, err := json.Marshal(map[string]any{"action": action})
+func (sdk mgSDK) GenerateReport(
+	ctx context.Context,
+	config ReportConfig,
+	action ReportAction,
+	domainID,
+	token string,
+) (ReportPage, *ReportFile, errors.SDKError) {
+	data, err := json.Marshal(config)
 	if err != nil {
-		return ReportPage{}, errors.NewSDKError(err)
+		return ReportPage{}, nil, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", sdk.reportsURL, domainID, reportsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s?action=%s",
+		sdk.reportsURL,
+		domainID,
+		reportsEndpoint,
+		action,
+	)
 
-	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK)
+	headers, body, sdkerr := sdk.processRequest(
+		ctx,
+		http.MethodPost,
+		url,
+		token,
+		data,
+		nil,
+		http.StatusOK,
+	)
 	if sdkerr != nil {
-		return ReportPage{}, sdkerr
+		return ReportPage{}, nil, sdkerr
 	}
 
+	// ✅ Handle Download Action
+	if action == DownloadReportAction {
+		file := &ReportFile{
+			Name:   extractFilename(headers.Get("Content-Disposition")),
+			Format: "pdf",
+			Data:   body,
+		}
+		return ReportPage{}, file, nil
+	}
+
+	// ✅ Handle JSON response (view/email)
 	var rp ReportPage
 	if err := json.Unmarshal(body, &rp); err != nil {
-		return ReportPage{}, errors.NewSDKError(err)
+		return ReportPage{}, nil, errors.NewSDKError(err)
 	}
 
-	return rp, nil
+	return rp, nil, nil
+}
+
+func extractFilename(contentDisposition string) string {
+	const prefix = "filename="
+	if idx := strings.Index(contentDisposition, prefix); idx != -1 {
+		return strings.Trim(contentDisposition[idx+len(prefix):], `"`)
+	}
+	return "report"
 }

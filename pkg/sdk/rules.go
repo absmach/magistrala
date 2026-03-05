@@ -85,7 +85,7 @@ func (sdk mgSDK) UpdateRule(ctx context.Context, r Rule, domainID, token string)
 
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.rulesEngineURL, domainID, rulesEndpoint, r.ID)
 
-	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
 		return Rule{}, sdkerr
 	}

@@ -34,7 +34,7 @@ type generateReportResp struct {
 }
 
 func (res generateReportResp) Code() int {
-	return http.StatusCreated
+	return http.StatusOK
 }
 
 func (res generateReportResp) Headers() map[string]string {

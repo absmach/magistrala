@@ -5927,7 +5927,7 @@ func (_c *SDK_FreezeDomain_Call) RunAndReturn(run func(ctx context.Context, doma
 }
 
 // GenerateReport provides a mock function for the type SDK
-func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, errors.SDKError) {
+func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError) {
 	ret := _mock.Called(ctx, config, action, domainID, token)
 
 	if len(ret) == 0 {
@@ -5935,8 +5935,9 @@ func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, a
 	}
 
 	var r0 sdk.ReportPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) (sdk.ReportPage, errors.SDKError)); ok {
+	var r1 *sdk.ReportFile
+	var r2 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)); ok {
 		return returnFunc(ctx, config, action, domainID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) sdk.ReportPage); ok {
@@ -5944,14 +5945,21 @@ func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, a
 	} else {
 		r0 = ret.Get(0).(sdk.ReportPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) errors.SDKError); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) *sdk.ReportFile); ok {
 		r1 = returnFunc(ctx, config, action, domainID, token)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
+			r1 = ret.Get(1).(*sdk.ReportFile)
 		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) errors.SDKError); ok {
+		r2 = returnFunc(ctx, config, action, domainID, token)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).(errors.SDKError)
+		}
+	}
+	return r0, r1, r2
 }
 
 // SDK_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
@@ -6002,12 +6010,12 @@ func (_c *SDK_GenerateReport_Call) Run(run func(ctx context.Context, config sdk.
 	return _c
 }
 
-func (_c *SDK_GenerateReport_Call) Return(reportPage sdk.ReportPage, sDKError errors.SDKError) *SDK_GenerateReport_Call {
-	_c.Call.Return(reportPage, sDKError)
+func (_c *SDK_GenerateReport_Call) Return(reportPage sdk.ReportPage, reportFile *sdk.ReportFile, sDKError errors.SDKError) *SDK_GenerateReport_Call {
+	_c.Call.Return(reportPage, reportFile, sDKError)
 	return _c
 }
 
-func (_c *SDK_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, errors.SDKError)) *SDK_GenerateReport_Call {
+func (_c *SDK_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)) *SDK_GenerateReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -12680,7 +12688,9 @@ func (_mock *SDK) ViewReportTemplate(ctx context.Context, id string, domainID st
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportTemplate); ok {
 		r0 = returnFunc(ctx, id, domainID, token)
 	} else {
-		r0 = ret.Get(0).(sdk.ReportTemplate)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(sdk.ReportTemplate)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
 		r1 = returnFunc(ctx, id, domainID, token)

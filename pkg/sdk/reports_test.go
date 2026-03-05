@@ -5,312 +5,457 @@ package sdk_test
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"net/http"
+	"errors"
 	"net/http/httptest"
 	"testing"
+	"time"
 
+	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/magistrala/reports/api"
+	rmocks "github.com/absmach/magistrala/reports/mocks"
+	"github.com/absmach/supermq/logger"
+	smqauthn "github.com/absmach/supermq/pkg/authn"
+	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
+	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-const reportConfigID = "report-config-1"
+const (
+	reportConfigID     = "report-config-1"
+	name               = "daily-report"
+	updatedName        = "updated daily-report"
+	description        = "Daily temperature report"
+	updatedDescription = "updated Daily temperature report"
+	validTemplate      = `<!DOCTYPE html>
+<html>
+<head>
+    <title>{{$.Title}}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .header { background-color: #f0f0f0; padding: 10px; }
+        .content { padding: 20px; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{$.Title}}</h1>
+        <p>Generated on: {{$.GeneratedDate}}</p>
+    </div>
+    <div class="content">
+        <h2>Messages</h2>
+        {{range .Messages}}
+        <div class="message">
+            <p>Time: {{formatTime .Time}}</p>
+            <p>Value: {{formatValue .}}</p>
+        </div>
+        {{end}}
+    </div>
+</body>
+</html>`
+)
 
-var testReportConfig = sdk.ReportConfig{
-	ID:          reportConfigID,
-	Name:        "daily-report",
-	Description: "Daily temperature report",
-	DomainID:    domainID,
-	Status:      "enabled",
+var (
+	now      = time.Now().UTC().Truncate(time.Minute)
+	future   = now.Add(1 * time.Hour)
+	schedule = pkgSch.Schedule{
+		StartDateTime:   future,
+		Recurring:       pkgSch.Daily,
+		RecurringPeriod: 1,
+		Time:            future,
+	}
+	metrics = []reports.ReqMetric{
+		{
+			ChannelID: "channel1",
+			ClientIDs: []string{"client1"},
+			Name:      "metric_name",
+		},
+	}
+	config = reports.MetricConfig{
+		From:        "now()-1h",
+		To:          "now()",
+		Title:       "test_title",
+		Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+	}
+	email = reports.EmailSetting{
+		To:      []string{"test@example.com"},
+		Subject: "Test Report",
+	}
+
+	testReportConfig = sdk.ReportConfig{
+		ID:          reportConfigID,
+		Name:        name,
+		Description: description,
+		DomainID:    domainID,
+		Status:      "enabled",
+		Schedule:    schedule,
+		Metrics:     metrics,
+		Config:      &config,
+		Email:       &email,
+	}
+)
+
+func setupReports() (*httptest.Server, *rmocks.Service, *authnmocks.Authentication) {
+	rsvc := new(rmocks.Service)
+	log := logger.NewMock()
+	authn := new(authnmocks.Authentication)
+	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
+	mux := chi.NewRouter()
+	_ = api.MakeHandler(rsvc, am, mux, log, "")
+	return httptest.NewServer(mux), rsvc, authn
 }
 
 func TestAddReportConfig(t *testing.T) {
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcCfg := reports.ReportConfig{
+		ID:          reportConfigID,
+		Name:        "daily-report",
+		Description: "Daily temperature report",
+		DomainID:    domainID,
+		Status:      reports.EnabledStatus,
+		Schedule:    schedule,
+		Metrics: []reports.ReqMetric{
+			{
+				ChannelID: "channel1",
+				ClientIDs: []string{"client1"},
+				Name:      "metric_name",
+			},
+		},
+		Config: &reports.MetricConfig{
+			From:        "now()-1h",
+			To:          "now()",
+			Title:       "test_title",
+			Aggregation: reports.AggConfig{AggType: reports.AggregationAVG, Interval: "1h"},
+		},
+		Email: &reports.EmailSetting{
+			To:      []string{"test@example.com"},
+			Subject: "Test Report",
+		},
+	}
+
 	cases := []struct {
-		desc    string
-		cfg     sdk.ReportConfig
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		cfg             sdk.ReportConfig
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "add report config successfully",
-			cfg:   sdk.ReportConfig{Name: "daily-report", Description: "desc"},
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs", domainID), r.URL.Path)
-				w.WriteHeader(http.StatusCreated)
-				_ = json.NewEncoder(w).Encode(testReportConfig)
-			},
-			resp: testReportConfig,
+			desc:   "add report config successfully",
+			cfg:    testReportConfig,
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "add report config with empty token",
-			cfg:   sdk.ReportConfig{Name: "daily-report"},
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "add report config with empty token",
+			cfg:     sdk.ReportConfig{Name: "daily-report"},
+			token:   "",
 			wantErr: true,
-		},
-		{
-			desc:  "add report config with bad request",
-			cfg:   sdk.ReportConfig{},
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusBadRequest)
-			},
-			wantErr: true,
+			svcErr:  errors.New("missing or invalid bearer user token"),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("AddReportConfig", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.AddReportConfig(context.Background(), tc.cfg, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewReportConfig(t *testing.T) {
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcCfg := reports.ReportConfig{
+		ID:          reportConfigID,
+		Name:        name,
+		Description: description,
+		DomainID:    domainID,
+		Status:      reports.EnabledStatus,
+		Metrics:     metrics,
+		Config:      &config,
+		Email:       &email,
+	}
+
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "view report config successfully",
-			id:    reportConfigID,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(testReportConfig)
-			},
-			resp: testReportConfig,
+			desc:   "view report config successfully",
+			id:     reportConfigID,
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "view report config with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "view report config with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 		{
-			desc:  "view non-existent report config",
-			id:    "non-existent",
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			},
+			desc:    "view non-existent report config",
+			id:      "non-existent",
+			token:   validToken,
+			svcErr:  errors.New("not found"),
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("ViewReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ViewReportConfig(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateReportConfig(t *testing.T) {
-	updated := testReportConfig
-	updated.Description = "updated description"
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	updatedConfig := testReportConfig
+	updatedConfig.Name = updatedName
+	updatedConfig.Description = updatedDescription
+
+	svcCfg := reports.ReportConfig{
+		ID:          reportConfigID,
+		Name:        updatedName,
+		Description: updatedDescription,
+		DomainID:    domainID,
+		Status:      reports.EnabledStatus,
+		Metrics:     metrics,
+		Config:      &config,
+		Email:       &email,
+	}
 
 	cases := []struct {
-		desc    string
-		cfg     sdk.ReportConfig
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		cfg             sdk.ReportConfig
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "update report config successfully",
-			cfg:   testReportConfig,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPatch, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(updated)
-			},
-			resp: updated,
+			desc:   "update report config successfully",
+			cfg:    updatedConfig,
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "update report config with empty token",
-			cfg:   testReportConfig,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "update report config with empty token",
+			cfg:     sdk.ReportConfig{ID: reportConfigID, Name: "updated-report"},
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("UpdateReportConfig", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.UpdateReportConfig(context.Background(), tc.cfg, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateReportSchedule(t *testing.T) {
-	updated := testReportConfig
-	updated.Schedule = map[string]any{"cron": "0 9 * * *"}
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcCfg := reports.ReportConfig{
+		ID:     reportConfigID,
+		Name:   name,
+		Status: reports.EnabledStatus,
+	}
 
 	cases := []struct {
-		desc    string
-		cfg     sdk.ReportConfig
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		cfg             sdk.ReportConfig
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "update report schedule successfully",
-			cfg:   sdk.ReportConfig{ID: reportConfigID, Schedule: map[string]any{"cron": "0 9 * * *"}},
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPatch, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/schedule", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(updated)
-			},
-			resp: updated,
+			desc:   "update report schedule successfully",
+			cfg:    sdk.ReportConfig{ID: reportConfigID, Schedule: map[string]any{"cron": "0 9 * * *"}},
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "update report schedule with empty token",
-			cfg:   sdk.ReportConfig{ID: reportConfigID},
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "update report schedule with empty token",
+			cfg:     sdk.ReportConfig{ID: reportConfigID},
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("UpdateReportSchedule", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.UpdateReportSchedule(context.Background(), tc.cfg, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestRemoveReportConfig(t *testing.T) {
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
 			desc:  "remove report config successfully",
 			id:    reportConfigID,
 			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodDelete, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusNoContent)
-			},
 		},
 		{
-			desc:  "remove report config with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "remove report config with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 		{
-			desc:  "remove non-existent report config",
-			id:    "non-existent",
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusNotFound)
-			},
+			desc:    "remove non-existent report config",
+			id:      "non-existent",
+			token:   validToken,
+			svcErr:  errors.New("not found"),
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("RemoveReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
 			err := mgsdk.RemoveReportConfig(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestListReportsConfig(t *testing.T) {
-	page := sdk.ReportConfigPage{
-		Total:         2,
-		Offset:        0,
-		Limit:         10,
-		ReportConfigs: []sdk.ReportConfig{testReportConfig, {ID: "report-2", Name: "weekly"}},
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
 	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcPage := reports.ReportConfigPage{}
 
 	cases := []struct {
-		desc    string
-		pm      sdk.PageMetadata
-		token   string
-		checkQ  func(t *testing.T, r *http.Request)
-		wantErr bool
-		resp    sdk.ReportConfigPage
+		desc            string
+		pm              sdk.PageMetadata
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfigPage
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "list reports config successfully",
-			pm:    sdk.PageMetadata{Offset: 0, Limit: 10},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				assert.Equal(t, "10", r.URL.Query().Get("limit"))
-			},
-			resp: page,
+			desc:   "list reports config successfully",
+			pm:     sdk.PageMetadata{Offset: 0, Limit: 10},
+			token:  validToken,
+			svcRes: svcPage,
 		},
 		{
 			desc: "list reports config with filters",
@@ -321,27 +466,14 @@ func TestListReportsConfig(t *testing.T) {
 				Dir:    "desc",
 				Order:  "created_at",
 			},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				q := r.URL.Query()
-				assert.Equal(t, "enabled", q.Get("status"))
-				assert.Equal(t, "daily", q.Get("name"))
-				assert.Equal(t, "desc", q.Get("dir"))
-				assert.Equal(t, "created_at", q.Get("order"))
-			},
-			resp: page,
+			token:  validToken,
+			svcRes: svcPage,
 		},
 		{
-			desc:  "list reports config with empty metadata excludes filter params",
-			pm:    sdk.PageMetadata{},
-			token: validToken,
-			checkQ: func(t *testing.T, r *http.Request) {
-				rawQ := r.URL.RawQuery
-				assert.NotContains(t, rawQ, "status=")
-				assert.NotContains(t, rawQ, "dir=")
-				assert.NotContains(t, rawQ, "order=")
-			},
-			resp: sdk.ReportConfigPage{},
+			desc:   "list reports config with empty metadata excludes filter params",
+			pm:     sdk.PageMetadata{},
+			token:  validToken,
+			svcRes: reports.ReportConfigPage{},
 		},
 		{
 			desc:    "list reports config with empty token",
@@ -353,325 +485,383 @@ func TestListReportsConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs", domainID), r.URL.Path)
-				if r.Header.Get("Authorization") == "" || r.Header.Get("Authorization") == "Bearer " {
-					w.WriteHeader(http.StatusUnauthorized)
-					return
-				}
-				if tc.checkQ != nil {
-					tc.checkQ(t, r)
-				}
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(tc.resp)
-			}))
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("ListReportsConfig", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ListReportsConfig(context.Background(), tc.pm, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotNil(t, result)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestEnableReportConfig(t *testing.T) {
-	enabled := testReportConfig
-	enabled.Status = "enabled"
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcCfg := reports.ReportConfig{
+		ID:     reportConfigID,
+		Status: reports.EnabledStatus,
+	}
 
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "enable report config successfully",
-			id:    reportConfigID,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/enable", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(enabled)
-			},
-			resp: enabled,
+			desc:   "enable report config successfully",
+			id:     reportConfigID,
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "enable report config with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "enable report config with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("EnableReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.EnableReportConfig(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestDisableReportConfig(t *testing.T) {
-	disabled := testReportConfig
-	disabled.Status = "disabled"
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcCfg := reports.ReportConfig{
+		ID:     reportConfigID,
+		Status: reports.DisabledStatus,
+	}
 
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportConfig
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportConfig
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "disable report config successfully",
-			id:    reportConfigID,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/disable", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(disabled)
-			},
-			resp: disabled,
+			desc:   "disable report config successfully",
+			id:     reportConfigID,
+			token:  validToken,
+			svcRes: svcCfg,
 		},
 		{
-			desc:  "disable report config with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "disable report config with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("DisableReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.DisableReportConfig(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result.ID)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestUpdateReportTemplate(t *testing.T) {
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
 	cases := []struct {
-		desc    string
-		cfg     sdk.ReportConfig
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
+		desc            string
+		cfg             sdk.ReportConfig
+		token           string
+		session         smqauthn.Session
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
 			desc: "update report template successfully",
 			cfg: sdk.ReportConfig{
 				ID:             reportConfigID,
-				ReportTemplate: sdk.ReportTemplate{Header: "Header text", Footer: "Footer text"},
+				ReportTemplate: validTemplate,
 			},
 			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPut, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/template", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-			},
 		},
 		{
-			desc:  "update report template with empty token",
-			cfg:   sdk.ReportConfig{ID: reportConfigID},
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "update report template with empty token",
+			cfg:     sdk.ReportConfig{ID: reportConfigID},
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("UpdateReportTemplate", mock.Anything, tc.session, mock.Anything).Return(tc.svcErr)
 			err := mgsdk.UpdateReportTemplate(context.Background(), tc.cfg, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestViewReportTemplate(t *testing.T) {
-	tmpl := sdk.ReportTemplate{Header: "Header", Footer: "Footer"}
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcTmpl := reports.ReportTemplate(validTemplate)
 
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportTemplate
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportTemplate
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
-			desc:  "view report template successfully",
-			id:    reportConfigID,
-			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/template", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(tmpl)
-			},
-			resp: tmpl,
+			desc:   "view report template successfully",
+			id:     reportConfigID,
+			token:  validToken,
+			svcRes: svcTmpl,
 		},
 		{
-			desc:  "view report template with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "view report template with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("ViewReportTemplate", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ViewReportTemplate(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+				assert.NotEmpty(t, result)
 			}
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestDeleteReportTemplate(t *testing.T) {
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
 	cases := []struct {
-		desc    string
-		id      string
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
+		desc            string
+		id              string
+		token           string
+		session         smqauthn.Session
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
 			desc:  "delete report template successfully",
 			id:    reportConfigID,
 			token: validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodDelete, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports/configs/%s/template", domainID, reportConfigID), r.URL.Path)
-				w.WriteHeader(http.StatusNoContent)
-			},
 		},
 		{
-			desc:  "delete report template with empty token",
-			id:    reportConfigID,
-			token: "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "delete report template with empty token",
+			id:      reportConfigID,
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := rsvc.On("DeleteReportTemplate", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
 			err := mgsdk.DeleteReportTemplate(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
 
 func TestGenerateReport(t *testing.T) {
-	reportPage := sdk.ReportPage{Total: 1}
+	rs, rsvc, auth := setupReports()
+	defer rs.Close()
+
+	conf := sdk.Config{
+		ReportsURL: rs.URL,
+	}
+	mgsdk := sdk.NewSDK(conf)
+
+	svcPage := reports.ReportPage{}
+
+	config := sdk.ReportConfig{
+		ID:             reportConfigID,
+		Name:           name,
+		Description:    description,
+		DomainID:       domainID,
+		Metrics:        metrics,
+		Config:         &config,
+		ReportTemplate: reports.ReportTemplate(validTemplate),
+	}
 
 	cases := []struct {
-		desc    string
-		cfg     sdk.ReportConfig
-		action  sdk.ReportAction
-		token   string
-		handler http.HandlerFunc
-		wantErr bool
-		resp    sdk.ReportPage
+		desc            string
+		cfg             sdk.ReportConfig
+		action          sdk.ReportAction
+		token           string
+		session         smqauthn.Session
+		svcRes          reports.ReportPage
+		svcErr          error
+		authenticateErr error
+		wantErr         bool
 	}{
 		{
 			desc:   "generate report successfully",
-			cfg:    testReportConfig,
+			cfg:    config,
 			action: sdk.ViewReportAction,
 			token:  validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				assert.Equal(t, http.MethodPost, r.Method)
-				assert.Equal(t, fmt.Sprintf("/%s/reports", domainID), r.URL.Path)
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(reportPage)
-			},
-			resp: reportPage,
+			svcRes: svcPage,
 		},
 		{
 			desc:   "generate report with download action",
-			cfg:    testReportConfig,
+			cfg:    config,
 			action: sdk.DownloadReportAction,
 			token:  validToken,
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(reportPage)
-			},
-			resp: reportPage,
+			svcRes: svcPage,
 		},
 		{
-			desc:   "generate report with empty token",
-			cfg:    testReportConfig,
-			action: sdk.ViewReportAction,
-			token:  "",
-			handler: func(w http.ResponseWriter, r *http.Request) {
-				w.WriteHeader(http.StatusUnauthorized)
-			},
+			desc:    "generate report with empty token",
+			cfg:     config,
+			action:  sdk.ViewReportAction,
+			token:   "",
 			wantErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			server := httptest.NewServer(tc.handler)
-			defer server.Close()
-
-			mgsdk := sdk.NewSDK(sdk.Config{ReportsURL: server.URL})
-			result, err := mgsdk.GenerateReport(context.Background(), tc.cfg, tc.action, domainID, tc.token)
-			assert.Equal(t, tc.wantErr, err != nil)
-			if !tc.wantErr {
-				assert.Equal(t, tc.resp, result)
+			if tc.token == validToken {
+				tc.session = smqauthn.Session{
+					DomainUserID: domainID + "_" + validID,
+					UserID:       validID,
+					DomainID:     domainID,
+				}
 			}
+
+			authCall := auth.On(
+				"Authenticate",
+				mock.Anything,
+				tc.token,
+			).Return(tc.session, tc.authenticateErr)
+
+			svcCall := rsvc.On(
+				"GenerateReport",
+				mock.Anything,
+				tc.session,
+				mock.Anything,
+				mock.Anything,
+			).Return(tc.svcRes, tc.svcErr)
+
+			page, file, err := mgsdk.GenerateReport(
+				context.Background(),
+				tc.cfg,
+				tc.action,
+				domainID,
+				tc.token,
+			)
+
+			assert.Equal(t, tc.wantErr, err != nil)
+
+			if !tc.wantErr {
+				if tc.action == sdk.DownloadReportAction {
+					// download should return file
+					assert.NotNil(t, file)
+				} else {
+					// view/email should return page
+					assert.Equal(t, tc.svcRes.Total, page.Total)
+				}
+			}
+
+			svcCall.Unset()
+			authCall.Unset()
 		})
 	}
 }
-

@@ -18,7 +18,6 @@ import (
 	"github.com/absmach/magistrala/alarms/middleware"
 	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	dpostgres "github.com/absmach/supermq/domains/postgres"
 	smqlog "github.com/absmach/supermq/logger"
@@ -216,10 +215,10 @@ func main() {
 
 	entitiesOps, err := permissions.NewEntitiesOperations(
 		permissions.EntitiesPermission{
-			mgPolicies.AlarmType: alarmOps,
+			operations.EntityType: alarmOps,
 		},
 		permissions.EntitiesOperationDetails[permissions.Operation]{
-			mgPolicies.AlarmType: operations.OperationDetails(),
+			operations.EntityType: operations.OperationDetails(),
 		},
 	)
 

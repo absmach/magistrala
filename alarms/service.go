@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/alarms/operations"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
@@ -26,7 +26,7 @@ type service struct {
 var _ Service = (*service)(nil)
 
 func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(mgPolicies.AlarmType, repo, policy, idp, availableActions, builtInRoles)
+	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err
 	}
@@ -72,7 +72,7 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
 			SubjectType: policies.DomainType,
 			Subject:     alarm.DomainID,
 			Relation:    policies.DomainRelation,
-			ObjectType:  mgPolicies.AlarmType,
+			ObjectType:  operations.EntityType,
 			Object:      alarm.ID,
 		},
 	}

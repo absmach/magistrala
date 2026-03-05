@@ -492,7 +492,7 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 		return channels.ChannelsPage{}, err
 	}
 
-	bq := repo.userChannelsBaseQuery(domainID, userID)
+	bq := repo.userChannelsBaseQuery()
 
 	connJoinQuery := `
 		FROM
@@ -515,6 +515,34 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 					conn.client_id, conn.channel_id
 			) conn ON c.id = conn.channel_id
 		`
+	}
+
+	dbPage, err := toDBChannelsPage(pm)
+	if err != nil {
+		return channels.ChannelsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	dbPage.UserID = userID
+	dbPage.DomainID = domainID
+
+	if pm.OnlyTotal {
+		cq := fmt.Sprintf(`%s
+			SELECT COUNT(*) AS total_count
+			FROM final_channels c
+			%s;
+		`, bq, pageQuery)
+
+		total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+		if err != nil {
+			return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+
+		return channels.ChannelsPage{
+			Page: channels.Page{
+				Total:  total,
+				Offset: pm.Offset,
+				Limit:  pm.Limit,
+			},
+		}, nil
 	}
 
 	q := fmt.Sprintf(`
@@ -540,7 +568,8 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 					c.access_provider_id,
 					c.access_provider_role_id,
 					c.access_provider_role_name,
-					c.access_provider_role_actions
+					c.access_provider_role_actions,
+					COUNT(*) OVER() AS total_count
 				%s
 				%s
 	`, bq, connJoinQuery, pageQuery)
@@ -549,83 +578,55 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 
 	q = applyLimitOffset(q)
 
-	dbPage, err := toDBChannelsPage(pm)
-	if err != nil {
-		return channels.ChannelsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	var items []channels.Channel
-	if !pm.OnlyTotal {
-		rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
-		if err != nil {
-			return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			dbc := dbChannel{}
-			if err := rows.StructScan(&dbc); err != nil {
-				return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
-			}
-
-			c, err := toChannel(dbc)
-			if err != nil {
-				return channels.ChannelsPage{}, err
-			}
-
-			items = append(items, c)
-		}
-	}
-
-	cq := fmt.Sprintf(`%s
-						SELECT COUNT(*) AS total_count
-						FROM (
-							SELECT
-								c.id,
-								c.name,
-								c.domain_id,
-								c.parent_group_id,
-								c.route,
-								c.tags,
-								c.metadata,
-								c.created_by,
-								c.created_at,
-								c.updated_at,
-								c.updated_by,
-								c.status,
-								c.parent_group_path,
-								c.role_id,
-								c.role_name,
-								c.actions,
-								c.access_type,
-								c.access_provider_id,
-								c.access_provider_role_id,
-								c.access_provider_role_name,
-								c.access_provider_role_actions
-							%s
-							%s
-						) AS subquery;
-			`, bq, connJoinQuery, pageQuery)
-
-	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 	}
+	defer rows.Close()
 
-	page := channels.ChannelsPage{
+	var total uint64
+	var items []channels.Channel
+	for rows.Next() {
+		dbc := dbChannel{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+
+		total = dbc.TotalCount
+
+		c, err := toChannel(dbc)
+		if err != nil {
+			return channels.ChannelsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`%s
+			SELECT COUNT(*) AS total_count
+			FROM final_channels c
+			%s;
+		`, bq, pageQuery)
+
+		total, err = postgres.Total(ctx, repo.db, cq, dbPage)
+		if err != nil {
+			return channels.ChannelsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+	}
+
+	return channels.ChannelsPage{
 		Channels: items,
 		Page: channels.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 		},
-	}
-
-	return page, nil
+	}, nil
 }
 
-func (repo *channelRepository) userChannelsBaseQuery(domainID, userID string) string {
-	return fmt.Sprintf(`
+func (repo *channelRepository) userChannelsBaseQuery() string {
+	return `
 WITH direct_channels AS (
 	select
 		c.id,
@@ -658,8 +659,8 @@ WITH direct_channels AS (
 	JOIN
 		channels c ON c.id = cr.entity_id
 	WHERE
-		crm.member_id = '%s'
-		AND c.domain_id = '%s'
+		crm.member_id = :user_id
+		AND c.domain_id = :domain_id_param
 	GROUP BY
 		cr.entity_id, crm.member_id, cr.id, cr."name", c.id
 ),
@@ -682,9 +683,9 @@ direct_groups AS (
 	JOIN
 		groups_role_actions all_actions ON all_actions.role_id = grm.role_id
 	WHERE
-		grm.member_id = '%s'
-		AND g.domain_id = '%s'
-		AND gra."action" LIKE 'channel%%'
+		grm.member_id = :user_id
+		AND g.domain_id = :domain_id_param
+		AND gra."action" LIKE 'channel%'
 	GROUP BY
 		gr.entity_id, grm.member_id, gr.id, gr."name", g."path", g.id
 ),
@@ -707,9 +708,9 @@ direct_groups_with_subgroup AS (
 	JOIN
 		groups_role_actions all_actions ON all_actions.role_id = grm.role_id
 	WHERE
-		grm.member_id = '%s'
-		AND g.domain_id = '%s'
-		AND gra."action" LIKE 'subgroup_channel%%'
+		grm.member_id = :user_id
+		AND g.domain_id = :domain_id_param
+		AND gra."action" LIKE 'subgroup_channel%'
 	GROUP BY
 		gr.entity_id, grm.member_id, gr.id, gr."name", g."path", g.id
 ),
@@ -737,7 +738,7 @@ indirect_child_groups AS (
 	JOIN
 		groups indirect_child_groups ON indirect_child_groups.path <@ dlgws.path
 	WHERE
-		indirect_child_groups.domain_id = '%s'
+		indirect_child_groups.domain_id = :domain_id_param
 		AND NOT EXISTS (
 			SELECT 1
 			FROM direct_groups_with_subgroup dgws
@@ -819,7 +820,7 @@ groups_channels AS (
 	JOIN
 		channels c ON c.parent_group_id = g.id
 	WHERE
-		c.id NOT IN (SELECT id FROM direct_channels)
+		NOT EXISTS (SELECT 1 FROM direct_channels dc WHERE dc.id = c.id)
 	UNION
 	SELECT	* FROM   direct_channels
 ),
@@ -884,17 +885,17 @@ final_channels AS (
 	LEFT JOIN
 		groups g ON dc.parent_group_id = g.id
 	WHERE
-		drm.member_id = '%s' -- user_id
-	 	AND d.id = '%s' -- domain_id
-	 	AND dra."action" LIKE 'channel_%%'
-	 	AND NOT EXISTS (  -- Ensures that the direct and indirect channels are not in included.
+		drm.member_id = :user_id
+	 	AND d.id = :domain_id_param
+	 	AND dra."action" LIKE 'channel_%'
+	 	AND NOT EXISTS (
 			SELECT 1 FROM groups_channels gc
 			WHERE gc.id = dc.id
 		)
 	 GROUP BY
 		dc.id, d.id, dr.id, g."path"
 )
-	`, userID, domainID, userID, domainID, userID, domainID, domainID, userID, domainID)
+	`
 }
 
 func (cr *channelRepository) Remove(ctx context.Context, ids ...string) error {
@@ -1145,6 +1146,7 @@ type dbChannel struct {
 	ConnectionTypes           pq.Int32Array    `db:"connection_types,omitempty"`
 	MemberID                  string           `db:"member_id,omitempty"`
 	Roles                     json.RawMessage  `db:"roles,omitempty"`
+	TotalCount                uint64           `db:"total_count"`
 }
 
 func toDBChannel(ch channels.Channel) (dbChannel, error) {
@@ -1438,6 +1440,8 @@ type dbChannelsPage struct {
 	AccessType  string           `db:"access_type"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
+	UserID      string           `db:"user_id"`
+	DomainID    string           `db:"domain_id_param"`
 }
 
 type dbConnection struct {

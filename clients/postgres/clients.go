@@ -529,7 +529,7 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 		return clients.ClientsPage{}, err
 	}
 
-	bq := repo.userClientBaseQuery(domainID, userID)
+	bq := repo.userClientBaseQuery()
 
 	connJoinQuery := `
 		FROM
@@ -552,6 +552,34 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 					conn.client_id, conn.channel_id
 			) conn ON c.id = conn.client_id
 		`
+	}
+
+	dbPage, err := ToDBClientsPage(pm)
+	if err != nil {
+		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	dbPage.UserID = userID
+	dbPage.DomainID = domainID
+
+	if pm.OnlyTotal {
+		cq := fmt.Sprintf(`%s
+			SELECT COUNT(*) AS total_count
+			FROM final_clients c
+			%s;
+		`, bq, pageQuery)
+
+		total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+		if err != nil {
+			return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+
+		return clients.ClientsPage{
+			Page: clients.Page{
+				Total:  total,
+				Offset: pm.Offset,
+				Limit:  pm.Limit,
+			},
+		}, nil
 	}
 
 	q := fmt.Sprintf(`
@@ -577,7 +605,8 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 					c.access_provider_id,
 					c.access_provider_role_id,
 					c.access_provider_role_name,
-					c.access_provider_role_actions
+					c.access_provider_role_actions,
+					COUNT(*) OVER() AS total_count
 				%s
 				%s
 	`, bq, connJoinQuery, pageQuery)
@@ -586,83 +615,55 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 
 	q = applyLimitOffset(q)
 
-	dbPage, err := ToDBClientsPage(pm)
-	if err != nil {
-		return clients.ClientsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	var items []clients.Client
-	if !pm.OnlyTotal {
-		rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
-		if err != nil {
-			return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
-		}
-		defer rows.Close()
-
-		for rows.Next() {
-			dbc := DBClient{}
-			if err := rows.StructScan(&dbc); err != nil {
-				return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
-			}
-
-			c, err := ToClient(dbc)
-			if err != nil {
-				return clients.ClientsPage{}, err
-			}
-
-			items = append(items, c)
-		}
-	}
-
-	cq := fmt.Sprintf(`%s
-						SELECT COUNT(*) AS total_count
-						FROM (
-							SELECT
-								c.id,
-								c.name,
-								c.domain_id,
-								c.parent_group_id,
-								c.identity,
-								c.secret,
-								c.tags,
-								c.metadata,
-								c.created_at,
-								c.updated_at,
-								c.updated_by,
-								c.status,
-								c.parent_group_path,
-								c.role_id,
-								c.role_name,
-								c.actions,
-								c.access_type,
-								c.access_provider_id,
-								c.access_provider_role_id,
-								c.access_provider_role_name,
-								c.access_provider_role_actions
-							%s
-							%s
-						) AS subquery;
-			`, bq, connJoinQuery, pageQuery)
-
-	total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
+	rows, err := repo.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 	}
+	defer rows.Close()
 
-	page := clients.ClientsPage{
+	var total uint64
+	var items []clients.Client
+	for rows.Next() {
+		dbc := DBClient{}
+		if err := rows.StructScan(&dbc); err != nil {
+			return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+
+		total = dbc.TotalCount
+
+		c, err := ToClient(dbc)
+		if err != nil {
+			return clients.ClientsPage{}, err
+		}
+
+		items = append(items, c)
+	}
+
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`%s
+			SELECT COUNT(*) AS total_count
+			FROM final_clients c
+			%s;
+		`, bq, pageQuery)
+
+		total, err = postgres.Total(ctx, repo.DB, cq, dbPage)
+		if err != nil {
+			return clients.ClientsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+	}
+
+	return clients.ClientsPage{
 		Clients: items,
 		Page: clients.Page{
 			Total:  total,
 			Offset: pm.Offset,
 			Limit:  pm.Limit,
 		},
-	}
-
-	return page, nil
+	}, nil
 }
 
-func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
-	return fmt.Sprintf(`
+func (repo *clientRepo) userClientBaseQuery() string {
+	return `
 	WITH direct_clients AS (
 		SELECT
 			c.id,
@@ -695,8 +696,8 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		JOIN
 			clients c ON c.id = cr.entity_id
 		WHERE
-			crm.member_id = '%s'
-			AND c.domain_id = '%s'
+			crm.member_id = :user_id
+			AND c.domain_id = :domain_id_param
 		GROUP BY
 			cr.entity_id, crm.member_id, cr.id, cr."name", c.id
 	),
@@ -719,9 +720,9 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		JOIN
 			groups_role_actions all_actions ON all_actions.role_id = grm.role_id
 		WHERE
-			grm.member_id = '%s'
-			AND g.domain_id = '%s'
-			AND gra."action" LIKE 'client%%'
+			grm.member_id = :user_id
+			AND g.domain_id = :domain_id_param
+			AND gra."action" LIKE 'client%'
 		GROUP BY
 			gr.entity_id, grm.member_id, gr.id, gr."name", g."path", g.id
 	),
@@ -744,9 +745,9 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		JOIN
 			groups_role_actions all_actions ON all_actions.role_id = grm.role_id
 		WHERE
-			grm.member_id = '%s'
-			AND g.domain_id = '%s'
-			AND gra."action" LIKE 'subgroup_client%%'
+			grm.member_id = :user_id
+			AND g.domain_id = :domain_id_param
+			AND gra."action" LIKE 'subgroup_client%'
 		GROUP BY
 			gr.entity_id, grm.member_id, gr.id, gr."name", g."path", g.id
 	),
@@ -772,10 +773,10 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		FROM
 			direct_leaf_groups_with_subgroup dlgws
 		JOIN
-			groups indirect_child_groups ON indirect_child_groups.path <@ dlgws.path  -- Finds all children of entity_id based on ltree path
+			groups indirect_child_groups ON indirect_child_groups.path <@ dlgws.path
 		WHERE
-			indirect_child_groups.domain_id = '%s'
-			AND NOT EXISTS ( 
+			indirect_child_groups.domain_id = :domain_id_param
+			AND NOT EXISTS (
 			SELECT 1
 			FROM direct_groups_with_subgroup dgws
 			WHERE dgws.id = indirect_child_groups.id
@@ -856,7 +857,7 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		JOIN
 			clients c ON c.parent_group_id = g.id
 		WHERE
-			c.id NOT IN (SELECT id FROM direct_clients)
+			NOT EXISTS (SELECT 1 FROM direct_clients dc WHERE dc.id = c.id)
 		UNION
 		SELECT	* FROM   direct_clients
 	),
@@ -921,17 +922,17 @@ func (repo *clientRepo) userClientBaseQuery(domainID, userID string) string {
 		LEFT JOIN
 			groups g ON dc.parent_group_id = g.id
 		WHERE
-			drm.member_id = '%s' -- user_id
-			 AND d.id = '%s' -- domain_id
-			 AND dra."action" LIKE 'client_%%'
-			 AND NOT EXISTS (  -- Ensures that the direct and indirect clients are not in included.
+			drm.member_id = :user_id
+			 AND d.id = :domain_id_param
+			 AND dra."action" LIKE 'client_%'
+			 AND NOT EXISTS (
 				SELECT 1 FROM groups_clients gc
 				WHERE gc.id = dc.id
 			)
 		 GROUP BY
 			dc.id, d.id, dr.id, g."path"
 	)
-	`, userID, domainID, userID, domainID, userID, domainID, domainID, userID, domainID)
+	`
 }
 
 func (repo *clientRepo) SearchClients(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
@@ -1056,6 +1057,7 @@ type DBClient struct {
 	ConnectionTypes           pq.Int32Array    `db:"connection_types,omitempty"`
 	MemberID                  string           `db:"member_id,omitempty"`
 	Roles                     json.RawMessage  `db:"roles,omitempty"`
+	TotalCount                uint64           `db:"total_count"`
 }
 
 func ToDBClient(c clients.Client) (DBClient, error) {
@@ -1230,6 +1232,8 @@ type dbClientsPage struct {
 	AccessType  string           `db:"access_type"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
+	UserID      string           `db:"user_id"`
+	DomainID    string           `db:"domain_id_param"`
 }
 
 func PageQuery(pm clients.Page) (string, error) {

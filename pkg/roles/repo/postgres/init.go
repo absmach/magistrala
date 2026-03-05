@@ -66,6 +66,17 @@ func Migration(rolesTableNamePrefix, entityTableName, entityIDColumnName string)
 					fmt.Sprintf(`ALTER TABLE %s_roles ALTER COLUMN updated_at TYPE TIMESTAMP;`, rolesTableNamePrefix),
 				},
 			},
+			{
+				Id: fmt.Sprintf("%s_roles_3", rolesTableNamePrefix),
+				Up: []string{
+					fmt.Sprintf(`CREATE INDEX IF NOT EXISTS idx_%s_role_members_member_id ON %s_role_members(member_id);`, rolesTableNamePrefix, rolesTableNamePrefix),
+					fmt.Sprintf(`CREATE INDEX IF NOT EXISTS idx_%s_role_actions_action ON %s_role_actions(action text_pattern_ops);`, rolesTableNamePrefix, rolesTableNamePrefix),
+				},
+				Down: []string{
+					fmt.Sprintf(`DROP INDEX IF EXISTS idx_%s_role_members_member_id;`, rolesTableNamePrefix),
+					fmt.Sprintf(`DROP INDEX IF EXISTS idx_%s_role_actions_action;`, rolesTableNamePrefix),
+				},
+			},
 		},
 	}, nil
 }

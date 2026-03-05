@@ -365,7 +365,7 @@ func (repo groupRepository) RetrieveByIDWithRoles(ctx context.Context, id, membe
 }
 
 func (repo groupRepository) RetrieveByIDAndUser(ctx context.Context, domainID, userID, groupID string) (groups.Group, error) {
-	baseQuery := repo.userGroupsBaseQuery()
+	baseQuery := userGroupsBaseQuery
 
 	dbg := dbGroup{ID: groupID, UserID: userID, DomainIDParam: domainID}
 	q := fmt.Sprintf(`%s
@@ -557,7 +557,7 @@ func (repo groupRepository) RetrieveHierarchy(ctx context.Context, domainID, use
 		dirQuery = "g.path <@ (SELECT path FROM groups WHERE id = :id)"
 	}
 
-	baseQuery := repo.userGroupsBaseQuery()
+	baseQuery := userGroupsBaseQuery
 	query := fmt.Sprintf(`%s,
 		target_hierarchy AS (
 			SELECT
@@ -899,7 +899,7 @@ func (repo groupRepository) RetrieveUserGroups(ctx context.Context, domainID, us
 }
 
 func (repo groupRepository) retrieveGroups(ctx context.Context, domainID, userID, query string, pm groups.PageMeta) (groups.Page, error) {
-	baseQuery := repo.userGroupsBaseQuery()
+	baseQuery := userGroupsBaseQuery
 
 	orderClause := ""
 	var orderBy string
@@ -1015,8 +1015,7 @@ func (repo groupRepository) retrieveGroups(ctx context.Context, domainID, userID
 	return page, nil
 }
 
-func (repo groupRepository) userGroupsBaseQuery() string {
-	return `
+const userGroupsBaseQuery = `
 WITH direct_groups AS (
 SELECT
 	g.*,
@@ -1211,7 +1210,6 @@ final_groups AS (
 		dg.id, d.id, dr.id
 )
 		`
-}
 
 func buildQuery(gm groups.PageMeta, ids ...string) string {
 	queries := []string{}

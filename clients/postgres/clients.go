@@ -531,7 +531,7 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 		return clients.ClientsPage{}, err
 	}
 
-	bq := repo.userClientBaseQuery()
+	bq := userClientBaseQuery
 
 	connJoinQuery := `
 		FROM
@@ -664,8 +664,7 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 	}, nil
 }
 
-func (repo *clientRepo) userClientBaseQuery() string {
-	return `
+const userClientBaseQuery = `
 	WITH direct_clients AS (
 		SELECT
 			c.id,
@@ -937,7 +936,6 @@ func (repo *clientRepo) userClientBaseQuery() string {
 			dc.id, d.id, dr.id, g."path"
 	)
 	`
-}
 
 func (repo *clientRepo) SearchClients(ctx context.Context, pm clients.Page) (clients.ClientsPage, error) {
 	query, err := PageQuery(pm)

@@ -338,7 +338,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 		LIMIT :limit OFFSET :offset`
 
 	if pm.UserID != "" {
-		q = repo.userDomainsBaseQuery() +
+		q = userDomainsBaseQuery +
 			`
 			SELECT
 				d.id as id,
@@ -372,7 +372,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 	if pm.OnlyTotal {
 		cq := `SELECT COUNT(*) FROM domains as d %s`
 		if pm.UserID != "" {
-			cq = repo.userDomainsBaseQuery() + cq
+			cq = userDomainsBaseQuery + cq
 		}
 		if query != "" {
 			cq = fmt.Sprintf(cq, query)
@@ -408,7 +408,7 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 	if len(doms) == 0 {
 		cq := `SELECT COUNT(*) FROM domains as d %s`
 		if pm.UserID != "" {
-			cq = repo.userDomainsBaseQuery() + cq
+			cq = userDomainsBaseQuery + cq
 		}
 		if query != "" {
 			cq = fmt.Sprintf(cq, query)
@@ -510,8 +510,7 @@ func (repo domainRepo) DeleteDomain(ctx context.Context, id string) error {
 	return nil
 }
 
-func (repo domainRepo) userDomainsBaseQuery() string {
-	return `
+const userDomainsBaseQuery = `
 		with domains AS (
 			SELECT
 				d.id as id,
@@ -542,7 +541,6 @@ func (repo domainRepo) userDomainsBaseQuery() string {
 			GROUP BY
 				dr.entity_id, drm.member_id, dr.id, dr."name", d.id
 		)`
-}
 
 func applyOrdering(emq string, pm domains.Page) string {
 	col := "COALESCE(d.updated_at, d.created_at)"

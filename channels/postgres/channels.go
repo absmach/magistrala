@@ -494,7 +494,7 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 		return channels.ChannelsPage{}, err
 	}
 
-	bq := repo.userChannelsBaseQuery()
+	bq := userChannelsBaseQuery
 
 	connJoinQuery := `
 		FROM
@@ -627,8 +627,7 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 	}, nil
 }
 
-func (repo *channelRepository) userChannelsBaseQuery() string {
-	return `
+const userChannelsBaseQuery = `
 WITH direct_channels AS (
 	select
 		c.id,
@@ -900,7 +899,6 @@ final_channels AS (
 		dc.id, d.id, dr.id, g."path"
 )
 	`
-}
 
 func (cr *channelRepository) Remove(ctx context.Context, ids ...string) error {
 	q := "DELETE FROM channels AS c  WHERE c.id = ANY(:channel_ids) ;"

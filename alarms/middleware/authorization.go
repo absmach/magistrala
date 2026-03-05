@@ -49,7 +49,7 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	switch {
 	case alarm.AssigneeID != "":
-		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorize(ctx, operations.OpAssignAlarm, session, operations.EntityType, alarm.ID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 		domainUserID := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
@@ -65,11 +65,11 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 			return alarms.Alarm{}, err
 		}
 	case alarm.AcknowledgedBy != "":
-		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, operations.EntityType, alarm.ID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	case alarm.ResolvedBy != "":
-		if err := am.authorize(ctx, operations.OpResolveAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorize(ctx, operations.OpResolveAlarm, session, operations.EntityType, alarm.ID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	default:

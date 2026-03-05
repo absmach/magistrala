@@ -15,7 +15,7 @@ import (
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/magistrala/reports/api"
 	rmocks "github.com/absmach/magistrala/reports/mocks"
-	"github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/go-chi/chi/v5"
@@ -99,7 +99,7 @@ var (
 
 func setupReports() (*httptest.Server, *rmocks.Service, *authnmocks.Authentication) {
 	rsvc := new(rmocks.Service)
-	log := logger.NewMock()
+	log := smqlog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := chi.NewRouter()

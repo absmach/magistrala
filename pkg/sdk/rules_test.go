@@ -13,7 +13,7 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/api"
 	remocks "github.com/absmach/magistrala/re/mocks"
-	"github.com/absmach/supermq/logger"
+	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/go-chi/chi/v5"
@@ -34,7 +34,7 @@ var testRule = sdk.Rule{
 
 func setupRules() (*httptest.Server, *remocks.Service, *authnmocks.Authentication) {
 	rsvc := new(remocks.Service)
-	log := logger.NewMock()
+	log := smqlog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := chi.NewRouter()

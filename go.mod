@@ -57,11 +57,10 @@ require (
 	github.com/go-logr/zerologr v1.2.3 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
+	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20251017212417-90e834f514db // indirect
 	sigs.k8s.io/controller-runtime v0.22.4 // indirect
 )
-
-require go.uber.org/atomic v1.11.0 // indirect
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20251209175733-2a1774d88802.1 // indirect

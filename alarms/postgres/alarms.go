@@ -20,11 +20,6 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const (
-	entityTableName    = "alarms"
-	entityIDColumnName = "id"
-)
-
 type repository struct {
 	db *sqlx.DB
 }

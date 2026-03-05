@@ -155,7 +155,7 @@ func viewReportConfigEndpoint(svc reports.Service) endpoint.Endpoint {
 			return viewReportConfigRes{}, err
 		}
 
-		cfg, err := svc.ViewReportConfig(ctx, session, req.ID)
+		cfg, err := svc.ViewReportConfig(ctx, session, req.ID, req.withRoles)
 		if err != nil {
 			return viewReportConfigRes{}, err
 		}

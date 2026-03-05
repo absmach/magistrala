@@ -330,7 +330,136 @@ func TestAddRule(t *testing.T) {
 					Time:            now,
 				},
 			},
-			err: re.ErrGoroutinesNotAllowed,
+			err:            re.ErrGoroutinesNotAllowed,
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
+		},
+		{
+			desc: "Add rule with failed to add roles and failed to delete policies",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addRoleErr:     svcerr.ErrCreateEntity,
+			deletePolicies: svcerr.ErrRemoveEntity,
+			err:            svcerr.ErrRemoveEntity,
+		},
+		{
+			desc: "Add rule with failed to add policies",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			err:            svcerr.ErrAddPolicies,
+		},
+		{
+			desc: "Add rule with failed to add policies and failed rollback",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addPoliciesErr: svcerr.ErrAuthorization,
+			deleteErr:      svcerr.ErrRemoveEntity,
+			err:            svcerr.ErrRollbackRepo,
+		},
+		{
+			desc: "Add rule with failed to add roles",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			res: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			addRoleErr: svcerr.ErrCreateEntity,
+			err:        svcerr.ErrAddPolicies,
 		},
 	}
 

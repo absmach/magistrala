@@ -7,11 +7,13 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/magistrala/reports/operations"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var (
@@ -27,36 +29,47 @@ var (
 )
 
 type authorizationMiddleware struct {
-	svc   reports.Service
-	authz smqauthz.Authorization
+	svc         reports.Service
+	authz       smqauthz.Authorization
+	entitiesOps permissions.EntitiesOperations[permissions.Operation]
+	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 // AuthorizationMiddleware adds authorization to the reports service.
-func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization) (reports.Service, error) {
+func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (reports.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
+	if err != nil {
+		return nil, err
+	}
 	return &authorizationMiddleware{
-		svc:   svc,
-		authz: authz,
+		svc:                                svc,
+		authz:                              authz,
+		entitiesOps:                        entitiesOps,
+		RoleManagerAuthorizationMiddleware: ram,
 	}, nil
 }
 
 func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpAddReportConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpAddReportConfig, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainCreateConfigs, err)
 	}
 
 	return am.svc.AddReportConfig(ctx, session, cfg)
 }
 
-func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpViewReportConfig, session); err != nil {
+func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (reports.ReportConfig, error) {
+	if err := am.authorize(ctx, operations.OpViewReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 
-	return am.svc.ViewReportConfig(ctx, session, id)
+	return am.svc.ViewReportConfig(ctx, session, id, withRoles)
 }
 
 func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpUpdateReportConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateReportConfig, session, operations.EntityType, cfg.ID); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -64,15 +77,15 @@ func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpUpdateReportSchedule, session); err != nil {
-		return reports.ReportConfig{}, errors.Wrap(errDomainDeleteConfigs, err)
+	if err := am.authorize(ctx, operations.OpUpdateReportSchedule, session, operations.EntityType, cfg.ID); err != nil {
+		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
 	return am.svc.UpdateReportSchedule(ctx, session, cfg)
 }
 
 func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, reports.OpRemoveReportConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpRemoveReportConfig, session, operations.EntityType, id); err != nil {
 		return errors.Wrap(errDomainDeleteConfigs, err)
 	}
 
@@ -80,7 +93,7 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	if err := am.authorize(ctx, reports.OpListReportsConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpListReportsConfig, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 
@@ -88,7 +101,7 @@ func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, sessio
 }
 
 func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpEnableReportConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpEnableReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -96,7 +109,7 @@ func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, reports.OpDisableReportConfig, session); err != nil {
+	if err := am.authorize(ctx, operations.OpDisableReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -104,7 +117,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 }
 
 func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction) (reports.ReportPage, error) {
-	if err := am.authorize(ctx, reports.OpGenerateReport, session); err != nil {
+	if err := am.authorize(ctx, operations.OpGenerateReport, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportPage{}, errors.Wrap(errDomainGenerateReports, err)
 	}
 
@@ -112,7 +125,7 @@ func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
-	if err := am.authorize(ctx, reports.OpUpdateReportTemplate, session); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateReportTemplate, session, operations.EntityType, cfg.ID); err != nil {
 		return errors.Wrap(errDomainUpdateTemplates, err)
 	}
 
@@ -120,7 +133,7 @@ func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, ses
 }
 
 func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
-	if err := am.authorize(ctx, reports.OpViewReportTemplate, session); err != nil {
+	if err := am.authorize(ctx, operations.OpViewReportTemplate, session, operations.EntityType, id); err != nil {
 		return "", errors.Wrap(errDomainViewTemplates, err)
 	}
 
@@ -128,7 +141,7 @@ func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, reports.OpDeleteReportTemplate, session); err != nil {
+	if err := am.authorize(ctx, operations.OpDeleteReportTemplate, session, operations.EntityType, id); err != nil {
 		return errors.Wrap(errDomainRemoveTemplates, err)
 	}
 
@@ -139,8 +152,8 @@ func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 	return am.svc.StartScheduler(ctx)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
-	perm, err := reports.GetPermission(op)
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
+	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
 	}
@@ -150,19 +163,19 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  perm,
+		Object:      obj,
+		ObjectType:  objType,
+		Permission:  perm.String(),
 	}
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		opName := reports.OperationName(op)
+		opName := am.entitiesOps.OperationName(operations.EntityType, op)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   session.DomainID,
-			EntityType: reports.EntityType,
+			EntityType: operations.EntityType,
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}

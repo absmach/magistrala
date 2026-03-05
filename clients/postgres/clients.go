@@ -1208,6 +1208,7 @@ func ToDBClientsPage(pm clients.Page) (dbClientsPage, error) {
 		RoleID:      pm.RoleID,
 		Actions:     pm.Actions,
 		AccessType:  pm.AccessType,
+		IDs:         pq.StringArray(pm.IDs),
 		CreatedFrom: pm.CreatedFrom,
 		CreatedTo:   pm.CreatedTo,
 	}, nil
@@ -1232,6 +1233,7 @@ type dbClientsPage struct {
 	AccessType  string           `db:"access_type"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
+	IDs         pq.StringArray   `db:"ids"`
 	UserID      string           `db:"user_id"`
 	DomainID    string           `db:"domain_id_param"`
 }
@@ -1256,7 +1258,7 @@ func PageQuery(pm clients.Page) (string, error) {
 		}
 	}
 	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("c.id IN ('%s')", strings.Join(pm.IDs, "','")))
+		query = append(query, "c.id = ANY(:ids)")
 	}
 
 	if pm.Status != clients.AllStatus {

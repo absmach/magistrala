@@ -670,7 +670,7 @@ type dbDomainsPage struct {
 	RoleName    string           `db:"role_name"`
 	Actions     pq.StringArray   `db:"actions"`
 	ID          string           `db:"id"`
-	IDs         []string         `db:"ids"`
+	IDs         pq.StringArray   `db:"ids"`
 	Metadata    []byte           `db:"metadata"`
 	Tags        pgtype.TextArray `db:"tags"`
 	Status      domains.Status   `db:"status"`
@@ -699,7 +699,7 @@ func toDBDomainsPage(pm domains.Page) (dbDomainsPage, error) {
 		RoleName:    pm.RoleName,
 		Actions:     pm.Actions,
 		ID:          pm.ID,
-		IDs:         pm.IDs,
+		IDs:         pq.StringArray(pm.IDs),
 		Metadata:    data,
 		Tags:        tags,
 		Status:      pm.Status,
@@ -718,7 +718,7 @@ func buildPageQuery(pm domains.Page) (string, error) {
 	}
 
 	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("d.id IN ('%s')", strings.Join(pm.IDs, "','")))
+		query = append(query, "d.id = ANY(:ids)")
 	}
 
 	if (pm.Status >= domains.EnabledStatus) && (pm.Status < domains.AllStatus) {

@@ -1305,7 +1305,7 @@ func PageQuery(pm channels.Page) (string, error) {
 	}
 
 	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
+		query = append(query, "id = ANY(:ids)")
 	}
 	if pm.Status != channels.AllStatus {
 		query = append(query, "c.status = :status")
@@ -1417,6 +1417,7 @@ func toDBChannelsPage(pm channels.Page) (dbChannelsPage, error) {
 		RoleID:      pm.RoleID,
 		Actions:     pm.Actions,
 		AccessType:  pm.AccessType,
+		IDs:         pq.StringArray(pm.IDs),
 		CreatedFrom: pm.CreatedFrom,
 		CreatedTo:   pm.CreatedTo,
 	}, nil
@@ -1440,6 +1441,7 @@ type dbChannelsPage struct {
 	AccessType  string           `db:"access_type"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
+	IDs         pq.StringArray   `db:"ids"`
 	UserID      string           `db:"user_id"`
 	DomainID    string           `db:"domain_id_param"`
 }

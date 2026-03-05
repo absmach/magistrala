@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/users"
 	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 )
 
 type userRepo struct {
@@ -634,6 +635,7 @@ type DBUsersPage struct {
 	GroupID     string           `db:"group_id"`
 	Role        users.Role       `db:"role"`
 	Status      users.Status     `db:"status"`
+	IDs         pq.StringArray   `db:"ids"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
 }
@@ -662,6 +664,7 @@ func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {
 		Status:      pm.Status,
 		Tags:        tags,
 		Role:        pm.Role,
+		IDs:         pq.StringArray(pm.IDs),
 		CreatedFrom: pm.CreatedFrom,
 		CreatedTo:   pm.CreatedTo,
 	}, nil
@@ -699,7 +702,7 @@ func PageQuery(pm users.Page) (string, error) {
 		query = append(query, "metadata @> :metadata")
 	}
 	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
+		query = append(query, "id = ANY(:ids)")
 	}
 	if pm.Status != users.AllStatus {
 		query = append(query, "u.status = :status")

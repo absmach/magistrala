@@ -492,6 +492,7 @@ func (repo groupRepository) RetrieveByIDs(ctx context.Context, pm groups.PageMet
 	if err != nil {
 		return groups.Page{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
+	dbPageMeta.IDs = pq.StringArray(ids)
 	rows, err := repo.db.NamedQueryContext(ctx, q, dbPageMeta)
 	if err != nil {
 		return groups.Page{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
@@ -800,7 +801,7 @@ func (repo groupRepository) RetrieveAllParentGroups(ctx context.Context, domainI
 
 	query := buildQuery(pm)
 
-	levelCondition := fmt.Sprintf("g.path @> '%s' ", cGroup.Path)
+	levelCondition := "g.path @> :path::::ltree "
 
 	switch {
 	case query == "":
@@ -809,6 +810,7 @@ func (repo groupRepository) RetrieveAllParentGroups(ctx context.Context, domainI
 		query = query + " AND " + levelCondition
 	}
 
+	pm.Path = cGroup.Path
 	return repo.retrieveGroups(ctx, domainID, userID, query, pm)
 }
 
@@ -824,19 +826,19 @@ func (repo groupRepository) RetrieveChildrenGroups(ctx context.Context, domainID
 	switch {
 	// Retrieve all children groups from parent group level
 	case startLevel == 0 && endLevel < 0:
-		levelCondition = fmt.Sprintf(" path ~ '%s.*'::::lquery ", pGroup.Path)
+		levelCondition = " path ~ (:path || '.*')::::lquery "
 
 	// Retrieve specific level of children groups from parent group level
 	case (startLevel > 0) && (startLevel == endLevel || endLevel == 0):
-		levelCondition = fmt.Sprintf(" path ~ '%s.*{%d}'::::lquery ", pGroup.Path, startLevel)
+		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d}')::::lquery ", startLevel)
 
 	// Retrieve all children groups from specific level from parent group level
 	case startLevel > 0 && endLevel < 0:
-		levelCondition = fmt.Sprintf(" path ~ '%s.*{%d,}'::::lquery ", pGroup.Path, startLevel)
+		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d,}')::::lquery ", startLevel)
 
 	// Retrieve children groups between specific level from parent group level
 	case startLevel > 0 && endLevel > 0 && startLevel < endLevel:
-		levelCondition = fmt.Sprintf(" path ~ '%s.*{%d,%d}'::::lquery ", pGroup.Path, startLevel, endLevel)
+		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d,%d}')::::lquery ", startLevel, endLevel)
 	default:
 		return groups.Page{}, errors.Wrap(repoerr.ErrViewEntity, fmt.Errorf("invalid level range: start level: %d end level: %d", startLevel, endLevel))
 	}
@@ -848,6 +850,7 @@ func (repo groupRepository) RetrieveChildrenGroups(ctx context.Context, domainID
 		query = query + " AND " + levelCondition
 	}
 
+	pm.Path = pGroup.Path
 	return repo.retrieveGroups(ctx, domainID, userID, query, pm)
 }
 
@@ -1188,7 +1191,7 @@ func buildQuery(gm groups.PageMeta, ids ...string) string {
 	queries := []string{}
 
 	if len(ids) > 0 {
-		queries = append(queries, fmt.Sprintf(" id in ('%s') ", strings.Join(ids, "', '")))
+		queries = append(queries, "id = ANY(:ids)")
 	}
 	if gm.Name != "" {
 		queries = append(queries, "g.name ILIKE '%' || :name || '%'")
@@ -1392,6 +1395,7 @@ func toDBGroupPageMeta(pm groups.PageMeta) (dbGroupPageMeta, error) {
 		RoleID:      pm.RoleID,
 		Actions:     pm.Actions,
 		AccessType:  pm.AccessType,
+		Path:        pm.Path,
 		CreatedFrom: pm.CreatedFrom,
 		CreatedTo:   pm.CreatedTo,
 	}, nil
@@ -1415,6 +1419,7 @@ type dbGroupPageMeta struct {
 	AccessType  string           `db:"access_type"`
 	Status      groups.Status    `db:"status"`
 	Tags        pgtype.TextArray `db:"tags"`
+	IDs            pq.StringArray   `db:"ids"`
 	CreatedFrom    time.Time        `db:"created_from"`
 	CreatedTo      time.Time        `db:"created_to"`
 	UserID         string           `db:"user_id"`

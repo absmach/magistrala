@@ -9,6 +9,9 @@ alarm:
     - enable: update_permission
     - disable: update_permission
     - delete: delete_permission
+    - assign: rule_alarm_assign_permission
+    - acknowledge: rule_alarm_acknowledge_permission
+    - resolve: rule_alarm_resolve_permission
 
 rule:
   operations:

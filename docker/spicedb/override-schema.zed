@@ -124,6 +124,9 @@ relation delete: role#member
 permission update_permission = update + domain->alarm_update_permission
 permission read_permission = read + domain->alarm_read_permission
 permission delete_permission = delete + domain->alarm_delete_permission
+permission assign_permission = domain->rule_alarm_assign_permission
+permission acknowledge_permission = domain->rule_alarm_acknowledge_permission
+permission resolve_permission = domain->rule_alarm_resolve_permission
 }
 
 definition rule {

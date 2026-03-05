@@ -22,6 +22,9 @@ rule:
     - enable: update_permission
     - disable: update_permission
     - delete: delete_permission
+    - alarm_assign: alarm_assign_permission
+    - alarm_acknowledge: alarm_acknowledge_permission
+    - alarm_resolve: alarm_resolve_permission
   roles_operations:
     - add: manage_role_permission
     - remove: manage_role_permission

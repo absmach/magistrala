@@ -17,18 +17,24 @@ const (
 	OpListAlarms
 	OpUpdateAlarm
 	OpDeleteAlarm
+	OpAssignAlarm
+	OpAcknowledgeAlarm
+	OpResolveAlarm
 )
 
 const (
-	OpAddAlarmStr    = "OpAddAlarm"
-	OpViewAlarmStr   = "OpViewAlarm"
-	OpListAlarmsStr  = "OpListAlarms"
-	OpUpdateAlarmStr = "OpUpdateAlarm"
-	OpDeleteAlarmStr = "OpDeleteAlarm"
+	OpAddAlarmStr         = "OpAddAlarm"
+	OpViewAlarmStr        = "OpViewAlarm"
+	OpListAlarmsStr       = "OpListAlarms"
+	OpUpdateAlarmStr      = "OpUpdateAlarm"
+	OpDeleteAlarmStr      = "OpDeleteAlarm"
+	OpAssignAlarmStr      = "OpAssignAlarm"
+	OpAcknowledgeAlarmStr = "OpAcknowledgeAlarm"
+	OpResolveAlarmStr     = "OpResolveAlarm"
 )
 
 func GetPermission(op permissions.Operation) (string, error) {
-	if op < OpAddAlarm || op > OpDeleteAlarm {
+	if op < OpAddAlarm || op > OpResolveAlarm {
 		return "", errors.New("invalid operation")
 	}
 
@@ -51,6 +57,12 @@ func OperationName(op permissions.Operation) string {
 		return OpUpdateAlarmStr
 	case OpDeleteAlarm:
 		return OpDeleteAlarmStr
+	case OpAssignAlarm:
+		return OpAssignAlarmStr
+	case OpAcknowledgeAlarm:
+		return OpAcknowledgeAlarmStr
+	case OpResolveAlarm:
+		return OpResolveAlarmStr
 	default:
 		return "unknown"
 	}

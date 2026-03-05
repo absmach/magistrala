@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/jackc/pgtype"
 )
 
@@ -35,6 +36,8 @@ type dbRule struct {
 	CreatedBy       string             `db:"created_by"`
 	UpdatedAt       time.Time          `db:"updated_at"`
 	UpdatedBy       string             `db:"updated_by"`
+	MemberID        string             `db:"member_id,omitempty"`
+	Roles           json.RawMessage    `db:"roles,omitempty"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -108,6 +111,13 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		}
 	}
 
+	var roles []roles.MemberRoleActions
+	if dto.Roles != nil {
+		if err := json.Unmarshal(dto.Roles, &roles); err != nil {
+			return re.Rule{}, errors.Wrap(errors.ErrMalformedEntity, err)
+		}
+	}
+
 	return re.Rule{
 		ID:           dto.ID,
 		Name:         dto.Name,
@@ -132,6 +142,7 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 		CreatedBy: dto.CreatedBy,
 		UpdatedAt: dto.UpdatedAt,
 		UpdatedBy: dto.UpdatedBy,
+		Roles:     roles,
 	}, nil
 }
 

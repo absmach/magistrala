@@ -13,7 +13,8 @@ REPO_URL=https://github.com/absmach/supermq
 TEMP_DIR="supermq"
 DOCKER_DIR="docker"
 DOCKER_DST_DIR="../docker"
-DEST_DIR="../../docker/supermq-docker"
+DEST_DIR="../docker/supermq-docker"
+COMBINE_SCHEMA_SCRIPT="./combine-schema.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR" || exit 1
@@ -40,3 +41,5 @@ mkdir -p "$DEST_DIR"
 mv -f "$DOCKER_DIR"/.??* "$DOCKER_DIR"/* "$DEST_DIR"/
 cd ..
 rm -rf "$TEMP_DIR"
+
+sh "$COMBINE_SCHEMA_SCRIPT"

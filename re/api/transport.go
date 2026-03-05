@@ -16,6 +16,7 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -36,6 +37,8 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 		r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
 		r.Route("/{domainID}", func(r chi.Router) {
 			r.Route("/rules", func(r chi.Router) {
+				d := roleManagerHttp.NewDecoder("ruleID")
+
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
 					addRuleEndpoint(svc),
 					decodeAddRuleRequest,
@@ -49,6 +52,8 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 					api.EncodeResponse,
 					opts...,
 				), "list_rules").ServeHTTP)
+
+				r = roleManagerHttp.EntityAvailableActionsRouter(svc, d, r, opts)
 
 				r.Route("/{ruleID}", func(r chi.Router) {
 					r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -99,6 +104,8 @@ func MakeHandler(svc re.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, l
 						api.EncodeResponse,
 						opts...,
 					), "disable_rule").ServeHTTP)
+
+					roleManagerHttp.EntityRoleMangerRouter(svc, d, r, opts)
 				})
 			})
 		})
@@ -123,7 +130,11 @@ func decodeAddRuleRequest(_ context.Context, r *http.Request) (any, error) {
 
 func decodeViewRuleRequest(_ context.Context, r *http.Request) (any, error) {
 	id := chi.URLParam(r, ruleIdKey)
-	return viewRuleReq{id: id}, nil
+	withRoles, err := apiutil.ReadBoolQuery(r, api.RolesKey, false)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return viewRuleReq{id: id, withRoles: withRoles}, nil
 }
 
 func decodeUpdateRuleRequest(_ context.Context, r *http.Request) (any, error) {

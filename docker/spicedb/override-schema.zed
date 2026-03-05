@@ -41,6 +41,9 @@ definition domain {
 	relation rule_add_role_users: role#member | team#member
 	relation rule_remove_role_users: role#member | team#member
 	relation rule_view_role_users: role#member | team#member
+	relation rule_alarm_assign: role#member | team#member
+	relation rule_alarm_acknowledge: role#member | team#member
+	relation rule_alarm_resolve: role#member | team#member
 
 	relation report_create: role#member | team#member
 	relation report_update: role#member | team#member

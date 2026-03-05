@@ -53,7 +53,7 @@ func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, 
 }
 
 func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpAddReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpAddReportConfig, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainCreateConfigs, err)
 	}
 
@@ -61,7 +61,7 @@ func (am *authorizationMiddleware) AddReportConfig(ctx context.Context, session 
 }
 
 func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpViewReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpViewReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 
@@ -69,7 +69,7 @@ func (am *authorizationMiddleware) ViewReportConfig(ctx context.Context, session
 }
 
 func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpUpdateReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateReportConfig, session, operations.EntityType, cfg.ID); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -77,7 +77,7 @@ func (am *authorizationMiddleware) UpdateReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpUpdateReportSchedule); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateReportSchedule, session, operations.EntityType, cfg.ID); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -85,7 +85,7 @@ func (am *authorizationMiddleware) UpdateReportSchedule(ctx context.Context, ses
 }
 
 func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, operations.OpRemoveReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpRemoveReportConfig, session, operations.EntityType, id); err != nil {
 		return errors.Wrap(errDomainDeleteConfigs, err)
 	}
 
@@ -93,7 +93,7 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	if err := am.authorize(ctx, session, operations.OpListReportsConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpListReportsConfig, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
 	}
 
@@ -101,7 +101,7 @@ func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, sessio
 }
 
 func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpEnableReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpEnableReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -109,7 +109,7 @@ func (am *authorizationMiddleware) EnableReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
-	if err := am.authorize(ctx, session, operations.OpDisableReportConfig); err != nil {
+	if err := am.authorize(ctx, operations.OpDisableReportConfig, session, operations.EntityType, id); err != nil {
 		return reports.ReportConfig{}, errors.Wrap(errDomainUpdateConfigs, err)
 	}
 
@@ -117,7 +117,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 }
 
 func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction) (reports.ReportPage, error) {
-	if err := am.authorize(ctx, session, operations.OpGenerateReport); err != nil {
+	if err := am.authorize(ctx, operations.OpGenerateReport, session, operations.EntityType, config.ID); err != nil {
 		return reports.ReportPage{}, errors.Wrap(errDomainGenerateReports, err)
 	}
 
@@ -125,7 +125,7 @@ func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session a
 }
 
 func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
-	if err := am.authorize(ctx, session, operations.OpUpdateReportTemplate); err != nil {
+	if err := am.authorize(ctx, operations.OpUpdateReportTemplate, session, operations.EntityType, cfg.ID); err != nil {
 		return errors.Wrap(errDomainUpdateTemplates, err)
 	}
 
@@ -133,7 +133,7 @@ func (am *authorizationMiddleware) UpdateReportTemplate(ctx context.Context, ses
 }
 
 func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
-	if err := am.authorize(ctx, session, operations.OpViewReportTemplate); err != nil {
+	if err := am.authorize(ctx, operations.OpViewReportTemplate, session, operations.EntityType, id); err != nil {
 		return "", errors.Wrap(errDomainViewTemplates, err)
 	}
 
@@ -141,7 +141,7 @@ func (am *authorizationMiddleware) ViewReportTemplate(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, session, operations.OpDeleteReportTemplate); err != nil {
+	if err := am.authorize(ctx, operations.OpDeleteReportTemplate, session, operations.EntityType, id); err != nil {
 		return errors.Wrap(errDomainRemoveTemplates, err)
 	}
 
@@ -152,7 +152,7 @@ func (am *authorizationMiddleware) StartScheduler(ctx context.Context) error {
 	return am.svc.StartScheduler(ctx)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, op permissions.Operation) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
 	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
@@ -163,8 +163,8 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		Object:      obj,
+		ObjectType:  objType,
 		Permission:  perm.String(),
 	}
 

@@ -49,7 +49,7 @@ func viewAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 			return alarmRes{}, svcerr.ErrAuthorization
 		}
 
-		alarm, err := svc.ViewAlarm(ctx, session, req.ID, req.withRoles)
+		alarm, err := svc.ViewAlarm(ctx, session, req.ID)
 		if err != nil {
 			return alarmRes{}, err
 		}

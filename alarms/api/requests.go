@@ -24,8 +24,7 @@ func (req alarmReq) validate() error {
 }
 
 type viewAlarmReq struct {
-	ID        string
-	withRoles bool
+	ID string
 }
 
 func (req viewAlarmReq) validate() error {

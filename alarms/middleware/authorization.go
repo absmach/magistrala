@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
-	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
 var (
@@ -27,25 +26,19 @@ type authorizationMiddleware struct {
 	svc         alarms.Service
 	authz       smqauthz.Authorization
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
-	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 var _ alarms.Service = (*authorizationMiddleware)(nil)
 
-func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (alarms.Service, error) {
+func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (alarms.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
-		return nil, err
-	}
-	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
-	if err != nil {
 		return nil, err
 	}
 
 	return &authorizationMiddleware{
-		svc:                                svc,
-		authz:                              authz,
-		entitiesOps:                        entitiesOps,
-		RoleManagerAuthorizationMiddleware: ram,
+		svc:         svc,
+		authz:       authz,
+		entitiesOps: entitiesOps,
 	}, nil
 }
 
@@ -96,12 +89,12 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 	return am.svc.ListAlarms(ctx, session, pm)
 }
 
-func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (alarms.Alarm, error) {
+func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
 	if err := am.authorize(ctx, operations.OpViewAlarm, session, operations.EntityType, id); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
-	return am.svc.ViewAlarm(ctx, session, id, withRoles)
+	return am.svc.ViewAlarm(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {

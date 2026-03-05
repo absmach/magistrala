@@ -12,9 +12,6 @@ services:
   spicedb-migrate:
     networks: !override
       - magistrala-base-net
-    depends_on:
-      schema-combiner:
-        condition: service_completed_successfully
 
   spicedb-db:
     networks: !override

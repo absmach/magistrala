@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/url"
 	"os"
 
@@ -15,23 +16,33 @@ import (
 	"github.com/absmach/magistrala/alarms/brokers"
 	"github.com/absmach/magistrala/alarms/consumer"
 	"github.com/absmach/magistrala/alarms/middleware"
+	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
+	dpostgres "github.com/absmach/supermq/domains/postgres"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/authn/authsvc"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
+	dconsumer "github.com/absmach/supermq/pkg/domains/events/consumer"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	"github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
+	"github.com/absmach/supermq/pkg/permissions"
+	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/policies/spicedb"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/authzed/authzed-go/v1"
+	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -42,14 +53,22 @@ const (
 	defDB            = "alarms"
 	defSvcHTTPPort   = "8050"
 	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	alarmEntity      = "alarm"
 )
 
 type config struct {
-	LogLevel   string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
-	BrokerURL  string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
-	InstanceID string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
-	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	LogLevel            string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
+	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	InstanceID          string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
+	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
+	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL               string  `env:"SMQ_ES_URL"             envDefault:"nats://localhost:4222"`
+	ESConsumerName      string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
+	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	SpicedbSchemaFile   string  `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
+	PermissionsFile     string  `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {
@@ -87,7 +106,14 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	db, err := postgres.Setup(dbConfig, *alarmsRepo.Migration())
+	migrations, err := alarmsRepo.Migration()
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+
+	db, err := postgres.Setup(dbConfig, *migrations)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -138,11 +164,62 @@ func main() {
 
 	logger.Info("AuthZ successfully connected to auth gRPC server " + authzHandler.Secure())
 
+	ddatabase := postgres.NewDatabase(db, dbConfig, tracer)
+	drepo := dpostgres.NewRepository(ddatabase)
+
+	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
+		exitCode = 1
+		return
+	}
+
 	idp := uuid.New()
 
-	svc := alarms.NewService(idp, repo)
+	policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	logger.Info("Policy service are successfully connected to SpiceDB gRPC server")
 
-	svc = middleware.NewAuthorizationMiddleware(svc, authz)
+	svc := alarms.NewService(idp, repo, policyService)
+
+	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to parse permissions file: %s", err))
+		exitCode = 1
+		return
+	}
+
+	alarmOps, _, err := permConfig.GetEntityPermissions(alarmEntity)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to get alarm permissions: %s", err))
+		exitCode = 1
+		return
+	}
+
+	entitiesOps, err := permissions.NewEntitiesOperations(
+		permissions.EntitiesPermission{
+			operations.EntityType: alarmOps,
+		},
+		permissions.EntitiesOperationDetails[permissions.Operation]{
+			operations.EntityType: operations.OperationDetails(),
+		},
+	)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create entity operations: %s", err))
+		exitCode = 1
+		return
+	}
+
+	svc, err = middleware.NewAuthorizationMiddleware(svc, authz, entitiesOps)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
+		exitCode = 1
+		return
+	}
+
 	svc = middleware.NewLoggingMiddleware(logger, svc)
 	counter, latency := prometheus.MakeMetrics("alarms", "api")
 	svc = middleware.NewMetricsMiddleware(counter, latency, svc)
@@ -191,4 +268,18 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("billing service terminated: %s", err))
 	}
+}
+
+func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Service, error) {
+	client, err := authzed.NewClientWithExperimentalAPIs(
+		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
+	)
+	if err != nil {
+		return nil, err
+	}
+	ps := spicedb.NewPolicyService(client, logger)
+
+	return ps, nil
 }

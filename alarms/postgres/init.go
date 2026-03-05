@@ -4,13 +4,16 @@
 package postgres
 
 import (
+	dpostgres "github.com/absmach/supermq/domains/postgres"
+	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )
 
 // Migration of Users service.
-func Migration() *migrate.MemoryMigrationSource {
-	return &migrate.MemoryMigrationSource{
+func Migration() (*migrate.MemoryMigrationSource, error) {
+	alarmsMigration := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
 				Id: "alarms_01",
@@ -50,4 +53,12 @@ func Migration() *migrate.MemoryMigrationSource {
 			},
 		},
 	}
+
+	domainsMigration, err := dpostgres.Migration()
+	if err != nil {
+		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
+	}
+	alarmsMigration.Migrations = append(alarmsMigration.Migrations, domainsMigration.Migrations...)
+
+	return alarmsMigration, nil
 }

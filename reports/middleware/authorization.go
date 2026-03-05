@@ -117,7 +117,7 @@ func (am *authorizationMiddleware) DisableReportConfig(ctx context.Context, sess
 }
 
 func (am *authorizationMiddleware) GenerateReport(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction) (reports.ReportPage, error) {
-	if err := am.authorize(ctx, operations.OpGenerateReport, session, operations.EntityType, config.ID); err != nil {
+	if err := am.authorize(ctx, operations.OpGenerateReport, session, policies.DomainType, session.DomainID); err != nil {
 		return reports.ReportPage{}, errors.Wrap(errDomainGenerateReports, err)
 	}
 

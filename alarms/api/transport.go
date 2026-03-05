@@ -42,7 +42,6 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 				api.EncodeResponse,
 				opts...,
 			), "list_alarms").ServeHTTP)
-
 			r.Route("/{alarmID}", func(r chi.Router) {
 				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
 					viewAlarmEndpoint(svc),

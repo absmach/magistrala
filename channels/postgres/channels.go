@@ -414,7 +414,7 @@ func (cr *channelRepository) RetrieveAll(ctx context.Context, pm channels.Page) 
 							COALESCE(c.domain_id, '') AS domain_id,
 							COALESCE(parent_group_id, '') AS parent_group_id,
 							c.route,
-							COALESCE((SELECT path FROM groups WHERE id = c.parent_group_id), ''::::ltree) AS parent_group_path,
+							COALESCE(g.path, ''::::ltree) AS parent_group_path,
 							c.status,
 							c.created_by,
 							c.created_at,
@@ -422,6 +422,8 @@ func (cr *channelRepository) RetrieveAll(ctx context.Context, pm channels.Page) 
 							COALESCE(c.updated_by, '') AS updated_by
 					    FROM
         					channels c
+						LEFT JOIN
+							groups g ON g.id = c.parent_group_id
 					)
 					SELECT
 						c.*
@@ -641,7 +643,7 @@ WITH direct_channels AS (
 		c.updated_at,
 		c.updated_by,
 		c.status,
-		COALESCE((SELECT path FROM groups WHERE id = c.parent_group_id), ''::::ltree) AS parent_group_path,
+		COALESCE(pg.path, ''::::ltree) AS parent_group_path,
 		cr.id AS role_id,
 		cr."name" AS role_name,
 		array_agg(cra."action") AS actions,
@@ -658,11 +660,13 @@ WITH direct_channels AS (
 		channels_roles cr ON cr.id = crm.role_id
 	JOIN
 		channels c ON c.id = cr.entity_id
+	LEFT JOIN
+		groups pg ON pg.id = c.parent_group_id
 	WHERE
 		crm.member_id = :user_id
 		AND c.domain_id = :domain_id_param
 	GROUP BY
-		cr.entity_id, crm.member_id, cr.id, cr."name", c.id
+		cr.entity_id, crm.member_id, cr.id, cr."name", c.id, pg.path
 ),
 direct_groups AS (
 	SELECT

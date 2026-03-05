@@ -71,7 +71,7 @@ func (repo *repository) RetrieveAll(ctx context.Context, page journal.Page) (jou
 	if page.Direction == "" {
 		page.Direction = "ASC"
 	}
-	q := fmt.Sprintf("SELECT %s FROM journal %s ORDER BY occurred_at %s LIMIT :limit OFFSET :offset;", sq, query, page.Direction)
+	q := fmt.Sprintf("SELECT %s, COUNT(*) OVER() AS total_count FROM journal %s ORDER BY occurred_at %s LIMIT :limit OFFSET :offset;", sq, query, page.Direction)
 
 	rows, err := repo.db.NamedQueryContext(ctx, q, page)
 	if err != nil {
@@ -79,12 +79,14 @@ func (repo *repository) RetrieveAll(ctx context.Context, page journal.Page) (jou
 	}
 	defer rows.Close()
 
+	var total uint64
 	var items []journal.Journal
 	for rows.Next() {
 		var item dbJournal
 		if err = rows.StructScan(&item); err != nil {
 			return journal.JournalsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 		}
+		total = item.TotalCount
 		j, err := toJournal(item)
 		if err != nil {
 			return journal.JournalsPage{}, err
@@ -92,21 +94,20 @@ func (repo *repository) RetrieveAll(ctx context.Context, page journal.Page) (jou
 		items = append(items, j)
 	}
 
-	tq := fmt.Sprintf(`SELECT COUNT(*) FROM journal %s;`, query)
-
-	total, err := postgres.Total(ctx, repo.db, tq, page)
-	if err != nil {
-		return journal.JournalsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+	if len(items) == 0 {
+		tq := fmt.Sprintf(`SELECT COUNT(*) FROM journal %s;`, query)
+		total, err = postgres.Total(ctx, repo.db, tq, page)
+		if err != nil {
+			return journal.JournalsPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
 	}
 
-	journalsPage := journal.JournalsPage{
+	return journal.JournalsPage{
 		Total:    total,
 		Offset:   page.Offset,
 		Limit:    page.Limit,
 		Journals: items,
-	}
-
-	return journalsPage, nil
+	}, nil
 }
 
 func pageQuery(pm journal.Page) string {
@@ -139,6 +140,7 @@ type dbJournal struct {
 	OccurredAt time.Time `db:"occurred_at"`
 	Attributes []byte    `db:"attributes"`
 	Metadata   []byte    `db:"metadata"`
+	TotalCount uint64    `db:"total_count"`
 }
 
 func toDBJournal(j journal.Journal) (dbJournal, error) {

@@ -694,7 +694,7 @@ func (repo *Repository) RoleRemoveAllMembers(ctx context.Context, role roles.Rol
 
 	dbrcap := dbRoleAction{RoleID: role.ID}
 
-	if _, err := repo.db.NamedExecContext(ctx, q, dbrcap); err != nil {
+	if _, err := tx.NamedExec(q, dbrcap); err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 

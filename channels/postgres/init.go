@@ -95,6 +95,17 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`SELECT 1`,
 				},
 			},
+			{
+				Id: "channels_06",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_channels_domain_id_status ON channels(domain_id, status);`,
+					`CREATE INDEX IF NOT EXISTS idx_channels_parent_group_id ON channels(parent_group_id);`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_channels_domain_id_status;`,
+					`DROP INDEX IF EXISTS idx_channels_parent_group_id;`,
+				},
+			},
 		},
 	}
 	channelsMigration.Migrations = append(channelsMigration.Migrations, rolesMigration.Migrations...)

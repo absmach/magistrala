@@ -452,13 +452,15 @@ func (repo *clientRepo) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 					c.metadata,
 					COALESCE(c.domain_id, '') AS domain_id,
 					COALESCE(parent_group_id, '') AS parent_group_id,
-					COALESCE((SELECT path FROM groups WHERE id = c.parent_group_id), ''::::ltree) AS parent_group_path,
+					COALESCE(g.path, ''::::ltree) AS parent_group_path,
 					c.status,
 					c.created_at,
 					c.updated_at,
 					COALESCE(c.updated_by, '') AS updated_by
 				FROM
 					clients c
+				LEFT JOIN
+					groups g ON g.id = c.parent_group_id
 			)
 			SELECT
 				c.*
@@ -678,7 +680,7 @@ func (repo *clientRepo) userClientBaseQuery() string {
 			c.updated_at,
 			c.updated_by,
 			c.status,
-			COALESCE((SELECT path FROM groups WHERE id = c.parent_group_id), ''::::ltree) AS parent_group_path,
+			COALESCE(pg.path, ''::::ltree) AS parent_group_path,
 			cr.id AS role_id,
 			cr."name" AS role_name,
 			array_agg(cra."action") AS actions,
@@ -695,11 +697,13 @@ func (repo *clientRepo) userClientBaseQuery() string {
 			clients_roles cr ON cr.id = crm.role_id
 		JOIN
 			clients c ON c.id = cr.entity_id
+		LEFT JOIN
+			groups pg ON pg.id = c.parent_group_id
 		WHERE
 			crm.member_id = :user_id
 			AND c.domain_id = :domain_id_param
 		GROUP BY
-			cr.entity_id, crm.member_id, cr.id, cr."name", c.id
+			cr.entity_id, crm.member_id, cr.id, cr."name", c.id, pg.path
 	),
 	direct_groups AS (
 		SELECT
@@ -1438,9 +1442,8 @@ func (repo *clientRepo) RemoveConnections(ctx context.Context, conns []clients.C
 		}
 	}()
 
-	query := `DELETE FROM connections WHERE channel_id = :channel_id AND domain_id = :domain_id AND client_id = :client_id`
-
 	for _, conn := range conns {
+		query := `DELETE FROM connections WHERE channel_id = :channel_id AND domain_id = :domain_id AND client_id = :client_id`
 		if uint8(conn.Type) > 0 {
 			query = query + " AND type = :type "
 		}

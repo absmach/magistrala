@@ -20,7 +20,6 @@ import (
 	"github.com/absmach/supermq/pkg/roles"
 	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
 	"github.com/jackc/pgtype"
-	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
 )
 
@@ -252,7 +251,6 @@ func (repo domainRepo) RetrieveDomainByRoute(ctx context.Context, route string) 
 
 // RetrieveAllByIDs retrieves for given Domain IDs .
 func (repo domainRepo) RetrieveAllDomainsByIDs(ctx context.Context, pm domains.Page) (domains.DomainsPage, error) {
-	var q string
 	if len(pm.IDs) == 0 {
 		return domains.DomainsPage{}, nil
 	}
@@ -263,11 +261,11 @@ func (repo domainRepo) RetrieveAllDomainsByIDs(ctx context.Context, pm domains.P
 
 	baseQ := `SELECT d.id as id, d.name as name, d.tags as tags, d.route as route, d.metadata as metadata,
 		d.created_at as created_at, d.updated_at as updated_at, d.updated_by as updated_by,
-		d.created_by as created_by, d.status as status FROM domains d`
+		d.created_by as created_by, d.status as status, COUNT(*) OVER() AS total_count FROM domains d`
 
 	squery := applyOrdering(query, pm)
 
-	q = fmt.Sprintf("%s %s  LIMIT %d OFFSET %d;", baseQ, squery, pm.Limit, pm.Offset)
+	q := fmt.Sprintf("%s %s LIMIT %d OFFSET %d;", baseQ, squery, pm.Limit, pm.Offset)
 
 	dbPage, err := toDBDomainsPage(pm)
 	if err != nil {
@@ -280,19 +278,30 @@ func (repo domainRepo) RetrieveAllDomainsByIDs(ctx context.Context, pm domains.P
 	}
 	defer rows.Close()
 
-	doms, err := repo.processRows(rows)
-	if err != nil {
-		return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+	var total uint64
+	var doms []domains.Domain
+	for rows.Next() {
+		dbd := dbDomain{}
+		if err := rows.StructScan(&dbd); err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
+		total = dbd.TotalCount
+		d, err := toDomain(dbd)
+		if err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
+		doms = append(doms, d)
 	}
 
-	cq := "SELECT COUNT(*) FROM domains d"
-	if query != "" {
-		cq = fmt.Sprintf(" %s %s", cq, query)
-	}
-
-	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
-	if err != nil {
-		return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+	if len(doms) == 0 {
+		cq := "SELECT COUNT(*) FROM domains d"
+		if query != "" {
+			cq = fmt.Sprintf(" %s %s", cq, query)
+		}
+		total, err = postgres.Total(ctx, repo.db, cq, dbPage)
+		if err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
 	}
 
 	return domains.DomainsPage{
@@ -321,7 +330,8 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 			d.updated_at as updated_at,
 			d.updated_by as updated_by,
 			d.created_by as created_by,
-			d.status as status
+			d.status as status,
+			COUNT(*) OVER() AS total_count
 		FROM
 			domains as d
 		%s
@@ -343,7 +353,8 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 				d.created_at as created_at,
 				d.updated_at as updated_at,
 				d.updated_by as updated_by,
-				d.created_by as created_by
+				d.created_by as created_by,
+				COUNT(*) OVER() AS total_count
 			FROM
 				domains d
 			%s
@@ -358,34 +369,54 @@ func (repo domainRepo) ListDomains(ctx context.Context, pm domains.Page) (domain
 		return domains.DomainsPage{}, errors.Wrap(repoerr.ErrFailedToRetrieveAllGroups, err)
 	}
 
-	var doms []domains.Domain
-	if !pm.OnlyTotal {
-		rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
+	if pm.OnlyTotal {
+		cq := `SELECT COUNT(*) FROM domains as d %s`
+		if pm.UserID != "" {
+			cq = repo.userDomainsBaseQuery() + cq
+		}
+		if query != "" {
+			cq = fmt.Sprintf(cq, query)
+		}
+		total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 		if err != nil {
 			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
 		}
-		defer rows.Close()
-
-		doms, err = repo.processRows(rows)
-		if err != nil {
-			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
-		}
+		return domains.DomainsPage{Total: total, Offset: pm.Offset, Limit: pm.Limit}, nil
 	}
 
-	cq := `SELECT COUNT(*)
-		FROM domains as d %s`
-
-	if pm.UserID != "" {
-		cq = repo.userDomainsBaseQuery() + cq
-	}
-
-	if query != "" {
-		cq = fmt.Sprintf(cq, query)
-	}
-
-	total, err := postgres.Total(ctx, repo.db, cq, dbPage)
+	rows, err := repo.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+	}
+	defer rows.Close()
+
+	var total uint64
+	var doms []domains.Domain
+	for rows.Next() {
+		dbd := dbDomain{}
+		if err := rows.StructScan(&dbd); err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
+		total = dbd.TotalCount
+		d, err := toDomain(dbd)
+		if err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
+		doms = append(doms, d)
+	}
+
+	if len(doms) == 0 {
+		cq := `SELECT COUNT(*) FROM domains as d %s`
+		if pm.UserID != "" {
+			cq = repo.userDomainsBaseQuery() + cq
+		}
+		if query != "" {
+			cq = fmt.Sprintf(cq, query)
+		}
+		total, err = postgres.Total(ctx, repo.db, cq, dbPage)
+		if err != nil {
+			return domains.DomainsPage{}, repo.eh.HandleError(repoerr.ErrFailedToRetrieveAllGroups, err)
+		}
 	}
 
 	return domains.DomainsPage{
@@ -513,22 +544,6 @@ func (repo domainRepo) userDomainsBaseQuery() string {
 		)`
 }
 
-func (repo domainRepo) processRows(rows *sqlx.Rows) ([]domains.Domain, error) {
-	var items []domains.Domain
-	for rows.Next() {
-		dbd := dbDomain{}
-		if err := rows.StructScan(&dbd); err != nil {
-			return items, err
-		}
-		d, err := toDomain(dbd)
-		if err != nil {
-			return items, err
-		}
-		items = append(items, d)
-	}
-	return items, nil
-}
-
 func applyOrdering(emq string, pm domains.Page) string {
 	col := "COALESCE(d.updated_at, d.created_at)"
 
@@ -550,21 +565,22 @@ func applyOrdering(emq string, pm domains.Page) string {
 }
 
 type dbDomain struct {
-	ID        string           `db:"id"`
-	Name      string           `db:"name"`
-	Metadata  []byte           `db:"metadata,omitempty"`
-	Tags      pgtype.TextArray `db:"tags,omitempty"`
-	Route     *string          `db:"route,omitempty"`
-	Status    domains.Status   `db:"status"`
-	RoleID    string           `db:"role_id"`
-	RoleName  string           `db:"role_name"`
-	Actions   pq.StringArray   `db:"actions"`
-	CreatedBy string           `db:"created_by"`
-	CreatedAt time.Time        `db:"created_at"`
-	UpdatedBy *string          `db:"updated_by,omitempty"`
-	UpdatedAt sql.NullTime     `db:"updated_at,omitempty"`
-	MemberID  string           `db:"member_id,omitempty"`
-	Roles     json.RawMessage  `db:"roles,omitempty"`
+	ID         string           `db:"id"`
+	Name       string           `db:"name"`
+	Metadata   []byte           `db:"metadata,omitempty"`
+	Tags       pgtype.TextArray `db:"tags,omitempty"`
+	Route      *string          `db:"route,omitempty"`
+	Status     domains.Status   `db:"status"`
+	RoleID     string           `db:"role_id"`
+	RoleName   string           `db:"role_name"`
+	Actions    pq.StringArray   `db:"actions"`
+	CreatedBy  string           `db:"created_by"`
+	CreatedAt  time.Time        `db:"created_at"`
+	UpdatedBy  *string          `db:"updated_by,omitempty"`
+	UpdatedAt  sql.NullTime     `db:"updated_at,omitempty"`
+	MemberID   string           `db:"member_id,omitempty"`
+	Roles      json.RawMessage  `db:"roles,omitempty"`
+	TotalCount uint64           `db:"total_count"`
 }
 
 func toDBDomain(d domains.Domain) (dbDomain, error) {

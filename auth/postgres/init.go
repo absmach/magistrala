@@ -134,6 +134,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE pat_scopes RENAME COLUMN domain_id TO optional_domain_id;`,
 				},
 			},
+			{
+				Id: "auth_8",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_pats_user_id ON pats(user_id);`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_pats_user_id;`,
+				},
+			},
 		},
 	}
 }

@@ -95,6 +95,15 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`SELECT 1`,
 				},
 			},
+			{
+				Id: "groups_07",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_groups_domain_id_status ON groups(domain_id, status);`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_groups_domain_id_status;`,
+				},
+			},
 		},
 	}
 

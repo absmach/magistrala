@@ -14,27 +14,22 @@ import (
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
 )
 
 type service struct {
-	idp  supermq.IDProvider
-	repo Repository
-	roles.ProvisionManageService
+	idp    supermq.IDProvider
+	repo   Repository
+	policy policies.Service
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(policy policies.Service, idp supermq.IDProvider, repo Repository, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
-	if err != nil {
-		return nil, err
-	}
+func NewService(idp supermq.IDProvider, repo Repository, policy policies.Service) Service {
 	return &service{
-		idp:                    idp,
-		repo:                   repo,
-		ProvisionManageService: rpms,
-	}, nil
+		idp:    idp,
+		repo:   repo,
+		policy: policy,
+	}
 }
 
 func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
@@ -63,11 +58,7 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
 		}
 	}()
 
-	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
-		BuiltInRoleAdmin: {roles.Member(alarm.CreatedBy)},
-	}
-
-	optionalPolicies := []policies.Policy{
+	if err := s.policy.AddPolicies(ctx, []policies.Policy{
 		{
 			SubjectType: policies.DomainType,
 			Subject:     alarm.DomainID,
@@ -75,26 +66,15 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
 			ObjectType:  operations.EntityType,
 			Object:      alarm.ID,
 		},
-	}
-
-	_, err = s.AddNewEntitiesRoles(ctx, alarm.DomainID, alarm.CreatedBy, []string{alarm.ID}, optionalPolicies, newBuiltInRoleMembers)
-	if err != nil {
+	}); err != nil {
 		return errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
 	return nil
 }
 
-func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string, withRoles bool) (Alarm, error) {
-	var alarm Alarm
-	var err error
-	switch withRoles {
-	case true:
-		alarm, err = s.repo.RetrieveByIDWithRoles(ctx, alarmID, session.UserID)
-	default:
-		alarm, err = s.repo.ViewAlarm(ctx, alarmID, session.DomainID)
-	}
-	return alarm, err
+func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {
+	return s.repo.ViewAlarm(ctx, alarmID, session.DomainID)
 }
 
 func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error) {
@@ -102,7 +82,23 @@ func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm Page
 }
 
 func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmID string) error {
-	return s.repo.DeleteAlarm(ctx, alarmID)
+	if err := s.repo.DeleteAlarm(ctx, alarmID); err != nil {
+		return err
+	}
+
+	if err := s.policy.DeletePolicies(ctx, []policies.Policy{
+		{
+			SubjectType: policies.DomainType,
+			Subject:     session.DomainID,
+			Relation:    policies.DomainRelation,
+			ObjectType:  operations.EntityType,
+			Object:      alarmID,
+		},
+	}); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	}
+
+	return nil
 }
 
 func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {

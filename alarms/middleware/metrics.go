@@ -9,7 +9,6 @@ import (
 
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/supermq/pkg/authn"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/go-kit/kit/metrics"
 )
 
@@ -17,17 +16,15 @@ type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
 	service alarms.Service
-	rolemw.RoleManagerMetricsMiddleware
 }
 
 var _ alarms.Service = (*metricsMiddleware)(nil)
 
 func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, service alarms.Service) alarms.Service {
 	return &metricsMiddleware{
-		counter:                      counter,
-		latency:                      latency,
-		service:                      service,
-		RoleManagerMetricsMiddleware: rolemw.NewMetrics("alarms", service, counter, latency),
+		counter: counter,
+		latency: latency,
+		service: service,
 	}
 }
 
@@ -49,13 +46,13 @@ func (mm *metricsMiddleware) UpdateAlarm(ctx context.Context, session authn.Sess
 	return mm.service.UpdateAlarm(ctx, session, alarm)
 }
 
-func (mm *metricsMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string, withRoles bool) (alarms.Alarm, error) {
+func (mm *metricsMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "get_alarm").Add(1)
 		mm.latency.With("method", "get_alarm").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.service.ViewAlarm(ctx, session, id, withRoles)
+	return mm.service.ViewAlarm(ctx, session, id)
 }
 
 func (mm *metricsMiddleware) ListAlarms(ctx context.Context, session authn.Session, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {

@@ -12,16 +12,11 @@ const (
 	OpViewAlarm permissions.Operation = iota
 	OpUpdateAlarm
 	OpDeleteAlarm
-	OpAddAlarm
 	OpListAlarms
 )
 
 func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 	return map[permissions.Operation]permissions.OperationDetails{
-		OpAddAlarm: {
-			Name:               "add",
-			PermissionRequired: true,
-		},
 		OpViewAlarm: {
 			Name:               "view",
 			PermissionRequired: true,

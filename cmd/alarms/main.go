@@ -34,10 +34,8 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	"github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/roles"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
-	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
@@ -185,19 +183,7 @@ func main() {
 	}
 	logger.Info("Policy service are successfully connected to SpiceDB gRPC server")
 
-	availableActions, buildInRoles, err := availableActionsAndBuiltInRoles(cfg.SpicedbSchemaFile)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to get available actions and built-in roles: %s", err))
-		exitCode = 1
-		return
-	}
-
-	svc, err := alarms.NewService(policyService, idp, repo, availableActions, buildInRoles)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
-		exitCode = 1
-		return
-	}
+	svc := alarms.NewService(idp, repo, policyService)
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
 	if err != nil {
@@ -206,7 +192,7 @@ func main() {
 		return
 	}
 
-	alarmOps, alarmRoleOps, err := permConfig.GetEntityPermissions(alarmEntity)
+	alarmOps, _, err := permConfig.GetEntityPermissions(alarmEntity)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to get alarm permissions: %s", err))
 		exitCode = 1
@@ -221,15 +207,13 @@ func main() {
 			operations.EntityType: operations.OperationDetails(),
 		},
 	)
-
-	roleOps, err := permissions.NewOperations(roles.Operations(), alarmRoleOps)
 	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create role operations: %s", err))
+		logger.Error(fmt.Sprintf("failed to create entity operations: %s", err))
 		exitCode = 1
 		return
 	}
 
-	svc, err = middleware.NewAuthorizationMiddleware(svc, authz, entitiesOps, roleOps)
+	svc, err = middleware.NewAuthorizationMiddleware(svc, authz, entitiesOps)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
 		exitCode = 1
@@ -298,17 +282,4 @@ func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies
 	ps := spicedb.NewPolicyService(client, logger)
 
 	return ps, nil
-}
-
-func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, alarmEntity)
-	if err != nil {
-		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
-	}
-
-	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
-		alarms.BuiltInRoleAdmin: availableActions,
-	}
-
-	return availableActions, builtInRoles, err
 }

@@ -10,7 +10,7 @@ const EntityType = "alarm"
 // Alarm Operations.
 const (
 	OpViewAlarm permissions.Operation = iota
-	OpUpdateAlarm
+	OpCommentAlarm
 	OpDeleteAlarm
 	OpListAlarms
 	OpAssignAlarm
@@ -24,8 +24,8 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 			Name:               "view",
 			PermissionRequired: true,
 		},
-		OpUpdateAlarm: {
-			Name:               "update",
+		OpCommentAlarm: {
+			Name:               "comment",
 			PermissionRequired: true,
 		},
 		OpDeleteAlarm: {

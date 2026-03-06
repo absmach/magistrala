@@ -351,7 +351,7 @@ definition domain {
 	channel_manage_role + channel_add_role_users + channel_remove_role_users + channel_view_role_users +
 	group_update + group_membership + group_read + group_delete + group_set_child + group_set_parent +
 	group_manage_role + group_add_role_users + group_remove_role_users + group_view_role_users +
-	alarm_update + alarm_read + alarm_delete + rule_create + rule_update + rule_read + rule_delete + rule_manage_role + rule_add_role_users + rule_remove_role_users + rule_view_role_users + alarm_assign + alarm_acknowledge + alarm_resolve + report_create + report_update + report_read + report_delete + report_manage_role + report_add_role_users + report_remove_role_users + report_view_role_users +
+	alarm_comment + alarm_read + alarm_delete + rule_create + rule_update + rule_read + rule_delete + rule_manage_role + rule_add_role_users + rule_remove_role_users + rule_view_role_users + alarm_assign + alarm_acknowledge + alarm_resolve + report_create + report_update + report_read + report_delete + report_manage_role + report_add_role_users + report_remove_role_users + report_view_role_users +
 	organization->admin
 
 	permission admin = (read & update & enable & disable & delete & manage_role & add_role_users & remove_role_users & view_role_users) + organization->admin
@@ -397,7 +397,7 @@ definition domain {
 	permission group_view_role_users_permission = group_view_role_users + team->group_view_role_users + organization->admin
 
 	// Magistrala-specific permissions
-	permission alarm_update_permission = alarm_update + team->alarm_update + organization->admin
+	permission alarm_comment_permission = alarm_comment + team->alarm_comment + organization->admin
 	permission alarm_read_permission = alarm_read + team->alarm_read + organization->admin
 	permission alarm_delete_permission = alarm_delete + team->alarm_delete + organization->admin
 	permission rule_create_permission = rule_create + team->rule_create + organization->admin
@@ -510,7 +510,7 @@ definition team {
 	relation group_view_role_users: role#member | team#member
 
 	// Magistrala-specific relations
-	relation alarm_update: role#member | team#member
+	relation alarm_comment: role#member | team#member
 	relation alarm_read: role#member | team#member
 	relation alarm_delete: role#member | team#member
 	relation rule_create: role#member | team#member
@@ -636,11 +636,11 @@ definition platform {
 definition alarm {
 relation domain: domain
 
-relation update: role#member
+relation comment: role#member
 relation read: role#member
 relation delete: role#member
 
-permission update_permission = update + domain->alarm_update_permission
+permission comment_permission = comment + domain->alarm_comment_permission
 permission read_permission = read + domain->alarm_read_permission
 permission delete_permission = delete + domain->alarm_delete_permission
 permission assign_permission = domain->alarm_assign_permission

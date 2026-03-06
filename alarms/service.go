@@ -105,5 +105,17 @@ func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm 
 	alarm.UpdatedAt = time.Now()
 	alarm.UpdatedBy = session.UserID
 
+	for i := range alarm.Comments {
+		id, err := s.idp.ID()
+		if err != nil {
+			return Alarm{}, err
+		}
+		alarm.Comments[i].ID = id
+		alarm.Comments[i].AlarmID = alarm.ID
+		alarm.Comments[i].DomainID = session.DomainID
+		alarm.Comments[i].UserID = session.UserID
+		alarm.Comments[i].CreatedAt = time.Now()
+	}
+
 	return s.repo.UpdateAlarm(ctx, alarm)
 }

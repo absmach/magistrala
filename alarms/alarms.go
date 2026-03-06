@@ -43,6 +43,17 @@ type Alarm struct {
 	ResolvedAt     time.Time `json:"resolved_at,omitempty"`
 	ResolvedBy     string    `json:"resolved_by,omitempty"`
 	Metadata       Metadata  `json:"metadata,omitempty"`
+	Comments       []Comment `json:"comments,omitempty"`
+}
+
+// Comment represents a user comment on an alarm.
+type Comment struct {
+	ID        string    `json:"id"`
+	AlarmID   string    `json:"-"`
+	DomainID  string    `json:"-"`
+	UserID    string    `json:"user_id"`
+	Text      string    `json:"text"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type AlarmsPage struct {
@@ -72,6 +83,7 @@ type PageMetadata struct {
 	AssignedBy     string    `json:"assigned_by"     db:"assigned_by"`
 	AcknowledgedBy string    `json:"acknowledged_by" db:"acknowledged_by"`
 	ResolvedBy     string    `json:"resolved_by"     db:"resolved_by"`
+	WithComments   bool      `json:"with_comments"   db:"-"`
 }
 
 func (a Alarm) Validate() error {

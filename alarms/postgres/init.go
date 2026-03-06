@@ -51,6 +51,23 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`DROP TABLE IF EXISTS alarms`,
 				},
 			},
+			{
+				Id: "alarms_02",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS alarm_comments (
+						id         VARCHAR(36) PRIMARY KEY,
+						alarm_id   VARCHAR(36) NOT NULL REFERENCES alarms(id) ON DELETE CASCADE,
+						domain_id  VARCHAR(36) NOT NULL,
+						user_id    VARCHAR(36) NOT NULL,
+						text       TEXT NOT NULL CHECK (length(text) > 0),
+						created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+					);`,
+					"CREATE INDEX IF NOT EXISTS idx_alarm_comments_alarm_id ON alarm_comments (alarm_id, domain_id, created_at DESC);",
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS alarm_comments`,
+				},
+			},
 		},
 	}
 

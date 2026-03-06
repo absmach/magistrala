@@ -160,6 +160,10 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (any, error) {
 			return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
 		}
 	}
+	withComments, err := apiutil.ReadBoolQuery(r, "with_comments", false)
+	if err != nil {
+		return listAlarmsReq{}, errors.Wrap(apiutil.ErrValidation, err)
+	}
 
 	return listAlarmsReq{
 		PageMetadata: alarms.PageMetadata{
@@ -181,6 +185,7 @@ func decodeListAlarmsReq(_ context.Context, r *http.Request) (any, error) {
 			CreatedTo:      createdTo,
 			Dir:            dir,
 			Order:          order,
+			WithComments:   withComments,
 		},
 	}, nil
 }

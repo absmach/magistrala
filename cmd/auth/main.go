@@ -47,6 +47,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+	"gopkg.in/yaml.v3"
 )
 
 const (
@@ -81,6 +82,7 @@ type config struct {
 	CacheKeyDuration              time.Duration `env:"SMQ_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
 	JWKSCacheMaxAge               int           `env:"SMQ_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`
 	JWKSCacheStaleWhileRevalidate int           `env:"SMQ_AUTH_JWKS_CACHE_STALE_WHILE_REVALIDATE" envDefault:"60"`
+	CustomOperationsFile          string        `env:"SMQ_AUTH_PAT_CUSTOM_OPERATIONS_FILE" envDefault:""`
 }
 
 func main() {
@@ -188,6 +190,15 @@ func main() {
 		logger.Error(fmt.Sprintf("failed to create service : %s\n", err.Error()))
 		exitCode = 1
 		return
+	}
+
+	// Load custom PAT scope operations from YAML file.
+	if cfg.CustomOperationsFile != "" {
+		if err := loadCustomOperations(cfg.CustomOperationsFile, logger); err != nil {
+			logger.Error(fmt.Sprintf("failed to load custom operations: %s", err.Error()))
+			exitCode = 1
+			return
+		}
 	}
 
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
@@ -313,4 +324,44 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	svc = middleware.NewTracing(svc, tracer)
 
 	return svc, nil
+}
+
+// permissionsConfig represents the structure of the permissions YAML file.
+type permissionsConfig struct {
+	Domains struct {
+		Operations      []map[string]string `yaml:"operations"`
+		RolesOperations []map[string]string `yaml:"roles_operations"`
+	} `yaml:"domains"`
+}
+
+// loadCustomOperations reads a permissions YAML file and registers all
+// operation names as custom PAT scope operations.
+func loadCustomOperations(path string, logger *slog.Logger) error {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return fmt.Errorf("failed to read custom operations file %s: %w", path, err)
+	}
+
+	var cfg permissionsConfig
+	if err := yaml.Unmarshal(data, &cfg); err != nil {
+		return fmt.Errorf("failed to parse custom operations file: %w", err)
+	}
+
+	var count int
+	for _, opMap := range cfg.Domains.Operations {
+		for name := range opMap {
+			auth.RegisterCustomOperation(name)
+			count++
+		}
+	}
+	for _, opMap := range cfg.Domains.RolesOperations {
+		for name := range opMap {
+			auth.RegisterCustomOperation(name)
+			count++
+		}
+	}
+
+	logger.Info(fmt.Sprintf("loaded %d custom PAT scope operations from %s", count, path))
+
+	return nil
 }

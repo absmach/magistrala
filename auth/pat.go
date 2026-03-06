@@ -8,11 +8,59 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/permissions"
+)
+
+const AnyIDs = "*"
+
+type Operation uint32
+
+// Custom operation registry for dynamically loaded operations.
+var (
+	customOpMu    sync.RWMutex
+	customOpByStr = map[string]Operation{}
+	customOpByID  = map[Operation]string{}
+	nextCustomOp  = Operation(100) // Start custom ops at 100 to leave room for future built-in ops.
+)
+
+// RegisterCustomOperation registers a custom operation name and returns its Operation value.
+// If the operation is already registered (built-in or custom), it returns the existing value.
+func RegisterCustomOperation(name string) Operation {
+	// Check if it's already a built-in operation.
+	if op, err := parseBuiltinOperation(name); err == nil {
+		return op
+	}
+
+	customOpMu.Lock()
+	defer customOpMu.Unlock()
+
+	if op, ok := customOpByStr[name]; ok {
+		return op
+	}
+
+	op := nextCustomOp
+	nextCustomOp++
+	customOpByStr[name] = op
+	customOpByID[op] = name
+
+	return op
+}
+
+const (
+	CreateOp Operation = iota
+	ReadOp
+	ListOp
+	UpdateOp
+	DeleteOp
+	ShareOp
+	UnshareOp
+	PublishOp
+	SubscribeOp
 )
 
 const (
@@ -36,13 +84,98 @@ const (
 
 	OpDashboardShare   = "dashboard_share"
 	OpDashboardUnshare = "dashboard_unshare"
-
-	OpPublish   = "publish"
-	OpSubscribe = "subscribe"
+	OpPublish          = "publish"
+	OpSubscribe        = "subscribe"
 
 	OpMessagePublish   = "message_publish"
 	OpMessageSubscribe = "message_subscribe"
 )
+
+func (op Operation) String() string {
+	switch op {
+	case CreateOp:
+		return createOpStr
+	case ReadOp:
+		return readOpStr
+	case ListOp:
+		return listOpStr
+	case UpdateOp:
+		return updateOpStr
+	case DeleteOp:
+		return deleteOpStr
+	case ShareOp:
+		return shareOpStr
+	case UnshareOp:
+		return UnshareOpStr
+	case PublishOp:
+		return PublishOpStr
+	case SubscribeOp:
+		return SubscribeOpStr
+	default:
+		customOpMu.RLock()
+		name, ok := customOpByID[op]
+		customOpMu.RUnlock()
+		if ok {
+			return name
+		}
+		return fmt.Sprintf("unknown operation type %d", op)
+	}
+}
+
+func (op Operation) ValidString() (string, error) {
+	str := op.String()
+	if strings.HasPrefix(str, "unknown operation type ") {
+		return "", errors.New(str)
+	}
+	return str, nil
+}
+
+// parseBuiltinOperation parses only built-in operation strings.
+func parseBuiltinOperation(op string) (Operation, error) {
+	switch op {
+	case createOpStr:
+		return CreateOp, nil
+	case readOpStr:
+		return ReadOp, nil
+	case listOpStr:
+		return ListOp, nil
+	case updateOpStr:
+		return UpdateOp, nil
+	case deleteOpStr:
+		return DeleteOp, nil
+	case shareOpStr:
+		return ShareOp, nil
+	case UnshareOpStr:
+		return UnshareOp, nil
+	case PublishOpStr:
+		return PublishOp, nil
+	case SubscribeOpStr:
+		return SubscribeOp, nil
+	default:
+		return 0, fmt.Errorf("unknown operation type %s", op)
+	}
+}
+
+// ParseOperation parses an operation string, checking built-in operations first,
+// then falling back to the custom operation registry.
+func ParseOperation(op string) (Operation, error) {
+	if v, err := parseBuiltinOperation(op); err == nil {
+		return v, nil
+	}
+
+	customOpMu.RLock()
+	v, ok := customOpByStr[op]
+	customOpMu.RUnlock()
+	if ok {
+		return v, nil
+	}
+
+	return 0, fmt.Errorf("unknown operation type %s", op)
+}
+
+func (op Operation) MarshalJSON() ([]byte, error) {
+	return json.Marshal(op.String())
+}
 
 var errInvalidEntityOp = errors.NewRequestError("operation not valid for entity type")
 

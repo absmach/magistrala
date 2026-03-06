@@ -161,6 +161,17 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				},
 			},
 			{
+				Id: "domain_6",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_invitations_invited_by ON invitations(invited_by);`,
+					`CREATE INDEX IF NOT EXISTS idx_invitations_role_id ON invitations(role_id);`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_invitations_invited_by;`,
+					`DROP INDEX IF EXISTS idx_invitations_role_id;`,
+				},
+			},
+			{
 				Id: "domain_7",
 				Up: []string{
 					`UPDATE domains 

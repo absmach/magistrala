@@ -23,6 +23,7 @@ type dbPat struct {
 	Revoked     bool         `db:"revoked,omitempty"`
 	RevokedAt   sql.NullTime `db:"revoked_at,omitempty"`
 	Status      auth.Status  `db:"status,omitempty"`
+	TotalCount  uint64       `db:"total_count"`
 }
 
 type dbScope struct {

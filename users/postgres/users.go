@@ -18,6 +18,7 @@ import (
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/users"
 	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 )
 
 type userRepo struct {
@@ -122,57 +123,64 @@ func (repo *userRepo) RetrieveAll(ctx context.Context, pm users.Page) (users.Use
 		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrParseQueryParams, err)
 	}
 
-	squery := applyOrdering(query, pm)
-
-	q := fmt.Sprintf(`SELECT u.id, u.tags, u.email, u.metadata, u.status, u.role, u.first_name, u.last_name, u.username,
-    u.created_at, u.updated_at, u.profile_picture, COALESCE(u.updated_by, '') AS updated_by, u.verified_at
-    FROM users u %s LIMIT :limit OFFSET :offset;`, squery)
-
 	dbPage, err := ToDBUsersPage(pm)
 	if err != nil {
 		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrMarshalBDEntity, err)
 	}
 
-	var items []users.User
-	if !pm.OnlyTotal {
-		rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
+	if pm.OnlyTotal {
+		cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
+		total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
 		if err != nil {
-			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrRetrieveAllUsers, err)
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 		}
-		defer rows.Close()
-
-		for rows.Next() {
-			dbu := DBUser{}
-			if err := rows.StructScan(&dbu); err != nil {
-				return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
-			}
-
-			c, err := ToUser(dbu)
-			if err != nil {
-				return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrUnmarshalBDEntity, err)
-			}
-
-			items = append(items, c)
-		}
+		return users.UsersPage{
+			Page: users.Page{Total: total, Offset: pm.Offset, Limit: pm.Limit},
+		}, nil
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
+	squery := applyOrdering(query, pm)
 
-	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+	q := fmt.Sprintf(`SELECT u.id, u.tags, u.email, u.metadata, u.status, u.role, u.first_name, u.last_name, u.username,
+    u.created_at, u.updated_at, u.profile_picture, COALESCE(u.updated_by, '') AS updated_by, u.verified_at,
+    COUNT(*) OVER() AS total_count
+    FROM users u %s LIMIT :limit OFFSET :offset;`, squery)
+
+	rows, err := repo.Repository.DB.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
-		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrRetrieveAllUsers, err)
+	}
+	defer rows.Close()
+
+	var total uint64
+	var items []users.User
+	for rows.Next() {
+		dbu := DBUser{}
+		if err := rows.StructScan(&dbu); err != nil {
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+		total = dbu.TotalCount
+
+		c, err := ToUser(dbu)
+		if err != nil {
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrUnmarshalBDEntity, err)
+		}
+
+		items = append(items, c)
 	}
 
-	page := users.UsersPage{
-		Page: users.Page{
-			Total:  total,
-			Offset: pm.Offset,
-			Limit:  pm.Limit,
-		},
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
+		total, err = postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+		if err != nil {
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
+	}
+
+	return users.UsersPage{
+		Page:  users.Page{Total: total, Offset: pm.Offset, Limit: pm.Limit},
 		Users: items,
-	}
-
-	return page, nil
+	}, nil
 }
 
 func (repo *userRepo) UpdateUsername(ctx context.Context, user users.User) (users.User, error) {
@@ -317,10 +325,10 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm users.Page) (users.Use
 		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrParseQueryParams, err)
 	}
 
-	tq := query
-	query = applyOrdering(query, pm)
+	squery := applyOrdering(query, pm)
 
-	q := fmt.Sprintf(`SELECT u.id, u.username, u.metadata, u.first_name, u.last_name, u.created_at, u.updated_at FROM users u %s LIMIT :limit OFFSET :offset;`, query)
+	q := fmt.Sprintf(`SELECT u.id, u.username, u.metadata, u.first_name, u.last_name, u.created_at, u.updated_at,
+	COUNT(*) OVER() AS total_count FROM users u %s LIMIT :limit OFFSET :offset;`, squery)
 
 	dbPage, err := ToDBUsersPage(pm)
 	if err != nil {
@@ -333,12 +341,14 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm users.Page) (users.Use
 	}
 	defer rows.Close()
 
+	var total uint64
 	var items []users.User
 	for rows.Next() {
 		dbu := DBUser{}
 		if err := rows.StructScan(&dbu); err != nil {
 			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 		}
+		total = dbu.TotalCount
 
 		c, err := ToUser(dbu)
 		if err != nil {
@@ -348,23 +358,18 @@ func (repo *userRepo) SearchUsers(ctx context.Context, pm users.Page) (users.Use
 		items = append(items, c)
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, tq)
-
-	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
-	if err != nil {
-		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
+		total, err = postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+		if err != nil {
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
 	}
 
-	page := users.UsersPage{
+	return users.UsersPage{
 		Users: items,
-		Page: users.Page{
-			Total:  total,
-			Offset: pm.Offset,
-			Limit:  pm.Limit,
-		},
-	}
-
-	return page, nil
+		Page:  users.Page{Total: total, Offset: pm.Offset, Limit: pm.Limit},
+	}, nil
 }
 
 func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (users.UsersPage, error) {
@@ -380,7 +385,8 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (user
 	squery := applyOrdering(query, pm)
 
 	q := fmt.Sprintf(`SELECT u.id, u.username, u.tags, u.email, u.metadata, u.status, u.role, u.first_name, u.last_name,
-                    u.created_at, u.updated_at, COALESCE(u.updated_by, '') AS updated_by FROM users u %s LIMIT :limit OFFSET :offset;`, squery)
+                    u.created_at, u.updated_at, COALESCE(u.updated_by, '') AS updated_by,
+                    COUNT(*) OVER() AS total_count FROM users u %s LIMIT :limit OFFSET :offset;`, squery)
 	dbPage, err := ToDBUsersPage(pm)
 	if err != nil {
 		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrMarshalBDEntity, err)
@@ -391,12 +397,14 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (user
 	}
 	defer rows.Close()
 
+	var total uint64
 	var items []users.User
 	for rows.Next() {
 		dbu := DBUser{}
 		if err := rows.StructScan(&dbu); err != nil {
 			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
 		}
+		total = dbu.TotalCount
 
 		c, err := ToUser(dbu)
 		if err != nil {
@@ -405,23 +413,19 @@ func (repo *userRepo) RetrieveAllByIDs(ctx context.Context, pm users.Page) (user
 
 		items = append(items, c)
 	}
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
 
-	total, err := postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
-	if err != nil {
-		return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`SELECT COUNT(*) FROM users u %s;`, query)
+		total, err = postgres.Total(ctx, repo.Repository.DB, cq, dbPage)
+		if err != nil {
+			return users.UsersPage{}, repo.eh.HandleError(repoerr.ErrViewEntity, err)
+		}
 	}
 
-	page := users.UsersPage{
+	return users.UsersPage{
 		Users: items,
-		Page: users.Page{
-			Total:  total,
-			Offset: pm.Offset,
-			Limit:  pm.Limit,
-		},
-	}
-
-	return page, nil
+		Page:  users.Page{Total: total, Offset: pm.Offset, Limit: pm.Limit},
+	}, nil
 }
 
 func (repo *userRepo) RetrieveByEmail(ctx context.Context, email string) (users.User, error) {
@@ -498,6 +502,7 @@ type DBUser struct {
 	Email           string           `db:"email,omitempty"`
 	VerifiedAt      sql.NullTime     `db:"verified_at,omitempty"`
 	AuthProvider    sql.NullString   `db:"auth_provider,omitempty"`
+	TotalCount      uint64           `db:"total_count"`
 }
 
 func toDBUser(u users.User) (DBUser, error) {
@@ -634,6 +639,7 @@ type DBUsersPage struct {
 	GroupID     string           `db:"group_id"`
 	Role        users.Role       `db:"role"`
 	Status      users.Status     `db:"status"`
+	IDs         pq.StringArray   `db:"ids"`
 	CreatedFrom time.Time        `db:"created_from"`
 	CreatedTo   time.Time        `db:"created_to"`
 }
@@ -662,6 +668,7 @@ func ToDBUsersPage(pm users.Page) (DBUsersPage, error) {
 		Status:      pm.Status,
 		Tags:        tags,
 		Role:        pm.Role,
+		IDs:         pq.StringArray(pm.IDs),
 		CreatedFrom: pm.CreatedFrom,
 		CreatedTo:   pm.CreatedTo,
 	}, nil
@@ -699,7 +706,7 @@ func PageQuery(pm users.Page) (string, error) {
 		query = append(query, "metadata @> :metadata")
 	}
 	if len(pm.IDs) != 0 {
-		query = append(query, fmt.Sprintf("id IN ('%s')", strings.Join(pm.IDs, "','")))
+		query = append(query, "id = ANY(:ids)")
 	}
 	if pm.Status != users.AllStatus {
 		query = append(query, "u.status = :status")

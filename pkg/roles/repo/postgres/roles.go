@@ -694,7 +694,7 @@ func (repo *Repository) RoleRemoveAllMembers(ctx context.Context, role roles.Rol
 
 	dbrcap := dbRoleAction{RoleID: role.ID}
 
-	if _, err := repo.db.NamedExecContext(ctx, q, dbrcap); err != nil {
+	if _, err := tx.NamedExec(q, dbrcap); err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
@@ -1113,7 +1113,7 @@ ungrouped_members AS (
         ARRAY_AGG(DISTINCT cra."action") AS actions,
         'direct' AS access_type,
         '' AS access_provider_id,
-		''::::LTREE AS access_provider_path
+		CAST('' AS LTREE) AS access_provider_path
     FROM
         client_group cg
     JOIN
@@ -1180,7 +1180,7 @@ ungrouped_members AS (
         ARRAY_AGG(DISTINCT agg_dra."action") AS actions,
         'domain' AS access_type,
         d.id AS access_provider_id,
-		''::::LTREE AS access_provider_path
+		CAST('' AS LTREE) AS access_provider_path
     FROM
         client_group cg
     JOIN
@@ -1251,7 +1251,7 @@ ungrouped_members AS (
         ARRAY_AGG(DISTINCT cra."action") AS actions,
         'direct' AS access_type,
         '' AS access_provider_id,
-		''::::LTREE AS access_provider_path
+		CAST('' AS LTREE) AS access_provider_path
     FROM
         channel_group cg
     JOIN
@@ -1318,7 +1318,7 @@ ungrouped_members AS (
         ARRAY_AGG(DISTINCT agg_dra."action") AS actions,
         'domain' AS access_type,
         d.id AS access_provider_id,
-		''::::LTREE AS access_provider_path
+		CAST('' AS LTREE) AS access_provider_path
     FROM
         channel_group cg
     JOIN

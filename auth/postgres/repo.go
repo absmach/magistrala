@@ -72,14 +72,15 @@ func (pr *patRepo) RetrieveAll(ctx context.Context, userID string, pm auth.PATSP
 	}
 
 	q := fmt.Sprintf(`
-		SELECT 
+		SELECT
 			p.id, p.user_id, p.name, p.description, p.issued_at, p.expires_at,
 			p.updated_at, p.revoked, p.revoked_at,
-		CASE 
+		CASE
 			WHEN p.revoked = TRUE THEN %d
 			WHEN expires_at IS NOT NULL AND expires_at < :timestamp THEN %d
         ELSE %d
-    	END AS status
+		END AS status,
+		COUNT(*) OVER() AS total_count
 		FROM pats p WHERE user_id = :user_id %s
 		ORDER BY issued_at DESC
 		LIMIT :limit OFFSET :offset`, auth.RevokedStatus, auth.ExpiredStatus, auth.ActiveStatus, pageQuery)
@@ -100,30 +101,31 @@ func (pr *patRepo) RetrieveAll(ctx context.Context, userID string, pm auth.PATSP
 	}
 	defer rows.Close()
 
+	var total uint64
 	items := []auth.PAT{}
 	for rows.Next() {
 		var pat dbPat
 		if err := rows.StructScan(&pat); err != nil {
 			return auth.PATSPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 		}
-
+		total = pat.TotalCount
 		items = append(items, toAuthPat(pat))
 	}
 
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM pats p WHERE user_id = :user_id %s`, pageQuery)
-
-	total, err := postgres.Total(ctx, pr.db, cq, dbPage)
-	if err != nil {
-		return auth.PATSPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	if len(items) == 0 {
+		cq := fmt.Sprintf(`SELECT COUNT(*) FROM pats p WHERE user_id = :user_id %s`, pageQuery)
+		total, err = postgres.Total(ctx, pr.db, cq, dbPage)
+		if err != nil {
+			return auth.PATSPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
 	}
 
-	page := auth.PATSPage{
+	return auth.PATSPage{
 		PATS:   items,
 		Total:  total,
 		Offset: pm.Offset,
 		Limit:  pm.Limit,
-	}
-	return page, nil
+	}, nil
 }
 
 func PageQuery(pm auth.PATSPageMeta) (string, error) {
@@ -408,14 +410,15 @@ func (pr *patRepo) AddScope(ctx context.Context, userID string, scopes []auth.Sc
 
 func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope, error) {
 	q := `
-		SELECT COUNT(*) 
-		FROM pat_scopes 
-		WHERE pat_id = :pat_id 
-		  AND entity_type = :entity_type
-		  AND domain_id = :domain_id
-		  AND operation = :operation
-		  AND entity_id = :entity_id
-		LIMIT 1`
+		SELECT EXISTS (
+			SELECT 1
+			FROM pat_scopes
+			WHERE pat_id = :pat_id
+			  AND entity_type = :entity_type
+			  AND domain_id = :domain_id
+			  AND operation = :operation
+			  AND entity_id = :entity_id
+		)`
 
 	params := dbScope{
 		PatID:      sc.PatID,
@@ -431,18 +434,28 @@ func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope,
 	}
 	defer rows.Close()
 
-	var count int
+	var exists bool
 	if rows.Next() {
-		if err := rows.Scan(&count); err != nil {
+		if err := rows.Scan(&exists); err != nil {
 			return auth.Scope{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 		}
 	}
 
-	if count > 0 {
+	if exists {
 		return auth.Scope{}, repoerr.ErrConflict
 	}
 
 	if sc.EntityID == auth.AnyIDs {
+		checkEntityQuery := `
+			SELECT EXISTS (
+				SELECT 1
+				FROM pat_scopes
+				WHERE pat_id = :pat_id
+				AND entity_type = :entity_type
+				AND domain_id = :domain_id
+				AND operation = :operation
+			)`
+
 		newParams := dbScope{
 			PatID:      sc.PatID,
 			DomainID:   sc.DomainID,
@@ -450,42 +463,31 @@ func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope,
 			Operation:  sc.Operation,
 		}
 
-		checkEntityQuery := `
-			SELECT COUNT(*) 
-			FROM pat_scopes 
-			WHERE pat_id = :pat_id 
-			AND entity_type = :entity_type
-			AND domain_id = :domain_id
-			AND operation = :operation
-			LIMIT 1`
-
 		rows, err := pr.db.NamedQueryContext(ctx, checkEntityQuery, newParams)
 		if err != nil {
 			return auth.Scope{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 		}
 		defer rows.Close()
 
-		var count int
+		var scopeExists bool
 		if rows.Next() {
-			if err := rows.Scan(&count); err != nil {
+			if err := rows.Scan(&scopeExists); err != nil {
 				return auth.Scope{}, postgres.HandleError(repoerr.ErrViewEntity, err)
 			}
 		}
 
-		if count > 0 {
+		if scopeExists {
 			updateWithWildcardQuery := `
-			UPDATE pat_scopes 
-			SET entity_id = :entity_id 
-			WHERE pat_id = :pat_id 
+			UPDATE pat_scopes
+			SET entity_id = :entity_id
+			WHERE pat_id = :pat_id
 			AND entity_type = :entity_type
 			AND domain_id = :domain_id
 			AND operation = :operation`
 
-			rows, err = pr.db.NamedQueryContext(ctx, updateWithWildcardQuery, params)
-			if err != nil {
+			if _, err := pr.db.NamedExecContext(ctx, updateWithWildcardQuery, params); err != nil {
 				return auth.Scope{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 			}
-			defer rows.Close()
 
 			return auth.Scope{}, nil
 		}
@@ -657,7 +659,7 @@ func (pr *patRepo) retrievePATFromDB(ctx context.Context, userID, patID string) 
 			WHEN revoked = TRUE THEN %d
 			WHEN expires_at IS NOT NULL AND expires_at < :timestamp THEN %d
 			ELSE %d
-    	END AS status
+		END AS status
 		FROM pats WHERE user_id = :user_id AND id = :id`, auth.RevokedStatus, auth.ExpiredStatus, auth.ActiveStatus)
 
 	dbp := dbPagemeta{

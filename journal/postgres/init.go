@@ -63,6 +63,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE clients_telemetry ALTER COLUMN last_seen TYPE TIMESTAMP;`,
 				},
 			},
+			{
+				Id: "journal_03",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_journal_domain ON journal(domain);`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_journal_domain;`,
+				},
+			},
 		},
 	}
 }

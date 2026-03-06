@@ -259,7 +259,7 @@ func (repo groupRepository) RetrieveByIDWithRoles(ctx context.Context, id, membe
 			dr.id AS role_id,
 			dr.name AS role_name,
 			jsonb_agg(DISTINCT all_actions.action) AS actions,
-			''::::ltree access_provider_path,
+			CAST('' AS ltree) access_provider_path,
 			'domain' AS access_type,
 			dr.entity_id AS access_provider_id
 		FROM
@@ -827,7 +827,7 @@ func (repo groupRepository) RetrieveAllParentGroups(ctx context.Context, domainI
 
 	query := buildQuery(pm)
 
-	levelCondition := "g.path @> :path::::ltree "
+	levelCondition := "g.path @> CAST(:path AS ltree) "
 
 	switch {
 	case query == "":
@@ -852,19 +852,19 @@ func (repo groupRepository) RetrieveChildrenGroups(ctx context.Context, domainID
 	switch {
 	// Retrieve all children groups from parent group level
 	case startLevel == 0 && endLevel < 0:
-		levelCondition = " path ~ (:path || '.*')::::lquery "
+		levelCondition = " path ~ CAST(:path || '.*' AS lquery) "
 
 	// Retrieve specific level of children groups from parent group level
 	case (startLevel > 0) && (startLevel == endLevel || endLevel == 0):
-		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d}')::::lquery ", startLevel)
+		levelCondition = fmt.Sprintf(" path ~ CAST(:path || '.*{%d}' AS lquery) ", startLevel)
 
 	// Retrieve all children groups from specific level from parent group level
 	case startLevel > 0 && endLevel < 0:
-		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d,}')::::lquery ", startLevel)
+		levelCondition = fmt.Sprintf(" path ~ CAST(:path || '.*{%d,}' AS lquery) ", startLevel)
 
 	// Retrieve children groups between specific level from parent group level
 	case startLevel > 0 && endLevel > 0 && startLevel < endLevel:
-		levelCondition = fmt.Sprintf(" path ~ (:path || '.*{%d,%d}')::::lquery ", startLevel, endLevel)
+		levelCondition = fmt.Sprintf(" path ~ CAST(:path || '.*{%d,%d}' AS lquery) ", startLevel, endLevel)
 	default:
 		return groups.Page{}, errors.Wrap(repoerr.ErrViewEntity, fmt.Errorf("invalid level range: start level: %d end level: %d", startLevel, endLevel))
 	}
@@ -1114,7 +1114,7 @@ direct_indirect_groups as (
 		'' AS access_provider_id,
 		'' AS access_provider_role_id,
 		'' AS access_provider_role_name,
-		array[]::::text[] AS access_provider_role_actions
+		CAST(array[] AS text[]) AS access_provider_role_actions
 	FROM
 		direct_groups
 	UNION
@@ -1133,7 +1133,7 @@ direct_indirect_groups as (
 		"path",
 		'' AS role_id,
 		'' AS role_name,
-		array[]::::text[] AS actions,
+		CAST(array[] AS text[]) AS actions,
 		'indirect' AS access_type,
 		access_provider_id,
 		access_provider_role_id,
@@ -1182,7 +1182,7 @@ final_groups AS (
 		dg."path",
 		'' AS role_id,
 		'' AS role_name,
-		array[]::::text[] AS actions,
+		CAST(array[] AS text[]) AS actions,
 		'domain' AS access_type,
 		d.id AS access_provider_id,
 		dr.id AS access_provider_role_id,
@@ -1478,7 +1478,7 @@ func (repo groupRepository) getInsertQuery(c context.Context, g groups.Group) (s
 			return "", "", fmt.Errorf("reached max nested depth")
 		}
 		return `INSERT INTO groups (name, description, tags, id, domain_id, parent_id, metadata, created_at, status, path)
-		VALUES (:name, :description, :tags, :id, :domain_id, :parent_id, :metadata, :created_at, :status, :path::::ltree)
+		VALUES (:name, :description, :tags, :id, :domain_id, :parent_id, :metadata, :created_at, :status, CAST(:path AS ltree))
 		RETURNING id, name, description, tags, domain_id, COALESCE(parent_id, '') AS parent_id, metadata, created_at, status, path, nlevel(path) as level;`, path, nil
 	default:
 		return `INSERT INTO groups (name, description, tags, id, domain_id, metadata, created_at, status, path)

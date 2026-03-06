@@ -195,7 +195,7 @@ func (repo *clientRepo) RetrieveByIDWithRoles(ctx context.Context, id, memberID 
 		SELECT
 			c.id,
 			c.parent_group_id,
-			COALESCE(g."path", ''::::ltree) AS parent_group_path,
+			COALESCE(g."path", CAST('' AS ltree)) AS parent_group_path,
 			c.domain_id
 		FROM
 			clients c
@@ -213,7 +213,7 @@ func (repo *clientRepo) RetrieveByIDWithRoles(ctx context.Context, id, memberID 
 			cr."name" AS role_name,
 			jsonb_agg(DISTINCT cra."action") AS actions,
 			'direct' AS access_type,
-			''::::ltree AS access_provider_path,
+			CAST('' AS ltree) AS access_provider_path,
 			'' AS access_provider_id
 		FROM
 			clients_roles cr
@@ -272,7 +272,7 @@ func (repo *clientRepo) RetrieveByIDWithRoles(ctx context.Context, id, memberID 
 			dr.id AS role_id,
 			dr."name" AS role_name,
 			jsonb_agg(DISTINCT all_actions."action") AS actions,
-			''::::ltree access_provider_path,
+			CAST('' AS ltree) access_provider_path,
 			'domain' AS access_type,
 			dr.entity_id AS access_provider_id
 		FROM
@@ -452,7 +452,7 @@ func (repo *clientRepo) RetrieveAll(ctx context.Context, pm clients.Page) (clien
 					c.metadata,
 					COALESCE(c.domain_id, '') AS domain_id,
 					COALESCE(parent_group_id, '') AS parent_group_id,
-					COALESCE(g.path, ''::::ltree) AS parent_group_path,
+					COALESCE(g.path, CAST('' AS ltree)) AS parent_group_path,
 					c.status,
 					c.created_at,
 					c.updated_at,
@@ -679,7 +679,7 @@ const userClientBaseQuery = `
 			c.updated_at,
 			c.updated_by,
 			c.status,
-			COALESCE(pg.path, ''::::ltree) AS parent_group_path,
+			COALESCE(pg.path, CAST('' AS ltree)) AS parent_group_path,
 			cr.id AS role_id,
 			cr."name" AS role_name,
 			array_agg(cra."action") AS actions,
@@ -687,7 +687,7 @@ const userClientBaseQuery = `
 			'' AS access_provider_id,
 			'' AS access_provider_role_id,
 			'' AS access_provider_role_name,
-			array[]::::text[] AS access_provider_role_actions
+			CAST(array[] AS text[]) AS access_provider_role_actions
 		FROM
 			clients_role_members crm
 		JOIN
@@ -800,7 +800,7 @@ const userClientBaseQuery = `
 			"path",
 			'' AS role_id,
 			'' AS role_name,
-			array[]::::text[] AS actions,
+			CAST(array[] AS text[]) AS actions,
 			'direct_group' AS access_type,
 			id AS access_provider_id,
 			role_id AS access_provider_role_id,
@@ -823,7 +823,7 @@ const userClientBaseQuery = `
 			"path",
 			'' AS role_id,
 			'' AS role_name,
-			array[]::::text[] AS actions,
+			CAST(array[] AS text[]) AS actions,
 			'indirect_group' AS access_type,
 			access_provider_id,
 			access_provider_role_id,
@@ -906,7 +906,7 @@ const userClientBaseQuery = `
 			g."path" AS parent_group_path,
 			'' AS role_id,
 			'' AS role_name,
-			array[]::::text[] AS actions,
+			CAST(array[] AS text[]) AS actions,
 			'domain' AS access_type,
 			d.id AS access_provider_id,
 			dr.id AS access_provider_role_id,

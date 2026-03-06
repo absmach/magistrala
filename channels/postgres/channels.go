@@ -183,7 +183,7 @@ func (cr *channelRepository) RetrieveByIDWithRoles(ctx context.Context, id, memb
 		SELECT
 			c.id,
 			c.parent_group_id,
-			COALESCE(g."path", ''::::ltree) AS parent_group_path,
+			COALESCE(g."path", CAST('' AS ltree)) AS parent_group_path,
 			c.domain_id
 		FROM
 			channels c
@@ -201,7 +201,7 @@ func (cr *channelRepository) RetrieveByIDWithRoles(ctx context.Context, id, memb
 			cr."name" AS role_name,
 			jsonb_agg(DISTINCT cra."action") AS actions,
 			'direct' AS access_type,
-			''::::ltree AS access_provider_path,
+			CAST('' AS ltree) AS access_provider_path,
 			'' AS access_provider_id
 		FROM
 			channels_roles cr
@@ -260,7 +260,7 @@ func (cr *channelRepository) RetrieveByIDWithRoles(ctx context.Context, id, memb
 			dr.id AS role_id,
 			dr."name" AS role_name,
 			jsonb_agg(DISTINCT all_actions."action") AS actions,
-			''::::ltree access_provider_path,
+			CAST('' AS ltree) access_provider_path,
 			'domain' AS access_type,
 			dr.entity_id AS access_provider_id
 		FROM
@@ -414,7 +414,7 @@ func (cr *channelRepository) RetrieveAll(ctx context.Context, pm channels.Page) 
 							COALESCE(c.domain_id, '') AS domain_id,
 							COALESCE(parent_group_id, '') AS parent_group_id,
 							c.route,
-							COALESCE(g.path, ''::::ltree) AS parent_group_path,
+							COALESCE(g.path, CAST('' AS ltree)) AS parent_group_path,
 							c.status,
 							c.created_by,
 							c.created_at,
@@ -642,7 +642,7 @@ WITH direct_channels AS (
 		c.updated_at,
 		c.updated_by,
 		c.status,
-		COALESCE(pg.path, ''::::ltree) AS parent_group_path,
+		COALESCE(pg.path, CAST('' AS ltree)) AS parent_group_path,
 		cr.id AS role_id,
 		cr."name" AS role_name,
 		array_agg(cra."action") AS actions,
@@ -650,7 +650,7 @@ WITH direct_channels AS (
 		'' AS access_provider_id,
 		'' AS access_provider_role_id,
 		'' AS access_provider_role_name,
-		array[]::::text[] AS access_provider_role_actions
+		CAST(array[] AS text[]) AS access_provider_role_actions
 	FROM
 		channels_role_members crm
 	JOIN
@@ -763,7 +763,7 @@ final_groups AS (
 		"path",
 		'' AS role_id,
 		'' AS role_name,
-		array[]::::text[] AS actions,
+		CAST(array[] AS text[]) AS actions,
 		'direct_group' AS access_type,
 		id AS access_provider_id,
 		role_id AS access_provider_role_id,
@@ -786,7 +786,7 @@ final_groups AS (
 		"path",
 		'' AS role_id,
 		'' AS role_name,
-		array[]::::text[] AS actions,
+		CAST(array[] AS text[]) AS actions,
 		'indirect_group' AS access_type,
 		access_provider_id,
 		access_provider_role_id,
@@ -869,7 +869,7 @@ final_channels AS (
 		g."path" AS parent_group_path,
 		'' AS role_id,
 		'' AS role_name,
-		array[]::::text[] AS actions,
+		CAST(array[] AS text[]) AS actions,
 		'domain' AS access_type,
 		d.id AS access_provider_id,
 		dr.id AS access_provider_role_id,

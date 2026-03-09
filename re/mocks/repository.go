@@ -178,6 +178,72 @@ func (_c *Repository_AddRule_Call) RunAndReturn(run func(ctx context.Context, r 
 	return _c
 }
 
+// ListAllRules provides a mock function for the type Repository
+func (_mock *Repository) ListAllRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
+	ret := _mock.Called(ctx, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAllRules")
+	}
+
+	var r0 re.Page
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.PageMeta) (re.Page, error)); ok {
+		return returnFunc(ctx, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, re.PageMeta) re.Page); ok {
+		r0 = returnFunc(ctx, pm)
+	} else {
+		r0 = ret.Get(0).(re.Page)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, re.PageMeta) error); ok {
+		r1 = returnFunc(ctx, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_ListAllRules_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAllRules'
+type Repository_ListAllRules_Call struct {
+	*mock.Call
+}
+
+// ListAllRules is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm re.PageMeta
+func (_e *Repository_Expecter) ListAllRules(ctx interface{}, pm interface{}) *Repository_ListAllRules_Call {
+	return &Repository_ListAllRules_Call{Call: _e.mock.On("ListAllRules", ctx, pm)}
+}
+
+func (_c *Repository_ListAllRules_Call) Run(run func(ctx context.Context, pm re.PageMeta)) *Repository_ListAllRules_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 re.PageMeta
+		if args[1] != nil {
+			arg1 = args[1].(re.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_ListAllRules_Call) Return(page re.Page, err error) *Repository_ListAllRules_Call {
+	_c.Call.Return(page, err)
+	return _c
+}
+
+func (_c *Repository_ListAllRules_Call) RunAndReturn(run func(ctx context.Context, pm re.PageMeta) (re.Page, error)) *Repository_ListAllRules_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListEntityMembers provides a mock function for the type Repository
 func (_mock *Repository) ListEntityMembers(ctx context.Context, entityID string, pageQuery roles.MembersRolePageQuery) (roles.MembersRolePage, error) {
 	ret := _mock.Called(ctx, entityID, pageQuery)
@@ -250,68 +316,80 @@ func (_c *Repository_ListEntityMembers_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// ListRules provides a mock function for the type Repository
-func (_mock *Repository) ListRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
-	ret := _mock.Called(ctx, pm)
+// ListUserRules provides a mock function for the type Repository
+func (_mock *Repository) ListUserRules(ctx context.Context, domainID string, userID string, pm re.PageMeta) (re.Page, error) {
+	ret := _mock.Called(ctx, domainID, userID, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListRules")
+		panic("no return value specified for ListUserRules")
 	}
 
 	var r0 re.Page
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, re.PageMeta) (re.Page, error)); ok {
-		return returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, re.PageMeta) (re.Page, error)); ok {
+		return returnFunc(ctx, domainID, userID, pm)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, re.PageMeta) re.Page); ok {
-		r0 = returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, re.PageMeta) re.Page); ok {
+		r0 = returnFunc(ctx, domainID, userID, pm)
 	} else {
 		r0 = ret.Get(0).(re.Page)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, re.PageMeta) error); ok {
-		r1 = returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, re.PageMeta) error); ok {
+		r1 = returnFunc(ctx, domainID, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Repository_ListRules_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRules'
-type Repository_ListRules_Call struct {
+// Repository_ListUserRules_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserRules'
+type Repository_ListUserRules_Call struct {
 	*mock.Call
 }
 
-// ListRules is a helper method to define mock.On call
+// ListUserRules is a helper method to define mock.On call
 //   - ctx context.Context
+//   - domainID string
+//   - userID string
 //   - pm re.PageMeta
-func (_e *Repository_Expecter) ListRules(ctx interface{}, pm interface{}) *Repository_ListRules_Call {
-	return &Repository_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm)}
+func (_e *Repository_Expecter) ListUserRules(ctx interface{}, domainID interface{}, userID interface{}, pm interface{}) *Repository_ListUserRules_Call {
+	return &Repository_ListUserRules_Call{Call: _e.mock.On("ListUserRules", ctx, domainID, userID, pm)}
 }
 
-func (_c *Repository_ListRules_Call) Run(run func(ctx context.Context, pm re.PageMeta)) *Repository_ListRules_Call {
+func (_c *Repository_ListUserRules_Call) Run(run func(ctx context.Context, domainID string, userID string, pm re.PageMeta)) *Repository_ListUserRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 re.PageMeta
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(re.PageMeta)
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 re.PageMeta
+		if args[3] != nil {
+			arg3 = args[3].(re.PageMeta)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
+			arg3,
 		)
 	})
 	return _c
 }
 
-func (_c *Repository_ListRules_Call) Return(page re.Page, err error) *Repository_ListRules_Call {
+func (_c *Repository_ListUserRules_Call) Return(page re.Page, err error) *Repository_ListUserRules_Call {
 	_c.Call.Return(page, err)
 	return _c
 }
 
-func (_c *Repository_ListRules_Call) RunAndReturn(run func(ctx context.Context, pm re.PageMeta) (re.Page, error)) *Repository_ListRules_Call {
+func (_c *Repository_ListUserRules_Call) RunAndReturn(run func(ctx context.Context, domainID string, userID string, pm re.PageMeta) (re.Page, error)) *Repository_ListUserRules_Call {
 	_c.Call.Return(run)
 	return _c
 }

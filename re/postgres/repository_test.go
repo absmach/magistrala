@@ -890,7 +890,7 @@ func TestListRules(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			page, err := repo.ListRules(context.Background(), tc.pm)
+			page, err := repo.ListAllRules(context.Background(), tc.pm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 				return
@@ -928,6 +928,192 @@ func TestListRules(t *testing.T) {
 						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
 							return page.Rules[i].UpdatedAt.After(page.Rules[j].UpdatedAt)
 						}), "Expected updated_at to be sorted descending")
+					}
+				}
+			}
+		})
+	}
+}
+
+func TestListUserRules(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM rules")
+		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+	})
+
+	repo := postgres.NewRepository(database)
+
+	domainID := generateUUID(t)
+	userID := generateUUID(t)
+	otherUserID := generateUUID(t)
+	channelID := generateUUID(t)
+
+	// Create 10 rules; assign the first 4 to userID via a role.
+	var allRules []re.Rule
+	for i := range 10 {
+		r := re.Rule{
+			ID:           generateUUID(t),
+			Name:         namegen.Generate(),
+			DomainID:     domainID,
+			InputChannel: channelID,
+			Logic:        re.Script{Type: re.LuaType, Value: "return true"},
+			Status:       re.EnabledStatus,
+			CreatedAt:    time.Now().UTC().Add(time.Duration(i) * time.Minute).Truncate(time.Microsecond),
+			CreatedBy:    generateUUID(t),
+			UpdatedAt:    time.Now().UTC().Add(time.Duration(i) * time.Minute).Truncate(time.Microsecond),
+			UpdatedBy:    generateUUID(t),
+		}
+		rule, err := repo.AddRule(context.Background(), r)
+		assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		allRules = append(allRules, rule)
+	}
+
+	// Assign userID to the first 4 rules via direct role INSERT.
+	for i := range 4 {
+		roleID := generateUUID(t)
+		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", allRules[i].ID)
+		assert.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
+		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, allRules[i].ID)
+		assert.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
+	}
+
+	cases := []struct {
+		desc   string
+		userID string
+		pm     re.PageMeta
+		count  int
+		err    error
+	}{
+		{
+			desc:   "list user rules returns only accessible rules",
+			userID: userID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 4,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules with offset",
+			userID: userID,
+			pm: re.PageMeta{
+				Offset: 2,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 2,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules with limit",
+			userID: userID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  2,
+				Status: re.AllStatus,
+			},
+			count: 2,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules with domain filter",
+			userID: userID,
+			pm: re.PageMeta{
+				Domain: domainID,
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 4,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules with channel filter",
+			userID: userID,
+			pm: re.PageMeta{
+				InputChannel: channelID,
+				Offset:       0,
+				Limit:        100,
+				Status:       re.AllStatus,
+			},
+			count: 4,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules with non-existing domain returns 0",
+			userID: userID,
+			pm: re.PageMeta{
+				Domain: generateUUID(t),
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list rules for user with no role assignments returns 0",
+			userID: otherUserID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules ordered by name ascending",
+			userID: userID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+				Order:  nameOrder,
+				Dir:    ascDir,
+			},
+			count: 4,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules ordered by created_at descending",
+			userID: userID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+				Order:  createdAtOrder,
+				Dir:    descDir,
+			},
+			count: 4,
+			err:   nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			page, err := repo.ListUserRules(context.Background(), domainID, tc.userID, tc.pm)
+			if tc.err != nil {
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+				return
+			}
+			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.Equal(t, tc.count, len(page.Rules), fmt.Sprintf("%s: expected %d rules, got %d", tc.desc, tc.count, len(page.Rules)))
+			if len(page.Rules) > 1 {
+				switch tc.pm.Order {
+				case nameOrder:
+					if tc.pm.Dir == ascDir {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].Name <= page.Rules[j].Name
+						}), "Expected names to be sorted ascending")
+					}
+				case createdAtOrder:
+					if tc.pm.Dir == descDir {
+						assert.True(t, sort.SliceIsSorted(page.Rules, func(i, j int) bool {
+							return page.Rules[i].CreatedAt.After(page.Rules[j].CreatedAt)
+						}), "Expected created_at to be sorted descending")
 					}
 				}
 			}

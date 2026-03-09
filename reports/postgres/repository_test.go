@@ -472,13 +472,139 @@ func TestListReportsConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			page, err := repo.ListReportsConfig(context.Background(), tc.pageMeta)
+			page, err := repo.ListAllReportsConfig(context.Background(), tc.pageMeta)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 				return
 			}
 			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 			require.Equal(t, tc.size, uint64(len(page.ReportConfigs)))
+		})
+	}
+}
+
+func TestListUserReportsConfig(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM report_config")
+		require.Nil(t, err, fmt.Sprintf("clean report_config unexpected error: %s", err))
+	})
+
+	repo := postgres.NewRepository(database)
+
+	domainID := generateUUID(t)
+	userID := generateUUID(t)
+	otherUserID := generateUUID(t)
+
+	num := 10
+	var allCfgs []reports.ReportConfig
+	for i := range num {
+		cfg := reports.ReportConfig{
+			ID:        generateUUID(t),
+			Name:      fmt.Sprintf("Report-%d", i),
+			DomainID:  domainID,
+			Status:    reports.EnabledStatus,
+			CreatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute),
+			UpdatedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute),
+			Metrics:   []reports.ReqMetric{},
+		}
+		cfg, err := repo.AddReportConfig(context.Background(), cfg)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		allCfgs = append(allCfgs, cfg)
+	}
+
+	// Assign userID to the first 5 report configs via direct role INSERT.
+	for i := range 5 {
+		roleID := generateUUID(t)
+		_, err := db.Exec(`INSERT INTO reports_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", allCfgs[i].ID)
+		require.Nil(t, err, fmt.Sprintf("insert reports_roles unexpected error: %s", err))
+		_, err = db.Exec(`INSERT INTO reports_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, allCfgs[i].ID)
+		require.Nil(t, err, fmt.Sprintf("insert reports_role_members unexpected error: %s", err))
+	}
+
+	cases := []struct {
+		desc     string
+		userID   string
+		pageMeta reports.PageMeta
+		size     int
+		err      error
+	}{
+		{
+			desc:   "list user reports returns only accessible reports",
+			userID: userID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  100,
+				Offset: 0,
+			},
+			size: 5,
+			err:  nil,
+		},
+		{
+			desc:   "list user reports with limit",
+			userID: userID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  3,
+				Offset: 0,
+			},
+			size: 3,
+			err:  nil,
+		},
+		{
+			desc:   "list user reports with offset",
+			userID: userID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  100,
+				Offset: 3,
+			},
+			size: 2,
+			err:  nil,
+		},
+		{
+			desc:   "list user reports with enabled status filter",
+			userID: userID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  100,
+				Status: reports.EnabledStatus,
+			},
+			size: 5,
+			err:  nil,
+		},
+		{
+			desc:   "list reports for user with no role assignments returns 0",
+			userID: otherUserID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  100,
+				Offset: 0,
+			},
+			size: 0,
+			err:  nil,
+		},
+		{
+			desc:   "list user reports with non-existing domain returns 0",
+			userID: userID,
+			pageMeta: reports.PageMeta{
+				Domain: generateUUID(t),
+				Limit:  100,
+				Offset: 0,
+			},
+			size: 0,
+			err:  nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			page, err := repo.ListUserReportsConfig(context.Background(), domainID, tc.userID, tc.pageMeta)
+			if tc.err != nil {
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+				return
+			}
+			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			require.Equal(t, tc.size, len(page.ReportConfigs), fmt.Sprintf("%s: expected %d reports, got %d", tc.desc, tc.size, len(page.ReportConfigs)))
 		})
 	}
 }

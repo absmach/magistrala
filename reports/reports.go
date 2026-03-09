@@ -405,7 +405,8 @@ type Repository interface {
 	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
-	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	ListAllReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	ListUserReportsConfig(ctx context.Context, domainID, userID string, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 
 	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error

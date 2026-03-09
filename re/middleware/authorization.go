@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/roles"
 	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
@@ -48,9 +49,9 @@ func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entit
 	}, nil
 }
 
-func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
 	if err := am.authorize(ctx, operations.OpAddRule, session, policies.DomainType, session.DomainID); err != nil {
-		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
+		return re.Rule{}, nil, errors.Wrap(errDomainCreateRules, err)
 	}
 
 	return am.svc.AddRule(ctx, session, r)

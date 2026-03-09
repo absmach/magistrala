@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/messaging"
 	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
 )
 
@@ -52,11 +51,10 @@ func RulesEventsSubscribe(ctx context.Context, repo re.Repository, esURL, esCons
 	}
 
 	subConfig := events.SubscriberConfig{
-		Stream:         stream,
-		Consumer:       esConsumerName,
-		Handler:        NewEventHandler(repo),
-		DeliveryPolicy: messaging.DeliverNewPolicy,
-		Ordered:        true,
+		Stream:   stream,
+		Consumer: esConsumerName,
+		Handler:  NewEventHandler(repo),
+		Ordered:  true,
 	}
 	return subscriber.Subscribe(ctx, subConfig)
 }
@@ -102,12 +100,16 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 }
 
 func (es *eventHandler) addRuleHandler(ctx context.Context, data map[string]any) error {
-	r, err := decodeAddRuleEvent(data)
+	r, rps, err := decodeAddRuleEvent(data)
 	if err != nil {
 		return errors.Wrap(errAddRuleEvent, err)
 	}
 
 	if _, err := es.repo.AddRule(ctx, r); err != nil {
+		return errors.Wrap(errAddRuleEvent, err)
+	}
+
+	if _, err := es.repo.AddRoles(ctx, rps); err != nil {
 		return errors.Wrap(errAddRuleEvent, err)
 	}
 

@@ -225,7 +225,7 @@ type Page struct {
 
 type Service interface {
 	messaging.MessageHandler
-	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
+	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, []roles.RoleProvision, error)
 	ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	UpdateRuleTags(ctx context.Context, session authn.Session, r Rule) (Rule, error)

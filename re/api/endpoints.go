@@ -25,7 +25,7 @@ func addRuleEndpoint(s re.Service) endpoint.Endpoint {
 		if err := req.validate(); err != nil {
 			return addRuleRes{}, err
 		}
-		rule, err := s.AddRule(ctx, session, req.Rule)
+		rule, _, err := s.AddRule(ctx, session, req.Rule)
 		if err != nil {
 			return addRuleRes{}, err
 		}

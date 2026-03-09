@@ -58,9 +58,9 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 	}, nil
 }
 
-func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retErr error) {
+func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retRps []roles.RoleProvision, retErr error) {
 	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
-		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+		return Rule{}, nil, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
 	}
 	if r.Logic.Type == GoType && panicRegex.MatchString(r.Logic.Value) {
 		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
@@ -68,7 +68,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 
 	id, err := re.idp.ID()
 	if err != nil {
-		return Rule{}, err
+		return Rule{}, nil, err
 	}
 	now := time.Now().UTC()
 	r.CreatedAt = now
@@ -84,7 +84,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
-		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return Rule{}, nil, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	defer func() {
@@ -109,12 +109,12 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 		},
 	}
 
-	_, err = re.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{rule.ID}, optionalPolicies, newBuiltInRoleMembers)
+	rps, err := re.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{rule.ID}, optionalPolicies, newBuiltInRoleMembers)
 	if err != nil {
-		return Rule{}, errors.Wrap(svcerr.ErrAddPolicies, err)
+		return Rule{}, nil, errors.Wrap(svcerr.ErrAddPolicies, err)
 	}
 
-	return rule, nil
+	return rule, rps, nil
 }
 
 func (re *re) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (Rule, error) {

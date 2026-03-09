@@ -494,7 +494,7 @@ func TestAddRule(t *testing.T) {
 			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies).Maybe()
 			repoCall1 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
 			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
-			res, err := svc.AddRule(context.Background(), tc.session, tc.rule)
+			res, _, err := svc.AddRule(context.Background(), tc.session, tc.rule)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
 				assert.NotEmpty(t, res.ID, "expected non-empty result in ID")

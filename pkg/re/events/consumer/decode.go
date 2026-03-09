@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/roles"
 	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
 )
 
@@ -141,12 +142,21 @@ func ToRule(data map[string]any) (re.Rule, error) {
 	return r, nil
 }
 
-func decodeAddRuleEvent(data map[string]any) (re.Rule, error) {
+func decodeAddRuleEvent(data map[string]any) (re.Rule, []roles.RoleProvision, error) {
 	r, err := ToRule(data)
 	if err != nil {
-		return re.Rule{}, errors.Wrap(errDecodeAddRuleEvent, err)
+		return re.Rule{}, nil, errors.Wrap(errDecodeAddRuleEvent, err)
 	}
-	return r, nil
+
+	var rps []roles.RoleProvision
+	if irps, ok := data["roles_provisioned"].([]any); ok {
+		rps, err = rconsumer.ToRoleProvisions(irps)
+		if err != nil {
+			return re.Rule{}, nil, errors.Wrap(errDecodeAddRuleEvent, err)
+		}
+	}
+
+	return r, rps, nil
 }
 
 func decodeUpdateRuleEvent(data map[string]any) (re.Rule, error) {

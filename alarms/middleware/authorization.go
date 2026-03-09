@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 )
@@ -94,8 +95,9 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, operations.OpListAlarms, session, policies.DomainType, session.DomainID); err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+	pm.UserID = session.UserID
+	if err := am.checkSuperAdmin(ctx, session); err == nil {
+		pm.SuperAdmin = true
 	}
 
 	return am.svc.ListAlarms(ctx, session, pm)
@@ -142,5 +144,21 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		return err
 	}
 
+	return nil
+}
+
+func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
+	if session.Role != authn.AdminRole {
+		return svcerr.ErrSuperAdminAction
+	}
+	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
+		SubjectType: policies.UserType,
+		Subject:     session.UserID,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.SuperMQObject,
+	}, nil); err != nil {
+		return err
+	}
 	return nil
 }

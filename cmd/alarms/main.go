@@ -97,7 +97,13 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	migrations := alarmsRepo.Migration()
+	migrations, err := alarmsRepo.Migration()
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to load migrations: %s", err))
+		exitCode = 1
+		return
+	}
+
 	db, err := postgres.Setup(dbConfig, *migrations)
 	if err != nil {
 		logger.Error(err.Error())

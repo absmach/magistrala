@@ -194,21 +194,86 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		dir = api.AscDir
 	}
 
-	orderClause := ""
-
+	var orderClause string
 	switch pm.Order {
 	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+		orderClause = fmt.Sprintf("ORDER BY alarms.created_at %s, alarms.id %s", dir, dir)
 	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(alarms.updated_at, alarms.created_at) %s, alarms.id %s", dir, dir)
 	}
 
-	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,
-			threshold, cause, status, severity, assignee_id, created_at, updated_at, updated_by, assigned_at,
-			assigned_by, acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
-			FROM alarms %s %s LIMIT :limit OFFSET :offset;`, query, orderClause)
+	var comQuery string
+	switch pm.SuperAdmin {
+	case false:
+		comQuery = fmt.Sprintf(`SELECT DISTINCT
+				alarms.id,
+				alarms.rule_id,
+				alarms.domain_id,
+				alarms.channel_id,
+				alarms.client_id,
+				alarms.subtopic,
+				alarms.measurement,
+				alarms.value,
+				alarms.unit,
+				alarms.threshold,
+				alarms.cause,
+				alarms.status,
+				alarms.severity,
+				alarms.assignee_id,
+				alarms.created_at,
+				alarms.updated_at,
+				alarms.updated_by,
+				alarms.assigned_at,
+				alarms.assigned_by,
+				alarms.acknowledged_at,
+				alarms.acknowledged_by,
+				alarms.resolved_at,
+				alarms.resolved_by,
+				alarms.metadata
+			FROM
+				alarms
+			INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
+			INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+			%s`, query)
+	default:
+		comQuery = fmt.Sprintf(`SELECT
+				id,
+				rule_id,
+				domain_id,
+				channel_id,
+				client_id,
+				subtopic,
+				measurement,
+				value,
+				unit,
+				threshold,
+				cause,
+				status,
+				severity,
+				assignee_id,
+				created_at,
+				updated_at,
+				updated_by,
+				assigned_at,
+				assigned_by,
+				acknowledged_at,
+				acknowledged_by,
+				resolved_at,
+				resolved_by,
+				metadata
+			FROM
+				alarms
+			%s`, query)
+	}
+
+	q := fmt.Sprintf(`%s
+		%s
+		LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count
+		FROM (
+			%s
+		) AS sub_query;`, comQuery)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
@@ -231,8 +296,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		items = append(items, a)
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM alarms %s;`, query)
-	total, err := postgres.Total(ctx, r.db, q, pm)
+	total, err := postgres.Total(ctx, r.db, cq, pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -444,49 +508,49 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 func pageQuery(pm alarms.PageMetadata) (string, error) {
 	var query []string
 	if pm.DomainID != "" {
-		query = append(query, "domain_id = :domain_id")
+		query = append(query, "alarms.domain_id = :domain_id")
 	}
 	if pm.RuleID != "" {
-		query = append(query, "rule_id = :rule_id")
+		query = append(query, "alarms.rule_id = :rule_id")
 	}
 	if pm.ChannelID != "" {
-		query = append(query, "channel_id = :channel_id")
+		query = append(query, "alarms.channel_id = :channel_id")
 	}
 	if pm.Subtopic != "" {
-		query = append(query, "subtopic = :subtopic")
+		query = append(query, "alarms.subtopic = :subtopic")
 	}
 	if pm.ClientID != "" {
-		query = append(query, "client_id = :client_id")
+		query = append(query, "alarms.client_id = :client_id")
 	}
 	if pm.Measurement != "" {
-		query = append(query, "measurement = :measurement")
+		query = append(query, "alarms.measurement = :measurement")
 	}
 	if pm.Status != alarms.AllStatus {
-		query = append(query, "status = :status")
+		query = append(query, "alarms.status = :status")
 	}
 	if pm.Severity != math.MaxUint8 {
-		query = append(query, "severity = :severity")
+		query = append(query, "alarms.severity = :severity")
 	}
 	if pm.AssigneeID != "" {
-		query = append(query, "assignee_id = :assignee_id")
+		query = append(query, "alarms.assignee_id = :assignee_id")
 	}
 	if pm.UpdatedBy != "" {
-		query = append(query, "updated_by = :updated_by")
+		query = append(query, "alarms.updated_by = :updated_by")
 	}
 	if pm.ResolvedBy != "" {
-		query = append(query, "resolved_by = :resolved_by")
+		query = append(query, "alarms.resolved_by = :resolved_by")
 	}
 	if pm.AcknowledgedBy != "" {
-		query = append(query, "acknowledged_by = :acknowledged_by")
+		query = append(query, "alarms.acknowledged_by = :acknowledged_by")
 	}
 	if pm.AssignedBy != "" {
-		query = append(query, "assigned_by = :assigned_by")
+		query = append(query, "alarms.assigned_by = :assigned_by")
 	}
 	if !pm.CreatedFrom.IsZero() {
-		query = append(query, "created_at >= :created_from")
+		query = append(query, "alarms.created_at >= :created_from")
 	}
 	if !pm.CreatedTo.IsZero() {
-		query = append(query, "created_at <= :created_to")
+		query = append(query, "alarms.created_at <= :created_to")
 	}
 
 	var emq string

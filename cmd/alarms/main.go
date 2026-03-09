@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"log/slog"
 	"net/url"
 	"os"
 
@@ -19,6 +18,8 @@ import (
 	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
+	rconsumer "github.com/absmach/magistrala/pkg/re/events/consumer"
+	rpostgres "github.com/absmach/magistrala/re/postgres"
 	dpostgres "github.com/absmach/supermq/domains/postgres"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
@@ -31,18 +32,12 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
 	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
 	"github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/server"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
 	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/authzed/authzed-go/v1"
-	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -57,18 +52,14 @@ const (
 )
 
 type config struct {
-	LogLevel            string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
-	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
-	InstanceID          string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
-	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	ESURL               string  `env:"SMQ_ES_URL"             envDefault:"nats://localhost:4222"`
-	ESConsumerName      string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
-	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
-	SpicedbSchemaFile   string  `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
-	PermissionsFile     string  `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
+	LogLevel        string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
+	BrokerURL       string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	InstanceID      string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
+	JaegerURL       url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
+	TraceRatio      float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL           string  `env:"SMQ_ES_URL"             envDefault:"nats://localhost:4222"`
+	ESConsumerName  string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
+	PermissionsFile string  `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {
@@ -106,13 +97,7 @@ func main() {
 		logger.Error(err.Error())
 	}
 
-	migrations, err := alarmsRepo.Migration()
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-
+	migrations := alarmsRepo.Migration()
 	db, err := postgres.Setup(dbConfig, *migrations)
 	if err != nil {
 		logger.Error(err.Error())
@@ -173,17 +158,18 @@ func main() {
 		return
 	}
 
-	idp := uuid.New()
+	rdatabase := postgres.NewDatabase(db, dbConfig, tracer)
+	rrepo := rpostgres.NewRepository(rdatabase)
 
-	policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
-	if err != nil {
-		logger.Error(err.Error())
+	if err := rconsumer.RulesEventsSubscribe(ctx, rrepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to rules events: %s", err))
 		exitCode = 1
 		return
 	}
-	logger.Info("Policy service are successfully connected to SpiceDB gRPC server")
 
-	svc := alarms.NewService(idp, repo, policyService)
+	idp := uuid.New()
+
+	svc := alarms.NewService(idp, repo)
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
 	if err != nil {
@@ -268,18 +254,4 @@ func main() {
 	if err := g.Wait(); err != nil {
 		logger.Error(fmt.Sprintf("billing service terminated: %s", err))
 	}
-}
-
-func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Service, error) {
-	client, err := authzed.NewClientWithExperimentalAPIs(
-		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
-	)
-	if err != nil {
-		return nil, err
-	}
-	ps := spicedb.NewPolicyService(client, logger)
-
-	return ps, nil
 }

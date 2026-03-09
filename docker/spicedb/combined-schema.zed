@@ -633,21 +633,6 @@ definition platform {
 
 // Overlay team block consumed by scripts/combine-schema.sh during merge.
 
-definition alarm {
-relation domain: domain
-
-relation update: role#member
-relation read: role#member
-relation delete: role#member
-
-permission update_permission = update + domain->alarm_update_permission
-permission read_permission = read + domain->alarm_read_permission
-permission delete_permission = delete + domain->alarm_delete_permission
-permission assign_permission = domain->alarm_assign_permission
-permission acknowledge_permission = domain->alarm_acknowledge_permission
-permission resolve_permission = domain->alarm_resolve_permission
-}
-
 definition rule {
 relation domain: domain
 
@@ -660,6 +645,7 @@ relation add_role_users: role#member
 relation remove_role_users: role#member
 relation view_role_users: role#member
 
+relation alarm_read: role#member
 relation alarm_assign: role#member
 relation alarm_acknowledge: role#member
 relation alarm_resolve: role#member
@@ -673,6 +659,7 @@ permission add_role_users_permission = add_role_users + domain->rule_add_role_us
 permission remove_role_users_permission = remove_role_users + domain->rule_remove_role_users_permission
 permission view_role_users_permission = view_role_users + domain->rule_view_role_users_permission
 
+permission alarm_read_permission = alarm_read + domain->alarm_read_permission
 permission alarm_assign_permission = alarm_assign + domain->alarm_assign_permission
 permission alarm_acknowledge_permission = alarm_acknowledge + domain->alarm_acknowledge_permission
 permission alarm_resolve_permission = alarm_resolve + domain->alarm_resolve_permission

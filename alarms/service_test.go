@@ -14,8 +14,6 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -23,22 +21,18 @@ import (
 
 var idp = uuid.New()
 
-func newService(t *testing.T, repo *mocks.Repository) (alarms.Service, *policymocks.Service) {
-	policy := new(policymocks.Service)
-	svc := alarms.NewService(idp, repo, policy)
-	return svc, policy
+func newService(t *testing.T, repo *mocks.Repository) alarms.Service {
+	return alarms.NewService(idp, repo)
 }
 
 func TestCreateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc, policies := newService(t, repo)
+	svc := newService(t, repo)
 	ts := time.Now()
 	cases := []struct {
-		desc           string
-		alarm          alarms.Alarm
-		err            error
-		addPoliciesErr error
-		deleteErr      error
+		desc  string
+		alarm alarms.Alarm
+		err   error
 	}{
 		{
 			desc: "valid alarm",
@@ -55,9 +49,7 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    100,
 				CreatedAt:   ts,
 			},
-			err:            nil,
-			addPoliciesErr: nil,
-			deleteErr:      nil,
+			err: nil,
 		},
 		{
 			desc: "missing rule_id",
@@ -73,69 +65,23 @@ func TestCreateAlarm(t *testing.T) {
 				Severity:    100,
 				CreatedAt:   ts,
 			},
-			err:            errors.New("rule_id is required"),
-			addPoliciesErr: nil,
-			deleteErr:      nil,
-		},
-		{
-			desc: "create alarm with failed to add policies",
-			alarm: alarms.Alarm{
-				RuleID:      "rule-id",
-				DomainID:    "domain-id",
-				ChannelID:   "channel-id",
-				ClientID:    "client-id",
-				Subtopic:    "subtopic",
-				Measurement: "measurement",
-				Value:       "value",
-				Unit:        "unit",
-				Cause:       "cause",
-				Severity:    100,
-				CreatedAt:   ts,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrAddPolicies,
-		},
-		{
-			desc: "create alarm with failed to add policies and failed rollback",
-			alarm: alarms.Alarm{
-				RuleID:      "rule-id",
-				DomainID:    "domain-id",
-				ChannelID:   "channel-id",
-				ClientID:    "client-id",
-				Subtopic:    "subtopic",
-				Measurement: "measurement",
-				Value:       "value",
-				Unit:        "unit",
-				Cause:       "cause",
-				Severity:    100,
-				CreatedAt:   ts,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			deleteErr:      svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRollbackRepo,
+			err: errors.New("rule_id is required"),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("CreateAlarm", context.Background(), mock.Anything).Return(tc.alarm, tc.err)
-			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
-			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(nil).Maybe()
-			repoCall2 := repo.On("DeleteAlarm", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
-			policyCall.Unset()
-			policyCall2.Unset()
 			repoCall.Unset()
-			repoCall2.Unset()
 		})
 	}
 }
 
 func TestViewAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc, _ := newService(t, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc     string
@@ -174,7 +120,7 @@ func TestViewAlarm(t *testing.T) {
 
 func TestUpdateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc, _ := newService(t, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc  string
@@ -232,7 +178,7 @@ func TestUpdateAlarm(t *testing.T) {
 
 func TestListAlarms(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc, _ := newService(t, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string
@@ -273,7 +219,7 @@ func TestListAlarms(t *testing.T) {
 
 func TestDeleteAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc, policies := newService(t, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string
@@ -296,7 +242,6 @@ func TestDeleteAlarm(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			s := authn.Session{DomainID: tc.id}
 			repoCall := repo.On("DeleteAlarm", context.Background(), tc.id).Return(tc.err)
-			policyCall := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(nil).Maybe()
 			err := svc.DeleteAlarm(context.Background(), s, tc.id)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -304,7 +249,6 @@ func TestDeleteAlarm(t *testing.T) {
 				return
 			}
 			repoCall.Unset()
-			policyCall.Unset()
 		})
 	}
 }

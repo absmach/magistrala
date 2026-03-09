@@ -7,32 +7,26 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/magistrala/alarms/operations"
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
 )
 
 type service struct {
-	idp    supermq.IDProvider
-	repo   Repository
-	policy policies.Service
+	idp  supermq.IDProvider
+	repo Repository
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(idp supermq.IDProvider, repo Repository, policy policies.Service) Service {
+func NewService(idp supermq.IDProvider, repo Repository) Service {
 	return &service{
-		idp:    idp,
-		repo:   repo,
-		policy: policy,
+		idp:  idp,
+		repo: repo,
 	}
 }
 
-func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
+func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 	id, err := s.idp.ID()
 	if err != nil {
 		return err
@@ -50,26 +44,6 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (retErr error) {
 		return err
 	}
 
-	defer func() {
-		if retErr != nil {
-			if errRollBack := s.repo.DeleteAlarm(ctx, alarm.ID); errRollBack != nil {
-				retErr = errors.Wrap(retErr, errors.Wrap(svcerr.ErrRollbackRepo, errRollBack))
-			}
-		}
-	}()
-
-	if err := s.policy.AddPolicies(ctx, []policies.Policy{
-		{
-			SubjectType: policies.DomainType,
-			Subject:     alarm.DomainID,
-			Relation:    policies.DomainRelation,
-			ObjectType:  operations.EntityType,
-			Object:      alarm.ID,
-		},
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrAddPolicies, err)
-	}
-
 	return nil
 }
 
@@ -82,23 +56,7 @@ func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm Page
 }
 
 func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmID string) error {
-	if err := s.repo.DeleteAlarm(ctx, alarmID); err != nil {
-		return err
-	}
-
-	if err := s.policy.DeletePolicies(ctx, []policies.Policy{
-		{
-			SubjectType: policies.DomainType,
-			Subject:     session.DomainID,
-			Relation:    policies.DomainRelation,
-			ObjectType:  operations.EntityType,
-			Object:      alarmID,
-		},
-	}); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
-	}
-
-	return nil
+	return s.repo.DeleteAlarm(ctx, alarmID)
 }
 
 func (s *service) UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {

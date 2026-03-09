@@ -49,7 +49,7 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	switch {
 	case alarm.AssigneeID != "":
-		if err := am.authorize(ctx, operations.OpAssignAlarm, session, operations.EntityType, alarm.ID); err != nil {
+		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 		domainUserID := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
@@ -65,15 +65,15 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 			return alarms.Alarm{}, err
 		}
 	case alarm.AcknowledgedBy != "":
-		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, operations.EntityType, alarm.ID); err != nil {
+		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	case alarm.ResolvedBy != "":
-		if err := am.authorize(ctx, operations.OpResolveAlarm, session, operations.EntityType, alarm.ID); err != nil {
+		if err := am.authorize(ctx, operations.OpResolveAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	default:
-		if err := am.authorize(ctx, operations.OpUpdateAlarm, session, operations.EntityType, alarm.ID); err != nil {
+		if err := am.authorize(ctx, operations.OpUpdateAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	}
@@ -82,7 +82,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, operations.OpDeleteAlarm, session, operations.EntityType, id); err != nil {
+	if err := am.authorize(ctx, operations.OpDeleteAlarm, session, policies.DomainType, session.DomainID); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
 
@@ -102,7 +102,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, operations.OpViewAlarm, session, operations.EntityType, id); err != nil {
+	if err := am.authorize(ctx, operations.OpViewAlarm, session, policies.DomainType, session.DomainID); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 

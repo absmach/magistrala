@@ -360,8 +360,9 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "valid page",
 			pm: alarms.PageMetadata{
-				Offset: 0,
-				Limit:  10,
+				Offset:     0,
+				Limit:      10,
+				SuperAdmin: true,
 			},
 			response: items[:10],
 			err:      nil,
@@ -369,8 +370,9 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "offset and limit",
 			pm: alarms.PageMetadata{
-				Offset: 10,
-				Limit:  50,
+				Offset:     10,
+				Limit:      50,
+				SuperAdmin: true,
 			},
 			response: items[10:60],
 			err:      nil,
@@ -384,8 +386,9 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "invalid page",
 			pm: alarms.PageMetadata{
-				Offset: 1000,
-				Limit:  10,
+				Offset:     1000,
+				Limit:      10,
+				SuperAdmin: true,
 			},
 			response: []alarms.Alarm{},
 			err:      nil,
@@ -396,6 +399,7 @@ func TestListAlarms(t *testing.T) {
 				Offset:     0,
 				Limit:      10,
 				AssigneeID: generateUUID(t),
+				SuperAdmin: true,
 			},
 			response: []alarms.Alarm{},
 			err:      nil,

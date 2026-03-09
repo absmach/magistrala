@@ -197,9 +197,9 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 	var orderClause string
 	switch pm.Order {
 	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY alarms.created_at %s, alarms.id %s", dir, dir)
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
 	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(alarms.updated_at, alarms.created_at) %s, alarms.id %s", dir, dir)
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
 	var comQuery string
@@ -266,7 +266,9 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 			%s`, query)
 	}
 
-	q := fmt.Sprintf(`%s
+	q := fmt.Sprintf(`SELECT * FROM (
+			%s
+		) AS sub_query
 		%s
 		LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
 

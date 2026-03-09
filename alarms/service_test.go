@@ -205,7 +205,7 @@ func TestListAlarms(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			s := authn.Session{DomainID: tc.pm.DomainID}
-			repoCall := repo.On("ListAlarms", context.Background(), tc.pm).Return(tc.page, tc.err)
+			repoCall := repo.On("ListUserAlarms", context.Background(), tc.pm.DomainID, s.UserID, tc.pm).Return(tc.page, tc.err)
 			_, err := svc.ListAlarms(context.Background(), s, tc.pm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

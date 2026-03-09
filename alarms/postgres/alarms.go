@@ -183,7 +183,7 @@ func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (a
 	return alarm, nil
 }
 
-func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
+func (r *repository) ListAllAlarms(ctx context.Context, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
 	query, err := pageQuery(pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -202,41 +202,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
-	var comQuery string
-	switch pm.SuperAdmin {
-	case false:
-		comQuery = fmt.Sprintf(`SELECT DISTINCT
-				alarms.id,
-				alarms.rule_id,
-				alarms.domain_id,
-				alarms.channel_id,
-				alarms.client_id,
-				alarms.subtopic,
-				alarms.measurement,
-				alarms.value,
-				alarms.unit,
-				alarms.threshold,
-				alarms.cause,
-				alarms.status,
-				alarms.severity,
-				alarms.assignee_id,
-				alarms.created_at,
-				alarms.updated_at,
-				alarms.updated_by,
-				alarms.assigned_at,
-				alarms.assigned_by,
-				alarms.acknowledged_at,
-				alarms.acknowledged_by,
-				alarms.resolved_at,
-				alarms.resolved_by,
-				alarms.metadata
-			FROM
-				alarms
-			INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
-			INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
-			%s`, query)
-	default:
-		comQuery = fmt.Sprintf(`SELECT
+	comQuery := fmt.Sprintf(`SELECT
 				id,
 				rule_id,
 				domain_id,
@@ -264,18 +230,112 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 			FROM
 				alarms
 			%s`, query)
-	}
 
 	q := fmt.Sprintf(`SELECT * FROM (
+				%s
+			) AS sub_query
 			%s
-		) AS sub_query
-		%s
-		LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
+			LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
 
 	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count
-		FROM (
+			FROM (
+				%s
+			) AS sub_query;`, comQuery)
+
+	rows, err := r.db.NamedQueryContext(ctx, q, pm)
+	if err != nil {
+		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	var items []alarms.Alarm
+	for rows.Next() {
+		dba := dbAlarm{}
+		if err := rows.StructScan(&dba); err != nil {
+			return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+
+		a, err := toAlarm(dba)
+		if err != nil {
+			return alarms.AlarmsPage{}, err
+		}
+
+		items = append(items, a)
+	}
+
+	total, err := postgres.Total(ctx, r.db, cq, pm)
+	if err != nil {
+		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return alarms.AlarmsPage{
+		Total:  total,
+		Offset: pm.Offset,
+		Limit:  pm.Limit,
+		Alarms: items,
+	}, nil
+}
+
+func (r *repository) ListUserAlarms(ctx context.Context, domainID, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
+	query, err := pageQuery(pm)
+	if err != nil {
+		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	var orderClause string
+	switch pm.Order {
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+
+	comQuery := fmt.Sprintf(`SELECT DISTINCT
+				alarms.id,
+				alarms.rule_id,
+				alarms.domain_id,
+				alarms.channel_id,
+				alarms.client_id,
+				alarms.subtopic,
+				alarms.measurement,
+				alarms.value,
+				alarms.unit,
+				alarms.threshold,
+				alarms.cause,
+				alarms.status,
+				alarms.severity,
+				alarms.assignee_id,
+				alarms.created_at,
+				alarms.updated_at,
+				alarms.updated_by,
+				alarms.assigned_at,
+				alarms.assigned_by,
+				alarms.acknowledged_at,
+				alarms.acknowledged_by,
+				alarms.resolved_at,
+				alarms.resolved_by,
+				alarms.metadata
+			FROM
+				alarms
+			INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
+			INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = '%s'
+			%s`, userID, query)
+
+	q := fmt.Sprintf(`SELECT * FROM (
+				%s
+			) AS sub_query
 			%s
-		) AS sub_query;`, comQuery)
+			LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count
+			FROM (
+				%s
+			) AS sub_query;`, comQuery)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {

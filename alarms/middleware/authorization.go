@@ -95,9 +95,8 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	pm.UserID = session.UserID
 	if err := am.checkSuperAdmin(ctx, session); err == nil {
-		pm.SuperAdmin = true
+		session.SuperAdmin = true
 	}
 
 	return am.svc.ListAlarms(ctx, session, pm)

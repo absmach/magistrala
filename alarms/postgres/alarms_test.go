@@ -360,9 +360,8 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "valid page",
 			pm: alarms.PageMetadata{
-				Offset:     0,
-				Limit:      10,
-				SuperAdmin: true,
+				Offset: 0,
+				Limit:  10,
 			},
 			response: items[:10],
 			err:      nil,
@@ -370,9 +369,8 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "offset and limit",
 			pm: alarms.PageMetadata{
-				Offset:     10,
-				Limit:      50,
-				SuperAdmin: true,
+				Offset: 10,
+				Limit:  50,
 			},
 			response: items[10:60],
 			err:      nil,
@@ -386,9 +384,8 @@ func TestListAlarms(t *testing.T) {
 		{
 			desc: "invalid page",
 			pm: alarms.PageMetadata{
-				Offset:     1000,
-				Limit:      10,
-				SuperAdmin: true,
+				Offset: 1000,
+				Limit:  10,
 			},
 			response: []alarms.Alarm{},
 			err:      nil,
@@ -399,7 +396,6 @@ func TestListAlarms(t *testing.T) {
 				Offset:     0,
 				Limit:      10,
 				AssigneeID: generateUUID(t),
-				SuperAdmin: true,
 			},
 			response: []alarms.Alarm{},
 			err:      nil,
@@ -407,7 +403,7 @@ func TestListAlarms(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			alarms, err := repo.ListAlarms(context.Background(), tc.pm)
+			alarms, err := repo.ListAllAlarms(context.Background(), tc.pm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -415,6 +411,158 @@ func TestListAlarms(t *testing.T) {
 			}
 			assert.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
 			assert.Equal(t, len(tc.response), len(alarms.Alarms))
+		})
+	}
+}
+
+func TestListUserAlarms(t *testing.T) {
+	t.Cleanup(func() {
+		_, err := db.Exec("DELETE FROM alarms")
+		require.Nil(t, err, fmt.Sprintf("clean alarms unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM rules")
+		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
+	})
+
+	repo := postgres.NewAlarmsRepo(db)
+
+	domainID := generateUUID(t)
+	userID := generateUUID(t)
+	otherUserID := generateUUID(t)
+
+	// Create 10 rules and 10 alarms referencing them.
+	// Assign userID to the first 6 rules via role membership.
+	var ruleIDs []string
+	var createdAlarms []alarms.Alarm
+	for i := range 10 {
+		ruleID := generateUUID(t)
+		_, err := db.Exec(`INSERT INTO rules (id, name, domain_id, status, logic_type, logic_value) VALUES ($1, $2, $3, 0, 0, '')`,
+			ruleID, fmt.Sprintf("rule-%d", i), domainID)
+		require.Nil(t, err, fmt.Sprintf("insert rule unexpected error: %s", err))
+		ruleIDs = append(ruleIDs, ruleID)
+
+		alarm := alarms.Alarm{
+			ID:          generateUUID(t),
+			RuleID:      ruleID,
+			DomainID:    domainID,
+			ChannelID:   generateUUID(t),
+			ClientID:    generateUUID(t),
+			Measurement: namegen.Generate(),
+			Value:       namegen.Generate(),
+			Unit:        namegen.Generate(),
+			Threshold:   namegen.Generate(),
+			Cause:       namegen.Generate(),
+			Status:      0,
+			AssigneeID:  generateUUID(t),
+			CreatedAt:   time.Now().UTC().Add(time.Duration(i) * time.Minute),
+		}
+		alarm, err = repo.CreateAlarm(context.Background(), alarm)
+		require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+		createdAlarms = append(createdAlarms, alarm)
+	}
+
+	// Assign userID to the first 6 rules via rules_roles + rules_role_members.
+	for i := range 6 {
+		roleID := generateUUID(t)
+		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
+		require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
+		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, ruleIDs[i])
+		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
+	}
+
+	_ = createdAlarms
+
+	cases := []struct {
+		desc   string
+		userID string
+		pm     alarms.PageMetadata
+		count  int
+		err    error
+	}{
+		{
+			desc:   "list user alarms returns only accessible alarms",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  100,
+			},
+			count: 6,
+			err:   nil,
+		},
+		{
+			desc:   "list user alarms with limit",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  3,
+			},
+			count: 3,
+			err:   nil,
+		},
+		{
+			desc:   "list user alarms with offset",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				Offset: 4,
+				Limit:  100,
+			},
+			count: 2,
+			err:   nil,
+		},
+		{
+			desc:   "list user alarms with domain filter",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				DomainID: domainID,
+				Offset:   0,
+				Limit:    100,
+			},
+			count: 6,
+			err:   nil,
+		},
+		{
+			desc:   "list user alarms with non-existing domain returns 0",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				DomainID: generateUUID(t),
+				Offset:   0,
+				Limit:    100,
+			},
+			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list alarms for user with no role assignments returns 0",
+			userID: otherUserID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  100,
+			},
+			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list user alarms ordered by created_at ascending",
+			userID: userID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  100,
+				Order:  "created_at",
+				Dir:    "asc",
+			},
+			count: 6,
+			err:   nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			page, err := repo.ListUserAlarms(context.Background(), domainID, tc.userID, tc.pm)
+			if tc.err != nil {
+				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+				return
+			}
+			require.Nil(t, err, fmt.Sprintf("unexpected error: %s", err))
+			assert.Equal(t, tc.count, len(page.Alarms), fmt.Sprintf("%s: expected %d alarms, got %d", tc.desc, tc.count, len(page.Alarms)))
 		})
 	}
 }

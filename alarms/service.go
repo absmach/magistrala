@@ -52,7 +52,10 @@ func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID 
 }
 
 func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error) {
-	return s.repo.ListAlarms(ctx, pm)
+	if session.SuperAdmin {
+		return s.repo.ListAllAlarms(ctx, pm)
+	}
+	return s.repo.ListUserAlarms(ctx, session.DomainID, session.UserID, pm)
 }
 
 func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmID string) error {

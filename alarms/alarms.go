@@ -117,6 +117,6 @@ type Repository interface {
 	UpdateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
 	ListAllAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
-	ListUserAlarms(ctx context.Context, domainID, userID string, pm PageMetadata) (AlarmsPage, error)
+	ListUserAlarms(ctx context.Context, userID string, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
 }

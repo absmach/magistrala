@@ -55,7 +55,7 @@ func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm Page
 	if session.SuperAdmin {
 		return s.repo.ListAllAlarms(ctx, pm)
 	}
-	return s.repo.ListUserAlarms(ctx, session.DomainID, session.UserID, pm)
+	return s.repo.ListUserAlarms(ctx, session.UserID, pm)
 }
 
 func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmID string) error {

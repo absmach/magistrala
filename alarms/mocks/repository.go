@@ -232,8 +232,8 @@ func (_c *Repository_ListAllAlarms_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // ListUserAlarms provides a mock function for the type Repository
-func (_mock *Repository) ListUserAlarms(ctx context.Context, domainID string, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
-	ret := _mock.Called(ctx, domainID, userID, pm)
+func (_mock *Repository) ListUserAlarms(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
+	ret := _mock.Called(ctx, userID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUserAlarms")
@@ -241,16 +241,16 @@ func (_mock *Repository) ListUserAlarms(ctx context.Context, domainID string, us
 
 	var r0 alarms.AlarmsPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, alarms.PageMetadata) (alarms.AlarmsPage, error)); ok {
-		return returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alarms.PageMetadata) (alarms.AlarmsPage, error)); ok {
+		return returnFunc(ctx, userID, pm)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, alarms.PageMetadata) alarms.AlarmsPage); ok {
-		r0 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, alarms.PageMetadata) alarms.AlarmsPage); ok {
+		r0 = returnFunc(ctx, userID, pm)
 	} else {
 		r0 = ret.Get(0).(alarms.AlarmsPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, alarms.PageMetadata) error); ok {
-		r1 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, alarms.PageMetadata) error); ok {
+		r1 = returnFunc(ctx, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -264,14 +264,13 @@ type Repository_ListUserAlarms_Call struct {
 
 // ListUserAlarms is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
 //   - userID string
 //   - pm alarms.PageMetadata
-func (_e *Repository_Expecter) ListUserAlarms(ctx interface{}, domainID interface{}, userID interface{}, pm interface{}) *Repository_ListUserAlarms_Call {
-	return &Repository_ListUserAlarms_Call{Call: _e.mock.On("ListUserAlarms", ctx, domainID, userID, pm)}
+func (_e *Repository_Expecter) ListUserAlarms(ctx interface{}, userID interface{}, pm interface{}) *Repository_ListUserAlarms_Call {
+	return &Repository_ListUserAlarms_Call{Call: _e.mock.On("ListUserAlarms", ctx, userID, pm)}
 }
 
-func (_c *Repository_ListUserAlarms_Call) Run(run func(ctx context.Context, domainID string, userID string, pm alarms.PageMetadata)) *Repository_ListUserAlarms_Call {
+func (_c *Repository_ListUserAlarms_Call) Run(run func(ctx context.Context, userID string, pm alarms.PageMetadata)) *Repository_ListUserAlarms_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -281,19 +280,14 @@ func (_c *Repository_ListUserAlarms_Call) Run(run func(ctx context.Context, doma
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 alarms.PageMetadata
 		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 alarms.PageMetadata
-		if args[3] != nil {
-			arg3 = args[3].(alarms.PageMetadata)
+			arg2 = args[2].(alarms.PageMetadata)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -304,7 +298,7 @@ func (_c *Repository_ListUserAlarms_Call) Return(alarmsPage alarms.AlarmsPage, e
 	return _c
 }
 
-func (_c *Repository_ListUserAlarms_Call) RunAndReturn(run func(ctx context.Context, domainID string, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error)) *Repository_ListUserAlarms_Call {
+func (_c *Repository_ListUserAlarms_Call) RunAndReturn(run func(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error)) *Repository_ListUserAlarms_Call {
 	_c.Call.Return(run)
 	return _c
 }

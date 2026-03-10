@@ -276,7 +276,7 @@ func (r *repository) ListAllAlarms(ctx context.Context, pm alarms.PageMetadata) 
 	}, nil
 }
 
-func (r *repository) ListUserAlarms(ctx context.Context, domainID, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
+func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
 	query, err := pageQuery(pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)

@@ -73,10 +73,6 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 		if err := am.authorize(ctx, operations.OpResolveAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
-	default:
-		if err := am.authorize(ctx, operations.OpUpdateAlarm, session, policies.DomainType, session.DomainID); err != nil {
-			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
-		}
 	}
 
 	return am.svc.UpdateAlarm(ctx, session, alarm)

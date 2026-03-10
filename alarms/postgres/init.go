@@ -11,7 +11,7 @@ import (
 	migrate "github.com/rubenv/sql-migrate"
 )
 
-// Migration of Users service.
+// Migration of Alarms service.
 func Migration() (*migrate.MemoryMigrationSource, error) {
 	alarmsMigtration := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{

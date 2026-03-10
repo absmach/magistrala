@@ -556,7 +556,7 @@ func TestListUserAlarms(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			page, err := repo.ListUserAlarms(context.Background(), domainID, tc.userID, tc.pm)
+			page, err := repo.ListUserAlarms(context.Background(), tc.userID, tc.pm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 				return

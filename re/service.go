@@ -22,6 +22,7 @@ import (
 )
 
 var ErrGoroutinesNotAllowed = errors.New("goroutines are not allowed in Go scripts")
+var ErrPanicNotAllowed = errors.New("panic is not allowed in Go scripts")
 
 type re struct {
 	repo       Repository
@@ -58,6 +59,9 @@ func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Se
 func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retErr error) {
 	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
 		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+	}
+	if r.Logic.Type == GoType && panicRegex.MatchString(r.Logic.Value) {
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
 	}
 
 	id, err := re.idp.ID()
@@ -130,6 +134,9 @@ func (re *re) ViewRule(ctx context.Context, session authn.Session, id string, wi
 func (re *re) UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error) {
 	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
 		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+	}
+	if r.Logic.Type == GoType && panicRegex.MatchString(r.Logic.Value) {
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
 	}
 
 	r.UpdatedAt = time.Now().UTC()

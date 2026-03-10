@@ -336,6 +336,30 @@ func TestAddRule(t *testing.T) {
 			deleteErr:      nil,
 		},
 		{
+			desc: "Add rule with Go script containing panic",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { panic("error"); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+			},
+			err:            re.ErrPanicNotAllowed,
+			addPoliciesErr: nil,
+			addRoleErr:     nil,
+			deleteErr:      nil,
+		},
+		{
 			desc: "Add rule with failed to add roles and failed to delete policies",
 			session: authn.Session{
 				UserID:   userID,
@@ -639,6 +663,31 @@ func TestUpdateRule(t *testing.T) {
 				DomainID:  domainID,
 			},
 			err: re.ErrGoroutinesNotAllowed,
+		},
+		{
+			desc: "Update rule with Go script containing panic",
+			session: authn.Session{
+				UserID:   userID,
+				DomainID: domainID,
+			},
+			rule: re.Rule{
+				Name:         ruleName,
+				ID:           ruleID,
+				InputChannel: inputChannel,
+				Logic: re.Script{
+					Type:  re.GoType,
+					Value: `func logicFunction() any { panic("test panic"); return true }`,
+				},
+				Schedule: pkgSch.Schedule{
+					Recurring:       pkgSch.Daily,
+					RecurringPeriod: 1,
+					Time:            now,
+				},
+				Status:    re.EnabledStatus,
+				CreatedBy: userID,
+				DomainID:  domainID,
+			},
+			err: re.ErrPanicNotAllowed,
 		},
 	}
 

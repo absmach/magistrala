@@ -336,7 +336,7 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	if k.Type != RefreshKey {
 		return Token{}, errIssueUser
 	}
-	ok, err := svc.tokensCache.IsActive(ctx, key.ID)
+	ok, err := svc.tokensCache.IsActive(ctx, k.ID)
 	if err != nil {
 		return Token{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

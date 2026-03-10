@@ -103,6 +103,7 @@ func TestIssue(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("Issuing API key expected to succeed: %s", err))
 
 	refreshkey := auth.Key{
+		ID:        testsutil.GenerateUUID(t),
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),
 		Subject:   userID,
@@ -398,7 +399,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.issueErr)
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
 			tokenizerCall2 := tokenizer.On("Revoke", mock.Anything, tc.token).Return(tc.parseErr)
-			cacheCall := tokensCache.On("IsActive", context.Background(), tc.key.ID).Return(tc.cacheRes, tc.cacheErr)
+			cacheCall := tokensCache.On("IsActive", context.Background(), tc.parseRes.ID).Return(tc.cacheRes, tc.cacheErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,

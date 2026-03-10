@@ -348,9 +348,3 @@ EOF
 } > "$OUTPUT_SCHEMA"
 
 echo "Combined schema generated at: $OUTPUT_SCHEMA"
-
-STALE_SCHEMA="$REPO_ROOT/docker/spicedb/schema.zed"
-if [ -f "$STALE_SCHEMA" ]; then
-    rm -f "$STALE_SCHEMA"
-    echo "Removed stale schema: $STALE_SCHEMA"
-fi

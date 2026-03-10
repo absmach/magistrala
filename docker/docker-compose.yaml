@@ -218,8 +218,8 @@ services:
     command:
       - -c
       - |
-        echo "[INIT] Waiting 25s for SeaweedFS S3 to be ready...";
-        sleep 25;
+        echo "[INIT] Waiting 20s for SeaweedFS S3 to be ready...";
+        sleep 20;
         OUT=$(aws --endpoint-url http://seaweedfs-s3:8333 s3api create-bucket --bucket $${BUCKET} 2>&1);
         EXIT=$$?;
         if [ $$EXIT -eq 0 ]; then

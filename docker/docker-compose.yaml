@@ -195,9 +195,9 @@ services:
       timeout: 3s
       retries: 60
   seaweedfs-s3:
-    image: chrislusf/seaweedfs:latest
+    image: chrislusf/seaweedfs:4.16
     container_name: magistrala-seaweedfs-s3
-    command: server -s3 -dir=/data
+    command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
     ports:
       - "8333:8333" # S3 endpoint
       - "9333:9333" # master UI
@@ -205,32 +205,39 @@ services:
       - "8888:8888" # filer UI
     volumes:
       - ./data/seaweedfs:/data
+      - ./configs/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
     networks:
       - magistrala-base-net
 
   seaweedfs-init:
-    image: curlimages/curl
+    image: amazon/aws-cli
     container_name: magistrala-seaweedfs-init
+    entrypoint: /bin/sh
     depends_on:
       - seaweedfs-s3
-    command: >
-      /bin/sh -c "
-      echo \"Creating bucket $${BUCKET}, wait for 25s...\";
-      sleep 25;
-      HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' -f -X PUT http://seaweedfs-s3:8333/$${BUCKET});
-      if [ $${HTTP_CODE} = '200' ] || [ $${HTTP_CODE} = '201' ]; then
-        echo \"[INIT] Bucket $${BUCKET} created successfully!\";
-        curl -s http://seaweedfs-s3:8333/ | grep -o '<Name>[^<]*</Name>';
-        exit 0;
-      else
-        echo \"[INIT] Failed to create bucket $${BUCKET}! HTTP code $${HTTP_CODE}.\" >&2;
-        exit 1;
-      fi
-      "
+    command:
+      - -c
+      - |
+        echo "[INIT] Waiting 25s for SeaweedFS S3 to be ready...";
+        sleep 25;
+        OUT=$(aws --endpoint-url http://seaweedfs-s3:8333 s3api create-bucket --bucket $${BUCKET} 2>&1);
+        EXIT=$$?;
+        if [ $$EXIT -eq 0 ]; then
+          echo "[INIT] Bucket $${BUCKET} created successfully.";
+        elif echo "$$OUT" | grep -q 'BucketAlreadyOwnedByYou\|BucketAlreadyExists'; then
+          echo "[INIT] Bucket $${BUCKET} already exists, skipping.";
+        else
+          echo "[INIT] Failed to create bucket $${BUCKET}: $$OUT" >&2;
+          exit 1;
+        fi
     networks:
       - magistrala-base-net
     environment:
       BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      AWS_ACCESS_KEY_ID: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
+      AWS_DEFAULT_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      AWS_EC2_METADATA_DISABLED: "true"
 
   re-db:
     image: docker.io/postgres:18.0-alpine3.22

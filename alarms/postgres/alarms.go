@@ -153,7 +153,23 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	return toAlarm(dba)
+	updated, err := toAlarm(dba)
+	if err != nil {
+		return alarms.Alarm{}, err
+	}
+
+	if len(alarm.Comments) > 0 {
+		dbCom := toDBComment(alarm.Comments)
+
+		cq := `INSERT INTO alarm_comments (id, alarm_id, domain_id, user_id, text, created_at)
+			VALUES (:id, :alarm_id, :domain_id, :user_id, :text, :created_at);`
+		if _, err := r.db.NamedQueryContext(ctx, cq, dbCom); err != nil {
+			return alarms.Alarm{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
+		}
+		updated.Comments = alarm.Comments
+	}
+
+	return updated, nil
 }
 
 func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (alarms.Alarm, error) {
@@ -180,11 +196,16 @@ func (r *repository) ViewAlarm(ctx context.Context, alarmID, domainID string) (a
 		return alarms.Alarm{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
+	alarm.Comments, err = r.fetchComments(ctx, alarmID, domainID)
+	if err != nil {
+		return alarms.Alarm{}, err
+	}
+
 	return alarm, nil
 }
 
 func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
-	query, err := pageQuery(pm)
+	whereClause, err := pageQuery(pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -194,8 +215,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		dir = api.AscDir
 	}
 
-	orderClause := ""
-
+	var orderClause string
 	switch pm.Order {
 	case api.CreatedAtOrder:
 		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
@@ -208,7 +228,7 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 	q := fmt.Sprintf(`SELECT id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit,
 			threshold, cause, status, severity, assignee_id, created_at, updated_at, updated_by, assigned_at,
 			assigned_by, acknowledged_at, acknowledged_by, resolved_at, resolved_by, metadata
-			FROM alarms %s %s LIMIT :limit OFFSET :offset;`, query, orderClause)
+			FROM alarms %s %s LIMIT :limit OFFSET :offset;`, whereClause, orderClause)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {
@@ -227,12 +247,20 @@ func (r *repository) ListAlarms(ctx context.Context, pm alarms.PageMetadata) (al
 		if err != nil {
 			return alarms.AlarmsPage{}, err
 		}
-
 		items = append(items, a)
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM alarms %s;`, query)
-	total, err := postgres.Total(ctx, r.db, q, pm)
+	if pm.WithComments {
+		for i := range items {
+			items[i].Comments, err = r.fetchComments(ctx, items[i].ID, pm.DomainID)
+			if err != nil {
+				return alarms.AlarmsPage{}, err
+			}
+		}
+	}
+
+	countQ := fmt.Sprintf(`SELECT COUNT(*) FROM alarms %s;`, whereClause)
+	total, err := postgres.Total(ctx, r.db, countQ, pm)
 	if err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -407,13 +435,12 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 
 	var metadata map[string]any
 	if len(dbr.Metadata) > 0 {
-		err := json.Unmarshal(dbr.Metadata, &metadata)
-		if err != nil {
+		if err := json.Unmarshal(dbr.Metadata, &metadata); err != nil {
 			return alarms.Alarm{}, errors.Wrap(repoerr.ErrMalformedEntity, err)
 		}
 	}
 
-	return alarms.Alarm{
+	alarm := alarms.Alarm{
 		ID:             dbr.ID,
 		RuleID:         dbr.RuleID,
 		DomainID:       dbr.DomainID,
@@ -438,61 +465,112 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 		ResolvedAt:     resolvedAt,
 		ResolvedBy:     resolvedBy,
 		Metadata:       metadata,
-	}, nil
+	}
+
+	return alarm, nil
 }
 
-func pageQuery(pm alarms.PageMetadata) (string, error) {
+type dbComment struct {
+	ID        string    `db:"id"`
+	AlarmID   string    `db:"alarm_id"`
+	DomainID  string    `db:"domain_id"`
+	UserID    string    `db:"user_id"`
+	Text      string    `db:"text"`
+	CreatedAt time.Time `db:"created_at"`
+}
+
+func toDBComment(c []alarms.Comment) []dbComment {
+	var dbComments []dbComment
+	for _, comment := range c {
+		dbComments = append(dbComments, dbComment{
+			ID:        comment.ID,
+			AlarmID:   comment.AlarmID,
+			DomainID:  comment.DomainID,
+			UserID:    comment.UserID,
+			Text:      comment.Text,
+			CreatedAt: comment.CreatedAt,
+		})
+	}
+
+	return dbComments
+}
+
+func (r *repository) fetchComments(ctx context.Context, alarmID, domainID string) ([]alarms.Comment, error) {
+	q := `SELECT id, alarm_id, domain_id, user_id, text, created_at
+		FROM alarm_comments WHERE alarm_id = $1 AND domain_id = $2
+		ORDER BY created_at ASC;`
+
+	var rows []dbComment
+	if err := r.db.SelectContext(ctx, &rows, q, alarmID, domainID); err != nil {
+		return nil, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	comments := make([]alarms.Comment, len(rows))
+	for i, row := range rows {
+		comments[i] = alarms.Comment{
+			ID:        row.ID,
+			AlarmID:   row.AlarmID,
+			DomainID:  row.DomainID,
+			UserID:    row.UserID,
+			Text:      row.Text,
+			CreatedAt: row.CreatedAt,
+		}
+	}
+
+	return comments, nil
+}
+
+func pageQuery(pm alarms.PageMetadata) (whereClause string, err error) {
 	var query []string
 	if pm.DomainID != "" {
-		query = append(query, "domain_id = :domain_id")
+		query = append(query, "alarms.domain_id = :domain_id")
 	}
 	if pm.RuleID != "" {
-		query = append(query, "rule_id = :rule_id")
+		query = append(query, "alarms.rule_id = :rule_id")
 	}
 	if pm.ChannelID != "" {
-		query = append(query, "channel_id = :channel_id")
+		query = append(query, "alarms.channel_id = :channel_id")
 	}
 	if pm.Subtopic != "" {
-		query = append(query, "subtopic = :subtopic")
+		query = append(query, "alarms.subtopic = :subtopic")
 	}
 	if pm.ClientID != "" {
-		query = append(query, "client_id = :client_id")
+		query = append(query, "alarms.client_id = :client_id")
 	}
 	if pm.Measurement != "" {
-		query = append(query, "measurement = :measurement")
+		query = append(query, "alarms.measurement = :measurement")
 	}
 	if pm.Status != alarms.AllStatus {
-		query = append(query, "status = :status")
+		query = append(query, "alarms.status = :status")
 	}
 	if pm.Severity != math.MaxUint8 {
-		query = append(query, "severity = :severity")
+		query = append(query, "alarms.severity = :severity")
 	}
 	if pm.AssigneeID != "" {
-		query = append(query, "assignee_id = :assignee_id")
+		query = append(query, "alarms.assignee_id = :assignee_id")
 	}
 	if pm.UpdatedBy != "" {
-		query = append(query, "updated_by = :updated_by")
+		query = append(query, "alarms.updated_by = :updated_by")
 	}
 	if pm.ResolvedBy != "" {
-		query = append(query, "resolved_by = :resolved_by")
+		query = append(query, "alarms.resolved_by = :resolved_by")
 	}
 	if pm.AcknowledgedBy != "" {
-		query = append(query, "acknowledged_by = :acknowledged_by")
+		query = append(query, "alarms.acknowledged_by = :acknowledged_by")
 	}
 	if pm.AssignedBy != "" {
-		query = append(query, "assigned_by = :assigned_by")
+		query = append(query, "alarms.assigned_by = :assigned_by")
 	}
 	if !pm.CreatedFrom.IsZero() {
-		query = append(query, "created_at >= :created_from")
+		query = append(query, "alarms.created_at >= :created_from")
 	}
 	if !pm.CreatedTo.IsZero() {
-		query = append(query, "created_at <= :created_to")
+		query = append(query, "alarms.created_at <= :created_to")
 	}
 
-	var emq string
 	if len(query) > 0 {
-		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+		whereClause = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 	}
 
-	return emq, nil
+	return whereClause, nil
 }

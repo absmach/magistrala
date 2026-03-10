@@ -4,13 +4,16 @@
 package postgres
 
 import (
+	dpostgres "github.com/absmach/supermq/domains/postgres"
+	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )
 
 // Migration of Users service.
-func Migration() *migrate.MemoryMigrationSource {
-	return &migrate.MemoryMigrationSource{
+func Migration() (*migrate.MemoryMigrationSource, error) {
+	alarmsMigration := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
 				Id: "alarms_01",
@@ -48,6 +51,31 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS alarms`,
 				},
 			},
+			{
+				Id: "alarms_02",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS alarm_comments (
+						id         VARCHAR(36) PRIMARY KEY,
+						alarm_id   VARCHAR(36) NOT NULL REFERENCES alarms(id) ON DELETE CASCADE,
+						domain_id  VARCHAR(36) NOT NULL,
+						user_id    VARCHAR(36) NOT NULL,
+						text       TEXT NOT NULL CHECK (length(text) > 0),
+						created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+					);`,
+					"CREATE INDEX IF NOT EXISTS idx_alarm_comments_alarm_id ON alarm_comments (alarm_id, domain_id, created_at DESC);",
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS alarm_comments`,
+				},
+			},
 		},
 	}
+
+	domainsMigration, err := dpostgres.Migration()
+	if err != nil {
+		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
+	}
+	alarmsMigration.Migrations = append(alarmsMigration.Migrations, domainsMigration.Migrations...)
+
+	return alarmsMigration, nil
 }

@@ -28,7 +28,6 @@
 definition domain {
 
 	// Magistrala-specific relations
-	relation alarm_create: role#member | team#member
 	relation alarm_update: role#member | team#member
 	relation alarm_read: role#member | team#member
 	relation alarm_delete: role#member | team#member
@@ -41,9 +40,9 @@ definition domain {
 	relation rule_add_role_users: role#member | team#member
 	relation rule_remove_role_users: role#member | team#member
 	relation rule_view_role_users: role#member | team#member
-	relation rule_alarm_assign: role#member | team#member
-	relation rule_alarm_acknowledge: role#member | team#member
-	relation rule_alarm_resolve: role#member | team#member
+	relation alarm_assign: role#member | team#member
+	relation alarm_acknowledge: role#member | team#member
+	relation alarm_resolve: role#member | team#member
 
 	relation report_create: role#member | team#member
 	relation report_update: role#member | team#member
@@ -55,8 +54,7 @@ definition domain {
 	relation report_view_role_users: role#member | team#member
 
 	// Magistrala-specific permissions
-	permission alarm_create_permission = alarm_create + team->alarm_create + organization->admin
-	permission alarm_update_permission = alarm_update + team->alarm_update + organization->admin
+	permission alarm_comment_permission = alarm_comment + team->alarm_comment + organization->admin
 	permission alarm_read_permission = alarm_read + team->alarm_read + organization->admin
 	permission alarm_delete_permission = alarm_delete + team->alarm_delete + organization->admin
 
@@ -68,9 +66,9 @@ definition domain {
 	permission rule_add_role_users_permission = rule_add_role_users + team->rule_add_role_users + organization->admin
 	permission rule_remove_role_users_permission = rule_remove_role_users + team->rule_remove_role_users + organization->admin
 	permission rule_view_role_users_permission = rule_view_role_users + team->rule_view_role_users + organization->admin
-	permission rule_alarm_assign_permission = rule_alarm_assign + team->rule_alarm_assign + organization->admin
-	permission rule_alarm_acknowledge_permission = rule_alarm_acknowledge + team->rule_alarm_acknowledge + organization->admin
-	permission rule_alarm_resolve_permission = rule_alarm_resolve + team->rule_alarm_resolve + organization->admin
+	permission alarm_assign_permission = alarm_assign + team->alarm_assign + organization->admin
+	permission alarm_acknowledge_permission = alarm_acknowledge + team->alarm_acknowledge + organization->admin
+	permission alarm_resolve_permission = alarm_resolve + team->alarm_resolve + organization->admin
 
 	permission report_create_permission = report_create + team->report_create + organization->admin
 	permission report_update_permission = report_update + team->report_update + organization->admin
@@ -82,15 +80,14 @@ definition domain {
 	permission report_view_role_users_permission = report_view_role_users + team->report_view_role_users + organization->admin
 
 	// Explicit extension injected into SuperMQ domain `permission membership`.
-	permission membership_extension = alarm_create + alarm_update + alarm_read + alarm_delete + rule_create + rule_update + rule_read + rule_delete + rule_manage_role + rule_add_role_users + rule_remove_role_users + rule_view_role_users + rule_alarm_assign + rule_alarm_acknowledge + rule_alarm_resolve + report_create + report_update + report_read + report_delete + report_manage_role + report_add_role_users + report_remove_role_users + report_view_role_users
+	permission membership_extension = alarm_comment + alarm_read + alarm_delete + rule_create + rule_update + rule_read + rule_delete + rule_manage_role + rule_add_role_users + rule_remove_role_users + rule_view_role_users + alarm_assign + alarm_acknowledge + alarm_resolve + report_create + report_update + report_read + report_delete + report_manage_role + report_add_role_users + report_remove_role_users + report_view_role_users
 
 }
 
 // Overlay team block consumed by scripts/combine-schema.sh during merge.
 definition team {
 
-	relation alarm_create: role#member | team#member
-	relation alarm_update: role#member | team#member
+	relation alarm_comment: role#member | team#member
 	relation alarm_read: role#member | team#member
 	relation alarm_delete: role#member | team#member
 
@@ -102,9 +99,9 @@ definition team {
 	relation rule_add_role_users: role#member | team#member
 	relation rule_remove_role_users: role#member | team#member
 	relation rule_view_role_users: role#member | team#member
-	relation rule_alarm_assign: role#member | team#member
-	relation rule_alarm_acknowledge: role#member | team#member
-	relation rule_alarm_resolve: role#member | team#member
+	relation alarm_assign: role#member | team#member
+	relation alarm_acknowledge: role#member | team#member
+	relation alarm_resolve: role#member | team#member
 
 	relation report_create: role#member | team#member
 	relation report_update: role#member | team#member
@@ -120,13 +117,16 @@ definition team {
 definition alarm {
 relation domain: domain
 
-relation update: role#member
+relation comment: role#member
 relation read: role#member
 relation delete: role#member
 
-permission update_permission = update + domain->alarm_update_permission
+permission comment_permission = comment + domain->alarm_comment_permission
 permission read_permission = read + domain->alarm_read_permission
 permission delete_permission = delete + domain->alarm_delete_permission
+permission assign_permission = domain->alarm_assign_permission
+permission acknowledge_permission = domain->alarm_acknowledge_permission
+permission resolve_permission = domain->alarm_resolve_permission
 }
 
 definition rule {
@@ -154,9 +154,9 @@ permission add_role_users_permission = add_role_users + domain->rule_add_role_us
 permission remove_role_users_permission = remove_role_users + domain->rule_remove_role_users_permission
 permission view_role_users_permission = view_role_users + domain->rule_view_role_users_permission
 
-permission alarm_assign_permission = alarm_assign + domain->rule_alarm_assign_permission
-permission alarm_acknowledge_permission = alarm_acknowledge + domain->rule_alarm_acknowledge_permission
-permission alarm_resolve_permission = alarm_resolve + domain->rule_alarm_resolve_permission
+permission alarm_assign_permission = alarm_assign + domain->alarm_assign_permission
+permission alarm_acknowledge_permission = alarm_acknowledge + domain->alarm_acknowledge_permission
+permission alarm_resolve_permission = alarm_resolve + domain->alarm_resolve_permission
 }
 
 definition report {

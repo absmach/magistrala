@@ -426,9 +426,6 @@ func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta
 }
 
 func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
-	if pm.Domain == "" {
-		return re.Page{}, repoerr.ErrViewEntity
-	}
 	pgData := ""
 	if pm.Limit != 0 {
 		pgData = "LIMIT :limit"
@@ -462,11 +459,6 @@ func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string
 	`, userID)
 
 	whereClause := pq
-	if whereClause == "" {
-		whereClause = fmt.Sprintf("WHERE r.domain_id = '%s'", pm.Domain)
-	} else {
-		whereClause = fmt.Sprintf("%s AND r.domain_id = '%s'", whereClause, pm.Domain)
-	}
 
 	innerQ := fmt.Sprintf(`
 		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,

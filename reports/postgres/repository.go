@@ -508,11 +508,6 @@ func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userI
 	`, userID)
 
 	whereClause := pq
-	if whereClause == "" {
-		whereClause = fmt.Sprintf("WHERE rc.domain_id = '%s'", pm.Domain)
-	} else {
-		whereClause = fmt.Sprintf("%s AND rc.domain_id = '%s'", whereClause, pm.Domain)
-	}
 
 	innerQ := fmt.Sprintf(`
 		SELECT DISTINCT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,

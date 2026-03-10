@@ -598,7 +598,7 @@ func TestListUserReportsConfig(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			page, err := repo.ListUserReportsConfig(context.Background(), domainID, tc.userID, tc.pageMeta)
+			page, err := repo.ListUserReportsConfig(context.Background(), tc.userID, tc.pageMeta)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 				return

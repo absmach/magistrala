@@ -952,7 +952,7 @@ func TestListRules(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("ListUserRules", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			repoCall := repo.On("ListUserRules", mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.ListRules(context.Background(), tc.session, tc.pageMeta)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

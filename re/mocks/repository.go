@@ -317,8 +317,8 @@ func (_c *Repository_ListEntityMembers_Call) RunAndReturn(run func(ctx context.C
 }
 
 // ListUserRules provides a mock function for the type Repository
-func (_mock *Repository) ListUserRules(ctx context.Context, domainID string, userID string, pm re.PageMeta) (re.Page, error) {
-	ret := _mock.Called(ctx, domainID, userID, pm)
+func (_mock *Repository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
+	ret := _mock.Called(ctx, userID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUserRules")
@@ -326,16 +326,16 @@ func (_mock *Repository) ListUserRules(ctx context.Context, domainID string, use
 
 	var r0 re.Page
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, re.PageMeta) (re.Page, error)); ok {
-		return returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.PageMeta) (re.Page, error)); ok {
+		return returnFunc(ctx, userID, pm)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, re.PageMeta) re.Page); ok {
-		r0 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, re.PageMeta) re.Page); ok {
+		r0 = returnFunc(ctx, userID, pm)
 	} else {
 		r0 = ret.Get(0).(re.Page)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, re.PageMeta) error); ok {
-		r1 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, re.PageMeta) error); ok {
+		r1 = returnFunc(ctx, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -349,14 +349,13 @@ type Repository_ListUserRules_Call struct {
 
 // ListUserRules is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
 //   - userID string
 //   - pm re.PageMeta
-func (_e *Repository_Expecter) ListUserRules(ctx interface{}, domainID interface{}, userID interface{}, pm interface{}) *Repository_ListUserRules_Call {
-	return &Repository_ListUserRules_Call{Call: _e.mock.On("ListUserRules", ctx, domainID, userID, pm)}
+func (_e *Repository_Expecter) ListUserRules(ctx interface{}, userID interface{}, pm interface{}) *Repository_ListUserRules_Call {
+	return &Repository_ListUserRules_Call{Call: _e.mock.On("ListUserRules", ctx, userID, pm)}
 }
 
-func (_c *Repository_ListUserRules_Call) Run(run func(ctx context.Context, domainID string, userID string, pm re.PageMeta)) *Repository_ListUserRules_Call {
+func (_c *Repository_ListUserRules_Call) Run(run func(ctx context.Context, userID string, pm re.PageMeta)) *Repository_ListUserRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -366,19 +365,14 @@ func (_c *Repository_ListUserRules_Call) Run(run func(ctx context.Context, domai
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 re.PageMeta
 		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 re.PageMeta
-		if args[3] != nil {
-			arg3 = args[3].(re.PageMeta)
+			arg2 = args[2].(re.PageMeta)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -389,7 +383,7 @@ func (_c *Repository_ListUserRules_Call) Return(page re.Page, err error) *Reposi
 	return _c
 }
 
-func (_c *Repository_ListUserRules_Call) RunAndReturn(run func(ctx context.Context, domainID string, userID string, pm re.PageMeta) (re.Page, error)) *Repository_ListUserRules_Call {
+func (_c *Repository_ListUserRules_Call) RunAndReturn(run func(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error)) *Repository_ListUserRules_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -251,7 +251,7 @@ type Repository interface {
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListAllRules(ctx context.Context, pm PageMeta) (Page, error)
-	ListUserRules(ctx context.Context, domainID, userID string, pm PageMeta) (Page, error)
+	ListUserRules(ctx context.Context, userID string, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 	roles.Repository
 }

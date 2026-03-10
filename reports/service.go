@@ -167,7 +167,7 @@ func (r *report) ListReportsConfig(ctx context.Context, session authn.Session, p
 		}
 		return page, nil
 	default:
-		page, err := r.repo.ListUserReportsConfig(ctx, session.DomainID, session.UserID, pm)
+		page, err := r.repo.ListUserReportsConfig(ctx, session.UserID, pm)
 		if err != nil {
 			return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 		}

@@ -474,7 +474,7 @@ func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm rep
 	return ret, nil
 }
 
-func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, domainID, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	pgData := ""
 	if pm.Limit != 0 {
 		pgData = "LIMIT :limit"
@@ -509,9 +509,9 @@ func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, domai
 
 	whereClause := pq
 	if whereClause == "" {
-		whereClause = fmt.Sprintf("WHERE rc.domain_id = '%s'", domainID)
+		whereClause = fmt.Sprintf("WHERE rc.domain_id = '%s'", pm.Domain)
 	} else {
-		whereClause = fmt.Sprintf("%s AND rc.domain_id = '%s'", whereClause, domainID)
+		whereClause = fmt.Sprintf("%s AND rc.domain_id = '%s'", whereClause, pm.Domain)
 	}
 
 	innerQ := fmt.Sprintf(`

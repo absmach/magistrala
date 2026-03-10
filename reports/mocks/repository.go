@@ -380,8 +380,8 @@ func (_c *Repository_ListEntityMembers_Call) RunAndReturn(run func(ctx context.C
 }
 
 // ListUserReportsConfig provides a mock function for the type Repository
-func (_mock *Repository) ListUserReportsConfig(ctx context.Context, domainID string, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	ret := _mock.Called(ctx, domainID, userID, pm)
+func (_mock *Repository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+	ret := _mock.Called(ctx, userID, pm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListUserReportsConfig")
@@ -389,16 +389,16 @@ func (_mock *Repository) ListUserReportsConfig(ctx context.Context, domainID str
 
 	var r0 reports.ReportConfigPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, reports.PageMeta) (reports.ReportConfigPage, error)); ok {
-		return returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, reports.PageMeta) (reports.ReportConfigPage, error)); ok {
+		return returnFunc(ctx, userID, pm)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, reports.PageMeta) reports.ReportConfigPage); ok {
-		r0 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, reports.PageMeta) reports.ReportConfigPage); ok {
+		r0 = returnFunc(ctx, userID, pm)
 	} else {
 		r0 = ret.Get(0).(reports.ReportConfigPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, reports.PageMeta) error); ok {
-		r1 = returnFunc(ctx, domainID, userID, pm)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, reports.PageMeta) error); ok {
+		r1 = returnFunc(ctx, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -412,14 +412,13 @@ type Repository_ListUserReportsConfig_Call struct {
 
 // ListUserReportsConfig is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
 //   - userID string
 //   - pm reports.PageMeta
-func (_e *Repository_Expecter) ListUserReportsConfig(ctx interface{}, domainID interface{}, userID interface{}, pm interface{}) *Repository_ListUserReportsConfig_Call {
-	return &Repository_ListUserReportsConfig_Call{Call: _e.mock.On("ListUserReportsConfig", ctx, domainID, userID, pm)}
+func (_e *Repository_Expecter) ListUserReportsConfig(ctx interface{}, userID interface{}, pm interface{}) *Repository_ListUserReportsConfig_Call {
+	return &Repository_ListUserReportsConfig_Call{Call: _e.mock.On("ListUserReportsConfig", ctx, userID, pm)}
 }
 
-func (_c *Repository_ListUserReportsConfig_Call) Run(run func(ctx context.Context, domainID string, userID string, pm reports.PageMeta)) *Repository_ListUserReportsConfig_Call {
+func (_c *Repository_ListUserReportsConfig_Call) Run(run func(ctx context.Context, userID string, pm reports.PageMeta)) *Repository_ListUserReportsConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -429,19 +428,14 @@ func (_c *Repository_ListUserReportsConfig_Call) Run(run func(ctx context.Contex
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 reports.PageMeta
 		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 reports.PageMeta
-		if args[3] != nil {
-			arg3 = args[3].(reports.PageMeta)
+			arg2 = args[2].(reports.PageMeta)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -452,7 +446,7 @@ func (_c *Repository_ListUserReportsConfig_Call) Return(reportConfigPage reports
 	return _c
 }
 
-func (_c *Repository_ListUserReportsConfig_Call) RunAndReturn(run func(ctx context.Context, domainID string, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error)) *Repository_ListUserReportsConfig_Call {
+func (_c *Repository_ListUserReportsConfig_Call) RunAndReturn(run func(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error)) *Repository_ListUserReportsConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

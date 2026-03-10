@@ -183,7 +183,7 @@ func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta)
 		}
 		return page, nil
 	default:
-		page, err := re.repo.ListUserRules(ctx, session.DomainID, session.UserID, pm)
+		page, err := re.repo.ListUserRules(ctx, session.UserID, pm)
 		if err != nil {
 			return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
 		}

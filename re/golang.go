@@ -20,8 +20,10 @@ import (
 
 const logicFunction = "main.logicFunction"
 
-var goKeywordRegex = regexp.MustCompile(`\bgo\s+func\s*\(|^\s*go\s+\w+\(|[;\s{]go\s+func\s*\(|[;\s{]go\s+\w+\(`)
-var panicRegex = regexp.MustCompile(`\bpanic\s*\(`)
+var (
+	goKeywordRegex = regexp.MustCompile(`\bgo\s+func\s*\(|^\s*go\s+\w+\(|[;\s{]go\s+func\s*\(|[;\s{]go\s+\w+\(`)
+	panicRegex     = regexp.MustCompile(`\bpanic\s*\(`)
+)
 
 // Type message is an SMQ message with payload replaces by JSON deserialized payload.
 type message struct {

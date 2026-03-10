@@ -21,8 +21,10 @@ import (
 	"github.com/absmach/supermq/pkg/roles"
 )
 
-var ErrGoroutinesNotAllowed = errors.New("goroutines are not allowed in Go scripts")
-var ErrPanicNotAllowed = errors.New("panic is not allowed in Go scripts")
+var (
+	ErrGoroutinesNotAllowed = errors.New("goroutines are not allowed in Go scripts")
+	ErrPanicNotAllowed      = errors.New("panic is not allowed in Go scripts")
+)
 
 type re struct {
 	repo       Repository

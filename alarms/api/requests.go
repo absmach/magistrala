@@ -23,6 +23,21 @@ func (req alarmReq) validate() error {
 	return nil
 }
 
+type updateAlarmReq struct {
+	alarms.Alarm `json:",inline"`
+}
+
+func (req updateAlarmReq) validate() error {
+	if req.Alarm.ID == "" {
+		return errors.New("missing alarm id")
+	}
+	if req.Alarm.AssigneeID == "" && req.Alarm.AcknowledgedBy == "" && req.Alarm.ResolvedBy == "" {
+		return errors.New("at least one of assignee_id, acknowledged_by, or resolved_by must be set")
+	}
+
+	return nil
+}
+
 type listAlarmsReq struct {
 	alarms.PageMetadata
 }

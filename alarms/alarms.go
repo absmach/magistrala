@@ -72,6 +72,7 @@ type PageMetadata struct {
 	AssignedBy     string    `json:"assigned_by"     db:"assigned_by"`
 	AcknowledgedBy string    `json:"acknowledged_by" db:"acknowledged_by"`
 	ResolvedBy     string    `json:"resolved_by"     db:"resolved_by"`
+	UserID         string    `json:"user_id"         db:"user_id"`
 }
 
 func (a Alarm) Validate() error {

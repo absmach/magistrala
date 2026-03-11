@@ -20,6 +20,10 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
+const alarmColumns = `alarms.id, alarms.rule_id, alarms.domain_id, alarms.channel_id, alarms.client_id, alarms.subtopic, alarms.measurement, alarms.value, alarms.unit,
+ 					alarms.threshold, alarms.cause, alarms.status, alarms.severity, alarms.assignee_id, alarms.created_at, alarms.updated_at, alarms.updated_by, alarms.assigned_at, 
+ 					alarms.assigned_by, alarms.acknowledged_at, alarms.acknowledged_by, alarms.resolved_at, alarms.resolved_by, alarms.metadata`
+
 type repository struct {
 	db *sqlx.DB
 }
@@ -189,91 +193,9 @@ func (r *repository) ListAllAlarms(ctx context.Context, pm alarms.PageMetadata) 
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
+	comQuery := fmt.Sprintf(`SELECT %s FROM alarms %s`, alarmColumns, query)
 
-	var orderClause string
-	switch pm.Order {
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
-
-	comQuery := fmt.Sprintf(`SELECT
-				id,
-				rule_id,
-				domain_id,
-				channel_id,
-				client_id,
-				subtopic,
-				measurement,
-				value,
-				unit,
-				threshold,
-				cause,
-				status,
-				severity,
-				assignee_id,
-				created_at,
-				updated_at,
-				updated_by,
-				assigned_at,
-				assigned_by,
-				acknowledged_at,
-				acknowledged_by,
-				resolved_at,
-				resolved_by,
-				metadata
-			FROM
-				alarms
-			%s`, query)
-
-	q := fmt.Sprintf(`SELECT * FROM (
-				%s
-			) AS sub_query
-			%s
-			LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count
-			FROM (
-				%s
-			) AS sub_query;`, comQuery)
-
-	rows, err := r.db.NamedQueryContext(ctx, q, pm)
-	if err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	var items []alarms.Alarm
-	for rows.Next() {
-		dba := dbAlarm{}
-		if err := rows.StructScan(&dba); err != nil {
-			return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-
-		a, err := toAlarm(dba)
-		if err != nil {
-			return alarms.AlarmsPage{}, err
-		}
-
-		items = append(items, a)
-	}
-
-	total, err := postgres.Total(ctx, r.db, cq, pm)
-	if err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	return alarms.AlarmsPage{
-		Total:  total,
-		Offset: pm.Offset,
-		Limit:  pm.Limit,
-		Alarms: items,
-	}, nil
+	return r.alarmsPage(ctx, comQuery, pm)
 }
 
 func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
@@ -282,6 +204,17 @@ func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarm
 		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
+	pm.UserID = userID
+	comQuery := fmt.Sprintf(`SELECT DISTINCT %s
+		FROM alarms
+		INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
+		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+		%s`, alarmColumns, query)
+
+	return r.alarmsPage(ctx, comQuery, pm)
+}
+
+func (r *repository) alarmsPage(ctx context.Context, comQuery string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
 	dir := api.DescDir
 	if pm.Dir == api.AscDir {
 		dir = api.AscDir
@@ -295,47 +228,8 @@ func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarm
 		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
-	comQuery := fmt.Sprintf(`SELECT DISTINCT
-				alarms.id,
-				alarms.rule_id,
-				alarms.domain_id,
-				alarms.channel_id,
-				alarms.client_id,
-				alarms.subtopic,
-				alarms.measurement,
-				alarms.value,
-				alarms.unit,
-				alarms.threshold,
-				alarms.cause,
-				alarms.status,
-				alarms.severity,
-				alarms.assignee_id,
-				alarms.created_at,
-				alarms.updated_at,
-				alarms.updated_by,
-				alarms.assigned_at,
-				alarms.assigned_by,
-				alarms.acknowledged_at,
-				alarms.acknowledged_by,
-				alarms.resolved_at,
-				alarms.resolved_by,
-				alarms.metadata
-			FROM
-				alarms
-			INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
-			INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = '%s'
-			%s`, userID, query)
-
-	q := fmt.Sprintf(`SELECT * FROM (
-				%s
-			) AS sub_query
-			%s
-			LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count
-			FROM (
-				%s
-			) AS sub_query;`, comQuery)
+	q := fmt.Sprintf(`SELECT * FROM (%s) AS sub_query %s LIMIT :limit OFFSET :offset;`, comQuery, orderClause)
+	cq := fmt.Sprintf(`SELECT COUNT(*) AS total_count FROM (%s) AS sub_query;`, comQuery)
 
 	rows, err := r.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {

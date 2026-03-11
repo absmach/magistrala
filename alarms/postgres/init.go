@@ -13,7 +13,7 @@ import (
 
 // Migration of Alarms service.
 func Migration() (*migrate.MemoryMigrationSource, error) {
-	alarmsMigtration := &migrate.MemoryMigrationSource{
+	alarmsMigration := &migrate.MemoryMigrationSource{
 		Migrations: []*migrate.Migration{
 			{
 				Id: "alarms_01",
@@ -59,7 +59,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
 	}
 
-	alarmsMigtration.Migrations = append(alarmsMigtration.Migrations, rulesMigration.Migrations...)
+	alarmsMigration.Migrations = append(alarmsMigration.Migrations, rulesMigration.Migrations...)
 
-	return alarmsMigtration, nil
+	return alarmsMigration, nil
 }

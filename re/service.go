@@ -63,7 +63,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 		return Rule{}, nil, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
 	}
 	if r.Logic.Type == GoType && panicRegex.MatchString(r.Logic.Value) {
-		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
+		return Rule{}, nil, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
 	}
 
 	id, err := re.idp.ID()

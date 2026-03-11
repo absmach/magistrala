@@ -160,7 +160,7 @@ func TestViewRule(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := rsvc.On("ViewRule", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
+			svcCall := rsvc.On("ViewRule", mock.Anything, tc.session, tc.id, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ViewRule(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {

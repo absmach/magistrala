@@ -242,7 +242,7 @@ func TestViewReportConfig(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := rsvc.On("ViewReportConfig", mock.Anything, tc.session, tc.id).Return(tc.svcRes, tc.svcErr)
+			svcCall := rsvc.On("ViewReportConfig", mock.Anything, tc.session, tc.id, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.ViewReportConfig(context.Background(), tc.id, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {

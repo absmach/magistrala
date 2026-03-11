@@ -367,7 +367,7 @@ func (am *authorizationMiddleware) ListChildrenGroups(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
-	if session.Role != authn.AdminRole {
+	if session.Role != authn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction
 	}
 	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{

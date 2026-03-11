@@ -36,7 +36,7 @@ type Role uint32
 
 const (
 	UserRole Role = iota + 1
-	AdminRole
+	SuperAdminRole
 )
 
 type Session struct {

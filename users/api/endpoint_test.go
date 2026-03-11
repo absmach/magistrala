@@ -1772,7 +1772,7 @@ func TestUpdateProfilePicture(t *testing.T) {
 			},
 			contentType: contentType,
 			token:       validToken,
-			authnRes:    smqauthn.Session{UserID: validID, DomainID: domainID, Role: smqauthn.AdminRole},
+			authnRes:    smqauthn.Session{UserID: validID, DomainID: domainID, Role: smqauthn.SuperAdminRole},
 			status:      http.StatusOK,
 			err:         nil,
 		},

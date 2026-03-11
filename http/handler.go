@@ -264,7 +264,7 @@ func (h *handler) authenticate(ctx context.Context, authType, token, domainID st
 		if err != nil {
 			return "", "", err
 		}
-		if authnSession.Role == smqauthn.AdminRole {
+		if authnSession.Role == smqauthn.SuperAdminRole {
 			return authnSession.UserID, authnSession.UserID, nil
 		}
 		return authnSession.UserID, policies.EncodeDomainUserID(domainID, authnSession.UserID), nil

@@ -138,7 +138,7 @@ func (a *authnMiddleware) Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			if resp.Type == AccessToken && !opts.allowUnverifiedUser && resp.Role != AdminRole && !resp.Verified {
+			if resp.Type == AccessToken && !opts.allowUnverifiedUser && resp.Role != SuperAdminRole && !resp.Verified {
 				encodeError(w, apiutil.ErrEmailNotVerified, http.StatusUnauthorized)
 				return
 			}
@@ -151,7 +151,7 @@ func (a *authnMiddleware) Middleware() func(http.Handler) http.Handler {
 				}
 				resp.DomainID = domain
 				switch resp.Role {
-				case AdminRole:
+				case SuperAdminRole:
 					resp.DomainUserID = resp.UserID
 				case UserRole:
 					resp.DomainUserID = policies.EncodeDomainUserID(domain, resp.UserID)

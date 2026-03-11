@@ -538,9 +538,10 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 			final_clients c
 	`
 
+	connCountJoinQuery := connJoinQuery
+
 	if pm.Channel != "" {
-		connJoinQuery = `
-			,conn.connection_types
+		connCountJoinQuery = `
 			FROM
 					final_clients c
 			LEFT JOIN (
@@ -554,6 +555,8 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 					conn.client_id, conn.channel_id
 			) conn ON c.id = conn.client_id
 		`
+		connJoinQuery = `
+			,conn.connection_types` + connCountJoinQuery
 	}
 
 	dbPage, err := ToDBClientsPage(pm)
@@ -566,9 +569,9 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 	if pm.OnlyTotal {
 		cq := fmt.Sprintf(`%s
 			SELECT COUNT(*) AS total_count
-			FROM final_clients c
+			%s
 			%s;
-		`, bq, pageQuery)
+		`, bq, connCountJoinQuery, pageQuery)
 
 		total, err := postgres.Total(ctx, repo.DB, cq, dbPage)
 		if err != nil {
@@ -644,9 +647,9 @@ func (repo *clientRepo) retrieveClients(ctx context.Context, domainID, userID st
 	if len(items) == 0 {
 		cq := fmt.Sprintf(`%s
 			SELECT COUNT(*) AS total_count
-			FROM final_clients c
+			%s
 			%s;
-		`, bq, pageQuery)
+		`, bq, connCountJoinQuery, pageQuery)
 
 		total, err = postgres.Total(ctx, repo.DB, cq, dbPage)
 		if err != nil {

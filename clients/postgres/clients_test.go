@@ -2783,6 +2783,47 @@ func TestRetrieveUserClients(t *testing.T) {
 				},
 			},
 		},
+		{
+			desc:     "retrieve clients connected to a channel with only total",
+			domainID: domain.ID,
+			userID:   userID,
+			pm: clients.Page{
+				Offset:    0,
+				Limit:     10,
+				Channel:   channelID,
+				Status:    clients.AllStatus,
+				OnlyTotal: true,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+				Clients: []clients.Client(nil),
+			},
+		},
+		{
+			desc:     "retrieve clients connected to a non-existent channel",
+			domainID: domain.ID,
+			userID:   userID,
+			pm: clients.Page{
+				Offset:  0,
+				Limit:   10,
+				Channel: testsutil.GenerateUUID(t),
+				Status:  clients.AllStatus,
+				Order:   defOrder,
+				Dir:     ascDir,
+			},
+			response: clients.ClientsPage{
+				Page: clients.Page{
+					Total:  0,
+					Offset: 0,
+					Limit:  10,
+				},
+				Clients: []clients.Client(nil),
+			},
+		},
 	}
 
 	for _, tc := range cases {

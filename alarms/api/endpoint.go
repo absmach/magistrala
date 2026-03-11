@@ -16,7 +16,7 @@ import (
 
 func updateAlarmEndpoint(svc alarms.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(alarmReq)
+		req := request.(updateAlarmReq)
 		if err := req.validate(); err != nil {
 			return alarmRes{}, errors.Wrap(apiutil.ErrValidation, err)
 		}

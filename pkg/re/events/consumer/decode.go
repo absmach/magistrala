@@ -14,10 +14,6 @@ import (
 	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
 )
 
-const (
-	layout = "2006-01-02T15:04:05.999999Z"
-)
-
 var (
 	errDecodeAddRuleEvent            = errors.New("failed to decode rule add event")
 	errDecodeUpdateRuleEvent         = errors.New("failed to decode rule update event")
@@ -75,7 +71,7 @@ func ToRule(data map[string]any) (re.Rule, error) {
 	if !ok {
 		return re.Rule{}, errCreatedAt
 	}
-	ct, err := time.Parse(layout, cat)
+	ct, err := time.Parse(re.TimeLayout, cat)
 	if err != nil {
 		return re.Rule{}, errors.Wrap(errCreatedAt, err)
 	}
@@ -102,7 +98,7 @@ func ToRule(data map[string]any) (re.Rule, error) {
 	}
 
 	if uat, ok := data["updated_at"].(string); ok {
-		ut, err := time.Parse(layout, uat)
+		ut, err := time.Parse(re.TimeLayout, uat)
 		if err != nil {
 			return re.Rule{}, errors.Wrap(errUpdatedAt, err)
 		}

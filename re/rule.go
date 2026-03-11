@@ -21,6 +21,8 @@ const (
 	GoType
 )
 
+const TimeLayout = "2006-01-02T15:04:05.999999Z"
+
 type (
 	// ScriptType indicates Runtime type for the future versions
 	// that will support JS or Go runtimes alongside Lua.
@@ -66,7 +68,7 @@ func (r Rule) EventEncode() (map[string]any, error) {
 	m := map[string]any{
 		"id":         r.ID,
 		"name":       r.Name,
-		"created_at": r.CreatedAt.Format(time.RFC3339Nano),
+		"created_at": r.CreatedAt.Format(TimeLayout),
 		"created_by": r.CreatedBy,
 		"schedule":   r.Schedule.EventEncode(),
 		"status":     r.Status.String(),
@@ -81,7 +83,7 @@ func (r Rule) EventEncode() (map[string]any, error) {
 	}
 
 	if !r.UpdatedAt.IsZero() {
-		m["updated_at"] = r.UpdatedAt.Format(time.RFC3339Nano)
+		m["updated_at"] = r.UpdatedAt.Format(TimeLayout)
 	}
 
 	if r.UpdatedBy != "" {

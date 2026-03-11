@@ -55,6 +55,8 @@ require (
 	github.com/emirpasic/gods v1.18.1 // indirect
 	github.com/go-errors/errors v1.5.1 // indirect
 	github.com/go-logr/zerologr v1.2.3 // indirect
+	github.com/moby/moby/api v1.53.0 // indirect
+	github.com/moby/moby/client v0.2.2 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
 	github.com/stoewer/go-strcase v1.3.1 // indirect
 	go.uber.org/atomic v1.11.0 // indirect

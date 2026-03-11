@@ -1311,7 +1311,7 @@ func TestGenerateReportWithTemplateValidation(t *testing.T) {
 			contentType: contentType,
 			domainID:    domainID,
 			authnRes:    smqauthn.Session{DomainUserID: auth.EncodeDomainUserID(domainID, userID), UserID: userID, DomainID: domainID},
-			status:      http.StatusCreated,
+			status:      http.StatusOK,
 			svcRes:      reports.ReportPage{},
 		},
 		{

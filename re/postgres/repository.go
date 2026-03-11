@@ -453,10 +453,11 @@ func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string
 		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
-	userJoin := fmt.Sprintf(`
+	pm.UserID = userID
+	userJoin := `
 		INNER JOIN rules_roles rr ON rr.entity_id = r.id
-		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = '%s'
-	`, userID)
+		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+	`
 
 	whereClause := pq
 

@@ -502,10 +502,11 @@ func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userI
 		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
 	}
 
-	userJoin := fmt.Sprintf(`
+	pm.UserID = userID
+	userJoin := `
 		INNER JOIN reports_roles rr ON rr.entity_id = rc.id
-		INNER JOIN reports_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = '%s'
-	`, userID)
+		INNER JOIN reports_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+	`
 
 	whereClause := pq
 

@@ -122,13 +122,7 @@ func (am *authorizationMiddleware) ViewChannel(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) ListChannels(ctx context.Context, session authn.Session, pm channels.Page) (channels.ChannelsPage, error) {
-	if err := am.authorize(ctx, session, policies.DomainType, dOperations.OpListDomainChannels, smqauthz.PolicyReq{
-		Domain:      session.DomainID,
-		SubjectType: policies.UserType,
-		Subject:     session.DomainUserID,
-		ObjectType:  policies.DomainType,
-		Object:      session.DomainID,
-	}); err == nil {
+	if err := am.checkSuperAdmin(ctx, session); err == nil {
 		session.SuperAdmin = true
 	}
 

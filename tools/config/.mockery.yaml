@@ -6,6 +6,8 @@ structname: "{{.InterfaceName}}"
 filename: "{{snakecase .InterfaceName}}.go"
 dir: "{{.InterfaceDirRelative}}/mocks"
 force-file-write: true
+include-auto-generated: true
+
 template-data:
   boilerplate-file: ./tools/config/boilerplate.txt
 packages:

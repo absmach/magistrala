@@ -34,6 +34,7 @@ type OperationName[K OperationKey] map[K]string
 
 type OperationDetails struct {
 	Name               string
+	PATOpName          string // PAT yaml operation name; falls back to Name if empty
 	PermissionRequired bool
 }
 
@@ -46,6 +47,7 @@ type Operations[K OperationKey] interface {
 	GetPermission(op K) (Permission, error)
 	GetPermissionAndRequired(op K) (Permission, bool, error)
 	OperationName(op K) string
+	PATOperationName(op K) string
 	Validate() error
 	Merge(nops Operations[K]) error
 	Remove(rops Operations[K]) error
@@ -74,6 +76,17 @@ func (ops *operations[K]) OperationName(op K) string {
 	opDetail, ok := ops.opDetails[op]
 	if !ok {
 		return fmt.Sprintf("UnknownOperation(%v)", op)
+	}
+	return opDetail.Name
+}
+
+func (ops *operations[K]) PATOperationName(op K) string {
+	opDetail, ok := ops.opDetails[op]
+	if !ok {
+		return fmt.Sprintf("UnknownOperation(%v)", op)
+	}
+	if opDetail.PATOpName != "" {
+		return opDetail.PATOpName
 	}
 	return opDetail.Name
 }

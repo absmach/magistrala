@@ -18,6 +18,7 @@ type EntitiesOperations[K OperationKey] interface {
 	GetPermission(et string, op K) (Permission, error)
 	GetPermissionAndRequired(et string, op K) (Permission, bool, error)
 	OperationName(et string, op K) string
+	PATOperationName(et string, op K) string
 	Validate() error
 	AddEntityOperations(et string, ops Operations[K]) error
 	RemoveEntityOperations(et string, ops Operations[K]) error
@@ -85,6 +86,13 @@ func (eo entitiesOperations[K]) GetPermissionAndRequired(et string, op K) (Permi
 func (eo entitiesOperations[K]) OperationName(et string, op K) string {
 	if ops, ok := eo[et]; ok {
 		return ops.OperationName(op)
+	}
+	return ""
+}
+
+func (eo entitiesOperations[K]) PATOperationName(et string, op K) string {
+	if ops, ok := eo[et]; ok {
+		return ops.PATOperationName(op)
 	}
 	return ""
 }

@@ -394,7 +394,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
 		entityID := pr.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
+		opName := am.entitiesOps.PATOperationName(entityType, op)
 		if op == dOperations.OpCreateDomainGroups || op == dOperations.OpListDomainGroups || op == operations.OpListUserGroups {
 			entityID = auth.AnyIDs
 		}

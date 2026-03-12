@@ -40,9 +40,7 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 }
 
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
-	// If assignee is present, check if assignee is member of domain
-
-	if err := am.authorize(ctx, alarms.OpUpdateAlarm, session); err != nil {
+	if err := am.authorize(ctx, alarms.OpUpdateAlarm, session, alarms.EntityType, alarm.ID); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 	}
 
@@ -65,7 +63,7 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, alarms.OpDeleteAlarm, session); err != nil {
+	if err := am.authorize(ctx, alarms.OpDeleteAlarm, session, alarms.EntityType, id); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
 
@@ -77,7 +75,7 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, alarms.OpListAlarms, session); err != nil {
+	if err := am.authorize(ctx, alarms.OpListAlarms, session, policies.DomainType, session.DomainID); err != nil {
 		return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
@@ -85,14 +83,14 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, alarms.OpViewAlarm, session); err != nil {
+	if err := am.authorize(ctx, alarms.OpViewAlarm, session, alarms.EntityType, id); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
 	return am.svc.ViewAlarm(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
 	perm, err := alarms.GetPermission(op)
 	if err != nil {
 		return err
@@ -103,8 +101,8 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
+		Object:      obj,
+		ObjectType:  objType,
 		Permission:  perm,
 	}
 

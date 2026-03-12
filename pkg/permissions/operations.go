@@ -34,7 +34,7 @@ type OperationName[K OperationKey] map[K]string
 
 type OperationDetails struct {
 	Name               string
-	PATOpName          string // PAT yaml operation name; falls back to Name if empty
+	PATOpName          string
 	PermissionRequired bool
 }
 

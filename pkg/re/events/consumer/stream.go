@@ -23,8 +23,6 @@ const (
 	updateSchedule = "rule.update_schedule"
 	enable         = "rule.enable"
 	disable        = "rule.disable"
-	view           = "rule.view"
-	list           = "rule.list"
 	remove         = "rule.remove"
 )
 

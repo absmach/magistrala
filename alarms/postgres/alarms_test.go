@@ -428,6 +428,7 @@ func TestListUserAlarms(t *testing.T) {
 	domainID := generateUUID(t)
 	userID := generateUUID(t)
 	otherUserID := generateUUID(t)
+	adminUserID := generateUUID(t)
 
 	// Create 10 rules and 10 alarms referencing them.
 	// Assign userID to the first 6 rules via role membership.
@@ -466,6 +467,15 @@ func TestListUserAlarms(t *testing.T) {
 		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
 		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, ruleIDs[i])
+		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
+	}
+
+	// Assign adminUserID to all 10 rules via rules_roles + rules_role_members.
+	for i := range 10 {
+		roleID := generateUUID(t)
+		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
+		require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
+		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, adminUserID, ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
 	}
 
@@ -538,6 +548,16 @@ func TestListUserAlarms(t *testing.T) {
 				Limit:  100,
 			},
 			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list alarms for admin user with role on all rules returns all alarms",
+			userID: adminUserID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  100,
+			},
+			count: 10,
 			err:   nil,
 		},
 		{

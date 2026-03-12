@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/channels"
 	"github.com/absmach/supermq/channels/operations"
 	cOperations "github.com/absmach/supermq/clients/operations"
@@ -330,15 +331,18 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		if opName := am.entitiesOps.OperationName(entityType, op); opName != "" {
-			pat = &smqauthz.PATReq{
-				UserID:     session.UserID,
-				PatID:      session.PatID,
-				EntityID:   req.Object,
-				EntityType: operations.EntityType,
-				Operation:  opName,
-				Domain:     session.DomainID,
-			}
+		entityID := req.Object
+		opName := am.entitiesOps.OperationName(entityType, op)
+		if op == dOperations.OpCreateDomainChannels || op == operations.OpListUserChannels {
+			entityID = auth.AnyIDs
+		}
+		pat = &smqauthz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   entityID,
+			EntityType: operations.EntityType,
+			Operation:  opName,
+			Domain:     session.DomainID,
 		}
 	}
 

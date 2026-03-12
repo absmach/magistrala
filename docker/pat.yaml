@@ -117,10 +117,10 @@ domains:
 
 dashboards:
   operations:
-    - dashboard_share: share_permission
-    - dashboard_unshare: unshare_permission
+    - share: share_permission
+    - unshare: unshare_permission
 
 messages:
   operations:
-    - message_publish: publish_permission
-    - message_subscribe: subscribe_permission
+    - publish: publish_permission
+    - subscribe: subscribe_permission

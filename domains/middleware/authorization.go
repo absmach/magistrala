@@ -210,12 +210,14 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
+		entityID := authReq.Object
+		opName := am.entitiesOps.OperationName(entityType, op)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
-			EntityID:   authReq.Object,
+			EntityID:   entityID,
 			EntityType: operations.EntityType,
-			Operation:  am.entitiesOps.OperationName(entityType, op),
+			Operation:  opName,
 			Domain:     session.DomainID,
 		}
 	}

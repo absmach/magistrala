@@ -116,9 +116,6 @@ jobs:
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
-      - name: Install CLI
-        run: GOBIN=$(go env GOPATH)/bin make install
-
       - name: Start containers
         run: |
           docker compose -f docker/docker-compose.yaml --env-file docker/.env -p supermq up -d

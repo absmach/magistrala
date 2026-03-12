@@ -462,20 +462,26 @@ func TestListUserAlarms(t *testing.T) {
 	}
 
 	// Assign userID to the first 6 rules via rules_roles + rules_role_members.
+	userRoleIDs := make([]string, 6)
 	for i := range 6 {
 		roleID := generateUUID(t)
+		userRoleIDs[i] = roleID
 		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
 		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
 	}
 
-	// Assign adminUserID to all 10 rules via rules_roles + rules_role_members.
 	for i := range 10 {
-		roleID := generateUUID(t)
-		_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
-		require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
-		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, adminUserID, ruleIDs[i])
+		var roleID string
+		if i < 6 {
+			roleID = userRoleIDs[i]
+		} else {
+			roleID = generateUUID(t)
+			_, err := db.Exec(`INSERT INTO rules_roles (id, name, entity_id) VALUES ($1, $2, $3)`, roleID, "admin", ruleIDs[i])
+			require.Nil(t, err, fmt.Sprintf("insert rules_roles unexpected error: %s", err))
+		}
+		_, err := db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, adminUserID, ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
 	}
 

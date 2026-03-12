@@ -20,8 +20,10 @@ const (
 	RoleOperationPrefix = "role_"
 )
 
-
-var errInvalidEntityOp = errors.NewRequestError("operation not valid for entity type")
+var (
+	errInvalidEntityOp   = errors.NewRequestError("operation not valid for entity type")
+	errInvalidEntityType = errors.NewRequestError("invalid entity type")
+)
 
 var patEntityOperations map[string]map[string]bool
 
@@ -40,11 +42,6 @@ func (et EntityType) String() string {
 func ParseEntityType(et string) (EntityType, error) {
 	if et == "" {
 		return "", fmt.Errorf("entity type cannot be empty")
-	}
-	if patEntityOperations != nil {
-		if _, ok := patEntityOperations[et]; !ok {
-			return "", fmt.Errorf("unknown entity type %s", et)
-		}
 	}
 	return EntityType(et), nil
 }
@@ -79,6 +76,14 @@ func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 		return false
 	}
 	return ops[operation]
+}
+
+func IsValidEntityType(entityType EntityType) bool {
+	if patEntityOperations == nil {
+		return false
+	}
+	_, ok := patEntityOperations[entityType.String()]
+	return ok
 }
 
 // Example Scope as JSON
@@ -151,6 +156,10 @@ func (s *Scope) Validate() error {
 
 	if s.DomainID == "" {
 		return apiutil.ErrMissingDomainID
+	}
+
+	if !IsValidEntityType(s.EntityType) {
+		return errors.Wrap(apiutil.ErrInvalidQueryParams, errInvalidEntityType)
 	}
 
 	if !IsValidOperationForEntity(s.EntityType, s.Operation) {

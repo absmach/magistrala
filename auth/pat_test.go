@@ -85,8 +85,8 @@ func TestParseEntityType(t *testing.T) {
 		{
 			desc:     "Parse unknown entity type",
 			et:       "unknown",
-			expected: auth.EntityType(""),
-			err:      true,
+			expected: auth.EntityType("unknown"),
+			err:      false,
 		},
 	}
 
@@ -161,8 +161,8 @@ func TestEntityTypeUnmarshalJSON(t *testing.T) {
 		{
 			desc:     "Unmarshal unknown",
 			data:     []byte(`"unknown"`),
-			expected: auth.EntityType(""),
-			err:      true,
+			expected: auth.EntityType("unknown"),
+			err:      false,
 		},
 	}
 
@@ -232,8 +232,8 @@ func TestEntityTypeUnmarshalText(t *testing.T) {
 		{
 			desc:     "Unmarshal unknown from text",
 			data:     []byte("unknown"),
-			expected: auth.EntityType(""),
-			err:      true,
+			expected: auth.EntityType("unknown"),
+			err:      false,
 		},
 	}
 

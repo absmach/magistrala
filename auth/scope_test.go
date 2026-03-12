@@ -4,6 +4,7 @@
 package auth_test
 
 import (
+	"os"
 	"testing"
 	"time"
 
@@ -14,6 +15,18 @@ import (
 	groupsOps "github.com/absmach/supermq/groups/operations"
 	"github.com/stretchr/testify/assert"
 )
+
+func TestMain(m *testing.M) {
+	auth.RegisterPATEntityOperations(map[string]map[string]bool{
+		"groups":     {"view": true, "create": true, "update": true, "delete": true, "role_add": true, "role_remove": true, "role_view": true},
+		"channels":   {"view": true, "create": true, "update": true, "delete": true, "role_add": true, "role_remove": true, "role_view": true},
+		"clients":    {"view": true, "create": true, "update": true, "delete": true, "role_add": true, "role_remove": true, "role_view": true},
+		"domains":    {"view": true, "create": true, "update": true, "delete": true, "role_add": true, "role_remove": true, "role_view": true},
+		"messages":   {"message_publish": true, "message_subscribe": true},
+		"dashboards": {"dashboard_share": true, "dashboard_unshare": true},
+	})
+	os.Exit(m.Run())
+}
 
 func TestScopeAuthorized(t *testing.T) {
 	cases := []struct {

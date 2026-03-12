@@ -7,7 +7,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/channels"
 	"github.com/absmach/supermq/channels/operations"
 	cOperations "github.com/absmach/supermq/clients/operations"
@@ -86,7 +85,7 @@ func (am *authorizationMiddleware) CreateChannels(ctx context.Context, session a
 		Subject:     session.DomainUserID,
 		ObjectType:  policies.DomainType,
 		Object:      session.DomainID,
-	}, "create"); err != nil {
+	}); err != nil {
 		return []channels.Channel{}, []roles.RoleProvision{}, errors.Wrap(err, errDomainCreateChannels)
 	}
 
@@ -319,7 +318,7 @@ func (am *authorizationMiddleware) RemoveParentGroup(ctx context.Context, sessio
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq, patOpName ...string) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
 	req.Domain = session.DomainID
 
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
@@ -331,23 +330,11 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		var opName string
-		var entityID string
-		if len(patOpName) > 0 && patOpName[0] != "" {
-			// Explicit PAT op name supplied (domain-level create/list): scope against any entity.
-			opName = patOpName[0]
-			entityID = auth.AnyIDs
-		} else if entityType == policies.ChannelType {
-			// Own-entity operation: derive name and scope to the specific entity.
-			opName = am.entitiesOps.OperationName(entityType, op)
-			entityID = req.Object
-		}
-		// Cross-entity group checks have no PAT equivalent — skip (opName == "").
-		if opName != "" {
+		if opName := am.entitiesOps.OperationName(entityType, op); opName != "" {
 			pat = &smqauthz.PATReq{
 				UserID:     session.UserID,
 				PatID:      session.PatID,
-				EntityID:   entityID,
+				EntityID:   req.Object,
 				EntityType: operations.EntityType,
 				Operation:  opName,
 				Domain:     session.DomainID,

@@ -6,7 +6,6 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/clients"
 	"github.com/absmach/supermq/clients/operations"
 	dOperations "github.com/absmach/supermq/domains/operations"
@@ -79,7 +78,7 @@ func (am *authorizationMiddleware) CreateClients(ctx context.Context, session au
 		Subject:     session.DomainUserID,
 		ObjectType:  policies.DomainType,
 		Object:      session.DomainID,
-	}, "create"); err != nil {
+	}); err != nil {
 		return []clients.Client{}, []roles.RoleProvision{}, errors.Wrap(err, errDomainCreateClients)
 	}
 
@@ -256,7 +255,7 @@ func (am *authorizationMiddleware) RemoveParentGroup(ctx context.Context, sessio
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq, patOpName ...string) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
 	req.Domain = session.DomainID
 
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
@@ -268,20 +267,11 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		var opName string
-		var entityID string
-		if len(patOpName) > 0 && patOpName[0] != "" {
-			opName = patOpName[0]
-			entityID = auth.AnyIDs
-		} else if entityType == policies.ClientType {
-			opName = am.entitiesOps.OperationName(entityType, op)
-			entityID = req.Object
-		}
-		if opName != "" {
+		if opName := am.entitiesOps.OperationName(entityType, op); opName != "" {
 			pat = &smqauthz.PATReq{
 				UserID:     session.UserID,
 				PatID:      session.PatID,
-				EntityID:   entityID,
+				EntityID:   req.Object,
 				EntityType: operations.EntityType,
 				Operation:  opName,
 				Domain:     session.DomainID,

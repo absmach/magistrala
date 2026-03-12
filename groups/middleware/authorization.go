@@ -85,7 +85,7 @@ func (am *authorizationMiddleware) CreateGroup(ctx context.Context, session auth
 		Subject:     session.DomainUserID,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-	}); err != nil {
+	}, "create"); err != nil {
 		return groups.Group{}, []roles.RoleProvision{}, errors.Wrap(errDomainCreateGroups, err)
 	}
 
@@ -161,7 +161,7 @@ func (am *authorizationMiddleware) ListGroups(ctx context.Context, session authn
 		Subject:     session.DomainUserID,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-	}); err != nil {
+	}, "list"); err != nil {
 		return groups.Page{}, errors.Wrap(errDomainListGroups, err)
 	}
 
@@ -180,7 +180,7 @@ func (am *authorizationMiddleware) ListUserGroups(ctx context.Context, session a
 		Subject:     session.DomainUserID,
 		Object:      session.DomainID,
 		ObjectType:  policies.DomainType,
-	}); err != nil {
+	}, "list"); err != nil {
 		return groups.Page{}, errors.Wrap(errDomainListGroups, err)
 	}
 
@@ -382,7 +382,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, pr smqauthz.PolicyReq) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, pr smqauthz.PolicyReq, patOpName ...string) error {
 	pr.Domain = session.DomainID
 
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
@@ -393,23 +393,26 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		entityID := pr.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
-		if op == dOperations.OpListDomainGroups || op == dOperations.OpCreateDomainGroups {
+		var opName string
+		var entityID string
+		if len(patOpName) > 0 && patOpName[0] != "" {
+			opName = patOpName[0]
 			entityID = auth.AnyIDs
+		} else if entityType == policies.GroupType {
+			opName = am.entitiesOps.OperationName(entityType, op)
+			entityID = pr.Object
 		}
-		pat = &smqauthz.PATReq{
-			UserID:     session.UserID,
-			PatID:      session.PatID,
-			EntityID:   entityID,
-			EntityType: auth.GroupsType.String(),
-			Operation:  opName,
-			Domain:     session.DomainID,
+		if opName != "" {
+			pat = &smqauthz.PATReq{
+				UserID:     session.UserID,
+				PatID:      session.PatID,
+				EntityID:   entityID,
+				EntityType: operations.EntityType,
+				Operation:  opName,
+				Domain:     session.DomainID,
+			}
 		}
 	}
 
-	if err := am.authz.Authorize(ctx, pr, pat); err != nil {
-		return err
-	}
-	return nil
+	return am.authz.Authorize(ctx, pr, pat)
 }

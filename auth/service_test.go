@@ -921,7 +921,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.EntityType("clients"),
 				EntityID:   validID,
 				Operation:  "read",
 				Domain:     domainID,
@@ -956,9 +956,9 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ChannelsType,
+				EntityType: auth.EntityType("channels"),
 				Domain:     domainID,
-				Operation:  auth.OpListChannels,
+				Operation:  "list_channels",
 				EntityID:   auth.AnyIDs,
 			},
 			checkPolicyReq: policies.Policy{
@@ -983,9 +983,9 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.EntityType(100),
+				EntityType: auth.EntityType("invalid_entity"),
 				Domain:     domainID,
-				Operation:  auth.OpListChannels,
+				Operation:  "list_channels",
 				EntityID:   auth.AnyIDs,
 			},
 			checkPolicyReq: policies.Policy{
@@ -1012,7 +1012,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.EntityType("clients"),
 				EntityID:   validID,
 				Operation:  "read",
 				Domain:     domainID,
@@ -1035,7 +1035,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.EntityType("clients"),
 				EntityID:   validID,
 				Operation:  "write",
 				Domain:     domainID,

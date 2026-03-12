@@ -18,33 +18,28 @@ func TestEntityTypeString(t *testing.T) {
 	}{
 		{
 			desc:     "Groups entity type",
-			et:       auth.GroupsType,
+			et:       auth.EntityType("groups"),
 			expected: "groups",
 		},
 		{
 			desc:     "Channels entity type",
-			et:       auth.ChannelsType,
+			et:       auth.EntityType("channels"),
 			expected: "channels",
 		},
 		{
 			desc:     "Clients entity type",
-			et:       auth.ClientsType,
+			et:       auth.EntityType("clients"),
 			expected: "clients",
 		},
 		{
 			desc:     "Dashboard entity type",
-			et:       auth.DashboardType,
+			et:       auth.EntityType("dashboards"),
 			expected: "dashboards",
 		},
 		{
 			desc:     "Messages entity type",
-			et:       auth.MessagesType,
+			et:       auth.EntityType("messages"),
 			expected: "messages",
-		},
-		{
-			desc:     "Unknown entity type",
-			et:       auth.EntityType(100),
-			expected: "unknown domain entity type 100",
 		},
 	}
 
@@ -66,31 +61,31 @@ func TestParseEntityType(t *testing.T) {
 		{
 			desc:     "Parse groups",
 			et:       "groups",
-			expected: auth.GroupsType,
+			expected: auth.EntityType("groups"),
 			err:      false,
 		},
 		{
 			desc:     "Parse channels",
 			et:       "channels",
-			expected: auth.ChannelsType,
+			expected: auth.EntityType("channels"),
 			err:      false,
 		},
 		{
 			desc:     "Parse clients",
 			et:       "clients",
-			expected: auth.ClientsType,
+			expected: auth.EntityType("clients"),
 			err:      false,
 		},
 		{
 			desc:     "Parse dashboards",
 			et:       "dashboards",
-			expected: auth.DashboardType,
+			expected: auth.EntityType("dashboards"),
 			err:      false,
 		},
 		{
 			desc:     "Parse unknown entity type",
 			et:       "unknown",
-			expected: auth.EntityType(0),
+			expected: auth.EntityType(""),
 			err:      true,
 		},
 	}
@@ -117,19 +112,19 @@ func TestEntityTypeMarshalJSON(t *testing.T) {
 	}{
 		{
 			desc:     "Marshal groups",
-			et:       auth.GroupsType,
+			et:       auth.EntityType("groups"),
 			expected: []byte(`"groups"`),
 			err:      nil,
 		},
 		{
 			desc:     "Marshal channels",
-			et:       auth.ChannelsType,
+			et:       auth.EntityType("channels"),
 			expected: []byte(`"channels"`),
 			err:      nil,
 		},
 		{
 			desc:     "Marshal clients",
-			et:       auth.ClientsType,
+			et:       auth.EntityType("clients"),
 			expected: []byte(`"clients"`),
 			err:      nil,
 		},
@@ -154,19 +149,19 @@ func TestEntityTypeUnmarshalJSON(t *testing.T) {
 		{
 			desc:     "Unmarshal groups",
 			data:     []byte(`"groups"`),
-			expected: auth.GroupsType,
+			expected: auth.EntityType("groups"),
 			err:      false,
 		},
 		{
 			desc:     "Unmarshal channels",
 			data:     []byte(`"channels"`),
-			expected: auth.ChannelsType,
+			expected: auth.EntityType("channels"),
 			err:      false,
 		},
 		{
 			desc:     "Unmarshal unknown",
 			data:     []byte(`"unknown"`),
-			expected: auth.EntityType(0),
+			expected: auth.EntityType(""),
 			err:      true,
 		},
 	}
@@ -194,13 +189,13 @@ func TestEntityTypeMarshalText(t *testing.T) {
 	}{
 		{
 			desc:     "Marshal groups as text",
-			et:       auth.GroupsType,
+			et:       auth.EntityType("groups"),
 			expected: []byte("groups"),
 			err:      nil,
 		},
 		{
 			desc:     "Marshal channels as text",
-			et:       auth.ChannelsType,
+			et:       auth.EntityType("channels"),
 			expected: []byte("channels"),
 			err:      nil,
 		},
@@ -225,19 +220,19 @@ func TestEntityTypeUnmarshalText(t *testing.T) {
 		{
 			desc:     "Unmarshal groups from text",
 			data:     []byte("groups"),
-			expected: auth.GroupsType,
+			expected: auth.EntityType("groups"),
 			err:      false,
 		},
 		{
 			desc:     "Unmarshal channels from text",
 			data:     []byte("channels"),
-			expected: auth.ChannelsType,
+			expected: auth.EntityType("channels"),
 			err:      false,
 		},
 		{
 			desc:     "Unmarshal unknown from text",
 			data:     []byte("unknown"),
-			expected: auth.EntityType(0),
+			expected: auth.EntityType(""),
 			err:      true,
 		},
 	}

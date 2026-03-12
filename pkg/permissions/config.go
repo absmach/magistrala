@@ -33,6 +33,51 @@ func ParsePermissionsFile(filePath string) (*PermissionConfig, error) {
 	return &config, nil
 }
 
+type PATEntityPermissions struct {
+	Operations      []map[string]string `yaml:"operations"`
+	RolesOperations []map[string]string `yaml:"roles_operations"`
+}
+
+type PATPermissionConfig struct {
+	Entities map[string]PATEntityPermissions `yaml:",inline"`
+}
+
+func ParsePATPermissionsFile(filePath string) (*PATPermissionConfig, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read PAT permissions file: %w", err)
+	}
+
+	var config PATPermissionConfig
+	if err := yaml.Unmarshal(data, &config); err != nil {
+		return nil, fmt.Errorf("failed to parse PAT permissions file: %w", err)
+	}
+
+	return &config, nil
+}
+
+// GetPATEntityOperations returns a registry mapping each PAT entity type to the
+// set of valid PAT operation names. Role management operations are prefixed with
+// "role_" (matching the RoleOperationPrefix convention used by the auth package).
+func (pc *PATPermissionConfig) GetPATEntityOperations() map[string]map[string]bool {
+	result := make(map[string]map[string]bool, len(pc.Entities))
+	for entity, perms := range pc.Entities {
+		ops := make(map[string]bool)
+		for _, opMap := range perms.Operations {
+			for name := range opMap {
+				ops[name] = true
+			}
+		}
+		for _, opMap := range perms.RolesOperations {
+			for name := range opMap {
+				ops["role_"+name] = true
+			}
+		}
+		result[entity] = ops
+	}
+	return result
+}
+
 func (pc *PermissionConfig) GetEntityPermissions(entityType string) (map[string]Permission, map[string]Permission, error) {
 	entityPerms, ok := pc.Entities[entityType]
 	if !ok {

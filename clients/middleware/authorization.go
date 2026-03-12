@@ -79,7 +79,7 @@ func (am *authorizationMiddleware) CreateClients(ctx context.Context, session au
 		Subject:     session.DomainUserID,
 		ObjectType:  policies.DomainType,
 		Object:      session.DomainID,
-	}); err != nil {
+	}, "create"); err != nil {
 		return []clients.Client{}, []roles.RoleProvision{}, errors.Wrap(err, errDomainCreateClients)
 	}
 
@@ -256,7 +256,7 @@ func (am *authorizationMiddleware) RemoveParentGroup(ctx context.Context, sessio
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.Session, entityType string, op permissions.Operation, req smqauthz.PolicyReq, patOpName ...string) error {
 	req.Domain = session.DomainID
 
 	perm, err := am.entitiesOps.GetPermission(entityType, op)
@@ -268,26 +268,28 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		entityID := req.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
-		if op == operations.OpListUserClients || op == dOperations.OpCreateDomainClients || op == dOperations.OpListDomainClients {
+		var opName string
+		var entityID string
+		if len(patOpName) > 0 && patOpName[0] != "" {
+			opName = patOpName[0]
 			entityID = auth.AnyIDs
+		} else if entityType == policies.ClientType {
+			opName = am.entitiesOps.OperationName(entityType, op)
+			entityID = req.Object
 		}
-		pat = &smqauthz.PATReq{
-			UserID:     session.UserID,
-			PatID:      session.PatID,
-			EntityID:   entityID,
-			EntityType: auth.ClientsType.String(),
-			Operation:  opName,
-			Domain:     session.DomainID,
+		if opName != "" {
+			pat = &smqauthz.PATReq{
+				UserID:     session.UserID,
+				PatID:      session.PatID,
+				EntityID:   entityID,
+				EntityType: operations.EntityType,
+				Operation:  opName,
+				Domain:     session.DomainID,
+			}
 		}
 	}
 
-	if err := am.authz.Authorize(ctx, req, pat); err != nil {
-		return err
-	}
-
-	return nil
+	return am.authz.Authorize(ctx, req, pat)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {

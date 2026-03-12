@@ -26,14 +26,15 @@ import (
 
 const (
 	port            = 8081
-	id              = "testID"
-	usersType       = "users"
-	adminPermission = "admin"
-	authoritiesObj  = "authorities"
-	memberRelation  = "member"
-	validToken      = "valid"
-	inValidToken    = "invalid"
-	validPATToken   = "valid"
+	id               = "testID"
+	usersType        = "users"
+	adminPermission  = "admin"
+	authoritiesObj   = "authorities"
+	memberRelation   = "member"
+	validToken       = "valid"
+	inValidToken     = "invalid"
+	validPATToken    = "valid"
+	clientsEntityType = "clients"
 )
 
 var (
@@ -264,7 +265,7 @@ func TestAuthorize(t *testing.T) {
 					Operation:  "view",
 					UserId:     id,
 					EntityId:   clientID,
-					EntityType: auth.ClientsScopeStr,
+					EntityType: clientsEntityType,
 				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
@@ -289,7 +290,7 @@ func TestAuthorize(t *testing.T) {
 					Operation:  "view",
 					UserId:     id,
 					EntityId:   clientID,
-					EntityType: auth.ClientsScopeStr,
+					EntityType: clientsEntityType,
 				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
@@ -313,7 +314,7 @@ func TestAuthorize(t *testing.T) {
 					Domain:     domainID,
 					Operation:  "view",
 					EntityId:   clientID,
-					EntityType: auth.ClientsScopeStr,
+					EntityType: clientsEntityType,
 				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},
@@ -337,7 +338,7 @@ func TestAuthorize(t *testing.T) {
 					Domain:     domainID,
 					Operation:  "view",
 					UserId:     id,
-					EntityType: auth.ClientsScopeStr,
+					EntityType: clientsEntityType,
 				},
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: false},

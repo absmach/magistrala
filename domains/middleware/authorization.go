@@ -6,7 +6,6 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/domains"
 	"github.com/absmach/supermq/domains/operations"
 	"github.com/absmach/supermq/pkg/authn"
@@ -211,23 +210,17 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		entityID := authReq.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
-			EntityID:   entityID,
-			EntityType: auth.DomainsType.String(),
-			Operation:  opName,
+			EntityID:   authReq.Object,
+			EntityType: operations.EntityType,
+			Operation:  am.entitiesOps.OperationName(entityType, op),
 			Domain:     session.DomainID,
 		}
 	}
 
-	if err := am.authz.Authorize(ctx, authReq, pat); err != nil {
-		return err
-	}
-
-	return nil
+	return am.authz.Authorize(ctx, authReq, pat)
 }
 
 // checkAdmin checks if the given user is a domain or platform administrator.

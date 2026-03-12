@@ -7,6 +7,8 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 )
 
+const EntityType = "clients"
+
 // Client Operations.
 const (
 	OpViewClient permissions.Operation = iota

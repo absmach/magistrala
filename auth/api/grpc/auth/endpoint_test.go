@@ -25,15 +25,15 @@ import (
 )
 
 const (
-	port            = 8081
-	id               = "testID"
-	usersType        = "users"
-	adminPermission  = "admin"
-	authoritiesObj   = "authorities"
-	memberRelation   = "member"
-	validToken       = "valid"
-	inValidToken     = "invalid"
-	validPATToken    = "valid"
+	port              = 8081
+	id                = "testID"
+	usersType         = "users"
+	adminPermission   = "admin"
+	authoritiesObj    = "authorities"
+	memberRelation    = "member"
+	validToken        = "valid"
+	inValidToken      = "invalid"
+	validPATToken     = "valid"
 	clientsEntityType = "clients"
 )
 

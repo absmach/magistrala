@@ -511,7 +511,7 @@ func TestAddScopeReqValidate(t *testing.T) {
 		DomainID:   "domain1",
 		EntityType: auth.EntityType("groups"),
 		EntityID:   "entity1",
-		Operation:  "create_groups",
+		Operation:  "create",
 	}
 
 	invalidScope := auth.Scope{

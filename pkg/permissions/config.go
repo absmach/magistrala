@@ -56,9 +56,6 @@ func ParsePATPermissionsFile(filePath string) (*PATPermissionConfig, error) {
 	return &config, nil
 }
 
-// GetPATEntityOperations returns a registry mapping each PAT entity type to the
-// set of valid PAT operation names. Role management operations are prefixed with
-// "role_" (matching the RoleOperationPrefix convention used by the auth package).
 func (pc *PATPermissionConfig) GetPATEntityOperations() map[string]map[string]bool {
 	result := make(map[string]map[string]bool, len(pc.Entities))
 	for entity, perms := range pc.Entities {

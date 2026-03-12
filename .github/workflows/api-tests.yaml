@@ -117,7 +117,7 @@ jobs:
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Install CLI
-        run: make install
+        run: GOBIN=$(go env GOPATH)/bin make install
 
       - name: Start containers
         run: make run_latest up args="-d" && make run_addons up args="-d"

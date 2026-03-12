@@ -94,8 +94,12 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return alarms.AlarmsPage{}, err
 	}
 
 	return am.svc.ListAlarms(ctx, session, pm)

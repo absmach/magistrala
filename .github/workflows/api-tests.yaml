@@ -116,6 +116,9 @@ jobs:
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
+      - name: Install CLI
+        run: make install
+
       - name: Start containers
         run: make run_latest up args="-d" && make run_addons up args="-d"
 

@@ -91,8 +91,12 @@ func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return re.Page{}, err
 	}
 
 	return am.svc.ListRules(ctx, session, pm)
@@ -171,7 +175,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
-	if session.Role != authn.AdminRole {
+	if session.Role != authn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction
 	}
 	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{

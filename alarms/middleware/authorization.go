@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 )

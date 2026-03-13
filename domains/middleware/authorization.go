@@ -57,9 +57,13 @@ func (am *authorizationMiddleware) CreateDomain(ctx context.Context, session aut
 }
 
 func (am *authorizationMiddleware) RetrieveDomain(ctx context.Context, session authn.Session, id string, withRoles bool) (domains.Domain, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
 		return am.svc.RetrieveDomain(ctx, session, id, withRoles)
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return domains.Domain{}, err
 	}
 
 	if err := am.authorize(ctx, session, policies.DomainType, operations.OpRetrieveDomain, authz.PolicyReq{
@@ -134,8 +138,12 @@ func (am *authorizationMiddleware) FreezeDomain(ctx context.Context, session aut
 }
 
 func (am *authorizationMiddleware) ListDomains(ctx context.Context, session authn.Session, page domains.Page) (domains.DomainsPage, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return domains.DomainsPage{}, err
 	}
 
 	return am.svc.ListDomains(ctx, session, page)

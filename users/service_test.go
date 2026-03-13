@@ -249,52 +249,52 @@ func TestRegister(t *testing.T) {
 
 	svc, _, cRepo, policies, _ = newService()
 
-	// cases2 := []struct {
-	// 	desc                      string
-	// 	user                      users.User
-	// 	session                   authn.Session
-	// 	addPoliciesResponseErr    error
-	// 	deletePoliciesResponseErr error
-	// 	saveErr                   error
-	// 	checkSuperAdminErr        error
-	// 	err                       error
-	// }{
-	// 	{
-	// 		desc:    "register new user successfully as admin",
-	// 		user:    user,
-	// 		session: authn.Session{UserID: validID, SuperAdmin: true},
-	// 		err:     nil,
-	// 	},
-	// 	{
-	// 		desc:               "register a new user as admin with failed check on super admin",
-	// 		user:               user,
-	// 		session:            authn.Session{UserID: validID, SuperAdmin: false},
-	// 		checkSuperAdminErr: svcerr.ErrAuthorization,
-	// 		err:                svcerr.ErrAuthorization,
-	// 	},
-	// }
-	// for _, tc := range cases2 {
-	// 	repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
-	// 	policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
-	// 	policyCall1 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
-	// 	repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.user, tc.saveErr)
-	// 	expected, err := svc.Register(context.Background(), authn.Session{UserID: validID}, tc.user, false)
-	// 	assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	// 	if err == nil {
-	// 		tc.user.ID = expected.ID
-	// 		tc.user.CreatedAt = expected.CreatedAt
-	// 		tc.user.UpdatedAt = expected.UpdatedAt
-	// 		tc.user.Credentials.Secret = expected.Credentials.Secret
-	// 		tc.user.UpdatedBy = expected.UpdatedBy
-	// 		assert.Equal(t, tc.user, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.user, expected))
-	// 		ok := repoCall1.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
-	// 		assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
-	// 	}
-	// 	repoCall1.Unset()
-	// 	policyCall.Unset()
-	// 	policyCall1.Unset()
-	// 	repoCall.Unset()
-	// }
+	cases2 := []struct {
+		desc                      string
+		user                      users.User
+		session                   authn.Session
+		addPoliciesResponseErr    error
+		deletePoliciesResponseErr error
+		saveErr                   error
+		checkSuperAdminErr        error
+		err                       error
+	}{
+		{
+			desc:    "register new user successfully as admin",
+			user:    user,
+			session: authn.Session{UserID: validID, SuperAdmin: true},
+			err:     nil,
+		},
+		{
+			desc:               "register a new user as admin with failed check on super admin",
+			user:               user,
+			session:            authn.Session{UserID: validID, SuperAdmin: false},
+			checkSuperAdminErr: svcerr.ErrAuthorization,
+			err:                svcerr.ErrAuthorization,
+		},
+	}
+	for _, tc := range cases2 {
+		repoCall := cRepo.On("CheckSuperAdmin", context.Background(), mock.Anything).Return(tc.checkSuperAdminErr)
+		policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesResponseErr)
+		policyCall1 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePoliciesResponseErr)
+		repoCall1 := cRepo.On("Save", context.Background(), mock.Anything).Return(tc.user, tc.saveErr)
+		expected, err := svc.Register(context.Background(), authn.Session{UserID: validID}, tc.user, false)
+		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if err == nil {
+			tc.user.ID = expected.ID
+			tc.user.CreatedAt = expected.CreatedAt
+			tc.user.UpdatedAt = expected.UpdatedAt
+			tc.user.Credentials.Secret = expected.Credentials.Secret
+			tc.user.UpdatedBy = expected.UpdatedBy
+			assert.Equal(t, tc.user, expected, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.user, expected))
+			ok := repoCall1.Parent.AssertCalled(t, "Save", context.Background(), mock.Anything)
+			assert.True(t, ok, fmt.Sprintf("Save was not called on %s", tc.desc))
+		}
+		repoCall1.Unset()
+		policyCall.Unset()
+		policyCall1.Unset()
+		repoCall.Unset()
+	}
 }
 
 func TestViewUser(t *testing.T) {

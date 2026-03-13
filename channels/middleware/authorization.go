@@ -122,8 +122,12 @@ func (am *authorizationMiddleware) ViewChannel(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) ListChannels(ctx context.Context, session authn.Session, pm channels.Page) (channels.ChannelsPage, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return channels.ChannelsPage{}, err
 	}
 
 	return am.svc.ListChannels(ctx, session, pm)

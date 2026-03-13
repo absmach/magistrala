@@ -159,11 +159,20 @@ func (r *report) RemoveReportConfig(ctx context.Context, session authn.Session, 
 
 func (r *report) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
 	pm.Domain = session.DomainID
-	page, err := r.repo.ListReportsConfig(ctx, pm)
-	if err != nil {
-		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	switch session.SuperAdmin {
+	case true:
+		page, err := r.repo.ListAllReportsConfig(ctx, pm)
+		if err != nil {
+			return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		}
+		return page, nil
+	default:
+		page, err := r.repo.ListUserReportsConfig(ctx, session.UserID, pm)
+		if err != nil {
+			return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		}
+		return page, nil
 	}
-	return page, nil
 }
 
 func (r *report) EnableReportConfig(ctx context.Context, session authn.Session, id string) (ReportConfig, error) {

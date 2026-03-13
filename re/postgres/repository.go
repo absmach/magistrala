@@ -357,7 +357,7 @@ func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error
 	return nil
 }
 
-func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
+func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
 	pgData := ""
 	if pm.Limit != 0 {
 		pgData = "LIMIT :limit"
@@ -423,6 +423,87 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	}
 
 	return ret, nil
+}
+
+func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	pq := pageRulesQuery(pm)
+
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	orderClause := ""
+
+	switch pm.Order {
+	case api.NameKey:
+		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	case api.UpdatedAtOrder:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	default:
+		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+
+	pm.UserID = userID
+	userJoin := `
+		INNER JOIN rules_roles rr ON rr.entity_id = r.id
+		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+	`
+
+	whereClause := pq
+
+	innerQ := fmt.Sprintf(`
+		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,
+			r.start_datetime, r.time, r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status
+		FROM rules r
+		%s
+		%s
+	`, userJoin, whereClause)
+
+	q := fmt.Sprintf(`
+		SELECT * FROM (%s) AS sub %s %s;
+	`, innerQ, orderClause, pgData)
+
+	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
+	if err != nil {
+		return re.Page{}, err
+	}
+	defer rows.Close()
+
+	var rules []re.Rule
+	for rows.Next() {
+		var r dbRule
+		if err := rows.StructScan(&r); err != nil {
+			return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		ret, err := dbToRule(r)
+		if err != nil {
+			return re.Page{}, err
+		}
+		rules = append(rules, ret)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS count_sub;`, innerQ)
+	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	if err != nil {
+		return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return re.Page{
+		Total:  total,
+		Offset: pm.Offset,
+		Limit:  pm.Limit,
+		Rules:  rules,
+	}, nil
 }
 
 func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, due time.Time) (re.Rule, error) {

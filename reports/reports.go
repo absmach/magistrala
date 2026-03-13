@@ -395,6 +395,7 @@ type PageMeta struct {
 	Domain          string     `json:"domain_id,omitempty"         db:"domain_id"`
 	ScheduledBefore *time.Time `json:"scheduled_before,omitempty"  db:"scheduled_before"` // Filter rules scheduled before this time
 	ScheduledAfter  *time.Time `json:"scheduled_after,omitempty"   db:"scheduled_after"`  // Filter rules scheduled after this time
+	UserID          string     `json:"user_id,omitempty"           db:"user_id"`
 }
 
 type Repository interface {
@@ -405,7 +406,8 @@ type Repository interface {
 	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
-	ListReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	ListAllReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
+	ListUserReportsConfig(ctx context.Context, userID string, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 
 	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error

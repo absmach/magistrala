@@ -43,7 +43,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 		Scheduled:    &scheduledFalse,
 	}
 	ctx := context.Background()
-	page, err := re.repo.ListRules(ctx, pm)
+	page, err := re.repo.ListAllRules(ctx, pm)
 	if err != nil {
 		return err
 	}
@@ -130,7 +130,7 @@ func (re *re) StartScheduler(ctx context.Context) error {
 				ScheduledBefore: &due,
 			}
 
-			page, err := re.repo.ListRules(ctx, pm)
+			page, err := re.repo.ListAllRules(ctx, pm)
 			if err != nil {
 				re.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelError,

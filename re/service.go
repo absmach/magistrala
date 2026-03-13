@@ -175,11 +175,20 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 
 func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
 	pm.Domain = session.DomainID
-	page, err := re.repo.ListRules(ctx, pm)
-	if err != nil {
-		return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	switch session.SuperAdmin {
+	case true:
+		page, err := re.repo.ListAllRules(ctx, pm)
+		if err != nil {
+			return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		}
+		return page, nil
+	default:
+		page, err := re.repo.ListUserRules(ctx, session.UserID, pm)
+		if err != nil {
+			return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		}
+		return page, nil
 	}
-	return page, nil
 }
 
 func (re *re) RemoveRule(ctx context.Context, session authn.Session, id string) error {

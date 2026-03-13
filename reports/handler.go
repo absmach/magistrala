@@ -27,7 +27,7 @@ func (r *report) StartScheduler(ctx context.Context) error {
 				ScheduledBefore: &due,
 			}
 
-			reportConfigs, err := r.repo.ListReportsConfig(ctx, pm)
+			reportConfigs, err := r.repo.ListAllReportsConfig(ctx, pm)
 			if err != nil {
 				r.runInfo <- pkglog.RunInfo{
 					Level:   slog.LevelError,

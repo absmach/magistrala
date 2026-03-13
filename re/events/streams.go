@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/roles"
 	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -44,7 +45,7 @@ func NewEventStoreMiddleware(ctx context.Context, svc re.Service, url string) (r
 		return nil, err
 	}
 
-	res := rmEvents.NewRoleManagerEventStore("alarms", supermqPrefix, svc, publisher)
+	res := rmEvents.NewRoleManagerEventStore("rules", rulePrefix, svc, publisher)
 
 	return &eventStore{
 		svc:                   svc,
@@ -53,19 +54,20 @@ func NewEventStoreMiddleware(ctx context.Context, svc re.Service, url string) (r
 	}, nil
 }
 
-func (es *eventStore) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
-	rule, err := es.svc.AddRule(ctx, session, r)
+func (es *eventStore) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
+	rule, rps, err := es.svc.AddRule(ctx, session, r)
 	if err != nil {
-		return rule, err
+		return rule, rps, err
 	}
 	event := createRuleEvent{
-		rule:          rule,
-		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
+		rule:             rule,
+		rolesProvisioned: rps,
+		baseRuleEvent:    newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, CreateStream, event); err != nil {
-		return rule, err
+		return rule, rps, err
 	}
-	return rule, nil
+	return rule, rps, nil
 }
 
 func (es *eventStore) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {

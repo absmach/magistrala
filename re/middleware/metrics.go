@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/roles"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 	"github.com/go-kit/kit/metrics"
 )
@@ -32,7 +33,7 @@ func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, se
 	}
 }
 
-func (mm *metricsMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+func (mm *metricsMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add_rule").Add(1)
 		mm.latency.With("method", "add_rule").Observe(time.Since(begin).Seconds())

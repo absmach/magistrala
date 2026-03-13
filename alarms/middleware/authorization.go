@@ -7,10 +7,12 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/alarms/operations"
 	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 )
@@ -22,37 +24,40 @@ var (
 )
 
 type authorizationMiddleware struct {
-	svc   alarms.Service
-	authz smqauthz.Authorization
+	svc         alarms.Service
+	authz       smqauthz.Authorization
+	entitiesOps permissions.EntitiesOperations[permissions.Operation]
 }
 
 var _ alarms.Service = (*authorizationMiddleware)(nil)
 
-func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization) alarms.Service {
-	return &authorizationMiddleware{
-		svc:   svc,
-		authz: authz,
+func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (alarms.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
 	}
+
+	return &authorizationMiddleware{
+		svc:         svc,
+		authz:       authz,
+		entitiesOps: entitiesOps,
+	}, nil
 }
 
-func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (err error) {
+func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) error {
 	return am.svc.CreateAlarm(ctx, alarm)
 }
 
-func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (dba alarms.Alarm, err error) {
-	// If assignee is present, check if assignee is member of domain
-
-	if err := am.authorize(ctx, alarms.OpUpdateAlarm, session); err != nil {
-		return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
-	}
-
+func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
 	if alarm.AssigneeID != "" {
-		domainUserId := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
+		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
+			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
+		}
+		domainUserID := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
 		if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
 			Domain:      session.DomainID,
 			SubjectType: policies.UserType,
 			SubjectKind: policies.UsersKind,
-			Subject:     domainUserId,
+			Subject:     domainUserID,
 			Permission:  policies.MembershipPermission,
 			ObjectType:  policies.DomainType,
 			Object:      session.DomainID,
@@ -61,11 +66,23 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 		}
 	}
 
+	if alarm.AcknowledgedBy != "" {
+		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, policies.DomainType, session.DomainID); err != nil {
+			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
+		}
+	}
+
+	if alarm.ResolvedBy != "" {
+		if err := am.authorize(ctx, operations.OpResolveAlarm, session, policies.DomainType, session.DomainID); err != nil {
+			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
+		}
+	}
+
 	return am.svc.UpdateAlarm(ctx, session, alarm)
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, alarms.OpDeleteAlarm, session); err != nil {
+	if err := am.authorize(ctx, operations.OpDeleteAlarm, session, policies.DomainType, session.DomainID); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
 
@@ -77,23 +94,27 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		pm.DomainID = session.DomainID
 	}
 
-	if err := am.authorize(ctx, alarms.OpListAlarms, session); err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
+		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return alarms.AlarmsPage{}, err
 	}
 
 	return am.svc.ListAlarms(ctx, session, pm)
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, alarms.OpViewAlarm, session); err != nil {
+	if err := am.authorize(ctx, operations.OpViewAlarm, session, policies.DomainType, session.DomainID); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
 	return am.svc.ViewAlarm(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session) error {
-	perm, err := alarms.GetPermission(op)
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
+	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
 	}
@@ -103,19 +124,19 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Subject:     session.DomainUserID,
-		Object:      session.DomainID,
-		ObjectType:  policies.DomainType,
-		Permission:  perm,
+		Object:      obj,
+		ObjectType:  objType,
+		Permission:  perm.String(),
 	}
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
-		opName := alarms.OperationName(op)
+		opName := am.entitiesOps.OperationName(operations.EntityType, op)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   session.DomainID,
-			EntityType: alarms.EntityType,
+			EntityType: operations.EntityType,
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}
@@ -125,5 +146,21 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		return err
 	}
 
+	return nil
+}
+
+func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
+	if session.Role != authn.SuperAdminRole {
+		return svcerr.ErrSuperAdminAction
+	}
+	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
+		SubjectType: policies.UserType,
+		Subject:     session.UserID,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.SuperMQObject,
+	}, nil); err != nil {
+		return err
+	}
 	return nil
 }

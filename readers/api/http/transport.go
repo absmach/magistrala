@@ -227,7 +227,7 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 		if err != nil {
 			return "", "", err
 		}
-		if session.Role == smqauthn.AdminRole {
+		if session.Role == smqauthn.SuperAdminRole {
 			return session.UserID, policies.UserType, nil
 		}
 

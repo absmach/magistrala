@@ -6,7 +6,6 @@ package alarms_test
 import (
 	"context"
 	"fmt"
-	"math"
 	"testing"
 	"time"
 
@@ -22,9 +21,13 @@ import (
 
 var idp = uuid.New()
 
+func newService(t *testing.T, repo *mocks.Repository) alarms.Service {
+	return alarms.NewService(idp, repo)
+}
+
 func TestCreateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 	ts := time.Now()
 	cases := []struct {
 		desc  string
@@ -69,33 +72,16 @@ func TestCreateAlarm(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("CreateAlarm", context.Background(), mock.Anything).Return(tc.alarm, tc.err)
-			repoCall1 := repo.On("ListAlarms", context.Background(), alarms.PageMetadata{
-				Offset: 0, Limit: 1,
-				DomainID:    tc.alarm.DomainID,
-				ChannelID:   tc.alarm.ChannelID,
-				ClientID:    tc.alarm.ClientID,
-				Subtopic:    tc.alarm.Subtopic,
-				Measurement: tc.alarm.Measurement,
-				RuleID:      tc.alarm.RuleID,
-				Status:      alarms.AllStatus,
-				Severity:    math.MaxUint8,
-				CreatedTo:   tc.alarm.CreatedAt,
-			}).Return(alarms.AlarmsPage{}, tc.err)
 			err := svc.CreateAlarm(context.Background(), tc.alarm)
-			if tc.err != nil {
-				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
-				return
-			}
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
-			repoCall1.Unset()
 		})
 	}
 }
 
 func TestViewAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc     string
@@ -134,7 +120,7 @@ func TestViewAlarm(t *testing.T) {
 
 func TestUpdateAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc  string
@@ -192,7 +178,7 @@ func TestUpdateAlarm(t *testing.T) {
 
 func TestListAlarms(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string
@@ -219,7 +205,7 @@ func TestListAlarms(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			s := authn.Session{DomainID: tc.pm.DomainID}
-			repoCall := repo.On("ListAlarms", context.Background(), tc.pm).Return(tc.page, tc.err)
+			repoCall := repo.On("ListUserAlarms", context.Background(), s.UserID, tc.pm).Return(tc.page, tc.err)
 			_, err := svc.ListAlarms(context.Background(), s, tc.pm)
 			if tc.err != nil {
 				assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -233,7 +219,7 @@ func TestListAlarms(t *testing.T) {
 
 func TestDeleteAlarm(t *testing.T) {
 	repo := new(mocks.Repository)
-	svc := alarms.NewService(idp, repo)
+	svc := newService(t, repo)
 
 	cases := []struct {
 		desc string

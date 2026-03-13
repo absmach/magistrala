@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/roles"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
 )
 
@@ -47,14 +48,14 @@ func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions
 	}, nil
 }
 
-func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
 	params := map[string]any{
 		"entities": r,
 		"count":    1,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpAddRule, params); err != nil {
-		return re.Rule{}, err
+		return re.Rule{}, nil, err
 	}
 
 	return cm.svc.AddRule(ctx, session, r)

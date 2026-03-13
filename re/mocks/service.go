@@ -136,7 +136,7 @@ func (_c *Service_AddRole_Call) RunAndReturn(run func(ctx context.Context, sessi
 }
 
 // AddRule provides a mock function for the type Service
-func (_mock *Service) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+func (_mock *Service) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
 	ret := _mock.Called(ctx, session, r)
 
 	if len(ret) == 0 {
@@ -144,8 +144,9 @@ func (_mock *Service) AddRule(ctx context.Context, session authn.Session, r re.R
 	}
 
 	var r0 re.Rule
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) (re.Rule, error)); ok {
+	var r1 []roles.RoleProvision
+	var r2 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) (re.Rule, []roles.RoleProvision, error)); ok {
 		return returnFunc(ctx, session, r)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, re.Rule) re.Rule); ok {
@@ -153,12 +154,19 @@ func (_mock *Service) AddRule(ctx context.Context, session authn.Session, r re.R
 	} else {
 		r0 = ret.Get(0).(re.Rule)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.Rule) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, re.Rule) []roles.RoleProvision); ok {
 		r1 = returnFunc(ctx, session, r)
 	} else {
-		r1 = ret.Error(1)
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).([]roles.RoleProvision)
+		}
 	}
-	return r0, r1
+	if returnFunc, ok := ret.Get(2).(func(context.Context, authn.Session, re.Rule) error); ok {
+		r2 = returnFunc(ctx, session, r)
+	} else {
+		r2 = ret.Error(2)
+	}
+	return r0, r1, r2
 }
 
 // Service_AddRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRule'
@@ -197,12 +205,12 @@ func (_c *Service_AddRule_Call) Run(run func(ctx context.Context, session authn.
 	return _c
 }
 
-func (_c *Service_AddRule_Call) Return(rule re.Rule, err error) *Service_AddRule_Call {
-	_c.Call.Return(rule, err)
+func (_c *Service_AddRule_Call) Return(rule re.Rule, roleProvisions []roles.RoleProvision, err error) *Service_AddRule_Call {
+	_c.Call.Return(rule, roleProvisions, err)
 	return _c
 }
 
-func (_c *Service_AddRule_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error)) *Service_AddRule_Call {
+func (_c *Service_AddRule_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error)) *Service_AddRule_Call {
 	_c.Call.Return(run)
 	return _c
 }

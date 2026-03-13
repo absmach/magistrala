@@ -72,6 +72,7 @@ type PageMetadata struct {
 	AssignedBy     string    `json:"assigned_by"     db:"assigned_by"`
 	AcknowledgedBy string    `json:"acknowledged_by" db:"acknowledged_by"`
 	ResolvedBy     string    `json:"resolved_by"     db:"resolved_by"`
+	UserID         string    `json:"user_id"         db:"user_id"`
 }
 
 func (a Alarm) Validate() error {
@@ -116,6 +117,7 @@ type Repository interface {
 	CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	UpdateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
-	ListAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
+	ListAllAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
+	ListUserAlarms(ctx context.Context, userID string, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
 }

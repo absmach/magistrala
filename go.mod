@@ -6,14 +6,12 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.5
-	github.com/absmach/mgate v0.5.0
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.8.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
 	github.com/authzed/spicedb v1.49.2
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/caarlos0/env/v11 v11.4.0
-	github.com/cenkalti/backoff/v4 v4.3.0
 	github.com/dgraph-io/ristretto/v2 v2.4.0
 	github.com/eclipse/paho.mqtt.golang v1.5.1
 	github.com/fatih/color v1.18.0
@@ -23,7 +21,6 @@ require (
 	github.com/gofrs/uuid/v5 v5.4.0
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.0
-	github.com/gorilla/websocket v1.5.3
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f
 	github.com/ivanpirog/coloredcobra v1.0.1
 	github.com/jackc/pgerrcode v0.0.0-20250907135507-afb5586c32a6
@@ -38,10 +35,8 @@ require (
 	github.com/openbao/openbao/api/v2 v2.5.1
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5
-	github.com/pion/dtls/v3 v3.1.2
 	github.com/plgd-dev/go-coap/v3 v3.4.2
 	github.com/prometheus/client_golang v1.23.2
-	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.18.0
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/slack-go/slack v0.19.0
@@ -69,6 +64,12 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v3 v3.0.1
 	moul.io/http2curl v1.0.0
+)
+
+require (
+	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/pion/dtls/v3 v3.1.2 // indirect
 )
 
 require (

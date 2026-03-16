@@ -60,12 +60,9 @@ jobs:
       fail-fast: true
       matrix:
         variant:
-          - name: rabbitmq
-            env: SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
-            target: mqtt
           - name: redis
             env: SMQ_ES_TYPE=es_redis
-            target: mqtt
+            target: fluxmq
 
     steps:
       - name: Checkout code

@@ -15,7 +15,6 @@ on:
       - "clients/api/http/**"
       - "domains/api/http/**"
       - "groups/api/http/**"
-      - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
       - "bootstrap/api/**"
@@ -36,7 +35,6 @@ on:
       - "clients/api/http/**"
       - "domains/api/http/**"
       - "groups/api/http/**"
-      - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
       - "bootstrap/api/**"
@@ -62,7 +60,6 @@ env:
   CLIENTS_URL: http://localhost:9006
   CHANNELS_URL: http://localhost:9005
   GROUPS_URL: http://localhost:9004
-  HTTP_ADAPTER_URL: http://localhost:8008
   AUTH_URL: http://localhost:9001
   JOURNAL_URL: http://localhost:9021
   BOOTSTRAP_URL: http://localhost:9013
@@ -110,10 +107,6 @@ jobs:
             domains:
               - "apidocs/openapi/domains.yaml"
               - "domains/api/http/**"
-
-            http:
-              - "apidocs/openapi/http.yaml"
-              - "http/api/**"
 
             clients:
               - "apidocs/openapi/clients.yaml"
@@ -221,15 +214,6 @@ jobs:
           base-url: ${{ env.CHANNELS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-
-      - name: Run HTTP Adapter API tests
-        if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
-        with:
-          schema: apidocs/openapi/http.yaml
-          base-url: ${{ env.HTTP_ADAPTER_URL }}
-          checks: all
-          args: '--header "Authorization: Client ${{ env.CLIENT_SECRET }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Auth API tests
         if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'

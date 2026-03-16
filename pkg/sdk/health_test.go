@@ -20,9 +20,6 @@ func TestHealth(t *testing.T) {
 	usersTs, _, _ := setupUsers()
 	defer usersTs.Close()
 
-	httpAdapterTs, _ := setupMessages(t)
-	defer httpAdapterTs.Close()
-
 	groupsTs, _, _ := setupGroups()
 	defer groupsTs.Close()
 
@@ -38,7 +35,6 @@ func TestHealth(t *testing.T) {
 	sdkConf := sdk.Config{
 		ClientsURL:      clientsTs.URL,
 		UsersURL:        usersTs.URL,
-		HTTPAdapterURL:  httpAdapterTs.URL,
 		GroupsURL:       groupsTs.URL,
 		ChannelsURL:     channelsTs.URL,
 		DomainsURL:      domainsTs.URL,
@@ -70,14 +66,6 @@ func TestHealth(t *testing.T) {
 			empty:       false,
 			err:         nil,
 			description: "users service",
-			status:      "pass",
-		},
-		{
-			desc:        "get http-adapter service health check",
-			service:     "http-adapter",
-			empty:       false,
-			err:         nil,
-			description: "http service",
 			status:      "pass",
 		},
 		{

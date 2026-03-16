@@ -3,8 +3,8 @@
 
 SMQ_DOCKER_IMAGE_NAME_PREFIX ?= supermq
 BUILD_DIR ?= build
-SERVICES = auth users clients groups channels domains http coap notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports fluxmq
-TEST_API_SERVICES = journal auth certs http clients users channels groups domains
+SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports fluxmq
+TEST_API_SERVICES = journal auth certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))

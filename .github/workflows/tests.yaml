@@ -111,14 +111,6 @@ jobs:
               - "domains/api/grpc/**"
               - "internal/grpc/**"
 
-            coap:
-              - "coap/**"
-              - "cmd/coap/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-
             domains:
               - "domains/**"
               - "cmd/domains/**"
@@ -140,15 +132,6 @@ jobs:
               - "domains/api/grpc/**"
               - "internal/grpc/**"
 
-            http:
-              - "http/**"
-              - "cmd/http/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-
             internal:
               - "internal/**"
 
@@ -162,16 +145,6 @@ jobs:
 
             logger:
               - "logger/**"
-
-            mqtt:
-              - "mqtt/**"
-              - "cmd/mqtt/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-              - "pkg/events/**"
 
             pkg-errors:
               - "pkg/errors/**"
@@ -191,7 +164,6 @@ jobs:
               - "pkg/errors/**"
               - "pkg/groups/**"
               - "auth/**"
-              - "http/**"
               - "internal/*"
               - "clients/**"
               - "users/**"
@@ -266,7 +238,7 @@ jobs:
 
           if [[ "${{ steps.changes.outputs.workflow }}" == "true" || "${{ steps.changes.outputs.pkg-errors }}" == "true" ]]; then
             # If workflow or pkg/errors changed, test everything
-            modules=("auth" "channels" "cli" "clients" "coap" "domains" "groups" "http" "internal" "journal" "logger" "mqtt" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers" "re" "alarms" "reports")
+            modules=("auth" "channels" "cli" "clients" "domains" "groups" "internal" "journal" "logger" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers" "re" "alarms" "reports")
           else
             # Add only changed modules
             [[ "${{ steps.changes.outputs.auth }}" == "true" ]] && modules+=("auth")

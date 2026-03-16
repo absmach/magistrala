@@ -24,6 +24,12 @@ server:
       addr: "0.0.0.0:8081"
       path: "/mqtt"
       protocol: "v5"
+  http:
+    plain:
+      addr: "0.0.0.0:8008"
+  coap:
+    plain:
+      addr: "0.0.0.0:5683"
   health_addr: "0.0.0.0:8088"
   health_enabled: true
   shutdown_timeout: 30s

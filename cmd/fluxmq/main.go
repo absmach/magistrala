@@ -16,7 +16,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	grpcFluxmqV1 "github.com/absmach/supermq/api/grpc/fluxmq/v1"
+	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
 	fluxmqgrpc "github.com/absmach/supermq/fluxmq/api/grpc"
 	smqlog "github.com/absmach/supermq/logger"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
@@ -158,7 +158,7 @@ func main() {
 
 	registerFluxMQServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		grpcFluxmqV1.RegisterAuthServiceServer(srv, fluxmqgrpc.NewServer(clientsClient, channelsClient, parser))
+		authv1.RegisterAuthServiceServer(srv, fluxmqgrpc.NewServer(clientsClient, channelsClient, parser))
 	}
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerFluxMQServer, logger)
 

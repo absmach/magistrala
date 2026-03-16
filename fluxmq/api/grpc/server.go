@@ -8,7 +8,7 @@ import (
 
 	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	grpcFluxmqV1 "github.com/absmach/supermq/api/grpc/fluxmq/v1"
+	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
 	smqauth "github.com/absmach/supermq/auth"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
@@ -19,10 +19,10 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-var _ grpcFluxmqV1.AuthServiceServer = (*grpcServer)(nil)
+var _ authv1.AuthServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
-	grpcFluxmqV1.UnimplementedAuthServiceServer
+	authv1.UnimplementedAuthServiceServer
 	authenticate kitgrpc.Handler
 	authorize    kitgrpc.Handler
 }
@@ -33,7 +33,7 @@ func NewServer(
 	clients grpcClientsV1.ClientsServiceClient,
 	channels grpcChannelsV1.ChannelsServiceClient,
 	parser messaging.TopicParser,
-) grpcFluxmqV1.AuthServiceServer {
+) authv1.AuthServiceServer {
 	return &grpcServer{
 		authenticate: kitgrpc.NewServer(
 			authenticateEndpoint(clients),
@@ -48,16 +48,16 @@ func NewServer(
 	}
 }
 
-func (s *grpcServer) Authenticate(ctx context.Context, req *grpcFluxmqV1.AuthnReq) (*grpcFluxmqV1.AuthnRes, error) {
+func (s *grpcServer) Authenticate(ctx context.Context, req *authv1.AuthnReq) (*authv1.AuthnRes, error) {
 	_, res, err := s.authenticate.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*grpcFluxmqV1.AuthnRes), nil
+	return res.(*authv1.AuthnRes), nil
 }
 
 func decodeAuthenticateRequest(_ context.Context, grpcReq any) (any, error) {
-	req := grpcReq.(*grpcFluxmqV1.AuthnReq)
+	req := grpcReq.(*authv1.AuthnReq)
 	return authenticateReq{
 		clientID: req.GetClientId(),
 		username: req.GetUsername(),
@@ -67,22 +67,22 @@ func decodeAuthenticateRequest(_ context.Context, grpcReq any) (any, error) {
 
 func encodeAuthenticateResponse(_ context.Context, grpcRes any) (any, error) {
 	res := grpcRes.(authenticateRes)
-	return &grpcFluxmqV1.AuthnRes{
+	return &authv1.AuthnRes{
 		Authenticated: res.authenticated,
 		Id:            res.id,
 	}, nil
 }
 
-func (s *grpcServer) Authorize(ctx context.Context, req *grpcFluxmqV1.AuthzReq) (*grpcFluxmqV1.AuthzRes, error) {
+func (s *grpcServer) Authorize(ctx context.Context, req *authv1.AuthzReq) (*authv1.AuthzRes, error) {
 	_, res, err := s.authorize.ServeGRPC(ctx, req)
 	if err != nil {
 		return nil, encodeError(err)
 	}
-	return res.(*grpcFluxmqV1.AuthzRes), nil
+	return res.(*authv1.AuthzRes), nil
 }
 
 func decodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
-	req := grpcReq.(*grpcFluxmqV1.AuthzReq)
+	req := grpcReq.(*authv1.AuthzReq)
 	return authorizeReq{
 		externalID: req.GetExternalId(),
 		topic:      req.GetTopic(),
@@ -92,7 +92,7 @@ func decodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
 
 func encodeAuthorizeResponse(_ context.Context, grpcRes any) (any, error) {
 	res := grpcRes.(authorizeRes)
-	return &grpcFluxmqV1.AuthzRes{
+	return &authv1.AuthzRes{
 		Authorized: res.authorized,
 	}, nil
 }

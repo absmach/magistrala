@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !es_nats && !es_rabbitmq && !es_fluxmq
-// +build !es_nats,!es_rabbitmq,!es_fluxmq
+//go:build es_fluxmq
+// +build es_fluxmq
 
 package store
 
@@ -12,18 +12,18 @@ import (
 	"log/slog"
 
 	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/redis"
+	"github.com/absmach/supermq/pkg/events/fluxmq"
 )
 
 // StreamAllEvents represents subject to subscribe for all the events.
 const StreamAllEvents = ">"
 
 func init() {
-	log.Println("The binary was build using redis as the events store")
+	log.Println("The binary was built using FluxMQ as the events store")
 }
 
 func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
-	pb, err := redis.NewPublisher(ctx, url, events.UnpublishedEventsCheckInterval)
+	pb, err := fluxmq.NewPublisher(ctx, url)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
 	return pb, nil
 }
 
-func NewSubscriber(_ context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
-	pb, err := redis.NewSubscriber(url, logger)
+func NewSubscriber(ctx context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
+	pb, err := fluxmq.NewSubscriber(ctx, url, logger)
 	if err != nil {
 		return nil, err
 	}

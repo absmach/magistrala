@@ -1224,6 +1224,7 @@ services:
     restart: on-failure
     ports:
       - ${SMQ_COAP_PORT}:5683/udp
+      - ${SMQ_FLUXMQ_AMQP091_PORT}:5682
     networks:
       - supermq-base-net
     volumes:

@@ -76,7 +76,7 @@ type config struct {
 	SpicedbSchemaFile             string        `env:"SMQ_SPICEDB_SCHEMA_FILE"                    envDefault:"./docker/spicedb/schema.zed"`
 	SpicedbPreSharedKey           string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"                 envDefault:"12345678"`
 	TraceRatio                    float64       `env:"SMQ_JAEGER_TRACE_RATIO"                     envDefault:"1.0"`
-	ESURL                         string        `env:"SMQ_ES_URL"                                 envDefault:"nats://localhost:4222"`
+	ESURL                         string        `env:"SMQ_ES_URL"                                 envDefault:"amqp://guest:guest@localhost:5682/"`
 	CacheURL                      string        `env:"SMQ_AUTH_CACHE_URL"                         envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration              time.Duration `env:"SMQ_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
 	JWKSCacheMaxAge               int           `env:"SMQ_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`

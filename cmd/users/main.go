@@ -85,7 +85,7 @@ type config struct {
 	JaegerURL                  url.URL       `env:"SMQ_JAEGER_URL"                        envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry              bool          `env:"SMQ_SEND_TELEMETRY"                    envDefault:"true"`
 	InstanceID                 string        `env:"SMQ_USERS_INSTANCE_ID"                 envDefault:""`
-	ESURL                      string        `env:"SMQ_ES_URL"                            envDefault:"nats://localhost:4222"`
+	ESURL                      string        `env:"SMQ_ES_URL"                            envDefault:"amqp://guest:guest@localhost:5682/"`
 	TraceRatio                 float64       `env:"SMQ_JAEGER_TRACE_RATIO"                envDefault:"1.0"`
 	SelfRegister               bool          `env:"SMQ_USERS_ALLOW_SELF_REGISTER"         envDefault:"false"`
 	OAuthUIRedirectURL         string        `env:"SMQ_OAUTH_UI_REDIRECT_URL"             envDefault:"http://localhost:9095/domains"`

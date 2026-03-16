@@ -38,7 +38,7 @@ endif
 ifneq ($(SMQ_ES_TYPE),)
 	SMQ_ES_TYPE := $(SMQ_ES_TYPE)
 else
-	SMQ_ES_TYPE=es_nats
+	SMQ_ES_TYPE=es_fluxmq
 endif
 
 define compile_service

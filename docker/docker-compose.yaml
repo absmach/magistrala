@@ -1339,6 +1339,91 @@ services:
         bind:
           create_host_path: true
 
+  fluxmq-auth:
+    image: docker.io/supermq/fluxmq:${SMQ_RELEASE_TAG}
+    container_name: supermq-fluxmq-auth
+    depends_on:
+      - clients
+      - channels
+      - domains
+    restart: on-failure
+    environment:
+      SMQ_FLUXMQ_LOG_LEVEL: ${SMQ_FLUXMQ_LOG_LEVEL}
+      SMQ_FLUXMQ_GRPC_HOST: ${SMQ_FLUXMQ_GRPC_HOST}
+      SMQ_FLUXMQ_GRPC_PORT: ${SMQ_FLUXMQ_GRPC_PORT}
+      SMQ_FLUXMQ_INSTANCE_ID: ${SMQ_FLUXMQ_INSTANCE_ID}
+      SMQ_FLUXMQ_CACHE_NUM_COUNTERS: ${SMQ_FLUXMQ_CACHE_NUM_COUNTERS}
+      SMQ_FLUXMQ_CACHE_MAX_COST: ${SMQ_FLUXMQ_CACHE_MAX_COST}
+      SMQ_FLUXMQ_CACHE_BUFFER_ITEMS: ${SMQ_FLUXMQ_CACHE_BUFFER_ITEMS}
+      SMQ_CLIENTS_GRPC_URL: ${SMQ_CLIENTS_GRPC_URL}
+      SMQ_CLIENTS_GRPC_TIMEOUT: ${SMQ_CLIENTS_GRPC_TIMEOUT}
+      SMQ_CLIENTS_GRPC_CLIENT_CERT: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      SMQ_CLIENTS_GRPC_CLIENT_KEY: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      SMQ_CLIENTS_GRPC_SERVER_CA_CERTS: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+    networks:
+      - supermq-base-net
+    volumes:
+      # Clients gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Channels gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Domains gRPC mTLS client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
   http-adapter:
     image: docker.io/supermq/http:${SMQ_RELEASE_TAG}
     container_name: supermq-http

@@ -1,0 +1,80 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package fluxmq.auth.v1;
+
+option go_package = "github.com/absmach/supermq/api/grpc/fluxmq/v1";
+
+// AuthService is a callout service for external authentication and
+// authorization. Broker implementations call this service during connection
+// establishment, publish, and subscribe to delegate credential validation
+// and topic-level access control to an external provider.
+service AuthService {
+  // Authenticate validates client credentials presented during connection.
+  // The server resolves the credentials to an external identity (e.g. a UUID)
+  // which the broker stores on the session and passes in subsequent Authorize
+  // calls.
+  rpc Authenticate(AuthnReq) returns (AuthnRes);
+
+  // Authorize checks whether a previously authenticated identity is allowed
+  // to perform a given action on a topic. The topic is passed as-is; any
+  // parsing, route resolution, or mapping is the server's responsibility.
+  rpc Authorize(AuthzReq) returns (AuthzRes);
+}
+
+// Protocol identifies which messaging protocol the client connected with.
+enum Protocol {
+  Unspecified = 0;
+  MQTT = 1;
+  AMQP_1_0 = 2;
+  AMQP_0_9_1 = 3;
+}
+
+message AuthnReq {
+  // Client identifier from the connection handshake.
+  string client_id = 1;
+  // Username credential.
+  string username = 2;
+  // Password credential.
+  string password = 3;
+  // Protocol the client connected with.
+  Protocol protocol = 4;
+}
+
+message AuthnRes {
+  // Whether the credentials are valid.
+  bool authenticated = 1;
+  // External identity resolved by the auth provider (e.g. a client UUID).
+  // The broker stores this on the session and passes it in AuthzReq.
+  string id = 2;
+  // Machine-readable reason code (0 = success).
+  uint32 reason_code = 3;
+  // Human-readable reason for rejection (empty on success).
+  string reason = 4;
+}
+
+message AuthzReq {
+  // External identity returned from AuthnRes.id.
+  string external_id = 1;
+  // Raw topic or topic filter from the publish/subscribe operation.
+  string topic = 2;
+  // The action being requested.
+  Action action = 3;
+}
+
+enum Action {
+  None = 0;
+  Publish = 1;
+  Subscribe = 2;
+}
+
+message AuthzRes {
+  // Whether the action is authorized.
+  bool authorized = 1;
+  // Machine-readable reason code (0 = authorized).
+  uint32 reason_code = 2;
+  // Human-readable reason for rejection (empty on success).
+  string reason = 3;
+}

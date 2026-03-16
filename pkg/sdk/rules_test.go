@@ -16,6 +16,7 @@ import (
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
+	"github.com/absmach/supermq/pkg/roles"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -95,7 +96,7 @@ func TestAddRule(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := rsvc.On("AddRule", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
+			svcCall := rsvc.On("AddRule", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, []roles.RoleProvision(nil), tc.svcErr)
 			result, err := mgsdk.AddRule(context.Background(), tc.rule, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {

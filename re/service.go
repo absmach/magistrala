@@ -175,7 +175,14 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 
 func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
 	pm.Domain = session.DomainID
-	page, err := re.repo.ListRules(ctx, pm)
+	if session.SuperAdmin {
+		page, err := re.repo.ListAllRules(ctx, pm)
+		if err != nil {
+			return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
+		}
+		return page, nil
+	}
+	page, err := re.repo.ListUserRules(ctx, session.UserID, pm)
 	if err != nil {
 		return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

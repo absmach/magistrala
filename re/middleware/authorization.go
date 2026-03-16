@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
@@ -90,8 +91,12 @@ func (am *authorizationMiddleware) UpdateRuleSchedule(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {
-	if err := am.authorize(ctx, operations.OpListRules, session, policies.DomainType, session.DomainID); err != nil {
-		return re.Page{}, errors.Wrap(errDomainViewRules, err)
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
+		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return re.Page{}, err
 	}
 
 	return am.svc.ListRules(ctx, session, pm)
@@ -166,5 +171,21 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		return err
 	}
 
+	return nil
+}
+
+func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
+	if session.Role != authn.SuperAdminRole {
+		return svcerr.ErrSuperAdminAction
+	}
+	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
+		SubjectType: policies.UserType,
+		Subject:     session.UserID,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.SuperMQObject,
+	}, nil); err != nil {
+		return err
+	}
 	return nil
 }

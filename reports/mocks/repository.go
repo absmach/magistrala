@@ -241,6 +241,72 @@ func (_c *Repository_DeleteReportTemplate_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// ListAllReportsConfig provides a mock function for the type Repository
+func (_mock *Repository) ListAllReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+	ret := _mock.Called(ctx, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAllReportsConfig")
+	}
+
+	var r0 reports.ReportConfigPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, reports.PageMeta) (reports.ReportConfigPage, error)); ok {
+		return returnFunc(ctx, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, reports.PageMeta) reports.ReportConfigPage); ok {
+		r0 = returnFunc(ctx, pm)
+	} else {
+		r0 = ret.Get(0).(reports.ReportConfigPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, reports.PageMeta) error); ok {
+		r1 = returnFunc(ctx, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Repository_ListAllReportsConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAllReportsConfig'
+type Repository_ListAllReportsConfig_Call struct {
+	*mock.Call
+}
+
+// ListAllReportsConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm reports.PageMeta
+func (_e *Repository_Expecter) ListAllReportsConfig(ctx interface{}, pm interface{}) *Repository_ListAllReportsConfig_Call {
+	return &Repository_ListAllReportsConfig_Call{Call: _e.mock.On("ListAllReportsConfig", ctx, pm)}
+}
+
+func (_c *Repository_ListAllReportsConfig_Call) Run(run func(ctx context.Context, pm reports.PageMeta)) *Repository_ListAllReportsConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 reports.PageMeta
+		if args[1] != nil {
+			arg1 = args[1].(reports.PageMeta)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Repository_ListAllReportsConfig_Call) Return(reportConfigPage reports.ReportConfigPage, err error) *Repository_ListAllReportsConfig_Call {
+	_c.Call.Return(reportConfigPage, err)
+	return _c
+}
+
+func (_c *Repository_ListAllReportsConfig_Call) RunAndReturn(run func(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error)) *Repository_ListAllReportsConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListEntityMembers provides a mock function for the type Repository
 func (_mock *Repository) ListEntityMembers(ctx context.Context, entityID string, pageQuery roles.MembersRolePageQuery) (roles.MembersRolePage, error) {
 	ret := _mock.Called(ctx, entityID, pageQuery)
@@ -313,68 +379,74 @@ func (_c *Repository_ListEntityMembers_Call) RunAndReturn(run func(ctx context.C
 	return _c
 }
 
-// ListReportsConfig provides a mock function for the type Repository
-func (_mock *Repository) ListReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	ret := _mock.Called(ctx, pm)
+// ListUserReportsConfig provides a mock function for the type Repository
+func (_mock *Repository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+	ret := _mock.Called(ctx, userID, pm)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListReportsConfig")
+		panic("no return value specified for ListUserReportsConfig")
 	}
 
 	var r0 reports.ReportConfigPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, reports.PageMeta) (reports.ReportConfigPage, error)); ok {
-		return returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, reports.PageMeta) (reports.ReportConfigPage, error)); ok {
+		return returnFunc(ctx, userID, pm)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, reports.PageMeta) reports.ReportConfigPage); ok {
-		r0 = returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, reports.PageMeta) reports.ReportConfigPage); ok {
+		r0 = returnFunc(ctx, userID, pm)
 	} else {
 		r0 = ret.Get(0).(reports.ReportConfigPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, reports.PageMeta) error); ok {
-		r1 = returnFunc(ctx, pm)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, reports.PageMeta) error); ok {
+		r1 = returnFunc(ctx, userID, pm)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// Repository_ListReportsConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReportsConfig'
-type Repository_ListReportsConfig_Call struct {
+// Repository_ListUserReportsConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListUserReportsConfig'
+type Repository_ListUserReportsConfig_Call struct {
 	*mock.Call
 }
 
-// ListReportsConfig is a helper method to define mock.On call
+// ListUserReportsConfig is a helper method to define mock.On call
 //   - ctx context.Context
+//   - userID string
 //   - pm reports.PageMeta
-func (_e *Repository_Expecter) ListReportsConfig(ctx interface{}, pm interface{}) *Repository_ListReportsConfig_Call {
-	return &Repository_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm)}
+func (_e *Repository_Expecter) ListUserReportsConfig(ctx interface{}, userID interface{}, pm interface{}) *Repository_ListUserReportsConfig_Call {
+	return &Repository_ListUserReportsConfig_Call{Call: _e.mock.On("ListUserReportsConfig", ctx, userID, pm)}
 }
 
-func (_c *Repository_ListReportsConfig_Call) Run(run func(ctx context.Context, pm reports.PageMeta)) *Repository_ListReportsConfig_Call {
+func (_c *Repository_ListUserReportsConfig_Call) Run(run func(ctx context.Context, userID string, pm reports.PageMeta)) *Repository_ListUserReportsConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 reports.PageMeta
+		var arg1 string
 		if args[1] != nil {
-			arg1 = args[1].(reports.PageMeta)
+			arg1 = args[1].(string)
+		}
+		var arg2 reports.PageMeta
+		if args[2] != nil {
+			arg2 = args[2].(reports.PageMeta)
 		}
 		run(
 			arg0,
 			arg1,
+			arg2,
 		)
 	})
 	return _c
 }
 
-func (_c *Repository_ListReportsConfig_Call) Return(reportConfigPage reports.ReportConfigPage, err error) *Repository_ListReportsConfig_Call {
+func (_c *Repository_ListUserReportsConfig_Call) Return(reportConfigPage reports.ReportConfigPage, err error) *Repository_ListUserReportsConfig_Call {
 	_c.Call.Return(reportConfigPage, err)
 	return _c
 }
 
-func (_c *Repository_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error)) *Repository_ListReportsConfig_Call {
+func (_c *Repository_ListUserReportsConfig_Call) RunAndReturn(run func(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error)) *Repository_ListUserReportsConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

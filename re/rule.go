@@ -172,6 +172,7 @@ type PageMeta struct {
 	ScheduledBefore *time.Time          `json:"scheduled_before,omitempty"  db:"scheduled_before"` // Filter rules scheduled before this time
 	ScheduledAfter  *time.Time          `json:"scheduled_after,omitempty"   db:"scheduled_after"`  // Filter rules scheduled after this time
 	Recurring       *schedule.Recurring `json:"recurring,omitempty"         db:"recurring"`        // Filter by recurring type
+	UserID          string              `json:"user_id,omitempty"           db:"user_id"`
 }
 
 // EventEncode converts a PageMeta struct to map[string]any.
@@ -250,7 +251,8 @@ type Repository interface {
 	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
-	ListRules(ctx context.Context, pm PageMeta) (Page, error)
+	ListAllRules(ctx context.Context, pm PageMeta) (Page, error)
+	ListUserRules(ctx context.Context, userID string, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
 	roles.Repository
 }

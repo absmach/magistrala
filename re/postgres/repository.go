@@ -357,33 +357,10 @@ func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error
 	return nil
 }
 
-func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
+func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
 	pq := pageRulesQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
+	orderClause := rulesOrderClause(pm)
+	pgData := rulesPageData(pm)
 
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_value, outputs,
@@ -425,6 +402,62 @@ func (repo *PostgresRepository) ListRules(ctx context.Context, pm re.PageMeta) (
 	return ret, nil
 }
 
+func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
+	pm.UserID = userID
+	pq := pageRulesQuery(pm)
+	orderClause := rulesOrderClause(pm)
+	pgData := rulesPageData(pm)
+
+	userJoin := `
+		INNER JOIN rules_roles rr ON rr.entity_id = r.id
+		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+	`
+
+	innerQ := fmt.Sprintf(`
+		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,
+			r.start_datetime, r.time, r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status
+		FROM rules r
+		%s
+		%s
+	`, userJoin, pq)
+
+	q := fmt.Sprintf(`
+		SELECT * FROM (%s) AS sub %s %s;
+	`, innerQ, orderClause, pgData)
+
+	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
+	if err != nil {
+		return re.Page{}, err
+	}
+	defer rows.Close()
+
+	var rules []re.Rule
+	for rows.Next() {
+		var r dbRule
+		if err := rows.StructScan(&r); err != nil {
+			return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		ret, err := dbToRule(r)
+		if err != nil {
+			return re.Page{}, err
+		}
+		rules = append(rules, ret)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS count_sub;`, innerQ)
+	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	if err != nil {
+		return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+
+	return re.Page{
+		Total:  total,
+		Offset: pm.Offset,
+		Limit:  pm.Limit,
+		Rules:  rules,
+	}, nil
+}
+
 func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, due time.Time) (re.Rule, error) {
 	q := `
 		UPDATE rules
@@ -458,6 +491,33 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	}
 
 	return rule, nil
+}
+
+func rulesOrderClause(pm re.PageMeta) string {
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	switch pm.Order {
+	case api.NameKey:
+		return fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		return fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	default:
+		return fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+}
+
+func rulesPageData(pm re.PageMeta) string {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	return pgData
 }
 
 func pageRulesQuery(pm re.PageMeta) string {

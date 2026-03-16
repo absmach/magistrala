@@ -11,6 +11,7 @@ import (
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
+	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
@@ -93,8 +94,12 @@ func (am *authorizationMiddleware) RemoveReportConfig(ctx context.Context, sessi
 }
 
 func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, session authn.Session, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	if err := am.authorize(ctx, operations.OpListReportsConfig, session, policies.DomainType, session.DomainID); err != nil {
-		return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
+		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return reports.ReportConfigPage{}, err
 	}
 
 	return am.svc.ListReportsConfig(ctx, session, pm)
@@ -185,5 +190,21 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		return err
 	}
 
+	return nil
+}
+
+func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
+	if session.Role != authn.SuperAdminRole {
+		return svcerr.ErrSuperAdminAction
+	}
+	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
+		SubjectType: policies.UserType,
+		Subject:     session.UserID,
+		Permission:  policies.AdminPermission,
+		ObjectType:  policies.PlatformType,
+		Object:      policies.SuperMQObject,
+	}, nil); err != nil {
+		return err
+	}
 	return nil
 }

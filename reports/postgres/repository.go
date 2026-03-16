@@ -405,39 +405,16 @@ func (repo *PostgresRepository) RemoveReportConfig(ctx context.Context, id strin
 	return nil
 }
 
-func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm reports.PageMeta) (reports.ReportConfigPage, error) {
 	listReportsQuery := `
 		SELECT id, name, description, domain_id, metrics, email, config,
 			start_datetime, due, recurring, recurring_period, created_at, created_by, updated_at, updated_by, status
 		FROM report_config rc %s %s %s;
 	`
 
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
 	pq := pageReportQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
+	orderClause := reportsOrderClause(pm)
+	pgData := reportsPageData(pm)
 
 	q := fmt.Sprintf(listReportsQuery, pq, orderClause, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
@@ -472,6 +449,63 @@ func (repo *PostgresRepository) ListReportsConfig(ctx context.Context, pm report
 	}
 
 	return ret, nil
+}
+
+func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
+	pq := pageReportQuery(pm)
+	orderClause := reportsOrderClause(pm)
+	pgData := reportsPageData(pm)
+
+	pm.UserID = userID
+	userJoin := `
+		INNER JOIN reports_roles rr ON rr.entity_id = rc.id
+		INNER JOIN reports_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
+	`
+
+	whereClause := pq
+
+	innerQ := fmt.Sprintf(`
+		SELECT DISTINCT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,
+			rc.start_datetime, rc.due, rc.recurring, rc.recurring_period, rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status
+		FROM report_config rc
+		%s
+		%s
+	`, userJoin, whereClause)
+
+	q := fmt.Sprintf(`
+		SELECT * FROM (%s) AS sub %s %s;
+	`, innerQ, orderClause, pgData)
+
+	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
+	if err != nil {
+		return reports.ReportConfigPage{}, err
+	}
+	defer rows.Close()
+
+	cfgs := []reports.ReportConfig{}
+	for rows.Next() {
+		var r dbReport
+		if err := rows.StructScan(&r); err != nil {
+			return reports.ReportConfigPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
+		rpt, err := dbToReport(r)
+		if err != nil {
+			return reports.ReportConfigPage{}, err
+		}
+		cfgs = append(cfgs, rpt)
+	}
+
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS count_sub;`, innerQ)
+	total, err := postgres.Total(ctx, repo.DB, cq, pm)
+	if err != nil {
+		return reports.ReportConfigPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	pm.Total = total
+
+	return reports.ReportConfigPage{
+		PageMeta:      pm,
+		ReportConfigs: cfgs,
+	}, nil
 }
 
 func (repo *PostgresRepository) UpdateReportDue(ctx context.Context, id string, due time.Time) (reports.ReportConfig, error) {
@@ -574,6 +608,32 @@ func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domain
 	defer row.Close()
 
 	return nil
+}
+
+func reportsOrderClause(pm reports.PageMeta) string {
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+	switch pm.Order {
+	case api.NameKey:
+		return fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		return fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	default:
+		return fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+}
+
+func reportsPageData(pm reports.PageMeta) string {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	return pgData
 }
 
 func pageReportQuery(pm reports.PageMeta) string {

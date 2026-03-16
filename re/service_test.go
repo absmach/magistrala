@@ -868,11 +868,12 @@ func TestListRules(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc     string
-		session  authn.Session
-		pageMeta re.PageMeta
-		res      re.Page
-		err      error
+		desc       string
+		session    authn.Session
+		pageMeta   re.PageMeta
+		res        re.Page
+		err        error
+		superAdmin bool
 	}{
 		{
 			desc: "list rules successfully",
@@ -948,11 +949,44 @@ func TestListRules(t *testing.T) {
 			pageMeta: re.PageMeta{},
 			err:      svcerr.ErrViewEntity,
 		},
+		{
+			desc: "list rules as super admin successfully",
+			session: authn.Session{
+				UserID:     userID,
+				DomainID:   domainID,
+				SuperAdmin: true,
+			},
+			pageMeta: re.PageMeta{},
+			res: re.Page{
+				Total:  uint64(numRules),
+				Offset: 0,
+				Limit:  10,
+				Rules:  rules[0:10],
+			},
+			superAdmin: true,
+			err:        nil,
+		},
+		{
+			desc: "list rules as super admin with failed repo",
+			session: authn.Session{
+				UserID:     userID,
+				DomainID:   domainID,
+				SuperAdmin: true,
+			},
+			pageMeta:   re.PageMeta{},
+			superAdmin: true,
+			err:        svcerr.ErrViewEntity,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := repo.On("ListUserRules", mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			var repoCall *mock.Call
+			if tc.superAdmin {
+				repoCall = repo.On("ListAllRules", mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			} else {
+				repoCall = repo.On("ListUserRules", mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
+			}
 			res, err := svc.ListRules(context.Background(), tc.session, tc.pageMeta)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

@@ -358,32 +358,9 @@ func (repo *PostgresRepository) RemoveRule(ctx context.Context, id string) error
 }
 
 func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta) (re.Page, error) {
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
 	pq := pageRulesQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
+	orderClause := rulesOrderClause(pm)
+	pgData := rulesPageData(pm)
 
 	q := fmt.Sprintf(`
 		SELECT id, name, domain_id, tags, input_channel, input_topic, logic_type, logic_value, outputs,
@@ -426,40 +403,15 @@ func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta
 }
 
 func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
-	pq := pageRulesQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
-
 	pm.UserID = userID
+	pq := pageRulesQuery(pm)
+	orderClause := rulesOrderClause(pm)
+	pgData := rulesPageData(pm)
+
 	userJoin := `
 		INNER JOIN rules_roles rr ON rr.entity_id = r.id
 		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
 	`
-
-	whereClause := pq
 
 	innerQ := fmt.Sprintf(`
 		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,
@@ -467,7 +419,7 @@ func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string
 		FROM rules r
 		%s
 		%s
-	`, userJoin, whereClause)
+	`, userJoin, pq)
 
 	q := fmt.Sprintf(`
 		SELECT * FROM (%s) AS sub %s %s;
@@ -539,6 +491,33 @@ func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, du
 	}
 
 	return rule, nil
+}
+
+func rulesOrderClause(pm re.PageMeta) string {
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+
+	switch pm.Order {
+	case api.NameKey:
+		return fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		return fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	default:
+		return fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+}
+
+func rulesPageData(pm re.PageMeta) string {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	return pgData
 }
 
 func pageRulesQuery(pm re.PageMeta) string {

@@ -412,32 +412,9 @@ func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm rep
 		FROM report_config rc %s %s %s;
 	`
 
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
 	pq := pageReportQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
+	orderClause := reportsOrderClause(pm)
+	pgData := reportsPageData(pm)
 
 	q := fmt.Sprintf(listReportsQuery, pq, orderClause, pgData)
 	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
@@ -475,32 +452,9 @@ func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm rep
 }
 
 func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	pgData := ""
-	if pm.Limit != 0 {
-		pgData = "LIMIT :limit"
-	}
-	if pm.Offset != 0 {
-		pgData += " OFFSET :offset"
-	}
 	pq := pageReportQuery(pm)
-
-	dir := api.DescDir
-	if pm.Dir == api.AscDir {
-		dir = api.AscDir
-	}
-
-	orderClause := ""
-
-	switch pm.Order {
-	case api.NameKey:
-		orderClause = fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
-	case api.CreatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
-	case api.UpdatedAtOrder:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	default:
-		orderClause = fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
-	}
+	orderClause := reportsOrderClause(pm)
+	pgData := reportsPageData(pm)
 
 	pm.UserID = userID
 	userJoin := `
@@ -654,6 +608,32 @@ func (repo *PostgresRepository) DeleteReportTemplate(ctx context.Context, domain
 	defer row.Close()
 
 	return nil
+}
+
+func reportsOrderClause(pm reports.PageMeta) string {
+	dir := api.DescDir
+	if pm.Dir == api.AscDir {
+		dir = api.AscDir
+	}
+	switch pm.Order {
+	case api.NameKey:
+		return fmt.Sprintf("ORDER BY name %s, id %s", dir, dir)
+	case api.CreatedAtOrder:
+		return fmt.Sprintf("ORDER BY created_at %s, id %s", dir, dir)
+	default:
+		return fmt.Sprintf("ORDER BY COALESCE(updated_at, created_at) %s, id %s", dir, dir)
+	}
+}
+
+func reportsPageData(pm reports.PageMeta) string {
+	pgData := ""
+	if pm.Limit != 0 {
+		pgData = "LIMIT :limit"
+	}
+	if pm.Offset != 0 {
+		pgData += " OFFSET :offset"
+	}
+	return pgData
 }
 
 func pageReportQuery(pm reports.PageMeta) string {

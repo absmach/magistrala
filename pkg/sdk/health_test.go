@@ -32,9 +32,13 @@ func TestHealth(t *testing.T) {
 	journalTs, _, _ := setupJournal()
 	defer journalTs.Close()
 
+	fluxmqTs := setupFluxMQ("any")
+	defer fluxmqTs.Close()
+
 	sdkConf := sdk.Config{
 		ClientsURL:      clientsTs.URL,
 		UsersURL:        usersTs.URL,
+		HTTPAdapterURL:  fluxmqTs.URL,
 		GroupsURL:       groupsTs.URL,
 		ChannelsURL:     channelsTs.URL,
 		DomainsURL:      domainsTs.URL,
@@ -112,4 +116,11 @@ func TestHealth(t *testing.T) {
 			assert.Equal(t, supermq.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", tc.desc, h.BuildTime))
 		})
 	}
+
+	// FluxMQ returns a simpler health response without version/commit/description.
+	t.Run("get fluxmq service health check", func(t *testing.T) {
+		h, err := mgsdk.Health("fluxmq")
+		assert.Nil(t, err)
+		assert.Equal(t, "healthy", h.Status)
+	})
 }

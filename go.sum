@@ -30,6 +30,8 @@ github.com/absmach/callhome v0.18.2 h1:dmopRHm2qTheHN1hdUKRRYpKwRrj7X9d8AWCFrb+K
 github.com/absmach/callhome v0.18.2/go.mod h1:LEXKhES9JJtj3tBgTZv7VPNjOi5ukJQB0mFic0QP60Q=
 github.com/absmach/certs v0.18.5 h1:eYlvitou+LoDtt7ETVLTp6d/1xCejGL3EmVOg+rHGTU=
 github.com/absmach/certs v0.18.5/go.mod h1:31dtVe1VYF16W+IvjAE/uPAIz4f3uLHgh+moBezjqIc=
+github.com/absmach/fluxmq v0.0.0-20260316215241-82efd70f187d h1:OgRPWp8PGLqeXlTui9RiLk1PyIe6EnQuzNdtDUNv8I4=
+github.com/absmach/fluxmq v0.0.0-20260316215241-82efd70f187d/go.mod h1:ni3YboHPaLCWDJjl+bsv7sHMxK21VpdOdU4pZxTlziA=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

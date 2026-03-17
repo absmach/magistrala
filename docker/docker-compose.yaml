@@ -438,9 +438,6 @@ services:
     env_file:
       - .env
     depends_on:
-      - auth
-      - clients
-      - users
       - fluxmq-node1
       - fluxmq-node2
       - fluxmq-node3
@@ -1225,7 +1222,6 @@ services:
     restart: on-failure
     ports:
       - ${SMQ_COAP_PORT}:5683/udp
-      - ${SMQ_FLUXMQ_AMQP091_PORT}:5682
     networks:
       - supermq-base-net
     volumes:

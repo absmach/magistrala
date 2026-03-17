@@ -25,7 +25,7 @@ type publishReq struct {
 	Retain  bool   `json:"retain"`
 }
 
-func setupFluxMQ(secret string) *httptest.Server {
+func setupFluxMQ(secret string, expectedTopic ...string) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /publish", func(w http.ResponseWriter, r *http.Request) {
@@ -52,6 +52,10 @@ func setupFluxMQ(secret string) *httptest.Server {
 			http.Error(w, "empty topic", http.StatusBadRequest)
 			return
 		}
+		if len(expectedTopic) > 0 && req.Topic != expectedTopic[0] {
+			http.Error(w, fmt.Sprintf("unexpected topic: %s", req.Topic), http.StatusBadRequest)
+			return
+		}
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -69,20 +73,12 @@ func setupFluxMQ(secret string) *httptest.Server {
 
 func TestSendMessage(t *testing.T) {
 	clientSecret := "validSecret"
-	ts := setupFluxMQ(clientSecret)
-	defer ts.Close()
-
-	sdkConf := sdk.Config{
-		HTTPAdapterURL:  ts.URL,
-		MsgContentType:  "application/senml+json",
-		TLSVerification: false,
-	}
-	mgsdk := sdk.NewSDK(sdkConf)
 
 	cases := []struct {
 		desc     string
 		topic    string
 		domainID string
+		wantTopic string
 		msg      string
 		secret   string
 		err      errors.SDKError
@@ -91,6 +87,7 @@ func TestSendMessage(t *testing.T) {
 			desc:     "publish message successfully",
 			topic:    "channelID",
 			domainID: "domainID",
+			wantTopic: "m/domainID/c/channelID",
 			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
 			secret:   clientSecret,
 			err:      nil,
@@ -99,6 +96,7 @@ func TestSendMessage(t *testing.T) {
 			desc:     "publish message with subtopic",
 			topic:    "channelID.sub.topic",
 			domainID: "domainID",
+			wantTopic: "m/domainID/c/channelID/sub/topic",
 			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
 			secret:   clientSecret,
 			err:      nil,
@@ -107,6 +105,7 @@ func TestSendMessage(t *testing.T) {
 			desc:     "publish message with invalid secret",
 			topic:    "channelID",
 			domainID: "domainID",
+			wantTopic: "m/domainID/c/channelID",
 			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
 			secret:   "invalid",
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
@@ -115,6 +114,7 @@ func TestSendMessage(t *testing.T) {
 			desc:     "publish message with empty secret",
 			topic:    "channelID",
 			domainID: "domainID",
+			wantTopic: "m/domainID/c/channelID",
 			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
 			secret:   "",
 			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
@@ -122,6 +122,16 @@ func TestSendMessage(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			ts := setupFluxMQ(clientSecret, tc.wantTopic)
+			defer ts.Close()
+
+			sdkConf := sdk.Config{
+				HTTPAdapterURL:  ts.URL,
+				MsgContentType:  "application/senml+json",
+				TLSVerification: false,
+			}
+			mgsdk := sdk.NewSDK(sdkConf)
+
 			err := mgsdk.SendMessage(context.Background(), tc.domainID, tc.topic, tc.msg, tc.secret)
 			if tc.err != nil {
 				assert.NotNil(t, err, fmt.Sprintf("%s: expected error, got nil", tc.desc))

@@ -5,6 +5,7 @@ package sdk
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,19 +16,37 @@ import (
 
 const channelParts = 2
 
+type publishRequest struct {
+	Topic   string `json:"topic"`
+	Payload []byte `json:"payload"`
+	QoS     byte   `json:"qos"`
+	Retain  bool   `json:"retain"`
+}
+
 func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret string) errors.SDKError {
 	chanNameParts := strings.SplitN(topic, ".", channelParts)
 	chanID := chanNameParts[0]
-	subtopicPart := ""
+	brokerTopic := fmt.Sprintf("m/%s/c/%s", domainID, chanID)
 	if len(chanNameParts) == channelParts {
-		subtopicPart = fmt.Sprintf("/%s", strings.ReplaceAll(chanNameParts[1], ".", "/"))
+		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, strings.ReplaceAll(chanNameParts[1], ".", "/"))
 	}
 
-	reqURL := fmt.Sprintf("%s/m/%s/c/%s%s", sdk.httpAdapterURL, domainID, chanID, subtopicPart)
+	data, err := json.Marshal(publishRequest{
+		Topic:   brokerTopic,
+		Payload: []byte(msg),
+	})
+	if err != nil {
+		return errors.NewSDKError(err)
+	}
 
-	_, _, err := sdk.processRequest(ctx, http.MethodPost, reqURL, ClientPrefix+secret, []byte(msg), nil, http.StatusAccepted)
+	headers := map[string]string{
+		"X-FluxMQ-Password": secret,
+	}
 
-	return err
+	reqURL := fmt.Sprintf("%s/publish", sdk.httpAdapterURL)
+	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, reqURL, "", data, headers, http.StatusOK)
+
+	return sdkErr
 }
 
 func (sdk *mgSDK) SetContentType(ct ContentType) errors.SDKError {

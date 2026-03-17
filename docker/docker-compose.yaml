@@ -15,7 +15,6 @@ volumes:
   supermq-channels-db-volume:
   supermq-channels-redis-volume:
   supermq-clients-redis-volume:
-  supermq-broker-volume:
   supermq-fluxmq-node1-volume:
   supermq-fluxmq-node2-volume:
   supermq-fluxmq-node3-volume:
@@ -479,7 +478,6 @@ services:
       - clients-db
       - users
       - auth
-      - nats
     restart: on-failure
     environment:
       SMQ_CLIENTS_LOG_LEVEL: ${SMQ_CLIENTS_LOG_LEVEL}
@@ -675,7 +673,6 @@ services:
       - channels-redis
       - users
       - auth
-      - nats
     restart: on-failure
     environment:
       SMQ_CHANNELS_LOG_LEVEL: ${SMQ_CHANNELS_LOG_LEVEL}
@@ -857,7 +854,6 @@ services:
     depends_on:
       - users-db
       - auth
-      - nats
     restart: on-failure
     environment:
       SMQ_USERS_LOG_LEVEL: ${SMQ_USERS_LOG_LEVEL}
@@ -972,8 +968,6 @@ services:
   notifications:
     image: docker.io/supermq/notifications:${SMQ_RELEASE_TAG}
     container_name: supermq-notifications
-    depends_on:
-      - nats
     restart: on-failure
     environment:
       SMQ_NOTIFICATIONS_LOG_LEVEL: ${SMQ_NOTIFICATIONS_LOG_LEVEL}
@@ -1042,7 +1036,6 @@ services:
     depends_on:
       - groups-db
       - auth
-      - nats
     restart: on-failure
     environment:
       SMQ_GROUPS_LOG_LEVEL: ${SMQ_GROUPS_LOG_LEVEL}
@@ -1259,10 +1252,6 @@ services:
   fluxmq-auth:
     image: docker.io/supermq/fluxmq:${SMQ_RELEASE_TAG}
     container_name: supermq-fluxmq-auth
-    depends_on:
-      - clients
-      - channels
-      - domains
     restart: on-failure
     environment:
       SMQ_FLUXMQ_LOG_LEVEL: ${SMQ_FLUXMQ_LOG_LEVEL}
@@ -1340,24 +1329,6 @@ services:
         target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
-
-  nats:
-    image: docker.io/nats:2.12.0-alpine3.22
-    container_name: supermq-nats
-    restart: on-failure
-    command: "--config=/etc/nats/nats.conf"
-    environment:
-      - SMQ_NATS_PORT=${SMQ_NATS_PORT}
-      - SMQ_NATS_HTTP_PORT=${SMQ_NATS_HTTP_PORT}
-      - SMQ_NATS_JETSTREAM_KEY=${SMQ_NATS_JETSTREAM_KEY}
-    ports:
-      - ${SMQ_NATS_PORT}:${SMQ_NATS_PORT}
-      - ${SMQ_NATS_HTTP_PORT}:${SMQ_NATS_HTTP_PORT}
-    volumes:
-      - supermq-broker-volume:/data
-      - ./nats:/etc/nats
-    networks:
-      - supermq-base-net
 
   ui:
     image: ghcr.io/absmach/magistrala/ui-mg:${SMQ_RELEASE_TAG}

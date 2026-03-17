@@ -13,6 +13,7 @@ import (
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
 	"github.com/absmach/supermq/pkg/events"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
 var _ events.Subscriber = (*subEventStore)(nil)
@@ -66,6 +67,10 @@ func (es *subEventStore) Subscribe(ctx context.Context, cfg events.SubscriberCon
 		Filter:        streamFilter(cfg.Stream),
 		ConsumerGroup: cfg.Consumer,
 		AutoCommit:    &autoCommit,
+	}
+
+	if cfg.DeliveryPolicy == messaging.DeliverNewPolicy {
+		opts.Offset = "last"
 	}
 
 	return es.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {

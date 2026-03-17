@@ -105,3 +105,9 @@ auth:
   url: "fluxmq-auth:7016"
   transport: "grpc"
   timeout: 5s
+  protocols:
+    mqtt: true
+    http: true
+    coap: true
+    amqp: true
+    amqp091: false

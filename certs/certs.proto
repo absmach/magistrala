@@ -1,0 +1,27 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+syntax = "proto3";
+
+package absmach.certs;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "./certs";
+
+service CertsService {
+  rpc GetEntityID(EntityReq) returns (EntityRes) {}
+  rpc RevokeCerts(RevokeReq) returns (google.protobuf.Empty) {}
+}
+
+message EntityReq {
+  string serial_number = 1;
+}
+
+message EntityRes {
+  string entity_id = 1;
+}
+
+message RevokeReq {
+  string entity_id = 1;
+}

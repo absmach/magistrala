@@ -1,0 +1,18 @@
+{
+  "identities": [
+    {
+      "name": "magistrala",
+      "credentials": [
+        {
+          "accessKey": "localKey",
+          "secretKey": "localSecret"
+        }
+      ],
+      "actions": [
+        "Admin",
+        "Read",
+        "Write"
+      ]
+    }
+  ]
+}

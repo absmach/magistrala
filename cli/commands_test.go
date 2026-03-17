@@ -51,3 +51,11 @@ const (
 	listCmd             = "list"
 	membersCmd          = "members"
 )
+
+// Bootstrap commands
+const (
+	updCmd       = "update"
+	rmCmd        = "remove"
+	whitelistCmd = "whitelist"
+	bootStrapCmd = "bootstrap"
+)

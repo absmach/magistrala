@@ -24,6 +24,12 @@ volumes:
   supermq-domains-redis-volume:
   supermq-auth-redis-volume:
   supermq-auth-keys-volume:
+  magistrala-ui-backend-db-volume:
+  magistrala-re-db-volume:
+  magistrala-alarms-db-volume:
+  magistrala-reports-db-volume:
+  supermq-certs-db-volume:
+  supermq-openbao-data:
 
 services:
   spicedb:
@@ -1602,3 +1608,667 @@ services:
       - ./nats:/etc/nats
     networks:
       - supermq-base-net
+
+  ui:
+    image: ghcr.io/absmach/magistrala/ui-mg:${SMQ_RELEASE_TAG}
+    container_name: magistrala-ui
+    ports:
+      - 3000:3000
+    networks:
+      - supermq-base-net
+    environment:
+      MG_AUTH_URL: ${MG_AUTH_URL}
+      MG_DOMAINS_URL: ${MG_DOMAINS_URL}
+      MG_USERS_URL: ${MG_USERS_URL}
+      MG_CLIENTS_URL: ${MG_CLIENTS_URL}
+      MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+      MG_GROUPS_URL: ${MG_GROUPS_URL}
+      MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
+      MG_CERTS_URL: ${MG_CERTS_URL}
+      MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
+      MG_READER_URL: ${MG_READER_URL}
+      MG_BACKEND_URL: ${SMQ_UI_BACKEND_URL}
+      MG_JOURNAL_URL: ${MG_JOURNAL_URL}
+      MG_ALARMS_URL: ${MG_ALARMS_URL}
+      MG_RE_URL: ${MG_RE_URL}
+      MG_REPORTS_URL: ${MG_REPORTS_URL}
+      MG_GOOGLE_CLIENT_ID: ${MG_GOOGLE_CLIENT_ID}
+      MG_GOOGLE_CLIENT_SECRET: ${MG_GOOGLE_CLIENT_SECRET}
+      MG_GOOGLE_REDIRECT_URL: ${MG_GOOGLE_REDIRECT_URL}
+      MG_GOOGLE_STATE: ${MG_GOOGLE_STATE}
+      MG_UI_BASE_PATH: ${MG_UI_BASE_PATH}
+      MG_NEXTAUTH_BASE_PATH: ${MG_NEXTAUTH_BASE_PATH}
+      MG_UI_TYPE: ${MG_UI_TYPE}
+      MG_UI_BASEURL: ${MG_UI_BASEURL}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXT_LOG_LEVEL: "debug"
+      MG_HOST_URL: ${MG_HOST_URL}
+      MG_UI_IMAGE_URL: ${MG_UI_IMAGE_URL}
+      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      MG_SUPPORT_EMAIL: ${MG_SUPPORT_EMAIL}
+      MG_SUPPORT_EMAIL_PASS: ${MG_SUPPORT_EMAIL_PASS}
+      MG_UI_CLI_MQTT_HOST: ${MG_UI_CLI_MQTT_HOST}
+      MG_UI_CLI_WS_URL: ${MG_UI_CLI_WS_URL}
+      MG_UI_CLI_COAP_HOST: ${MG_UI_CLI_COAP_HOST}
+      MG_UI_CLI_COAP_PORT: ${MG_UI_CLI_COAP_PORT}
+      MG_UI_CLI_HTTP_URL: ${MG_UI_CLI_HTTP_URL}
+      MG_UI_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+      MG_ACCESS_TOKEN_EXPIRY: ${SMQ_AUTH_ACCESS_TOKEN_DURATION}
+      MG_REFRESH_TOKEN_EXPIRY: ${SMQ_AUTH_REFRESH_TOKEN_DURATION}
+      MG_UI_SMTP_HOST: ${MG_UI_SMTP_HOST}
+      MG_UI_SMTP_PORT: ${MG_UI_SMTP_PORT}
+      MG_UI_SMTP_SECURE: ${MG_UI_SMTP_SECURE}
+      MG_UI_SUPPORT_FROM: ${MG_UI_SUPPORT_FROM}
+
+  ui-backend:
+    image: ghcr.io/absmach/magistrala/ui-backend:${SMQ_RELEASE_TAG}
+    container_name: magistrala-ui-backend
+    ports:
+      - ${SMQ_UI_BACKEND_HTTP_PORT}:${SMQ_UI_BACKEND_HTTP_PORT}
+    networks:
+      - supermq-base-net
+    restart: on-failure:3
+    environment:
+      MG_BACKEND_LOG_LEVEL: ${SMQ_UI_BACKEND_LOG_LEVEL}
+      MG_BACKEND_HTTP_HOST: ${SMQ_UI_BACKEND_HTTP_HOST}
+      MG_BACKEND_HTTP_PORT: ${SMQ_UI_BACKEND_HTTP_PORT}
+      MG_BACKEND_HTTP_SERVER_CERT: ${SMQ_UI_BACKEND_HTTP_SERVER_CERT}
+      MG_BACKEND_HTTP_SERVER_KEY: ${SMQ_UI_BACKEND_HTTP_SERVER_KEY}
+      MG_BACKEND_DB_HOST: ${SMQ_UI_BACKEND_DB_HOST}
+      MG_BACKEND_DB_PORT: ${SMQ_UI_BACKEND_DB_PORT}
+      MG_BACKEND_DB_USER: ${MG_UI_BACKEND_DB_USER}
+      MG_BACKEND_DB_PASS: ${MG_UI_BACKEND_DB_PASS}
+      MG_BACKEND_DB_NAME: ${MG_UI_BACKEND_DB_NAME}
+      MG_BACKEND_DB_SSL_MODE: ${SMQ_UI_BACKEND_DB_SSL_MODE}
+      MG_BACKEND_DB_SSL_CERT: ${SMQ_UI_BACKEND_DB_SSL_CERT}
+      MG_BACKEND_DB_SSL_KEY: ${SMQ_UI_BACKEND_DB_SSL_KEY}
+      MG_BACKEND_DB_SSL_ROOT_CERT: ${SMQ_UI_BACKEND_DB_SSL_ROOT_CERT}
+      MG_BACKEND_INSTANCE_ID: ${SMQ_UI_BACKEND_INSTANCE_ID}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
+      MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
+      MG_READER_URL: ${MG_READER_URL}
+      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
+      SMQ_CHANNELS_GRPC_URL: ${SMQ_CHANNELS_GRPC_URL}
+      SMQ_CHANNELS_GRPC_TIMEOUT: ${SMQ_CHANNELS_GRPC_TIMEOUT}
+      SMQ_CHANNELS_GRPC_CLIENT_CERT: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
+      SMQ_CHANNELS_GRPC_CLIENT_KEY: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:+/channels-grpc-client.key}
+      SMQ_CHANNELS_GRPC_SERVER_CA_CERTS: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+/channels-grpc-server-ca.crt}
+      MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC_URL}
+      MG_TIMESCALE_READER_GRPC_TIMEOUT: ${MG_TIMESCALE_READER_GRPC_TIMEOUT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+/readers-grpc-client.crt}
+      MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
+      MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+/readers-grpc-server-ca.crt}
+      MG_BACKEND_OBJECT_STORAGE_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      MG_BACKEND_OBJECT_STORAGE_BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      MG_BACKEND_OBJECT_STORAGE_ENDPOINT: ${MG_BACKEND_OBJECT_STORAGE_ENDPOINT}
+      MG_BACKEND_OBJECT_STORAGE_USE_PATH_STYLE: ${MG_BACKEND_OBJECT_STORAGE_USE_PATH_STYLE}
+      MG_BACKEND_OBJECT_STORAGE_PRESIGN_ENDPOINT: ${MG_BACKEND_OBJECT_STORAGE_PRESIGN_ENDPOINT}
+      MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      MG_BACKEND_OBJECT_STORAGE_SECRET_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
+      MG_BACKEND_OBJECT_STORAGE_TTL: ${MG_BACKEND_OBJECT_STORAGE_TTL}
+      MG_BACKEND_OBJECT_STORAGE_READ_TTL: ${MG_BACKEND_OBJECT_STORAGE_READ_TTL}
+    depends_on:
+      ui-backend-db:
+        condition: service_healthy
+      seaweedfs-s3:
+        condition: service_started
+    volumes:
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /readers-grpc-server-ca${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  ui-backend-db:
+    image: docker.io/postgres:18.0-alpine3.22
+    container_name: magistrala-ui-backend-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_UI_BACKEND_DB_USER}
+      POSTGRES_PASSWORD: ${MG_UI_BACKEND_DB_PASS}
+      POSTGRES_DB: ${MG_UI_BACKEND_DB_NAME}
+      SMQ_POSTGRES_MAX_CONNECTIONS: ${SMQ_POSTGRES_MAX_CONNECTIONS}
+    ports:
+      - 6008:5432
+    networks:
+      - supermq-base-net
+    volumes:
+      - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
+
+  seaweedfs-s3:
+    image: chrislusf/seaweedfs:4.16
+    container_name: magistrala-seaweedfs-s3
+    command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
+    ports:
+      - "8333:8333"
+      - "9333:9333"
+      - "19333:19333"
+      - "8888:8888"
+    volumes:
+      - ./data/seaweedfs:/data
+      - ./configs/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+    networks:
+      - supermq-base-net
+
+  seaweedfs-init:
+    image: amazon/aws-cli
+    container_name: magistrala-seaweedfs-init
+    entrypoint: /bin/sh
+    depends_on:
+      - seaweedfs-s3
+    command:
+      - -c
+      - |
+        echo "[INIT] Waiting 20s for SeaweedFS S3 to be ready...";
+        sleep 20;
+        OUT=$(aws --endpoint-url http://seaweedfs-s3:8333 s3api create-bucket --bucket $${BUCKET} 2>&1);
+        EXIT=$$?;
+        if [ $$EXIT -eq 0 ]; then
+          echo "[INIT] Bucket $${BUCKET} created successfully.";
+        elif echo "$$OUT" | grep -q 'BucketAlreadyOwnedByYou\|BucketAlreadyExists'; then
+          echo "[INIT] Bucket $${BUCKET} already exists, skipping.";
+        else
+          echo "[INIT] Failed to create bucket $${BUCKET}: $$OUT" >&2;
+          exit 1;
+        fi
+    networks:
+      - supermq-base-net
+    environment:
+      BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
+      AWS_ACCESS_KEY_ID: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
+      AWS_DEFAULT_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
+      AWS_EC2_METADATA_DISABLED: "true"
+
+  re-db:
+    image: docker.io/postgres:18.0-alpine3.22
+    container_name: magistrala-re-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_RE_DB_USER}
+      POSTGRES_PASSWORD: ${MG_RE_DB_PASS}
+      POSTGRES_DB: ${MG_RE_DB_NAME}
+    ports:
+      - 6009:5432
+    networks:
+      - supermq-base-net
+    volumes:
+      - magistrala-re-db-volume:/var/lib/postgresql/data
+
+  re:
+    image: ghcr.io/absmach/magistrala/re:${SMQ_RELEASE_TAG}
+    container_name: magistrala-re
+    depends_on:
+      - re-db
+      - spicedb-migrate
+    restart: on-failure
+    environment:
+      MG_RE_LOG_LEVEL: ${MG_RE_LOG_LEVEL}
+      MG_RE_HTTP_PORT: ${MG_RE_HTTP_PORT}
+      MG_RE_HTTP_HOST: ${MG_RE_HTTP_HOST}
+      MG_RE_HTTP_SERVER_CERT: ${MG_RE_HTTP_SERVER_CERT}
+      MG_RE_HTTP_SERVER_KEY: ${MG_RE_HTTP_SERVER_KEY}
+      MG_RE_DB_HOST: ${MG_RE_DB_HOST}
+      MG_RE_DB_PORT: ${MG_RE_DB_PORT}
+      MG_RE_DB_USER: ${MG_RE_DB_USER}
+      MG_RE_DB_PASS: ${MG_RE_DB_PASS}
+      MG_RE_DB_NAME: ${MG_RE_DB_NAME}
+      MG_RE_DB_SSL_MODE: ${MG_RE_DB_SSL_MODE}
+      MG_RE_DB_SSL_CERT: ${MG_RE_DB_SSL_CERT}
+      MG_RE_DB_SSL_KEY: ${MG_RE_DB_SSL_KEY}
+      MG_RE_DB_SSL_ROOT_CERT: ${MG_RE_DB_SSL_ROOT_CERT}
+      MG_RE_CALLOUT_URLS: ${MG_RE_CALLOUT_URLS}
+      MG_RE_CALLOUT_METHOD: ${MG_RE_CALLOUT_METHOD}
+      MG_RE_CALLOUT_TLS_VERIFICATION: ${MG_RE_CALLOUT_TLS_VERIFICATION}
+      MG_RE_CALLOUT_TIMEOUT: ${MG_RE_CALLOUT_TIMEOUT}
+      MG_RE_CALLOUT_CA_CERT: ${MG_RE_CALLOUT_CA_CERT}
+      MG_RE_CALLOUT_CERT: ${MG_RE_CALLOUT_CERT}
+      MG_RE_CALLOUT_KEY: ${MG_RE_CALLOUT_KEY}
+      MG_RE_CALLOUT_OPERATIONS: ${MG_RE_CALLOUT_OPERATIONS}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
+      MG_RE_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
+      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
+      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
+      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
+      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
+      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
+      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
+      MG_EMAIL_TEMPLATE: ${MG_EMAIL_TEMPLATE}
+      MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC_URL}
+      MG_TIMESCALE_READER_GRPC_TIMEOUT: ${MG_TIMESCALE_READER_GRPC_TIMEOUT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS}
+      MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    ports:
+      - ${MG_RE_HTTP_PORT}:${MG_RE_HTTP_PORT}
+    networks:
+      - supermq-base-net
+    volumes:
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  alarms-db:
+    image: docker.io/postgres:18.0-alpine3.22
+    container_name: magistrala-alarms-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_ALARMS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_ALARMS_DB_PASS}
+      POSTGRES_DB: ${MG_ALARMS_DB_NAME}
+    ports:
+      - 6019:5432
+    networks:
+      - supermq-base-net
+    volumes:
+      - magistrala-alarms-db-volume:/var/lib/postgresql/data
+
+  alarms:
+    image: ghcr.io/absmach/magistrala/alarms:${SMQ_RELEASE_TAG}
+    container_name: magistrala-alarms
+    depends_on:
+      - alarms-db
+      - spicedb-migrate
+    restart: on-failure
+    environment:
+      MG_ALARMS_LOG_LEVEL: ${MG_ALARMS_LOG_LEVEL}
+      MG_ALARMS_HTTP_PORT: ${MG_ALARMS_HTTP_PORT}
+      MG_ALARMS_HTTP_HOST: ${MG_ALARMS_HTTP_HOST}
+      MG_ALARMS_HTTP_SERVER_CERT: ${MG_ALARMS_HTTP_SERVER_CERT}
+      MG_ALARMS_HTTP_SERVER_KEY: ${MG_ALARMS_HTTP_SERVER_KEY}
+      MG_ALARMS_DB_HOST: ${MG_ALARMS_DB_HOST}
+      MG_ALARMS_DB_PORT: ${MG_ALARMS_DB_PORT}
+      MG_ALARMS_DB_USER: ${MG_ALARMS_DB_USER}
+      MG_ALARMS_DB_PASS: ${MG_ALARMS_DB_PASS}
+      MG_ALARMS_DB_NAME: ${MG_ALARMS_DB_NAME}
+      MG_ALARMS_DB_SSL_MODE: ${MG_ALARMS_DB_SSL_MODE}
+      MG_ALARMS_DB_SSL_CERT: ${MG_ALARMS_DB_SSL_CERT}
+      MG_ALARMS_DB_SSL_KEY: ${MG_ALARMS_DB_SSL_KEY}
+      MG_ALARMS_DB_SSL_ROOT_CERT: ${MG_ALARMS_DB_SSL_ROOT_CERT}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
+      MG_ALARMS_INSTANCE_ID: ${MG_ALARMS_INSTANCE_ID}
+      MG_ALARMS_EVENT_CONSUMER: ${MG_ALARMS_EVENT_CONSUMER}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    ports:
+      - ${MG_ALARMS_HTTP_PORT}:${MG_ALARMS_HTTP_PORT}
+    networks:
+      - supermq-base-net
+    volumes:
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  reports-db:
+    image: docker.io/postgres:18.0-alpine3.22
+    container_name: magistrala-reports-db
+    restart: on-failure
+    command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${MG_REPORTS_DB_USER}
+      POSTGRES_PASSWORD: ${MG_REPORTS_DB_PASS}
+      POSTGRES_DB: ${MG_REPORTS_DB_NAME}
+    ports:
+      - 6020:5432
+    networks:
+      - supermq-base-net
+    volumes:
+      - magistrala-reports-db-volume:/var/lib/postgresql/data
+
+  reports:
+    image: ghcr.io/absmach/magistrala/reports:${SMQ_RELEASE_TAG}
+    container_name: magistrala-reports
+    depends_on:
+      - reports-db
+      - spicedb-migrate
+    restart: on-failure
+    environment:
+      MG_REPORTS_LOG_LEVEL: ${MG_REPORTS_LOG_LEVEL}
+      MG_REPORTS_HTTP_PORT: ${MG_REPORTS_HTTP_PORT}
+      MG_REPORTS_HTTP_HOST: ${MG_REPORTS_HTTP_HOST}
+      MG_REPORTS_HTTP_SERVER_CERT: ${MG_REPORTS_HTTP_SERVER_CERT}
+      MG_REPORTS_HTTP_SERVER_KEY: ${MG_REPORTS_HTTP_SERVER_KEY}
+      MG_REPORTS_DB_HOST: ${MG_REPORTS_DB_HOST}
+      MG_REPORTS_DB_PORT: ${MG_REPORTS_DB_PORT}
+      MG_REPORTS_DB_USER: ${MG_REPORTS_DB_USER}
+      MG_REPORTS_DB_PASS: ${MG_REPORTS_DB_PASS}
+      MG_REPORTS_DB_NAME: ${MG_REPORTS_DB_NAME}
+      MG_REPORTS_DB_SSL_MODE: ${MG_REPORTS_DB_SSL_MODE}
+      MG_REPORTS_DB_SSL_CERT: ${MG_REPORTS_DB_SSL_CERT}
+      MG_REPORTS_DB_SSL_KEY: ${MG_REPORTS_DB_SSL_KEY}
+      MG_REPORTS_DB_SSL_ROOT_CERT: ${MG_REPORTS_DB_SSL_ROOT_CERT}
+      MG_REPORTS_DEFAULT_TEMPLATE: ${MG_REPORTS_DEFAULT_TEMPLATE}
+      MG_PDF_CONVERTER_URL: ${MG_PDF_CONVERTER_URL}
+      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_SPICEDB_SCHEMA_FILE: ${SMQ_SPICEDB_SCHEMA_FILE}
+      SMQ_PERMISSIONS_FILE: ${SMQ_PERMISSIONS_FILE}
+      MG_REPORTS_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
+      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
+      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
+      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
+      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
+      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
+      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
+      MG_EMAIL_TEMPLATE: ${MG_EMAIL_TEMPLATE}
+      MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC_URL}
+      MG_TIMESCALE_READER_GRPC_TIMEOUT: ${MG_TIMESCALE_READER_GRPC_TIMEOUT}
+      MG_TIMESCALE_READER_GRPC_CLIENT_CERT: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT}
+      MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS}
+      MG_TIMESCALE_READER_GRPC_CLIENT_KEY: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    ports:
+      - ${MG_REPORTS_HTTP_PORT}:${MG_REPORTS_HTTP_PORT}
+    networks:
+      - supermq-base-net
+    volumes:
+      - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
+      - ./spicedb/combined-schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  pdf-generator:
+    image: gotenberg/gotenberg:8.25.1
+    container_name: magistrala-pdf
+    ports:
+      - "4000:3000"
+    networks:
+      - supermq-base-net
+
+  certs:
+    image: ghcr.io/absmach/certs:${AM_CERTS_RELEASE_TAG}
+    container_name: supermq-certs
+    depends_on:
+      openbao:
+        condition: service_healthy
+      certs-db:
+        condition: service_started
+    restart: on-failure
+    networks:
+      - supermq-base-net
+    environment:
+      AM_CERTS_LOG_LEVEL: ${AM_CERTS_LOG_LEVEL}
+      AM_CERTS_HTTP_HOST: ${AM_CERTS_HTTP_HOST}
+      AM_CERTS_HTTP_PORT: ${AM_CERTS_HTTP_PORT}
+      AM_CERTS_GRPC_HOST: ${AM_CERTS_GRPC_HOST}
+      AM_CERTS_GRPC_PORT: ${AM_CERTS_GRPC_PORT}
+      AM_JAEGER_URL: ${AM_JAEGER_URL}
+      AM_JAEGER_TRACE_RATIO: ${AM_JAEGER_TRACE_RATIO}
+      AM_CERTS_OPENBAO_HOST: ${AM_CERTS_OPENBAO_HOST}
+      AM_CERTS_OPENBAO_APP_ROLE: ${AM_CERTS_OPENBAO_APP_ROLE}
+      AM_CERTS_OPENBAO_APP_SECRET: ${AM_CERTS_OPENBAO_APP_SECRET}
+      AM_CERTS_OPENBAO_NAMESPACE: ${AM_CERTS_OPENBAO_NAMESPACE}
+      AM_CERTS_OPENBAO_PKI_PATH: ${AM_CERTS_OPENBAO_PKI_PATH}
+      AM_CERTS_OPENBAO_ROLE: ${AM_CERTS_OPENBAO_ROLE}
+      AM_CERTS_OPENBAO_SECRET_ID_TTL: ${AM_CERTS_OPENBAO_SECRET_ID_TTL}
+      AM_CERTS_DB_HOST: ${AM_CERTS_DB_HOST}
+      AM_CERTS_DB_PORT: ${AM_CERTS_DB_PORT}
+      AM_CERTS_DB_USER: ${AM_CERTS_DB_USER}
+      AM_CERTS_DB_PASS: ${AM_CERTS_DB_PASS}
+      AM_CERTS_DB: ${AM_CERTS_DB}
+      AM_CERTS_DB_SSL_MODE: ${AM_CERTS_DB_SSL_MODE}
+      AM_AUTH_GRPC_URL: ${AM_AUTH_GRPC_URL}
+      AM_AUTH_GRPC_TIMEOUT: ${AM_AUTH_GRPC_TIMEOUT}
+      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT}
+      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY}
+      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS}
+      AM_DOMAINS_GRPC_URL: ${AM_DOMAINS_GRPC_URL}
+      AM_DOMAINS_GRPC_TIMEOUT: ${AM_DOMAINS_GRPC_TIMEOUT}
+      AM_DOMAINS_GRPC_CLIENT_CERT: ${AM_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      AM_DOMAINS_GRPC_CLIENT_KEY: ${AM_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      AM_DOMAINS_GRPC_SERVER_CA_CERTS: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      AM_CERTS_SECRET: ${AM_CERTS_SECRET}
+      AM_CERTS_SERVICE_TOKEN_PATH: ${AM_CERTS_SERVICE_TOKEN_PATH}
+      AM_CERTS_SECRET_ID_PATH: ${AM_CERTS_SECRET_ID_PATH}
+      AM_CERTS_SECRET_RENEW_THRESHOLD: ${AM_CERTS_SECRET_RENEW_THRESHOLD}
+      AM_CERTS_SECRET_CHECK_INTERVAL: ${AM_CERTS_SECRET_CHECK_INTERVAL}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    ports:
+      - ${AM_CERTS_HTTP_PORT}:${AM_CERTS_HTTP_PORT}
+      - ${AM_CERTS_GRPC_PORT}:${AM_CERTS_GRPC_PORT}
+    volumes:
+      - supermq-openbao-data:/openbao:ro
+      - type: bind
+        source: ${AM_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client${AM_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${AM_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-client${AM_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca${AM_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+
+  certs-db:
+    image: docker.io/postgres:16.2-alpine
+    container_name: supermq-certs-db
+    restart: on-failure
+    networks:
+      - supermq-base-net
+    command: postgres -c "max_connections=${AM_CERTS_DB_MAX_CONNECTIONS}"
+    environment:
+      POSTGRES_USER: ${AM_CERTS_DB_USER}
+      POSTGRES_PASSWORD: ${AM_CERTS_DB_PASS}
+      POSTGRES_DB: ${AM_CERTS_DB}
+    ports:
+      - 5454:5432
+    volumes:
+      - supermq-certs-db-volume:/var/lib/postgresql/data
+
+  openbao:
+    image: openbao/openbao:2.4.0
+    container_name: supermq-openbao
+    restart: on-failure
+    networks:
+      - supermq-base-net
+    ports:
+      - 8200:8200
+    healthcheck:
+      test: ["CMD", "sh", "-c", "test -f /opt/openbao/data/service_token"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    environment:
+      - BAO_ADDR=http://127.0.0.1:8200
+      - BAO_LOG_LEVEL=info
+      - AM_CERTS_OPENBAO_PKI_ROLE=${AM_CERTS_OPENBAO_ROLE}
+      - AM_CERTS_OPENBAO_APP_ROLE=${AM_CERTS_OPENBAO_APP_ROLE}
+      - AM_CERTS_OPENBAO_APP_SECRET=${AM_CERTS_OPENBAO_APP_SECRET}
+      - AM_CERTS_OPENBAO_SECRET_ID_TTL=${AM_CERTS_OPENBAO_SECRET_ID_TTL}
+      - AM_CERTS_OPENBAO_NAMESPACE=${AM_CERTS_OPENBAO_NAMESPACE}
+      - AM_CERTS_OPENBAO_PKI_CA_CN=${AM_CERTS_OPENBAO_PKI_CA_CN}
+      - AM_CERTS_OPENBAO_PKI_CA_OU=${AM_CERTS_OPENBAO_PKI_CA_OU}
+      - AM_CERTS_OPENBAO_PKI_CA_O=${AM_CERTS_OPENBAO_PKI_CA_O}
+      - AM_CERTS_OPENBAO_PKI_CA_C=${AM_CERTS_OPENBAO_PKI_CA_C}
+      - AM_CERTS_OPENBAO_PKI_CA_L=${AM_CERTS_OPENBAO_PKI_CA_L}
+      - AM_CERTS_OPENBAO_PKI_CA_ST=${AM_CERTS_OPENBAO_PKI_CA_ST}
+      - AM_CERTS_OPENBAO_PKI_CA_ADDR=${AM_CERTS_OPENBAO_PKI_CA_ADDR}
+      - AM_CERTS_OPENBAO_PKI_CA_PO=${AM_CERTS_OPENBAO_PKI_CA_PO}
+      - AM_CERTS_OPENBAO_PKI_CA_DNS_NAMES=${AM_CERTS_OPENBAO_PKI_CA_DNS_NAMES}
+      - AM_CERTS_OPENBAO_PKI_CA_IP_ADDRESSES=${AM_CERTS_OPENBAO_PKI_CA_IP_ADDRESSES}
+      - AM_CERTS_OPENBAO_PKI_CA_URI_SANS=${AM_CERTS_OPENBAO_PKI_CA_URI_SANS}
+      - AM_CERTS_OPENBAO_PKI_CA_EMAIL_ADDRESSES=${AM_CERTS_OPENBAO_PKI_CA_EMAIL_ADDRESSES}
+      - AM_CERTS_OPENBAO_UNSEAL_KEY_1=${AM_CERTS_OPENBAO_UNSEAL_KEY_1}
+      - AM_CERTS_OPENBAO_UNSEAL_KEY_2=${AM_CERTS_OPENBAO_UNSEAL_KEY_2}
+      - AM_CERTS_OPENBAO_UNSEAL_KEY_3=${AM_CERTS_OPENBAO_UNSEAL_KEY_3}
+      - AM_CERTS_OPENBAO_ROOT_TOKEN=${AM_CERTS_OPENBAO_ROOT_TOKEN}
+    cap_add:
+      - IPC_LOCK
+    mem_swappiness: 0
+    volumes:
+      - supermq-openbao-data:/opt/openbao/data
+      - supermq-openbao-data:/opt/openbao/config
+      - ./openbao-entrypoint.sh:/entrypoint.sh
+    entrypoint: /bin/sh
+    command: /entrypoint.sh

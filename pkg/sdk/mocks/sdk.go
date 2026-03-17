@@ -106,6 +106,86 @@ func (_c *SDK_AcceptInvitation_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// AddBootstrap provides a mock function for the type SDK
+func (_mock *SDK) AddBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) (string, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddBootstrap")
+	}
+
+	var r0 string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) (string, errors.SDKError)); ok {
+		return returnFunc(ctx, cfg, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) string); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapConfig, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AddBootstrap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddBootstrap'
+type SDK_AddBootstrap_Call struct {
+	*mock.Call
+}
+
+// AddBootstrap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.BootstrapConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) AddBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_AddBootstrap_Call {
+	return &SDK_AddBootstrap_Call{Call: _e.mock.On("AddBootstrap", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_AddBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_AddBootstrap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AddBootstrap_Call) Return(s string, sDKError errors.SDKError) *SDK_AddBootstrap_Call {
+	_c.Call.Return(s, sDKError)
+	return _c
+}
+
+func (_c *SDK_AddBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) (string, errors.SDKError)) *SDK_AddBootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AddChildren provides a mock function for the type SDK
 func (_mock *SDK) AddChildren(ctx context.Context, id string, domainID string, groupIDs []string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, domainID, groupIDs, token)
@@ -735,6 +815,166 @@ func (_c *SDK_AddGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
+// AddReportConfig provides a mock function for the type SDK
+func (_mock *SDK) AddReportConfig(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddReportConfig")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, cfg, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AddReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddReportConfig'
+type SDK_AddReportConfig_Call struct {
+	*mock.Call
+}
+
+// AddReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.ReportConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) AddReportConfig(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_AddReportConfig_Call {
+	return &SDK_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_AddReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_AddReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.ReportConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AddReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_AddReportConfig_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_AddReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_AddReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddRule provides a mock function for the type SDK
+func (_mock *SDK) AddRule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddRule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, r, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, r, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, r, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AddRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddRule'
+type SDK_AddRule_Call struct {
+	*mock.Call
+}
+
+// AddRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - r sdk.Rule
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) AddRule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_AddRule_Call {
+	return &SDK_AddRule_Call{Call: _e.mock.On("AddRule", ctx, r, domainID, token)}
+}
+
+func (_c *SDK_AddRule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_AddRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Rule
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Rule)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AddRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_AddRule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_AddRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_AddRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AvailableClientRoleActions provides a mock function for the type SDK
 func (_mock *SDK) AvailableClientRoleActions(ctx context.Context, domainID string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, domainID, token)
@@ -953,6 +1193,240 @@ func (_c *SDK_AvailableGroupRoleActions_Call) Return(strings []string, sDKError 
 }
 
 func (_c *SDK_AvailableGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, token string) ([]string, errors.SDKError)) *SDK_AvailableGroupRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Bootstrap provides a mock function for the type SDK
+func (_mock *SDK) Bootstrap(ctx context.Context, externalID string, externalKey string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, externalID, externalKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Bootstrap")
+	}
+
+	var r0 sdk.BootstrapConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, externalID, externalKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.BootstrapConfig); ok {
+		r0 = returnFunc(ctx, externalID, externalKey)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, externalID, externalKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_Bootstrap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Bootstrap'
+type SDK_Bootstrap_Call struct {
+	*mock.Call
+}
+
+// Bootstrap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - externalID string
+//   - externalKey string
+func (_e *SDK_Expecter) Bootstrap(ctx interface{}, externalID interface{}, externalKey interface{}) *SDK_Bootstrap_Call {
+	return &SDK_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalID, externalKey)}
+}
+
+func (_c *SDK_Bootstrap_Call) Run(run func(ctx context.Context, externalID string, externalKey string)) *SDK_Bootstrap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_Bootstrap_Call) Return(bootstrapConfig sdk.BootstrapConfig, sDKError errors.SDKError) *SDK_Bootstrap_Call {
+	_c.Call.Return(bootstrapConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, externalID string, externalKey string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_Bootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BootstrapSecure provides a mock function for the type SDK
+func (_mock *SDK) BootstrapSecure(ctx context.Context, externalID string, externalKey string, cryptoKey string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, externalID, externalKey, cryptoKey)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BootstrapSecure")
+	}
+
+	var r0 sdk.BootstrapConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, externalID, externalKey, cryptoKey)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapConfig); ok {
+		r0 = returnFunc(ctx, externalID, externalKey, cryptoKey)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, externalID, externalKey, cryptoKey)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_BootstrapSecure_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BootstrapSecure'
+type SDK_BootstrapSecure_Call struct {
+	*mock.Call
+}
+
+// BootstrapSecure is a helper method to define mock.On call
+//   - ctx context.Context
+//   - externalID string
+//   - externalKey string
+//   - cryptoKey string
+func (_e *SDK_Expecter) BootstrapSecure(ctx interface{}, externalID interface{}, externalKey interface{}, cryptoKey interface{}) *SDK_BootstrapSecure_Call {
+	return &SDK_BootstrapSecure_Call{Call: _e.mock.On("BootstrapSecure", ctx, externalID, externalKey, cryptoKey)}
+}
+
+func (_c *SDK_BootstrapSecure_Call) Run(run func(ctx context.Context, externalID string, externalKey string, cryptoKey string)) *SDK_BootstrapSecure_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_BootstrapSecure_Call) Return(bootstrapConfig sdk.BootstrapConfig, sDKError errors.SDKError) *SDK_BootstrapSecure_Call {
+	_c.Call.Return(bootstrapConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_BootstrapSecure_Call) RunAndReturn(run func(ctx context.Context, externalID string, externalKey string, cryptoKey string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_BootstrapSecure_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Bootstraps provides a mock function for the type SDK
+func (_mock *SDK) Bootstraps(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Bootstraps")
+	}
+
+	var r0 sdk.BootstrapPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.BootstrapPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.BootstrapPage); ok {
+		r0 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_Bootstraps_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Bootstraps'
+type SDK_Bootstraps_Call struct {
+	*mock.Call
+}
+
+// Bootstraps is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) Bootstraps(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Bootstraps_Call {
+	return &SDK_Bootstraps_Call{Call: _e.mock.On("Bootstraps", ctx, pm, domainID, token)}
+}
+
+func (_c *SDK_Bootstraps_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Bootstraps_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_Bootstraps_Call) Return(bootstrapPage sdk.BootstrapPage, sDKError errors.SDKError) *SDK_Bootstraps_Call {
+	_c.Call.Return(bootstrapPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_Bootstraps_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapPage, errors.SDKError)) *SDK_Bootstraps_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2599,6 +3073,86 @@ func (_c *SDK_CreateGroupRole_Call) RunAndReturn(run func(ctx context.Context, i
 	return _c
 }
 
+// CreateSubscription provides a mock function for the type SDK
+func (_mock *SDK) CreateSubscription(ctx context.Context, topic string, contact string, token string) (string, errors.SDKError) {
+	ret := _mock.Called(ctx, topic, contact, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateSubscription")
+	}
+
+	var r0 string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (string, errors.SDKError)); ok {
+		return returnFunc(ctx, topic, contact, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) string); ok {
+		r0 = returnFunc(ctx, topic, contact, token)
+	} else {
+		r0 = ret.Get(0).(string)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, topic, contact, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_CreateSubscription_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateSubscription'
+type SDK_CreateSubscription_Call struct {
+	*mock.Call
+}
+
+// CreateSubscription is a helper method to define mock.On call
+//   - ctx context.Context
+//   - topic string
+//   - contact string
+//   - token string
+func (_e *SDK_Expecter) CreateSubscription(ctx interface{}, topic interface{}, contact interface{}, token interface{}) *SDK_CreateSubscription_Call {
+	return &SDK_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, topic, contact, token)}
+}
+
+func (_c *SDK_CreateSubscription_Call) Run(run func(ctx context.Context, topic string, contact string, token string)) *SDK_CreateSubscription_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_CreateSubscription_Call) Return(s string, sDKError errors.SDKError) *SDK_CreateSubscription_Call {
+	_c.Call.Return(s, sDKError)
+	return _c
+}
+
+func (_c *SDK_CreateSubscription_Call) RunAndReturn(run func(ctx context.Context, topic string, contact string, token string) (string, errors.SDKError)) *SDK_CreateSubscription_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateToken provides a mock function for the type SDK
 func (_mock *SDK) CreateToken(ctx context.Context, lt sdk.Login) (sdk.Token, errors.SDKError) {
 	ret := _mock.Called(ctx, lt)
@@ -2737,6 +3291,77 @@ func (_c *SDK_CreateUser_Call) Return(user1 sdk.User, sDKError errors.SDKError) 
 }
 
 func (_c *SDK_CreateUser_Call) RunAndReturn(run func(ctx context.Context, user sdk.User, token string) (sdk.User, errors.SDKError)) *SDK_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteAlarm provides a mock function for the type SDK
+func (_mock *SDK) DeleteAlarm(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAlarm")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_DeleteAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAlarm'
+type SDK_DeleteAlarm_Call struct {
+	*mock.Call
+}
+
+// DeleteAlarm is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) DeleteAlarm(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteAlarm_Call {
+	return &SDK_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_DeleteAlarm_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteAlarm_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DeleteAlarm_Call) Return(sDKError errors.SDKError) *SDK_DeleteAlarm_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_DeleteAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3248,6 +3873,142 @@ func (_c *SDK_DeleteInvitation_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// DeleteReportTemplate provides a mock function for the type SDK
+func (_mock *SDK) DeleteReportTemplate(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteReportTemplate")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_DeleteReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteReportTemplate'
+type SDK_DeleteReportTemplate_Call struct {
+	*mock.Call
+}
+
+// DeleteReportTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) DeleteReportTemplate(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteReportTemplate_Call {
+	return &SDK_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_DeleteReportTemplate_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DeleteReportTemplate_Call) Return(sDKError errors.SDKError) *SDK_DeleteReportTemplate_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_DeleteReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteSubscription provides a mock function for the type SDK
+func (_mock *SDK) DeleteSubscription(ctx context.Context, id string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteSubscription")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_DeleteSubscription_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteSubscription'
+type SDK_DeleteSubscription_Call struct {
+	*mock.Call
+}
+
+// DeleteSubscription is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - token string
+func (_e *SDK_Expecter) DeleteSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_DeleteSubscription_Call {
+	return &SDK_DeleteSubscription_Call{Call: _e.mock.On("DeleteSubscription", ctx, id, token)}
+}
+
+func (_c *SDK_DeleteSubscription_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_DeleteSubscription_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DeleteSubscription_Call) Return(sDKError errors.SDKError) *SDK_DeleteSubscription_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_DeleteSubscription_Call) RunAndReturn(run func(ctx context.Context, id string, token string) errors.SDKError) *SDK_DeleteSubscription_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteUser provides a mock function for the type SDK
 func (_mock *SDK) DeleteUser(ctx context.Context, id string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, token)
@@ -3614,6 +4375,166 @@ func (_c *SDK_DisableGroup_Call) Return(group sdk.Group, sDKError errors.SDKErro
 }
 
 func (_c *SDK_DisableGroup_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_DisableGroup_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DisableReportConfig provides a mock function for the type SDK
+func (_mock *SDK) DisableReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableReportConfig")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_DisableReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableReportConfig'
+type SDK_DisableReportConfig_Call struct {
+	*mock.Call
+}
+
+// DisableReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) DisableReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableReportConfig_Call {
+	return &SDK_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_DisableReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DisableReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_DisableReportConfig_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_DisableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_DisableReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DisableRule provides a mock function for the type SDK
+func (_mock *SDK) DisableRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableRule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_DisableRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableRule'
+type SDK_DisableRule_Call struct {
+	*mock.Call
+}
+
+// DisableRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) DisableRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableRule_Call {
+	return &SDK_DisableRule_Call{Call: _e.mock.On("DisableRule", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_DisableRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DisableRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_DisableRule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_DisableRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_DisableRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4705,6 +5626,166 @@ func (_c *SDK_EnableGroup_Call) RunAndReturn(run func(ctx context.Context, id st
 	return _c
 }
 
+// EnableReportConfig provides a mock function for the type SDK
+func (_mock *SDK) EnableReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableReportConfig")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_EnableReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableReportConfig'
+type SDK_EnableReportConfig_Call struct {
+	*mock.Call
+}
+
+// EnableReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) EnableReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableReportConfig_Call {
+	return &SDK_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_EnableReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_EnableReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_EnableReportConfig_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_EnableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_EnableReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// EnableRule provides a mock function for the type SDK
+func (_mock *SDK) EnableRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableRule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_EnableRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableRule'
+type SDK_EnableRule_Call struct {
+	*mock.Call
+}
+
+// EnableRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) EnableRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableRule_Call {
+	return &SDK_EnableRule_Call{Call: _e.mock.On("EnableRule", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_EnableRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_EnableRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_EnableRule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_EnableRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_EnableRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EnableUser provides a mock function for the type SDK
 func (_mock *SDK) EnableUser(ctx context.Context, id string, token string) (sdk.User, errors.SDKError) {
 	ret := _mock.Called(ctx, id, token)
@@ -4840,6 +5921,100 @@ func (_c *SDK_FreezeDomain_Call) Return(sDKError errors.SDKError) *SDK_FreezeDom
 }
 
 func (_c *SDK_FreezeDomain_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) errors.SDKError) *SDK_FreezeDomain_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GenerateReport provides a mock function for the type SDK
+func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError) {
+	ret := _mock.Called(ctx, config, action, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateReport")
+	}
+
+	var r0 sdk.ReportPage
+	var r1 *sdk.ReportFile
+	var r2 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)); ok {
+		return returnFunc(ctx, config, action, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) sdk.ReportPage); ok {
+		r0 = returnFunc(ctx, config, action, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) *sdk.ReportFile); ok {
+		r1 = returnFunc(ctx, config, action, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(*sdk.ReportFile)
+		}
+	}
+	if returnFunc, ok := ret.Get(2).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) errors.SDKError); ok {
+		r2 = returnFunc(ctx, config, action, domainID, token)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).(errors.SDKError)
+		}
+	}
+	return r0, r1, r2
+}
+
+// SDK_GenerateReport_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GenerateReport'
+type SDK_GenerateReport_Call struct {
+	*mock.Call
+}
+
+// GenerateReport is a helper method to define mock.On call
+//   - ctx context.Context
+//   - config sdk.ReportConfig
+//   - action sdk.ReportAction
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) GenerateReport(ctx interface{}, config interface{}, action interface{}, domainID interface{}, token interface{}) *SDK_GenerateReport_Call {
+	return &SDK_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, config, action, domainID, token)}
+}
+
+func (_c *SDK_GenerateReport_Call) Run(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string)) *SDK_GenerateReport_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.ReportConfig)
+		}
+		var arg2 sdk.ReportAction
+		if args[2] != nil {
+			arg2 = args[2].(sdk.ReportAction)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_GenerateReport_Call) Return(reportPage sdk.ReportPage, reportFile *sdk.ReportFile, sDKError errors.SDKError) *SDK_GenerateReport_Call {
+	_c.Call.Return(reportPage, reportFile, sDKError)
+	return _c
+}
+
+func (_c *SDK_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)) *SDK_GenerateReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5666,6 +6841,86 @@ func (_c *SDK_Journal_Call) RunAndReturn(run func(ctx context.Context, entityTyp
 	return _c
 }
 
+// ListAlarms provides a mock function for the type SDK
+func (_mock *SDK) ListAlarms(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.AlarmsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListAlarms")
+	}
+
+	var r0 sdk.AlarmsPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.AlarmsPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.AlarmsPage); ok {
+		r0 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.AlarmsPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListAlarms_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListAlarms'
+type SDK_ListAlarms_Call struct {
+	*mock.Call
+}
+
+// ListAlarms is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ListAlarms(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListAlarms_Call {
+	return &SDK_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, pm, domainID, token)}
+}
+
+func (_c *SDK_ListAlarms_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListAlarms_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListAlarms_Call) Return(alarmsPage sdk.AlarmsPage, sDKError errors.SDKError) *SDK_ListAlarms_Call {
+	_c.Call.Return(alarmsPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListAlarms_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.AlarmsPage, errors.SDKError)) *SDK_ListAlarms_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListChannelMembers provides a mock function for the type SDK
 func (_mock *SDK) ListChannelMembers(ctx context.Context, channelID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
 	ret := _mock.Called(ctx, channelID, domainID, pm, token)
@@ -6000,6 +7255,326 @@ func (_c *SDK_ListGroupMembers_Call) Return(entityMembersPage sdk.EntityMembersP
 }
 
 func (_c *SDK_ListGroupMembers_Call) RunAndReturn(run func(ctx context.Context, groupID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListGroupMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListReportsConfig provides a mock function for the type SDK
+func (_mock *SDK) ListReportsConfig(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ReportConfigPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListReportsConfig")
+	}
+
+	var r0 sdk.ReportConfigPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.ReportConfigPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.ReportConfigPage); ok {
+		r0 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfigPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListReportsConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListReportsConfig'
+type SDK_ListReportsConfig_Call struct {
+	*mock.Call
+}
+
+// ListReportsConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ListReportsConfig(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListReportsConfig_Call {
+	return &SDK_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm, domainID, token)}
+}
+
+func (_c *SDK_ListReportsConfig_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListReportsConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListReportsConfig_Call) Return(reportConfigPage sdk.ReportConfigPage, sDKError errors.SDKError) *SDK_ListReportsConfig_Call {
+	_c.Call.Return(reportConfigPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ReportConfigPage, errors.SDKError)) *SDK_ListReportsConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListRules provides a mock function for the type SDK
+func (_mock *SDK) ListRules(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.Page, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListRules")
+	}
+
+	var r0 sdk.Page
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.Page, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.Page); ok {
+		r0 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Page)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListRules_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListRules'
+type SDK_ListRules_Call struct {
+	*mock.Call
+}
+
+// ListRules is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ListRules(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListRules_Call {
+	return &SDK_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm, domainID, token)}
+}
+
+func (_c *SDK_ListRules_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListRules_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListRules_Call) Return(page sdk.Page, sDKError errors.SDKError) *SDK_ListRules_Call {
+	_c.Call.Return(page, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListRules_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.Page, errors.SDKError)) *SDK_ListRules_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListSubscriptions provides a mock function for the type SDK
+func (_mock *SDK) ListSubscriptions(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.SubscriptionPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListSubscriptions")
+	}
+
+	var r0 sdk.SubscriptionPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) (sdk.SubscriptionPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) sdk.SubscriptionPage); ok {
+		r0 = returnFunc(ctx, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.SubscriptionPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListSubscriptions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListSubscriptions'
+type SDK_ListSubscriptions_Call struct {
+	*mock.Call
+}
+
+// ListSubscriptions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - token string
+func (_e *SDK_Expecter) ListSubscriptions(ctx interface{}, pm interface{}, token interface{}) *SDK_ListSubscriptions_Call {
+	return &SDK_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, pm, token)}
+}
+
+func (_c *SDK_ListSubscriptions_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_ListSubscriptions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListSubscriptions_Call) Return(subscriptionPage sdk.SubscriptionPage, sDKError errors.SDKError) *SDK_ListSubscriptions_Call {
+	_c.Call.Return(subscriptionPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListSubscriptions_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.SubscriptionPage, errors.SDKError)) *SDK_ListSubscriptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReadMessages provides a mock function for the type SDK
+func (_mock *SDK) ReadMessages(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string) (sdk.MessagesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, chanID, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReadMessages")
+	}
+
+	var r0 sdk.MessagesPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.MessagePageMetadata, string, string, string) (sdk.MessagesPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, chanID, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.MessagePageMetadata, string, string, string) sdk.MessagesPage); ok {
+		r0 = returnFunc(ctx, pm, chanID, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.MessagesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.MessagePageMetadata, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, chanID, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ReadMessages_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReadMessages'
+type SDK_ReadMessages_Call struct {
+	*mock.Call
+}
+
+// ReadMessages is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.MessagePageMetadata
+//   - chanID string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ReadMessages(ctx interface{}, pm interface{}, chanID interface{}, domainID interface{}, token interface{}) *SDK_ReadMessages_Call {
+	return &SDK_ReadMessages_Call{Call: _e.mock.On("ReadMessages", ctx, pm, chanID, domainID, token)}
+}
+
+func (_c *SDK_ReadMessages_Call) Run(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string)) *SDK_ReadMessages_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.MessagePageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.MessagePageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ReadMessages_Call) Return(messagesPage sdk.MessagesPage, sDKError errors.SDKError) *SDK_ReadMessages_Call {
+	_c.Call.Return(messagesPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ReadMessages_Call) RunAndReturn(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string) (sdk.MessagesPage, errors.SDKError)) *SDK_ReadMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6652,6 +8227,77 @@ func (_c *SDK_RemoveAllGroupRoleMembers_Call) Return(sDKError errors.SDKError) *
 }
 
 func (_c *SDK_RemoveAllGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveBootstrap provides a mock function for the type SDK
+func (_mock *SDK) RemoveBootstrap(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBootstrap")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveBootstrap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveBootstrap'
+type SDK_RemoveBootstrap_Call struct {
+	*mock.Call
+}
+
+// RemoveBootstrap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RemoveBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrap_Call {
+	return &SDK_RemoveBootstrap_Call{Call: _e.mock.On("RemoveBootstrap", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_RemoveBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveBootstrap_Call) Return(sDKError errors.SDKError) *SDK_RemoveBootstrap_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrap_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -7450,6 +9096,148 @@ func (_c *SDK_RemoveGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Con
 	return _c
 }
 
+// RemoveReportConfig provides a mock function for the type SDK
+func (_mock *SDK) RemoveReportConfig(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveReportConfig")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveReportConfig'
+type SDK_RemoveReportConfig_Call struct {
+	*mock.Call
+}
+
+// RemoveReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RemoveReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveReportConfig_Call {
+	return &SDK_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_RemoveReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveReportConfig_Call) Return(sDKError errors.SDKError) *SDK_RemoveReportConfig_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveRule provides a mock function for the type SDK
+func (_mock *SDK) RemoveRule(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveRule")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveRule'
+type SDK_RemoveRule_Call struct {
+	*mock.Call
+}
+
+// RemoveRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RemoveRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveRule_Call {
+	return &SDK_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_RemoveRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveRule_Call) Return(sDKError errors.SDKError) *SDK_RemoveRule_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ResetPassword provides a mock function for the type SDK
 func (_mock *SDK) ResetPassword(ctx context.Context, password string, confPass string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, password, confPass, token)
@@ -8133,6 +9921,332 @@ func (_c *SDK_SetGroupParent_Call) Return(sDKError errors.SDKError) *SDK_SetGrou
 }
 
 func (_c *SDK_SetGroupParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_SetGroupParent_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateAlarm provides a mock function for the type SDK
+func (_mock *SDK) UpdateAlarm(ctx context.Context, alarm sdk.Alarm, domainID string, token string) (sdk.Alarm, errors.SDKError) {
+	ret := _mock.Called(ctx, alarm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateAlarm")
+	}
+
+	var r0 sdk.Alarm
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) (sdk.Alarm, errors.SDKError)); ok {
+		return returnFunc(ctx, alarm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) sdk.Alarm); ok {
+		r0 = returnFunc(ctx, alarm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Alarm)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Alarm, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, alarm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateAlarm'
+type SDK_UpdateAlarm_Call struct {
+	*mock.Call
+}
+
+// UpdateAlarm is a helper method to define mock.On call
+//   - ctx context.Context
+//   - alarm sdk.Alarm
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateAlarm(ctx interface{}, alarm interface{}, domainID interface{}, token interface{}) *SDK_UpdateAlarm_Call {
+	return &SDK_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm, domainID, token)}
+}
+
+func (_c *SDK_UpdateAlarm_Call) Run(run func(ctx context.Context, alarm sdk.Alarm, domainID string, token string)) *SDK_UpdateAlarm_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Alarm
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Alarm)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateAlarm_Call) Return(alarm1 sdk.Alarm, sDKError errors.SDKError) *SDK_UpdateAlarm_Call {
+	_c.Call.Return(alarm1, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm sdk.Alarm, domainID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_UpdateAlarm_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateBootstrap provides a mock function for the type SDK
+func (_mock *SDK) UpdateBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBootstrap")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_UpdateBootstrap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBootstrap'
+type SDK_UpdateBootstrap_Call struct {
+	*mock.Call
+}
+
+// UpdateBootstrap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.BootstrapConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrap_Call {
+	return &SDK_UpdateBootstrap_Call{Call: _e.mock.On("UpdateBootstrap", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_UpdateBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_UpdateBootstrap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrap_Call) Return(sDKError errors.SDKError) *SDK_UpdateBootstrap_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateBootstrapCerts provides a mock function for the type SDK
+func (_mock *SDK) UpdateBootstrapCerts(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, clientCert, clientKey, ca, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBootstrapCerts")
+	}
+
+	var r0 sdk.BootstrapConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) sdk.BootstrapConfig); ok {
+		r0 = returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateBootstrapCerts_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBootstrapCerts'
+type SDK_UpdateBootstrapCerts_Call struct {
+	*mock.Call
+}
+
+// UpdateBootstrapCerts is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - clientCert string
+//   - clientKey string
+//   - ca string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx interface{}, id interface{}, clientCert interface{}, clientKey interface{}, ca interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapCerts_Call {
+	return &SDK_UpdateBootstrapCerts_Call{Call: _e.mock.On("UpdateBootstrapCerts", ctx, id, clientCert, clientKey, ca, domainID, token)}
+}
+
+func (_c *SDK_UpdateBootstrapCerts_Call) Run(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string)) *SDK_UpdateBootstrapCerts_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		var arg6 string
+		if args[6] != nil {
+			arg6 = args[6].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+			arg6,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapCerts_Call) Return(bootstrapConfig sdk.BootstrapConfig, sDKError errors.SDKError) *SDK_UpdateBootstrapCerts_Call {
+	_c.Call.Return(bootstrapConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapCerts_Call) RunAndReturn(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_UpdateBootstrapCerts_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateBootstrapConnection provides a mock function for the type SDK
+func (_mock *SDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, channels, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBootstrapConnection")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, channels, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_UpdateBootstrapConnection_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBootstrapConnection'
+type SDK_UpdateBootstrapConnection_Call struct {
+	*mock.Call
+}
+
+// UpdateBootstrapConnection is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - channels []string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx interface{}, id interface{}, channels interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapConnection_Call {
+	return &SDK_UpdateBootstrapConnection_Call{Call: _e.mock.On("UpdateBootstrapConnection", ctx, id, channels, domainID, token)}
+}
+
+func (_c *SDK_UpdateBootstrapConnection_Call) Run(run func(ctx context.Context, id string, channels []string, domainID string, token string)) *SDK_UpdateBootstrapConnection_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []string
+		if args[2] != nil {
+			arg2 = args[2].([]string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapConnection_Call) Return(sDKError errors.SDKError) *SDK_UpdateBootstrapConnection_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapConnection_Call) RunAndReturn(run func(ctx context.Context, id string, channels []string, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -9201,6 +11315,477 @@ func (_c *SDK_UpdateProfilePicture_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
+// UpdateReportConfig provides a mock function for the type SDK
+func (_mock *SDK) UpdateReportConfig(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportConfig")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, cfg, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportConfig'
+type SDK_UpdateReportConfig_Call struct {
+	*mock.Call
+}
+
+// UpdateReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.ReportConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateReportConfig(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportConfig_Call {
+	return &SDK_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_UpdateReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.ReportConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_UpdateReportConfig_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateReportSchedule provides a mock function for the type SDK
+func (_mock *SDK) UpdateReportSchedule(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportSchedule")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, cfg, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateReportSchedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportSchedule'
+type SDK_UpdateReportSchedule_Call struct {
+	*mock.Call
+}
+
+// UpdateReportSchedule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.ReportConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportSchedule_Call {
+	return &SDK_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_UpdateReportSchedule_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportSchedule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.ReportConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateReportSchedule_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_UpdateReportSchedule_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateReportSchedule_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportSchedule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateReportTemplate provides a mock function for the type SDK
+func (_mock *SDK) UpdateReportTemplate(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, cfg, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateReportTemplate")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, cfg, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_UpdateReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateReportTemplate'
+type SDK_UpdateReportTemplate_Call struct {
+	*mock.Call
+}
+
+// UpdateReportTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - cfg sdk.ReportConfig
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateReportTemplate(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportTemplate_Call {
+	return &SDK_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, cfg, domainID, token)}
+}
+
+func (_c *SDK_UpdateReportTemplate_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.ReportConfig
+		if args[1] != nil {
+			arg1 = args[1].(sdk.ReportConfig)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateReportTemplate_Call) Return(sDKError errors.SDKError) *SDK_UpdateReportTemplate_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) errors.SDKError) *SDK_UpdateReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRule provides a mock function for the type SDK
+func (_mock *SDK) UpdateRule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, r, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, r, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, r, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRule'
+type SDK_UpdateRule_Call struct {
+	*mock.Call
+}
+
+// UpdateRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - r sdk.Rule
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateRule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRule_Call {
+	return &SDK_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, r, domainID, token)}
+}
+
+func (_c *SDK_UpdateRule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Rule
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Rule)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_UpdateRule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRuleSchedule provides a mock function for the type SDK
+func (_mock *SDK) UpdateRuleSchedule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleSchedule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, r, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, r, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, r, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateRuleSchedule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleSchedule'
+type SDK_UpdateRuleSchedule_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleSchedule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - r sdk.Rule
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRuleSchedule_Call {
+	return &SDK_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r, domainID, token)}
+}
+
+func (_c *SDK_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRuleSchedule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Rule
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Rule)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateRuleSchedule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_UpdateRuleSchedule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleSchedule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRuleTags provides a mock function for the type SDK
+func (_mock *SDK) UpdateRuleTags(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRuleTags")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, r, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, r, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, r, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateRuleTags_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRuleTags'
+type SDK_UpdateRuleTags_Call struct {
+	*mock.Call
+}
+
+// UpdateRuleTags is a helper method to define mock.On call
+//   - ctx context.Context
+//   - r sdk.Rule
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateRuleTags(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRuleTags_Call {
+	return &SDK_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r, domainID, token)}
+}
+
+func (_c *SDK_UpdateRuleTags_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRuleTags_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Rule
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Rule)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateRuleTags_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_UpdateRuleTags_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleTags_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // UpdateUser provides a mock function for the type SDK
 func (_mock *SDK) UpdateUser(ctx context.Context, user sdk.User, token string) (sdk.User, errors.SDKError) {
 	ret := _mock.Called(ctx, user, token)
@@ -9842,6 +12427,559 @@ func (_c *SDK_VerifyEmail_Call) Return(sDKError errors.SDKError) *SDK_VerifyEmai
 }
 
 func (_c *SDK_VerifyEmail_Call) RunAndReturn(run func(ctx context.Context, verificationToken string) errors.SDKError) *SDK_VerifyEmail_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewAlarm provides a mock function for the type SDK
+func (_mock *SDK) ViewAlarm(ctx context.Context, id string, domainID string, token string) (sdk.Alarm, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewAlarm")
+	}
+
+	var r0 sdk.Alarm
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Alarm, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Alarm); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Alarm)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewAlarm'
+type SDK_ViewAlarm_Call struct {
+	*mock.Call
+}
+
+// ViewAlarm is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewAlarm(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewAlarm_Call {
+	return &SDK_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewAlarm_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewAlarm_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewAlarm_Call) Return(alarm sdk.Alarm, sDKError errors.SDKError) *SDK_ViewAlarm_Call {
+	_c.Call.Return(alarm, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_ViewAlarm_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewBootstrap provides a mock function for the type SDK
+func (_mock *SDK) ViewBootstrap(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewBootstrap")
+	}
+
+	var r0 sdk.BootstrapConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapConfig); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewBootstrap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewBootstrap'
+type SDK_ViewBootstrap_Call struct {
+	*mock.Call
+}
+
+// ViewBootstrap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrap_Call {
+	return &SDK_ViewBootstrap_Call{Call: _e.mock.On("ViewBootstrap", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewBootstrap_Call) Return(bootstrapConfig sdk.BootstrapConfig, sDKError errors.SDKError) *SDK_ViewBootstrap_Call {
+	_c.Call.Return(bootstrapConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_ViewBootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewReportConfig provides a mock function for the type SDK
+func (_mock *SDK) ViewReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewReportConfig")
+	}
+
+	var r0 sdk.ReportConfig
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.ReportConfig)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewReportConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewReportConfig'
+type SDK_ViewReportConfig_Call struct {
+	*mock.Call
+}
+
+// ViewReportConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewReportConfig_Call {
+	return &SDK_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewReportConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKError errors.SDKError) *SDK_ViewReportConfig_Call {
+	_c.Call.Return(reportConfig, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_ViewReportConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewReportTemplate provides a mock function for the type SDK
+func (_mock *SDK) ViewReportTemplate(ctx context.Context, id string, domainID string, token string) (sdk.ReportTemplate, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewReportTemplate")
+	}
+
+	var r0 sdk.ReportTemplate
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportTemplate, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportTemplate); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(sdk.ReportTemplate)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewReportTemplate_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewReportTemplate'
+type SDK_ViewReportTemplate_Call struct {
+	*mock.Call
+}
+
+// ViewReportTemplate is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewReportTemplate(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewReportTemplate_Call {
+	return &SDK_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewReportTemplate_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewReportTemplate_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewReportTemplate_Call) Return(reportTemplate sdk.ReportTemplate, sDKError errors.SDKError) *SDK_ViewReportTemplate_Call {
+	_c.Call.Return(reportTemplate, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportTemplate, errors.SDKError)) *SDK_ViewReportTemplate_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewRule provides a mock function for the type SDK
+func (_mock *SDK) ViewRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewRule")
+	}
+
+	var r0 sdk.Rule
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Rule)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewRule_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewRule'
+type SDK_ViewRule_Call struct {
+	*mock.Call
+}
+
+// ViewRule is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewRule_Call {
+	return &SDK_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewRule_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK_ViewRule_Call {
+	_c.Call.Return(rule, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_ViewRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewSubscription provides a mock function for the type SDK
+func (_mock *SDK) ViewSubscription(ctx context.Context, id string, token string) (sdk.Subscription, errors.SDKError) {
+	ret := _mock.Called(ctx, id, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewSubscription")
+	}
+
+	var r0 sdk.Subscription
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.Subscription, errors.SDKError)); ok {
+		return returnFunc(ctx, id, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.Subscription); ok {
+		r0 = returnFunc(ctx, id, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Subscription)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewSubscription_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewSubscription'
+type SDK_ViewSubscription_Call struct {
+	*mock.Call
+}
+
+// ViewSubscription is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - token string
+func (_e *SDK_Expecter) ViewSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_ViewSubscription_Call {
+	return &SDK_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, id, token)}
+}
+
+func (_c *SDK_ViewSubscription_Call) Run(run func(ctx context.Context, id string, token string)) *SDK_ViewSubscription_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewSubscription_Call) Return(subscription sdk.Subscription, sDKError errors.SDKError) *SDK_ViewSubscription_Call {
+	_c.Call.Return(subscription, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewSubscription_Call) RunAndReturn(run func(ctx context.Context, id string, token string) (sdk.Subscription, errors.SDKError)) *SDK_ViewSubscription_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Whitelist provides a mock function for the type SDK
+func (_mock *SDK) Whitelist(ctx context.Context, clientID string, state int, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, clientID, state, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Whitelist")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, int, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, clientID, state, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_Whitelist_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Whitelist'
+type SDK_Whitelist_Call struct {
+	*mock.Call
+}
+
+// Whitelist is a helper method to define mock.On call
+//   - ctx context.Context
+//   - clientID string
+//   - state int
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) Whitelist(ctx interface{}, clientID interface{}, state interface{}, domainID interface{}, token interface{}) *SDK_Whitelist_Call {
+	return &SDK_Whitelist_Call{Call: _e.mock.On("Whitelist", ctx, clientID, state, domainID, token)}
+}
+
+func (_c *SDK_Whitelist_Call) Run(run func(ctx context.Context, clientID string, state int, domainID string, token string)) *SDK_Whitelist_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 int
+		if args[2] != nil {
+			arg2 = args[2].(int)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_Whitelist_Call) Return(sDKError errors.SDKError) *SDK_Whitelist_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_Whitelist_Call) RunAndReturn(run func(ctx context.Context, clientID string, state int, domainID string, token string) errors.SDKError) *SDK_Whitelist_Call {
 	_c.Call.Return(run)
 	return _c
 }

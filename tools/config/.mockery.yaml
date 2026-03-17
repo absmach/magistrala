@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 pkgname: mocks
+template: testify
 structname: "{{.InterfaceName}}"
 filename: "{{snakecase .InterfaceName}}.go"
 dir: "{{.InterfaceDirRelative}}/mocks"
@@ -46,6 +47,13 @@ packages:
           dir: "./groups/mocks"
           structname: "GroupsServiceClient"
           filename: "groups_client.go"
+  github.com/absmach/supermq/api/grpc/readers/v1:
+    interfaces:
+      ReadersServiceClient:
+        config:
+          dir: "./readers/mocks"
+          structname: "ReadersServiceClient"
+          filename: "readers_client.go"
   github.com/absmach/supermq/pkg/sdk:
     interfaces:
       SDK:
@@ -83,6 +91,10 @@ packages:
   github.com/absmach/supermq/consumers:
     interfaces:
       Notifier:
+  github.com/absmach/supermq/consumers/notifiers:
+    interfaces:
+      Service:
+      SubscriptionsRepository:
   github.com/absmach/supermq/domains:
     interfaces:
       Repository:
@@ -112,6 +124,9 @@ packages:
   github.com/absmach/supermq/pkg/authz:
     interfaces:
       Authorization:
+  github.com/absmach/supermq/pkg/emailer:
+    interfaces:
+      Emailer:
   github.com/absmach/supermq/pkg/events:
     interfaces:
       Publisher:
@@ -134,9 +149,32 @@ packages:
   github.com/absmach/supermq/pkg/callout:
     interfaces:
       Callout:
+  github.com/absmach/supermq/pkg/ticker:
+    interfaces:
+      Ticker:
   github.com/absmach/supermq/readers:
     interfaces:
       MessageRepository:
+  github.com/absmach/supermq/re:
+    interfaces:
+      Repository:
+      Service:
+  github.com/absmach/supermq/bootstrap:
+    interfaces:
+      ConfigRepository:
+      ConfigReader:
+      Service:
+  github.com/absmach/supermq/provision:
+    interfaces:
+      Service:
+  github.com/absmach/supermq/alarms:
+    interfaces:
+      Service:
+      Repository:
+  github.com/absmach/supermq/reports:
+    interfaces:
+      Service:
+      Repository:
   github.com/absmach/supermq/users:
     interfaces:
       Emailer:

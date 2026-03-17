@@ -190,14 +190,14 @@ services:
 
       AM_AUTH_GRPC_URL: ${AM_AUTH_GRPC_URL}
       AM_AUTH_GRPC_TIMEOUT: ${AM_AUTH_GRPC_TIMEOUT}
-      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT}
-      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY}
-      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS}
+      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       AM_DOMAINS_GRPC_URL: ${AM_DOMAINS_GRPC_URL}
       AM_DOMAINS_GRPC_TIMEOUT: ${AM_DOMAINS_GRPC_TIMEOUT}
-      AM_DOMAINS_GRPC_CLIENT_CERT: ${AM_DOMAINS_GRPC_CLIENT_CERT}
-      AM_DOMAINS_GRPC_CLIENT_KEY: ${AM_DOMAINS_GRPC_CLIENT_KEY}
-      AM_DOMAINS_GRPC_SERVER_CA_CERTS: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS}
+      AM_DOMAINS_GRPC_CLIENT_CERT: ${AM_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      AM_DOMAINS_GRPC_CLIENT_KEY: ${AM_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      AM_DOMAINS_GRPC_SERVER_CA_CERTS: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
     networks: !override
       - magistrala-base-net
 
@@ -208,10 +208,10 @@ services:
       - ../../docker/nginx/entrypoint.sh:/docker-entrypoint.d/entrypoint.sh
       - type: bind
         source: ${SMQ_NGINX_SERVER_CERT:-../../docker/ssl/certs/magistrala-server.crt}
-        target: /etc/ssl/certs/magistrala-server.crt
+        target: /etc/ssl/certs/supermq-server.crt
       - type: bind
         source: ${SMQ_NGINX_SERVER_KEY:-../../docker/ssl/certs/magistrala-server.key}
-        target: /etc/ssl/private/magistrala-server.key
+        target: /etc/ssl/private/supermq-server.key
       - type: bind
         source: ${SMQ_NGINX_SERVER_CLIENT_CA:-../../docker/ssl/certs/ca.crt}
         target: /etc/ssl/certs/ca.crt
@@ -223,5 +223,4 @@ services:
     env_file: !override
       - ./.env
       - ../../docker/.env
-
 

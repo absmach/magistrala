@@ -163,45 +163,45 @@ services:
       # Auth retiring private key file (optional, for key rotation)
       - type: bind
         source: ${SMQ_AUTH_KEYS_RETIRING_KEY_PATH:-ssl/certs/dummy/retiring_key}
-        target: /keys/retiring${SMQ_AUTH_KEYS_RETIRING_KEY_PATH:+.key}
+        target: /keys/retiring.key
         read_only: true
         bind:
           create_host_path: true
       # Auth gRPC mTLS server certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /auth-grpc-server${SMQ_AUTH_GRPC_SERVER_CERT:+.crt}
+        target: /auth-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /auth-grpc-server${SMQ_AUTH_GRPC_SERVER_KEY:+.key}
+        target: /auth-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /auth-grpc-client-ca${SMQ_AUTH_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /auth-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth Callout Client Certificates
       - type: bind
         source: ${SMQ_AUTH_CALLOUT_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-callout-client${SMQ_AUTH_CALLOUT_CLIENT_CERT:+.crt}
+        target: /auth-callout-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_CALLOUT_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-callout-client${SMQ_AUTH_CALLOUT_CLIENT_KEY:+.key}
+        target: /auth-callout-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_CALLOUT_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /auth-callout-client-ca${SMQ_AUTH_CALLOUT_CLIENT_CA_CERTS:+.crt}
+        target: /auth-callout-client-ca.crt
         bind:
           create_host_path: true
 
@@ -315,86 +315,86 @@ services:
       # Auth gRPC mTLS server certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_SERVER_CERT:+.crt}
+        target: /domains-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /domains-grpc-server${SMQ_DOMAINS_GRPC_SERVER_KEY:+.key}
+        target: /domains-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /domains-grpc-client-ca${SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /domains-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Groups gRPC client certificates
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_CERT:+.crt}
+        target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_KEY:+.key}
+        target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /groups-grpc-server-ca${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -552,86 +552,86 @@ services:
       # Clients gRPC server certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /clients-grpc-server${SMQ_CLIENTS_GRPC_SERVER_CERT:+.crt}
+        target: /clients-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /clients-grpc-server${SMQ_CLIENTS_GRPC_SERVER_KEY:+.key}
+        target: /clients-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /clients-grpc-client-ca${SMQ_CLIENTS_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /clients-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channel gRPC client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Group gRPC client certificates
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_CERT:+.crt}
+        target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_KEY:+.key}
+        target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /groups-grpc-server-ca${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domain gRPC client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -745,86 +745,86 @@ services:
       # Channels gRPC server certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /channels-grpc-server${SMQ_CHANNELS_GRPC_SERVER_CERT:+.crt}
+        target: /channels-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /channels-grpc-server${SMQ_CHANNELS_GRPC_SERVER_KEY:+.key}
+        target: /channels-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /channels-grpc-client-ca${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /channels-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Groups gRPC client certificates
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_CERT:+.crt}
+        target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /groups-grpc-client${SMQ_GROUPS_GRPC_CLIENT_KEY:+.key}
+        target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /groups-grpc-server-ca${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -933,33 +933,33 @@ services:
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -999,17 +999,17 @@ services:
       # Users gRPC client certificates
       - type: bind
         source: ${SMQ_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /users-grpc-client${SMQ_USERS_GRPC_CLIENT_CERT:+.crt}
+        target: /users-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /users-grpc-client${SMQ_USERS_GRPC_CLIENT_KEY:+.key}
+        target: /users-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /users-grpc-server-ca${SMQ_USERS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /users-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1112,86 +1112,86 @@ services:
       # Groups gRPC server certificates
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
-        target: /groups-grpc-server${SMQ_GROUPS_GRPC_SERVER_CERT:+.crt}
+        target: /groups-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
-        target: /groups-grpc-server${SMQ_GROUPS_GRPC_SERVER_KEY:+.key}
+        target: /groups-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
-        target: /groups-grpc-server-ca${SMQ_GROUPS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_GROUPS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
-        target: /groups-grpc-client-ca${SMQ_GROUPS_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /groups-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1266,70 +1266,70 @@ services:
       # TLS certificate for MQTT
       - type: bind
         source: ${SMQ_MQTT_ADAPTER_CERT_FILE:-ssl/certs/dummy/server_cert}
-        target: /mqtt-adapter${SMQ_MQTT_ADAPTER_CERT_FILE:+.crt}
+        target: /mqtt-adapter.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_MQTT_ADAPTER_KEY_FILE:-ssl/certs/dummy/server_key}
-        target: /mqtt-adapter${SMQ_MQTT_ADAPTER_KEY_FILE:+.key}
+        target: /mqtt-adapter.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_MQTT_ADAPTER_SERVER_CA_FILE:-ssl/certs/dummy/server_ca}
-        target: /mqtt-adapter-server-ca${SMQ_MQTT_ADAPTER_SERVER_CA_FILE:+.crt}
+        target: /mqtt-adapter-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_MQTT_ADAPTER_CLIENT_CA_FILE:-ssl/certs/dummy/client_ca}
-        target: /mqtt-adapter-client-ca${SMQ_MQTT_ADAPTER_CLIENT_CA_FILE:+.crt}
+        target: /mqtt-adapter-client-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1384,65 +1384,65 @@ services:
       # Clients gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1497,70 +1497,70 @@ services:
       # DTLS certificates for CoAP
       - type: bind
         source: ${SMQ_COAP_ADAPTER_SERVER_CERT_FILE:-ssl/certs/dummy/server_cert}
-        target: /coap-server${SMQ_COAP_ADAPTER_SERVER_CERT_FILE:+.crt}
+        target: /coap-server.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_COAP_ADAPTER_SERVER_KEY_FILE:-ssl/certs/dummy/server_key}
-        target: /coap-server${SMQ_COAP_ADAPTER_SERVER_KEY_FILE:+.key}
+        target: /coap-server.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_COAP_ADAPTER_SERVER_CA_FILE:-ssl/certs/dummy/server_ca}
-        target: /coap-server-ca${SMQ_COAP_ADAPTER_SERVER_CA_FILE:+.crt}
+        target: /coap-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /clients-grpc-client${SMQ_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /clients-grpc-server-ca${SMQ_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_CERT:+.crt}
+        target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /channels-grpc-client${SMQ_CHANNELS_GRPC_CLIENT_KEY:+.key}
+        target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /channels-grpc-server-ca${SMQ_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca}
-        target: /channels-grpc-client-ca${SMQ_CHANNELS_GRPC_CLIENT_CA_CERTS:+.crt}
+        target: /channels-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC mTLS client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 

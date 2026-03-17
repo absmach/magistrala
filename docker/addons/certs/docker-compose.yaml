@@ -46,9 +46,9 @@ services:
       AM_CERTS_DB_SSL_MODE: ${AM_CERTS_DB_SSL_MODE}
       AM_AUTH_GRPC_URL: ${AM_AUTH_GRPC_URL}
       AM_AUTH_GRPC_TIMEOUT: ${AM_AUTH_GRPC_TIMEOUT}
-      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT}
-      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY}
-      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS}
+      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       AM_DOMAINS_GRPC_URL: ${AM_DOMAINS_GRPC_URL}
       AM_DOMAINS_GRPC_TIMEOUT: ${AM_DOMAINS_GRPC_TIMEOUT}
       AM_DOMAINS_GRPC_CLIENT_CERT: ${AM_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
@@ -65,6 +65,36 @@ services:
       - ${AM_CERTS_GRPC_PORT}:${AM_CERTS_GRPC_PORT}
     volumes:
       - openbao-data:/openbao:ro
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /auth-grpc-client.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_DOMAINS_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_DOMAINS_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /domains-grpc-client.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${AM_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca.crt
+        bind:
+          create_host_path: true
 
   certs-db:
     image: postgres:16.2-alpine

@@ -432,6 +432,7 @@ services:
       - ${SMQ_NGINX_SSL_PORT}:${SMQ_NGINX_SSL_PORT}
       - ${SMQ_NGINX_MQTT_PORT}:${SMQ_NGINX_MQTT_PORT}
       - ${SMQ_NGINX_MQTTS_PORT}:${SMQ_NGINX_MQTTS_PORT}
+      - ${SMQ_NGINX_AMQP_PORT}:${SMQ_NGINX_AMQP_PORT}
     networks:
       - supermq-base-net
     env_file:

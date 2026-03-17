@@ -93,6 +93,13 @@ queues:
     topics:
       - "$queue/#"
     reserved: true
+  - name: "events"
+    topics:
+      - "$queue/events/#"
+    type: "stream"
+    retention:
+      max_age: 168h
+      max_length_bytes: 1073741824
 
 auth:
   url: "fluxmq-auth:7016"

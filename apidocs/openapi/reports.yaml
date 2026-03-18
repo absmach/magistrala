@@ -540,14 +540,11 @@ components:
     ServiceError:
       description: Unexpected server error
     HealthRes:
-      description: Service health status
+      description: Service Health Check.
       content:
-        application/json:
+        application/health+json:
           schema:
-            type: object
-            properties:
-              status:
-                type: string
+            $ref: './schemas/health_info.yaml'
 
   securitySchemes:
     bearerAuth:

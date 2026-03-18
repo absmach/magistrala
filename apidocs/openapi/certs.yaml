@@ -1,0 +1,722 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.3
+info:
+  title: Certs Service API
+  description: |
+    Certificate management service for issuing, renewing, revoking, and managing X.509 certificates.
+    This service provides PKI functionality including certificate lifecycle management, OCSP responder,
+    and CRL generation.
+  version: 1.0.0
+  contact:
+    name: Abstract Machines
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+
+servers:
+  - url: http://localhost:9019
+    description: Development server
+
+tags:
+  - name: certificates
+    description: Certificate lifecycle management operations
+  - name: pki
+    description: PKI infrastructure operations (OCSP, CRL, CA)
+  - name: health
+    description: Service health and monitoring
+
+security:
+  - BearerAuth: []
+
+paths:
+  /{domainID}/certs/issue/{entityID}:
+    post:
+      tags:
+        - certificates
+      summary: Issue a new certificate
+      description: Issues a new X.509 certificate for the specified entity with custom subject options
+      operationId: issueCert
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/EntityID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueCertRequest'
+      responses:
+        '201':
+          description: Certificate successfully issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs/{id}/renew:
+    patch:
+      tags:
+        - certificates
+      summary: Renew a certificate
+      description: Renews an existing certificate with extended TTL and new serial number
+      operationId: renewCert
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/CertID'
+      responses:
+        '200':
+          description: Certificate successfully renewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenewCertResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs/{id}/revoke:
+    patch:
+      tags:
+        - certificates
+      summary: Revoke a certificate
+      description: Revokes a certificate by its serial number
+      operationId: revokeCert
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/CertID'
+      responses:
+        '204':
+          description: Certificate successfully revoked
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs/{entityID}/delete:
+    delete:
+      tags:
+        - certificates
+      summary: Delete certificates for an entity
+      description: Deletes all certificates associated with the specified entity
+      operationId: deleteCert
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/EntityID'
+      responses:
+        '204':
+          description: Certificates successfully deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs:
+    get:
+      tags:
+        - certificates
+      summary: List certificates
+      description: Retrieves a paginated list of certificates with optional filtering by entity ID
+      operationId: listCerts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/EntityIDFilter'
+      responses:
+        '200':
+          description: Certificates successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CertificateListResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs/{id}:
+    get:
+      tags:
+        - certificates
+      summary: View certificate details
+      description: Retrieves detailed information about a specific certificate by serial number
+      operationId: viewCert
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/CertID'
+      responses:
+        '200':
+          description: Certificate details successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViewCertResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /{domainID}/certs/csrs/{entityID}:
+    post:
+      tags:
+        - certificates
+      summary: Issue certificate from CSR
+      description: Issues a certificate from a Certificate Signing Request (CSR)
+      operationId: issueFromCSR
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/EntityID'
+        - $ref: '#/components/parameters/TTL'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueFromCSRRequest'
+      responses:
+        '200':
+          description: Certificate successfully issued from CSR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueFromCSRResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certs/csrs/{entityID}:
+    post:
+      tags:
+        - certificates
+      summary: Issue certificate from CSR (Internal)
+      description: Issues a certificate from a CSR using internal agent authentication
+      operationId: issueFromCSRInternal
+      security:
+        - AgentAuth: []
+      parameters:
+        - $ref: '#/components/parameters/EntityID'
+        - $ref: '#/components/parameters/TTL'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IssueFromCSRRequest'
+      responses:
+        '200':
+          description: Certificate successfully issued from CSR
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IssueFromCSRResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certs/ocsp:
+    post:
+      tags:
+        - pki
+      summary: OCSP responder
+      description: |
+        Online Certificate Status Protocol (OCSP) responder endpoint.
+        Accepts both binary OCSP requests and JSON format requests.
+      operationId: ocsp
+      security: []
+      parameters:
+        - name: force_status
+          in: query
+          description: Force a specific OCSP status for testing
+          required: false
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/ocsp-request:
+            schema:
+              type: string
+              format: binary
+              description: DER-encoded OCSP request
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OCSPRequest'
+      responses:
+        '200':
+          description: OCSP response
+          content:
+            application/ocsp-response:
+              schema:
+                type: string
+                format: binary
+                description: DER-encoded OCSP response
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certs/crl:
+    get:
+      tags:
+        - pki
+      summary: Generate Certificate Revocation List
+      description: Generates and returns the current Certificate Revocation List (CRL)
+      operationId: generateCRL
+      security: []
+      responses:
+        '200':
+          description: CRL successfully generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CRLResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certs/view-ca:
+    get:
+      tags:
+        - pki
+      summary: View CA certificate
+      description: Retrieves the CA certificate chain (root and intermediate certificates)
+      operationId: viewCA
+      security: []
+      responses:
+        '200':
+          description: CA certificate successfully retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ViewCertResponse'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /certs/download-ca:
+    get:
+      tags:
+        - pki
+      summary: Download CA certificate
+      description: Downloads the CA certificate as a ZIP file
+      operationId: downloadCA
+      security: []
+      responses:
+        '200':
+          description: CA certificate ZIP file
+          content:
+            application/zip:
+              schema:
+                type: string
+                format: binary
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      security: []
+      responses:
+        '200':
+          $ref: '#/components/responses/HealthRes'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /metrics:
+    get:
+      tags:
+        - health
+      summary: Prometheus metrics
+      description: Returns Prometheus metrics for monitoring
+      operationId: metrics
+      security: []
+      responses:
+        '200':
+          description: Metrics successfully retrieved
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: User authentication token
+    AgentAuth:
+      type: http
+      scheme: bearer
+      description: Agent authentication token for internal operations
+
+  parameters:
+    DomainID:
+      name: domainID
+      in: path
+      required: true
+      description: Domain identifier
+      schema:
+        type: string
+    EntityID:
+      name: entityID
+      in: path
+      required: true
+      description: Entity identifier for the certificate
+      schema:
+        type: string
+    CertID:
+      name: id
+      in: path
+      required: true
+      description: Certificate serial number
+      schema:
+        type: string
+    Offset:
+      name: offset
+      in: query
+      description: Number of items to skip
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    Limit:
+      name: limit
+      in: query
+      description: Maximum number of items to return
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 10
+    EntityIDFilter:
+      name: entity_id
+      in: query
+      description: Filter certificates by entity ID
+      schema:
+        type: string
+    TTL:
+      name: ttl
+      in: query
+      description: Time to live for the certificate (e.g., "8760h", "365d")
+      schema:
+        type: string
+
+  schemas:
+    IssueCertRequest:
+      type: object
+      required:
+        - options
+      properties:
+        ttl:
+          type: string
+          description: Time to live for the certificate (e.g., "8760h" for 1 year)
+          example: "8760h"
+        ip_addresses:
+          type: array
+          items:
+            type: string
+          description: IP addresses to include in the certificate
+          example: ["192.168.1.1", "10.0.0.1"]
+        options:
+          $ref: '#/components/schemas/SubjectOptions'
+
+    SubjectOptions:
+      type: object
+      required:
+        - common_name
+      properties:
+        common_name:
+          type: string
+          description: Common Name (CN) for the certificate subject
+          example: "example.com"
+        organization:
+          type: array
+          items:
+            type: string
+          description: Organization (O)
+          example: ["Abstract Machines"]
+        organizational_unit:
+          type: array
+          items:
+            type: string
+          description: Organizational Unit (OU)
+          example: ["Engineering"]
+        country:
+          type: array
+          items:
+            type: string
+          description: Country (C)
+          example: ["US"]
+        province:
+          type: array
+          items:
+            type: string
+          description: Province or State (ST)
+          example: ["California"]
+        locality:
+          type: array
+          items:
+            type: string
+          description: Locality or City (L)
+          example: ["San Francisco"]
+        street_address:
+          type: array
+          items:
+            type: string
+          description: Street Address
+          example: ["123 Main St"]
+        postal_code:
+          type: array
+          items:
+            type: string
+          description: Postal Code
+          example: ["94105"]
+        dns_names:
+          type: array
+          items:
+            type: string
+          description: DNS names for Subject Alternative Names
+          example: ["example.com", "www.example.com"]
+        ip_addresses:
+          type: array
+          items:
+            type: string
+          description: IP addresses for Subject Alternative Names
+          example: ["192.168.1.1"]
+
+    CertificateResponse:
+      type: object
+      properties:
+        serial_number:
+          type: string
+          description: Unique serial number of the certificate
+          example: "4a:3f:5e:2c:1b:8d:9e:7f"
+        certificate:
+          type: string
+          description: PEM-encoded certificate
+          example: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        key:
+          type: string
+          description: PEM-encoded private key
+          example: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+        revoked:
+          type: boolean
+          description: Whether the certificate is revoked
+          example: false
+        expiry_time:
+          type: string
+          format: date-time
+          description: Certificate expiration time
+          example: "2026-11-05T12:00:00Z"
+        entity_id:
+          type: string
+          description: Entity identifier associated with the certificate
+          example: "entity-123"
+
+    RenewCertResponse:
+      type: object
+      properties:
+        certificate:
+          $ref: '#/components/schemas/ViewCertResponse'
+
+    ViewCertResponse:
+      type: object
+      properties:
+        serial_number:
+          type: string
+          description: Certificate serial number
+          example: "4a:3f:5e:2c:1b:8d:9e:7f"
+        certificate:
+          type: string
+          description: PEM-encoded certificate
+          example: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        key:
+          type: string
+          description: PEM-encoded private key
+          example: "-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----"
+        revoked:
+          type: boolean
+          description: Revocation status
+          example: false
+        expiry_time:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+          example: "2026-11-05T12:00:00Z"
+        entity_id:
+          type: string
+          description: Associated entity identifier
+          example: "entity-123"
+
+    CertificateListResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: uint64
+          description: Total number of certificates
+          example: 100
+        offset:
+          type: integer
+          format: uint64
+          description: Current offset
+          example: 0
+        limit:
+          type: integer
+          format: uint64
+          description: Current limit
+          example: 10
+        certificates:
+          type: array
+          items:
+            $ref: '#/components/schemas/ViewCertResponse'
+
+    IssueFromCSRRequest:
+      type: object
+      required:
+        - csr
+      properties:
+        csr:
+          type: string
+          format: byte
+          description: PEM-encoded Certificate Signing Request
+          example: "LS0tLS1CRUdJTiBDRVJUSUZJQ0FURSBSRVFVRVNULS0tLS0K..."
+
+    IssueFromCSRResponse:
+      type: object
+      properties:
+        serial_number:
+          type: string
+          description: Serial number of the issued certificate
+          example: "4a:3f:5e:2c:1b:8d:9e:7f"
+        certificate:
+          type: string
+          description: PEM-encoded certificate
+          example: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        revoked:
+          type: boolean
+          description: Revocation status
+          example: false
+        expiry_time:
+          type: string
+          format: date-time
+          description: Expiration timestamp
+          example: "2026-11-05T12:00:00Z"
+        entity_id:
+          type: string
+          description: Associated entity identifier
+          example: "entity-123"
+
+    OCSPRequest:
+      type: object
+      properties:
+        serial_number:
+          type: string
+          description: Certificate serial number to check
+          example: "4a:3f:5e:2c:1b:8d:9e:7f"
+        certificate:
+          type: string
+          description: PEM-encoded certificate to check
+          example: "-----BEGIN CERTIFICATE-----\n...\n-----END CERTIFICATE-----"
+        status:
+          type: string
+          description: Force a specific status (for testing)
+          enum: [good, revoked, unknown]
+
+    CRLResponse:
+      type: object
+      properties:
+        crl:
+          type: string
+          format: byte
+          description: DER-encoded Certificate Revocation List
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "invalid request"
+
+  responses:
+    BadRequest:
+      description: Bad request - invalid parameters or malformed request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized - invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    UnprocessableEntity:
+      description: Unprocessable entity - request cannot be processed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    InternalServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/health+json:
+          schema:
+            $ref: './schemas/health_info.yaml'

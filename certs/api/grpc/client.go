@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/certs"
+	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
 	"github.com/absmach/supermq/certs/api"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
@@ -23,7 +23,7 @@ type grpcClient struct {
 	revokeCerts endpoint.Endpoint
 }
 
-func NewClient(conn *grpc.ClientConn, timeout time.Duration) certs.CertsServiceClient {
+func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcCertsV1.CertsServiceClient {
 	return &grpcClient{
 		getEntityID: kitgrpc.NewClient(
 			conn,
@@ -31,7 +31,7 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) certs.CertsServiceC
 			"GetEntityID",
 			encodeGetEntityIDRequest,
 			decodeGetEntityIDResponse,
-			certs.EntityRes{},
+			grpcCertsV1.EntityRes{},
 		).Endpoint(),
 
 		revokeCerts: kitgrpc.NewClient(
@@ -47,17 +47,17 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) certs.CertsServiceC
 	}
 }
 
-func (c *grpcClient) GetEntityID(ctx context.Context, req *certs.EntityReq, _ ...grpc.CallOption) (*certs.EntityRes, error) {
+func (c *grpcClient) GetEntityID(ctx context.Context, req *grpcCertsV1.EntityReq, _ ...grpc.CallOption) (*grpcCertsV1.EntityRes, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 	res, err := c.getEntityID(ctx, req)
 	if err != nil {
 		return nil, err
 	}
-	return res.(*certs.EntityRes), nil
+	return res.(*grpcCertsV1.EntityRes), nil
 }
 
-func (c *grpcClient) RevokeCerts(ctx context.Context, req *certs.RevokeReq, _ ...grpc.CallOption) (*emptypb.Empty, error) {
+func (c *grpcClient) RevokeCerts(ctx context.Context, req *grpcCertsV1.RevokeReq, _ ...grpc.CallOption) (*emptypb.Empty, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.timeout)
 	defer cancel()
 	res, err := c.revokeCerts(ctx, req)
@@ -68,22 +68,22 @@ func (c *grpcClient) RevokeCerts(ctx context.Context, req *certs.RevokeReq, _ ..
 }
 
 func encodeGetEntityIDRequest(_ context.Context, request any) (any, error) {
-	req := request.(*certs.EntityReq)
-	return &certs.EntityReq{
+	req := request.(*grpcCertsV1.EntityReq)
+	return &grpcCertsV1.EntityReq{
 		SerialNumber: api.NormalizeSerialNumber(req.GetSerialNumber()),
 	}, nil
 }
 
 func decodeGetEntityIDResponse(_ context.Context, response any) (any, error) {
-	res := response.(*certs.EntityRes)
-	return &certs.EntityRes{
+	res := response.(*grpcCertsV1.EntityRes)
+	return &grpcCertsV1.EntityRes{
 		EntityId: res.EntityId,
 	}, nil
 }
 
 func encodeRevokeCertsRequest(_ context.Context, request any) (any, error) {
-	req := request.(*certs.RevokeReq)
-	return &certs.RevokeReq{
+	req := request.(*grpcCertsV1.RevokeReq)
+	return &grpcCertsV1.RevokeReq{
 		EntityId: req.GetEntityId(),
 	}, nil
 }

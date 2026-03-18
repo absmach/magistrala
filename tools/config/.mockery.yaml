@@ -47,6 +47,13 @@ packages:
           dir: "./groups/mocks"
           structname: "GroupsServiceClient"
           filename: "groups_client.go"
+  github.com/absmach/supermq/api/grpc/certs/v1:
+    interfaces:
+      CertsServiceClient:
+        config:
+          dir: "./certs/mocks"
+          structname: "CertsServiceClient"
+          filename: "certs_client.go"
   github.com/absmach/supermq/api/grpc/readers/v1:
     interfaces:
       ReadersServiceClient:
@@ -88,6 +95,11 @@ packages:
   github.com/absmach/supermq/clients/private:
     interfaces:
       Service:
+  github.com/absmach/supermq/certs:
+    interfaces:
+      Agent:
+      Service:
+      Repository:
   github.com/absmach/supermq/consumers:
     interfaces:
       Notifier:

@@ -6,12 +6,12 @@ package client
 import (
 	"context"
 
-	"github.com/absmach/supermq/certs"
+	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
 	grpc "github.com/absmach/supermq/pkg/grpcclient"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 
-func NewCertsClient(ctx context.Context, cfg grpc.Config) (grpc.Handler, certs.CertsServiceClient, error) {
+func NewCertsClient(ctx context.Context, cfg grpc.Config) (grpc.Handler, grpcCertsV1.CertsServiceClient, error) {
 	client, err := grpc.NewHandler(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -24,5 +24,5 @@ func NewCertsClient(ctx context.Context, cfg grpc.Config) (grpc.Handler, certs.C
 	if err != nil || resp.GetStatus() != grpchealth.HealthCheckResponse_SERVING {
 		return nil, nil, grpc.ErrSvcNotServing
 	}
-	return client, certs.NewCertsServiceClient(client.Connection()), nil
+	return client, grpcCertsV1.NewCertsServiceClient(client.Connection()), nil
 }

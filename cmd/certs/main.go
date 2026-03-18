@@ -15,17 +15,15 @@ import (
 
 	"github.com/absmach/supermq/certs"
 	certsgrpc "github.com/absmach/supermq/certs/api/grpc"
+	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
 	httpapi "github.com/absmach/supermq/certs/api/http"
-	jaegerClient "github.com/absmach/supermq/certs/internal/jaeger"
-	"github.com/absmach/supermq/certs/internal/prometheus"
-	"github.com/absmach/supermq/certs/internal/server"
-	grpcserver "github.com/absmach/supermq/certs/internal/server/grpc"
-	"github.com/absmach/supermq/certs/internal/uuid"
 	"github.com/absmach/supermq/certs/middleware"
 	"github.com/absmach/supermq/certs/pki"
 	"github.com/absmach/supermq/certs/postgres"
 	"github.com/absmach/supermq/certs/tracing"
+	"github.com/absmach/supermq/pkg/jaeger"
 	smqlog "github.com/absmach/supermq/logger"
+	"github.com/absmach/supermq/pkg/prometheus"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
@@ -34,7 +32,9 @@ import (
 	"github.com/absmach/supermq/pkg/grpcclient"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	smq "github.com/absmach/supermq/pkg/server"
+	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
 	httpserver "github.com/absmach/supermq/pkg/server/http"
+	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
@@ -172,7 +172,7 @@ func main() {
 	}
 	defer db.Close()
 
-	tp, err := jaegerClient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
+	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("Failed to init Jaeger: %s", err))
 		exitCode = 1
@@ -241,9 +241,9 @@ func main() {
 
 	registerCertsServiceServer := func(srv *grpc.Server) {
 		reflection.Register(srv)
-		certs.RegisterCertsServiceServer(srv, certsgrpc.NewServer(svc))
+		grpcCertsV1.RegisterCertsServiceServer(srv, certsgrpc.NewServer(svc))
 	}
-	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerCertsServiceServer, logger, nil, nil)
+	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerCertsServiceServer, logger)
 
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authnMiddleware, logger, cfg.InstanceID, cfg.Secret), logger)
 
@@ -256,7 +256,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return server.StopSignalHandler(ctx, cancel, logger, svcName, hs, gs)
+		return smq.StopSignalHandler(ctx, cancel, logger, svcName, hs, gs)
 	})
 
 	if err := g.Wait(); err != nil {

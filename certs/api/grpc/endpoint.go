@@ -6,6 +6,7 @@ package grpc
 import (
 	"context"
 
+	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
 	"github.com/absmach/supermq/certs"
 	"github.com/absmach/supermq/pkg/authn"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
@@ -15,20 +16,20 @@ import (
 
 func getEntityEndpoint(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(*certs.EntityReq)
+		req := request.(*grpcCertsV1.EntityReq)
 
 		entityID, err := svc.GetEntityID(ctx, req.SerialNumber)
 		if err != nil {
 			return nil, err
 		}
 
-		return &certs.EntityRes{EntityId: entityID}, nil
+		return &grpcCertsV1.EntityRes{EntityId: entityID}, nil
 	}
 }
 
 func revokeCertsEndpoint(svc certs.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(*certs.RevokeReq)
+		req := request.(*grpcCertsV1.RevokeReq)
 
 		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
 		if !ok {

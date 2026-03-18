@@ -7,7 +7,7 @@ package absmach.certs;
 
 import "google/protobuf/empty.proto";
 
-option go_package = "./certs";
+option go_package = "github.com/absmach/supermq/api/grpc/certs/v1";
 
 service CertsService {
   rpc GetEntityID(EntityReq) returns (EntityRes) {}

@@ -6,6 +6,7 @@ package grpc
 import (
 	"context"
 
+	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
 	"github.com/absmach/supermq/certs"
 	"github.com/absmach/supermq/certs/api/http"
 	"github.com/absmach/supermq/pkg/errors"
@@ -15,15 +16,15 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
-var _ certs.CertsServiceServer = (*grpcServer)(nil)
+var _ grpcCertsV1.CertsServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
 	getEntity   kitgrpc.Handler
 	revokeCerts kitgrpc.Handler
-	certs.UnimplementedCertsServiceServer
+	grpcCertsV1.UnimplementedCertsServiceServer
 }
 
-func NewServer(svc certs.Service) certs.CertsServiceServer {
+func NewServer(svc certs.Service) grpcCertsV1.CertsServiceServer {
 	return &grpcServer{
 		getEntity: kitgrpc.NewServer(
 			(getEntityEndpoint(svc)),
@@ -39,15 +40,15 @@ func NewServer(svc certs.Service) certs.CertsServiceServer {
 }
 
 func decodeGetEntityReq(_ context.Context, req any) (any, error) {
-	return req.(*certs.EntityReq), nil
+	return req.(*grpcCertsV1.EntityReq), nil
 }
 
 func encodeGetEntityRes(_ context.Context, res any) (any, error) {
-	return res.(*certs.EntityRes), nil
+	return res.(*grpcCertsV1.EntityRes), nil
 }
 
 func decodeRevokeCertsReq(_ context.Context, req any) (any, error) {
-	return req.(*certs.RevokeReq), nil
+	return req.(*grpcCertsV1.RevokeReq), nil
 }
 
 func encodeRevokeCertsRes(_ context.Context, res any) (any, error) {
@@ -55,15 +56,15 @@ func encodeRevokeCertsRes(_ context.Context, res any) (any, error) {
 }
 
 // GetEntityID returns the entity ID for the given entity request.
-func (g *grpcServer) GetEntityID(ctx context.Context, req *certs.EntityReq) (*certs.EntityRes, error) {
+func (g *grpcServer) GetEntityID(ctx context.Context, req *grpcCertsV1.EntityReq) (*grpcCertsV1.EntityRes, error) {
 	_, res, err := g.getEntity.ServeGRPC(ctx, req)
 	if err != nil {
-		return &certs.EntityRes{}, encodeError(err)
+		return &grpcCertsV1.EntityRes{}, encodeError(err)
 	}
-	return res.(*certs.EntityRes), nil
+	return res.(*grpcCertsV1.EntityRes), nil
 }
 
-func (g *grpcServer) RevokeCerts(ctx context.Context, req *certs.RevokeReq) (*emptypb.Empty, error) {
+func (g *grpcServer) RevokeCerts(ctx context.Context, req *grpcCertsV1.RevokeReq) (*emptypb.Empty, error) {
 	_, res, err := g.revokeCerts.ServeGRPC(ctx, req)
 	if err != nil {
 		return &emptypb.Empty{}, encodeError(err)

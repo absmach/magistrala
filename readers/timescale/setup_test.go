@@ -48,6 +48,8 @@ func TestMain(m *testing.M) {
 	port := container.GetPort("5432/tcp")
 	url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 
+	// exponential backoff-retry, because the application in the container might not be ready to accept connections yet
+	pool.MaxWait = 120 * time.Second
 	if err = pool.Retry(func() error {
 		db, err = sqlx.Open("pgx", url)
 		if err != nil {
@@ -68,15 +70,6 @@ func TestMain(m *testing.M) {
 		SSLCert:     "",
 		SSLKey:      "",
 		SSLRootCert: "",
-		Pool: pgclient.PoolConfig{
-			MaxConnLifetime:       1 * time.Hour,
-			MaxConnLifetimeJitter: time.Duration(0),
-			MaxConnIdleTime:       15 * time.Minute,
-			MaxConns:              5,
-			MinConns:              1,
-			MinIdleConns:          1,
-			HealthCheckPeriod:     1 * time.Minute,
-		},
 	}
 
 	if db, err = pgclient.Setup(dbConfig, *tsWriter.Migration()); err != nil {

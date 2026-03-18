@@ -110,7 +110,7 @@ func TestIssueCertCmd(t *testing.T) {
 			defer func() {
 				cleanupFiles(t, []string{"cert.pem", "key.pem"})
 			}()
-			sdkCall := sdkMock.On("IssueCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("IssueCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{issueCmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -196,7 +196,7 @@ func TestRevokeCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RevokeCert", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("RevokeCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{revokeCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -256,7 +256,7 @@ func TestDeleteCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("DeleteCert", mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			sdkCall := sdkMock.On("DeleteCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{deleteCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -316,7 +316,7 @@ func TestRenewCertCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("RenewCert", mock.Anything, mock.Anything, mock.Anything).Return(sdk.Certificate{}, tc.sdkErr)
+			sdkCall := sdkMock.On("RenewCert", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(sdk.Certificate{}, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{renewCmd}, tc.args...)...)
 			switch tc.logType {
 			case okLog:
@@ -414,7 +414,7 @@ func TestListCertsCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ListCerts", mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			sdkCall := sdkMock.On("ListCerts", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{certsListCmd}, tc.args...)...)
 
 			switch tc.logType {
@@ -473,7 +473,7 @@ func TestDownloadCACmd(t *testing.T) {
 			defer func() {
 				cleanupFiles(t, []string{"ca.crt"})
 			}()
-			sdkCall := sdkMock.On("DownloadCA").Return(tc.certBundle, tc.sdkErr)
+			sdkCall := sdkMock.On("DownloadCA", mock.Anything).Return(tc.certBundle, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{downloadCACmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -529,7 +529,7 @@ func TestViewCACmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("ViewCA").Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("ViewCA", mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{viewCACmd}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -586,7 +586,7 @@ func TestGenerateCRLCmd(t *testing.T) {
 				cleanupFiles(t, []string{"ca.crl"})
 			}()
 
-			sdkCall := sdkMock.On("GenerateCRL").Return(tc.crlBytes, tc.sdkErr)
+			sdkCall := sdkMock.On("GenerateCRL", mock.Anything).Return(tc.crlBytes, tc.sdkErr)
 			defer sdkCall.Unset()
 
 			out := executeCommand(t, rootCmd, append([]string{"crl"}, tc.args...)...)
@@ -641,7 +641,7 @@ func TestGetEntityIDCmd(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			sdkCall := sdkMock.On("EntityID", mock.Anything, mock.Anything, mock.Anything).Return(tc.entityID, tc.sdkErr)
+			sdkCall := sdkMock.On("EntityID", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.entityID, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{"entity-id"}, tc.args...)...)
 
 			switch tc.logType {
@@ -739,7 +739,7 @@ func TestIssueFromCSRInternalCmd(t *testing.T) {
 			defer func() {
 				cleanupFiles(t, []string{"cert.pem", "key.pem"})
 			}()
-			sdkCall := sdkMock.On("IssueFromCSRInternal", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("IssueFromCSRInternal", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{"issue-csr-internal"}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:
@@ -859,7 +859,7 @@ func TestIssueFromCSRCmd(t *testing.T) {
 			defer func() {
 				cleanupFiles(t, []string{"cert.pem", "key.pem"})
 			}()
-			sdkCall := sdkMock.On("IssueFromCSR", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
+			sdkCall := sdkMock.On("IssueFromCSR", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.cert, tc.sdkErr)
 			out := executeCommand(t, rootCmd, append([]string{"issue-csr"}, tc.args...)...)
 			switch tc.logType {
 			case entityLog:

@@ -4,7 +4,6 @@
 package cli
 
 import (
-	"context"
 	"encoding/json"
 	"os"
 
@@ -28,7 +27,7 @@ var cmdCerts = []cobra.Command{
 					Limit:  Limit,
 					Offset: Offset,
 				}
-				page, err := sdk.ListCerts(context.Background(), pm, args[1], args[2])
+				page, err := sdk.ListCerts(cmd.Context(), pm, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
@@ -41,7 +40,7 @@ var cmdCerts = []cobra.Command{
 				Limit:    Limit,
 				Offset:   Offset,
 			}
-			page, err := sdk.ListCerts(context.Background(), pm, args[1], args[2])
+			page, err := sdk.ListCerts(cmd.Context(), pm, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -58,7 +57,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			err := sdk.RevokeCert(context.Background(), args[0], args[1], args[2])
+			err := sdk.RevokeCert(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -75,7 +74,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			err := sdk.DeleteCert(context.Background(), args[0], args[1], args[2])
+			err := sdk.DeleteCert(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -92,7 +91,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			_, err := sdk.RenewCert(context.Background(), args[0], args[1], args[2])
+			_, err := sdk.RenewCert(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -120,7 +119,7 @@ var cmdCerts = []cobra.Command{
 			} else {
 				serialNumber = args[0]
 			}
-			response, err := sdk.OCSP(context.Background(), serialNumber, certContent)
+			response, err := sdk.OCSP(cmd.Context(), serialNumber, certContent)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -137,7 +136,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			cert, err := sdk.ViewCert(context.Background(), args[0], args[1], args[2])
+			cert, err := sdk.ViewCert(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -154,7 +153,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			cert, err := sdk.ViewCA(context.Background())
+			cert, err := sdk.ViewCA(cmd.Context())
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -171,7 +170,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			bundle, err := sdk.DownloadCA(context.Background())
+			bundle, err := sdk.DownloadCA(cmd.Context())
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -198,7 +197,7 @@ var cmdCerts = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			csr, err := sdk.CreateCSR(context.Background(), pm, data)
+			csr, err := sdk.CreateCSR(cmd.Context(), pm, data)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -220,7 +219,7 @@ var cmdCerts = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			cert, err := sdk.IssueFromCSR(context.Background(), args[0], args[1], string(csrData), args[3], args[4])
+			cert, err := sdk.IssueFromCSR(cmd.Context(), args[0], args[1], string(csrData), args[3], args[4])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -243,7 +242,7 @@ var cmdCerts = []cobra.Command{
 				logErrorCmd(*cmd, err)
 				return
 			}
-			cert, err := sdk.IssueFromCSRInternal(context.Background(), args[0], args[1], string(csrData), args[3])
+			cert, err := sdk.IssueFromCSRInternal(cmd.Context(), args[0], args[1], string(csrData), args[3])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -261,7 +260,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			crlBytes, err := sdk.GenerateCRL(context.Background())
+			crlBytes, err := sdk.GenerateCRL(cmd.Context())
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -278,7 +277,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			entityID, err := sdk.EntityID(context.Background(), args[0], args[1], args[2])
+			entityID, err := sdk.EntityID(cmd.Context(), args[0], args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -319,7 +318,7 @@ func NewCertsCmd() *cobra.Command {
 				domainID = args[4]
 				token = args[5]
 			}
-			cert, err := sdk.IssueCert(context.Background(), args[0], ttl, ipAddrs, option, domainID, token)
+			cert, err := sdk.IssueCert(cmd.Context(), args[0], ttl, ipAddrs, option, domainID, token)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

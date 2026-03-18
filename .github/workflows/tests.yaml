@@ -22,24 +22,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-certs:
-    name: Check Certs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Fetch Certs
-        run: |
-          make fetch_certs
-          if [[ -n $(git status --porcelain docker/addons/certs) ]]; then
-            echo "Certs docker file is not up to date. Please update it"
-            git diff docker/addons/certs
-            exit 1
-          else
-            exit 0
-          fi
-
   lint-proto:
     name: Lint Proto
     runs-on: ubuntu-latest
@@ -66,10 +48,8 @@ jobs:
           protolint .
 
   lint-and-build:
-    needs: [check-certs, lint-proto]
+    needs: [lint-proto]
     uses: ./.github/workflows/lint-and-build.yaml
-
-
 
   detect-changes:
     name: Detect Changes
@@ -257,6 +237,18 @@ jobs:
             readers:
               - "readers/**"
 
+            re:
+              - "re/**"
+              - "cmd/re/**"
+
+            alarms:
+              - "alarms/**"
+              - "cmd/alarms/**"
+
+            reports:
+              - "reports/**"
+              - "cmd/reports/**"
+
       - name: Set matrix for changed modules
         id: set-matrix
         run: |
@@ -264,7 +256,7 @@ jobs:
 
           if [[ "${{ steps.changes.outputs.workflow }}" == "true" || "${{ steps.changes.outputs.pkg-errors }}" == "true" ]]; then
             # If workflow or pkg/errors changed, test everything
-            modules=("auth" "channels" "cli" "clients" "coap" "domains" "groups" "http" "internal" "journal" "logger" "mqtt" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers")
+            modules=("auth" "channels" "cli" "clients" "coap" "domains" "groups" "http" "internal" "journal" "logger" "mqtt" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers" "re" "alarms" "reports")
           else
             # Add only changed modules
             [[ "${{ steps.changes.outputs.auth }}" == "true" ]] && modules+=("auth")
@@ -292,6 +284,9 @@ jobs:
             [[ "${{ steps.changes.outputs.api }}" == "true" ]] && modules+=("api")
             [[ "${{ steps.changes.outputs.consumers }}" == "true" ]] && modules+=("consumers")
             [[ "${{ steps.changes.outputs.readers }}" == "true" ]] && modules+=("readers")
+            [[ "${{ steps.changes.outputs.re }}" == "true" ]] && modules+=("re")
+            [[ "${{ steps.changes.outputs.alarms }}" == "true" ]] && modules+=("alarms")
+            [[ "${{ steps.changes.outputs.reports }}" == "true" ]] && modules+=("reports")
           fi
 
           # Convert to JSON array

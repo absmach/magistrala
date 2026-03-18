@@ -12,11 +12,11 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	grpcapi "github.com/absmach/supermq/readers/api/grpc"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
+	grpcapi "github.com/absmach/supermq/readers/api/grpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

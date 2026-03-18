@@ -6,7 +6,11 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 
+	"github.com/absmach/supermq/certs"
+	smqsdk "github.com/absmach/supermq/pkg/sdk"
 	"github.com/fatih/color"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
@@ -93,4 +97,73 @@ func convertMetadata(m string) (map[string]any, error) {
 		return nil, err
 	}
 	return nil, nil
+}
+
+const certFileMode = 0o644
+
+func logSaveCertFiles(cmd cobra.Command, cert smqsdk.Certificate) {
+	files := map[string][]byte{
+		"cert.pem": []byte(cert.Certificate),
+	}
+	if cert.Key != "" {
+		files["key.pem"] = []byte(cert.Key)
+	}
+	for filename, content := range files {
+		if err := saveToFile(filename, content); err != nil {
+			logErrorCmd(cmd, err)
+			return
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Saved %s\n", filename)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "\nAll certificate files have been saved successfully.\n")
+}
+
+func logSaveCAFiles(cmd cobra.Command, certBundle smqsdk.CertificateBundle) {
+	files := map[string][]byte{
+		"ca.crt": certBundle.Certificate,
+	}
+	for filename, content := range files {
+		if err := saveToFile(filename, content); err != nil {
+			logErrorCmd(cmd, err)
+			return
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Saved %s\n", filename)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "\nAll certificate files have been saved successfully.\n")
+}
+
+func logSaveCSRFiles(cmd cobra.Command, csr certs.CSR) {
+	files := map[string][]byte{
+		"file.csr": csr.CSR,
+	}
+	for filename, content := range files {
+		if err := saveToFile(filename, content); err != nil {
+			logErrorCmd(cmd, err)
+			return
+		}
+		fmt.Fprintf(cmd.OutOrStdout(), "Saved %s\n", filename)
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "\nCSR file have been saved successfully.\n")
+}
+
+func logSaveCRLFile(cmd cobra.Command, crlBytes []byte) {
+	filename := "ca.crl"
+	if err := saveToFile(filename, crlBytes); err != nil {
+		logErrorCmd(cmd, err)
+		return
+	}
+	fmt.Fprintf(cmd.OutOrStdout(), "Saved %s\n", filename)
+	fmt.Fprintf(cmd.OutOrStdout(), "\nCRL file has been saved successfully.\n")
+}
+
+func saveToFile(filename string, content []byte) error {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("failed to get current working directory: %w", err)
+	}
+	filePath := filepath.Join(cwd, filename)
+	if err := os.WriteFile(filePath, content, certFileMode); err != nil {
+		return fmt.Errorf("failed to write file %s: %w", filename, err)
+	}
+	return nil
 }

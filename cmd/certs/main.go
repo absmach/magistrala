@@ -20,7 +20,6 @@ import (
 	"github.com/absmach/supermq/certs/middleware"
 	"github.com/absmach/supermq/certs/pki"
 	"github.com/absmach/supermq/certs/postgres"
-	"github.com/absmach/supermq/certs/tracing"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
@@ -276,7 +275,7 @@ func newService(ctx context.Context, db *sqlx.DB, dbConfig pgclient.Config, trac
 	svc = middleware.LoggingMiddleware(svc, logger)
 	counter, latency := prometheus.MakeMetrics(svcName, "api")
 	svc = middleware.MetricsMiddleware(svc, counter, latency)
-	svc = tracing.New(svc, tracer)
+	svc = middleware.New(svc, tracer)
 
 	return svc
 }

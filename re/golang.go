@@ -11,8 +11,8 @@ import (
 	"reflect"
 	"regexp"
 
-	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/errors"
+	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/messaging"
 	golang "github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"

@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/re/outputs"
 	"github.com/absmach/supermq/pkg/errors"
+	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/re/outputs"
 )
 
 var (

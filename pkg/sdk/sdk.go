@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/absmach/supermq/certs"
 	"github.com/absmach/supermq/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"moul.io/http2curl"
@@ -177,6 +178,9 @@ type PageMetadata struct {
 	AssignedBy      string    `json:"assigned_by,omitempty"`
 	AcknowledgedBy  string    `json:"acknowledged_by,omitempty"`
 	ResolvedBy      string    `json:"resolved_by,omitempty"`
+	EntityID        string    `json:"entity_id,omitempty"`
+	CommonName      string    `json:"common_name,omitempty"`
+	TTL             string    `json:"ttl,omitempty"`
 }
 
 type Role struct {
@@ -204,6 +208,82 @@ type RolesPage struct {
 type Credentials struct {
 	Username string `json:"username,omitempty"` // username or generated login ID
 	Secret   string `json:"secret,omitempty"`   // password or token
+}
+
+// CertStatus represents the status of a certificate.
+type CertStatus int
+
+const (
+	CertValid   CertStatus = iota
+	CertRevoked CertStatus = iota
+	CertUnknown CertStatus = iota
+)
+
+func (c CertStatus) String() string {
+	switch c {
+	case CertValid:
+		return "Valid"
+	case CertRevoked:
+		return "Revoked"
+	default:
+		return "Unknown"
+	}
+}
+
+func (c CertStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.String())
+}
+
+// Certificate holds certificate data returned by the certs service SDK.
+type Certificate struct {
+	SerialNumber string    `json:"serial_number,omitempty"`
+	Certificate  string    `json:"certificate,omitempty"`
+	Key          string    `json:"key,omitempty"`
+	Revoked      bool      `json:"revoked,omitempty"`
+	ExpiryTime   time.Time `json:"expiry_time,omitempty"`
+	EntityID     string    `json:"entity_id,omitempty"`
+	DownloadUrl  string    `json:"-"`
+}
+
+// CertificatePage holds a page of certificates.
+type CertificatePage struct {
+	Total        uint64        `json:"total"`
+	Offset       uint64        `json:"offset"`
+	Limit        uint64        `json:"limit"`
+	Certificates []Certificate `json:"certificates,omitempty"`
+}
+
+// CertificateBundle holds CA and certificate data for download.
+type CertificateBundle struct {
+	CA          []byte `json:"ca"`
+	Certificate []byte `json:"certificate"`
+	PrivateKey  []byte `json:"private_key"`
+}
+
+// OCSPResponse holds the OCSP status response for a certificate.
+type OCSPResponse struct {
+	Status           CertStatus `json:"status"`
+	SerialNumber     string     `json:"serial_number"`
+	RevokedAt        *time.Time `json:"revoked_at,omitempty"`
+	ProducedAt       *time.Time `json:"produced_at,omitempty"`
+	ThisUpdate       *time.Time `json:"this_update,omitempty"`
+	NextUpdate       *time.Time `json:"next_update,omitempty"`
+	Certificate      []byte     `json:"certificate,omitempty"`
+	IssuerHash       string     `json:"issuer_hash,omitempty"`
+	RevocationReason int        `json:"revocation_reason,omitempty"`
+}
+
+// Options holds certificate subject options for issuance.
+type Options struct {
+	CommonName         string   `json:"common_name"`
+	Organization       []string `json:"organization"`
+	OrganizationalUnit []string `json:"organizational_unit"`
+	Country            []string `json:"country"`
+	Province           []string `json:"province"`
+	Locality           []string `json:"locality"`
+	StreetAddress      []string `json:"street_address"`
+	PostalCode         []string `json:"postal_code"`
+	DnsNames           []string `json:"dns_names"`
 }
 
 // SDK contains SuperMQ API.
@@ -1596,6 +1676,96 @@ type SDK interface {
 
 	// DisableRule disables a rule.
 	DisableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// IssueCert issues a certificate for an entity.
+	//
+	// example:
+	//  cert, _ := sdk.IssueCert(context.Background(), "entityID", "8760h", []string{"127.0.0.1"}, sdk.Options{CommonName: "cn"}, "domainID", "token")
+	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, domainID, token string) (Certificate, errors.SDKError)
+
+	// RevokeCert revokes a certificate by serial number.
+	//
+	// example:
+	//  err := sdk.RevokeCert(context.Background(), "serialNumber", "domainID", "token")
+	RevokeCert(ctx context.Context, serialNumber, domainID, token string) errors.SDKError
+
+	// RenewCert renews a certificate by serial number.
+	//
+	// example:
+	//  cert, _ := sdk.RenewCert(context.Background(), "serialNumber", "domainID", "token")
+	RenewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+
+	// ListCerts lists certificates matching the given metadata filter.
+	//
+	// example:
+	//  page, _ := sdk.ListCerts(context.Background(), sdk.PageMetadata{Limit: 10}, "domainID", "token")
+	ListCerts(ctx context.Context, pm PageMetadata, domainID, token string) (CertificatePage, errors.SDKError)
+
+	// DeleteCert deletes all certificates for the given entity ID.
+	//
+	// example:
+	//  err := sdk.DeleteCert(context.Background(), "entityID", "domainID", "token")
+	DeleteCert(ctx context.Context, entityID, domainID, token string) errors.SDKError
+
+	// ViewCert retrieves a certificate by serial number.
+	//
+	// example:
+	//  cert, _ := sdk.ViewCert(context.Background(), "serialNumber", "domainID", "token")
+	ViewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+
+	// OCSP checks the revocation status of a certificate.
+	//
+	// example:
+	//  resp, _ := sdk.OCSP(context.Background(), "serialNumber", "")
+	OCSP(ctx context.Context, serialNumber, cert string) (OCSPResponse, errors.SDKError)
+
+	// ViewCA views the signing CA certificate.
+	//
+	// example:
+	//  cert, _ := sdk.ViewCA(context.Background())
+	ViewCA(ctx context.Context) (Certificate, errors.SDKError)
+
+	// DownloadCA downloads the signing CA certificate bundle.
+	//
+	// example:
+	//  bundle, _ := sdk.DownloadCA(context.Background())
+	DownloadCA(ctx context.Context) (CertificateBundle, errors.SDKError)
+
+	// IssueFromCSR issues a certificate from a provided CSR.
+	//
+	// example:
+	//  cert, _ := sdk.IssueFromCSR(context.Background(), "entityID", "8760h", csrPEM, "domainID", "token")
+	IssueFromCSR(ctx context.Context, entityID, ttl, csr, domainID, token string) (Certificate, errors.SDKError)
+
+	// IssueFromCSRInternal issues a certificate from a CSR using agent authentication.
+	//
+	// example:
+	//  cert, _ := sdk.IssueFromCSRInternal(context.Background(), "entityID", "8760h", csrPEM, "agentToken")
+	IssueFromCSRInternal(ctx context.Context, entityID, ttl, csr, token string) (Certificate, errors.SDKError)
+
+	// GenerateCRL generates a Certificate Revocation List.
+	//
+	// example:
+	//  crl, _ := sdk.GenerateCRL(context.Background())
+	GenerateCRL(ctx context.Context) ([]byte, errors.SDKError)
+
+	// RevokeAll revokes all certificates for an entity ID.
+	//
+	// example:
+	//  err := sdk.RevokeAll(context.Background(), "entityID", "domainID", "token")
+	RevokeAll(ctx context.Context, entityID, domainID, token string) errors.SDKError
+
+	// EntityID gets the entity ID for a certificate by serial number.
+	//
+	// example:
+	//  id, _ := sdk.EntityID(context.Background(), "serialNumber", "domainID", "token")
+	EntityID(ctx context.Context, serialNumber, domainID, token string) (string, errors.SDKError)
+
+	// CreateCSR creates a Certificate Signing Request from metadata and a private key.
+	//
+	// example:
+	//  csr, _ := sdk.CreateCSR(context.Background(), metadata, privateKeyBytes)
+	CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError)
 }
 
 type mgSDK struct {
@@ -1860,6 +2030,15 @@ func (pm PageMetadata) query() (string, error) {
 	}
 	q.Add("with_attributes", strconv.FormatBool(pm.WithAttributes))
 	q.Add("with_metadata", strconv.FormatBool(pm.WithMetadata))
+	if pm.EntityID != "" {
+		q.Add("entity_id", pm.EntityID)
+	}
+	if pm.CommonName != "" {
+		q.Add("common_name", pm.CommonName)
+	}
+	if pm.TTL != "" {
+		q.Add("ttl", pm.TTL)
+	}
 
 	return q.Encode(), nil
 }

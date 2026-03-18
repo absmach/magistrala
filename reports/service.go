@@ -236,15 +236,15 @@ func (r *report) generateReport(ctx context.Context, cfg ReportConfig, action Re
 	agg := grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED
 	switch cfg.Config.Aggregation.AggType {
 	case AggregationMAX:
-		agg = grpcReadersV1.Aggregation_MAX
+		agg = grpcReadersV1.Aggregation_AGGREGATION_MAX
 	case AggregationMIN:
-		agg = grpcReadersV1.Aggregation_MIN
+		agg = grpcReadersV1.Aggregation_AGGREGATION_MIN
 	case AggregationCOUNT:
-		agg = grpcReadersV1.Aggregation_COUNT
+		agg = grpcReadersV1.Aggregation_AGGREGATION_COUNT
 	case AggregationAVG:
-		agg = grpcReadersV1.Aggregation_AVG
+		agg = grpcReadersV1.Aggregation_AGGREGATION_AVG
 	case AggregationSUM:
-		agg = grpcReadersV1.Aggregation_SUM
+		agg = grpcReadersV1.Aggregation_AGGREGATION_SUM
 	}
 
 	loc, err := resolveTimezone(cfg.Config.Timezone)

@@ -84,9 +84,9 @@ message ReadMessagesReq {
 // Aggregation defines supported data aggregations.
 enum Aggregation {
   AGGREGATION_UNSPECIFIED = 0;
-  MAX                     = 1;
-  MIN                     = 2;
-  SUM                     = 3;
-  COUNT                   = 4;
-  AVG                     = 5;
+  AGGREGATION_MAX         = 1;
+  AGGREGATION_MIN         = 2;
+  AGGREGATION_SUM         = 3;
+  AGGREGATION_COUNT       = 4;
+  AGGREGATION_AVG         = 5;
 }

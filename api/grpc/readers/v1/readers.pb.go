@@ -29,30 +29,30 @@ type Aggregation int32
 
 const (
 	Aggregation_AGGREGATION_UNSPECIFIED Aggregation = 0
-	Aggregation_MAX                     Aggregation = 1
-	Aggregation_MIN                     Aggregation = 2
-	Aggregation_SUM                     Aggregation = 3
-	Aggregation_COUNT                   Aggregation = 4
-	Aggregation_AVG                     Aggregation = 5
+	Aggregation_AGGREGATION_MAX         Aggregation = 1
+	Aggregation_AGGREGATION_MIN         Aggregation = 2
+	Aggregation_AGGREGATION_SUM         Aggregation = 3
+	Aggregation_AGGREGATION_COUNT       Aggregation = 4
+	Aggregation_AGGREGATION_AVG         Aggregation = 5
 )
 
 // Enum value maps for Aggregation.
 var (
 	Aggregation_name = map[int32]string{
 		0: "AGGREGATION_UNSPECIFIED",
-		1: "MAX",
-		2: "MIN",
-		3: "SUM",
-		4: "COUNT",
-		5: "AVG",
+		1: "AGGREGATION_MAX",
+		2: "AGGREGATION_MIN",
+		3: "AGGREGATION_SUM",
+		4: "AGGREGATION_COUNT",
+		5: "AGGREGATION_AVG",
 	}
 	Aggregation_value = map[string]int32{
 		"AGGREGATION_UNSPECIFIED": 0,
-		"MAX":                     1,
-		"MIN":                     2,
-		"SUM":                     3,
-		"COUNT":                   4,
-		"AVG":                     5,
+		"AGGREGATION_MAX":         1,
+		"AGGREGATION_MIN":         2,
+		"AGGREGATION_SUM":         3,
+		"AGGREGATION_COUNT":       4,
+		"AGGREGATION_AVG":         5,
 	}
 )
 
@@ -789,14 +789,14 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\x12\x1b\n" +
 	"\tdomain_id\x18\x02 \x01(\tR\bdomainId\x12=\n" +
-	"\rpage_metadata\x18\x03 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*Y\n" +
+	"\rpage_metadata\x18\x03 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*\x95\x01\n" +
 	"\vAggregation\x12\x1b\n" +
-	"\x17AGGREGATION_UNSPECIFIED\x10\x00\x12\a\n" +
-	"\x03MAX\x10\x01\x12\a\n" +
-	"\x03MIN\x10\x02\x12\a\n" +
-	"\x03SUM\x10\x03\x12\t\n" +
-	"\x05COUNT\x10\x04\x12\a\n" +
-	"\x03AVG\x10\x052\\\n" +
+	"\x17AGGREGATION_UNSPECIFIED\x10\x00\x12\x13\n" +
+	"\x0fAGGREGATION_MAX\x10\x01\x12\x13\n" +
+	"\x0fAGGREGATION_MIN\x10\x02\x12\x13\n" +
+	"\x0fAGGREGATION_SUM\x10\x03\x12\x15\n" +
+	"\x11AGGREGATION_COUNT\x10\x04\x12\x13\n" +
+	"\x0fAGGREGATION_AVG\x10\x052\\\n" +
 	"\x0eReadersService\x12J\n" +
 	"\fReadMessages\x12\x1b.readers.v1.ReadMessagesReq\x1a\x1b.readers.v1.ReadMessagesRes\"\x00B0Z.github.com/absmach/supermq/api/grpc/readers/v1b\x06proto3"
 

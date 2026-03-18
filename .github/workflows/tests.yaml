@@ -236,13 +236,20 @@ jobs:
 
             consumers:
               - "consumers/**"
+              - "cmd/postgres-writer/**"
+              - "cmd/timescale-writer/**"
+              - "cmd/smpp-notifier/**"
+              - "cmd/smtp-notifier/**"
 
             readers:
               - "readers/**"
+              - "cmd/postgres-reader/**"
+              - "cmd/timescale-reader/**"
 
             re:
               - "re/**"
               - "cmd/re/**"
+              - "re/api/**"
 
             alarms:
               - "alarms/**"

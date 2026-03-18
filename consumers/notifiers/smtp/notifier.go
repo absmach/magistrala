@@ -6,8 +6,8 @@ package smtp
 import (
 	"fmt"
 
-	"github.com/absmach/supermq/internal/email"
 	"github.com/absmach/supermq/consumers"
+	"github.com/absmach/supermq/internal/email"
 	"github.com/absmach/supermq/pkg/messaging"
 )
 

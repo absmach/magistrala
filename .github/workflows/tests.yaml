@@ -200,6 +200,9 @@ jobs:
               - "groups/**"
               - "journal/**"
               - "api/http/**"
+              - "re/**"
+              - "alarms/**"
+              - "reports/**"
 
             pkg-transformers:
               - "pkg/transformers/**"

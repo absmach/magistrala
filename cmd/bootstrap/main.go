@@ -13,6 +13,7 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
+	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/bootstrap"
 	httpapi "github.com/absmach/supermq/bootstrap/api"
 	"github.com/absmach/supermq/bootstrap/events/consumer"
@@ -20,7 +21,6 @@ import (
 	"github.com/absmach/supermq/bootstrap/middleware"
 	bootstrappg "github.com/absmach/supermq/bootstrap/postgres"
 	"github.com/absmach/supermq/bootstrap/tracing"
-	"github.com/absmach/supermq"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"

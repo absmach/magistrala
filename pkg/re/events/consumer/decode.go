@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/re"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/roles"
 	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/supermq/pkg/schedule"
+	"github.com/absmach/supermq/re"
 )
 
 var (

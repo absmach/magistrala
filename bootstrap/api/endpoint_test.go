@@ -18,11 +18,11 @@ import (
 	"strings"
 	"testing"
 
+	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/bootstrap"
 	bsapi "github.com/absmach/supermq/bootstrap/api"
 	"github.com/absmach/supermq/bootstrap/mocks"
 	"github.com/absmach/supermq/internal/testsutil"
-	apiutil "github.com/absmach/supermq/api/http/util"
 	smqlog "github.com/absmach/supermq/logger"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"

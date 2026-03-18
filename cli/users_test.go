@@ -33,7 +33,6 @@ var user = mgsdk.User{
 	Status: users.EnabledStatus.String(),
 }
 
-
 func TestCreateUsersCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)

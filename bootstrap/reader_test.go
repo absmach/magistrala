@@ -11,8 +11,8 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/absmach/supermq/bootstrap"
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/bootstrap"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )

@@ -15,9 +15,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/absmach/supermq/certs"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/supermq/certs"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/go-chi/chi/v5"

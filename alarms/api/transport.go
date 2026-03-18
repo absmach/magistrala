@@ -12,8 +12,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/alarms"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	smqauthn "github.com/absmach/supermq/pkg/authn"

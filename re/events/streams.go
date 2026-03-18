@@ -6,13 +6,13 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/re"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/roles"
 	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/supermq/re"
 	"github.com/go-chi/chi/v5/middleware"
 )
 

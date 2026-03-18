@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/absmach/supermq/re"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/re"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

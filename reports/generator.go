@@ -18,9 +18,9 @@ import (
 	"time"
 	_ "time/tzdata" // Embed timezone database
 
-	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 

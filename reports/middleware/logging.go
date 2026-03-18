@@ -8,9 +8,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/reports"
 	"github.com/absmach/supermq/pkg/authn"
 	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/supermq/reports"
 )
 
 var _ reports.Service = (*loggingMiddleware)(nil)

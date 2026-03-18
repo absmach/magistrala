@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/absmach/supermq/reports"
 	"github.com/absmach/supermq"
+	"github.com/absmach/supermq/reports"
 )
 
 var (

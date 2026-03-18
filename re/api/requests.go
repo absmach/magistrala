@@ -4,11 +4,11 @@
 package api
 
 import (
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/re"
 	api "github.com/absmach/supermq/api/http"
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/schedule"
+	"github.com/absmach/supermq/re"
 )
 
 const (

@@ -6,8 +6,6 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/reports"
-	"github.com/absmach/supermq/reports/operations"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
@@ -15,6 +13,8 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies"
 	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/supermq/reports"
+	"github.com/absmach/supermq/reports/operations"
 )
 
 var (

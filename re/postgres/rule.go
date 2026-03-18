@@ -8,10 +8,10 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/re"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/supermq/pkg/schedule"
+	"github.com/absmach/supermq/re"
 	"github.com/jackc/pgtype"
 )
 

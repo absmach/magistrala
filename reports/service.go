@@ -10,19 +10,19 @@ import (
 	"strings"
 	"time"
 
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	"github.com/absmach/supermq/pkg/emailer"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/reltime"
-	"github.com/absmach/supermq/pkg/ticker"
-	"github.com/absmach/supermq/reports/operations"
 	"github.com/absmach/supermq"
+	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
 	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/supermq/pkg/emailer"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	pkglog "github.com/absmach/supermq/pkg/logger"
 	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/supermq/pkg/reltime"
 	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/supermq/pkg/ticker"
 	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/absmach/supermq/reports/operations"
 )
 
 const limit = 1000

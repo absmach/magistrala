@@ -10,12 +10,12 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/reports"
-	"github.com/absmach/supermq/reports/postgres"
 	"github.com/absmach/supermq/pkg/errors"
 	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/supermq/pkg/schedule"
 	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/supermq/reports"
+	"github.com/absmach/supermq/reports/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

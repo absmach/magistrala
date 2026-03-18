@@ -11,11 +11,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/pkg/reltime"
-	"github.com/absmach/supermq/pkg/schedule"
 	"github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/supermq/pkg/reltime"
 	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/supermq/pkg/schedule"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 )
 

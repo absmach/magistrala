@@ -11,10 +11,10 @@ import (
 
 	twriter "github.com/absmach/supermq/consumers/writers/timescale"
 	"github.com/absmach/supermq/internal/testsutil"
-	treader "github.com/absmach/supermq/readers/timescale"
 	"github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
+	treader "github.com/absmach/supermq/readers/timescale"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

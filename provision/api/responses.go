@@ -8,7 +8,7 @@ import (
 	"net/http"
 
 	"github.com/absmach/supermq"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/supermq/pkg/sdk"
 )
 
 var _ supermq.Response = (*provisionRes)(nil)

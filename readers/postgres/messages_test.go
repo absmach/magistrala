@@ -11,10 +11,10 @@ import (
 
 	pwriter "github.com/absmach/supermq/consumers/writers/postgres"
 	"github.com/absmach/supermq/internal/testsutil"
-	preader "github.com/absmach/supermq/readers/postgres"
 	"github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/absmach/supermq/readers"
+	preader "github.com/absmach/supermq/readers/postgres"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

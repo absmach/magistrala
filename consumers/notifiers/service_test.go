@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/absmach/supermq/consumers"
+	smqmocks "github.com/absmach/supermq/consumers/mocks"
 	"github.com/absmach/supermq/consumers/notifiers"
 	"github.com/absmach/supermq/consumers/notifiers/mocks"
 	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/consumers"
-	smqmocks "github.com/absmach/supermq/consumers/mocks"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
 	"github.com/absmach/supermq/pkg/errors"

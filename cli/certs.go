@@ -23,7 +23,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			if args[0] == "all" {
+			if args[0] == all {
 				pm := smqsdk.PageMetadata{
 					Limit:  Limit,
 					Offset: Offset,

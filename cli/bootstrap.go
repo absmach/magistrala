@@ -53,7 +53,7 @@ var cmdBootstrap = []cobra.Command{
 				State:  State,
 				Name:   Name,
 			}
-			if args[0] == "all" {
+			if args[0] == all {
 				l, err := sdk.Bootstraps(cmd.Context(), pageMetadata, args[1], args[2])
 				if err != nil {
 					logErrorCmd(*cmd, err)

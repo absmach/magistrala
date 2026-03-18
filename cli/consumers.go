@@ -45,7 +45,7 @@ var cmdSubscription = []cobra.Command{
 				Topic:   Topic,
 				Contact: Contact,
 			}
-			if args[0] == "all" {
+			if args[0] == all {
 				sub, err := sdk.ListSubscriptions(cmd.Context(), pageMetadata, args[1])
 				if err != nil {
 					logErrorCmd(*cmd, err)

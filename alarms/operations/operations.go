@@ -15,6 +15,7 @@ const (
 	OpAssignAlarm
 	OpAcknowledgeAlarm
 	OpResolveAlarm
+	OpUpdateAlarm
 )
 
 func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
@@ -41,6 +42,10 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 		},
 		OpResolveAlarm: {
 			Name:               "resolve",
+			PermissionRequired: true,
+		},
+		OpUpdateAlarm: {
+			Name:               "update",
 			PermissionRequired: true,
 		},
 	}

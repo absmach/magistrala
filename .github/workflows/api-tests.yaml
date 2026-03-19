@@ -314,4 +314,6 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: make run_latest down args="-v" && make run_addons down args="-v"
+        run: |
+          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p supermq down -v
+          make run_addons down args="-v" DOCKER_PROJECT=supermq

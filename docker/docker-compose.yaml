@@ -24,10 +24,10 @@ volumes:
   supermq-domains-redis-volume:
   supermq-auth-redis-volume:
   supermq-auth-keys-volume:
-  magistrala-ui-backend-db-volume:
-  magistrala-re-db-volume:
-  magistrala-alarms-db-volume:
-  magistrala-reports-db-volume:
+  supermq-ui-backend-db-volume:
+  supermq-re-db-volume:
+  supermq-alarms-db-volume:
+  supermq-reports-db-volume:
   supermq-certs-db-volume:
   supermq-openbao-data:
 
@@ -1611,7 +1611,7 @@ services:
 
   ui:
     image: ghcr.io/absmach/magistrala/ui-mg:${SMQ_RELEASE_TAG}
-    container_name: magistrala-ui
+    container_name: supermq-ui
     ports:
       - 3000:3000
     networks:
@@ -1663,7 +1663,7 @@ services:
 
   ui-backend:
     image: ghcr.io/absmach/magistrala/ui-backend:${SMQ_RELEASE_TAG}
-    container_name: magistrala-ui-backend
+    container_name: supermq-ui-backend
     ports:
       - ${MG_UI_BACKEND_HTTP_PORT}:${MG_UI_BACKEND_HTTP_PORT}
     networks:
@@ -1770,7 +1770,7 @@ services:
 
   ui-backend-db:
     image: docker.io/postgres:18.0-alpine3.22
-    container_name: magistrala-ui-backend-db
+    container_name: supermq-ui-backend-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
@@ -1783,7 +1783,7 @@ services:
     networks:
       - supermq-base-net
     volumes:
-      - magistrala-ui-backend-db-volume:/var/lib/postgresql/data
+      - supermq-ui-backend-db-volume:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
       interval: 5s
@@ -1792,7 +1792,7 @@ services:
 
   seaweedfs-s3:
     image: chrislusf/seaweedfs:4.16
-    container_name: magistrala-seaweedfs-s3
+    container_name: supermq-seaweedfs-s3
     command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
     ports:
       - "8333:8333"
@@ -1807,7 +1807,7 @@ services:
 
   seaweedfs-init:
     image: amazon/aws-cli
-    container_name: magistrala-seaweedfs-init
+    container_name: supermq-seaweedfs-init
     entrypoint: /bin/sh
     depends_on:
       - seaweedfs-s3
@@ -1837,7 +1837,7 @@ services:
 
   re-db:
     image: docker.io/postgres:18.0-alpine3.22
-    container_name: magistrala-re-db
+    container_name: supermq-re-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
@@ -1849,11 +1849,11 @@ services:
     networks:
       - supermq-base-net
     volumes:
-      - magistrala-re-db-volume:/var/lib/postgresql/data
+      - supermq-re-db-volume:/var/lib/postgresql/data
 
   re:
     image: ghcr.io/absmach/magistrala/re:${SMQ_RELEASE_TAG}
-    container_name: magistrala-re
+    container_name: supermq-re
     depends_on:
       - re-db
       - spicedb-migrate
@@ -1941,7 +1941,7 @@ services:
 
   alarms-db:
     image: docker.io/postgres:18.0-alpine3.22
-    container_name: magistrala-alarms-db
+    container_name: supermq-alarms-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
@@ -1953,11 +1953,11 @@ services:
     networks:
       - supermq-base-net
     volumes:
-      - magistrala-alarms-db-volume:/var/lib/postgresql/data
+      - supermq-alarms-db-volume:/var/lib/postgresql/data
 
   alarms:
     image: ghcr.io/absmach/magistrala/alarms:${SMQ_RELEASE_TAG}
-    container_name: magistrala-alarms
+    container_name: supermq-alarms
     depends_on:
       - alarms-db
       - spicedb-migrate
@@ -2039,7 +2039,7 @@ services:
 
   reports-db:
     image: docker.io/postgres:18.0-alpine3.22
-    container_name: magistrala-reports-db
+    container_name: supermq-reports-db
     restart: on-failure
     command: postgres -c "max_connections=${SMQ_POSTGRES_MAX_CONNECTIONS}"
     environment:
@@ -2051,11 +2051,11 @@ services:
     networks:
       - supermq-base-net
     volumes:
-      - magistrala-reports-db-volume:/var/lib/postgresql/data
+      - supermq-reports-db-volume:/var/lib/postgresql/data
 
   reports:
     image: ghcr.io/absmach/magistrala/reports:${SMQ_RELEASE_TAG}
-    container_name: magistrala-reports
+    container_name: supermq-reports
     depends_on:
       - reports-db
       - spicedb-migrate
@@ -2137,7 +2137,7 @@ services:
 
   pdf-generator:
     image: gotenberg/gotenberg:8.25.1
-    container_name: magistrala-pdf
+    container_name: supermq-pdf
     ports:
       - "4000:3000"
     networks:

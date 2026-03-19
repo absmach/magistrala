@@ -159,7 +159,9 @@ jobs:
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Start containers
-        run: make run_latest up args="-d" && make run_addons up args="-d"
+        run: |
+          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p supermq up -d
+          make run_addons up args="-d" DOCKER_PROJECT=supermq
 
       - name: Wait for services to be ready
         run: |

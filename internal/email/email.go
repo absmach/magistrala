@@ -5,6 +5,7 @@ package email
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/mail"
 	"strconv"
@@ -102,11 +103,21 @@ func (a *Agent) Send(to []string, from, subject, header, user, content, footer s
 	m.SetHeader("To", to...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", buff.String())
-	for name, data := range attachments {
-		m.Attach(name, gomail.SetCopyFunc(func(w io.Writer) error {
-			_, err := w.Write(data)
-			return err
-		}))
+
+	for filename, data := range attachments {
+		reader := bytes.NewReader(data)
+
+		settings := []gomail.FileSetting{
+			gomail.SetHeader(map[string][]string{
+				"Content-Disposition": {fmt.Sprintf(`attachment; filename="%s"`, filename)},
+			}),
+			gomail.SetCopyFunc(func(w io.Writer) error {
+				_, err := io.Copy(w, reader)
+				return err
+			}),
+		}
+
+		m.Attach(filename, settings...)
 	}
 
 	if err := a.dial.DialAndSend(m); err != nil {

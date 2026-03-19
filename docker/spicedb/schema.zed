@@ -5,9 +5,9 @@ definition user {}
 
 
 definition role {
-	relation entity: domain | group | channel | client
+	relation entity: domain | group | channel | client | rule | report
 	relation member: user
-	relation built_in_role: domain | group | channel | client
+	relation built_in_role: domain | group | channel | client | rule | report
 
 	permission delete = entity->manage_role_permission - built_in_role->manage_role_permission
 	permission update = entity->manage_role_permission - built_in_role->manage_role_permission

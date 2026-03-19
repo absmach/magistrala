@@ -95,7 +95,7 @@ define run_with_arch_detection
 	fi
 endef
 
-ADDON_SERVICES = journal bootstrap provision
+ADDON_SERVICES = journal bootstrap provision postgres-writer postgres-reader timescale-writer timescale-reader
 
 EXTERNAL_SERVICES = prometheus
 

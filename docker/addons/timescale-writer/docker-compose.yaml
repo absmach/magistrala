@@ -10,7 +10,6 @@
 
 networks:
   supermq-base-net:
-    external: true
     driver: bridge
 
 volumes:

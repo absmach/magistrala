@@ -7,6 +7,9 @@ networks:
   supermq-base-net:
     driver: bridge
     name: supermq-base-net
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
 
 volumes:
   supermq-users-db-volume:
@@ -111,6 +114,7 @@ services:
     depends_on:
       - auth-db
       - spicedb
+      - nginx
     expose:
       - ${SMQ_AUTH_GRPC_PORT}
     restart: on-failure
@@ -242,6 +246,7 @@ services:
     depends_on:
       - domains-db
       - spicedb
+      - nginx
     expose:
       - ${SMQ_DOMAINS_GRPC_PORT}
     restart: on-failure
@@ -478,6 +483,7 @@ services:
       - clients-db
       - users
       - auth
+      - nginx
     restart: on-failure
     environment:
       SMQ_CLIENTS_LOG_LEVEL: ${SMQ_CLIENTS_LOG_LEVEL}
@@ -673,6 +679,7 @@ services:
       - channels-redis
       - users
       - auth
+      - nginx
     restart: on-failure
     environment:
       SMQ_CHANNELS_LOG_LEVEL: ${SMQ_CHANNELS_LOG_LEVEL}
@@ -854,6 +861,7 @@ services:
     depends_on:
       - users-db
       - auth
+      - nginx
     restart: on-failure
     environment:
       SMQ_USERS_LOG_LEVEL: ${SMQ_USERS_LOG_LEVEL}
@@ -968,6 +976,8 @@ services:
   notifications:
     image: docker.io/supermq/notifications:${SMQ_RELEASE_TAG}
     container_name: supermq-notifications
+    depends_on:
+      - nginx
     restart: on-failure
     environment:
       SMQ_NOTIFICATIONS_LOG_LEVEL: ${SMQ_NOTIFICATIONS_LOG_LEVEL}
@@ -1036,6 +1046,7 @@ services:
     depends_on:
       - groups-db
       - auth
+      - nginx
     restart: on-failure
     environment:
       SMQ_GROUPS_LOG_LEVEL: ${SMQ_GROUPS_LOG_LEVEL}
@@ -1209,6 +1220,7 @@ services:
   fluxmq-node1:
     image: ghcr.io/absmach/fluxmq:${SMQ_FLUXMQ_IMAGE_TAG}
     container_name: supermq-fluxmq-node1
+    user: "0:0"
     command: ["-config", "/etc/fluxmq/config.yaml"]
     depends_on:
       - fluxmq-auth
@@ -1216,38 +1228,43 @@ services:
     ports:
       - ${SMQ_COAP_PORT}:5683/udp
     networks:
-      - supermq-base-net
+      supermq-base-net:
+        ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node1-volume:/data
+      - supermq-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
     image: ghcr.io/absmach/fluxmq:${SMQ_FLUXMQ_IMAGE_TAG}
     container_name: supermq-fluxmq-node2
+    user: "0:0"
     command: ["-config", "/etc/fluxmq/config.yaml"]
     depends_on:
       - fluxmq-node1
       - fluxmq-auth
     restart: on-failure
     networks:
-      - supermq-base-net
+      supermq-base-net:
+        ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node2-volume:/data
+      - supermq-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
     image: ghcr.io/absmach/fluxmq:${SMQ_FLUXMQ_IMAGE_TAG}
     container_name: supermq-fluxmq-node3
+    user: "0:0"
     command: ["-config", "/etc/fluxmq/config.yaml"]
     depends_on:
       - fluxmq-node1
       - fluxmq-auth
     restart: on-failure
     networks:
-      - supermq-base-net
+      supermq-base-net:
+        ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node3-volume:/data
+      - supermq-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
     image: docker.io/supermq/fluxmq:${SMQ_RELEASE_TAG}
@@ -1578,6 +1595,7 @@ services:
     depends_on:
       - re-db
       - spicedb-migrate
+      - nginx
     restart: on-failure
     environment:
       MG_RE_LOG_LEVEL: ${MG_RE_LOG_LEVEL}
@@ -1682,6 +1700,7 @@ services:
     depends_on:
       - alarms-db
       - spicedb-migrate
+      - nginx
     restart: on-failure
     environment:
       MG_ALARMS_LOG_LEVEL: ${MG_ALARMS_LOG_LEVEL}
@@ -1780,6 +1799,7 @@ services:
     depends_on:
       - reports-db
       - spicedb-migrate
+      - nginx
     restart: on-failure
     environment:
       MG_REPORTS_LOG_LEVEL: ${MG_REPORTS_LOG_LEVEL}

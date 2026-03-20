@@ -4,32 +4,36 @@
 server:
   tcp:
     v3:
-      addr: "0.0.0.0:1885"
+      addr: "0.0.0.0:1883"
       protocol: "v3"
       max_connections: 10000
       read_timeout: 60s
       write_timeout: 60s
     v5:
-      addr: "0.0.0.0:1886"
+      addr: "0.0.0.0:1884"
       protocol: "v5"
       max_connections: 10000
       read_timeout: 60s
       write_timeout: 60s
   websocket:
     v3:
-      addr: "0.0.0.0:8885"
+      addr: "0.0.0.0:8883"
       path: "/mqtt"
       protocol: "v3"
     v5:
-      addr: "0.0.0.0:8886"
+      addr: "0.0.0.0:8884"
       path: "/mqtt"
       protocol: "v5"
   http:
     plain:
-      addr: "0.0.0.0:8091"
+      addr: "0.0.0.0:8090"
+  amqp:
+    plain:
+      addr: "0.0.0.0:5672"
+      max_connections: 10000
   amqp091:
     plain:
-      addr: "0.0.0.0:5683"
+      addr: "0.0.0.0:5682"
   health_addr: "0.0.0.0:8082"
   health_enabled: true
   shutdown_timeout: 30s
@@ -59,18 +63,17 @@ log:
 
 storage:
   type: "badger"
-  badger_dir: "/tmp/fluxmq/node2/data"
+  badger_dir: "/tmp/fluxmq/data"
   sync_writes: false
 
 cluster:
   enabled: true
   node_id: "node2"
   etcd:
-    data_dir: "/tmp/fluxmq/node2/etcd"
-    bind_addr: "0.0.0.0:2380"
-    advertise_addr: "fluxmq-node2:2380"
-    client_addr: "0.0.0.0:2379"
-    initial_cluster: "node1=http://fluxmq-node1:2380,node2=http://fluxmq-node2:2380,node3=http://fluxmq-node3:2380"
+    data_dir: "/tmp/fluxmq/etcd"
+    bind_addr: "172.30.0.202:2380"
+    client_addr: "172.30.0.202:2379"
+    initial_cluster: "node1=http://172.30.0.201:2380,node2=http://172.30.0.202:2380,node3=http://172.30.0.203:2380"
     bootstrap: true
     hybrid_retained_size_threshold: 1024
   transport:

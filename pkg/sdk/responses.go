@@ -64,6 +64,18 @@ type DomainsPage struct {
 	PageRes
 }
 
+// BootstrapPage contains list of bootstrap configs in a page with proper metadata.
+type BootstrapPage struct {
+	Configs []BootstrapConfig `json:"configs"`
+	PageRes
+}
+
+// SubscriptionPage contains list of subscriptions in a page with proper metadata.
+type SubscriptionPage struct {
+	Subscriptions []Subscription `json:"subscriptions"`
+	PageRes
+}
+
 type roleActionsRes struct {
 	Actions []string `json:"actions"`
 }

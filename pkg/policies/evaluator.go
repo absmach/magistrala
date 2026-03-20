@@ -27,6 +27,9 @@ const (
 	UserType     = "user"
 	DomainType   = "domain"
 	PlatformType = "platform"
+	RulesType    = "rules"
+	ReportsType  = "reports"
+	AlarmsType   = "alarms"
 )
 
 const (

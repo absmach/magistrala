@@ -31,7 +31,7 @@ import (
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 	pubsub "github.com/absmach/supermq/pkg/messaging/mocks"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/supermq/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

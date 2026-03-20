@@ -17,6 +17,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/absmach/supermq/certs"
 	"github.com/absmach/supermq/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"moul.io/http2curl"
@@ -164,6 +165,22 @@ type PageMetadata struct {
 	EndLevel        int64     `json:"end_level,omitempty"`
 	CreatedFrom     time.Time `json:"created_from,omitempty"`
 	CreatedTo       time.Time `json:"created_to,omitempty"`
+	Dir             string    `json:"dir,omitempty"`
+	Tag             string    `json:"tag,omitempty"`
+	InputChannel    string    `json:"input_channel,omitempty"`
+	RuleID          string    `json:"rule_id,omitempty"`
+	ChannelID       string    `json:"channel_id,omitempty"`
+	ClientID        string    `json:"client_id,omitempty"`
+	Subtopic        string    `json:"subtopic,omitempty"`
+	AssigneeID      string    `json:"assignee_id,omitempty"`
+	Severity        uint8     `json:"severity,omitempty"`
+	UpdatedBy       string    `json:"updated_by,omitempty"`
+	AssignedBy      string    `json:"assigned_by,omitempty"`
+	AcknowledgedBy  string    `json:"acknowledged_by,omitempty"`
+	ResolvedBy      string    `json:"resolved_by,omitempty"`
+	EntityID        string    `json:"entity_id,omitempty"`
+	CommonName      string    `json:"common_name,omitempty"`
+	TTL             string    `json:"ttl,omitempty"`
 }
 
 type Role struct {
@@ -191,6 +208,82 @@ type RolesPage struct {
 type Credentials struct {
 	Username string `json:"username,omitempty"` // username or generated login ID
 	Secret   string `json:"secret,omitempty"`   // password or token
+}
+
+// CertStatus represents the status of a certificate.
+type CertStatus int
+
+const (
+	CertValid   CertStatus = iota
+	CertRevoked CertStatus = iota
+	CertUnknown CertStatus = iota
+)
+
+func (c CertStatus) String() string {
+	switch c {
+	case CertValid:
+		return "Valid"
+	case CertRevoked:
+		return "Revoked"
+	default:
+		return "Unknown"
+	}
+}
+
+func (c CertStatus) MarshalJSON() ([]byte, error) {
+	return json.Marshal(c.String())
+}
+
+// Certificate holds certificate data returned by the certs service SDK.
+type Certificate struct {
+	SerialNumber string    `json:"serial_number,omitempty"`
+	Certificate  string    `json:"certificate,omitempty"`
+	Key          string    `json:"key,omitempty"`
+	Revoked      bool      `json:"revoked,omitempty"`
+	ExpiryTime   time.Time `json:"expiry_time,omitempty"`
+	EntityID     string    `json:"entity_id,omitempty"`
+	DownloadUrl  string    `json:"-"`
+}
+
+// CertificatePage holds a page of certificates.
+type CertificatePage struct {
+	Total        uint64        `json:"total"`
+	Offset       uint64        `json:"offset"`
+	Limit        uint64        `json:"limit"`
+	Certificates []Certificate `json:"certificates,omitempty"`
+}
+
+// CertificateBundle holds CA and certificate data for download.
+type CertificateBundle struct {
+	CA          []byte `json:"ca"`
+	Certificate []byte `json:"certificate"`
+	PrivateKey  []byte `json:"private_key"`
+}
+
+// OCSPResponse holds the OCSP status response for a certificate.
+type OCSPResponse struct {
+	Status           CertStatus `json:"status"`
+	SerialNumber     string     `json:"serial_number"`
+	RevokedAt        *time.Time `json:"revoked_at,omitempty"`
+	ProducedAt       *time.Time `json:"produced_at,omitempty"`
+	ThisUpdate       *time.Time `json:"this_update,omitempty"`
+	NextUpdate       *time.Time `json:"next_update,omitempty"`
+	Certificate      []byte     `json:"certificate,omitempty"`
+	IssuerHash       string     `json:"issuer_hash,omitempty"`
+	RevocationReason int        `json:"revocation_reason,omitempty"`
+}
+
+// Options holds certificate subject options for issuance.
+type Options struct {
+	CommonName         string   `json:"common_name"`
+	Organization       []string `json:"organization"`
+	OrganizationalUnit []string `json:"organizational_unit"`
+	Country            []string `json:"country"`
+	Province           []string `json:"province"`
+	Locality           []string `json:"locality"`
+	StreetAddress      []string `json:"street_address"`
+	PostalCode         []string `json:"postal_code"`
+	DnsNames           []string `json:"dns_names"`
 }
 
 // SDK contains SuperMQ API.
@@ -1463,6 +1556,216 @@ type SDK interface {
 	//  invitations, _ := sdk.DomainInvitations(ctx, "domainID", pm, "token")
 	//  fmt.Println(invitations)
 	DomainInvitations(ctx context.Context, pm PageMetadata, token, domainID string) (invitations InvitationPage, err error)
+
+	// AddBootstrap add bootstrap configuration
+	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
+
+	// ViewBootstrap returns Client Config with given ID belonging to the user identified by the given token.
+	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, errors.SDKError)
+
+	// UpdateBootstrap updates editable fields of the provided Config.
+	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) errors.SDKError
+
+	// UpdateBootstrapCerts updates bootstrap config certificates.
+	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
+
+	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Client is connected to.
+	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) errors.SDKError
+
+	// RemoveBootstrap removes Config with specified token that belongs to the user identified by the given token.
+	RemoveBootstrap(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// Bootstrap returns Config to the Client with provided external ID using external key.
+	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+
+	// BootstrapSecure retrieves a configuration with given external ID and encrypted external key.
+	BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+
+	// Bootstraps retrieves a list of managed configs.
+	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+
+	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
+	Whitelist(ctx context.Context, clientID string, state int, domainID, token string) errors.SDKError
+
+	// ReadMessages reads messages of specified channel.
+	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
+
+	// CreateSubscription creates a new subscription.
+	CreateSubscription(ctx context.Context, topic, contact, token string) (string, errors.SDKError)
+
+	// ListSubscriptions list subscriptions given list parameters.
+	ListSubscriptions(ctx context.Context, pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
+
+	// ViewSubscription retrieves a subscription with the provided id.
+	ViewSubscription(ctx context.Context, id, token string) (Subscription, errors.SDKError)
+
+	// DeleteSubscription removes a subscription with the provided id.
+	DeleteSubscription(ctx context.Context, id, token string) errors.SDKError
+
+	// UpdateAlarm updates an existing alarm.
+	UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, errors.SDKError)
+
+	// ViewAlarm retrieves an alarm by its ID.
+	ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, errors.SDKError)
+
+	// ListAlarms retrieves a page of alarms.
+	ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, errors.SDKError)
+
+	// DeleteAlarm deletes an alarm.
+	DeleteAlarm(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// AddReportConfig creates a new report configuration.
+	AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// ViewReportConfig retrieves a report config by its ID.
+	ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportConfig updates an existing report configuration.
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportSchedule updates an existing report configuration's schedule.
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// RemoveReportConfig deletes a report config.
+	RemoveReportConfig(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// ListReportsConfig retrieves a page of report configs.
+	ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, errors.SDKError)
+
+	// EnableReportConfig enables a report config.
+	EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// DisableReportConfig disables a report config.
+	DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+
+	// UpdateReportTemplate updates a report template.
+	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) errors.SDKError
+
+	// ViewReportTemplate retrieves a report template.
+	ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, errors.SDKError)
+
+	// DeleteReportTemplate deletes a report template.
+	DeleteReportTemplate(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// GenerateReport generates a report from a configuration.
+	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, *ReportFile, errors.SDKError)
+
+	// AddRule creates a new rule.
+	AddRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// ViewRule retrieves a rule by its ID.
+	ViewRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRule updates an existing rule.
+	UpdateRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRuleTags updates an existing rule's tags.
+	UpdateRuleTags(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// UpdateRuleSchedule updates an existing rule's schedule.
+	UpdateRuleSchedule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+
+	// ListRules retrieves a page of rules.
+	ListRules(ctx context.Context, pm PageMetadata, domainID, token string) (Page, errors.SDKError)
+
+	// RemoveRule deletes a rule.
+	RemoveRule(ctx context.Context, id, domainID, token string) errors.SDKError
+
+	// EnableRule enables a rule.
+	EnableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// DisableRule disables a rule.
+	DisableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+
+	// IssueCert issues a certificate for an entity.
+	//
+	// example:
+	//  cert, _ := sdk.IssueCert(context.Background(), "entityID", "8760h", []string{"127.0.0.1"}, sdk.Options{CommonName: "cn"}, "domainID", "token")
+	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, domainID, token string) (Certificate, errors.SDKError)
+
+	// RevokeCert revokes a certificate by serial number.
+	//
+	// example:
+	//  err := sdk.RevokeCert(context.Background(), "serialNumber", "domainID", "token")
+	RevokeCert(ctx context.Context, serialNumber, domainID, token string) errors.SDKError
+
+	// RenewCert renews a certificate by serial number.
+	//
+	// example:
+	//  cert, _ := sdk.RenewCert(context.Background(), "serialNumber", "domainID", "token")
+	RenewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+
+	// ListCerts lists certificates matching the given metadata filter.
+	//
+	// example:
+	//  page, _ := sdk.ListCerts(context.Background(), sdk.PageMetadata{Limit: 10}, "domainID", "token")
+	ListCerts(ctx context.Context, pm PageMetadata, domainID, token string) (CertificatePage, errors.SDKError)
+
+	// DeleteCert deletes all certificates for the given entity ID.
+	//
+	// example:
+	//  err := sdk.DeleteCert(context.Background(), "entityID", "domainID", "token")
+	DeleteCert(ctx context.Context, entityID, domainID, token string) errors.SDKError
+
+	// ViewCert retrieves a certificate by serial number.
+	//
+	// example:
+	//  cert, _ := sdk.ViewCert(context.Background(), "serialNumber", "domainID", "token")
+	ViewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+
+	// OCSP checks the revocation status of a certificate.
+	//
+	// example:
+	//  resp, _ := sdk.OCSP(context.Background(), "serialNumber", "")
+	OCSP(ctx context.Context, serialNumber, cert string) (OCSPResponse, errors.SDKError)
+
+	// ViewCA views the signing CA certificate.
+	//
+	// example:
+	//  cert, _ := sdk.ViewCA(context.Background())
+	ViewCA(ctx context.Context) (Certificate, errors.SDKError)
+
+	// DownloadCA downloads the signing CA certificate bundle.
+	//
+	// example:
+	//  bundle, _ := sdk.DownloadCA(context.Background())
+	DownloadCA(ctx context.Context) (CertificateBundle, errors.SDKError)
+
+	// IssueFromCSR issues a certificate from a provided CSR.
+	//
+	// example:
+	//  cert, _ := sdk.IssueFromCSR(context.Background(), "entityID", "8760h", csrPEM, "domainID", "token")
+	IssueFromCSR(ctx context.Context, entityID, ttl, csr, domainID, token string) (Certificate, errors.SDKError)
+
+	// IssueFromCSRInternal issues a certificate from a CSR using agent authentication.
+	//
+	// example:
+	//  cert, _ := sdk.IssueFromCSRInternal(context.Background(), "entityID", "8760h", csrPEM, "agentToken")
+	IssueFromCSRInternal(ctx context.Context, entityID, ttl, csr, token string) (Certificate, errors.SDKError)
+
+	// GenerateCRL generates a Certificate Revocation List.
+	//
+	// example:
+	//  crl, _ := sdk.GenerateCRL(context.Background())
+	GenerateCRL(ctx context.Context) ([]byte, errors.SDKError)
+
+	// RevokeAll revokes all certificates for an entity ID.
+	//
+	// example:
+	//  err := sdk.RevokeAll(context.Background(), "entityID", "domainID", "token")
+	RevokeAll(ctx context.Context, entityID, domainID, token string) errors.SDKError
+
+	// EntityID gets the entity ID for a certificate by serial number.
+	//
+	// example:
+	//  id, _ := sdk.EntityID(context.Background(), "serialNumber", "domainID", "token")
+	EntityID(ctx context.Context, serialNumber, domainID, token string) (string, errors.SDKError)
+
+	// CreateCSR creates a Certificate Signing Request from metadata and a private key.
+	//
+	// example:
+	//  csr, _ := sdk.CreateCSR(context.Background(), metadata, privateKeyBytes)
+	CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError)
 }
 
 type mgSDK struct {
@@ -1475,6 +1778,11 @@ type mgSDK struct {
 	domainsURL     string
 	journalURL     string
 	HostURL        string
+	bootstrapURL   string
+	readersURL     string
+	alarmsURL      string
+	reportsURL     string
+	rulesEngineURL string
 
 	msgContentType ContentType
 	client         *http.Client
@@ -1493,6 +1801,11 @@ type Config struct {
 	DomainsURL     string
 	JournalURL     string
 	HostURL        string
+	BootstrapURL   string
+	ReaderURL      string
+	AlarmsURL      string
+	ReportsURL     string
+	RulesEngineURL string
 
 	MsgContentType  ContentType
 	TLSVerification bool
@@ -1512,6 +1825,11 @@ func NewSDK(conf Config) SDK {
 		domainsURL:     conf.DomainsURL,
 		journalURL:     conf.JournalURL,
 		HostURL:        conf.HostURL,
+		bootstrapURL:   conf.BootstrapURL,
+		readersURL:     conf.ReaderURL,
+		alarmsURL:      conf.AlarmsURL,
+		reportsURL:     conf.ReportsURL,
+		rulesEngineURL: conf.RulesEngineURL,
 
 		msgContentType: conf.MsgContentType,
 		client: &http.Client{Transport: otelhttp.NewTransport(&http.Transport{
@@ -1712,6 +2030,15 @@ func (pm PageMetadata) query() (string, error) {
 	}
 	q.Add("with_attributes", strconv.FormatBool(pm.WithAttributes))
 	q.Add("with_metadata", strconv.FormatBool(pm.WithMetadata))
+	if pm.EntityID != "" {
+		q.Add("entity_id", pm.EntityID)
+	}
+	if pm.CommonName != "" {
+		q.Add("common_name", pm.CommonName)
+	}
+	if pm.TTL != "" {
+		q.Add("ttl", pm.TTL)
+	}
 
 	return q.Encode(), nil
 }

@@ -24,9 +24,7 @@ import (
 
 var (
 	token    = "valid" + "domaintoken"
-	domainID = "domain-id"
 	relation = "administrator"
-	all      = "all"
 	conntype = `["publish","subscribe"]`
 
 	errEndJSONInput = errors.New("unexpected end of JSON input")

@@ -41,10 +41,10 @@ func New(resetURL, verificationURL string, resetConfig, verifyConfig *email.Conf
 
 func (e *emailer) SendPasswordReset(to []string, user, token string) error {
 	url := fmt.Sprintf("%s?token=%s", e.resetURL, token)
-	return e.resetAgent.Send(to, "", "Password Reset Request", "", user, url, "")
+	return e.resetAgent.Send(to, "", "Password Reset Request", "", user, url, "", nil)
 }
 
 func (e *emailer) SendVerification(to []string, user, verificationToken string) error {
 	url := fmt.Sprintf("%s?token=%s", e.verificationURL, verificationToken)
-	return e.verifyAgent.Send(to, "", "Email Verification", "", user, url, "")
+	return e.verifyAgent.Send(to, "", "Email Verification", "", user, url, "", nil)
 }

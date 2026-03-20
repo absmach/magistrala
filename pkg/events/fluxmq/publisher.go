@@ -6,6 +6,7 @@ package fluxmq
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
@@ -24,7 +25,17 @@ type pubEventStore struct {
 
 // NewPublisher creates a FluxMQ-backed event publisher.
 func NewPublisher(_ context.Context, url string) (events.Publisher, error) {
-	opts := fluxamqp.NewOptions().SetURL(url)
+	logger := slog.Default()
+	opts := fluxamqp.NewOptions().SetURL(url).
+		SetOnConnectionLost(func(err error) {
+			logger.Warn("FluxMQ event publisher connection lost", "error", err)
+		}).
+		SetOnReconnecting(func(attempt int) {
+			logger.Info("FluxMQ event publisher reconnecting", "attempt", attempt)
+		}).
+		SetOnConnect(func() {
+			logger.Info("FluxMQ event publisher connected")
+		})
 
 	client, err := fluxamqp.New(opts)
 	if err != nil {

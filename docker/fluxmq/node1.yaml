@@ -17,23 +17,23 @@ server:
       write_timeout: 60s
   websocket:
     v3:
-      addr: "0.0.0.0:8080"
+      addr: "0.0.0.0:8883"
       path: "/mqtt"
       protocol: "v3"
     v5:
-      addr: "0.0.0.0:8081"
+      addr: "0.0.0.0:8884"
       path: "/mqtt"
       protocol: "v5"
   http:
     plain:
-      addr: "0.0.0.0:8008"
+      addr: "0.0.0.0:8090"
   coap:
     plain:
       addr: "0.0.0.0:5683"
   amqp091:
     plain:
       addr: "0.0.0.0:5682"
-  health_addr: "0.0.0.0:8088"
+  health_addr: "0.0.0.0:8081"
   health_enabled: true
   shutdown_timeout: 30s
 
@@ -62,17 +62,17 @@ log:
 
 storage:
   type: "badger"
-  badger_dir: "/data/badger"
+  badger_dir: "/tmp/fluxmq/node1/data"
   sync_writes: false
 
 cluster:
   enabled: true
   node_id: "node1"
   etcd:
-    data_dir: "/data/etcd"
-    bind_addr: "0.0.0.0:2380"
-    client_addr: "0.0.0.0:2379"
-    initial_cluster: "node1=http://fluxmq-node1:2380,node2=http://fluxmq-node2:2380,node3=http://fluxmq-node3:2380"
+    data_dir: "/tmp/fluxmq/node1/etcd"
+    bind_addr: "172.30.10.201:2380"
+    client_addr: "172.30.10.201:2379"
+    initial_cluster: "node1=http://172.30.10.201:2380,node2=http://172.30.10.202:2380,node3=http://172.30.10.203:2380"
     bootstrap: true
     hybrid_retained_size_threshold: 1024
   transport:

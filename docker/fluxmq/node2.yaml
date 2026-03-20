@@ -67,9 +67,10 @@ cluster:
   node_id: "node2"
   etcd:
     data_dir: "/tmp/fluxmq/node2/etcd"
-    bind_addr: "172.30.10.202:2380"
-    client_addr: "172.30.10.202:2379"
-    initial_cluster: "node1=http://172.30.10.201:2380,node2=http://172.30.10.202:2380,node3=http://172.30.10.203:2380"
+    bind_addr: "0.0.0.0:2380"
+    advertise_addr: "fluxmq-node2:2380"
+    client_addr: "0.0.0.0:2379"
+    initial_cluster: "node1=http://fluxmq-node1:2380,node2=http://fluxmq-node2:2380,node3=http://fluxmq-node3:2380"
     bootstrap: true
     hybrid_retained_size_threshold: 1024
   transport:

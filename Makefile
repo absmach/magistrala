@@ -305,7 +305,10 @@ endif
 
 run_latest: check_certs
 	$(SED_INPLACE) 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=latest/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	SMQ_ADDONS_CERTS_PATH_PREFIX="../." $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
+		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_stable: check_certs
 	$(eval version = $(shell git describe --abbrev=0 --tags))

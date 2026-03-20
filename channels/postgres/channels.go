@@ -500,10 +500,10 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 		FROM
 			final_channels c
 	`
+	connCountJoinQuery := connJoinQuery
 
 	if pm.Client != "" {
-		connJoinQuery = `
-			,conn.connection_types
+		connCountJoinQuery = `
 			FROM
 					final_channels c
 			LEFT JOIN (
@@ -517,6 +517,9 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 					conn.client_id, conn.channel_id
 			) conn ON c.id = conn.channel_id
 		`
+		connJoinQuery = `
+			,conn.connection_types
+			` + connCountJoinQuery
 	}
 
 	dbPage, err := toDBChannelsPage(pm)
@@ -529,9 +532,9 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 	if pm.OnlyTotal {
 		cq := fmt.Sprintf(`%s
 			SELECT COUNT(*) AS total_count
-			FROM final_channels c
+			%s
 			%s;
-		`, bq, pageQuery)
+		`, bq, connCountJoinQuery, pageQuery)
 
 		total, err := postgres.Total(ctx, repo.db, cq, dbPage)
 		if err != nil {
@@ -607,9 +610,9 @@ func (repo *channelRepository) retrieveChannels(ctx context.Context, domainID, u
 	if len(items) == 0 {
 		cq := fmt.Sprintf(`%s
 			SELECT COUNT(*) AS total_count
-			FROM final_channels c
+			%s
 			%s;
-		`, bq, pageQuery)
+		`, bq, connCountJoinQuery, pageQuery)
 
 		total, err = postgres.Total(ctx, repo.db, cq, dbPage)
 		if err != nil {

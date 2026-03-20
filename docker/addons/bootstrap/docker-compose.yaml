@@ -1,0 +1,94 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional bootstrap services. Since it's optional, this file is
+# dependent of docker-compose file from <project_root>/docker. In order to run this services, execute command:
+# docker compose -f docker/docker-compose.yaml -f docker/addons/bootstrap/docker-compose.yaml up
+# from project root.
+
+networks:
+  supermq-base-net:
+    external: true
+    driver: bridge
+
+volumes:
+  supermq-bootstrap-db-volume:
+
+services:
+  bootstrap-db:
+    image: postgres:16.2-alpine
+    container_name: supermq-bootstrap-db
+    restart: on-failure
+    environment:
+      POSTGRES_USER: ${SMQ_BOOTSTRAP_DB_USER}
+      POSTGRES_PASSWORD: ${SMQ_BOOTSTRAP_DB_PASS}
+      POSTGRES_DB: ${SMQ_BOOTSTRAP_DB_NAME}
+    networks:
+      - supermq-base-net
+    volumes:
+      - supermq-bootstrap-db-volume:/var/lib/postgresql/data
+
+  bootstrap:
+    image: supermq/bootstrap:latest
+    container_name: supermq-bootstrap
+    depends_on:
+      - bootstrap-db
+    restart: on-failure
+    ports:
+      - ${SMQ_BOOTSTRAP_HTTP_PORT}:${SMQ_BOOTSTRAP_HTTP_PORT}
+    environment:
+      SMQ_BOOTSTRAP_LOG_LEVEL: ${SMQ_BOOTSTRAP_LOG_LEVEL}
+      SMQ_BOOTSTRAP_ENCRYPT_KEY: ${SMQ_BOOTSTRAP_ENCRYPT_KEY}
+      SMQ_BOOTSTRAP_EVENT_CONSUMER: ${SMQ_BOOTSTRAP_EVENT_CONSUMER}
+      SMQ_ES_URL: ${SMQ_ES_URL}
+      SMQ_BOOTSTRAP_HTTP_HOST: ${SMQ_BOOTSTRAP_HTTP_HOST}
+      SMQ_BOOTSTRAP_HTTP_PORT: ${SMQ_BOOTSTRAP_HTTP_PORT}
+      SMQ_BOOTSTRAP_HTTP_SERVER_CERT: ${SMQ_BOOTSTRAP_HTTP_SERVER_CERT}
+      SMQ_BOOTSTRAP_HTTP_SERVER_KEY: ${SMQ_BOOTSTRAP_HTTP_SERVER_KEY}
+      SMQ_BOOTSTRAP_DB_HOST: ${SMQ_BOOTSTRAP_DB_HOST}
+      SMQ_BOOTSTRAP_DB_PORT: ${SMQ_BOOTSTRAP_DB_PORT}
+      SMQ_BOOTSTRAP_DB_USER: ${SMQ_BOOTSTRAP_DB_USER}
+      SMQ_BOOTSTRAP_DB_PASS: ${SMQ_BOOTSTRAP_DB_PASS}
+      SMQ_BOOTSTRAP_DB_NAME: ${SMQ_BOOTSTRAP_DB_NAME}
+      SMQ_BOOTSTRAP_DB_SSL_MODE: ${SMQ_BOOTSTRAP_DB_SSL_MODE}
+      SMQ_BOOTSTRAP_DB_SSL_CERT: ${SMQ_BOOTSTRAP_DB_SSL_CERT}
+      SMQ_BOOTSTRAP_DB_SSL_KEY: ${SMQ_BOOTSTRAP_DB_SSL_KEY}
+      SMQ_BOOTSTRAP_DB_SSL_ROOT_CERT: ${SMQ_BOOTSTRAP_DB_SSL_ROOT_CERT}
+      SMQ_BOOTSTRAP_INSTANCE_ID: ${SMQ_BOOTSTRAP_INSTANCE_ID}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_DOMAINS_GRPC_URL: ${SMQ_DOMAINS_GRPC_URL}
+      SMQ_DOMAINS_GRPC_TIMEOUT: ${SMQ_DOMAINS_GRPC_TIMEOUT}
+      SMQ_DOMAINS_GRPC_CLIENT_CERT: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
+      SMQ_DOMAINS_GRPC_CLIENT_KEY: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:+/domains-grpc-client.key}
+      SMQ_DOMAINS_GRPC_SERVER_CA_CERTS: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
+      SMQ_CLIENTS_URL: ${SMQ_CLIENTS_URL}
+      SMQ_CHANNELS_URL: ${SMQ_CHANNELS_URL}
+      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
+      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_SPICEDB_PRE_SHARED_KEY: ${SMQ_SPICEDB_PRE_SHARED_KEY}
+      SMQ_SPICEDB_HOST: ${SMQ_SPICEDB_HOST}
+      SMQ_SPICEDB_PORT: ${SMQ_SPICEDB_PORT}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    networks:
+      - supermq-base-net
+    volumes:
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_ADDONS_CERTS_PATH_PREFIX}${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true

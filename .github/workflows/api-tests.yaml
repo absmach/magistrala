@@ -18,6 +18,12 @@ on:
       - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
+      - "bootstrap/api/**"
+      - "certs/api/http/**"
+      - "readers/api/http/**"
+      - "re/api/**"
+      - "alarms/api/**"
+      - "reports/api/**"
       - "apidocs/openapi/**"
   pull_request:
     branches:
@@ -33,6 +39,12 @@ on:
       - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
+      - "bootstrap/api/**"
+      - "certs/api/http/**"
+      - "readers/api/http/**"
+      - "re/api/**"
+      - "alarms/api/**"
+      - "reports/api/**"
       - "apidocs/openapi/**"
 
 concurrency:
@@ -53,6 +65,12 @@ env:
   HTTP_ADAPTER_URL: http://localhost:8008
   AUTH_URL: http://localhost:9001
   JOURNAL_URL: http://localhost:9021
+  BOOTSTRAP_URL: http://localhost:9013
+  CERTS_URL: http://localhost:9019
+  READERS_URL: http://localhost:9011
+  RE_URL: http://localhost:9008
+  ALARMS_URL: http://localhost:8050
+  REPORTS_URL: http://localhost:9017
 
 jobs:
   api-test:
@@ -113,11 +131,37 @@ jobs:
               - "apidocs/openapi/users.yaml"
               - "users/api/**"
 
+            bootstrap:
+              - "apidocs/openapi/bootstrap.yaml"
+              - "bootstrap/api/**"
+
+            certs:
+              - "apidocs/openapi/certs.yaml"
+              - "certs/api/http/**"
+
+            readers:
+              - "apidocs/openapi/readers.yaml"
+              - "readers/api/http/**"
+
+            re:
+              - "apidocs/openapi/rules.yaml"
+              - "re/api/**"
+
+            alarms:
+              - "apidocs/openapi/alarms.yaml"
+              - "alarms/api/**"
+
+            reports:
+              - "apidocs/openapi/reports.yaml"
+              - "reports/api/**"
+
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Start containers
-        run: make run_latest up args="-d" && make run_addons up args="-d"
+        run: |
+          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p supermq up -d
+          make run_addons up args="-d" DOCKER_PROJECT=supermq
 
       - name: Wait for services to be ready
         run: |
@@ -214,6 +258,62 @@ jobs:
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
+      - name: Run Bootstrap API tests
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/bootstrap.yaml
+          base-url: ${{ env.BOOTSTRAP_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Certs API tests
+        if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/certs.yaml
+          base-url: ${{ env.CERTS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Readers API tests
+        if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/readers.yaml
+          base-url: ${{ env.READERS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Rules Engine API tests
+        if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/rules.yaml
+          base-url: ${{ env.RE_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Alarms API tests
+        if: steps.changes.outputs.alarms == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/alarms.yaml
+          base-url: ${{ env.ALARMS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Reports API tests
+        if: steps.changes.outputs.reports == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/reports.yaml
+          base-url: ${{ env.REPORTS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
       - name: Stop containers
         if: always()
-        run: make run_latest down args="-v" && make run_addons down args="-v"
+        run: |
+          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p supermq down -v
+          make run_addons down args="-v" DOCKER_PROJECT=supermq

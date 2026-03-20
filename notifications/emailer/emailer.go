@@ -127,7 +127,7 @@ func (n *notifier) Notify(ctx context.Context, notif notifications.Notification)
 		return errors.Wrap(errSendingEmail, fmt.Errorf("no email agent configured for notification type: %d", notif.Type))
 	}
 
-	if err := agent.Send([]string{recipientEmail}, "", subject, "", recipientName, content, n.fromName); err != nil {
+	if err := agent.Send([]string{recipientEmail}, "", subject, "", recipientName, content, n.fromName, nil); err != nil {
 		return errors.Wrap(errSendingEmail, err)
 	}
 

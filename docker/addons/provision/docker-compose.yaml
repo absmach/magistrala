@@ -1,0 +1,55 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional provision services. Since it's optional, this file is
+# dependent of docker-compose file from <project_root>/docker. In order to run this services, execute command:
+# docker compose -f docker/docker-compose.yaml -f docker/addons/provision/docker-compose.yaml up
+# from project root.
+
+networks:
+  supermq-base-net:
+    external: true
+    driver: bridge
+
+services:
+  provision:
+    image: supermq/provision:latest
+    container_name: supermq-provision
+    restart: on-failure
+    networks:
+      - supermq-base-net
+    ports:
+      - ${SMQ_PROVISION_HTTP_PORT}:${SMQ_PROVISION_HTTP_PORT}
+    environment:
+      SMQ_PROVISION_LOG_LEVEL: ${SMQ_PROVISION_LOG_LEVEL}
+      SMQ_PROVISION_HTTP_PORT: ${SMQ_PROVISION_HTTP_PORT}
+      SMQ_PROVISION_CONFIG_FILE: ${SMQ_PROVISION_CONFIG_FILE}
+      SMQ_PROVISION_ENV_CLIENTS_TLS: ${SMQ_PROVISION_ENV_CLIENTS_TLS}
+      SMQ_PROVISION_SERVER_CERT: ${SMQ_PROVISION_SERVER_CERT}
+      SMQ_PROVISION_SERVER_KEY: ${SMQ_PROVISION_SERVER_KEY}
+      SMQ_PROVISION_USERS_URL: ${SMQ_PROVISION_USERS_URL}
+      SMQ_PROVISION_CHANNELS_URL: ${SMQ_PROVISION_CHANNELS_URL}
+      SMQ_PROVISION_CLIENTS_URL: ${SMQ_PROVISION_CLIENTS_URL}
+      SMQ_PROVISION_USER: ${SMQ_PROVISION_USER}
+      SMQ_PROVISION_USERNAME: ${SMQ_PROVISION_USERNAME}
+      SMQ_PROVISION_PASS: ${SMQ_PROVISION_PASS}
+      SMQ_PROVISION_API_KEY: ${SMQ_PROVISION_API_KEY}
+      SMQ_PROVISION_CERTS_URL: ${SMQ_PROVISION_CERTS_URL}
+      SMQ_PROVISION_X509_PROVISIONING: ${SMQ_PROVISION_X509_PROVISIONING}
+      SMQ_PROVISION_BS_SVC_URL: ${SMQ_PROVISION_BS_SVC_URL}
+      SMQ_PROVISION_BS_CONFIG_PROVISIONING: ${SMQ_PROVISION_BS_CONFIG_PROVISIONING}
+      SMQ_PROVISION_BS_AUTO_WHITELIST: ${SMQ_PROVISION_BS_AUTO_WHITELIST}
+      SMQ_PROVISION_BS_CONTENT: ${SMQ_PROVISION_BS_CONTENT}
+      SMQ_PROVISION_CERTS_HOURS_VALID: ${SMQ_PROVISION_CERTS_HOURS_VALID}
+      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
+      SMQ_PROVISION_INSTANCE_ID: ${SMQ_PROVISION_INSTANCE_ID}
+      SMQ_AUTH_GRPC_URL: ${SMQ_AUTH_GRPC_URL}
+      SMQ_AUTH_GRPC_TIMEOUT: ${SMQ_AUTH_GRPC_TIMEOUT}
+      SMQ_AUTH_GRPC_CLIENT_CERT: ${SMQ_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      SMQ_AUTH_GRPC_CLIENT_KEY: ${SMQ_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      SMQ_AUTH_GRPC_SERVER_CA_CERTS: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      SMQ_ALLOW_UNVERIFIED_USER: ${SMQ_ALLOW_UNVERIFIED_USER}
+    volumes:
+      - ./configs:/configs
+      - ../../ssl/certs/ca.key:/etc/ssl/certs/ca.key
+      - ../../ssl/certs/ca.crt:/etc/ssl/certs/ca.crt

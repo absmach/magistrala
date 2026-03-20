@@ -31,7 +31,7 @@ const (
 	InvalidEmail    = "invalidemail"
 	secret          = "strongsecret"
 	invalidToken    = "invalid"
-	contentType     = "application/senml+json"
+	contentType     = sdk.CTJSON
 	invalid         = "invalid"
 	wrongID         = "wrongID"
 	roleName        = "roleName"

@@ -324,7 +324,7 @@ services:
     volumes:
       - ./permission.yaml:/permission.yaml
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
-      # Auth gRPC mTLS server certificates
+      # Domains gRPC mTLS server certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
         target: /domains-grpc-server.crt
@@ -940,6 +940,27 @@ services:
     volumes:
       - ./templates/${SMQ_PASSWORD_RESET_EMAIL_TEMPLATE}:/${SMQ_PASSWORD_RESET_EMAIL_TEMPLATE}
       - ./templates/${SMQ_VERIFICATION_EMAIL_TEMPLATE}:/${SMQ_VERIFICATION_EMAIL_TEMPLATE}
+      # Users gRPC server certificates
+      - type: bind
+        source: ${SMQ_USERS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        target: /users-grpc-server.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_USERS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        target: /users-grpc-server.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        target: /users-grpc-server-ca.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_USERS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        target: /users-grpc-client-ca.crt
+        bind:
+          create_host_path: true
       # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
@@ -1662,19 +1683,36 @@ services:
       - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
+      # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
+        bind:
+          create_host_path: true
+      # Domains gRPC client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-client.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1746,34 +1784,36 @@ services:
     volumes:
       - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
+      # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
+      # Domains gRPC client certificates
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${SMQ_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1860,19 +1900,36 @@ services:
       - ./permission.yaml:${SMQ_PERMISSIONS_FILE}
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
+      # Auth gRPC client certificates
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_CERT:+.crt}
+        target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /auth-grpc-client${SMQ_AUTH_GRPC_CLIENT_KEY:+.key}
+        target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${SMQ_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /auth-grpc-server-ca${SMQ_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /auth-grpc-server-ca.crt
+        bind:
+          create_host_path: true
+      # Domains gRPC client certificates
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /domains-grpc-client.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /domains-grpc-client.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${SMQ_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 
@@ -1918,9 +1975,9 @@ services:
       AM_CERTS_DB_SSL_MODE: ${AM_CERTS_DB_SSL_MODE}
       AM_AUTH_GRPC_URL: ${AM_AUTH_GRPC_URL}
       AM_AUTH_GRPC_TIMEOUT: ${AM_AUTH_GRPC_TIMEOUT}
-      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT}
-      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY}
-      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS}
+      AM_AUTH_GRPC_CLIENT_CERT: ${AM_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      AM_AUTH_GRPC_CLIENT_KEY: ${AM_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      AM_AUTH_GRPC_SERVER_CA_CERTS: ${AM_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
       AM_DOMAINS_GRPC_URL: ${AM_DOMAINS_GRPC_URL}
       AM_DOMAINS_GRPC_TIMEOUT: ${AM_DOMAINS_GRPC_TIMEOUT}
       AM_DOMAINS_GRPC_CLIENT_CERT: ${AM_DOMAINS_GRPC_CLIENT_CERT:+/domains-grpc-client.crt}
@@ -1937,19 +1994,36 @@ services:
       - ${AM_CERTS_GRPC_PORT}:${AM_CERTS_GRPC_PORT}
     volumes:
       - supermq-openbao-data:/openbao:ro
+      # Auth gRPC client certificates
+      - type: bind
+        source: ${AM_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        target: /auth-grpc-client.crt
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${AM_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        target: /auth-grpc-client.key
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${AM_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        target: /auth-grpc-server-ca.crt
+        bind:
+          create_host_path: true
+      # Domains gRPC client certificates
       - type: bind
         source: ${AM_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
-        target: /domains-grpc-client${AM_DOMAINS_GRPC_CLIENT_CERT:+.crt}
+        target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
         source: ${AM_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
-        target: /domains-grpc-client${AM_DOMAINS_GRPC_CLIENT_KEY:+.key}
+        target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
         source: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
-        target: /domains-grpc-server-ca${AM_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
+        target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
 

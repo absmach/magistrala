@@ -25,6 +25,7 @@ envsubst '
     ${SMQ_NGINX_MQTTS_PORT}
     ${MG_RE_HTTP_PORT}
     ${MG_ALARMS_HTTP_PORT}
-    ${MG_REPORTS_HTTP_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
+    ${MG_REPORTS_HTTP_PORT}
+    ${SMQ_NGINX_AMQP_PORT}' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 
 exec nginx -g "daemon off;"

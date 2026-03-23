@@ -94,7 +94,7 @@ type config struct {
 	SendTelemetry       bool          `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`
 	CacheURL            string        `env:"SMQ_CHANNELS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration    time.Duration `env:"SMQ_CHANNELS_CACHE_KEY_DURATION"  envDefault:"10m"`
-	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"nats://localhost:4222"`
+	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"amqp://guest:guest@localhost:5682/"`
 	ESConsumerName      string        `env:"SMQ_CHANNELS_EVENT_CONSUMER"      envDefault:"channels"`
 	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
 	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`

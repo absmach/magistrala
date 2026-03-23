@@ -85,7 +85,7 @@ type config struct {
 	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
 	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
 	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"nats://localhost:4222"`
+	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"amqp://guest:guest@localhost:5682/"`
 	AuthKeyAlgorithm    string        `env:"SMQ_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
 	JWKSURL             string        `env:"SMQ_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
 	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`

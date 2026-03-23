@@ -3,8 +3,8 @@
 
 SMQ_DOCKER_IMAGE_NAME_PREFIX ?= supermq
 BUILD_DIR ?= build
-SERVICES = auth users clients groups channels domains http coap mqtt notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports
-TEST_API_SERVICES = journal auth certs http clients users channels groups domains
+SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports fluxmq
+TEST_API_SERVICES = journal auth certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -38,7 +38,7 @@ endif
 ifneq ($(SMQ_ES_TYPE),)
 	SMQ_ES_TYPE := $(SMQ_ES_TYPE)
 else
-	SMQ_ES_TYPE=es_nats
+	SMQ_ES_TYPE=es_fluxmq
 endif
 
 define compile_service
@@ -305,7 +305,10 @@ endif
 
 run_latest: check_certs
 	$(SED_INPLACE) 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=latest/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	SMQ_ADDONS_CERTS_PATH_PREFIX="../." $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml \
+		-f docker/addons/timescale-reader/docker-compose.yaml \
+		-f docker/addons/timescale-writer/docker-compose.yaml \
+		--env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_stable: check_certs
 	$(eval version = $(shell git describe --abbrev=0 --tags))

@@ -10,53 +10,53 @@ The service is configured via environment variables (unset values fall back to d
 
 | Variable                               | Description                                                                                       | Default                               |
 | -------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `SMQ_GROUPS_LOG_LEVEL`                 | Log level for Groups (debug, info, warn, error)                                                   | debug                                  |
-| `SMQ_GROUPS_HTTP_HOST`                 | Groups service HTTP host                                                                          | groups                                 |
-| `SMQ_GROUPS_HTTP_PORT`                 | Groups service HTTP port                                                                          | 9004                                   |
-| `SMQ_GROUPS_HTTP_SERVER_CERT`          | Path to PEM-encoded HTTP server certificate                                                       | ""                                     |
-| `SMQ_GROUPS_HTTP_SERVER_KEY`           | Path to PEM-encoded HTTP server key                                                               | ""                                     |
-| `SMQ_GROUPS_HTTP_SERVER_CA_CERTS`      | Path to trusted CA bundle for the HTTP server                                                     | ""                                     |
-| `SMQ_GROUPS_HTTP_CLIENT_CA_CERTS`      | Path to client CA bundle to require HTTP mTLS                                                     | ""                                     |
-| `SMQ_GROUPS_GRPC_HOST`                 | Groups service gRPC host                                                                          | groups                                 |
-| `SMQ_GROUPS_GRPC_PORT`                 | Groups service gRPC port                                                                          | 7004                                   |
-| `SMQ_GROUPS_GRPC_SERVER_CERT`          | Path to PEM-encoded gRPC server certificate                                                       | ""                                     |
-| `SMQ_GROUPS_GRPC_SERVER_KEY`           | Path to PEM-encoded gRPC server key                                                               | ""                                     |
-| `SMQ_GROUPS_GRPC_SERVER_CA_CERTS`      | Path to trusted CA bundle for the gRPC server                                                     | ""                                     |
-| `SMQ_GROUPS_GRPC_CLIENT_CA_CERTS`      | Path to client CA bundle to require gRPC mTLS                                                     | ""                                     |
-| `SMQ_GROUPS_DB_HOST`                   | Database host address                                                                             | groups-db                              |
-| `SMQ_GROUPS_DB_PORT`                   | Database host port                                                                                | 5432                                   |
-| `SMQ_GROUPS_DB_USER`                   | Database user                                                                                     | supermq                                |
-| `SMQ_GROUPS_DB_PASS`                   | Database password                                                                                 | supermq                                |
-| `SMQ_GROUPS_DB_NAME`                   | Name of the database used by the service                                                          | groups                                 |
-| `SMQ_GROUPS_DB_SSL_MODE`               | Database connection SSL mode (disable, require, verify-ca, verify-full)                           | disable                                |
-| `SMQ_GROUPS_DB_SSL_CERT`               | Path to the PEM-encoded certificate file                                                          | ""                                     |
-| `SMQ_GROUPS_DB_SSL_KEY`                | Path to the PEM-encoded key file                                                                  | ""                                     |
-| `SMQ_GROUPS_DB_SSL_ROOT_CERT`          | Path to the PEM-encoded root certificate file                                                     | ""                                     |
-| `SMQ_GROUPS_INSTANCE_ID`               | Groups instance ID (auto-generated when empty)                                                    | ""                                     |
-| `SMQ_GROUPS_EVENT_CONSUMER`            | NATS consumer name for domain events                                                              | groups                                 |
-| `SMQ_SPICEDB_HOST`                     | SpiceDB host for policy checks                                                                    | supermq-spicedb                              |
-| `SMQ_SPICEDB_PORT`                     | SpiceDB port                                                                                      | 50051                                  |
-| `SMQ_SPICEDB_SCHEMA_FILE`              | Path to SpiceDB schema file used to seed available actions                                        | "/schema.zed"                              |
-| `SMQ_SPICEDB_PRE_SHARED_KEY`           | SpiceDB preshared key                                                                             | 12345678                               |
-| `SMQ_ES_URL`                           | Event store URL                                                                                   | nats://nats:4222                  |
-| `SMQ_JAEGER_URL`                       | Jaeger server URL                                                                                 | <http://jaeger:4318/v1/traces>      |
-| `SMQ_JAEGER_TRACE_RATIO`               | Trace sampling ratio                                                                              | 1.0                                    |
-| `SMQ_SEND_TELEMETRY`                   | Send telemetry to the SuperMQ call-home server                                                    | true                                   |
-| `SMQ_AUTH_GRPC_URL`                    | Auth service gRPC URL                                                                             | ""                                     |
-| `SMQ_AUTH_GRPC_TIMEOUT`                | Auth service gRPC request timeout                                                                 | 1s                                     |
-| `SMQ_AUTH_GRPC_CLIENT_CERT`            | Path to the PEM-encoded Auth gRPC client certificate                                              | ""                                     |
-| `SMQ_AUTH_GRPC_CLIENT_KEY`             | Path to the PEM-encoded Auth gRPC client key                                                      | ""                                     |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS`        | Path to the PEM-encoded Auth gRPC trusted CA bundle                                               | ""                                     |
-| `SMQ_GROUPS_CALLOUT_URLS`              | Comma-separated list of HTTP callout targets invoked on group operations                          | ""                                     |
-| `SMQ_GROUPS_CALLOUT_METHOD`            | HTTP method for callouts (POST or GET)                                                            | POST                                   |
-| `SMQ_GROUPS_CALLOUT_TLS_VERIFICATION`  | Verify TLS certificates for callouts                                                              | false                                  |
-| `SMQ_GROUPS_CALLOUT_TIMEOUT`           | Callout request timeout                                                                           | 10s                                    |
-| `SMQ_GROUPS_CALLOUT_CA_CERT`           | CA bundle for verifying callout targets                                                           | ""                                     |
-| `SMQ_GROUPS_CALLOUT_CERT`              | Client certificate for mTLS callouts                                                              | ""                                     |
-| `SMQ_GROUPS_CALLOUT_KEY`               | Client key for mTLS callouts                                                                      | ""                                     |
-| `SMQ_GROUPS_CALLOUT_OPERATIONS`        | Comma-separated list of operation names that should trigger callouts                              | ""                                     |
+| `MG_GROUPS_LOG_LEVEL`                 | Log level for Groups (debug, info, warn, error)                                                   | debug                                  |
+| `MG_GROUPS_HTTP_HOST`                 | Groups service HTTP host                                                                          | groups                                 |
+| `MG_GROUPS_HTTP_PORT`                 | Groups service HTTP port                                                                          | 9004                                   |
+| `MG_GROUPS_HTTP_SERVER_CERT`          | Path to PEM-encoded HTTP server certificate                                                       | ""                                     |
+| `MG_GROUPS_HTTP_SERVER_KEY`           | Path to PEM-encoded HTTP server key                                                               | ""                                     |
+| `MG_GROUPS_HTTP_SERVER_CA_CERTS`      | Path to trusted CA bundle for the HTTP server                                                     | ""                                     |
+| `MG_GROUPS_HTTP_CLIENT_CA_CERTS`      | Path to client CA bundle to require HTTP mTLS                                                     | ""                                     |
+| `MG_GROUPS_GRPC_HOST`                 | Groups service gRPC host                                                                          | groups                                 |
+| `MG_GROUPS_GRPC_PORT`                 | Groups service gRPC port                                                                          | 7004                                   |
+| `MG_GROUPS_GRPC_SERVER_CERT`          | Path to PEM-encoded gRPC server certificate                                                       | ""                                     |
+| `MG_GROUPS_GRPC_SERVER_KEY`           | Path to PEM-encoded gRPC server key                                                               | ""                                     |
+| `MG_GROUPS_GRPC_SERVER_CA_CERTS`      | Path to trusted CA bundle for the gRPC server                                                     | ""                                     |
+| `MG_GROUPS_GRPC_CLIENT_CA_CERTS`      | Path to client CA bundle to require gRPC mTLS                                                     | ""                                     |
+| `MG_GROUPS_DB_HOST`                   | Database host address                                                                             | groups-db                              |
+| `MG_GROUPS_DB_PORT`                   | Database host port                                                                                | 5432                                   |
+| `MG_GROUPS_DB_USER`                   | Database user                                                                                     | supermq                                |
+| `MG_GROUPS_DB_PASS`                   | Database password                                                                                 | supermq                                |
+| `MG_GROUPS_DB_NAME`                   | Name of the database used by the service                                                          | groups                                 |
+| `MG_GROUPS_DB_SSL_MODE`               | Database connection SSL mode (disable, require, verify-ca, verify-full)                           | disable                                |
+| `MG_GROUPS_DB_SSL_CERT`               | Path to the PEM-encoded certificate file                                                          | ""                                     |
+| `MG_GROUPS_DB_SSL_KEY`                | Path to the PEM-encoded key file                                                                  | ""                                     |
+| `MG_GROUPS_DB_SSL_ROOT_CERT`          | Path to the PEM-encoded root certificate file                                                     | ""                                     |
+| `MG_GROUPS_INSTANCE_ID`               | Groups instance ID (auto-generated when empty)                                                    | ""                                     |
+| `MG_GROUPS_EVENT_CONSUMER`            | NATS consumer name for domain events                                                              | groups                                 |
+| `MG_SPICEDB_HOST`                     | SpiceDB host for policy checks                                                                    | supermq-spicedb                              |
+| `MG_SPICEDB_PORT`                     | SpiceDB port                                                                                      | 50051                                  |
+| `MG_SPICEDB_SCHEMA_FILE`              | Path to SpiceDB schema file used to seed available actions                                        | "/schema.zed"                              |
+| `MG_SPICEDB_PRE_SHARED_KEY`           | SpiceDB preshared key                                                                             | 12345678                               |
+| `MG_ES_URL`                           | Event store URL                                                                                   | nats://nats:4222                  |
+| `MG_JAEGER_URL`                       | Jaeger server URL                                                                                 | <http://jaeger:4318/v1/traces>      |
+| `MG_JAEGER_TRACE_RATIO`               | Trace sampling ratio                                                                              | 1.0                                    |
+| `MG_SEND_TELEMETRY`                   | Send telemetry to the SuperMQ call-home server                                                    | true                                   |
+| `MG_AUTH_GRPC_URL`                    | Auth service gRPC URL                                                                             | ""                                     |
+| `MG_AUTH_GRPC_TIMEOUT`                | Auth service gRPC request timeout                                                                 | 1s                                     |
+| `MG_AUTH_GRPC_CLIENT_CERT`            | Path to the PEM-encoded Auth gRPC client certificate                                              | ""                                     |
+| `MG_AUTH_GRPC_CLIENT_KEY`             | Path to the PEM-encoded Auth gRPC client key                                                      | ""                                     |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS`        | Path to the PEM-encoded Auth gRPC trusted CA bundle                                               | ""                                     |
+| `MG_GROUPS_CALLOUT_URLS`              | Comma-separated list of HTTP callout targets invoked on group operations                          | ""                                     |
+| `MG_GROUPS_CALLOUT_METHOD`            | HTTP method for callouts (POST or GET)                                                            | POST                                   |
+| `MG_GROUPS_CALLOUT_TLS_VERIFICATION`  | Verify TLS certificates for callouts                                                              | false                                  |
+| `MG_GROUPS_CALLOUT_TIMEOUT`           | Callout request timeout                                                                           | 10s                                    |
+| `MG_GROUPS_CALLOUT_CA_CERT`           | CA bundle for verifying callout targets                                                           | ""                                     |
+| `MG_GROUPS_CALLOUT_CERT`              | Client certificate for mTLS callouts                                                              | ""                                     |
+| `MG_GROUPS_CALLOUT_KEY`               | Client key for mTLS callouts                                                                      | ""                                     |
+| `MG_GROUPS_CALLOUT_OPERATIONS`        | Comma-separated list of operation names that should trigger callouts                              | ""                                     |
 
-**Note**: Set `SMQ_GROUPS_CALLOUT_OPERATIONS` to a subset of `OpCreateGroup`, `OpViewGroup`, `OpUpdateGroup`, `OpEnableGroup`, `OpDisableGroup`, `OpDeleteGroup`, `OpListGroups`, `OpHierarchy`, `OpAddParentGroup`, `OpRemoveParentGroup`, `OpAddChildrenGroups`, `OpRemoveChildrenGroups`, `OpRemoveAllChildrenGroups`, or `OpListChildrenGroups` to filter which actions produce callouts.
+**Note**: Set `MG_GROUPS_CALLOUT_OPERATIONS` to a subset of `OpCreateGroup`, `OpViewGroup`, `OpUpdateGroup`, `OpEnableGroup`, `OpDisableGroup`, `OpDeleteGroup`, `OpListGroups`, `OpHierarchy`, `OpAddParentGroup`, `OpRemoveParentGroup`, `OpAddChildrenGroups`, `OpRemoveChildrenGroups`, `OpRemoveAllChildrenGroups`, or `OpListChildrenGroups` to filter which actions produce callouts.
 
 ## Deployment
 
@@ -76,63 +76,63 @@ make groups
 make install
 
 # set the environment variables and run the service
-SMQ_GROUPS_LOG_LEVEL=debug \
-SMQ_GROUPS_HTTP_HOST=groups \
-SMQ_GROUPS_HTTP_PORT=9004 \
-SMQ_GROUPS_HTTP_SERVER_CERT="" \
-SMQ_GROUPS_HTTP_SERVER_KEY="" \
-SMQ_GROUPS_GRPC_HOST=groups \
-SMQ_GROUPS_GRPC_PORT=7004 \
-SMQ_GROUPS_GRPC_SERVER_CERT="" \
-SMQ_GROUPS_GRPC_SERVER_KEY="" \
-SMQ_GROUPS_GRPC_SERVER_CA_CERTS="" \
-SMQ_GROUPS_GRPC_CLIENT_CA_CERTS="" \
-SMQ_GROUPS_DB_HOST=groups-db \
-SMQ_GROUPS_DB_PORT=5432 \
-SMQ_GROUPS_DB_USER=supermq \
-SMQ_GROUPS_DB_PASS=supermq \
-SMQ_GROUPS_DB_NAME=groups \
-SMQ_GROUPS_DB_SSL_MODE=disable \
-SMQ_GROUPS_DB_SSL_CERT="" \
-SMQ_GROUPS_DB_SSL_KEY="" \
-SMQ_GROUPS_DB_SSL_ROOT_CERT="" \
-SMQ_AUTH_GRPC_URL="" \
-SMQ_AUTH_GRPC_TIMEOUT=1s \
-SMQ_AUTH_GRPC_CLIENT_CERT="" \
-SMQ_AUTH_GRPC_CLIENT_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CA_CERTS="" \
-SMQ_DOMAINS_GRPC_URL=domains:7003 \
-SMQ_DOMAINS_GRPC_TIMEOUT=1s \
-SMQ_DOMAINS_GRPC_CLIENT_CERT="" \
-SMQ_DOMAINS_GRPC_CLIENT_KEY="" \
-SMQ_DOMAINS_GRPC_SERVER_CA_CERTS="" \
-SMQ_CHANNELS_GRPC_URL=channels:7005 \
-SMQ_CHANNELS_GRPC_TIMEOUT=1s \
-SMQ_CHANNELS_GRPC_CLIENT_CERT="" \
-SMQ_CHANNELS_GRPC_CLIENT_KEY="" \
-SMQ_CHANNELS_GRPC_SERVER_CA_CERTS="" \
-SMQ_CLIENTS_GRPC_URL=clients:7000 \
-SMQ_CLIENTS_GRPC_TIMEOUT=1s \
-SMQ_CLIENTS_GRPC_CLIENT_CERT="" \
-SMQ_CLIENTS_GRPC_CLIENT_KEY="" \
-SMQ_CLIENTS_GRPC_SERVER_CA_CERTS="" \
-SMQ_SPICEDB_HOST=localhost \
-SMQ_SPICEDB_PORT=50051 \
-SMQ_SPICEDB_SCHEMA_FILE=schema.zed \
-SMQ_SPICEDB_PRE_SHARED_KEY=12345678 \
-SMQ_ES_URL=nats://localhost:4222 \
-SMQ_JAEGER_URL=<http://localhost:4318/v1/traces> \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_GROUPS_CALLOUT_URLS="" \
-SMQ_GROUPS_CALLOUT_METHOD=POST \
-SMQ_GROUPS_CALLOUT_TLS_VERIFICATION=false \
-SMQ_GROUPS_CALLOUT_TIMEOUT=10s \
-SMQ_GROUPS_CALLOUT_CA_CERT="" \
-SMQ_GROUPS_CALLOUT_CERT="" \
-SMQ_GROUPS_CALLOUT_KEY="" \
-SMQ_GROUPS_CALLOUT_OPERATIONS="" \
-SMQ_SEND_TELEMETRY=true \
-SMQ_GROUPS_INSTANCE_ID="" \
+MG_GROUPS_LOG_LEVEL=debug \
+MG_GROUPS_HTTP_HOST=groups \
+MG_GROUPS_HTTP_PORT=9004 \
+MG_GROUPS_HTTP_SERVER_CERT="" \
+MG_GROUPS_HTTP_SERVER_KEY="" \
+MG_GROUPS_GRPC_HOST=groups \
+MG_GROUPS_GRPC_PORT=7004 \
+MG_GROUPS_GRPC_SERVER_CERT="" \
+MG_GROUPS_GRPC_SERVER_KEY="" \
+MG_GROUPS_GRPC_SERVER_CA_CERTS="" \
+MG_GROUPS_GRPC_CLIENT_CA_CERTS="" \
+MG_GROUPS_DB_HOST=groups-db \
+MG_GROUPS_DB_PORT=5432 \
+MG_GROUPS_DB_USER=supermq \
+MG_GROUPS_DB_PASS=supermq \
+MG_GROUPS_DB_NAME=groups \
+MG_GROUPS_DB_SSL_MODE=disable \
+MG_GROUPS_DB_SSL_CERT="" \
+MG_GROUPS_DB_SSL_KEY="" \
+MG_GROUPS_DB_SSL_ROOT_CERT="" \
+MG_AUTH_GRPC_URL="" \
+MG_AUTH_GRPC_TIMEOUT=1s \
+MG_AUTH_GRPC_CLIENT_CERT="" \
+MG_AUTH_GRPC_CLIENT_KEY="" \
+MG_AUTH_GRPC_SERVER_CA_CERTS="" \
+MG_DOMAINS_GRPC_URL=domains:7003 \
+MG_DOMAINS_GRPC_TIMEOUT=1s \
+MG_DOMAINS_GRPC_CLIENT_CERT="" \
+MG_DOMAINS_GRPC_CLIENT_KEY="" \
+MG_DOMAINS_GRPC_SERVER_CA_CERTS="" \
+MG_CHANNELS_GRPC_URL=channels:7005 \
+MG_CHANNELS_GRPC_TIMEOUT=1s \
+MG_CHANNELS_GRPC_CLIENT_CERT="" \
+MG_CHANNELS_GRPC_CLIENT_KEY="" \
+MG_CHANNELS_GRPC_SERVER_CA_CERTS="" \
+MG_CLIENTS_GRPC_URL=clients:7000 \
+MG_CLIENTS_GRPC_TIMEOUT=1s \
+MG_CLIENTS_GRPC_CLIENT_CERT="" \
+MG_CLIENTS_GRPC_CLIENT_KEY="" \
+MG_CLIENTS_GRPC_SERVER_CA_CERTS="" \
+MG_SPICEDB_HOST=localhost \
+MG_SPICEDB_PORT=50051 \
+MG_SPICEDB_SCHEMA_FILE=schema.zed \
+MG_SPICEDB_PRE_SHARED_KEY=12345678 \
+MG_ES_URL=nats://localhost:4222 \
+MG_JAEGER_URL=<http://localhost:4318/v1/traces> \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_GROUPS_CALLOUT_URLS="" \
+MG_GROUPS_CALLOUT_METHOD=POST \
+MG_GROUPS_CALLOUT_TLS_VERIFICATION=false \
+MG_GROUPS_CALLOUT_TIMEOUT=10s \
+MG_GROUPS_CALLOUT_CA_CERT="" \
+MG_GROUPS_CALLOUT_CERT="" \
+MG_GROUPS_CALLOUT_KEY="" \
+MG_GROUPS_CALLOUT_OPERATIONS="" \
+MG_SEND_TELEMETRY=true \
+MG_GROUPS_INSTANCE_ID="" \
 $GOBIN/supermq-groups
 ```
 
@@ -252,9 +252,9 @@ curl -X GET http://localhost:9004/<domainID>/groups/roles/available-actions \
 
 - Groups are stored in PostgreSQL with `ltree` paths for hierarchy queries; domain migrations are applied alongside group migrations for referential integrity.
 - Role tables are provisioned per entity with a `groups_` prefix.
-- Event notifications are published to `SMQ_ES_URL`; domain events are consumed to keep group data aligned.
+- Event notifications are published to `MG_ES_URL`; domain events are consumed to keep group data aligned.
 - Authorization and roles are enforced through SpiceDB and shared policy middleware.
-- Optional HTTP callouts (pre-operation hooks) are controlled via `SMQ_GROUPS_CALLOUT_*`.
+- Optional HTTP callouts (pre-operation hooks) are controlled via `MG_GROUPS_CALLOUT_*`.
 - Observability: Jaeger tracing, Prometheus metrics at `/metrics`, and a `/health` endpoint.
 
 ### Groups Table
@@ -281,7 +281,7 @@ curl -X GET http://localhost:9004/<domainID>/groups/roles/available-actions \
 - Prefer `disable` before `delete` when you need reversible off-boarding.
 - Use roles sparingly and audit with `list-role-members`; grant only required actions.
 - Fetch children with bounded levels to keep queries efficient.
-- Limit callouts to necessary operations via `SMQ_GROUPS_CALLOUT_OPERATIONS`.
+- Limit callouts to necessary operations via `MG_GROUPS_CALLOUT_OPERATIONS`.
 
 ## Versioning and Health Check
 

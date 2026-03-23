@@ -44,11 +44,11 @@ import (
 
 const (
 	svcName          = "certs"
-	envPrefixHTTP    = "AM_CERTS_HTTP_"
-	envPrefixDB      = "AM_CERTS_DB_"
-	envPrefixGRPC    = "AM_CERTS_GRPC_"
-	envPrefixAuth    = "AM_AUTH_GRPC_"
-	envPrefixDomains = "AM_DOMAINS_GRPC_"
+	envPrefixHTTP    = "MG_CERTS_HTTP_"
+	envPrefixDB      = "MG_CERTS_DB_"
+	envPrefixGRPC    = "MG_CERTS_GRPC_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	defSvcHTTPPort   = "9010"
 	defSvcGRPCPort   = "7012"
 	defDB            = "certs"
@@ -56,25 +56,25 @@ const (
 )
 
 type config struct {
-	LogLevel   string  `env:"AM_COMPUTATIONS_LOG_LEVEL"     envDefault:"info"`
-	JaegerURL  url.URL `env:"AM_JAEGER_URL"                 envDefault:"http://jaeger:4318"`
-	InstanceID string  `env:"AM_COMPUTATIONS_INSTANCE_ID"   envDefault:""`
-	TraceRatio float64 `env:"AM_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
-	Secret     string  `env:"AM_CERTS_SECRET"               envDefault:""`
+	LogLevel   string  `env:"MG_CERTS_LOG_LEVEL"            envDefault:"info"`
+	JaegerURL  url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://jaeger:4318"`
+	InstanceID string  `env:"MG_CERTS_INSTANCE_ID"          envDefault:""`
+	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	Secret     string  `env:"MG_CERTS_SECRET"               envDefault:""`
 
 	// OpenBao PKI settings
-	OpenBaoHost          string `env:"AM_CERTS_OPENBAO_HOST"            envDefault:"http://localhost:8200"`
-	OpenBaoAppRole       string `env:"AM_CERTS_OPENBAO_APP_ROLE"        envDefault:""`
-	OpenBaoAppSecret     string `env:"AM_CERTS_OPENBAO_APP_SECRET"      envDefault:""`
-	OpenBaoNamespace     string `env:"AM_CERTS_OPENBAO_NAMESPACE"       envDefault:""`
-	OpenBaoPKIPath       string `env:"AM_CERTS_OPENBAO_PKI_PATH"        envDefault:"pki"`
-	OpenBaoRole          string `env:"AM_CERTS_OPENBAO_ROLE"            envDefault:"certs"`
-	OpenBaoServiceToken  string `env:"AM_CERTS_SERVICE_TOKEN"           envDefault:""`
-	ServiceTokenPath     string `env:"AM_CERTS_SERVICE_TOKEN_PATH"      envDefault:""`
-	SecretIDPath         string `env:"AM_CERTS_SECRET_ID_PATH"          envDefault:""`
-	SecretRenewThreshold string `env:"AM_CERTS_SECRET_RENEW_THRESHOLD"  envDefault:"24h"`
-	SecretIDTTL          string `env:"AM_CERTS_OPENBAO_SECRET_ID_TTL"   envDefault:"72h"`
-	SecretCheckInterval  string `env:"AM_CERTS_SECRET_CHECK_INTERVAL"   envDefault:"30s"`
+	OpenBaoHost          string `env:"MG_CERTS_OPENBAO_HOST"            envDefault:"http://localhost:8200"`
+	OpenBaoAppRole       string `env:"MG_CERTS_OPENBAO_APP_ROLE"        envDefault:""`
+	OpenBaoAppSecret     string `env:"MG_CERTS_OPENBAO_APP_SECRET"      envDefault:""`
+	OpenBaoNamespace     string `env:"MG_CERTS_OPENBAO_NAMESPACE"       envDefault:""`
+	OpenBaoPKIPath       string `env:"MG_CERTS_OPENBAO_PKI_PATH"        envDefault:"pki"`
+	OpenBaoRole          string `env:"MG_CERTS_OPENBAO_ROLE"            envDefault:"certs"`
+	OpenBaoServiceToken  string `env:"MG_CERTS_SERVICE_TOKEN"           envDefault:""`
+	ServiceTokenPath     string `env:"MG_CERTS_SERVICE_TOKEN_PATH"      envDefault:""`
+	SecretIDPath         string `env:"MG_CERTS_SECRET_ID_PATH"          envDefault:""`
+	SecretRenewThreshold string `env:"MG_CERTS_SECRET_RENEW_THRESHOLD"  envDefault:"24h"`
+	SecretIDTTL          string `env:"MG_CERTS_OPENBAO_SECRET_ID_TTL"   envDefault:"72h"`
+	SecretCheckInterval  string `env:"MG_CERTS_SECRET_CHECK_INTERVAL"   envDefault:"30s"`
 }
 
 func main() {
@@ -127,7 +127,7 @@ func main() {
 	}
 
 	if secretID == "" {
-		logger.Error("OpenBao secret ID not specified (provide via AM_CERTS_OPENBAO_APP_SECRET or AM_CERTS_SECRET_ID_PATH)")
+		logger.Error("OpenBao secret ID not specified (provide via MG_CERTS_OPENBAO_APP_SECRET or MG_CERTS_SECRET_ID_PATH)")
 		exitCode = 1
 		return
 	}

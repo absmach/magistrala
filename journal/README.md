@@ -8,38 +8,38 @@ The service is configured with the following environment variables (unset values
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `SMQ_JOURNAL_LOG_LEVEL` | Log level for Journal (debug, info, warn, error) | info |
-| `SMQ_JOURNAL_HTTP_HOST` | Journal HTTP host | localhost |
-| `SMQ_JOURNAL_HTTP_PORT` | Journal HTTP port | 9021 |
-| `SMQ_JOURNAL_HTTP_SERVER_CERT` | Path to PEM-encoded HTTP server certificate | "" |
-| `SMQ_JOURNAL_HTTP_SERVER_KEY` | Path to PEM-encoded HTTP server key | "" |
-| `SMQ_JOURNAL_HTTP_SERVER_CA_CERTS` | Path to trusted CA bundle for the HTTP server | "" |
-| `SMQ_JOURNAL_HTTP_CLIENT_CA_CERTS` | Path to client CA bundle to require HTTP mTLS | "" |
-| `SMQ_JOURNAL_DB_HOST` | Database host address | localhost |
-| `SMQ_JOURNAL_DB_PORT` | Database host port | 5432 |
-| `SMQ_JOURNAL_DB_USER` | Database user | supermq |
-| `SMQ_JOURNAL_DB_PASS` | Database password | supermq |
-| `SMQ_JOURNAL_DB_NAME` | Name of the database used by the service | journal |
-| `SMQ_JOURNAL_DB_SSL_MODE` | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable |
-| `SMQ_JOURNAL_DB_SSL_CERT` | Path to the PEM-encoded certificate file | "" |
-| `SMQ_JOURNAL_DB_SSL_KEY` | Path to the PEM-encoded key file | "" |
-| `SMQ_JOURNAL_DB_SSL_ROOT_CERT` | Path to the PEM-encoded root certificate file | "" |
-| `SMQ_ES_URL` | Event store URL (NATS) consumed for journal entries | nats://localhost:4222 |
-| `SMQ_JAEGER_URL` | Jaeger tracing endpoint | <http://localhost:4318/v1/traces> |
-| `SMQ_JAEGER_TRACE_RATIO` | Trace sampling ratio | 1.0 |
-| `SMQ_SEND_TELEMETRY` | Send telemetry to the SuperMQ call-home server | true |
-| `SMQ_AUTH_GRPC_URL` | Auth service gRPC URL | "" |
-| `SMQ_AUTH_GRPC_TIMEOUT` | Auth service gRPC timeout | 1s |
-| `SMQ_AUTH_GRPC_CLIENT_CERT` | Path to PEM-encoded Auth gRPC client certificate | "" |
-| `SMQ_AUTH_GRPC_CLIENT_KEY` | Path to PEM-encoded Auth gRPC client key | "" |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS` | Path to PEM-encoded Auth gRPC trusted CA bundle | "" |
-| `SMQ_DOMAINS_GRPC_URL` | Domains service gRPC URL | "" |
-| `SMQ_DOMAINS_GRPC_TIMEOUT` | Domains service gRPC timeout | 1s |
-| `SMQ_DOMAINS_GRPC_CLIENT_CERT` | Path to PEM-encoded Domains gRPC client certificate | "" |
-| `SMQ_DOMAINS_GRPC_CLIENT_KEY` | Path to PEM-encoded Domains gRPC client key | "" |
-| `SMQ_DOMAINS_GRPC_SERVER_CA_CERTS` | Path to PEM-encoded Domains gRPC trusted CA bundle | "" |
-| `SMQ_JOURNAL_INSTANCE_ID` | Journal instance ID (auto-generated when empty) | "" |
-| `SMQ_ALLOW_UNVERIFIED_USER` | Allow unverified users to authenticate (useful in dev) | false |
+| `MG_JOURNAL_LOG_LEVEL` | Log level for Journal (debug, info, warn, error) | info |
+| `MG_JOURNAL_HTTP_HOST` | Journal HTTP host | localhost |
+| `MG_JOURNAL_HTTP_PORT` | Journal HTTP port | 9021 |
+| `MG_JOURNAL_HTTP_SERVER_CERT` | Path to PEM-encoded HTTP server certificate | "" |
+| `MG_JOURNAL_HTTP_SERVER_KEY` | Path to PEM-encoded HTTP server key | "" |
+| `MG_JOURNAL_HTTP_SERVER_CA_CERTS` | Path to trusted CA bundle for the HTTP server | "" |
+| `MG_JOURNAL_HTTP_CLIENT_CA_CERTS` | Path to client CA bundle to require HTTP mTLS | "" |
+| `MG_JOURNAL_DB_HOST` | Database host address | localhost |
+| `MG_JOURNAL_DB_PORT` | Database host port | 5432 |
+| `MG_JOURNAL_DB_USER` | Database user | supermq |
+| `MG_JOURNAL_DB_PASS` | Database password | supermq |
+| `MG_JOURNAL_DB_NAME` | Name of the database used by the service | journal |
+| `MG_JOURNAL_DB_SSL_MODE` | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable |
+| `MG_JOURNAL_DB_SSL_CERT` | Path to the PEM-encoded certificate file | "" |
+| `MG_JOURNAL_DB_SSL_KEY` | Path to the PEM-encoded key file | "" |
+| `MG_JOURNAL_DB_SSL_ROOT_CERT` | Path to the PEM-encoded root certificate file | "" |
+| `MG_ES_URL` | Event store URL (NATS) consumed for journal entries | nats://localhost:4222 |
+| `MG_JAEGER_URL` | Jaeger tracing endpoint | <http://localhost:4318/v1/traces> |
+| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | 1.0 |
+| `MG_SEND_TELEMETRY` | Send telemetry to the SuperMQ call-home server | true |
+| `MG_AUTH_GRPC_URL` | Auth service gRPC URL | "" |
+| `MG_AUTH_GRPC_TIMEOUT` | Auth service gRPC timeout | 1s |
+| `MG_AUTH_GRPC_CLIENT_CERT` | Path to PEM-encoded Auth gRPC client certificate | "" |
+| `MG_AUTH_GRPC_CLIENT_KEY` | Path to PEM-encoded Auth gRPC client key | "" |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS` | Path to PEM-encoded Auth gRPC trusted CA bundle | "" |
+| `MG_DOMAINS_GRPC_URL` | Domains service gRPC URL | "" |
+| `MG_DOMAINS_GRPC_TIMEOUT` | Domains service gRPC timeout | 1s |
+| `MG_DOMAINS_GRPC_CLIENT_CERT` | Path to PEM-encoded Domains gRPC client certificate | "" |
+| `MG_DOMAINS_GRPC_CLIENT_KEY` | Path to PEM-encoded Domains gRPC client key | "" |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS` | Path to PEM-encoded Domains gRPC trusted CA bundle | "" |
+| `MG_JOURNAL_INSTANCE_ID` | Journal instance ID (auto-generated when empty) | "" |
+| `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to authenticate (useful in dev) | false |
 
 ## Deployment
 
@@ -56,16 +56,16 @@ make journal
 make install
 
 # run with the essentials; requires Postgres, Auth gRPC, Domains gRPC, and NATS running
-SMQ_JOURNAL_HTTP_HOST=localhost \
-SMQ_JOURNAL_HTTP_PORT=9021 \
-SMQ_JOURNAL_DB_HOST=localhost \
-SMQ_JOURNAL_DB_PORT=5432 \
-SMQ_JOURNAL_DB_USER=supermq \
-SMQ_JOURNAL_DB_PASS=supermq \
-SMQ_JOURNAL_DB_NAME=journal \
-SMQ_AUTH_GRPC_URL=localhost:7001 \
-SMQ_DOMAINS_GRPC_URL=localhost:7003 \
-SMQ_ES_URL=nats://localhost:4222 \
+MG_JOURNAL_HTTP_HOST=localhost \
+MG_JOURNAL_HTTP_PORT=9021 \
+MG_JOURNAL_DB_HOST=localhost \
+MG_JOURNAL_DB_PORT=5432 \
+MG_JOURNAL_DB_USER=supermq \
+MG_JOURNAL_DB_PASS=supermq \
+MG_JOURNAL_DB_NAME=journal \
+MG_AUTH_GRPC_URL=localhost:7001 \
+MG_DOMAINS_GRPC_URL=localhost:7003 \
+MG_ES_URL=nats://localhost:4222 \
 $GOBIN/supermq-journal
 ```
 

@@ -63,12 +63,12 @@ import (
 
 const (
 	svcName          = "users"
-	envPrefixDB      = "SMQ_USERS_DB_"
-	envPrefixHTTP    = "SMQ_USERS_HTTP_"
-	envPrefixGRPC    = "SMQ_USERS_GRPC_"
-	envPrefixAuth    = "SMQ_AUTH_GRPC_"
-	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
-	envPrefixGoogle  = "SMQ_GOOGLE_"
+	envPrefixDB      = "MG_USERS_DB_"
+	envPrefixHTTP    = "MG_USERS_HTTP_"
+	envPrefixGRPC    = "MG_USERS_GRPC_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
+	envPrefixGoogle  = "MG_GOOGLE_"
 	defDB            = "users"
 	defSvcHTTPPort   = "9002"
 	defSvcGRPCPort   = "7002"
@@ -85,7 +85,7 @@ type config struct {
 	JaegerURL                  url.URL       `env:"SMQ_JAEGER_URL"                        envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry              bool          `env:"SMQ_SEND_TELEMETRY"                    envDefault:"true"`
 	InstanceID                 string        `env:"SMQ_USERS_INSTANCE_ID"                 envDefault:""`
-	ESURL                      string        `env:"SMQ_ES_URL"                            envDefault:"amqp://guest:guest@localhost:5682/"`
+	ESURL                      string        `env:"SMQ_ES_URL"                            envDefault:"nats://localhost:4222"`
 	TraceRatio                 float64       `env:"SMQ_JAEGER_TRACE_RATIO"                envDefault:"1.0"`
 	SelfRegister               bool          `env:"SMQ_USERS_ALLOW_SELF_REGISTER"         envDefault:"false"`
 	OAuthUIRedirectURL         string        `env:"SMQ_OAUTH_UI_REDIRECT_URL"             envDefault:"http://localhost:9095/domains"`

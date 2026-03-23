@@ -37,21 +37,21 @@ import (
 
 const (
 	svcName           = "postgres-reader"
-	envPrefixDB       = "SMQ_POSTGRES_"
-	envPrefixHTTP     = "SMQ_POSTGRES_READER_HTTP_"
-	envPrefixAuth     = "SMQ_AUTH_GRPC_"
-	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
-	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
+	envPrefixDB       = "MG_POSTGRES_"
+	envPrefixHTTP     = "MG_POSTGRES_READER_HTTP_"
+	envPrefixAuth     = "MG_AUTH_GRPC_"
+	envPrefixClients  = "MG_CLIENTS_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
 	defDB             = "supermq"
 	defSvcHTTPPort    = "9009"
 	defSvcGRPCPort    = "7009"
-	envPrefixGrpc     = "SMQ_POSTGRES_READER_GRPC_"
+	envPrefixGrpc     = "MG_POSTGRES_READER_GRPC_"
 )
 
 type config struct {
-	LogLevel      string `env:"SMQ_POSTGRES_READER_LOG_LEVEL"     envDefault:"info"`
-	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string `env:"SMQ_POSTGRES_READER_INSTANCE_ID"   envDefault:""`
+	LogLevel      string `env:"MG_POSTGRES_READER_LOG_LEVEL"     envDefault:"info"`
+	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
+	InstanceID    string `env:"MG_POSTGRES_READER_INSTANCE_ID"   envDefault:""`
 }
 
 func main() {

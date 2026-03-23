@@ -61,13 +61,13 @@ Defined in `consumers/notifiers/smpp/README.md`.
 | `MG_SMPP_NOTIFIER_DB_SSL_CERT` | DB SSL client cert path | "" |
 | `MG_SMPP_NOTIFIER_DB_SSL_KEY` | DB SSL client key path | "" |
 | `MG_SMPP_NOTIFIER_DB_SSL_ROOT_CERT` | DB SSL root cert path | "" |
-| `SMQ_AUTH_GRPC_URL` | Auth gRPC URL | `localhost:7001` |
-| `SMQ_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `1s` |
+| `MG_AUTH_GRPC_URL` | Auth gRPC URL | `localhost:7001` |
+| `MG_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `1s` |
 | `MG_AUTH_GRPC_CLIENT_TLS` | Auth client TLS flag | `false` |
 | `MG_AUTH_GRPC_CA_CERT` | Auth client CA certs path | "" |
-| `SMQ_MESSAGE_BROKER_URL` | Message broker URL | `nats://127.0.0.1:4222` |
-| `SMQ_JAEGER_URL` | Jaeger tracing URL | `http://jaeger:14268/api/traces` |
-| `SMQ_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL | `nats://127.0.0.1:4222` |
+| `MG_JAEGER_URL` | Jaeger tracing URL | `http://jaeger:14268/api/traces` |
+| `MG_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
 | `MG_SMPP_NOTIFIER_INSTANCE_ID` | SMPP notifier instance ID | "" |
 
 ## Features

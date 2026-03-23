@@ -37,33 +37,33 @@ The service is configured using the environment variables presented in the follo
 
 | Variable                       | Description                                                                      | Default                           |
 | ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------- |
-| SMQ_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                               | info                              |
-| SMQ_BOOTSTRAP_DB_HOST          | Database host address                                                            | localhost                         |
-| SMQ_BOOTSTRAP_DB_PORT          | Database host port                                                               | 5432                              |
-| SMQ_BOOTSTRAP_DB_USER          | Database user                                                                    | magistrala                        |
-| SMQ_BOOTSTRAP_DB_PASS          | Database password                                                                | magistrala                        |
-| SMQ_BOOTSTRAP_DB_NAME          | Name of the database used by the service                                         | bootstrap                         |
-| SMQ_BOOTSTRAP_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full)          | disable                           |
-| SMQ_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                         | ""                                |
-| SMQ_BOOTSTRAP_DB_SSL_KEY       | Path to the PEM encoded key file                                                 | ""                                |
-| SMQ_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                                    | ""                                |
-| SMQ_BOOTSTRAP_ENCRYPT_KEY      | Secret key for secure bootstrapping encryption                                   | 12345678910111213141516171819202  |
-| SMQ_BOOTSTRAP_HTTP_HOST        | Bootstrap service HTTP host                                                      | ""                                |
-| SMQ_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                              |
-| SMQ_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                                |
-| SMQ_BOOTSTRAP_HTTP_SERVER_KEY  | Path to server key in pem format                                                 | ""                                |
-| SMQ_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                                     | bootstrap                         |
-| SMQ_ES_URL                     | Event store URL                                                                  | <nats://localhost:4222>           |
-| SMQ_AUTH_GRPC_URL              | Auth service Auth gRPC URL                                                       | <localhost:8181>                  |
-| SMQ_AUTH_GRPC_TIMEOUT          | Auth service Auth gRPC request timeout in seconds                                | 1s                                |
-| SMQ_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded auth service Auth gRPC client certificate file           | ""                                |
-| SMQ_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded auth service Auth gRPC client key file                   | ""                                |
-| SMQ_AUTH_GRPC_SERVER_CERTS     | Path to the PEM encoded auth server Auth gRPC server trusted CA certificate file | ""                                |
-| SMQ_CLIENTS_URL                | Base URL for Magistrala Clients                                                  | <http://localhost:9000>           |
-| SMQ_JAEGER_URL                 | Jaeger server URL                                                                | <http://localhost:4318/v1/traces> |
-| SMQ_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                            | 1.0                               |
-| SMQ_SEND_TELEMETRY             | Send telemetry to magistrala call home server                                    | true                              |
-| SMQ_BOOTSTRAP_INSTANCE_ID      | Bootstrap service instance ID                                                    | ""                                |
+| MG_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                               | info                              |
+| MG_BOOTSTRAP_DB_HOST          | Database host address                                                            | localhost                         |
+| MG_BOOTSTRAP_DB_PORT          | Database host port                                                               | 5432                              |
+| MG_BOOTSTRAP_DB_USER          | Database user                                                                    | magistrala                        |
+| MG_BOOTSTRAP_DB_PASS          | Database password                                                                | magistrala                        |
+| MG_BOOTSTRAP_DB_NAME          | Name of the database used by the service                                         | bootstrap                         |
+| MG_BOOTSTRAP_DB_SSL_MODE      | Database connection SSL mode (disable, require, verify-ca, verify-full)          | disable                           |
+| MG_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                         | ""                                |
+| MG_BOOTSTRAP_DB_SSL_KEY       | Path to the PEM encoded key file                                                 | ""                                |
+| MG_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                                    | ""                                |
+| MG_BOOTSTRAP_ENCRYPT_KEY      | Secret key for secure bootstrapping encryption                                   | 12345678910111213141516171819202  |
+| MG_BOOTSTRAP_HTTP_HOST        | Bootstrap service HTTP host                                                      | ""                                |
+| MG_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                              |
+| MG_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                                |
+| MG_BOOTSTRAP_HTTP_SERVER_KEY  | Path to server key in pem format                                                 | ""                                |
+| MG_BOOTSTRAP_EVENT_CONSUMER   | Bootstrap service event source consumer name                                     | bootstrap                         |
+| MG_ES_URL                     | Event store URL                                                                  | <nats://localhost:4222>           |
+| MG_AUTH_GRPC_URL              | Auth service Auth gRPC URL                                                       | <localhost:8181>                  |
+| MG_AUTH_GRPC_TIMEOUT          | Auth service Auth gRPC request timeout in seconds                                | 1s                                |
+| MG_AUTH_GRPC_CLIENT_CERT      | Path to the PEM encoded auth service Auth gRPC client certificate file           | ""                                |
+| MG_AUTH_GRPC_CLIENT_KEY       | Path to the PEM encoded auth service Auth gRPC client key file                   | ""                                |
+| MG_AUTH_GRPC_SERVER_CERTS     | Path to the PEM encoded auth server Auth gRPC server trusted CA certificate file | ""                                |
+| MG_CLIENTS_URL                | Base URL for Magistrala Clients                                                  | <http://localhost:9000>           |
+| MG_JAEGER_URL                 | Jaeger server URL                                                                | <http://localhost:4318/v1/traces> |
+| MG_JAEGER_TRACE_RATIO         | Jaeger sampling ratio                                                            | 1.0                               |
+| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server                                    | true                              |
+| MG_BOOTSTRAP_INSTANCE_ID      | Bootstrap service instance ID                                                    | ""                                |
 
 ## Deployment
 
@@ -84,38 +84,38 @@ make bootstrap
 make install
 
 # set the environment variables and run the service
-SMQ_BOOTSTRAP_LOG_LEVEL=info \
-SMQ_BOOTSTRAP_DB_HOST=localhost \
-SMQ_BOOTSTRAP_DB_PORT=5432 \
-SMQ_BOOTSTRAP_DB_USER=magistrala \
-SMQ_BOOTSTRAP_DB_PASS=magistrala \
-SMQ_BOOTSTRAP_DB_NAME=bootstrap \
-SMQ_BOOTSTRAP_DB_SSL_MODE=disable \
-SMQ_BOOTSTRAP_DB_SSL_CERT="" \
-SMQ_BOOTSTRAP_DB_SSL_KEY="" \
-SMQ_BOOTSTRAP_DB_SSL_ROOT_CERT="" \
-SMQ_BOOTSTRAP_HTTP_HOST=localhost \
-SMQ_BOOTSTRAP_HTTP_PORT=9013 \
-SMQ_BOOTSTRAP_HTTP_SERVER_CERT="" \
-SMQ_BOOTSTRAP_HTTP_SERVER_KEY="" \
-SMQ_BOOTSTRAP_EVENT_CONSUMER=bootstrap \
-SMQ_ES_URL=nats://localhost:4222 \
-SMQ_AUTH_GRPC_URL=localhost:8181 \
-SMQ_AUTH_GRPC_TIMEOUT=1s \
-SMQ_AUTH_GRPC_CLIENT_CERT="" \
-SMQ_AUTH_GRPC_CLIENT_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CERTS="" \
-SMQ_CLIENTS_URL=http://localhost:9000 \
-SMQ_JAEGER_URL=http://localhost:14268/api/traces \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_SEND_TELEMETRY=true \
-SMQ_BOOTSTRAP_INSTANCE_ID="" \
+MG_BOOTSTRAP_LOG_LEVEL=info \
+MG_BOOTSTRAP_DB_HOST=localhost \
+MG_BOOTSTRAP_DB_PORT=5432 \
+MG_BOOTSTRAP_DB_USER=magistrala \
+MG_BOOTSTRAP_DB_PASS=magistrala \
+MG_BOOTSTRAP_DB_NAME=bootstrap \
+MG_BOOTSTRAP_DB_SSL_MODE=disable \
+MG_BOOTSTRAP_DB_SSL_CERT="" \
+MG_BOOTSTRAP_DB_SSL_KEY="" \
+MG_BOOTSTRAP_DB_SSL_ROOT_CERT="" \
+MG_BOOTSTRAP_HTTP_HOST=localhost \
+MG_BOOTSTRAP_HTTP_PORT=9013 \
+MG_BOOTSTRAP_HTTP_SERVER_CERT="" \
+MG_BOOTSTRAP_HTTP_SERVER_KEY="" \
+MG_BOOTSTRAP_EVENT_CONSUMER=bootstrap \
+MG_ES_URL=nats://localhost:4222 \
+MG_AUTH_GRPC_URL=localhost:8181 \
+MG_AUTH_GRPC_TIMEOUT=1s \
+MG_AUTH_GRPC_CLIENT_CERT="" \
+MG_AUTH_GRPC_CLIENT_KEY="" \
+MG_AUTH_GRPC_SERVER_CERTS="" \
+MG_CLIENTS_URL=http://localhost:9000 \
+MG_JAEGER_URL=http://localhost:14268/api/traces \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_SEND_TELEMETRY=true \
+MG_BOOTSTRAP_INSTANCE_ID="" \
 $GOBIN/magistrala-bootstrap
 ```
 
-Setting `SMQ_BOOTSTRAP_HTTP_SERVER_CERT` and `SMQ_BOOTSTRAP_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
+Setting `MG_BOOTSTRAP_HTTP_SERVER_CERT` and `MG_BOOTSTRAP_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
 
-Setting `SMQ_AUTH_GRPC_CLIENT_CERT` and `SMQ_AUTH_GRPC_CLIENT_KEY` will enable TLS against the auth service. The service expects a file in PEM format for both the certificate and the key. Setting `SMQ_AUTH_GRPC_SERVER_CERTS` will enable TLS against the auth service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
+Setting `MG_AUTH_GRPC_CLIENT_CERT` and `MG_AUTH_GRPC_CLIENT_KEY` will enable TLS against the auth service. The service expects a file in PEM format for both the certificate and the key. Setting `MG_AUTH_GRPC_SERVER_CERTS` will enable TLS against the auth service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
 
 ## Usage
 

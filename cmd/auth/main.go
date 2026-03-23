@@ -51,36 +51,36 @@ import (
 
 const (
 	svcName        = "auth"
-	envPrefixHTTP  = "SMQ_AUTH_HTTP_"
-	envPrefixGrpc  = "SMQ_AUTH_GRPC_"
-	envPrefixDB    = "SMQ_AUTH_DB_"
+	envPrefixHTTP  = "MG_AUTH_HTTP_"
+	envPrefixGrpc  = "MG_AUTH_GRPC_"
+	envPrefixDB    = "MG_AUTH_DB_"
 	defDB          = "auth"
 	defSvcHTTPPort = "8189"
 	defSvcGRPCPort = "8181"
 )
 
 type config struct {
-	LogLevel                      string        `env:"SMQ_AUTH_LOG_LEVEL"                         envDefault:"info"`
-	SecretKey                     string        `env:"SMQ_AUTH_SECRET_KEY"                        envDefault:"secret"`
-	JaegerURL                     url.URL       `env:"SMQ_JAEGER_URL"                             envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry                 bool          `env:"SMQ_SEND_TELEMETRY"                         envDefault:"true"`
-	InstanceID                    string        `env:"SMQ_AUTH_ADAPTER_INSTANCE_ID"               envDefault:""`
-	AccessDuration                time.Duration `env:"SMQ_AUTH_ACCESS_TOKEN_DURATION"             envDefault:"1h"`
-	RefreshDuration               time.Duration `env:"SMQ_AUTH_REFRESH_TOKEN_DURATION"            envDefault:"24h"`
-	KeyAlgorithm                  string        `env:"SMQ_AUTH_KEYS_ALGORITHM"                    envDefault:"EdDSA"`
-	ActiveKeyPath                 string        `env:"SMQ_AUTH_KEYS_ACTIVE_KEY_PATH"              envDefault:"./keys/active.key"`
-	RetiringKeyPath               string        `env:"SMQ_AUTH_KEYS_RETIRING_KEY_PATH"            envDefault:""`
-	InvitationDuration            time.Duration `env:"SMQ_AUTH_INVITATION_DURATION"               envDefault:"168h"`
-	SpicedbHost                   string        `env:"SMQ_SPICEDB_HOST"                           envDefault:"localhost"`
-	SpicedbPort                   string        `env:"SMQ_SPICEDB_PORT"                           envDefault:"50051"`
-	SpicedbSchemaFile             string        `env:"SMQ_SPICEDB_SCHEMA_FILE"                    envDefault:"./docker/spicedb/schema.zed"`
-	SpicedbPreSharedKey           string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"                 envDefault:"12345678"`
-	TraceRatio                    float64       `env:"SMQ_JAEGER_TRACE_RATIO"                     envDefault:"1.0"`
-	ESURL                         string        `env:"SMQ_ES_URL"                                 envDefault:"amqp://guest:guest@localhost:5682/"`
-	CacheURL                      string        `env:"SMQ_AUTH_CACHE_URL"                         envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration              time.Duration `env:"SMQ_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
-	JWKSCacheMaxAge               int           `env:"SMQ_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`
-	JWKSCacheStaleWhileRevalidate int           `env:"SMQ_AUTH_JWKS_CACHE_STALE_WHILE_REVALIDATE" envDefault:"60"`
+	LogLevel                      string        `env:"MG_AUTH_LOG_LEVEL"                         envDefault:"info"`
+	SecretKey                     string        `env:"MG_AUTH_SECRET_KEY"                        envDefault:"secret"`
+	JaegerURL                     url.URL       `env:"MG_JAEGER_URL"                             envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry                 bool          `env:"MG_SEND_TELEMETRY"                         envDefault:"true"`
+	InstanceID                    string        `env:"MG_AUTH_ADAPTER_INSTANCE_ID"               envDefault:""`
+	AccessDuration                time.Duration `env:"MG_AUTH_ACCESS_TOKEN_DURATION"             envDefault:"1h"`
+	RefreshDuration               time.Duration `env:"MG_AUTH_REFRESH_TOKEN_DURATION"            envDefault:"24h"`
+	KeyAlgorithm                  string        `env:"MG_AUTH_KEYS_ALGORITHM"                    envDefault:"EdDSA"`
+	ActiveKeyPath                 string        `env:"MG_AUTH_KEYS_ACTIVE_KEY_PATH"              envDefault:"./keys/active.key"`
+	RetiringKeyPath               string        `env:"MG_AUTH_KEYS_RETIRING_KEY_PATH"            envDefault:""`
+	InvitationDuration            time.Duration `env:"MG_AUTH_INVITATION_DURATION"               envDefault:"168h"`
+	SpicedbHost                   string        `env:"MG_SPICEDB_HOST"                           envDefault:"localhost"`
+	SpicedbPort                   string        `env:"MG_SPICEDB_PORT"                           envDefault:"50051"`
+	SpicedbSchemaFile             string        `env:"MG_SPICEDB_SCHEMA_FILE"                    envDefault:"./docker/spicedb/schema.zed"`
+	SpicedbPreSharedKey           string        `env:"MG_SPICEDB_PRE_SHARED_KEY"                 envDefault:"12345678"`
+	TraceRatio                    float64       `env:"MG_JAEGER_TRACE_RATIO"                     envDefault:"1.0"`
+	ESURL                         string        `env:"MG_ES_URL"                                 envDefault:"amqp://guest:guest@localhost:5682/"`
+	CacheURL                      string        `env:"MG_AUTH_CACHE_URL"                         envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration              time.Duration `env:"MG_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
+	JWKSCacheMaxAge               int           `env:"MG_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`
+	JWKSCacheStaleWhileRevalidate int           `env:"MG_AUTH_JWKS_CACHE_STALE_WHILE_REVALIDATE" envDefault:"60"`
 }
 
 func main() {
@@ -267,7 +267,7 @@ func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, sch
 func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	if isSymmetric {
 		if cfg.SecretKey == "secret" {
-			return fmt.Errorf("default secret key is insecure - please set SMQ_AUTH_SECRET_KEY environment variable")
+			return fmt.Errorf("default secret key is insecure - please set MG_AUTH_SECRET_KEY environment variable")
 		}
 		return nil
 	}
@@ -276,7 +276,7 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	_, err := os.Stat(cfg.ActiveKeyPath)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return fmt.Errorf("active key file not found: %s - please set SMQ_AUTH_KEYS_ACTIVE_KEY_PATH", cfg.ActiveKeyPath)
+			return fmt.Errorf("active key file not found: %s - please set MG_AUTH_KEYS_ACTIVE_KEY_PATH", cfg.ActiveKeyPath)
 		}
 		return fmt.Errorf("failed to access active key file: %w", err)
 	}

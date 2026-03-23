@@ -37,21 +37,21 @@ import (
 
 const (
 	svcName           = "timescaledb-reader"
-	envPrefixDB       = "SMQ_TIMESCALE_"
-	envPrefixHTTP     = "SMQ_TIMESCALE_READER_HTTP_"
-	envPrefixAuth     = "SMQ_AUTH_GRPC_"
-	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
-	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
+	envPrefixDB       = "MG_TIMESCALE_"
+	envPrefixHTTP     = "MG_TIMESCALE_READER_HTTP_"
+	envPrefixAuth     = "MG_AUTH_GRPC_"
+	envPrefixClients  = "MG_CLIENTS_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
 	defDB             = "messages"
 	defSvcHTTPPort    = "9011"
 	defSvcGRPCPort    = "7011"
-	envPrefixGrpc     = "SMQ_TIMESCALE_READER_GRPC_"
+	envPrefixGrpc     = "MG_TIMESCALE_READER_GRPC_"
 )
 
 type config struct {
-	LogLevel      string `env:"SMQ_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
-	SendTelemetry bool   `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`
-	InstanceID    string `env:"SMQ_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
+	LogLevel      string `env:"MG_TIMESCALE_READER_LOG_LEVEL"    envDefault:"info"`
+	SendTelemetry bool   `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	InstanceID    string `env:"MG_TIMESCALE_READER_INSTANCE_ID"  envDefault:""`
 }
 
 func main() {

@@ -44,22 +44,22 @@ const (
 	svcName          = "alarms"
 	envPrefixDB      = "MG_ALARMS_DB_"
 	envPrefixHTTP    = "MG_ALARMS_HTTP_"
-	envPrefixAuth    = "SMQ_AUTH_GRPC_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
 	defDB            = "alarms"
 	defSvcHTTPPort   = "8050"
-	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	alarmEntity      = "alarm"
 )
 
 type config struct {
 	LogLevel        string  `env:"MG_ALARMS_LOG_LEVEL"    envDefault:"info"`
-	BrokerURL       string  `env:"SMQ_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
+	BrokerURL       string  `env:"MG_MESSAGE_BROKER_URL" envDefault:"nats://localhost:4222"`
 	InstanceID      string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
-	JaegerURL       url.URL `env:"SMQ_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
-	TraceRatio      float64 `env:"SMQ_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	ESURL           string  `env:"SMQ_ES_URL"             envDefault:"nats://localhost:4222"`
+	JaegerURL       url.URL `env:"MG_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
+	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO" envDefault:"1.0"`
+	ESURL           string  `env:"MG_ES_URL"             envDefault:"nats://localhost:4222"`
 	ESConsumerName  string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
-	PermissionsFile string  `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
+	PermissionsFile string  `env:"MG_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {

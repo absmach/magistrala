@@ -49,8 +49,8 @@ func (m *mockUsersClient) RetrieveUsers(ctx context.Context, req *grpcUsersV1.Re
 }
 
 func TestNotify(t *testing.T) {
-	if os.Getenv("SMQ_RUN_EMAIL_TESTS") != envTrue {
-		t.Skip("Skipping email tests. Set SMQ_RUN_EMAIL_TESTS=true to run.")
+	if os.Getenv("MG_RUN_EMAIL_TESTS") != envTrue {
+		t.Skip("Skipping email tests. Set MG_RUN_EMAIL_TESTS=true to run.")
 	}
 
 	usersClient := new(mockUsersClient)

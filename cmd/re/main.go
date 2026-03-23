@@ -68,11 +68,11 @@ const (
 	envPrefixDB      = "MG_RE_DB_"
 	envPrefixHTTP    = "MG_RE_HTTP_"
 	envPrefixCallout = "MG_RE_CALLOUT_"
-	envPrefixAuth    = "SMQ_AUTH_GRPC_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
 	defDB            = "r"
 	defSvcHTTPPort   = "9008"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
-	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
 )
 
 // We use a buffered channel to prevent blocking, as logging is an expensive operation.
@@ -83,19 +83,19 @@ const channBuffer = 256
 type config struct {
 	LogLevel            string        `env:"MG_RE_LOG_LEVEL"             envDefault:"info"`
 	InstanceID          string        `env:"MG_RE_INSTANCE_ID"           envDefault:""`
-	JaegerURL           url.URL       `env:"SMQ_JAEGER_URL"              envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool          `env:"SMQ_SEND_TELEMETRY"          envDefault:"true"`
-	ESURL               string        `env:"SMQ_ES_URL"                  envDefault:"nats://localhost:4222"`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"              envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"          envDefault:"true"`
+	ESURL               string        `env:"MG_ES_URL"                  envDefault:"nats://localhost:4222"`
 	ESConsumerName      string        `env:"MG_RE_EVENT_CONSUMER"        envDefault:"rules_engine"`
 	CacheURL            string        `env:"MG_RE_CACHE_URL"             envDefault:"redis://localhost:6379/0"`
 	CacheKeyDuration    time.Duration `env:"MG_RE_CACHE_KEY_DURATION"    envDefault:"10m"`
-	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
-	BrokerURL           string        `env:"SMQ_MESSAGE_BROKER_URL"      envDefault:"nats://localhost:4222"`
-	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"            envDefault:"localhost"`
-	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"            envDefault:"50051"`
-	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"  envDefault:"12345678"`
-	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"     envDefault:"schema.zed"`
-	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"        envDefault:"permission.yaml"`
+	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"      envDefault:"1.0"`
+	BrokerURL           string        `env:"MG_MESSAGE_BROKER_URL"      envDefault:"nats://localhost:4222"`
+	SpicedbHost         string        `env:"MG_SPICEDB_HOST"            envDefault:"localhost"`
+	SpicedbPort         string        `env:"MG_SPICEDB_PORT"            envDefault:"50051"`
+	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"  envDefault:"12345678"`
+	SpicedbSchemaFile   string        `env:"MG_SPICEDB_SCHEMA_FILE"     envDefault:"schema.zed"`
+	PermissionsFile     string        `env:"MG_PERMISSIONS_FILE"        envDefault:"permission.yaml"`
 }
 
 func main() {

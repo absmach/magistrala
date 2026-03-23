@@ -63,11 +63,11 @@ const (
 	envPrefixDB      = "MG_REPORTS_DB_"
 	envPrefixHTTP    = "MG_REPORTS_HTTP_"
 	envPrefixCallout = "MG_REPORTS_CALLOUT_"
-	envPrefixAuth    = "SMQ_AUTH_GRPC_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
 	defDB            = "repo"
 	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
-	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	templatePath     = "template/reports_default_template.html"
 	reportEntity     = "report"
 )
@@ -81,19 +81,19 @@ var templateFS embed.FS
 type config struct {
 	LogLevel            string  `env:"MG_REPORTS_LOG_LEVEL"           envDefault:"info"`
 	InstanceID          string  `env:"MG_REPORTS_INSTANCE_ID"         envDefault:""`
-	JaegerURL           url.URL `env:"SMQ_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool    `env:"SMQ_SEND_TELEMETRY"             envDefault:"true"`
-	ESURL               string  `env:"SMQ_ES_URL"                     envDefault:"nats://localhost:4222"`
+	JaegerURL           url.URL `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool    `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
+	ESURL               string  `env:"MG_ES_URL"                     envDefault:"nats://localhost:4222"`
 	ESConsumerName      string  `env:"MG_REPORTS_EVENT_CONSUMER"      envDefault:"reports"`
-	TraceRatio          float64 `env:"SMQ_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
-	BrokerURL           string  `env:"SMQ_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
+	TraceRatio          float64 `env:"MG_JAEGER_TRACE_RATIO"         envDefault:"1.0"`
+	BrokerURL           string  `env:"MG_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
 	DefaultTemplatePath string  `env:"MG_REPORTS_DEFAULT_TEMPLATE"    envDefault:""`
 	ConverterURL        string  `env:"MG_PDF_CONVERTER_URL"           envDefault:"http://localhost:4000/pdf"`
-	SpicedbHost         string  `env:"SMQ_SPICEDB_HOST"               envDefault:"localhost"`
-	SpicedbPort         string  `env:"SMQ_SPICEDB_PORT"               envDefault:"50051"`
-	SpicedbPreSharedKey string  `env:"SMQ_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
-	SpicedbSchemaFile   string  `env:"SMQ_SPICEDB_SCHEMA_FILE"        envDefault:"schema.zed"`
-	PermissionsFile     string  `env:"SMQ_PERMISSIONS_FILE"           envDefault:"permission.yaml"`
+	SpicedbHost         string  `env:"MG_SPICEDB_HOST"               envDefault:"localhost"`
+	SpicedbPort         string  `env:"MG_SPICEDB_PORT"               envDefault:"50051"`
+	SpicedbPreSharedKey string  `env:"MG_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
+	SpicedbSchemaFile   string  `env:"MG_SPICEDB_SCHEMA_FILE"        envDefault:"schema.zed"`
+	PermissionsFile     string  `env:"MG_PERMISSIONS_FILE"           envDefault:"permission.yaml"`
 }
 
 func main() {

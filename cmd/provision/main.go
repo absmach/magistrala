@@ -36,7 +36,7 @@ import (
 const (
 	svcName       = "provision"
 	contentType   = "application/json"
-	envPrefixAuth = "SMQ_AUTH_GRPC_"
+	envPrefixAuth = "MG_AUTH_GRPC_"
 )
 
 var (

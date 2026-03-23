@@ -37,13 +37,13 @@ type email struct {
 
 // Config email agent configuration.
 type Config struct {
-	Host        string `env:"SMQ_EMAIL_HOST"         envDefault:"localhost"`
-	Port        string `env:"SMQ_EMAIL_PORT"         envDefault:"25"`
-	Username    string `env:"SMQ_EMAIL_USERNAME"     envDefault:"root"`
-	Password    string `env:"SMQ_EMAIL_PASSWORD"     envDefault:""`
-	FromAddress string `env:"SMQ_EMAIL_FROM_ADDRESS" envDefault:""`
-	FromName    string `env:"SMQ_EMAIL_FROM_NAME"    envDefault:""`
-	Template    string `env:"SMQ_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
+	Host        string `env:"MG_EMAIL_HOST"         envDefault:"localhost"`
+	Port        string `env:"MG_EMAIL_PORT"         envDefault:"25"`
+	Username    string `env:"MG_EMAIL_USERNAME"     envDefault:"root"`
+	Password    string `env:"MG_EMAIL_PASSWORD"     envDefault:""`
+	FromAddress string `env:"MG_EMAIL_FROM_ADDRESS" envDefault:""`
+	FromName    string `env:"MG_EMAIL_FROM_NAME"    envDefault:""`
+	Template    string `env:"MG_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
 }
 
 // Agent for mailing.

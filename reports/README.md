@@ -16,11 +16,11 @@ The service is configured using the following environment variables (values show
 | `MG_REPORTS_HTTP_SERVER_CERT` | Path to PEM-encoded HTTPS server certificate | "" |
 | `MG_REPORTS_HTTP_SERVER_KEY` | Path to PEM-encoded HTTPS server key | "" |
 | `MG_REPORTS_INSTANCE_ID` | Instance ID for tracing/health | "" |
-| `SMQ_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
-| `SMQ_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
-| `SMQ_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
-| `SMQ_MESSAGE_BROKER_URL` | Message broker URL (parsed, currently unused by reports) | `nats://nats:4222` |
-| `SMQ_ES_URL` | Event store URL (parsed, currently unused by reports) | `nats://nats:4222` |
+| `MG_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
+| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
+| `MG_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL (parsed, currently unused by reports) | `nats://nats:4222` |
+| `MG_ES_URL` | Event store URL (parsed, currently unused by reports) | `nats://nats:4222` |
 
 ### Database
 
@@ -40,20 +40,20 @@ The service is configured using the following environment variables (values show
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `SMQ_AUTH_GRPC_URL` | Auth gRPC endpoint | `auth:7001` |
-| `SMQ_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `300s` |
-| `SMQ_AUTH_GRPC_CLIENT_CERT` | Auth gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.crt}` |
-| `SMQ_AUTH_GRPC_CLIENT_KEY` | Auth gRPC client key path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.key}` |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS` | Auth gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
-| `SMQ_DOMAINS_GRPC_URL` | Domains gRPC endpoint | `domains:7003` |
-| `SMQ_DOMAINS_GRPC_TIMEOUT` | Domains gRPC timeout | `300s` |
-| `SMQ_DOMAINS_GRPC_CLIENT_CERT` | Domains gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.crt}` |
-| `SMQ_DOMAINS_GRPC_CLIENT_KEY` | Domains gRPC client key path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.key}` |
-| `SMQ_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
-| `SMQ_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
-| `SMQ_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | `12345678` |
-| `SMQ_SPICEDB_HOST` | SpiceDB host | `supermq-spicedb` |
-| `SMQ_SPICEDB_PORT` | SpiceDB gRPC port | `50051` |
+| `MG_AUTH_GRPC_URL` | Auth gRPC endpoint | `auth:7001` |
+| `MG_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `300s` |
+| `MG_AUTH_GRPC_CLIENT_CERT` | Auth gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.crt}` |
+| `MG_AUTH_GRPC_CLIENT_KEY` | Auth gRPC client key path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.key}` |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS` | Auth gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
+| `MG_DOMAINS_GRPC_URL` | Domains gRPC endpoint | `domains:7003` |
+| `MG_DOMAINS_GRPC_TIMEOUT` | Domains gRPC timeout | `300s` |
+| `MG_DOMAINS_GRPC_CLIENT_CERT` | Domains gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.crt}` |
+| `MG_DOMAINS_GRPC_CLIENT_KEY` | Domains gRPC client key path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.key}` |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
+| `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
+| `MG_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | `12345678` |
+| `MG_SPICEDB_HOST` | SpiceDB host | `supermq-spicedb` |
+| `MG_SPICEDB_PORT` | SpiceDB gRPC port | `50051` |
 
 ### Readers gRPC
 
@@ -162,10 +162,10 @@ MG_REPORTS_DB_USER=magistrala \
 MG_REPORTS_DB_PASS=magistrala \
 MG_REPORTS_DB_NAME=reports \
 MG_PDF_CONVERTER_URL=http://localhost:4000/forms/chromium/convert/html \
-SMQ_AUTH_GRPC_URL=localhost:7001 \
-SMQ_AUTH_GRPC_TIMEOUT=300s \
-SMQ_DOMAINS_GRPC_URL=localhost:7003 \
-SMQ_DOMAINS_GRPC_TIMEOUT=300s \
+MG_AUTH_GRPC_URL=localhost:7001 \
+MG_AUTH_GRPC_TIMEOUT=300s \
+MG_DOMAINS_GRPC_URL=localhost:7003 \
+MG_DOMAINS_GRPC_TIMEOUT=300s \
 MG_TIMESCALE_READER_GRPC_URL=localhost:7011 \
 MG_TIMESCALE_READER_GRPC_TIMEOUT=300s \
 ./build/reports

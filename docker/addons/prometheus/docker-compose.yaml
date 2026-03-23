@@ -8,42 +8,42 @@
 # from project root.
 
 networks:
-  supermq-base-net:
-    name: supermq-base-net
+  magistrala-base-net:
+    name: magistrala-base-net
     external: true
 
 volumes:
-  supermq-prometheus-volume:
+  magistrala-prometheus-volume:
 
 
 services:
   promethues:
     image: prom/prometheus:v2.49.1
-    container_name: supermq-prometheus
+    container_name: magistrala-prometheus
     restart: on-failure
     ports:
-      - ${SMQ_PROMETHEUS_PORT}:${SMQ_PROMETHEUS_PORT}
+      - ${MG_PROMETHEUS_PORT}:${MG_PROMETHEUS_PORT}
     networks:
-      - supermq-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
         source: ./metrics/prometheus.yaml
         target: /etc/prometheus/prometheus.yaml
-      - supermq-prometheus-volume:/prometheus
+      - magistrala-prometheus-volume:/prometheus
 
   grafana:
     image: grafana/grafana:10.2.3
-    container_name: supermq-grafana
+    container_name: magistrala-grafana
     depends_on:
       - promethues
     restart: on-failure
     ports:
-      - ${SMQ_GRAFANA_PORT}:${SMQ_GRAFANA_PORT}
+      - ${MG_GRAFANA_PORT}:${MG_GRAFANA_PORT}
     environment:
-      - GF_SECURITY_ADMIN_USER=${SMQ_GRAFANA_ADMIN_USER}
-      - GF_SECURITY_ADMIN_PASSWORD=${SMQ_GRAFANA_ADMIN_PASSWORD}
+      - GF_SECURITY_ADMIN_USER=${MG_GRAFANA_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${MG_GRAFANA_ADMIN_PASSWORD}
     networks:
-      - supermq-base-net
+      - magistrala-base-net
     volumes:
       - type: bind
         source: ./grafana/datasource.yaml

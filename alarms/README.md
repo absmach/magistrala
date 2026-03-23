@@ -23,20 +23,20 @@ The service is configured using the following environment variables (values show
 | `MG_ALARMS_DB_SSL_KEY` | PostgreSQL SSL client key | "" |
 | `MG_ALARMS_DB_SSL_ROOT_CERT` | PostgreSQL SSL root cert | "" |
 | `MG_ALARMS_INSTANCE_ID` | Instance ID for tracing/health | "" |
-| `SMQ_MESSAGE_BROKER_URL` | Message broker URL for alarm ingestion | `nats://nats:4222` |
-| `SMQ_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
-| `SMQ_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
-| `SMQ_AUTH_GRPC_URL` | Auth gRPC endpoint | `auth:7001` |
-| `SMQ_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `300s` |
-| `SMQ_AUTH_GRPC_CLIENT_CERT` | Auth gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.crt}` |
-| `SMQ_AUTH_GRPC_CLIENT_KEY` | Auth gRPC client key path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.key}` |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS` | Auth gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
-| `SMQ_DOMAINS_GRPC_URL` | Domains gRPC endpoint | `domains:7003` |
-| `SMQ_DOMAINS_GRPC_TIMEOUT` | Domains gRPC timeout | `300s` |
-| `SMQ_DOMAINS_GRPC_CLIENT_CERT` | Domains gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.crt}` |
-| `SMQ_DOMAINS_GRPC_CLIENT_KEY` | Domains gRPC client key path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.key}` |
-| `SMQ_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
-| `SMQ_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL for alarm ingestion | `nats://nats:4222` |
+| `MG_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
+| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
+| `MG_AUTH_GRPC_URL` | Auth gRPC endpoint | `auth:7001` |
+| `MG_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `300s` |
+| `MG_AUTH_GRPC_CLIENT_CERT` | Auth gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.crt}` |
+| `MG_AUTH_GRPC_CLIENT_KEY` | Auth gRPC client key path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.key}` |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS` | Auth gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
+| `MG_DOMAINS_GRPC_URL` | Domains gRPC endpoint | `domains:7003` |
+| `MG_DOMAINS_GRPC_TIMEOUT` | Domains gRPC timeout | `300s` |
+| `MG_DOMAINS_GRPC_CLIENT_CERT` | Domains gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.crt}` |
+| `MG_DOMAINS_GRPC_CLIENT_KEY` | Domains gRPC client key path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.key}` |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
+| `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
 
 ## Features
 
@@ -111,11 +111,11 @@ MG_ALARMS_DB_PORT=5432 \
 MG_ALARMS_DB_USER=magistrala \
 MG_ALARMS_DB_PASS=magistrala \
 MG_ALARMS_DB_NAME=alarms \
-SMQ_MESSAGE_BROKER_URL=nats://localhost:4222 \
-SMQ_AUTH_GRPC_URL=localhost:7001 \
-SMQ_AUTH_GRPC_TIMEOUT=300s \
-SMQ_DOMAINS_GRPC_URL=localhost:7003 \
-SMQ_DOMAINS_GRPC_TIMEOUT=300s \
+MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_AUTH_GRPC_URL=localhost:7001 \
+MG_AUTH_GRPC_TIMEOUT=300s \
+MG_DOMAINS_GRPC_URL=localhost:7003 \
+MG_DOMAINS_GRPC_TIMEOUT=300s \
 ./build/alarms
 ```
 

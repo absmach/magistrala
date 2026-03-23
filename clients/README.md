@@ -18,37 +18,37 @@ default values.
 
 | Variable                       | Description                                                             | Default                        |
 | ------------------------------ | ----------------------------------------------------------------------- | ------------------------------ |
-| SMQ_CLIENTS_LOG_LEVEL          | Log level for Clients (debug, info, warn, error)                        | info                           |
-| SMQ_CLIENTS_HTTP_HOST          | Clients service HTTP host                                               | localhost                      |
-| SMQ_CLIENTS_HTTP_PORT          | Clients service HTTP port                                               | 9000                           |
-| SMQ_CLIENTS_SERVER_CERT        | Path to the PEM encoded server certificate file                         | ""                             |
-| SMQ_CLIENTS_SERVER_KEY         | Path to the PEM encoded server key file                                 | ""                             |
-| SMQ_CLIENTS_GRPC_HOST          | Clients service gRPC host                                               | localhost                      |
-| SMQ_CLIENTS_GRPC_PORT          | Clients service gRPC port                                               | 7000                           |
-| SMQ_CLIENTS_GRPC_SERVER_CERT   | Path to the PEM encoded server certificate file                         | ""                             |
-| SMQ_CLIENTS_GRPC_SERVER_KEY    | Path to the PEM encoded server key file                                 | ""                             |
-| SMQ_CLIENTS_DB_HOST            | Database host address                                                   | localhost                      |
-| SMQ_CLIENTS_DB_PORT            | Database host port                                                      | 5432                           |
-| SMQ_CLIENTS_DB_USER            | Database user                                                           | supermq                        |
-| SMQ_CLIENTS_DB_PASS            | Database password                                                       | supermq                        |
-| SMQ_CLIENTS_DB_NAME            | Name of the database used by the service                                | clients                        |
-| SMQ_CLIENTS_DB_SSL_MODE        | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                        |
-| SMQ_CLIENTS_DB_SSL_CERT        | Path to the PEM encoded certificate file                                | ""                             |
-| SMQ_CLIENTS_DB_SSL_KEY         | Path to the PEM encoded key file                                        | ""                             |
-| SMQ_CLIENTS_DB_SSL_ROOT_CERT   | Path to the PEM encoded root certificate file                           | ""                             |
-| SMQ_CLIENTS_CACHE_URL          | Cache database URL                                                      | <redis://localhost:6379/0>     |
-| SMQ_CLIENTS_CACHE_KEY_DURATION | Cache key duration in seconds                                           | 3600                           |
-| SMQ_CLIENTS_ES_URL             | Event store URL                                                         | <localhost:6379>               |
-| SMQ_CLIENTS_ES_PASS            | Event store password                                                    | ""                             |
-| SMQ_CLIENTS_ES_DB              | Event store instance name                                               | 0                              |
-| SMQ_CLIENTS_STANDALONE_ID      | User ID for standalone mode (no gRPC communication with Auth)           | ""                             |
-| SMQ_CLIENTS_STANDALONE_TOKEN   | User token for standalone mode that should be passed in auth header     | ""                             |
-| SMQ_JAEGER_URL                 | Jaeger server URL                                                       | <http://jaeger:4318/v1/traces> |
-| SMQ_AUTH_GRPC_URL              | Auth service gRPC URL                                                   | localhost:7001                 |
-| SMQ_AUTH_GRPC_TIMEOUT          | Auth service gRPC request timeout in seconds                            | 1s                             |
-| SMQ_AUTH_GRPC_CLIENT_TLS       | Enable TLS for gRPC client                                              | false                          |
-| SMQ_AUTH_GRPC_CA_CERT          | Path to the CA certificate file                                         | ""                             |
-| SMQ_SEND_TELEMETRY             | Send telemetry to supermq call home server.                             | true                           |
+| MG_CLIENTS_LOG_LEVEL          | Log level for Clients (debug, info, warn, error)                        | info                           |
+| MG_CLIENTS_HTTP_HOST          | Clients service HTTP host                                               | localhost                      |
+| MG_CLIENTS_HTTP_PORT          | Clients service HTTP port                                               | 9000                           |
+| MG_CLIENTS_SERVER_CERT        | Path to the PEM encoded server certificate file                         | ""                             |
+| MG_CLIENTS_SERVER_KEY         | Path to the PEM encoded server key file                                 | ""                             |
+| MG_CLIENTS_GRPC_HOST          | Clients service gRPC host                                               | localhost                      |
+| MG_CLIENTS_GRPC_PORT          | Clients service gRPC port                                               | 7000                           |
+| MG_CLIENTS_GRPC_SERVER_CERT   | Path to the PEM encoded server certificate file                         | ""                             |
+| MG_CLIENTS_GRPC_SERVER_KEY    | Path to the PEM encoded server key file                                 | ""                             |
+| MG_CLIENTS_DB_HOST            | Database host address                                                   | localhost                      |
+| MG_CLIENTS_DB_PORT            | Database host port                                                      | 5432                           |
+| MG_CLIENTS_DB_USER            | Database user                                                           | supermq                        |
+| MG_CLIENTS_DB_PASS            | Database password                                                       | supermq                        |
+| MG_CLIENTS_DB_NAME            | Name of the database used by the service                                | clients                        |
+| MG_CLIENTS_DB_SSL_MODE        | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                        |
+| MG_CLIENTS_DB_SSL_CERT        | Path to the PEM encoded certificate file                                | ""                             |
+| MG_CLIENTS_DB_SSL_KEY         | Path to the PEM encoded key file                                        | ""                             |
+| MG_CLIENTS_DB_SSL_ROOT_CERT   | Path to the PEM encoded root certificate file                           | ""                             |
+| MG_CLIENTS_CACHE_URL          | Cache database URL                                                      | <redis://localhost:6379/0>     |
+| MG_CLIENTS_CACHE_KEY_DURATION | Cache key duration in seconds                                           | 3600                           |
+| MG_CLIENTS_ES_URL             | Event store URL                                                         | <localhost:6379>               |
+| MG_CLIENTS_ES_PASS            | Event store password                                                    | ""                             |
+| MG_CLIENTS_ES_DB              | Event store instance name                                               | 0                              |
+| MG_CLIENTS_STANDALONE_ID      | User ID for standalone mode (no gRPC communication with Auth)           | ""                             |
+| MG_CLIENTS_STANDALONE_TOKEN   | User token for standalone mode that should be passed in auth header     | ""                             |
+| MG_JAEGER_URL                 | Jaeger server URL                                                       | <http://jaeger:4318/v1/traces> |
+| MG_AUTH_GRPC_URL              | Auth service gRPC URL                                                   | localhost:7001                 |
+| MG_AUTH_GRPC_TIMEOUT          | Auth service gRPC request timeout in seconds                            | 1s                             |
+| MG_AUTH_GRPC_CLIENT_TLS       | Enable TLS for gRPC client                                              | false                          |
+| MG_AUTH_GRPC_CA_CERT          | Path to the CA certificate file                                         | ""                             |
+| MG_SEND_TELEMETRY             | Send telemetry to supermq call home server.                             | true                           |
 | Clients_INSTANCE_ID            | Clients instance ID                                                     | ""                             |
 
 **Note** that if you want `clients` service to have only one user locally, you should use `CLIENTS_STANDALONE` env vars. By specifying these, you don't need `auth` service in your deployment for users' authorization.
@@ -98,12 +98,12 @@ Clients_CACHE_URL=[Cache database URL] \
 Clients_ES_URL=[Event store URL] \
 Clients_ES_PASS=[Event store password] \
 Clients_ES_DB=[Event store instance name] \
-SMQ_AUTH_GRPC_URL=[Auth service gRPC URL] \
-SMQ_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
-SMQ_AUTH_GRPC_CLIENT_TLS=[Enable TLS for gRPC client] \
-SMQ_AUTH_GRPC_CA_CERT=[Path to trusted CA certificate file] \
-SMQ_JAEGER_URL=[Jaeger server URL] \
-SMQ_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
+MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
+MG_AUTH_GRPC_CLIENT_TLS=[Enable TLS for gRPC client] \
+MG_AUTH_GRPC_CA_CERT=[Path to trusted CA certificate file] \
+MG_JAEGER_URL=[Jaeger server URL] \
+MG_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
 Clients_INSTANCE_ID=[Clients instance ID] \
 $GOBIN/supermq-clients
 ```

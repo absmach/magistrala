@@ -61,7 +61,7 @@ jobs:
       matrix:
         variant:
           - name: redis
-            env: SMQ_ES_TYPE=es_redis
+            env: MG_ES_TYPE=es_redis
             target: fluxmq
 
     steps:

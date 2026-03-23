@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package main contains the FluxMQ auth bridge service entry point.
-// This service implements the FluxMQ auth callout gRPC server, bridging
-// authentication requests to SuperMQ's Clients service and authorization
-// requests to SuperMQ's Channels service.
+// This service implements the FluxMQ auth callout server using ConnectRPC,
+// bridging authentication requests to SuperMQ's Clients service and
+// authorization requests to SuperMQ's Channels service.
 package main
 
 import (
@@ -17,6 +17,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"connectrpc.com/connect"
+	"connectrpc.com/otelconnect"
 	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
 	fluxmqgrpc "github.com/absmach/supermq/fluxmq/api/grpc"
 	smqlog "github.com/absmach/supermq/logger"
@@ -157,7 +159,16 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	path, handler := authv1connect.NewAuthServiceHandler(fluxmqgrpc.NewServer(clientsClient, channelsClient, parser))
+	otelInterceptor, err := otelconnect.NewInterceptor()
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create OTel interceptor: %s", err))
+		exitCode = 1
+		return
+	}
+	path, handler := authv1connect.NewAuthServiceHandler(
+		fluxmqgrpc.NewServer(clientsClient, channelsClient, parser),
+		connect.WithInterceptors(otelInterceptor),
+	)
 	mux.Handle(path, handler)
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)

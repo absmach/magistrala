@@ -3,6 +3,7 @@ module github.com/absmach/supermq
 go 1.26.0
 
 require (
+	connectrpc.com/otelconnect v0.9.0
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.5
@@ -67,8 +68,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 	moul.io/http2curl v1.0.0
 )
-
-replace github.com/absmach/fluxmq => ../fluxmq
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20251209175733-2a1774d88802.1 // indirect
@@ -135,7 +134,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jzelinskie/stringz v0.0.3 // indirect
-	github.com/klauspost/compress v1.18.4 // indirect
+	github.com/klauspost/compress v1.18.5 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect

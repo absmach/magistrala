@@ -8,22 +8,22 @@ The service is configured using the following environment variables (unset varia
 
 | Variable                     | Description                                                  | Default     |
 |-----------------------------|--------------------------------------------------------------|-------------|
-| `SMQ_CHANNELS_LOG_LEVEL`      | Log level (debug, info, warn, error)                          | info        |
-| `SMQ_CHANNELS_HTTP_HOST`      | HTTP host for Channels service                               | localhost   |
-| `SMQ_CHANNELS_HTTP_PORT`      | HTTP port for Channels service                               | 9005        |
-| `SMQ_CHANNELS_SERVER_CERT`    | Path to PEM encoded server certificate                       | ""          |
-| `SMQ_CHANNELS_SERVER_KEY`     | Path to PEM encoded server key file                          | ""          |
-| `SMQ_CHANNELS_GRPC_HOST`      | gRPC host for Channels service                               | localhost   |
-| `SMQ_CHANNELS_GRPC_PORT`      | gRPC port for Channels service                               | 7005        |
-| `SMQ_CHANNELS_DB_HOST`        | Database host address                                        | localhost   |
-| `SMQ_CHANNELS_DB_PORT`        | Database port                                                | 5432        |
-| `SMQ_CHANNELS_DB_USER`        | Database user                                                | supermq     |
-| `SMQ_CHANNELS_DB_PASS`        | Database password                                            | supermq     |
-| `SMQ_CHANNELS_DB_NAME`        | Name of the database used by the service                    | channels    |
-| `SMQ_CHANNELS_DB_SSL_MODE`    | Database connection SSL mode                                 | disable     |
-| `SMQ_CHANNELS_CACHE_URL`      | Cache database URL                                           | <redis://localhost:6379/0> |
-| `SMQ_JAEGER_URL`              | Jaeger tracing server URL                                    | <http://jaeger:4318/v1/traces> |
-| `SMQ_SEND_TELEMETRY`          | Send telemetry to SuperMQ call-home server                   | true        |
+| `MG_CHANNELS_LOG_LEVEL`      | Log level (debug, info, warn, error)                          | info        |
+| `MG_CHANNELS_HTTP_HOST`      | HTTP host for Channels service                               | localhost   |
+| `MG_CHANNELS_HTTP_PORT`      | HTTP port for Channels service                               | 9005        |
+| `MG_CHANNELS_SERVER_CERT`    | Path to PEM encoded server certificate                       | ""          |
+| `MG_CHANNELS_SERVER_KEY`     | Path to PEM encoded server key file                          | ""          |
+| `MG_CHANNELS_GRPC_HOST`      | gRPC host for Channels service                               | localhost   |
+| `MG_CHANNELS_GRPC_PORT`      | gRPC port for Channels service                               | 7005        |
+| `MG_CHANNELS_DB_HOST`        | Database host address                                        | localhost   |
+| `MG_CHANNELS_DB_PORT`        | Database port                                                | 5432        |
+| `MG_CHANNELS_DB_USER`        | Database user                                                | supermq     |
+| `MG_CHANNELS_DB_PASS`        | Database password                                            | supermq     |
+| `MG_CHANNELS_DB_NAME`        | Name of the database used by the service                    | channels    |
+| `MG_CHANNELS_DB_SSL_MODE`    | Database connection SSL mode                                 | disable     |
+| `MG_CHANNELS_CACHE_URL`      | Cache database URL                                           | <redis://localhost:6379/0> |
+| `MG_JAEGER_URL`              | Jaeger tracing server URL                                    | <http://jaeger:4318/v1/traces> |
+| `MG_SEND_TELEMETRY`          | Send telemetry to SuperMQ call-home server                   | true        |
 
 ## Features
 
@@ -86,13 +86,13 @@ make channels
 
 make install
 
-SMQ_CHANNELS_HTTP_HOST=localhost \
-SMQ_CHANNELS_HTTP_PORT=9005 \
-SMQ_CHANNELS_DB_HOST=localhost \
-SMQ_CHANNELS_DB_PORT=5432 \
-SMQ_CHANNELS_DB_USER=supermq \
-SMQ_CHANNELS_DB_PASS=supermq \
-SMQ_CHANNELS_DB_NAME=channels \
+MG_CHANNELS_HTTP_HOST=localhost \
+MG_CHANNELS_HTTP_PORT=9005 \
+MG_CHANNELS_DB_HOST=localhost \
+MG_CHANNELS_DB_PORT=5432 \
+MG_CHANNELS_DB_USER=supermq \
+MG_CHANNELS_DB_PASS=supermq \
+MG_CHANNELS_DB_NAME=channels \
 $GOBIN/supermq-channels
 ```
 

@@ -43,10 +43,10 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `SMQ_MESSAGE_BROKER_URL` | Message broker URL | `nats://nats:4222` |
-| `SMQ_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
-| `SMQ_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
-| `SMQ_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL | `nats://nats:4222` |
+| `MG_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
+| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
+| `MG_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
 
 ### Timescale writer
 
@@ -204,8 +204,8 @@ MG_POSTGRES_PORT=5432 \
 MG_POSTGRES_USER=supermq \
 MG_POSTGRES_PASS=supermq \
 MG_POSTGRES_NAME=messages \
-SMQ_MESSAGE_BROKER_URL=nats://localhost:4222 \
-SMQ_JAEGER_URL=http://localhost:4318/v1/traces \
+MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/postgres-writer
 ```
 
@@ -222,8 +222,8 @@ MG_TIMESCALE_PORT=5432 \
 MG_TIMESCALE_USER=supermq \
 MG_TIMESCALE_PASS=supermq \
 MG_TIMESCALE_NAME=supermq \
-SMQ_MESSAGE_BROKER_URL=nats://localhost:4222 \
-SMQ_JAEGER_URL=http://localhost:4318/v1/traces \
+MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/timescale-writer
 ```
 

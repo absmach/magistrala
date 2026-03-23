@@ -14,49 +14,49 @@ The service is configured using the environment variables presented in the follo
 
 | Variable                          | Description                                                             | Default                           |
 | --------------------------------- | ----------------------------------------------------------------------- | --------------------------------- |
-| `SMQ_USERS_LOG_LEVEL`               | Log level for users service (debug, info, warn, error)                  | info                              |
-| `SMQ_USERS_ADMIN_EMAIL`             | Default user, created on startup                                        | <admin@example.com>               |
-| `SMQ_USERS_ADMIN_PASSWORD`          | Default user password, created on startup                               | 12345678                          |
-| `SMQ_USERS_PASS_REGEX`              | Password regex                                                          | ^.{8,}$                           |
-| `SMQ_USERS_HTTP_HOST`               | Users service HTTP host                                                 | localhost                         |
-| `SMQ_USERS_HTTP_PORT`               | Users service HTTP port                                                 | 9002                              |
-| `SMQ_USERS_HTTP_SERVER_CERT`        | Path to the PEM encoded server certificate file                         | ""                                |
-| `SMQ_USERS_HTTP_SERVER_KEY`         | Path to the PEM encoded server key file                                 | ""                                |
-| `SMQ_USERS_HTTP_SERVER_CA_CERTS`    | Path to the PEM encoded server CA certificate file                      | ""                                |
-| `SMQ_USERS_HTTP_CLIENT_CA_CERTS`    | Path to the PEM encoded client CA certificate file                      | ""                                |
-| `SMQ_AUTH_GRPC_URL`                 | Auth service GRPC URL                                                   | localhost:8181                    |
-| `SMQ_AUTH_GRPC_TIMEOUT`             | Auth service GRPC timeout                                               | 1s                                |
-| `SMQ_AUTH_GRPC_CLIENT_CERT`         | Path to the PEM encoded client certificate file                         | ""                                |
-| `SMQ_AUTH_GRPC_CLIENT_KEY`          | Path to the PEM encoded client key file                                 | ""                                |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS`     | Path to the PEM encoded server CA certificate file                      | ""                                |
-| `SMQ_USERS_DB_HOST`                 | Database host address                                                   | localhost                         |
-| `SMQ_USERS_DB_PORT`                 | Database host port                                                      | 5432                              |
-| `SMQ_USERS_DB_USER`                 | Database user                                                           | supermq                           |
-| `SMQ_USERS_DB_PASS`                 | Database password                                                       | supermq                           |
-| `SMQ_USERS_DB_NAME`                 | Name of the database used by the service                                | users                             |
-| `SMQ_USERS_DB_SSL_MODE`             | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                           |
-| `SMQ_USERS_DB_SSL_CERT`             | Path to the PEM encoded certificate file                                | ""                                |
-| `SMQ_USERS_DB_SSL_KEY`              | Path to the PEM encoded key file                                        | ""                                |
-| `SMQ_USERS_DB_SSL_ROOT_CERT`        | Path to the PEM encoded root certificate file                           | ""                                |
-| `SMQ_EMAIL_HOST`                    | Mail server host                                                        | localhost                         |
-| `SMQ_EMAIL_PORT`                    | Mail server port                                                        | 25                                |
-| `SMQ_EMAIL_USERNAME`                | Mail server username                                                    | ""                                |
-| `SMQ_EMAIL_PASSWORD`                | Mail server password                                                    | ""                                |
-| `SMQ_EMAIL_FROM_ADDRESS`            | Email "from" address                                                    | ""                                |
-| `SMQ_EMAIL_FROM_NAME`               | Email "from" name                                                       | ""                                |
-| `SMQ_PASSWORD_RESET_URL_PREFIX`     | Password reset URL prefix                                               | <http://localhost/password/reset> |
-| `SMQ_PASSWORD_RESET_EMAIL_TEMPLATE` | Password reset email template                                           | reset-password-email.tmpl         |
-| `SMQ_VERIFICATION_URL_PREFIX`       | Verification URL prefix                                                 | <http://localhost/verify-email>   |
-| `SMQ_VERIFICATION_EMAIL_TEMPLATE`   | Verification email template                                             | verification-email.tmpl           |
-| `SMQ_USERS_ES_URL`                  | Event store URL                                                         | <nats://localhost:4222>           |
-| `SMQ_JAEGER_URL`                    | Jaeger server URL                                                       | <http://localhost:4318/v1/traces> |
-| `SMQ_OAUTH_UI_REDIRECT_URL`         | OAuth UI redirect URL                                                   | <http://localhost:9095/domains>   |
-| `SMQ_OAUTH_UI_ERROR_URL`            | OAuth UI error URL                                                      | <http://localhost:9095/error>     |
-| `SMQ_USERS_DELETE_INTERVAL`         | Interval for deleting users                                             | 24h                               |
-| `SMQ_USERS_DELETE_AFTER`            | Time after which users are deleted                                      | 720h                              |
-| `SMQ_JAEGER_TRACE_RATIO`            | Jaeger sampling ratio                                                   | 1.0                               |
-| `SMQ_SEND_TELEMETRY`                | Send telemetry to supermq call home server.                             | true                              |
-| `SMQ_USERS_INSTANCE_ID`             | SuperMQ instance ID                                                     | ""                                |
+| `MG_USERS_LOG_LEVEL`               | Log level for users service (debug, info, warn, error)                  | info                              |
+| `MG_USERS_ADMIN_EMAIL`             | Default user, created on startup                                        | <admin@example.com>               |
+| `MG_USERS_ADMIN_PASSWORD`          | Default user password, created on startup                               | 12345678                          |
+| `MG_USERS_PASS_REGEX`              | Password regex                                                          | ^.{8,}$                           |
+| `MG_USERS_HTTP_HOST`               | Users service HTTP host                                                 | localhost                         |
+| `MG_USERS_HTTP_PORT`               | Users service HTTP port                                                 | 9002                              |
+| `MG_USERS_HTTP_SERVER_CERT`        | Path to the PEM encoded server certificate file                         | ""                                |
+| `MG_USERS_HTTP_SERVER_KEY`         | Path to the PEM encoded server key file                                 | ""                                |
+| `MG_USERS_HTTP_SERVER_CA_CERTS`    | Path to the PEM encoded server CA certificate file                      | ""                                |
+| `MG_USERS_HTTP_CLIENT_CA_CERTS`    | Path to the PEM encoded client CA certificate file                      | ""                                |
+| `MG_AUTH_GRPC_URL`                 | Auth service GRPC URL                                                   | localhost:8181                    |
+| `MG_AUTH_GRPC_TIMEOUT`             | Auth service GRPC timeout                                               | 1s                                |
+| `MG_AUTH_GRPC_CLIENT_CERT`         | Path to the PEM encoded client certificate file                         | ""                                |
+| `MG_AUTH_GRPC_CLIENT_KEY`          | Path to the PEM encoded client key file                                 | ""                                |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS`     | Path to the PEM encoded server CA certificate file                      | ""                                |
+| `MG_USERS_DB_HOST`                 | Database host address                                                   | localhost                         |
+| `MG_USERS_DB_PORT`                 | Database host port                                                      | 5432                              |
+| `MG_USERS_DB_USER`                 | Database user                                                           | supermq                           |
+| `MG_USERS_DB_PASS`                 | Database password                                                       | supermq                           |
+| `MG_USERS_DB_NAME`                 | Name of the database used by the service                                | users                             |
+| `MG_USERS_DB_SSL_MODE`             | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                           |
+| `MG_USERS_DB_SSL_CERT`             | Path to the PEM encoded certificate file                                | ""                                |
+| `MG_USERS_DB_SSL_KEY`              | Path to the PEM encoded key file                                        | ""                                |
+| `MG_USERS_DB_SSL_ROOT_CERT`        | Path to the PEM encoded root certificate file                           | ""                                |
+| `MG_EMAIL_HOST`                    | Mail server host                                                        | localhost                         |
+| `MG_EMAIL_PORT`                    | Mail server port                                                        | 25                                |
+| `MG_EMAIL_USERNAME`                | Mail server username                                                    | ""                                |
+| `MG_EMAIL_PASSWORD`                | Mail server password                                                    | ""                                |
+| `MG_EMAIL_FROM_ADDRESS`            | Email "from" address                                                    | ""                                |
+| `MG_EMAIL_FROM_NAME`               | Email "from" name                                                       | ""                                |
+| `MG_PASSWORD_RESET_URL_PREFIX`     | Password reset URL prefix                                               | <http://localhost/password/reset> |
+| `MG_PASSWORD_RESET_EMAIL_TEMPLATE` | Password reset email template                                           | reset-password-email.tmpl         |
+| `MG_VERIFICATION_URL_PREFIX`       | Verification URL prefix                                                 | <http://localhost/verify-email>   |
+| `MG_VERIFICATION_EMAIL_TEMPLATE`   | Verification email template                                             | verification-email.tmpl           |
+| `MG_USERS_ES_URL`                  | Event store URL                                                         | <nats://localhost:4222>           |
+| `MG_JAEGER_URL`                    | Jaeger server URL                                                       | <http://localhost:4318/v1/traces> |
+| `MG_OAUTH_UI_REDIRECT_URL`         | OAuth UI redirect URL                                                   | <http://localhost:9095/domains>   |
+| `MG_OAUTH_UI_ERROR_URL`            | OAuth UI error URL                                                      | <http://localhost:9095/error>     |
+| `MG_USERS_DELETE_INTERVAL`         | Interval for deleting users                                             | 24h                               |
+| `MG_USERS_DELETE_AFTER`            | Time after which users are deleted                                      | 720h                              |
+| `MG_JAEGER_TRACE_RATIO`            | Jaeger sampling ratio                                                   | 1.0                               |
+| `MG_SEND_TELEMETRY`                | Send telemetry to supermq call home server.                             | true                              |
+| `MG_USERS_INSTANCE_ID`             | SuperMQ instance ID                                                     | ""                                |
 
 ## Deployment
 
@@ -77,57 +77,57 @@ make users
 make install
 
 # set the environment variables and run the service
-SMQ_USERS_LOG_LEVEL=info \
-SMQ_USERS_ADMIN_EMAIL=admin@example.com \
-SMQ_USERS_ADMIN_PASSWORD=12345678 \
-SMQ_USERS_PASS_REGEX="^.{8,}$" \
-SMQ_USERS_HTTP_HOST=localhost \
-SMQ_USERS_HTTP_PORT=9002 \
-SMQ_USERS_HTTP_SERVER_CERT="" \
-SMQ_USERS_HTTP_SERVER_KEY="" \
-SMQ_USERS_HTTP_SERVER_CA_CERTS="" \
-SMQ_USERS_HTTP_CLIENT_CA_CERTS="" \
-SMQ_AUTH_GRPC_URL=localhost:8181 \
-SMQ_AUTH_GRPC_TIMEOUT=1s \
-SMQ_AUTH_GRPC_CLIENT_CERT="" \
-SMQ_AUTH_GRPC_CLIENT_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CA_CERTS="" \
-SMQ_USERS_DB_HOST=localhost \
-SMQ_USERS_DB_PORT=5432 \
-SMQ_USERS_DB_USER=supermq \
-SMQ_USERS_DB_PASS=supermq \
-SMQ_USERS_DB_NAME=users \
-SMQ_USERS_DB_SSL_MODE=disable \
-SMQ_USERS_DB_SSL_CERT="" \
-SMQ_USERS_DB_SSL_KEY="" \
-SMQ_USERS_DB_SSL_ROOT_CERT="" \
-SMQ_EMAIL_HOST=smtp.mailtrap.io \
-SMQ_EMAIL_PORT=2525 \
-SMQ_EMAIL_USERNAME="18bf7f7070513" \
-SMQ_EMAIL_PASSWORD="2b0d302e775b1e" \
-SMQ_EMAIL_FROM_ADDRESS=from@example.com \
-SMQ_EMAIL_FROM_NAME=Example \
-SMQ_PASSWORD_RESET_URL_PREFIX=http://localhost:9002/password/reset \
-SMQ_PASSWORD_RESET_EMAIL_TEMPLATE=docker/templates/reset-password-email.tmpl \
-SMQ_VERIFICATION_URL_PREFIX=http://localhost:9002/users/verify-email \
-SMQ_VERIFICATION_EMAIL_TEMPLATE=docker/templates/verification-email.tmpl \
-SMQ_USERS_ES_URL=nats://localhost:4222 \
-SMQ_JAEGER_URL=http://localhost:14268/api/traces \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_SEND_TELEMETRY=true \
-SMQ_OAUTH_UI_REDIRECT_URL=http://localhost:9095/domains \
-SMQ_OAUTH_UI_ERROR_URL=http://localhost:9095/error \
-SMQ_USERS_DELETE_INTERVAL=24h \
-SMQ_USERS_DELETE_AFTER=720h \
-SMQ_USERS_INSTANCE_ID="" \
+MG_USERS_LOG_LEVEL=info \
+MG_USERS_ADMIN_EMAIL=admin@example.com \
+MG_USERS_ADMIN_PASSWORD=12345678 \
+MG_USERS_PASS_REGEX="^.{8,}$" \
+MG_USERS_HTTP_HOST=localhost \
+MG_USERS_HTTP_PORT=9002 \
+MG_USERS_HTTP_SERVER_CERT="" \
+MG_USERS_HTTP_SERVER_KEY="" \
+MG_USERS_HTTP_SERVER_CA_CERTS="" \
+MG_USERS_HTTP_CLIENT_CA_CERTS="" \
+MG_AUTH_GRPC_URL=localhost:8181 \
+MG_AUTH_GRPC_TIMEOUT=1s \
+MG_AUTH_GRPC_CLIENT_CERT="" \
+MG_AUTH_GRPC_CLIENT_KEY="" \
+MG_AUTH_GRPC_SERVER_CA_CERTS="" \
+MG_USERS_DB_HOST=localhost \
+MG_USERS_DB_PORT=5432 \
+MG_USERS_DB_USER=supermq \
+MG_USERS_DB_PASS=supermq \
+MG_USERS_DB_NAME=users \
+MG_USERS_DB_SSL_MODE=disable \
+MG_USERS_DB_SSL_CERT="" \
+MG_USERS_DB_SSL_KEY="" \
+MG_USERS_DB_SSL_ROOT_CERT="" \
+MG_EMAIL_HOST=smtp.mailtrap.io \
+MG_EMAIL_PORT=2525 \
+MG_EMAIL_USERNAME="18bf7f7070513" \
+MG_EMAIL_PASSWORD="2b0d302e775b1e" \
+MG_EMAIL_FROM_ADDRESS=from@example.com \
+MG_EMAIL_FROM_NAME=Example \
+MG_PASSWORD_RESET_URL_PREFIX=http://localhost:9002/password/reset \
+MG_PASSWORD_RESET_EMAIL_TEMPLATE=docker/templates/reset-password-email.tmpl \
+MG_VERIFICATION_URL_PREFIX=http://localhost:9002/users/verify-email \
+MG_VERIFICATION_EMAIL_TEMPLATE=docker/templates/verification-email.tmpl \
+MG_USERS_ES_URL=nats://localhost:4222 \
+MG_JAEGER_URL=http://localhost:14268/api/traces \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_SEND_TELEMETRY=true \
+MG_OAUTH_UI_REDIRECT_URL=http://localhost:9095/domains \
+MG_OAUTH_UI_ERROR_URL=http://localhost:9095/error \
+MG_USERS_DELETE_INTERVAL=24h \
+MG_USERS_DELETE_AFTER=720h \
+MG_USERS_INSTANCE_ID="" \
 $GOBIN/supermq-users
 ```
 
-If `SMQ_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work. The email environment variables are used to send emails with password reset link. The service expects a file in Go template format. The template should be something like [this](https://github.com/absmach/supermq/blob/main/docker/templates/users.tmpl).
+If `MG_EMAIL_TEMPLATE` doesn't point to any file service will function but password reset functionality will not work. The email environment variables are used to send emails with password reset link. The service expects a file in Go template format. The template should be something like [this](https://github.com/absmach/supermq/blob/main/docker/templates/users.tmpl).
 
-Setting `SMQ_USERS_HTTP_SERVER_CERT` and `SMQ_USERS_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key. Setting `SMQ_USERS_HTTP_SERVER_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs. Setting `SMQ_USERS_HTTP_CLIENT_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
+Setting `MG_USERS_HTTP_SERVER_CERT` and `MG_USERS_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key. Setting `MG_USERS_HTTP_SERVER_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs. Setting `MG_USERS_HTTP_CLIENT_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
 
-Setting `SMQ_AUTH_GRPC_CLIENT_CERT` and `SMQ_AUTH_GRPC_CLIENT_KEY` will enable TLS against the auth service. The service expects a file in PEM format for both the certificate and the key. Setting `SMQ_AUTH_GRPC_SERVER_CA_CERTS` will enable TLS against the auth service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
+Setting `MG_AUTH_GRPC_CLIENT_CERT` and `MG_AUTH_GRPC_CLIENT_KEY` will enable TLS against the auth service. The service expects a file in PEM format for both the certificate and the key. Setting `MG_AUTH_GRPC_SERVER_CA_CERTS` will enable TLS against the auth service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
 
 ## HTTP API
 
@@ -153,7 +153,7 @@ Base URL defaults to `http://localhost:9002`. Unless otherwise noted, endpoints 
 - Disable self-registration in production; onboard users via admin tokens or your IdP.
 - Keep `allow_unverified_user` false and require email verification before granting domain roles.
 - Enforce TLS for HTTP and mTLS for gRPC by setting server/client cert env vars.
-- Harden passwords with `SMQ_USERS_PASS_REGEX` and rotate credentials; purge stale accounts via `SMQ_USERS_DELETE_AFTER`.
+- Harden passwords with `MG_USERS_PASS_REGEX` and rotate credentials; purge stale accounts via `MG_USERS_DELETE_AFTER`.
 - Rate-limit token issuance and password reset endpoints at your API gateway; export Prometheus metrics to watch for abuse.
 - Store SMTP credentials and certificates in a secrets manager; avoid embedding secrets in images or repos.
 

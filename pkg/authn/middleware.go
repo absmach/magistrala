@@ -19,7 +19,7 @@ import (
 type sessionKeyType string
 
 const (
-	allowUnverifiedUserEnv = "SMQ_ALLOW_UNVERIFIED_USER"
+	allowUnverifiedUserEnv = "MG_ALLOW_UNVERIFIED_USER"
 	jsonContentType        = "application/json"
 
 	SessionKey = sessionKeyType("session")
@@ -81,12 +81,12 @@ type authnMiddleware struct {
 // NewAuthNMiddleware creates a new authenticated service with middleware support.
 // The order of precedence for options is as follows, with later options overriding earlier ones:
 // 1. Default options (lowest precedence).
-// 2. Options from environment variables (e.g., SMQ_ALLOW_UNVERIFIED_USER).
+// 2. Options from environment variables (e.g., MG_ALLOW_UNVERIFIED_USER).
 // 3. Options passed as arguments to this function (highest precedence).
 //
 // For example, consider the 'allowUnverifiedUser' option:
 //   - By default, it is 'false'.
-//   - If the SMQ_ALLOW_UNVERIFIED_USER environment variable is set to "true",
+//   - If the MG_ALLOW_UNVERIFIED_USER environment variable is set to "true",
 //     it becomes 'true'.
 //   - If NewAuthNMiddleware is called with WithAllowUnverifiedUser(false), it will be 'false',
 //     regardless of the environment variable, as function arguments have the highest precedence.

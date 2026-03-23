@@ -63,32 +63,32 @@ import (
 
 const (
 	svcName                = "domains"
-	envPrefixHTTP          = "SMQ_DOMAINS_HTTP_"
-	envPrefixGrpc          = "SMQ_DOMAINS_GRPC_"
-	envPrefixDB            = "SMQ_DOMAINS_DB_"
-	envPrefixAuth          = "SMQ_AUTH_GRPC_"
-	envPrefixDomainCallout = "SMQ_DOMAINS_CALLOUT_"
+	envPrefixHTTP          = "MG_DOMAINS_HTTP_"
+	envPrefixGrpc          = "MG_DOMAINS_GRPC_"
+	envPrefixDB            = "MG_DOMAINS_DB_"
+	envPrefixAuth          = "MG_AUTH_GRPC_"
+	envPrefixDomainCallout = "MG_DOMAINS_CALLOUT_"
 	defDB                  = "domains"
 	defSvcHTTPPort         = "9004"
 	defSvcGRPCPort         = "7004"
 )
 
 type config struct {
-	LogLevel            string        `env:"SMQ_DOMAINS_LOG_LEVEL"            envDefault:"info"`
-	JaegerURL           url.URL       `env:"SMQ_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool          `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`
-	CacheURL            string        `env:"SMQ_DOMAINS_CACHE_URL"            envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration    time.Duration `env:"SMQ_DOMAINS_CACHE_KEY_DURATION"   envDefault:"10m"`
-	InstanceID          string        `env:"SMQ_DOMAINS_INSTANCE_ID"          envDefault:""`
-	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
-	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
-	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"nats://localhost:4222"`
-	AuthKeyAlgorithm    string        `env:"SMQ_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
-	JWKSURL             string        `env:"SMQ_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
-	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
+	LogLevel            string        `env:"MG_DOMAINS_LOG_LEVEL"            envDefault:"info"`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	CacheURL            string        `env:"MG_DOMAINS_CACHE_URL"            envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration    time.Duration `env:"MG_DOMAINS_CACHE_KEY_DURATION"   envDefault:"10m"`
+	InstanceID          string        `env:"MG_DOMAINS_INSTANCE_ID"          envDefault:""`
+	SpicedbHost         string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbSchemaFile   string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
+	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	ESURL               string        `env:"MG_ES_URL"                       envDefault:"nats://localhost:4222"`
+	AuthKeyAlgorithm    string        `env:"MG_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
+	JWKSURL             string        `env:"MG_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
+	PermissionsFile     string        `env:"MG_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {

@@ -61,10 +61,10 @@ jobs:
       matrix:
         variant:
           - name: rabbitmq
-            env: SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
+            env: MG_MESSAGE_BROKER_TYPE=msg_rabbitmq
             target: mqtt
           - name: redis
-            env: SMQ_ES_TYPE=es_redis
+            env: MG_ES_TYPE=es_redis
             target: mqtt
 
     steps:

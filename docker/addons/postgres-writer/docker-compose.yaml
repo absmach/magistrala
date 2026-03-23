@@ -9,58 +9,58 @@
 # inspection and data visualization.
 
 networks:
-  supermq-base-net:
+  magistrala-base-net:
     external: true
 
 volumes:
-  supermq-postgres-writer-volume:
+  magistrala-postgres-writer-volume:
 
 services:
   postgres:
     image: postgres:16.2-alpine
-    container_name: supermq-postgres
+    container_name: magistrala-postgres
     restart: on-failure
     environment:
-      POSTGRES_USER: ${SMQ_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${SMQ_POSTGRES_PASS}
-      POSTGRES_DB: ${SMQ_POSTGRES_NAME}
+      POSTGRES_USER: ${MG_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${MG_POSTGRES_PASS}
+      POSTGRES_DB: ${MG_POSTGRES_NAME}
     ports:
       - 5434:5432
     networks:
-      - supermq-base-net
+      - magistrala-base-net
     volumes:
-      - supermq-postgres-writer-volume:/var/lib/postgresql/data
+      - magistrala-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: supermq/postgres-writer:${SMQ_RELEASE_TAG}
-    container_name: supermq-postgres-writer
+    image: docker.io/magistrala/postgres-writer:${MG_RELEASE_TAG}
+    container_name: magistrala-postgres-writer
     depends_on:
       - postgres
     restart: on-failure
     environment:
-      SMQ_POSTGRES_WRITER_LOG_LEVEL: ${SMQ_POSTGRES_WRITER_LOG_LEVEL}
-      SMQ_POSTGRES_WRITER_CONFIG_PATH: ${SMQ_POSTGRES_WRITER_CONFIG_PATH}
-      SMQ_POSTGRES_WRITER_HTTP_HOST: ${SMQ_POSTGRES_WRITER_HTTP_HOST}
-      SMQ_POSTGRES_WRITER_HTTP_PORT: ${SMQ_POSTGRES_WRITER_HTTP_PORT}
-      SMQ_POSTGRES_WRITER_HTTP_SERVER_CERT: ${SMQ_POSTGRES_WRITER_HTTP_SERVER_CERT}
-      SMQ_POSTGRES_WRITER_HTTP_SERVER_KEY: ${SMQ_POSTGRES_WRITER_HTTP_SERVER_KEY}
-      SMQ_POSTGRES_HOST: ${SMQ_POSTGRES_HOST}
-      SMQ_POSTGRES_PORT: ${SMQ_POSTGRES_PORT}
-      SMQ_POSTGRES_USER: ${SMQ_POSTGRES_USER}
-      SMQ_POSTGRES_PASS: ${SMQ_POSTGRES_PASS}
-      SMQ_POSTGRES_NAME: ${SMQ_POSTGRES_NAME}
-      SMQ_POSTGRES_SSL_MODE: ${SMQ_POSTGRES_SSL_MODE}
-      SMQ_POSTGRES_SSL_CERT: ${SMQ_POSTGRES_SSL_CERT}
-      SMQ_POSTGRES_SSL_KEY: ${SMQ_POSTGRES_SSL_KEY}
-      SMQ_POSTGRES_SSL_ROOT_CERT: ${SMQ_POSTGRES_SSL_ROOT_CERT}
-      SMQ_MESSAGE_BROKER_URL: ${SMQ_MESSAGE_BROKER_URL}
-      SMQ_JAEGER_URL: ${SMQ_JAEGER_URL}
-      SMQ_JAEGER_TRACE_RATIO: ${SMQ_JAEGER_TRACE_RATIO}
-      SMQ_SEND_TELEMETRY: ${SMQ_SEND_TELEMETRY}
-      SMQ_POSTGRES_WRITER_INSTANCE_ID: ${SMQ_POSTGRES_WRITER_INSTANCE_ID}
+      MG_POSTGRES_WRITER_LOG_LEVEL: ${MG_POSTGRES_WRITER_LOG_LEVEL}
+      MG_POSTGRES_WRITER_CONFIG_PATH: ${MG_POSTGRES_WRITER_CONFIG_PATH}
+      MG_POSTGRES_WRITER_HTTP_HOST: ${MG_POSTGRES_WRITER_HTTP_HOST}
+      MG_POSTGRES_WRITER_HTTP_PORT: ${MG_POSTGRES_WRITER_HTTP_PORT}
+      MG_POSTGRES_WRITER_HTTP_SERVER_CERT: ${MG_POSTGRES_WRITER_HTTP_SERVER_CERT}
+      MG_POSTGRES_WRITER_HTTP_SERVER_KEY: ${MG_POSTGRES_WRITER_HTTP_SERVER_KEY}
+      MG_POSTGRES_HOST: ${MG_POSTGRES_HOST}
+      MG_POSTGRES_PORT: ${MG_POSTGRES_PORT}
+      MG_POSTGRES_USER: ${MG_POSTGRES_USER}
+      MG_POSTGRES_PASS: ${MG_POSTGRES_PASS}
+      MG_POSTGRES_NAME: ${MG_POSTGRES_NAME}
+      MG_POSTGRES_SSL_MODE: ${MG_POSTGRES_SSL_MODE}
+      MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
+      MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
+      MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_POSTGRES_WRITER_INSTANCE_ID: ${MG_POSTGRES_WRITER_INSTANCE_ID}
     ports:
-      - ${SMQ_POSTGRES_WRITER_HTTP_PORT}:${SMQ_POSTGRES_WRITER_HTTP_PORT}
+      - ${MG_POSTGRES_WRITER_HTTP_PORT}:${MG_POSTGRES_WRITER_HTTP_PORT}
     networks:
-      - supermq-base-net
+      - magistrala-base-net
     volumes:
       - ./config.toml:/config.toml

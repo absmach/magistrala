@@ -10,42 +10,42 @@ Environment variables (unset values fall back to defaults):
 
 | Variable                              | Description                                          | Default                        |
 | ------------------------------------- | ---------------------------------------------------- | ------------------------------ |
-| `SMQ_HTTP_ADAPTER_LOG_LEVEL`          | Log level (debug, info, warn, error)                 | debug                          |
-| `SMQ_HTTP_ADAPTER_HOST`               | HTTP Adapter host                                    | http-adapter                   |
-| `SMQ_HTTP_ADAPTER_PORT`               | HTTP Adapter port                                    | 8008                           |
-| `SMQ_HTTP_ADAPTER_SERVER_CERT`        | Path to PEM-encoded server certificate (enables TLS) | ""                             |
-| `SMQ_HTTP_ADAPTER_SERVER_KEY`         | Path to PEM-encoded server key                       | ""                             |
-| `SMQ_HTTP_ADAPTER_SERVER_CA_CERTS`    | Trusted CA bundle for HTTPS server                   | ""                             |
-| `SMQ_HTTP_ADAPTER_CLIENT_CA_CERTS`    | Client CA bundle to require mTLS on HTTPS server     | ""                             |
-| `SMQ_HTTP_ADAPTER_CACHE_NUM_COUNTERS` | Cache counters for topic parsing                     | 200000                         |
-| `SMQ_HTTP_ADAPTER_CACHE_MAX_COST`     | Maximum cache size (bytes)                           | 1048576                        |
-| `SMQ_HTTP_ADAPTER_CACHE_BUFFER_ITEMS` | Cache buffer items                                   | 64                             |
-| `SMQ_MESSAGE_BROKER_URL`              | Message broker URL (publishing target)               | nats://nats:4222               |
-| `SMQ_ES_URL`                          | Event store URL (publishing middleware)              | nats://nats:4222               |
-| `SMQ_JAEGER_URL`                      | Jaeger tracing endpoint                              | <http://jaeger:4318/v1/traces> |
-| `SMQ_JAEGER_TRACE_RATIO`              | Trace sampling ratio                                 | 1.0                            |
-| `SMQ_SEND_TELEMETRY`                  | Send telemetry to SuperMQ call-home server           | true                           |
-| `SMQ_HTTP_ADAPTER_INSTANCE_ID`        | Service instance ID (auto-generated when empty)      | ""                             |
-| `SMQ_CLIENTS_GRPC_URL`                | Clients service gRPC URL                             | clients:7006                   |
-| `SMQ_CLIENTS_GRPC_TIMEOUT`            | Clients gRPC request timeout                         | 300s                           |
-| `SMQ_CLIENTS_GRPC_CLIENT_CERT`        | Clients gRPC client certificate                      | ""                             |
-| `SMQ_CLIENTS_GRPC_CLIENT_KEY`         | Clients gRPC client key                              | ""                             |
-| `SMQ_CLIENTS_GRPC_SERVER_CA_CERTS`    | Clients gRPC trusted CA bundle                       | ""                             |
-| `SMQ_CHANNELS_GRPC_URL`               | Channels service gRPC URL                            | channels:7005                  |
-| `SMQ_CHANNELS_GRPC_TIMEOUT`           | Channels gRPC request timeout                        | 300s                           |
-| `SMQ_CHANNELS_GRPC_CLIENT_CERT`       | Channels gRPC client certificate                     | ""                             |
-| `SMQ_CHANNELS_GRPC_CLIENT_KEY`        | Channels gRPC client key                             | ""                             |
-| `SMQ_CHANNELS_GRPC_SERVER_CA_CERTS`   | Channels gRPC trusted CA bundle                      | ""                             |
-| `SMQ_DOMAINS_GRPC_URL`                | Domains service gRPC URL                             | domains:7003                   |
-| `SMQ_DOMAINS_GRPC_TIMEOUT`            | Domains gRPC request timeout                         | 300s                           |
-| `SMQ_DOMAINS_GRPC_CLIENT_CERT`        | Domains gRPC client certificate                      | ""                             |
-| `SMQ_DOMAINS_GRPC_CLIENT_KEY`         | Domains gRPC client key                              | ""                             |
-| `SMQ_DOMAINS_GRPC_SERVER_CA_CERTS`    | Domains gRPC trusted CA bundle                       | ""                             |
-| `SMQ_AUTH_GRPC_URL`                   | Auth service gRPC URL                                | auth:7001                      |
-| `SMQ_AUTH_GRPC_TIMEOUT`               | Auth service gRPC request timeout                    | 300s                           |
-| `SMQ_AUTH_GRPC_CLIENT_CERT`           | Auth gRPC client certificate                         | ""                             |
-| `SMQ_AUTH_GRPC_CLIENT_KEY`            | Auth gRPC client key                                 | ""                             |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS`       | Auth gRPC trusted CA bundle                          | ""                             |
+| `MG_HTTP_ADAPTER_LOG_LEVEL`          | Log level (debug, info, warn, error)                 | debug                          |
+| `MG_HTTP_ADAPTER_HOST`               | HTTP Adapter host                                    | http-adapter                   |
+| `MG_HTTP_ADAPTER_PORT`               | HTTP Adapter port                                    | 8008                           |
+| `MG_HTTP_ADAPTER_SERVER_CERT`        | Path to PEM-encoded server certificate (enables TLS) | ""                             |
+| `MG_HTTP_ADAPTER_SERVER_KEY`         | Path to PEM-encoded server key                       | ""                             |
+| `MG_HTTP_ADAPTER_SERVER_CA_CERTS`    | Trusted CA bundle for HTTPS server                   | ""                             |
+| `MG_HTTP_ADAPTER_CLIENT_CA_CERTS`    | Client CA bundle to require mTLS on HTTPS server     | ""                             |
+| `MG_HTTP_ADAPTER_CACHE_NUM_COUNTERS` | Cache counters for topic parsing                     | 200000                         |
+| `MG_HTTP_ADAPTER_CACHE_MAX_COST`     | Maximum cache size (bytes)                           | 1048576                        |
+| `MG_HTTP_ADAPTER_CACHE_BUFFER_ITEMS` | Cache buffer items                                   | 64                             |
+| `MG_MESSAGE_BROKER_URL`              | Message broker URL (publishing target)               | nats://nats:4222               |
+| `MG_ES_URL`                          | Event store URL (publishing middleware)              | nats://nats:4222               |
+| `MG_JAEGER_URL`                      | Jaeger tracing endpoint                              | <http://jaeger:4318/v1/traces> |
+| `MG_JAEGER_TRACE_RATIO`              | Trace sampling ratio                                 | 1.0                            |
+| `MG_SEND_TELEMETRY`                  | Send telemetry to SuperMQ call-home server           | true                           |
+| `MG_HTTP_ADAPTER_INSTANCE_ID`        | Service instance ID (auto-generated when empty)      | ""                             |
+| `MG_CLIENTS_GRPC_URL`                | Clients service gRPC URL                             | clients:7006                   |
+| `MG_CLIENTS_GRPC_TIMEOUT`            | Clients gRPC request timeout                         | 300s                           |
+| `MG_CLIENTS_GRPC_CLIENT_CERT`        | Clients gRPC client certificate                      | ""                             |
+| `MG_CLIENTS_GRPC_CLIENT_KEY`         | Clients gRPC client key                              | ""                             |
+| `MG_CLIENTS_GRPC_SERVER_CA_CERTS`    | Clients gRPC trusted CA bundle                       | ""                             |
+| `MG_CHANNELS_GRPC_URL`               | Channels service gRPC URL                            | channels:7005                  |
+| `MG_CHANNELS_GRPC_TIMEOUT`           | Channels gRPC request timeout                        | 300s                           |
+| `MG_CHANNELS_GRPC_CLIENT_CERT`       | Channels gRPC client certificate                     | ""                             |
+| `MG_CHANNELS_GRPC_CLIENT_KEY`        | Channels gRPC client key                             | ""                             |
+| `MG_CHANNELS_GRPC_SERVER_CA_CERTS`   | Channels gRPC trusted CA bundle                      | ""                             |
+| `MG_DOMAINS_GRPC_URL`                | Domains service gRPC URL                             | domains:7003                   |
+| `MG_DOMAINS_GRPC_TIMEOUT`            | Domains gRPC request timeout                         | 300s                           |
+| `MG_DOMAINS_GRPC_CLIENT_CERT`        | Domains gRPC client certificate                      | ""                             |
+| `MG_DOMAINS_GRPC_CLIENT_KEY`         | Domains gRPC client key                              | ""                             |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS`    | Domains gRPC trusted CA bundle                       | ""                             |
+| `MG_AUTH_GRPC_URL`                   | Auth service gRPC URL                                | auth:7001                      |
+| `MG_AUTH_GRPC_TIMEOUT`               | Auth service gRPC request timeout                    | 300s                           |
+| `MG_AUTH_GRPC_CLIENT_CERT`           | Auth gRPC client certificate                         | ""                             |
+| `MG_AUTH_GRPC_CLIENT_KEY`            | Auth gRPC client key                                 | ""                             |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS`       | Auth gRPC trusted CA bundle                          | ""                             |
 
 ## Deployment
 
@@ -65,44 +65,44 @@ make http
 make install
 
 # set the environment variables and run the service
-SMQ_HTTP_ADAPTER_LOG_LEVEL=debug \
-SMQ_HTTP_ADAPTER_HOST=http-adapter \
-SMQ_HTTP_ADAPTER_PORT=8008 \
-SMQ_HTTP_ADAPTER_SERVER_CERT="" \
-SMQ_HTTP_ADAPTER_SERVER_KEY="" \
-SMQ_HTTP_ADAPTER_CACHE_NUM_COUNTERS=200000 \
-SMQ_HTTP_ADAPTER_CACHE_MAX_COST=1048576 \
-SMQ_HTTP_ADAPTER_CACHE_BUFFER_ITEMS=64 \
-SMQ_MESSAGE_BROKER_URL=nats://nats:4222 \
-SMQ_ES_URL=nats://nats:4222 \
-SMQ_JAEGER_URL=<http://jaeger:4318/v1/traces> \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_CLIENTS_GRPC_URL=clients:7006 \
-SMQ_CLIENTS_GRPC_TIMEOUT=300s \
-SMQ_CLIENTS_GRPC_CLIENT_CERT="" \
-SMQ_CLIENTS_GRPC_CLIENT_KEY="" \
-SMQ_CLIENTS_GRPC_SERVER_CA_CERTS="" \
-SMQ_CHANNELS_GRPC_URL=channels:7005 \
-SMQ_CHANNELS_GRPC_TIMEOUT=300s \
-SMQ_CHANNELS_GRPC_CLIENT_CERT="" \
-SMQ_CHANNELS_GRPC_CLIENT_KEY="" \
-SMQ_CHANNELS_GRPC_SERVER_CA_CERTS="" \
-SMQ_DOMAINS_GRPC_URL=domains:7003 \
-SMQ_DOMAINS_GRPC_TIMEOUT=300s \
-SMQ_DOMAINS_GRPC_CLIENT_CERT="" \
-SMQ_DOMAINS_GRPC_CLIENT_KEY="" \
-SMQ_DOMAINS_GRPC_SERVER_CA_CERTS="" \
-SMQ_AUTH_GRPC_URL=auth:7001 \
-SMQ_AUTH_GRPC_TIMEOUT=300s \
-SMQ_AUTH_GRPC_CLIENT_CERT="" \
-SMQ_AUTH_GRPC_CLIENT_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CA_CERTS="" \
-SMQ_SEND_TELEMETRY=true \
-SMQ_HTTP_ADAPTER_INSTANCE_ID="" \
+MG_HTTP_ADAPTER_LOG_LEVEL=debug \
+MG_HTTP_ADAPTER_HOST=http-adapter \
+MG_HTTP_ADAPTER_PORT=8008 \
+MG_HTTP_ADAPTER_SERVER_CERT="" \
+MG_HTTP_ADAPTER_SERVER_KEY="" \
+MG_HTTP_ADAPTER_CACHE_NUM_COUNTERS=200000 \
+MG_HTTP_ADAPTER_CACHE_MAX_COST=1048576 \
+MG_HTTP_ADAPTER_CACHE_BUFFER_ITEMS=64 \
+MG_MESSAGE_BROKER_URL=nats://nats:4222 \
+MG_ES_URL=nats://nats:4222 \
+MG_JAEGER_URL=<http://jaeger:4318/v1/traces> \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_CLIENTS_GRPC_URL=clients:7006 \
+MG_CLIENTS_GRPC_TIMEOUT=300s \
+MG_CLIENTS_GRPC_CLIENT_CERT="" \
+MG_CLIENTS_GRPC_CLIENT_KEY="" \
+MG_CLIENTS_GRPC_SERVER_CA_CERTS="" \
+MG_CHANNELS_GRPC_URL=channels:7005 \
+MG_CHANNELS_GRPC_TIMEOUT=300s \
+MG_CHANNELS_GRPC_CLIENT_CERT="" \
+MG_CHANNELS_GRPC_CLIENT_KEY="" \
+MG_CHANNELS_GRPC_SERVER_CA_CERTS="" \
+MG_DOMAINS_GRPC_URL=domains:7003 \
+MG_DOMAINS_GRPC_TIMEOUT=300s \
+MG_DOMAINS_GRPC_CLIENT_CERT="" \
+MG_DOMAINS_GRPC_CLIENT_KEY="" \
+MG_DOMAINS_GRPC_SERVER_CA_CERTS="" \
+MG_AUTH_GRPC_URL=auth:7001 \
+MG_AUTH_GRPC_TIMEOUT=300s \
+MG_AUTH_GRPC_CLIENT_CERT="" \
+MG_AUTH_GRPC_CLIENT_KEY="" \
+MG_AUTH_GRPC_SERVER_CA_CERTS="" \
+MG_SEND_TELEMETRY=true \
+MG_HTTP_ADAPTER_INSTANCE_ID="" \
 $GOBIN/supermq-http
 ```
 
-TLS is enabled by setting `SMQ_HTTP_ADAPTER_SERVER_CERT` and `SMQ_HTTP_ADAPTER_SERVER_KEY`. mTLS is enabled when `SMQ_HTTP_ADAPTER_CLIENT_CA_CERTS` is provided. gRPC client TLS/mTLS is enabled by setting the corresponding client cert/key/CA variables.
+TLS is enabled by setting `MG_HTTP_ADAPTER_SERVER_CERT` and `MG_HTTP_ADAPTER_SERVER_KEY`. mTLS is enabled when `MG_HTTP_ADAPTER_CLIENT_CA_CERTS` is provided. gRPC client TLS/mTLS is enabled by setting the corresponding client cert/key/CA variables.
 
 ## Usage
 
@@ -131,7 +131,7 @@ curl -X POST http://localhost:8008/m/<domainID>/c/<channelID>/sub/topic \
 
 ## Implementation Details
 
-- Publishes to the configured message broker (`SMQ_MESSAGE_BROKER_URL`) with optional event-store middleware (`SMQ_ES_URL`).
+- Publishes to the configured message broker (`MG_MESSAGE_BROKER_URL`) with optional event-store middleware (`MG_ES_URL`).
 - Resolves domains and channels over gRPC to validate/route topics; authenticates via Auth gRPC; validates client identity via Clients gRPC.
 - Topic parsing is cached (Ristretto) with configurable counters/cost/buffers to reduce resolver calls.
 - Observability: Jaeger tracing, Prometheus metrics at `/metrics`, service health at `/health`.

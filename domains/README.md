@@ -10,49 +10,49 @@ The service is configured through environment variables (unset variables fall ba
 
 | Variable                             | Description                                                                                  | Default                               |
 | ------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `SMQ_DOMAINS_LOG_LEVEL`              | Log level for Domains (debug, info, warn, error)                                             | debug                                  |
-| `SMQ_DOMAINS_HTTP_HOST`              | Domains service HTTP host                                                                    | domains                                |
-| `SMQ_DOMAINS_HTTP_PORT`              | Domains service HTTP port                                                                    | 9003                                   |
-| `SMQ_DOMAINS_HTTP_SERVER_CERT`       | Path to PEM-encoded HTTP server certificate                                                  | ""                                     |
-| `SMQ_DOMAINS_HTTP_SERVER_KEY`        | Path to PEM-encoded HTTP server key                                                          | ""                                     |
-| `SMQ_DOMAINS_GRPC_PORT`              | Domains service gRPC port                                                                    | 7003                                   |
-| `SMQ_DOMAINS_GRPC_SERVER_CERT`       | Path to PEM-encoded gRPC server certificate                                                  | ""                                     |
-| `SMQ_DOMAINS_GRPC_SERVER_KEY`        | Path to PEM-encoded gRPC server key                                                          | ""                                     |
-| `SMQ_DOMAINS_GRPC_SERVER_CA_CERTS`   | Path to trusted CA bundle for the gRPC server                                                | ""                                     |
-| `SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS`   | Path to client CA bundle to require gRPC mTLS                                                | ""                                     |
-| `SMQ_DOMAINS_DB_HOST`                | Database host address                                                                        | domains-db                             |
-| `SMQ_DOMAINS_DB_PORT`                | Database host port                                                                           | 5432                                   |
-| `SMQ_DOMAINS_DB_USER`                | Database user                                                                                | supermq                                |
-| `SMQ_DOMAINS_DB_PASS`                | Database password                                                                            | supermq                                |
-| `SMQ_DOMAINS_DB_NAME`                | Name of the database used by the service                                                     | domains                                |
-| `SMQ_DOMAINS_DB_SSL_MODE`            | Database connection SSL mode (disable, require, verify-ca, verify-full)                      | ""                                     |
-| `SMQ_DOMAINS_DB_SSL_CERT`            | Path to the PEM-encoded certificate file                                                     | ""                                     |
-| `SMQ_DOMAINS_DB_SSL_KEY`             | Path to the PEM-encoded key file                                                             | ""                                     |
-| `SMQ_DOMAINS_DB_SSL_ROOT_CERT`       | Path to the PEM-encoded root certificate file                                                | ""                                     |
-| `SMQ_DOMAINS_CACHE_URL`              | Cache database URL                                                                           | redis://domains-redis:6379/0           |
-| `SMQ_DOMAINS_CACHE_KEY_DURATION`     | Cache key duration for domain status/route lookups                                           | 10m                                    |
-| `SMQ_DOMAINS_INSTANCE_ID`            | Domains instance ID (auto-generated when empty)                                              | ""                                     |
-| `SMQ_SPICEDB_HOST`                   | SpiceDB host for policy checks                                                               | supermq-spicedb                              |
-| `SMQ_SPICEDB_PORT`                   | SpiceDB port                                                                                 | 50051                                  |
-| `SMQ_SPICEDB_SCHEMA_FILE`            | Path to SpiceDB schema file used to seed available actions                                   | ./docker/spicedb/schema.schema.zed     |
-| `SMQ_SPICEDB_PRE_SHARED_KEY`         | SpiceDB preshared key                                                                        | 12345678                               |
-| `SMQ_ES_URL`                         | Event store URL                                                                              | nats://localhost:4222                  |
-| `SMQ_JAEGER_URL`                     | Jaeger server URL                                                                            | <http://localhost:4318/v1/traces>      |
-| `SMQ_JAEGER_TRACE_RATIO`             | Trace sampling ratio                                                                         | 1.0                                    |
-| `SMQ_SEND_TELEMETRY`                 | Send telemetry to the SuperMQ call-home server                                               | true                                   |
-| `SMQ_AUTH_GRPC_URL`                  | Auth service gRPC URL                                                                        | ""                                     |
-| `SMQ_AUTH_GRPC_TIMEOUT`              | Auth service gRPC request timeout                                                            | 1s                                     |
-| `SMQ_AUTH_GRPC_CLIENT_CERT`          | Path to the PEM-encoded Auth gRPC client certificate                                         | ""                                     |
-| `SMQ_AUTH_GRPC_CLIENT_KEY`           | Path to the PEM-encoded Auth gRPC client key                                                 | ""                                     |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS`      | Path to the PEM-encoded Auth gRPC trusted CA bundle                                          | ""                                     |
-| `SMQ_DOMAINS_CALLOUT_URLS`           | Comma-separated list of HTTP callout targets invoked on domain operations                    | ""                                     |
-| `SMQ_DOMAINS_CALLOUT_METHOD`         | HTTP method for callouts (POST or GET)                                                       | POST                                   |
-| `SMQ_DOMAINS_CALLOUT_TLS_VERIFICATION` | Verify TLS certificates for callouts                                                         | true                                   |
-| `SMQ_DOMAINS_CALLOUT_TIMEOUT`        | Callout request timeout                                                                      | 10s                                    |
-| `SMQ_DOMAINS_CALLOUT_KEY`            | Client key for mTLS callouts                                                                 | ""                                     |
-| `SMQ_DOMAINS_CALLOUT_OPERATIONS`     | Comma-separated list of operation names that should trigger callouts                         | ""                                     |
+| `MG_DOMAINS_LOG_LEVEL`              | Log level for Domains (debug, info, warn, error)                                             | debug                                  |
+| `MG_DOMAINS_HTTP_HOST`              | Domains service HTTP host                                                                    | domains                                |
+| `MG_DOMAINS_HTTP_PORT`              | Domains service HTTP port                                                                    | 9003                                   |
+| `MG_DOMAINS_HTTP_SERVER_CERT`       | Path to PEM-encoded HTTP server certificate                                                  | ""                                     |
+| `MG_DOMAINS_HTTP_SERVER_KEY`        | Path to PEM-encoded HTTP server key                                                          | ""                                     |
+| `MG_DOMAINS_GRPC_PORT`              | Domains service gRPC port                                                                    | 7003                                   |
+| `MG_DOMAINS_GRPC_SERVER_CERT`       | Path to PEM-encoded gRPC server certificate                                                  | ""                                     |
+| `MG_DOMAINS_GRPC_SERVER_KEY`        | Path to PEM-encoded gRPC server key                                                          | ""                                     |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS`   | Path to trusted CA bundle for the gRPC server                                                | ""                                     |
+| `MG_DOMAINS_GRPC_CLIENT_CA_CERTS`   | Path to client CA bundle to require gRPC mTLS                                                | ""                                     |
+| `MG_DOMAINS_DB_HOST`                | Database host address                                                                        | domains-db                             |
+| `MG_DOMAINS_DB_PORT`                | Database host port                                                                           | 5432                                   |
+| `MG_DOMAINS_DB_USER`                | Database user                                                                                | supermq                                |
+| `MG_DOMAINS_DB_PASS`                | Database password                                                                            | supermq                                |
+| `MG_DOMAINS_DB_NAME`                | Name of the database used by the service                                                     | domains                                |
+| `MG_DOMAINS_DB_SSL_MODE`            | Database connection SSL mode (disable, require, verify-ca, verify-full)                      | ""                                     |
+| `MG_DOMAINS_DB_SSL_CERT`            | Path to the PEM-encoded certificate file                                                     | ""                                     |
+| `MG_DOMAINS_DB_SSL_KEY`             | Path to the PEM-encoded key file                                                             | ""                                     |
+| `MG_DOMAINS_DB_SSL_ROOT_CERT`       | Path to the PEM-encoded root certificate file                                                | ""                                     |
+| `MG_DOMAINS_CACHE_URL`              | Cache database URL                                                                           | redis://domains-redis:6379/0           |
+| `MG_DOMAINS_CACHE_KEY_DURATION`     | Cache key duration for domain status/route lookups                                           | 10m                                    |
+| `MG_DOMAINS_INSTANCE_ID`            | Domains instance ID (auto-generated when empty)                                              | ""                                     |
+| `MG_SPICEDB_HOST`                   | SpiceDB host for policy checks                                                               | supermq-spicedb                              |
+| `MG_SPICEDB_PORT`                   | SpiceDB port                                                                                 | 50051                                  |
+| `MG_SPICEDB_SCHEMA_FILE`            | Path to SpiceDB schema file used to seed available actions                                   | ./docker/spicedb/schema.schema.zed     |
+| `MG_SPICEDB_PRE_SHARED_KEY`         | SpiceDB preshared key                                                                        | 12345678                               |
+| `MG_ES_URL`                         | Event store URL                                                                              | nats://localhost:4222                  |
+| `MG_JAEGER_URL`                     | Jaeger server URL                                                                            | <http://localhost:4318/v1/traces>      |
+| `MG_JAEGER_TRACE_RATIO`             | Trace sampling ratio                                                                         | 1.0                                    |
+| `MG_SEND_TELEMETRY`                 | Send telemetry to the SuperMQ call-home server                                               | true                                   |
+| `MG_AUTH_GRPC_URL`                  | Auth service gRPC URL                                                                        | ""                                     |
+| `MG_AUTH_GRPC_TIMEOUT`              | Auth service gRPC request timeout                                                            | 1s                                     |
+| `MG_AUTH_GRPC_CLIENT_CERT`          | Path to the PEM-encoded Auth gRPC client certificate                                         | ""                                     |
+| `MG_AUTH_GRPC_CLIENT_KEY`           | Path to the PEM-encoded Auth gRPC client key                                                 | ""                                     |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS`      | Path to the PEM-encoded Auth gRPC trusted CA bundle                                          | ""                                     |
+| `MG_DOMAINS_CALLOUT_URLS`           | Comma-separated list of HTTP callout targets invoked on domain operations                    | ""                                     |
+| `MG_DOMAINS_CALLOUT_METHOD`         | HTTP method for callouts (POST or GET)                                                       | POST                                   |
+| `MG_DOMAINS_CALLOUT_TLS_VERIFICATION` | Verify TLS certificates for callouts                                                         | true                                   |
+| `MG_DOMAINS_CALLOUT_TIMEOUT`        | Callout request timeout                                                                      | 10s                                    |
+| `MG_DOMAINS_CALLOUT_KEY`            | Client key for mTLS callouts                                                                 | ""                                     |
+| `MG_DOMAINS_CALLOUT_OPERATIONS`     | Comma-separated list of operation names that should trigger callouts                         | ""                                     |
 
-**Note**: Set `SMQ_DOMAINS_CALLOUT_OPERATIONS` to a subset of `OpCreateDomain`, `OpRetrieveDomain`, `OpUpdateDomain`, `OpEnableDomain`, `OpDisableDomain`, `OpFreezeDomain`, `OpListDomains`, `OpViewDomainInvitation`, `OpSendInvitation`, `OpAcceptInvitation`, `OpListInvitations`, `OpListDomainInvitations`, `OpRejectInvitation`, or `OpDeleteInvitation` to filter which actions produce callouts.
+**Note**: Set `MG_DOMAINS_CALLOUT_OPERATIONS` to a subset of `OpCreateDomain`, `OpRetrieveDomain`, `OpUpdateDomain`, `OpEnableDomain`, `OpDisableDomain`, `OpFreezeDomain`, `OpListDomains`, `OpViewDomainInvitation`, `OpSendInvitation`, `OpAcceptInvitation`, `OpListInvitations`, `OpListDomainInvitations`, `OpRejectInvitation`, or `OpDeleteInvitation` to filter which actions produce callouts.
 
 ## Deployment
 
@@ -72,48 +72,48 @@ make domains
 make install
 
 # set the environment variables and run the service
-SMQ_DOMAINS_LOG_LEVEL=debug \
-SMQ_DOMAINS_CACHE_URL=redis://domains-redis:6379/0 \
-SMQ_DOMAINS_CACHE_KEY_DURATION=10m \
-SMQ_DOMAINS_HTTP_HOST=domains \
-SMQ_DOMAINS_HTTP_PORT=9003 \
-SMQ_DOMAINS_HTTP_SERVER_CERT="" \
-SMQ_DOMAINS_HTTP_SERVER_KEY="" \
-SMQ_DOMAINS_GRPC_HOST=domains \
-SMQ_DOMAINS_GRPC_PORT=7003 \
-SMQ_DOMAINS_GRPC_SERVER_CERT="" \
-SMQ_DOMAINS_GRPC_SERVER_KEY="" \
-SMQ_DOMAINS_GRPC_SERVER_CA_CERTS="" \
-SMQ_DOMAINS_GRPC_CLIENT_CA_CERTS="" \
-SMQ_DOMAINS_DB_HOST=domains-db \
-SMQ_DOMAINS_DB_PORT=5432 \
-SMQ_DOMAINS_DB_USER=supermq \
-SMQ_DOMAINS_DB_PASS=supermq \
-SMQ_DOMAINS_DB_NAME=domains \
-SMQ_DOMAINS_DB_SSL_MODE="" \
-SMQ_DOMAINS_DB_SSL_CERT="" \
-SMQ_DOMAINS_DB_SSL_KEY="" \
-SMQ_DOMAINS_DB_SSL_ROOT_CERT="" \
-SMQ_AUTH_GRPC_URL="" \
-SMQ_AUTH_GRPC_TIMEOUT=1s \
-SMQ_AUTH_GRPC_CLIENT_CERT="" \
-SMQ_AUTH_GRPC_CLIENT_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CA_CERTS="" \
-SMQ_SPICEDB_HOST=localhost \
-SMQ_SPICEDB_PORT=50051 \
-SMQ_SPICEDB_SCHEMA_FILE=./docker/spicedb/schema.schema.zed \
-SMQ_SPICEDB_PRE_SHARED_KEY=12345678 \
-SMQ_ES_URL=nats://localhost:4222 \
-SMQ_JAEGER_URL=<http://localhost:4318/v1/traces> \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_DOMAINS_CALLOUT_URLS="" \
-SMQ_DOMAINS_CALLOUT_METHOD=POST \
-SMQ_DOMAINS_CALLOUT_TLS_VERIFICATION=true \
-SMQ_DOMAINS_CALLOUT_TIMEOUT=10s \
-SMQ_DOMAINS_CALLOUT_KEY="" \
-SMQ_DOMAINS_CALLOUT_OPERATIONS="" \
-SMQ_SEND_TELEMETRY=true \
-SMQ_DOMAINS_INSTANCE_ID="" \
+MG_DOMAINS_LOG_LEVEL=debug \
+MG_DOMAINS_CACHE_URL=redis://domains-redis:6379/0 \
+MG_DOMAINS_CACHE_KEY_DURATION=10m \
+MG_DOMAINS_HTTP_HOST=domains \
+MG_DOMAINS_HTTP_PORT=9003 \
+MG_DOMAINS_HTTP_SERVER_CERT="" \
+MG_DOMAINS_HTTP_SERVER_KEY="" \
+MG_DOMAINS_GRPC_HOST=domains \
+MG_DOMAINS_GRPC_PORT=7003 \
+MG_DOMAINS_GRPC_SERVER_CERT="" \
+MG_DOMAINS_GRPC_SERVER_KEY="" \
+MG_DOMAINS_GRPC_SERVER_CA_CERTS="" \
+MG_DOMAINS_GRPC_CLIENT_CA_CERTS="" \
+MG_DOMAINS_DB_HOST=domains-db \
+MG_DOMAINS_DB_PORT=5432 \
+MG_DOMAINS_DB_USER=supermq \
+MG_DOMAINS_DB_PASS=supermq \
+MG_DOMAINS_DB_NAME=domains \
+MG_DOMAINS_DB_SSL_MODE="" \
+MG_DOMAINS_DB_SSL_CERT="" \
+MG_DOMAINS_DB_SSL_KEY="" \
+MG_DOMAINS_DB_SSL_ROOT_CERT="" \
+MG_AUTH_GRPC_URL="" \
+MG_AUTH_GRPC_TIMEOUT=1s \
+MG_AUTH_GRPC_CLIENT_CERT="" \
+MG_AUTH_GRPC_CLIENT_KEY="" \
+MG_AUTH_GRPC_SERVER_CA_CERTS="" \
+MG_SPICEDB_HOST=localhost \
+MG_SPICEDB_PORT=50051 \
+MG_SPICEDB_SCHEMA_FILE=./docker/spicedb/schema.schema.zed \
+MG_SPICEDB_PRE_SHARED_KEY=12345678 \
+MG_ES_URL=nats://localhost:4222 \
+MG_JAEGER_URL=<http://localhost:4318/v1/traces> \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_DOMAINS_CALLOUT_URLS="" \
+MG_DOMAINS_CALLOUT_METHOD=POST \
+MG_DOMAINS_CALLOUT_TLS_VERIFICATION=true \
+MG_DOMAINS_CALLOUT_TIMEOUT=10s \
+MG_DOMAINS_CALLOUT_KEY="" \
+MG_DOMAINS_CALLOUT_OPERATIONS="" \
+MG_SEND_TELEMETRY=true \
+MG_DOMAINS_INSTANCE_ID="" \
 $GOBIN/supermq-domains
 ```
 
@@ -360,9 +360,9 @@ curl -X GET http://localhost:9004/domains/roles/available-actions \
 
 - Domains and invitations are persisted in PostgreSQL; migrations also create role tables with a `domains_` prefix.
 - Redis caches domain status and route-to-ID lookups to speed up authorization.
-- Domain lifecycle events are published to the configured event store (`SMQ_ES_URL`).
+- Domain lifecycle events are published to the configured event store (`MG_ES_URL`).
 - Authorization and role checks are enforced via SpiceDB-backed policy service.
-- Optional HTTP callouts can be triggered before operations, using the `SMQ_DOMAINS_CALLOUT_*` settings.
+- Optional HTTP callouts can be triggered before operations, using the `MG_DOMAINS_CALLOUT_*` settings.
 - Observability: Jaeger tracing, Prometheus metrics at `/metrics`, and a `/health` endpoint.
 
 ### Domains Table
@@ -400,7 +400,7 @@ curl -X GET http://localhost:9004/domains/roles/available-actions \
 - Prefer `disable` over delete when you need reversible off-boarding; use `freeze` for emergency locks by admins.
 - Keep role definitions minimal; grant only the actions needed and audit with `list-role-members`.
 - Clean up stale invitations regularly using the domain/user invitation listing endpoints.
-- When enabling callouts, narrow `SMQ_DOMAINS_CALLOUT_OPERATIONS` to the events you must observe.
+- When enabling callouts, narrow `MG_DOMAINS_CALLOUT_OPERATIONS` to the events you must observe.
 
 ## Versioning and Health Check
 

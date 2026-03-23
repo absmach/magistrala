@@ -25,9 +25,9 @@ default values.
 | MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path                            | ""                           |
 | MG_TIMESCALE_SSL_KEY                 | Timescale SSL key                                         | ""                           |
 | MG_TIMESCALE_SSL_ROOT_CERT           | Timescale SSL root certificate path                       | ""                           |
-| SMQ_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222        |
-| SMQ_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:4318/v1/traces |
-| SMQ_SEND_TELEMETRY                    | Send telemetry to supermq call home server                | true                         |
+| MG_MESSAGE_BROKER_URL                | Message broker instance URL                               | nats://localhost:4222        |
+| MG_JAEGER_URL                        | Jaeger server URL                                         | http://jaeger:4318/v1/traces |
+| MG_SEND_TELEMETRY                    | Send telemetry to supermq call home server                | true                         |
 | MG_TIMESCALE_WRITER_INSTANCE_ID      | Timescale writer instance ID                              | ""                           |
 
 ## Deployment
@@ -64,9 +64,9 @@ MG_TIMESCALE_SSL_MODE=[Timescale SSL mode] \
 MG_TIMESCALE_SSL_CERT=[Timescale SSL cert] \
 MG_TIMESCALE_SSL_KEY=[Timescale SSL key] \
 MG_TIMESCALE_SSL_ROOT_CERT=[Timescale SSL Root cert] \
-SMQ_MESSAGE_BROKER_URL=[Message broker instance URL] \
-SMQ_JAEGER_URL=[Jaeger server URL] \
-SMQ_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+MG_MESSAGE_BROKER_URL=[Message broker instance URL] \
+MG_JAEGER_URL=[Jaeger server URL] \
+MG_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
 MG_TIMESCALE_WRITER_INSTANCE_ID=[Timescale writer instance ID] \
 $GOBIN/supermq-timescale-writer
 ```

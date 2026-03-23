@@ -31,30 +31,30 @@ domains service → event store → notifications service → users service (gRP
 The service is configured using environment variables:
 
 ### General Configuration
-- `SMQ_NOTIFICATIONS_LOG_LEVEL` - Log level (default: "info")
-- `SMQ_NOTIFICATIONS_INSTANCE_ID` - Instance ID for the service
-- `SMQ_NOTIFICATIONS_DOMAIN_ALT_NAME` - Alternative name for domains such as, say, workspaces or tenants (default: "domains")
-- `SMQ_ES_URL` - Event store URL (default: "nats://localhost:4222")
+- `MG_NOTIFICATIONS_LOG_LEVEL` - Log level (default: "info")
+- `MG_NOTIFICATIONS_INSTANCE_ID` - Instance ID for the service
+- `MG_NOTIFICATIONS_DOMAIN_ALT_NAME` - Alternative name for domains such as, say, workspaces or tenants (default: "domains")
+- `MG_ES_URL` - Event store URL (default: "nats://localhost:4222")
 
 ### Email Configuration
-- `SMQ_EMAIL_HOST` - SMTP server host (default: "localhost")
-- `SMQ_EMAIL_PORT` - SMTP server port (default: "25")
-- `SMQ_EMAIL_USERNAME` - SMTP username
-- `SMQ_EMAIL_PASSWORD` - SMTP password
-- `SMQ_EMAIL_FROM_ADDRESS` - From email address (default: "noreply@supermq.com")
-- `SMQ_EMAIL_FROM_NAME` - From name (default: "SuperMQ Notifications")
+- `MG_EMAIL_HOST` - SMTP server host (default: "localhost")
+- `MG_EMAIL_PORT` - SMTP server port (default: "25")
+- `MG_EMAIL_USERNAME` - SMTP username
+- `MG_EMAIL_PASSWORD` - SMTP password
+- `MG_EMAIL_FROM_ADDRESS` - From email address (default: "noreply@supermq.com")
+- `MG_EMAIL_FROM_NAME` - From name (default: "SuperMQ Notifications")
 
 ### Template Configuration
-- `SMQ_EMAIL_INVITATION_TEMPLATE` - Path to invitation email template
-- `SMQ_EMAIL_ACCEPTANCE_TEMPLATE` - Path to acceptance email template
-- `SMQ_EMAIL_REJECTION_TEMPLATE` - Path to rejection email template
+- `MG_EMAIL_INVITATION_TEMPLATE` - Path to invitation email template
+- `MG_EMAIL_ACCEPTANCE_TEMPLATE` - Path to acceptance email template
+- `MG_EMAIL_REJECTION_TEMPLATE` - Path to rejection email template
 
 ### gRPC Configuration (Users Service)
-- `SMQ_USERS_GRPC_URL` - Users service gRPC URL
-- `SMQ_USERS_GRPC_TIMEOUT` - gRPC request timeout
-- `SMQ_USERS_GRPC_CLIENT_CERT` - Client certificate path
-- `SMQ_USERS_GRPC_CLIENT_KEY` - Client key path
-- `SMQ_USERS_GRPC_SERVER_CA_CERTS` - Server CA certificates path
+- `MG_USERS_GRPC_URL` - Users service gRPC URL
+- `MG_USERS_GRPC_TIMEOUT` - gRPC request timeout
+- `MG_USERS_GRPC_CLIENT_CERT` - Client certificate path
+- `MG_USERS_GRPC_CLIENT_KEY` - Client key path
+- `MG_USERS_GRPC_SERVER_CA_CERTS` - Server CA certificates path
 
 ## Running the Service
 
@@ -94,7 +94,7 @@ go test ./notifications/... -v
 To run email integration tests (requires SMTP server):
 
 ```bash
-SMQ_RUN_EMAIL_TESTS=true go test ./notifications/emailer -v
+MG_RUN_EMAIL_TESTS=true go test ./notifications/emailer -v
 ```
 
 ## Development

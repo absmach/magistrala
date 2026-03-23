@@ -41,13 +41,13 @@ import (
 
 const (
 	svcName           = "coap_adapter"
-	envPrefix         = "SMQ_COAP_ADAPTER_"
-	envPrefixHTTP     = "SMQ_COAP_ADAPTER_HTTP_"
-	envPrefixDTLS     = "SMQ_COAP_ADAPTER_SERVER_"
-	envPrefixCache    = "SMQ_COAP_CACHE_"
-	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
-	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
-	envPrefixDomains  = "SMQ_DOMAINS_GRPC_"
+	envPrefix         = "MG_COAP_ADAPTER_"
+	envPrefixHTTP     = "MG_COAP_ADAPTER_HTTP_"
+	envPrefixDTLS     = "MG_COAP_ADAPTER_SERVER_"
+	envPrefixCache    = "MG_COAP_CACHE_"
+	envPrefixClients  = "MG_CLIENTS_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
+	envPrefixDomains  = "MG_DOMAINS_GRPC_"
 	defSvcHTTPPort    = "5683"
 	defSvcCoAPPort    = "5683"
 	targetProtocol    = "coap"
@@ -55,13 +55,13 @@ const (
 )
 
 type config struct {
-	LogLevel      string  `env:"SMQ_COAP_ADAPTER_LOG_LEVEL"   envDefault:"info"`
-	BrokerURL     string  `env:"SMQ_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"SMQ_JAEGER_URL"               envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"SMQ_SEND_TELEMETRY"           envDefault:"true"`
-	InstanceID    string  `env:"SMQ_COAP_ADAPTER_INSTANCE_ID" envDefault:""`
-	TraceRatio    float64 `env:"SMQ_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
-	ESURL         string  `env:"SMQ_ES_URL"                   envDefault:"nats://localhost:4222"`
+	LogLevel      string  `env:"MG_COAP_ADAPTER_LOG_LEVEL"   envDefault:"info"`
+	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"       envDefault:"nats://localhost:4222"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"               envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"           envDefault:"true"`
+	InstanceID    string  `env:"MG_COAP_ADAPTER_INSTANCE_ID" envDefault:""`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"       envDefault:"1.0"`
+	ESURL         string  `env:"MG_ES_URL"                   envDefault:"nats://localhost:4222"`
 }
 
 func main() {

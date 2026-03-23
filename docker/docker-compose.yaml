@@ -1611,7 +1611,7 @@ services:
       - supermq-re-db-volume:/var/lib/postgresql/data
 
   re:
-    image: ghcr.io/absmach/magistrala/re:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/re:${SMQ_RELEASE_TAG}
     container_name: supermq-re
     depends_on:
       - re-db
@@ -1733,7 +1733,7 @@ services:
       - supermq-alarms-db-volume:/var/lib/postgresql/data
 
   alarms:
-    image: ghcr.io/absmach/magistrala/alarms:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/alarms:${SMQ_RELEASE_TAG}
     container_name: supermq-alarms
     depends_on:
       - alarms-db
@@ -1834,7 +1834,7 @@ services:
       - supermq-reports-db-volume:/var/lib/postgresql/data
 
   reports:
-    image: ghcr.io/absmach/magistrala/reports:${SMQ_RELEASE_TAG}
+    image: docker.io/supermq/reports:${SMQ_RELEASE_TAG}
     container_name: supermq-reports
     depends_on:
       - reports-db

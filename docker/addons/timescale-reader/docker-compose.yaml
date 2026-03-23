@@ -13,7 +13,7 @@ networks:
 
 services:
   timescale-reader:
-    image: supermq/timescale-reader:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/timescale-reader:${SMQ_RELEASE_TAG}
     container_name: supermq-timescale-reader
     restart: on-failure
     environment:

@@ -13,7 +13,7 @@ networks:
 
 services:
   provision:
-    image: supermq/provision:latest
+    image: ghcr.io/absmach/magistrala/provision:latest
     container_name: supermq-provision
     restart: on-failure
     networks:

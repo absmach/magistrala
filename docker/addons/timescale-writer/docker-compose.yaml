@@ -32,7 +32,7 @@ services:
       - supermq-timescale-writer-volume:/var/lib/postgresql/data
 
   timescale-writer:
-    image: supermq/timescale-writer:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/timescale-writer:${SMQ_RELEASE_TAG}
     container_name: supermq-timescale-writer
     depends_on:
       - timescale

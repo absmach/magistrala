@@ -34,7 +34,7 @@ services:
       - supermq-journal-volume:/var/lib/postgresql/data
 
   journal:
-    image: supermq/journal:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/journal:${SMQ_RELEASE_TAG}
     container_name: supermq-journal
     depends_on:
       - journal-db

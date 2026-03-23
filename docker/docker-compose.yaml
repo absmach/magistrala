@@ -109,7 +109,7 @@ services:
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   auth:
-    image: docker.io/supermq/auth:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/auth:${SMQ_RELEASE_TAG}
     container_name: supermq-auth
     depends_on:
       - auth-db
@@ -241,7 +241,7 @@ services:
       - supermq-domains-redis-volume:/data
 
   domains:
-    image: docker.io/supermq/domains:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/domains:${SMQ_RELEASE_TAG}
     container_name: supermq-domains
     depends_on:
       - domains-db
@@ -477,7 +477,7 @@ services:
       - supermq-clients-redis-volume:/data
 
   clients:
-    image: docker.io/supermq/clients:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/clients:${SMQ_RELEASE_TAG}
     container_name: supermq-clients
     depends_on:
       - clients-db
@@ -672,7 +672,7 @@ services:
       - supermq-channels-redis-volume:/data
 
   channels:
-    image: docker.io/supermq/channels:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/channels:${SMQ_RELEASE_TAG}
     container_name: supermq-channels
     depends_on:
       - channels-db
@@ -856,7 +856,7 @@ services:
       - supermq-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: docker.io/supermq/users:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/users:${SMQ_RELEASE_TAG}
     container_name: supermq-users
     depends_on:
       - users-db
@@ -995,7 +995,7 @@ services:
           create_host_path: true
 
   notifications:
-    image: docker.io/supermq/notifications:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/notifications:${SMQ_RELEASE_TAG}
     container_name: supermq-notifications
     depends_on:
       - nginx
@@ -1062,7 +1062,7 @@ services:
       - supermq-groups-db-volume:/var/lib/postgresql/data
 
   groups:
-    image: docker.io/supermq/groups:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/groups:${SMQ_RELEASE_TAG}
     container_name: supermq-groups
     depends_on:
       - groups-db
@@ -1288,7 +1288,7 @@ services:
       - supermq-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
-    image: docker.io/supermq/fluxmq:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/fluxmq:${SMQ_RELEASE_TAG}
     container_name: supermq-fluxmq-auth
     restart: on-failure
     environment:
@@ -1611,7 +1611,7 @@ services:
       - supermq-re-db-volume:/var/lib/postgresql/data
 
   re:
-    image: docker.io/supermq/re:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/re:${SMQ_RELEASE_TAG}
     container_name: supermq-re
     depends_on:
       - re-db
@@ -1733,7 +1733,7 @@ services:
       - supermq-alarms-db-volume:/var/lib/postgresql/data
 
   alarms:
-    image: docker.io/supermq/alarms:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/alarms:${SMQ_RELEASE_TAG}
     container_name: supermq-alarms
     depends_on:
       - alarms-db
@@ -1834,7 +1834,7 @@ services:
       - supermq-reports-db-volume:/var/lib/postgresql/data
 
   reports:
-    image: docker.io/supermq/reports:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/reports:${SMQ_RELEASE_TAG}
     container_name: supermq-reports
     depends_on:
       - reports-db

@@ -1,7 +1,7 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-SMQ_DOCKER_IMAGE_NAME_PREFIX ?= supermq
+SMQ_DOCKER_IMAGE_NAME_PREFIX ?= ghcr.io/absmach/magistrala
 BUILD_DIR ?= build
 SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports fluxmq
 TEST_API_SERVICES = journal auth certs clients users channels groups domains
@@ -32,7 +32,7 @@ INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed
 ifneq ($(SMQ_MESSAGE_BROKER_TYPE),)
 	SMQ_MESSAGE_BROKER_TYPE := $(SMQ_MESSAGE_BROKER_TYPE)
 else
-	SMQ_MESSAGE_BROKER_TYPE=msg_nats
+	SMQ_MESSAGE_BROKER_TYPE=msg_fluxmq
 endif
 
 ifneq ($(SMQ_ES_TYPE),)

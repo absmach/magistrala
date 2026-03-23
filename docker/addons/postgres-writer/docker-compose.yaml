@@ -32,7 +32,7 @@ services:
       - supermq-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: supermq/postgres-writer:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/postgres-writer:${SMQ_RELEASE_TAG}
     container_name: supermq-postgres-writer
     depends_on:
       - postgres

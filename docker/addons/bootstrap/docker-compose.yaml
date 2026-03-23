@@ -29,7 +29,7 @@ services:
       - supermq-bootstrap-db-volume:/var/lib/postgresql/data
 
   bootstrap:
-    image: supermq/bootstrap:latest
+    image: ghcr.io/absmach/magistrala/bootstrap:latest
     container_name: supermq-bootstrap
     depends_on:
       - bootstrap-db

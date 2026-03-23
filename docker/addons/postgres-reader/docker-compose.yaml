@@ -13,7 +13,7 @@ networks:
 
 services:
   postgres-reader:
-    image: supermq/postgres-reader:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/postgres-reader:${SMQ_RELEASE_TAG}
     container_name: supermq-postgres-reader
     restart: on-failure
     environment:

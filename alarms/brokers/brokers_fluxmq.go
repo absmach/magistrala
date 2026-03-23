@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !msg_fluxmq && !msg_rabbitmq && !rabbitmq
-// +build !msg_fluxmq,!msg_rabbitmq,!rabbitmq
+//go:build msg_fluxmq
+// +build msg_fluxmq
 
 package brokers
 
@@ -12,20 +12,20 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/pkg/messaging"
-	broker "github.com/absmach/supermq/pkg/messaging/nats"
+	broker "github.com/absmach/supermq/pkg/messaging/fluxmq"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
 const (
-	AllTopic = "writers.>"
+	AllTopic = "alarms.>"
 
-	prefix = "writers"
+	prefix = "alarms"
 )
 
 var cfg = jetstream.StreamConfig{
-	Name:              "writers",
-	Description:       "SuperMQ Rules Engine stream for handling internal messages",
-	Subjects:          []string{"writers.>"},
+	Name:              "alarms",
+	Description:       "SuperMQ stream alarms",
+	Subjects:          []string{"alarms.>"},
 	Retention:         jetstream.LimitsPolicy,
 	MaxMsgsPerSubject: 1e6,
 	MaxAge:            time.Hour * 24,

@@ -103,7 +103,7 @@ queues:
       max_length_bytes: 1073741824
 
 auth:
-  url: "fluxmq-auth:7016"
+  url: "http://fluxmq-auth:7016"
   transport: "grpc"
   timeout: 5s
   protocols:

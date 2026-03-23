@@ -1288,7 +1288,7 @@ services:
       - supermq-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
-    image: ghcr.io/absmach/fluxmq:${SMQ_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/fluxmq:${SMQ_RELEASE_TAG}
     container_name: supermq-fluxmq-auth
     restart: on-failure
     environment:

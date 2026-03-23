@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !msg_fluxmq && !msg_rabbitmq && !rabbitmq
-// +build !msg_fluxmq,!msg_rabbitmq,!rabbitmq
+//go:build msg_fluxmq
+// +build msg_fluxmq
 
 package brokers
 
@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/pkg/messaging"
-	broker "github.com/absmach/supermq/pkg/messaging/nats"
+	broker "github.com/absmach/supermq/pkg/messaging/fluxmq"
 	"github.com/nats-io/nats.go/jetstream"
 )
 

@@ -41,9 +41,11 @@ else
 	SMQ_ES_TYPE=es_fluxmq
 endif
 
+BUILD_TAGS := $(strip $(SMQ_MESSAGE_BROKER_TYPE) $(SMQ_ES_TYPE))
+
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -tags $(SMQ_MESSAGE_BROKER_TYPE) -tags $(SMQ_ES_TYPE) -ldflags "-s -w \
+	go build -tags "$(BUILD_TAGS)" -ldflags "-s -w \
 	-X 'github.com/absmach/supermq.BuildTime=$(TIME)' \
 	-X 'github.com/absmach/supermq.Version=$(VERSION)' \
 	-X 'github.com/absmach/supermq.Commit=$(COMMIT)'" \

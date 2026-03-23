@@ -4,9 +4,9 @@
 version: 2
 updates:
   - package-ecosystem: "github-actions"
-    directory: "./.github/workflows"
+    directory: "/"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
       day: "monday"
       timezone: "Europe/Paris"
     groups:
@@ -22,9 +22,9 @@ updates:
       timezone: "Europe/Paris"
 
   - package-ecosystem: "docker"
-    directory: "./docker"
+    directory: "/docker"
     schedule:
-      interval: "monthly"
+      interval: "weekly"
       day: "monday"
       timezone: "Europe/Paris"
     groups:

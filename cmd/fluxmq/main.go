@@ -11,12 +11,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
 
-	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
+	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
 	fluxmqgrpc "github.com/absmach/supermq/fluxmq/api/grpc"
 	smqlog "github.com/absmach/supermq/logger"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
@@ -24,12 +25,11 @@ import (
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
 	"github.com/absmach/supermq/pkg/uuid"
 	"github.com/caarlos0/env/v11"
+	"golang.org/x/net/http2"
+	"golang.org/x/net/http2/h2c"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 const (
@@ -148,7 +148,7 @@ func main() {
 		return
 	}
 
-	// Start FluxMQ auth gRPC server.
+	// Start FluxMQ auth Connect/gRPC server over h2c.
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGRPC}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load gRPC server configuration: %s", err))
@@ -156,14 +156,50 @@ func main() {
 		return
 	}
 
-	registerFluxMQServer := func(srv *grpc.Server) {
-		reflection.Register(srv)
-		authv1.RegisterAuthServiceServer(srv, fluxmqgrpc.NewServer(clientsClient, channelsClient, parser))
+	mux := http.NewServeMux()
+	path, handler := authv1connect.NewAuthServiceHandler(fluxmqgrpc.NewServer(clientsClient, channelsClient, parser))
+	mux.Handle(path, handler)
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{"status":"ok"}`)) //nolint:errcheck // HTTP response write; client disconnect is non-fatal.
+	})
+
+	address := fmt.Sprintf("%s:%s", grpcServerConfig.Host, grpcServerConfig.Port)
+	httpServer := &http.Server{
+		Addr:              address,
+		Handler:           h2c.NewHandler(mux, &http2.Server{}),
+		ReadTimeout:       grpcServerConfig.ReadTimeout,
+		WriteTimeout:      grpcServerConfig.WriteTimeout,
+		ReadHeaderTimeout: grpcServerConfig.ReadHeaderTimeout,
+		IdleTimeout:       grpcServerConfig.IdleTimeout,
+		MaxHeaderBytes:    grpcServerConfig.MaxHeaderBytes,
 	}
-	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerFluxMQServer, logger)
 
 	g.Go(func() error {
-		return gs.Start()
+		logger.Info(fmt.Sprintf("%s service h2c server listening at %s", svcName, address))
+		var err error
+		switch {
+		case grpcServerConfig.CertFile != "" || grpcServerConfig.KeyFile != "":
+			err = httpServer.ListenAndServeTLS(grpcServerConfig.CertFile, grpcServerConfig.KeyFile)
+		default:
+			err = httpServer.ListenAndServe()
+		}
+		if err != nil && err != http.ErrServerClosed {
+			cancel()
+			return err
+		}
+		return nil
+	})
+
+	g.Go(func() error {
+		<-ctx.Done()
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), server.StopWaitTime)
+		defer shutdownCancel()
+		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+			return fmt.Errorf("failed to shutdown %s server: %w", svcName, err)
+		}
+		logger.Info(fmt.Sprintf("%s service shutdown at %s", svcName, address))
+		return nil
 	})
 
 	g.Go(func() error {

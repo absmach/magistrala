@@ -2,13 +2,9 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-if [ -z "$SMQ_MQTT_CLUSTER" ]
-then
-      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' < /etc/nginx/snippets/mqtt-upstream-single.conf > /etc/nginx/snippets/mqtt-upstream.conf
-      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' < /etc/nginx/snippets/mqtt-ws-upstream-single.conf > /etc/nginx/snippets/mqtt-ws-upstream.conf
-else
-      envsubst '${SMQ_MQTT_ADAPTER_MQTT_PORT}' < /etc/nginx/snippets/mqtt-upstream-cluster.conf > /etc/nginx/snippets/mqtt-upstream.conf
-      envsubst '${SMQ_MQTT_ADAPTER_WS_PORT}' < /etc/nginx/snippets/mqtt-ws-upstream-cluster.conf > /etc/nginx/snippets/mqtt-ws-upstream.conf
+if [ ! -f /etc/nginx/snippets/mqtt-upstream.conf ] || [ ! -f /etc/nginx/snippets/mqtt-ws-upstream.conf ]; then
+      echo "Missing MQTT upstream snippets; cannot start nginx." >&2
+      exit 1
 fi
 
 envsubst '

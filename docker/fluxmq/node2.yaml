@@ -34,7 +34,7 @@ server:
   amqp091:
     plain:
       addr: "0.0.0.0:5682"
-  health_addr: "0.0.0.0:8082"
+  health_addr: "0.0.0.0:8084"
   health_enabled: true
   shutdown_timeout: 30s
 

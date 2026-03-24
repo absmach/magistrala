@@ -1339,6 +1339,7 @@ services:
     restart: on-failure
     ports:
       - ${MG_COAP_PORT}:5683/udp
+      - ${MG_FLUXMQ_API_PORT_1}:8082
     networks:
       magistrala-base-net:
         ipv4_address: 172.30.0.201
@@ -1359,6 +1360,8 @@ services:
       - fluxmq-node1
       - fluxmq-auth
     restart: on-failure
+    ports:
+      - ${MG_FLUXMQ_API_PORT_2}:8082
     networks:
       magistrala-base-net:
         ipv4_address: 172.30.0.202
@@ -1379,6 +1382,8 @@ services:
       - fluxmq-node1
       - fluxmq-auth
     restart: on-failure
+    ports:
+      - ${MG_FLUXMQ_API_PORT_3}:8082
     networks:
       magistrala-base-net:
         ipv4_address: 172.30.0.203

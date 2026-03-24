@@ -235,10 +235,10 @@ Postgres writer add-on:
 docker compose -f docker/docker-compose.yaml -f docker/addons/postgres-writer/docker-compose.yaml up
 ```
 
-Timescale writer add-on:
+Timescale writer:
 
 ```bash
-docker compose -f docker/docker-compose.yaml -f docker/addons/timescale-writer/docker-compose.yaml up
+docker compose -f docker/docker-compose.yaml up
 ```
 
 ### Health check

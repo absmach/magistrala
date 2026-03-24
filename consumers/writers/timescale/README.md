@@ -32,7 +32,7 @@ default values.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`timescale-writer`](https://github.com/absmach/supermq/blob/main/docker/addons/timescale-writer/docker-compose.yaml#L34-L59) service section in docker-compose file to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`timescale-writer`](https://github.com/absmach/supermq/blob/main/docker/docker-compose.yaml) service section in the root docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 

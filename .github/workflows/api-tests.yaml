@@ -153,8 +153,7 @@ jobs:
 
       - name: Start containers
         run: |
-          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p magistrala up -d
-          make run_addons up args="-d" DOCKER_PROJECT=magistrala
+          make run_latest up args="-d" && make run_addons up args="-d"
 
       - name: Wait for services to be ready
         run: |
@@ -299,5 +298,4 @@ jobs:
       - name: Stop containers
         if: always()
         run: |
-          docker compose -f docker/docker-compose.yaml --env-file docker/.env -p magistrala down -v
-          make run_addons down args="-v" DOCKER_PROJECT=magistrala
+          make run_latest down args="-v" && make run_addons down args="-v"

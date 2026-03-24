@@ -43,8 +43,8 @@ func TestHandler(t *testing.T) {
 			config: Config{
 				URL:          "localhost:8080",
 				Timeout:      time.Second,
-				ClientCert:   "../../docker/ssl/certs/supermq-server.crt",
-				ClientKey:    "../../docker/ssl/certs/supermq-server.key",
+				ClientCert:   "../../docker/ssl/certs/magistrala-server.crt",
+				ClientKey:    "../../docker/ssl/certs/magistrala-server.key",
 				ServerCAFile: "../../docker/ssl/certs/ca.crt",
 			},
 			err:    nil,
@@ -72,7 +72,7 @@ func TestHandler(t *testing.T) {
 			config: Config{
 				URL:          "localhost:8080",
 				Timeout:      time.Second,
-				ServerCAFile: "../../docker/ssl/certs/supermq-server.key",
+				ServerCAFile: "../../docker/ssl/certs/magistrala-server.key",
 			},
 			err: errors.New("failed to load root ca: failed to append root ca to tls.Config"),
 		},
@@ -82,7 +82,7 @@ func TestHandler(t *testing.T) {
 				URL:          "localhost:8080",
 				Timeout:      time.Second,
 				ClientCert:   "invalid",
-				ClientKey:    "../../docker/ssl/certs/supermq-server.key",
+				ClientKey:    "../../docker/ssl/certs/magistrala-server.key",
 				ServerCAFile: "../../docker/ssl/certs/ca.crt",
 			},
 			err: errors.New("failed to client certificate and key tls: failed to find any PEM data in certificate input"),
@@ -92,7 +92,7 @@ func TestHandler(t *testing.T) {
 			config: Config{
 				URL:          "localhost:8080",
 				Timeout:      time.Second,
-				ClientCert:   "../../docker/ssl/certs/supermq-server.crt",
+				ClientCert:   "../../docker/ssl/certs/magistrala-server.crt",
 				ClientKey:    "invalid",
 				ServerCAFile: "../../docker/ssl/certs/ca.crt",
 			},

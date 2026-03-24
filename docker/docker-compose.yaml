@@ -1391,7 +1391,7 @@ services:
           create_host_path: true
 
   fluxmq-auth:
-    image: ghcr.io/absmach/magistrala/fluxmq:${MG_RELEASE_TAG}
+    image: docker.io/magistrala/fluxmq:${MG_RELEASE_TAG}
     container_name: magistrala-fluxmq-auth
     restart: on-failure
     environment:

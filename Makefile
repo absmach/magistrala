@@ -41,7 +41,7 @@ else
 	MG_ES_TYPE=es_fluxmq
 endif
 
-BUILD_TAGS := $(strip $(SMQ_MESSAGE_BROKER_TYPE) $(SMQ_ES_TYPE))
+BUILD_TAGS := $(strip $(MG_MESSAGE_BROKER_TYPE) $(MG_ES_TYPE))
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \

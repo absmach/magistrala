@@ -75,32 +75,32 @@ const (
 )
 
 type config struct {
-	LogLevel                   string        `env:"SMQ_USERS_LOG_LEVEL"                   envDefault:"info"`
-	AdminEmail                 string        `env:"SMQ_USERS_ADMIN_EMAIL"                 envDefault:"admin@example.com"`
-	AdminPassword              string        `env:"SMQ_USERS_ADMIN_PASSWORD"              envDefault:"12345678"`
-	AdminUsername              string        `env:"SMQ_USERS_ADMIN_USERNAME"              envDefault:"admin"`
-	AdminFirstName             string        `env:"SMQ_USERS_ADMIN_FIRST_NAME"            envDefault:"super"`
-	AdminLastName              string        `env:"SMQ_USERS_ADMIN_LAST_NAME"             envDefault:"admin"`
-	PassRegexText              string        `env:"SMQ_USERS_PASS_REGEX"                  envDefault:"^.{8,}$"`
-	JaegerURL                  url.URL       `env:"SMQ_JAEGER_URL"                        envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry              bool          `env:"SMQ_SEND_TELEMETRY"                    envDefault:"true"`
-	InstanceID                 string        `env:"SMQ_USERS_INSTANCE_ID"                 envDefault:""`
-	ESURL                      string        `env:"SMQ_ES_URL"                            envDefault:"nats://localhost:4222"`
-	TraceRatio                 float64       `env:"SMQ_JAEGER_TRACE_RATIO"                envDefault:"1.0"`
-	SelfRegister               bool          `env:"SMQ_USERS_ALLOW_SELF_REGISTER"         envDefault:"false"`
-	OAuthUIRedirectURL         string        `env:"SMQ_OAUTH_UI_REDIRECT_URL"             envDefault:"http://localhost:9095/domains"`
-	OAuthUIErrorURL            string        `env:"SMQ_OAUTH_UI_ERROR_URL"                envDefault:"http://localhost:9095/error"`
-	DeleteInterval             time.Duration `env:"SMQ_USERS_DELETE_INTERVAL"             envDefault:"24h"`
-	DeleteAfter                time.Duration `env:"SMQ_USERS_DELETE_AFTER"                envDefault:"720h"`
-	SpicedbHost                string        `env:"SMQ_SPICEDB_HOST"                      envDefault:"localhost"`
-	SpicedbPort                string        `env:"SMQ_SPICEDB_PORT"                      envDefault:"50051"`
-	SpicedbPreSharedKey        string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"            envDefault:"12345678"`
-	PasswordResetURLPrefix     string        `env:"SMQ_PASSWORD_RESET_URL_PREFIX"         envDefault:"http://localhost/password/reset"`
-	PasswordResetEmailTemplate string        `env:"SMQ_PASSWORD_RESET_EMAIL_TEMPLATE"     envDefault:"reset-password-email.tmpl"`
-	VerificationURLPrefix      string        `env:"SMQ_VERIFICATION_URL_PREFIX"           envDefault:"http://localhost/verify-email"`
-	VerificationEmailTemplate  string        `env:"SMQ_VERIFICATION_EMAIL_TEMPLATE"       envDefault:"verification-email.tmpl"`
-	AuthKeyAlgorithm           string        `env:"SMQ_AUTH_KEYS_ALGORITHM"               envDefault:"RS256"`
-	JWKSURL                    string        `env:"SMQ_AUTH_JWKS_URL"                     envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
+	LogLevel                   string        `env:"MG_USERS_LOG_LEVEL"                   envDefault:"info"`
+	AdminEmail                 string        `env:"MG_USERS_ADMIN_EMAIL"                 envDefault:"admin@example.com"`
+	AdminPassword              string        `env:"MG_USERS_ADMIN_PASSWORD"              envDefault:"12345678"`
+	AdminUsername              string        `env:"MG_USERS_ADMIN_USERNAME"              envDefault:"admin"`
+	AdminFirstName             string        `env:"MG_USERS_ADMIN_FIRST_NAME"            envDefault:"super"`
+	AdminLastName              string        `env:"MG_USERS_ADMIN_LAST_NAME"             envDefault:"admin"`
+	PassRegexText              string        `env:"MG_USERS_PASS_REGEX"                  envDefault:"^.{8,}$"`
+	JaegerURL                  url.URL       `env:"MG_JAEGER_URL"                        envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry              bool          `env:"MG_SEND_TELEMETRY"                    envDefault:"true"`
+	InstanceID                 string        `env:"MG_USERS_INSTANCE_ID"                 envDefault:""`
+	ESURL                      string        `env:"MG_ES_URL"                            envDefault:"amqp://guest:guest@localhost:5682/"`
+	TraceRatio                 float64       `env:"MG_JAEGER_TRACE_RATIO"                envDefault:"1.0"`
+	SelfRegister               bool          `env:"MG_USERS_ALLOW_SELF_REGISTER"         envDefault:"false"`
+	OAuthUIRedirectURL         string        `env:"MG_OAUTH_UI_REDIRECT_URL"             envDefault:"http://localhost:9095/domains"`
+	OAuthUIErrorURL            string        `env:"MG_OAUTH_UI_ERROR_URL"                envDefault:"http://localhost:9095/error"`
+	DeleteInterval             time.Duration `env:"MG_USERS_DELETE_INTERVAL"             envDefault:"24h"`
+	DeleteAfter                time.Duration `env:"MG_USERS_DELETE_AFTER"                envDefault:"720h"`
+	SpicedbHost                string        `env:"MG_SPICEDB_HOST"                      envDefault:"localhost"`
+	SpicedbPort                string        `env:"MG_SPICEDB_PORT"                      envDefault:"50051"`
+	SpicedbPreSharedKey        string        `env:"MG_SPICEDB_PRE_SHARED_KEY"            envDefault:"12345678"`
+	PasswordResetURLPrefix     string        `env:"MG_PASSWORD_RESET_URL_PREFIX"         envDefault:"http://localhost/password/reset"`
+	PasswordResetEmailTemplate string        `env:"MG_PASSWORD_RESET_EMAIL_TEMPLATE"     envDefault:"reset-password-email.tmpl"`
+	VerificationURLPrefix      string        `env:"MG_VERIFICATION_URL_PREFIX"           envDefault:"http://localhost/verify-email"`
+	VerificationEmailTemplate  string        `env:"MG_VERIFICATION_EMAIL_TEMPLATE"       envDefault:"verification-email.tmpl"`
+	AuthKeyAlgorithm           string        `env:"MG_AUTH_KEYS_ALGORITHM"               envDefault:"RS256"`
+	JWKSURL                    string        `env:"MG_AUTH_JWKS_URL"                     envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
 	PassRegex                  *regexp.Regexp
 }
 

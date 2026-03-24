@@ -37,18 +37,18 @@ import (
 const (
 	svcName           = "fluxmq-auth"
 	defSvcGRPCPort    = "7016"
-	envPrefixClients  = "SMQ_CLIENTS_GRPC_"
-	envPrefixChannels = "SMQ_CHANNELS_GRPC_"
-	envPrefixDomains  = "SMQ_DOMAINS_GRPC_"
-	envPrefixCache    = "SMQ_FLUXMQ_CACHE_"
-	envPrefixGRPC     = "SMQ_FLUXMQ_GRPC_"
+	envPrefixClients  = "MG_CLIENTS_GRPC_"
+	envPrefixChannels = "MG_CHANNELS_GRPC_"
+	envPrefixDomains  = "MG_DOMAINS_GRPC_"
+	envPrefixCache    = "MG_FLUXMQ_CACHE_"
+	envPrefixGRPC     = "MG_FLUXMQ_GRPC_"
 )
 
 type config struct {
-	LogLevel   string  `env:"SMQ_FLUXMQ_LOG_LEVEL"    envDefault:"info"`
-	JaegerURL  url.URL `env:"SMQ_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
-	TraceRatio float64 `env:"SMQ_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
-	InstanceID string  `env:"SMQ_FLUXMQ_INSTANCE_ID"   envDefault:""`
+	LogLevel   string  `env:"MG_FLUXMQ_LOG_LEVEL"    envDefault:"info"`
+	JaegerURL  url.URL `env:"MG_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
+	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
+	InstanceID string  `env:"MG_FLUXMQ_INSTANCE_ID"   envDefault:""`
 }
 
 func main() {

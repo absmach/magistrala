@@ -55,6 +55,7 @@ func declareEventsStream(client *fluxamqp.Client) error {
 	_, err := client.DeclareStreamQueue(&fluxamqp.StreamQueueOptions{
 		Name:    eventsQueue,
 		Durable: true,
+		MaxAge:  "30D",
 	})
 	return err
 }

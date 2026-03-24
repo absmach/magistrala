@@ -97,7 +97,7 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
 	svc := bootstrap.New(policies, boot, sdk, encKey, idp)
-	publisher, err := store.NewPublisher(context.Background(), redisURL)
+	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
 	return testVariable{

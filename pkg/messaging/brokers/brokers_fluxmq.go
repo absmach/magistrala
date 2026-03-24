@@ -22,6 +22,12 @@ func init() {
 	log.Println("The binary was built using FluxMQ as the message broker")
 }
 
+// ConnectionName returns an option that sets a human-readable connection name
+// for identifying this client in the FluxMQ admin UI.
+func ConnectionName(name string) messaging.Option {
+	return fluxmq.ConnectionName(name)
+}
+
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
 	pb, err := fluxmq.NewPublisher(ctx, url, opts...)
 	if err != nil {

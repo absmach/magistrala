@@ -43,7 +43,7 @@ type eventHandler struct {
 }
 
 func RulesEventsSubscribe(ctx context.Context, repo re.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, esURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, esURL, "re-es-sub", logger)
 	if err != nil {
 		return err
 	}

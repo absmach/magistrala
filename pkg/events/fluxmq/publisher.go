@@ -24,9 +24,10 @@ type pubEventStore struct {
 }
 
 // NewPublisher creates a FluxMQ-backed event publisher.
-func NewPublisher(_ context.Context, url string) (events.Publisher, error) {
+func NewPublisher(_ context.Context, url, connectionName string) (events.Publisher, error) {
 	logger := slog.Default()
 	opts := fluxamqp.NewOptions().SetURL(url).
+		SetConnectionName(connectionName).
 		SetOnConnectionLost(func(err error) {
 			logger.Warn("FluxMQ event publisher connection lost", "error", err)
 		}).

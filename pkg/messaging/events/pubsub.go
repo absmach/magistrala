@@ -26,7 +26,7 @@ type pubsubES struct {
 }
 
 func NewPubSubMiddleware(ctx context.Context, pubsub messaging.PubSub, url string) (messaging.PubSub, error) {
-	publisher, err := store.NewPublisher(ctx, url)
+	publisher, err := store.NewPublisher(ctx, url, "msg-es-pub")
 	if err != nil {
 		return nil, err
 	}

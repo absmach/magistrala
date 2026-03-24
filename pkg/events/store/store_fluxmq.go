@@ -22,8 +22,8 @@ func init() {
 	log.Println("The binary was built using FluxMQ as the events store")
 }
 
-func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
-	pb, err := fluxmq.NewPublisher(ctx, url)
+func NewPublisher(ctx context.Context, url, connectionName string) (events.Publisher, error) {
+	pb, err := fluxmq.NewPublisher(ctx, url, connectionName)
 	if err != nil {
 		return nil, err
 	}
@@ -31,8 +31,8 @@ func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
 	return pb, nil
 }
 
-func NewSubscriber(ctx context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
-	pb, err := fluxmq.NewSubscriber(ctx, url, logger)
+func NewSubscriber(ctx context.Context, url, connectionName string, logger *slog.Logger) (events.Subscriber, error) {
+	pb, err := fluxmq.NewSubscriber(ctx, url, connectionName, logger)
 	if err != nil {
 		return nil, err
 	}

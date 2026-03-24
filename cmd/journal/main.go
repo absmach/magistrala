@@ -177,7 +177,7 @@ func main() {
 
 	svc := newService(db, dbConfig, authz, logger, tracer)
 
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "journal-es-sub", logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create subscriber: %s", err))
 		exitCode = 1

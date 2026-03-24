@@ -49,6 +49,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 	}
 
 	amqpOpts := fluxamqp.NewOptions().SetURL(url).
+		SetConnectionName(ps.connectionName).
 		SetOnConnectionLost(func(err error) {
 			ps.logWarn("FluxMQ message pub/sub connection lost", "error", err)
 		}).

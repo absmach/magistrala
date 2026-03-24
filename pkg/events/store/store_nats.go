@@ -22,7 +22,7 @@ func init() {
 	log.Println("The binary was build using Nats as the events store")
 }
 
-func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
+func NewPublisher(ctx context.Context, url, _ string) (events.Publisher, error) {
 	pb, err := nats.NewPublisher(ctx, url)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,7 @@ func NewPublisher(ctx context.Context, url string) (events.Publisher, error) {
 	return pb, nil
 }
 
-func NewSubscriber(ctx context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
+func NewSubscriber(ctx context.Context, url, _ string, logger *slog.Logger) (events.Subscriber, error) {
 	pb, err := nats.NewSubscriber(ctx, url, logger)
 	if err != nil {
 		return nil, err

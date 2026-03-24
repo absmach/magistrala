@@ -131,7 +131,7 @@ func main() {
 	notifier = middleware.NewMetrics(notifier, counter, latency)
 	notifier = middleware.NewTracing(notifier, tp.Tracer(svcName))
 
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "notifications-es-sub", logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create subscriber: %s", err))
 		exitCode = 1

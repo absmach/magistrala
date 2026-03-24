@@ -22,6 +22,12 @@ func init() {
 	log.Println("The binary was built using NATS as the message broker")
 }
 
+// ConnectionName is a no-op for the NATS backend. It exists for API
+// compatibility with the FluxMQ variant.
+func ConnectionName(_ string) messaging.Option {
+	return func(_ any) error { return nil }
+}
+
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
 	pb, err := nats.NewPublisher(ctx, url, opts...)
 	if err != nil {

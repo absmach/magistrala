@@ -191,7 +191,7 @@ func main() {
 		return
 	}
 
-	msgSub, err := smqbrokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	msgSub, err := smqbrokers.NewPubSub(ctx, cfg.BrokerURL, logger, smqbrokers.ConnectionName("re-msg-pubsub"))
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker for mg pubSub: %s", err))
 		exitCode = 1

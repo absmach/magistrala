@@ -33,6 +33,7 @@ func NewPublisher(_ context.Context, url string, opts ...messaging.Option) (mess
 
 	logger := slog.Default()
 	amqpOpts := fluxamqp.NewOptions().SetURL(url).
+		SetConnectionName(pub.connectionName).
 		SetOnConnectionLost(func(err error) {
 			logger.Warn("FluxMQ message publisher connection lost", "error", err)
 		}).

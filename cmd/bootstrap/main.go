@@ -233,7 +233,7 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 
 	svc := bootstrap.New(policySvc, repoConfig, sdk, []byte(cfg.EncKey), idp)
 
-	publisher, err := store.NewPublisher(ctx, cfg.ESURL)
+	publisher, err := store.NewPublisher(ctx, cfg.ESURL, "bootstrap-es-pub")
 	if err != nil {
 		return nil, err
 	}
@@ -249,7 +249,7 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 }
 
 func subscribeToClientsES(ctx context.Context, svc bootstrap.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "bootstrap-es-sub", logger)
 	if err != nil {
 		return err
 	}

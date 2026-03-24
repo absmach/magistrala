@@ -30,8 +30,9 @@ type subEventStore struct {
 }
 
 // NewSubscriber creates a FluxMQ-backed event subscriber.
-func NewSubscriber(_ context.Context, url string, logger *slog.Logger) (events.Subscriber, error) {
+func NewSubscriber(_ context.Context, url, connectionName string, logger *slog.Logger) (events.Subscriber, error) {
 	opts := fluxamqp.NewOptions().SetURL(url).
+		SetConnectionName(connectionName).
 		SetOnConnectionLost(func(err error) {
 			logger.Warn("FluxMQ event subscriber connection lost", "error", err)
 		}).

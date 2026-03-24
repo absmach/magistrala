@@ -425,7 +425,7 @@ services:
       - magistrala-journal-volume:/var/lib/postgresql/data
 
   journal:
-    image: ghcr.io/absmach/magistrala/journal:${MG_RELEASE_TAG}
+    image: docker.io/magistrala/journal:${MG_RELEASE_TAG}
     container_name: magistrala-journal
     depends_on:
       - journal-db
@@ -1713,7 +1713,7 @@ services:
       - magistrala-timescale-writer-volume:/var/lib/postgresql/data
 
   timescale-reader:
-    image: ghcr.io/absmach/magistrala/timescale-reader:${MG_RELEASE_TAG}
+    image: docker.io/magistrala/timescale-reader:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-reader
     depends_on:
       - timescale
@@ -1847,7 +1847,7 @@ services:
           create_host_path: true
 
   timescale-writer:
-    image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
+    image: docker.io/magistrala/timescale-writer:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-writer
     depends_on:
       - timescale

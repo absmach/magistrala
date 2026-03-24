@@ -18,9 +18,6 @@ volumes:
   supermq-channels-db-volume:
   supermq-channels-redis-volume:
   supermq-clients-redis-volume:
-  supermq-fluxmq-node1-volume:
-  supermq-fluxmq-node2-volume:
-  supermq-fluxmq-node3-volume:
   supermq-spicedb-db-volume:
   supermq-auth-db-volume:
   supermq-pat-db-volume:
@@ -1254,7 +1251,11 @@ services:
         ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node1-volume:/tmp/fluxmq
+      - type: bind
+        source: /tmp/supermq-fluxmq-node1
+        target: /tmp/fluxmq
+        bind:
+          create_host_path: true
 
   fluxmq-node2:
     image: ghcr.io/absmach/fluxmq:${SMQ_FLUXMQ_IMAGE_TAG}
@@ -1270,7 +1271,11 @@ services:
         ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node2-volume:/tmp/fluxmq
+      - type: bind
+        source: /tmp/supermq-fluxmq-node2
+        target: /tmp/fluxmq
+        bind:
+          create_host_path: true
 
   fluxmq-node3:
     image: ghcr.io/absmach/fluxmq:${SMQ_FLUXMQ_IMAGE_TAG}
@@ -1286,7 +1291,11 @@ services:
         ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
-      - supermq-fluxmq-node3-volume:/tmp/fluxmq
+      - type: bind
+        source: /tmp/supermq-fluxmq-node3
+        target: /tmp/fluxmq
+        bind:
+          create_host_path: true
 
   fluxmq-auth:
     image: ghcr.io/absmach/magistrala/fluxmq:${SMQ_RELEASE_TAG}

@@ -43,7 +43,7 @@ The service is configured with the following environment variables (unset values
 
 ## Deployment
 
-The service is distributed as a Docker container. Check the [`journals`](https://github.com/absmach/supermq/tree/main/docker/addons/journal) for the `journal` and `journal-db` services and how they are wired into the base stack.
+The service is distributed as a Docker container. Check [`docker/docker-compose.yaml`](https://github.com/absmach/supermq/tree/main/docker/docker-compose.yaml) for the `journal` and `journal-db` services and how they are wired into the base stack.
 
 To start the service outside of the container, execute the following shell script:
 

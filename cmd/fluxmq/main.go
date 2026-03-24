@@ -204,9 +204,9 @@ func main() {
 
 	g.Go(func() error {
 		<-ctx.Done()
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), server.StopWaitTime)
+		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), server.StopWaitTime) //nolint:contextcheck
 		defer shutdownCancel()
-		if err := httpServer.Shutdown(shutdownCtx); err != nil {
+		if err := httpServer.Shutdown(shutdownCtx); err != nil { //nolint:contextcheck
 			return fmt.Errorf("failed to shutdown %s server: %w", svcName, err)
 		}
 		logger.Info(fmt.Sprintf("%s service shutdown at %s", svcName, address))

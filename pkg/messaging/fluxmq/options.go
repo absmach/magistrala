@@ -10,10 +10,8 @@ import (
 	"github.com/nats-io/nats.go/jetstream"
 )
 
-var (
-	// ErrInvalidType is returned when the provided value is not of the expected type.
-	ErrInvalidType = errors.New("invalid type")
-)
+// ErrInvalidType is returned when the provided value is not of the expected type.
+var ErrInvalidType = errors.New("invalid type")
 
 const msgPrefix = "m"
 

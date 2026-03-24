@@ -75,49 +75,49 @@ func TestSendMessage(t *testing.T) {
 	clientSecret := "validSecret"
 
 	cases := []struct {
-		desc     string
-		topic    string
-		domainID string
+		desc      string
+		topic     string
+		domainID  string
 		wantTopic string
-		msg      string
-		secret   string
-		err      errors.SDKError
+		msg       string
+		secret    string
+		err       errors.SDKError
 	}{
 		{
-			desc:     "publish message successfully",
-			topic:    "channelID",
-			domainID: "domainID",
+			desc:      "publish message successfully",
+			topic:     "channelID",
+			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID",
-			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
-			secret:   clientSecret,
-			err:      nil,
+			msg:       `[{"n":"current","t":-1,"v":1.6}]`,
+			secret:    clientSecret,
+			err:       nil,
 		},
 		{
-			desc:     "publish message with subtopic",
-			topic:    "channelID.sub.topic",
-			domainID: "domainID",
+			desc:      "publish message with subtopic",
+			topic:     "channelID.sub.topic",
+			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID/sub/topic",
-			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
-			secret:   clientSecret,
-			err:      nil,
+			msg:       `[{"n":"current","t":-1,"v":1.6}]`,
+			secret:    clientSecret,
+			err:       nil,
 		},
 		{
-			desc:     "publish message with invalid secret",
-			topic:    "channelID",
-			domainID: "domainID",
+			desc:      "publish message with invalid secret",
+			topic:     "channelID",
+			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID",
-			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
-			secret:   "invalid",
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
+			msg:       `[{"n":"current","t":-1,"v":1.6}]`,
+			secret:    "invalid",
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
 		},
 		{
-			desc:     "publish message with empty secret",
-			topic:    "channelID",
-			domainID: "domainID",
+			desc:      "publish message with empty secret",
+			topic:     "channelID",
+			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID",
-			msg:      `[{"n":"current","t":-1,"v":1.6}]`,
-			secret:   "",
-			err:      errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
+			msg:       `[{"n":"current","t":-1,"v":1.6}]`,
+			secret:    "",
+			err:       errors.NewSDKErrorWithStatus(errors.Wrap(errors.New(""), errors.New("")), http.StatusUnauthorized),
 		},
 	}
 	for _, tc := range cases {

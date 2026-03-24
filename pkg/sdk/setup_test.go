@@ -11,7 +11,9 @@ import (
 	"time"
 
 	"github.com/absmach/supermq/channels"
+	chmocks "github.com/absmach/supermq/channels/mocks"
 	"github.com/absmach/supermq/clients"
+	climocks "github.com/absmach/supermq/clients/mocks"
 	"github.com/absmach/supermq/domains"
 	groups "github.com/absmach/supermq/groups"
 	"github.com/absmach/supermq/internal/nullable"
@@ -49,6 +51,9 @@ var (
 	total         uint64 = 200
 	passRegex            = regexp.MustCompile("^.{8,}$")
 	validID              = testsutil.GenerateUUID(&testing.T{})
+
+	clientsGRPCClient  *climocks.ClientsServiceClient
+	channelsGRPCClient *chmocks.ChannelsServiceClient
 )
 
 func generateUUID(t *testing.T) string {

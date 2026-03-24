@@ -29,6 +29,7 @@ import (
 	redisclient "github.com/absmach/supermq/internal/clients/redis"
 	smqlog "github.com/absmach/supermq/logger"
 	"github.com/absmach/supermq/pkg/jaeger"
+	"github.com/absmach/supermq/pkg/permissions"
 	"github.com/absmach/supermq/pkg/policies/spicedb"
 	pgclient "github.com/absmach/supermq/pkg/postgres"
 	"github.com/absmach/supermq/pkg/prometheus"
@@ -81,6 +82,7 @@ type config struct {
 	CacheKeyDuration              time.Duration `env:"SMQ_AUTH_CACHE_KEY_DURATION"                envDefault:"10m"`
 	JWKSCacheMaxAge               int           `env:"SMQ_AUTH_JWKS_CACHE_MAX_AGE"                envDefault:"900"`
 	JWKSCacheStaleWhileRevalidate int           `env:"SMQ_AUTH_JWKS_CACHE_STALE_WHILE_REVALIDATE" envDefault:"60"`
+	PATPermissionsFile            string        `env:"SMQ_PAT_PERMISSIONS_FILE"                   envDefault:"pat.yaml"`
 }
 
 func main() {
@@ -189,6 +191,14 @@ func main() {
 		exitCode = 1
 		return
 	}
+
+	patPermConfig, err := permissions.ParsePATPermissionsFile(cfg.PATPermissionsFile)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to load PAT permissions file: %s", err.Error()))
+		exitCode = 1
+		return
+	}
+	auth.RegisterPATEntityOperations(patPermConfig.GetPATEntityOperations())
 
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {

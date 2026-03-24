@@ -7,6 +7,8 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 )
 
+const EntityType = "channels"
+
 // Channel Operations.
 const (
 	OpViewChannel permissions.Operation = iota

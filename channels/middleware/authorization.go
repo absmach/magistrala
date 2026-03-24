@@ -332,7 +332,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
 		entityID := req.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
+		opName := am.entitiesOps.PATOperationName(entityType, op)
 		if op == operations.OpListUserChannels || op == dOperations.OpCreateDomainChannels || op == dOperations.OpListDomainChannels {
 			entityID = auth.AnyIDs
 		}
@@ -340,17 +340,13 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   entityID,
-			EntityType: auth.ChannelsType.String(),
+			EntityType: operations.EntityType,
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}
 	}
 
-	if err := am.authz.Authorize(ctx, req, pat); err != nil {
-		return err
-	}
-
-	return nil
+	return am.authz.Authorize(ctx, req, pat)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {

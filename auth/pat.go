@@ -20,108 +20,30 @@ const (
 	RoleOperationPrefix = "role_"
 )
 
-const (
-	OpCreate = "create"
-	OpList   = "list"
-
-	OpCreateClients  = "create_clients"
-	OpListClients    = "list_clients"
-	OpCreateChannels = "create_channels"
-	OpListChannels   = "list_channels"
-	OpCreateGroups   = "create_groups"
-	OpListGroups     = "list_groups"
-
-	OpShare   = "share"
-	OpUnshare = "unshare"
-
-	OpDashboardShare   = "dashboard_share"
-	OpDashboardUnshare = "dashboard_unshare"
-
-	OpPublish   = "publish"
-	OpSubscribe = "subscribe"
-
-	OpMessagePublish   = "message_publish"
-	OpMessageSubscribe = "message_subscribe"
+var (
+	errInvalidEntityOp   = errors.NewRequestError("operation not valid for entity type")
+	errInvalidEntityType = errors.NewRequestError("invalid entity type")
 )
 
-var errInvalidEntityOp = errors.NewRequestError("operation not valid for entity type")
+var patEntityOperations map[string]map[string]bool
+
+func RegisterPATEntityOperations(ops map[string]map[string]bool) {
+	patEntityOperations = ops
+}
 
 type Operation = permissions.Operation
 
-// Dashboard operations.
-const (
-	DashboardShareOp Operation = iota + 400
-	DashboardUnshareOp
-)
-
-// Messages operations.
-const (
-	MessagePublishOp Operation = iota + 500
-	MessageSubscribeOp
-)
-
-type EntityType uint32
-
-const (
-	GroupsType EntityType = iota
-	ChannelsType
-	ClientsType
-	DashboardType
-	MessagesType
-	DomainsType
-	UsersType
-)
-
-const (
-	GroupsScopeStr   = "groups"
-	ChannelsScopeStr = "channels"
-	ClientsScopeStr  = "clients"
-	DashboardsStr    = "dashboards"
-	MessagesStr      = "messages"
-	DomainsStr       = "domains"
-	UsersStr         = "users"
-)
+type EntityType string
 
 func (et EntityType) String() string {
-	switch et {
-	case GroupsType:
-		return GroupsScopeStr
-	case ChannelsType:
-		return ChannelsScopeStr
-	case ClientsType:
-		return ClientsScopeStr
-	case DashboardType:
-		return DashboardsStr
-	case MessagesType:
-		return MessagesStr
-	case DomainsType:
-		return DomainsStr
-	case UsersType:
-		return UsersStr
-	default:
-		return fmt.Sprintf("unknown domain entity type %d", et)
-	}
+	return string(et)
 }
 
 func ParseEntityType(et string) (EntityType, error) {
-	switch et {
-	case GroupsScopeStr:
-		return GroupsType, nil
-	case ChannelsScopeStr:
-		return ChannelsType, nil
-	case ClientsScopeStr:
-		return ClientsType, nil
-	case DashboardsStr:
-		return DashboardType, nil
-	case MessagesStr:
-		return MessagesType, nil
-	case DomainsStr:
-		return DomainsType, nil
-	case UsersStr:
-		return UsersType, nil
-	default:
-		return 0, fmt.Errorf("unknown domain entity type %s", et)
+	if et == "" {
+		return "", fmt.Errorf("entity type cannot be empty")
 	}
+	return EntityType(et), nil
 }
 
 func (et EntityType) MarshalJSON() ([]byte, error) {
@@ -146,16 +68,22 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 }
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
-	switch entityType {
-	case ClientsType, ChannelsType, GroupsType, DomainsType:
-		return true
-	case DashboardType:
-		return operation == OpDashboardShare || operation == OpDashboardUnshare
-	case MessagesType:
-		return operation == OpMessagePublish || operation == OpMessageSubscribe
-	default:
+	if patEntityOperations == nil {
 		return false
 	}
+	ops, ok := patEntityOperations[entityType.String()]
+	if !ok {
+		return false
+	}
+	return ops[operation]
+}
+
+func IsValidEntityType(entityType EntityType) bool {
+	if patEntityOperations == nil {
+		return false
+	}
+	_, ok := patEntityOperations[entityType.String()]
+	return ok
 }
 
 // Example Scope as JSON
@@ -188,55 +116,6 @@ type Scope struct {
 	EntityType EntityType `json:"entity_type"`
 	EntityID   string     `json:"entity_id"`
 	Operation  string     `json:"operation"`
-}
-
-func (s *Scope) UnmarshalJSON(data []byte) error {
-	type Alias Scope
-	aux := (*Alias)(s)
-
-	if err := json.Unmarshal(data, aux); err != nil {
-		return err
-	}
-
-	switch s.EntityType {
-	case ClientsType:
-		switch s.Operation {
-		case OpCreate:
-			s.Operation = OpCreateClients
-		case OpList:
-			s.Operation = OpListClients
-		}
-	case ChannelsType:
-		switch s.Operation {
-		case OpCreate:
-			s.Operation = OpCreateChannels
-		case OpList:
-			s.Operation = OpListChannels
-		}
-	case GroupsType:
-		switch s.Operation {
-		case OpCreate:
-			s.Operation = OpCreateGroups
-		case OpList:
-			s.Operation = OpListGroups
-		}
-	case DashboardType:
-		switch s.Operation {
-		case OpShare:
-			s.Operation = OpDashboardShare
-		case OpUnshare:
-			s.Operation = OpDashboardUnshare
-		}
-	case MessagesType:
-		switch s.Operation {
-		case OpPublish:
-			s.Operation = OpMessagePublish
-		case OpSubscribe:
-			s.Operation = OpMessageSubscribe
-		}
-	}
-
-	return nil
 }
 
 func (s *Scope) Authorized(entityType EntityType, domainID string, operation string, entityID string) bool {
@@ -277,6 +156,10 @@ func (s *Scope) Validate() error {
 
 	if s.DomainID == "" {
 		return apiutil.ErrMissingDomainID
+	}
+
+	if !IsValidEntityType(s.EntityType) {
+		return errors.Wrap(apiutil.ErrInvalidQueryParams, errInvalidEntityType)
 	}
 
 	if !IsValidOperationForEntity(s.EntityType, s.Operation) {

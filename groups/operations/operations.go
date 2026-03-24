@@ -5,6 +5,8 @@ package operations
 
 import "github.com/absmach/supermq/pkg/permissions"
 
+const EntityType = "groups"
+
 // Group Operations.
 const (
 	OpViewGroup permissions.Operation = iota

@@ -7,6 +7,8 @@ import (
 	"github.com/absmach/supermq/pkg/permissions"
 )
 
+const EntityType = "domains"
+
 const (
 	OpCreateDomain permissions.Operation = iota
 	OpUpdateDomain
@@ -106,31 +108,37 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 		// Operations related to entities
 		OpCreateDomainClients: {
 			Name:               "create_clients",
+			PATOpName:          "create",
 			PermissionRequired: true,
 		},
 
 		OpListDomainClients: {
 			Name:               "list_clients",
+			PATOpName:          "list",
 			PermissionRequired: true,
 		},
 
 		OpCreateDomainChannels: {
 			Name:               "create_channels",
+			PATOpName:          "create",
 			PermissionRequired: true,
 		},
 
 		OpListDomainChannels: {
 			Name:               "list_channels",
+			PATOpName:          "list",
 			PermissionRequired: true,
 		},
 
 		OpCreateDomainGroups: {
 			Name:               "create_groups",
+			PATOpName:          "create",
 			PermissionRequired: true,
 		},
 
 		OpListDomainGroups: {
 			Name:               "list_groups",
+			PATOpName:          "list",
 			PermissionRequired: true,
 		},
 	}

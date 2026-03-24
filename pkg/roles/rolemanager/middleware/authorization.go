@@ -8,6 +8,9 @@ import (
 	"fmt"
 
 	"github.com/absmach/supermq/auth"
+	channelsops "github.com/absmach/supermq/channels/operations"
+	clientsops "github.com/absmach/supermq/clients/operations"
+	groupsops "github.com/absmach/supermq/groups/operations"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	"github.com/absmach/supermq/pkg/errors"
@@ -309,11 +312,11 @@ func (ram RoleManagerAuthorizationMiddleware) authorize(ctx context.Context, ses
 		var patEntityType string
 		switch pr.ObjectType {
 		case policies.GroupType:
-			patEntityType = auth.GroupsType.String()
+			patEntityType = groupsops.EntityType
 		case policies.ClientType:
-			patEntityType = auth.ClientsType.String()
+			patEntityType = clientsops.EntityType
 		case policies.ChannelType:
-			patEntityType = auth.ChannelsType.String()
+			patEntityType = channelsops.EntityType
 		default:
 			return errors.Wrap(errors.ErrAuthorization, fmt.Errorf("unsupported entity type for PAT: %s", pr.ObjectType))
 		}

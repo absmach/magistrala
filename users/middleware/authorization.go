@@ -7,12 +7,12 @@ import (
 	"context"
 
 	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/pkg/authn"
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/policies"
 	"github.com/absmach/supermq/users"
+	"github.com/absmach/supermq/users/operations"
 )
 
 var _ users.Service = (*authorizationMiddleware)(nil)
@@ -222,7 +222,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   subj,
-			EntityType: auth.UsersType.String(),
+			EntityType: operations.EntityType,
 			Operation:  perm,
 			Domain:     domain,
 		}

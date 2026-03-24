@@ -5,6 +5,7 @@ package middleware
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/absmach/supermq/auth"
 	"github.com/absmach/supermq/clients"
@@ -269,25 +270,22 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
 		entityID := req.Object
-		opName := am.entitiesOps.OperationName(entityType, op)
+		opName := am.entitiesOps.PATOperationName(entityType, op)
 		if op == operations.OpListUserClients || op == dOperations.OpCreateDomainClients || op == dOperations.OpListDomainClients {
 			entityID = auth.AnyIDs
 		}
+		fmt.Printf("[DEBUG] authorize: entityType=%s op=%v permission=%s opName=%s entityID=%s patID=%s domain=%s\n", entityType, op, req.Permission, opName, entityID, session.PatID, session.DomainID)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   entityID,
-			EntityType: auth.ClientsType.String(),
+			EntityType: operations.EntityType,
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}
 	}
 
-	if err := am.authz.Authorize(ctx, req, pat); err != nil {
-		return err
-	}
-
-	return nil
+	return am.authz.Authorize(ctx, req, pat)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {

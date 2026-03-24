@@ -147,6 +147,7 @@ services:
       SMQ_AUTH_ADAPTER_INSTANCE_ID: ${SMQ_AUTH_ADAPTER_INSTANCE_ID}
       SMQ_ES_URL: ${SMQ_ES_URL}
       SMQ_AUTH_CACHE_URL: ${SMQ_AUTH_CACHE_URL}
+      SMQ_PAT_PERMISSIONS_FILE: ${SMQ_PAT_PERMISSIONS_FILE}
     ports:
       - ${SMQ_AUTH_HTTP_PORT}:${SMQ_AUTH_HTTP_PORT}
       - ${SMQ_AUTH_GRPC_PORT}:${SMQ_AUTH_GRPC_PORT}
@@ -155,6 +156,7 @@ services:
     volumes:
       - ./spicedb/schema.zed:${SMQ_SPICEDB_SCHEMA_FILE}
       - supermq-pat-db-volume:/supermq-data
+      - ./pat.yaml:/pat.yaml
       # Auth active private key file
       - type: bind
         source: ${SMQ_AUTH_KEYS_ACTIVE_KEY_PATH}

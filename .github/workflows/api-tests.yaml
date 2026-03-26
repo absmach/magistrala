@@ -151,9 +151,6 @@ jobs:
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
-      - name: Create FluxMQ data directories
-        run: mkdir -p docker/fluxmq/data/node1 docker/fluxmq/data/node2 docker/fluxmq/data/node3
-
       - name: Start containers
         run: make run_latest up args="-d" && make run_addons up args="-d"
 

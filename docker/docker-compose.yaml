@@ -33,6 +33,9 @@ volumes:
   magistrala-certs-db-volume:
   magistrala-openbao-data:
   magistrala-timescale-writer-volume:
+  magistrala-fluxmq-node1-volume:
+  magistrala-fluxmq-node2-volume:
+  magistrala-fluxmq-node3-volume:
 
 services:
   spicedb:
@@ -1345,11 +1348,7 @@ services:
         ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
-      - type: bind
-        source: ./fluxmq/data/node1
-        target: /tmp/fluxmq
-        bind:
-          create_host_path: true
+      - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
     image: ghcr.io/absmach/fluxmq:${MG_FLUXMQ_IMAGE_TAG}
@@ -1367,11 +1366,7 @@ services:
         ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
-      - type: bind
-        source: ./fluxmq/data/node2
-        target: /tmp/fluxmq
-        bind:
-          create_host_path: true
+      - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
     image: ghcr.io/absmach/fluxmq:${MG_FLUXMQ_IMAGE_TAG}
@@ -1389,11 +1384,7 @@ services:
         ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
-      - type: bind
-        source: ./fluxmq/data/node3
-        target: /tmp/fluxmq
-        bind:
-          create_host_path: true
+      - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
     image: docker.io/magistrala/fluxmq:${MG_RELEASE_TAG}

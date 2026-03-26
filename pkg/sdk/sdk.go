@@ -1832,14 +1832,12 @@ func NewSDK(conf Config) SDK {
 		rulesEngineURL: conf.RulesEngineURL,
 
 		msgContentType: conf.MsgContentType,
-		client: func() *http.Client {
-			transport := http.DefaultTransport.(*http.Transport).Clone()
-			transport.TLSClientConfig = &tls.Config{
+		client: &http.Client{Transport: otelhttp.NewTransport(&http.Transport{
+			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: !conf.TLSVerification,
-			}
-			transport.DisableKeepAlives = true
-			return &http.Client{Transport: otelhttp.NewTransport(transport)}
-		}(),
+			},
+			DisableKeepAlives: true,
+		})},
 		curlFlag: conf.CurlFlag,
 		roles:    conf.Roles,
 	}

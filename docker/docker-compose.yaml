@@ -1346,7 +1346,7 @@ services:
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
       - type: bind
-        source: /tmp/magistrala-fluxmq-node1
+        source: ./fluxmq/data/node1
         target: /tmp/fluxmq
         bind:
           create_host_path: true
@@ -1368,7 +1368,7 @@ services:
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
       - type: bind
-        source: /tmp/magistrala-fluxmq-node2
+        source: ./fluxmq/data/node2
         target: /tmp/fluxmq
         bind:
           create_host_path: true
@@ -1390,7 +1390,7 @@ services:
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
       - type: bind
-        source: /tmp/magistrala-fluxmq-node3
+        source: ./fluxmq/data/node3
         target: /tmp/fluxmq
         bind:
           create_host_path: true

@@ -21,3 +21,6 @@ docker/addons/certs/openbao/
 
 # Ignore SeaweedFS data directory as it contains runtime-generated data
 docker/data/*
+
+# Ignore FluxMQ runtime data directories
+docker/fluxmq/data/

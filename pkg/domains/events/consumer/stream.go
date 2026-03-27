@@ -5,7 +5,6 @@ package consumer
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/absmach/supermq/domains"
@@ -13,38 +12,40 @@ import (
 	"github.com/absmach/supermq/pkg/events"
 	"github.com/absmach/supermq/pkg/events/store"
 	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/supermq/pkg/roles"
 	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
 )
 
 const (
 	stream = "events.supermq.domain.*"
 
-	create     = "domain.create"
-	update     = "domain.update"
-	enable     = "domain.enable"
-	disable    = "domain.disable"
-	freeze     = "domain.freeze"
-	delete     = "domain.delete"
-	userDelete = "domain.user_delete"
+	create              = "domain.create"
+	update              = "domain.update"
+	enable              = "domain.enable"
+	disable             = "domain.disable"
+	freeze              = "domain.freeze"
+	delete              = "domain.delete"
+	removeDomainMembers = "domain.members.remove"
 )
 
 var (
-	errNoOperationKey          = errors.New("operation key is not found in event message")
-	errCreateDomainEvent       = errors.New("failed to consume domain create event")
-	errUpdateDomainEvent       = errors.New("failed to consume domain update event")
-	errEnableDomainGroupEvent  = errors.New("failed to consume domain enable event")
-	errDisableDomainGroupEvent = errors.New("failed to consume domain disable event")
-	errFreezeDomainGroupEvent  = errors.New("failed to consume domain freeze event")
-	errUserDeleteDomainEvent   = errors.New("failed to consume domain user delete event")
-	errDeleteDomainEvent       = errors.New("failed to consume domain delete event")
+	errNoOperationKey           = errors.New("operation key is not found in event message")
+	errCreateDomainEvent        = errors.New("failed to consume domain create event")
+	errUpdateDomainEvent        = errors.New("failed to consume domain update event")
+	errEnableDomainEvent        = errors.New("failed to consume domain enable event")
+	errDisableDomainEvent       = errors.New("failed to consume domain disable event")
+	errFreezeDomainEvent        = errors.New("failed to consume domain freeze event")
+	errRemoveDomainMembersEvent = errors.New("failed to consume domain remove members event")
+	errDeleteDomainEvent        = errors.New("failed to consume domain delete event")
 )
 
 type eventHandler struct {
 	repo              domains.Repository
 	rolesEventHandler rconsumer.EventHandler
+	entityRoleManager roles.RoleManager
 }
 
-func DomainsEventsSubscribe(ctx context.Context, repo domains.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
+func DomainsEventsSubscribe(ctx context.Context, repo domains.Repository, roleManager roles.RoleManager, esURL, esConsumerName string, logger *slog.Logger) error {
 	subscriber, err := store.NewSubscriber(ctx, esURL, logger)
 	if err != nil {
 		return err
@@ -53,7 +54,7 @@ func DomainsEventsSubscribe(ctx context.Context, repo domains.Repository, esURL,
 	subConfig := events.SubscriberConfig{
 		Stream:         stream,
 		Consumer:       esConsumerName,
-		Handler:        NewEventHandler(repo),
+		Handler:        NewEventHandler(repo, roleManager),
 		DeliveryPolicy: messaging.DeliverNewPolicy,
 		Ordered:        true,
 	}
@@ -61,11 +62,12 @@ func DomainsEventsSubscribe(ctx context.Context, repo domains.Repository, esURL,
 }
 
 // NewEventHandler returns new event store handler.
-func NewEventHandler(repo domains.Repository) events.EventHandler {
+func NewEventHandler(repo domains.Repository, roleManager roles.RoleManager) events.EventHandler {
 	reh := rconsumer.NewEventHandler("domain", repo)
 	return &eventHandler{
 		repo:              repo,
 		rolesEventHandler: reh,
+		entityRoleManager: roleManager,
 	}
 }
 
@@ -91,8 +93,8 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 		return es.disableDomainHandler(ctx, msg)
 	case freeze:
 		return es.freezeDomainHandler(ctx, msg)
-	case userDelete:
-		return es.userDeleteDomainHandler(ctx, msg)
+	case removeDomainMembers:
+		return es.removeDomainMembersHandler(ctx, msg)
 	case delete:
 		return es.deleteDomainHandler(ctx, msg)
 	}
@@ -142,12 +144,12 @@ func (es *eventHandler) updateDomainHandler(ctx context.Context, data map[string
 func (es *eventHandler) enableDomainHandler(ctx context.Context, data map[string]any) error {
 	d, err := decodeEnableDomainEvent(data)
 	if err != nil {
-		return errors.Wrap(errEnableDomainGroupEvent, err)
+		return errors.Wrap(errEnableDomainEvent, err)
 	}
 
 	enabled := domains.EnabledStatus
 	if _, err := es.repo.UpdateDomain(ctx, d.ID, domains.DomainReq{Status: &enabled, UpdatedBy: &d.UpdatedBy, UpdatedAt: &d.UpdatedAt}); err != nil {
-		return errors.Wrap(errEnableDomainGroupEvent, err)
+		return errors.Wrap(errEnableDomainEvent, err)
 	}
 
 	return nil
@@ -156,12 +158,12 @@ func (es *eventHandler) enableDomainHandler(ctx context.Context, data map[string
 func (es *eventHandler) disableDomainHandler(ctx context.Context, data map[string]any) error {
 	d, err := decodeDisableDomainEvent(data)
 	if err != nil {
-		return errors.Wrap(errDisableDomainGroupEvent, err)
+		return errors.Wrap(errDisableDomainEvent, err)
 	}
 
 	disabled := domains.DisabledStatus
 	if _, err := es.repo.UpdateDomain(ctx, d.ID, domains.DomainReq{Status: &disabled, UpdatedBy: &d.UpdatedBy, UpdatedAt: &d.UpdatedAt}); err != nil {
-		return errors.Wrap(errDisableDomainGroupEvent, err)
+		return errors.Wrap(errDisableDomainEvent, err)
 	}
 
 	return nil
@@ -170,24 +172,34 @@ func (es *eventHandler) disableDomainHandler(ctx context.Context, data map[strin
 func (es *eventHandler) freezeDomainHandler(ctx context.Context, data map[string]any) error {
 	d, err := decodeFreezeDomainEvent(data)
 	if err != nil {
-		return errors.Wrap(errFreezeDomainGroupEvent, err)
+		return errors.Wrap(errFreezeDomainEvent, err)
 	}
 
 	freeze := domains.FreezeStatus
 	if _, err := es.repo.UpdateDomain(ctx, d.ID, domains.DomainReq{Status: &freeze, UpdatedBy: &d.UpdatedBy, UpdatedAt: &d.UpdatedAt}); err != nil {
-		return errors.Wrap(errFreezeDomainGroupEvent, err)
+		return errors.Wrap(errFreezeDomainEvent, err)
 	}
 
 	return nil
 }
 
-func (es *eventHandler) userDeleteDomainHandler(_ context.Context, data map[string]any) error {
-	_, err := decodeUserDeleteDomainEvent(data)
+func (es *eventHandler) removeDomainMembersHandler(ctx context.Context, data map[string]any) error {
+	domainID, memberIDs, err := decodeRemoveDomainMembersEvent(data)
 	if err != nil {
-		return errors.Wrap(errUserDeleteDomainEvent, err)
+		return errors.Wrap(errRemoveDomainMembersEvent, err)
 	}
 
-	return fmt.Errorf("not implemented user delete domain handler")
+	if err := es.repo.RemoveEntityMembers(ctx, domainID, memberIDs); err != nil {
+		return errors.Wrap(errRemoveDomainMembersEvent, err)
+	}
+
+	for _, memberID := range memberIDs {
+		if err := es.entityRoleManager.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
+			return errors.Wrap(errRemoveDomainMembersEvent, err)
+		}
+	}
+
+	return nil
 }
 
 func (es *eventHandler) deleteDomainHandler(ctx context.Context, data map[string]any) error {

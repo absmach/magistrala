@@ -92,6 +92,10 @@ func (rtm *RoleManagerTracing) ListEntityMembers(ctx context.Context, session au
 	return rtm.roles.ListEntityMembers(ctx, session, entityID, pageQuery)
 }
 
+func (rtm *RoleManagerTracing) RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error {
+	return rtm.roles.RemoveMemberFromDomain(ctx, domainID, memberID)
+}
+
 func (rtm *RoleManagerTracing) RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, members []string) error {
 	return rtm.roles.RemoveEntityMembers(ctx, session, entityID, members)
 }

@@ -4,7 +4,6 @@
 package consumer
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/absmach/supermq/domains"
@@ -34,6 +33,9 @@ var (
 	errCreatedBy     = errors.New("missing or invalid 'created_by'")
 	errCreatedAt     = errors.New("failed to parse 'created_at' time")
 	errUpdatedAt     = errors.New("failed to parse 'updated_at' time")
+	errEntityID      = errors.New("missing or invalid 'entity_id'")
+	errMembers       = errors.New("missing or invalid 'members'")
+	errNotString     = errors.New("not string type")
 )
 
 func ToDomains(data map[string]any) (domains.Domain, error) {
@@ -256,8 +258,21 @@ func decodeFreezeDomainEvent(data map[string]any) (domains.Domain, error) {
 	return d, nil
 }
 
-func decodeUserDeleteDomainEvent(_ map[string]any) (domains.Domain, error) {
-	return domains.Domain{}, fmt.Errorf("not implemented decode domain user delete event ")
+func decodeRemoveDomainMembersEvent(data map[string]any) (string, []string, error) {
+	entityID, ok := data["entity_id"].(string)
+	if !ok {
+		return "", nil, errors.Wrap(errRemoveDomainMembersEvent, errEntityID)
+	}
+	imems, ok := data["members"].([]any)
+	if !ok {
+		return "", nil, errors.Wrap(errRemoveDomainMembersEvent, errMembers)
+	}
+	mems, err := toStrings(imems)
+	if err != nil {
+		return "", nil, errors.Wrap(errRemoveDomainMembersEvent, err)
+	}
+
+	return entityID, mems, nil
 }
 
 func decodeDeleteDomainEvent(data map[string]any) (domains.Domain, error) {
@@ -268,4 +283,16 @@ func decodeDeleteDomainEvent(data map[string]any) (domains.Domain, error) {
 	}
 	d.ID = id
 	return d, nil
+}
+
+func toStrings(data []any) ([]string, error) {
+	var strs []string
+	for _, i := range data {
+		str, ok := i.(string)
+		if !ok {
+			return []string{}, errNotString
+		}
+		strs = append(strs, str)
+	}
+	return strs, nil
 }

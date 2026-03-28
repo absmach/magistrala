@@ -419,3 +419,43 @@ func TestUnsetParentGroupFromClient(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteDomainClients(t *testing.T) {
+	svc := new(mocks.Service)
+	server := startGRPCServer(svc, port)
+	defer server.GracefulStop()
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := grpcapi.NewClient(conn, time.Second)
+
+	cases := []struct {
+		desc   string
+		req    *grpcCommonV1.DeleteDomainEntitiesReq
+		svcErr error
+		err    error
+	}{
+		{
+			desc: "delete domain clients successfully",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: validID,
+			},
+			err: nil,
+		},
+		{
+			desc: "delete domain clients with invalid request",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: "",
+			},
+			svcErr: svcerr.ErrRemoveEntity,
+			err:    svcerr.ErrRemoveEntity,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("DeleteDomainClients", mock.Anything, tc.req.DomainId).Return(tc.svcErr)
+			_, err := client.DeleteDomainClients(context.Background(), tc.req)
+			assert.True(t, errors.Contains(err, tc.err))
+			svcCall.Unset()
+		})
+	}
+}

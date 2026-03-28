@@ -22,3 +22,7 @@ type removeChannelConnectionsReq struct {
 type UnsetParentGroupFromClientReq struct {
 	parentGroupID string
 }
+
+type deleteDomainClientsReq struct {
+	domainID string
+}

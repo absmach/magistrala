@@ -24,8 +24,9 @@ const svcName = "groups.v1.GroupsService"
 var _ grpcGroupsV1.GroupsServiceClient = (*grpcClient)(nil)
 
 type grpcClient struct {
-	timeout        time.Duration
-	retrieveEntity endpoint.Endpoint
+	timeout            time.Duration
+	retrieveEntity     endpoint.Endpoint
+	deleteDomainGroups endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
@@ -38,6 +39,15 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcGroupsV1.Groups
 			encodeRetrieveEntityRequest,
 			decodeRetrieveEntityResponse,
 			grpcCommonV1.RetrieveEntityRes{},
+		).Endpoint(),
+
+		deleteDomainGroups: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"DeleteDomainGroups",
+			encodeDeleteDomainGroupsRequest,
+			decodeDeleteDomainGroupsResponse,
+			grpcCommonV1.DeleteDomainEntitiesRes{},
 		).Endpoint(),
 
 		timeout: timeout,
@@ -62,6 +72,27 @@ func encodeRetrieveEntityRequest(_ context.Context, grpcReq any) (any, error) {
 }
 
 func decodeRetrieveEntityResponse(_ context.Context, grpcRes any) (any, error) {
+	return grpcRes, nil
+}
+
+func (client grpcClient) DeleteDomainGroups(ctx context.Context, req *grpcCommonV1.DeleteDomainEntitiesReq, _ ...grpc.CallOption) (r *grpcCommonV1.DeleteDomainEntitiesRes, err error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	res, err := client.deleteDomainGroups(ctx, req)
+	if err != nil {
+		return &grpcCommonV1.DeleteDomainEntitiesRes{}, decodeError(err)
+	}
+	typedRes := res.(*grpcCommonV1.DeleteDomainEntitiesRes)
+
+	return typedRes, nil
+}
+
+func encodeDeleteDomainGroupsRequest(_ context.Context, grpcReq any) (any, error) {
+	return grpcReq, nil
+}
+
+func decodeDeleteDomainGroupsResponse(_ context.Context, grpcRes any) (any, error) {
 	return grpcRes, nil
 }
 

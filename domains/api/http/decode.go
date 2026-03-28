@@ -98,6 +98,13 @@ func decodeFreezeDomainRequest(_ context.Context, r *http.Request) (any, error) 
 	return req, nil
 }
 
+func decodeDeleteDomainRequest(_ context.Context, r *http.Request) (any, error) {
+	req := deleteDomainReq{
+		domainID: chi.URLParam(r, "domainID"),
+	}
+	return req, nil
+}
+
 func decodePageRequest(_ context.Context, r *http.Request) (domains.Page, error) {
 	s, err := apiutil.ReadStringQuery(r, api.StatusKey, api.DefClientStatus)
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	grpcGroupsV1 "github.com/absmach/supermq/api/grpc/groups/v1"
 	"github.com/absmach/supermq/groups"
 	grpcapi "github.com/absmach/supermq/groups/api/grpc"
-	prmocks "github.com/absmach/supermq/groups/private/mocks"
+	"github.com/absmach/supermq/groups/private/mocks"
 	"github.com/absmach/supermq/internal/nullable"
 	"github.com/absmach/supermq/internal/testsutil"
 	"github.com/absmach/supermq/pkg/errors"
@@ -48,7 +48,7 @@ var (
 	}
 )
 
-func startGRPCServer(svc *prmocks.Service, port int) {
+func startGRPCServer(svc *mocks.Service, port int) *grpc.Server {
 	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
 	if err != nil {
 		panic(fmt.Sprintf("failed to obtain port: %s", err))
@@ -60,13 +60,15 @@ func startGRPCServer(svc *prmocks.Service, port int) {
 			panic(fmt.Sprintf("failed to serve: %s", err))
 		}
 	}()
+	return server
 }
 
 func TestRetrieveEntityEndpoint(t *testing.T) {
-	svc := new(prmocks.Service)
-	startGRPCServer(svc, port)
-	grpAddr := fmt.Sprintf("localhost:%d", port)
-	conn, _ := grpc.NewClient(grpAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	svc := new(mocks.Service)
+	server := startGRPCServer(svc, port)
+	defer server.GracefulStop()
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	client := grpcapi.NewClient(conn, time.Second)
 
 	cases := []struct {
@@ -154,6 +156,71 @@ func TestRetrieveEntityEndpoint(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			svcCall := svc.On("RetrieveById", mock.Anything, tc.req.Id).Return(tc.svcRes, tc.svcErr)
 			res, err := client.RetrieveEntity(context.Background(), tc.req)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
+			assert.Equal(t, tc.res, res, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.res, res))
+			svcCall.Unset()
+		})
+	}
+}
+
+func TestDeleteDomainGroupsEndpoint(t *testing.T) {
+	svc := new(mocks.Service)
+	server := startGRPCServer(svc, port)
+	defer server.GracefulStop()
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := grpcapi.NewClient(conn, time.Second)
+
+	cases := []struct {
+		desc   string
+		req    *grpcCommonV1.DeleteDomainEntitiesReq
+		svcErr error
+		res    *grpcCommonV1.DeleteDomainEntitiesRes
+		err    error
+	}{
+		{
+			desc: "delete domain groups successfully",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: validID,
+			},
+			svcErr: nil,
+			res: &grpcCommonV1.DeleteDomainEntitiesRes{
+				Deleted: true,
+			},
+			err: nil,
+		},
+		{
+			desc: "delete domain groups with authentication error",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: validID,
+			},
+			svcErr: svcerr.ErrAuthentication,
+			res:    &grpcCommonV1.DeleteDomainEntitiesRes{},
+			err:    svcerr.ErrAuthentication,
+		},
+		{
+			desc: "delete domain groups with authorization error",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: validID,
+			},
+			svcErr: svcerr.ErrAuthorization,
+			res:    &grpcCommonV1.DeleteDomainEntitiesRes{},
+			err:    svcerr.ErrAuthorization,
+		},
+		{
+			desc: "delete domain groups with unknown error",
+			req: &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: validID,
+			},
+			svcErr: errors.ErrUnidentified,
+			res:    &grpcCommonV1.DeleteDomainEntitiesRes{},
+			err:    errors.ErrUnidentified,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("DeleteDomainGroups", mock.Anything, tc.req.DomainId).Return(tc.svcErr)
+			res, err := client.DeleteDomainGroups(context.Background(), tc.req)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
 			assert.Equal(t, tc.res, res, fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.res, res))
 			svcCall.Unset()

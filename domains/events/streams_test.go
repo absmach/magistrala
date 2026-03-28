@@ -401,6 +401,44 @@ func TestListDomains(t *testing.T) {
 	}
 }
 
+func TestDeleteDomain(t *testing.T) {
+	svc, nsvc := newEventStoreMiddleware(t)
+
+	validCtx := context.WithValue(context.Background(), middleware.RequestIDKey, testsutil.GenerateUUID(t))
+
+	cases := []struct {
+		desc     string
+		session  authn.Session
+		domainID string
+		svcErr   error
+		err      error
+	}{
+		{
+			desc:     "publish successfully",
+			session:  validSession,
+			domainID: validDomain.ID,
+			svcErr:   nil,
+			err:      nil,
+		},
+		{
+			desc:     "failed to publish with service error",
+			session:  validSession,
+			domainID: validDomain.ID,
+			svcErr:   svcerr.ErrRemoveEntity,
+			err:      svcerr.ErrRemoveEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("DeleteDomain", validCtx, tc.session, tc.domainID).Return(tc.svcErr)
+			err := nsvc.DeleteDomain(validCtx, tc.session, tc.domainID)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+			svcCall.Unset()
+		})
+	}
+}
+
 func TestSendInvitation(t *testing.T) {
 	svc, nsvc := newEventStoreMiddleware(t)
 

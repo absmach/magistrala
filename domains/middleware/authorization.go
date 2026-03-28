@@ -141,6 +141,21 @@ func (am *authorizationMiddleware) ListDomains(ctx context.Context, session auth
 	return am.svc.ListDomains(ctx, session, page)
 }
 
+func (am *authorizationMiddleware) DeleteDomain(ctx context.Context, session authn.Session, id string) error {
+	if err := am.authorize(ctx, policies.DomainType, domains.OpDeleteDomain, authz.PolicyReq{
+		TokenType:   session.Type,
+		Subject:     session.DomainUserID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Object:      id,
+		ObjectType:  policies.DomainType,
+	}); err != nil {
+		return err
+	}
+
+	return am.svc.DeleteDomain(ctx, session, id)
+}
+
 func (am *authorizationMiddleware) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (domains.Invitation, error) {
 	if err := am.authorize(ctx, session, policies.DomainType, operations.OpSendDomainInvitation, authz.PolicyReq{
 		Subject:     session.DomainUserID,

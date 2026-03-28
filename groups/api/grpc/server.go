@@ -22,7 +22,8 @@ var _ grpcGroupsV1.GroupsServiceServer = (*grpcServer)(nil)
 
 type grpcServer struct {
 	grpcGroupsV1.UnimplementedGroupsServiceServer
-	retrieveEntity kitgrpc.Handler
+	retrieveEntity     kitgrpc.Handler
+	deleteDomainGroups kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -32,6 +33,11 @@ func NewServer(svc groups.Service) grpcGroupsV1.GroupsServiceServer {
 			retrieveEntityEndpoint(svc),
 			decodeRetrieveEntityRequest,
 			encodeRetrieveEntityResponse,
+		),
+		deleteDomainGroups: kitgrpc.NewServer(
+			deleteDomainGroupsEndpoint(svc),
+			decodeDeleteDomainGroupsRequest,
+			encodeDeleteDomainGroupsResponse,
 		),
 	}
 }
@@ -61,6 +67,29 @@ func encodeRetrieveEntityResponse(_ context.Context, grpcRes any) (any, error) {
 			ParentGroupId: res.parentGroup,
 			Status:        uint32(res.status),
 		},
+	}, nil
+}
+
+func (s *grpcServer) DeleteDomainGroups(ctx context.Context, req *grpcCommonV1.DeleteDomainEntitiesReq) (*grpcCommonV1.DeleteDomainEntitiesRes, error) {
+	_, res, err := s.deleteDomainGroups.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+	return res.(*grpcCommonV1.DeleteDomainEntitiesRes), nil
+}
+
+func decodeDeleteDomainGroupsRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(*grpcCommonV1.DeleteDomainEntitiesReq)
+	return deleteDomainGroupsReq{
+		domainID: req.GetDomainId(),
+	}, nil
+}
+
+func encodeDeleteDomainGroupsResponse(_ context.Context, grpcRes any) (any, error) {
+	res := grpcRes.(deleteDomainGroupsRes)
+
+	return &grpcCommonV1.DeleteDomainEntitiesRes{
+		Deleted: res.deleted,
 	}, nil
 }
 

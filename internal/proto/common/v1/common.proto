@@ -60,3 +60,11 @@ message RetrieveIDByRouteReq{
   string route = 1;
   string domain_id = 2;
 }
+
+message DeleteDomainEntitiesReq {
+  string domain_id = 1;
+}
+
+message DeleteDomainEntitiesRes {
+  bool deleted = 1;
+}

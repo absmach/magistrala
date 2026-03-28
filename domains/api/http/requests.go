@@ -118,6 +118,18 @@ func (req freezeDomainReq) validate() error {
 	return nil
 }
 
+type deleteDomainReq struct {
+	domainID string
+}
+
+func (req deleteDomainReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+
+	return nil
+}
+
 type sendInvitationReq struct {
 	InviteeUserID string `json:"invitee_user_id,omitempty"`
 	RoleID        string `json:"role_id,omitempty"`

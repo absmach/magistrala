@@ -23,3 +23,7 @@ type retrieveEntityRes channelBasic
 type retrieveIDByRouteRes struct {
 	id string
 }
+
+type deleteDomainChannelsRes struct {
+	deleted bool
+}

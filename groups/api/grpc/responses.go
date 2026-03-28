@@ -11,3 +11,7 @@ type groupBasic struct {
 }
 
 type retrieveEntityRes groupBasic
+
+type deleteDomainGroupsRes struct {
+	deleted bool
+}

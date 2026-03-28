@@ -68,6 +68,9 @@ const (
 	envPrefixDB            = "SMQ_DOMAINS_DB_"
 	envPrefixAuth          = "SMQ_AUTH_GRPC_"
 	envPrefixDomainCallout = "SMQ_DOMAINS_CALLOUT_"
+	envPrefixChannels      = "SMQ_CHANNELS_GRPC_"
+	envPrefixClients       = "SMQ_CLIENTS_GRPC_"
+	envPrefixGroups        = "SMQ_GROUPS_GRPC_"
 	defDB                  = "domains"
 	defSvcHTTPPort         = "9004"
 	defSvcGRPCPort         = "7004"
@@ -89,6 +92,8 @@ type config struct {
 	AuthKeyAlgorithm    string        `env:"SMQ_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
 	JWKSURL             string        `env:"SMQ_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
 	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
+	DeleteInterval      time.Duration `env:"SMQ_DOMAINS_DELETE_INTERVAL"      envDefault:"24h"`
+	DeleteAfter         time.Duration `env:"SMQ_DOMAINS_DELETE_AFTER"         envDefault:"720h"`
 }
 
 func main() {
@@ -235,12 +240,59 @@ func main() {
 		return
 	}
 
+	chgrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&chgrpcCfg, env.Options{Prefix: envPrefixChannels}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load channels gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	channelsClient, channelsHandler, err := grpcclient.SetupChannelsClient(ctx, chgrpcCfg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to channels gRPC server: %s", err))
+		exitCode = 1
+		return
+	}
+	defer channelsHandler.Close()
+	logger.Info("Channels gRPC client successfully connected to channels gRPC server " + channelsHandler.Secure())
+
+	thgrpcCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&thgrpcCfg, env.Options{Prefix: envPrefixClients}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	clientsClient, clientsHandler, err := grpcclient.SetupClientsClient(ctx, thgrpcCfg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to clients gRPC server: %s", err))
+		exitCode = 1
+		return
+	}
+	defer clientsHandler.Close()
+	logger.Info("Clients gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
+
+	groupsgRPCCfg := grpcclient.Config{}
+	if err := env.ParseWithOptions(&groupsgRPCCfg, env.Options{Prefix: envPrefixGroups}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load groups gRPC client configuration : %s", err))
+		exitCode = 1
+		return
+	}
+	groupsClient, groupsHandler, err := grpcclient.SetupGroupsClient(ctx, groupsgRPCCfg)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to connect to groups gRPC server: %s", err))
+		exitCode = 1
+		return
+	}
+	defer groupsHandler.Close()
+	logger.Info("Groups gRPC client successfully connected to groups gRPC server " + groupsHandler.Secure())
+
 	svc, err := newDomainService(ctx, domainsRepo, cache, tracer, cfg, authz, policyService, logger, call)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err.Error()))
 		exitCode = 1
 		return
 	}
+
+	domains.NewDeleteHandler(ctx, domainsRepo, policyService, channelsClient, clientsClient, groupsClient, cfg.DeleteInterval, cfg.DeleteAfter, logger)
 
 	grpcServerConfig := server.Config{Port: defSvcGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -347,6 +399,7 @@ func newDomainService(ctx context.Context, domainsRepo domainsSvc.Repository, ca
 	svc = dmw.NewLogging(svc, logger)
 
 	svc = dmw.NewTracing(svc, tracer)
+
 	return svc, nil
 }
 

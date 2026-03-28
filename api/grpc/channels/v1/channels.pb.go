@@ -327,13 +327,14 @@ const file_channels_v1_channels_proto_rawDesc = "" +
 	"\bAuthzRes\x12\x1e\n" +
 	"\n" +
 	"authorized\x18\x01 \x01(\bR\n" +
-	"authorized2\xe1\x03\n" +
+	"authorized2\xc3\x04\n" +
 	"\x0fChannelsService\x12;\n" +
 	"\tAuthorize\x12\x15.channels.v1.AuthzReq\x1a\x15.channels.v1.AuthzRes\"\x00\x12m\n" +
 	"\x17RemoveClientConnections\x12'.channels.v1.RemoveClientConnectionsReq\x1a'.channels.v1.RemoveClientConnectionsRes\"\x00\x12|\n" +
 	"\x1cUnsetParentGroupFromChannels\x12,.channels.v1.UnsetParentGroupFromChannelsReq\x1a,.channels.v1.UnsetParentGroupFromChannelsRes\"\x00\x12N\n" +
 	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
-	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B1Z/github.com/absmach/supermq/api/grpc/channels/v1b\x06proto3"
+	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12`\n" +
+	"\x14DeleteDomainChannels\x12\".common.v1.DeleteDomainEntitiesReq\x1a\".common.v1.DeleteDomainEntitiesRes\"\x00B1Z/github.com/absmach/supermq/api/grpc/channels/v1b\x06proto3"
 
 var (
 	file_channels_v1_channels_proto_rawDescOnce sync.Once
@@ -357,24 +358,28 @@ var file_channels_v1_channels_proto_goTypes = []any{
 	(*AuthzRes)(nil),                        // 5: channels.v1.AuthzRes
 	(*v1.RetrieveEntityReq)(nil),            // 6: common.v1.RetrieveEntityReq
 	(*v1.RetrieveIDByRouteReq)(nil),         // 7: common.v1.RetrieveIDByRouteReq
-	(*v1.RetrieveEntityRes)(nil),            // 8: common.v1.RetrieveEntityRes
+	(*v1.DeleteDomainEntitiesReq)(nil),      // 8: common.v1.DeleteDomainEntitiesReq
+	(*v1.RetrieveEntityRes)(nil),            // 9: common.v1.RetrieveEntityRes
+	(*v1.DeleteDomainEntitiesRes)(nil),      // 10: common.v1.DeleteDomainEntitiesRes
 }
 var file_channels_v1_channels_proto_depIdxs = []int32{
-	4, // 0: channels.v1.ChannelsService.Authorize:input_type -> channels.v1.AuthzReq
-	0, // 1: channels.v1.ChannelsService.RemoveClientConnections:input_type -> channels.v1.RemoveClientConnectionsReq
-	2, // 2: channels.v1.ChannelsService.UnsetParentGroupFromChannels:input_type -> channels.v1.UnsetParentGroupFromChannelsReq
-	6, // 3: channels.v1.ChannelsService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
-	7, // 4: channels.v1.ChannelsService.RetrieveIDByRoute:input_type -> common.v1.RetrieveIDByRouteReq
-	5, // 5: channels.v1.ChannelsService.Authorize:output_type -> channels.v1.AuthzRes
-	1, // 6: channels.v1.ChannelsService.RemoveClientConnections:output_type -> channels.v1.RemoveClientConnectionsRes
-	3, // 7: channels.v1.ChannelsService.UnsetParentGroupFromChannels:output_type -> channels.v1.UnsetParentGroupFromChannelsRes
-	8, // 8: channels.v1.ChannelsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
-	8, // 9: channels.v1.ChannelsService.RetrieveIDByRoute:output_type -> common.v1.RetrieveEntityRes
-	5, // [5:10] is the sub-list for method output_type
-	0, // [0:5] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	4,  // 0: channels.v1.ChannelsService.Authorize:input_type -> channels.v1.AuthzReq
+	0,  // 1: channels.v1.ChannelsService.RemoveClientConnections:input_type -> channels.v1.RemoveClientConnectionsReq
+	2,  // 2: channels.v1.ChannelsService.UnsetParentGroupFromChannels:input_type -> channels.v1.UnsetParentGroupFromChannelsReq
+	6,  // 3: channels.v1.ChannelsService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
+	7,  // 4: channels.v1.ChannelsService.RetrieveIDByRoute:input_type -> common.v1.RetrieveIDByRouteReq
+	8,  // 5: channels.v1.ChannelsService.DeleteDomainChannels:input_type -> common.v1.DeleteDomainEntitiesReq
+	5,  // 6: channels.v1.ChannelsService.Authorize:output_type -> channels.v1.AuthzRes
+	1,  // 7: channels.v1.ChannelsService.RemoveClientConnections:output_type -> channels.v1.RemoveClientConnectionsRes
+	3,  // 8: channels.v1.ChannelsService.UnsetParentGroupFromChannels:output_type -> channels.v1.UnsetParentGroupFromChannelsRes
+	9,  // 9: channels.v1.ChannelsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
+	9,  // 10: channels.v1.ChannelsService.RetrieveIDByRoute:output_type -> common.v1.RetrieveEntityRes
+	10, // 11: channels.v1.ChannelsService.DeleteDomainChannels:output_type -> common.v1.DeleteDomainEntitiesRes
+	6,  // [6:12] is the sub-list for method output_type
+	0,  // [0:6] is the sub-list for method input_type
+	0,  // [0:0] is the sub-list for extension type_name
+	0,  // [0:0] is the sub-list for extension extendee
+	0,  // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_channels_v1_channels_proto_init() }

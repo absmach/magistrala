@@ -23,7 +23,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	GroupsService_RetrieveEntity_FullMethodName = "/groups.v1.GroupsService/RetrieveEntity"
+	GroupsService_RetrieveEntity_FullMethodName     = "/groups.v1.GroupsService/RetrieveEntity"
+	GroupsService_DeleteDomainGroups_FullMethodName = "/groups.v1.GroupsService/DeleteDomainGroups"
 )
 
 // GroupsServiceClient is the client API for GroupsService service.
@@ -34,6 +35,7 @@ const (
 // functionalities for SuperMQ services.
 type GroupsServiceClient interface {
 	RetrieveEntity(ctx context.Context, in *v1.RetrieveEntityReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
+	DeleteDomainGroups(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error)
 }
 
 type groupsServiceClient struct {
@@ -54,6 +56,16 @@ func (c *groupsServiceClient) RetrieveEntity(ctx context.Context, in *v1.Retriev
 	return out, nil
 }
 
+func (c *groupsServiceClient) DeleteDomainGroups(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.DeleteDomainEntitiesRes)
+	err := c.cc.Invoke(ctx, GroupsService_DeleteDomainGroups_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // GroupsServiceServer is the server API for GroupsService service.
 // All implementations must embed UnimplementedGroupsServiceServer
 // for forward compatibility.
@@ -62,6 +74,7 @@ func (c *groupsServiceClient) RetrieveEntity(ctx context.Context, in *v1.Retriev
 // functionalities for SuperMQ services.
 type GroupsServiceServer interface {
 	RetrieveEntity(context.Context, *v1.RetrieveEntityReq) (*v1.RetrieveEntityRes, error)
+	DeleteDomainGroups(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error)
 	mustEmbedUnimplementedGroupsServiceServer()
 }
 
@@ -74,6 +87,9 @@ type UnimplementedGroupsServiceServer struct{}
 
 func (UnimplementedGroupsServiceServer) RetrieveEntity(context.Context, *v1.RetrieveEntityReq) (*v1.RetrieveEntityRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method RetrieveEntity not implemented")
+}
+func (UnimplementedGroupsServiceServer) DeleteDomainGroups(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDomainGroups not implemented")
 }
 func (UnimplementedGroupsServiceServer) mustEmbedUnimplementedGroupsServiceServer() {}
 func (UnimplementedGroupsServiceServer) testEmbeddedByValue()                       {}
@@ -114,6 +130,24 @@ func _GroupsService_RetrieveEntity_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _GroupsService_DeleteDomainGroups_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.DeleteDomainEntitiesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(GroupsServiceServer).DeleteDomainGroups(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: GroupsService_DeleteDomainGroups_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(GroupsServiceServer).DeleteDomainGroups(ctx, req.(*v1.DeleteDomainEntitiesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // GroupsService_ServiceDesc is the grpc.ServiceDesc for GroupsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -124,6 +158,10 @@ var GroupsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RetrieveEntity",
 			Handler:    _GroupsService_RetrieveEntity_Handler,
+		},
+		{
+			MethodName: "DeleteDomainGroups",
+			Handler:    _GroupsService_DeleteDomainGroups_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

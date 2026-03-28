@@ -15,6 +15,7 @@ const (
 	OpDisableDomain
 	OpFreezeDomain
 	OpListDomains
+	OpDeleteDomain
 
 	OpSendDomainInvitation
 	OpListDomainInvitations
@@ -53,6 +54,10 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 		},
 		OpDisableDomain: {
 			Name:               "disable",
+			PermissionRequired: true,
+		},
+		OpDeleteDomain: {
+			Name:               "delete",
 			PermissionRequired: true,
 		},
 

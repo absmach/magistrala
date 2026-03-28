@@ -83,3 +83,18 @@ func retrieveIDByRouteEndpoint(svc channels.Service) endpoint.Endpoint {
 		return retrieveIDByRouteRes{id: id}, nil
 	}
 }
+
+func deleteDomainChannelsEndpoint(svc channels.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deleteDomainChannelsReq)
+		if err := req.validate(); err != nil {
+			return deleteDomainChannelsRes{}, err
+		}
+
+		if err := svc.DeleteDomainChannels(ctx, req.domainID); err != nil {
+			return deleteDomainChannelsRes{}, err
+		}
+
+		return deleteDomainChannelsRes{deleted: true}, nil
+	}
+}

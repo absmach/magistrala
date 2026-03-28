@@ -93,6 +93,14 @@ func (ms *metricsMiddleware) ListDomains(ctx context.Context, session authn.Sess
 	return ms.svc.ListDomains(ctx, session, page)
 }
 
+func (mm *metricsMiddleware) DeleteDomain(ctx context.Context, session authn.Session, id string) (err error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "delete_domain").Add(1)
+		mm.latency.With("method", "delete_domain").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.DeleteDomain(ctx, session, id)
+}
+
 func (mm *metricsMiddleware) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (domains.Invitation, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "send_invitation").Add(1)

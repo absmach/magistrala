@@ -30,6 +30,7 @@ const (
 	ClientsService_RemoveConnections_FullMethodName          = "/clients.v1.ClientsService/RemoveConnections"
 	ClientsService_RemoveChannelConnections_FullMethodName   = "/clients.v1.ClientsService/RemoveChannelConnections"
 	ClientsService_UnsetParentGroupFromClient_FullMethodName = "/clients.v1.ClientsService/UnsetParentGroupFromClient"
+	ClientsService_DeleteDomainClients_FullMethodName        = "/clients.v1.ClientsService/DeleteDomainClients"
 )
 
 // ClientsServiceClient is the client API for ClientsService service.
@@ -47,6 +48,7 @@ type ClientsServiceClient interface {
 	RemoveConnections(ctx context.Context, in *v1.RemoveConnectionsReq, opts ...grpc.CallOption) (*v1.RemoveConnectionsRes, error)
 	RemoveChannelConnections(ctx context.Context, in *RemoveChannelConnectionsReq, opts ...grpc.CallOption) (*RemoveChannelConnectionsRes, error)
 	UnsetParentGroupFromClient(ctx context.Context, in *UnsetParentGroupFromClientReq, opts ...grpc.CallOption) (*UnsetParentGroupFromClientRes, error)
+	DeleteDomainClients(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error)
 }
 
 type clientsServiceClient struct {
@@ -127,6 +129,16 @@ func (c *clientsServiceClient) UnsetParentGroupFromClient(ctx context.Context, i
 	return out, nil
 }
 
+func (c *clientsServiceClient) DeleteDomainClients(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.DeleteDomainEntitiesRes)
+	err := c.cc.Invoke(ctx, ClientsService_DeleteDomainClients_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ClientsServiceServer is the server API for ClientsService service.
 // All implementations must embed UnimplementedClientsServiceServer
 // for forward compatibility.
@@ -142,6 +154,7 @@ type ClientsServiceServer interface {
 	RemoveConnections(context.Context, *v1.RemoveConnectionsReq) (*v1.RemoveConnectionsRes, error)
 	RemoveChannelConnections(context.Context, *RemoveChannelConnectionsReq) (*RemoveChannelConnectionsRes, error)
 	UnsetParentGroupFromClient(context.Context, *UnsetParentGroupFromClientReq) (*UnsetParentGroupFromClientRes, error)
+	DeleteDomainClients(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error)
 	mustEmbedUnimplementedClientsServiceServer()
 }
 
@@ -172,6 +185,9 @@ func (UnimplementedClientsServiceServer) RemoveChannelConnections(context.Contex
 }
 func (UnimplementedClientsServiceServer) UnsetParentGroupFromClient(context.Context, *UnsetParentGroupFromClientReq) (*UnsetParentGroupFromClientRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method UnsetParentGroupFromClient not implemented")
+}
+func (UnimplementedClientsServiceServer) DeleteDomainClients(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDomainClients not implemented")
 }
 func (UnimplementedClientsServiceServer) mustEmbedUnimplementedClientsServiceServer() {}
 func (UnimplementedClientsServiceServer) testEmbeddedByValue()                        {}
@@ -320,6 +336,24 @@ func _ClientsService_UnsetParentGroupFromClient_Handler(srv interface{}, ctx con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ClientsService_DeleteDomainClients_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.DeleteDomainEntitiesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ClientsServiceServer).DeleteDomainClients(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ClientsService_DeleteDomainClients_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ClientsServiceServer).DeleteDomainClients(ctx, req.(*v1.DeleteDomainEntitiesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ClientsService_ServiceDesc is the grpc.ServiceDesc for ClientsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -354,6 +388,10 @@ var ClientsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UnsetParentGroupFromClient",
 			Handler:    _ClientsService_UnsetParentGroupFromClient_Handler,
+		},
+		{
+			MethodName: "DeleteDomainClients",
+			Handler:    _ClientsService_DeleteDomainClients_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

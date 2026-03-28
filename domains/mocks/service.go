@@ -286,6 +286,69 @@ func (_c *Service_CreateDomain_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
+// DeleteDomain provides a mock function for the type Service
+func (_mock *Service) DeleteDomain(ctx context.Context, session authn.Session, id string) error {
+	ret := _mock.Called(ctx, session, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDomain")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_DeleteDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDomain'
+type Service_DeleteDomain_Call struct {
+	*mock.Call
+}
+
+// DeleteDomain is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - id string
+func (_e *Service_Expecter) DeleteDomain(ctx interface{}, session interface{}, id interface{}) *Service_DeleteDomain_Call {
+	return &Service_DeleteDomain_Call{Call: _e.mock.On("DeleteDomain", ctx, session, id)}
+}
+
+func (_c *Service_DeleteDomain_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DeleteDomain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_DeleteDomain_Call) Return(err error) *Service_DeleteDomain_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_DeleteDomain_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) error) *Service_DeleteDomain_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteInvitation provides a mock function for the type Service
 func (_mock *Service) DeleteInvitation(ctx context.Context, session authn.Session, inviteeUserID string, domainID string) error {
 	ret := _mock.Called(ctx, session, inviteeUserID, domainID)

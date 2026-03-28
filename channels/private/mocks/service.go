@@ -99,6 +99,63 @@ func (_c *Service_Authorize_Call) RunAndReturn(run func(ctx context.Context, req
 	return _c
 }
 
+// DeleteDomainChannels provides a mock function for the type Service
+func (_mock *Service) DeleteDomainChannels(ctx context.Context, domainID string) error {
+	ret := _mock.Called(ctx, domainID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDomainChannels")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = returnFunc(ctx, domainID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_DeleteDomainChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDomainChannels'
+type Service_DeleteDomainChannels_Call struct {
+	*mock.Call
+}
+
+// DeleteDomainChannels is a helper method to define mock.On call
+//   - ctx context.Context
+//   - domainID string
+func (_e *Service_Expecter) DeleteDomainChannels(ctx interface{}, domainID interface{}) *Service_DeleteDomainChannels_Call {
+	return &Service_DeleteDomainChannels_Call{Call: _e.mock.On("DeleteDomainChannels", ctx, domainID)}
+}
+
+func (_c *Service_DeleteDomainChannels_Call) Run(run func(ctx context.Context, domainID string)) *Service_DeleteDomainChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_DeleteDomainChannels_Call) Return(err error) *Service_DeleteDomainChannels_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_DeleteDomainChannels_Call) RunAndReturn(run func(ctx context.Context, domainID string) error) *Service_DeleteDomainChannels_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveClientConnections provides a mock function for the type Service
 func (_mock *Service) RemoveClientConnections(ctx context.Context, clientID string) error {
 	ret := _mock.Called(ctx, clientID)

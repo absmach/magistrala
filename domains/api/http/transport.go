@@ -64,6 +64,13 @@ func MakeHandler(svc domains.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 				opts...,
 			), "update_domain").ServeHTTP)
 
+			r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+				deleteDomainEndpoint(svc),
+				decodeDeleteDomainRequest,
+				api.EncodeResponse,
+				opts...,
+			), "delete_domain").ServeHTTP)
+
 			r.Post("/enable", otelhttp.NewHandler(kithttp.NewServer(
 				enableDomainEndpoint(svc),
 				decodeEnableDomainRequest,

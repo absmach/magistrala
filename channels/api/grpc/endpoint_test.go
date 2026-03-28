@@ -343,3 +343,52 @@ func TestRetrieveIDByRoute(t *testing.T) {
 		})
 	}
 }
+
+func TestDeleteDomainChannels(t *testing.T) {
+	svc := new(mocks.Service)
+	server := startGRPCServer(svc, port)
+	defer server.GracefulStop()
+	authAddr := fmt.Sprintf("localhost:%d", port)
+	conn, _ := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	client := grpcapi.NewClient(conn, time.Second)
+
+	domainID := testsutil.GenerateUUID(t)
+
+	cases := []struct {
+		desc      string
+		domainID  string
+		svcErr    error
+		deleteRes *grpcCommonV1.DeleteDomainEntitiesRes
+		err       error
+	}{
+		{
+			desc:     "delete domain channels successfully",
+			domainID: domainID,
+			deleteRes: &grpcCommonV1.DeleteDomainEntitiesRes{
+				Deleted: true,
+			},
+			err: nil,
+		},
+		{
+			desc:     "delete domain channels with error",
+			domainID: domainID,
+			svcErr:   svcerr.ErrNotFound,
+			deleteRes: &grpcCommonV1.DeleteDomainEntitiesRes{
+				Deleted: false,
+			},
+			err: svcerr.ErrNotFound,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			svcCall := svc.On("DeleteDomainChannels", mock.Anything, tc.domainID).Return(tc.svcErr)
+			res, err := client.DeleteDomainChannels(context.Background(), &grpcCommonV1.DeleteDomainEntitiesReq{
+				DomainId: tc.domainID,
+			})
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s", tc.desc, tc.err, err))
+			assert.Equal(t, tc.deleteRes, res)
+			svcCall.Unset()
+		})
+	}
+}

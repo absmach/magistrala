@@ -14,4 +14,7 @@ option go_package = "github.com/absmach/supermq/api/grpc/groups/v1";
 service GroupsService {
   rpc RetrieveEntity(common.v1.RetrieveEntityReq)
     returns (common.v1.RetrieveEntityRes){}
+  
+  rpc DeleteDomainGroups(common.v1.DeleteDomainEntitiesReq)
+    returns (common.v1.DeleteDomainEntitiesRes) {}
 }

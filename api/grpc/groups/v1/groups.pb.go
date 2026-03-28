@@ -28,19 +28,24 @@ var File_groups_v1_groups_proto protoreflect.FileDescriptor
 
 const file_groups_v1_groups_proto_rawDesc = "" +
 	"\n" +
-	"\x16groups/v1/groups.proto\x12\tgroups.v1\x1a\x16common/v1/common.proto2_\n" +
+	"\x16groups/v1/groups.proto\x12\tgroups.v1\x1a\x16common/v1/common.proto2\xbf\x01\n" +
 	"\rGroupsService\x12N\n" +
-	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B/Z-github.com/absmach/supermq/api/grpc/groups/v1b\x06proto3"
+	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12^\n" +
+	"\x12DeleteDomainGroups\x12\".common.v1.DeleteDomainEntitiesReq\x1a\".common.v1.DeleteDomainEntitiesRes\"\x00B/Z-github.com/absmach/supermq/api/grpc/groups/v1b\x06proto3"
 
 var file_groups_v1_groups_proto_goTypes = []any{
-	(*v1.RetrieveEntityReq)(nil), // 0: common.v1.RetrieveEntityReq
-	(*v1.RetrieveEntityRes)(nil), // 1: common.v1.RetrieveEntityRes
+	(*v1.RetrieveEntityReq)(nil),       // 0: common.v1.RetrieveEntityReq
+	(*v1.DeleteDomainEntitiesReq)(nil), // 1: common.v1.DeleteDomainEntitiesReq
+	(*v1.RetrieveEntityRes)(nil),       // 2: common.v1.RetrieveEntityRes
+	(*v1.DeleteDomainEntitiesRes)(nil), // 3: common.v1.DeleteDomainEntitiesRes
 }
 var file_groups_v1_groups_proto_depIdxs = []int32{
 	0, // 0: groups.v1.GroupsService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
-	1, // 1: groups.v1.GroupsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	1, // 1: groups.v1.GroupsService.DeleteDomainGroups:input_type -> common.v1.DeleteDomainEntitiesReq
+	2, // 2: groups.v1.GroupsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
+	3, // 3: groups.v1.GroupsService.DeleteDomainGroups:output_type -> common.v1.DeleteDomainEntitiesRes
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name

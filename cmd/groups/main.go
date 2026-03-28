@@ -407,7 +407,7 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policy polici
 	counter, latency := prometheus.MakeMetrics("groups", "api")
 	svc = middleware.NewMetrics(svc, counter, latency)
 
-	psvc := pgroups.New(repo)
+	psvc := pgroups.New(repo, policy)
 	return svc, psvc, err
 }
 

@@ -21,3 +21,19 @@ func retrieveEntityEndpoint(svc groups.Service) endpoint.Endpoint {
 		return retrieveEntityRes{id: group.ID, domain: group.Domain, parentGroup: group.Parent, status: uint8(group.Status)}, nil
 	}
 }
+
+func deleteDomainGroupsEndpoint(svc groups.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deleteDomainGroupsReq)
+		if err := req.validate(); err != nil {
+			return deleteDomainGroupsRes{}, err
+		}
+
+		err := svc.DeleteDomainGroups(ctx, req.domainID)
+		if err != nil {
+			return deleteDomainGroupsRes{}, err
+		}
+
+		return deleteDomainGroupsRes{deleted: true}, nil
+	}
+}

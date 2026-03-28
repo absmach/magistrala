@@ -34,6 +34,7 @@ type grpcClient struct {
 	removeConnections          endpoint.Endpoint
 	removeChannelConnections   endpoint.Endpoint
 	unsetParentGroupFromClient endpoint.Endpoint
+	deleteDomainClients        endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
@@ -100,6 +101,15 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcClientsV1.Clien
 			encodeUnsetParentGroupFromClientRequest,
 			decodeUnsetParentGroupFromClientResponse,
 			grpcClientsV1.UnsetParentGroupFromClientRes{},
+		).Endpoint(),
+
+		deleteDomainClients: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"DeleteDomainClients",
+			encodeDeleteDomainClientsRequest,
+			decodeDeleteDomainClientsResponse,
+			grpcCommonV1.DeleteDomainEntitiesRes{},
 		).Endpoint(),
 
 		timeout: timeout,
@@ -342,6 +352,26 @@ func encodeUnsetParentGroupFromClientRequest(_ context.Context, grpcReq any) (an
 
 func decodeUnsetParentGroupFromClientResponse(_ context.Context, grpcRes any) (any, error) {
 	return grpcRes.(*grpcClientsV1.UnsetParentGroupFromClientRes), nil
+}
+
+func (client grpcClient) DeleteDomainClients(ctx context.Context, req *grpcCommonV1.DeleteDomainEntitiesReq, _ ...grpc.CallOption) (r *grpcCommonV1.DeleteDomainEntitiesRes, err error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	_, err = client.deleteDomainClients(ctx, req)
+	if err != nil {
+		return &grpcCommonV1.DeleteDomainEntitiesRes{}, decodeError(err)
+	}
+
+	return &grpcCommonV1.DeleteDomainEntitiesRes{Deleted: true}, nil
+}
+
+func encodeDeleteDomainClientsRequest(_ context.Context, grpcReq any) (any, error) {
+	return grpcReq.(*grpcCommonV1.DeleteDomainEntitiesReq), nil
+}
+
+func decodeDeleteDomainClientsResponse(_ context.Context, grpcRes any) (any, error) {
+	return grpcRes.(*grpcCommonV1.DeleteDomainEntitiesRes), nil
 }
 
 func decodeError(err error) error {

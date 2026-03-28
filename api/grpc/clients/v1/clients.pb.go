@@ -298,7 +298,7 @@ const file_clients_v1_clients_proto_rawDesc = "" +
 	"\x1bRemoveChannelConnectionsRes\"G\n" +
 	"\x1dUnsetParentGroupFromClientReq\x12&\n" +
 	"\x0fparent_group_id\x18\x01 \x01(\tR\rparentGroupId\"\x1f\n" +
-	"\x1dUnsetParentGroupFromClientRes2\x83\x05\n" +
+	"\x1dUnsetParentGroupFromClientRes2\xe4\x05\n" +
 	"\x0eClientsService\x12<\n" +
 	"\fAuthenticate\x12\x14.clients.v1.AuthnReq\x1a\x14.clients.v1.AuthnRes\"\x00\x12N\n" +
 	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
@@ -306,7 +306,8 @@ const file_clients_v1_clients_proto_rawDesc = "" +
 	"\x0eAddConnections\x12\x1c.common.v1.AddConnectionsReq\x1a\x1c.common.v1.AddConnectionsRes\"\x00\x12W\n" +
 	"\x11RemoveConnections\x12\x1f.common.v1.RemoveConnectionsReq\x1a\x1f.common.v1.RemoveConnectionsRes\"\x00\x12n\n" +
 	"\x18RemoveChannelConnections\x12'.clients.v1.RemoveChannelConnectionsReq\x1a'.clients.v1.RemoveChannelConnectionsRes\"\x00\x12t\n" +
-	"\x1aUnsetParentGroupFromClient\x12).clients.v1.UnsetParentGroupFromClientReq\x1a).clients.v1.UnsetParentGroupFromClientRes\"\x00B0Z.github.com/absmach/supermq/api/grpc/clients/v1b\x06proto3"
+	"\x1aUnsetParentGroupFromClient\x12).clients.v1.UnsetParentGroupFromClientReq\x1a).clients.v1.UnsetParentGroupFromClientRes\"\x00\x12_\n" +
+	"\x13DeleteDomainClients\x12\".common.v1.DeleteDomainEntitiesReq\x1a\".common.v1.DeleteDomainEntitiesRes\"\x00B0Z.github.com/absmach/supermq/api/grpc/clients/v1b\x06proto3"
 
 var (
 	file_clients_v1_clients_proto_rawDescOnce sync.Once
@@ -332,10 +333,12 @@ var file_clients_v1_clients_proto_goTypes = []any{
 	(*v1.RetrieveEntitiesReq)(nil),        // 7: common.v1.RetrieveEntitiesReq
 	(*v1.AddConnectionsReq)(nil),          // 8: common.v1.AddConnectionsReq
 	(*v1.RemoveConnectionsReq)(nil),       // 9: common.v1.RemoveConnectionsReq
-	(*v1.RetrieveEntityRes)(nil),          // 10: common.v1.RetrieveEntityRes
-	(*v1.RetrieveEntitiesRes)(nil),        // 11: common.v1.RetrieveEntitiesRes
-	(*v1.AddConnectionsRes)(nil),          // 12: common.v1.AddConnectionsRes
-	(*v1.RemoveConnectionsRes)(nil),       // 13: common.v1.RemoveConnectionsRes
+	(*v1.DeleteDomainEntitiesReq)(nil),    // 10: common.v1.DeleteDomainEntitiesReq
+	(*v1.RetrieveEntityRes)(nil),          // 11: common.v1.RetrieveEntityRes
+	(*v1.RetrieveEntitiesRes)(nil),        // 12: common.v1.RetrieveEntitiesRes
+	(*v1.AddConnectionsRes)(nil),          // 13: common.v1.AddConnectionsRes
+	(*v1.RemoveConnectionsRes)(nil),       // 14: common.v1.RemoveConnectionsRes
+	(*v1.DeleteDomainEntitiesRes)(nil),    // 15: common.v1.DeleteDomainEntitiesRes
 }
 var file_clients_v1_clients_proto_depIdxs = []int32{
 	0,  // 0: clients.v1.ClientsService.Authenticate:input_type -> clients.v1.AuthnReq
@@ -345,15 +348,17 @@ var file_clients_v1_clients_proto_depIdxs = []int32{
 	9,  // 4: clients.v1.ClientsService.RemoveConnections:input_type -> common.v1.RemoveConnectionsReq
 	2,  // 5: clients.v1.ClientsService.RemoveChannelConnections:input_type -> clients.v1.RemoveChannelConnectionsReq
 	4,  // 6: clients.v1.ClientsService.UnsetParentGroupFromClient:input_type -> clients.v1.UnsetParentGroupFromClientReq
-	1,  // 7: clients.v1.ClientsService.Authenticate:output_type -> clients.v1.AuthnRes
-	10, // 8: clients.v1.ClientsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
-	11, // 9: clients.v1.ClientsService.RetrieveEntities:output_type -> common.v1.RetrieveEntitiesRes
-	12, // 10: clients.v1.ClientsService.AddConnections:output_type -> common.v1.AddConnectionsRes
-	13, // 11: clients.v1.ClientsService.RemoveConnections:output_type -> common.v1.RemoveConnectionsRes
-	3,  // 12: clients.v1.ClientsService.RemoveChannelConnections:output_type -> clients.v1.RemoveChannelConnectionsRes
-	5,  // 13: clients.v1.ClientsService.UnsetParentGroupFromClient:output_type -> clients.v1.UnsetParentGroupFromClientRes
-	7,  // [7:14] is the sub-list for method output_type
-	0,  // [0:7] is the sub-list for method input_type
+	10, // 7: clients.v1.ClientsService.DeleteDomainClients:input_type -> common.v1.DeleteDomainEntitiesReq
+	1,  // 8: clients.v1.ClientsService.Authenticate:output_type -> clients.v1.AuthnRes
+	11, // 9: clients.v1.ClientsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
+	12, // 10: clients.v1.ClientsService.RetrieveEntities:output_type -> common.v1.RetrieveEntitiesRes
+	13, // 11: clients.v1.ClientsService.AddConnections:output_type -> common.v1.AddConnectionsRes
+	14, // 12: clients.v1.ClientsService.RemoveConnections:output_type -> common.v1.RemoveConnectionsRes
+	3,  // 13: clients.v1.ClientsService.RemoveChannelConnections:output_type -> clients.v1.RemoveChannelConnectionsRes
+	5,  // 14: clients.v1.ClientsService.UnsetParentGroupFromClient:output_type -> clients.v1.UnsetParentGroupFromClientRes
+	15, // 15: clients.v1.ClientsService.DeleteDomainClients:output_type -> common.v1.DeleteDomainEntitiesRes
+	8,  // [8:16] is the sub-list for method output_type
+	0,  // [0:8] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name
 	0,  // [0:0] is the sub-list for extension extendee
 	0,  // [0:0] is the sub-list for field type_name

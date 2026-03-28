@@ -21,6 +21,7 @@ const (
 	domainDisable        = domainPrefix + "disable"
 	domainFreeze         = domainPrefix + "freeze"
 	domainList           = domainPrefix + "list"
+	domainDelete         = domainPrefix + "delete"
 	invitationPrefix     = "invitation."
 	invitationSend       = invitationPrefix + "send"
 	invitationAccept     = invitationPrefix + "accept"
@@ -38,6 +39,7 @@ var (
 	_ events.Event = (*disableDomainEvent)(nil)
 	_ events.Event = (*freezeDomainEvent)(nil)
 	_ events.Event = (*listDomainsEvent)(nil)
+	_ events.Event = (*deleteDomainEvent)(nil)
 	_ events.Event = (*sendInvitationEvent)(nil)
 	_ events.Event = (*listInvitationsEvent)(nil)
 	_ events.Event = (*listDomainInvitationsEvent)(nil)
@@ -279,6 +281,23 @@ func (lde listDomainsEvent) Encode() (map[string]any, error) {
 	}
 
 	return val, nil
+}
+
+type deleteDomainEvent struct {
+	domainID string
+	authn.Session
+	requestID string
+}
+
+func (dde deleteDomainEvent) Encode() (map[string]any, error) {
+	return map[string]any{
+		"operation":   domainDelete,
+		"id":          dde.domainID,
+		"user_id":     dde.UserID,
+		"token_type":  dde.Type.String(),
+		"super_admin": dde.SuperAdmin,
+		"request_id":  dde.requestID,
+	}, nil
 }
 
 type sendInvitationEvent struct {

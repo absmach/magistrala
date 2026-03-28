@@ -127,6 +127,89 @@ func (_c *ChannelsServiceClient_Authorize_Call) RunAndReturn(run func(ctx contex
 	return _c
 }
 
+// DeleteDomainChannels provides a mock function for the type ChannelsServiceClient
+func (_mock *ChannelsServiceClient) DeleteDomainChannels(ctx context.Context, in *v10.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v10.DeleteDomainEntitiesRes, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, in, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, in)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteDomainChannels")
+	}
+
+	var r0 *v10.DeleteDomainEntitiesRes
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v10.DeleteDomainEntitiesReq, ...grpc.CallOption) (*v10.DeleteDomainEntitiesRes, error)); ok {
+		return returnFunc(ctx, in, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v10.DeleteDomainEntitiesReq, ...grpc.CallOption) *v10.DeleteDomainEntitiesRes); ok {
+		r0 = returnFunc(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v10.DeleteDomainEntitiesRes)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *v10.DeleteDomainEntitiesReq, ...grpc.CallOption) error); ok {
+		r1 = returnFunc(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// ChannelsServiceClient_DeleteDomainChannels_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDomainChannels'
+type ChannelsServiceClient_DeleteDomainChannels_Call struct {
+	*mock.Call
+}
+
+// DeleteDomainChannels is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *v10.DeleteDomainEntitiesReq
+//   - opts ...grpc.CallOption
+func (_e *ChannelsServiceClient_Expecter) DeleteDomainChannels(ctx interface{}, in interface{}, opts ...interface{}) *ChannelsServiceClient_DeleteDomainChannels_Call {
+	return &ChannelsServiceClient_DeleteDomainChannels_Call{Call: _e.mock.On("DeleteDomainChannels",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *ChannelsServiceClient_DeleteDomainChannels_Call) Run(run func(ctx context.Context, in *v10.DeleteDomainEntitiesReq, opts ...grpc.CallOption)) *ChannelsServiceClient_DeleteDomainChannels_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *v10.DeleteDomainEntitiesReq
+		if args[1] != nil {
+			arg1 = args[1].(*v10.DeleteDomainEntitiesReq)
+		}
+		var arg2 []grpc.CallOption
+		var variadicArgs []grpc.CallOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]grpc.CallOption)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *ChannelsServiceClient_DeleteDomainChannels_Call) Return(deleteDomainEntitiesRes *v10.DeleteDomainEntitiesRes, err error) *ChannelsServiceClient_DeleteDomainChannels_Call {
+	_c.Call.Return(deleteDomainEntitiesRes, err)
+	return _c
+}
+
+func (_c *ChannelsServiceClient_DeleteDomainChannels_Call) RunAndReturn(run func(ctx context.Context, in *v10.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v10.DeleteDomainEntitiesRes, error)) *ChannelsServiceClient_DeleteDomainChannels_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RemoveClientConnections provides a mock function for the type ChannelsServiceClient
 func (_mock *ChannelsServiceClient) RemoveClientConnections(ctx context.Context, in *v1.RemoveClientConnectionsReq, opts ...grpc.CallOption) (*v1.RemoveClientConnectionsRes, error) {
 	var tmpRet mock.Arguments

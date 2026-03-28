@@ -1215,6 +1215,75 @@ func TestFreezeDomain(t *testing.T) {
 	}
 }
 
+func TestDeleteDomain(t *testing.T) {
+	ds, svc, auth := newDomainsServer()
+	defer ds.Close()
+
+	cases := []struct {
+		desc     string
+		token    string
+		session  authn.Session
+		domainID string
+		status   int
+		svcErr   error
+		authnErr error
+		err      error
+	}{
+		{
+			desc:     "delete domain with valid token",
+			token:    validToken,
+			domainID: domain.ID,
+			status:   http.StatusNoContent,
+			err:      nil,
+		},
+		{
+			desc:     "delete domain with invalid token",
+			token:    inValidToken,
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			authnErr: svcerr.ErrAuthentication,
+			err:      svcerr.ErrAuthentication,
+		},
+		{
+			desc:     "delete domain with empty token",
+			token:    "",
+			domainID: domain.ID,
+			status:   http.StatusUnauthorized,
+			err:      apiutil.ErrBearerToken,
+		},
+		{
+			desc:     "delete domain with invalid id",
+			token:    validToken,
+			domainID: invalid,
+			status:   http.StatusUnprocessableEntity,
+			svcErr:   svcerr.ErrRemoveEntity,
+			err:      svcerr.ErrRemoveEntity,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			req := testRequest{
+				client:      ds.Client(),
+				method:      http.MethodDelete,
+				url:         fmt.Sprintf("%s/domains/%s", ds.URL, tc.domainID),
+				contentType: contentType,
+				token:       tc.token,
+			}
+			if tc.token == validToken {
+				tc.session = authn.Session{UserID: userID, DomainID: tc.domainID, DomainUserID: tc.domainID + "_" + userID}
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authnErr)
+			svcCall := svc.On("DeleteDomain", mock.Anything, tc.session, tc.domainID).Return(tc.svcErr)
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
 func TestSendInvitation(t *testing.T) {
 	is, svc, auth := newDomainsServer()
 

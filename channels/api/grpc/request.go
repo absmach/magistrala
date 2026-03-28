@@ -54,3 +54,14 @@ func (req retrieveIDByRouteReq) validate() error {
 
 	return nil
 }
+
+type deleteDomainChannelsReq struct {
+	domainID string
+}
+
+func (req deleteDomainChannelsReq) validate() error {
+	if req.domainID == "" {
+		return apiutil.ErrMissingDomainID
+	}
+	return nil
+}

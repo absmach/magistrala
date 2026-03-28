@@ -222,6 +222,9 @@ type Service interface {
 	// ListDomains returns a list of domains.
 	ListDomains(ctx context.Context, sesssion authn.Session, page Page) (DomainsPage, error)
 
+	// DeleteDomain deletes the domain specified by the provided ID.
+	DeleteDomain(ctx context.Context, session authn.Session, id string) error
+
 	// SendInvitation sends an invitation to the given user.
 	// Only domain administrators and platform administrators can send invitations.
 	// Returns the enriched invitation with domain and role names populated.

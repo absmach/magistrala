@@ -17,6 +17,8 @@ var (
 	_ supermq.Response = (*enableDomainRes)(nil)
 	_ supermq.Response = (*disableDomainRes)(nil)
 	_ supermq.Response = (*freezeDomainRes)(nil)
+	_ supermq.Response = (*updateDomainRes)(nil)
+	_ supermq.Response = (*deleteDomainRes)(nil)
 	_ supermq.Response = (*sendInvitationRes)(nil)
 	_ supermq.Response = (*listInvitationsRes)(nil)
 	_ supermq.Response = (*acceptInvitationRes)(nil)
@@ -127,6 +129,20 @@ func (res freezeDomainRes) Headers() map[string]string {
 }
 
 func (res freezeDomainRes) Empty() bool {
+	return true
+}
+
+type deleteDomainRes struct{}
+
+func (res deleteDomainRes) Code() int {
+	return http.StatusNoContent
+}
+
+func (res deleteDomainRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res deleteDomainRes) Empty() bool {
 	return true
 }
 

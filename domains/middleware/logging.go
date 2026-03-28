@@ -175,6 +175,23 @@ func (lm *loggingMiddleware) ListDomains(ctx context.Context, session authn.Sess
 	return lm.svc.ListDomains(ctx, session, page)
 }
 
+func (lm *loggingMiddleware) DeleteDomain(ctx context.Context, session authn.Session, id string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("request_id", middleware.GetReqID(ctx)),
+			slog.String("domain_id", id),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Delete domain failed", args...)
+			return
+		}
+		lm.logger.Info("Delete domain completed successfully", args...)
+	}(time.Now())
+	return lm.svc.DeleteDomain(ctx, session, id)
+}
+
 func (lm *loggingMiddleware) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (inv domains.Invitation, err error) {
 	defer func(begin time.Time) {
 		args := []any{

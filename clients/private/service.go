@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/supermq/pkg/policies"
 )
 
+const defLimit = 100
+
 type Service interface {
 	// Authenticate returns client ID for given client key.
 	Authenticate(ctx context.Context, key string) (string, error)
@@ -28,6 +30,8 @@ type Service interface {
 	RemoveChannelConnections(ctx context.Context, channelID string) error
 
 	UnsetParentGroupFromClient(ctx context.Context, parentGroupID string) error
+
+	DeleteDomainClients(ctx context.Context, domainID string) error
 }
 
 var _ Service = (*service)(nil)
@@ -121,5 +125,85 @@ func (svc service) UnsetParentGroupFromClient(ctx context.Context, parentGroupID
 			return errors.Wrap(svcerr.ErrRemoveEntity, err)
 		}
 	}
+	return nil
+}
+
+func (svc service) DeleteDomainClients(ctx context.Context, domainID string) error {
+	clientsPage, err := svc.repo.RetrieveAll(ctx, clients.Page{Domain: domainID, Limit: defLimit})
+	if err != nil {
+		return errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+
+	if clientsPage.Total > defLimit {
+		for i := defLimit; i < int(clientsPage.Total); i += defLimit {
+			page := clients.Page{Domain: domainID, Offset: uint64(i), Limit: defLimit}
+			cp, err := svc.repo.RetrieveAll(ctx, page)
+			if err != nil {
+				return err
+			}
+			clientsPage.Clients = append(clientsPage.Clients, cp.Clients...)
+		}
+	}
+
+	for _, client := range clientsPage.Clients {
+		if err := svc.cache.Remove(ctx, client.ID); err != nil {
+			return errors.Wrap(svcerr.ErrRemoveEntity, err)
+		}
+		if err := svc.deleteClientPolicies(ctx, domainID, client.ID); err != nil {
+			return errors.Wrap(svcerr.ErrRemoveEntity, err)
+		}
+		if err := svc.repo.Delete(ctx, client.ID); err != nil {
+			return errors.Wrap(svcerr.ErrRemoveEntity, err)
+		}
+	}
+
+	return nil
+}
+
+func (svc service) deleteClientPolicies(ctx context.Context, domainID, clientID string) error {
+	ears, emrs, err := svc.repo.RetrieveEntitiesRolesActionsMembers(ctx, []string{clientID})
+	if err != nil {
+		return err
+	}
+	deletePolicies := []policies.Policy{}
+	for _, ear := range ears {
+		deletePolicies = append(deletePolicies, policies.Policy{
+			Subject:         ear.RoleID,
+			SubjectRelation: policies.MemberRelation,
+			SubjectType:     policies.RoleType,
+			Relation:        ear.Action,
+			ObjectType:      policies.ClientType,
+			Object:          ear.EntityID,
+		})
+	}
+	for _, emr := range emrs {
+		deletePolicies = append(deletePolicies, policies.Policy{
+			Subject:     policies.EncodeDomainUserID(domainID, emr.MemberID),
+			SubjectType: policies.UserType,
+			Relation:    policies.MemberRelation,
+			ObjectType:  policies.RoleType,
+			Object:      emr.RoleID,
+		})
+	}
+	if err := svc.policy.DeletePolicies(ctx, deletePolicies); err != nil {
+		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	}
+
+	filterDeletePolicies := []policies.Policy{
+		{
+			SubjectType: policies.ClientType,
+			Subject:     clientID,
+		},
+		{
+			ObjectType: policies.ClientType,
+			Object:     clientID,
+		},
+	}
+	for _, filter := range filterDeletePolicies {
+		if err := svc.policy.DeletePolicyFilter(ctx, filter); err != nil {
+			return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		}
+	}
+
 	return nil
 }

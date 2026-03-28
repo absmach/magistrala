@@ -24,6 +24,9 @@ service ChannelsService {
 
   rpc RetrieveIDByRoute(common.v1.RetrieveIDByRouteReq)
     returns (common.v1.RetrieveEntityRes) {}
+
+  rpc DeleteDomainChannels(common.v1.DeleteDomainEntitiesReq)
+    returns (common.v1.DeleteDomainEntitiesRes) {}
 }
 
 message RemoveClientConnectionsReq {

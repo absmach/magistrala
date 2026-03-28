@@ -104,6 +104,7 @@ domains:
     - enable: enable_permission
     - disable: disable_permission
     - list: read_permission
+    - delete: delete_permission
     - send_invitation: manage_role_permission
     - list_invitation: membership_permission
     - list_domain_invitation: manage_role_permission

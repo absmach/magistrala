@@ -24,6 +24,7 @@ const (
 	disableStream               = supermqPrefix + domainDisable
 	freezeStream                = supermqPrefix + domainFreeze
 	listStream                  = supermqPrefix + domainList
+	deleteStream                = supermqPrefix + domainDelete
 	sendInvitationStream        = supermqPrefix + invitationSend
 	acceptInvitationStream      = supermqPrefix + invitationAccept
 	rejectInvitationStream      = supermqPrefix + invitationReject
@@ -198,6 +199,20 @@ func (es *eventStore) ListDomains(ctx context.Context, session authn.Session, p 
 	}
 
 	return dp, nil
+}
+
+func (es *eventStore) DeleteDomain(ctx context.Context, session authn.Session, id string) error {
+	if err := es.svc.DeleteDomain(ctx, session, id); err != nil {
+		return err
+	}
+
+	event := deleteDomainEvent{
+		domainID:  id,
+		Session:   session,
+		requestID: middleware.GetReqID(ctx),
+	}
+
+	return es.Publish(ctx, deleteStream, event)
 }
 
 func (es *eventStore) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (domains.Invitation, error) {

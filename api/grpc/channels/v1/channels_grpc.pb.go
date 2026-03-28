@@ -28,6 +28,7 @@ const (
 	ChannelsService_UnsetParentGroupFromChannels_FullMethodName = "/channels.v1.ChannelsService/UnsetParentGroupFromChannels"
 	ChannelsService_RetrieveEntity_FullMethodName               = "/channels.v1.ChannelsService/RetrieveEntity"
 	ChannelsService_RetrieveIDByRoute_FullMethodName            = "/channels.v1.ChannelsService/RetrieveIDByRoute"
+	ChannelsService_DeleteDomainChannels_FullMethodName         = "/channels.v1.ChannelsService/DeleteDomainChannels"
 )
 
 // ChannelsServiceClient is the client API for ChannelsService service.
@@ -39,6 +40,7 @@ type ChannelsServiceClient interface {
 	UnsetParentGroupFromChannels(ctx context.Context, in *UnsetParentGroupFromChannelsReq, opts ...grpc.CallOption) (*UnsetParentGroupFromChannelsRes, error)
 	RetrieveEntity(ctx context.Context, in *v1.RetrieveEntityReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
 	RetrieveIDByRoute(ctx context.Context, in *v1.RetrieveIDByRouteReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
+	DeleteDomainChannels(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error)
 }
 
 type channelsServiceClient struct {
@@ -99,6 +101,16 @@ func (c *channelsServiceClient) RetrieveIDByRoute(ctx context.Context, in *v1.Re
 	return out, nil
 }
 
+func (c *channelsServiceClient) DeleteDomainChannels(ctx context.Context, in *v1.DeleteDomainEntitiesReq, opts ...grpc.CallOption) (*v1.DeleteDomainEntitiesRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(v1.DeleteDomainEntitiesRes)
+	err := c.cc.Invoke(ctx, ChannelsService_DeleteDomainChannels_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ChannelsServiceServer is the server API for ChannelsService service.
 // All implementations must embed UnimplementedChannelsServiceServer
 // for forward compatibility.
@@ -108,6 +120,7 @@ type ChannelsServiceServer interface {
 	UnsetParentGroupFromChannels(context.Context, *UnsetParentGroupFromChannelsReq) (*UnsetParentGroupFromChannelsRes, error)
 	RetrieveEntity(context.Context, *v1.RetrieveEntityReq) (*v1.RetrieveEntityRes, error)
 	RetrieveIDByRoute(context.Context, *v1.RetrieveIDByRouteReq) (*v1.RetrieveEntityRes, error)
+	DeleteDomainChannels(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error)
 	mustEmbedUnimplementedChannelsServiceServer()
 }
 
@@ -132,6 +145,9 @@ func (UnimplementedChannelsServiceServer) RetrieveEntity(context.Context, *v1.Re
 }
 func (UnimplementedChannelsServiceServer) RetrieveIDByRoute(context.Context, *v1.RetrieveIDByRouteReq) (*v1.RetrieveEntityRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method RetrieveIDByRoute not implemented")
+}
+func (UnimplementedChannelsServiceServer) DeleteDomainChannels(context.Context, *v1.DeleteDomainEntitiesReq) (*v1.DeleteDomainEntitiesRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeleteDomainChannels not implemented")
 }
 func (UnimplementedChannelsServiceServer) mustEmbedUnimplementedChannelsServiceServer() {}
 func (UnimplementedChannelsServiceServer) testEmbeddedByValue()                         {}
@@ -244,6 +260,24 @@ func _ChannelsService_RetrieveIDByRoute_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ChannelsService_DeleteDomainChannels_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(v1.DeleteDomainEntitiesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ChannelsServiceServer).DeleteDomainChannels(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ChannelsService_DeleteDomainChannels_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ChannelsServiceServer).DeleteDomainChannels(ctx, req.(*v1.DeleteDomainEntitiesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ChannelsService_ServiceDesc is the grpc.ServiceDesc for ChannelsService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -270,6 +304,10 @@ var ChannelsService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "RetrieveIDByRoute",
 			Handler:    _ChannelsService_RetrieveIDByRoute_Handler,
+		},
+		{
+			MethodName: "DeleteDomainChannels",
+			Handler:    _ChannelsService_DeleteDomainChannels_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

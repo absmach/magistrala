@@ -130,6 +130,18 @@ func (cm *calloutMiddleware) ListDomains(ctx context.Context, session authn.Sess
 	return cm.svc.ListDomains(ctx, session, page)
 }
 
+func (cm *calloutMiddleware) DeleteDomain(ctx context.Context, session authn.Session, id string) error {
+	params := map[string]any{
+		"entity_id": id,
+	}
+
+	if err := cm.callOut(ctx, session, policies.DomainType, domains.OpDeleteDomain, params); err != nil {
+		return err
+	}
+
+	return cm.svc.DeleteDomain(ctx, session, id)
+}
+
 func (cm *calloutMiddleware) SendInvitation(ctx context.Context, session authn.Session, invitation domains.Invitation) (domains.Invitation, error) {
 	params := map[string]any{
 		"entity_id":  invitation.DomainID,

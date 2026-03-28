@@ -125,3 +125,15 @@ func UnsetParentGroupFromClientEndpoint(svc pClients.Service) endpoint.Endpoint 
 		return UnsetParentGroupFromClientRes{}, nil
 	}
 }
+
+func deleteDomainClientsEndpoint(svc pClients.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deleteDomainClientsReq)
+
+		if err := svc.DeleteDomainClients(ctx, req.domainID); err != nil {
+			return deleteDomainClientsRes{deleted: false}, err
+		}
+
+		return deleteDomainClientsRes{deleted: true}, nil
+	}
+}

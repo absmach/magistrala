@@ -28,6 +28,7 @@ type grpcServer struct {
 	unsetParentGroupFromChannels kitgrpc.Handler
 	retrieveEntity               kitgrpc.Handler
 	retrieveIDByRoute            kitgrpc.Handler
+	deleteDomainChannels         kitgrpc.Handler
 }
 
 // NewServer returns new AuthServiceServer instance.
@@ -57,6 +58,11 @@ func NewServer(svc channels.Service) grpcChannelsV1.ChannelsServiceServer {
 			retrieveIDByRouteEndpoint(svc),
 			decodeRetrieveIDByRouteRequest,
 			encodeRetrieveIDByRouteResponse,
+		),
+		deleteDomainChannels: kitgrpc.NewServer(
+			deleteDomainChannelsEndpoint(svc),
+			decodeDeleteDomainChannelsRequest,
+			encodeDeleteDomainChannelsResponse,
 		),
 	}
 }
@@ -184,6 +190,31 @@ func (s *grpcServer) RetrieveIDByRoute(ctx context.Context, req *grpcCommonV1.Re
 		return nil, encodeError(err)
 	}
 	return res.(*grpcCommonV1.RetrieveEntityRes), nil
+}
+
+func decodeDeleteDomainChannelsRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(*grpcCommonV1.DeleteDomainEntitiesReq)
+
+	return deleteDomainChannelsReq{
+		domainID: req.GetDomainId(),
+	}, nil
+}
+
+func encodeDeleteDomainChannelsResponse(_ context.Context, grpcRes any) (any, error) {
+	res := grpcRes.(deleteDomainChannelsRes)
+
+	return &grpcCommonV1.DeleteDomainEntitiesRes{
+		Deleted: res.deleted,
+	}, nil
+}
+
+func (s *grpcServer) DeleteDomainChannels(ctx context.Context, req *grpcCommonV1.DeleteDomainEntitiesReq) (*grpcCommonV1.DeleteDomainEntitiesRes, error) {
+	_, res, err := s.deleteDomainChannels.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, encodeError(err)
+	}
+
+	return res.(*grpcCommonV1.DeleteDomainEntitiesRes), nil
 }
 
 func encodeError(err error) error {

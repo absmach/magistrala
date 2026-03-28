@@ -33,6 +33,9 @@ service ClientsService {
 
   rpc UnsetParentGroupFromClient(UnsetParentGroupFromClientReq)
     returns(UnsetParentGroupFromClientRes){}
+  
+  rpc DeleteDomainClients(common.v1.DeleteDomainEntitiesReq)
+    returns (common.v1.DeleteDomainEntitiesRes) {}
 }
 
 

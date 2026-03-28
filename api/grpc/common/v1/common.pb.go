@@ -588,6 +588,94 @@ func (x *RetrieveIDByRouteReq) GetDomainId() string {
 	return ""
 }
 
+type DeleteDomainEntitiesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DomainId      string                 `protobuf:"bytes,1,opt,name=domain_id,json=domainId,proto3" json:"domain_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDomainEntitiesReq) Reset() {
+	*x = DeleteDomainEntitiesReq{}
+	mi := &file_common_v1_common_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDomainEntitiesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDomainEntitiesReq) ProtoMessage() {}
+
+func (x *DeleteDomainEntitiesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDomainEntitiesReq.ProtoReflect.Descriptor instead.
+func (*DeleteDomainEntitiesReq) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *DeleteDomainEntitiesReq) GetDomainId() string {
+	if x != nil {
+		return x.DomainId
+	}
+	return ""
+}
+
+type DeleteDomainEntitiesRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Deleted       bool                   `protobuf:"varint,1,opt,name=deleted,proto3" json:"deleted,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteDomainEntitiesRes) Reset() {
+	*x = DeleteDomainEntitiesRes{}
+	mi := &file_common_v1_common_proto_msgTypes[12]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteDomainEntitiesRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteDomainEntitiesRes) ProtoMessage() {}
+
+func (x *DeleteDomainEntitiesRes) ProtoReflect() protoreflect.Message {
+	mi := &file_common_v1_common_proto_msgTypes[12]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteDomainEntitiesRes.ProtoReflect.Descriptor instead.
+func (*DeleteDomainEntitiesRes) Descriptor() ([]byte, []int) {
+	return file_common_v1_common_proto_rawDescGZIP(), []int{12}
+}
+
+func (x *DeleteDomainEntitiesRes) GetDeleted() bool {
+	if x != nil {
+		return x.Deleted
+	}
+	return false
+}
+
 var File_common_v1_common_proto protoreflect.FileDescriptor
 
 const file_common_v1_common_proto_rawDesc = "" +
@@ -626,7 +714,11 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x04type\x18\x04 \x01(\rR\x04type\"I\n" +
 	"\x14RetrieveIDByRouteReq\x12\x14\n" +
 	"\x05route\x18\x01 \x01(\tR\x05route\x12\x1b\n" +
-	"\tdomain_id\x18\x02 \x01(\tR\bdomainIdB/Z-github.com/absmach/supermq/api/grpc/common/v1b\x06proto3"
+	"\tdomain_id\x18\x02 \x01(\tR\bdomainId\"6\n" +
+	"\x17DeleteDomainEntitiesReq\x12\x1b\n" +
+	"\tdomain_id\x18\x01 \x01(\tR\bdomainId\"3\n" +
+	"\x17DeleteDomainEntitiesRes\x12\x18\n" +
+	"\adeleted\x18\x01 \x01(\bR\adeletedB/Z-github.com/absmach/supermq/api/grpc/common/v1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once
@@ -640,19 +732,21 @@ func file_common_v1_common_proto_rawDescGZIP() []byte {
 	return file_common_v1_common_proto_rawDescData
 }
 
-var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_common_v1_common_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
 var file_common_v1_common_proto_goTypes = []any{
-	(*RetrieveEntitiesReq)(nil),  // 0: common.v1.RetrieveEntitiesReq
-	(*RetrieveEntitiesRes)(nil),  // 1: common.v1.RetrieveEntitiesRes
-	(*RetrieveEntityReq)(nil),    // 2: common.v1.RetrieveEntityReq
-	(*RetrieveEntityRes)(nil),    // 3: common.v1.RetrieveEntityRes
-	(*EntityBasic)(nil),          // 4: common.v1.EntityBasic
-	(*AddConnectionsReq)(nil),    // 5: common.v1.AddConnectionsReq
-	(*AddConnectionsRes)(nil),    // 6: common.v1.AddConnectionsRes
-	(*RemoveConnectionsReq)(nil), // 7: common.v1.RemoveConnectionsReq
-	(*RemoveConnectionsRes)(nil), // 8: common.v1.RemoveConnectionsRes
-	(*Connection)(nil),           // 9: common.v1.Connection
-	(*RetrieveIDByRouteReq)(nil), // 10: common.v1.RetrieveIDByRouteReq
+	(*RetrieveEntitiesReq)(nil),     // 0: common.v1.RetrieveEntitiesReq
+	(*RetrieveEntitiesRes)(nil),     // 1: common.v1.RetrieveEntitiesRes
+	(*RetrieveEntityReq)(nil),       // 2: common.v1.RetrieveEntityReq
+	(*RetrieveEntityRes)(nil),       // 3: common.v1.RetrieveEntityRes
+	(*EntityBasic)(nil),             // 4: common.v1.EntityBasic
+	(*AddConnectionsReq)(nil),       // 5: common.v1.AddConnectionsReq
+	(*AddConnectionsRes)(nil),       // 6: common.v1.AddConnectionsRes
+	(*RemoveConnectionsReq)(nil),    // 7: common.v1.RemoveConnectionsReq
+	(*RemoveConnectionsRes)(nil),    // 8: common.v1.RemoveConnectionsRes
+	(*Connection)(nil),              // 9: common.v1.Connection
+	(*RetrieveIDByRouteReq)(nil),    // 10: common.v1.RetrieveIDByRouteReq
+	(*DeleteDomainEntitiesReq)(nil), // 11: common.v1.DeleteDomainEntitiesReq
+	(*DeleteDomainEntitiesRes)(nil), // 12: common.v1.DeleteDomainEntitiesRes
 }
 var file_common_v1_common_proto_depIdxs = []int32{
 	4, // 0: common.v1.RetrieveEntitiesRes.entities:type_name -> common.v1.EntityBasic
@@ -677,7 +771,7 @@ func file_common_v1_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_v1_common_proto_rawDesc), len(file_common_v1_common_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   13,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -31,6 +31,7 @@ type grpcClient struct {
 	unsetParentGroupFromChannels endpoint.Endpoint
 	retrieveEntity               endpoint.Endpoint
 	retrieveIDByRoute            endpoint.Endpoint
+	deleteDomainChannels         endpoint.Endpoint
 }
 
 // NewClient returns new gRPC client instance.
@@ -75,6 +76,14 @@ func NewClient(conn *grpc.ClientConn, timeout time.Duration) grpcChannelsV1.Chan
 			encodeRetrieveIDByRouteRequest,
 			decodeRetrieveIDByRouteResponse,
 			grpcCommonV1.RetrieveEntityRes{},
+		).Endpoint(),
+		deleteDomainChannels: kitgrpc.NewClient(
+			conn,
+			svcName,
+			"DeleteDomainChannels",
+			encodeDeleteDomainChannelsRequest,
+			decodeDeleteDomainChannelsResponse,
+			grpcCommonV1.DeleteDomainEntitiesRes{},
 		).Endpoint(),
 		timeout: timeout,
 	}
@@ -194,6 +203,26 @@ func encodeRetrieveIDByRouteRequest(_ context.Context, grpcReq any) (any, error)
 
 func decodeRetrieveIDByRouteResponse(_ context.Context, grpcRes any) (any, error) {
 	return grpcRes.(*grpcCommonV1.RetrieveEntityRes), nil
+}
+
+func (client grpcClient) DeleteDomainChannels(ctx context.Context, req *grpcCommonV1.DeleteDomainEntitiesReq, _ ...grpc.CallOption) (r *grpcCommonV1.DeleteDomainEntitiesRes, err error) {
+	ctx, cancel := context.WithTimeout(ctx, client.timeout)
+	defer cancel()
+
+	_, err = client.deleteDomainChannels(ctx, req)
+	if err != nil {
+		return &grpcCommonV1.DeleteDomainEntitiesRes{}, decodeError(err)
+	}
+
+	return &grpcCommonV1.DeleteDomainEntitiesRes{Deleted: true}, nil
+}
+
+func encodeDeleteDomainChannelsRequest(_ context.Context, grpcReq any) (any, error) {
+	return grpcReq.(*grpcCommonV1.DeleteDomainEntitiesReq), nil
+}
+
+func decodeDeleteDomainChannelsResponse(_ context.Context, grpcRes any) (any, error) {
+	return grpcRes.(*grpcCommonV1.DeleteDomainEntitiesRes), nil
 }
 
 func decodeError(err error) error {

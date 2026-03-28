@@ -168,6 +168,25 @@ func freezeDomainEndpoint(svc domains.Service) endpoint.Endpoint {
 	}
 }
 
+func deleteDomainEndpoint(svc domains.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deleteDomainReq)
+		if err := req.validate(); err != nil {
+			return nil, err
+		}
+
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		if err := svc.DeleteDomain(ctx, session, req.domainID); err != nil {
+			return nil, err
+		}
+		return deleteDomainRes{}, nil
+	}
+}
+
 func sendInvitationEndpoint(svc domains.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(sendInvitationReq)

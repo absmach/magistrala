@@ -188,6 +188,23 @@ func (svc service) ListDomains(ctx context.Context, session authn.Session, p Pag
 	return dp, nil
 }
 
+func (svc service) DeleteDomain(ctx context.Context, session authn.Session, id string) error {
+	updatedAt := time.Now().UTC()
+	updatedBy := session.UserID
+	updatedStatus := DeletedStatus
+
+	_, err := svc.repo.UpdateDomain(ctx, id, DomainReq{
+		Status:    &updatedStatus,
+		UpdatedAt: &updatedAt,
+		UpdatedBy: &updatedBy,
+	})
+	if err != nil {
+		return errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
+
+	return nil
+}
+
 func (svc *service) SendInvitation(ctx context.Context, session authn.Session, invitation Invitation) (Invitation, error) {
 	role, err := svc.repo.RetrieveRole(ctx, invitation.RoleID)
 	if err != nil {

@@ -47,7 +47,6 @@ func (re *re) Handle(msg *messaging.Message) error {
 	if err != nil {
 		return err
 	}
-
 	for _, r := range page.Rules {
 		if matchSubject(msg.Subtopic, r.InputTopic) {
 			go func(ctx context.Context) {

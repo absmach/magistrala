@@ -16,8 +16,9 @@ var ErrInvalidType = errors.New("invalid type")
 const msgPrefix = "m"
 
 type options struct {
-	prefix         string
-	connectionName string
+	prefix             string
+	connectionName     string
+	directTopicIngress bool
 }
 
 func defaultOptions() options {
@@ -51,6 +52,24 @@ func ConnectionName(name string) messaging.Option {
 			v.connectionName = name
 		case *pubsub:
 			v.connectionName = name
+		default:
+			return ErrInvalidType
+		}
+
+		return nil
+	}
+}
+
+// DirectTopicIngress enables direct MQTT topic delivery in addition to stream
+// queue delivery. This is opt-in because direct topic messages are normalized
+// from broker-native metadata instead of the protobuf queue envelope.
+func DirectTopicIngress() messaging.Option {
+	return func(val any) error {
+		switch v := val.(type) {
+		case *publisher:
+			return nil
+		case *pubsub:
+			v.directTopicIngress = true
 		default:
 			return ErrInvalidType
 		}

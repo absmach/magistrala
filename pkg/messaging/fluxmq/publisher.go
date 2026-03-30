@@ -6,10 +6,10 @@ package fluxmq
 import (
 	"context"
 	"log/slog"
+	"strconv"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
 	"github.com/absmach/supermq/pkg/messaging"
-	"google.golang.org/protobuf/proto"
 )
 
 var _ messaging.Publisher = (*publisher)(nil)
@@ -66,12 +66,19 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		return ErrEmptyTopic
 	}
 
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return err
+	props := map[string]string{
+		"publisher": msg.GetPublisher(),
+		"protocol":  msg.GetProtocol(),
+	}
+	if msg.GetCreated() != 0 {
+		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
 	}
 
-	return pub.client.PublishContext(ctx, queueTopic(pub.prefix, topic), data)
+	return pub.client.PublishWithOptionsContext(ctx, &fluxamqp.PublishOptions{
+		Topic:      queueTopic(pub.prefix, topic),
+		Payload:    msg.GetPayload(),
+		Properties: props,
+	})
 }
 
 func (pub *publisher) Close() error {

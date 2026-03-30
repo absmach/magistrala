@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
 const queuePrefix = "$queue/"
@@ -96,6 +97,54 @@ func formatConsumerName(topic, id string) string {
 	topic = nameReplacer.Replace(topic)
 	id = nameReplacer.Replace(id)
 	return fmt.Sprintf("%s-%s", topic, id)
+}
+
+// topicFilter returns the MQTT topic filter for subscribing to regular
+// (non-queued) messages. It converts a NATS-style topic to MQTT format
+// with the prefix prepended.
+// For example, with prefix "m" and topic "m.>", it returns "m/#".
+func topicFilter(prefix, topic string) string {
+	prefix = canonicalPrefix(prefix)
+	path := filterPath(prefix, topic)
+	if path == "" || path == "#" {
+		return prefix + "/#"
+	}
+
+	return prefix + "/" + path
+}
+
+func parseMQTTTopic(prefix, topic string) (domainID, channelID, subtopic string, err error) {
+	topic = strings.TrimPrefix(strings.TrimSpace(topic), "/")
+	prefix = canonicalPrefix(prefix)
+	if !strings.HasPrefix(topic, prefix+"/") {
+		return "", "", "", messaging.ErrMalformedTopic
+	}
+	normalized := "/" + msgPrefix + "/" + strings.TrimPrefix(topic, prefix+"/")
+
+	domainID, channelID, subtopic, _, err = messaging.ParseSubscribeTopic(normalized)
+	if err != nil {
+		return "", "", "", err
+	}
+
+	return domainID, channelID, subtopic, nil
+}
+
+func stringHeader(headers map[string]any, key string) string {
+	if headers == nil {
+		return ""
+	}
+	v, ok := headers[key]
+	if !ok {
+		return ""
+	}
+	switch s := v.(type) {
+	case string:
+		return s
+	case []byte:
+		return string(s)
+	default:
+		return ""
+	}
 }
 
 func declareStream(client *fluxamqp.Client, prefix string) error {

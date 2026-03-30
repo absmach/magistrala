@@ -38,6 +38,7 @@ func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (me
 }
 
 func NewPubSub(ctx context.Context, url string, logger *slog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+	opts = append(opts, fluxmq.DirectTopicIngress())
 	pb, err := fluxmq.NewPubSub(ctx, url, logger, opts...)
 	if err != nil {
 		return nil, err

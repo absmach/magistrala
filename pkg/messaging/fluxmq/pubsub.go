@@ -8,11 +8,14 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strconv"
+	"strings"
 	"sync"
+	"time"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
+	fluxtopics "github.com/absmach/fluxmq/topics"
 	"github.com/absmach/supermq/pkg/messaging"
-	"google.golang.org/protobuf/proto"
 )
 
 // Publisher and Subscriber errors.
@@ -29,7 +32,12 @@ type pubsub struct {
 	logger *slog.Logger
 
 	mu            sync.Mutex
-	subscriptions map[string]string
+	subscriptions map[string]subscription
+}
+
+type subscription struct {
+	streamTopic string
+	mqttTopic   string
 }
 
 // NewPubSub creates a FluxMQ-backed message publisher/subscriber.
@@ -39,7 +47,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 			options: defaultOptions(),
 		},
 		logger:        logger,
-		subscriptions: make(map[string]string),
+		subscriptions: make(map[string]subscription),
 	}
 
 	for _, opt := range opts {
@@ -101,14 +109,33 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 
 	if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
 		if err := ps.handle(cfg.Handler, msg); err != nil {
-			ps.logWarn("failed to process FluxMQ message", "error", err, "topic", cfg.Topic, "consumer_group", group)
+			ps.logWarn("failed to process FluxMQ stream message", "error", err, "topic", cfg.Topic, "consumer_group", group)
 		}
 	}); err != nil {
 		return err
 	}
 
+	sub := subscription{
+		streamTopic: queueFilter(ps.prefix, cfg.Topic),
+	}
+
+	if ps.directTopicIngress {
+		// Subscribe to regular MQTT topics so that messages published directly
+		// by MQTT clients (not through the stream queue) are also received.
+		sub.mqttTopic = topicFilter(ps.prefix, cfg.Topic)
+		if err := ps.client.Subscribe(sub.mqttTopic, func(msg *fluxamqp.Message) {
+			if err := ps.handleTopicMessage(cfg.Handler, msg); err != nil {
+				ps.logWarn("failed to process FluxMQ topic message", "error", err, "topic", sub.mqttTopic)
+			}
+		}); err != nil {
+			_ = ps.client.UnsubscribeFromStream(sub.streamTopic)
+
+			return err
+		}
+	}
+
 	ps.mu.Lock()
-	ps.subscriptions[subscriptionKey(cfg.ID, cfg.Topic)] = queueFilter(ps.prefix, cfg.Topic)
+	ps.subscriptions[subscriptionKey(cfg.ID, cfg.Topic)] = sub
 	ps.mu.Unlock()
 
 	return nil
@@ -125,36 +152,53 @@ func (ps *pubsub) Unsubscribe(_ context.Context, id, topic string) error {
 	key := subscriptionKey(id, topic)
 
 	ps.mu.Lock()
-	streamTopic, ok := ps.subscriptions[key]
+	sub, ok := ps.subscriptions[key]
 	ps.mu.Unlock()
 	if !ok {
 		return ErrNotSubscribed
 	}
 
-	if err := ps.client.UnsubscribeFromStream(streamTopic); err != nil {
-		return err
+	streamErr := ps.client.UnsubscribeFromStream(sub.streamTopic)
+	var topicErr error
+	if sub.mqttTopic != "" {
+		topicErr = ps.client.Unsubscribe(sub.mqttTopic)
 	}
 
 	ps.mu.Lock()
 	delete(ps.subscriptions, key)
 	ps.mu.Unlock()
 
+	return errors.Join(streamErr, topicErr)
+}
+
+func (ps *pubsub) handleTopicMessage(h messaging.MessageHandler, msg *fluxamqp.Message) error {
+	mqttTopic := fluxtopics.AMQPTopicToMQTT(msg.Topic)
+	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, msg.UserId, ps.prefix, mqttTopic)
+	if err != nil {
+		return fmt.Errorf("failed to parse MQTT topic %q: %w", msg.Topic, err)
+	}
+
+	if err := h.Handle(m); err != nil {
+		ps.logWarn("failed to handle topic message", "error", err)
+	}
+
 	return nil
 }
 
 func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage) error {
-	var m messaging.Message
-	if err := proto.Unmarshal(msg.Body, &m); err != nil {
+	mqttTopic := strings.TrimPrefix(msg.RoutingKey, queuePrefix)
+	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, msg.UserId, ps.prefix, mqttTopic)
+	if err != nil {
 		if rejectErr := msg.Reject(); rejectErr != nil {
 			return errors.Join(err, rejectErr)
 		}
 		return err
 	}
 
-	err := h.Handle(&m)
-	ackType := ps.errAckType(err)
-	if err != nil {
-		ps.logWarn("failed to handle message", "ack_type", ackType.String(), "error", err)
+	handleErr := h.Handle(m)
+	ackType := ps.errAckType(handleErr)
+	if handleErr != nil {
+		ps.logWarn("failed to handle message", "ack_type", ackType.String(), "error", handleErr)
 	}
 
 	if ackErr := ps.handleAck(ackType, msg); ackErr != nil {
@@ -162,6 +206,40 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 	}
 
 	return nil
+}
+
+func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, userID, prefix, mqttTopic string) (*messaging.Message, error) {
+	domain, channel, subtopic, err := parseMQTTTopic(prefix, mqttTopic)
+	if err != nil {
+		return nil, err
+	}
+
+	publisher := stringHeader(headers, "publisher")
+	if publisher == "" {
+		publisher = userID
+	}
+
+	protocol := stringHeader(headers, "protocol")
+	if protocol == "" {
+		protocol = "mqtt"
+	}
+
+	created := ts.UnixNano()
+	if s := stringHeader(headers, "created"); s != "" {
+		if v, err := strconv.ParseInt(s, 10, 64); err == nil {
+			created = v
+		}
+	}
+
+	return &messaging.Message{
+		Domain:    domain,
+		Channel:   channel,
+		Subtopic:  subtopic,
+		Payload:   body,
+		Publisher: publisher,
+		Protocol:  protocol,
+		Created:   created,
+	}, nil
 }
 
 func (ps *pubsub) errAckType(err error) messaging.AckType {

@@ -39,7 +39,6 @@ func (re *re) processLua(ctx context.Context, details []slog.Attr, r Rule, msg *
 
 	// Set the message object as a Lua global variable.
 	l.SetGlobal("message", message)
-
 	if err := l.DoString(r.Logic.Value); err != nil {
 		return pkglog.RunInfo{Level: slog.LevelError, Message: fmt.Sprintf("failed to run rule logic: %s", err), Details: details}
 	}

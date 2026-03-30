@@ -57,7 +57,7 @@ const (
 	CreatePermission     = "create"
 )
 
-const SuperMQObject = "supermq"
+const MagistralaObject = "magistrala"
 
 type Evaluator interface {
 	// CheckPolicy checks if the subject has a relation on the object.

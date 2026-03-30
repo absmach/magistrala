@@ -347,7 +347,7 @@ func (ram RoleManagerAuthorizationMiddleware) validateMembers(ctx context.Contex
 				Subject:     member,
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			}, nil); err != nil {
 				return errors.Wrap(errors.ErrMissingMember, err)

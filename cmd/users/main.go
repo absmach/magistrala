@@ -28,6 +28,8 @@ import (
 	smqauthz "github.com/absmach/supermq/pkg/authz"
 	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
+	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	"github.com/absmach/supermq/pkg/grpcclient"
 	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
 	"github.com/absmach/supermq/pkg/oauth2"
@@ -354,8 +356,10 @@ func newService(ctx context.Context, authz smqauthz.Authorization, token grpcTok
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create admin client: %s", err))
 	}
-	if err := createAdminPolicy(ctx, userID, authz, policyService); err != nil {
-		return nil, err
+	if userID != "" {
+		if err := createAdminPolicy(ctx, userID, policyService); err != nil {
+			return nil, err
+		}
 	}
 
 	users.NewDeleteHandler(ctx, repo, policyService, domainsClient, c.DeleteInterval, c.DeleteAfter, logger)
@@ -395,34 +399,22 @@ func createAdmin(ctx context.Context, c config, repo users.Repository, hsr users
 		return u.ID, nil
 	}
 
-	// Create an admin
 	if _, err = repo.Save(ctx, user); err != nil {
-		return "", err
-	}
-	if _, err = svc.IssueToken(ctx, c.AdminUsername, c.AdminPassword, ""); err != nil {
 		return "", err
 	}
 	return user.ID, nil
 }
 
-func createAdminPolicy(ctx context.Context, userID string, authz smqauthz.Authorization, policyService policies.Service) error {
-	if err := authz.Authorize(ctx, smqauthz.PolicyReq{
+func createAdminPolicy(ctx context.Context, userID string, policyService policies.Service) error {
+	err := policyService.AddPolicy(ctx, policies.Policy{
 		SubjectType: policies.UserType,
 		Subject:     userID,
-		Permission:  policies.AdministratorRelation,
-		Object:      policies.SuperMQObject,
+		Relation:    policies.AdministratorRelation,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
-	}, nil); err != nil {
-		err := policyService.AddPolicy(ctx, policies.Policy{
-			SubjectType: policies.UserType,
-			Subject:     userID,
-			Relation:    policies.AdministratorRelation,
-			Object:      policies.SuperMQObject,
-			ObjectType:  policies.PlatformType,
-		})
-		if err != nil {
-			return err
-		}
+	})
+	if err != nil && !errors.Contains(err, repoerr.ErrConflict) {
+		return err
 	}
 	return nil
 }

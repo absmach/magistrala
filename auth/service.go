@@ -258,7 +258,7 @@ func (svc service) checkPolicy(ctx context.Context, pr policies.Policy) error {
 }
 
 func (svc service) PolicyValidation(pr policies.Policy) error {
-	if pr.ObjectType == policies.PlatformType && pr.Object != policies.SuperMQObject {
+	if pr.ObjectType == policies.PlatformType && pr.Object != policies.MagistralaObject {
 		return errPlatform
 	}
 	return nil
@@ -375,7 +375,7 @@ func (svc service) checkUserRole(ctx context.Context, key Key) (err error) {
 			Subject:     key.Subject,
 			SubjectType: policies.UserType,
 			Permission:  policies.AdminPermission,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 			ObjectType:  policies.PlatformType,
 		}, nil); err != nil {
 			return errRoleAuth
@@ -386,7 +386,7 @@ func (svc service) checkUserRole(ctx context.Context, key Key) (err error) {
 			Subject:     key.Subject,
 			SubjectType: policies.UserType,
 			Permission:  policies.MembershipPermission,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 			ObjectType:  policies.PlatformType,
 		}, nil); err != nil {
 			return errRoleAuth
@@ -403,7 +403,7 @@ func (svc service) getUserRole(ctx context.Context, userID string) (role Role) {
 		Subject:     userID,
 		SubjectType: policies.UserType,
 		Permission:  policies.AdminPermission,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}, nil); err == nil {
 		rl = AdminRole

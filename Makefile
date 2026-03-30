@@ -84,8 +84,8 @@ define run_with_arch_detection
 		git checkout $(1); \
 		GOARCH=arm64 $(MAKE) dockers; \
 		for svc in $(SERVICES); do \
-			docker tag supermq/$$svc supermq/$$svc:latest; \
-			docker tag supermq/$$svc docker.io/supermq/$$svc:latest; \
+				docker tag magistrala/$$svc magistrala/$$svc:latest; \
+				docker tag magistrala/$$svc docker.io/magistrala/$$svc:latest; \
 		done; \
 		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
 		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
@@ -159,7 +159,7 @@ endif
 
 install:
 	for file in $(BUILD_DIR)/*; do \
-		cp $$file $(GOBIN)/supermq-`basename $$file`; \
+		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
 	done
 
 mocks: $(MOCKERY)

@@ -108,7 +108,7 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 				Subject:     subject,
 				SubjectType: subjectType,
 				Permission:  policies.AdminPermission,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			},
 		})

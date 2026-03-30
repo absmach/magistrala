@@ -74,7 +74,7 @@ jobs:
           cache-dependency-path: "go.sum"
 
       - name: Check for changes in specific paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -144,7 +144,7 @@ jobs:
 
       - name: Run Users API tests
         if: steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/users.yaml
           base-url: ${{ env.USERS_URL }}
@@ -153,7 +153,7 @@ jobs:
 
       - name: Run Groups API tests
         if: steps.changes.outputs.groups == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/groups.yaml
           base-url: ${{ env.GROUPS_URL }}
@@ -162,7 +162,7 @@ jobs:
 
       - name: Run Clients API tests
         if: steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/clients.yaml
           base-url: ${{ env.CLIENTS_URL }}
@@ -171,7 +171,7 @@ jobs:
 
       - name: Run Channels API tests
         if: steps.changes.outputs.channels == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/channels.yaml
           base-url: ${{ env.CHANNELS_URL }}
@@ -180,7 +180,7 @@ jobs:
 
       - name: Run HTTP Adapter API tests
         if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/http.yaml
           base-url: ${{ env.HTTP_ADAPTER_URL }}
@@ -189,7 +189,7 @@ jobs:
 
       - name: Run Auth API tests
         if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/auth.yaml
           base-url: ${{ env.AUTH_URL }}
@@ -198,7 +198,7 @@ jobs:
 
       - name: Run Domains API tests
         if: steps.changes.outputs.domains == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/domains.yaml
           base-url: ${{ env.DOMAIN_URL }}
@@ -207,7 +207,7 @@ jobs:
 
       - name: Run Journal API tests
         if: steps.changes.outputs.journal == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
+        uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/journal.yaml
           base-url: ${{ env.JOURNAL_URL }}

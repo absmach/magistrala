@@ -121,7 +121,7 @@ func main() {
 	defer pubSub.Close()
 	pubSub = brokerstracing.NewPubSub(httpServerConfig, tracer, pubSub)
 
-	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
+	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, brokers.AllTopic, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Timescale writer: %s", err))
 		exitCode = 1
 		return

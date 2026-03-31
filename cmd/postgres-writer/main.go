@@ -119,7 +119,7 @@ func main() {
 	repo := newService(db, logger)
 	repo = consumertracing.NewBlocking(tracer, repo, httpServerConfig)
 
-	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, logger); err != nil {
+	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, brokers.AllTopic, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Postgres writer: %s", err))
 		exitCode = 1
 		return

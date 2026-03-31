@@ -18,7 +18,7 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 | Variable | Description | Default |
 | --- | --- | --- |
 | `MG_POSTGRES_WRITER_LOG_LEVEL` | Service log level | `debug` |
-| `MG_POSTGRES_WRITER_CONFIG_PATH` | Config file path (subjects/transformer) | `/config.toml` |
+| `MG_POSTGRES_WRITER_CONFIG_PATH` | Config file path (topics/transformer) | `/config.toml` |
 | `MG_POSTGRES_WRITER_HTTP_HOST` | HTTP host | `postgres-writer` |
 | `MG_POSTGRES_WRITER_HTTP_PORT` | HTTP port | `9007` |
 | `MG_POSTGRES_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path | "" |
@@ -55,7 +55,7 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 | Variable | Description | Default |
 | --- | --- | --- |
 | `MG_TIMESCALE_WRITER_LOG_LEVEL` | Service log level | `debug` |
-| `MG_TIMESCALE_WRITER_CONFIG_PATH` | Config file path (subjects/transformer) | `/config.toml` |
+| `MG_TIMESCALE_WRITER_CONFIG_PATH` | Config file path (topics/transformer) | `/config.toml` |
 | `MG_TIMESCALE_WRITER_HTTP_HOST` | HTTP host | `timescale-writer` |
 | `MG_TIMESCALE_WRITER_HTTP_PORT` | HTTP port | `9012` |
 | `MG_TIMESCALE_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path | "" |
@@ -87,11 +87,11 @@ Both writers read a config file defined by `*_WRITER_CONFIG_PATH`. The default a
 - `docker/addons/postgres-writer/config.toml`
 - `docker/addons/timescale-writer/config.toml`
 
-The config file controls subscription subjects and, for Postgres, optional transformer settings:
+The config file controls subscription topics and optional transformer settings for both writers. The default Timescale add-on config omits the transformer section and relies on the built-in defaults:
 
 ```toml
 ["subscriber"]
-subjects = ["writers.>"]
+topics = ["writers.>"]
 
 [transformer]
 format = "senml"
@@ -104,28 +104,32 @@ time_fields = [
 ]
 ```
 
-NATS uses subject `writers.>` and RabbitMQ uses routing key `writers.#` (both are handled by `consumers/writers/brokers`).
+The topic filter uses `writers.*` syntax in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `consumers/writers/brokers`:
+
+- NATS builds use JetStream streams with durable consumers.
+- FluxMQ builds publish to and consume from the `writers` stream queue while preserving the same `writers.>` config syntax.
 
 ## Features
 
 - **Message persistence**: Stores incoming SenML messages into PostgreSQL or TimescaleDB.
 - **JSON payload support**: Saves JSON payloads into dynamically created tables.
-- **Broker-backed ingestion**: Consumes from NATS JetStream or RabbitMQ topics.
-- **Configurable subscription**: Limits ingestion to specific `writers.*` subjects.
+- **Stream-backed ingestion**: Consumes through NATS JetStream durable consumers or FluxMQ stream queues.
+- **Configurable subscription**: Limits ingestion to specific `writers.*` topics.
 - **Observability**: Exposes `/health` and `/metrics` endpoints, with Jaeger tracing.
 
 ## Architecture
 
 ### Runtime flow
 
-1. The message broker publishes messages under `writers.*`.
-2. The writer loads `config.toml` to select subjects and transformer settings.
-3. The consumer converts messages to SenML or JSON payloads.
-4. The repository writes records to the target database.
+1. The rules engine publishes writer messages under `writers.*`.
+2. The writer loads `config.toml` to select topic filters and transformer settings.
+3. The broker adapter consumes from the underlying stream-backed implementation.
+4. The consumer converts messages to SenML or JSON payloads.
+5. The repository writes records to the target database.
 
 ### Components
 
-- **Message broker adapter**: `consumers/writers/brokers` (NATS JetStream or RabbitMQ).
+- **Message broker adapter**: `consumers/writers/brokers` (NATS JetStream or FluxMQ stream queues).
 - **Writer services**: `consumers/writers/postgres` and `consumers/writers/timescale`.
 - **HTTP API**: `consumers/writers/api` exposes `/health` and `/metrics`.
 - **Migrations**: `consumers/writers/*/init.go` defines the schema and indexes.
@@ -256,7 +260,7 @@ go test ./consumers/writers/...
 
 ## Usage
 
-Writers do not expose a message ingestion API. Messages are written via the message broker. The HTTP API provides only health and metrics endpoints.
+Writers do not expose a message ingestion API. Messages are written via the message broker, and writers consume them through the stream-backed broker adapter. The HTTP API provides only health and metrics endpoints.
 
 | Endpoint | Description |
 | --- | --- |

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AllTopic = "writers.>"
+	AllTopic = "writers/#"
 
 	prefix = "writers"
 )
@@ -25,7 +25,7 @@ const (
 var cfg = jetstream.StreamConfig{
 	Name:              "writers",
 	Description:       "SuperMQ Rules Engine stream for handling internal messages",
-	Subjects:          []string{"writers.>"},
+	Subjects:          []string{"writers/#"},
 	Retention:         jetstream.LimitsPolicy,
 	MaxMsgsPerSubject: 1e6,
 	MaxAge:            time.Hour * 24,

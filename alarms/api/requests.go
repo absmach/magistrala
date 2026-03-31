@@ -31,8 +31,8 @@ func (req updateAlarmReq) validate() error {
 	if req.Alarm.ID == "" {
 		return errors.New("missing alarm id")
 	}
-	if req.Alarm.AssigneeID == "" && req.Alarm.AcknowledgedBy == "" && req.Alarm.ResolvedBy == "" {
-		return errors.New("at least one of assignee_id, acknowledged_by, or resolved_by must be set")
+	if req.Alarm.AssigneeID == "" && req.Alarm.AcknowledgedBy == "" && req.Alarm.ResolvedBy == "" && len(req.Alarm.Metadata) == 0 {
+		return errors.New("at least one of assignee_id, acknowledged_by, resolved_by, or metadata must be set")
 	}
 
 	return nil

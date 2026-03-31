@@ -48,6 +48,12 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 }
 
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
+	if len(alarm.Metadata) > 0 {
+		if err := am.authorize(ctx, operations.OpUpdateAlarm, session, policies.DomainType, session.DomainID); err != nil {
+			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
+		}
+	}
+
 	if alarm.AssigneeID != "" {
 		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)

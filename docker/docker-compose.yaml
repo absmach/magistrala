@@ -1659,7 +1659,7 @@ services:
       - "8888:8888"
     volumes:
       - ./data/seaweedfs:/data
-      - ./configs/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+      - ./seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
     networks:
       - magistrala-base-net
 

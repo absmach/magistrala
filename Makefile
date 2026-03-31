@@ -184,34 +184,18 @@ define test_api_service
 
 	@if [ -z "$(USER_TOKEN)" ]; then \
 		echo "USER_TOKEN is not set"; \
-		echo "Please set it to a valid token"; \
-		exit 1; \
+			echo "Please set it to a valid token"; \
+			exit 1; \
 	fi
 
-	@if [ "$(svc)" = "http" ] && [ -z "$(CLIENT_SECRET)" ]; then \
-		echo "CLIENT_SECRET is not set"; \
-		echo "Please set it to a valid secret"; \
-		exit 1; \
-	fi
-
-	@if [ "$(svc)" = "http" ]; then \
-		uvx schemathesis run apidocs/openapi/$(svc).yaml \
-		--checks all \
-		--url $(2) \
-		--header "Authorization: Client $(CLIENT_SECRET)" \
-		--suppress-health-check=filter_too_much \
-		--exclude-checks=positive_data_acceptance \
-		--phases=examples,stateful; \
-	else \
-		uvx schemathesis run apidocs/openapi/$(svc).yaml \
-		--checks all \
-		--url $(2) \
-		--header "Authorization: Bearer $(USER_TOKEN)" \
-		--suppress-health-check=filter_too_much \
-		--exclude-checks=positive_data_acceptance \
-		--exclude-operation-id=requestPasswordReset \
-		--phases=examples,stateful; \
-	fi
+	@uvx schemathesis run apidocs/openapi/$(svc).yaml \
+	--checks all \
+	--url $(2) \
+	--header "Authorization: Bearer $(USER_TOKEN)" \
+	--suppress-health-check=filter_too_much \
+	--exclude-checks=positive_data_acceptance \
+	--exclude-operation-id=requestPasswordReset \
+	--phases=examples,stateful
 endef
 
 test_api_users: TEST_API_URL := http://localhost:9002
@@ -219,7 +203,6 @@ test_api_clients: TEST_API_URL := http://localhost:9006
 test_api_domains: TEST_API_URL := http://localhost:9003
 test_api_channels: TEST_API_URL := http://localhost:9005
 test_api_groups: TEST_API_URL := http://localhost:9004
-test_api_http: TEST_API_URL := http://localhost:8008
 test_api_auth: TEST_API_URL := http://localhost:9001
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_journal: TEST_API_URL := http://localhost:9021

@@ -65,7 +65,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 			ps.logInfo("FluxMQ message pub/sub reconnecting", "attempt", attempt)
 		}).
 		SetOnConnect(func() {
-			ps.logInfo("FluxMQ message pub/sub connected")
+			ps.logInfo("FluxMQ message pub/sub connected", url, ps.prefix)
 		})
 
 	client, err := fluxamqp.New(amqpOpts)

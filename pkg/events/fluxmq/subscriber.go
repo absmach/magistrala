@@ -40,7 +40,7 @@ func NewSubscriber(_ context.Context, url, connectionName string, logger *slog.L
 			logger.Info("FluxMQ event subscriber reconnecting", "attempt", attempt)
 		}).
 		SetOnConnect(func() {
-			logger.Info("FluxMQ event subscriber connected")
+			logger.Info("FluxMQ event subscriber connected", url, connectionName)
 		})
 
 	client, err := fluxamqp.New(opts)

@@ -60,64 +60,64 @@ services:
       - magistrala-base-net
     volumes:
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/certs/dummy/client_cert}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/certs/dummy/client_key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/certs/dummy/server_ca}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca${MG_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Reader gRPC mTLS client certificates
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /readers-grpc-server-ca${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /readers-grpc-client${MG_POSTGRES_READER_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_POSTGRES_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /readers-grpc-client${MG_POSTGRES_READER_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true

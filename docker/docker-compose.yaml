@@ -175,45 +175,45 @@ services:
         read_only: true
       # Auth retiring private key file (optional, for key rotation)
       - type: bind
-        source: ${MG_AUTH_KEYS_RETIRING_KEY_PATH:-ssl/certs/dummy/retiring_key}
+        source: ${MG_AUTH_KEYS_RETIRING_KEY_PATH:-./ssl/placeholder}
         target: /keys/retiring.key
         read_only: true
         bind:
           create_host_path: true
       # Auth gRPC mTLS server certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_AUTH_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /auth-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_AUTH_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /auth-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_AUTH_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth Callout Client Certificates
       - type: bind
-        source: ${MG_AUTH_CALLOUT_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_CALLOUT_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-callout-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_CALLOUT_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_CALLOUT_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-callout-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_CALLOUT_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_AUTH_CALLOUT_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /auth-callout-client-ca.crt
         bind:
           create_host_path: true
@@ -328,86 +328,86 @@ services:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Domains gRPC mTLS server certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_DOMAINS_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /domains-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_DOMAINS_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /domains-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Groups gRPC client certificates
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -474,32 +474,32 @@ services:
       - magistrala-base-net
     volumes:
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -655,86 +655,86 @@ services:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Clients gRPC server certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_CLIENTS_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /clients-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_CLIENTS_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /clients-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channel gRPC client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Group gRPC client certificates
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domain gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -848,86 +848,86 @@ services:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Channels gRPC server certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_CHANNELS_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /channels-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_CHANNELS_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /channels-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Groups gRPC client certificates
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_GROUPS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /groups-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_GROUPS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /groups-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -1036,54 +1036,54 @@ services:
       - ./templates/${MG_VERIFICATION_EMAIL_TEMPLATE}:/${MG_VERIFICATION_EMAIL_TEMPLATE}
       # Users gRPC server certificates
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_USERS_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /users-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_USERS_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /users-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /users-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_USERS_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /users-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -1123,17 +1123,17 @@ services:
       - ./templates/${MG_EMAIL_REJECTION_TEMPLATE}:/${MG_EMAIL_REJECTION_TEMPLATE}
       # Users gRPC client certificates
       - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_USERS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /users-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_USERS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /users-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_USERS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /users-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -1236,86 +1236,86 @@ services:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Groups gRPC server certificates
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_GROUPS_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /groups-grpc-server.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_GROUPS_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /groups-grpc-server.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_GROUPS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /groups-grpc-server-ca.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_GROUPS_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_GROUPS_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /groups-grpc-client-ca.crt
         bind:
           create_host_path: true
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -1420,49 +1420,49 @@ services:
     volumes:
       # Clients gRPC mTLS client certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca${MG_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Channels gRPC mTLS client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Domains gRPC mTLS client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client${MG_DOMAINS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client${MG_DOMAINS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
@@ -1579,49 +1579,49 @@ services:
     volumes:
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Reader gRPC client certificates
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /readers-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /readers-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /readers-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -1764,80 +1764,80 @@ services:
     volumes:
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Clients gRPC client certificates
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /clients-grpc-server-ca${MG_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Channels gRPC client certificates
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_CHANNELS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_CHANNELS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /channels-grpc-client${MG_CHANNELS_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_CHANNELS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /channels-grpc-server-ca${MG_CHANNELS_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       # Reader gRPC server and client certificates
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CERT:-ssl/certs/dummy/server_cert}
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CERT:-./ssl/placeholder}
         target: /readers-grpc-server${MG_TIMESCALE_READER_GRPC_SERVER_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_SERVER_KEY:-ssl/certs/dummy/server_key}
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_KEY:-./ssl/placeholder}
         target: /readers-grpc-server${MG_TIMESCALE_READER_GRPC_SERVER_KEY:+.key}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca_certs}
+        source: ${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /readers-grpc-server-ca${MG_TIMESCALE_READER_GRPC_SERVER_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:-ssl/certs/dummy/client_ca_certs}
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
         target: /readers-grpc-client-ca${MG_TIMESCALE_READER_GRPC_CLIENT_CA_CERTS:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_CERT:+.crt}
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /readers-grpc-client${MG_TIMESCALE_READER_GRPC_CLIENT_KEY:+.key}
         bind:
           create_host_path: true
@@ -1966,33 +1966,33 @@ services:
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -2067,33 +2067,33 @@ services:
       - ./spicedb/schema.zed:${MG_SPICEDB_SCHEMA_FILE}
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -2183,33 +2183,33 @@ services:
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
       # Auth gRPC client certificates
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${MG_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${MG_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true
@@ -2277,33 +2277,33 @@ services:
       - magistrala-openbao-data:/openbao:ro
       # Auth gRPC client certificates
       - type: bind
-        source: ${AM_AUTH_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${AM_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /auth-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${AM_AUTH_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${AM_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /auth-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${AM_AUTH_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${AM_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /auth-grpc-server-ca.crt
         bind:
           create_host_path: true
       # Domains gRPC client certificates
       - type: bind
-        source: ${AM_DOMAINS_GRPC_CLIENT_CERT:-ssl/certs/dummy/client_cert}
+        source: ${AM_DOMAINS_GRPC_CLIENT_CERT:-./ssl/placeholder}
         target: /domains-grpc-client.crt
         bind:
           create_host_path: true
       - type: bind
-        source: ${AM_DOMAINS_GRPC_CLIENT_KEY:-ssl/certs/dummy/client_key}
+        source: ${AM_DOMAINS_GRPC_CLIENT_KEY:-./ssl/placeholder}
         target: /domains-grpc-client.key
         bind:
           create_host_path: true
       - type: bind
-        source: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:-ssl/certs/dummy/server_ca}
+        source: ${AM_DOMAINS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
         target: /domains-grpc-server-ca.crt
         bind:
           create_host_path: true

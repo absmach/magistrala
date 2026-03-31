@@ -7,7 +7,7 @@ require (
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
 	github.com/absmach/certs v0.18.5
-	github.com/absmach/fluxmq v0.0.0-20260331152618-309042234c16
+	github.com/absmach/fluxmq v0.0.0-20260331222442-1cb8de377063
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.8.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8

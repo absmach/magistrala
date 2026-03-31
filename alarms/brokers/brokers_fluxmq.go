@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AllTopic = "alarms.>"
+	AllTopic = "alarms/#"
 
 	prefix = "alarms"
 )
@@ -25,7 +25,7 @@ const (
 var cfg = jetstream.StreamConfig{
 	Name:              "alarms",
 	Description:       "SuperMQ stream alarms",
-	Subjects:          []string{"alarms.>"},
+	Subjects:          []string{"alarms/#"},
 	Retention:         jetstream.LimitsPolicy,
 	MaxMsgsPerSubject: 1e6,
 	MaxAge:            time.Hour * 24,

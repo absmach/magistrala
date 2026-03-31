@@ -143,7 +143,7 @@ Defined in `consumers/writers/postgres/init.go`:
 | `id` | `UUID` | Message ID |
 | `channel` | `UUID` | Channel ID |
 | `subtopic` | `VARCHAR(254)` | Subtopic |
-| `publisher` | `UUID` | Publisher (client) ID |
+| `publisher` | `UUID` | Publisher ID |
 | `protocol` | `TEXT` | Protocol name |
 | `name` | `TEXT` | SenML name |
 | `unit` | `TEXT` | SenML unit |
@@ -166,7 +166,7 @@ Defined in `consumers/writers/timescale/init.go`:
 | `time` | `BIGINT` | Measurement time |
 | `channel` | `UUID` | Channel ID |
 | `subtopic` | `VARCHAR(254)` | Subtopic |
-| `publisher` | `VARCHAR(254)` | Publisher (client) ID |
+| `publisher` | `VARCHAR(254)` | Publisher ID |
 | `protocol` | `TEXT` | Protocol name |
 | `name` | `VARCHAR(254)` | SenML name |
 | `unit` | `TEXT` | SenML unit |

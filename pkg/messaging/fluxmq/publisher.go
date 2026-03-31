@@ -5,6 +5,7 @@ package fluxmq
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -70,6 +71,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		"publisher": msg.GetPublisher(),
 		"protocol":  msg.GetProtocol(),
 	}
+	fmt.Println("publishing with props", props)
 	if msg.GetCreated() != 0 {
 		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
 	}

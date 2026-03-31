@@ -20,6 +20,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/absmach/supermq/certs"
 	smqerrors "github.com/absmach/supermq/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"moul.io/http2curl"
@@ -1560,214 +1561,214 @@ type SDK interface {
 	DomainInvitations(ctx context.Context, pm PageMetadata, token, domainID string) (invitations InvitationPage, err error)
 
 	// AddBootstrap add bootstrap configuration
-	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, errors.SDKError)
+	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, smqerrors.SDKError)
 
 	// ViewBootstrap returns Client Config with given ID belonging to the user identified by the given token.
-	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, errors.SDKError)
+	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
 
 	// UpdateBootstrap updates editable fields of the provided Config.
-	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) errors.SDKError
+	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) smqerrors.SDKError
 
 	// UpdateBootstrapCerts updates bootstrap config certificates.
-	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, errors.SDKError)
+	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Client is connected to.
-	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) errors.SDKError
+	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) smqerrors.SDKError
 
 	// RemoveBootstrap removes Config with specified token that belongs to the user identified by the given token.
-	RemoveBootstrap(ctx context.Context, id, domainID, token string) errors.SDKError
+	RemoveBootstrap(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
 	// Bootstrap returns Config to the Client with provided external ID using external key.
-	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, errors.SDKError)
+	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, smqerrors.SDKError)
 
 	// BootstrapSecure retrieves a configuration with given external ID and encrypted external key.
-	BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, errors.SDKError)
+	BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, smqerrors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
-	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError)
+	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, smqerrors.SDKError)
 
 	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
-	Whitelist(ctx context.Context, clientID string, state int, domainID, token string) errors.SDKError
+	Whitelist(ctx context.Context, clientID string, state int, domainID, token string) smqerrors.SDKError
 
 	// ReadMessages reads messages of specified channel.
-	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, errors.SDKError)
+	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, smqerrors.SDKError)
 
 	// CreateSubscription creates a new subscription.
-	CreateSubscription(ctx context.Context, topic, contact, token string) (string, errors.SDKError)
+	CreateSubscription(ctx context.Context, topic, contact, token string) (string, smqerrors.SDKError)
 
 	// ListSubscriptions list subscriptions given list parameters.
-	ListSubscriptions(ctx context.Context, pm PageMetadata, token string) (SubscriptionPage, errors.SDKError)
+	ListSubscriptions(ctx context.Context, pm PageMetadata, token string) (SubscriptionPage, smqerrors.SDKError)
 
 	// ViewSubscription retrieves a subscription with the provided id.
-	ViewSubscription(ctx context.Context, id, token string) (Subscription, errors.SDKError)
+	ViewSubscription(ctx context.Context, id, token string) (Subscription, smqerrors.SDKError)
 
 	// DeleteSubscription removes a subscription with the provided id.
-	DeleteSubscription(ctx context.Context, id, token string) errors.SDKError
+	DeleteSubscription(ctx context.Context, id, token string) smqerrors.SDKError
 
 	// UpdateAlarm updates an existing alarm.
-	UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, errors.SDKError)
+	UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, smqerrors.SDKError)
 
 	// ViewAlarm retrieves an alarm by its ID.
-	ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, errors.SDKError)
+	ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, smqerrors.SDKError)
 
 	// ListAlarms retrieves a page of alarms.
-	ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, errors.SDKError)
+	ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, smqerrors.SDKError)
 
 	// DeleteAlarm deletes an alarm.
-	DeleteAlarm(ctx context.Context, id, domainID, token string) errors.SDKError
+	DeleteAlarm(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
 	// AddReportConfig creates a new report configuration.
-	AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+	AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// ViewReportConfig retrieves a report config by its ID.
-	ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+	ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportConfig updates an existing report configuration.
-	UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportSchedule updates an existing report configuration's schedule.
-	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError)
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// RemoveReportConfig deletes a report config.
-	RemoveReportConfig(ctx context.Context, id, domainID, token string) errors.SDKError
+	RemoveReportConfig(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
 	// ListReportsConfig retrieves a page of report configs.
-	ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, errors.SDKError)
+	ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, smqerrors.SDKError)
 
 	// EnableReportConfig enables a report config.
-	EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+	EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// DisableReportConfig disables a report config.
-	DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError)
+	DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportTemplate updates a report template.
-	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) errors.SDKError
+	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) smqerrors.SDKError
 
 	// ViewReportTemplate retrieves a report template.
-	ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, errors.SDKError)
+	ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, smqerrors.SDKError)
 
 	// DeleteReportTemplate deletes a report template.
-	DeleteReportTemplate(ctx context.Context, id, domainID, token string) errors.SDKError
+	DeleteReportTemplate(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
 	// GenerateReport generates a report from a configuration.
-	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, *ReportFile, errors.SDKError)
+	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, *ReportFile, smqerrors.SDKError)
 
 	// AddRule creates a new rule.
-	AddRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+	AddRule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// ViewRule retrieves a rule by its ID.
-	ViewRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+	ViewRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRule updates an existing rule.
-	UpdateRule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+	UpdateRule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRuleTags updates an existing rule's tags.
-	UpdateRuleTags(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+	UpdateRuleTags(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRuleSchedule updates an existing rule's schedule.
-	UpdateRuleSchedule(ctx context.Context, r Rule, domainID, token string) (Rule, errors.SDKError)
+	UpdateRuleSchedule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// ListRules retrieves a page of rules.
-	ListRules(ctx context.Context, pm PageMetadata, domainID, token string) (Page, errors.SDKError)
+	ListRules(ctx context.Context, pm PageMetadata, domainID, token string) (Page, smqerrors.SDKError)
 
 	// RemoveRule deletes a rule.
-	RemoveRule(ctx context.Context, id, domainID, token string) errors.SDKError
+	RemoveRule(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
 	// EnableRule enables a rule.
-	EnableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+	EnableRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// DisableRule disables a rule.
-	DisableRule(ctx context.Context, id, domainID, token string) (Rule, errors.SDKError)
+	DisableRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
 
 	// IssueCert issues a certificate for an entity.
 	//
 	// example:
 	//  cert, _ := sdk.IssueCert(context.Background(), "entityID", "8760h", []string{"127.0.0.1"}, sdk.Options{CommonName: "cn"}, "domainID", "token")
-	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, domainID, token string) (Certificate, errors.SDKError)
+	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, domainID, token string) (Certificate, smqerrors.SDKError)
 
 	// RevokeCert revokes a certificate by serial number.
 	//
 	// example:
 	//  err := sdk.RevokeCert(context.Background(), "serialNumber", "domainID", "token")
-	RevokeCert(ctx context.Context, serialNumber, domainID, token string) errors.SDKError
+	RevokeCert(ctx context.Context, serialNumber, domainID, token string) smqerrors.SDKError
 
 	// RenewCert renews a certificate by serial number.
 	//
 	// example:
 	//  cert, _ := sdk.RenewCert(context.Background(), "serialNumber", "domainID", "token")
-	RenewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+	RenewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, smqerrors.SDKError)
 
 	// ListCerts lists certificates matching the given metadata filter.
 	//
 	// example:
 	//  page, _ := sdk.ListCerts(context.Background(), sdk.PageMetadata{Limit: 10}, "domainID", "token")
-	ListCerts(ctx context.Context, pm PageMetadata, domainID, token string) (CertificatePage, errors.SDKError)
+	ListCerts(ctx context.Context, pm PageMetadata, domainID, token string) (CertificatePage, smqerrors.SDKError)
 
 	// DeleteCert deletes all certificates for the given entity ID.
 	//
 	// example:
 	//  err := sdk.DeleteCert(context.Background(), "entityID", "domainID", "token")
-	DeleteCert(ctx context.Context, entityID, domainID, token string) errors.SDKError
+	DeleteCert(ctx context.Context, entityID, domainID, token string) smqerrors.SDKError
 
 	// ViewCert retrieves a certificate by serial number.
 	//
 	// example:
 	//  cert, _ := sdk.ViewCert(context.Background(), "serialNumber", "domainID", "token")
-	ViewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, errors.SDKError)
+	ViewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, smqerrors.SDKError)
 
 	// OCSP checks the revocation status of a certificate.
 	//
 	// example:
 	//  resp, _ := sdk.OCSP(context.Background(), "serialNumber", "")
-	OCSP(ctx context.Context, serialNumber, cert string) (OCSPResponse, errors.SDKError)
+	OCSP(ctx context.Context, serialNumber, cert string) (OCSPResponse, smqerrors.SDKError)
 
 	// ViewCA views the signing CA certificate.
 	//
 	// example:
 	//  cert, _ := sdk.ViewCA(context.Background())
-	ViewCA(ctx context.Context) (Certificate, errors.SDKError)
+	ViewCA(ctx context.Context) (Certificate, smqerrors.SDKError)
 
 	// DownloadCA downloads the signing CA certificate bundle.
 	//
 	// example:
 	//  bundle, _ := sdk.DownloadCA(context.Background())
-	DownloadCA(ctx context.Context) (CertificateBundle, errors.SDKError)
+	DownloadCA(ctx context.Context) (CertificateBundle, smqerrors.SDKError)
 
 	// IssueFromCSR issues a certificate from a provided CSR.
 	//
 	// example:
 	//  cert, _ := sdk.IssueFromCSR(context.Background(), "entityID", "8760h", csrPEM, "domainID", "token")
-	IssueFromCSR(ctx context.Context, entityID, ttl, csr, domainID, token string) (Certificate, errors.SDKError)
+	IssueFromCSR(ctx context.Context, entityID, ttl, csr, domainID, token string) (Certificate, smqerrors.SDKError)
 
 	// IssueFromCSRInternal issues a certificate from a CSR using agent authentication.
 	//
 	// example:
 	//  cert, _ := sdk.IssueFromCSRInternal(context.Background(), "entityID", "8760h", csrPEM, "agentToken")
-	IssueFromCSRInternal(ctx context.Context, entityID, ttl, csr, token string) (Certificate, errors.SDKError)
+	IssueFromCSRInternal(ctx context.Context, entityID, ttl, csr, token string) (Certificate, smqerrors.SDKError)
 
 	// GenerateCRL generates a Certificate Revocation List.
 	//
 	// example:
 	//  crl, _ := sdk.GenerateCRL(context.Background())
-	GenerateCRL(ctx context.Context) ([]byte, errors.SDKError)
+	GenerateCRL(ctx context.Context) ([]byte, smqerrors.SDKError)
 
 	// RevokeAll revokes all certificates for an entity ID.
 	//
 	// example:
 	//  err := sdk.RevokeAll(context.Background(), "entityID", "domainID", "token")
-	RevokeAll(ctx context.Context, entityID, domainID, token string) errors.SDKError
+	RevokeAll(ctx context.Context, entityID, domainID, token string) smqerrors.SDKError
 
 	// EntityID gets the entity ID for a certificate by serial number.
 	//
 	// example:
 	//  id, _ := sdk.EntityID(context.Background(), "serialNumber", "domainID", "token")
-	EntityID(ctx context.Context, serialNumber, domainID, token string) (string, errors.SDKError)
+	EntityID(ctx context.Context, serialNumber, domainID, token string) (string, smqerrors.SDKError)
 
 	// CreateCSR creates a Certificate Signing Request from metadata and a private key.
 	//
 	// example:
 	//  csr, _ := sdk.CreateCSR(context.Background(), metadata, privateKeyBytes)
-	CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError)
+	CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, smqerrors.SDKError)
 }
 
 type mgSDK struct {

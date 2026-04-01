@@ -9,7 +9,6 @@ import (
 	"github.com/absmach/magistrala/auth"
 	smqjwt "github.com/absmach/magistrala/auth/tokenizer/util"
 	"github.com/absmach/magistrala/pkg/errors"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
@@ -61,9 +60,9 @@ func (tok *tokenizer) Parse(ctx context.Context, tokenString string) (auth.Key, 
 	)
 	if err != nil {
 		if errors.Contains(err, smqjwt.ErrJWTExpiryKey) {
-			return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, auth.ErrExpiry)
+			return auth.Key{}, auth.ErrExpiry
 		}
-		return auth.Key{}, errors.Wrap(svcerr.ErrAuthentication, err)
+		return auth.Key{}, err
 	}
 
 	if tkn.Issuer() != smqjwt.IssuerName {

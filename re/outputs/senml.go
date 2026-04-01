@@ -31,6 +31,7 @@ func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val any) error 
 	m := &messaging.Message{
 		Domain:    msg.Domain,
 		Publisher: msg.Publisher,
+		ClientId:  msg.ClientIdentity(),
 		Created:   msg.Created,
 		Channel:   msg.Channel,
 		Subtopic:  msg.Subtopic,

@@ -40,7 +40,7 @@ func (h handler) Handle(msg *messaging.Message) (err error) {
 	}
 	alarm.DomainID = msg.GetDomain()
 	alarm.ChannelID = msg.GetChannel()
-	alarm.ClientID = msg.GetPublisher()
+	alarm.ClientID = msg.ClientIdentity()
 	alarm.Subtopic = msg.GetSubtopic()
 	alarm.CreatedAt = time.Unix(0, int64(msg.GetCreated()))
 

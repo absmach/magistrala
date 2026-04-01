@@ -45,7 +45,7 @@ func (a *Alarm) Run(ctx context.Context, msg *messaging.Message, val any) error 
 func (a *Alarm) processAlarm(ctx context.Context, msg *messaging.Message, alarm alarms.Alarm) error {
 	alarm.RuleID = a.RuleID
 	alarm.DomainID = msg.Domain
-	alarm.ClientID = msg.Publisher
+	alarm.ClientID = msg.ClientIdentity()
 	alarm.ChannelID = msg.Channel
 	alarm.Subtopic = msg.Subtopic
 
@@ -57,6 +57,7 @@ func (a *Alarm) processAlarm(ctx context.Context, msg *messaging.Message, alarm 
 	m := &messaging.Message{
 		Domain:    msg.Domain,
 		Publisher: msg.Publisher,
+		ClientId:  msg.ClientIdentity(),
 		Created:   msg.Created,
 		Channel:   msg.Channel,
 		Subtopic:  msg.Subtopic,

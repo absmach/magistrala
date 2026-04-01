@@ -94,6 +94,7 @@ func prepareMsg(l *lua.LState, msg *messaging.Message) lua.LValue {
 	message.RawSetString("domain", lua.LString(msg.Domain))
 	message.RawSetString("channel", lua.LString(msg.Channel))
 	message.RawSetString("subtopic", lua.LString(msg.Subtopic))
+	message.RawSetString("client_id", lua.LString(msg.ClientIdentity()))
 	message.RawSetString("publisher", lua.LString(msg.Publisher))
 	message.RawSetString("protocol", lua.LString(msg.Protocol))
 	message.RawSetString("created", lua.LNumber(msg.Created))

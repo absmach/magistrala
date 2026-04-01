@@ -27,6 +27,7 @@ func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val 
 	m := &messaging.Message{
 		Domain:    msg.Domain,
 		Publisher: msg.Publisher,
+		ClientId:  msg.ClientIdentity(),
 		Created:   msg.Created,
 		Channel:   p.Channel,
 		Subtopic:  p.Topic,

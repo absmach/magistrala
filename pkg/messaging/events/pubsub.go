@@ -45,7 +45,7 @@ func (es *pubsubES) Publish(ctx context.Context, topic string, msg *messaging.Me
 	me := publishEvent{
 		domainID:  msg.Domain,
 		channelID: msg.Channel,
-		clientID:  msg.Publisher,
+		clientID:  msg.ClientIdentity(),
 		subtopic:  msg.Subtopic,
 	}
 

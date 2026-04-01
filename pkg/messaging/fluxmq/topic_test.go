@@ -242,11 +242,11 @@ func TestParseMQTTTopicFromStreamRoutingKey(t *testing.T) {
 
 func TestStringHeader(t *testing.T) {
 	headers := map[string]any{
-		"publisher": "pub-1",
-		"number":    42,
-		"bytes":     []byte("bin"),
+		"external_id": "pub-1",
+		"number":      42,
+		"bytes":       []byte("bin"),
 	}
-	if got := stringHeader(headers, "publisher"); got != "pub-1" {
+	if got := stringHeader(headers, "external_id"); got != "pub-1" {
 		t.Fatalf("expected pub-1, got %q", got)
 	}
 	if got := stringHeader(headers, "bytes"); got != "bin" {

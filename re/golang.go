@@ -28,6 +28,7 @@ var (
 // Type message is an SMQ message with payload replaces by JSON deserialized payload.
 type message struct {
 	Channel   string `json:"channel,omitempty"`
+	ClientID  string `json:"client_id,omitempty"`
 	Domain    string `json:"domain,omitempty"`
 	Subtopic  string `json:"subtopic,omitempty"`
 	Publisher string `json:"publisher,omitempty"`
@@ -53,6 +54,7 @@ func (re *re) processGo(ctx context.Context, details []slog.Attr, r Rule, msg *m
 	}
 	m := message{
 		Created:   msg.Created,
+		ClientID:  msg.ClientIdentity(),
 		Domain:    msg.Domain,
 		Publisher: msg.Publisher,
 		Channel:   msg.Channel,

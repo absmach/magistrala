@@ -173,7 +173,7 @@ func (ps *pubsub) Unsubscribe(_ context.Context, id, topic string) error {
 
 func (ps *pubsub) handleTopicMessage(h messaging.MessageHandler, msg *fluxamqp.Message) error {
 	mqttTopic := fluxtopics.AMQPTopicToMQTT(msg.Topic)
-	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, msg.UserId, ps.prefix, mqttTopic)
+	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, ps.prefix, mqttTopic)
 	if err != nil {
 		return fmt.Errorf("failed to parse MQTT topic %q: %w", msg.Topic, err)
 	}
@@ -187,7 +187,7 @@ func (ps *pubsub) handleTopicMessage(h messaging.MessageHandler, msg *fluxamqp.M
 
 func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage) error {
 	mqttTopic := strings.TrimPrefix(msg.RoutingKey, queuePrefix)
-	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, msg.UserId, ps.prefix, mqttTopic)
+	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, ps.prefix, mqttTopic)
 	if err != nil {
 		if rejectErr := msg.Reject(); rejectErr != nil {
 			return errors.Join(err, rejectErr)
@@ -208,16 +208,14 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 	return nil
 }
 
-func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, userID, prefix, mqttTopic string) (*messaging.Message, error) {
+func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, prefix, mqttTopic string) (*messaging.Message, error) {
 	domain, channel, subtopic, err := parseMQTTTopic(prefix, mqttTopic)
 	if err != nil {
 		return nil, err
 	}
 
-	publisher := stringHeader(headers, "publisher")
-	if publisher == "" {
-		publisher = userID
-	}
+	clientID := stringHeader(headers, "client_id")
+	publisher := stringHeader(headers, "external_id")
 
 	protocol := stringHeader(headers, "protocol")
 	if protocol == "" {
@@ -237,6 +235,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, user
 		Subtopic:  subtopic,
 		Payload:   body,
 		Publisher: publisher,
+		ClientId:  clientID,
 		Protocol:  protocol,
 		Created:   created,
 	}, nil

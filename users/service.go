@@ -682,7 +682,7 @@ func (svc service) addUserPolicy(ctx context.Context, userID string, role Role) 
 		Subject:     userID,
 		Relation:    policies.MemberRelation,
 		ObjectType:  policies.PlatformType,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 	})
 
 	if role == AdminRole {
@@ -691,7 +691,7 @@ func (svc service) addUserPolicy(ctx context.Context, userID string, role Role) 
 			Subject:     userID,
 			Relation:    policies.AdministratorRelation,
 			ObjectType:  policies.PlatformType,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 		})
 	}
 	err := svc.policies.AddPolicies(ctx, policyList)
@@ -710,7 +710,7 @@ func (svc service) addUserPolicyRollback(ctx context.Context, userID string, rol
 		Subject:     userID,
 		Relation:    policies.MemberRelation,
 		ObjectType:  policies.PlatformType,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 	})
 
 	if role == AdminRole {
@@ -719,7 +719,7 @@ func (svc service) addUserPolicyRollback(ctx context.Context, userID string, rol
 			Subject:     userID,
 			Relation:    policies.AdministratorRelation,
 			ObjectType:  policies.PlatformType,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 		})
 	}
 	err := svc.policies.DeletePolicies(ctx, policyList)
@@ -738,7 +738,7 @@ func (svc service) updateUserPolicy(ctx context.Context, userID string, role Rol
 			Subject:     userID,
 			Relation:    policies.AdministratorRelation,
 			ObjectType:  policies.PlatformType,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 		})
 		if err != nil {
 			return errors.Wrap(svcerr.ErrAddPolicies, err)
@@ -753,7 +753,7 @@ func (svc service) updateUserPolicy(ctx context.Context, userID string, role Rol
 			Subject:     userID,
 			Relation:    policies.AdministratorRelation,
 			ObjectType:  policies.PlatformType,
-			Object:      policies.SuperMQObject,
+			Object:      policies.MagistralaObject,
 		})
 		if err != nil {
 			return errors.Wrap(svcerr.ErrDeletePolicies, err)

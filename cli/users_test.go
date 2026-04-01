@@ -33,13 +33,6 @@ var user = mgsdk.User{
 	Status: users.EnabledStatus.String(),
 }
 
-var (
-	validToken   = "valid"
-	invalidToken = ""
-	invalidID    = "invalidID"
-	extraArg     = "extra-arg"
-)
-
 func TestCreateUsersCmd(t *testing.T) {
 	sdkMock := new(sdkmocks.SDK)
 	cli.SetSDK(sdkMock)

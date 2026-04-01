@@ -61,48 +61,48 @@ The service is configured using the environment variables presented in the follo
 
 | Variable | Description | Default |
 | :--- | :--- | :--- |
-| `SMQ_AUTH_LOG_LEVEL` | Log level for the Auth service (debug, info, warn, error) | info |
-| `SMQ_AUTH_DB_HOST` | Database host address | localhost |
-| `SMQ_AUTH_DB_PORT` | Database host port | 5432 |
-| `SMQ_AUTH_DB_USER` | Database user | supermq |
-| `SMQ_AUTH_DB_PASSWORD` | Database password | supermq |
-| `SMQ_AUTH_DB_NAME` | Name of the database used by the service | auth |
-| `SMQ_AUTH_DB_SSL_MODE` | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable |
-| `SMQ_AUTH_DB_SSL_CERT` | Path to the PEM encoded certificate file | "" |
-| `SMQ_AUTH_DB_SSL_KEY` | Path to the PEM encoded key file | "" |
-| `SMQ_AUTH_DB_SSL_ROOT_CERT` | Path to the PEM encoded root certificate file | "" |
-| `SMQ_AUTH_HTTP_HOST` | Auth service HTTP host | "" |
-| `SMQ_AUTH_HTTP_PORT` | Auth service HTTP port | 8189 |
-| `SMQ_AUTH_HTTP_SERVER_CERT` | Path to the PEM encoded HTTP server certificate file | "" |
-| `SMQ_AUTH_HTTP_SERVER_KEY` | Path to the PEM encoded HTTP server key file | "" |
-| `SMQ_AUTH_GRPC_HOST` | Auth service gRPC host | "" |
-| `SMQ_AUTH_GRPC_PORT` | Auth service gRPC port | 8181 |
-| `SMQ_AUTH_GRPC_SERVER_CERT` | Path to the PEM encoded gRPC server certificate file | "" |
-| `SMQ_AUTH_GRPC_SERVER_KEY` | Path to the PEM encoded gRPC server key file | "" |
-| `SMQ_AUTH_GRPC_SERVER_CA_CERTS` | Path to the PEM encoded gRPC server CA certificate file | "" |
-| `SMQ_AUTH_GRPC_CLIENT_CA_CERTS` | Path to the PEM encoded gRPC client CA certificate file | "" |
-| `SMQ_AUTH_SECRET_KEY` | String used for signing tokens | secret |
-| `SMQ_AUTH_ACCESS_TOKEN_DURATION` | The access token expiration period | 1h |
-| `SMQ_AUTH_REFRESH_TOKEN_DURATION` | The refresh token expiration period | 24h |
-| `SMQ_AUTH_INVITATION_DURATION` | The invitation token expiration period | 168h |
-| `SMQ_AUTH_CACHE_URL` | Redis URL for caching PAT scopes | redis://localhost:6379/0 |
-| `SMQ_AUTH_CACHE_KEY_DURATION` | Duration for which PAT scope cache keys are valid | 10m |
-| `SMQ_SPICEDB_HOST` | SpiceDB host address | localhost |
-| `SMQ_SPICEDB_PORT` | SpiceDB host port | 50051 |
-| `SMQ_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | 12345678 |
-| `SMQ_SPICEDB_SCHEMA_FILE` | Path to SpiceDB schema file | ./docker/spicedb/schema.zed |
-| `SMQ_JAEGER_URL` | Jaeger server URL | <http://jaeger:4318/v1/traces> |
-| `SMQ_JAEGER_TRACE_RATIO` | Jaeger sampling ratio | 1.0 |
-| `SMQ_SEND_TELEMETRY` | Send telemetry to supermq call home server | true |
-| `SMQ_ADAPTER_INSTANCE_ID` | Adapter instance ID | "" |
-| `SMQ_CALLOUT_URLS` | Comma-separated list of callout URLs | "" |
-| `SMQ_CALLOUT_METHOD` | Callout method | POST |
-| `SMQ_CALLOUT_TLS_VERIFICATION` | Enable TLS verification for callouts | true |
-| `SMQ_CALLOUT_TIMEOUT` | Callout timeout | 10s |
-| `SMQ_CALLOUT_CA_CERT` | Path to CA certificate file | "" |
-| `SMQ_CALLOUT_CERT` | Path to client certificate file | "" |
-| `SMQ_CALLOUT_KEY` | Path to client key file | "" |
-| `SMQ_CALLOUT_OPERATIONS` | Invoke callout if the authorization permission matches any of the given permissions. | "" |
+| `MG_AUTH_LOG_LEVEL` | Log level for the Auth service (debug, info, warn, error) | info |
+| `MG_AUTH_DB_HOST` | Database host address | localhost |
+| `MG_AUTH_DB_PORT` | Database host port | 5432 |
+| `MG_AUTH_DB_USER` | Database user | supermq |
+| `MG_AUTH_DB_PASSWORD` | Database password | supermq |
+| `MG_AUTH_DB_NAME` | Name of the database used by the service | auth |
+| `MG_AUTH_DB_SSL_MODE` | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable |
+| `MG_AUTH_DB_SSL_CERT` | Path to the PEM encoded certificate file | "" |
+| `MG_AUTH_DB_SSL_KEY` | Path to the PEM encoded key file | "" |
+| `MG_AUTH_DB_SSL_ROOT_CERT` | Path to the PEM encoded root certificate file | "" |
+| `MG_AUTH_HTTP_HOST` | Auth service HTTP host | "" |
+| `MG_AUTH_HTTP_PORT` | Auth service HTTP port | 8189 |
+| `MG_AUTH_HTTP_SERVER_CERT` | Path to the PEM encoded HTTP server certificate file | "" |
+| `MG_AUTH_HTTP_SERVER_KEY` | Path to the PEM encoded HTTP server key file | "" |
+| `MG_AUTH_GRPC_HOST` | Auth service gRPC host | "" |
+| `MG_AUTH_GRPC_PORT` | Auth service gRPC port | 8181 |
+| `MG_AUTH_GRPC_SERVER_CERT` | Path to the PEM encoded gRPC server certificate file | "" |
+| `MG_AUTH_GRPC_SERVER_KEY` | Path to the PEM encoded gRPC server key file | "" |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS` | Path to the PEM encoded gRPC server CA certificate file | "" |
+| `MG_AUTH_GRPC_CLIENT_CA_CERTS` | Path to the PEM encoded gRPC client CA certificate file | "" |
+| `MG_AUTH_SECRET_KEY` | String used for signing tokens | secret |
+| `MG_AUTH_ACCESS_TOKEN_DURATION` | The access token expiration period | 1h |
+| `MG_AUTH_REFRESH_TOKEN_DURATION` | The refresh token expiration period | 24h |
+| `MG_AUTH_INVITATION_DURATION` | The invitation token expiration period | 168h |
+| `MG_AUTH_CACHE_URL` | Redis URL for caching PAT scopes | redis://localhost:6379/0 |
+| `MG_AUTH_CACHE_KEY_DURATION` | Duration for which PAT scope cache keys are valid | 10m |
+| `MG_SPICEDB_HOST` | SpiceDB host address | localhost |
+| `MG_SPICEDB_PORT` | SpiceDB host port | 50051 |
+| `MG_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | 12345678 |
+| `MG_SPICEDB_SCHEMA_FILE` | Path to SpiceDB schema file | ./docker/spicedb/schema.zed |
+| `MG_JAEGER_URL` | Jaeger server URL | <http://jaeger:4318/v1/traces> |
+| `MG_JAEGER_TRACE_RATIO` | Jaeger sampling ratio | 1.0 |
+| `MG_SEND_TELEMETRY` | Send telemetry to supermq call home server | true |
+| `MG_ADAPTER_INSTANCE_ID` | Adapter instance ID | "" |
+| `MG_CALLOUT_URLS` | Comma-separated list of callout URLs | "" |
+| `MG_CALLOUT_METHOD` | Callout method | POST |
+| `MG_CALLOUT_TLS_VERIFICATION` | Enable TLS verification for callouts | true |
+| `MG_CALLOUT_TIMEOUT` | Callout timeout | 10s |
+| `MG_CALLOUT_CA_CERT` | Path to CA certificate file | "" |
+| `MG_CALLOUT_CERT` | Path to client certificate file | "" |
+| `MG_CALLOUT_KEY` | Path to client key file | "" |
+| `MG_CALLOUT_OPERATIONS` | Invoke callout if the authorization permission matches any of the given permissions. | "" |
 
 ## Deployment
 
@@ -124,46 +124,46 @@ make auth
 make install
 
 # set the environment variables and run the service
-SMQ_AUTH_LOG_LEVEL=info \
-SMQ_AUTH_DB_HOST=localhost \
-SMQ_AUTH_DB_PORT=5432 \
-SMQ_AUTH_DB_USER=supermq \
-SMQ_AUTH_DB_PASSWORD=supermq \
-SMQ_AUTH_DB_NAME=auth \
-SMQ_AUTH_DB_SSL_MODE=disable \
-SMQ_AUTH_DB_SSL_CERT="" \
-SMQ_AUTH_DB_SSL_KEY="" \
-SMQ_AUTH_DB_SSL_ROOT_CERT="" \
-SMQ_AUTH_HTTP_HOST=localhost \
-SMQ_AUTH_HTTP_PORT=8189 \
-SMQ_AUTH_HTTP_SERVER_CERT="" \
-SMQ_AUTH_HTTP_SERVER_KEY="" \
-SMQ_AUTH_GRPC_HOST=localhost \
-SMQ_AUTH_GRPC_PORT=8181 \
-SMQ_AUTH_GRPC_SERVER_CERT="" \
-SMQ_AUTH_GRPC_SERVER_KEY="" \
-SMQ_AUTH_GRPC_SERVER_CA_CERTS="" \
-SMQ_AUTH_GRPC_CLIENT_CA_CERTS="" \
-SMQ_AUTH_SECRET_KEY=secret \
-SMQ_AUTH_ACCESS_TOKEN_DURATION=1h \
-SMQ_AUTH_REFRESH_TOKEN_DURATION=24h \
-SMQ_AUTH_INVITATION_DURATION=168h \
-SMQ_SPICEDB_HOST=localhost \
-SMQ_SPICEDB_PORT=50051 \
-SMQ_SPICEDB_PRE_SHARED_KEY=12345678 \
-SMQ_SPICEDB_SCHEMA_FILE=./docker/spicedb/schema.zed \
-SMQ_JAEGER_URL=http://localhost:14268/api/traces \
-SMQ_JAEGER_TRACE_RATIO=1.0 \
-SMQ_SEND_TELEMETRY=true \
-SMQ_AUTH_ADAPTER_INSTANCE_ID="" \
-SMQ_CALLOUT_URLS="" \
-SMQ_CALLOUT_METHOD="POST" \
-SMQ_CALLOUT_TLS_VERIFICATION=true \
+MG_AUTH_LOG_LEVEL=info \
+MG_AUTH_DB_HOST=localhost \
+MG_AUTH_DB_PORT=5432 \
+MG_AUTH_DB_USER=supermq \
+MG_AUTH_DB_PASSWORD=supermq \
+MG_AUTH_DB_NAME=auth \
+MG_AUTH_DB_SSL_MODE=disable \
+MG_AUTH_DB_SSL_CERT="" \
+MG_AUTH_DB_SSL_KEY="" \
+MG_AUTH_DB_SSL_ROOT_CERT="" \
+MG_AUTH_HTTP_HOST=localhost \
+MG_AUTH_HTTP_PORT=8189 \
+MG_AUTH_HTTP_SERVER_CERT="" \
+MG_AUTH_HTTP_SERVER_KEY="" \
+MG_AUTH_GRPC_HOST=localhost \
+MG_AUTH_GRPC_PORT=8181 \
+MG_AUTH_GRPC_SERVER_CERT="" \
+MG_AUTH_GRPC_SERVER_KEY="" \
+MG_AUTH_GRPC_SERVER_CA_CERTS="" \
+MG_AUTH_GRPC_CLIENT_CA_CERTS="" \
+MG_AUTH_SECRET_KEY=secret \
+MG_AUTH_ACCESS_TOKEN_DURATION=1h \
+MG_AUTH_REFRESH_TOKEN_DURATION=24h \
+MG_AUTH_INVITATION_DURATION=168h \
+MG_SPICEDB_HOST=localhost \
+MG_SPICEDB_PORT=50051 \
+MG_SPICEDB_PRE_SHARED_KEY=12345678 \
+MG_SPICEDB_SCHEMA_FILE=./docker/spicedb/schema.zed \
+MG_JAEGER_URL=http://localhost:14268/api/traces \
+MG_JAEGER_TRACE_RATIO=1.0 \
+MG_SEND_TELEMETRY=true \
+MG_AUTH_ADAPTER_INSTANCE_ID="" \
+MG_CALLOUT_URLS="" \
+MG_CALLOUT_METHOD="POST" \
+MG_CALLOUT_TLS_VERIFICATION=true \
 $GOBIN/supermq-auth
 ```
 
-Setting `SMQ_AUTH_HTTP_SERVER_CERT` and `SMQ_AUTH_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
-Setting `SMQ_AUTH_GRPC_SERVER_CERT` and `SMQ_AUTH_GRPC_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key. Setting `SMQ_AUTH_GRPC_SERVER_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs. Setting `SMQ_AUTH_GRPC_CLIENT_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
+Setting `MG_AUTH_HTTP_SERVER_CERT` and `MG_AUTH_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
+Setting `MG_AUTH_GRPC_SERVER_CERT` and `MG_AUTH_GRPC_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key. Setting `MG_AUTH_GRPC_SERVER_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs. Setting `MG_AUTH_GRPC_CLIENT_CA_CERTS` will enable TLS against the service trusting only those CAs that are provided. The service expects a file in PEM format of trusted CAs.
 
 ## Personal Access Tokens (PATs)
 

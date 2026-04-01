@@ -15,9 +15,14 @@ on:
       - "clients/api/http/**"
       - "domains/api/http/**"
       - "groups/api/http/**"
-      - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
+      - "bootstrap/api/**"
+      - "certs/api/http/**"
+      - "readers/api/http/**"
+      - "re/api/**"
+      - "alarms/api/**"
+      - "reports/api/**"
       - "apidocs/openapi/**"
   pull_request:
     branches:
@@ -30,9 +35,14 @@ on:
       - "clients/api/http/**"
       - "domains/api/http/**"
       - "groups/api/http/**"
-      - "http/api/**"
       - "journal/api/**"
       - "users/api/**"
+      - "bootstrap/api/**"
+      - "certs/api/http/**"
+      - "readers/api/http/**"
+      - "re/api/**"
+      - "alarms/api/**"
+      - "reports/api/**"
       - "apidocs/openapi/**"
 
 concurrency:
@@ -50,9 +60,14 @@ env:
   CLIENTS_URL: http://localhost:9006
   CHANNELS_URL: http://localhost:9005
   GROUPS_URL: http://localhost:9004
-  HTTP_ADAPTER_URL: http://localhost:8008
   AUTH_URL: http://localhost:9001
   JOURNAL_URL: http://localhost:9021
+  BOOTSTRAP_URL: http://localhost:9013
+  CERTS_URL: http://localhost:9019
+  READERS_URL: http://localhost:9011
+  RE_URL: http://localhost:9008
+  ALARMS_URL: http://localhost:8050
+  REPORTS_URL: http://localhost:9017
 
 jobs:
   api-test:
@@ -93,10 +108,6 @@ jobs:
               - "apidocs/openapi/domains.yaml"
               - "domains/api/http/**"
 
-            http:
-              - "apidocs/openapi/http.yaml"
-              - "http/api/**"
-
             clients:
               - "apidocs/openapi/clients.yaml"
               - "clients/api/http/**"
@@ -112,6 +123,30 @@ jobs:
             users:
               - "apidocs/openapi/users.yaml"
               - "users/api/**"
+
+            bootstrap:
+              - "apidocs/openapi/bootstrap.yaml"
+              - "bootstrap/api/**"
+
+            certs:
+              - "apidocs/openapi/certs.yaml"
+              - "certs/api/http/**"
+
+            readers:
+              - "apidocs/openapi/readers.yaml"
+              - "readers/api/http/**"
+
+            re:
+              - "apidocs/openapi/rules.yaml"
+              - "re/api/**"
+
+            alarms:
+              - "apidocs/openapi/alarms.yaml"
+              - "alarms/api/**"
+
+            reports:
+              - "apidocs/openapi/reports.yaml"
+              - "reports/api/**"
 
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
@@ -178,15 +213,6 @@ jobs:
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
-      - name: Run HTTP Adapter API tests
-        if: steps.changes.outputs.http == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v2.1.0
-        with:
-          schema: apidocs/openapi/http.yaml
-          base-url: ${{ env.HTTP_ADAPTER_URL }}
-          checks: all
-          args: '--header "Authorization: Client ${{ env.CLIENT_SECRET }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-
       - name: Run Auth API tests
         if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
         uses: schemathesis/action@v2.1.0
@@ -211,6 +237,60 @@ jobs:
         with:
           schema: apidocs/openapi/journal.yaml
           base-url: ${{ env.JOURNAL_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Bootstrap API tests
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/bootstrap.yaml
+          base-url: ${{ env.BOOTSTRAP_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Certs API tests
+        if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/certs.yaml
+          base-url: ${{ env.CERTS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Readers API tests
+        if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/readers.yaml
+          base-url: ${{ env.READERS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Rules Engine API tests
+        if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/rules.yaml
+          base-url: ${{ env.RE_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Alarms API tests
+        if: steps.changes.outputs.alarms == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/alarms.yaml
+          base-url: ${{ env.ALARMS_URL }}
+          checks: all
+          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+
+      - name: Run Reports API tests
+        if: steps.changes.outputs.reports == 'true' || steps.changes.outputs.workflow == 'true'
+        uses: schemathesis/action@v2.1.0
+        with:
+          schema: apidocs/openapi/reports.yaml
+          base-url: ${{ env.REPORTS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 

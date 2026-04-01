@@ -1,0 +1,123 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# This docker-compose file contains optional Postgres-reader service for Magistrala platform.
+# Since this service is optional, this file is dependent of docker-compose.yaml file
+# from <project_root>/docker. In order to run this service, execute command:
+# docker compose -f docker/docker-compose.yaml -f docker/addons/postgres-reader/docker-compose.yaml up
+# from project root.
+
+networks:
+  magistrala-base-net:
+    external: true
+
+services:
+  postgres-reader:
+    image: docker.io/magistrala/postgres-reader:${MG_RELEASE_TAG}
+    container_name: magistrala-postgres-reader
+    restart: on-failure
+    environment:
+      MG_POSTGRES_READER_LOG_LEVEL: ${MG_POSTGRES_READER_LOG_LEVEL}
+      MG_POSTGRES_READER_HTTP_HOST: ${MG_POSTGRES_READER_HTTP_HOST}
+      MG_POSTGRES_READER_HTTP_PORT: ${MG_POSTGRES_READER_HTTP_PORT}
+      MG_POSTGRES_READER_HTTP_SERVER_CERT: ${MG_POSTGRES_READER_HTTP_SERVER_CERT}
+      MG_POSTGRES_READER_HTTP_SERVER_KEY: ${MG_POSTGRES_READER_HTTP_SERVER_KEY}
+      MG_POSTGRES_HOST: ${MG_POSTGRES_HOST}
+      MG_POSTGRES_PORT: ${MG_POSTGRES_PORT}
+      MG_POSTGRES_USER: ${MG_POSTGRES_USER}
+      MG_POSTGRES_PASS: ${MG_POSTGRES_PASS}
+      MG_POSTGRES_NAME: ${MG_POSTGRES_NAME}
+      MG_POSTGRES_SSL_MODE: ${MG_POSTGRES_SSL_MODE}
+      MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
+      MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
+      MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
+      MG_CLIENTS_GRPC_URL: ${MG_CLIENTS_GRPC_URL}
+      MG_CLIENTS_GRPC_TIMEOUT: ${MG_CLIENTS_GRPC_TIMEOUT}
+      MG_CLIENTS_GRPC_CLIENT_CERT: ${MG_CLIENTS_GRPC_CLIENT_CERT:+/clients-grpc-client.crt}
+      MG_CLIENTS_GRPC_CLIENT_KEY: ${MG_CLIENTS_GRPC_CLIENT_KEY:+/clients-grpc-client.key}
+      MG_CLIENTS_GRPC_SERVER_CA_CERTS: ${MG_CLIENTS_GRPC_SERVER_CA_CERTS:+/clients-grpc-server-ca.crt}
+      MG_POSTGRES_READER_GRPC_URL: ${MG_POSTGRES_READER_GRPC_URL}
+      MG_POSTGRES_READER_GRPC_PORT: ${MG_POSTGRES_READER_GRPC_PORT}
+      MG_POSTGRES_READER_GRPC_HOST: ${MG_POSTGRES_READER_GRPC_HOST}
+      MG_POSTGRES_READER_GRPC_TIMEOUT: ${MG_POSTGRES_READER_GRPC_TIMEOUT}
+      MG_POSTGRES_READER_GRPC_CLIENT_CERT: ${MG_POSTGRES_READER_GRPC_CLIENT_CERT:+./ssl/certs/reader-grpc-client.crt}
+      MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS: ${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:+./ssl/certs/ca.crt}
+      MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS: ${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:+./ssl/certs/ca.crt}
+      MG_POSTGRES_READER_GRPC_CLIENT_KEY: ${MG_POSTGRES_READER_GRPC_CLIENT_KEY:+/readers-grpc-client.key}
+      MG_POSTGRES_READER_GRPC_SERVER_CERT: ${MG_POSTGRES_READER_GRPC_SERVER_CERT:+./ssl/certs/readers-grpc-server.crt}
+      MG_POSTGRES_READER_GRPC_SERVER_KEY: ${MG_POSTGRES_READER_GRPC_SERVER_KEY:+./ssl/certs/readers-grpc-server.key}
+      MG_AUTH_GRPC_URL: ${MG_AUTH_GRPC_URL}
+      MG_AUTH_GRPC_TIMEOUT: ${MG_AUTH_GRPC_TIMEOUT}
+      MG_AUTH_GRPC_CLIENT_CERT: ${MG_AUTH_GRPC_CLIENT_CERT:+/auth-grpc-client.crt}
+      MG_AUTH_GRPC_CLIENT_KEY: ${MG_AUTH_GRPC_CLIENT_KEY:+/auth-grpc-client.key}
+      MG_AUTH_GRPC_SERVER_CA_CERTS: ${MG_AUTH_GRPC_SERVER_CA_CERTS:+/auth-grpc-server-ca.crt}
+      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
+      MG_POSTGRES_READER_INSTANCE_ID: ${MG_POSTGRES_READER_INSTANCE_ID}
+    ports:
+      - ${MG_POSTGRES_READER_HTTP_PORT}:${MG_POSTGRES_READER_HTTP_PORT}
+      - ${MG_POSTGRES_READER_GRPC_PORT}:${MG_POSTGRES_READER_GRPC_PORT}
+    networks:
+      - magistrala-base-net
+    volumes:
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
+        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
+        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Clients gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_CERT:-./ssl/placeholder}
+        target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_CLIENT_KEY:-./ssl/placeholder}
+        target: /clients-grpc-client${MG_CLIENTS_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_CLIENTS_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
+        target: /clients-grpc-server-ca${MG_CLIENTS_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      # Reader gRPC mTLS client certificates
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_CERT:-./ssl/placeholder}
+        target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_SERVER_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_KEY:-./ssl/placeholder}
+        target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_SERVER_KEY:+.key}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
+        target: /readers-grpc-server-ca${MG_POSTGRES_READER_GRPC_SERVER_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:-./ssl/placeholder}
+        target: /readers-grpc-server${MG_POSTGRES_READER_GRPC_CLIENT_CA_CERTS:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_CERT:-./ssl/placeholder}
+        target: /readers-grpc-client${MG_POSTGRES_READER_GRPC_CLIENT_CERT:+.crt}
+        bind:
+          create_host_path: true
+      - type: bind
+        source: ${MG_POSTGRES_READER_GRPC_CLIENT_KEY:-./ssl/placeholder}
+        target: /readers-grpc-client${MG_POSTGRES_READER_GRPC_CLIENT_KEY:+.key}
+        bind:
+          create_host_path: true

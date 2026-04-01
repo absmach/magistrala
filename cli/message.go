@@ -31,7 +31,7 @@ func NewMessagesCmd() *cobra.Command {
 	cmd := cobra.Command{
 		Use:   "messages [send]",
 		Short: "Send messages",
-		Long:  `Send messages using the http-adapter`,
+		Long:  `Send messages using the HTTP API`,
 	}
 
 	for i := range cmdMessages {

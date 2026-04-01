@@ -49,7 +49,7 @@ type eventHandler struct {
 }
 
 func GroupsEventsSubscribe(ctx context.Context, repo groups.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, esURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, esURL, "groups-es-sub", logger)
 	if err != nil {
 		return err
 	}

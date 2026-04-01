@@ -1,0 +1,117 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+server:
+  tcp:
+    v3:
+      addr: "0.0.0.0:1883"
+      protocol: "v3"
+      max_connections: 10000
+      read_timeout: 60s
+      write_timeout: 60s
+    v5:
+      addr: "0.0.0.0:1884"
+      protocol: "v5"
+      max_connections: 10000
+      read_timeout: 60s
+      write_timeout: 60s
+  websocket:
+    v3:
+      addr: "0.0.0.0:8883"
+      path: "/mqtt"
+      protocol: "v3"
+    v5:
+      addr: "0.0.0.0:8884"
+      path: "/mqtt"
+      protocol: "v5"
+  http:
+    plain:
+      addr: "0.0.0.0:8090"
+  coap:
+    plain:
+      addr: "0.0.0.0:5683"
+  amqp:
+    plain:
+      addr: "0.0.0.0:5672"
+      max_connections: 10000
+  amqp091:
+    plain:
+      addr: "0.0.0.0:5682"
+  health_addr: "0.0.0.0:8081"
+  health_enabled: true
+  shutdown_timeout: 30s
+
+broker:
+  max_message_size: 1048576
+  max_retained_messages: 10000
+  retry_interval: 20s
+  max_retries: 0
+  max_qos: 2
+  async_fan_out: false
+  fan_out_workers: 0
+
+session:
+  max_sessions: 10000
+  default_expiry_interval: 300
+  max_offline_queue_size: 10000
+  max_inflight_messages: 1000
+  max_send_queue_size: 1000
+  offline_queue_policy: "evict"
+  inflight_overflow: 1
+  pending_queue_size: 1000
+
+log:
+  level: "info"
+  format: "text"
+
+storage:
+  type: "badger"
+  badger_dir: "/tmp/fluxmq/data"
+  sync_writes: false
+
+cluster:
+  enabled: true
+  node_id: "node1"
+  etcd:
+    data_dir: "/tmp/fluxmq/etcd"
+    bind_addr: "172.30.0.201:2380"
+    client_addr: "172.30.0.201:2379"
+    initial_cluster: "node1=http://172.30.0.201:2380,node2=http://172.30.0.202:2380,node3=http://172.30.0.203:2380"
+    bootstrap: true
+    hybrid_retained_size_threshold: 1024
+  transport:
+    bind_addr: "0.0.0.0:7948"
+    peers:
+      node2: "fluxmq-node2:7948"
+      node3: "fluxmq-node3:7948"
+    route_batch_max_size: 256
+    route_batch_max_delay: 50ms
+    route_batch_flush_workers: 8
+    route_publish_timeout: 15s
+
+queue_manager:
+  auto_commit_interval: 5s
+
+queues:
+  - name: "mqtt"
+    topics:
+      - "$queue/#"
+    reserved: true
+  - name: "events"
+    topics:
+      - "$queue/events/#"
+    type: "stream"
+    retention:
+      max_age: 168h
+      max_length_bytes: 1073741824
+
+auth:
+  url: "http://fluxmq-auth:7016"
+  transport: "grpc"
+  timeout: 5s
+  protocols:
+    mqtt: true
+    http: true
+    coap: true
+    amqp: true
+    amqp091: false

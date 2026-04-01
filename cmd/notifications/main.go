@@ -29,27 +29,27 @@ import (
 
 const (
 	svcName        = "notifications"
-	envPrefixUsers = "SMQ_USERS_GRPC_"
+	envPrefixUsers = "MG_USERS_GRPC_"
 	defEmailPort   = "25"
 )
 
 type config struct {
-	LogLevel           string  `env:"SMQ_NOTIFICATIONS_LOG_LEVEL"              envDefault:"info"`
-	ESURL              string  `env:"SMQ_ES_URL"                               envDefault:"nats://localhost:4222"`
-	JaegerURL          url.URL `env:"SMQ_JAEGER_URL"                           envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry      bool    `env:"SMQ_SEND_TELEMETRY"                       envDefault:"true"`
-	InstanceID         string  `env:"SMQ_NOTIFICATIONS_INSTANCE_ID"            envDefault:""`
-	DomainAltName      string  `env:"SMQ_NOTIFICATIONS_DOMAIN_ALT_NAME"        envDefault:"domain"`
-	TraceRatio         float64 `env:"SMQ_JAEGER_TRACE_RATIO"                   envDefault:"1.0"`
-	EmailHost          string  `env:"SMQ_EMAIL_HOST"                           envDefault:"localhost"`
-	EmailPort          string  `env:"SMQ_EMAIL_PORT"                           envDefault:"25"`
-	EmailUsername      string  `env:"SMQ_EMAIL_USERNAME"                       envDefault:""`
-	EmailPassword      string  `env:"SMQ_EMAIL_PASSWORD"                       envDefault:""`
-	EmailFromAddress   string  `env:"SMQ_EMAIL_FROM_ADDRESS"                   envDefault:"noreply@supermq.com"`
-	EmailFromName      string  `env:"SMQ_EMAIL_FROM_NAME"                      envDefault:"SuperMQ Notifications"`
-	InvitationTemplate string  `env:"SMQ_EMAIL_INVITATION_TEMPLATE"            envDefault:"docker/templates/invitation-sent-email.tmpl"`
-	AcceptanceTemplate string  `env:"SMQ_EMAIL_ACCEPTANCE_TEMPLATE"            envDefault:"docker/templates/invitation-accepted-email.tmpl"`
-	RejectionTemplate  string  `env:"SMQ_EMAIL_REJECTION_TEMPLATE"             envDefault:"docker/templates/invitation-rejected-email.tmpl"`
+	LogLevel           string  `env:"MG_NOTIFICATIONS_LOG_LEVEL"              envDefault:"info"`
+	ESURL              string  `env:"MG_ES_URL"                               envDefault:"amqp://guest:guest@localhost:5682/"`
+	JaegerURL          url.URL `env:"MG_JAEGER_URL"                           envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry      bool    `env:"MG_SEND_TELEMETRY"                       envDefault:"true"`
+	InstanceID         string  `env:"MG_NOTIFICATIONS_INSTANCE_ID"            envDefault:""`
+	DomainAltName      string  `env:"MG_NOTIFICATIONS_DOMAIN_ALT_NAME"        envDefault:"domain"`
+	TraceRatio         float64 `env:"MG_JAEGER_TRACE_RATIO"                   envDefault:"1.0"`
+	EmailHost          string  `env:"MG_EMAIL_HOST"                           envDefault:"localhost"`
+	EmailPort          string  `env:"MG_EMAIL_PORT"                           envDefault:"25"`
+	EmailUsername      string  `env:"MG_EMAIL_USERNAME"                       envDefault:""`
+	EmailPassword      string  `env:"MG_EMAIL_PASSWORD"                       envDefault:""`
+	EmailFromAddress   string  `env:"MG_EMAIL_FROM_ADDRESS"                   envDefault:"noreply@supermq.com"`
+	EmailFromName      string  `env:"MG_EMAIL_FROM_NAME"                      envDefault:"SuperMQ Notifications"`
+	InvitationTemplate string  `env:"MG_EMAIL_INVITATION_TEMPLATE"            envDefault:"docker/templates/invitation-sent-email.tmpl"`
+	AcceptanceTemplate string  `env:"MG_EMAIL_ACCEPTANCE_TEMPLATE"            envDefault:"docker/templates/invitation-accepted-email.tmpl"`
+	RejectionTemplate  string  `env:"MG_EMAIL_REJECTION_TEMPLATE"             envDefault:"docker/templates/invitation-rejected-email.tmpl"`
 }
 
 func main() {
@@ -131,7 +131,7 @@ func main() {
 	notifier = middleware.NewMetrics(notifier, counter, latency)
 	notifier = middleware.NewTracing(notifier, tp.Tracer(svcName))
 
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "notifications-es-sub", logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create subscriber: %s", err))
 		exitCode = 1

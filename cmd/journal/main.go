@@ -44,23 +44,23 @@ import (
 
 const (
 	svcName          = "journal"
-	envPrefixDB      = "SMQ_JOURNAL_DB_"
-	envPrefixHTTP    = "SMQ_JOURNAL_HTTP_"
-	envPrefixAuth    = "SMQ_AUTH_GRPC_"
-	envPrefixDomains = "SMQ_DOMAINS_GRPC_"
+	envPrefixDB      = "MG_JOURNAL_DB_"
+	envPrefixHTTP    = "MG_JOURNAL_HTTP_"
+	envPrefixAuth    = "MG_AUTH_GRPC_"
+	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	defDB            = "journal"
 	defSvcHTTPPort   = "9021"
 )
 
 type config struct {
-	LogLevel         string  `env:"SMQ_JOURNAL_LOG_LEVEL"   envDefault:"info"`
-	ESURL            string  `env:"SMQ_ES_URL"              envDefault:"nats://localhost:4222"`
-	JaegerURL        url.URL `env:"SMQ_JAEGER_URL"          envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry    bool    `env:"SMQ_SEND_TELEMETRY"      envDefault:"true"`
-	InstanceID       string  `env:"SMQ_JOURNAL_INSTANCE_ID" envDefault:""`
-	TraceRatio       float64 `env:"SMQ_JAEGER_TRACE_RATIO"  envDefault:"1.0"`
-	AuthKeyAlgorithm string  `env:"SMQ_AUTH_KEYS_ALGORITHM" envDefault:"RS256"`
-	JWKSURL          string  `env:"SMQ_AUTH_JWKS_URL"       envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
+	LogLevel         string  `env:"MG_JOURNAL_LOG_LEVEL"   envDefault:"info"`
+	ESURL            string  `env:"MG_ES_URL"              envDefault:"amqp://guest:guest@localhost:5682/"`
+	JaegerURL        url.URL `env:"MG_JAEGER_URL"          envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry    bool    `env:"MG_SEND_TELEMETRY"      envDefault:"true"`
+	InstanceID       string  `env:"MG_JOURNAL_INSTANCE_ID" envDefault:""`
+	TraceRatio       float64 `env:"MG_JAEGER_TRACE_RATIO"  envDefault:"1.0"`
+	AuthKeyAlgorithm string  `env:"MG_AUTH_KEYS_ALGORITHM" envDefault:"RS256"`
+	JWKSURL          string  `env:"MG_AUTH_JWKS_URL"       envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
 }
 
 func main() {
@@ -177,7 +177,7 @@ func main() {
 
 	svc := newService(db, dbConfig, authz, logger, tracer)
 
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "journal-es-sub", logger)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create subscriber: %s", err))
 		exitCode = 1

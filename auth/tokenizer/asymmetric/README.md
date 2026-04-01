@@ -14,8 +14,8 @@ The tokenizer uses environment variables to specify key file paths:
 
 | Environment Variable              | Required | Description                                      |
 | --------------------------------- | -------- | ------------------------------------------------ |
-| `SMQ_AUTH_KEYS_ACTIVE_KEY_PATH`   | Yes      | Path to active private key file                  |
-| `SMQ_AUTH_KEYS_RETIRING_KEY_PATH` | No       | Path to retiring private key file (for rotation) |
+| `MG_AUTH_KEYS_ACTIVE_KEY_PATH`   | Yes      | Path to active private key file                  |
+| `MG_AUTH_KEYS_RETIRING_KEY_PATH` | No       | Path to retiring private key file (for rotation) |
 
 Please note that key names are used as **key IDs (kid)**.
 
@@ -24,7 +24,7 @@ Please note that key names are used as **key IDs (kid)**.
 Set only the active key path:
 
 ```bash
-export SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/private.key"
+export MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/private.key"
 ```
 
 The tokenizer will:
@@ -38,8 +38,8 @@ The tokenizer will:
 Set both active and retiring key paths:
 
 ```bash
-export SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/active.key"
-export SMQ_AUTH_KEYS_RETIRING_KEY_PATH="./keys/retiring.key"
+export MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/active.key"
+export MG_AUTH_KEYS_RETIRING_KEY_PATH="./keys/retiring.key"
 ```
 
 The tokenizer will:
@@ -64,12 +64,12 @@ Move the current active key to retiring position and set the new key as active:
 
 ```bash
 # Before rotation
-SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/current.key"
-SMQ_AUTH_KEYS_RETIRING_KEY_PATH=""  # No retiring key
+MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/current.key"
+MG_AUTH_KEYS_RETIRING_KEY_PATH=""  # No retiring key
 
 # During rotation (both keys active for grace period)
-SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/new.key"
-SMQ_AUTH_KEYS_RETIRING_KEY_PATH="./keys/current.key"
+MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/new.key"
+MG_AUTH_KEYS_RETIRING_KEY_PATH="./keys/current.key"
 
 # After rotation (restart service with new config)
 docker-compose restart auth
@@ -83,8 +83,8 @@ After the grace period expires (typically 7-30 days), remove the retiring key:
 
 ```bash
 # Remove retiring key configuration
-SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/new.key"
-SMQ_AUTH_KEYS_RETIRING_KEY_PATH=""  # Remove retiring key
+MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/new.key"
+MG_AUTH_KEYS_RETIRING_KEY_PATH=""  # Remove retiring key
 
 # Restart service
 docker-compose restart auth
@@ -121,20 +121,20 @@ The grace period should be longer than your longest-lived access token duration.
 
 ```bash
 # Day 0: Normal operation
-export SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/key-2024.pem"
-export SMQ_AUTH_KEYS_RETIRING_KEY_PATH=""
+export MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/key-2024.pem"
+export MG_AUTH_KEYS_RETIRING_KEY_PATH=""
 
 # Day 1: Start rotation - generate new key
 openssl genpkey -algorithm Ed25519 -out ./keys/key-2025.pem
 chmod 600 ./keys/key-2025.pem
 
 # Day 1: Update config and restart
-export SMQ_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/key-2025.pem"
-export SMQ_AUTH_KEYS_RETIRING_KEY_PATH="./keys/key-2024.pem"
+export MG_AUTH_KEYS_ACTIVE_KEY_PATH="./keys/key-2025.pem"
+export MG_AUTH_KEYS_RETIRING_KEY_PATH="./keys/key-2024.pem"
 docker-compose restart auth
 
 # Day 8: Grace period expired - remove old key
-export SMQ_AUTH_KEYS_RETIRING_KEY_PATH=""
+export MG_AUTH_KEYS_RETIRING_KEY_PATH=""
 docker-compose restart auth
 rm ./keys/key-2024.pem
 ```
@@ -147,7 +147,7 @@ rm ./keys/key-2024.pem
 Error: active key file not found: ./keys/active.key
 ```
 
-**Solution:** Ensure the file exists and path is correct. Verify `SMQ_AUTH_KEYS_ACTIVE_KEY_PATH` environment variable.
+**Solution:** Ensure the file exists and path is correct. Verify `MG_AUTH_KEYS_ACTIVE_KEY_PATH` environment variable.
 
 ### Retiring key warning
 

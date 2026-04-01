@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !msg_rabbitmq
-// +build !msg_rabbitmq
+//go:build !msg_fluxmq && !msg_rabbitmq && !rabbitmq
+// +build !msg_fluxmq,!msg_rabbitmq,!rabbitmq
 
 package brokers
 
@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	log.Println("The binary was build using Nats as the message broker")
+	log.Println("The binary was built using NATS as the message broker")
 }
 
 func NewPublisher(cfg server.Config, tracer trace.Tracer, publisher messaging.Publisher) messaging.Publisher {

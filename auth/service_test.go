@@ -141,7 +141,7 @@ func TestIssue(t *testing.T) {
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
 				Permission:  policies.MembershipPermission,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			}).Return(tc.roleCheckErr)
 			_, err := svc.Issue(context.Background(), tc.token, tc.key)
@@ -195,7 +195,7 @@ func TestIssue(t *testing.T) {
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
 				Permission:  policies.MembershipPermission,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			}).Return(tc.roleCheckErr)
 			_, err := svc.Issue(context.Background(), tc.token, tc.key)
@@ -290,7 +290,7 @@ func TestIssue(t *testing.T) {
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
 				Permission:  policies.MembershipPermission,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			}).Return(tc.roleCheckErr)
 			_, err := svc.Issue(context.Background(), tc.token, tc.key)
@@ -404,7 +404,7 @@ func TestIssue(t *testing.T) {
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
 				Permission:  policies.MembershipPermission,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 			}).Return(tc.roleCheckErr)
 			_, err := svc.Issue(context.Background(), tc.token, tc.key)
@@ -887,14 +887,14 @@ func TestAuthorize(t *testing.T) {
 			policyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
@@ -949,7 +949,7 @@ func TestAuthorize(t *testing.T) {
 			policyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
@@ -964,7 +964,7 @@ func TestAuthorize(t *testing.T) {
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
@@ -976,7 +976,7 @@ func TestAuthorize(t *testing.T) {
 			policyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
@@ -991,7 +991,7 @@ func TestAuthorize(t *testing.T) {
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
@@ -1049,14 +1049,14 @@ func TestAuthorize(t *testing.T) {
 			policyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
 			checkPolicyReq: policies.Policy{
 				SubjectType: policies.UserType,
 				SubjectKind: policies.UsersKind,
-				Object:      policies.SuperMQObject,
+				Object:      policies.MagistralaObject,
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},

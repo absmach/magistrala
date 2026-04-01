@@ -13,7 +13,6 @@ import (
 	apiutil "github.com/absmach/supermq/api/http/util"
 	"github.com/absmach/supermq/pkg/errors"
 	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/messaging/brokers"
 	"github.com/absmach/supermq/pkg/transformers"
 	"github.com/absmach/supermq/pkg/transformers/json"
 	"github.com/absmach/supermq/pkg/transformers/senml"
@@ -33,18 +32,18 @@ var (
 // Start method starts consuming messages received from Message broker.
 // This method transforms messages to SenML format before
 // using MessageRepository to store them.
-func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer any, configPath string, logger *slog.Logger) error {
-	cfg, err := loadConfig(configPath)
+func Start(ctx context.Context, id string, sub messaging.Subscriber, consumer any, configPath string, defaultTopic string, logger *slog.Logger) error {
+	cfg, err := loadConfig(configPath, defaultTopic)
 	if err != nil {
 		logger.Warn(fmt.Sprintf("Failed to load consumer config: %s", err))
 	}
 
 	transformer := makeTransformer(cfg.TransformerCfg, logger)
 
-	for _, subject := range cfg.SubscriberCfg.Subjects {
+	for _, topic := range cfg.SubscriberCfg.Topics {
 		subCfg := messaging.SubscriberConfig{
 			ID:             id,
-			Topic:          subject,
+			Topic:          topic,
 			DeliveryPolicy: messaging.DeliverAllPolicy,
 		}
 		switch c := consumer.(type) {
@@ -106,7 +105,7 @@ func (h handleFunc) Cancel() error {
 }
 
 type subscriberConfig struct {
-	Subjects []string `toml:"subjects"`
+	Topics []string `toml:"topics"`
 }
 
 type transformerConfig struct {
@@ -120,10 +119,10 @@ type config struct {
 	TransformerCfg transformerConfig `toml:"transformer"`
 }
 
-func loadConfig(configPath string) (config, error) {
+func loadConfig(configPath, defaultTopic string) (config, error) {
 	cfg := config{
 		SubscriberCfg: subscriberConfig{
-			Subjects: []string{brokers.SubjectAllMessages},
+			Topics: []string{defaultTopic},
 		},
 		TransformerCfg: transformerConfig{
 			Format:      defFormat,

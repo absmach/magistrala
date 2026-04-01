@@ -85,7 +85,7 @@ func (svc service) CreateDomain(ctx context.Context, session authn.Session, d Do
 
 	optionalPolicies := []policies.Policy{
 		{
-			Subject:     policies.SuperMQObject,
+			Subject:     policies.MagistralaObject,
 			SubjectType: policies.PlatformType,
 			Relation:    "organization",
 			Object:      d.ID,

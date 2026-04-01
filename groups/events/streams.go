@@ -46,7 +46,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around clients service that sends
 // events to event store.
 func New(ctx context.Context, svc groups.Service, url string) (groups.Service, error) {
-	publisher, err := store.NewPublisher(ctx, url)
+	publisher, err := store.NewPublisher(ctx, url, "groups-es-pub")
 	if err != nil {
 		return nil, err
 	}

@@ -53,6 +53,22 @@ func Migration() *migrate.MemoryMigrationSource {
 			{
 				Id: "journal_02",
 				Up: []string{
+					`CREATE TABLE IF NOT EXISTS clients_telemetry (
+						client_id         VARCHAR(36) PRIMARY KEY,
+						domain_id         VARCHAR(36) NOT NULL,
+						inbound_messages  BIGINT DEFAULT 0,
+						outbound_messages BIGINT DEFAULT 0,
+						first_seen        TIMESTAMP,
+						last_seen         TIMESTAMP
+					)`,
+					`CREATE TABLE IF NOT EXISTS subscriptions (
+						id              VARCHAR(36) PRIMARY KEY,
+						subscriber_id   VARCHAR(1024) NOT NULL,
+						channel_id      VARCHAR(36) NOT NULL,
+						subtopic        VARCHAR(1024),
+						client_id       VARCHAR(36),
+						FOREIGN KEY (client_id) REFERENCES clients_telemetry(client_id) ON DELETE CASCADE ON UPDATE CASCADE
+					)`,
 					`ALTER TABLE journal ALTER COLUMN occurred_at TYPE TIMESTAMPTZ;`,
 					`ALTER TABLE clients_telemetry ALTER COLUMN first_seen TYPE TIMESTAMPTZ;`,
 					`ALTER TABLE clients_telemetry ALTER COLUMN last_seen TYPE TIMESTAMPTZ;`,

@@ -1,10 +1,10 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-SMQ_DOCKER_IMAGE_NAME_PREFIX ?= supermq
+MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = auth users clients groups channels domains http coap cli mqtt journal notifications
-TEST_API_SERVICES = journal auth certs http clients users channels groups domains
+SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports bootstrap journal fluxmq
+TEST_API_SERVICES = journal auth certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -29,21 +29,23 @@ PKG_PROTO_GEN_OUT_DIR=api/grpc
 INTERNAL_PROTO_DIR=internal/proto
 INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
 
-ifneq ($(SMQ_MESSAGE_BROKER_TYPE),)
-	SMQ_MESSAGE_BROKER_TYPE := $(SMQ_MESSAGE_BROKER_TYPE)
+ifneq ($(MG_MESSAGE_BROKER_TYPE),)
+	MG_MESSAGE_BROKER_TYPE := $(MG_MESSAGE_BROKER_TYPE)
 else
-	SMQ_MESSAGE_BROKER_TYPE=msg_nats
+	MG_MESSAGE_BROKER_TYPE=msg_fluxmq
 endif
 
-ifneq ($(SMQ_ES_TYPE),)
-	SMQ_ES_TYPE := $(SMQ_ES_TYPE)
+ifneq ($(MG_ES_TYPE),)
+	MG_ES_TYPE := $(MG_ES_TYPE)
 else
-	SMQ_ES_TYPE=es_nats
+	MG_ES_TYPE=es_fluxmq
 endif
+
+BUILD_TAGS := $(strip $(MG_MESSAGE_BROKER_TYPE) $(MG_ES_TYPE))
 
 define compile_service
 	CGO_ENABLED=$(CGO_ENABLED) GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM) \
-	go build -tags $(SMQ_MESSAGE_BROKER_TYPE) -tags $(SMQ_ES_TYPE) -ldflags "-s -w \
+	go build -tags "$(BUILD_TAGS)" -ldflags "-s -w \
 	-X 'github.com/absmach/supermq.BuildTime=$(TIME)' \
 	-X 'github.com/absmach/supermq.Version=$(VERSION)' \
 	-X 'github.com/absmach/supermq.Commit=$(COMMIT)'" \
@@ -61,7 +63,7 @@ define make_docker
 		--build-arg VERSION=$(VERSION) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg TIME=$(TIME) \
-		--tag=$(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile .
 endef
 
@@ -71,7 +73,7 @@ define make_docker_dev
 	docker build \
 		--no-cache \
 		--build-arg SVC=$(svc) \
-		--tag=$(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
+		--tag=$(MG_DOCKER_IMAGE_NAME_PREFIX)/$(svc) \
 		-f docker/Dockerfile.dev ./build
 endef
 
@@ -82,20 +84,20 @@ define run_with_arch_detection
 		git checkout $(1); \
 		GOARCH=arm64 $(MAKE) dockers; \
 		for svc in $(SERVICES); do \
-			docker tag supermq/$$svc supermq/$$svc:latest; \
-			docker tag supermq/$$svc docker.io/supermq/$$svc:latest; \
+				docker tag magistrala/$$svc magistrala/$$svc:latest; \
+				docker tag magistrala/$$svc docker.io/magistrala/$$svc:latest; \
 		done; \
-		sed -i.bak 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
 		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	else \
 		echo "x86_64 architecture detected."; \
 		git checkout $(1); \
-		sed -i.bak 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
+		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
 		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	fi
 endef
 
-ADDON_SERVICES = journal certs
+ADDON_SERVICES = bootstrap provision postgres-writer postgres-reader
 
 EXTERNAL_SERVICES = prometheus
 
@@ -152,12 +154,12 @@ cleandocker:
 
 ifdef pv
 	# Remove unused volumes
-	docker volume ls -f name=$(SMQ_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
+	docker volume ls -f name=$(MG_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
 endif
 
 install:
 	for file in $(BUILD_DIR)/*; do \
-		cp $$file $(GOBIN)/supermq-`basename $$file`; \
+		cp $$file $(GOBIN)/magistrala-`basename $$file`; \
 	done
 
 mocks: $(MOCKERY)
@@ -182,34 +184,18 @@ define test_api_service
 
 	@if [ -z "$(USER_TOKEN)" ]; then \
 		echo "USER_TOKEN is not set"; \
-		echo "Please set it to a valid token"; \
-		exit 1; \
+			echo "Please set it to a valid token"; \
+			exit 1; \
 	fi
 
-	@if [ "$(svc)" = "http" ] && [ -z "$(CLIENT_SECRET)" ]; then \
-		echo "CLIENT_SECRET is not set"; \
-		echo "Please set it to a valid secret"; \
-		exit 1; \
-	fi
-
-	@if [ "$(svc)" = "http" ]; then \
-		uvx schemathesis run apidocs/openapi/$(svc).yaml \
-		--checks all \
-		--url $(2) \
-		--header "Authorization: Client $(CLIENT_SECRET)" \
-		--suppress-health-check=filter_too_much \
-		--exclude-checks=positive_data_acceptance \
-		--phases=examples,stateful; \
-	else \
-		uvx schemathesis run apidocs/openapi/$(svc).yaml \
-		--checks all \
-		--url $(2) \
-		--header "Authorization: Bearer $(USER_TOKEN)" \
-		--suppress-health-check=filter_too_much \
-		--exclude-checks=positive_data_acceptance \
-		--exclude-operation-id=requestPasswordReset \
-		--phases=examples,stateful; \
-	fi
+	@uvx schemathesis run apidocs/openapi/$(svc).yaml \
+	--checks all \
+	--url $(2) \
+	--header "Authorization: Bearer $(USER_TOKEN)" \
+	--suppress-health-check=filter_too_much \
+	--exclude-checks=positive_data_acceptance \
+	--exclude-operation-id=requestPasswordReset \
+	--phases=examples,stateful
 endef
 
 test_api_users: TEST_API_URL := http://localhost:9002
@@ -217,7 +203,6 @@ test_api_clients: TEST_API_URL := http://localhost:9006
 test_api_domains: TEST_API_URL := http://localhost:9003
 test_api_channels: TEST_API_URL := http://localhost:9005
 test_api_groups: TEST_API_URL := http://localhost:9004
-test_api_http: TEST_API_URL := http://localhost:8008
 test_api_auth: TEST_API_URL := http://localhost:9001
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_journal: TEST_API_URL := http://localhost:9021
@@ -244,7 +229,7 @@ dockers_dev: $(DOCKERS_DEV)
 
 define docker_push
 	for svc in $(SERVICES); do \
-		docker push $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
+		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(1); \
 	done
 endef
 
@@ -257,10 +242,10 @@ latest: dockers
 publish_arch:
 	$(MAKE) dockers GOOS=$(GOOS) GOARCH=$(GOARCH) GOARM=$(GOARM)
 	for svc in $(SERVICES); do \
-		docker tag $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(VERSION)-$(GOARCH); \
-		docker tag $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest-$(GOARCH); \
-		docker push $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(VERSION)-$(GOARCH); \
-		docker push $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest-$(GOARCH); \
+		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(VERSION)-$(GOARCH); \
+		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest-$(GOARCH); \
+		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(VERSION)-$(GOARCH); \
+		docker push $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest-$(GOARCH); \
 	done
 
 release:
@@ -268,7 +253,7 @@ release:
 	git checkout $(version)
 	$(MAKE) dockers
 	for svc in $(SERVICES); do \
-		docker tag $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(SMQ_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
+		docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:$(version); \
 	done
 	$(call docker_push,$(version))
 
@@ -303,29 +288,21 @@ endif
 endif
 endif
 
-fetch_certs:
-	@./scripts/certs.sh
-
 run_latest: check_certs
-	git checkout main
-	$(SED_INPLACE) 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=latest/' docker/.env
+	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_stable: check_certs
 	$(eval version = $(shell git describe --abbrev=0 --tags))
 	git checkout $(version)
-	$(SED_INPLACE) 's/^SMQ_RELEASE_TAG=.*/SMQ_RELEASE_TAG=$(version)/' docker/.env
+	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(version)/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file ./docker/.env -p $(DOCKER_PROJECT) up -d auth domains jaeger
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		if [ "$$SVC" = "certs" ]; then \
-			$(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -f docker/certs-docker-compose-override.yaml --env-file ./docker/.env --env-file ./docker/addons/$$SVC/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args) & \
-		else \
-			SMQ_ADDONS_CERTS_PATH_PREFIX="../." $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
-		fi; \
+		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done
 
 run_live: check_certs

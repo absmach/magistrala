@@ -47,7 +47,7 @@ type eventHandler struct {
 }
 
 func ChannelsEventsSubscribe(ctx context.Context, repo channels.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, esURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, esURL, "channels-es-sub", logger)
 	if err != nil {
 		return err
 	}

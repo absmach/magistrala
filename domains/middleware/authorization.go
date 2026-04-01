@@ -124,7 +124,7 @@ func (am *authorizationMiddleware) FreezeDomain(ctx context.Context, session aut
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
 		Permission:  policies.AdminPermission,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}, nil); err != nil {
 		return domains.Domain{}, err
@@ -250,7 +250,7 @@ func (am *authorizationMiddleware) checkAdmin(ctx context.Context, session authn
 		Subject:     session.UserID,
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 	}
 
 	if err := am.authz.Authorize(ctx, req, nil); err == nil {
@@ -269,7 +269,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 		Subject:     session.UserID,
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 	}, nil); err != nil {
 		return err
 	}

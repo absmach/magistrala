@@ -5,6 +5,8 @@ package email
 
 import (
 	"bytes"
+	"fmt"
+	"io"
 	"net/mail"
 	"strconv"
 	"strings"
@@ -35,13 +37,13 @@ type email struct {
 
 // Config email agent configuration.
 type Config struct {
-	Host        string `env:"SMQ_EMAIL_HOST"         envDefault:"localhost"`
-	Port        string `env:"SMQ_EMAIL_PORT"         envDefault:"25"`
-	Username    string `env:"SMQ_EMAIL_USERNAME"     envDefault:"root"`
-	Password    string `env:"SMQ_EMAIL_PASSWORD"     envDefault:""`
-	FromAddress string `env:"SMQ_EMAIL_FROM_ADDRESS" envDefault:""`
-	FromName    string `env:"SMQ_EMAIL_FROM_NAME"    envDefault:""`
-	Template    string `env:"SMQ_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
+	Host        string `env:"MG_EMAIL_HOST"         envDefault:"localhost"`
+	Port        string `env:"MG_EMAIL_PORT"         envDefault:"25"`
+	Username    string `env:"MG_EMAIL_USERNAME"     envDefault:"root"`
+	Password    string `env:"MG_EMAIL_PASSWORD"     envDefault:""`
+	FromAddress string `env:"MG_EMAIL_FROM_ADDRESS" envDefault:""`
+	FromName    string `env:"MG_EMAIL_FROM_NAME"    envDefault:""`
+	Template    string `env:"MG_EMAIL_TEMPLATE"     envDefault:"email.tmpl"`
 }
 
 // Agent for mailing.
@@ -71,7 +73,7 @@ func New(c *Config) (*Agent, error) {
 }
 
 // Send sends e-mail.
-func (a *Agent) Send(to []string, from, subject, header, user, content, footer string) error {
+func (a *Agent) Send(to []string, from, subject, header, user, content, footer string, attachments map[string][]byte) error {
 	if a.tmpl == nil {
 		return errMissingEmailTemplate
 	}
@@ -101,6 +103,22 @@ func (a *Agent) Send(to []string, from, subject, header, user, content, footer s
 	m.SetHeader("To", to...)
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", buff.String())
+
+	for filename, data := range attachments {
+		reader := bytes.NewReader(data)
+
+		settings := []gomail.FileSetting{
+			gomail.SetHeader(map[string][]string{
+				"Content-Disposition": {fmt.Sprintf(`attachment; filename="%s"`, filename)},
+			}),
+			gomail.SetCopyFunc(func(w io.Writer) error {
+				_, err := io.Copy(w, reader)
+				return err
+			}),
+		}
+
+		m.Attach(filename, settings...)
+	}
 
 	if err := a.dial.DialAndSend(m); err != nil {
 		return errors.Wrap(errSendMail, err)

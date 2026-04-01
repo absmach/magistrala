@@ -45,7 +45,7 @@ type eventHandler struct {
 }
 
 func DomainsEventsSubscribe(ctx context.Context, repo domains.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, esURL, logger)
+	subscriber, err := store.NewSubscriber(ctx, esURL, "domains-es-sub", logger)
 	if err != nil {
 		return err
 	}

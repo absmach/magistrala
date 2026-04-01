@@ -79,17 +79,17 @@ ca:
 	openssl req -newkey rsa:2048 -x509 -nodes -sha512 -days 1095 \
 				-keyout $(CRT_LOCATION)/ca.key -out $(CRT_LOCATION)/ca.crt -subj "/CN=$(CN_CA)/O=$(O)/OU=$(OU_CA)/emailAddress=$(EA)"
 
-# Server cert and key name is "supermq-server".
+# Server cert and key name is "magistrala-server".
 server_cert:
-	# Create supermq server key and CSR.
-	openssl req -new -sha256 -newkey rsa:4096 -nodes -keyout $(CRT_LOCATION)/supermq-server.key \
-				-out $(CRT_LOCATION)/supermq-server.csr -subj "/CN=$(CN_SRV)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
+	# Create magistrala server key and CSR.
+	openssl req -new -sha256 -newkey rsa:4096 -nodes -keyout $(CRT_LOCATION)/magistrala-server.key \
+				-out $(CRT_LOCATION)/magistrala-server.csr -subj "/CN=$(CN_SRV)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
 
 	# Sign server CSR.
-	openssl x509 -req -days 1000 -in $(CRT_LOCATION)/supermq-server.csr -CA $(CRT_LOCATION)/ca.crt -CAkey $(CRT_LOCATION)/ca.key -CAcreateserial -out $(CRT_LOCATION)/supermq-server.crt
+	openssl x509 -req -days 1000 -in $(CRT_LOCATION)/magistrala-server.csr -CA $(CRT_LOCATION)/ca.crt -CAkey $(CRT_LOCATION)/ca.key -CAcreateserial -out $(CRT_LOCATION)/magistrala-server.crt
 
 	# Remove CSR.
-	rm $(CRT_LOCATION)/supermq-server.csr
+	rm $(CRT_LOCATION)/magistrala-server.csr
 
 client_cert:
 	# Create supermq server key and CSR.

@@ -74,36 +74,36 @@ import (
 
 const (
 	svcName                 = "channels"
-	envPrefixDB             = "SMQ_CHANNELS_DB_"
-	envPrefixHTTP           = "SMQ_CHANNELS_HTTP_"
-	envPrefixGRPC           = "SMQ_CHANNELS_GRPC_"
-	envPrefixAuth           = "SMQ_AUTH_GRPC_"
-	envPrefixClients        = "SMQ_CLIENTS_GRPC_"
-	envPrefixGroups         = "SMQ_GROUPS_GRPC_"
-	envPrefixDomains        = "SMQ_DOMAINS_GRPC_"
-	envPrefixChannelCallout = "SMQ_CHANNELS_CALLOUT_"
+	envPrefixDB             = "MG_CHANNELS_DB_"
+	envPrefixHTTP           = "MG_CHANNELS_HTTP_"
+	envPrefixGRPC           = "MG_CHANNELS_GRPC_"
+	envPrefixAuth           = "MG_AUTH_GRPC_"
+	envPrefixClients        = "MG_CLIENTS_GRPC_"
+	envPrefixGroups         = "MG_GROUPS_GRPC_"
+	envPrefixDomains        = "MG_DOMAINS_GRPC_"
+	envPrefixChannelCallout = "MG_CHANNELS_CALLOUT_"
 	defDB                   = "channels"
 	defSvcHTTPPort          = "9005"
 	defSvcGRPCPort          = "7005"
 )
 
 type config struct {
-	LogLevel            string        `env:"SMQ_CHANNELS_LOG_LEVEL"           envDefault:"info"`
-	InstanceID          string        `env:"SMQ_CHANNELS_INSTANCE_ID"         envDefault:""`
-	JaegerURL           url.URL       `env:"SMQ_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry       bool          `env:"SMQ_SEND_TELEMETRY"               envDefault:"true"`
-	CacheURL            string        `env:"SMQ_CHANNELS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration    time.Duration `env:"SMQ_CHANNELS_CACHE_KEY_DURATION"  envDefault:"10m"`
-	ESURL               string        `env:"SMQ_ES_URL"                       envDefault:"nats://localhost:4222"`
-	ESConsumerName      string        `env:"SMQ_CHANNELS_EVENT_CONSUMER"      envDefault:"channels"`
-	TraceRatio          float64       `env:"SMQ_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
-	SpicedbHost         string        `env:"SMQ_SPICEDB_HOST"                 envDefault:"localhost"`
-	SpicedbPort         string        `env:"SMQ_SPICEDB_PORT"                 envDefault:"50051"`
-	SpicedbPreSharedKey string        `env:"SMQ_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
-	SpicedbSchemaFile   string        `env:"SMQ_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
-	AuthKeyAlgorithm    string        `env:"SMQ_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
-	JWKSURL             string        `env:"SMQ_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
-	PermissionsFile     string        `env:"SMQ_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
+	LogLevel            string        `env:"MG_CHANNELS_LOG_LEVEL"           envDefault:"info"`
+	InstanceID          string        `env:"MG_CHANNELS_INSTANCE_ID"         envDefault:""`
+	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                   envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"               envDefault:"true"`
+	CacheURL            string        `env:"MG_CHANNELS_CACHE_URL"           envDefault:"redis://localhost:6379/0"`
+	CacheKeyDuration    time.Duration `env:"MG_CHANNELS_CACHE_KEY_DURATION"  envDefault:"10m"`
+	ESURL               string        `env:"MG_ES_URL"                       envDefault:"amqp://guest:guest@localhost:5682/"`
+	ESConsumerName      string        `env:"MG_CHANNELS_EVENT_CONSUMER"      envDefault:"channels"`
+	TraceRatio          float64       `env:"MG_JAEGER_TRACE_RATIO"           envDefault:"1.0"`
+	SpicedbHost         string        `env:"MG_SPICEDB_HOST"                 envDefault:"localhost"`
+	SpicedbPort         string        `env:"MG_SPICEDB_PORT"                 envDefault:"50051"`
+	SpicedbPreSharedKey string        `env:"MG_SPICEDB_PRE_SHARED_KEY"       envDefault:"12345678"`
+	SpicedbSchemaFile   string        `env:"MG_SPICEDB_SCHEMA_FILE"          envDefault:"schema.zed"`
+	AuthKeyAlgorithm    string        `env:"MG_AUTH_KEYS_ALGORITHM"          envDefault:"RS256"`
+	JWKSURL             string        `env:"MG_AUTH_JWKS_URL"                envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
+	PermissionsFile     string        `env:"MG_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
 func main() {

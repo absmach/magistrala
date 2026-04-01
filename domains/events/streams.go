@@ -43,7 +43,7 @@ type eventStore struct {
 // NewEventStoreMiddleware returns wrapper around auth service that sends
 // events to event store.
 func NewEventStoreMiddleware(ctx context.Context, svc domains.Service, url string) (domains.Service, error) {
-	publisher, err := store.NewPublisher(ctx, url)
+	publisher, err := store.NewPublisher(ctx, url, "domains-es-pub")
 	if err != nil {
 		return nil, err
 	}

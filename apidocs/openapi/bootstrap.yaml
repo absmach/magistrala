@@ -1,0 +1,699 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+openapi: 3.0.1
+info:
+  title: Magistrala Bootstrap service
+  description: |
+    HTTP API for managing platform clients configuration.
+    Some useful links:
+    - [The Magistrala repository](https://github.com/absmach/supermq)
+  contact:
+    email: info@absmach.eu
+  license:
+    name: Apache 2.0
+    url: https://github.com/absmach/supermq/blob/main/LICENSE
+  version: 0.18.5
+
+servers:
+  - url: http://localhost:9013
+  - url: https://localhost:9013
+
+tags:
+  - name: configs
+    description: Everything about your Configs
+    externalDocs:
+      description: Find out more about Configs
+      url: https://docs.magistrala.absmach.eu
+
+paths:
+  /{domainID}/clients/configs:
+    post:
+      operationId: createConfig
+      summary: Adds new config
+      description: |
+        Adds new config to the list of config owned by user identified using
+        the provided access token.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigCreateReq"
+      responses:
+        "201":
+          $ref: "#/components/responses/ConfigCreateRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: A non-existent entity request.
+        "409":
+          description: Failed due to using an existing identity.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+        "503":
+          description: Failed to receive response from the clients service.
+    get:
+      operationId: getConfigs
+      summary: Retrieves managed configs
+      description: |
+        Retrieves a list of managed configs. Due to performance concerns, data
+        is retrieved in subsets. The API configs must ensure that the entire
+        dataset is consumed either by making subsequent requests, or by
+        increasing the subset size of the initial request.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/State"
+        - $ref: "#/components/parameters/Name"
+      responses:
+        "200":
+          $ref: "#/components/responses/ConfigListRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/configs/{configID}:
+    get:
+      operationId: getConfig
+      summary: Retrieves config info (with channels).
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "200":
+          $ref: "#/components/responses/ConfigRes"
+        "400":
+          description: Missing or invalid config.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Config does not exist.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    put:
+      operationId: updateConfig
+      summary: Updates config info
+      description: |
+        Update is performed by replacing the current resource data with values
+        provided in a request payload. Note that the owner, ID, external ID,
+        external key, SuperMQ Client ID and key cannot be changed.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigUpdateReq"
+      responses:
+        "200":
+          description: Config updated.
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Config does not exist.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    delete:
+      operationId: removeConfig
+      summary: Removes a Config
+      description: |
+        Removes a Config. In case of successful removal the service will ensure
+        that the removed config is disconnected from all of the SuperMQ channels.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      responses:
+        "204":
+          description: Config removed.
+        "400":
+          description: Failed due to malformed config ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/configs/certs/{configID}:
+    patch:
+      operationId: updateConfigCerts
+      summary: Updates certs
+      description: |
+        Update is performed by replacing the current certificate data with values
+        provided in a request payload.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigCertUpdateReq"
+      responses:
+        "200":
+          description: Config updated.
+          $ref: "#/components/responses/ConfigUpdateCertsRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Config does not exist.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/configs/connections/{configID}:
+    put:
+      operationId: updateConfigConnections
+      summary: Updates channels the client is connected to
+      description: |
+        Update connections performs update of the channel list corresponding
+        Client is connected to.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigConnUpdateReq"
+      responses:
+        "200":
+          description: Config updated.
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Config does not exist.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /clients/bootstrap/{externalId}:
+    get:
+      operationId: getBootstrapConfig
+      summary: Retrieves configuration.
+      description: |
+        Retrieves a configuration with given external ID and external key.
+      tags:
+        - configs
+      security:
+        - bootstrapAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ExternalId"
+      responses:
+        "200":
+          $ref: "#/components/responses/BootstrapConfigRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid external key provided.
+        "404":
+          description: Failed to retrieve corresponding config.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /clients/bootstrap/secure/{externalId}:
+    get:
+      operationId: getSecureBootstrapConfig
+      summary: Retrieves configuration.
+      description: |
+        Retrieves a configuration with given external ID and encrypted external key.
+      tags:
+        - configs
+      security:
+        - bootstrapEncAuth: []
+      parameters:
+        - $ref: "#/components/parameters/ExternalId"
+      responses:
+        "200":
+          $ref: "#/components/responses/BootstrapConfigRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: |
+            Failed to retrieve corresponding config.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/state/{configID}:
+    put:
+      operationId: updateConfigState
+      summary: Updates Config state.
+      description: |
+        Updating state represents enabling/disabling Config, i.e. connecting
+        and disconnecting corresponding SuperMQ Client to the list of Channels.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigId"
+      requestBody:
+        $ref: "#/components/requestBodies/ConfigStateUpdateReq"
+      responses:
+        "204":
+          description: Config removed.
+        "400":
+          description: Failed due to malformed config's ID.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: A non-existent entity request.
+        "415":
+          description: Missing or invalid content type.
+        "422":
+          description: Database can't process request.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /health:
+    get:
+      summary: Retrieves service health check info.
+      tags:
+        - health
+      security: []
+      responses:
+        "200":
+          $ref: "#/components/responses/HealthRes"
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+components:
+  schemas:
+    State:
+      type: integer
+      enum: [0, 1]
+    Config:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Corresponding SuperMQ Client ID.
+        magistrala_secret:
+          type: string
+          format: uuid
+          description: Corresponding SuperMQ Client key.
+        channels:
+          type: array
+          minItems: 0
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+                description: Channel unique identifier.
+              name:
+                type: string
+                description: Name of the Channel.
+              metadata:
+                type: object
+                description: Custom metadata related to the Channel.
+        external_id:
+          type: string
+          description: External ID (MAC address or some unique identifier).
+        external_key:
+          type: string
+          description: External key.
+        content:
+          type: string
+          description: Free-form custom configuration.
+        state:
+          $ref: "#/components/schemas/State"
+        client_cert:
+          type: string
+          description: Client certificate.
+        ca_cert:
+          type: string
+          description: Issuing CA certificate.
+      required:
+        - external_id
+        - external_key
+    ConfigList:
+      type: object
+      properties:
+        total:
+          type: integer
+          description: Total number of results.
+          minimum: 0
+        offset:
+          type: integer
+          description: Number of items to skip during retrieval.
+          minimum: 0
+          default: 0
+        limit:
+          type: integer
+          description: Size of the subset to retrieve.
+          maximum: 100
+          default: 10
+        configs:
+          type: array
+          minItems: 0
+          uniqueItems: true
+          items:
+            $ref: "#/components/schemas/Config"
+      required:
+        - configs
+    BootstrapConfig:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Corresponding SuperMQ Client ID.
+        client_key:
+          type: string
+          format: uuid
+          description: Corresponding SuperMQ Client key.
+        channels:
+          type: array
+          minItems: 0
+          items:
+            type: string
+        content:
+          type: string
+          description: Free-form custom configuration.
+        client_cert:
+          type: string
+          description: Client certificate.
+      required:
+        - client_id
+        - client_key
+        - channels
+        - content
+    ConfigUpdateCerts:
+      type: object
+      properties:
+        client_id:
+          type: string
+          format: uuid
+          description: Corresponding SuperMQ Client ID.
+        client_cert:
+          type: string
+          description: Client certificate.
+        client_key:
+          type: string
+          description: Key for the client_cert.
+        ca_cert:
+          type: string
+          description: Issuing CA certificate.
+      required:
+        - client_id
+        - client_key
+        - channels
+        - content
+
+  parameters:
+    ConfigId:
+      name: configID
+      description: Unique Config identifier. It's the ID of the corresponding Client.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+    ExternalId:
+      name: externalId
+      description: Unique Config identifier provided by external entity.
+      in: path
+      schema:
+        type: string
+      required: true
+    Limit:
+      name: limit
+      description: Size of the subset to retrieve.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+    Offset:
+      name: offset
+      description: Number of items to skip during retrieval.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+    State:
+      name: state
+      description: A state of items
+      in: query
+      schema:
+        $ref: "#/components/schemas/State"
+      required: false
+    Name:
+      name: name
+      description: Name of the config. Search by name is partial-match and case-insensitive.
+      in: query
+      schema:
+        type: string
+      required: false
+    DomainID:
+      name: domainID
+      description: Unique domain identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+      example: bb7edb32-2eac-4aad-aebe-ed96fe073879
+
+  requestBodies:
+    ConfigCreateReq:
+      description: JSON-formatted document describing the new config.
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              external_id:
+                type: string
+                description: External ID (MAC address or some unique identifier).
+              external_key:
+                type: string
+                description: External key.
+              client_id:
+                type: string
+                format: uuid
+                description: ID of the corresponding SuperMQ Client.
+              channels:
+                type: array
+                minItems: 0
+                items:
+                  type: string
+                  format: uuid
+              content:
+                type: string
+              name:
+                type: string
+              client_cert:
+                type: string
+                description: Client Certificate.
+              client_key:
+                type: string
+                description: Client Private Key.
+              ca_cert:
+                type: string
+            required:
+              - external_id
+              - external_key
+    ConfigUpdateReq:
+      description: JSON-formatted document describing the updated client.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              content:
+                type: string
+              name:
+                type: string
+            required:
+              - content
+              - name
+    ConfigCertUpdateReq:
+      description: JSON-formatted document describing the updated client.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              client_cert:
+                type: string
+              client_key:
+                type: string
+              ca_cert:
+                type: string
+    ConfigConnUpdateReq:
+      description: Array if IDs the client is be connected to.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              channels:
+                type: array
+                minItems: 0
+                items:
+                  type: string
+                  format: uuid
+    ConfigStateUpdateReq:
+      description: Update the state of the Config.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              state:
+                $ref: "#/components/schemas/State"
+
+  responses:
+    ConfigCreateRes:
+      description: Config registered.
+      headers:
+        Location:
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Created configuration's relative URL (i.e. /clients/configs/{configID}).
+    ConfigListRes:
+      description: Data retrieved. Configs from this list don't contain channels.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigList"
+    ConfigRes:
+      description: Data retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Config"
+      links:
+        update:
+          operationId: updateConfig
+          parameters:
+            configID: $response.body#/id
+        updateCerts:
+          operationId: updateConfigCerts
+          parameters:
+            configID: $response.body#/id
+        updateConnections:
+          operationId: updateConfigConnections
+          parameters:
+            configID: $response.body#/id
+        updateState:
+          operationId: updateConfigState
+          parameters:
+            configID: $response.body#/id
+        delete:
+          operationId: removeConfig
+          parameters:
+            configID: $response.body#/id
+    BootstrapConfigRes:
+      description: |
+        Data retrieved. If secure, a response is encrypted using
+        the secret key, so the response is in the binary form.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BootstrapConfig"
+    ServiceError:
+      description: Unexpected server-side error occurred.
+    HealthRes:
+      description: Service Health Check.
+      content:
+        application/health+json:
+          schema:
+            $ref: "./schemas/health_info.yaml"
+    ConfigUpdateCertsRes:
+      description: Data retrieved. Config certs updated.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ConfigUpdateCerts"
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        * Users access: "Authorization: Bearer <user_token>"
+
+    bootstrapAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: string
+      description: |
+        * Clients access: "Authorization: Client <external_key>"
+
+    bootstrapEncAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: aes-sha256-uuid
+      description: |
+        * Clients access: "Authorization: Client <external_enc_key>"
+        Hex-encoded configuration external key encrypted using
+        the AES algorithm and SHA256 sum of the external key
+        itself as an encryption key.
+
+security:
+  - bearerAuth: []

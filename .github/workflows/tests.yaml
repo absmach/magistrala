@@ -22,24 +22,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check-certs:
-    name: Check Certs
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v6
-
-      - name: Fetch Certs
-        run: |
-          make fetch_certs
-          if [[ -n $(git status --porcelain docker/addons/certs) ]]; then
-            echo "Certs docker file is not up to date. Please update it"
-            git diff docker/addons/certs
-            exit 1
-          else
-            exit 0
-          fi
-
   lint-proto:
     name: Lint Proto
     runs-on: ubuntu-latest
@@ -66,10 +48,8 @@ jobs:
           protolint .
 
   lint-and-build:
-    needs: [check-certs, lint-proto]
+    needs: [lint-proto]
     uses: ./.github/workflows/lint-and-build.yaml
-
-
 
   detect-changes:
     name: Detect Changes
@@ -131,14 +111,6 @@ jobs:
               - "domains/api/grpc/**"
               - "internal/grpc/**"
 
-            coap:
-              - "coap/**"
-              - "cmd/coap/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-
             domains:
               - "domains/**"
               - "cmd/domains/**"
@@ -160,15 +132,6 @@ jobs:
               - "domains/api/grpc/**"
               - "internal/grpc/**"
 
-            http:
-              - "http/**"
-              - "cmd/http/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-
             internal:
               - "internal/**"
 
@@ -182,16 +145,6 @@ jobs:
 
             logger:
               - "logger/**"
-
-            mqtt:
-              - "mqtt/**"
-              - "cmd/mqtt/**"
-              - "auth.pb.go"
-              - "auth_grpc.pb.go"
-              - "clients/**"
-              - "pkg/messaging/**"
-              - "logger/**"
-              - "pkg/events/**"
 
             pkg-errors:
               - "pkg/errors/**"
@@ -211,7 +164,6 @@ jobs:
               - "pkg/errors/**"
               - "pkg/groups/**"
               - "auth/**"
-              - "http/**"
               - "internal/*"
               - "clients/**"
               - "users/**"
@@ -220,6 +172,9 @@ jobs:
               - "groups/**"
               - "journal/**"
               - "api/http/**"
+              - "re/**"
+              - "alarms/**"
+              - "reports/**"
 
             pkg-transformers:
               - "pkg/transformers/**"
@@ -253,9 +208,28 @@ jobs:
 
             consumers:
               - "consumers/**"
+              - "cmd/postgres-writer/**"
+              - "cmd/timescale-writer/**"
+              - "cmd/smpp-notifier/**"
+              - "cmd/smtp-notifier/**"
 
             readers:
               - "readers/**"
+              - "cmd/postgres-reader/**"
+              - "cmd/timescale-reader/**"
+
+            re:
+              - "re/**"
+              - "cmd/re/**"
+              - "re/api/**"
+
+            alarms:
+              - "alarms/**"
+              - "cmd/alarms/**"
+
+            reports:
+              - "reports/**"
+              - "cmd/reports/**"
 
       - name: Set matrix for changed modules
         id: set-matrix
@@ -264,21 +238,18 @@ jobs:
 
           if [[ "${{ steps.changes.outputs.workflow }}" == "true" || "${{ steps.changes.outputs.pkg-errors }}" == "true" ]]; then
             # If workflow or pkg/errors changed, test everything
-            modules=("auth" "channels" "cli" "clients" "coap" "domains" "groups" "http" "internal" "journal" "logger" "mqtt" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers")
+            modules=("auth" "channels" "cli" "clients" "domains" "groups" "internal" "journal" "logger" "pkg-errors" "pkg-events" "pkg-grpcclient" "pkg-messaging" "pkg-sdk" "pkg-transformers" "pkg-ulid" "pkg-uuid" "users" "notifications" "api" "consumers" "readers" "re" "alarms" "reports")
           else
             # Add only changed modules
             [[ "${{ steps.changes.outputs.auth }}" == "true" ]] && modules+=("auth")
             [[ "${{ steps.changes.outputs.channels }}" == "true" ]] && modules+=("channels")
             [[ "${{ steps.changes.outputs.cli }}" == "true" ]] && modules+=("cli")
             [[ "${{ steps.changes.outputs.clients }}" == "true" ]] && modules+=("clients")
-            [[ "${{ steps.changes.outputs.coap }}" == "true" ]] && modules+=("coap")
             [[ "${{ steps.changes.outputs.domains }}" == "true" ]] && modules+=("domains")
             [[ "${{ steps.changes.outputs.groups }}" == "true" ]] && modules+=("groups")
-            [[ "${{ steps.changes.outputs.http }}" == "true" ]] && modules+=("http")
             [[ "${{ steps.changes.outputs.internal }}" == "true" ]] && modules+=("internal")
             [[ "${{ steps.changes.outputs.journal }}" == "true" ]] && modules+=("journal")
             [[ "${{ steps.changes.outputs.logger }}" == "true" ]] && modules+=("logger")
-            [[ "${{ steps.changes.outputs.mqtt }}" == "true" ]] && modules+=("mqtt")
             [[ "${{ steps.changes.outputs.pkg-errors }}" == "true" ]] && modules+=("pkg-errors")
             [[ "${{ steps.changes.outputs.pkg-events }}" == "true" ]] && modules+=("pkg-events")
             [[ "${{ steps.changes.outputs.pkg-grpcclient }}" == "true" ]] && modules+=("pkg-grpcclient")
@@ -292,6 +263,9 @@ jobs:
             [[ "${{ steps.changes.outputs.api }}" == "true" ]] && modules+=("api")
             [[ "${{ steps.changes.outputs.consumers }}" == "true" ]] && modules+=("consumers")
             [[ "${{ steps.changes.outputs.readers }}" == "true" ]] && modules+=("readers")
+            [[ "${{ steps.changes.outputs.re }}" == "true" ]] && modules+=("re")
+            [[ "${{ steps.changes.outputs.alarms }}" == "true" ]] && modules+=("alarms")
+            [[ "${{ steps.changes.outputs.reports }}" == "true" ]] && modules+=("reports")
           fi
 
           # Convert to JSON array

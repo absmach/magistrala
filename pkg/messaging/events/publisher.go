@@ -19,7 +19,7 @@ type publisherES struct {
 }
 
 func NewPublisherMiddleware(ctx context.Context, pub messaging.Publisher, url string) (messaging.Publisher, error) {
-	publisher, err := store.NewPublisher(ctx, url)
+	publisher, err := store.NewPublisher(ctx, url, "msg-es-pub")
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (es *publisherES) Publish(ctx context.Context, topic string, msg *messaging
 	me := publishEvent{
 		domainID:  msg.Domain,
 		channelID: msg.Channel,
-		clientID:  msg.Publisher,
+		clientID:  msg.ClientIdentity(),
 		subtopic:  msg.Subtopic,
 	}
 

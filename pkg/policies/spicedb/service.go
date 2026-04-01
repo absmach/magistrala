@@ -318,7 +318,7 @@ func (ps *policyService) ListPermissions(ctx context.Context, pr policies.Policy
 }
 
 func (ps *policyService) policyValidation(pr policies.Policy) error {
-	if pr.ObjectType == policies.PlatformType && pr.Object != policies.SuperMQObject {
+	if pr.ObjectType == policies.PlatformType && pr.Object != policies.MagistralaObject {
 		return errPlatform
 	}
 
@@ -409,7 +409,7 @@ func (ps *policyService) userGroupPreConditions(ctx context.Context, pr policies
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
 		Permission:  policies.AdminPermission,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		isSuperAdmin = true
@@ -484,7 +484,7 @@ func (ps *policyService) userClientPreConditions(ctx context.Context, pr policie
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
 		Permission:  policies.AdminPermission,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		isSuperAdmin = true
@@ -549,7 +549,7 @@ func (ps *policyService) userDomainPreConditions(ctx context.Context, pr policie
 		Subject:     pr.Subject,
 		SubjectType: pr.SubjectType,
 		Permission:  policies.AdminPermission,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 		ObjectType:  policies.PlatformType,
 	}); err == nil {
 		return preconds, fmt.Errorf("use already exists in domain")

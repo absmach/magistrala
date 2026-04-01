@@ -22,7 +22,7 @@ To start additional addon services:
 docker compose -f docker/addons/<path>/docker-compose.yaml up
 ```
 
-To pull docker images from a specific release you need to change the value of `SMQ_RELEASE_TAG` in `.env` before running these commands.
+To pull docker images from a specific release you need to change the value of `MG_RELEASE_TAG` in `.env` before running these commands.
 
 ## Broker Configuration
 
@@ -53,41 +53,41 @@ Depending on the desired setup, the following broker configurations are valid:
 > For non-default brokers (e.g. RabbitMQ as message broker), adjust the environment variables appropriately and rebuild Docker images. Example:
 
 ```bash
-SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
+MG_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
 ```
 
 Then in `.env`:
 
 ```text
-SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
-SMQ_MESSAGE_BROKER_URL=${SMQ_RABBITMQ_URL}
+MG_MESSAGE_BROKER_TYPE=msg_rabbitmq
+MG_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
 ```
 
 For Redis as an events store, you would need to run RabbitMQ or NATS as a message broker. For example, to use Redis as an events store with rabbitmq as a message broker:
 
 ```bash
-SMQ_ES_TYPE=es_redis SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
+MG_ES_TYPE=es_redis MG_MESSAGE_BROKER_TYPE=msg_rabbitmq make dockers
 ```
 
 ```env
-SMQ_MESSAGE_BROKER_TYPE=msg_rabbitmq
-SMQ_MESSAGE_BROKER_URL=${SMQ_RABBITMQ_URL}
-SMQ_ES_TYPE=es_redis
-SMQ_ES_URL=${SMQ_REDIS_URL}
+MG_MESSAGE_BROKER_TYPE=msg_rabbitmq
+MG_MESSAGE_BROKER_URL=${MG_RABBITMQ_URL}
+MG_ES_TYPE=es_redis
+MG_ES_URL=${MG_REDIS_URL}
 ```
 
 For MQTT broker other than RabbitMQ, you would need to change the `docker/.env`. For example, to use NATS as a MQTT broker:
 
 ```env
-SMQ_MQTT_BROKER_TYPE=nats
-SMQ_MQTT_BROKER_HEALTH_CHECK=${SMQ_NATS_HEALTH_CHECK}
-SMQ_MQTT_ADAPTER_MQTT_QOS=${SMQ_NATS_MQTT_QOS}
-SMQ_MQTT_ADAPTER_MQTT_TARGET_HOST=${SMQ_MQTT_BROKER_TYPE}
-SMQ_MQTT_ADAPTER_MQTT_TARGET_PORT=1883
-SMQ_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK=${SMQ_MQTT_BROKER_HEALTH_CHECK}
-SMQ_MQTT_ADAPTER_WS_TARGET_HOST=${SMQ_MQTT_BROKER_TYPE}
-SMQ_MQTT_ADAPTER_WS_TARGET_PORT=8080
-SMQ_MQTT_ADAPTER_WS_TARGET_PATH=${SMQ_NATS_WS_TARGET_PATH}
+MG_MQTT_BROKER_TYPE=nats
+MG_MQTT_BROKER_HEALTH_CHECK=${MG_NATS_HEALTH_CHECK}
+MG_MQTT_ADAPTER_MQTT_QOS=${MG_NATS_MQTT_QOS}
+MG_MQTT_ADAPTER_MQTT_TARGET_HOST=${MG_MQTT_BROKER_TYPE}
+MG_MQTT_ADAPTER_MQTT_TARGET_PORT=1883
+MG_MQTT_ADAPTER_MQTT_TARGET_HEALTH_CHECK=${MG_MQTT_BROKER_HEALTH_CHECK}
+MG_MQTT_ADAPTER_WS_TARGET_HOST=${MG_MQTT_BROKER_TYPE}
+MG_MQTT_ADAPTER_WS_TARGET_PORT=8080
+MG_MQTT_ADAPTER_WS_TARGET_PATH=${MG_NATS_WS_TARGET_PATH}
 ```
 
 ### RabbitMQ configuration (as MQTT broker or MESSAGE_BROKER)
@@ -99,13 +99,13 @@ services:
     container_name: supermq-rabbitmq
     restart: on-failure
     environment:
-      RABBITMQ_ERLANG_COOKIE: ${SMQ_RABBITMQ_COOKIE}
-      RABBITMQ_DEFAULT_USER: ${SMQ_RABBITMQ_USER}
-      RABBITMQ_DEFAULT_PASS: ${SMQ_RABBITMQ_PASS}
-      RABBITMQ_DEFAULT_VHOST: ${SMQ_RABBITMQ_VHOST}
+      RABBITMQ_ERLANG_COOKIE: ${MG_RABBITMQ_COOKIE}
+      RABBITMQ_DEFAULT_USER: ${MG_RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${MG_RABBITMQ_PASS}
+      RABBITMQ_DEFAULT_VHOST: ${MG_RABBITMQ_VHOST}
     ports:
-      - ${SMQ_RABBITMQ_PORT}:${SMQ_RABBITMQ_PORT}
-      - ${SMQ_RABBITMQ_HTTP_PORT}:${SMQ_RABBITMQ_HTTP_PORT}
+      - ${MG_RABBITMQ_PORT}:${MG_RABBITMQ_PORT}
+      - ${MG_RABBITMQ_HTTP_PORT}:${MG_RABBITMQ_HTTP_PORT}
     networks:
       - supermq-base-net
 ```
@@ -131,11 +131,11 @@ By using environment variables file at `docker/.env` you can modify the below gi
 
 | Environment Variable | Description |
 |----------------------|-------------|
-| `SMQ_NGINX_SERVER_NAME` | `SMQ_NGINX_SERVER_NAME` environmental variable is used to configure nginx directive `server_name`. If environmental variable `SMQ_NGINX_SERVER_NAME` is empty then default value `localhost` will set to `server_name`. |
-| `SMQ_NGINX_SERVER_CERT` | `SMQ_NGINX_SERVER_CERT` environmental variable is used to configure nginx directive `ssl_certificate`. If environmental variable `SMQ_NGINX_SERVER_CERT` is empty then by default server certificate in the path `docker/ssl/certs/supermq-server.crt`  will be assigned. |
-| `SMQ_NGINX_SERVER_KEY` | `SMQ_NGINX_SERVER_KEY` environmental variable is used to configure nginx directive `ssl_certificate_key`. If environmental variable `SMQ_NGINX_SERVER_KEY` is empty then by default server certificate key in the path `docker/ssl/certs/supermq-server.key`  will be assigned. |
-| `SMQ_NGINX_SERVER_CLIENT_CA` | `SMQ_NGINX_SERVER_CLIENT_CA` environmental variable is used to configure nginx directive `ssl_client_certificate`. If environmental variable `SMQ_NGINX_SERVER_CLIENT_CA` is empty then by default certificate in the path `docker/ssl/certs/ca.crt` will be assigned. |
-| `SMQ_NGINX_SERVER_DHPARAM` | `SMQ_NGINX_SERVER_DHPARAM` environmental variable is used to configure nginx directive `ssl_dhparam`. If environmental variable `SMQ_NGINX_SERVER_DHPARAM` is empty then by default file in the path `docker/ssl/dhparam.pem` will be assigned. |
+| `MG_NGINX_SERVER_NAME` | `MG_NGINX_SERVER_NAME` environmental variable is used to configure nginx directive `server_name`. If environmental variable `MG_NGINX_SERVER_NAME` is empty then default value `localhost` will set to `server_name`. |
+| `MG_NGINX_SERVER_CERT` | `MG_NGINX_SERVER_CERT` environmental variable is used to configure nginx directive `ssl_certificate`. If environmental variable `MG_NGINX_SERVER_CERT` is empty then by default server certificate in the path `docker/ssl/certs/magistrala-server.crt`  will be assigned. |
+| `MG_NGINX_SERVER_KEY` | `MG_NGINX_SERVER_KEY` environmental variable is used to configure nginx directive `ssl_certificate_key`. If environmental variable `MG_NGINX_SERVER_KEY` is empty then by default server certificate key in the path `docker/ssl/certs/magistrala-server.key`  will be assigned. |
+| `MG_NGINX_SERVER_CLIENT_CA` | `MG_NGINX_SERVER_CLIENT_CA` environmental variable is used to configure nginx directive `ssl_client_certificate`. If environmental variable `MG_NGINX_SERVER_CLIENT_CA` is empty then by default certificate in the path `docker/ssl/certs/ca.crt` will be assigned. |
+| `MG_NGINX_SERVER_DHPARAM` | `MG_NGINX_SERVER_DHPARAM` environmental variable is used to configure nginx directive `ssl_dhparam`. If environmental variable `MG_NGINX_SERVER_DHPARAM` is empty then by default file in the path `docker/ssl/dhparam.pem` will be assigned. |
 
 Adjust these values in `.env` to configure TLS / SSL behavior for your deployment.
 

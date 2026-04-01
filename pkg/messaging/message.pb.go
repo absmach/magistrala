@@ -33,7 +33,8 @@ type Message struct {
 	Publisher     string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	Protocol      string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	Payload       []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
-	Created       int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"` // Unix timestamp in nanoseconds
+	Created       int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                  // Unix timestamp in nanoseconds
+	ClientId      string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"` // Transport-level client identifier
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -117,11 +118,18 @@ func (x *Message) GetCreated() int64 {
 	return 0
 }
 
+func (x *Message) GetClientId() string {
+	if x != nil {
+		return x.ClientId
+	}
+	return ""
+}
+
 var File_pkg_messaging_message_proto protoreflect.FileDescriptor
 
 const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xc5\x01\n" +
+	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xe2\x01\n" +
 	"\aMessage\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x1a\n" +
@@ -129,7 +137,8 @@ const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\tpublisher\x18\x04 \x01(\tR\tpublisher\x12\x1a\n" +
 	"\bprotocol\x18\x05 \x01(\tR\bprotocol\x12\x18\n" +
 	"\apayload\x18\x06 \x01(\fR\apayload\x12\x18\n" +
-	"\acreated\x18\a \x01(\x03R\acreatedB\rZ\v./messagingb\x06proto3"
+	"\acreated\x18\a \x01(\x03R\acreated\x12\x1b\n" +
+	"\tclient_id\x18\b \x01(\tR\bclientIdB\rZ\v./messagingb\x06proto3"
 
 var (
 	file_pkg_messaging_message_proto_rawDescOnce sync.Once

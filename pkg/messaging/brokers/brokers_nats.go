@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build !msg_rabbitmq
-// +build !msg_rabbitmq
+//go:build !msg_fluxmq && !msg_rabbitmq && !rabbitmq
+// +build !msg_fluxmq,!msg_rabbitmq,!rabbitmq
 
 package brokers
 
@@ -19,7 +19,13 @@ import (
 const SubjectAllMessages = string(messaging.MsgTopicPrefix) + ".>"
 
 func init() {
-	log.Println("The binary was build using Nats as the message broker")
+	log.Println("The binary was built using NATS as the message broker")
+}
+
+// ConnectionName is a no-op for the NATS backend. It exists for API
+// compatibility with the FluxMQ variant.
+func ConnectionName(_ string) messaging.Option {
+	return func(_ any) error { return nil }
 }
 
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {

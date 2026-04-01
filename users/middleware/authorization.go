@@ -127,7 +127,7 @@ func (am *authorizationMiddleware) UpdateRole(ctx context.Context, session authn
 		return users.User{}, err
 	}
 	session.SuperAdmin = true
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.SuperMQObject); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err != nil {
 		return users.User{}, err
 	}
 
@@ -183,7 +183,7 @@ func (am *authorizationMiddleware) OAuthCallback(ctx context.Context, user users
 }
 
 func (am *authorizationMiddleware) OAuthAddUserPolicy(ctx context.Context, user users.User) error {
-	if err := am.authorize(ctx, authn.Session{}, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.SuperMQObject); err == nil {
+	if err := am.authorize(ctx, authn.Session{}, "", policies.UserType, policies.UsersKind, user.ID, policies.MembershipPermission, policies.PlatformType, policies.MagistralaObject); err == nil {
 		return nil
 	}
 	return am.svc.OAuthAddUserPolicy(ctx, user)
@@ -198,7 +198,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session 
 		Subject:     session.UserID,
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
-		Object:      policies.SuperMQObject,
+		Object:      policies.MagistralaObject,
 	}, nil); err != nil {
 		return err
 	}

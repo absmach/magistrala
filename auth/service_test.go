@@ -303,16 +303,17 @@ func TestIssue(t *testing.T) {
 	}
 
 	cases4 := []struct {
-		desc         string
-		key          auth.Key
-		token        string
-		parseRes     auth.Key
-		parseErr     error
-		roleCheckErr error
-		issueErr     error
-		cacheRes     bool
-		cacheErr     error
-		err          error
+		desc          string
+		key           auth.Key
+		token         string
+		parseRes      auth.Key
+		parseErr      error
+		roleCheckErr  error
+		issueErr      error
+		cacheRes      bool
+		cacheErr      error
+		saveActiveErr error
+		err           error
 	}{
 		{
 			desc: "issue refresh key",
@@ -366,6 +367,20 @@ func TestIssue(t *testing.T) {
 			err:          errRoleAuth,
 		},
 		{
+			desc: "issue refresh key with failed to save active token",
+			key: auth.Key{
+				Type:     auth.RefreshKey,
+				IssuedAt: time.Now(),
+				Subject:  userID,
+				Role:     auth.UserRole,
+			},
+			token:         refreshToken,
+			parseRes:      refreshkey,
+			cacheRes:      true,
+			saveActiveErr: svcerr.ErrCreateEntity,
+			err:           svcerr.ErrCreateEntity,
+		},
+		{
 			desc: "issue refresh key with revoked refresh token",
 			key: auth.Key{
 				Type:     auth.RefreshKey,
@@ -400,6 +415,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
 			tokenizerCall2 := tokenizer.On("Revoke", mock.Anything, tc.token).Return(tc.parseErr)
 			cacheCall := tokensCache.On("IsActive", context.Background(), tc.parseRes.ID).Return(tc.cacheRes, tc.cacheErr)
+			saveActiveCall := tokensCache.On("SaveActive", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.saveActiveErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
 				Subject:     tc.key.Subject,
 				SubjectType: policies.UserType,
@@ -414,6 +430,7 @@ func TestIssue(t *testing.T) {
 			tokenizerCall2.Unset()
 			policyCall.Unset()
 			cacheCall.Unset()
+			saveActiveCall.Unset()
 		})
 	}
 }

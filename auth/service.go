@@ -365,6 +365,12 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 		return Token{}, errors.Wrap(errIssueTmp, err)
 	}
 
+	if key.Subject != "" && key.ExpiresAt.After(time.Now()) {
+		if err := svc.tokensCache.SaveActive(ctx, key.Subject, key.ID, key.Description, key.ExpiresAt); err != nil {
+			return Token{}, errors.Wrap(errSaveRefreshKey, err)
+		}
+	}
+
 	return Token{AccessToken: access, RefreshToken: refresh}, nil
 }
 

@@ -31,6 +31,7 @@ func EncodeError(err error) error {
 		return status.Error(codes.InvalidArgument, err.Error())
 	case errors.Contains(err, svcerr.ErrAuthentication),
 		errors.Contains(err, auth.ErrKeyExpired),
+		errors.Contains(err, auth.ErrRevokedToken),
 		err == apiutil.ErrMissingEmail,
 		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())

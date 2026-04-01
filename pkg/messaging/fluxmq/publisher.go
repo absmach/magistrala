@@ -68,7 +68,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 
 	props := map[string]string{
 		"external_id": msg.GetPublisher(),
-		"protocol":  msg.GetProtocol(),
+		"protocol":    msg.GetProtocol(),
 	}
 	if clientID := msg.ClientIdentity(); clientID != "" {
 		props["client_id"] = clientID

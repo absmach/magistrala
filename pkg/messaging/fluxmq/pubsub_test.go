@@ -40,7 +40,7 @@ func TestHandleTopicMessageNormalizesAMQPRoutingKey(t *testing.T) {
 			Timestamp: ts,
 			Headers: amqp091.Table{
 				"external_id": "ext-user",
-				"client_id": "client-9",
+				"client_id":   "client-9",
 			},
 		},
 		Topic: "m.domain.c.channel.test",
@@ -83,9 +83,9 @@ func TestHandleTopicMessageUsesMQTTIdentityFields(t *testing.T) {
 			Timestamp: ts,
 			Headers: amqp091.Table{
 				"external_id": "ext-77",
-				"client_id": "client-7",
-				"protocol":  "http",
-				"created":   "1234567890000000000",
+				"client_id":   "client-7",
+				"protocol":    "http",
+				"created":     "1234567890000000000",
 			},
 		},
 		Topic: "m.domain.c.channel.sub",

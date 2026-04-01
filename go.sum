@@ -38,8 +38,8 @@ github.com/absmach/callhome v0.18.2 h1:dmopRHm2qTheHN1hdUKRRYpKwRrj7X9d8AWCFrb+K
 github.com/absmach/callhome v0.18.2/go.mod h1:LEXKhES9JJtj3tBgTZv7VPNjOi5ukJQB0mFic0QP60Q=
 github.com/absmach/certs v0.18.5 h1:eYlvitou+LoDtt7ETVLTp6d/1xCejGL3EmVOg+rHGTU=
 github.com/absmach/certs v0.18.5/go.mod h1:31dtVe1VYF16W+IvjAE/uPAIz4f3uLHgh+moBezjqIc=
-github.com/absmach/fluxmq v0.0.0-20260331222442-1cb8de377063 h1:3bpWSrCIjVk+C0ZLiXLUdZp8HQlactcyontXKo07abA=
-github.com/absmach/fluxmq v0.0.0-20260331222442-1cb8de377063/go.mod h1:MSpCAYY2IHv5fQovhQr24610E0AHHgM2A9UUP0zbKco=
+github.com/absmach/fluxmq v0.0.0-20260401001416-3f9be65b7db7 h1:cNeNb3ngHX6mfPrbxbDD8dpNh82UJ0wDVEiyBjP+C8c=
+github.com/absmach/fluxmq v0.0.0-20260401001416-3f9be65b7db7/go.mod h1:MSpCAYY2IHv5fQovhQr24610E0AHHgM2A9UUP0zbKco=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=

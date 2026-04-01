@@ -64,7 +64,7 @@ jobs:
           fetch-depth: 0
 
       - name: Check for changes in specific paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           filters: |
@@ -344,7 +344,7 @@ jobs:
           merge-multiple: true
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         with:
           token: ${{ secrets.CODECOV }}
           directory: ./coverage

@@ -101,6 +101,20 @@ queues:
     retention:
       max_age: 168h
       max_length_bytes: 1073741824
+  - name: "writers"
+    topics:
+      - "$queue/writers/#"
+    type: "stream"
+    retention:
+      max_age: 24h
+      max_length_bytes: 1073741824
+  - name: "alarms"
+    topics:
+      - "$queue/alarms/#"
+    type: "stream"
+    retention:
+      max_age: 24h
+      max_length_bytes: 1073741824
 
 auth:
   url: "http://fluxmq-auth:7016"

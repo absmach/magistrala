@@ -503,7 +503,7 @@ func TestListUserAlarms(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("insert domains_roles unexpected error: %s", err))
 	_, err = db.Exec(`INSERT INTO domains_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, domainRoleID, domainUserID, domainID)
 	require.Nil(t, err, fmt.Sprintf("insert domains_role_members unexpected error: %s", err))
-	_, err = db.Exec(`INSERT INTO domains_role_actions (role_id, action) VALUES ($1, $2)`, domainRoleID, "rule_read")
+	_, err = db.Exec(`INSERT INTO domains_role_actions (role_id, action) VALUES ($1, $2)`, domainRoleID, "alarm_read")
 	require.Nil(t, err, fmt.Sprintf("insert domains_role_actions unexpected error: %s", err))
 
 	_ = createdAlarms

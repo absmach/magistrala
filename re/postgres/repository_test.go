@@ -937,16 +937,29 @@ func TestListRules(t *testing.T) {
 
 func TestListUserRules(t *testing.T) {
 	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM rules")
+		_, err := db.Exec("DELETE FROM domains_role_actions")
+		assert.Nil(t, err, fmt.Sprintf("clean domains_role_actions unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_role_members")
+		assert.Nil(t, err, fmt.Sprintf("clean domains_role_members unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_roles")
+		assert.Nil(t, err, fmt.Sprintf("clean domains_roles unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains")
+		assert.Nil(t, err, fmt.Sprintf("clean domains unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM rules")
 		assert.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
 
 	domainID := generateUUID(t)
+	domainRoute := generateUUID(t)
 	userID := generateUUID(t)
+	domainUserID := generateUUID(t)
 	otherUserID := generateUUID(t)
 	channelID := generateUUID(t)
+
+	_, err := db.Exec(`INSERT INTO domains (id, name, route, status) VALUES ($1, $2, $3, $4)`, domainID, namegen.Generate(), domainRoute, 0)
+	assert.Nil(t, err, fmt.Sprintf("insert domains unexpected error: %s", err))
 
 	// Create 10 rules; assign the first 4 to userID via a role.
 	var allRules []re.Rule
@@ -976,6 +989,14 @@ func TestListUserRules(t *testing.T) {
 		_, err = db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, allRules[i].ID)
 		assert.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
 	}
+
+	domainRoleID := generateUUID(t)
+	_, err = db.Exec(`INSERT INTO domains_roles (id, name, entity_id) VALUES ($1, $2, $3)`, domainRoleID, "admin", domainID)
+	assert.Nil(t, err, fmt.Sprintf("insert domains_roles unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, domainRoleID, domainUserID, domainID)
+	assert.Nil(t, err, fmt.Sprintf("insert domains_role_members unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_actions (role_id, action) VALUES ($1, $2)`, domainRoleID, "rule_read")
+	assert.Nil(t, err, fmt.Sprintf("insert domains_role_actions unexpected error: %s", err))
 
 	cases := []struct {
 		desc   string
@@ -1051,6 +1072,17 @@ func TestListUserRules(t *testing.T) {
 				Status: re.AllStatus,
 			},
 			count: 0,
+			err:   nil,
+		},
+		{
+			desc:   "list user rules via domain role returns all domain rules",
+			userID: domainUserID,
+			pm: re.PageMeta{
+				Offset: 0,
+				Limit:  100,
+				Status: re.AllStatus,
+			},
+			count: 10,
 			err:   nil,
 		},
 		{

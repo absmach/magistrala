@@ -485,15 +485,28 @@ func TestListReportsConfig(t *testing.T) {
 
 func TestListUserReportsConfig(t *testing.T) {
 	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM report_config")
+		_, err := db.Exec("DELETE FROM domains_role_actions")
+		require.Nil(t, err, fmt.Sprintf("clean domains_role_actions unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_role_members")
+		require.Nil(t, err, fmt.Sprintf("clean domains_role_members unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_roles")
+		require.Nil(t, err, fmt.Sprintf("clean domains_roles unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains")
+		require.Nil(t, err, fmt.Sprintf("clean domains unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM report_config")
 		require.Nil(t, err, fmt.Sprintf("clean report_config unexpected error: %s", err))
 	})
 
 	repo := postgres.NewRepository(database)
 
 	domainID := generateUUID(t)
+	domainRoute := generateUUID(t)
 	userID := generateUUID(t)
+	domainUserID := generateUUID(t)
 	otherUserID := generateUUID(t)
+
+	_, err := db.Exec(`INSERT INTO domains (id, name, route, status) VALUES ($1, $2, $3, $4)`, domainID, namegen.Generate(), domainRoute, 0)
+	require.Nil(t, err, fmt.Sprintf("insert domains unexpected error: %s", err))
 
 	num := 10
 	var allCfgs []reports.ReportConfig
@@ -520,6 +533,14 @@ func TestListUserReportsConfig(t *testing.T) {
 		_, err = db.Exec(`INSERT INTO reports_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, userID, allCfgs[i].ID)
 		require.Nil(t, err, fmt.Sprintf("insert reports_role_members unexpected error: %s", err))
 	}
+
+	domainRoleID := generateUUID(t)
+	_, err = db.Exec(`INSERT INTO domains_roles (id, name, entity_id) VALUES ($1, $2, $3)`, domainRoleID, "admin", domainID)
+	require.Nil(t, err, fmt.Sprintf("insert domains_roles unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, domainRoleID, domainUserID, domainID)
+	require.Nil(t, err, fmt.Sprintf("insert domains_role_members unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_actions (role_id, action) VALUES ($1, $2)`, domainRoleID, "report_read")
+	require.Nil(t, err, fmt.Sprintf("insert domains_role_actions unexpected error: %s", err))
 
 	cases := []struct {
 		desc     string
@@ -581,6 +602,17 @@ func TestListUserReportsConfig(t *testing.T) {
 				Offset: 0,
 			},
 			size: 0,
+			err:  nil,
+		},
+		{
+			desc:   "list user reports via domain role returns all domain reports",
+			userID: domainUserID,
+			pageMeta: reports.PageMeta{
+				Domain: domainID,
+				Limit:  100,
+				Offset: 0,
+			},
+			size: 10,
 			err:  nil,
 		},
 		{

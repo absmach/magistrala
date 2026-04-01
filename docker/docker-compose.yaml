@@ -111,7 +111,7 @@ services:
     command: ["redis-server", "/etc/redis/redis.conf"]
 
   auth:
-    image: docker.io/magistrala/auth:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/auth:${MG_RELEASE_TAG}
     container_name: magistrala-auth
     depends_on:
       - auth-db
@@ -243,7 +243,7 @@ services:
       - magistrala-domains-redis-volume:/data
 
   domains:
-    image: docker.io/magistrala/domains:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/domains:${MG_RELEASE_TAG}
     container_name: magistrala-domains
     depends_on:
       - domains-db
@@ -428,7 +428,7 @@ services:
       - magistrala-journal-volume:/var/lib/postgresql/data
 
   journal:
-    image: docker.io/magistrala/journal:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/journal:${MG_RELEASE_TAG}
     container_name: magistrala-journal
     depends_on:
       - journal-db
@@ -571,7 +571,7 @@ services:
       - magistrala-clients-redis-volume:/data
 
   clients:
-    image: docker.io/magistrala/clients:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/clients:${MG_RELEASE_TAG}
     container_name: magistrala-clients
     depends_on:
       - clients-db
@@ -766,7 +766,7 @@ services:
       - magistrala-channels-redis-volume:/data
 
   channels:
-    image: docker.io/magistrala/channels:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/channels:${MG_RELEASE_TAG}
     container_name: magistrala-channels
     depends_on:
       - channels-db
@@ -950,7 +950,7 @@ services:
       - magistrala-users-db-volume:/var/lib/postgresql/data
 
   users:
-    image: docker.io/magistrala/users:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/users:${MG_RELEASE_TAG}
     container_name: magistrala-users
     depends_on:
       - users-db
@@ -1089,7 +1089,7 @@ services:
           create_host_path: true
 
   notifications:
-    image: docker.io/magistrala/notifications:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/notifications:${MG_RELEASE_TAG}
     container_name: magistrala-notifications
     depends_on:
       - nginx
@@ -1156,7 +1156,7 @@ services:
       - magistrala-groups-db-volume:/var/lib/postgresql/data
 
   groups:
-    image: docker.io/magistrala/groups:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/groups:${MG_RELEASE_TAG}
     container_name: magistrala-groups
     depends_on:
       - groups-db
@@ -1387,7 +1387,7 @@ services:
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
-    image: docker.io/magistrala/fluxmq:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/fluxmq:${MG_RELEASE_TAG}
     container_name: magistrala-fluxmq-auth
     restart: on-failure
     environment:
@@ -1709,7 +1709,7 @@ services:
       - magistrala-timescale-writer-volume:/var/lib/postgresql/data
 
   timescale-reader:
-    image: docker.io/magistrala/timescale-reader:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/timescale-reader:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-reader
     depends_on:
       - timescale
@@ -1843,7 +1843,7 @@ services:
           create_host_path: true
 
   timescale-writer:
-    image: docker.io/magistrala/timescale-writer:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-writer
     depends_on:
       - timescale
@@ -1892,7 +1892,7 @@ services:
       - magistrala-re-db-volume:/var/lib/postgresql/data
 
   re:
-    image: docker.io/magistrala/re:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/re:${MG_RELEASE_TAG}
     container_name: magistrala-re
     depends_on:
       - re-db
@@ -2014,7 +2014,7 @@ services:
       - magistrala-alarms-db-volume:/var/lib/postgresql/data
 
   alarms:
-    image: docker.io/magistrala/alarms:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/alarms:${MG_RELEASE_TAG}
     container_name: magistrala-alarms
     depends_on:
       - alarms-db
@@ -2115,7 +2115,7 @@ services:
       - magistrala-reports-db-volume:/var/lib/postgresql/data
 
   reports:
-    image: docker.io/magistrala/reports:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/reports:${MG_RELEASE_TAG}
     container_name: magistrala-reports
     depends_on:
       - reports-db
@@ -2223,7 +2223,7 @@ services:
       - magistrala-base-net
 
   certs:
-    image: docker.io/magistrala/certs:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/certs:${MG_RELEASE_TAG}
     container_name: magistrala-certs
     depends_on:
       openbao:

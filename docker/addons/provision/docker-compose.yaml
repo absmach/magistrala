@@ -12,7 +12,7 @@ networks:
 
 services:
   provision:
-    image: docker.io/magistrala/provision:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/provision:${MG_RELEASE_TAG}
     container_name: magistrala-provision
     restart: on-failure
     networks:

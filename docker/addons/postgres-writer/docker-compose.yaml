@@ -32,7 +32,7 @@ services:
       - magistrala-postgres-writer-volume:/var/lib/postgresql/data
 
   postgres-writer:
-    image: docker.io/magistrala/postgres-writer:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/postgres-writer:${MG_RELEASE_TAG}
     container_name: magistrala-postgres-writer
     depends_on:
       - postgres

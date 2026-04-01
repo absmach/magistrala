@@ -22,7 +22,7 @@ To start additional addon services:
 docker compose -f docker/addons/<path>/docker-compose.yaml up
 ```
 
-To pull docker images from a specific release you need to change the value of `MG_RELEASE_TAG` in `.env` before running these commands.
+To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `MG_RELEASE_TAG` in `.env` before running these commands.
 
 ## Broker Configuration
 
@@ -146,6 +146,7 @@ The included `Makefile` defines build and Docker‑build targets for all SuperMQ
 - `SERVICES`: list of core services (auth, clients, channels, http, coap, mqtt, ws, etc.)
 
 - `DOCKERS`, `DOCKERS_DEV`: build targets for production and development Docker images
+- `make dockers`, `make dockers_dev`: always tag images as `ghcr.io/absmach/magistrala/<service>`
 
 - Build arguments embed version, commit hash, and build timestamp into the binary
 

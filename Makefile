@@ -1,7 +1,8 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-MG_DOCKER_IMAGE_NAME_PREFIX ?= magistrala
+override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
+MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
 SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports bootstrap journal fluxmq
 TEST_API_SERVICES = journal auth certs clients users channels groups domains
@@ -84,8 +85,7 @@ define run_with_arch_detection
 		git checkout $(1); \
 		GOARCH=arm64 $(MAKE) dockers; \
 		for svc in $(SERVICES); do \
-				docker tag magistrala/$$svc magistrala/$$svc:latest; \
-				docker tag magistrala/$$svc docker.io/magistrala/$$svc:latest; \
+				docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest; \
 		done; \
 		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
 		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
@@ -154,7 +154,7 @@ cleandocker:
 
 ifdef pv
 	# Remove unused volumes
-	docker volume ls -f name=$(MG_DOCKER_IMAGE_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
+	docker volume ls -f name=$(MG_DOCKER_VOLUME_NAME_PREFIX) -f dangling=true -q | xargs -r docker volume rm
 endif
 
 install:

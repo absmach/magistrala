@@ -41,7 +41,7 @@ jobs:
           git diff --exit-code
 
       - name: Check for changes in specific paths
-        uses: dorny/paths-filter@v3
+        uses: dorny/paths-filter@v4
         id: changes
         with:
           base: main

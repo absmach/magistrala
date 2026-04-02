@@ -13,16 +13,15 @@ import (
 
 const queuePrefix = "$queue/"
 
-var (
-	topicReplacer = strings.NewReplacer(".", "/", "*", "+", ">", "#")
-	nameReplacer  = strings.NewReplacer(
-		" ", "_",
-		".", "_",
-		"*", "_",
-		">", "_",
-		"/", "_",
-		"\\", "_",
-	)
+var nameReplacer = strings.NewReplacer(
+	" ", "_",
+	".", "_",
+	"*", "_",
+	">", "_",
+	"/", "_",
+	"\\", "_",
+	"+", "_",
+	"#", "_",
 )
 
 func canonicalPrefix(prefix string) string {
@@ -39,12 +38,12 @@ func streamQueue(prefix string) string {
 
 func brokerPath(topic string) string {
 	topic = strings.TrimSpace(topic)
-	topic = strings.TrimPrefix(topic, ".")
+	topic = strings.TrimPrefix(topic, "/")
 	if topic == "" {
 		return ""
 	}
 
-	return topicReplacer.Replace(topic)
+	return topic
 }
 
 func streamFilter(prefix, topic string) string {
@@ -77,16 +76,16 @@ func queueTopic(prefix, topic string) string {
 
 func filterPath(prefix, topic string) string {
 	topic = strings.TrimSpace(topic)
-	if topic == "" || topic == ">" {
+	if topic == "" || topic == "#" {
 		return "#"
 	}
 
 	prefix = canonicalPrefix(prefix)
 	switch {
 	case topic == prefix:
-		topic = ">"
-	case strings.HasPrefix(topic, prefix+"."):
-		topic = strings.TrimPrefix(topic, prefix+".")
+		topic = "#"
+	case strings.HasPrefix(topic, prefix+"/"):
+		topic = strings.TrimPrefix(topic, prefix+"/")
 	}
 
 	return brokerPath(topic)
@@ -100,9 +99,9 @@ func formatConsumerName(topic, id string) string {
 }
 
 // topicFilter returns the MQTT topic filter for subscribing to regular
-// (non-queued) messages. It converts a NATS-style topic to MQTT format
-// with the prefix prepended.
-// For example, with prefix "m" and topic "m.>", it returns "m/#".
+// (non-queued) messages. It strips the prefix and re-prepends it to
+// normalize the filter.
+// For example, with prefix "m" and topic "m/#", it returns "m/#".
 func topicFilter(prefix, topic string) string {
 	prefix = canonicalPrefix(prefix)
 	path := filterPath(prefix, topic)
@@ -119,7 +118,9 @@ func parseMQTTTopic(prefix, topic string) (domainID, channelID, subtopic string,
 	if !strings.HasPrefix(topic, prefix+"/") {
 		return "", "", "", messaging.ErrMalformedTopic
 	}
-	normalized := "/" + msgPrefix + "/" + strings.TrimPrefix(topic, prefix+"/")
+	// Replace the broker-specific prefix with the canonical message prefix
+	// so ParseSubscribeTopic can parse it.
+	normalized := msgPrefix + "/" + strings.TrimPrefix(topic, prefix+"/")
 
 	domainID, channelID, subtopic, _, err = messaging.ParseSubscribeTopic(normalized)
 	if err != nil {

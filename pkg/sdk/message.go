@@ -24,11 +24,11 @@ type publishRequest struct {
 }
 
 func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret string) errors.SDKError {
-	chanNameParts := strings.SplitN(topic, ".", channelParts)
+	chanNameParts := strings.SplitN(topic, "/", channelParts)
 	chanID := chanNameParts[0]
 	brokerTopic := fmt.Sprintf("m/%s/c/%s", domainID, chanID)
 	if len(chanNameParts) == channelParts {
-		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, strings.ReplaceAll(chanNameParts[1], ".", "/"))
+		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, chanNameParts[1])
 	}
 
 	data, err := json.Marshal(publishRequest{

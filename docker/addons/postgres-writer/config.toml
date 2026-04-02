@@ -4,11 +4,11 @@
 # Writers consume through the broker's stream-backed path; this file only
 # selects topic filters. Use NATS-style filters here even when built with
 # FluxMQ.
-# To listen on all writer topics use the default value "writers.>".
-# To subscribe to specific topics use values starting with "writers." and
-# followed by a subtopic (e.g. ["writers.<channel_id>.sub.topic.x", ...]).
+# To listen on all writer topics use the default value "writers/#".
+# To subscribe to specific topics use values starting with "writers/" and
+# followed by a subtopic (e.g. ["writers/<channel_id>/sub/topic/x", ...]).
 ["subscriber"]
-topics = ["writers.>"]
+topics = ["writers/#"]
 
 [transformer]
 # SenML or JSON

@@ -16,7 +16,7 @@ import (
 )
 
 func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
-	chanNameParts := strings.SplitN(chanName, ".", channelParts)
+	chanNameParts := strings.SplitN(chanName, "/", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
 	if len(chanNameParts) == channelParts {

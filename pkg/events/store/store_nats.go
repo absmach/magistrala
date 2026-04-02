@@ -16,7 +16,7 @@ import (
 )
 
 // StreamAllEvents represents subject to subscribe for all the events.
-const StreamAllEvents = "events.>"
+const StreamAllEvents = "events/#"
 
 func init() {
 	log.Println("The binary was build using Nats as the events store")

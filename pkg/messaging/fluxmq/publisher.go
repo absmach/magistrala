@@ -5,6 +5,7 @@ package fluxmq
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"strconv"
 
@@ -62,6 +63,7 @@ func NewPublisher(_ context.Context, url string, opts ...messaging.Option) (mess
 }
 
 func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
+	fmt.Println("Publishing", topic)
 	if topic == "" {
 		return ErrEmptyTopic
 	}

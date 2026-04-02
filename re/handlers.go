@@ -58,20 +58,21 @@ func (re *re) Handle(msg *messaging.Message) error {
 	return nil
 }
 
-// Match NATS subject to support wildcards.
+// matchSubject matches a published subtopic against a subscription pattern
+// using MQTT-style wildcards: + (single level) and # (multi-level).
 func matchSubject(published, subscribed string) bool {
-	p := strings.Split(published, ".")
-	s := strings.Split(subscribed, ".")
+	p := strings.Split(published, "/")
+	s := strings.Split(subscribed, "/")
 	n := len(p)
 
 	for i := range s {
-		if s[i] == ">" {
+		if s[i] == "#" {
 			return true
 		}
 		if i >= n {
 			return false
 		}
-		if s[i] != "*" && p[i] != s[i] {
+		if s[i] != "+" && p[i] != s[i] {
 			return false
 		}
 	}

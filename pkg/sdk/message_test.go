@@ -94,7 +94,7 @@ func TestSendMessage(t *testing.T) {
 		},
 		{
 			desc:      "publish message with subtopic",
-			topic:     "channelID.sub.topic",
+			topic:     "channelID/sub/topic",
 			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID/sub/topic",
 			msg:       `[{"n":"current","t":-1,"v":1.6}]`,

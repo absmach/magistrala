@@ -83,12 +83,13 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 	// nolint:contextcheck
 	nh := ps.natsHandler(cfg.Handler)
 
+	natsTopic := toNATSTopic(cfg.Topic)
 	consumerConfig := jetstream.ConsumerConfig{
 		Name:          formatConsumerName(cfg.Topic, cfg.ID),
 		Durable:       formatConsumerName(cfg.Topic, cfg.ID),
 		Description:   fmt.Sprintf("SuperMQ consumer of id %s for cfg.Topic %s", cfg.ID, cfg.Topic),
 		DeliverPolicy: jetstream.DeliverNewPolicy,
-		FilterSubject: cfg.Topic,
+		FilterSubject: natsTopic,
 	}
 
 	if cfg.Ordered {
@@ -205,6 +206,14 @@ func (ps *pubsub) handleAck(at messaging.AckType, m jetstream.Msg) {
 	}
 }
 
+// toNATSTopic converts a canonical /-separated topic with MQTT wildcards
+// to NATS format using . separators and NATS wildcards.
+var natsTopicReplacer = strings.NewReplacer("/", ".", "+", "*", "#", ">")
+
+func toNATSTopic(topic string) string {
+	return natsTopicReplacer.Replace(topic)
+}
+
 func formatConsumerName(topic, id string) string {
 	// A durable name cannot contain whitespace, ., *, >, path separators (forward or backwards slash), and non-printable characters.
 	chars := []string{
@@ -214,6 +223,8 @@ func formatConsumerName(topic, id string) string {
 		">", "_",
 		"/", "_",
 		"\\", "_",
+		"+", "_",
+		"#", "_",
 	}
 	topic = strings.NewReplacer(chars...).Replace(topic)
 

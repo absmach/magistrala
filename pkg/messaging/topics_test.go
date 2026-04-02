@@ -65,7 +65,7 @@ var ParsePublisherTopicTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices/temp",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.temp",
+		subtopic:  "devices/temp",
 		topicType: messaging.MessageType,
 		err:       nil,
 	},
@@ -74,7 +74,7 @@ var ParsePublisherTopicTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices%2Ftemp%2Fdata",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.temp.data",
+		subtopic:  "devices/temp/data",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -82,7 +82,7 @@ var ParsePublisherTopicTestCases = []struct {
 		topic:     "/m/domain/c/channel/extra/extra2",
 		domainID:  "domain",
 		channelID: "channel",
-		subtopic:  "extra.extra2",
+		subtopic:  "extra/extra2",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -98,7 +98,7 @@ var ParsePublisherTopicTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices/temp/",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.temp",
+		subtopic:  "devices/temp",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -253,7 +253,7 @@ var ParseSubscribeTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices/temp",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.temp",
+		subtopic:  "devices/temp",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -261,7 +261,7 @@ var ParseSubscribeTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices/+/temp/#",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.*.temp.>",
+		subtopic:  "devices/+/temp/#",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -277,7 +277,7 @@ var ParseSubscribeTestCases = []struct {
 		topic:     "/m/domain123/c/channel456/devices/temp/",
 		domainID:  "domain123",
 		channelID: "channel456",
-		subtopic:  "devices.temp",
+		subtopic:  "devices/temp",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -323,11 +323,11 @@ var ParseSubscribeTestCases = []struct {
 		err:       messaging.ErrMalformedTopic,
 	},
 	{
-		desc:      "invalid domain name m/domain*123/c/channel456/devices/+/temp/#",
+		desc:      "valid domain with wildcards m/domain*123/c/channel456/devices/+/temp/#",
 		topic:     "m/domain*123/c/channel456/devices/+/temp/#",
 		domainID:  "domain*123",
 		channelID: "channel456",
-		subtopic:  "devices.*.temp.>",
+		subtopic:  "devices/+/temp/#",
 		topicType: messaging.MessageType,
 	},
 	{
@@ -430,15 +430,15 @@ func TestEncodeTopic(t *testing.T) {
 			desc:      "with subtopic",
 			domainID:  "domain1",
 			channelID: "chan1",
-			subtopic:  "dev.sensor.temp",
-			expected:  "m.domain1.c.chan1.dev.sensor.temp",
+			subtopic:  "dev/sensor/temp",
+			expected:  "m/domain1/c/chan1/dev/sensor/temp",
 		},
 		{
 			desc:      "without subtopic",
 			domainID:  "domain1",
 			channelID: "chan1",
 			subtopic:  "",
-			expected:  "m.domain1.c.chan1",
+			expected:  "m/domain1/c/chan1",
 		},
 	}
 
@@ -462,15 +462,15 @@ func TestEncodeTopicSuffix(t *testing.T) {
 			desc:      "with subtopic",
 			domainID:  "domain1",
 			channelID: "chan1",
-			subtopic:  "dev.sensor.temp",
-			expected:  "domain1.c.chan1.dev.sensor.temp",
+			subtopic:  "dev/sensor/temp",
+			expected:  "domain1/c/chan1/dev/sensor/temp",
 		},
 		{
 			desc:      "without subtopic",
 			domainID:  "domain1",
 			channelID: "chan1",
 			subtopic:  "",
-			expected:  "domain1.c.chan1",
+			expected:  "domain1/c/chan1",
 		},
 	}
 
@@ -493,9 +493,9 @@ func TestMessage_EncodeTopicSuffix(t *testing.T) {
 			message: &messaging.Message{
 				Domain:   "domainX",
 				Channel:  "chanX",
-				Subtopic: "device.123.status",
+				Subtopic: "device/123/status",
 			},
-			expected: "domainX.c.chanX.device.123.status",
+			expected: "domainX/c/chanX/device/123/status",
 		},
 		{
 			desc: "without subtopic",
@@ -503,7 +503,7 @@ func TestMessage_EncodeTopicSuffix(t *testing.T) {
 				Domain:  "domainY",
 				Channel: "chanY",
 			},
-			expected: "domainY.c.chanY",
+			expected: "domainY/c/chanY",
 		},
 	}
 
@@ -526,7 +526,7 @@ func TestMessage_EncodeToMQTTTopic(t *testing.T) {
 			message: &messaging.Message{
 				Domain:   "domainA",
 				Channel:  "chanA",
-				Subtopic: "dev.1.temp",
+				Subtopic: "dev/1/temp",
 			},
 			expected: "m/domainA/c/chanA/dev/1/temp",
 		},

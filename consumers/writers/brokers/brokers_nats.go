@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AllTopic = "writers.>"
+	AllTopic = "writers/#"
 
 	prefix = "writers"
 )

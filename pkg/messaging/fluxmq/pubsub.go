@@ -86,7 +86,6 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 }
 
 func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) error {
-	fmt.Println("subscribing", cfg.Topic)
 	if cfg.ID == "" {
 		return ErrEmptyID
 	}
@@ -137,7 +136,6 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	ps.mu.Lock()
 	ps.subscriptions[subscriptionKey(cfg.ID, cfg.Topic)] = sub
 	ps.mu.Unlock()
-	fmt.Println("sub OK")
 	return nil
 }
 
@@ -186,10 +184,8 @@ func (ps *pubsub) handleTopicMessage(h messaging.MessageHandler, msg *fluxamqp.M
 }
 
 func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage) error {
-	fmt.Println("Received message", msg.Exchange)
 	mqttTopic := strings.TrimPrefix(msg.RoutingKey, queuePrefix)
 	m, err := messageFromDelivery(msg.Body, msg.Headers, msg.Timestamp, ps.prefix, mqttTopic)
-	fmt.Println("message received", m.Subtopic, m.Channel)
 	if err != nil {
 		if rejectErr := msg.Reject(); rejectErr != nil {
 			return errors.Join(err, rejectErr)

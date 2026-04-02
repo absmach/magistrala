@@ -48,7 +48,7 @@ func (re *re) Handle(msg *messaging.Message) error {
 		return err
 	}
 	for _, r := range page.Rules {
-		if matchSubject(msg.Subtopic, r.InputTopic) {
+		if matchTopic(msg.Subtopic, r.InputTopic) {
 			go func(ctx context.Context) {
 				re.runInfo <- re.process(ctx, r, msg)
 			}(ctx)
@@ -58,9 +58,9 @@ func (re *re) Handle(msg *messaging.Message) error {
 	return nil
 }
 
-// matchSubject matches a published subtopic against a subscription pattern
+// matchTopic matches a published subtopic against a subscription pattern
 // using MQTT-style wildcards: + (single level) and # (multi-level).
-func matchSubject(published, subscribed string) bool {
+func matchTopic(published, subscribed string) bool {
 	p := strings.Split(published, "/")
 	s := strings.Split(subscribed, "/")
 	n := len(p)

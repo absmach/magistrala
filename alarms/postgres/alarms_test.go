@@ -417,7 +417,15 @@ func TestListAlarms(t *testing.T) {
 
 func TestListUserAlarms(t *testing.T) {
 	t.Cleanup(func() {
-		_, err := db.Exec("DELETE FROM alarms")
+		_, err := db.Exec("DELETE FROM domains_role_actions")
+		require.Nil(t, err, fmt.Sprintf("clean domains_role_actions unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_role_members")
+		require.Nil(t, err, fmt.Sprintf("clean domains_role_members unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains_roles")
+		require.Nil(t, err, fmt.Sprintf("clean domains_roles unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM domains")
+		require.Nil(t, err, fmt.Sprintf("clean domains unexpected error: %s", err))
+		_, err = db.Exec("DELETE FROM alarms")
 		require.Nil(t, err, fmt.Sprintf("clean alarms unexpected error: %s", err))
 		_, err = db.Exec("DELETE FROM rules")
 		require.Nil(t, err, fmt.Sprintf("clean rules unexpected error: %s", err))
@@ -426,9 +434,14 @@ func TestListUserAlarms(t *testing.T) {
 	repo := postgres.NewAlarmsRepo(db)
 
 	domainID := generateUUID(t)
+	domainRoute := generateUUID(t)
 	userID := generateUUID(t)
 	otherUserID := generateUUID(t)
 	adminUserID := generateUUID(t)
+	domainUserID := generateUUID(t)
+
+	_, err := db.Exec(`INSERT INTO domains (id, name, route, status) VALUES ($1, $2, $3, $4)`, domainID, namegen.Generate(), domainRoute, 0)
+	require.Nil(t, err, fmt.Sprintf("insert domains unexpected error: %s", err))
 
 	// Create 10 rules and 10 alarms referencing them.
 	// Assign userID to the first 6 rules via role membership.
@@ -484,6 +497,14 @@ func TestListUserAlarms(t *testing.T) {
 		_, err := db.Exec(`INSERT INTO rules_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, roleID, adminUserID, ruleIDs[i])
 		require.Nil(t, err, fmt.Sprintf("insert rules_role_members unexpected error: %s", err))
 	}
+
+	domainRoleID := generateUUID(t)
+	_, err = db.Exec(`INSERT INTO domains_roles (id, name, entity_id) VALUES ($1, $2, $3)`, domainRoleID, "admin", domainID)
+	require.Nil(t, err, fmt.Sprintf("insert domains_roles unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_members (role_id, member_id, entity_id) VALUES ($1, $2, $3)`, domainRoleID, domainUserID, domainID)
+	require.Nil(t, err, fmt.Sprintf("insert domains_role_members unexpected error: %s", err))
+	_, err = db.Exec(`INSERT INTO domains_role_actions (role_id, action) VALUES ($1, $2)`, domainRoleID, "alarm_read")
+	require.Nil(t, err, fmt.Sprintf("insert domains_role_actions unexpected error: %s", err))
 
 	_ = createdAlarms
 
@@ -559,6 +580,16 @@ func TestListUserAlarms(t *testing.T) {
 		{
 			desc:   "list alarms for admin user with role on all rules returns all alarms",
 			userID: adminUserID,
+			pm: alarms.PageMetadata{
+				Offset: 0,
+				Limit:  100,
+			},
+			count: 10,
+			err:   nil,
+		},
+		{
+			desc:   "list alarms for user with domain-level rule access returns all alarms",
+			userID: domainUserID,
 			pm: alarms.PageMetadata{
 				Offset: 0,
 				Limit:  100,

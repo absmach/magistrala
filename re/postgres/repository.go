@@ -404,22 +404,37 @@ func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta
 
 func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
 	pm.UserID = userID
-	pq := pageRulesQuery(pm)
+	clauses := []string{
+		`(
+			EXISTS (
+				SELECT 1
+				FROM rules_roles rr
+				JOIN rules_role_members rrm ON rrm.role_id = rr.id
+				WHERE rr.entity_id = r.id AND rrm.member_id = :user_id
+			)
+			OR EXISTS (
+				SELECT 1
+				FROM domains_roles dr
+				JOIN domains_role_members drm ON drm.role_id = dr.id
+				JOIN domains_role_actions dra ON dra.role_id = dr.id
+				WHERE dr.entity_id = r.domain_id
+					AND drm.member_id = :user_id
+					AND dra.action LIKE 'rule%'
+			)
+		)`,
+	}
+	clauses = append(clauses, pageRulesQueryConditions(pm)...)
 	orderClause := rulesOrderClause(pm)
 	pgData := rulesPageData(pm)
 
-	userJoin := `
-		INNER JOIN rules_roles rr ON rr.entity_id = r.id
-		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
-	`
+	whereClause := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
 
 	innerQ := fmt.Sprintf(`
 		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,
 			r.start_datetime, r.time, r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status
 		FROM rules r
 		%s
-		%s
-	`, userJoin, pq)
+	`, whereClause)
 
 	q := fmt.Sprintf(`
 		SELECT * FROM (%s) AS sub %s %s;
@@ -521,6 +536,16 @@ func rulesPageData(pm re.PageMeta) string {
 }
 
 func pageRulesQuery(pm re.PageMeta) string {
+	query := pageRulesQueryConditions(pm)
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	return q
+}
+
+func pageRulesQueryConditions(pm re.PageMeta) []string {
 	var query []string
 	if pm.InputChannel != "" {
 		query = append(query, "r.input_channel = :input_channel")
@@ -546,11 +571,5 @@ func pageRulesQuery(pm re.PageMeta) string {
 	if pm.Scheduled != nil && !*pm.Scheduled {
 		query = append(query, "r.time IS NULL")
 	}
-
-	var q string
-	if len(query) > 0 {
-		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	return q
+	return query
 }

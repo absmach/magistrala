@@ -452,25 +452,38 @@ func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm rep
 }
 
 func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	pq := pageReportQuery(pm)
+	clauses := []string{
+		`(
+			EXISTS (
+				SELECT 1
+				FROM reports_roles rr
+				JOIN reports_role_members rrm ON rrm.role_id = rr.id
+				WHERE rr.entity_id = rc.id AND rrm.member_id = :user_id
+			)
+			OR EXISTS (
+				SELECT 1
+				FROM domains_roles dr
+				JOIN domains_role_members drm ON drm.role_id = dr.id
+				JOIN domains_role_actions dra ON dra.role_id = dr.id
+				WHERE dr.entity_id = rc.domain_id
+					AND drm.member_id = :user_id
+					AND dra.action LIKE 'report%'
+			)
+		)`,
+	}
+	clauses = append(clauses, pageReportQueryConditions(pm)...)
 	orderClause := reportsOrderClause(pm)
 	pgData := reportsPageData(pm)
 
 	pm.UserID = userID
-	userJoin := `
-		INNER JOIN reports_roles rr ON rr.entity_id = rc.id
-		INNER JOIN reports_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
-	`
-
-	whereClause := pq
+	whereClause := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
 
 	innerQ := fmt.Sprintf(`
 		SELECT DISTINCT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,
 			rc.start_datetime, rc.due, rc.recurring, rc.recurring_period, rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status
 		FROM report_config rc
 		%s
-		%s
-	`, userJoin, whereClause)
+	`, whereClause)
 
 	q := fmt.Sprintf(`
 		SELECT * FROM (%s) AS sub %s %s;
@@ -637,6 +650,17 @@ func reportsPageData(pm reports.PageMeta) string {
 }
 
 func pageReportQuery(pm reports.PageMeta) string {
+	query := pageReportQueryConditions(pm)
+
+	var q string
+	if len(query) > 0 {
+		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	return q
+}
+
+func pageReportQueryConditions(pm reports.PageMeta) []string {
 	var query []string
 	if pm.Status != reports.AllStatus {
 		query = append(query, "rc.status = :status")
@@ -653,11 +677,5 @@ func pageReportQuery(pm reports.PageMeta) string {
 	if pm.Name != "" {
 		query = append(query, "rc.name ILIKE '%' || :name || '%'")
 	}
-
-	var q string
-	if len(query) > 0 {
-		q = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	return q
+	return query
 }

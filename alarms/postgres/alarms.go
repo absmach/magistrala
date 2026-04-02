@@ -21,7 +21,7 @@ import (
 )
 
 const alarmColumns = `alarms.id, alarms.rule_id, alarms.domain_id, alarms.channel_id, alarms.client_id, alarms.subtopic, alarms.measurement, alarms.value, alarms.unit,
-alarms.threshold, alarms.cause, alarms.status, alarms.severity, alarms.assignee_id, alarms.created_at, alarms.updated_at, alarms.updated_by, alarms.assigned_at, 
+alarms.threshold, alarms.cause, alarms.status, alarms.severity, alarms.assignee_id, alarms.created_at, alarms.updated_at, alarms.updated_by, alarms.assigned_at,
 alarms.assigned_by, alarms.acknowledged_at, alarms.acknowledged_by, alarms.resolved_at, alarms.resolved_by, alarms.metadata`
 
 type repository struct {
@@ -134,8 +134,8 @@ func (r *repository) UpdateAlarm(ctx context.Context, alarm alarms.Alarm) (alarm
 	}
 
 	q := fmt.Sprintf(`UPDATE alarms SET %s updated_by = :updated_by, updated_at = :updated_at WHERE id = :id
-		RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, 
-		cause, status, severity, assignee_id, assigned_at, assigned_by, acknowledged_at, acknowledged_by, 
+		RETURNING id, rule_id, domain_id, channel_id, client_id, subtopic, measurement, value, unit, threshold,
+		cause, status, severity, assignee_id, assigned_at, assigned_by, acknowledged_at, acknowledged_by,
 		resolved_by, resolved_at, metadata, created_at, updated_by, updated_at;`, upq)
 
 	dba, err := toDBAlarm(alarm)
@@ -199,17 +199,30 @@ func (r *repository) ListAllAlarms(ctx context.Context, pm alarms.PageMetadata) 
 }
 
 func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
-	query, err := pageQuery(pm)
-	if err != nil {
-		return alarms.AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	clauses := []string{
+		`(
+			EXISTS (
+				SELECT 1
+				FROM rules_roles rr
+				JOIN rules_role_members rrm ON rrm.role_id = rr.id
+				WHERE rr.entity_id = alarms.rule_id AND rrm.member_id = :user_id
+			)
+			OR EXISTS (
+				SELECT 1
+				FROM domains_roles dr
+				JOIN domains_role_members drm ON drm.role_id = dr.id
+				JOIN domains_role_actions dra ON dra.role_id = dr.id
+				WHERE dr.entity_id = alarms.domain_id
+					AND drm.member_id = :user_id
+					AND dra.action LIKE 'alarm%'
+			)
+		)`,
 	}
 
+	clauses = append(clauses, pageQueryConditions(pm)...)
+	query := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
 	pm.UserID = userID
-	comQuery := fmt.Sprintf(`SELECT DISTINCT %s
-		FROM alarms
-		INNER JOIN rules_roles rr ON rr.entity_id = alarms.rule_id
-		INNER JOIN rules_role_members rrm ON rrm.role_id = rr.id AND rrm.member_id = :user_id
-		%s`, alarmColumns, query)
+	comQuery := fmt.Sprintf(`SELECT DISTINCT %s FROM alarms %s`, alarmColumns, query)
 
 	return r.alarmsPage(ctx, comQuery, pm)
 }
@@ -462,6 +475,17 @@ func toAlarm(dbr dbAlarm) (alarms.Alarm, error) {
 }
 
 func pageQuery(pm alarms.PageMetadata) (string, error) {
+	query := pageQueryConditions(pm)
+
+	var emq string
+	if len(query) > 0 {
+		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+	}
+
+	return emq, nil
+}
+
+func pageQueryConditions(pm alarms.PageMetadata) []string {
 	var query []string
 	if pm.DomainID != "" {
 		query = append(query, "alarms.domain_id = :domain_id")
@@ -508,11 +532,5 @@ func pageQuery(pm alarms.PageMetadata) (string, error) {
 	if !pm.CreatedTo.IsZero() {
 		query = append(query, "alarms.created_at <= :created_to")
 	}
-
-	var emq string
-	if len(query) > 0 {
-		emq = fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
-	}
-
-	return emq, nil
+	return query
 }

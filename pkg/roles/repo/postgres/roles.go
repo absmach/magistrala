@@ -45,6 +45,10 @@ func NewRepository(db postgres.Database, entityType, tableNamePrefix, entityTabl
 		membersListBaseQuery = groupMembersListBaseQuery()
 	case policies.DomainType:
 		membersListBaseQuery = domainMembersListBaseQuery()
+	case policies.RulesType:
+		membersListBaseQuery = rulesMembersListBaseQuery()
+	case policies.ReportsType:
+		membersListBaseQuery = reportsMembersListBaseQuery()
 	}
 
 	return Repository{
@@ -940,6 +944,130 @@ func toDBMembersRolePageQuery(pageQuery roles.MembersRolePageQuery) (dbMembersRo
 		Actions:          actions,
 		AccessType:       accessType,
 	}, nil
+}
+
+func rulesMembersListBaseQuery() string {
+	return `
+WITH ungrouped_members AS (
+    SELECT
+        rr.id,
+        rr.name,
+        rrm.member_id,
+        ARRAY_AGG(DISTINCT rra."action") AS actions,
+        'direct' AS access_type,
+        '' AS access_provider_id
+    FROM
+        rules_roles rr
+    JOIN rules_role_members rrm ON rrm.role_id = rr.id
+    JOIN rules_role_actions rra ON rra.role_id = rr.id
+    WHERE
+        rr.entity_id = :entity_id
+    GROUP BY
+        rr.id,
+        rrm.member_id
+UNION
+    SELECT
+        dr.id,
+        dr.name,
+        drm.member_id,
+        ARRAY_AGG(DISTINCT agg_dra."action") AS actions,
+        'domain' AS access_type,
+        d.id AS access_provider_id
+    FROM
+        rules r
+    JOIN domains d ON d.id = r.domain_id
+    JOIN domains_roles dr ON dr.entity_id = d.id
+    JOIN domains_role_members drm ON dr.id = drm.role_id
+    JOIN domains_role_actions dra ON dr.id = dra.role_id
+    JOIN domains_role_actions agg_dra ON agg_dra.role_id = dr.id
+    WHERE
+        r.id = :entity_id
+        AND dra."action" LIKE 'rule%'
+    GROUP BY
+        dr.id,
+        drm.member_id,
+        d.id
+),
+members AS (
+    SELECT
+        um.member_id,
+        JSONB_AGG(
+            JSON_BUILD_OBJECT(
+                'role_id', um.id,
+                'role_name', um.name,
+                'actions', um.actions,
+                'access_type', um.access_type,
+                'access_provider_id', um.access_provider_id
+            )
+        ) AS roles
+    FROM
+        ungrouped_members um
+    GROUP BY
+        um.member_id
+)
+	`
+}
+
+func reportsMembersListBaseQuery() string {
+	return `
+WITH ungrouped_members AS (
+    SELECT
+        rr.id,
+        rr.name,
+        rrm.member_id,
+        ARRAY_AGG(DISTINCT rra."action") AS actions,
+        'direct' AS access_type,
+        '' AS access_provider_id
+    FROM
+        reports_roles rr
+    JOIN reports_role_members rrm ON rrm.role_id = rr.id
+    JOIN reports_role_actions rra ON rra.role_id = rr.id
+    WHERE
+        rr.entity_id = :entity_id
+    GROUP BY
+        rr.id,
+        rrm.member_id
+UNION
+    SELECT
+        dr.id,
+        dr.name,
+        drm.member_id,
+        ARRAY_AGG(DISTINCT agg_dra."action") AS actions,
+        'domain' AS access_type,
+        d.id AS access_provider_id
+    FROM
+        report_config rc
+    JOIN domains d ON d.id = rc.domain_id
+    JOIN domains_roles dr ON dr.entity_id = d.id
+    JOIN domains_role_members drm ON dr.id = drm.role_id
+    JOIN domains_role_actions dra ON dr.id = dra.role_id
+    JOIN domains_role_actions agg_dra ON agg_dra.role_id = dr.id
+    WHERE
+        rc.id = :entity_id
+        AND dra."action" LIKE 'report%'
+    GROUP BY
+        dr.id,
+        drm.member_id,
+        d.id
+),
+members AS (
+    SELECT
+        um.member_id,
+        JSONB_AGG(
+            JSON_BUILD_OBJECT(
+                'role_id', um.id,
+                'role_name', um.name,
+                'actions', um.actions,
+                'access_type', um.access_type,
+                'access_provider_id', um.access_provider_id
+            )
+        ) AS roles
+    FROM
+        ungrouped_members um
+    GROUP BY
+        um.member_id
+)
+	`
 }
 
 func domainMembersListBaseQuery() string {

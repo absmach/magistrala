@@ -50,5 +50,5 @@ the message format is `myFormat`. It can be any valid subtopic name, JSON transf
 Having a message format in the subtopic means that the subscriber has an option to subscribe to only one message format. This is a nice feature because message subscribers know what's the expected format of the message so that they can process it. If the message format is not important, wildcard subtopic can always be used to subscribe to any message format:
 
 ```
-http://localhost:8185/m/<domain_id>/c/<channelID>/home/temperature/*
+http://localhost:8185/m/<domain_id>/c/<channelID>/home/temperature/#
 ```

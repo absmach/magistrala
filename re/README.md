@@ -100,7 +100,7 @@ The service is configured using the following environment variables (values show
 - **Rule execution**: Runs Lua or Go scripts for incoming messages.
 - **Multiple outputs**: Channels, alarms, email, SenML writers, remote PostgreSQL, and Slack outputs.
 - **Scheduling**: Runs rules at specific times with recurring intervals.
-- **Filtering and matching**: Input channel filtering and NATS-style topic matching (`*`, `>`).
+- **Filtering and matching**: Input channel filtering and MQTT-style topic matching (`+`, `#`).
 - **Observability**: `/metrics` Prometheus endpoint and Jaeger tracing support.
 - **Payload limit**: Messages over 100 kB are rejected for processing.
 
@@ -110,7 +110,7 @@ The service is configured using the following environment variables (values show
 
 1. The service subscribes to all internal broker messages.
 2. For each message, it lists enabled rules for the same domain and input channel.
-3. It matches the rule `input_topic` against the message subtopic using NATS-style wildcards.
+3. It matches the rule `input_topic` against the message subtopic using MQTT-style wildcards.
 4. The rule logic (Lua or Go) is executed and the result is passed to configured outputs.
 
 ### Message payloads
@@ -174,7 +174,7 @@ Defined in `re/postgres/init.go`:
 | `updated_at` | `TIMESTAMP` | Last update timestamp |
 | `updated_by` | `VARCHAR(254)` | Last updater user ID |
 | `input_channel` | `VARCHAR(36)` | Input channel ID |
-| `input_topic` | `TEXT` | Input topic (supports wildcards) |
+| `input_topic` | `TEXT` | Input topic (supports `+` and `#` wildcards) |
 | `outputs` | `JSONB` | Output definitions |
 | `status` | `SMALLINT` | 0 = enabled, 1 = disabled, 2 = deleted |
 | `logic_type` | `SMALLINT` | 0 = Lua, 1 = Go |
@@ -258,7 +258,7 @@ curl -X POST http://localhost:9008/<domainID>/rules \
   -d '{
     "name": "High Temperature Alert",
     "input_channel": "sensors",
-    "input_topic": "temperature.*",
+    "input_topic": "temperature/+",
     "logic": {
       "type": 0,
       "value": "if message.payload.t > 30 then return {measurement=\"temperature\", value=tostring(message.payload.t), unit=\"C\", threshold=\"30\", cause=\"temp high\", severity=90} end"

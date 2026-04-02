@@ -15,66 +15,66 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 
 #### Postgres Service endpoints
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `MG_POSTGRES_WRITER_LOG_LEVEL` | Service log level | `debug` |
-| `MG_POSTGRES_WRITER_CONFIG_PATH` | Config file path (topics/transformer) | `/config.toml` |
-| `MG_POSTGRES_WRITER_HTTP_HOST` | HTTP host | `postgres-writer` |
-| `MG_POSTGRES_WRITER_HTTP_PORT` | HTTP port | `9007` |
-| `MG_POSTGRES_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path | "" |
-| `MG_POSTGRES_WRITER_HTTP_SERVER_KEY` | HTTPS server key path | "" |
-| `MG_POSTGRES_WRITER_INSTANCE_ID` | Instance ID | "" |
+| Variable                              | Description                           | Default           |
+| ------------------------------------- | ------------------------------------- | ----------------- |
+| `MG_POSTGRES_WRITER_LOG_LEVEL`        | Service log level                     | `debug`           |
+| `MG_POSTGRES_WRITER_CONFIG_PATH`      | Config file path (topics/transformer) | `/config.toml`    |
+| `MG_POSTGRES_WRITER_HTTP_HOST`        | HTTP host                             | `postgres-writer` |
+| `MG_POSTGRES_WRITER_HTTP_PORT`        | HTTP port                             | `9007`            |
+| `MG_POSTGRES_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path         | ""                |
+| `MG_POSTGRES_WRITER_HTTP_SERVER_KEY`  | HTTPS server key path                 | ""                |
+| `MG_POSTGRES_WRITER_INSTANCE_ID`      | Instance ID                           | ""                |
 
 #### Postgres Database
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `MG_POSTGRES_HOST` | PostgreSQL host | `postgres` |
-| `MG_POSTGRES_PORT` | PostgreSQL port | `5432` |
-| `MG_POSTGRES_USER` | PostgreSQL user | `supermq` |
-| `MG_POSTGRES_PASS` | PostgreSQL password | `supermq` |
-| `MG_POSTGRES_NAME` | PostgreSQL database name | `messages` |
-| `MG_POSTGRES_SSL_MODE` | PostgreSQL SSL mode | `disable` |
-| `MG_POSTGRES_SSL_CERT` | PostgreSQL SSL client cert | "" |
-| `MG_POSTGRES_SSL_KEY` | PostgreSQL SSL client key | "" |
-| `MG_POSTGRES_SSL_ROOT_CERT` | PostgreSQL SSL root cert | "" |
+| Variable                    | Description                | Default    |
+| --------------------------- | -------------------------- | ---------- |
+| `MG_POSTGRES_HOST`          | PostgreSQL host            | `postgres` |
+| `MG_POSTGRES_PORT`          | PostgreSQL port            | `5432`     |
+| `MG_POSTGRES_USER`          | PostgreSQL user            | `supermq`  |
+| `MG_POSTGRES_PASS`          | PostgreSQL password        | `supermq`  |
+| `MG_POSTGRES_NAME`          | PostgreSQL database name   | `messages` |
+| `MG_POSTGRES_SSL_MODE`      | PostgreSQL SSL mode        | `disable`  |
+| `MG_POSTGRES_SSL_CERT`      | PostgreSQL SSL client cert | ""         |
+| `MG_POSTGRES_SSL_KEY`       | PostgreSQL SSL client key  | ""         |
+| `MG_POSTGRES_SSL_ROOT_CERT` | PostgreSQL SSL root cert   | ""         |
 
 #### Postgres Message broker and observability
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `MG_MESSAGE_BROKER_URL` | Message broker URL | `nats://nats:4222` |
-| `MG_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
-| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
-| `MG_SEND_TELEMETRY` | Send telemetry to Magistrala call-home server | `true` |
+| Variable                | Description                                   | Default                        |
+| ----------------------- | --------------------------------------------- | ------------------------------ |
+| `MG_MESSAGE_BROKER_URL` | Message broker URL                            | `nats://nats:4222`             |
+| `MG_JAEGER_URL`         | Jaeger collector endpoint                     | `http://jaeger:4318/v1/traces` |
+| `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio                          | `1.0`                          |
+| `MG_SEND_TELEMETRY`     | Send telemetry to Magistrala call-home server | `true`                         |
 
 ### Timescale writer
 
 #### Timescale Service endpoints
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `MG_TIMESCALE_WRITER_LOG_LEVEL` | Service log level | `debug` |
-| `MG_TIMESCALE_WRITER_CONFIG_PATH` | Config file path (topics/transformer) | `/config.toml` |
-| `MG_TIMESCALE_WRITER_HTTP_HOST` | HTTP host | `timescale-writer` |
-| `MG_TIMESCALE_WRITER_HTTP_PORT` | HTTP port | `9012` |
-| `MG_TIMESCALE_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path | "" |
-| `MG_TIMESCALE_WRITER_HTTP_SERVER_KEY` | HTTPS server key path | "" |
-| `MG_TIMESCALE_WRITER_INSTANCE_ID` | Instance ID | "" |
+| Variable                               | Description                           | Default            |
+| -------------------------------------- | ------------------------------------- | ------------------ |
+| `MG_TIMESCALE_WRITER_LOG_LEVEL`        | Service log level                     | `debug`            |
+| `MG_TIMESCALE_WRITER_CONFIG_PATH`      | Config file path (topics/transformer) | `/config.toml`     |
+| `MG_TIMESCALE_WRITER_HTTP_HOST`        | HTTP host                             | `timescale-writer` |
+| `MG_TIMESCALE_WRITER_HTTP_PORT`        | HTTP port                             | `9012`             |
+| `MG_TIMESCALE_WRITER_HTTP_SERVER_CERT` | HTTPS server certificate path         | ""                 |
+| `MG_TIMESCALE_WRITER_HTTP_SERVER_KEY`  | HTTPS server key path                 | ""                 |
+| `MG_TIMESCALE_WRITER_INSTANCE_ID`      | Instance ID                           | ""                 |
 
 #### Timescale Database
 
-| Variable | Description | Default |
-| --- | --- | --- |
-| `MG_TIMESCALE_HOST` | TimescaleDB host | `timescale` |
-| `MG_TIMESCALE_PORT` | TimescaleDB port | `5432` |
-| `MG_TIMESCALE_USER` | TimescaleDB user | `supermq` |
-| `MG_TIMESCALE_PASS` | TimescaleDB password | `supermq` |
-| `MG_TIMESCALE_NAME` | TimescaleDB database name | `supermq` |
-| `MG_TIMESCALE_SSL_MODE` | TimescaleDB SSL mode | `disable` |
-| `MG_TIMESCALE_SSL_CERT` | TimescaleDB SSL client cert | "" |
-| `MG_TIMESCALE_SSL_KEY` | TimescaleDB SSL client key | "" |
-| `MG_TIMESCALE_SSL_ROOT_CERT` | TimescaleDB SSL root cert | "" |
+| Variable                     | Description                 | Default     |
+| ---------------------------- | --------------------------- | ----------- |
+| `MG_TIMESCALE_HOST`          | TimescaleDB host            | `timescale` |
+| `MG_TIMESCALE_PORT`          | TimescaleDB port            | `5432`      |
+| `MG_TIMESCALE_USER`          | TimescaleDB user            | `supermq`   |
+| `MG_TIMESCALE_PASS`          | TimescaleDB password        | `supermq`   |
+| `MG_TIMESCALE_NAME`          | TimescaleDB database name   | `supermq`   |
+| `MG_TIMESCALE_SSL_MODE`      | TimescaleDB SSL mode        | `disable`   |
+| `MG_TIMESCALE_SSL_CERT`      | TimescaleDB SSL client cert | ""          |
+| `MG_TIMESCALE_SSL_KEY`       | TimescaleDB SSL client key  | ""          |
+| `MG_TIMESCALE_SSL_ROOT_CERT` | TimescaleDB SSL root cert   | ""          |
 
 #### Timescale Message broker and observability
 
@@ -91,7 +91,7 @@ The config file controls subscription topics and optional transformer settings f
 
 ```toml
 ["subscriber"]
-topics = ["writers.>"]
+topics = ["writers/#"]
 
 [transformer]
 format = "senml"
@@ -104,24 +104,24 @@ time_fields = [
 ]
 ```
 
-The topic filter uses `writers.*` syntax in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `consumers/writers/brokers`:
+The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `consumers/writers/brokers`:
 
 - NATS builds use JetStream streams with durable consumers.
-- FluxMQ builds publish to and consume from the `writers` stream queue while preserving the same `writers.>` config syntax.
+- FluxMQ builds publish to and consume from the `writers` stream queue while preserving the same `writers/#` config syntax.
 
 ## Features
 
 - **Message persistence**: Stores incoming SenML messages into PostgreSQL or TimescaleDB.
 - **JSON payload support**: Saves JSON payloads into dynamically created tables.
 - **Stream-backed ingestion**: Consumes through NATS JetStream durable consumers or FluxMQ stream queues.
-- **Configurable subscription**: Limits ingestion to specific `writers.*` topics.
+- **Configurable subscription**: Limits ingestion to specific `writers/<channel>/<subtopic>` topics.
 - **Observability**: Exposes `/health` and `/metrics` endpoints, with Jaeger tracing.
 
 ## Architecture
 
 ### Runtime flow
 
-1. The rules engine publishes writer messages under `writers.*`.
+1. The rules engine publishes writer messages under `writers/<channel>/<subtopic>`.
 2. The writer loads `config.toml` to select topic filters and transformer settings.
 3. The broker adapter consumes from the underlying stream-backed implementation.
 4. The consumer converts messages to SenML or JSON payloads.
@@ -138,22 +138,22 @@ The topic filter uses `writers.*` syntax in the config file for both backends. W
 
 Defined in `consumers/writers/postgres/init.go`:
 
-| Column | Type | Description |
-| --- | --- | --- |
-| `id` | `UUID` | Message ID |
-| `channel` | `UUID` | Channel ID |
-| `subtopic` | `VARCHAR(254)` | Subtopic |
-| `publisher` | `UUID` | Publisher ID |
-| `protocol` | `TEXT` | Protocol name |
-| `name` | `TEXT` | SenML name |
-| `unit` | `TEXT` | SenML unit |
-| `value` | `FLOAT` | Numeric value |
-| `string_value` | `TEXT` | String value |
-| `bool_value` | `BOOL` | Boolean value |
-| `data_value` | `BYTEA` | Data value |
-| `sum` | `FLOAT` | Sum value |
-| `time` | `FLOAT` | Measurement time |
-| `update_time` | `FLOAT` | Update time |
+| Column         | Type           | Description      |
+| -------------- | -------------- | ---------------- |
+| `id`           | `UUID`         | Message ID       |
+| `channel`      | `UUID`         | Channel ID       |
+| `subtopic`     | `VARCHAR(254)` | Subtopic         |
+| `publisher`    | `UUID`         | Publisher ID     |
+| `protocol`     | `TEXT`         | Protocol name    |
+| `name`         | `TEXT`         | SenML name       |
+| `unit`         | `TEXT`         | SenML unit       |
+| `value`        | `FLOAT`        | Numeric value    |
+| `string_value` | `TEXT`         | String value     |
+| `bool_value`   | `BOOL`         | Boolean value    |
+| `data_value`   | `BYTEA`        | Data value       |
+| `sum`          | `FLOAT`        | Sum value        |
+| `time`         | `FLOAT`        | Measurement time |
+| `update_time`  | `FLOAT`        | Update time      |
 
 Primary key: `(time, publisher, subtopic, name)`
 
@@ -161,21 +161,21 @@ Primary key: `(time, publisher, subtopic, name)`
 
 Defined in `consumers/writers/timescale/init.go`:
 
-| Column | Type | Description |
-| --- | --- | --- |
-| `time` | `BIGINT` | Measurement time |
-| `channel` | `UUID` | Channel ID |
-| `subtopic` | `VARCHAR(254)` | Subtopic |
-| `publisher` | `VARCHAR(254)` | Publisher ID |
-| `protocol` | `TEXT` | Protocol name |
-| `name` | `VARCHAR(254)` | SenML name |
-| `unit` | `TEXT` | SenML unit |
-| `value` | `FLOAT` | Numeric value |
-| `string_value` | `TEXT` | String value |
-| `bool_value` | `BOOL` | Boolean value |
-| `data_value` | `BYTEA` | Data value |
-| `sum` | `FLOAT` | Sum value |
-| `update_time` | `FLOAT` | Update time |
+| Column         | Type           | Description      |
+| -------------- | -------------- | ---------------- |
+| `time`         | `BIGINT`       | Measurement time |
+| `channel`      | `UUID`         | Channel ID       |
+| `subtopic`     | `VARCHAR(254)` | Subtopic         |
+| `publisher`    | `VARCHAR(254)` | Publisher ID     |
+| `protocol`     | `TEXT`         | Protocol name    |
+| `name`         | `VARCHAR(254)` | SenML name       |
+| `unit`         | `TEXT`         | SenML unit       |
+| `value`        | `FLOAT`        | Numeric value    |
+| `string_value` | `TEXT`         | String value     |
+| `bool_value`   | `BOOL`         | Boolean value    |
+| `data_value`   | `BYTEA`        | Data value       |
+| `sum`          | `FLOAT`        | Sum value        |
+| `update_time`  | `FLOAT`        | Update time      |
 
 Primary key: `(time, channel, subtopic, protocol, publisher, name)`
 
@@ -262,10 +262,10 @@ go test ./consumers/writers/...
 
 Writers do not expose a message ingestion API. Messages are written via the message broker, and writers consume them through the stream-backed broker adapter. The HTTP API provides only health and metrics endpoints.
 
-| Endpoint | Description |
-| --- | --- |
-| `GET /health` | Service health check |
-| `GET /metrics` | Prometheus metrics |
+| Endpoint       | Description          |
+| -------------- | -------------------- |
+| `GET /health`  | Service health check |
+| `GET /metrics` | Prometheus metrics   |
 
 For an in-depth explanation of Writers, see the [official documentation][doc].
 

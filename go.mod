@@ -49,7 +49,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/traefik/yaegi v0.16.1
 	github.com/vadv/gopher-lua-libs v0.8.0
-	github.com/yuin/gopher-lua v1.1.1
+	github.com/yuin/gopher-lua v1.1.2
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.67.0
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.67.0
 	go.opentelemetry.io/otel v1.42.0

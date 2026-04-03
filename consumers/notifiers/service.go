@@ -5,12 +5,12 @@ package notifiers
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/absmach/supermq"
 	"github.com/absmach/supermq/consumers"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
+	repoerr "github.com/absmach/supermq/pkg/errors/repository"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
 	"github.com/absmach/supermq/pkg/messaging"
 )
@@ -112,24 +112,11 @@ func (ns *notifierService) ConsumeBlocking(ctx context.Context, message any) err
 	if !ok {
 		return ErrMessage
 	}
-	topic := msg.GetChannel()
-	if msg.GetSubtopic() != "" {
-		topic = fmt.Sprintf("%s.%s", msg.GetChannel(), msg.GetSubtopic())
-	}
-	pm := PageMetadata{
-		Topic:  topic,
-		Offset: 0,
-		Limit:  -1,
-	}
-	page, err := ns.subs.RetrieveAll(ctx, pm)
+	to, err := ns.recipients(ctx, msg)
 	if err != nil {
 		return err
 	}
 
-	var to []string
-	for _, sub := range page.Subscriptions {
-		to = append(to, sub.Contact)
-	}
 	if len(to) > 0 {
 		err := ns.notifier.Notify(ns.from, to, msg)
 		if err != nil {
@@ -146,25 +133,12 @@ func (ns *notifierService) ConsumeAsync(ctx context.Context, message any) {
 		ns.errCh <- ErrMessage
 		return
 	}
-	topic := msg.GetChannel()
-	if msg.GetSubtopic() != "" {
-		topic = fmt.Sprintf("%s.%s", msg.GetChannel(), msg.GetSubtopic())
-	}
-	pm := PageMetadata{
-		Topic:  topic,
-		Offset: 0,
-		Limit:  -1,
-	}
-	page, err := ns.subs.RetrieveAll(ctx, pm)
+	to, err := ns.recipients(ctx, msg)
 	if err != nil {
 		ns.errCh <- err
 		return
 	}
 
-	var to []string
-	for _, sub := range page.Subscriptions {
-		to = append(to, sub.Contact)
-	}
 	if len(to) > 0 {
 		if err := ns.notifier.Notify(ns.from, to, msg); err != nil {
 			ns.errCh <- errors.Wrap(consumers.ErrNotify, err)
@@ -174,4 +148,45 @@ func (ns *notifierService) ConsumeAsync(ctx context.Context, message any) {
 
 func (ns *notifierService) Errors() <-chan error {
 	return ns.errCh
+}
+
+func (ns *notifierService) recipients(ctx context.Context, msg *messaging.Message) ([]string, error) {
+	topic, ok := subscriptionTopic(msg)
+	if !ok {
+		return nil, nil
+	}
+
+	pm := PageMetadata{
+		Topic:  topic,
+		Offset: 0,
+		Limit:  -1,
+	}
+	page, err := ns.subs.RetrieveAll(ctx, pm)
+	if err != nil {
+		if errors.Contains(err, repoerr.ErrNotFound) {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	to := make([]string, 0, len(page.Subscriptions))
+	for _, sub := range page.Subscriptions {
+		to = append(to, sub.Contact)
+	}
+
+	return to, nil
+}
+
+func subscriptionTopic(msg *messaging.Message) (string, bool) {
+	channel := msg.GetChannel()
+	if channel == "" {
+		return "", false
+	}
+
+	subtopic := msg.GetSubtopic()
+	if subtopic == "" {
+		return channel, true
+	}
+
+	return channel + "/" + subtopic, true
 }

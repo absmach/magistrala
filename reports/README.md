@@ -215,6 +215,7 @@ The Reports service supports the following operations:
 List filters: `offset`, `limit`, `status`, `name`, `order` (`name`, `created_at`, `updated_at`), and `dir` (`asc`, `desc`).
 
 Time ranges use relative expressions parsed by `pkg/reltime`, such as `now()` or `now()-24h` (units: `s`, `m`, `h`, `d`, `w`). Aggregation intervals use Go duration strings like `15m` or `1h`. File output formats are `pdf` and `csv`.
+When metric `subtopic` is used, provide it in slash-delimited form (for example, `sensor/temp`).
 
 ### Example: Generate a report
 

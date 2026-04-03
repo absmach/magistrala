@@ -31,12 +31,17 @@ const (
 )
 
 func newService() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository) {
+	svc, auth, repo, _ := newServiceWithNotifier()
+	return svc, auth, repo
+}
+
+func newServiceWithNotifier() (notifiers.Service, *authnmocks.Authentication, *mocks.SubscriptionsRepository, *smqmocks.Notifier) {
 	repo := new(mocks.SubscriptionsRepository)
 	auth := new(authnmocks.Authentication)
 	notifier := new(smqmocks.Notifier)
 	idp := uuid.NewMock()
 	from := "exampleFrom"
-	return notifiers.New(auth, repo, idp, notifier, from), auth, repo
+	return notifiers.New(auth, repo, idp, notifier, from), auth, repo, notifier
 }
 
 func TestCreateSubscription(t *testing.T) {
@@ -324,7 +329,7 @@ func TestRemoveSubscription(t *testing.T) {
 }
 
 func TestConsume(t *testing.T) {
-	svc, _, repo := newService()
+	svc, _, repo, notifier := newServiceWithNotifier()
 	msg := messaging.Message{
 		Channel:  "topic",
 		Subtopic: "subtopic",
@@ -357,4 +362,24 @@ func TestConsume(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		repoCall.Unset()
 	}
+
+	canonicalMsg := &messaging.Message{
+		Channel:  "topic",
+		Subtopic: "sub/topic",
+	}
+
+	repo.On("RetrieveAll", context.TODO(), notifiers.PageMetadata{
+		Topic:  "topic/sub/topic",
+		Offset: 0,
+		Limit:  -1,
+	}).Return(notifiers.Page{
+		Subscriptions: []notifiers.Subscription{
+			{Contact: "user@example.com"},
+		},
+	}, nil).Once()
+
+	notifier.On("Notify", "exampleFrom", []string{"user@example.com"}, canonicalMsg).Return(nil).Once()
+
+	err := svc.ConsumeBlocking(context.TODO(), canonicalMsg)
+	assert.NoError(t, err)
 }

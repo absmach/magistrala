@@ -154,6 +154,8 @@ Supported output types (`outputs.OutputType`) and their fields:
 | `save_remote_pg` | `host`, `port`, `user`, `password`, `database`, `table`, `mapping` | `mapping` is a Go template that must render a JSON object. |
 | `slack` | `token`, `channel_id`, `message` | `message` is a Go template. |
 
+For `channels` output, `topic` is a slash-delimited subtopic (for example, `alerts/high-temp`).
+
 Templates receive a `Message` (the incoming message) and a `Result` (the script output) value.
 
 ## Data model

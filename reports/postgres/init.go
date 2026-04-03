@@ -54,6 +54,53 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`ALTER TABLE report_config DROP COLUMN report_template;`,
 				},
 			},
+			{
+				Id: "reports_03",
+				Up: []string{
+					// Canonicalize legacy report metric subtopics from dot/NATS wildcards
+					// to slash/MQTT wildcards.
+					`UPDATE report_config AS rc
+						SET metrics = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN metric.elem ? 'subtopic'
+										AND jsonb_typeof(metric.elem->'subtopic') = 'string'
+									THEN jsonb_set(
+										metric.elem,
+										'{subtopic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(metric.elem->>'subtopic', '>', '#'), '*', '+'), '.', '/')),
+										false
+									)
+									ELSE metric.elem
+								END
+								ORDER BY metric.ord
+							)
+							FROM jsonb_array_elements(rc.metrics) WITH ORDINALITY AS metric(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(rc.metrics) = 'array'`,
+				},
+				Down: []string{
+					`UPDATE report_config AS rc
+						SET metrics = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN metric.elem ? 'subtopic'
+										AND jsonb_typeof(metric.elem->'subtopic') = 'string'
+									THEN jsonb_set(
+										metric.elem,
+										'{subtopic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(metric.elem->>'subtopic', '#', '>'), '+', '*'), '/', '.')),
+										false
+									)
+									ELSE metric.elem
+								END
+								ORDER BY metric.ord
+							)
+							FROM jsonb_array_elements(rc.metrics) WITH ORDINALITY AS metric(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(rc.metrics) = 'array'`,
+				},
+			},
 		},
 	}
 

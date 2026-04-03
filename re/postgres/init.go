@@ -86,6 +86,55 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 						 WHERE input_topic IS NOT NULL AND input_topic <> ''`,
 				},
 			},
+			{
+				Id: "rules_05",
+				Up: []string{
+					// Canonicalize channel output topics in rule outputs JSON:
+					// dot/NATS wildcards -> slash/MQTT wildcards.
+					`UPDATE rules AS r
+						SET outputs = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN out_elem.elem->>'type' = 'channels'
+										AND out_elem.elem ? 'topic'
+										AND jsonb_typeof(out_elem.elem->'topic') = 'string'
+									THEN jsonb_set(
+										out_elem.elem,
+										'{topic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(out_elem.elem->>'topic', '>', '#'), '*', '+'), '.', '/')),
+										false
+									)
+									ELSE out_elem.elem
+								END
+								ORDER BY out_elem.ord
+							)
+							FROM jsonb_array_elements(r.outputs) WITH ORDINALITY AS out_elem(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(r.outputs) = 'array'`,
+				},
+				Down: []string{
+					`UPDATE rules AS r
+						SET outputs = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN out_elem.elem->>'type' = 'channels'
+										AND out_elem.elem ? 'topic'
+										AND jsonb_typeof(out_elem.elem->'topic') = 'string'
+									THEN jsonb_set(
+										out_elem.elem,
+										'{topic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(out_elem.elem->>'topic', '#', '>'), '+', '*'), '/', '.')),
+										false
+									)
+									ELSE out_elem.elem
+								END
+								ORDER BY out_elem.ord
+							)
+							FROM jsonb_array_elements(r.outputs) WITH ORDINALITY AS out_elem(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(r.outputs) = 'array'`,
+				},
+			},
 		},
 	}
 

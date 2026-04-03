@@ -62,13 +62,77 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "rules_03",
 				Up: []string{
 					`UPDATE rules
-					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
-					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'string'`,
+						 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
+						 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'string'`,
 				},
 				Down: []string{
 					`UPDATE rules
-					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
-					 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'string'`,
+						 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
+						 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'string'`,
+				},
+			},
+			{
+				Id: "rules_04",
+				Up: []string{
+					// Canonicalize legacy rule topics from dot/NATS wildcards
+					// to slash/MQTT wildcards.
+					`UPDATE rules
+						 SET input_topic = REPLACE(REPLACE(REPLACE(input_topic, '>', '#'), '*', '+'), '.', '/')
+						 WHERE input_topic IS NOT NULL AND input_topic <> ''`,
+				},
+				Down: []string{
+					`UPDATE rules
+						 SET input_topic = REPLACE(REPLACE(REPLACE(input_topic, '#', '>'), '+', '*'), '/', '.')
+						 WHERE input_topic IS NOT NULL AND input_topic <> ''`,
+				},
+			},
+			{
+				Id: "rules_05",
+				Up: []string{
+					// Canonicalize channel output topics in rule outputs JSON:
+					// dot/NATS wildcards -> slash/MQTT wildcards.
+					`UPDATE rules AS r
+						SET outputs = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN out_elem.elem->>'type' = 'channels'
+										AND out_elem.elem ? 'topic'
+										AND jsonb_typeof(out_elem.elem->'topic') = 'string'
+									THEN jsonb_set(
+										out_elem.elem,
+										'{topic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(out_elem.elem->>'topic', '>', '#'), '*', '+'), '.', '/')),
+										false
+									)
+									ELSE out_elem.elem
+								END
+								ORDER BY out_elem.ord
+							)
+							FROM jsonb_array_elements(r.outputs) WITH ORDINALITY AS out_elem(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(r.outputs) = 'array'`,
+				},
+				Down: []string{
+					`UPDATE rules AS r
+						SET outputs = COALESCE((
+							SELECT jsonb_agg(
+								CASE
+									WHEN out_elem.elem->>'type' = 'channels'
+										AND out_elem.elem ? 'topic'
+										AND jsonb_typeof(out_elem.elem->'topic') = 'string'
+									THEN jsonb_set(
+										out_elem.elem,
+										'{topic}',
+										to_jsonb(REPLACE(REPLACE(REPLACE(out_elem.elem->>'topic', '#', '>'), '+', '*'), '/', '.')),
+										false
+									)
+									ELSE out_elem.elem
+								END
+								ORDER BY out_elem.ord
+							)
+							FROM jsonb_array_elements(r.outputs) WITH ORDINALITY AS out_elem(elem, ord)
+						), '[]'::jsonb)
+						WHERE jsonb_typeof(r.outputs) = 'array'`,
 				},
 			},
 		},

@@ -23,6 +23,20 @@ func Migration() *migrate.MemoryMigrationSource {
 					"DROP TABLE IF EXISTS subscriptions",
 				},
 			},
+			{
+				Id: "subscriptions_2",
+				Up: []string{
+					// Canonicalize legacy dot-delimited topics to slash-delimited topics.
+					`UPDATE subscriptions
+							SET topic = REPLACE(topic, '.', '/')
+							WHERE topic LIKE '%.%'`,
+				},
+				Down: []string{
+					`UPDATE subscriptions
+						SET topic = REPLACE(topic, '/', '.')
+						WHERE topic LIKE '%/%'`,
+				},
+			},
 		},
 	}
 }

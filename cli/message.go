@@ -7,7 +7,7 @@ import "github.com/spf13/cobra"
 
 var cmdMessages = []cobra.Command{
 	{
-		Use:   "send <domain_id> <channel_id.subtopic> <JSON_string> <secret>",
+		Use:   "send <domain_id> <channel_id/subtopic> <JSON_string> <secret>",
 		Short: "Send messages",
 		Long:  `Sends message on the channel`,
 		Run: func(cmd *cobra.Command, args []string) {

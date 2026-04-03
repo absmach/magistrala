@@ -5,6 +5,7 @@ package fluxmq
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/absmach/supermq/pkg/messaging"
 	"github.com/nats-io/nats.go/jetstream"
@@ -32,9 +33,15 @@ func Prefix(prefix string) messaging.Option {
 	return func(val any) error {
 		switch v := val.(type) {
 		case *publisher:
-			v.prefix = prefix
+			v.prefix = strings.TrimSpace(prefix)
+			if v.prefix == "" {
+				v.prefix = msgPrefix
+			}
 		case *pubsub:
-			v.prefix = prefix
+			v.prefix = strings.TrimSpace(prefix)
+			if v.prefix == "" {
+				v.prefix = msgPrefix
+			}
 		default:
 			return ErrInvalidType
 		}

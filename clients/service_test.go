@@ -707,6 +707,7 @@ func TestUpdateSecret(t *testing.T) {
 		updateSecretResponse clients.Client
 		session              smqauthn.Session
 		updateErr            error
+		removeErr            error
 		err                  error
 	}{
 		{
@@ -732,15 +733,37 @@ func TestUpdateSecret(t *testing.T) {
 			updateErr:            repoerr.ErrMalformedEntity,
 			err:                  svcerr.ErrUpdateEntity,
 		},
+		{
+			desc:      "update client secret with failed to remove cache",
+			client:    client,
+			newSecret: "newSecret",
+			session:   smqauthn.Session{UserID: validID},
+			updateSecretResponse: clients.Client{
+				ID: client.ID,
+				Credentials: clients.Credentials{
+					Identity: client.Credentials.Identity,
+					Secret:   "newSecret",
+				},
+			},
+			removeErr: repoerr.ErrRemoveEntity,
+			err:       svcerr.ErrRemoveEntity,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("UpdateSecret", context.Background(), mock.Anything).Return(tc.updateSecretResponse, tc.updateErr)
+			var cacheCall *mock.Call
+			if tc.updateErr == nil {
+				cacheCall = cache.On("Remove", context.Background(), tc.updateSecretResponse.ID).Return(tc.removeErr)
+			}
 			updatedClient, err := svc.UpdateSecret(context.Background(), tc.session, tc.client.ID, tc.newSecret)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.updateSecretResponse, updatedClient, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.updateSecretResponse, updatedClient))
 			repoCall.Unset()
+			if cacheCall != nil {
+				cacheCall.Unset()
+			}
 		})
 	}
 }

@@ -119,7 +119,7 @@ queues:
 auth:
   url: "http://fluxmq-auth:7016"
   transport: "grpc"
-  timeout: 5s
+  timeout: 15s
   protocols:
     mqtt: true
     http: true

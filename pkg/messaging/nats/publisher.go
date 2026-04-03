@@ -73,7 +73,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		return err
 	}
 
-	subject := fmt.Sprintf("%s.%s", pub.prefix, topic)
+	subject := fmt.Sprintf("%s.%s", pub.prefix, toNATSTopic(topic))
 	if _, err = pub.js.Publish(ctx, subject, data); err != nil {
 		return err
 	}

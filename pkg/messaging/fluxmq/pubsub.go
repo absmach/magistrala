@@ -95,7 +95,7 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 
 	group := formatConsumerName(cfg.Topic, cfg.ID)
 	opts := &fluxamqp.StreamConsumeOptions{
-		QueueName:     streamQueue(ps.prefix),
+		QueueName:     ps.prefix,
 		Filter:        streamFilter(ps.prefix, cfg.Topic),
 		ConsumerGroup: group,
 	}
@@ -118,7 +118,6 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	sub := subscription{
 		streamTopic: queueFilter(ps.prefix, cfg.Topic),
 	}
-
 	if ps.directTopicIngress {
 		// Subscribe to regular MQTT topics so that messages published directly
 		// by MQTT clients (not through the stream queue) are also received.
@@ -137,7 +136,6 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	ps.mu.Lock()
 	ps.subscriptions[subscriptionKey(cfg.ID, cfg.Topic)] = sub
 	ps.mu.Unlock()
-
 	return nil
 }
 

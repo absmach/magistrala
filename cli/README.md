@@ -269,7 +269,7 @@ supermq-cli channels connections <channel_id> <user_token>
 #### Send a message over HTTP
 
 ```bash
-supermq-cli messages send <domain_id> <channel_id.subtopic> <secret> '[{"bn":"Dev1","n":"temp","v":20}, {"n":"hum","v":40}, {"bn":"Dev2", "n":"temp","v":20}, {"n":"hum","v":40}]'
+supermq-cli messages send <domain_id> <channel_id/subtopic> <secret> '[{"bn":"Dev1","n":"temp","v":20}, {"n":"hum","v":40}, {"bn":"Dev2", "n":"temp","v":20}, {"n":"hum","v":40}]'
 ```
 
 ### Groups

@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	AllTopic = "alarms.>"
+	AllTopic = "alarms/#"
 
 	prefix = "alarms"
 )

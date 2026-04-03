@@ -23,11 +23,11 @@ const (
 )
 
 var (
-	mqWildcards          = "+#"
-	wildcards            = "*>"
-	subtopicInvalidChars = " #+"
-	wildcardsReplacer    = strings.NewReplacer("+", "*", "#", ">")
-	pathReplacer         = strings.NewReplacer("/", ".")
+	// MQTT wildcards are the canonical wildcard characters.
+	mqttWildcards        = "+#"
+	natsWildcards        = "*>"
+	subtopicInvalidChars = " "
+	subtopicSep          = "/"
 
 	DefaultCacheConfig = CacheConfig{
 		NumCounters: 2e5,     // 200k
@@ -269,11 +269,11 @@ func ParsePublishSubtopic(subtopic string) (parseSubTopic string, err error) {
 		return "", errors.Wrap(ErrMalformedSubtopic, err)
 	}
 
-	if strings.ContainsAny(subtopic, subtopicInvalidChars+wildcards) {
+	if strings.ContainsAny(subtopic, subtopicInvalidChars+mqttWildcards+natsWildcards) {
 		return "", ErrMalformedSubtopic
 	}
 
-	if strings.Contains(subtopic, "..") {
+	if strings.Contains(subtopic, "//") {
 		return "", ErrMalformedSubtopic
 	}
 
@@ -298,24 +298,21 @@ func ParseSubscribeSubtopic(subtopic string) (parseSubTopic string, err error) {
 		return "", nil
 	}
 
-	if strings.ContainsAny(subtopic, mqWildcards) {
-		subtopic = wildcardsReplacer.Replace(subtopic)
-	}
 	subtopic, err = formatSubtopic(subtopic)
 	if err != nil {
 		return "", errors.Wrap(ErrMalformedSubtopic, err)
 	}
 
-	if strings.ContainsAny(subtopic, subtopicInvalidChars) {
+	if strings.ContainsAny(subtopic, subtopicInvalidChars+natsWildcards) {
 		return "", ErrMalformedSubtopic
 	}
 
-	if strings.Contains(subtopic, "..") {
+	if strings.Contains(subtopic, "//") {
 		return "", ErrMalformedSubtopic
 	}
 
-	for _, elem := range strings.Split(subtopic, ".") {
-		if len(elem) > 1 && strings.ContainsAny(elem, wildcards) {
+	for _, elem := range strings.Split(subtopic, subtopicSep) {
+		if len(elem) > 1 && strings.ContainsAny(elem, mqttWildcards) {
 			return "", ErrMalformedSubtopic
 		}
 	}
@@ -323,25 +320,24 @@ func ParseSubscribeSubtopic(subtopic string) (parseSubTopic string, err error) {
 }
 
 func formatSubtopic(subtopic string) (string, error) {
-	subtopic, err := url.QueryUnescape(subtopic)
+	subtopic, err := url.PathUnescape(subtopic)
 	if err != nil {
 		return "", err
 	}
 	subtopic = strings.TrimPrefix(subtopic, "/")
 	subtopic = strings.TrimSuffix(subtopic, "/")
 	subtopic = strings.TrimSpace(subtopic)
-	subtopic = pathReplacer.Replace(subtopic)
 	return subtopic, nil
 }
 
 func EncodeTopic(domainID string, channelID string, subtopic string) string {
-	return fmt.Sprintf("%s.%s", string(MsgTopicPrefix), EncodeTopicSuffix(domainID, channelID, subtopic))
+	return fmt.Sprintf("%s/%s", string(MsgTopicPrefix), EncodeTopicSuffix(domainID, channelID, subtopic))
 }
 
 func EncodeTopicSuffix(domainID string, channelID string, subtopic string) string {
-	subject := fmt.Sprintf("%s.%s.%s", domainID, string(ChannelTopicPrefix), channelID)
+	subject := fmt.Sprintf("%s/%s/%s", domainID, string(ChannelTopicPrefix), channelID)
 	if subtopic != "" {
-		subject = fmt.Sprintf("%s.%s", subject, subtopic)
+		subject = fmt.Sprintf("%s/%s", subject, subtopic)
 	}
 	return subject
 }
@@ -351,11 +347,7 @@ func EncodeMessageTopic(m *Message) string {
 }
 
 func EncodeMessageMQTTTopic(m *Message) string {
-	topic := fmt.Sprintf("%s/%s/%s/%s", string(MsgTopicPrefix), m.GetDomain(), string(ChannelTopicPrefix), m.GetChannel())
-	if m.GetSubtopic() != "" {
-		topic = topic + "/" + strings.ReplaceAll(m.GetSubtopic(), ".", "/")
-	}
-	return topic
+	return EncodeTopic(m.GetDomain(), m.GetChannel(), m.GetSubtopic())
 }
 
 func encodeAdapterTopic(domain, channel, subtopic string, topicType TopicType) string {

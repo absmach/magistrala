@@ -61,7 +61,7 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 		return nil, errors.Wrap(ErrTransform, errUnknownFormat)
 	}
 
-	subs := strings.Split(ret.Subtopic, ".")
+	subs := strings.Split(ret.Subtopic, "/")
 	if len(subs) == 0 {
 		return nil, errors.Wrap(ErrTransform, errUnknownFormat)
 	}

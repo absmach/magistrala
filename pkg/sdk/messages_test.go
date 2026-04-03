@@ -100,7 +100,7 @@ func TestReadMessages(t *testing.T) {
 		{
 			desc:     "read messages successfully with subtopic",
 			token:    validToken,
-			chanName: channelID + ".subtopic",
+			chanName: channelID + "/subtopic",
 			domainID: validID,
 			messagePageMeta: sdk.MessagePageMetadata{
 				PageMetadata: sdk.PageMetadata{

@@ -1,8 +1,8 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-//go:build msg_fluxmq
-// +build msg_fluxmq
+//go:build !msg_nats
+// +build !msg_nats
 
 package brokers
 
@@ -16,7 +16,7 @@ import (
 )
 
 // SubjectAllMessages represents subject to subscribe for all the messages.
-const SubjectAllMessages = string(messaging.MsgTopicPrefix) + ".>"
+const SubjectAllMessages = string(messaging.MsgTopicPrefix) + "/#"
 
 func init() {
 	log.Println("The binary was built using FluxMQ as the message broker")

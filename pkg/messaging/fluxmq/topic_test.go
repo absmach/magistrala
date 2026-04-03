@@ -9,7 +9,7 @@ import (
 )
 
 func TestQueueTopic(t *testing.T) {
-	got := queueTopic("m", "domain.c.channel.subtopic")
+	got := queueTopic("m", "domain/c/channel/subtopic")
 	want := "$queue/m/domain/c/channel/subtopic"
 	if got != want {
 		t.Fatalf("queue topic mismatch: got %q, want %q", got, want)
@@ -26,25 +26,25 @@ func TestStreamFilter(t *testing.T) {
 		{
 			name:   "all messages with prefix",
 			prefix: "m",
-			topic:  "m.>",
+			topic:  "m/#",
 			want:   "#",
 		},
 		{
 			name:   "all messages without explicit prefix",
 			prefix: "writers",
-			topic:  ">",
+			topic:  "#",
 			want:   "#",
 		},
 		{
 			name:   "specific topic filter",
 			prefix: "writers",
-			topic:  "writers.domain.c.channel.*",
+			topic:  "writers/domain/c/channel/+",
 			want:   "domain/c/channel/+",
 		},
 		{
 			name:   "topic without prefix",
 			prefix: "alarms",
-			topic:  "domain.c.channel.>",
+			topic:  "domain/c/channel/#",
 			want:   "domain/c/channel/#",
 		},
 	}
@@ -60,7 +60,7 @@ func TestStreamFilter(t *testing.T) {
 }
 
 func TestQueueFilter(t *testing.T) {
-	got := queueFilter("writers", "writers.>")
+	got := queueFilter("writers", "writers/#")
 	want := "$queue/writers/#"
 	if got != want {
 		t.Fatalf("queue filter mismatch: got %q, want %q", got, want)
@@ -77,25 +77,25 @@ func TestTopicFilter(t *testing.T) {
 		{
 			name:   "all messages with prefix",
 			prefix: "m",
-			topic:  "m.>",
+			topic:  "m/#",
 			want:   "m/#",
 		},
 		{
 			name:   "wildcard topic",
 			prefix: "writers",
-			topic:  ">",
+			topic:  "#",
 			want:   "writers/#",
 		},
 		{
 			name:   "specific topic",
 			prefix: "m",
-			topic:  "m.domain.c.channel.subtopic",
+			topic:  "m/domain/c/channel/subtopic",
 			want:   "m/domain/c/channel/subtopic",
 		},
 		{
 			name:   "single-level wildcard",
 			prefix: "m",
-			topic:  "m.domain.c.*.subtopic",
+			topic:  "m/domain/c/+/subtopic",
 			want:   "m/domain/c/+/subtopic",
 		},
 	}
@@ -126,7 +126,7 @@ func TestParseMQTTTopic(t *testing.T) {
 			topic:    "m/domain/c/channel/sub/topic",
 			domain:   "domain",
 			channel:  "channel",
-			subtopic: "sub.topic",
+			subtopic: "sub/topic",
 		},
 		{
 			name:     "alternate prefix without subtopic",
@@ -142,7 +142,7 @@ func TestParseMQTTTopic(t *testing.T) {
 			topic:    "/alarms/domain/c/channel/critical/high",
 			domain:   "domain",
 			channel:  "channel",
-			subtopic: "critical.high",
+			subtopic: "critical/high",
 		},
 		{
 			name:      "mismatched prefix",
@@ -223,7 +223,7 @@ func TestParseMQTTTopicFromStreamRoutingKey(t *testing.T) {
 			prefix:     "alarms",
 			domain:     "dom",
 			channel:    "ch",
-			subtopic:   "critical.high",
+			subtopic:   "critical/high",
 		},
 	}
 	for _, tc := range cases {
@@ -264,7 +264,7 @@ func TestStringHeader(t *testing.T) {
 }
 
 func TestFormatConsumerName(t *testing.T) {
-	got := formatConsumerName("m.domain.c.channel.>", "re/service 1")
+	got := formatConsumerName("m/domain/c/channel/#", "re/service 1")
 	want := "m_domain_c_channel__-re_service_1"
 	if got != want {
 		t.Fatalf("consumer name mismatch: got %q, want %q", got, want)

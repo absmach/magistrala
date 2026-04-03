@@ -24,13 +24,12 @@ type publishRequest struct {
 }
 
 func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret string) errors.SDKError {
-	chanNameParts := strings.SplitN(topic, ".", channelParts)
+	chanNameParts := strings.SplitN(topic, "/", channelParts)
 	chanID := chanNameParts[0]
 	brokerTopic := fmt.Sprintf("m/%s/c/%s", domainID, chanID)
 	if len(chanNameParts) == channelParts {
-		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, strings.ReplaceAll(chanNameParts[1], ".", "/"))
+		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, chanNameParts[1])
 	}
-
 	data, err := json.Marshal(publishRequest{
 		Topic:   brokerTopic,
 		Payload: []byte(msg),
@@ -40,11 +39,11 @@ func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret s
 	}
 
 	headers := map[string]string{
-		"X-FluxMQ-Password": secret,
+		"X-FluxMQ-Username": domainID,
 	}
 
 	reqURL := fmt.Sprintf("%s/publish", sdk.httpAdapterURL)
-	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, reqURL, "", data, headers, http.StatusOK)
+	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, reqURL, secret, data, headers, http.StatusOK)
 
 	return sdkErr
 }

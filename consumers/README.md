@@ -65,7 +65,7 @@ curl -X POST http://localhost:9014/subscriptions \
   -H "Authorization: Bearer <user_access_token>" \
   -H "Content-Type: application/json" \
   -d '{
-    "topic": "some.topic.subtopic",
+    "topic": "some/topic/subtopic",
     "contact": "user@example.com"
   }'
   ```

@@ -6,13 +6,13 @@ package journal
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/absmach/supermq"
 	smqauthn "github.com/absmach/supermq/pkg/authn"
 	"github.com/absmach/supermq/pkg/errors"
 	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/supermq/pkg/messaging"
 )
 
 const (
@@ -28,6 +28,7 @@ const (
 var (
 	errSaveJournal     = errors.New("failed to save journal")
 	errHandleTelemetry = errors.New("failed to handle client telemetry")
+	errInvalidSubTopic = errors.New("invalid subscribe topic")
 )
 
 type service struct {
@@ -139,10 +140,9 @@ func (svc *service) addSubscription(ctx context.Context, journal Journal) error 
 	if err != nil {
 		return err
 	}
-	var subtopic string
-	topics := strings.Split(ae.topic, ".")
-	if len(topics) > 2 {
-		subtopic = topics[2]
+	channelID, subtopic, err := parseSubscriptionTopic(ae.topic)
+	if err != nil {
+		return err
 	}
 
 	id, err := svc.idProvider.ID()
@@ -153,12 +153,23 @@ func (svc *service) addSubscription(ctx context.Context, journal Journal) error 
 	sub := ClientSubscription{
 		ID:           id,
 		SubscriberID: ae.subscriberID,
-		ChannelID:    topics[1],
+		ChannelID:    channelID,
 		Subtopic:     subtopic,
 		ClientID:     ae.clientID,
 	}
 
 	return svc.repository.AddSubscription(ctx, sub)
+}
+
+func parseSubscriptionTopic(topic string) (string, string, error) {
+	_, channelID, subtopic, _, err := messaging.ParseSubscribeTopic(topic)
+	if err != nil {
+		return "", "", errors.Wrap(errInvalidSubTopic, err)
+	}
+	if channelID == "" {
+		return "", "", errInvalidSubTopic
+	}
+	return channelID, subtopic, nil
 }
 
 func (svc *service) addMqttSubscription(ctx context.Context, journal Journal) error {

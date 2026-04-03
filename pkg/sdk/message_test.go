@@ -29,8 +29,9 @@ func setupFluxMQ(secret string, expectedTopic ...string) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /publish", func(w http.ResponseWriter, r *http.Request) {
-		password := r.Header.Get("X-FluxMQ-Password")
-		if password == "" || password != secret {
+		username := r.Header.Get("X-FluxMQ-Username")
+		auth := r.Header.Get("Authorization")
+		if username == "" || auth == "" || auth != "Bearer "+secret {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}
@@ -94,7 +95,7 @@ func TestSendMessage(t *testing.T) {
 		},
 		{
 			desc:      "publish message with subtopic",
-			topic:     "channelID.sub.topic",
+			topic:     "channelID/sub/topic",
 			domainID:  "domainID",
 			wantTopic: "m/domainID/c/channelID/sub/topic",
 			msg:       `[{"n":"current","t":-1,"v":1.6}]`,

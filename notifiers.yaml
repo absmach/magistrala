@@ -155,7 +155,7 @@ components:
           description: An id of the owner who created subscription.
         topic:
           type: string
-          example: topic.subtopic
+          example: topic/subtopic
           description: Topic to which the user subscribes.
         contact:
           type: string
@@ -166,7 +166,7 @@ components:
       properties:
         topic:
           type: string
-          example: topic.subtopic
+          example: topic/subtopic
           description: Topic to which the user subscribes.
         contact:
           type: string

@@ -95,7 +95,7 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 
 	group := formatConsumerName(cfg.Topic, cfg.ID)
 	opts := &fluxamqp.StreamConsumeOptions{
-		QueueName:     streamQueue(ps.prefix),
+		QueueName:     ps.prefix,
 		Filter:        streamFilter(ps.prefix, cfg.Topic),
 		ConsumerGroup: group,
 	}

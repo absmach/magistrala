@@ -29,8 +29,9 @@ func setupFluxMQ(secret string, expectedTopic ...string) *httptest.Server {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("POST /publish", func(w http.ResponseWriter, r *http.Request) {
-		password := r.Header.Get("X-FluxMQ-Password")
-		if password == "" || password != secret {
+		username := r.Header.Get("X-FluxMQ-Username")
+		auth := r.Header.Get("Authorization")
+		if username == "" || auth == "" || auth != "Bearer "+secret {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
 			return
 		}

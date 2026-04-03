@@ -35,9 +35,9 @@ func TestSendMesageCmd(t *testing.T) {
 		{
 			desc: "send message successfully",
 			args: []string{
+				domainID,
 				channel.ID,
 				message,
-				domainID,
 				client.Credentials.Secret,
 			},
 			logType: okLog,
@@ -45,10 +45,10 @@ func TestSendMesageCmd(t *testing.T) {
 		{
 			desc: "send message with invalid args",
 			args: []string{
+				domainID,
 				channel.ID,
 				message,
 				client.Credentials.Secret,
-				domainID,
 				extraArg,
 			},
 			logType: usageLog,
@@ -56,9 +56,9 @@ func TestSendMesageCmd(t *testing.T) {
 		{
 			desc: "send message with invalid client secret",
 			args: []string{
+				domainID,
 				channel.ID,
 				message,
-				domainID,
 				"invalid_secret",
 			},
 			sdkErr:        errors.NewSDKErrorWithStatus(errors.Wrap(svcerr.ErrAuthentication, errors.Wrap(svcerr.ErrAuthorization, svcerr.ErrNotFound)), http.StatusBadRequest),

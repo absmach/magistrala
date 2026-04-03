@@ -92,7 +92,7 @@ type config struct {
 	StandaloneID        string        `env:"MG_CLIENTS_STANDALONE_ID"      envDefault:""`
 	StandaloneToken     string        `env:"MG_CLIENTS_STANDALONE_TOKEN"   envDefault:""`
 	CacheURL            string        `env:"MG_CLIENTS_CACHE_URL"          envDefault:"redis://localhost:6379/0"`
-	CacheKeyDuration    time.Duration `env:"MG_CLIENTS_CACHE_KEY_DURATION" envDefault:"10m"`
+	CacheKeyDuration    time.Duration `env:"MG_CLIENTS_CACHE_KEY_DURATION" envDefault:"1h"`
 	JaegerURL           url.URL       `env:"MG_JAEGER_URL"                 envDefault:"http://localhost:4318/v1/traces"`
 	SendTelemetry       bool          `env:"MG_SEND_TELEMETRY"             envDefault:"true"`
 	ESURL               string        `env:"MG_ES_URL"                     envDefault:"amqp://guest:guest@localhost:5682/"`

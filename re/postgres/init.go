@@ -62,13 +62,28 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "rules_03",
 				Up: []string{
 					`UPDATE rules
-					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
-					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'string'`,
+						 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'ui') || jsonb_build_object('flow', metadata->'ui')
+						 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'string'`,
 				},
 				Down: []string{
 					`UPDATE rules
-					 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
-					 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'string'`,
+						 SET metadata = (COALESCE(metadata, '{}'::jsonb) - 'flow') || jsonb_build_object('ui', metadata->'flow')
+						 WHERE metadata ? 'flow' AND jsonb_typeof(metadata->'flow') = 'string'`,
+				},
+			},
+			{
+				Id: "rules_04",
+				Up: []string{
+					// Canonicalize legacy rule topics from dot/NATS wildcards
+					// to slash/MQTT wildcards.
+					`UPDATE rules
+						 SET input_topic = REPLACE(REPLACE(REPLACE(input_topic, '>', '#'), '*', '+'), '.', '/')
+						 WHERE input_topic IS NOT NULL AND input_topic <> ''`,
+				},
+				Down: []string{
+					`UPDATE rules
+						 SET input_topic = REPLACE(REPLACE(REPLACE(input_topic, '#', '>'), '+', '*'), '/', '.')
+						 WHERE input_topic IS NOT NULL AND input_topic <> ''`,
 				},
 			},
 		},

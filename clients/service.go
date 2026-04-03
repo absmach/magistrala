@@ -208,6 +208,9 @@ func (svc service) UpdateSecret(ctx context.Context, session authn.Session, id, 
 	if err != nil {
 		return Client{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
+	if err := svc.cache.Remove(ctx, client.ID); err != nil {
+		return client, errors.Wrap(svcerr.ErrRemoveEntity, err)
+	}
 	return client, nil
 }
 

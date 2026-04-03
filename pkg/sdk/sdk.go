@@ -1262,7 +1262,7 @@ type SDK interface {
 	// example:
 	//  ctx := context.Background()
 	//  msg := '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
-	//  err := sdk.SendMessage(ctx, "domainID", "topic", msg, "clientSecret")
+	//  err := sdk.SendMessage(ctx, "domainID", "76cc9425-9df0-4b53-99b8-8dabbd3444fc/test", msg, "clientSecret")
 	//  fmt.Println(err)
 	SendMessage(ctx context.Context, domainID, topic, msg, secret string) smqerrors.SDKError
 

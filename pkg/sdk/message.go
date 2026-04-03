@@ -30,7 +30,6 @@ func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret s
 	if len(chanNameParts) == channelParts {
 		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, chanNameParts[1])
 	}
-
 	data, err := json.Marshal(publishRequest{
 		Topic:   brokerTopic,
 		Payload: []byte(msg),

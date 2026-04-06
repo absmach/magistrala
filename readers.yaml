@@ -7,12 +7,12 @@ info:
   description: |
     HTTP API for reading messages.
     Some useful links:
-    - [The Magistrala repository](https://github.com/absmach/supermq)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@absmach.eu
   license:
     name: Apache 2.0
-    url: https://github.com/absmach/supermq/blob/main/LICENSE
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
   version: 0.18.5
 
 servers:
@@ -30,7 +30,7 @@ tags:
     description: Everything about your Readers
     externalDocs:
       description: Find out more about readers
-      url: https://docs.magistrala.absmach.eu
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/channels/{chanId}/messages:

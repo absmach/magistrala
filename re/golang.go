@@ -25,7 +25,7 @@ var (
 	panicRegex     = regexp.MustCompile(`\bpanic\s*\(`)
 )
 
-// Type message is an SMQ message with payload replaces by JSON deserialized payload.
+// Type message is a magistrala message with payload replaces by JSON deserialized payload.
 type message struct {
 	Channel   string `json:"channel,omitempty"`
 	ClientID  string `json:"client_id,omitempty"`

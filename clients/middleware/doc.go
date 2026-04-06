@@ -5,5 +5,5 @@
 // for Magistrala Clients Service.
 //
 // For more details about tracing instrumentation for Magistrala refer to the
-// documentation at https://docs.magistrala.absmach.eu/tracing/.
+// documentation at https://magistrala.absmach.eu/docs/tracing/.
 package middleware

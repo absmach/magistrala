@@ -30,7 +30,7 @@ tags:
     description: Everything about your Readers
     externalDocs:
       description: Find out more about readers
-      url: https://docs.magistrala.absmach.eu
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/channels/{chanId}/messages:

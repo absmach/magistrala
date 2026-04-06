@@ -24,7 +24,7 @@ tags:
     description: Everything about your Rules Engine
     externalDocs:
       description: Find out more about rules engine
-      url: https://docs.magistrala.absmach.eu
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/rules:

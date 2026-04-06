@@ -8,5 +8,5 @@
 // Magistrala Users service.
 //
 // For more details about tracing instrumentation for Magistrala messaging refer
-// to the documentation at https://docs.magistrala.absmach.eu.
+// to the documentation at https://magistrala.absmach.eu/docs/.
 package tracing

@@ -24,7 +24,7 @@ tags:
     description: Everything about your Configs
     externalDocs:
       description: Find out more about Configs
-      url: https://docs.magistrala.absmach.eu
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/clients/configs:

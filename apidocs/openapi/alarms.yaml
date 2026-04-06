@@ -24,7 +24,7 @@ tags:
     description: Everything about your Alarms
     externalDocs:
       description: Find out more about alarms
-      url: https://docs.magistrala.absmach.eu
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/alarms:

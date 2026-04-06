@@ -6,8 +6,8 @@ package domains_test
 import (
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/domains"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/domains"
 	"github.com/stretchr/testify/assert"
 )
 

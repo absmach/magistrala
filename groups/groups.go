@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/internal/nullable"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/internal/nullable"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 // MaxLevel represents the maximum group hierarchy level.

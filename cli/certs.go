@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/absmach/supermq/certs"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/certs"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 

@@ -7,7 +7,7 @@ package channels.v1;
 
 import "common/v1/common.proto";
 
-option go_package = "github.com/absmach/supermq/api/grpc/channels/v1";
+option go_package = "github.com/absmach/magistrala/api/grpc/channels/v1";
 
 service ChannelsService {
   rpc Authorize(AuthzReq)

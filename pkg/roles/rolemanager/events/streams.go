@@ -6,14 +6,14 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix = "supermq."
+	magistralaPrefix = "magistrala."
 	rolesPrefix   = "roles"
 )
 
@@ -34,7 +34,7 @@ func NewRoleManagerEventStore(svcName, operationPrefix string, svc roles.RoleMan
 		svcName:         svcName,
 		operationPrefix: operationPrefix,
 		svc:             svc,
-		streamID:        supermqPrefix + operationPrefix + rolesPrefix,
+		streamID:        magistralaPrefix + operationPrefix + rolesPrefix,
 		Publisher:       publisher,
 	}
 }

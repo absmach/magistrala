@@ -6,8 +6,8 @@ package grpc
 import (
 	"context"
 
-	ch "github.com/absmach/supermq/channels"
-	channels "github.com/absmach/supermq/channels/private"
+	ch "github.com/absmach/magistrala/channels"
+	channels "github.com/absmach/magistrala/channels/private"
 	"github.com/go-kit/kit/endpoint"
 )
 

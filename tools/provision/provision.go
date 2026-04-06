@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	sdk "github.com/absmach/supermq/pkg/sdk"
-	supermqSDK "github.com/absmach/supermq/pkg/sdk"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	mgSDK "github.com/absmach/magistrala/pkg/sdk"
 )
 
 const (
@@ -33,7 +33,7 @@ const (
 
 var namesgenerator = namegenerator.NewGenerator()
 
-// MgConn - structure describing SuperMQ connection set.
+// MgConn - structure describing Magistrala connection set.
 type MgConn struct {
 	ClientID     string
 	ClinetSecret string
@@ -62,7 +62,7 @@ func Provision(ctx context.Context, conf Config) error {
 		ttl     = "2400h"
 	)
 
-	msgContentType := string(supermqSDK.CTJSONSenML)
+	msgContentType := string(mgSDK.CTJSONSenML)
 	sdkConf := sdk.Config{
 		ClientsURL:      conf.Host,
 		UsersURL:        conf.Host,
@@ -70,15 +70,15 @@ func Provision(ctx context.Context, conf Config) error {
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),
 		BootstrapURL:    conf.Host,
 		CertsURL:        conf.Host,
-		MsgContentType:  supermqSDK.ContentType(msgContentType),
+		MsgContentType:  mgSDK.ContentType(msgContentType),
 		TLSVerification: false,
 	}
 
 	s := sdk.NewSDK(sdkConf)
 
-	user := supermqSDK.User{
+	user := mgSDK.User{
 		Email: conf.Email,
-		Credentials: supermqSDK.Credentials{
+		Credentials: mgSDK.Credentials{
 			Username: conf.Username,
 			Secret:   conf.Password,
 		},
@@ -97,14 +97,14 @@ func Provision(ctx context.Context, conf Config) error {
 	var err error
 
 	// Login user
-	token, err := s.CreateToken(ctx, supermqSDK.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
+	token, err := s.CreateToken(ctx, mgSDK.Login{Username: user.Credentials.Username, Password: user.Credentials.Secret})
 	if err != nil {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
 
 	// Create new domain
 	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
-	domain := supermqSDK.Domain{
+	domain := mgSDK.Domain{
 		Name:       dname,
 		Route:      strings.ToLower(dname),
 		Permission: "admin",
@@ -115,7 +115,7 @@ func Provision(ctx context.Context, conf Config) error {
 		return fmt.Errorf("unable to create domain: %w", err)
 	}
 	// Login to domain
-	token, err = s.CreateToken(ctx, supermqSDK.Login{
+	token, err = s.CreateToken(ctx, mgSDK.Login{
 		Username: user.Credentials.Username,
 		Password: user.Credentials.Secret,
 	})
@@ -149,16 +149,16 @@ func Provision(ctx context.Context, conf Config) error {
 	}
 
 	//  Create clients and channels
-	clients := make([]supermqSDK.Client, conf.Num)
-	channels := make([]supermqSDK.Channel, conf.Num)
+	clients := make([]mgSDK.Client, conf.Num)
+	channels := make([]mgSDK.Channel, conf.Num)
 	cIDs := []string{}
 	tIDs := []string{}
 
 	fmt.Println("# List of clients that can be connected to MQTT broker")
 
 	for i := 0; i < conf.Num; i++ {
-		clients[i] = supermqSDK.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
-		channels[i] = supermqSDK.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
+		clients[i] = mgSDK.Client{Name: fmt.Sprintf("%s-client-%d", conf.Prefix, i)}
+		channels[i] = mgSDK.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
 	clients, err = s.CreateClients(ctx, clients, domain.ID, token.AccessToken)
@@ -166,7 +166,7 @@ func Provision(ctx context.Context, conf Config) error {
 		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
-	var chs []supermqSDK.Channel
+	var chs []mgSDK.Channel
 	for _, c := range channels {
 		c, err = s.CreateChannel(ctx, c, domain.ID, token.AccessToken)
 		if err != nil {
@@ -208,9 +208,9 @@ func Provision(ctx context.Context, conf Config) error {
 			tmpl := x509.Certificate{
 				SerialNumber: serialNumber,
 				Subject: pkix.Name{
-					Organization:       []string{"SuperMQ"},
+					Organization:       []string{"Magistrala"},
 					CommonName:         clients[i].Credentials.Secret,
-					OrganizationalUnit: []string{"supermq"},
+					OrganizationalUnit: []string{"magistrala"},
 				},
 				NotBefore: notBefore,
 				NotAfter:  notAfter,
@@ -259,7 +259,7 @@ func Provision(ctx context.Context, conf Config) error {
 
 	for _, cID := range cIDs {
 		for _, tID := range tIDs {
-			conIDs := supermqSDK.Connection{
+			conIDs := mgSDK.Connection{
 				ClientIDs:  []string{tID},
 				ChannelIDs: []string{cID},
 				Types:      []string{"publish", "subscribe"},

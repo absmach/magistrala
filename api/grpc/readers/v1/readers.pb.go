@@ -798,7 +798,7 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\x11AGGREGATION_COUNT\x10\x04\x12\x13\n" +
 	"\x0fAGGREGATION_AVG\x10\x052\\\n" +
 	"\x0eReadersService\x12J\n" +
-	"\fReadMessages\x12\x1b.readers.v1.ReadMessagesReq\x1a\x1b.readers.v1.ReadMessagesRes\"\x00B0Z.github.com/absmach/supermq/api/grpc/readers/v1b\x06proto3"
+	"\fReadMessages\x12\x1b.readers.v1.ReadMessagesReq\x1a\x1b.readers.v1.ReadMessagesRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/readers/v1b\x06proto3"
 
 var (
 	file_readers_v1_readers_proto_rawDescOnce sync.Once

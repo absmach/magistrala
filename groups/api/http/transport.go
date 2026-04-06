@@ -6,12 +6,12 @@ package api
 import (
 	"log/slog"
 
-	"github.com/absmach/supermq"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/groups"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
+	"github.com/absmach/magistrala"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/groups"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	roleManagerHttp "github.com/absmach/magistrala/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -19,7 +19,7 @@ import (
 )
 
 // MakeHandler returns a HTTP handler for Groups API endpoints.
-func MakeHandler(svc groups.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string, idp supermq.IDProvider) *chi.Mux {
+func MakeHandler(svc groups.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string, idp magistrala.IDProvider) *chi.Mux {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -144,7 +144,7 @@ func MakeHandler(svc groups.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mu
 		})
 	})
 
-	mux.Get("/health", supermq.Health("groups", instanceID))
+	mux.Get("/health", magistrala.Health("groups", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

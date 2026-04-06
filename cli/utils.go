@@ -9,8 +9,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/absmach/supermq/certs"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/certs"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/fatih/color"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"

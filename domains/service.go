@@ -7,13 +7,13 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (
@@ -25,13 +25,13 @@ type service struct {
 	repo       Repository
 	cache      Cache
 	policy     policies.Service
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 	roles.ProvisionManageService
 }
 
 var _ Service = (*service)(nil)
 
-func New(repo Repository, cache Cache, policy policies.Service, idProvider supermq.IDProvider, sidProvider supermq.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func New(repo Repository, cache Cache, policy policies.Service, idProvider magistrala.IDProvider, sidProvider magistrala.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(policies.DomainType, repo, policy, sidProvider, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err

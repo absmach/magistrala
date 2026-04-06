@@ -20,8 +20,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/absmach/supermq/certs"
-	smqerrors "github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	smqerrors "github.com/absmach/magistrala/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"moul.io/http2curl"
 )
@@ -289,9 +289,9 @@ type Options struct {
 	DnsNames           []string `json:"dns_names"`
 }
 
-// SDK contains SuperMQ API.
+// SDK contains Magistrala API.
 type SDK interface {
-	// CreateUser registers supermq user.
+	// CreateUser registers magistrala user.
 	//
 	// example:
 	//  ctx := context.Background()
@@ -1816,7 +1816,7 @@ type Config struct {
 	Roles           bool
 }
 
-// NewSDK returns new supermq SDK instance.
+// NewSDK returns new magistrala SDK instance.
 func NewSDK(conf Config) SDK {
 	return &mgSDK{
 		certsURL:       conf.CertsURL,

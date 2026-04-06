@@ -3,7 +3,7 @@
 
 package grpc
 
-import "github.com/absmach/supermq/pkg/connections"
+import "github.com/absmach/magistrala/pkg/connections"
 
 type entity struct {
 	id          string

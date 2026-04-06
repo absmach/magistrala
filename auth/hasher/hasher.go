@@ -9,8 +9,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/errors"
 	"golang.org/x/crypto/scrypt"
 )
 

@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/auth"
-	channelsOps "github.com/absmach/supermq/channels/operations"
-	clientsOps "github.com/absmach/supermq/clients/operations"
-	groupsOps "github.com/absmach/supermq/groups/operations"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/auth"
+	channelsOps "github.com/absmach/magistrala/channels/operations"
+	clientsOps "github.com/absmach/magistrala/clients/operations"
+	groupsOps "github.com/absmach/magistrala/groups/operations"
 	"github.com/stretchr/testify/assert"
 )
 

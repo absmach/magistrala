@@ -3,16 +3,16 @@
 
 openapi: 3.0.3
 info:
-  title: SuperMQ Users Service
+  title: Magistrala Users Service
   description: |
     This is the Users Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform users. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
-    - [The SuperMQ repository](https://github.com/absmach/supermq)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@absmach.eu
   license:
     name: Apache 2.0
-    url: https://github.com/absmach/supermq/blob/main/LICENSE
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
   version: 0.18.0
 
 servers:
@@ -24,12 +24,12 @@ tags:
     description: Everything about your Users
     externalDocs:
       description: Find out more about users
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
   - name: Health
     description: Health check operations
     externalDocs:
       description: Find out more about health checks
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /users:
@@ -815,7 +815,7 @@ components:
           description: User tags.
         email:
           type: string
-          example: "john.doe@supermq.com"
+          example: "john.doe@magistrala.com"
           description: User email for example email address.
         credentials:
           type: object
@@ -872,7 +872,7 @@ components:
           description: User's last name.
         email:
           type: string
-          example: user@supermq.com
+          example: user@magistrala.com
           description: User's email address.
         tags:
           type: array
@@ -987,7 +987,7 @@ components:
       properties:
         email:
           type: string
-          example: user@supermq.com
+          example: user@magistrala.com
           description: User email address.
       required:
         - email

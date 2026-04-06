@@ -1,19 +1,19 @@
 # Standalone packages
 
-The `pkg` directory (the current directory) contains a set of standalone packages that can be imported and used by external applications. The packages are specifically meant for the development of SuperMQ based back-end applications and implement common tasks needed by the programmatic operation of the SuperMQ platform.
+The `pkg` directory (the current directory) contains a set of standalone packages that can be imported and used by external applications. The packages are specifically meant for the development of Magistrala based back-end applications and implement common tasks needed by the programmatic operation of the Magistrala platform.
 
 ## Using the packages
 
 Fetch any package directly from the module:
 
 ```bash
-go get github.com/absmach/supermq/pkg/authn
+go get github.com/absmach/magistrala/pkg/authn
 ```
 
 Then import it in your code:
 
 ```go
-import "github.com/absmach/supermq/pkg/authn"
+import "github.com/absmach/magistrala/pkg/authn"
 ```
 
 ## Package map (selected)
@@ -27,11 +27,11 @@ import "github.com/absmach/supermq/pkg/authn"
 | `events` | Event store client abstractions and subscriber utilities. |
 | `prometheus` | Metrics collectors for request counts/latency. |
 | `jaeger`, `tracing` | OpenTelemetry tracing configuration and instrumentation helpers. |
-| `channels`, `clients`, `groups`, `domains`, `roles` | Shared types and helpers for core SuperMQ domain services. |
+| `channels`, `clients`, `groups`, `domains`, `roles` | Shared types and helpers for core Magistrala domain services. |
 | `messaging`, `connections`, `callout` | Messaging DTOs, connection types, and outbound callout helpers. |
-| `sdk` | Go SDK for interacting with SuperMQ services. |
+| `sdk` | Go SDK for interacting with Magistrala services. |
 | `errors` | Error wrappers with consistent error typing. |
 | `uuid`, `ulid`, `sid` | ID generators. |
 | `transformers`, `svcutil` | Generic data transformation and service utilities. |
 
-For detailed package-level docs, run `go doc` on the desired package or browse the [source here](https://docs.supermq.absmach.eu.).
+For detailed package-level docs, run `go doc` on the desired package or browse the [source here](https://magistrala.absmach.eu/docs/.).

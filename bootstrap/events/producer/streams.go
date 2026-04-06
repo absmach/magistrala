@@ -6,9 +6,9 @@ package producer
 import (
 	"context"
 
-	"github.com/absmach/supermq/bootstrap"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
+	"github.com/absmach/magistrala/bootstrap"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
 )
 
 var _ bootstrap.Service = (*eventStore)(nil)

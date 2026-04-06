@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package supermq acts as an umbrella package containing multiple different
+// package magistrala acts as an umbrella package containing multiple different
 // microservices and defines all shared domain concepts.
-// For detailed documentation of the platform, please visit https://docs.supermq.absmach.eu.
-package supermq
+// For detailed documentation of the platform, please visit https://magistrala.absmach.eu/docs/.
+package magistrala

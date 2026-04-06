@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 type templateVal struct {

@@ -6,10 +6,10 @@ package events
 import (
 	"maps"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/re"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/re"
 )
 
 const (

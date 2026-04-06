@@ -11,7 +11,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/journal"
+	"github.com/absmach/magistrala/journal"
 	mock "github.com/stretchr/testify/mock"
 )
 

@@ -6,10 +6,10 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/journal"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala/journal"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var (

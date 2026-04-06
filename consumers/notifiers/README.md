@@ -1,6 +1,6 @@
 # Notifiers
 
-The Notifiers service manages notification subscriptions and dispatches alerts for incoming messages. It stores subscription records (topic + contact), exposes an HTTP API for CRUD operations, and consumes SuperMQ messages to fan out notifications via notifier implementations (SMTP for email, SMPP for SMS). Notifiers are dependencies used by the service, not standalone services.
+The Notifiers service manages notification subscriptions and dispatches alerts for incoming messages. It stores subscription records (topic + contact), exposes an HTTP API for CRUD operations, and consumes Magistrala messages to fan out notifications via notifier implementations (SMTP for email, SMPP for SMS). Notifiers are dependencies used by the service, not standalone services.
 
 ## Configuration
 
@@ -179,4 +179,4 @@ curl -X GET http://localhost:9014/health \
 
 For an in-depth explanation of the Notifiers, see the [official documentation][doc].
 
-[doc]: https://docs.magistrala.absmach.eu/dev-guide/consumers/#notifiers
+[doc]: https://magistrala.absmach.eu/docs/dev-guide/services/consumers/#notifiers

@@ -10,10 +10,10 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/go-chi/chi/v5/middleware"
 )
 

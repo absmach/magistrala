@@ -10,14 +10,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/absmach/supermq/certs"
-	httpapi "github.com/absmach/supermq/certs/api/http"
-	"github.com/absmach/supermq/certs/mocks"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/certs"
+	httpapi "github.com/absmach/magistrala/certs/api/http"
+	"github.com/absmach/magistrala/certs/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -36,7 +36,7 @@ const (
 
 func setupCerts() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	handler := httpapi.MakeHandler(svc, am, logger, certsInstanceID, agentToken)

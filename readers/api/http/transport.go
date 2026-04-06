@@ -8,17 +8,17 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/readers"
+	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/readers"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -62,7 +62,7 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 		opts...,
 	).ServeHTTP)
 
-	mux.Get("/health", supermq.Health(svcName, instanceID))
+	mux.Get("/health", magistrala.Health(svcName, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -194,7 +194,7 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 func encodeResponse(_ context.Context, w http.ResponseWriter, response any) error {
 	w.Header().Set("Content-Type", contentType)
 
-	if ar, ok := response.(supermq.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

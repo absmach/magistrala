@@ -9,15 +9,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/alarms/api"
-	amocks "github.com/absmach/supermq/alarms/mocks"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/alarms/api"
+	amocks "github.com/absmach/magistrala/alarms/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -44,7 +44,7 @@ var testAlarm = sdk.Alarm{
 
 func setupAlarms() (*httptest.Server, *amocks.Service, *authnmocks.Authentication) {
 	asvc := new(amocks.Service)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	idp := uuid.NewMock()

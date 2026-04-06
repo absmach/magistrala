@@ -10,7 +10,7 @@
 package v1
 
 import (
-	v1 "github.com/absmach/supermq/api/grpc/common/v1"
+	v1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -126,7 +126,7 @@ const file_domains_v1_domains_proto_rawDesc = "" +
 	"\x0eDomainsService\x12O\n" +
 	"\x15DeleteUserFromDomains\x12\x19.domains.v1.DeleteUserReq\x1a\x19.domains.v1.DeleteUserRes\"\x00\x12N\n" +
 	"\x0eRetrieveStatus\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
-	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B5Z3github.com/absmach/supermq/internal/grpc/domains/v1b\x06proto3"
+	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B8Z6github.com/absmach/magistrala/internal/grpc/domains/v1b\x06proto3"
 
 var (
 	file_domains_v1_domains_proto_rawDescOnce sync.Once

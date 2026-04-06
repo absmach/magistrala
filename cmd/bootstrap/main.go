@@ -13,32 +13,32 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/bootstrap"
-	httpapi "github.com/absmach/supermq/bootstrap/api"
-	"github.com/absmach/supermq/bootstrap/events/consumer"
-	"github.com/absmach/supermq/bootstrap/events/producer"
-	"github.com/absmach/supermq/bootstrap/middleware"
-	bootstrappg "github.com/absmach/supermq/bootstrap/postgres"
-	"github.com/absmach/supermq/bootstrap/tracing"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	"github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/server"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/bootstrap"
+	httpapi "github.com/absmach/magistrala/bootstrap/api"
+	"github.com/absmach/magistrala/bootstrap/events/consumer"
+	"github.com/absmach/magistrala/bootstrap/events/producer"
+	"github.com/absmach/magistrala/bootstrap/middleware"
+	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
+	"github.com/absmach/magistrala/bootstrap/tracing"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	"github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -58,8 +58,8 @@ const (
 	defDB            = "bootstrap"
 	defSvcHTTPPort   = "9013"
 
-	stream   = "events.supermq.clients"
-	streamID = "supermq.bootstrap"
+	stream   = "events.magistrala.clients"
+	streamID = "magistrala.bootstrap"
 )
 
 type config struct {
@@ -87,13 +87,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -201,7 +201,7 @@ func main() {
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/authn"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 // Status represents Domain status.

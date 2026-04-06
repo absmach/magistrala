@@ -6,22 +6,22 @@ package http
 import (
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/domains"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/domains"
 )
 
 var (
-	_ supermq.Response = (*createDomainRes)(nil)
-	_ supermq.Response = (*retrieveDomainRes)(nil)
-	_ supermq.Response = (*listDomainsRes)(nil)
-	_ supermq.Response = (*enableDomainRes)(nil)
-	_ supermq.Response = (*disableDomainRes)(nil)
-	_ supermq.Response = (*freezeDomainRes)(nil)
-	_ supermq.Response = (*sendInvitationRes)(nil)
-	_ supermq.Response = (*listInvitationsRes)(nil)
-	_ supermq.Response = (*acceptInvitationRes)(nil)
-	_ supermq.Response = (*rejectInvitationRes)(nil)
-	_ supermq.Response = (*deleteInvitationRes)(nil)
+	_ magistrala.Response = (*createDomainRes)(nil)
+	_ magistrala.Response = (*retrieveDomainRes)(nil)
+	_ magistrala.Response = (*listDomainsRes)(nil)
+	_ magistrala.Response = (*enableDomainRes)(nil)
+	_ magistrala.Response = (*disableDomainRes)(nil)
+	_ magistrala.Response = (*freezeDomainRes)(nil)
+	_ magistrala.Response = (*sendInvitationRes)(nil)
+	_ magistrala.Response = (*listInvitationsRes)(nil)
+	_ magistrala.Response = (*acceptInvitationRes)(nil)
+	_ magistrala.Response = (*rejectInvitationRes)(nil)
+	_ magistrala.Response = (*deleteInvitationRes)(nil)
 )
 
 type createDomainRes struct {

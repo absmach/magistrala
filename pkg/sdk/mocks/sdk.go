@@ -11,9 +11,9 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/sdk"
 	mock "github.com/stretchr/testify/mock"
 )
 

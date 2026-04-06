@@ -10,7 +10,7 @@
 package v1
 
 import (
-	v1 "github.com/absmach/supermq/api/grpc/common/v1"
+	v1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -333,7 +333,7 @@ const file_channels_v1_channels_proto_rawDesc = "" +
 	"\x17RemoveClientConnections\x12'.channels.v1.RemoveClientConnectionsReq\x1a'.channels.v1.RemoveClientConnectionsRes\"\x00\x12|\n" +
 	"\x1cUnsetParentGroupFromChannels\x12,.channels.v1.UnsetParentGroupFromChannelsReq\x1a,.channels.v1.UnsetParentGroupFromChannelsRes\"\x00\x12N\n" +
 	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
-	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B1Z/github.com/absmach/supermq/api/grpc/channels/v1b\x06proto3"
+	"\x11RetrieveIDByRoute\x12\x1f.common.v1.RetrieveIDByRouteReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B4Z2github.com/absmach/magistrala/api/grpc/channels/v1b\x06proto3"
 
 var (
 	file_channels_v1_channels_proto_rawDescOnce sync.Once

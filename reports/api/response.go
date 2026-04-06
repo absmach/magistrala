@@ -7,16 +7,16 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/reports"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/reports"
 )
 
 var (
-	_ supermq.Response = (*addReportConfigRes)(nil)
-	_ supermq.Response = (*viewReportConfigRes)(nil)
-	_ supermq.Response = (*updateReportConfigRes)(nil)
-	_ supermq.Response = (*deleteReportConfigRes)(nil)
-	_ supermq.Response = (*listReportsConfigRes)(nil)
+	_ magistrala.Response = (*addReportConfigRes)(nil)
+	_ magistrala.Response = (*viewReportConfigRes)(nil)
+	_ magistrala.Response = (*updateReportConfigRes)(nil)
+	_ magistrala.Response = (*deleteReportConfigRes)(nil)
+	_ magistrala.Response = (*listReportsConfigRes)(nil)
 )
 
 type pageRes struct {

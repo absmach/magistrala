@@ -8,8 +8,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 

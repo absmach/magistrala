@@ -3,7 +3,7 @@
 
 package grpc
 
-import "github.com/absmach/supermq/users"
+import "github.com/absmach/magistrala/users"
 
 type retrieveUsersRes struct {
 	users  []users.User

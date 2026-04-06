@@ -6,27 +6,27 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/roles"
-	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
-	"github.com/absmach/supermq/re"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/roles"
+	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/re"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix        = "supermq."
-	CreateStream         = supermqPrefix + ruleCreate
-	ListStream           = supermqPrefix + ruleList
-	ViewStream           = supermqPrefix + ruleView
-	UpdateStream         = supermqPrefix + ruleUpdate
-	UpdateTagsStream     = supermqPrefix + ruleUpdateTags
-	UpdateScheduleStream = supermqPrefix + ruleUpdateSchedule
-	EnableStream         = supermqPrefix + ruleEnable
-	DisableStream        = supermqPrefix + ruleDisable
-	RemoveStream         = supermqPrefix + ruleRemove
+	magistralaPrefix     = "magistrala."
+	CreateStream         = magistralaPrefix + ruleCreate
+	ListStream           = magistralaPrefix + ruleList
+	ViewStream           = magistralaPrefix + ruleView
+	UpdateStream         = magistralaPrefix + ruleUpdate
+	UpdateTagsStream     = magistralaPrefix + ruleUpdateTags
+	UpdateScheduleStream = magistralaPrefix + ruleUpdateSchedule
+	EnableStream         = magistralaPrefix + ruleEnable
+	DisableStream        = magistralaPrefix + ruleDisable
+	RemoveStream         = magistralaPrefix + ruleRemove
 )
 
 var _ re.Service = (*eventStore)(nil)

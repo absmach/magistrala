@@ -7,17 +7,17 @@ import (
 	"context"
 	"time"
 
-	dOperations "github.com/absmach/supermq/domains/operations"
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/groups/operations"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/callout"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	dOperations "github.com/absmach/magistrala/domains/operations"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/groups/operations"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/callout"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemgr "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 )
 
 var _ groups.Service = (*calloutMiddleware)(nil)

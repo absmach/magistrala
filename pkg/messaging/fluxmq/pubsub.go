@@ -15,7 +15,7 @@ import (
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
 	fluxtopics "github.com/absmach/fluxmq/topics"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 // Publisher and Subscriber errors.

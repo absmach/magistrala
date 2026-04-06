@@ -12,22 +12,22 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/authn/authsvc"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/readers"
-	readersgrpcapi "github.com/absmach/supermq/readers/api/grpc"
-	httpapi "github.com/absmach/supermq/readers/api/http"
-	middleware "github.com/absmach/supermq/readers/middleware"
-	"github.com/absmach/supermq/readers/postgres"
+	"github.com/absmach/magistrala"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/authn/authsvc"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/readers"
+	readersgrpcapi "github.com/absmach/magistrala/readers/api/grpc"
+	httpapi "github.com/absmach/magistrala/readers/api/http"
+	middleware "github.com/absmach/magistrala/readers/middleware"
+	"github.com/absmach/magistrala/readers/postgres"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"
@@ -42,7 +42,7 @@ const (
 	envPrefixAuth     = "MG_AUTH_GRPC_"
 	envPrefixClients  = "MG_CLIENTS_GRPC_"
 	envPrefixChannels = "MG_CHANNELS_GRPC_"
-	defDB             = "supermq"
+	defDB             = "magistrala"
 	defSvcHTTPPort    = "9009"
 	defSvcGRPCPort    = "7009"
 	envPrefixGrpc     = "MG_POSTGRES_READER_GRPC_"
@@ -63,13 +63,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -164,7 +164,7 @@ func main() {
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(repo, authn, clientsClient, channelsClient, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 )
 
 type EntityType uint8

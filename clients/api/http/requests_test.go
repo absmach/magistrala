@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/internal/testsutil"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/readers"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/readers"
 )
 
 const maxLimitSize = 1000

@@ -11,20 +11,20 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/domains"
-	domainapi "github.com/absmach/supermq/domains/api/http"
-	"github.com/absmach/supermq/domains/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/roles"
-	sdk "github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/uuid"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/domains"
+	domainapi "github.com/absmach/magistrala/domains/api/http"
+	"github.com/absmach/magistrala/domains/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/roles"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -58,7 +58,7 @@ var (
 
 func setupDomains() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	idp := uuid.NewMock()
 	authn := new(authnmocks.Authentication)

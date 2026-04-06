@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
 	broker "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/protobuf/proto"

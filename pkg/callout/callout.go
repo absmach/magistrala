@@ -15,8 +15,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/server"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/server"
 )
 
 var errFailedToRead = errors.New("failed to read callout response body")

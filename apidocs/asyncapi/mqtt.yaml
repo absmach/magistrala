@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 asyncapi: '2.6.0'
-id: 'https://github.com/absmach/supermq/blob/main/api/asyncapi/mqtt.yaml'
+id: 'https://github.com/absmach/magistrala/blob/main/api/asyncapi/mqtt.yaml'
 info:
-  title: SuperMQ MQTT Adapter
+  title: Magistrala MQTT Adapter
   version: '0.18.0'
   contact:
-    name: SuperMQ Team
-    url: 'https://github.com/absmach/supermq'
+    name: Magistrala Team
+    url: 'https://github.com/absmach/magistrala'
     email: info@absmach.eu
   description: |
     MQTT adapter provides an MQTT API for sending messages through the platform. MQTT adapter uses [mProxy](https://github.com/absmach/mproxy) for proxying traffic between client and MQTT broker.
@@ -16,7 +16,7 @@ info:
 
   license:
     name: Apache 2.0
-    url: 'https://github.com/absmach/supermq/blob/main/LICENSE'
+    url: 'https://github.com/absmach/magistrala/blob/main/LICENSE'
 
 
 defaultContentType: application/json

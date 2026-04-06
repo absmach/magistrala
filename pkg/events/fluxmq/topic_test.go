@@ -12,14 +12,14 @@ func TestCanonicalStream(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "raw supermq stream",
-			stream: "supermq.domain.create",
-			want:   "events.supermq.domain.create",
+			name:   "raw magistrala stream",
+			stream: "magistrala.domain.create",
+			want:   "events.magistrala.domain.create",
 		},
 		{
 			name:   "already prefixed stream",
-			stream: "events.supermq.group.*",
-			want:   "events.supermq.group.*",
+			stream: "events.magistrala.group.*",
+			want:   "events.magistrala.group.*",
 		},
 		{
 			name:   "all events wildcard",
@@ -45,8 +45,8 @@ func TestQueueFilter(t *testing.T) {
 	}{
 		{
 			name:   "domain wildcard",
-			stream: "events.supermq.domain.*",
-			want:   "$queue/events/supermq/domain/+",
+			stream: "events.magistrala.domain.*",
+			want:   "$queue/events/magistrala/domain/+",
 		},
 		{
 			name:   "all events",
@@ -72,8 +72,8 @@ func TestStreamFilter(t *testing.T) {
 	}{
 		{
 			name:   "domain wildcard",
-			stream: "events.supermq.domain.*",
-			want:   "supermq/domain/+",
+			stream: "events.magistrala.domain.*",
+			want:   "magistrala/domain/+",
 		},
 		{
 			name:   "all events",

@@ -10,16 +10,16 @@ import (
 	"connectrpc.com/connect"
 	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
 	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauth "github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/policies"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauth "github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var _ authv1connect.AuthServiceHandler = (*connectServer)(nil)
@@ -32,7 +32,7 @@ type connectServer struct {
 }
 
 // NewServer creates a FluxMQ AuthService Connect handler that bridges to
-// SuperMQ's Clients (authn) and Channels (authz) services.
+// Magistrala's Clients (authn) and Channels (authz) services.
 func NewServer(
 	clients grpcClientsV1.ClientsServiceClient,
 	channels grpcChannelsV1.ChannelsServiceClient,

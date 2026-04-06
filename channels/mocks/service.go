@@ -11,10 +11,10 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/roles"
 	mock "github.com/stretchr/testify/mock"
 )
 

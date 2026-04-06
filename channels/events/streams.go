@@ -6,31 +6,31 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/roles"
-	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/roles"
+	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix      = "supermq."
-	createStream       = supermqPrefix + channelCreate
-	updateStream       = supermqPrefix + channelUpdate
-	updateTagsStream   = supermqPrefix + channelUpdateTags
-	enableStream       = supermqPrefix + channelEnable
-	disableStream      = supermqPrefix + channelDisable
-	removeStream       = supermqPrefix + channelRemove
-	viewStream         = supermqPrefix + channelView
-	listStream         = supermqPrefix + channelList
-	listByUserStream   = supermqPrefix + channelListByUser
-	connectStream      = supermqPrefix + channelConnect
-	disconnectStream   = supermqPrefix + channelDisconnect
-	setParentStream    = supermqPrefix + channelSetParent
-	removeParentStream = supermqPrefix + channelRemoveParent
+	magistralaPrefix   = "magistrala."
+	createStream       = magistralaPrefix + channelCreate
+	updateStream       = magistralaPrefix + channelUpdate
+	updateTagsStream   = magistralaPrefix + channelUpdateTags
+	enableStream       = magistralaPrefix + channelEnable
+	disableStream      = magistralaPrefix + channelDisable
+	removeStream       = magistralaPrefix + channelRemove
+	viewStream         = magistralaPrefix + channelView
+	listStream         = magistralaPrefix + channelList
+	listByUserStream   = magistralaPrefix + channelListByUser
+	connectStream      = magistralaPrefix + channelConnect
+	disconnectStream   = magistralaPrefix + channelDisconnect
+	setParentStream    = magistralaPrefix + channelSetParent
+	removeParentStream = magistralaPrefix + channelRemoveParent
 )
 
 var _ channels.Service = (*eventStore)(nil)

@@ -9,22 +9,22 @@ import (
 	"io"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/oklog/ulid/v2"
 )
 
 // ErrGeneratingID indicates error in generating ULID.
 var ErrGeneratingID = errors.New("generating id failed")
 
-var _ supermq.IDProvider = (*ulidProvider)(nil)
+var _ magistrala.IDProvider = (*ulidProvider)(nil)
 
 type ulidProvider struct {
 	entropy io.Reader
 }
 
 // New instantiates a ULID provider.
-func New() supermq.IDProvider {
+func New() magistrala.IDProvider {
 	return &ulidProvider{
 		entropy: rand.Reader,
 	}

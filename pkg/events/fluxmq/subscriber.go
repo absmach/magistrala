@@ -11,8 +11,8 @@ import (
 	"log/slog"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var _ events.Subscriber = (*subEventStore)(nil)

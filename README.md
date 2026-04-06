@@ -1,31 +1,31 @@
 <div align="center">
 
-# SuperMQ
+# Magistrala
   
 ### Planetary event-driven infrastructure
   
 **Made with ❤️ by [Abstract Machines](https://absmach.eu/)**
 
-[![Build Status](https://github.com/absmach/supermq/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/supermq/actions/workflows/build.yaml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/absmach/supermq)](https://goreportcard.com/report/github.com/absmach/supermq)
-[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/absmach/supermq)
-[![Check License Header](https://github.com/absmach/supermq/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/supermq/actions/workflows/check-license.yaml)
-[![Check Generated Files](https://github.com/absmach/supermq/actions/workflows/check-generated-files.yaml/badge.svg?branch=main)](https://github.com/absmach/supermq/actions/workflows/check-generated-files.yaml)
-[![Coverage](https://codecov.io/gh/absmach/supermq/graph/badge.svg?token=nPCEr5nW8S)](https://codecov.io/gh/absmach/supermq)
+[![Build Status](https://github.com/absmach/magistrala/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yaml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/absmach/magistrala)
+[![Check License Header](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-license.yaml)
+[![Check Generated Files](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/check-generated-files.yaml)
+[![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=nPCEr5nW8S)](https://codecov.io/gh/absmach/magistrala)
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Matrix](https://img.shields.io/matrix/supermq%3Amatrix.org?label=Chat&style=flat&logo=matrix&logoColor=white)](https://matrix.to/#/#supermq:matrix.org)
   
-### [Guide](https://docs.supermq.absmach.eu) | [Contributing](CONTRIBUTING.md) | [Website](https://absmach.eu/) | [Chat](https://matrix.to/#/#supermq:matrix.org)
+### [Guide](https://magistrala.absmach.eu/docs/) | [Contributing](CONTRIBUTING.md) | [Website](https://absmach.eu/) | [Chat](https://matrix.to/#/#supermq:matrix.org)
 
 </div>
 
 ## Introduction 📖
 
-SuperMQ is a distributed, highly scalable, and secure open-source cloud platform for messaging and event-driven architecture (EDA). It is a planetarily distributed, highly scalable, and secure platform that serves as a robust foundation for building advanced real-time and reactive systems.
+Magistrala is a distributed, highly scalable, and secure open-source cloud platform for messaging and event-driven architecture (EDA). It is a planetarily distributed, highly scalable, and secure platform that serves as a robust foundation for building advanced real-time and reactive systems.
 
-## Why SuperMQ Stands Out 🚀
+## Why Magistrala Stands Out 🚀
 
-SuperMQ bridges the gap between various network protocols (HTTP, MQTT, WebSocket, CoAP, and more) to provide a seamless messaging experience. Whether you're working on IoT solutions, real-time data pipelines, or event-driven systems, SuperMQ has you covered. 🌐✨
+Magistrala bridges the gap between various network protocols (HTTP, MQTT, WebSocket, CoAP, and more) to provide a seamless messaging experience. Whether you're working on IoT solutions, real-time data pipelines, or event-driven systems, Magistrala has you covered. 🌐✨
 
 ## Key Features 🌟
 
@@ -45,12 +45,12 @@ SuperMQ bridges the gap between various network protocols (HTTP, MQTT, WebSocket
 
 ## Installation 🛠️
 
-There are multiple ways to run SuperMQ.
+There are multiple ways to run Magistrala.
 First, clone the repository and position to it:
 
 ```bash
-git clone https://github.com/absmach/supermq.git
-cd supermq
+git clone https://github.com/absmach/magistrala.git
+cd magistrala
 ```
 
 To run the latest stable (tagged) version, use:
@@ -80,7 +80,7 @@ git checkout main
 
 ### Running on Apple Silicon (M1/M2/M3) Macs
 
-When running SuperMQ on Apple Silicon Macs, the Makefile will automatically detect your ARM64 architecture and build Docker images locally. 
+When running Magistrala on Apple Silicon Macs, the Makefile will automatically detect your ARM64 architecture and build Docker images locally. 
 
 **If using Docker Desktop:**
 
@@ -92,7 +92,7 @@ When running SuperMQ on Apple Silicon Macs, the Makefile will automatically dete
 
 After enabling these options, restart Docker Desktop, then run `make run_stable` or `make run_latest` as usual.
 
-To manually run SuperMQ, clone the repository and start all core services:
+To manually run Magistrala, clone the repository and start all core services:
 
 ```bash
 docker compose -f docker/docker-compose.yaml --env-file docker/.env up
@@ -104,10 +104,10 @@ docker compose -f docker/docker-compose.yaml --env-file docker/.env up
 
 ```bash
 make cli
-./build/supermq-cli status
+./build/magistrala-cli status
 ```
 
-This command retrieves the status of the SuperMQ server and outputs it to the console.
+This command retrieves the status of the Magistrala server and outputs it to the console.
 
 **Using HTTP with Curl :**
 
@@ -117,20 +117,20 @@ curl -X GET http://localhost:8080/status
 
 This request fetches the server status over HTTP and provides a JSON response.
 
-See our [CLI documentation](https://docs.supermq.absmach.eu/cli) for more details.
+See our [CLI documentation](https://magistrala.absmach.eu/docs/dev-guide/cli/introduction-to-cli/) for more details.
 
 ## Documentation 📚
 
-The official documentation is hosted at [SuperMQ docs page](https://docs.supermq.absmach.eu/).
+The official documentation is hosted at [Magistrala docs page](https://magistrala.absmach.eu/docs/).
 
-Documentation is auto-generated, check out the instructions in the [docs repository](https://github.com/absmach/supermq-docs).
+Documentation is auto-generated, check out the instructions in the [docs repository](https://github.com/absmach/magistrala-docs).
 If you spot an error or a need for corrections, please let us know - or even better: send us a PR! 💌
 
 ## Community and Contributing 🤝
 
-Thank you for your interest in SuperMQ and the desire to contribute!
+Thank you for your interest in Magistrala and the desire to contribute!
 
-1. Take a look at our [open issues](https://github.com/absmach/supermq/issues). The [good-first-issue](https://github.com/absmach/supermq/labels/good-first-issue) label is specifically for issues that are great for getting started.
+1. Take a look at our [open issues](https://github.com/absmach/magistrala/issues). The [good-first-issue](https://github.com/absmach/magistrala/labels/good-first-issue) label is specifically for issues that are great for getting started.
 2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
 3. Make your changes compatible to our workflow.
 
@@ -140,14 +140,14 @@ Join our community:
 
 ## Professional Support 💼
 
-Need help deploying SuperMQ or integrating it into your system? Reach out to **[Abstract Machines](https://absmach.eu/)** for professional support and guidance.
+Need help deploying Magistrala or integrating it into your system? Reach out to **[Abstract Machines](https://absmach.eu/)** for professional support and guidance.
 
 ## License 📜
 
-SuperMQ is open-source software licensed under the [Apache License 2.0](LICENSE). Contributions are welcome!
+Magistrala is open-source software licensed under the [Apache License 2.0](LICENSE). Contributions are welcome!
 
 ## Acknowledgments 🙌
 
-Special thanks to the amazing contributors who make SuperMQ possible. Check out the [MAINTAINERS](MAINTAINERS) file to see the team behind the magic.
+Special thanks to the amazing contributors who make Magistrala possible. Check out the [MAINTAINERS](MAINTAINERS) file to see the team behind the magic.
 
 Ready to build the future of messaging and event-driven systems? Let's get started! 🚀

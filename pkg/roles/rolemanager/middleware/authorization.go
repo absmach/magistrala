@@ -7,13 +7,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/authn"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/authn"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var _ roles.RoleManager = (*RoleManagerAuthorizationMiddleware)(nil)

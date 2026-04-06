@@ -4,7 +4,7 @@
 package cli
 
 import (
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 
@@ -14,8 +14,8 @@ var cmdUserInvitations = []cobra.Command{
 		Short: "Get user invitations",
 		Long: "Get all invitations for the authenticated user\n" +
 			"Usage:\n" +
-			"\tsupermq-cli invitations user get <user_auth_token> - lists all invitations for the user\n" +
-			"\tsupermq-cli invitations user get <user_auth_token> --offset <offset> --limit <limit> - lists all invitations with provided offset and limit\n",
+			"\tmagistrala-cli invitations user get <user_auth_token> - lists all invitations for the user\n" +
+			"\tmagistrala-cli invitations user get <user_auth_token> --offset <offset> --limit <limit> - lists all invitations with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -40,7 +40,7 @@ var cmdUserInvitations = []cobra.Command{
 		Short: "Accept invitation",
 		Long: "Accept invitation to domain\n" +
 			"Usage:\n" +
-			"\tsupermq-cli invitations user accept 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_TOKEN\n",
+			"\tmagistrala-cli invitations user accept 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -60,7 +60,7 @@ var cmdUserInvitations = []cobra.Command{
 		Short: "Reject invitation",
 		Long: "Reject invitation to domain\n" +
 			"Usage:\n" +
-			"\tsupermq-cli invitations user reject 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_AUTH_TOKEN\n",
+			"\tmagistrala-cli invitations user reject 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -83,7 +83,7 @@ var cmdDomainInvitations = []cobra.Command{
 		Short: "Send domain invitation",
 		Long: "Send invitation to user for a domain\n" +
 			"For example:\n" +
-			"\tsupermq-cli invitations domain send 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a ba4c904c-e6d4-4978-9417-1694aac6793e $USER_AUTH_TOKEN\n",
+			"\tmagistrala-cli invitations domain send 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a ba4c904c-e6d4-4978-9417-1694aac6793e $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -107,8 +107,8 @@ var cmdDomainInvitations = []cobra.Command{
 		Short: "Get domain invitations",
 		Long: "Get all invitations for a specific domain\n" +
 			"Usage:\n" +
-			"\tsupermq-cli invitations domain get <domain_id> <user_auth_token> - shows invitations for domain\n" +
-			"\tsupermq-cli invitations domain get <domain_id> <user_auth_token> --offset <offset> --limit <limit> - shows invitations with provided offset and limit\n",
+			"\tmagistrala-cli invitations domain get <domain_id> <user_auth_token> - shows invitations for domain\n" +
+			"\tmagistrala-cli invitations domain get <domain_id> <user_auth_token> --offset <offset> --limit <limit> - shows invitations with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -134,7 +134,7 @@ var cmdDomainInvitations = []cobra.Command{
 		Short: "Delete domain invitation",
 		Long: "Delete invitation for a specific user and domain\n" +
 			"Usage:\n" +
-			"\tsupermq-cli invitations domain delete 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a $USER_TOKEN\n",
+			"\tmagistrala-cli invitations domain delete 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a $USER_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)

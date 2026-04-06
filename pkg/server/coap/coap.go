@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/pkg/server"
+	"github.com/absmach/magistrala/pkg/server"
 	gocoap "github.com/plgd-dev/go-coap/v3"
 	"github.com/plgd-dev/go-coap/v3/mux"
 )

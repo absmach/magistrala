@@ -3,8 +3,8 @@
 
 // Package main contains the FluxMQ auth bridge service entry point.
 // This service implements the FluxMQ auth callout server using ConnectRPC,
-// bridging authentication requests to SuperMQ's Clients service and
-// authorization requests to SuperMQ's Channels service.
+// bridging authentication requests to Magistrala's Clients service and
+// authorization requests to Magistrala's Channels service.
 package main
 
 import (
@@ -20,14 +20,14 @@ import (
 	"connectrpc.com/connect"
 	"connectrpc.com/otelconnect"
 	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
-	fluxmqgrpc "github.com/absmach/supermq/fluxmq/api/grpc"
-	smqlog "github.com/absmach/supermq/logger"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/server"
-	"github.com/absmach/supermq/pkg/uuid"
+	fluxmqgrpc "github.com/absmach/magistrala/fluxmq/api/grpc"
+	mglog "github.com/absmach/magistrala/logger"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/server"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
@@ -60,13 +60,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration: %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {

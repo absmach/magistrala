@@ -11,9 +11,9 @@ import (
 
 	certs "github.com/absmach/certs"
 	csdk "github.com/absmach/certs/sdk"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/sdk"
-	smqSDK "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/sdk"
+	smqSDK "github.com/absmach/magistrala/pkg/sdk"
 )
 
 const (

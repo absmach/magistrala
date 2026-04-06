@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

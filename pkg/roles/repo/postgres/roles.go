@@ -11,13 +11,13 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/roles"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/lib/pq"
 )
 

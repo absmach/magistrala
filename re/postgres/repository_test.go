@@ -11,13 +11,13 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/re"
-	"github.com/absmach/supermq/re/outputs"
-	"github.com/absmach/supermq/re/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/re/outputs"
+	"github.com/absmach/magistrala/re/postgres"
 	"github.com/stretchr/testify/assert"
 )
 

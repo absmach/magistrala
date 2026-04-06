@@ -7,11 +7,11 @@ import (
 	"context"
 	"net/http"
 
-	"github.com/absmach/supermq"
+	"github.com/absmach/magistrala"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
-func RequestIDMiddleware(idp supermq.IDProvider) func(http.Handler) http.Handler {
+func RequestIDMiddleware(idp magistrala.IDProvider) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			requestID, err := idp.ID()

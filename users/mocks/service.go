@@ -11,9 +11,9 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/users"
 	mock "github.com/stretchr/testify/mock"
 )
 

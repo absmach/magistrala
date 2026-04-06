@@ -6,30 +6,30 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/roles"
-	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/roles"
+	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix               = "supermq."
-	createStream                = supermqPrefix + domainCreate
-	retrieveStream              = supermqPrefix + domainRetrieve
-	updateStream                = supermqPrefix + domainUpdate
-	enableStream                = supermqPrefix + domainEnable
-	disableStream               = supermqPrefix + domainDisable
-	freezeStream                = supermqPrefix + domainFreeze
-	listStream                  = supermqPrefix + domainList
-	sendInvitationStream        = supermqPrefix + invitationSend
-	acceptInvitationStream      = supermqPrefix + invitationAccept
-	rejectInvitationStream      = supermqPrefix + invitationReject
-	listInvitationsStream       = supermqPrefix + invitationList
-	listDomainInvitationsStream = supermqPrefix + invitationListDomain
-	deleteInvitationStream      = supermqPrefix + invitationDelete
+	magistralaPrefix               = "magistrala."
+	createStream                = magistralaPrefix + domainCreate
+	retrieveStream              = magistralaPrefix + domainRetrieve
+	updateStream                = magistralaPrefix + domainUpdate
+	enableStream                = magistralaPrefix + domainEnable
+	disableStream               = magistralaPrefix + domainDisable
+	freezeStream                = magistralaPrefix + domainFreeze
+	listStream                  = magistralaPrefix + domainList
+	sendInvitationStream        = magistralaPrefix + invitationSend
+	acceptInvitationStream      = magistralaPrefix + invitationAccept
+	rejectInvitationStream      = magistralaPrefix + invitationReject
+	listInvitationsStream       = magistralaPrefix + invitationList
+	listDomainInvitationsStream = magistralaPrefix + invitationListDomain
+	deleteInvitationStream      = magistralaPrefix + invitationDelete
 )
 
 var _ domains.Service = (*eventStore)(nil)

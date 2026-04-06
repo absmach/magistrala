@@ -7,14 +7,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq"
+	"github.com/absmach/magistrala"
 )
 
 var (
-	_ supermq.Response = (*createSubRes)(nil)
-	_ supermq.Response = (*viewSubRes)(nil)
-	_ supermq.Response = (*listSubsRes)(nil)
-	_ supermq.Response = (*removeSubRes)(nil)
+	_ magistrala.Response = (*createSubRes)(nil)
+	_ magistrala.Response = (*viewSubRes)(nil)
+	_ magistrala.Response = (*listSubsRes)(nil)
+	_ magistrala.Response = (*removeSubRes)(nil)
 )
 
 type createSubRes struct {

@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 	tokenQueryParamKey       = "token"
 )
 
-// User represents supermq user its credentials.
+// User represents magistrala user its credentials.
 type User struct {
 	ID              string      `json:"id"`
 	FirstName       string      `json:"first_name,omitempty"`

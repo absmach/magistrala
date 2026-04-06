@@ -13,46 +13,46 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	grpcGroupsV1 "github.com/absmach/supermq/api/grpc/groups/v1"
-	"github.com/absmach/supermq/auth"
-	doperations "github.com/absmach/supermq/domains/operations"
-	dpostgres "github.com/absmach/supermq/domains/postgres"
-	"github.com/absmach/supermq/groups"
-	gpsvc "github.com/absmach/supermq/groups"
-	grpcapi "github.com/absmach/supermq/groups/api/grpc"
-	httpapi "github.com/absmach/supermq/groups/api/http"
-	"github.com/absmach/supermq/groups/events"
-	"github.com/absmach/supermq/groups/middleware"
-	goperations "github.com/absmach/supermq/groups/operations"
-	"github.com/absmach/supermq/groups/postgres"
-	pgroups "github.com/absmach/supermq/groups/private"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	jwksAuthn "github.com/absmach/supermq/pkg/authn/jwks"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	"github.com/absmach/supermq/pkg/callout"
-	dconsumer "github.com/absmach/supermq/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pg "github.com/absmach/supermq/pkg/postgres"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/sid"
-	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
+	"github.com/absmach/magistrala/auth"
+	doperations "github.com/absmach/magistrala/domains/operations"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	"github.com/absmach/magistrala/groups"
+	gpsvc "github.com/absmach/magistrala/groups"
+	grpcapi "github.com/absmach/magistrala/groups/api/grpc"
+	httpapi "github.com/absmach/magistrala/groups/api/http"
+	"github.com/absmach/magistrala/groups/events"
+	"github.com/absmach/magistrala/groups/middleware"
+	goperations "github.com/absmach/magistrala/groups/operations"
+	"github.com/absmach/magistrala/groups/postgres"
+	pgroups "github.com/absmach/magistrala/groups/private"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	jwksAuthn "github.com/absmach/magistrala/pkg/authn/jwks"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	"github.com/absmach/magistrala/pkg/callout"
+	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pg "github.com/absmach/magistrala/pkg/postgres"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/sid"
+	spicedbdecoder "github.com/absmach/magistrala/pkg/spicedb"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -106,13 +106,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -315,7 +315,7 @@ func main() {
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerGroupsServer, logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

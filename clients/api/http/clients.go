@@ -6,18 +6,18 @@ package http
 import (
 	"log/slog"
 
-	"github.com/absmach/supermq"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/clients"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
+	"github.com/absmach/magistrala"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/clients"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	roleManagerHttp "github.com/absmach/magistrala/pkg/roles/rolemanager/api"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func clientsHandler(svc clients.Service, authn smqauthn.AuthNMiddleware, r *chi.Mux, logger *slog.Logger, idp supermq.IDProvider) *chi.Mux {
+func clientsHandler(svc clients.Service, authn smqauthn.AuthNMiddleware, r *chi.Mux, logger *slog.Logger, idp magistrala.IDProvider) *chi.Mux {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}

@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/users"
 )
 
 type normalizedUser struct {

@@ -6,8 +6,8 @@ package grpc
 import (
 	"context"
 
-	"github.com/absmach/supermq/clients"
-	pClients "github.com/absmach/supermq/clients/private"
+	"github.com/absmach/magistrala/clients"
+	pClients "github.com/absmach/magistrala/clients/private"
 	"github.com/go-kit/kit/endpoint"
 )
 

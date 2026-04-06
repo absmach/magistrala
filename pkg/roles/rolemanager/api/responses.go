@@ -6,25 +6,25 @@ package http
 import (
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (
-	_ supermq.Response = (*createRoleRes)(nil)
-	_ supermq.Response = (*listRolesRes)(nil)
-	_ supermq.Response = (*viewRoleRes)(nil)
-	_ supermq.Response = (*updateRoleRes)(nil)
-	_ supermq.Response = (*deleteRoleRes)(nil)
-	_ supermq.Response = (*listAvailableActionsRes)(nil)
-	_ supermq.Response = (*addRoleActionsRes)(nil)
-	_ supermq.Response = (*listRoleActionsRes)(nil)
-	_ supermq.Response = (*deleteRoleActionsRes)(nil)
-	_ supermq.Response = (*deleteAllRoleActionsRes)(nil)
-	_ supermq.Response = (*addRoleMembersRes)(nil)
-	_ supermq.Response = (*listRoleMembersRes)(nil)
-	_ supermq.Response = (*deleteRoleMembersRes)(nil)
-	_ supermq.Response = (*deleteAllRoleMemberRes)(nil)
+	_ magistrala.Response = (*createRoleRes)(nil)
+	_ magistrala.Response = (*listRolesRes)(nil)
+	_ magistrala.Response = (*viewRoleRes)(nil)
+	_ magistrala.Response = (*updateRoleRes)(nil)
+	_ magistrala.Response = (*deleteRoleRes)(nil)
+	_ magistrala.Response = (*listAvailableActionsRes)(nil)
+	_ magistrala.Response = (*addRoleActionsRes)(nil)
+	_ magistrala.Response = (*listRoleActionsRes)(nil)
+	_ magistrala.Response = (*deleteRoleActionsRes)(nil)
+	_ magistrala.Response = (*deleteAllRoleActionsRes)(nil)
+	_ magistrala.Response = (*addRoleMembersRes)(nil)
+	_ magistrala.Response = (*listRoleMembersRes)(nil)
+	_ magistrala.Response = (*deleteRoleMembersRes)(nil)
+	_ magistrala.Response = (*deleteAllRoleMemberRes)(nil)
 )
 
 type createRoleRes struct {

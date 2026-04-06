@@ -15,15 +15,15 @@ set -o pipefail
 # Define source and target database connection details
 SRC_DB_HOST="localhost"
 SRC_DB_PORT="6003"
-SRC_DB_USER="supermq"
-SRC_DB_PASSWORD="supermq"
+SRC_DB_USER="magistrala"
+SRC_DB_PASSWORD="magistrala"
 SRC_DB_NAME="domains"
 TABLENAME_PREFIX=domains
 
 DEST_DB_HOST="localhost"
 DEST_DB_PORT="6005"
-DEST_DB_USER="supermq"
-DEST_DB_PASSWORD="supermq"
+DEST_DB_USER="magistrala"
+DEST_DB_PASSWORD="magistrala"
 DEST_DB_NAME="channels"
 
 # List of tables to copy

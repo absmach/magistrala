@@ -6,11 +6,11 @@ package http
 import (
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/readers"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/readers"
 )
 
-var _ supermq.Response = (*pageRes)(nil)
+var _ magistrala.Response = (*pageRes)(nil)
 
 type pageRes struct {
 	readers.PageMetadata

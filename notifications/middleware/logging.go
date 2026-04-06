@@ -8,7 +8,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/notifications"
+	"github.com/absmach/magistrala/notifications"
 )
 
 var _ notifications.Notifier = (*loggingMiddleware)(nil)

@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/redis"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/redis"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ var (
 	stream     = "tests.events"
 	consumer   = "test-consumer"
 	eventsChan = make(chan map[string]any)
-	logger     = smqlog.NewMock()
+	logger     = mglog.NewMock()
 	errFailed  = errors.New("failed")
 	numEvents  = 100
 )

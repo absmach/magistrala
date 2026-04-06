@@ -13,20 +13,20 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/consumers"
-	consumertracing "github.com/absmach/supermq/consumers/tracing"
-	httpapi "github.com/absmach/supermq/consumers/writers/api"
-	"github.com/absmach/supermq/consumers/writers/brokers"
-	"github.com/absmach/supermq/consumers/writers/timescale"
-	smqlog "github.com/absmach/supermq/logger"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
+	consumertracing "github.com/absmach/magistrala/consumers/tracing"
+	httpapi "github.com/absmach/magistrala/consumers/writers/api"
+	"github.com/absmach/magistrala/consumers/writers/brokers"
+	"github.com/absmach/magistrala/consumers/writers/timescale"
+	mglog "github.com/absmach/magistrala/logger"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"golang.org/x/sync/errgroup"
@@ -59,13 +59,13 @@ func main() {
 		log.Fatalf("failed to load %s service configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -130,7 +130,7 @@ func main() {
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

@@ -4,7 +4,7 @@
 package postgres
 
 import (
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 

@@ -11,15 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	policymocks "github.com/absmach/supermq/pkg/policies/mocks"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
@@ -34,7 +34,7 @@ const (
 	tokenType       = "type"
 	roleField       = "role"
 	VerifiedField   = "verified"
-	issuerName      = "supermq.auth"
+	issuerName      = "magistrala.auth"
 )
 
 var (

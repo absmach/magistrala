@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/pelletier/go-toml"
 )
 

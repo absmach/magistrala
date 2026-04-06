@@ -6,8 +6,8 @@ package auth_test
 import (
 	"testing"
 
-	"github.com/absmach/supermq/auth"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/auth"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -12,17 +12,17 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/notifications/emailer"
-	"github.com/absmach/supermq/notifications/events"
-	"github.com/absmach/supermq/notifications/middleware"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/notifications/emailer"
+	"github.com/absmach/magistrala/notifications/events"
+	"github.com/absmach/magistrala/notifications/middleware"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -45,8 +45,8 @@ type config struct {
 	EmailPort          string  `env:"MG_EMAIL_PORT"                           envDefault:"25"`
 	EmailUsername      string  `env:"MG_EMAIL_USERNAME"                       envDefault:""`
 	EmailPassword      string  `env:"MG_EMAIL_PASSWORD"                       envDefault:""`
-	EmailFromAddress   string  `env:"MG_EMAIL_FROM_ADDRESS"                   envDefault:"noreply@supermq.com"`
-	EmailFromName      string  `env:"MG_EMAIL_FROM_NAME"                      envDefault:"SuperMQ Notifications"`
+	EmailFromAddress   string  `env:"MG_EMAIL_FROM_ADDRESS"                   envDefault:"noreply@magistrala.com"`
+	EmailFromName      string  `env:"MG_EMAIL_FROM_NAME"                      envDefault:"Magistrala Notifications"`
 	InvitationTemplate string  `env:"MG_EMAIL_INVITATION_TEMPLATE"            envDefault:"docker/templates/invitation-sent-email.tmpl"`
 	AcceptanceTemplate string  `env:"MG_EMAIL_ACCEPTANCE_TEMPLATE"            envDefault:"docker/templates/invitation-accepted-email.tmpl"`
 	RejectionTemplate  string  `env:"MG_EMAIL_REJECTION_TEMPLATE"             envDefault:"docker/templates/invitation-rejected-email.tmpl"`
@@ -61,13 +61,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -147,7 +147,7 @@ func main() {
 	}
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

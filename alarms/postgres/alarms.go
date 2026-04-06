@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
-	api "github.com/absmach/supermq/api/http"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/magistrala/alarms"
+	api "github.com/absmach/magistrala/api/http"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 )
 

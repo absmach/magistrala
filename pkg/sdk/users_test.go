@@ -12,21 +12,21 @@ import (
 	"testing"
 	"time"
 
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	authmocks "github.com/absmach/supermq/auth/mocks"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	oauth2mocks "github.com/absmach/supermq/pkg/oauth2/mocks"
-	sdk "github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/users"
-	httpapi "github.com/absmach/supermq/users/api"
-	umocks "github.com/absmach/supermq/users/mocks"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	authmocks "github.com/absmach/magistrala/auth/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/users"
+	httpapi "github.com/absmach/magistrala/users/api"
+	umocks "github.com/absmach/magistrala/users/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -39,7 +39,7 @@ var (
 
 func setupUsers() (*httptest.Server, *umocks.Service, *authnmocks.Authentication) {
 	usvc := new(umocks.Service)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	idp := uuid.NewMock()
 	provider := new(oauth2mocks.Provider)

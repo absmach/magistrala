@@ -6,11 +6,11 @@ package grpcclient
 import (
 	"context"
 
-	grpcCommonV1 "github.com/absmach/supermq/api/grpc/common/v1"
-	grpcDomainsV1 "github.com/absmach/supermq/api/grpc/domains/v1"
-	"github.com/absmach/supermq/domains"
-	pkgDomains "github.com/absmach/supermq/pkg/domains"
-	"github.com/absmach/supermq/pkg/grpcclient"
+	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	"github.com/absmach/magistrala/domains"
+	pkgDomains "github.com/absmach/magistrala/pkg/domains"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 )
 
 type authorization struct {

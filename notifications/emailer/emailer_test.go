@@ -9,9 +9,9 @@ import (
 	"os"
 	"testing"
 
-	grpcUsersV1 "github.com/absmach/supermq/api/grpc/users/v1"
-	"github.com/absmach/supermq/notifications"
-	"github.com/absmach/supermq/notifications/emailer"
+	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
+	"github.com/absmach/magistrala/notifications"
+	"github.com/absmach/magistrala/notifications/emailer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"

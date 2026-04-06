@@ -1,29 +1,29 @@
 # Channels
 
-The Channels service is a core component of SuperMQ that manages communication channels between devices and applications. It handles channel creation, configuration, access control and message routing within the SuperMQ ecosystem.
+The Channels service is a core component of Magistrala that manages communication channels between devices and applications. It handles channel creation, configuration, access control and message routing within the Magistrala ecosystem.
 
 ## Configuration
 
 The service is configured using the following environment variables (unset variables use default values):
 
-| Variable                     | Description                                                  | Default     |
-|-----------------------------|--------------------------------------------------------------|-------------|
-| `MG_CHANNELS_LOG_LEVEL`      | Log level (debug, info, warn, error)                          | info        |
-| `MG_CHANNELS_HTTP_HOST`      | HTTP host for Channels service                               | localhost   |
-| `MG_CHANNELS_HTTP_PORT`      | HTTP port for Channels service                               | 9005        |
-| `MG_CHANNELS_SERVER_CERT`    | Path to PEM encoded server certificate                       | ""          |
-| `MG_CHANNELS_SERVER_KEY`     | Path to PEM encoded server key file                          | ""          |
-| `MG_CHANNELS_GRPC_HOST`      | gRPC host for Channels service                               | localhost   |
-| `MG_CHANNELS_GRPC_PORT`      | gRPC port for Channels service                               | 7005        |
-| `MG_CHANNELS_DB_HOST`        | Database host address                                        | localhost   |
-| `MG_CHANNELS_DB_PORT`        | Database port                                                | 5432        |
-| `MG_CHANNELS_DB_USER`        | Database user                                                | supermq     |
-| `MG_CHANNELS_DB_PASS`        | Database password                                            | supermq     |
-| `MG_CHANNELS_DB_NAME`        | Name of the database used by the service                    | channels    |
-| `MG_CHANNELS_DB_SSL_MODE`    | Database connection SSL mode                                 | disable     |
-| `MG_CHANNELS_CACHE_URL`      | Cache database URL                                           | <redis://localhost:6379/0> |
-| `MG_JAEGER_URL`              | Jaeger tracing server URL                                    | <http://jaeger:4318/v1/traces> |
-| `MG_SEND_TELEMETRY`          | Send telemetry to SuperMQ call-home server                   | true        |
+| Variable                  | Description                                   | Default                        |
+| ------------------------- | --------------------------------------------- | ------------------------------ |
+| `MG_CHANNELS_LOG_LEVEL`   | Log level (debug, info, warn, error)          | info                           |
+| `MG_CHANNELS_HTTP_HOST`   | HTTP host for Channels service                | localhost                      |
+| `MG_CHANNELS_HTTP_PORT`   | HTTP port for Channels service                | 9005                           |
+| `MG_CHANNELS_SERVER_CERT` | Path to PEM encoded server certificate        | ""                             |
+| `MG_CHANNELS_SERVER_KEY`  | Path to PEM encoded server key file           | ""                             |
+| `MG_CHANNELS_GRPC_HOST`   | gRPC host for Channels service                | localhost                      |
+| `MG_CHANNELS_GRPC_PORT`   | gRPC port for Channels service                | 7005                           |
+| `MG_CHANNELS_DB_HOST`     | Database host address                         | localhost                      |
+| `MG_CHANNELS_DB_PORT`     | Database port                                 | 5432                           |
+| `MG_CHANNELS_DB_USER`     | Database user                                 | magistrala                     |
+| `MG_CHANNELS_DB_PASS`     | Database password                             | magistrala                     |
+| `MG_CHANNELS_DB_NAME`     | Name of the database used by the service      | channels                       |
+| `MG_CHANNELS_DB_SSL_MODE` | Database connection SSL mode                  | disable                        |
+| `MG_CHANNELS_CACHE_URL`   | Cache database URL                            | <redis://localhost:6379/0>     |
+| `MG_JAEGER_URL`           | Jaeger tracing server URL                     | <http://jaeger:4318/v1/traces> |
+| `MG_SEND_TELEMETRY`       | Send telemetry to Magistrala call-home server | true                           |
 
 ## Features
 
@@ -46,29 +46,29 @@ The service is built using:
 
 ### Channels Table
 
-| Column             | Type           | Description                                                    |
-|--------------------|----------------|----------------------------------------------------------------|
-| `id`               | VARCHAR(36)    | UUID of the channel (primary key)                              |
-| `name`             | VARCHAR(1024)  | Human-readable name                                            |
-| `domain_id`        | VARCHAR(36)    | Domain to which the channel belongs                            |
-| `parent_group_id`  | VARCHAR(36)    | Optional group parent                                          |
-| `tags`             | TEXT[]         | Array of tags                                                  |
-| `metadata`         | JSONB          | Free-form structured metadata                                  |
-| `created_by`       | VARCHAR(254)   | User that created the channel                                  |
-| `created_at`       | TIMESTAMPTZ    | Timestamp of creation                                          |
-| `updated_at`       | TIMESTAMPTZ    | Timestamp of last update                                       |
-| `updated_by`       | VARCHAR(254)   | User that performed last update                                |
-| `status`           | SMALLINT       | 0 = enabled, 1 = disabled                                      |
-| `route`            | VARCHAR(36)    | Optional route identifier unique within domain if set          |
+| Column            | Type          | Description                                           |
+| ----------------- | ------------- | ----------------------------------------------------- |
+| `id`              | VARCHAR(36)   | UUID of the channel (primary key)                     |
+| `name`            | VARCHAR(1024) | Human-readable name                                   |
+| `domain_id`       | VARCHAR(36)   | Domain to which the channel belongs                   |
+| `parent_group_id` | VARCHAR(36)   | Optional group parent                                 |
+| `tags`            | TEXT[]        | Array of tags                                         |
+| `metadata`        | JSONB         | Free-form structured metadata                         |
+| `created_by`      | VARCHAR(254)  | User that created the channel                         |
+| `created_at`      | TIMESTAMPTZ   | Timestamp of creation                                 |
+| `updated_at`      | TIMESTAMPTZ   | Timestamp of last update                              |
+| `updated_by`      | VARCHAR(254)  | User that performed last update                       |
+| `status`          | SMALLINT      | 0 = enabled, 1 = disabled                             |
+| `route`           | VARCHAR(36)   | Optional route identifier unique within domain if set |
 
 ### Connections Table
 
-| Column        | Type         | Description                                          |
-|---------------|--------------|------------------------------------------------------|
-| `channel_id`  | VARCHAR(36)  | Channel UUID                                         |
-| `domain_id`   | VARCHAR(36)  | Domain of channel and client                         |
-| `client_id`   | VARCHAR(36)  | Client UUID                                          |
-| `type`        | SMALLINT     | Connection type: `1 = Publish`, `2 = Subscribe`      |
+| Column       | Type        | Description                                     |
+| ------------ | ----------- | ----------------------------------------------- |
+| `channel_id` | VARCHAR(36) | Channel UUID                                    |
+| `domain_id`  | VARCHAR(36) | Domain of channel and client                    |
+| `client_id`  | VARCHAR(36) | Client UUID                                     |
+| `type`       | SMALLINT    | Connection type: `1 = Publish`, `2 = Subscribe` |
 
 ## Deployment
 
@@ -78,8 +78,8 @@ To build and run locally:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/supermq
-cd supermq
+git clone https://github.com/absmach/magistrala
+cd magistrala
 
 # compile the channels
 make channels
@@ -90,10 +90,8 @@ MG_CHANNELS_HTTP_HOST=localhost \
 MG_CHANNELS_HTTP_PORT=9005 \
 MG_CHANNELS_DB_HOST=localhost \
 MG_CHANNELS_DB_PORT=5432 \
-MG_CHANNELS_DB_USER=supermq \
-MG_CHANNELS_DB_PASS=supermq \
-MG_CHANNELS_DB_NAME=channels \
-$GOBIN/supermq-channels
+MG_CHANNELS_DB_USER=magistrala \MG_CHANNELS_DB_PASS=magistrala \MG_CHANNELS_DB_NAME=channels \
+$GOBIN/magistrala-channels
 ```
 
 ### Running the Service
@@ -110,7 +108,7 @@ go run cmd/main.go
 ### Docker Deployment
 
 ```bash
-docker run -p 8180:8180 supermq/channels
+docker run -p 8180:8180 magistrala/channels
 ```
 
 ## Testing
@@ -127,19 +125,19 @@ make test-integration
 
 The Channels service supports the following operations:
 
-| Operation        | Description                                                   |
-|------------------|---------------------------------------------------------------|
-| `create`         | Create a new channel                                          |
-| `list`           | Retrieve all channels (paged)                                 |
-| `get`            | Retrieve a single channel by ID                               |
-| `update`         | Update a channel’s name & metadata                            |
-| `delete`         | Permanently delete a channel                                  |
-| `enable`         | Enable a previously disabled channel                          |
-| `disable`        | Disable an active channel                                     |
-| `set-parent`     | Assign a parent group to a channel                            |
-| `remove-parent`  | Remove parent group from a channel                            |
-| `connect`        | Connect one or more clients to channels                       |
-| `disconnect`     | Disconnect one or more clients from channels                  |
+| Operation       | Description                                  |
+| --------------- | -------------------------------------------- |
+| `create`        | Create a new channel                         |
+| `list`          | Retrieve all channels (paged)                |
+| `get`           | Retrieve a single channel by ID              |
+| `update`        | Update a channel’s name & metadata           |
+| `delete`        | Permanently delete a channel                 |
+| `enable`        | Enable a previously disabled channel         |
+| `disable`       | Disable an active channel                    |
+| `set-parent`    | Assign a parent group to a channel           |
+| `remove-parent` | Remove parent group from a channel           |
+| `connect`       | Connect one or more clients to channels      |
+| `disconnect`    | Disconnect one or more clients from channels |
 
 ### Example: Create a Channel
 

@@ -4,7 +4,7 @@
 syntax = "proto3";
 
 package token.v1;
-option go_package = "github.com/absmach/supermq/api/grpc/token/v1";
+option go_package = "github.com/absmach/magistrala/api/grpc/token/v1";
 
 service TokenService {
   rpc Issue(IssueReq) returns (Token) {}

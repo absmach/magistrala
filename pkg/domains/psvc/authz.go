@@ -6,11 +6,11 @@ package domainscache
 import (
 	"context"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/domains/private"
-	pkgDomains "github.com/absmach/supermq/pkg/domains"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/domains/private"
+	pkgDomains "github.com/absmach/magistrala/pkg/domains"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 type authorization struct {

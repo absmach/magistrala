@@ -18,8 +18,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/pkg/callout"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/callout"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

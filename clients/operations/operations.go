@@ -4,7 +4,7 @@
 package operations
 
 import (
-	"github.com/absmach/supermq/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/permissions"
 )
 
 // Client Operations.

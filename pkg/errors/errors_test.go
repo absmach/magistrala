@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 

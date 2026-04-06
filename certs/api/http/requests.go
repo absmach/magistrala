@@ -8,9 +8,9 @@ import (
 	"encoding/pem"
 	"fmt"
 
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/certs/api"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/certs/api"
+	"github.com/absmach/magistrala/pkg/errors"
 	"golang.org/x/crypto/ocsp"
 )
 

@@ -8,7 +8,7 @@ Through this API clients are able to do the following actions:
 - "connect" clients into the channels
 
 For an in-depth explanation of the aforementioned scenarios, as well as thorough
-understanding of SuperMQ, please check out the [official documentation][doc].
+understanding of Magistrala, please check out the [official documentation][doc].
 
 ## Configuration
 
@@ -16,8 +16,8 @@ The service is configured using the environment variables presented in the
 following table. Note that any unset variables will be replaced with their
 default values.
 
-| Variable                       | Description                                                             | Default                        |
-| ------------------------------ | ----------------------------------------------------------------------- | ------------------------------ |
+| Variable                      | Description                                                             | Default                        |
+| ----------------------------- | ----------------------------------------------------------------------- | ------------------------------ |
 | MG_CLIENTS_LOG_LEVEL          | Log level for Clients (debug, info, warn, error)                        | info                           |
 | MG_CLIENTS_HTTP_HOST          | Clients service HTTP host                                               | localhost                      |
 | MG_CLIENTS_HTTP_PORT          | Clients service HTTP port                                               | 9000                           |
@@ -29,8 +29,8 @@ default values.
 | MG_CLIENTS_GRPC_SERVER_KEY    | Path to the PEM encoded server key file                                 | ""                             |
 | MG_CLIENTS_DB_HOST            | Database host address                                                   | localhost                      |
 | MG_CLIENTS_DB_PORT            | Database host port                                                      | 5432                           |
-| MG_CLIENTS_DB_USER            | Database user                                                           | supermq                        |
-| MG_CLIENTS_DB_PASS            | Database password                                                       | supermq                        |
+| MG_CLIENTS_DB_USER            | Database user                                                           | magistrala                     |
+| MG_CLIENTS_DB_PASS            | Database password                                                       | magistrala                     |
 | MG_CLIENTS_DB_NAME            | Name of the database used by the service                                | clients                        |
 | MG_CLIENTS_DB_SSL_MODE        | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable                        |
 | MG_CLIENTS_DB_SSL_CERT        | Path to the PEM encoded certificate file                                | ""                             |
@@ -48,23 +48,23 @@ default values.
 | MG_AUTH_GRPC_TIMEOUT          | Auth service gRPC request timeout in seconds                            | 1s                             |
 | MG_AUTH_GRPC_CLIENT_TLS       | Enable TLS for gRPC client                                              | false                          |
 | MG_AUTH_GRPC_CA_CERT          | Path to the CA certificate file                                         | ""                             |
-| MG_SEND_TELEMETRY             | Send telemetry to supermq call home server.                             | true                           |
-| Clients_INSTANCE_ID            | Clients instance ID                                                     | ""                             |
+| MG_SEND_TELEMETRY             | Send telemetry to magistrala call home server.                          | true                           |
+| Clients_INSTANCE_ID           | Clients instance ID                                                     | ""                             |
 
 **Note** that if you want `clients` service to have only one user locally, you should use `CLIENTS_STANDALONE` env vars. By specifying these, you don't need `auth` service in your deployment for users' authorization.
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`clients`](https://github.com/absmach/supermq/blob/main/docker/docker-compose.yaml#L167-L194) service section in
+The service itself is distributed as Docker container. Check the [`clients`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml#L167-L194) service section in
 docker-compose file to see how service is deployed.
 
 To start the service outside of the container, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/supermq
+git clone https://github.com/absmach/magistrala
 
-cd supermq
+cd magistrala
 
 # compile the clients
 make clients
@@ -103,9 +103,9 @@ MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Enable TLS for gRPC client] \
 MG_AUTH_GRPC_CA_CERT=[Path to trusted CA certificate file] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 Clients_INSTANCE_ID=[Clients instance ID] \
-$GOBIN/supermq-clients
+$GOBIN/magistrala-clients
 ```
 
 Setting `Clients_CA_CERTS` expects a file in PEM format of trusted CAs. This will enable TLS against the Auth gRPC endpoint trusting only those CAs that are provided.
@@ -116,18 +116,18 @@ To run service in a standalone mode, set `Clients_STANDALONE_EMAIL` and `Clients
 
 ## Usage
 
-SuperMQ supports the following operations for Clients:
+Magistrala supports the following operations for Clients:
 
-| Operation     | Description                                                        |
-| ------------- | ------------------------------------------------------------------ |
-| `create`      | Create a new client                                                |
-| `get`         | Retrieve a single client or list all clients                       |
-| `update`      | Update a client’s name and metadata                                |
-| `delete`      | Permanently delete a client                                        |
-| `enable`      | Enable a previously disabled client                                |
-| `disable`     | Disable an active client                                           |
-| `setClientParentGroup`     | Add a Parent Group to a client                  |
-| `removeClientParentGroup`  |  Remove a Parent Group from a client      |
+| Operation                 | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| `create`                  | Create a new client                          |
+| `get`                     | Retrieve a single client or list all clients |
+| `update`                  | Update a client’s name and metadata          |
+| `delete`                  | Permanently delete a client                  |
+| `enable`                  | Enable a previously disabled client          |
+| `disable`                 | Disable an active client                     |
+| `setClientParentGroup`    | Add a Parent Group to a client               |
+| `removeClientParentGroup` | Remove a Parent Group from a client          |
 
 ### API Examples
 
@@ -263,22 +263,22 @@ In addition to standard client lifecycle operations (create, get, update, delete
 
 ### Supported Role Operations
 
-| Operation                     | Description                                                                 |
-|------------------------------|-----------------------------------------------------------------------------|
-| `create-role`                | Create a new role for a client                                             |
-| `list-roles`                 | List all roles assigned to a client                                         |
-| `get-role`                   | Retrieve details for a specific client role                                 |
-| `update-role`                | Update a specific client role                                               |
-| `delete-role`                | Delete a specific client role                                               |
-| `add-role-action`            | Add one or more actions (permissions) to a client role                        |
-| `list-role-actions`          | List all actions associated with a client role                              |
-| `delete-role-action`         | Remove a specific action from a client role                                 |
-| `delete-all-role-actions`    | Remove all actions from a client role                                       |
-| `add-role-member`            | Associate one or more users or entities to a client role                     |
-| `list-role-members`          | List all members of a client role                                            |
-| `delete-role-member`         | Remove one or more members from a client role                               |
-| `delete-all-role-members`    | Remove all members from a client role                                       |
-| `list-available-actions`     | Retrieve the global list of available actions key for role creation         |
+| Operation                 | Description                                                         |
+| ------------------------- | ------------------------------------------------------------------- |
+| `create-role`             | Create a new role for a client                                      |
+| `list-roles`              | List all roles assigned to a client                                 |
+| `get-role`                | Retrieve details for a specific client role                         |
+| `update-role`             | Update a specific client role                                       |
+| `delete-role`             | Delete a specific client role                                       |
+| `add-role-action`         | Add one or more actions (permissions) to a client role              |
+| `list-role-actions`       | List all actions associated with a client role                      |
+| `delete-role-action`      | Remove a specific action from a client role                         |
+| `delete-all-role-actions` | Remove all actions from a client role                               |
+| `add-role-member`         | Associate one or more users or entities to a client role            |
+| `list-role-members`       | List all members of a client role                                   |
+| `delete-role-member`      | Remove one or more members from a client role                       |
+| `delete-all-role-members` | Remove all members from a client role                               |
+| `list-available-actions`  | Retrieve the global list of available actions key for role creation |
 
 ### Example: Create a Client Role
 
@@ -295,37 +295,37 @@ curl -X POST http://localhost:9006/<domainID>/clients/<clientID>/roles \
 
 ## Implementation Details
 
-Clients in SuperMQ are persisted in PostgreSQL using a schema optimized for identity management, authorization, and relationship tracking (channels, groups, and users).
+Clients in Magistrala are persisted in PostgreSQL using a schema optimized for identity management, authorization, and relationship tracking (channels, groups, and users).
 
 ### Clients Table Structure
 
 The main `clients` table tracks all metadata, identity, and lifecycle information for each client:
 
-| Column            | Type           | Description                                                                 |
-|------------------ | -------------- | --------------------------------------------------------------------------- |
-| `id`              | VARCHAR(36)    | UUID of the client (primary key).                                           |
-| `name`            | VARCHAR(1024)  | Human‑readable name.                                                        |
-| `domain_id`       | VARCHAR(36)    | Domain to which the client belongs.                                         |
-| `parent_group_id` | VARCHAR(36)    | Optional group parent (for inheritance/scoping).                            |
-| `identity`        | VARCHAR(254)   | Login identity (often an email or unique ID).                               |
-| `secret`          | VARCHAR(4096)  | Hashed authentication secret.                                               |
-| `tags`            | TEXT[]         | Arbitrary list of client tags.                                              |
-| `metadata`        | JSONB          | Free‑form structured metadata.                                              |
-| `created_at`      | TIMESTAMPTZ    | Timestamp when the client was created.                                      |
-| `updated_at`      | TIMESTAMPTZ    | Timestamp when the client was last updated.                                 |
-| `updated_by`      | VARCHAR(254)   | Identifier of the actor who performed the last update.                      |
-| `status`          | SMALLINT       | 0 = enabled, 1 = disabled.                                                  |
+| Column            | Type          | Description                                            |
+| ----------------- | ------------- | ------------------------------------------------------ |
+| `id`              | VARCHAR(36)   | UUID of the client (primary key).                      |
+| `name`            | VARCHAR(1024) | Human‑readable name.                                   |
+| `domain_id`       | VARCHAR(36)   | Domain to which the client belongs.                    |
+| `parent_group_id` | VARCHAR(36)   | Optional group parent (for inheritance/scoping).       |
+| `identity`        | VARCHAR(254)  | Login identity (often an email or unique ID).          |
+| `secret`          | VARCHAR(4096) | Hashed authentication secret.                          |
+| `tags`            | TEXT[]        | Arbitrary list of client tags.                         |
+| `metadata`        | JSONB         | Free‑form structured metadata.                         |
+| `created_at`      | TIMESTAMPTZ   | Timestamp when the client was created.                 |
+| `updated_at`      | TIMESTAMPTZ   | Timestamp when the client was last updated.            |
+| `updated_by`      | VARCHAR(254)  | Identifier of the actor who performed the last update. |
+| `status`          | SMALLINT      | 0 = enabled, 1 = disabled.                             |
 
 #### Connections Table Structure
 
 Client ↔ Channel relationships are stored in the `connections` table:
 
-| Column        | Type         | Description                                                            |
-|-------------- | ------------ | ---------------------------------------------------------------------- |
-| `channel_id`  | VARCHAR(36)  | Channel UUID.                                                          |
-| `domain_id`   | VARCHAR(36)  | Domain of the client & channel.                                        |
-| `client_id`   | VARCHAR(36)  | Client UUID.                                                           |
-| `type`        | SMALLINT     | Connection type: `1 = Publish`, `2 = Subscribe`.                       |
+| Column       | Type        | Description                                      |
+| ------------ | ----------- | ------------------------------------------------ |
+| `channel_id` | VARCHAR(36) | Channel UUID.                                    |
+| `domain_id`  | VARCHAR(36) | Domain of the client & channel.                  |
+| `client_id`  | VARCHAR(36) | Client UUID.                                     |
+| `type`       | SMALLINT    | Connection type: `1 = Publish`, `2 = Subscribe`. |
 
 This guarantees that when a client is deleted, all channel connections are automatically removed.
 
@@ -366,6 +366,6 @@ The expected response is:
 This endpoint can be used for monitoring, CI/CD readiness checks, or basic diagnostics.
 
 For more information about service capabilities and its usage, please check out
-the [API documentation](https://docs.api.supermq.absmach.eu/?urls.primaryName=api%2Fclients.yaml).
+the [API documentation](https://docs.api.magistrala.absmach.eu/?urls.primaryName=api%2Fclients.yaml).
 
-[doc]: https://docs.supermq.absmach.eu/
+[doc]: https://magistrala.absmach.eu/docs/

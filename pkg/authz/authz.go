@@ -65,7 +65,7 @@ type PATReq struct {
 	EntityType string `json:"entity_type"`
 }
 
-// Authz is supermq authorization library.
+// Authz is magistrala authorization library.
 type Authorization interface {
 	Authorize(ctx context.Context, pr PolicyReq, pat *PATReq) error
 }

@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/absmach/supermq/notifications"
-	"github.com/absmach/supermq/pkg/events"
+	"github.com/absmach/magistrala/notifications"
+	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (
 	// Stream names.
-	sendInvitationStream   = "events.supermq.invitation.send"
-	acceptInvitationStream = "events.supermq.invitation.accept"
-	rejectInvitationStream = "events.supermq.invitation.reject"
+	sendInvitationStream   = "events.magistrala.invitation.send"
+	acceptInvitationStream = "events.magistrala.invitation.accept"
+	rejectInvitationStream = "events.magistrala.invitation.reject"
 
 	// Event data field keys.
 	invitedByKey     = "invited_by"

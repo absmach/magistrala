@@ -9,7 +9,7 @@
 package mocks
 
 import (
-	"github.com/absmach/supermq/bootstrap"
+	"github.com/absmach/magistrala/bootstrap"
 	mock "github.com/stretchr/testify/mock"
 )
 

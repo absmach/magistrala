@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
@@ -21,8 +21,8 @@ var (
 type Config struct {
 	Host        string `env:"HOST"           envDefault:"localhost"`
 	Port        string `env:"PORT"           envDefault:"5432"`
-	User        string `env:"USER"           envDefault:"supermq"`
-	Pass        string `env:"PASS"           envDefault:"supermq"`
+	User        string `env:"USER"           envDefault:"magistrala"`
+	Pass        string `env:"PASS"           envDefault:"magistrala"`
 	Name        string `env:"NAME"           envDefault:""`
 	SSLMode     string `env:"SSL_MODE"       envDefault:"disable"`
 	SSLCert     string `env:"SSL_CERT"       envDefault:""`

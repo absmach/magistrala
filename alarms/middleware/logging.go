@@ -8,8 +8,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/go-chi/chi/v5/middleware"
 )
 

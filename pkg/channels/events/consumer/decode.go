@@ -6,11 +6,11 @@ package consumer
 import (
 	"time"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/roles"
-	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
+	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 )
 
 const layout = "2006-01-02T15:04:05.999999Z"

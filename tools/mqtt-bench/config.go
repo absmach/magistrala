@@ -39,7 +39,7 @@ type logConfig struct {
 	Quiet bool `toml:"quiet" mapstructure:"quiet"`
 }
 
-type smqFile struct {
+type mgFile struct {
 	ConnFile string `toml:"connections_file" mapstructure:"connections_file"`
 }
 
@@ -54,7 +54,7 @@ type channel struct {
 	ChannelID string `toml:"channel_id" mapstructure:"channel_id"`
 }
 
-type superMQ struct {
+type magistralaConn struct {
 	Clients  []client  `toml:"clients" mapstructure:"clients"`
 	Channels []channel `toml:"channels" mapstructure:"channels"`
 }
@@ -64,5 +64,5 @@ type Config struct {
 	MQTT mqttConfig `toml:"mqtt" mapstructure:"mqtt"`
 	Test testConfig `toml:"test" mapstructure:"test"`
 	Log  logConfig  `toml:"log" mapstructure:"log"`
-	Smq  smqFile    `toml:"supermq" mapstructure:"supermq"`
+	Mg  mgFile    `toml:"magistrala" mapstructure:"magistrala"`
 }

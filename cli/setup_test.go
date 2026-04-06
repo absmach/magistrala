@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/absmach/supermq/cli"
+	"github.com/absmach/magistrala/cli"
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 )

@@ -6,10 +6,10 @@ package events
 import (
 	"time"
 
-	groups "github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/roles"
+	groups "github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const (

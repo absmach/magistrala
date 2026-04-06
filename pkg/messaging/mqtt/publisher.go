@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 )
 

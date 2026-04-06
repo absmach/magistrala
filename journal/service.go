@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const (
@@ -32,11 +32,11 @@ var (
 )
 
 type service struct {
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 	repository Repository
 }
 
-func NewService(idp supermq.IDProvider, repository Repository) Service {
+func NewService(idp magistrala.IDProvider, repository Repository) Service {
 	return &service{
 		idProvider: idp,
 		repository: repository,

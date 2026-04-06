@@ -14,52 +14,52 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	grpcGroupsV1 "github.com/absmach/supermq/api/grpc/groups/v1"
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/channels"
-	grpcapi "github.com/absmach/supermq/channels/api/grpc"
-	httpapi "github.com/absmach/supermq/channels/api/http"
-	"github.com/absmach/supermq/channels/cache"
-	"github.com/absmach/supermq/channels/events"
-	"github.com/absmach/supermq/channels/middleware"
-	channelsOps "github.com/absmach/supermq/channels/operations"
-	"github.com/absmach/supermq/channels/postgres"
-	pChannels "github.com/absmach/supermq/channels/private"
-	clientsOps "github.com/absmach/supermq/clients/operations"
-	domainsOps "github.com/absmach/supermq/domains/operations"
-	dpostgres "github.com/absmach/supermq/domains/postgres"
-	groupsOps "github.com/absmach/supermq/groups/operations"
-	gpostgres "github.com/absmach/supermq/groups/postgres"
-	redisclient "github.com/absmach/supermq/internal/clients/redis"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	jwksAuthn "github.com/absmach/supermq/pkg/authn/jwks"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	"github.com/absmach/supermq/pkg/callout"
-	pkgDomains "github.com/absmach/supermq/pkg/domains"
-	dconsumer "github.com/absmach/supermq/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	gconsumer "github.com/absmach/supermq/pkg/groups/events/consumer"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pg "github.com/absmach/supermq/pkg/postgres"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/sid"
-	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/channels"
+	grpcapi "github.com/absmach/magistrala/channels/api/grpc"
+	httpapi "github.com/absmach/magistrala/channels/api/http"
+	"github.com/absmach/magistrala/channels/cache"
+	"github.com/absmach/magistrala/channels/events"
+	"github.com/absmach/magistrala/channels/middleware"
+	channelsOps "github.com/absmach/magistrala/channels/operations"
+	"github.com/absmach/magistrala/channels/postgres"
+	pChannels "github.com/absmach/magistrala/channels/private"
+	clientsOps "github.com/absmach/magistrala/clients/operations"
+	domainsOps "github.com/absmach/magistrala/domains/operations"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	groupsOps "github.com/absmach/magistrala/groups/operations"
+	gpostgres "github.com/absmach/magistrala/groups/postgres"
+	redisclient "github.com/absmach/magistrala/internal/clients/redis"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	jwksAuthn "github.com/absmach/magistrala/pkg/authn/jwks"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	"github.com/absmach/magistrala/pkg/callout"
+	pkgDomains "github.com/absmach/magistrala/pkg/domains"
+	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	gconsumer "github.com/absmach/magistrala/pkg/groups/events/consumer"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pg "github.com/absmach/magistrala/pkg/postgres"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/sid"
+	spicedbdecoder "github.com/absmach/magistrala/pkg/spicedb"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -117,13 +117,13 @@ func main() {
 	}
 
 	var logger *slog.Logger
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -345,7 +345,7 @@ func main() {
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authnMiddleware, mux, logger, cfg.InstanceID, idp), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

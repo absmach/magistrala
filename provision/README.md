@@ -224,7 +224,7 @@ go test ./provision/...
 
 For an in-depth explanation of our Provision Service, see the [official documentation][doc].
 
-[doc]: https://docs.magistrala.absmach.eu/dev-guide/provision/
+[doc]: https://magistrala.absmach.eu/docs/dev-guide/services/provision/
 [magistrala]: https://github.com/absmach/magistrala
 [bootstrap]: https://github.com/absmach/magistrala/tree/main/bootstrap
 [export]: https://github.com/absmach/export

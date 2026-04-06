@@ -9,7 +9,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/roles"
 	corev1 "github.com/authzed/spicedb/pkg/proto/core/v1"
 	"github.com/authzed/spicedb/pkg/schemadsl/compiler"
 	"github.com/authzed/spicedb/pkg/schemadsl/input"

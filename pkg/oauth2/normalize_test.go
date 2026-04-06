@@ -6,7 +6,7 @@ package oauth2
 import (
 	"testing"
 
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/users"
 	"github.com/stretchr/testify/assert"
 )
 

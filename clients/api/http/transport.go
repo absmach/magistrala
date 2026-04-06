@@ -7,18 +7,18 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/clients"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/clients"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // MakeHandler returns a HTTP handler for clients and Groups API endpoints.
-func MakeHandler(tsvc clients.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string, idp supermq.IDProvider) http.Handler {
+func MakeHandler(tsvc clients.Service, authn smqauthn.AuthNMiddleware, mux *chi.Mux, logger *slog.Logger, instanceID string, idp magistrala.IDProvider) http.Handler {
 	mux = clientsHandler(tsvc, authn, mux, logger, idp)
 
-	mux.Get("/health", supermq.Health("clients", instanceID))
+	mux.Get("/health", magistrala.Health("clients", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

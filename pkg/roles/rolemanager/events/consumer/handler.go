@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 )
 
 const (

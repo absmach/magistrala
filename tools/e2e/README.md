@@ -1,4 +1,4 @@
-# SuperMQ Users Groups Clients and Channels E2E Testing Tool
+# Magistrala Users Groups Clients and Channels E2E Testing Tool
 
 A simple utility to create a list of groups and users connected to these groups and channels and clients connected to these channels.
 
@@ -13,12 +13,11 @@ make
 
 ```bash
 ./e2e --help
-Tool for testing end-to-end flow of SuperMQ by doing a couple of operations namely:
+Tool for testing end-to-end flow of Magistrala by doing a couple of operations namely:
 1. Creating, viewing, updating and changing status of users, groups, clients and channels.
 2. Connecting users and groups to each other and clients and channels to each other.
 3. Sending messages from clients to channels on all 4 protocol adapters (HTTP, WS, CoAP and MQTT).
-Complete documentation is available at https://docs.supermq.absmach.eu
-
+Complete documentation is available at https://magistrala.absmach.eu/docs/
 
 Usage:
 
@@ -28,7 +27,7 @@ Usage:
 Examples:
 
 Here is a simple example of using e2e tool.
-Use the following commands from the root SuperMQ directory:
+Use the following commands from the root Magistrala directory:
 
 go run tools/e2e/cmd/main.go
 go run tools/e2e/cmd/main.go --host 142.93.118.47
@@ -38,19 +37,19 @@ go run tools/e2e/cmd/main.go --host localhost --num 10 --num_of_messages 100 --p
 Flags:
 
   -h, --help                   help for e2e
-  -H, --host string            address for a running SuperMQ instance (default "localhost")
+  -H, --host string            address for a running Magistrala instance (default "localhost")
   -n, --num uint               number of users, groups, channels and clients to create and connect (default 10)
   -N, --num_of_messages uint   number of messages to send (default 10)
   -p, --prefix string          name prefix for users, groups, clients and channels
 ```
 
-To use `-H` option, you can specify the address for the SuperMQ instance as an argument when running the program. For example, if the SuperMQ instance is running on another computer with the IP address 192.168.0.1, you could use the following command:
+To use `-H` option, you can specify the address for the Magistrala instance as an argument when running the program. For example, if the Magistrala instance is running on another computer with the IP address 192.168.0.1, you could use the following command:
 
 ```bash
 go run tools/e2e/cmd/main.go --host 142.93.118.47
 ```
 
-This will tell the program to connect to the SuperMQ instance running on the specified IP address.
+This will tell the program to connect to the Magistrala instance running on the specified IP address.
 
 If you want to create a list of channels with certificates:
 

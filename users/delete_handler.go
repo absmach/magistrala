@@ -14,9 +14,9 @@ import (
 	"log/slog"
 	"time"
 
-	grpcDomainsV1 "github.com/absmach/supermq/api/grpc/domains/v1"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 const defLimit = uint64(100)

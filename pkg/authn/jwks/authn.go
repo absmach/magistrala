@@ -12,14 +12,14 @@ import (
 	"sync"
 	"time"
 
-	grpcAuthV1 "github.com/absmach/supermq/api/grpc/auth/v1"
-	smqauth "github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/api/grpc/auth"
-	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/grpcclient"
+	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
+	smqauth "github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/api/grpc/auth"
+	smqjwt "github.com/absmach/magistrala/auth/tokenizer/util"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
 	"github.com/lestrrat-go/jwx/v2/jwt"
@@ -27,7 +27,7 @@ import (
 )
 
 const (
-	issuerName   = "supermq.auth"
+	issuerName   = "magistrala.auth"
 	acceptHeader = "application/json"
 
 	fetchKeyDeadline = 10 * time.Second

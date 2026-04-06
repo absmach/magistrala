@@ -7,10 +7,10 @@ import (
 	"context"
 	"testing"
 
-	"github.com/absmach/supermq/notifications"
-	"github.com/absmach/supermq/notifications/events"
-	"github.com/absmach/supermq/notifications/mocks"
-	smqevents "github.com/absmach/supermq/pkg/events"
+	"github.com/absmach/magistrala/notifications"
+	"github.com/absmach/magistrala/notifications/events"
+	"github.com/absmach/magistrala/notifications/mocks"
+	smqevents "github.com/absmach/magistrala/pkg/events"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -130,7 +130,7 @@ func TestHandleInvitationSent(t *testing.T) {
 
 			var handlerConfig smqevents.SubscriberConfig
 			subscriber.On("Subscribe", mock.Anything, mock.MatchedBy(func(cfg smqevents.SubscriberConfig) bool {
-				if cfg.Stream == "events.supermq.invitation.send" {
+				if cfg.Stream == "events.magistrala.invitation.send" {
 					handlerConfig = cfg
 					return true
 				}
@@ -208,7 +208,7 @@ func TestHandleInvitationAccepted(t *testing.T) {
 
 			var handlerConfig smqevents.SubscriberConfig
 			subscriber.On("Subscribe", mock.Anything, mock.MatchedBy(func(cfg smqevents.SubscriberConfig) bool {
-				if cfg.Stream == "events.supermq.invitation.accept" {
+				if cfg.Stream == "events.magistrala.invitation.accept" {
 					handlerConfig = cfg
 					return true
 				}
@@ -281,7 +281,7 @@ func TestHandleInvitationRejected(t *testing.T) {
 
 			var handlerConfig smqevents.SubscriberConfig
 			subscriber.On("Subscribe", mock.Anything, mock.MatchedBy(func(cfg smqevents.SubscriberConfig) bool {
-				if cfg.Stream == "events.supermq.invitation.reject" {
+				if cfg.Stream == "events.magistrala.invitation.reject" {
 					handlerConfig = cfg
 					return true
 				}

@@ -11,8 +11,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/pkg/messaging"
-	broker "github.com/absmach/supermq/pkg/messaging/nats"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/nats"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -24,7 +24,7 @@ const (
 
 var cfg = jetstream.StreamConfig{
 	Name:              "writers",
-	Description:       "SuperMQ Rules Engine stream for handling internal messages",
+	Description:       "Magistrala Rules Engine stream for handling internal messages",
 	Subjects:          []string{"writers.>"},
 	Retention:         jetstream.LimitsPolicy,
 	MaxMsgsPerSubject: 1e6,

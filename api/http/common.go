@@ -11,12 +11,12 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/absmach/supermq"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -158,7 +158,7 @@ func ValidateUserName(name string) error {
 
 // EncodeResponse encodes successful response.
 func EncodeResponse(_ context.Context, w http.ResponseWriter, response any) error {
-	if ar, ok := response.(supermq.Response); ok {
+	if ar, ok := response.(magistrala.Response); ok {
 		for k, v := range ar.Headers() {
 			w.Header().Set(k, v)
 		}

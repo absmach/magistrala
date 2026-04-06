@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 	mgsenml "github.com/absmach/senml"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers/senml"
 	"github.com/stretchr/testify/assert"
 )
 

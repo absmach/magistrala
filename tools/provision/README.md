@@ -1,9 +1,9 @@
-# SuperMQ Clients and Channels Provisioning Tool
+# Magistrala Clients and Channels Provisioning Tool
 
 A simple utility to create a list of channels and clients connected to these channels with possibility to create certificates for mTLS use case.
 
 This tool is useful for testing, and it creates a TOML format output (on stdout, can be redirected into the file as needed)
-that can be used by SuperMQ MQTT benchmarking tool (`mqtt-bench`).
+that can be used by Magistrala MQTT benchmarking tool (`mqtt-bench`).
 
 ## Installation
 
@@ -16,9 +16,8 @@ make
 
 ```bash
 ./provision --help
-Tool for provisioning series of SuperMQ channels and clients and connecting them together.
-Complete documentation is available at https://docs.supermq.absmach.eu
-
+Tool for provisioning series of Magistrala channels and clients and connecting them together.
+Complete documentation is available at https://magistrala.absmach.eu/docs/
 Usage:
   provision [flags]
 
@@ -26,24 +25,24 @@ Flags:
       --ca string         CA for creating and signing clients certificate (default "ca.crt")
       --cakey string      ca.key for creating and signing clients certificate (default "ca.key")
   -h, --help              help for provision
-      --host string       address for supermq instance (default "https://localhost")
+      --host string       address for magistrala instance (default "https://localhost")
       --num int           number of channels and clients to create and connect (default 10)
-  -p, --password string   supermq users password
+  -p, --password string   magistrala users password
       --ssl               create certificates for mTLS access
-  -u, --username string   supermq user
+  -u, --username string   magistrala user
       --prefix string     name prefix for clients and channels
 ```
 
 Example:
 
 ```bash
-go run tools/provision/cmd/main.go -u test@supermq.com -p test1234 --host https://142.93.118.47
+go run tools/provision/cmd/main.go -u test@magistrala.com -p test1234 --host https://142.93.118.47
 ```
 
 If you want to create a list of channels with certificates:
 
 ```bash
-go run tools/provision/cmd/main.go  --host http://localhost --num 10 -u test@supermq.com -p test1234 --ssl true --ca docker/ssl/certs/ca.crt --cakey docker/ssl/certs/ca.key
+go run tools/provision/cmd/main.go  --host http://localhost --num 10 -u test@magistrala.com -p test1234 --ssl true --ca docker/ssl/certs/ca.crt --cakey docker/ssl/certs/ca.key
 
 ```
 

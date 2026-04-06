@@ -6,10 +6,10 @@ package grpc
 import (
 	"context"
 
-	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/certs/api/http"
-	"github.com/absmach/supermq/pkg/errors"
+	grpcCertsV1 "github.com/absmach/magistrala/api/grpc/certs/v1"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/certs/api/http"
+	"github.com/absmach/magistrala/pkg/errors"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

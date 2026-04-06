@@ -11,7 +11,7 @@ package v1
 
 import (
 	context "context"
-	v1 "github.com/absmach/supermq/api/grpc/common/v1"
+	v1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -33,7 +33,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
 // DomainsService is a service that provides access to
-// domains functionalities for SuperMQ services.
+// domains functionalities for Magistrala services.
 type DomainsServiceClient interface {
 	DeleteUserFromDomains(ctx context.Context, in *DeleteUserReq, opts ...grpc.CallOption) (*DeleteUserRes, error)
 	RetrieveStatus(ctx context.Context, in *v1.RetrieveEntityReq, opts ...grpc.CallOption) (*v1.RetrieveEntityRes, error)
@@ -83,7 +83,7 @@ func (c *domainsServiceClient) RetrieveIDByRoute(ctx context.Context, in *v1.Ret
 // for forward compatibility.
 //
 // DomainsService is a service that provides access to
-// domains functionalities for SuperMQ services.
+// domains functionalities for Magistrala services.
 type DomainsServiceServer interface {
 	DeleteUserFromDomains(context.Context, *DeleteUserReq) (*DeleteUserRes, error)
 	RetrieveStatus(context.Context, *v1.RetrieveEntityReq) (*v1.RetrieveEntityRes, error)

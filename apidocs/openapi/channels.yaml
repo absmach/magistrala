@@ -3,16 +3,16 @@
 
 openapi: 3.0.3
 info:
-  title: SuperMQ Channels Service
+  title: Magistrala Channels Service
   description: |
     This is the Channels Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform channels. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
-    - [The SuperMQ repository](https://github.com/absmach/supermq)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@absmach.eu
   license:
     name: Apache 2.0
-    url: https://github.com/absmach/supermq/blob/main/LICENSE
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
   version: 0.18.0
 
 servers:
@@ -24,17 +24,17 @@ tags:
     description: CRUD operations for your channels
     externalDocs:
       description: Find out more about channels
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
   - name: Connections
     description: All operations involving channel and client connections
     externalDocs:
       description: Find out more about channel and client connections
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
   - name: Health
     description: Health check operations
     externalDocs:
       description: Find out more about health checks
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /{domainID}/channels:

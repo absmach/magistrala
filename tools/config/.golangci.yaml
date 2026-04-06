@@ -65,17 +65,17 @@ linters:
       alias:
         - pkg: github.com/absmach/callhome/pkg/client
           alias: chclient
-        - pkg: github.com/absmach/supermq/logger
+        - pkg: github.com/absmach/magistrala/logger
           alias: smqlog
-        - pkg: github.com/absmach/supermq/pkg/errors/service
+        - pkg: github.com/absmach/magistrala/pkg/errors/service
           alias: svcerr
-        - pkg: github.com/absmach/supermq/pkg/errors/repository
+        - pkg: github.com/absmach/magistrala/pkg/errors/repository
           alias: repoerr
-        - pkg: github.com/absmach/supermq/pkg/sdk/mocks
+        - pkg: github.com/absmach/magistrala/pkg/sdk/mocks
           alias: sdkmocks
-        - pkg: github.com/absmach/supermq/api/http/util
+        - pkg: github.com/absmach/magistrala/api/http/util
           alias: apiutil
-        - pkg: github.com/absmach/supermq/api/http
+        - pkg: github.com/absmach/magistrala/api/http
           alias: api
       no-unaliased: true
       no-extra-aliases: false

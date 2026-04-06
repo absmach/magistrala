@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	smqlog "github.com/absmach/supermq/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/pelletier/go-toml"
 )
 
@@ -23,7 +23,7 @@ func Benchmark(cfg Config) error {
 	if err := checkConnection(cfg.MQTT.Broker.URL, 1); err != nil {
 		return err
 	}
-	logger, err := smqlog.New(os.Stdout, "debug")
+	logger, err := mglog.New(os.Stdout, "debug")
 	if err != nil {
 		return err
 	}
@@ -44,14 +44,14 @@ func Benchmark(cfg Config) error {
 		caByte, _ = io.ReadAll(caFile)
 	}
 
-	data, err := os.ReadFile(cfg.Smq.ConnFile)
+	data, err := os.ReadFile(cfg.Mg.ConnFile)
 	if err != nil {
 		return fmt.Errorf("error loading connections file: %s", err)
 	}
 
-	mg := superMQ{}
+	mg := magistralaConn{}
 	if err := toml.Unmarshal(data, &mg); err != nil {
-		return fmt.Errorf("cannot load SuperMQ connections config %s \nUse tools/provision to create file", cfg.Smq.ConnFile)
+		return fmt.Errorf("cannot load Magistrala connections config %s \nUse tools/provision to create file", cfg.Mg.ConnFile)
 	}
 
 	resCh := make(chan *runResults)

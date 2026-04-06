@@ -7,10 +7,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/absmach/supermq/consumers"
-	"github.com/absmach/supermq/pkg/server"
-	smqjson "github.com/absmach/supermq/pkg/transformers/json"
-	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/pkg/server"
+	smqjson "github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

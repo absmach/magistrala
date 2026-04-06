@@ -174,7 +174,7 @@ jobs:
           export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
           export DOMAIN_ID=$(curl -sSX POST $CREATE_DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"route\":\"$DOMAIN_NAME\"}" | jq -r .id)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
-          export CLIENT_SECRET=$(supermq-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
+          export CLIENT_SECRET=$(magistrala-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
           echo "CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Run Users API tests

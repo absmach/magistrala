@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/stretchr/testify/assert"
 )
 

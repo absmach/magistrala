@@ -15,8 +15,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/tokenizer/asymmetric"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/tokenizer/asymmetric"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

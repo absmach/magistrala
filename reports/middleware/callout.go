@@ -7,14 +7,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/callout"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	mgPolicies "github.com/absmach/supermq/pkg/policies"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
-	"github.com/absmach/supermq/reports"
-	"github.com/absmach/supermq/reports/operations"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/callout"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
+	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/magistrala/reports/operations"
 )
 
 var _ reports.Service = (*calloutMiddleware)(nil)

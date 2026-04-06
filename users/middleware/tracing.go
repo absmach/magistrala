@@ -6,10 +6,10 @@ package middleware
 import (
 	"context"
 
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/tracing"
-	users "github.com/absmach/supermq/users"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/tracing"
+	users "github.com/absmach/magistrala/users"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

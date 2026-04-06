@@ -9,14 +9,14 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/re"
-	"github.com/absmach/supermq/re/api"
-	remocks "github.com/absmach/supermq/re/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/re/api"
+	remocks "github.com/absmach/magistrala/re/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -35,7 +35,7 @@ var testRule = sdk.Rule{
 
 func setupRules() (*httptest.Server, *remocks.Service, *authnmocks.Authentication) {
 	rsvc := new(remocks.Service)
-	log := smqlog.NewMock()
+	log := mglog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := chi.NewRouter()

@@ -7,13 +7,13 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/alarms"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/alarms"
 )
 
 var (
-	_ supermq.Response = (*alarmRes)(nil)
-	_ supermq.Response = (*alarmsPageRes)(nil)
+	_ magistrala.Response = (*alarmRes)(nil)
+	_ magistrala.Response = (*alarmsPageRes)(nil)
 )
 
 type alarmRes struct {

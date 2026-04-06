@@ -13,27 +13,27 @@ import (
 	"strings"
 	"time"
 
-	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
-	"github.com/absmach/supermq/certs"
-	certsgrpc "github.com/absmach/supermq/certs/api/grpc"
-	httpapi "github.com/absmach/supermq/certs/api/http"
-	"github.com/absmach/supermq/certs/middleware"
-	"github.com/absmach/supermq/certs/pki"
-	"github.com/absmach/supermq/certs/postgres"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	"github.com/absmach/supermq/pkg/jaeger"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	smq "github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
+	grpcCertsV1 "github.com/absmach/magistrala/api/grpc/certs/v1"
+	"github.com/absmach/magistrala/certs"
+	certsgrpc "github.com/absmach/magistrala/certs/api/grpc"
+	httpapi "github.com/absmach/magistrala/certs/api/http"
+	"github.com/absmach/magistrala/certs/middleware"
+	"github.com/absmach/magistrala/certs/pki"
+	"github.com/absmach/magistrala/certs/postgres"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	"github.com/absmach/magistrala/pkg/jaeger"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	mgserver "github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v10"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
@@ -92,7 +92,7 @@ func main() {
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		cfg.InstanceID, err = uuid.New().ID()
@@ -222,7 +222,7 @@ func main() {
 	}
 	defer authzHandler.Close()
 	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
-	httpServerConfig := smq.Config{Port: defSvcHTTPPort}
+	httpServerConfig := mgserver.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))
 		exitCode = 1
@@ -231,7 +231,7 @@ func main() {
 
 	svc := newService(ctx, db, dbConfig, tracer, logger, pkiAgent, authz)
 
-	grpcServerConfig := smq.Config{Port: defSvcGRPCPort}
+	grpcServerConfig := mgserver.Config{Port: defSvcGRPCPort}
 	if err := env.ParseWithOptions(&grpcServerConfig, env.Options{Prefix: envPrefixGRPC}); err != nil {
 		log.Printf("failed to load %s gRPC server configuration : %s", svcName, err.Error())
 		exitCode = 1
@@ -255,7 +255,7 @@ func main() {
 	})
 
 	g.Go(func() error {
-		return smq.StopSignalHandler(ctx, cancel, logger, svcName, hs, gs)
+		return mgserver.StopSignalHandler(ctx, cancel, logger, svcName, hs, gs)
 	})
 
 	if err := g.Wait(); err != nil {

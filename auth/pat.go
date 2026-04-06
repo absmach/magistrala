@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/permissions"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/permissions"
 )
 
 const (

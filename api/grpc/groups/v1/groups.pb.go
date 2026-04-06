@@ -10,7 +10,7 @@
 package v1
 
 import (
-	v1 "github.com/absmach/supermq/api/grpc/common/v1"
+	v1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -30,7 +30,7 @@ const file_groups_v1_groups_proto_rawDesc = "" +
 	"\n" +
 	"\x16groups/v1/groups.proto\x12\tgroups.v1\x1a\x16common/v1/common.proto2_\n" +
 	"\rGroupsService\x12N\n" +
-	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B/Z-github.com/absmach/supermq/api/grpc/groups/v1b\x06proto3"
+	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00B2Z0github.com/absmach/magistrala/api/grpc/groups/v1b\x06proto3"
 
 var file_groups_v1_groups_proto_goTypes = []any{
 	(*v1.RetrieveEntityReq)(nil), // 0: common.v1.RetrieveEntityReq

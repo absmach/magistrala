@@ -7,7 +7,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const protocol = "nats"

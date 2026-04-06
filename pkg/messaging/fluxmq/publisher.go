@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var _ messaging.Publisher = (*publisher)(nil)

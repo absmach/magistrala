@@ -12,8 +12,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/policies"
 	mock "github.com/stretchr/testify/mock"
 )
 

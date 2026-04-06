@@ -8,11 +8,11 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/provision"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/provision"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 )

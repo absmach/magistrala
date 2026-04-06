@@ -6,7 +6,7 @@ package grpc
 import (
 	"context"
 
-	groups "github.com/absmach/supermq/groups/private"
+	groups "github.com/absmach/magistrala/groups/private"
 	"github.com/go-kit/kit/endpoint"
 )
 

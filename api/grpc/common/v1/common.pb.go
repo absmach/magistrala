@@ -626,7 +626,7 @@ const file_common_v1_common_proto_rawDesc = "" +
 	"\x04type\x18\x04 \x01(\rR\x04type\"I\n" +
 	"\x14RetrieveIDByRouteReq\x12\x14\n" +
 	"\x05route\x18\x01 \x01(\tR\x05route\x12\x1b\n" +
-	"\tdomain_id\x18\x02 \x01(\tR\bdomainIdB/Z-github.com/absmach/supermq/api/grpc/common/v1b\x06proto3"
+	"\tdomain_id\x18\x02 \x01(\tR\bdomainIdB2Z0github.com/absmach/magistrala/api/grpc/common/v1b\x06proto3"
 
 var (
 	file_common_v1_common_proto_rawDescOnce sync.Once

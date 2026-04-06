@@ -6,8 +6,8 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/notifications"
-	smqTracing "github.com/absmach/supermq/pkg/tracing"
+	"github.com/absmach/magistrala/notifications"
+	smqTracing "github.com/absmach/magistrala/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

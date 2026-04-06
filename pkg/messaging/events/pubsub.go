@@ -6,16 +6,16 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const (
-	supermqPrefix     = "supermq."
-	publishStream     = supermqPrefix + "publish"
-	subscribeStream   = supermqPrefix + "subscribe"
-	unsubscribeStream = supermqPrefix + "unsubscribe"
+	magistralaPrefix     = "magistrala."
+	publishStream     = magistralaPrefix + "publish"
+	subscribeStream   = magistralaPrefix + "subscribe"
+	unsubscribeStream = magistralaPrefix + "unsubscribe"
 )
 
 var _ messaging.PubSub = (*pubsubES)(nil)

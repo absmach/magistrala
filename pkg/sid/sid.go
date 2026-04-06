@@ -7,8 +7,8 @@ package sid
 import (
 	"encoding/binary"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid/v5"
 	"github.com/sqids/sqids-go"
 )
@@ -19,14 +19,14 @@ var (
 	ErrGeneratingID        = errors.New("generating id failed")
 	ErrEncodeID            = errors.New("encoding id failed")
 )
-var _ supermq.IDProvider = (*sidProvider)(nil)
+var _ magistrala.IDProvider = (*sidProvider)(nil)
 
 type sidProvider struct {
 	sidEncoder *sqids.Sqids
 }
 
 // New instantiates a short ID provider.
-func New() (supermq.IDProvider, error) {
+func New() (magistrala.IDProvider, error) {
 	sidEncoder, err := sqids.New(sqids.Options{
 		Alphabet: "FxnXM1kBN6cuhsAvjW3Co7l2RePyY8DwaU04Tzt9fHQrqSVKdpimLGIJOgb5ZE",
 	})

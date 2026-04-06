@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/clients/cache"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/clients/cache"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/stretchr/testify/assert"
 )
 

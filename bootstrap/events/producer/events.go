@@ -4,8 +4,8 @@
 package producer
 
 import (
-	"github.com/absmach/supermq/bootstrap"
-	"github.com/absmach/supermq/pkg/events"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/pkg/events"
 )
 
 const (

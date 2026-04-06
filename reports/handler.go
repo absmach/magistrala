@@ -9,7 +9,7 @@ import (
 	"log/slog"
 	"time"
 
-	pkglog "github.com/absmach/supermq/pkg/logger"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
 )
 
 func (r *report) StartScheduler(ctx context.Context) error {

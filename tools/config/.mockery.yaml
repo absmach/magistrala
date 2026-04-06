@@ -12,63 +12,63 @@ force-file-write: true
 include-auto-generated: true
 
 packages:
-  github.com/absmach/supermq/api/grpc/clients/v1:
+  github.com/absmach/magistrala/api/grpc/clients/v1:
     interfaces:
       ClientsServiceClient:
         config:
           dir: "./clients/mocks"
           structname: "ClientsServiceClient"
           filename: "clients_client.go"
-  github.com/absmach/supermq/api/grpc/domains/v1:
+  github.com/absmach/magistrala/api/grpc/domains/v1:
     interfaces:
       DomainsServiceClient:
         config:
           dir: "./domains/mocks"
           structname: "DomainsServiceClient"
           filename: "domains_client.go"
-  github.com/absmach/supermq/api/grpc/token/v1:
+  github.com/absmach/magistrala/api/grpc/token/v1:
     interfaces:
       TokenServiceClient:
         config:
           dir: "./auth/mocks"
           structname: "TokenServiceClient"
           filename: "token_client.go"
-  github.com/absmach/supermq/api/grpc/channels/v1:
+  github.com/absmach/magistrala/api/grpc/channels/v1:
     interfaces:
       ChannelsServiceClient:
         config:
           dir: "./channels/mocks"
           structname: "ChannelsServiceClient"
           filename: "channels_client.go"
-  github.com/absmach/supermq/api/grpc/groups/v1:
+  github.com/absmach/magistrala/api/grpc/groups/v1:
     interfaces:
       GroupsServiceClient:
         config:
           dir: "./groups/mocks"
           structname: "GroupsServiceClient"
           filename: "groups_client.go"
-  github.com/absmach/supermq/api/grpc/certs/v1:
+  github.com/absmach/magistrala/api/grpc/certs/v1:
     interfaces:
       CertsServiceClient:
         config:
           dir: "./certs/mocks"
           structname: "CertsServiceClient"
           filename: "certs_client.go"
-  github.com/absmach/supermq/api/grpc/readers/v1:
+  github.com/absmach/magistrala/api/grpc/readers/v1:
     interfaces:
       ReadersServiceClient:
         config:
           dir: "./readers/mocks"
           structname: "ReadersServiceClient"
           filename: "readers_client.go"
-  github.com/absmach/supermq/pkg/sdk:
+  github.com/absmach/magistrala/pkg/sdk:
     interfaces:
       SDK:
         config:
           dir: "./pkg/sdk/mocks"
           structname: "SDK"
           filename: "sdk.go"
-  github.com/absmach/supermq/auth:
+  github.com/absmach/magistrala/auth:
     interfaces:
       Authz:
       Cache:
@@ -79,117 +79,117 @@ packages:
       PATS:
       PATSRepository:
       Service:
-  github.com/absmach/supermq/channels:
+  github.com/absmach/magistrala/channels:
     interfaces:
       Cache:
       Repository:
       Service:
-  github.com/absmach/supermq/channels/private:
+  github.com/absmach/magistrala/channels/private:
     interfaces:
       Service:
-  github.com/absmach/supermq/clients:
+  github.com/absmach/magistrala/clients:
     interfaces:
       Repository:
       Cache:
       Service:
-  github.com/absmach/supermq/clients/private:
+  github.com/absmach/magistrala/clients/private:
     interfaces:
       Service:
-  github.com/absmach/supermq/certs:
+  github.com/absmach/magistrala/certs:
     interfaces:
       Agent:
       Service:
       Repository:
-  github.com/absmach/supermq/consumers:
+  github.com/absmach/magistrala/consumers:
     interfaces:
       Notifier:
-  github.com/absmach/supermq/consumers/notifiers:
+  github.com/absmach/magistrala/consumers/notifiers:
     interfaces:
       Service:
       SubscriptionsRepository:
-  github.com/absmach/supermq/domains:
+  github.com/absmach/magistrala/domains:
     interfaces:
       Repository:
       Cache:
       Service:
-  github.com/absmach/supermq/domains/private:
+  github.com/absmach/magistrala/domains/private:
     interfaces:
       Service:
-  github.com/absmach/supermq/groups:
-    interfaces:
-      Repository:
-      Service:
-  github.com/absmach/supermq/groups/private:
-    interfaces:
-      Service:
-  github.com/absmach/supermq/journal:
+  github.com/absmach/magistrala/groups:
     interfaces:
       Repository:
       Service:
-  github.com/absmach/supermq/pkg/authn:
+  github.com/absmach/magistrala/groups/private:
+    interfaces:
+      Service:
+  github.com/absmach/magistrala/journal:
+    interfaces:
+      Repository:
+      Service:
+  github.com/absmach/magistrala/pkg/authn:
     interfaces:
       Authentication:
       AuthNMiddleware:
-  github.com/absmach/supermq/pkg/authz:
+  github.com/absmach/magistrala/pkg/authz:
     interfaces:
       Authorization:
-  github.com/absmach/supermq/pkg/emailer:
+  github.com/absmach/magistrala/pkg/emailer:
     interfaces:
       Emailer:
-  github.com/absmach/supermq/pkg/events:
+  github.com/absmach/magistrala/pkg/events:
     interfaces:
       Publisher:
       Subscriber:
-  github.com/absmach/supermq/pkg/messaging:
+  github.com/absmach/magistrala/pkg/messaging:
     interfaces:
       PubSub:
-  github.com/absmach/supermq/pkg/oauth2:
+  github.com/absmach/magistrala/pkg/oauth2:
     interfaces:
       Provider:
-  github.com/absmach/supermq/pkg/policies:
+  github.com/absmach/magistrala/pkg/policies:
     interfaces:
       Evaluator:
       Service:
-  github.com/absmach/supermq/pkg/roles:
+  github.com/absmach/magistrala/pkg/roles:
     interfaces:
       Provisioner:
       RoleManager:
       Repository:
-  github.com/absmach/supermq/pkg/callout:
+  github.com/absmach/magistrala/pkg/callout:
     interfaces:
       Callout:
-  github.com/absmach/supermq/pkg/ticker:
+  github.com/absmach/magistrala/pkg/ticker:
     interfaces:
       Ticker:
-  github.com/absmach/supermq/readers:
+  github.com/absmach/magistrala/readers:
     interfaces:
       MessageRepository:
-  github.com/absmach/supermq/re:
+  github.com/absmach/magistrala/re:
     interfaces:
       Repository:
       Service:
-  github.com/absmach/supermq/bootstrap:
+  github.com/absmach/magistrala/bootstrap:
     interfaces:
       ConfigRepository:
       ConfigReader:
       Service:
-  github.com/absmach/supermq/provision:
+  github.com/absmach/magistrala/provision:
     interfaces:
       Service:
-  github.com/absmach/supermq/alarms:
-    interfaces:
-      Service:
-      Repository:
-  github.com/absmach/supermq/reports:
+  github.com/absmach/magistrala/alarms:
     interfaces:
       Service:
       Repository:
-  github.com/absmach/supermq/users:
+  github.com/absmach/magistrala/reports:
+    interfaces:
+      Service:
+      Repository:
+  github.com/absmach/magistrala/users:
     interfaces:
       Emailer:
       Hasher:
       Repository:
       Service:
-  github.com/absmach/supermq/notifications:
+  github.com/absmach/magistrala/notifications:
     interfaces:
       Notifier:

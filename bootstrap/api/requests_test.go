@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/bootstrap"
-	"github.com/absmach/supermq/internal/testsutil"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/stretchr/testify/assert"
 )
 

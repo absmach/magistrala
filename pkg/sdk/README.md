@@ -1,18 +1,18 @@
-# SuperMQ Go SDK
+# Magistrala Go SDK
 
-Go SDK, a Go driver for SuperMQ HTTP API.
+Go SDK, a Go driver for Magistrala HTTP API.
 
 Provides comprehensive functionality for system administration (provisioning), messaging, user management, domain management, groups, channels, clients, certificates, invitations, and journal operations.
 
 ## Installation
 
-Import `"github.com/absmach/supermq/pkg/sdk"` in your Go package.
+Import `"github.com/absmach/magistrala/pkg/sdk"` in your Go package.
 
 ```go
-import "github.com/absmach/supermq/pkg/sdk"
+import "github.com/absmach/magistrala/pkg/sdk"
 ```
 
-You can check [SuperMQ CLI](https://github.com/absmach/supermq/tree/main/cli) as an example of SDK usage.
+You can check [Magistrala CLI](https://github.com/absmach/magistrala/tree/main/cli) as an example of SDK usage.
 
 ## Quick Start
 
@@ -20,7 +20,7 @@ You can check [SuperMQ CLI](https://github.com/absmach/supermq/tree/main/cli) as
 import (
     "context"
     "fmt"
-    "github.com/absmach/supermq/pkg/sdk"
+    "github.com/absmach/magistrala/pkg/sdk"
 )
 
 func main() {

@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 	broker "github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"google.golang.org/protobuf/proto"
@@ -87,7 +87,7 @@ func (ps *pubsub) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig)
 	consumerConfig := jetstream.ConsumerConfig{
 		Name:          formatConsumerName(cfg.Topic, cfg.ID),
 		Durable:       formatConsumerName(cfg.Topic, cfg.ID),
-		Description:   fmt.Sprintf("SuperMQ consumer of id %s for cfg.Topic %s", cfg.ID, cfg.Topic),
+		Description:   fmt.Sprintf("Magistrala consumer of id %s for cfg.Topic %s", cfg.ID, cfg.Topic),
 		DeliverPolicy: jetstream.DeliverNewPolicy,
 		FilterSubject: natsTopic,
 	}

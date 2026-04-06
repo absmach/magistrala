@@ -18,8 +18,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/mitchellh/mapstructure"
 	"github.com/openbao/openbao/api/v2"
 	"golang.org/x/crypto/ocsp"

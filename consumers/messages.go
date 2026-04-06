@@ -10,12 +10,12 @@ import (
 	"os"
 	"strings"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers"
-	"github.com/absmach/supermq/pkg/transformers/json"
-	"github.com/absmach/supermq/pkg/transformers/senml"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers"
+	"github.com/absmach/magistrala/pkg/transformers/json"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/pelletier/go-toml"
 )
 

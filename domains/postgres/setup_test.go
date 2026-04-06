@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	dpostgres "github.com/absmach/supermq/domains/postgres"
-	"github.com/absmach/supermq/pkg/postgres"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	"github.com/absmach/magistrala/pkg/postgres"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 	dockertest "github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"

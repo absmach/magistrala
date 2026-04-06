@@ -10,14 +10,14 @@ import (
 
 	csdk "github.com/absmach/certs/sdk"
 	csdkmocks "github.com/absmach/certs/sdk/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	smqSDK "github.com/absmach/supermq/pkg/sdk"
-	sdkmocks "github.com/absmach/supermq/pkg/sdk/mocks"
-	"github.com/absmach/supermq/provision"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	smqSDK "github.com/absmach/magistrala/pkg/sdk"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/provision"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -27,7 +27,7 @@ var validToken = "valid"
 func TestMapping(t *testing.T) {
 	mgsdk := new(sdkmocks.SDK)
 	certs := new(csdkmocks.SDK)
-	svc := provision.New(validConfig, mgsdk, certs, smqlog.NewMock())
+	svc := provision.New(validConfig, mgsdk, certs, mglog.NewMock())
 
 	cases := []struct {
 		desc    string
@@ -207,7 +207,7 @@ func TestCert(t *testing.T) {
 	certs := new(csdkmocks.SDK)
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			svc := provision.New(c.config, mgsdk, certs, smqlog.NewMock())
+			svc := provision.New(c.config, mgsdk, certs, mglog.NewMock())
 
 			call1 := mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
 			var call2 *mock.Call

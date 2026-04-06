@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/redis/go-redis/v9"
 )
 

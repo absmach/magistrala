@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/internal/nullable"
-	"github.com/absmach/supermq/pkg/errors"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/internal/nullable"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 )
 

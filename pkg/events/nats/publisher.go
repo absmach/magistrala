@@ -8,9 +8,9 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/messaging"
-	broker "github.com/absmach/supermq/pkg/messaging/nats"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/nats"
 )
 
 type pubEventStore struct {

@@ -28,7 +28,6 @@ import (
 const defaultUsernamePrefix = "user"
 
 var (
-	errIssueToken            = errors.NewServiceError("failed to issue token")
 	errRecoveryToken         = errors.NewServiceError("failed to generate password recovery token")
 	errLoginDisableUser      = errors.NewAuthNError("failed to login in disabled user")
 	errMatchUserVerification = errors.NewRequestError("user verification does not match with stored verification")

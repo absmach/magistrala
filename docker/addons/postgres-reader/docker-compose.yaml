@@ -13,7 +13,7 @@ networks:
 
 services:
   postgres-reader:
-    image: docker.io/magistrala/postgres-reader:${MG_RELEASE_TAG}
+    image: ghcr.io/absmach/magistrala/postgres-reader:${MG_RELEASE_TAG}
     container_name: magistrala-postgres-reader
     restart: on-failure
     environment:

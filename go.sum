@@ -469,8 +469,8 @@ github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINE
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240917153116-6f2963f01587 h1:xzZOeCMQLA/W198ZkdVdt4EKFKJtS26B773zNU377ZY=
 github.com/planetscale/vtprotobuf v0.6.1-0.20240917153116-6f2963f01587/go.mod h1:t/avpk3KcrXxUnYOhZhMXJlSEyie6gQbtLq5NM3loB8=
-github.com/plgd-dev/go-coap/v3 v3.5.0 h1:+3Lb9Qm6uKA8yZSgHYWOgIIjLC2+NKQbChxYDebGORA=
-github.com/plgd-dev/go-coap/v3 v3.5.0/go.mod h1:kgdxil4mi3Bi9s5av/NbQeVwRJ+8N6zGHFEPy7qTRWI=
+github.com/plgd-dev/go-coap/v3 v3.5.1 h1:jRJXJAIQ2/YmjNycM+P+oabrqjpWQGl2HHuImvF3OJ8=
+github.com/plgd-dev/go-coap/v3 v3.5.1/go.mod h1:kgdxil4mi3Bi9s5av/NbQeVwRJ+8N6zGHFEPy7qTRWI=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 h1:Jamvg5psRIccs7FGNTlIRMkT8wgtp5eCXdBlqhYGL6U=
 github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=

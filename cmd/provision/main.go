@@ -13,7 +13,6 @@ import (
 	"reflect"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	csdk "github.com/absmach/certs/sdk"
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/channels"
 	"github.com/absmach/magistrala/clients"
@@ -108,13 +107,7 @@ func main() {
 	}
 	mgSdk := mgsdk.NewSDK(SDKCfg)
 
-	csdkConf := csdk.Config{
-		CertsURL: cfg.Server.CertsURL,
-	}
-
-	cSdk := csdk.NewSDK(csdkConf)
-
-	svc := provision.New(cfg, mgSdk, cSdk, logger)
+	svc := provision.New(cfg, mgSdk, logger)
 	svc = middleware.NewLogging(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.Port, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}

@@ -6,7 +6,6 @@ require (
 	connectrpc.com/otelconnect v0.9.0
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/certs v0.18.5
 	github.com/absmach/fluxmq v0.0.0-20260402075516-078522f369d4
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.8.0
@@ -69,7 +68,11 @@ require (
 	moul.io/http2curl v1.0.0
 )
 
-require github.com/absmach/supermq v0.18.5 // indirect
+require (
+	github.com/onsi/gomega v1.38.2 // indirect
+	github.com/smarty/assertions v1.16.0 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
+)
 
 require (
 	buf.build/gen/go/bufbuild/protovalidate/protocolbuffers/go v1.36.11-20260209202127-80ab13bee0bf.1 // indirect

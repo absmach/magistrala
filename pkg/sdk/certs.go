@@ -23,9 +23,22 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/pkg/errors"
 	"golang.org/x/crypto/ocsp"
+)
+
+const (
+	rsaPrivateKey   = "RSA PRIVATE KEY"
+	ecPrivateKey    = "EC PRIVATE KEY"
+	privateKey      = "PRIVATE KEY"
+	pkcs8PrivateKey = "PKCS8 PRIVATE KEY"
+	edPrivateKey    = "ED25519 PRIVATE KEY"
+)
+
+var (
+	errCreateEntityCSR = errors.New("failed to create entity")
+	errPrivKeyType     = errors.New("unsupported private key type")
+	errFailedParse     = errors.New("failed to parse key PEM")
 )
 
 const (
@@ -296,7 +309,7 @@ func (sdk mgSDK) EntityID(ctx context.Context, serialNumber, domainID, token str
 
 // CreateCSR creates a Certificate Signing Request from the given metadata and private key.
 // The private key may be a PEM-encoded []byte or a crypto.Signer (rsa, ecdsa, ed25519).
-func (sdk mgSDK) CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError) {
+func (sdk mgSDK) CreateCSR(ctx context.Context, metadata CSRMetadata, privKey any) (CSR, errors.SDKError) {
 	template := &x509.CertificateRequest{
 		Subject: pkix.Name{
 			CommonName:         metadata.CommonName,
@@ -322,7 +335,7 @@ func (sdk mgSDK) CreateCSR(ctx context.Context, metadata certs.CSRMetadata, priv
 		var err error
 		actualKey, err = extractPrivateKey(keyBytes)
 		if err != nil {
-			return certs.CSR{}, errors.NewSDKError(errors.Wrap(certs.ErrCreateEntity, err))
+			return CSR{}, errors.NewSDKError(errors.Wrap(errCreateEntityCSR, err))
 		}
 	}
 	var signer crypto.Signer
@@ -332,14 +345,14 @@ func (sdk mgSDK) CreateCSR(ctx context.Context, metadata certs.CSRMetadata, priv
 	case ed25519.PrivateKey:
 		signer = key
 	default:
-		return certs.CSR{}, errors.NewSDKError(errors.Wrap(certs.ErrCreateEntity, certs.ErrPrivKeyType))
+		return CSR{}, errors.NewSDKError(errors.Wrap(errCreateEntityCSR, errPrivKeyType))
 	}
 	csrBytes, err := x509.CreateCertificateRequest(rand.Reader, template, signer)
 	if err != nil {
-		return certs.CSR{}, errors.NewSDKError(errors.Wrap(certs.ErrCreateEntity, err))
+		return CSR{}, errors.NewSDKError(errors.Wrap(errCreateEntityCSR, err))
 	}
 	csrPEM := pem.EncodeToMemory(&pem.Block{Type: "CERTIFICATE REQUEST", Bytes: csrBytes})
-	return certs.CSR{CSR: csrPEM}, nil
+	return CSR{CSR: csrPEM}, nil
 }
 
 func readZipFile(file *zip.File) ([]byte, error) {
@@ -357,21 +370,21 @@ func extractPrivateKey(pemKey []byte) (any, error) {
 		return nil, errors.New("failed to parse private key PEM")
 	}
 	var (
-		privateKey any
-		err        error
+		parsedKey any
+		err       error
 	)
 	switch block.Type {
-	case certs.RSAPrivateKey:
-		privateKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
-	case certs.ECPrivateKey:
-		privateKey, err = x509.ParseECPrivateKey(block.Bytes)
-	case certs.PrivateKey, certs.PKCS8PrivateKey, certs.EDPrivateKey:
-		privateKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
+	case rsaPrivateKey:
+		parsedKey, err = x509.ParsePKCS1PrivateKey(block.Bytes)
+	case ecPrivateKey:
+		parsedKey, err = x509.ParseECPrivateKey(block.Bytes)
+	case privateKey, pkcs8PrivateKey, edPrivateKey:
+		parsedKey, err = x509.ParsePKCS8PrivateKey(block.Bytes)
 	default:
-		err = certs.ErrPrivKeyType
+		err = errPrivKeyType
 	}
 	if err != nil {
-		return nil, certs.ErrFailedParse
+		return nil, errFailedParse
 	}
-	return privateKey, nil
+	return parsedKey, nil
 }

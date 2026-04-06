@@ -11,7 +11,6 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/magistrala/certs"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/sdk"
 	mock "github.com/stretchr/testify/mock"
@@ -2345,24 +2344,24 @@ func (_c *SDK_ConnectClients_Call) RunAndReturn(run func(ctx context.Context, ch
 }
 
 // CreateCSR provides a mock function for the type SDK
-func (_mock *SDK) CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError) {
+func (_mock *SDK) CreateCSR(ctx context.Context, metadata sdk.CSRMetadata, privKey any) (sdk.CSR, errors.SDKError) {
 	ret := _mock.Called(ctx, metadata, privKey)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateCSR")
 	}
 
-	var r0 certs.CSR
+	var r0 sdk.CSR
 	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, certs.CSRMetadata, any) (certs.CSR, errors.SDKError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.CSRMetadata, any) (sdk.CSR, errors.SDKError)); ok {
 		return returnFunc(ctx, metadata, privKey)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, certs.CSRMetadata, any) certs.CSR); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.CSRMetadata, any) sdk.CSR); ok {
 		r0 = returnFunc(ctx, metadata, privKey)
 	} else {
-		r0 = ret.Get(0).(certs.CSR)
+		r0 = ret.Get(0).(sdk.CSR)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, certs.CSRMetadata, any) errors.SDKError); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.CSRMetadata, any) errors.SDKError); ok {
 		r1 = returnFunc(ctx, metadata, privKey)
 	} else {
 		if ret.Get(1) != nil {
@@ -2379,21 +2378,21 @@ type SDK_CreateCSR_Call struct {
 
 // CreateCSR is a helper method to define mock.On call
 //   - ctx context.Context
-//   - metadata certs.CSRMetadata
+//   - metadata sdk.CSRMetadata
 //   - privKey any
 func (_e *SDK_Expecter) CreateCSR(ctx interface{}, metadata interface{}, privKey interface{}) *SDK_CreateCSR_Call {
 	return &SDK_CreateCSR_Call{Call: _e.mock.On("CreateCSR", ctx, metadata, privKey)}
 }
 
-func (_c *SDK_CreateCSR_Call) Run(run func(ctx context.Context, metadata certs.CSRMetadata, privKey any)) *SDK_CreateCSR_Call {
+func (_c *SDK_CreateCSR_Call) Run(run func(ctx context.Context, metadata sdk.CSRMetadata, privKey any)) *SDK_CreateCSR_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 certs.CSRMetadata
+		var arg1 sdk.CSRMetadata
 		if args[1] != nil {
-			arg1 = args[1].(certs.CSRMetadata)
+			arg1 = args[1].(sdk.CSRMetadata)
 		}
 		var arg2 any
 		if args[2] != nil {
@@ -2408,12 +2407,12 @@ func (_c *SDK_CreateCSR_Call) Run(run func(ctx context.Context, metadata certs.C
 	return _c
 }
 
-func (_c *SDK_CreateCSR_Call) Return(cSR certs.CSR, sDKError errors.SDKError) *SDK_CreateCSR_Call {
+func (_c *SDK_CreateCSR_Call) Return(cSR sdk.CSR, sDKError errors.SDKError) *SDK_CreateCSR_Call {
 	_c.Call.Return(cSR, sDKError)
 	return _c
 }
 
-func (_c *SDK_CreateCSR_Call) RunAndReturn(run func(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, errors.SDKError)) *SDK_CreateCSR_Call {
+func (_c *SDK_CreateCSR_Call) RunAndReturn(run func(ctx context.Context, metadata sdk.CSRMetadata, privKey any) (sdk.CSR, errors.SDKError)) *SDK_CreateCSR_Call {
 	_c.Call.Return(run)
 	return _c
 }

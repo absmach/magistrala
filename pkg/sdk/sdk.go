@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
+	"crypto/x509/pkix"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -20,7 +21,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/absmach/magistrala/certs"
 	smqerrors "github.com/absmach/magistrala/pkg/errors"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 	"moul.io/http2curl"
@@ -322,6 +322,27 @@ type Options struct {
 	StreetAddress      []string `json:"street_address"`
 	PostalCode         []string `json:"postal_code"`
 	DnsNames           []string `json:"dns_names"`
+}
+
+// CSRMetadata holds metadata for creating a Certificate Signing Request.
+type CSRMetadata struct {
+	CommonName         string           `json:"common_name"`
+	Organization       []string         `json:"organization"`
+	OrganizationalUnit []string         `json:"organizational_unit"`
+	Country            []string         `json:"country"`
+	Province           []string         `json:"province"`
+	Locality           []string         `json:"locality"`
+	StreetAddress      []string         `json:"street_address"`
+	PostalCode         []string         `json:"postal_code"`
+	DNSNames           []string         `json:"dns_names"`
+	IPAddresses        []string         `json:"ip_addresses"`
+	EmailAddresses     []string         `json:"email_addresses"`
+	ExtraExtensions    []pkix.Extension `json:"extra_extensions,omitempty"`
+}
+
+// CSR holds a Certificate Signing Request in PEM format.
+type CSR struct {
+	CSR []byte `json:"csr,omitempty"`
 }
 
 // SDK contains Magistrala API.
@@ -1803,7 +1824,7 @@ type SDK interface {
 	//
 	// example:
 	//  csr, _ := sdk.CreateCSR(context.Background(), metadata, privateKeyBytes)
-	CreateCSR(ctx context.Context, metadata certs.CSRMetadata, privKey any) (certs.CSR, smqerrors.SDKError)
+	CreateCSR(ctx context.Context, metadata CSRMetadata, privKey any) (CSR, smqerrors.SDKError)
 }
 
 type mgSDK struct {

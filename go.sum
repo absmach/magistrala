@@ -36,14 +36,10 @@ github.com/VividCortex/gohistogram v1.0.0 h1:6+hBz+qvs0JOrrNhhmR7lFxo5sINxBCGXrd
 github.com/VividCortex/gohistogram v1.0.0/go.mod h1:Pf5mBqqDxYaXu3hDrrU+w6nw50o/4+TcAqDqk/vUH7g=
 github.com/absmach/callhome v0.18.2 h1:dmopRHm2qTheHN1hdUKRRYpKwRrj7X9d8AWCFrb+K6s=
 github.com/absmach/callhome v0.18.2/go.mod h1:LEXKhES9JJtj3tBgTZv7VPNjOi5ukJQB0mFic0QP60Q=
-github.com/absmach/certs v0.18.5 h1:eYlvitou+LoDtt7ETVLTp6d/1xCejGL3EmVOg+rHGTU=
-github.com/absmach/certs v0.18.5/go.mod h1:31dtVe1VYF16W+IvjAE/uPAIz4f3uLHgh+moBezjqIc=
 github.com/absmach/fluxmq v0.0.0-20260402075516-078522f369d4 h1:4xm4N3solTm6k1V4m2vEtqh06MU1qEYoNCIO8nrlkuw=
 github.com/absmach/fluxmq v0.0.0-20260402075516-078522f369d4/go.mod h1:MSpCAYY2IHv5fQovhQr24610E0AHHgM2A9UUP0zbKco=
 github.com/absmach/senml v1.0.8 h1:+opem/r4g6c6eA/JLyCIuksyEhj7eBdysY3pEmy1mqo=
 github.com/absmach/senml v1.0.8/go.mod h1:DRhzHLgvQoIUHroBgpFrSWso+bJZO9E96RlHAHy+VRI=
-github.com/absmach/supermq v0.18.5 h1:mBWfhzCDWzWZ4GaiKB8y4h17qddCBKSZhlBGMsTZNHs=
-github.com/absmach/supermq v0.18.5/go.mod h1:wBPp1RSd8Rf4sC+2ljiD1aXJpgwacZVnU7WQEvGLmBU=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=

@@ -9,8 +9,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	certs "github.com/absmach/certs"
-	csdk "github.com/absmach/certs/sdk"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/sdk"
 	smqSDK "github.com/absmach/magistrala/pkg/sdk"
@@ -72,7 +70,6 @@ type Service interface {
 type provisionService struct {
 	logger *slog.Logger
 	sdk    sdk.SDK
-	csdk   csdk.SDK
 	conf   Config
 }
 
@@ -88,10 +85,9 @@ type Result struct {
 }
 
 // New returns new provision service.
-func New(cfg Config, mgsdk sdk.SDK, certsSdk csdk.SDK, logger *slog.Logger) Service {
+func New(cfg Config, mgsdk sdk.SDK, logger *slog.Logger) Service {
 	return &provisionService{
 		logger: logger,
-		csdk:   certsSdk,
 		conf:   cfg,
 		sdk:    mgsdk,
 	}
@@ -174,7 +170,6 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 		ClientKey:   map[string]string{},
 	}
 
-	var cert certs.Certificate
 	var bsConfig sdk.BootstrapConfig
 	for _, c := range clients {
 		var chanIDs []string
@@ -194,8 +189,8 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 				ExternalKey: externalKey,
 				Channels:    chanIDs,
 				CACert:      res.CACert,
-				ClientCert:  string(cert.Certificate),
-				ClientKey:   string(cert.Key),
+				ClientCert:  "",
+				ClientKey:   "",
 				Content:     string(content),
 			}
 			bsid, err := ps.sdk.AddBootstrap(ctx, bsReq, domainID, token)
@@ -210,14 +205,14 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 		}
 
 		if ps.conf.Bootstrap.X509Provision {
-			var cert csdk.Certificate
+			var cert smqSDK.Certificate
 
-			cert, err = ps.csdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, nil, csdk.Options{}, domainID, token)
+			cert, err = ps.sdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, nil, smqSDK.Options{}, domainID, token)
 			if err != nil {
 				e := errors.Wrap(err, fmt.Errorf("client id: %s", c.ID))
 				return res, errors.Wrap(ErrFailedCertCreation, e)
 			}
-			cert, err := ps.csdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
+			cert, err := ps.sdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
 			if err != nil {
 				return res, errors.Wrap(ErrFailedCertView, err)
 			}
@@ -258,11 +253,11 @@ func (ps *provisionService) Cert(ctx context.Context, domainID, token, clientID,
 	if err != nil {
 		return "", "", errors.Wrap(ErrUnauthorized, err)
 	}
-	cert, err := ps.csdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, []string{}, csdk.Options{}, domainID, token)
+	cert, err := ps.sdk.IssueCert(ctx, c.ID, ps.conf.Cert.TTL, []string{}, smqSDK.Options{}, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertCreation, err)
 	}
-	cert, err = ps.csdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
+	cert, err = ps.sdk.ViewCert(ctx, cert.SerialNumber, domainID, token)
 	if err != nil {
 		return "", "", errors.Wrap(ErrFailedCertView, err)
 	}
@@ -392,7 +387,7 @@ func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK
 		clean(ctx, ps, clients, channels, domainID, token)
 		for _, c := range clients {
 			if ps.conf.Bootstrap.X509Provision && needsBootstrap(c) {
-				err := ps.csdk.RevokeCert(ctx, c.ID, domainID, token)
+				err := ps.sdk.RevokeCert(ctx, c.ID, domainID, token)
 				ps.errLog(err)
 			}
 			if needsBootstrap(c) {

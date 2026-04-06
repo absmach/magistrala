@@ -8,8 +8,6 @@ import (
 	"fmt"
 	"testing"
 
-	csdk "github.com/absmach/certs/sdk"
-	csdkmocks "github.com/absmach/certs/sdk/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -26,8 +24,7 @@ var validToken = "valid"
 
 func TestMapping(t *testing.T) {
 	mgsdk := new(sdkmocks.SDK)
-	certs := new(csdkmocks.SDK)
-	svc := provision.New(validConfig, mgsdk, certs, mglog.NewMock())
+	svc := provision.New(validConfig, mgsdk, mglog.NewMock())
 
 	cases := []struct {
 		desc    string
@@ -204,20 +201,19 @@ func TestCert(t *testing.T) {
 		},
 	}
 	mgsdk := new(sdkmocks.SDK)
-	certs := new(csdkmocks.SDK)
 	for _, c := range cases {
 		t.Run(c.desc, func(t *testing.T) {
-			svc := provision.New(c.config, mgsdk, certs, mglog.NewMock())
+			svc := provision.New(c.config, mgsdk, mglog.NewMock())
 
 			call1 := mgsdk.On("Client", mock.Anything, c.clientID, c.domainID, mock.Anything).Return(smqSDK.Client{ID: c.clientID}, c.sdkClientErr)
 			var call2 *mock.Call
 			switch c.token {
 			case "":
-				call2 = certs.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, csdk.Options{}, c.domainID, c.returnedToken).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
+				call2 = mgsdk.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, smqSDK.Options{}, c.domainID, c.returnedToken).Return(smqSDK.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
 			default:
-				call2 = certs.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, csdk.Options{}, c.domainID, c.token).Return(csdk.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
+				call2 = mgsdk.On("IssueCert", context.Background(), c.clientID, c.config.Cert.TTL, []string{}, smqSDK.Options{}, c.domainID, c.token).Return(smqSDK.Certificate{SerialNumber: c.serial}, c.sdkCertErr)
 			}
-			call3 := certs.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(csdk.Certificate{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
+			call3 := mgsdk.On("ViewCert", mock.Anything, c.serial, mock.Anything, mock.Anything).Return(smqSDK.Certificate{Certificate: c.cert, Key: c.key}, c.sdkCertErr)
 
 			login := smqSDK.Login{
 				Username: c.config.Server.MgUsername,

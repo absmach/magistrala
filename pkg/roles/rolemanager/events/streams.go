@@ -14,7 +14,7 @@ import (
 
 const (
 	magistralaPrefix = "magistrala."
-	rolesPrefix   = "roles"
+	rolesPrefix      = "roles"
 )
 
 var _ roles.RoleManager = (*RoleManagerEventStore)(nil)

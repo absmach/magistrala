@@ -125,65 +125,75 @@ func ToTagsQuery(s string) TagsQuery {
 }
 
 type PageMetadata struct {
-	Total           uint64    `json:"total"`
-	Offset          uint64    `json:"offset"`
-	Limit           uint64    `json:"limit"`
-	Order           string    `json:"order,omitempty"`
-	Direction       string    `json:"direction,omitempty"`
-	Level           uint64    `json:"level,omitempty"`
-	Identity        string    `json:"identity,omitempty"`
-	Email           string    `json:"email,omitempty"`
-	Username        string    `json:"username,omitempty"`
-	LastName        string    `json:"last_name,omitempty"`
-	FirstName       string    `json:"first_name,omitempty"`
-	Name            string    `json:"name,omitempty"`
-	Type            string    `json:"type,omitempty"`
-	Metadata        Metadata  `json:"metadata,omitempty"`
-	Status          string    `json:"status,omitempty"`
-	Action          string    `json:"action,omitempty"`
-	Subject         string    `json:"subject,omitempty"`
-	Object          string    `json:"object,omitempty"`
-	Permission      string    `json:"permission,omitempty"`
-	Tags            TagsQuery `json:"tags,omitempty"`
-	Owner           string    `json:"owner,omitempty"`
-	SharedBy        string    `json:"shared_by,omitempty"`
-	Visibility      string    `json:"visibility,omitempty"`
-	OwnerID         string    `json:"owner_id,omitempty"`
-	Topic           string    `json:"topic,omitempty"`
-	Contact         string    `json:"contact,omitempty"`
-	State           string    `json:"state,omitempty"`
-	ListPermissions string    `json:"list_perms,omitempty"`
-	InvitedBy       string    `json:"invited_by,omitempty"`
-	UserID          string    `json:"user_id,omitempty"`
-	DomainID        string    `json:"domain_id,omitempty"`
-	Relation        string    `json:"relation,omitempty"`
-	Operation       string    `json:"operation,omitempty"`
-	From            int64     `json:"from,omitempty"`
-	To              int64     `json:"to,omitempty"`
-	WithMetadata    bool      `json:"with_metadata,omitempty"`
-	WithAttributes  bool      `json:"with_attributes,omitempty"`
-	ID              string    `json:"id,omitempty"`
-	Tree            bool      `json:"tree,omitempty"`
-	StartLevel      int64     `json:"start_level,omitempty"`
-	EndLevel        int64     `json:"end_level,omitempty"`
-	CreatedFrom     time.Time `json:"created_from,omitempty"`
-	CreatedTo       time.Time `json:"created_to,omitempty"`
-	Dir             string    `json:"dir,omitempty"`
-	Tag             string    `json:"tag,omitempty"`
-	InputChannel    string    `json:"input_channel,omitempty"`
-	RuleID          string    `json:"rule_id,omitempty"`
-	ChannelID       string    `json:"channel_id,omitempty"`
-	ClientID        string    `json:"client_id,omitempty"`
-	Subtopic        string    `json:"subtopic,omitempty"`
-	AssigneeID      string    `json:"assignee_id,omitempty"`
-	Severity        uint8     `json:"severity,omitempty"`
-	UpdatedBy       string    `json:"updated_by,omitempty"`
-	AssignedBy      string    `json:"assigned_by,omitempty"`
-	AcknowledgedBy  string    `json:"acknowledged_by,omitempty"`
-	ResolvedBy      string    `json:"resolved_by,omitempty"`
-	EntityID        string    `json:"entity_id,omitempty"`
-	CommonName      string    `json:"common_name,omitempty"`
-	TTL             string    `json:"ttl,omitempty"`
+	Total              uint64    `json:"total"`
+	Offset             uint64    `json:"offset"`
+	Limit              uint64    `json:"limit"`
+	Order              string    `json:"order,omitempty"`
+	Direction          string    `json:"direction,omitempty"`
+	Level              uint64    `json:"level,omitempty"`
+	Identity           string    `json:"identity,omitempty"`
+	Email              string    `json:"email,omitempty"`
+	Username           string    `json:"username,omitempty"`
+	LastName           string    `json:"last_name,omitempty"`
+	FirstName          string    `json:"first_name,omitempty"`
+	Name               string    `json:"name,omitempty"`
+	Type               string    `json:"type,omitempty"`
+	Metadata           Metadata  `json:"metadata,omitempty"`
+	Status             string    `json:"status,omitempty"`
+	Action             string    `json:"action,omitempty"`
+	Subject            string    `json:"subject,omitempty"`
+	Object             string    `json:"object,omitempty"`
+	Permission         string    `json:"permission,omitempty"`
+	Tags               TagsQuery `json:"tags,omitempty"`
+	Owner              string    `json:"owner,omitempty"`
+	SharedBy           string    `json:"shared_by,omitempty"`
+	Visibility         string    `json:"visibility,omitempty"`
+	OwnerID            string    `json:"owner_id,omitempty"`
+	Topic              string    `json:"topic,omitempty"`
+	Contact            string    `json:"contact,omitempty"`
+	State              string    `json:"state,omitempty"`
+	ListPermissions    string    `json:"list_perms,omitempty"`
+	InvitedBy          string    `json:"invited_by,omitempty"`
+	UserID             string    `json:"user_id,omitempty"`
+	DomainID           string    `json:"domain_id,omitempty"`
+	Relation           string    `json:"relation,omitempty"`
+	Operation          string    `json:"operation,omitempty"`
+	From               int64     `json:"from,omitempty"`
+	To                 int64     `json:"to,omitempty"`
+	WithMetadata       bool      `json:"with_metadata,omitempty"`
+	WithAttributes     bool      `json:"with_attributes,omitempty"`
+	ID                 string    `json:"id,omitempty"`
+	Tree               bool      `json:"tree,omitempty"`
+	StartLevel         int64     `json:"start_level,omitempty"`
+	EndLevel           int64     `json:"end_level,omitempty"`
+	CreatedFrom        time.Time `json:"created_from,omitempty"`
+	CreatedTo          time.Time `json:"created_to,omitempty"`
+	Dir                string    `json:"dir,omitempty"`
+	Tag                string    `json:"tag,omitempty"`
+	InputChannel       string    `json:"input_channel,omitempty"`
+	RuleID             string    `json:"rule_id,omitempty"`
+	ChannelID          string    `json:"channel_id,omitempty"`
+	ClientID           string    `json:"client_id,omitempty"`
+	Subtopic           string    `json:"subtopic,omitempty"`
+	AssigneeID         string    `json:"assignee_id,omitempty"`
+	Severity           uint8     `json:"severity,omitempty"`
+	UpdatedBy          string    `json:"updated_by,omitempty"`
+	AssignedBy         string    `json:"assigned_by,omitempty"`
+	AcknowledgedBy     string    `json:"acknowledged_by,omitempty"`
+	ResolvedBy         string    `json:"resolved_by,omitempty"`
+	EntityID           string    `json:"entity_id,omitempty"`
+	CommonName         string    `json:"common_name,omitempty"`
+	Organization       []string  `json:"organization,omitempty"`
+	OrganizationalUnit []string  `json:"organizational_unit,omitempty"`
+	Country            []string  `json:"country,omitempty"`
+	Province           []string  `json:"province,omitempty"`
+	Locality           []string  `json:"locality,omitempty"`
+	StreetAddress      []string  `json:"street_address,omitempty"`
+	PostalCode         []string  `json:"postal_code,omitempty"`
+	DNSNames           []string  `json:"dns_names,omitempty"`
+	IPAddresses        []string  `json:"ip_addresses,omitempty"`
+	EmailAddresses     []string  `json:"email_addresses,omitempty"`
+	TTL                string    `json:"ttl,omitempty"`
 }
 
 type Role struct {
@@ -221,6 +231,31 @@ const (
 	CertRevoked CertStatus = iota
 	CertUnknown CertStatus = iota
 )
+
+const (
+	Valid   CertStatus = CertValid
+	Revoked CertStatus = CertRevoked
+	Unknown CertStatus = CertUnknown
+)
+
+// CertType represents CA certificate type.
+type CertType int
+
+const (
+	RootCA CertType = iota
+	IntermediateCA
+)
+
+func (c CertType) String() string {
+	switch c {
+	case RootCA:
+		return "root"
+	case IntermediateCA:
+		return "intermediate"
+	default:
+		return "unknown"
+	}
+}
 
 func (c CertStatus) String() string {
 	switch c {
@@ -1920,6 +1955,15 @@ func (sdk mgSDK) withQueryParams(baseURL, endpoint string, pm PageMetadata) (str
 
 func (pm PageMetadata) query() (string, error) {
 	q := url.Values{}
+	addStringSlice := func(key string, values []string) {
+		for _, value := range values {
+			if value == "" {
+				continue
+			}
+			q.Add(key, value)
+		}
+	}
+
 	if pm.Offset != 0 {
 		q.Add("offset", strconv.FormatUint(pm.Offset, 10))
 	}
@@ -2050,6 +2094,16 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.CommonName != "" {
 		q.Add("common_name", pm.CommonName)
 	}
+	addStringSlice("organization", pm.Organization)
+	addStringSlice("organizational_unit", pm.OrganizationalUnit)
+	addStringSlice("country", pm.Country)
+	addStringSlice("province", pm.Province)
+	addStringSlice("locality", pm.Locality)
+	addStringSlice("street_address", pm.StreetAddress)
+	addStringSlice("postal_code", pm.PostalCode)
+	addStringSlice("dns_names", pm.DNSNames)
+	addStringSlice("ip_addresses", pm.IPAddresses)
+	addStringSlice("email_addresses", pm.EmailAddresses)
 	if pm.TTL != "" {
 		q.Add("ttl", pm.TTL)
 	}

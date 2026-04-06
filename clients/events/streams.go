@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	magistralaPrefix      = "magistrala."
+	magistralaPrefix   = "magistrala."
 	createStream       = magistralaPrefix + clientCreate
 	updateStream       = magistralaPrefix + clientUpdate
 	updateTagsStream   = magistralaPrefix + clientUpdateTags

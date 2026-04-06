@@ -22,8 +22,8 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	sdk "github.com/absmach/magistrala/pkg/sdk"
 	mgSDK "github.com/absmach/magistrala/pkg/sdk"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
 const (

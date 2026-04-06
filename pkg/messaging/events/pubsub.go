@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	magistralaPrefix     = "magistrala."
+	magistralaPrefix  = "magistrala."
 	publishStream     = magistralaPrefix + "publish"
 	subscribeStream   = magistralaPrefix + "subscribe"
 	unsubscribeStream = magistralaPrefix + "unsubscribe"

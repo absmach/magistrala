@@ -64,5 +64,5 @@ type Config struct {
 	MQTT mqttConfig `toml:"mqtt" mapstructure:"mqtt"`
 	Test testConfig `toml:"test" mapstructure:"test"`
 	Log  logConfig  `toml:"log" mapstructure:"log"`
-	Mg  mgFile    `toml:"magistrala" mapstructure:"magistrala"`
+	Mg   mgFile     `toml:"magistrala" mapstructure:"magistrala"`
 }

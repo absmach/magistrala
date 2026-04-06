@@ -66,7 +66,7 @@ linters:
         - pkg: github.com/absmach/callhome/pkg/client
           alias: chclient
         - pkg: github.com/absmach/magistrala/logger
-          alias: smqlog
+          alias: mglog
         - pkg: github.com/absmach/magistrala/pkg/errors/service
           alias: svcerr
         - pkg: github.com/absmach/magistrala/pkg/errors/repository

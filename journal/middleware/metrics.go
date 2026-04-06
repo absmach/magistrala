@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/journal"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala/journal"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/go-kit/kit/metrics"
 )
 

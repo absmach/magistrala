@@ -7,9 +7,9 @@ import (
 	"encoding/json"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers"
 )
 
 const sep = "/"
@@ -47,7 +47,7 @@ func New(tfs []TimeField) transformers.Transformer {
 	}
 }
 
-// Transform transforms SuperMQ message to a list of JSON messages.
+// Transform transforms Magistrala message to a list of JSON messages.
 func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 	ret := Message{
 		Publisher: msg.GetPublisher(),

@@ -4,8 +4,8 @@
 package hasher
 
 import (
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/users"
 	"golang.org/x/crypto/bcrypt"
 )
 

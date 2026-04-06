@@ -2,18 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 
 asyncapi: 2.6.0
-id: 'https://github.com/absmach/supermq/blob/main/api/asyncapi/websocket.yaml'
+id: 'https://github.com/absmach/magistrala/blob/main/api/asyncapi/websocket.yaml'
 info:
-  title: SuperMQ WebSocket adapter
+  title: Magistrala WebSocket adapter
   description: WebSocket adapter provides a WebSocket API for sending messages through communication channels. WebSocket adapter uses [mProxy](https://github.com/absmach/mproxy) for proxying traffic between client and MQTT broker.
   version: '0.18.0'
   contact:
-    name: SuperMQ Team
-    url: 'https://github.com/absmach/supermq'
+    name: Magistrala Team
+    url: 'https://github.com/absmach/magistrala'
     email: info@absmach.eu
   license:
     name: Apache 2.0
-    url: 'https://github.com/absmach/supermq/blob/main/LICENSE'
+    url: 'https://github.com/absmach/magistrala/blob/main/LICENSE'
 tags:
   - name: WebSocket
 defaultContentType: application/json
@@ -28,7 +28,7 @@ servers:
         description: Hostname of the WebSocket adapter
         default: localhost
       port:
-        description: SuperMQ WebSocket Adapter port
+        description: Magistrala WebSocket Adapter port
         default: '8008'
 
 channels:
@@ -74,7 +74,7 @@ channels:
         - bearerAuth: []
   /version:
     subscribe:
-      summary: Get the version of the SuperMQ adapter
+      summary: Get the version of the Magistrala adapter
       operationId: getVersion
       bindings:
         http:

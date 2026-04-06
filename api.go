@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package supermq
+package magistrala
 
 // Response contains HTTP response specific methods.
 type Response interface {

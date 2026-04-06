@@ -6,33 +6,33 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/roles"
-	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/roles"
+	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix           = "supermq."
-	createStream            = supermqPrefix + groupCreate
-	updateStream            = supermqPrefix + groupUpdate
-	updateTagsStream        = supermqPrefix + groupUpdateTags
-	enableStream            = supermqPrefix + groupEnable
-	disableStream           = supermqPrefix + groupDisable
-	viewStream              = supermqPrefix + groupView
-	listStream              = supermqPrefix + groupList
-	listUserGroupsStream    = supermqPrefix + groupListUserGroups
-	removeStream            = supermqPrefix + groupRemove
-	retrieveHierarchyStream = supermqPrefix + groupRetrieveGroupHierarchy
-	addParentStream         = supermqPrefix + groupAddParentGroup
-	removeParentStream      = supermqPrefix + groupRemoveParentGroup
-	addChildrenStream       = supermqPrefix + groupAddChildrenGroups
-	removeChildrenStream    = supermqPrefix + groupRemoveChildrenGroups
-	removeAllChildrenStream = supermqPrefix + groupRemoveAllChildrenGroups
-	listChildrenStream      = supermqPrefix + groupListChildrenGroups
+	magistralaPrefix        = "magistrala."
+	createStream            = magistralaPrefix + groupCreate
+	updateStream            = magistralaPrefix + groupUpdate
+	updateTagsStream        = magistralaPrefix + groupUpdateTags
+	enableStream            = magistralaPrefix + groupEnable
+	disableStream           = magistralaPrefix + groupDisable
+	viewStream              = magistralaPrefix + groupView
+	listStream              = magistralaPrefix + groupList
+	listUserGroupsStream    = magistralaPrefix + groupListUserGroups
+	removeStream            = magistralaPrefix + groupRemove
+	retrieveHierarchyStream = magistralaPrefix + groupRetrieveGroupHierarchy
+	addParentStream         = magistralaPrefix + groupAddParentGroup
+	removeParentStream      = magistralaPrefix + groupRemoveParentGroup
+	addChildrenStream       = magistralaPrefix + groupAddChildrenGroups
+	removeChildrenStream    = magistralaPrefix + groupRemoveChildrenGroups
+	removeAllChildrenStream = magistralaPrefix + groupRemoveAllChildrenGroups
+	listChildrenStream      = magistralaPrefix + groupListChildrenGroups
 )
 
 var _ groups.Service = (*eventStore)(nil)

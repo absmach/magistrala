@@ -6,16 +6,16 @@ import (
 	"context"
 	"time"
 
-	smq "github.com/absmach/supermq"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcCommonV1 "github.com/absmach/supermq/api/grpc/common/v1"
-	grpcGroupsV1 "github.com/absmach/supermq/api/grpc/groups/v1"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
+	mg "github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (
@@ -33,12 +33,12 @@ type service struct {
 	channels   grpcChannelsV1.ChannelsServiceClient
 	groups     grpcGroupsV1.GroupsServiceClient
 	cache      Cache
-	idProvider smq.IDProvider
+	idProvider mg.IDProvider
 	roles.ProvisionManageService
 }
 
 // NewService returns a new Clients service implementation.
-func NewService(repo Repository, policy policies.Service, cache Cache, channels grpcChannelsV1.ChannelsServiceClient, groups grpcGroupsV1.GroupsServiceClient, idProvider smq.IDProvider, sIDProvider smq.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func NewService(repo Repository, policy policies.Service, cache Cache, channels grpcChannelsV1.ChannelsServiceClient, groups grpcGroupsV1.GroupsServiceClient, idProvider mg.IDProvider, sIDProvider mg.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(policies.ClientType, repo, policy, sIDProvider, availableActions, builtInRoles)
 	if err != nil {
 		return service{}, err

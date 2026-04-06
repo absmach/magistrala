@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/tokenizer/symmetric"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/tokenizer/symmetric"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 	"github.com/stretchr/testify/assert"
@@ -98,7 +98,7 @@ func TestSign(t *testing.T) {
 			key: auth.Key{
 				ID:        "key-id",
 				Type:      auth.AccessKey,
-				Issuer:    "supermq.auth",
+				Issuer:    "magistrala.auth",
 				Subject:   "user-id",
 				Role:      auth.UserRole,
 				IssuedAt:  time.Now().UTC(),
@@ -111,7 +111,7 @@ func TestSign(t *testing.T) {
 			key: auth.Key{
 				ID:        "key-id",
 				Type:      auth.APIKey,
-				Issuer:    "supermq.auth",
+				Issuer:    "magistrala.auth",
 				Role:      auth.AdminRole,
 				IssuedAt:  time.Now().UTC(),
 				ExpiresAt: time.Now().Add(24 * time.Hour).UTC(),
@@ -152,7 +152,7 @@ func TestVerify(t *testing.T) {
 	validKey := auth.Key{
 		ID:        "key-id",
 		Type:      auth.AccessKey,
-		Issuer:    "supermq.auth",
+		Issuer:    "magistrala.auth",
 		Subject:   "user-id",
 		Role:      auth.UserRole,
 		IssuedAt:  time.Now().UTC(),
@@ -274,7 +274,7 @@ func TestSignAndVerifyRoundTrip(t *testing.T) {
 			originalKey := auth.Key{
 				ID:        "key-123",
 				Type:      auth.AccessKey,
-				Issuer:    "supermq.auth",
+				Issuer:    "magistrala.auth",
 				Subject:   "user-456",
 				Role:      auth.UserRole,
 				IssuedAt:  time.Now().UTC().Truncate(time.Second),
@@ -305,7 +305,7 @@ func TestDifferentAlgorithms(t *testing.T) {
 	key := auth.Key{
 		ID:        "key-id",
 		Type:      auth.AccessKey,
-		Issuer:    "supermq.auth",
+		Issuer:    "magistrala.auth",
 		Subject:   "user-id",
 		Role:      auth.UserRole,
 		IssuedAt:  time.Now().UTC(),

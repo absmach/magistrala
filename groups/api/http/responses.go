@@ -7,23 +7,23 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/groups"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/groups"
 )
 
 var (
-	_ supermq.Response = (*createGroupRes)(nil)
-	_ supermq.Response = (*groupPageRes)(nil)
-	_ supermq.Response = (*changeStatusRes)(nil)
-	_ supermq.Response = (*viewGroupRes)(nil)
-	_ supermq.Response = (*updateGroupRes)(nil)
-	_ supermq.Response = (*retrieveGroupHierarchyRes)(nil)
-	_ supermq.Response = (*addParentGroupRes)(nil)
-	_ supermq.Response = (*removeParentGroupRes)(nil)
-	_ supermq.Response = (*addChildrenGroupsRes)(nil)
-	_ supermq.Response = (*removeChildrenGroupsRes)(nil)
-	_ supermq.Response = (*removeAllChildrenGroupsRes)(nil)
-	_ supermq.Response = (*listChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*createGroupRes)(nil)
+	_ magistrala.Response = (*groupPageRes)(nil)
+	_ magistrala.Response = (*changeStatusRes)(nil)
+	_ magistrala.Response = (*viewGroupRes)(nil)
+	_ magistrala.Response = (*updateGroupRes)(nil)
+	_ magistrala.Response = (*retrieveGroupHierarchyRes)(nil)
+	_ magistrala.Response = (*addParentGroupRes)(nil)
+	_ magistrala.Response = (*removeParentGroupRes)(nil)
+	_ magistrala.Response = (*addChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*removeChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*removeAllChildrenGroupsRes)(nil)
+	_ magistrala.Response = (*listChildrenGroupsRes)(nil)
 )
 
 type viewGroupRes struct {

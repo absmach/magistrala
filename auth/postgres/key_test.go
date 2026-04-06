@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/postgres"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

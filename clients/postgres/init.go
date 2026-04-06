@@ -4,10 +4,10 @@
 package postgres
 
 import (
-	gpostgres "github.com/absmach/supermq/groups/postgres"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
+	gpostgres "github.com/absmach/magistrala/groups/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	rolesPostgres "github.com/absmach/magistrala/pkg/roles/repo/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )

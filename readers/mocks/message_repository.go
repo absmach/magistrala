@@ -9,7 +9,7 @@
 package mocks
 
 import (
-	"github.com/absmach/supermq/readers"
+	"github.com/absmach/magistrala/readers"
 	mock "github.com/stretchr/testify/mock"
 )
 

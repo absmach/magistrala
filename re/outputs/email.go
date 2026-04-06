@@ -9,8 +9,8 @@ import (
 	"encoding/json"
 	"text/template"
 
-	"github.com/absmach/supermq/pkg/emailer"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 type Email struct {

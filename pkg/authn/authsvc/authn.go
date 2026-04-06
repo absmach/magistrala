@@ -6,11 +6,11 @@ package authsvc
 import (
 	"context"
 
-	grpcAuthV1 "github.com/absmach/supermq/api/grpc/auth/v1"
-	"github.com/absmach/supermq/auth/api/grpc/auth"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/grpcclient"
+	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
+	"github.com/absmach/magistrala/auth/api/grpc/auth"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/grpcclient"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 

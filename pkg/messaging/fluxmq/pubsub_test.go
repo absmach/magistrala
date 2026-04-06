@@ -8,7 +8,7 @@ import (
 	"time"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 	amqp091 "github.com/rabbitmq/amqp091-go"
 )
 

@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-package supermq
+package magistrala
 
 // IDProvider specifies an API for generating unique identifiers.
 type IDProvider interface {

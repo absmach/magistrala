@@ -8,7 +8,7 @@ package middleware
 import (
 	"time"
 
-	"github.com/absmach/supermq/readers"
+	"github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/metrics"
 )
 

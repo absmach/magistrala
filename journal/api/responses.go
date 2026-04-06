@@ -6,13 +6,13 @@ package api
 import (
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/journal"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/journal"
 )
 
 var (
-	_ supermq.Response = (*pageRes)(nil)
-	_ supermq.Response = (*clientTelemetryRes)(nil)
+	_ magistrala.Response = (*pageRes)(nil)
+	_ magistrala.Response = (*clientTelemetryRes)(nil)
 )
 
 type pageRes struct {

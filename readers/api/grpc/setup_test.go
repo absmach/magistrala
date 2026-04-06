@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/supermq/readers/mocks"
+	"github.com/absmach/magistrala/readers/mocks"
 )
 
 var svc *mocks.MessageRepository

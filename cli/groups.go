@@ -7,8 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/absmach/supermq/groups"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/groups"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 

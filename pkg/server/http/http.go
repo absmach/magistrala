@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/absmach/supermq/pkg/server"
+	"github.com/absmach/magistrala/pkg/server"
 )
 
 const (

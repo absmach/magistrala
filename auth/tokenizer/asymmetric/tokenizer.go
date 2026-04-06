@@ -14,10 +14,10 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/auth"
-	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	smqjwt "github.com/absmach/magistrala/auth/tokenizer/util"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -54,7 +54,7 @@ var _ auth.Tokenizer = (*tokenizer)(nil)
 // If retiringKeyPath is provided but the file doesn't exist or is invalid, a warning is logged
 // but the tokenizer is still created with just the active key.
 // Key IDs are derived from filenames to ensure consistency across multiple service instances.
-func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider supermq.IDProvider, logger *slog.Logger) (auth.Tokenizer, error) {
+func NewTokenizer(activeKeyPath, retiringKeyPath string, idProvider magistrala.IDProvider, logger *slog.Logger) (auth.Tokenizer, error) {
 	activeKID := keyIDFromPath(activeKeyPath)
 
 	activePrivateJwk, activePublicJwk, err := loadKeyPair(activeKeyPath, activeKID)

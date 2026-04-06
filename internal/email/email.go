@@ -12,7 +12,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 	"gopkg.in/gomail.v2"
 )
 

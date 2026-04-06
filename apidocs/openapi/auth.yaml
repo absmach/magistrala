@@ -3,16 +3,16 @@
 
 openapi: 3.0.3
 info:
-  title: SuperMQ Auth Service
+  title: Magistrala Auth Service
   description: |
     This is the Auth Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform users. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
-    - [The SuperMQ repository](https://github.com/absmach/supermq)
+    - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
     email: info@absmach.eu
   license:
     name: Apache 2.0
-    url: https://github.com/absmach/supermq/blob/main/LICENSE
+    url: https://github.com/absmach/magistrala/blob/main/LICENSE
   version: 0.18.0
 
 servers:
@@ -24,17 +24,17 @@ tags:
     description: Everything about your Keys.
     externalDocs:
       description: Find out more about keys
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
   - name: PATs
     description: Everything about your Personal Access Tokens.
     externalDocs:
       description: Find out more about Personal Access Tokens
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
   - name: Health
     description: Service health check endpoint.
     externalDocs:
       description: Find out more about health check
-      url: https://docs.supermq.absmach.eu/
+      url: https://magistrala.absmach.eu/docs/
 
 paths:
   /keys:

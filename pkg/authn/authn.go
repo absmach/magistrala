@@ -50,7 +50,7 @@ type Session struct {
 	Role         Role
 }
 
-// Authn is supermq authentication library.
+// Authn is magistrala authentication library.
 type Authentication interface {
 	Authenticate(ctx context.Context, token string) (Session, error)
 }

@@ -10,9 +10,9 @@ func NewHealthCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "health <service>",
 		Short: "Health Check",
-		Long: "SuperMQ service Health Check\n" +
+		Long: "Magistrala service Health Check\n" +
 			"usage:\n" +
-			"\tsupermq-cli health <service>",
+			"\tmagistrala-cli health <service>",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 1 {
 				logUsageCmd(*cmd, cmd.Use)

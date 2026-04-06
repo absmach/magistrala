@@ -13,15 +13,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauth "github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauth "github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -40,14 +40,14 @@ var (
 type service struct {
 	token      grpcTokenV1.TokenServiceClient
 	users      Repository
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 	policies   policies.Service
 	hasher     Hasher
 	email      Emailer
 }
 
 // NewService returns a new Users service implementation.
-func NewService(token grpcTokenV1.TokenServiceClient, urepo Repository, policyService policies.Service, emailer Emailer, hasher Hasher, idp supermq.IDProvider) Service {
+func NewService(token grpcTokenV1.TokenServiceClient, urepo Repository, policyService policies.Service, emailer Emailer, hasher Hasher, idp magistrala.IDProvider) Service {
 	return service{
 		token:      token,
 		users:      urepo,

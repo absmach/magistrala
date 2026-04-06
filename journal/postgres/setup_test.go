@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	jpostgres "github.com/absmach/supermq/journal/postgres"
-	"github.com/absmach/supermq/pkg/postgres"
+	jpostgres "github.com/absmach/magistrala/journal/postgres"
+	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jmoiron/sqlx"
 	dockertest "github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"

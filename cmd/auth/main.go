@@ -13,29 +13,29 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	grpcAuthV1 "github.com/absmach/supermq/api/grpc/auth/v1"
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/auth"
-	authgrpcapi "github.com/absmach/supermq/auth/api/grpc/auth"
-	tokengrpcapi "github.com/absmach/supermq/auth/api/grpc/token"
-	httpapi "github.com/absmach/supermq/auth/api/http"
-	"github.com/absmach/supermq/auth/cache"
-	"github.com/absmach/supermq/auth/hasher"
-	"github.com/absmach/supermq/auth/middleware"
-	apostgres "github.com/absmach/supermq/auth/postgres"
-	"github.com/absmach/supermq/auth/tokenizer/asymmetric"
-	"github.com/absmach/supermq/auth/tokenizer/symmetric"
-	redisclient "github.com/absmach/supermq/internal/clients/redis"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/auth"
+	authgrpcapi "github.com/absmach/magistrala/auth/api/grpc/auth"
+	tokengrpcapi "github.com/absmach/magistrala/auth/api/grpc/token"
+	httpapi "github.com/absmach/magistrala/auth/api/http"
+	"github.com/absmach/magistrala/auth/cache"
+	"github.com/absmach/magistrala/auth/hasher"
+	"github.com/absmach/magistrala/auth/middleware"
+	apostgres "github.com/absmach/magistrala/auth/postgres"
+	"github.com/absmach/magistrala/auth/tokenizer/asymmetric"
+	"github.com/absmach/magistrala/auth/tokenizer/symmetric"
+	redisclient "github.com/absmach/magistrala/internal/clients/redis"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
 	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
@@ -92,13 +92,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -205,7 +205,7 @@ func main() {
 	gs := grpcserver.NewServer(ctx, cancel, svcName, grpcServerConfig, registerAuthServiceServer, logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 
@@ -291,7 +291,7 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider supermq.IDProvider) (auth.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider magistrala.IDProvider) (auth.Service, error) {
 	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
 	tokensCache, err := cache.NewUserActiveTokensCache(cacheClient, keyDuration)
 	if err != nil {

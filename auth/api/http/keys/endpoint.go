@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/auth"
+	"github.com/absmach/magistrala/auth"
 	"github.com/go-kit/kit/endpoint"
 )
 

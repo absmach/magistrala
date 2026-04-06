@@ -6,8 +6,8 @@ package client
 import (
 	"context"
 
-	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
-	grpc "github.com/absmach/supermq/pkg/grpcclient"
+	grpcCertsV1 "github.com/absmach/magistrala/api/grpc/certs/v1"
+	grpc "github.com/absmach/magistrala/pkg/grpcclient"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 

@@ -10,19 +10,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/emailer"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/reltime"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/ticker"
-	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/absmach/supermq/reports/operations"
+	"github.com/absmach/magistrala"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/reltime"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/ticker"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/reports/operations"
 )
 
 const limit = 1000
@@ -30,7 +30,7 @@ const limit = 1000
 type report struct {
 	repo            Repository
 	runInfo         chan pkglog.RunInfo
-	idp             supermq.IDProvider
+	idp             magistrala.IDProvider
 	email           emailer.Emailer
 	ticker          ticker.Ticker
 	readers         grpcReadersV1.ReadersServiceClient
@@ -39,7 +39,7 @@ type report struct {
 	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp magistrala.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err

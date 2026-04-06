@@ -11,8 +11,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var _ roles.RoleManager = (*RoleManagerLoggingMiddleware)(nil)

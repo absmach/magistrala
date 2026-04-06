@@ -6,7 +6,7 @@ package consumers
 import (
 	"errors"
 
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 // ErrNotify wraps sending notification errors.

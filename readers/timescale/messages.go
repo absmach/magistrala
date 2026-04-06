@@ -8,10 +8,10 @@ import (
 	"fmt"
 	"strings"
 
-	api "github.com/absmach/supermq/api/http"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/absmach/supermq/readers"
+	api "github.com/absmach/magistrala/api/http"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access

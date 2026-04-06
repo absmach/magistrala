@@ -10,10 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/auth/cache"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/auth/cache"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )

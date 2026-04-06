@@ -10,10 +10,10 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	mgoauth2 "github.com/absmach/supermq/pkg/oauth2"
-	uclient "github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	mgoauth2 "github.com/absmach/magistrala/pkg/oauth2"
+	uclient "github.com/absmach/magistrala/users"
 	"golang.org/x/oauth2"
 	googleoauth2 "golang.org/x/oauth2/google"
 )

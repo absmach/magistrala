@@ -7,15 +7,15 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
-	"github.com/absmach/supermq/re"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/magistrala/re"
 )
 
 const (
-	stream = "events.supermq.rule.*"
+	stream = "events.magistrala.rule.*"
 
 	create         = "rule.create"
 	update         = "rule.update"

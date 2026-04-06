@@ -11,8 +11,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/errors"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/errors"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/pelletier/go-toml"
 	"github.com/spf13/cobra"
 )

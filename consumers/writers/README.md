@@ -27,17 +27,17 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 
 #### Postgres Database
 
-| Variable                    | Description                | Default    |
-| --------------------------- | -------------------------- | ---------- |
-| `MG_POSTGRES_HOST`          | PostgreSQL host            | `postgres` |
-| `MG_POSTGRES_PORT`          | PostgreSQL port            | `5432`     |
-| `MG_POSTGRES_USER`          | PostgreSQL user            | `supermq`  |
-| `MG_POSTGRES_PASS`          | PostgreSQL password        | `supermq`  |
-| `MG_POSTGRES_NAME`          | PostgreSQL database name   | `messages` |
-| `MG_POSTGRES_SSL_MODE`      | PostgreSQL SSL mode        | `disable`  |
-| `MG_POSTGRES_SSL_CERT`      | PostgreSQL SSL client cert | ""         |
-| `MG_POSTGRES_SSL_KEY`       | PostgreSQL SSL client key  | ""         |
-| `MG_POSTGRES_SSL_ROOT_CERT` | PostgreSQL SSL root cert   | ""         |
+| Variable                    | Description                | Default      |
+| --------------------------- | -------------------------- | ------------ |
+| `MG_POSTGRES_HOST`          | PostgreSQL host            | `postgres`   |
+| `MG_POSTGRES_PORT`          | PostgreSQL port            | `5432`       |
+| `MG_POSTGRES_USER`          | PostgreSQL user            | `magistrala` |
+| `MG_POSTGRES_PASS`          | PostgreSQL password        | `magistrala` |
+| `MG_POSTGRES_NAME`          | PostgreSQL database name   | `messages`   |
+| `MG_POSTGRES_SSL_MODE`      | PostgreSQL SSL mode        | `disable`    |
+| `MG_POSTGRES_SSL_CERT`      | PostgreSQL SSL client cert | ""           |
+| `MG_POSTGRES_SSL_KEY`       | PostgreSQL SSL client key  | ""           |
+| `MG_POSTGRES_SSL_ROOT_CERT` | PostgreSQL SSL root cert   | ""           |
 
 #### Postgres Message broker and observability
 
@@ -64,17 +64,17 @@ Values shown are from [docker/.env](https://github.com/absmach/magistrala/blob/m
 
 #### Timescale Database
 
-| Variable                     | Description                 | Default     |
-| ---------------------------- | --------------------------- | ----------- |
-| `MG_TIMESCALE_HOST`          | TimescaleDB host            | `timescale` |
-| `MG_TIMESCALE_PORT`          | TimescaleDB port            | `5432`      |
-| `MG_TIMESCALE_USER`          | TimescaleDB user            | `supermq`   |
-| `MG_TIMESCALE_PASS`          | TimescaleDB password        | `supermq`   |
-| `MG_TIMESCALE_NAME`          | TimescaleDB database name   | `supermq`   |
-| `MG_TIMESCALE_SSL_MODE`      | TimescaleDB SSL mode        | `disable`   |
-| `MG_TIMESCALE_SSL_CERT`      | TimescaleDB SSL client cert | ""          |
-| `MG_TIMESCALE_SSL_KEY`       | TimescaleDB SSL client key  | ""          |
-| `MG_TIMESCALE_SSL_ROOT_CERT` | TimescaleDB SSL root cert   | ""          |
+| Variable                     | Description                 | Default      |
+| ---------------------------- | --------------------------- | ------------ |
+| `MG_TIMESCALE_HOST`          | TimescaleDB host            | `timescale`  |
+| `MG_TIMESCALE_PORT`          | TimescaleDB port            | `5432`       |
+| `MG_TIMESCALE_USER`          | TimescaleDB user            | `magistrala` |
+| `MG_TIMESCALE_PASS`          | TimescaleDB password        | `magistrala` |
+| `MG_TIMESCALE_NAME`          | TimescaleDB database name   | `magistrala` |
+| `MG_TIMESCALE_SSL_MODE`      | TimescaleDB SSL mode        | `disable`    |
+| `MG_TIMESCALE_SSL_CERT`      | TimescaleDB SSL client cert | ""           |
+| `MG_TIMESCALE_SSL_KEY`       | TimescaleDB SSL client key  | ""           |
+| `MG_TIMESCALE_SSL_ROOT_CERT` | TimescaleDB SSL root cert   | ""           |
 
 #### Timescale Message broker and observability
 
@@ -205,9 +205,7 @@ MG_POSTGRES_WRITER_CONFIG_PATH=./docker/addons/postgres-writer/config.toml \
 MG_POSTGRES_WRITER_HTTP_PORT=9007 \
 MG_POSTGRES_HOST=localhost \
 MG_POSTGRES_PORT=5432 \
-MG_POSTGRES_USER=supermq \
-MG_POSTGRES_PASS=supermq \
-MG_POSTGRES_NAME=messages \
+MG_POSTGRES_USER=magistrala \MG_POSTGRES_PASS=magistrala \MG_POSTGRES_NAME=messages \
 MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
 MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/postgres-writer
@@ -223,10 +221,7 @@ MG_TIMESCALE_WRITER_CONFIG_PATH=./docker/addons/timescale-writer/config.toml \
 MG_TIMESCALE_WRITER_HTTP_PORT=9012 \
 MG_TIMESCALE_HOST=localhost \
 MG_TIMESCALE_PORT=5432 \
-MG_TIMESCALE_USER=supermq \
-MG_TIMESCALE_PASS=supermq \
-MG_TIMESCALE_NAME=supermq \
-MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
+MG_TIMESCALE_USER=magistrala \MG_TIMESCALE_PASS=magistrala \MG_TIMESCALE_NAME=magistrala \MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
 MG_JAEGER_URL=http://localhost:4318/v1/traces \
 ./build/timescale-writer
 ```
@@ -269,4 +264,4 @@ Writers do not expose a message ingestion API. Messages are written via the mess
 
 For an in-depth explanation of Writers, see the [official documentation][doc].
 
-[doc]: https://docs.magistrala.absmach.eu/dev-guide/consumers/
+[doc]: https://magistrala.absmach.eu/docs/dev-guide/services/consumers/

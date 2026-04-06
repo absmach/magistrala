@@ -3,7 +3,7 @@
 
 package messaging
 
-// MsgError is an error type for SuperMQ SDK.
+// MsgError is an error type for Magistrala SDK.
 type Error interface {
 	error
 	Ack() AckType

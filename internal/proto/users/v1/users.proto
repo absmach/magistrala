@@ -8,7 +8,7 @@ package users.v1;
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
-option go_package = "github.com/absmach/supermq/api/grpc/users/v1";
+option go_package = "github.com/absmach/magistrala/api/grpc/users/v1";
 
 // UsersService exposes user-related functionality over gRPC.
 service UsersService {

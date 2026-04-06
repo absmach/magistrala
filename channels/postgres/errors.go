@@ -3,7 +3,7 @@
 
 package postgres
 
-import "github.com/absmach/supermq/pkg/errors"
+import "github.com/absmach/magistrala/pkg/errors"
 
 var _ errors.Mapper = (*duplicateErrors)(nil)
 

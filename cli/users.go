@@ -9,8 +9,8 @@ import (
 	"net/url"
 	"strconv"
 
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
-	smqusers "github.com/absmach/supermq/users"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
+	smqusers "github.com/absmach/magistrala/users"
 	"github.com/spf13/cobra"
 )
 

@@ -7,8 +7,8 @@ import (
 	"context"
 	"time"
 
-	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
-	"github.com/absmach/supermq/certs/api"
+	grpcCertsV1 "github.com/absmach/magistrala/api/grpc/certs/v1"
+	"github.com/absmach/magistrala/certs/api"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"

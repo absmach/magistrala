@@ -6,41 +6,41 @@ package events
 import (
 	"context"
 
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/users"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix            = "supermq."
-	createStream             = supermqPrefix + userCreate
-	sendVerificationStream   = supermqPrefix + userSendVerification
-	verifyEmailStream        = supermqPrefix + userVerifyEmail
-	updateStream             = supermqPrefix + userUpdate
-	updateRoleStream         = supermqPrefix + userUpdateRole
-	updateTagsStream         = supermqPrefix + userUpdateTags
-	updateSecretStream       = supermqPrefix + userUpdateSecret
-	updateUsernameStream     = supermqPrefix + userUpdateUsername
-	updatePictureStream      = supermqPrefix + userUpdateProfilePicture
-	UpdateEmailStream        = supermqPrefix + userUpdateEmail
-	enableStream             = supermqPrefix + userEnable
-	disableStream            = supermqPrefix + userDisable
-	viewStream               = supermqPrefix + userView
-	viewProfileStream        = supermqPrefix + profileView
-	listStream               = supermqPrefix + userList
-	searchStream             = supermqPrefix + userSearch
-	identifyStream           = supermqPrefix + userIdentify
-	issueTokenStream         = supermqPrefix + issueToken
-	refreshTokenStream       = supermqPrefix + refreshToken
-	revokeRefreshTokenStream = supermqPrefix + revokeRefreshToken
-	resetSecretStream        = supermqPrefix + resetSecret
-	sendPasswordResetStream  = supermqPrefix + sendPasswordReset
-	oauthStream              = supermqPrefix + oauthCallback
-	addPolicyStream          = supermqPrefix + addClientPolicy
-	deleteStream             = supermqPrefix + deleteUser
+	magistralaPrefix         = "magistrala."
+	createStream             = magistralaPrefix + userCreate
+	sendVerificationStream   = magistralaPrefix + userSendVerification
+	verifyEmailStream        = magistralaPrefix + userVerifyEmail
+	updateStream             = magistralaPrefix + userUpdate
+	updateRoleStream         = magistralaPrefix + userUpdateRole
+	updateTagsStream         = magistralaPrefix + userUpdateTags
+	updateSecretStream       = magistralaPrefix + userUpdateSecret
+	updateUsernameStream     = magistralaPrefix + userUpdateUsername
+	updatePictureStream      = magistralaPrefix + userUpdateProfilePicture
+	UpdateEmailStream        = magistralaPrefix + userUpdateEmail
+	enableStream             = magistralaPrefix + userEnable
+	disableStream            = magistralaPrefix + userDisable
+	viewStream               = magistralaPrefix + userView
+	viewProfileStream        = magistralaPrefix + profileView
+	listStream               = magistralaPrefix + userList
+	searchStream             = magistralaPrefix + userSearch
+	identifyStream           = magistralaPrefix + userIdentify
+	issueTokenStream         = magistralaPrefix + issueToken
+	refreshTokenStream       = magistralaPrefix + refreshToken
+	revokeRefreshTokenStream = magistralaPrefix + revokeRefreshToken
+	resetSecretStream        = magistralaPrefix + resetSecret
+	sendPasswordResetStream  = magistralaPrefix + sendPasswordReset
+	oauthStream              = magistralaPrefix + oauthCallback
+	addPolicyStream          = magistralaPrefix + addClientPolicy
+	deleteStream             = magistralaPrefix + deleteUser
 )
 
 var _ users.Service = (*eventStore)(nil)

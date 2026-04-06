@@ -18,7 +18,7 @@ type errorRes struct {
 // Failed to read response body.
 var errRespBody = New("failed to read response body")
 
-// SDKError is an error type for SuperMQ SDK.
+// SDKError is an error type for Magistrala SDK.
 type SDKError interface {
 	Error
 	StatusCode() int

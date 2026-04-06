@@ -8,11 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var (
@@ -31,13 +31,13 @@ var _ roleProvisionerManger = (*ProvisionManageService)(nil)
 type ProvisionManageService struct {
 	entityType   string
 	repo         Repository
-	sidProvider  supermq.IDProvider
+	sidProvider  magistrala.IDProvider
 	policy       policies.Service
 	actions      []Action
 	builtInRoles map[BuiltInRoleName][]Action
 }
 
-func NewProvisionManageService(entityType string, repo Repository, policy policies.Service, sidProvider supermq.IDProvider, actions []Action, builtInRoles map[BuiltInRoleName][]Action) (ProvisionManageService, error) {
+func NewProvisionManageService(entityType string, repo Repository, policy policies.Service, sidProvider magistrala.IDProvider, actions []Action, builtInRoles map[BuiltInRoleName][]Action) (ProvisionManageService, error) {
 	rm := ProvisionManageService{
 		entityType:   entityType,
 		repo:         repo,

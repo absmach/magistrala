@@ -479,7 +479,7 @@ const file_token_v1_token_proto_rawDesc = "" +
 	"\x05Issue\x12\x12.token.v1.IssueReq\x1a\x0f.token.v1.Token\"\x00\x122\n" +
 	"\aRefresh\x12\x14.token.v1.RefreshReq\x1a\x0f.token.v1.Token\"\x00\x124\n" +
 	"\x06Revoke\x12\x13.token.v1.RevokeReq\x1a\x13.token.v1.RevokeRes\"\x00\x12a\n" +
-	"\x15ListUserRefreshTokens\x12\".token.v1.ListUserRefreshTokensReq\x1a\".token.v1.ListUserRefreshTokensRes\"\x00B.Z,github.com/absmach/supermq/api/grpc/token/v1b\x06proto3"
+	"\x15ListUserRefreshTokens\x12\".token.v1.ListUserRefreshTokensReq\x1a\".token.v1.ListUserRefreshTokensRes\"\x00B1Z/github.com/absmach/magistrala/api/grpc/token/v1b\x06proto3"
 
 var (
 	file_token_v1_token_proto_rawDescOnce sync.Once

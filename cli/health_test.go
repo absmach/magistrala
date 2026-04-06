@@ -9,10 +9,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/supermq/cli"
-	"github.com/absmach/supermq/pkg/errors"
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
-	sdkmocks "github.com/absmach/supermq/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/cli"
+	"github.com/absmach/magistrala/pkg/errors"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

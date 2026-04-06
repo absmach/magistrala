@@ -9,10 +9,10 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	grpcUsersV1 "github.com/absmach/supermq/api/grpc/users/v1"
-	"github.com/absmach/supermq/internal/email"
-	"github.com/absmach/supermq/notifications"
-	"github.com/absmach/supermq/pkg/errors"
+	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
+	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/notifications"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var (

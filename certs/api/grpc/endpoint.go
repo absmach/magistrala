@@ -6,10 +6,10 @@ package grpc
 import (
 	"context"
 
-	grpcCertsV1 "github.com/absmach/supermq/api/grpc/certs/v1"
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/pkg/authn"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	grpcCertsV1 "github.com/absmach/magistrala/api/grpc/certs/v1"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/authn"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/go-kit/kit/endpoint"
 	"google.golang.org/protobuf/types/known/emptypb"
 )

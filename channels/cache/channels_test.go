@@ -9,11 +9,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/channels/cache"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/channels/cache"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 )

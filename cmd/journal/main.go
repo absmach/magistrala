@@ -13,29 +13,29 @@ import (
 	"os"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/journal"
-	httpapi "github.com/absmach/supermq/journal/api"
-	"github.com/absmach/supermq/journal/events"
-	"github.com/absmach/supermq/journal/middleware"
-	journalpg "github.com/absmach/supermq/journal/postgres"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	jwksAuthn "github.com/absmach/supermq/pkg/authn/jwks"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/postgres"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	"github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/journal"
+	httpapi "github.com/absmach/magistrala/journal/api"
+	"github.com/absmach/magistrala/journal/events"
+	"github.com/absmach/magistrala/journal/middleware"
+	journalpg "github.com/absmach/magistrala/journal/postgres"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	jwksAuthn "github.com/absmach/magistrala/pkg/authn/jwks"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/postgres"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	"github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
@@ -72,13 +72,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -202,7 +202,7 @@ func main() {
 	hs := http.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, authnMiddleware, logger, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

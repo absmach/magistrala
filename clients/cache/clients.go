@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/redis/go-redis/v9"
 )
 

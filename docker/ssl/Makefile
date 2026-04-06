@@ -2,11 +2,11 @@
 # SPDX-License-Identifier: Apache-2.0
 
 CRT_LOCATION = certs
-O = SuperMQ
-OU_CA = supermq_ca
-OU_CRT = supermq_crt
-EA = info@supermq.com
-CN_CA = SuperMQ_Self_Signed_CA
+O = Magistrala
+OU_CA = magistrala_ca
+OU_CRT = magistrala_crt
+EA = info@magistrala.com
+CN_CA = Magistrala_Self_Signed_CA
 CN_SRV ?= localhost
 CLIENT_SECRET ?= "" # e.g. 8f65ed04-0770-4ce4-a291-6d1bf2000f4d
 CRT_FILE_NAME = client
@@ -92,7 +92,7 @@ server_cert:
 	rm $(CRT_LOCATION)/magistrala-server.csr
 
 client_cert:
-	# Create supermq server key and CSR.
+	# Create magistrala server key and CSR.
 	openssl req -new -sha256 -newkey rsa:4096 -nodes -keyout $(CRT_LOCATION)/$(CRT_FILE_NAME).key \
 				-out $(CRT_LOCATION)/$(CRT_FILE_NAME).csr -subj "/CN=$(CLIENT_SECRET)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
 

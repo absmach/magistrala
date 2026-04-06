@@ -1,4 +1,4 @@
-module github.com/absmach/supermq
+module github.com/absmach/magistrala
 
 go 1.26.0
 
@@ -6,7 +6,6 @@ require (
 	connectrpc.com/otelconnect v0.9.0
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/certs v0.18.5
 	github.com/absmach/fluxmq v0.0.0-20260402075516-078522f369d4
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.8.0
@@ -67,6 +66,12 @@ require (
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v3 v3.0.1
 	moul.io/http2curl v1.0.0
+)
+
+require (
+	github.com/onsi/gomega v1.38.2 // indirect
+	github.com/smarty/assertions v1.16.0 // indirect
+	github.com/smartystreets/goconvey v1.8.1 // indirect
 )
 
 require (
@@ -152,7 +157,6 @@ require (
 	github.com/nats-io/nkeys v0.4.15 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/onsi/ginkgo/v2 v2.27.2 // indirect
-	github.com/onsi/gomega v1.38.2 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.2.8 // indirect
@@ -171,8 +175,6 @@ require (
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smarty/assertions v1.16.0 // indirect
-	github.com/smartystreets/goconvey v1.8.1 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/cast v1.10.0 // indirect

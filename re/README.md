@@ -322,4 +322,4 @@ curl -X DELETE http://localhost:9008/<domainID>/rules/<ruleID> \
 
 For an in-depth explanation of our Rules Engine Service, see the [official documentation][doc].
 
-[doc]: https://docs.magistrala.absmach.eu/dev-guide/rules-engine/
+[doc]: https://magistrala.absmach.eu/docs/dev-guide/services/rules-engine/

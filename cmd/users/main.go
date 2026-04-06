@@ -15,43 +15,43 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	grpcDomainsV1 "github.com/absmach/supermq/api/grpc/domains/v1"
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	grpcUsersV1 "github.com/absmach/supermq/api/grpc/users/v1"
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/internal/email"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authsvcAuthn "github.com/absmach/supermq/pkg/authn/authsvc"
-	jwksAuthn "github.com/absmach/supermq/pkg/authn/jwks"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/oauth2"
-	googleoauth "github.com/absmach/supermq/pkg/oauth2/google"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pg "github.com/absmach/supermq/pkg/postgres"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/server"
-	grpcserver "github.com/absmach/supermq/pkg/server/grpc"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/users"
-	httpapi "github.com/absmach/supermq/users/api"
-	grpcapi "github.com/absmach/supermq/users/api/grpc"
-	"github.com/absmach/supermq/users/emailer"
-	"github.com/absmach/supermq/users/events"
-	"github.com/absmach/supermq/users/hasher"
-	"github.com/absmach/supermq/users/middleware"
-	"github.com/absmach/supermq/users/postgres"
-	pusers "github.com/absmach/supermq/users/private"
+	"github.com/absmach/magistrala"
+	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/email"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	jwksAuthn "github.com/absmach/magistrala/pkg/authn/jwks"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/oauth2"
+	googleoauth "github.com/absmach/magistrala/pkg/oauth2/google"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pg "github.com/absmach/magistrala/pkg/postgres"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/server"
+	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/users"
+	httpapi "github.com/absmach/magistrala/users/api"
+	grpcapi "github.com/absmach/magistrala/users/api/grpc"
+	"github.com/absmach/magistrala/users/emailer"
+	"github.com/absmach/magistrala/users/events"
+	"github.com/absmach/magistrala/users/hasher"
+	"github.com/absmach/magistrala/users/middleware"
+	"github.com/absmach/magistrala/users/postgres"
+	pusers "github.com/absmach/magistrala/users/private"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -120,13 +120,13 @@ func main() {
 	}
 	cfg.PassRegex = passRegex
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -302,7 +302,7 @@ func main() {
 	httpSrv := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(csvc, authnMiddleware, tokenClient, cfg.SelfRegister, mux, logger, cfg.InstanceID, cfg.PassRegex, idp, oauthProvider), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

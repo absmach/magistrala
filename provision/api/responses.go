@@ -7,11 +7,11 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/sdk"
 )
 
-var _ supermq.Response = (*provisionRes)(nil)
+var _ magistrala.Response = (*provisionRes)(nil)
 
 type provisionRes struct {
 	Clients     []sdk.Client      `json:"clients"`

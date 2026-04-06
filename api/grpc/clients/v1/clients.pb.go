@@ -10,7 +10,7 @@
 package v1
 
 import (
-	v1 "github.com/absmach/supermq/api/grpc/common/v1"
+	v1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
@@ -306,7 +306,7 @@ const file_clients_v1_clients_proto_rawDesc = "" +
 	"\x0eAddConnections\x12\x1c.common.v1.AddConnectionsReq\x1a\x1c.common.v1.AddConnectionsRes\"\x00\x12W\n" +
 	"\x11RemoveConnections\x12\x1f.common.v1.RemoveConnectionsReq\x1a\x1f.common.v1.RemoveConnectionsRes\"\x00\x12n\n" +
 	"\x18RemoveChannelConnections\x12'.clients.v1.RemoveChannelConnectionsReq\x1a'.clients.v1.RemoveChannelConnectionsRes\"\x00\x12t\n" +
-	"\x1aUnsetParentGroupFromClient\x12).clients.v1.UnsetParentGroupFromClientReq\x1a).clients.v1.UnsetParentGroupFromClientRes\"\x00B0Z.github.com/absmach/supermq/api/grpc/clients/v1b\x06proto3"
+	"\x1aUnsetParentGroupFromClient\x12).clients.v1.UnsetParentGroupFromClientReq\x1a).clients.v1.UnsetParentGroupFromClientRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/clients/v1b\x06proto3"
 
 var (
 	file_clients_v1_clients_proto_rawDescOnce sync.Once

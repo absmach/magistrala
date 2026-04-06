@@ -4,8 +4,8 @@
 package postgres
 
 import (
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 var _ errors.Mapper = (*duplicateErrors)(nil)

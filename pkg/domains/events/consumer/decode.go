@@ -7,10 +7,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/roles"
-	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
+	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 )
 
 const (

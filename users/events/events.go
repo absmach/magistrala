@@ -6,9 +6,9 @@ package events
 import (
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/users"
 )
 
 const (

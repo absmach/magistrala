@@ -14,45 +14,45 @@ import (
 	"time"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	"github.com/absmach/supermq"
-	abrokers "github.com/absmach/supermq/alarms/brokers"
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	"github.com/absmach/supermq/consumers/writers/brokers"
-	dpostgres "github.com/absmach/supermq/domains/postgres"
-	"github.com/absmach/supermq/internal/email"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
-	mgauthz "github.com/absmach/supermq/pkg/authz"
-	authzsvc "github.com/absmach/supermq/pkg/authz/authsvc"
-	"github.com/absmach/supermq/pkg/callout"
-	dconsumer "github.com/absmach/supermq/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/emailer"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	jaegerclient "github.com/absmach/supermq/pkg/jaeger"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/messaging"
-	smqbrokers "github.com/absmach/supermq/pkg/messaging/brokers"
-	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/policies/spicedb"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/server"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	spicedbdecoder "github.com/absmach/supermq/pkg/spicedb"
-	"github.com/absmach/supermq/pkg/ticker"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/re"
-	httpapi "github.com/absmach/supermq/re/api"
-	"github.com/absmach/supermq/re/events"
-	"github.com/absmach/supermq/re/middleware"
-	"github.com/absmach/supermq/re/operations"
-	repg "github.com/absmach/supermq/re/postgres"
-	grpcClient "github.com/absmach/supermq/readers/api/grpc"
+	"github.com/absmach/magistrala"
+	abrokers "github.com/absmach/magistrala/alarms/brokers"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/consumers/writers/brokers"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	"github.com/absmach/magistrala/internal/email"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnsvc "github.com/absmach/magistrala/pkg/authn/authsvc"
+	mgauthz "github.com/absmach/magistrala/pkg/authz"
+	authzsvc "github.com/absmach/magistrala/pkg/authz/authsvc"
+	"github.com/absmach/magistrala/pkg/callout"
+	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	smqbrokers "github.com/absmach/magistrala/pkg/messaging/brokers"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	spicedbdecoder "github.com/absmach/magistrala/pkg/spicedb"
+	"github.com/absmach/magistrala/pkg/ticker"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/re"
+	httpapi "github.com/absmach/magistrala/re/api"
+	"github.com/absmach/magistrala/re/events"
+	"github.com/absmach/magistrala/re/middleware"
+	"github.com/absmach/magistrala/re/operations"
+	repg "github.com/absmach/magistrala/re/postgres"
+	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
@@ -108,13 +108,13 @@ func main() {
 	}
 
 	var logger *slog.Logger
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -323,7 +323,7 @@ func main() {
 	httpSvc := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, mux, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

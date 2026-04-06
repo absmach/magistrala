@@ -7,8 +7,8 @@ package main
 import (
 	"log"
 
-	"github.com/absmach/supermq/cli"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala/cli"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 
@@ -20,7 +20,7 @@ func main() {
 
 	// Root
 	rootCmd := &cobra.Command{
-		Use: "supermq-cli",
+		Use: "magistrala-cli",
 		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			cliConf, err := cli.ParseConfig(sdkConf)
 			if err != nil {

@@ -7,10 +7,10 @@ import (
 	"context"
 	"encoding/json"
 
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	grpcapi "github.com/absmach/supermq/auth/api/grpc"
-	"github.com/absmach/supermq/pkg/transformers/senml"
-	"github.com/absmach/supermq/readers"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
+	"github.com/absmach/magistrala/readers"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 )
 

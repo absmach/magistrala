@@ -5,20 +5,20 @@
 package uuid
 
 import (
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/gofrs/uuid/v5"
 )
 
 // ErrGeneratingID indicates error in generating UUID.
 var ErrGeneratingID = errors.New("failed to generate uuid")
 
-var _ supermq.IDProvider = (*uuidProvider)(nil)
+var _ magistrala.IDProvider = (*uuidProvider)(nil)
 
 type uuidProvider struct{}
 
 // New instantiates a UUID provider.
-func New() supermq.IDProvider {
+func New() magistrala.IDProvider {
 	return &uuidProvider{}
 }
 

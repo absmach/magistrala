@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/gookit/color"
 	"github.com/gorilla/websocket"
 	"golang.org/x/sync/errgroup"
@@ -603,7 +603,7 @@ func sendCoAPMessage(msg string, client sdk.Client, chanID string) error {
 }
 
 func sendMQTTMessage(msg string, client sdk.Client, chanID string) error {
-	cmd := exec.Command("mosquitto_pub", "--id-prefix", "supermq", "-u", client.ID, "-P", client.Credentials.Secret, "-t", fmt.Sprintf("m/%s/c/%s", client.DomainID, chanID), "-h", "localhost", "-m", msg)
+	cmd := exec.Command("mosquitto_pub", "--id-prefix", "magistrala", "-u", client.ID, "-P", client.Credentials.Secret, "-t", fmt.Sprintf("m/%s/c/%s", client.DomainID, chanID), "-h", "localhost", "-m", msg)
 	if _, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("MQTT failed to send message from client %s to channel %s: %w", client.ID, chanID, err)
 	}

@@ -6,8 +6,8 @@ package consumer
 import (
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (

@@ -18,10 +18,10 @@ import (
 	"time"
 	_ "time/tzdata" // Embed timezone database
 
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/transformers/senml"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/transformers/senml"
 )
 
 const nanosecondThreshold = float64(10 * time.Second / time.Nanosecond)

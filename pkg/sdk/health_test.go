@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/errors"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -111,9 +111,9 @@ func TestHealth(t *testing.T) {
 			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected error %s, got %s", tc.desc, tc.err, err))
 			assert.Equal(t, tc.status, h.Status, fmt.Sprintf("%s: expected %s status, got %s", tc.desc, tc.status, h.Status))
 			assert.Equal(t, tc.empty, h.Version == "", fmt.Sprintf("%s: expected non-empty version", tc.desc))
-			assert.Equal(t, supermq.Commit, h.Commit, fmt.Sprintf("%s: expected non-empty commit", tc.desc))
+			assert.Equal(t, magistrala.Commit, h.Commit, fmt.Sprintf("%s: expected non-empty commit", tc.desc))
 			assert.Equal(t, tc.description, h.Description, fmt.Sprintf("%s: expected proper description, got %s", tc.desc, h.Description))
-			assert.Equal(t, supermq.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", tc.desc, h.BuildTime))
+			assert.Equal(t, magistrala.BuildTime, h.BuildTime, fmt.Sprintf("%s: expected default epoch date, got %s", tc.desc, h.BuildTime))
 		})
 	}
 

@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )
 
 // Status represents Channel status.

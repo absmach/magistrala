@@ -7,18 +7,18 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcReadersV1 "github.com/absmach/supermq/api/grpc/readers/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/emailer"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/ticker"
-	"github.com/absmach/supermq/re/operations"
+	"github.com/absmach/magistrala"
+	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/emailer"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/ticker"
+	"github.com/absmach/magistrala/re/operations"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 type re struct {
 	repo       Repository
 	runInfo    chan pkglog.RunInfo
-	idp        supermq.IDProvider
+	idp        magistrala.IDProvider
 	rePubSub   messaging.PubSub
 	writersPub messaging.Publisher
 	alarmsPub  messaging.Publisher
@@ -39,7 +39,7 @@ type re struct {
 	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp supermq.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp magistrala.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err

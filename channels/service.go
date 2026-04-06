@@ -8,18 +8,18 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	grpcCommonV1 "github.com/absmach/supermq/api/grpc/common/v1"
-	grpcGroupsV1 "github.com/absmach/supermq/api/grpc/groups/v1"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (
@@ -33,7 +33,7 @@ type service struct {
 	repo       Repository
 	cache      Cache
 	policy     policies.Service
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 	clients    grpcClientsV1.ClientsServiceClient
 	groups     grpcGroupsV1.GroupsServiceClient
 	roles.ProvisionManageService
@@ -41,7 +41,7 @@ type service struct {
 
 var _ Service = (*service)(nil)
 
-func New(repo Repository, cache Cache, policy policies.Service, idProvider supermq.IDProvider, clients grpcClientsV1.ClientsServiceClient, groups grpcGroupsV1.GroupsServiceClient, sidProvider supermq.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func New(repo Repository, cache Cache, policy policies.Service, idProvider magistrala.IDProvider, clients grpcClientsV1.ClientsServiceClient, groups grpcGroupsV1.GroupsServiceClient, sidProvider magistrala.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(policies.ChannelType, repo, policy, sidProvider, availableActions, builtInRoles)
 	if err != nil {
 		return nil, err

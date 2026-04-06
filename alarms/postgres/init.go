@@ -4,9 +4,9 @@
 package postgres
 
 import (
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	rpostgres "github.com/absmach/supermq/re/postgres"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	rpostgres "github.com/absmach/magistrala/re/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )

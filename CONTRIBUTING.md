@@ -13,7 +13,7 @@ Reporting issues are a great way to contribute to the project. We are perpetuall
 thorough bug report.
 
 Before raising a new issue, check [our issue
-list](https://github.com/absmach/supermq/issues) to determine if it already contains the
+list](https://github.com/absmach/magistrala/issues) to determine if it already contains the
 problem that you are facing.
 
 A good bug report shouldn't leave others needing to chase you for more information. Please be as detailed as possible. The following questions might serve as a template for writing a detailed
@@ -41,9 +41,9 @@ To contribute to the project, [fork](https://help.github.com/articles/fork-a-rep
 clone your fork repository, and configure the remotes:
 
 ```
-git clone https://github.com/<your-username>/supermq.git
-cd supermq
-git remote add upstream https://github.com/absmach/supermq.git
+git clone https://github.com/<your-username>/magistrala.git
+cd magistrala
+git remote add upstream https://github.com/absmach/magistrala.git
 ```
 
 If your cloned repository is behind the upstream commits, then get the latest changes from upstream:

@@ -12,19 +12,19 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/alarms"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/alarms"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider, instanceID string, authn smqauthn.AuthNMiddleware) http.Handler {
+func MakeHandler(svc alarms.Service, logger *slog.Logger, idp magistrala.IDProvider, instanceID string, authn smqauthn.AuthNMiddleware) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(apiutil.LoggingErrorEncoder(logger, api.EncodeError)),
 	}
@@ -65,7 +65,7 @@ func MakeHandler(svc alarms.Service, logger *slog.Logger, idp supermq.IDProvider
 		})
 	})
 
-	mux.Get("/health", supermq.Health("alarms", instanceID))
+	mux.Get("/health", magistrala.Health("alarms", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

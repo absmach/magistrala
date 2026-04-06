@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauth "github.com/absmach/supermq/auth"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/oauth2"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauth "github.com/absmach/magistrala/auth"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/oauth2"
+	"github.com/absmach/magistrala/users"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -29,7 +29,7 @@ import (
 var passRegex = regexp.MustCompile("^.{8,}$")
 
 // usersHandler returns a HTTP handler for API endpoints.
-func usersHandler(svc users.Service, authn smqauthn.AuthNMiddleware, tokenClient grpcTokenV1.TokenServiceClient, selfRegister bool, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, idp supermq.IDProvider, providers ...oauth2.Provider) *chi.Mux {
+func usersHandler(svc users.Service, authn smqauthn.AuthNMiddleware, tokenClient grpcTokenV1.TokenServiceClient, selfRegister bool, r *chi.Mux, logger *slog.Logger, pr *regexp.Regexp, idp magistrala.IDProvider, providers ...oauth2.Provider) *chi.Mux {
 	passRegex = pr
 
 	opts := []kithttp.ServerOption{

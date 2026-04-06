@@ -10,13 +10,13 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	mgPolicies "github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/postgres"
-	rolesPostgres "github.com/absmach/supermq/pkg/roles/repo/postgres"
-	"github.com/absmach/supermq/re"
+	api "github.com/absmach/magistrala/api/http"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	mgPolicies "github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/postgres"
+	rolesPostgres "github.com/absmach/magistrala/pkg/roles/repo/postgres"
+	"github.com/absmach/magistrala/re"
 )
 
 const (

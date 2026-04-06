@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 var errInvalidConnType = errors.New("invalid connection type")

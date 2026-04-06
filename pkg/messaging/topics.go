@@ -9,10 +9,10 @@ import (
 	"net/url"
 	"strings"
 
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcCommonV1 "github.com/absmach/supermq/api/grpc/common/v1"
-	grpcDomainsV1 "github.com/absmach/supermq/api/grpc/domains/v1"
-	"github.com/absmach/supermq/pkg/errors"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/gofrs/uuid/v5"
 )

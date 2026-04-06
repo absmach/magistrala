@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/0x6flab/namegenerator"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 

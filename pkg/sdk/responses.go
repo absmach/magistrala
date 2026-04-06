@@ -3,7 +3,7 @@
 
 package sdk
 
-import "github.com/absmach/supermq/pkg/transformers/senml"
+import "github.com/absmach/magistrala/pkg/transformers/senml"
 
 type createClientsRes struct {
 	Clients []Client `json:"clients"`

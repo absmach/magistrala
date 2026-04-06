@@ -11,7 +11,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/notifications"
+	"github.com/absmach/magistrala/notifications"
 	mock "github.com/stretchr/testify/mock"
 )
 

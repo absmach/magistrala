@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 type Connection struct {

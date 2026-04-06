@@ -7,19 +7,19 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/authn"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/authn"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 )
 
 type service struct {
-	idp  supermq.IDProvider
+	idp  magistrala.IDProvider
 	repo Repository
 }
 
 var _ Service = (*service)(nil)
 
-func NewService(idp supermq.IDProvider, repo Repository) Service {
+func NewService(idp magistrala.IDProvider, repo Repository) Service {
 	return &service{
 		idp:  idp,
 		repo: repo,

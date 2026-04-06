@@ -9,8 +9,8 @@ import (
 	"encoding/gob"
 	"encoding/json"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 type Alarm struct {

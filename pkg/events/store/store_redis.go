@@ -11,8 +11,8 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/redis"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/redis"
 )
 
 // StreamAllEvents represents subject to subscribe for all the events.

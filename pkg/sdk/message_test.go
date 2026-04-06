@@ -12,9 +12,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 )
 

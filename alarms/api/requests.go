@@ -6,9 +6,9 @@ package api
 import (
 	"errors"
 
-	"github.com/absmach/supermq/alarms"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
+	"github.com/absmach/magistrala/alarms"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
 )
 
 type alarmReq struct {

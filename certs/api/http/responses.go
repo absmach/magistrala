@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/absmach/supermq/certs"
+	"github.com/absmach/magistrala/certs"
 )
 
 var (

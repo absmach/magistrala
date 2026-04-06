@@ -7,8 +7,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/absmach/supermq/certs"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 
@@ -187,7 +186,7 @@ var cmdCerts = []cobra.Command{
 				logUsageCmd(*cmd, cmd.Use)
 				return
 			}
-			var pm certs.CSRMetadata
+			var pm smqsdk.CSRMetadata
 			if err := json.Unmarshal([]byte(args[0]), &pm); err != nil {
 				logErrorCmd(*cmd, err)
 				return

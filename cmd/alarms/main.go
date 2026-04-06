@@ -10,32 +10,32 @@ import (
 	"net/url"
 	"os"
 
-	"github.com/absmach/supermq/alarms"
-	httpAPI "github.com/absmach/supermq/alarms/api"
-	"github.com/absmach/supermq/alarms/brokers"
-	"github.com/absmach/supermq/alarms/consumer"
-	"github.com/absmach/supermq/alarms/middleware"
-	"github.com/absmach/supermq/alarms/operations"
-	alarmsRepo "github.com/absmach/supermq/alarms/postgres"
-	dpostgres "github.com/absmach/supermq/domains/postgres"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/authn/authsvc"
-	authsvcAuthz "github.com/absmach/supermq/pkg/authz/authsvc"
-	dconsumer "github.com/absmach/supermq/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/supermq/pkg/domains/grpcclient"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	"github.com/absmach/supermq/pkg/jaeger"
-	"github.com/absmach/supermq/pkg/messaging"
-	brokerstracing "github.com/absmach/supermq/pkg/messaging/brokers/tracing"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/pkg/prometheus"
-	rconsumer "github.com/absmach/supermq/pkg/re/events/consumer"
-	"github.com/absmach/supermq/pkg/server"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
-	rpostgres "github.com/absmach/supermq/re/postgres"
+	"github.com/absmach/magistrala/alarms"
+	httpAPI "github.com/absmach/magistrala/alarms/api"
+	"github.com/absmach/magistrala/alarms/brokers"
+	"github.com/absmach/magistrala/alarms/consumer"
+	"github.com/absmach/magistrala/alarms/middleware"
+	"github.com/absmach/magistrala/alarms/operations"
+	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
+	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/authn/authsvc"
+	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
+	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	"github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/pkg/prometheus"
+	rconsumer "github.com/absmach/magistrala/pkg/re/events/consumer"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
+	rpostgres "github.com/absmach/magistrala/re/postgres"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -71,13 +71,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err.Error())
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {

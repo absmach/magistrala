@@ -4,7 +4,7 @@
 package grpc
 
 import (
-	"github.com/absmach/supermq/readers"
+	"github.com/absmach/magistrala/readers"
 )
 
 type readMessagesRes struct {

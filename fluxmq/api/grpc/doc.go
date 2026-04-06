@@ -3,5 +3,5 @@
 
 // Package grpc contains the FluxMQ auth callout gRPC server implementation.
 // It bridges FluxMQ broker authentication and authorization requests to
-// SuperMQ's Clients and Channels services.
+// Magistrala's Clients and Channels services.
 package grpc

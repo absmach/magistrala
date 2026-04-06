@@ -7,10 +7,10 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/redis/go-redis/v9"
 )
 

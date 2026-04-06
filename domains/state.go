@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"strings"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
+	apiutil "github.com/absmach/magistrala/api/http/util"
 )
 
 // State represents invitation state.

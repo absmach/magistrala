@@ -12,21 +12,21 @@ import (
 	"testing"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/groups"
-	httpapi "github.com/absmach/supermq/groups/api/http"
-	"github.com/absmach/supermq/groups/mocks"
-	"github.com/absmach/supermq/internal/nullable"
-	"github.com/absmach/supermq/internal/testsutil"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	oauth2mocks "github.com/absmach/supermq/pkg/oauth2/mocks"
-	"github.com/absmach/supermq/pkg/roles"
-	sdk "github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/uuid"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/groups"
+	httpapi "github.com/absmach/magistrala/groups/api/http"
+	"github.com/absmach/magistrala/groups/mocks"
+	"github.com/absmach/magistrala/internal/nullable"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	oauth2mocks "github.com/absmach/magistrala/pkg/oauth2/mocks"
+	"github.com/absmach/magistrala/pkg/roles"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -42,7 +42,7 @@ var (
 func setupGroups() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	mux := chi.NewRouter()
 	idp := uuid.NewMock()
 	provider := new(oauth2mocks.Provider)

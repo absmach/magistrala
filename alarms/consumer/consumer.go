@@ -10,9 +10,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var errFailedToDecode = errors.New("failed to decode alarm")

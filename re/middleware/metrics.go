@@ -7,11 +7,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
-	"github.com/absmach/supermq/re"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/re"
 	"github.com/go-kit/kit/metrics"
 )
 

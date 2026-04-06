@@ -13,22 +13,21 @@ import (
 	"reflect"
 
 	chclient "github.com/absmach/callhome/pkg/client"
-	csdk "github.com/absmach/certs/sdk"
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/clients"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnsvc "github.com/absmach/supermq/pkg/authn/authsvc"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/grpcclient"
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/pkg/server"
-	httpserver "github.com/absmach/supermq/pkg/server/http"
-	"github.com/absmach/supermq/pkg/uuid"
-	"github.com/absmach/supermq/provision"
-	httpapi "github.com/absmach/supermq/provision/api"
-	"github.com/absmach/supermq/provision/middleware"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/clients"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnsvc "github.com/absmach/magistrala/pkg/authn/authsvc"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/grpcclient"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
+	"github.com/absmach/magistrala/pkg/uuid"
+	"github.com/absmach/magistrala/provision"
+	httpapi "github.com/absmach/magistrala/provision/api"
+	"github.com/absmach/magistrala/provision/middleware"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -54,13 +53,13 @@ func main() {
 		log.Fatalf("failed to load %s configuration : %s", svcName, err)
 	}
 
-	logger, err := smqlog.New(os.Stdout, cfg.Server.LogLevel)
+	logger, err := mglog.New(os.Stdout, cfg.Server.LogLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err.Error())
 	}
 
 	var exitCode int
-	defer smqlog.ExitWithError(&exitCode)
+	defer mglog.ExitWithError(&exitCode)
 
 	if cfg.InstanceID == "" {
 		if cfg.InstanceID, err = uuid.New().ID(); err != nil {
@@ -108,20 +107,14 @@ func main() {
 	}
 	mgSdk := mgsdk.NewSDK(SDKCfg)
 
-	csdkConf := csdk.Config{
-		CertsURL: cfg.Server.CertsURL,
-	}
-
-	cSdk := csdk.NewSDK(csdkConf)
-
-	svc := provision.New(cfg, mgSdk, cSdk, logger)
+	svc := provision.New(cfg, mgSdk, logger)
 	svc = middleware.NewLogging(svc, logger)
 
 	httpServerConfig := server.Config{Host: "", Port: cfg.Server.Port, KeyFile: cfg.Server.ServerKey, CertFile: cfg.Server.ServerCert}
 	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
-		chc := chclient.New(svcName, supermq.Version, logger, cancel)
+		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
 		go chc.CallHome(ctx)
 	}
 

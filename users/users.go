@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/postgres"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/postgres"
 )
 
 type User struct {

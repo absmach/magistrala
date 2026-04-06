@@ -10,8 +10,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/bootstrap"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala/bootstrap"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 )
 
 var _ bootstrap.Service = (*loggingMiddleware)(nil)

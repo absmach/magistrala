@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/consumers/notifiers"
+	"github.com/absmach/magistrala/consumers/notifiers"
 )
 
 var _ notifiers.Service = (*loggingMiddleware)(nil)

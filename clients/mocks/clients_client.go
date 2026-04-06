@@ -11,8 +11,8 @@ package mocks
 import (
 	"context"
 
-	v10 "github.com/absmach/supermq/api/grpc/clients/v1"
-	"github.com/absmach/supermq/api/grpc/common/v1"
+	v10 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	"github.com/absmach/magistrala/api/grpc/common/v1"
 	mock "github.com/stretchr/testify/mock"
 	"google.golang.org/grpc"
 )

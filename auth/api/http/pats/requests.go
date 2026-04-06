@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/errors"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 type createPatReq struct {

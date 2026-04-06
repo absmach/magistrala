@@ -10,15 +10,15 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/consumers/notifiers"
-	httpapi "github.com/absmach/supermq/consumers/notifiers/api"
-	notmocks "github.com/absmach/supermq/consumers/notifiers/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/sdk"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/consumers/notifiers"
+	httpapi "github.com/absmach/magistrala/consumers/notifiers/api"
+	notmocks "github.com/absmach/magistrala/consumers/notifiers/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -51,7 +51,7 @@ var (
 
 func setupSubscriptions() (*httptest.Server, *notmocks.Service) {
 	nsvc := new(notmocks.Service)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	mux := httpapi.MakeHandler(nsvc, logger, instanceID)
 
 	return httptest.NewServer(mux), nsvc

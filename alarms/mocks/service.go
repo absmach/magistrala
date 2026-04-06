@@ -11,8 +11,8 @@ package mocks
 import (
 	"context"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/pkg/authn"
 	mock "github.com/stretchr/testify/mock"
 )
 

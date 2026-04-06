@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/absmach/supermq/auth"
+	"github.com/absmach/magistrala/auth"
 )
 
 type dbPat struct {

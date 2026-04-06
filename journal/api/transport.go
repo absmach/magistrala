@@ -10,13 +10,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/absmach/supermq"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/journal"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/journal"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -66,7 +66,7 @@ func MakeHandler(svc journal.Service, authn smqauthn.AuthNMiddleware, logger *sl
 		), "view_client_telemetry").ServeHTTP)
 	})
 
-	mux.Get("/health", supermq.Health(svcName, instanceID))
+	mux.Get("/health", magistrala.Health(svcName, instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux

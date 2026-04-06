@@ -4,7 +4,7 @@
 package emailer
 
 import (
-	"github.com/absmach/supermq/internal/email"
+	"github.com/absmach/magistrala/internal/email"
 )
 
 var _ Emailer = (*emailer)(nil)

@@ -1,69 +1,69 @@
 # Domains
 
-The Domains service provides an HTTP API for managing platform domains in SuperMQ. Through this API you can create, list, retrieve, update, enable/disable/freeze domains, manage roles & invitations associated with domains, and more.
+The Domains service provides an HTTP API for managing platform domains in Magistrala. Through this API you can create, list, retrieve, update, enable/disable/freeze domains, manage roles & invitations associated with domains, and more.
 
-For more background on SuperMQ concepts, see the [official documentation][doc].
+For more background on Magistrala concepts, see the [official documentation][doc].
 
 ## Configuration
 
 The service is configured through environment variables (unset variables fall back to defaults).
 
-| Variable                             | Description                                                                                  | Default                               |
-| ------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------- |
-| `MG_DOMAINS_LOG_LEVEL`              | Log level for Domains (debug, info, warn, error)                                             | debug                                  |
-| `MG_DOMAINS_HTTP_HOST`              | Domains service HTTP host                                                                    | domains                                |
-| `MG_DOMAINS_HTTP_PORT`              | Domains service HTTP port                                                                    | 9003                                   |
-| `MG_DOMAINS_HTTP_SERVER_CERT`       | Path to PEM-encoded HTTP server certificate                                                  | ""                                     |
-| `MG_DOMAINS_HTTP_SERVER_KEY`        | Path to PEM-encoded HTTP server key                                                          | ""                                     |
-| `MG_DOMAINS_GRPC_PORT`              | Domains service gRPC port                                                                    | 7003                                   |
-| `MG_DOMAINS_GRPC_SERVER_CERT`       | Path to PEM-encoded gRPC server certificate                                                  | ""                                     |
-| `MG_DOMAINS_GRPC_SERVER_KEY`        | Path to PEM-encoded gRPC server key                                                          | ""                                     |
-| `MG_DOMAINS_GRPC_SERVER_CA_CERTS`   | Path to trusted CA bundle for the gRPC server                                                | ""                                     |
-| `MG_DOMAINS_GRPC_CLIENT_CA_CERTS`   | Path to client CA bundle to require gRPC mTLS                                                | ""                                     |
-| `MG_DOMAINS_DB_HOST`                | Database host address                                                                        | domains-db                             |
-| `MG_DOMAINS_DB_PORT`                | Database host port                                                                           | 5432                                   |
-| `MG_DOMAINS_DB_USER`                | Database user                                                                                | supermq                                |
-| `MG_DOMAINS_DB_PASS`                | Database password                                                                            | supermq                                |
-| `MG_DOMAINS_DB_NAME`                | Name of the database used by the service                                                     | domains                                |
-| `MG_DOMAINS_DB_SSL_MODE`            | Database connection SSL mode (disable, require, verify-ca, verify-full)                      | ""                                     |
-| `MG_DOMAINS_DB_SSL_CERT`            | Path to the PEM-encoded certificate file                                                     | ""                                     |
-| `MG_DOMAINS_DB_SSL_KEY`             | Path to the PEM-encoded key file                                                             | ""                                     |
-| `MG_DOMAINS_DB_SSL_ROOT_CERT`       | Path to the PEM-encoded root certificate file                                                | ""                                     |
-| `MG_DOMAINS_CACHE_URL`              | Cache database URL                                                                           | redis://domains-redis:6379/0           |
-| `MG_DOMAINS_CACHE_KEY_DURATION`     | Cache key duration for domain status/route lookups                                           | 10m                                    |
-| `MG_DOMAINS_INSTANCE_ID`            | Domains instance ID (auto-generated when empty)                                              | ""                                     |
-| `MG_SPICEDB_HOST`                   | SpiceDB host for policy checks                                                               | supermq-spicedb                              |
-| `MG_SPICEDB_PORT`                   | SpiceDB port                                                                                 | 50051                                  |
-| `MG_SPICEDB_SCHEMA_FILE`            | Path to SpiceDB schema file used to seed available actions                                   | ./docker/spicedb/schema.schema.zed     |
-| `MG_SPICEDB_PRE_SHARED_KEY`         | SpiceDB preshared key                                                                        | 12345678                               |
-| `MG_ES_URL`                         | Event store URL                                                                              | nats://localhost:4222                  |
-| `MG_JAEGER_URL`                     | Jaeger server URL                                                                            | <http://localhost:4318/v1/traces>      |
-| `MG_JAEGER_TRACE_RATIO`             | Trace sampling ratio                                                                         | 1.0                                    |
-| `MG_SEND_TELEMETRY`                 | Send telemetry to the SuperMQ call-home server                                               | true                                   |
-| `MG_AUTH_GRPC_URL`                  | Auth service gRPC URL                                                                        | ""                                     |
-| `MG_AUTH_GRPC_TIMEOUT`              | Auth service gRPC request timeout                                                            | 1s                                     |
-| `MG_AUTH_GRPC_CLIENT_CERT`          | Path to the PEM-encoded Auth gRPC client certificate                                         | ""                                     |
-| `MG_AUTH_GRPC_CLIENT_KEY`           | Path to the PEM-encoded Auth gRPC client key                                                 | ""                                     |
-| `MG_AUTH_GRPC_SERVER_CA_CERTS`      | Path to the PEM-encoded Auth gRPC trusted CA bundle                                          | ""                                     |
-| `MG_DOMAINS_CALLOUT_URLS`           | Comma-separated list of HTTP callout targets invoked on domain operations                    | ""                                     |
-| `MG_DOMAINS_CALLOUT_METHOD`         | HTTP method for callouts (POST or GET)                                                       | POST                                   |
-| `MG_DOMAINS_CALLOUT_TLS_VERIFICATION` | Verify TLS certificates for callouts                                                         | true                                   |
-| `MG_DOMAINS_CALLOUT_TIMEOUT`        | Callout request timeout                                                                      | 10s                                    |
-| `MG_DOMAINS_CALLOUT_KEY`            | Client key for mTLS callouts                                                                 | ""                                     |
-| `MG_DOMAINS_CALLOUT_OPERATIONS`     | Comma-separated list of operation names that should trigger callouts                         | ""                                     |
+| Variable                              | Description                                                               | Default                            |
+| ------------------------------------- | ------------------------------------------------------------------------- | ---------------------------------- |
+| `MG_DOMAINS_LOG_LEVEL`                | Log level for Domains (debug, info, warn, error)                          | debug                              |
+| `MG_DOMAINS_HTTP_HOST`                | Domains service HTTP host                                                 | domains                            |
+| `MG_DOMAINS_HTTP_PORT`                | Domains service HTTP port                                                 | 9003                               |
+| `MG_DOMAINS_HTTP_SERVER_CERT`         | Path to PEM-encoded HTTP server certificate                               | ""                                 |
+| `MG_DOMAINS_HTTP_SERVER_KEY`          | Path to PEM-encoded HTTP server key                                       | ""                                 |
+| `MG_DOMAINS_GRPC_PORT`                | Domains service gRPC port                                                 | 7003                               |
+| `MG_DOMAINS_GRPC_SERVER_CERT`         | Path to PEM-encoded gRPC server certificate                               | ""                                 |
+| `MG_DOMAINS_GRPC_SERVER_KEY`          | Path to PEM-encoded gRPC server key                                       | ""                                 |
+| `MG_DOMAINS_GRPC_SERVER_CA_CERTS`     | Path to trusted CA bundle for the gRPC server                             | ""                                 |
+| `MG_DOMAINS_GRPC_CLIENT_CA_CERTS`     | Path to client CA bundle to require gRPC mTLS                             | ""                                 |
+| `MG_DOMAINS_DB_HOST`                  | Database host address                                                     | domains-db                         |
+| `MG_DOMAINS_DB_PORT`                  | Database host port                                                        | 5432                               |
+| `MG_DOMAINS_DB_USER`                  | Database user                                                             | magistrala                         |
+| `MG_DOMAINS_DB_PASS`                  | Database password                                                         | magistrala                         |
+| `MG_DOMAINS_DB_NAME`                  | Name of the database used by the service                                  | domains                            |
+| `MG_DOMAINS_DB_SSL_MODE`              | Database connection SSL mode (disable, require, verify-ca, verify-full)   | ""                                 |
+| `MG_DOMAINS_DB_SSL_CERT`              | Path to the PEM-encoded certificate file                                  | ""                                 |
+| `MG_DOMAINS_DB_SSL_KEY`               | Path to the PEM-encoded key file                                          | ""                                 |
+| `MG_DOMAINS_DB_SSL_ROOT_CERT`         | Path to the PEM-encoded root certificate file                             | ""                                 |
+| `MG_DOMAINS_CACHE_URL`                | Cache database URL                                                        | redis://domains-redis:6379/0       |
+| `MG_DOMAINS_CACHE_KEY_DURATION`       | Cache key duration for domain status/route lookups                        | 10m                                |
+| `MG_DOMAINS_INSTANCE_ID`              | Domains instance ID (auto-generated when empty)                           | ""                                 |
+| `MG_SPICEDB_HOST`                     | SpiceDB host for policy checks                                            | magistrala-spicedb                 |
+| `MG_SPICEDB_PORT`                     | SpiceDB port                                                              | 50051                              |
+| `MG_SPICEDB_SCHEMA_FILE`              | Path to SpiceDB schema file used to seed available actions                | ./docker/spicedb/schema.schema.zed |
+| `MG_SPICEDB_PRE_SHARED_KEY`           | SpiceDB preshared key                                                     | 12345678                           |
+| `MG_ES_URL`                           | Event store URL                                                           | nats://localhost:4222              |
+| `MG_JAEGER_URL`                       | Jaeger server URL                                                         | <http://localhost:4318/v1/traces>  |
+| `MG_JAEGER_TRACE_RATIO`               | Trace sampling ratio                                                      | 1.0                                |
+| `MG_SEND_TELEMETRY`                   | Send telemetry to the Magistrala call-home server                         | true                               |
+| `MG_AUTH_GRPC_URL`                    | Auth service gRPC URL                                                     | ""                                 |
+| `MG_AUTH_GRPC_TIMEOUT`                | Auth service gRPC request timeout                                         | 1s                                 |
+| `MG_AUTH_GRPC_CLIENT_CERT`            | Path to the PEM-encoded Auth gRPC client certificate                      | ""                                 |
+| `MG_AUTH_GRPC_CLIENT_KEY`             | Path to the PEM-encoded Auth gRPC client key                              | ""                                 |
+| `MG_AUTH_GRPC_SERVER_CA_CERTS`        | Path to the PEM-encoded Auth gRPC trusted CA bundle                       | ""                                 |
+| `MG_DOMAINS_CALLOUT_URLS`             | Comma-separated list of HTTP callout targets invoked on domain operations | ""                                 |
+| `MG_DOMAINS_CALLOUT_METHOD`           | HTTP method for callouts (POST or GET)                                    | POST                               |
+| `MG_DOMAINS_CALLOUT_TLS_VERIFICATION` | Verify TLS certificates for callouts                                      | true                               |
+| `MG_DOMAINS_CALLOUT_TIMEOUT`          | Callout request timeout                                                   | 10s                                |
+| `MG_DOMAINS_CALLOUT_KEY`              | Client key for mTLS callouts                                              | ""                                 |
+| `MG_DOMAINS_CALLOUT_OPERATIONS`       | Comma-separated list of operation names that should trigger callouts      | ""                                 |
 
 **Note**: Set `MG_DOMAINS_CALLOUT_OPERATIONS` to a subset of `OpCreateDomain`, `OpRetrieveDomain`, `OpUpdateDomain`, `OpEnableDomain`, `OpDisableDomain`, `OpFreezeDomain`, `OpListDomains`, `OpViewDomainInvitation`, `OpSendInvitation`, `OpAcceptInvitation`, `OpListInvitations`, `OpListDomainInvitations`, `OpRejectInvitation`, or `OpDeleteInvitation` to filter which actions produce callouts.
 
 ## Deployment
 
-The service is distributed as a Docker container. See the [`domains` section](https://github.com/absmach/supermq/blob/main/docker/docker-compose.yaml#L215-L310) of the compose file for an example deployment.
+The service is distributed as a Docker container. See the [`domains` section](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml#L215-L310) of the compose file for an example deployment.
 
 To run the service outside of a container:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/supermq
-cd supermq
+git clone https://github.com/absmach/magistrala
+cd magistrala
 
 # compile the domains service
 make domains
@@ -87,9 +87,7 @@ MG_DOMAINS_GRPC_SERVER_CA_CERTS="" \
 MG_DOMAINS_GRPC_CLIENT_CA_CERTS="" \
 MG_DOMAINS_DB_HOST=domains-db \
 MG_DOMAINS_DB_PORT=5432 \
-MG_DOMAINS_DB_USER=supermq \
-MG_DOMAINS_DB_PASS=supermq \
-MG_DOMAINS_DB_NAME=domains \
+MG_DOMAINS_DB_USER=magistrala \MG_DOMAINS_DB_PASS=magistrala \MG_DOMAINS_DB_NAME=domains \
 MG_DOMAINS_DB_SSL_MODE="" \
 MG_DOMAINS_DB_SSL_CERT="" \
 MG_DOMAINS_DB_SSL_KEY="" \
@@ -114,26 +112,26 @@ MG_DOMAINS_CALLOUT_KEY="" \
 MG_DOMAINS_CALLOUT_OPERATIONS="" \
 MG_SEND_TELEMETRY=true \
 MG_DOMAINS_INSTANCE_ID="" \
-$GOBIN/supermq-domains
+$GOBIN/magistrala-domains
 ```
 
 ## Usage
 
 Domains supports the following operations:
 
-| Operation            | Description                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------- |
-| `create`             | Create a new domain with a unique route                                               |
-| `get`                | Retrieve a domain (optionally with role memberships) or list accessible domains       |
-| `update`             | Update a domain’s name, tags, or metadata                                             |
-| `enable`             | Enable a previously disabled domain                                                   |
-| `disable`            | Disable an active domain                                                              |
-| `freeze`             | Freeze a domain (platform administrators only)                                        |
-| `invite`             | Send an invitation for a user to join a domain with a specific role                   |
-| `invitations`        | List invitations for the current user or for a specific domain                        |
-| `accept/reject`      | Accept or reject a pending domain invitation                                          |
-| `delete-invitation`  | Delete an invitation (inviter, invitee, or admin)                                     |
-| `roles`              | Create/list/update/delete domain roles; manage role actions and members; list actions |
+| Operation           | Description                                                                           |
+| ------------------- | ------------------------------------------------------------------------------------- |
+| `create`            | Create a new domain with a unique route                                               |
+| `get`               | Retrieve a domain (optionally with role memberships) or list accessible domains       |
+| `update`            | Update a domain’s name, tags, or metadata                                             |
+| `enable`            | Enable a previously disabled domain                                                   |
+| `disable`           | Disable an active domain                                                              |
+| `freeze`            | Freeze a domain (platform administrators only)                                        |
+| `invite`            | Send an invitation for a user to join a domain with a specific role                   |
+| `invitations`       | List invitations for the current user or for a specific domain                        |
+| `accept/reject`     | Accept or reject a pending domain invitation                                          |
+| `delete-invitation` | Delete an invitation (inviter, invitee, or admin)                                     |
+| `roles`             | Create/list/update/delete domain roles; manage role actions and members; list actions |
 
 ### API Examples
 
@@ -319,22 +317,22 @@ curl -X DELETE http://localhost:9004/domains/<domainID>/invitations \
 
 Domain roles reuse the shared role manager. Supported operations:
 
-| Operation                  | Description                                                             |
-| -------------------------- | ----------------------------------------------------------------------- |
-| `create-role`              | Create a new role for a domain                                          |
-| `list-roles`               | List all roles assigned to a domain                                     |
-| `get-role`                 | Retrieve details for a specific domain role                             |
-| `update-role`              | Update a domain role name                                               |
-| `delete-role`              | Delete a domain role                                                    |
-| `add-role-action`          | Add one or more actions to a domain role                                |
-| `list-role-actions`        | List all actions associated with a domain role                          |
-| `delete-role-action`       | Remove a specific action from a domain role                             |
-| `delete-all-role-actions`  | Remove all actions from a domain role                                   |
-| `add-role-member`          | Associate one or more members with a domain role                        |
-| `list-role-members`        | List all members of a domain role                                       |
-| `delete-role-member`       | Remove one or more members from a domain role                           |
-| `delete-all-role-members`  | Remove all members from a domain role                                   |
-| `list-available-actions`   | Retrieve the global list of available domain actions from the schema    |
+| Operation                 | Description                                                          |
+| ------------------------- | -------------------------------------------------------------------- |
+| `create-role`             | Create a new role for a domain                                       |
+| `list-roles`              | List all roles assigned to a domain                                  |
+| `get-role`                | Retrieve details for a specific domain role                          |
+| `update-role`             | Update a domain role name                                            |
+| `delete-role`             | Delete a domain role                                                 |
+| `add-role-action`         | Add one or more actions to a domain role                             |
+| `list-role-actions`       | List all actions associated with a domain role                       |
+| `delete-role-action`      | Remove a specific action from a domain role                          |
+| `delete-all-role-actions` | Remove all actions from a domain role                                |
+| `add-role-member`         | Associate one or more members with a domain role                     |
+| `list-role-members`       | List all members of a domain role                                    |
+| `delete-role-member`      | Remove one or more members from a domain role                        |
+| `delete-all-role-members` | Remove all members from a domain role                                |
+| `list-available-actions`  | Retrieve the global list of available domain actions from the schema |
 
 Example: create a domain role
 
@@ -367,31 +365,31 @@ curl -X GET http://localhost:9004/domains/roles/available-actions \
 
 ### Domains Table
 
-| Column      | Type          | Description                                                  |
-| ----------- | ------------- | ------------------------------------------------------------ |
-| `id`        | VARCHAR(36)   | UUID of the domain (primary key)                            |
-| `name`      | VARCHAR(254)  | Human-readable domain name                                  |
-| `tags`      | TEXT[]        | Domain tags                                                 |
-| `metadata`  | JSONB         | Arbitrary metadata                                           |
-| `route`     | VARCHAR(254)  | Unique domain route/alias                                    |
-| `created_at`| TIMESTAMPTZ   | Creation timestamp                                           |
-| `updated_at`| TIMESTAMPTZ   | Last update timestamp                                        |
-| `updated_by`| VARCHAR(254)  | Actor who last updated the domain                            |
-| `created_by`| VARCHAR(254)  | Actor who created the domain                                 |
-| `status`    | SMALLINT      | 0 = enabled, 1 = disabled, 2 = freezed, 3 = deleted          |
+| Column       | Type         | Description                                         |
+| ------------ | ------------ | --------------------------------------------------- |
+| `id`         | VARCHAR(36)  | UUID of the domain (primary key)                    |
+| `name`       | VARCHAR(254) | Human-readable domain name                          |
+| `tags`       | TEXT[]       | Domain tags                                         |
+| `metadata`   | JSONB        | Arbitrary metadata                                  |
+| `route`      | VARCHAR(254) | Unique domain route/alias                           |
+| `created_at` | TIMESTAMPTZ  | Creation timestamp                                  |
+| `updated_at` | TIMESTAMPTZ  | Last update timestamp                               |
+| `updated_by` | VARCHAR(254) | Actor who last updated the domain                   |
+| `created_by` | VARCHAR(254) | Actor who created the domain                        |
+| `status`     | SMALLINT     | 0 = enabled, 1 = disabled, 2 = freezed, 3 = deleted |
 
 ### Invitations Table
 
-| Column            | Type        | Description                                         |
-| ----------------- | ----------- | --------------------------------------------------- |
-| `invited_by`      | VARCHAR(36) | User who sent the invitation                        |
-| `invitee_user_id` | VARCHAR(36) | User being invited                                  |
-| `domain_id`       | VARCHAR(36) | Domain to join (FK to `domains.id`)                 |
-| `role_id`         | VARCHAR(36) | Role to grant on acceptance                         |
-| `created_at`      | TIMESTAMPTZ | Invitation creation time                            |
-| `updated_at`      | TIMESTAMPTZ | Last modification time                              |
-| `confirmed_at`    | TIMESTAMPTZ | When the invitation was accepted (if applicable)    |
-| `rejected_at`     | TIMESTAMPTZ | When the invitation was rejected (if applicable)    |
+| Column            | Type        | Description                                      |
+| ----------------- | ----------- | ------------------------------------------------ |
+| `invited_by`      | VARCHAR(36) | User who sent the invitation                     |
+| `invitee_user_id` | VARCHAR(36) | User being invited                               |
+| `domain_id`       | VARCHAR(36) | Domain to join (FK to `domains.id`)              |
+| `role_id`         | VARCHAR(36) | Role to grant on acceptance                      |
+| `created_at`      | TIMESTAMPTZ | Invitation creation time                         |
+| `updated_at`      | TIMESTAMPTZ | Last modification time                           |
+| `confirmed_at`    | TIMESTAMPTZ | When the invitation was accepted (if applicable) |
+| `rejected_at`     | TIMESTAMPTZ | When the invitation was rejected (if applicable) |
 
 ## Best Practices
 
@@ -423,6 +421,6 @@ Example response:
 }
 ```
 
-For full API coverage, see the [Domains API documentation](https://docs.api.supermq.absmach.eu/?urls.primaryName=api%2Fdomains.yaml).
+For full API coverage, see the [Domains API documentation](https://docs.api.magistrala.absmach.eu/?urls.primaryName=api%2Fdomains.yaml).
 
-[doc]: https://docs.supermq.absmach.eu/
+[doc]: https://magistrala.absmach.eu/docs/

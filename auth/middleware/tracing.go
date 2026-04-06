@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/policies"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

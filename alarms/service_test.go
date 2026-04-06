@@ -9,12 +9,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/alarms"
-	"github.com/absmach/supermq/alarms/mocks"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala/alarms"
+	"github.com/absmach/magistrala/alarms/mocks"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

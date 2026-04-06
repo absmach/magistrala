@@ -6,10 +6,10 @@ package smpp
 import (
 	"time"
 
-	"github.com/absmach/supermq/consumers"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/transformers"
-	"github.com/absmach/supermq/pkg/transformers/json"
+	"github.com/absmach/magistrala/consumers"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/transformers"
+	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/fiorix/go-smpp/smpp"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdufield"
 	"github.com/fiorix/go-smpp/smpp/pdu/pdutext"

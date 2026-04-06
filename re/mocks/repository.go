@@ -12,8 +12,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/re"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/re"
 	mock "github.com/stretchr/testify/mock"
 )
 

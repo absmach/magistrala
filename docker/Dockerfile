@@ -9,7 +9,7 @@ ARG VERSION
 ARG COMMIT
 ARG TIME
 
-WORKDIR /go/src/github.com/absmach/supermq
+WORKDIR /go/src/github.com/absmach/magistrala
 COPY . .
 RUN apk update \
     && apk add make upx\

@@ -11,8 +11,8 @@ import (
 	"net"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 type CertType int

@@ -6,7 +6,7 @@ package domains
 import (
 	"context"
 
-	"github.com/absmach/supermq/domains"
+	"github.com/absmach/magistrala/domains"
 )
 
 type Authorization interface {

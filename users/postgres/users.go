@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/postgres"
-	"github.com/absmach/supermq/users"
+	api "github.com/absmach/magistrala/api/http"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/postgres"
+	"github.com/absmach/magistrala/users"
 	"github.com/jackc/pgtype"
 	"github.com/lib/pq"
 )

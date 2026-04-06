@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/absmach/supermq/pkg/errors"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/errors"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/vadv/gopher-lua-libs/argparse"
 	"github.com/vadv/gopher-lua-libs/base64"
 	bit "github.com/vadv/gopher-lua-libs/bit"

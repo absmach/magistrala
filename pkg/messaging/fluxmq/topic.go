@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const queuePrefix = "$queue/"

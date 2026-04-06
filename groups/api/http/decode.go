@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	groups "github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/pkg/errors"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	groups "github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 )
 

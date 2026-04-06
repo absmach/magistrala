@@ -6,18 +6,18 @@ package notifiers
 import (
 	"context"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/consumers"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/consumers"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var (
-	// ErrMessage indicates an error converting a message to SuperMQ message.
-	ErrMessage = errors.New("failed to convert to SuperMQ message")
+	// ErrMessage indicates an error converting a message to Magistrala message.
+	ErrMessage = errors.New("failed to convert to Magistrala message")
 
 	// ErrSubscriptionsAlreadyExists indicates subscription already exists.
 	ErrSubscriptionsAlreadyExists = errors.NewRequestError("subscription already exists")
@@ -47,14 +47,14 @@ var _ Service = (*notifierService)(nil)
 type notifierService struct {
 	authn    smqauthn.Authentication
 	subs     SubscriptionsRepository
-	idp      supermq.IDProvider
+	idp      magistrala.IDProvider
 	notifier consumers.Notifier
 	errCh    chan error
 	from     string
 }
 
 // New instantiates the subscriptions service implementation.
-func New(authn smqauthn.Authentication, subs SubscriptionsRepository, idp supermq.IDProvider, notifier consumers.Notifier, from string) Service {
+func New(authn smqauthn.Authentication, subs SubscriptionsRepository, idp magistrala.IDProvider, notifier consumers.Notifier, from string) Service {
 	return &notifierService{
 		authn:    authn,
 		subs:     subs,

@@ -3,7 +3,7 @@
 
 package operations
 
-import "github.com/absmach/supermq/pkg/permissions"
+import "github.com/absmach/magistrala/pkg/permissions"
 
 // Group Operations.
 const (

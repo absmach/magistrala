@@ -1,11 +1,11 @@
-# SuperMQ Email Agent
+# Magistrala Email Agent
 
-SuperMQ Email Agent is used for sending emails. It wraps basic SMTP features and 
-provides a simple API that SuperMQ services can use to send email notifications.
+Magistrala Email Agent is used for sending emails. It wraps basic SMTP features and 
+provides a simple API that Magistrala services can use to send email notifications.
 
 ## Configuration
 
-SuperMQ Email Agent is configured using the following configuration parameters:
+Magistrala Email Agent is configured using the following configuration parameters:
 
 | Parameter                           | Description                                                             |
 | ----------------------------------- | ----------------------------------------------------------------------- |

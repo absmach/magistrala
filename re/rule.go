@@ -8,12 +8,12 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/roles"
-	"github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/re/outputs"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/roles"
+	"github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/magistrala/re/outputs"
 )
 
 const (

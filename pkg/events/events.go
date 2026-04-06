@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 const (

@@ -3,7 +3,7 @@
 
 package token
 
-import "github.com/absmach/supermq/auth"
+import "github.com/absmach/magistrala/auth"
 
 type issueRes struct {
 	accessToken  string

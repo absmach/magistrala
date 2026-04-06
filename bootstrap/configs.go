@@ -7,14 +7,14 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/clients"
+	"github.com/absmach/magistrala/clients"
 )
 
 // Config represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding SuperMQ entities.
-// MGClient represents corresponding SuperMQ Client ID.
-// MGKey is key of corresponding SuperMQ Client.
-// MGChannels is a list of SuperMQ Channels corresponding SuperMQ Client connects to.
+// as well as info about corresponding Magistrala entities.
+// MGClient represents corresponding Magistrala Client ID.
+// MGKey is key of corresponding Magistrala Client.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Client connects to.
 type Config struct {
 	ClientID     string    `json:"client_id"`
 	ClientSecret string    `json:"client_secret"`
@@ -30,7 +30,7 @@ type Config struct {
 	State        State     `json:"state"`
 }
 
-// Channel represents SuperMQ channel corresponding SuperMQ Client is connected to.
+// Channel represents Magistrala channel corresponding Magistrala Client is connected to.
 type Channel struct {
 	ID          string         `json:"id"`
 	Name        string         `json:"name,omitempty"`

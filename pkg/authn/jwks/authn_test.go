@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/auth"
-	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
+	"github.com/absmach/magistrala/auth"
+	smqjwt "github.com/absmach/magistrala/auth/tokenizer/util"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwk"
 	"github.com/lestrrat-go/jwx/v2/jws"
@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	validIssuer   = "supermq.auth"
+	validIssuer   = "magistrala.auth"
 	invalidIssuer = "invalid.issuer"
 	userID        = "user123"
 )

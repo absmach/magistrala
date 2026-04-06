@@ -6,8 +6,8 @@ package channels_test
 import (
 	"testing"
 
-	"github.com/absmach/supermq/channels"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/channels"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 

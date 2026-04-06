@@ -6,8 +6,8 @@ package util
 import (
 	"encoding/json"
 
-	"github.com/absmach/supermq/auth"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )
 
@@ -27,7 +27,7 @@ var (
 )
 
 const (
-	IssuerName    = "supermq.auth"
+	IssuerName    = "magistrala.auth"
 	TokenType     = "type"
 	RoleField     = "role"
 	VerifiedField = "verified"

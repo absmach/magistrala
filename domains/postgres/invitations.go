@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq/domains"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/postgres"
+	"github.com/absmach/magistrala/domains"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/postgres"
 )
 
 func (repo domainRepo) SaveInvitation(ctx context.Context, invitation domains.Invitation) (err error) {

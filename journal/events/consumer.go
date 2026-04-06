@@ -9,9 +9,9 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/journal"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
+	"github.com/absmach/magistrala/journal"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
 )
 
 var (

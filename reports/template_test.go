@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/absmach/supermq/reports"
+	"github.com/absmach/magistrala/reports"
 	"github.com/stretchr/testify/assert"
 )
 

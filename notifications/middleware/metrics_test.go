@@ -7,9 +7,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/absmach/supermq/notifications"
-	"github.com/absmach/supermq/notifications/middleware"
-	"github.com/absmach/supermq/notifications/mocks"
+	"github.com/absmach/magistrala/notifications"
+	"github.com/absmach/magistrala/notifications/middleware"
+	"github.com/absmach/magistrala/notifications/mocks"
 	"github.com/go-kit/kit/metrics"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

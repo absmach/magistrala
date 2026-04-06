@@ -7,8 +7,8 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/senml"
-	"github.com/absmach/supermq/pkg/messaging"
 )
 
 type SenML struct {

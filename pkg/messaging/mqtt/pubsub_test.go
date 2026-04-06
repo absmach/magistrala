@@ -10,8 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/pkg/messaging"
-	mqttpubsub "github.com/absmach/supermq/pkg/messaging/mqtt"
+	"github.com/absmach/magistrala/pkg/messaging"
+	mqttpubsub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/protobuf/proto"
@@ -28,7 +28,7 @@ const (
 var data = []byte("payload")
 
 // ErrFailedHandleMessage indicates that the message couldn't be handled.
-var errFailedHandleMessage = errors.New("failed to handle supermq message")
+var errFailedHandleMessage = errors.New("failed to handle magistrala message")
 
 func TestPublisher(t *testing.T) {
 	msgChan := make(chan []byte)
@@ -121,7 +121,7 @@ func TestSubscribe(t *testing.T) {
 	msgChan := make(chan *messaging.Message)
 
 	// Creating client to Publish messages to subscribed topic.
-	client, err := newClient(address, "supermq", brokerTimeout)
+	client, err := newClient(address, "magistrala", brokerTimeout)
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	t.Cleanup(func() {

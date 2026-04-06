@@ -8,15 +8,15 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/supermq"
-	grpcChannelsV1 "github.com/absmach/supermq/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/supermq/api/grpc/clients/v1"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
+	"github.com/absmach/magistrala"
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 var (
@@ -29,7 +29,7 @@ var (
 type service struct {
 	repo       Repository
 	policy     policies.Service
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 	channels   grpcChannelsV1.ChannelsServiceClient
 	clients    grpcClientsV1.ClientsServiceClient
 
@@ -37,7 +37,7 @@ type service struct {
 }
 
 // NewService returns a new groups service implementation.
-func NewService(repo Repository, policy policies.Service, idp supermq.IDProvider, channels grpcChannelsV1.ChannelsServiceClient, clients grpcClientsV1.ClientsServiceClient, sidProvider supermq.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
+func NewService(repo Repository, policy policies.Service, idp magistrala.IDProvider, channels grpcChannelsV1.ChannelsServiceClient, clients grpcClientsV1.ClientsServiceClient, sidProvider magistrala.IDProvider, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
 	rpms, err := roles.NewProvisionManageService(policies.GroupType, repo, policy, sidProvider, availableActions, builtInRoles)
 	if err != nil {
 		return service{}, err

@@ -7,7 +7,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/absmach/supermq/auth/mocks"
+	"github.com/absmach/magistrala/auth/mocks"
 )
 
 var svc *mocks.Service

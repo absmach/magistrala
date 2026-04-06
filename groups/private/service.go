@@ -6,7 +6,7 @@ package private
 import (
 	"context"
 
-	"github.com/absmach/supermq/groups"
+	"github.com/absmach/magistrala/groups"
 )
 
 type Service interface {

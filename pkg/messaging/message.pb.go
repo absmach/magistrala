@@ -24,7 +24,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Message represents a message emitted by the SuperMQ adapters layer.
+// Message represents a message emitted by the Magistrala adapters layer.
 type Message struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Channel       string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`

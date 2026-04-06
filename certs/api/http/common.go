@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (

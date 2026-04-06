@@ -12,12 +12,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/journal"
-	aevents "github.com/absmach/supermq/journal/events"
-	"github.com/absmach/supermq/journal/mocks"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/pkg/uuid"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/journal"
+	aevents "github.com/absmach/magistrala/journal/events"
+	"github.com/absmach/magistrala/journal/mocks"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

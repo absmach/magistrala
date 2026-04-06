@@ -11,8 +11,8 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/pkg/messaging"
-	broker "github.com/absmach/supermq/pkg/messaging/fluxmq"
+	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/fluxmq"
 	"github.com/nats-io/nats.go/jetstream"
 )
 
@@ -24,7 +24,7 @@ const (
 
 var cfg = jetstream.StreamConfig{
 	Name:              "alarms",
-	Description:       "SuperMQ stream alarms",
+	Description:       "Magistrala stream alarms",
 	Subjects:          []string{"alarms/#"},
 	Retention:         jetstream.LimitsPolicy,
 	MaxMsgsPerSubject: 1e6,

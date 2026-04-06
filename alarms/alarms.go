@@ -8,7 +8,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/absmach/supermq/pkg/authn"
+	"github.com/absmach/magistrala/pkg/authn"
 )
 
 const SeverityMax uint8 = 100

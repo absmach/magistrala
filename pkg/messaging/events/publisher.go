@@ -6,9 +6,9 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/messaging"
 )
 
 var _ messaging.Publisher = (*publisherES)(nil)

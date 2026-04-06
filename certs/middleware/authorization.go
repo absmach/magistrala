@@ -6,12 +6,12 @@ package middleware
 import (
 	"context"
 
-	crt "github.com/absmach/supermq/certs"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/authz"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	crt "github.com/absmach/magistrala/certs"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var _ crt.Service = (*authorizationMiddleware)(nil)

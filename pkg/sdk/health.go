@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 // HealthInfo contains version endpoint response.

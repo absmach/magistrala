@@ -6,12 +6,12 @@ package grpc
 import (
 	"context"
 
-	grpcUsersV1 "github.com/absmach/supermq/api/grpc/users/v1"
-	grpcapi "github.com/absmach/supermq/auth/api/grpc"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/users"
-	pusers "github.com/absmach/supermq/users/private"
+	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
+	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/users"
+	pusers "github.com/absmach/magistrala/users/private"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	structpb "google.golang.org/protobuf/types/known/structpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"

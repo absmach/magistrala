@@ -49,7 +49,7 @@ setup_protoc() {
 }
 
 setup_mg() {
-    echo "Setting up SuperMQ..."
+    echo "Setting up Magistrala..."
     for p in $(ls *.pb.go); do
         mv $p $p.tmp
     done

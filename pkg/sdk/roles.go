@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 func (sdk mgSDK) createRole(ctx context.Context, entityURL, entityEndpoint, id, domainID string, rq RoleReq, token string) (Role, errors.SDKError) {

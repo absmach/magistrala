@@ -15,8 +15,8 @@ import (
 	"net/http"
 	"strings"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/pkg/errors"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/pkg/errors"
 )
 
 const (
@@ -29,10 +29,10 @@ const (
 )
 
 // BootstrapConfig represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding SuperMQ entities.
-// MGClient represents corresponding SuperMQ Client ID.
-// MGKey is key of corresponding SuperMQ Client.
-// MGChannels is a list of SuperMQ Channels corresponding SuperMQ Client connects to.
+// as well as info about corresponding Magistrala entities.
+// MGClient represents corresponding Magistrala Client ID.
+// MGKey is key of corresponding Magistrala Client.
+// MGChannels is a list of Magistrala Channels corresponding Magistrala Client connects to.
 type BootstrapConfig struct {
 	Channels     any    `json:"channels,omitempty"`
 	ExternalID   string `json:"external_id,omitempty"`

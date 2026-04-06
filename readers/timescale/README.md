@@ -17,8 +17,8 @@ default values.
 | MG_TIMESCALE_READER_HTTP_SERVER_KEY  | Service HTTP server key path                 | ""                           |
 | MG_TIMESCALE_HOST                    | Timescale DB host                            | localhost                    |
 | MG_TIMESCALE_PORT                    | Timescale DB port                            | 5432                         |
-| MG_TIMESCALE_USER                    | Timescale user                               | supermq                      |
-| MG_TIMESCALE_PASS                    | Timescale password                           | supermq                      |
+| MG_TIMESCALE_USER                    | Timescale user                               | magistrala                      |
+| MG_TIMESCALE_PASS                    | Timescale password                           | magistrala                      |
 | MG_TIMESCALE_NAME                    | Timescale database name                      | messages                     |
 | MG_TIMESCALE_SSL_MODE                | Timescale SSL mode                           | disabled                     |
 | MG_TIMESCALE_SSL_CERT                | Timescale SSL certificate path               | ""                           |
@@ -33,20 +33,20 @@ default values.
 | MG_AUTH_GRPC_CLIENT_TLS              | Auth service gRPC TLS enabled flag           | false                        |
 | MG_AUTH_GRPC_CA_CERT                 | Auth service gRPC CA certificate             | ""                           |
 | MG_JAEGER_URL                        | Jaeger server URL                            | http://jaeger:4318/v1/traces |
-| MG_SEND_TELEMETRY                    | Send telemetry to supermq call home server   | true                         |
+| MG_SEND_TELEMETRY                    | Send telemetry to magistrala call home server   | true                         |
 | MG_TIMESCALE_READER_INSTANCE_ID      | Timescale reader instance ID                 | ""                           |
 
 ## Deployment
 
-The service itself is distributed as Docker container. Check the [`timescale-reader`](https://github.com/absmach/supermq/blob/main/docker/docker-compose.yaml) service section in the root docker-compose file to see how service is deployed.
+The service itself is distributed as Docker container. Check the [`timescale-reader`](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) service section in the root docker-compose file to see how service is deployed.
 
 To start the service, execute the following shell script:
 
 ```bash
 # download the latest version of the service
-git clone https://github.com/absmach/supermq
+git clone https://github.com/absmach/magistrala
 
-cd supermq
+cd magistrala
 
 # compile the timescale writer
 make timescale-writer
@@ -78,9 +78,9 @@ MG_AUTH_GRPC_TIMEOUT=[Auth service Auth gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Auth service Auth gRPC TLS enabled flag] \
 MG_AUTH_GRPC_CA_CERT=[Auth service Auth gRPC CA certificates] \
 MG_JAEGER_URL=[Jaeger server URL] \
-MG_SEND_TELEMETRY=[Send telemetry to supermq call home server] \
+MG_SEND_TELEMETRY=[Send telemetry to magistrala call home server] \
 MG_TIMESCALE_READER_INSTANCE_ID=[Timescale reader instance ID] \
-$GOBIN/supermq-timescale-reader
+$GOBIN/magistrala-timescale-reader
 ```
 
 ## Usage
@@ -96,4 +96,4 @@ Comparator Usage Guide:
 | le         | Return values that are superstrings of the query                            | le["active"] -> "tiv"              |
 | lt         | Return values that are superstrings of the query and not equal to the query | lt["active"] -> "active" and "tiv" |
 
-Official docs can be found [here](https://docs.supermq.absmach.eu).
+Official docs can be found [here](https://magistrala.absmach.eu/docs/).

@@ -1,8 +1,8 @@
 # Consumers
 
-Consumers provide an abstraction for various “SuperMQ consumers”.
+Consumers provide an abstraction for various “Magistrala consumers”.
 
-A consumer is a generic plugin‑style service that handles received messages — for example, writing them to a database, sending notifications, or transforming them. Before consuming, messages from SuperMQ can be transformed (e.g. to JSON or SenML) to match what a specific consumer expects.
+A consumer is a generic plugin‑style service that handles received messages — for example, writing them to a database, sending notifications, or transforming them. Before consuming, messages from Magistrala can be transformed (e.g. to JSON or SenML) to match what a specific consumer expects.
 
 This service (Notifiers) is optional — to use it, core services must be running (e.g. message broker + clients + channels etc.).
 
@@ -101,6 +101,6 @@ Example response:
 ```
 
 For an in-depth explanation of the usage of `consumers`, as well as thorough
-understanding of SuperMQ, please check out the [official documentation][doc].
+understanding of Magistrala, please check out the [official documentation][doc].
 
-[doc]: https://docs.supermq.absmach.eu/
+[doc]: https://magistrala.absmach.eu/docs/

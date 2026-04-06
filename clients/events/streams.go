@@ -6,29 +6,29 @@ package events
 import (
 	"context"
 
-	"github.com/absmach/supermq/clients"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/roles"
-	rmEvents "github.com/absmach/supermq/pkg/roles/rolemanager/events"
+	"github.com/absmach/magistrala/clients"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/roles"
+	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/go-chi/chi/v5/middleware"
 )
 
 const (
-	supermqPrefix      = "supermq."
-	createStream       = supermqPrefix + clientCreate
-	updateStream       = supermqPrefix + clientUpdate
-	updateTagsStream   = supermqPrefix + clientUpdateTags
-	updateSecretStream = supermqPrefix + clientUpdateSecret
-	enableStream       = supermqPrefix + clientEnable
-	disableStream      = supermqPrefix + clientDisable
-	removeStream       = supermqPrefix + clientRemove
-	viewStream         = supermqPrefix + clientView
-	listStream         = supermqPrefix + clientList
-	listByUserStream   = supermqPrefix + clientListByUser
-	setParentStream    = supermqPrefix + clientSetParent
-	removeParentStream = supermqPrefix + clientRemoveParent
+	magistralaPrefix   = "magistrala."
+	createStream       = magistralaPrefix + clientCreate
+	updateStream       = magistralaPrefix + clientUpdate
+	updateTagsStream   = magistralaPrefix + clientUpdateTags
+	updateSecretStream = magistralaPrefix + clientUpdateSecret
+	enableStream       = magistralaPrefix + clientEnable
+	disableStream      = magistralaPrefix + clientDisable
+	removeStream       = magistralaPrefix + clientRemove
+	viewStream         = magistralaPrefix + clientView
+	listStream         = magistralaPrefix + clientList
+	listByUserStream   = magistralaPrefix + clientListByUser
+	setParentStream    = magistralaPrefix + clientSetParent
+	removeParentStream = magistralaPrefix + clientRemoveParent
 )
 
 var _ clients.Service = (*eventStore)(nil)

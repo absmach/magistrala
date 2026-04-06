@@ -6,8 +6,8 @@ package groups_test
 import (
 	"testing"
 
-	"github.com/absmach/supermq/groups"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/groups"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -4,8 +4,8 @@
 package http
 
 import (
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
 )
 
 type createRoleReq struct {

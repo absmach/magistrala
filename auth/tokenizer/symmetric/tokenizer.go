@@ -6,10 +6,10 @@ package symmetric
 import (
 	"context"
 
-	"github.com/absmach/supermq/auth"
-	smqjwt "github.com/absmach/supermq/auth/tokenizer/util"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	"github.com/absmach/magistrala/auth"
+	smqjwt "github.com/absmach/magistrala/auth/tokenizer/util"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/lestrrat-go/jwx/v2/jwa"
 	"github.com/lestrrat-go/jwx/v2/jwt"
 )

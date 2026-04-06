@@ -6,7 +6,7 @@ package grpc
 import (
 	"context"
 
-	readers "github.com/absmach/supermq/readers"
+	readers "github.com/absmach/magistrala/readers"
 	"github.com/go-kit/kit/endpoint"
 )
 

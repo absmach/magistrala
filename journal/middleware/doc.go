@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Package middleware provides tracing, logging and metrics middleware
-// for SuperMQ Journal service.
+// for Magistrala Journal service.
 //
-// For more details about tracing instrumentation for SuperMQ refer to the
-// documentation at https://docs.supermq.absmach.eu/tracing/.
+// For more details about tracing instrumentation for Magistrala refer to the
+// documentation at https://magistrala.absmach.eu/docs/.
 package middleware

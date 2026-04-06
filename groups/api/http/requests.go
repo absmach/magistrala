@@ -4,10 +4,10 @@
 package api
 
 import (
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/internal/nullable"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/internal/nullable"
 )
 
 type createGroupReq struct {

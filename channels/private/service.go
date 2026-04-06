@@ -6,12 +6,12 @@ package private
 import (
 	"context"
 
-	"github.com/absmach/supermq/channels"
-	dom "github.com/absmach/supermq/domains"
-	pkgDomains "github.com/absmach/supermq/pkg/domains"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala/channels"
+	dom "github.com/absmach/magistrala/domains"
+	pkgDomains "github.com/absmach/magistrala/pkg/domains"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 )
 
 var errDisabledDomain = errors.New("domain is disabled or frozen")

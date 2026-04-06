@@ -6,7 +6,7 @@ package cli
 import (
 	"encoding/json"
 
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/spf13/cobra"
 )
 

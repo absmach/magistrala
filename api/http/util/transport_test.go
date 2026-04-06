@@ -11,10 +11,10 @@ import (
 	"net/url"
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -355,7 +355,7 @@ func TestLoggingErrorEncoder(t *testing.T) {
 				encCalled = true
 			}
 
-			errorEncoder := apiutil.LoggingErrorEncoder(smqlog.NewMock(), encFunc)
+			errorEncoder := apiutil.LoggingErrorEncoder(mglog.NewMock(), encFunc)
 			errorEncoder(context.Background(), c.err, httptest.NewRecorder())
 
 			assert.True(t, encCalled)

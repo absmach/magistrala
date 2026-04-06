@@ -3,7 +3,7 @@
 
 package events
 
-import "github.com/absmach/supermq/pkg/events"
+import "github.com/absmach/magistrala/pkg/events"
 
 const (
 	messagingPrefix   = "messaging"

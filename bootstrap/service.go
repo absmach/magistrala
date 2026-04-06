@@ -9,17 +9,17 @@ import (
 	"crypto/cipher"
 	"encoding/hex"
 
-	"github.com/absmach/supermq"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
-	mgsdk "github.com/absmach/supermq/pkg/sdk"
+	"github.com/absmach/magistrala"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
+	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
 var (
-	// ErrClients indicates failure to communicate with SuperMQ Clients service.
+	// ErrClients indicates failure to communicate with Magistrala Clients service.
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrClients = errors.New("failed to receive response from Clients service")
 
@@ -122,11 +122,11 @@ type bootstrapService struct {
 	configs    ConfigRepository
 	sdk        mgsdk.SDK
 	encKey     []byte
-	idProvider supermq.IDProvider
+	idProvider magistrala.IDProvider
 }
 
 // New returns new Bootstrap service.
-func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp supermq.IDProvider) Service {
+func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
 		sdk:        sdk,
@@ -395,7 +395,7 @@ func (bs bootstrapService) DisconnectClientHandler(ctx context.Context, channelI
 	return nil
 }
 
-// Method client retrieves SuperMQ Client creating one if an empty ID is passed.
+// Method client retrieves Magistrala Client creating one if an empty ID is passed.
 func (bs bootstrapService) client(ctx context.Context, domainID, id, token string) (mgsdk.Client, error) {
 	// If Client ID is not provided, then create new client.
 	if id == "" {

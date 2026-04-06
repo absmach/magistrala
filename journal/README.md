@@ -17,8 +17,8 @@ The service is configured with the following environment variables (unset values
 | `MG_JOURNAL_HTTP_CLIENT_CA_CERTS` | Path to client CA bundle to require HTTP mTLS | "" |
 | `MG_JOURNAL_DB_HOST` | Database host address | localhost |
 | `MG_JOURNAL_DB_PORT` | Database host port | 5432 |
-| `MG_JOURNAL_DB_USER` | Database user | supermq |
-| `MG_JOURNAL_DB_PASS` | Database password | supermq |
+| `MG_JOURNAL_DB_USER` | Database user | magistrala |
+| `MG_JOURNAL_DB_PASS` | Database password | magistrala |
 | `MG_JOURNAL_DB_NAME` | Name of the database used by the service | journal |
 | `MG_JOURNAL_DB_SSL_MODE` | Database connection SSL mode (disable, require, verify-ca, verify-full) | disable |
 | `MG_JOURNAL_DB_SSL_CERT` | Path to the PEM-encoded certificate file | "" |
@@ -27,7 +27,7 @@ The service is configured with the following environment variables (unset values
 | `MG_ES_URL` | Event store URL (NATS) consumed for journal entries | nats://localhost:4222 |
 | `MG_JAEGER_URL` | Jaeger tracing endpoint | <http://localhost:4318/v1/traces> |
 | `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | 1.0 |
-| `MG_SEND_TELEMETRY` | Send telemetry to the SuperMQ call-home server | true |
+| `MG_SEND_TELEMETRY` | Send telemetry to the Magistrala call-home server | true |
 | `MG_AUTH_GRPC_URL` | Auth service gRPC URL | "" |
 | `MG_AUTH_GRPC_TIMEOUT` | Auth service gRPC timeout | 1s |
 | `MG_AUTH_GRPC_CLIENT_CERT` | Path to PEM-encoded Auth gRPC client certificate | "" |
@@ -43,13 +43,13 @@ The service is configured with the following environment variables (unset values
 
 ## Deployment
 
-The service is distributed as a Docker container. Check [`docker/docker-compose.yaml`](https://github.com/absmach/supermq/tree/main/docker/docker-compose.yaml) for the `journal` and `journal-db` services and how they are wired into the base stack.
+The service is distributed as a Docker container. Check [`docker/docker-compose.yaml`](https://github.com/absmach/magistrala/tree/main/docker/docker-compose.yaml) for the `journal` and `journal-db` services and how they are wired into the base stack.
 
 To start the service outside of the container, execute the following shell script:
 
 ```bash
-git clone https://github.com/absmach/supermq
-cd supermq
+git clone https://github.com/absmach/magistrala
+cd magistrala
 
 # build and install the binary
 make journal
@@ -60,13 +60,11 @@ MG_JOURNAL_HTTP_HOST=localhost \
 MG_JOURNAL_HTTP_PORT=9021 \
 MG_JOURNAL_DB_HOST=localhost \
 MG_JOURNAL_DB_PORT=5432 \
-MG_JOURNAL_DB_USER=supermq \
-MG_JOURNAL_DB_PASS=supermq \
-MG_JOURNAL_DB_NAME=journal \
+MG_JOURNAL_DB_USER=magistrala \MG_JOURNAL_DB_PASS=magistrala \MG_JOURNAL_DB_NAME=journal \
 MG_AUTH_GRPC_URL=localhost:7001 \
 MG_DOMAINS_GRPC_URL=localhost:7003 \
 MG_ES_URL=nats://localhost:4222 \
-$GOBIN/supermq-journal
+$GOBIN/magistrala-journal
 ```
 
 ## HTTP API

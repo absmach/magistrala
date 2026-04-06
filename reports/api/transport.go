@@ -11,13 +11,13 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/absmach/supermq"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
-	roleManagerHttp "github.com/absmach/supermq/pkg/roles/rolemanager/api"
-	"github.com/absmach/supermq/reports"
+	"github.com/absmach/magistrala"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
+	roleManagerHttp "github.com/absmach/magistrala/pkg/roles/rolemanager/api"
+	"github.com/absmach/magistrala/reports"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -136,7 +136,7 @@ func MakeHandler(svc reports.Service, authn smqauthn.AuthNMiddleware, mux *chi.M
 		})
 	})
 
-	mux.Get("/health", supermq.Health("reports", instanceID))
+	mux.Get("/health", magistrala.Health("reports", instanceID))
 	mux.Handle("/metrics", promhttp.Handler())
 
 	return mux
@@ -297,7 +297,7 @@ func encodeFileDownloadResponse(_ context.Context, w http.ResponseWriter, respon
 		_, err := w.Write(resp.File.Data)
 		return err
 	default:
-		if ar, ok := response.(supermq.Response); ok {
+		if ar, ok := response.(magistrala.Response); ok {
 			for k, v := range ar.Headers() {
 				w.Header().Set(k, v)
 			}

@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	tsWriter "github.com/absmach/supermq/consumers/writers/timescale"
-	pgclient "github.com/absmach/supermq/pkg/postgres"
+	tsWriter "github.com/absmach/magistrala/consumers/writers/timescale"
+	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	"github.com/jmoiron/sqlx"
 	"github.com/ory/dockertest/v3"

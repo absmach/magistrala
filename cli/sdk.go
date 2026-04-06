@@ -3,12 +3,12 @@
 
 package cli
 
-import smqsdk "github.com/absmach/supermq/pkg/sdk"
+import smqsdk "github.com/absmach/magistrala/pkg/sdk"
 
 // Keep SDK handle in global var.
 var sdk smqsdk.SDK
 
-// SetSDK sets supermq SDK instance.
+// SetSDK sets magistrala SDK instance.
 func SetSDK(s smqsdk.SDK) {
 	sdk = s
 }

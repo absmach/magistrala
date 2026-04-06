@@ -10,14 +10,14 @@ import (
 	"testing"
 	"time"
 
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	pkgSch "github.com/absmach/supermq/pkg/schedule"
-	"github.com/absmach/supermq/pkg/sdk"
-	"github.com/absmach/supermq/reports"
-	"github.com/absmach/supermq/reports/api"
-	rmocks "github.com/absmach/supermq/reports/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	pkgSch "github.com/absmach/magistrala/pkg/schedule"
+	"github.com/absmach/magistrala/pkg/sdk"
+	"github.com/absmach/magistrala/reports"
+	"github.com/absmach/magistrala/reports/api"
+	rmocks "github.com/absmach/magistrala/reports/mocks"
 	"github.com/go-chi/chi/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -99,7 +99,7 @@ var (
 
 func setupReports() (*httptest.Server, *rmocks.Service, *authnmocks.Authentication) {
 	rsvc := new(rmocks.Service)
-	log := smqlog.NewMock()
+	log := mglog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := chi.NewRouter()

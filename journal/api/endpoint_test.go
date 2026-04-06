@@ -12,16 +12,16 @@ import (
 	"testing"
 	"time"
 
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/journal"
-	httpapi "github.com/absmach/supermq/journal/api"
-	"github.com/absmach/supermq/journal/mocks"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/journal"
+	httpapi "github.com/absmach/magistrala/journal/api"
+	"github.com/absmach/magistrala/journal/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -55,7 +55,7 @@ func (tr testRequest) make() (*http.Response, error) {
 func newjournalServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := httpapi.MakeHandler(svc, am, logger, "journal-log", "test")

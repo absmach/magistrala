@@ -11,9 +11,9 @@ import (
 	"reflect"
 	"regexp"
 
-	"github.com/absmach/supermq/pkg/errors"
-	pkglog "github.com/absmach/supermq/pkg/logger"
-	"github.com/absmach/supermq/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/errors"
+	pkglog "github.com/absmach/magistrala/pkg/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
 	golang "github.com/traefik/yaegi/interp"
 	"github.com/traefik/yaegi/stdlib"
 )
@@ -25,7 +25,7 @@ var (
 	panicRegex     = regexp.MustCompile(`\bpanic\s*\(`)
 )
 
-// Type message is an SMQ message with payload replaces by JSON deserialized payload.
+// Type message is a magistrala message with payload replaces by JSON deserialized payload.
 type message struct {
 	Channel   string `json:"channel,omitempty"`
 	ClientID  string `json:"client_id,omitempty"`

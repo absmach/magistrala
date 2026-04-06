@@ -170,7 +170,7 @@ const file_certs_v1_certs_proto_rawDesc = "" +
 	"\tentity_id\x18\x01 \x01(\tR\bentityId2\x96\x01\n" +
 	"\fCertsService\x12C\n" +
 	"\vGetEntityID\x12\x18.absmach.certs.EntityReq\x1a\x18.absmach.certs.EntityRes\"\x00\x12A\n" +
-	"\vRevokeCerts\x12\x18.absmach.certs.RevokeReq\x1a\x16.google.protobuf.Empty\"\x00B.Z,github.com/absmach/supermq/api/grpc/certs/v1b\x06proto3"
+	"\vRevokeCerts\x12\x18.absmach.certs.RevokeReq\x1a\x16.google.protobuf.Empty\"\x00B1Z/github.com/absmach/magistrala/api/grpc/certs/v1b\x06proto3"
 
 var (
 	file_certs_v1_certs_proto_rawDescOnce sync.Once

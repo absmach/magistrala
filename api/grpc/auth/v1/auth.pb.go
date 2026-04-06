@@ -478,7 +478,7 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\x02id\x18\x02 \x01(\tR\x02id2z\n" +
 	"\vAuthService\x123\n" +
 	"\tAuthorize\x12\x11.auth.v1.AuthZReq\x1a\x11.auth.v1.AuthZRes\"\x00\x126\n" +
-	"\fAuthenticate\x12\x11.auth.v1.AuthNReq\x1a\x11.auth.v1.AuthNRes\"\x00B-Z+github.com/absmach/supermq/api/grpc/auth/v1b\x06proto3"
+	"\fAuthenticate\x12\x11.auth.v1.AuthNReq\x1a\x11.auth.v1.AuthNRes\"\x00B0Z.github.com/absmach/magistrala/api/grpc/auth/v1b\x06proto3"
 
 var (
 	file_auth_v1_auth_proto_rawDescOnce sync.Once

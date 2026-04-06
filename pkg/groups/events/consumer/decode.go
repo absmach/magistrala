@@ -6,11 +6,11 @@ package consumer
 import (
 	"time"
 
-	"github.com/absmach/supermq/groups"
-	"github.com/absmach/supermq/internal/nullable"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/roles"
-	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/magistrala/groups"
+	"github.com/absmach/magistrala/internal/nullable"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
+	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 )
 
 var (

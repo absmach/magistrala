@@ -7,9 +7,9 @@ import (
 	"context"
 	"time"
 
-	grpcAuthV1 "github.com/absmach/supermq/api/grpc/auth/v1"
-	"github.com/absmach/supermq/auth"
-	grpcapi "github.com/absmach/supermq/auth/api/grpc"
+	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
+	"github.com/absmach/magistrala/auth"
+	grpcapi "github.com/absmach/magistrala/auth/api/grpc"
 	"github.com/go-kit/kit/endpoint"
 	kitgrpc "github.com/go-kit/kit/transport/grpc"
 	"google.golang.org/grpc"

@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/absmach/supermq/notifications"
+	"github.com/absmach/magistrala/notifications"
 	"github.com/go-kit/kit/metrics"
 )
 

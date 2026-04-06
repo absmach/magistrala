@@ -10,11 +10,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/policies"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/google/uuid"
 )
 
@@ -111,7 +111,7 @@ type service struct {
 	cache              Cache
 	tokensCache        UserActiveTokensCache
 	hasher             Hasher
-	idProvider         supermq.IDProvider
+	idProvider         magistrala.IDProvider
 	evaluator          policies.Evaluator
 	policysvc          policies.Service
 	tokenizer          Tokenizer
@@ -121,7 +121,7 @@ type service struct {
 }
 
 // New instantiates the auth service implementation.
-func New(keys KeyRepository, pats PATSRepository, cache Cache, tokensCache UserActiveTokensCache, hasher Hasher, idp supermq.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
+func New(keys KeyRepository, pats PATSRepository, cache Cache, tokensCache UserActiveTokensCache, hasher Hasher, idp magistrala.IDProvider, tokenizer Tokenizer, policyEvaluator policies.Evaluator, policyService policies.Service, loginDuration, refreshDuration, invitationDuration time.Duration) Service {
 	return &service{
 		tokenizer:          tokenizer,
 		keys:               keys,

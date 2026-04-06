@@ -9,11 +9,11 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/absmach/supermq/bootstrap"
-	"github.com/absmach/supermq/bootstrap/postgres"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
+	"github.com/absmach/magistrala/bootstrap"
+	"github.com/absmach/magistrala/bootstrap/postgres"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,8 +23,8 @@ const numConfigs = 10
 
 var (
 	config = bootstrap.Config{
-		ClientID:     "smq-client",
-		ClientSecret: "smq-key",
+		ClientID:     "mg-client",
+		ClientSecret: "mg-key",
 		ExternalID:   "external-id",
 		ExternalKey:  "external-key",
 		DomainID:     testsutil.GenerateUUID(&testing.T{}),

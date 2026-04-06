@@ -18,16 +18,16 @@ import (
 	"strings"
 	"testing"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/bootstrap"
-	bsapi "github.com/absmach/supermq/bootstrap/api"
-	"github.com/absmach/supermq/bootstrap/mocks"
-	"github.com/absmach/supermq/internal/testsutil"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/bootstrap"
+	bsapi "github.com/absmach/magistrala/bootstrap/api"
+	"github.com/absmach/magistrala/bootstrap/mocks"
+	"github.com/absmach/magistrala/internal/testsutil"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -177,7 +177,7 @@ func dec(in []byte) ([]byte, error) {
 }
 
 func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	svc := new(mocks.Service)
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))

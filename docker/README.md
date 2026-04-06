@@ -1,6 +1,6 @@
 # Docker Composition
 
-Configure environment variables and run SuperMQ Docker Composition.
+Configure environment variables and run Magistrala Docker Composition.
 
 > \*Note\*\*: `docker-compose` uses `.env` file to set all environment variables. Ensure that you run the command from the same location as .env file.
 
@@ -26,18 +26,18 @@ To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `
 
 ## Broker Configuration
 
-SuperMQ supports configurable MQTT broker and Message broker, which also acts as an events store. SuperMQ uses two types of brokers:
+Magistrala supports configurable MQTT broker and Message broker, which also acts as an events store. Magistrala uses two types of brokers:
 
 1. **MQTT_BROKER**: Handles MQTT communication between MQTT adapters and message broker. This can either be `RabbitMQ` or `NATS`.
-2. **MESSAGE_BROKER**: Manages message exchange between SuperMQ core, optional, and external services. This can either be `NATS` or `RabbitMQ`. This is used to store messages for distributed processing.
+2. **MESSAGE_BROKER**: Manages message exchange between Magistrala core, optional, and external services. This can either be `NATS` or `RabbitMQ`. This is used to store messages for distributed processing.
 
-Events store: This is used by SuperMQ services to store events for distributed processing. SuperMQ uses a single service to be the message broker and events store. This can either be `NATS` or `RabbitMQ`. Redis can also be used as an events store, but it requires a message broker to be deployed along with it for message exchange.
+Events store: This is used by Magistrala services to store events for distributed processing. Magistrala uses a single service to be the message broker and events store. This can either be `NATS` or `RabbitMQ`. Redis can also be used as an events store, but it requires a message broker to be deployed along with it for message exchange.
 
 ## Supported Combinations
 
 This is the same as MESSAGE_BROKER. This can either be `NATS` or `RabbitMQ` or `Redis`.  If Redis is used as an events store, then RabbitMQ or NATS is used as a message broker.
 
-The current deployment strategy for SuperMQ in `docker/docker-compose.yaml` is to use RabbitMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
+The current deployment strategy for Magistrala in `docker/docker-compose.yaml` is to use RabbitMQ as a MQTT_BROKER and NATS as a MESSAGE_BROKER and EVENTS_STORE.
 
 Depending on the desired setup, the following broker configurations are valid:
 
@@ -96,7 +96,7 @@ MG_MQTT_ADAPTER_WS_TARGET_PATH=${MG_NATS_WS_TARGET_PATH}
 services:
   rabbitmq:
     image: rabbitmq:3.12.12-management-alpine
-    container_name: supermq-rabbitmq
+    container_name: magistrala-rabbitmq
     restart: on-failure
     environment:
       RABBITMQ_ERLANG_COOKIE: ${MG_RABBITMQ_COOKIE}
@@ -107,7 +107,7 @@ services:
       - ${MG_RABBITMQ_PORT}:${MG_RABBITMQ_PORT}
       - ${MG_RABBITMQ_HTTP_PORT}:${MG_RABBITMQ_HTTP_PORT}
     networks:
-      - supermq-base-net
+      - magistrala-base-net
 ```
 
 ### Redis configuration (as events store)
@@ -116,17 +116,17 @@ services:
 services:
   redis:
     image: redis:7.2.4-alpine
-    container_name: supermq-es-redis
+    container_name: magistrala-es-redis
     restart: on-failure
     networks:
-      - supermq-base-net
+      - magistrala-base-net
     volumes:
-      - supermq-broker-volume:/data
+      - magistrala-broker-volume:/data
 ```
 
 ## Nginx Configuration
 
-Nginx is the entry point for all traffic to SuperMQ.
+Nginx is the entry point for all traffic to Magistrala.
 By using environment variables file at `docker/.env` you can modify the below given Nginx directive.
 
 | Environment Variable | Description |
@@ -141,7 +141,7 @@ Adjust these values in `.env` to configure TLS / SSL behavior for your deploymen
 
 ## Makefile Integration
 
-The included `Makefile` defines build and Docker‑build targets for all SuperMQ services. Key points:
+The included `Makefile` defines build and Docker‑build targets for all Magistrala services. Key points:
 
 - `SERVICES`: list of core services (auth, clients, channels, http, coap, mqtt, ws, etc.)
 

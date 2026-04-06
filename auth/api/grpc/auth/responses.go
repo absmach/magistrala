@@ -3,7 +3,7 @@
 
 package auth
 
-import smqauth "github.com/absmach/supermq/auth"
+import smqauth "github.com/absmach/magistrala/auth"
 
 type authenticateRes struct {
 	id       string

@@ -6,11 +6,11 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
-	"github.com/absmach/supermq/pkg/tracing"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/pkg/tracing"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )

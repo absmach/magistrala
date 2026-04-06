@@ -11,16 +11,16 @@ import (
 	"testing"
 	"time"
 
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/journal"
-	"github.com/absmach/supermq/journal/api"
-	"github.com/absmach/supermq/journal/mocks"
-	smqlog "github.com/absmach/supermq/logger"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	authnmocks "github.com/absmach/supermq/pkg/authn/mocks"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	sdk "github.com/absmach/supermq/pkg/sdk"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/journal"
+	"github.com/absmach/magistrala/journal/api"
+	"github.com/absmach/magistrala/journal/mocks"
+	mglog "github.com/absmach/magistrala/logger"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	sdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,7 +28,7 @@ import (
 func setupJournal() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	svc := new(mocks.Service)
 	authn := new(authnmocks.Authentication)
-	logger := smqlog.NewMock()
+	logger := mglog.NewMock()
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
 	mux := api.MakeHandler(svc, am, logger, "journal-log", "test")
 

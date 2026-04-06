@@ -9,8 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/absmach/supermq/certs"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/fatih/color"
 	"github.com/hokaccha/go-prettyjson"
 	"github.com/spf13/cobra"
@@ -132,7 +131,7 @@ func logSaveCAFiles(cmd cobra.Command, certBundle smqsdk.CertificateBundle) {
 	fmt.Fprintf(cmd.OutOrStdout(), "\nAll certificate files have been saved successfully.\n")
 }
 
-func logSaveCSRFiles(cmd cobra.Command, csr certs.CSR) {
+func logSaveCSRFiles(cmd cobra.Command, csr smqsdk.CSR) {
 	files := map[string][]byte{
 		"file.csr": csr.CSR,
 	}

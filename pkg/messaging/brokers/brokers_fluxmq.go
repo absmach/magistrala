@@ -11,8 +11,8 @@ import (
 	"log"
 	"log/slog"
 
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/messaging/fluxmq"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/messaging/fluxmq"
 )
 
 // SubjectAllMessages represents subject to subscribe for all the messages.

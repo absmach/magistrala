@@ -52,7 +52,7 @@ The service is configured using the following environment variables (values show
 | `MG_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
 | `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
 | `MG_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | `12345678` |
-| `MG_SPICEDB_HOST` | SpiceDB host | `supermq-spicedb` |
+| `MG_SPICEDB_HOST` | SpiceDB host | `magistrala-spicedb` |
 | `MG_SPICEDB_PORT` | SpiceDB gRPC port | `50051` |
 
 ### Readers gRPC
@@ -333,4 +333,4 @@ curl -X POST "http://localhost:9017/<domainID>/reports/configs/<reportID>/enable
 
 For an in-depth explanation of our Reports Service, see the see the [official documentation][doc].
 
-[doc]: https://docs.magistrala.absmach.eu/dev-guide/reports/
+[doc]: https://magistrala.absmach.eu/docs/user-guide/reports/

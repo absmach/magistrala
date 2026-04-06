@@ -10,12 +10,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/absmach/supermq/cli"
-	"github.com/absmach/supermq/internal/testsutil"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	smqsdk "github.com/absmach/supermq/pkg/sdk"
-	sdkmocks "github.com/absmach/supermq/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/cli"
+	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	smqsdk "github.com/absmach/magistrala/pkg/sdk"
+	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

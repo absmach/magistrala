@@ -6,20 +6,20 @@ package pats
 import (
 	"net/http"
 
-	"github.com/absmach/supermq"
-	"github.com/absmach/supermq/auth"
+	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/auth"
 )
 
 var (
-	_ supermq.Response = (*createPatRes)(nil)
-	_ supermq.Response = (*retrievePatRes)(nil)
-	_ supermq.Response = (*updatePatNameRes)(nil)
-	_ supermq.Response = (*updatePatDescriptionRes)(nil)
-	_ supermq.Response = (*deletePatRes)(nil)
-	_ supermq.Response = (*resetPatSecretRes)(nil)
-	_ supermq.Response = (*revokePatSecretRes)(nil)
-	_ supermq.Response = (*scopeRes)(nil)
-	_ supermq.Response = (*clearAllRes)(nil)
+	_ magistrala.Response = (*createPatRes)(nil)
+	_ magistrala.Response = (*retrievePatRes)(nil)
+	_ magistrala.Response = (*updatePatNameRes)(nil)
+	_ magistrala.Response = (*updatePatDescriptionRes)(nil)
+	_ magistrala.Response = (*deletePatRes)(nil)
+	_ magistrala.Response = (*resetPatSecretRes)(nil)
+	_ magistrala.Response = (*revokePatSecretRes)(nil)
+	_ magistrala.Response = (*scopeRes)(nil)
+	_ magistrala.Response = (*clearAllRes)(nil)
 )
 
 type createPatRes struct {

@@ -1,12 +1,12 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package tracing provides tracing instrumentation for SuperMQ Users service.
+// Package tracing provides tracing instrumentation for Magistrala Users service.
 //
-// This package provides tracing middleware for SuperMQ Users service.
+// This package provides tracing middleware for Magistrala Users service.
 // It can be used to trace incoming requests and add tracing capabilities to
-// SuperMQ Users service.
+// Magistrala Users service.
 //
-// For more details about tracing instrumentation for SuperMQ messaging refer
-// to the documentation at https://docs.supermq.absmach.eu/tracing/.
+// For more details about tracing instrumentation for Magistrala messaging refer
+// to the documentation at https://magistrala.absmach.eu/docs/.
 package tracing

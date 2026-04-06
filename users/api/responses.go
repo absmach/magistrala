@@ -7,28 +7,28 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/absmach/supermq"
-	grpcTokenV1 "github.com/absmach/supermq/api/grpc/token/v1"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala"
+	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
+	"github.com/absmach/magistrala/users"
 )
 
 // MailSent message response when link is sent.
 const MailSent = "Email with reset link is sent"
 
 var (
-	_ supermq.Response = (*tokenRes)(nil)
-	_ supermq.Response = (*sendVerificationRes)(nil)
-	_ supermq.Response = (*verifyEmailRes)(nil)
-	_ supermq.Response = (*viewUserRes)(nil)
-	_ supermq.Response = (*createUserRes)(nil)
-	_ supermq.Response = (*changeUserStatusRes)(nil)
-	_ supermq.Response = (*usersPageRes)(nil)
-	_ supermq.Response = (*passResetReqRes)(nil)
-	_ supermq.Response = (*passChangeRes)(nil)
-	_ supermq.Response = (*updateUserRes)(nil)
-	_ supermq.Response = (*revokeRes)(nil)
-	_ supermq.Response = (*deleteUserRes)(nil)
-	_ supermq.Response = (*listRefreshTokensRes)(nil)
+	_ magistrala.Response = (*tokenRes)(nil)
+	_ magistrala.Response = (*sendVerificationRes)(nil)
+	_ magistrala.Response = (*verifyEmailRes)(nil)
+	_ magistrala.Response = (*viewUserRes)(nil)
+	_ magistrala.Response = (*createUserRes)(nil)
+	_ magistrala.Response = (*changeUserStatusRes)(nil)
+	_ magistrala.Response = (*usersPageRes)(nil)
+	_ magistrala.Response = (*passResetReqRes)(nil)
+	_ magistrala.Response = (*passChangeRes)(nil)
+	_ magistrala.Response = (*updateUserRes)(nil)
+	_ magistrala.Response = (*revokeRes)(nil)
+	_ magistrala.Response = (*deleteUserRes)(nil)
+	_ magistrala.Response = (*listRefreshTokensRes)(nil)
 )
 
 type pageRes struct {

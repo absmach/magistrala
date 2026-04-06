@@ -1,6 +1,6 @@
 # Notifications Service
 
-The Notifications Service is responsible for sending email notifications when domain invitation events occur in the SuperMQ platform.
+The Notifications Service is responsible for sending email notifications when domain invitation events occur in the Magistrala platform.
 
 ## Overview
 
@@ -41,8 +41,8 @@ The service is configured using environment variables:
 - `MG_EMAIL_PORT` - SMTP server port (default: "25")
 - `MG_EMAIL_USERNAME` - SMTP username
 - `MG_EMAIL_PASSWORD` - SMTP password
-- `MG_EMAIL_FROM_ADDRESS` - From email address (default: "noreply@supermq.com")
-- `MG_EMAIL_FROM_NAME` - From name (default: "SuperMQ Notifications")
+- `MG_EMAIL_FROM_ADDRESS` - From email address (default: "noreply@magistrala.com")
+- `MG_EMAIL_FROM_NAME` - From name (default: "Magistrala Notifications")
 
 ### Template Configuration
 - `MG_EMAIL_INVITATION_TEMPLATE` - Path to invitation email template

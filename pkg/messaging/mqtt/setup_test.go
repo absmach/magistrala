@@ -13,9 +13,9 @@ import (
 	"testing"
 	"time"
 
-	smqlog "github.com/absmach/supermq/logger"
-	"github.com/absmach/supermq/pkg/messaging"
-	mqttpubsub "github.com/absmach/supermq/pkg/messaging/mqtt"
+	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/messaging"
+	mqttpubsub "github.com/absmach/magistrala/pkg/messaging/mqtt"
 	mqtt "github.com/eclipse/paho.mqtt.golang"
 	"github.com/ory/dockertest/v3"
 	"github.com/ory/dockertest/v3/docker"
@@ -28,7 +28,7 @@ var (
 )
 
 const (
-	username      = "supermq-mqtt"
+	username      = "magistrala-mqtt"
 	qos           = 2
 	port          = "1883/tcp"
 	brokerTimeout = 30 * time.Second
@@ -57,13 +57,13 @@ func TestMain(m *testing.M) {
 	address = fmt.Sprintf("%s:%s", "localhost", container.GetPort(port))
 	pool.MaxWait = poolMaxWait
 
-	logger, err = smqlog.New(os.Stdout, "debug")
+	logger, err = mglog.New(os.Stdout, "debug")
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
 	if err := pool.Retry(func() error {
-		pubsub, err = mqttpubsub.NewPubSub(address, "supermq", "", 2, brokerTimeout, logger)
+		pubsub, err = mqttpubsub.NewPubSub(address, "magistrala", "", 2, brokerTimeout, logger)
 		return err
 	}); err != nil {
 		log.Fatalf("Could not connect to docker: %s", err)

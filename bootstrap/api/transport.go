@@ -11,12 +11,12 @@ import (
 	"net/url"
 	"strings"
 
-	"github.com/absmach/supermq"
-	api "github.com/absmach/supermq/api/http"
-	apiutil "github.com/absmach/supermq/api/http/util"
-	"github.com/absmach/supermq/bootstrap"
-	smqauthn "github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/errors"
+	"github.com/absmach/magistrala"
+	api "github.com/absmach/magistrala/api/http"
+	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/bootstrap"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/go-chi/chi/v5"
 	kithttp "github.com/go-kit/kit/transport/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -120,7 +120,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 			opts...), "bootstrap_secure").ServeHTTP)
 	})
 
-	r.Get("/health", supermq.Health("bootstrap", instanceID))
+	r.Get("/health", magistrala.Health("bootstrap", instanceID))
 	r.Handle("/metrics", promhttp.Handler())
 
 	return r

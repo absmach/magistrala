@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"testing"
 
-	smqlog "github.com/absmach/supermq/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -50,7 +50,7 @@ func TestLoggerInitialization(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			writer := &mockWriter{}
-			logger, err := smqlog.New(writer, tc.level)
+			logger, err := mglog.New(writer, tc.level)
 			if tc.level == "invalid" {
 				assert.NotNil(t, err, "expected error during logger initialization")
 				assert.NotNil(t, logger, "logger should not be nil when an error occurs")

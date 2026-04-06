@@ -9,11 +9,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/absmach/supermq/channels"
-	"github.com/absmach/supermq/pkg/authn"
-	"github.com/absmach/supermq/pkg/connections"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemw "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/channels"
+	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/go-chi/chi/v5/middleware"
 )
 

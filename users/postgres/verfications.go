@@ -8,9 +8,9 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/absmach/supermq/pkg/errors"
-	repoerr "github.com/absmach/supermq/pkg/errors/repository"
-	"github.com/absmach/supermq/users"
+	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
+	"github.com/absmach/magistrala/users"
 )
 
 // AddUserVerification adds new verification for given user id and email.

@@ -6,17 +6,17 @@ package middleware
 import (
 	"context"
 
-	"github.com/absmach/supermq/pkg/authn"
-	smqauthz "github.com/absmach/supermq/pkg/authz"
-	"github.com/absmach/supermq/pkg/errors"
-	svcerr "github.com/absmach/supermq/pkg/errors/service"
-	"github.com/absmach/supermq/pkg/messaging"
-	"github.com/absmach/supermq/pkg/permissions"
-	"github.com/absmach/supermq/pkg/policies"
-	"github.com/absmach/supermq/pkg/roles"
-	rolemgr "github.com/absmach/supermq/pkg/roles/rolemanager/middleware"
-	"github.com/absmach/supermq/re"
-	"github.com/absmach/supermq/re/operations"
+	"github.com/absmach/magistrala/pkg/authn"
+	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/errors"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/messaging"
+	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/policies"
+	"github.com/absmach/magistrala/pkg/roles"
+	rolemgr "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
+	"github.com/absmach/magistrala/re"
+	"github.com/absmach/magistrala/re/operations"
 )
 
 var (

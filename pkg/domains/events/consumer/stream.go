@@ -8,16 +8,16 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/absmach/supermq/domains"
-	"github.com/absmach/supermq/pkg/errors"
-	"github.com/absmach/supermq/pkg/events"
-	"github.com/absmach/supermq/pkg/events/store"
-	"github.com/absmach/supermq/pkg/messaging"
-	rconsumer "github.com/absmach/supermq/pkg/roles/rolemanager/events/consumer"
+	"github.com/absmach/magistrala/domains"
+	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/events"
+	"github.com/absmach/magistrala/pkg/events/store"
+	"github.com/absmach/magistrala/pkg/messaging"
+	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 )
 
 const (
-	stream = "events.supermq.domain.*"
+	stream = "events.magistrala.domain.*"
 
 	create     = "domain.create"
 	update     = "domain.update"

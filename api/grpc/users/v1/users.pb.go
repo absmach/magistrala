@@ -365,7 +365,7 @@ const file_users_v1_users_proto_rawDesc = "" +
 	"\rauth_provider\x18\x10 \x01(\tR\fauthProvider\x12 \n" +
 	"\vpermissions\x18\x11 \x03(\tR\vpermissions2Y\n" +
 	"\fUsersService\x12I\n" +
-	"\rRetrieveUsers\x12\x1a.users.v1.RetrieveUsersReq\x1a\x1a.users.v1.RetrieveUsersRes\"\x00B.Z,github.com/absmach/supermq/api/grpc/users/v1b\x06proto3"
+	"\rRetrieveUsers\x12\x1a.users.v1.RetrieveUsersReq\x1a\x1a.users.v1.RetrieveUsersRes\"\x00B1Z/github.com/absmach/magistrala/api/grpc/users/v1b\x06proto3"
 
 var (
 	file_users_v1_users_proto_rawDescOnce sync.Once

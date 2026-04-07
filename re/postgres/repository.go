@@ -421,16 +421,16 @@ func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string
 				r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status,
 				rr.id AS role_id,
 				rr."name" AS role_name,
-				array_agg(DISTINCT rra."action") AS actions,
+				array_remove(array_agg(DISTINCT rra."action"), NULL) AS actions,
 				'direct' AS access_type,
 				'' AS access_provider_id,
 				'' AS access_provider_role_id,
 				'' AS access_provider_role_name,
 				CAST(array[] AS text[]) AS access_provider_role_actions
 			FROM rules_role_members rrm
-			JOIN rules_role_actions rra ON rra.role_id = rrm.role_id
 			JOIN rules_roles rr ON rr.id = rrm.role_id
 			JOIN rules r ON r.id = rr.entity_id
+			LEFT JOIN rules_role_actions rra ON rra.role_id = rrm.role_id
 			WHERE rrm.member_id = :user_id
 			%s
 			GROUP BY r.id, rr.id, rr."name"

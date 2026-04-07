@@ -470,16 +470,16 @@ func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userI
 				rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status,
 				rr.id AS role_id,
 				rr."name" AS role_name,
-				array_agg(DISTINCT rra."action") AS actions,
+				array_remove(array_agg(DISTINCT rra."action"), NULL) AS actions,
 				'direct' AS access_type,
 				'' AS access_provider_id,
 				'' AS access_provider_role_id,
 				'' AS access_provider_role_name,
 				CAST(array[] AS text[]) AS access_provider_role_actions
 			FROM reports_role_members rrm
-			JOIN reports_role_actions rra ON rra.role_id = rrm.role_id
 			JOIN reports_roles rr ON rr.id = rrm.role_id
 			JOIN report_config rc ON rc.id = rr.entity_id
+			LEFT JOIN reports_role_actions rra ON rra.role_id = rrm.role_id
 			WHERE rrm.member_id = :user_id
 			%s
 			GROUP BY rc.id, rr.id, rr."name"

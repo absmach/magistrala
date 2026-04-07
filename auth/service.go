@@ -331,7 +331,7 @@ func (svc service) invitationKey(ctx context.Context, key Key) (Token, error) {
 func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token, error) {
 	k, err := svc.tokenizer.Parse(ctx, token)
 	if err != nil {
-		return Token{}, errors.Wrap(errRetrieve, err)
+		return Token{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	if k.Type != RefreshKey {
 		return Token{}, errIssueUser

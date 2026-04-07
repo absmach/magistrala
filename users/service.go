@@ -28,7 +28,6 @@ import (
 const defaultUsernamePrefix = "user"
 
 var (
-	errIssueToken            = errors.NewServiceError("failed to issue token")
 	errRecoveryToken         = errors.NewServiceError("failed to generate password recovery token")
 	errLoginDisableUser      = errors.NewAuthNError("failed to login in disabled user")
 	errMatchUserVerification = errors.NewRequestError("user verification does not match with stored verification")
@@ -213,7 +212,7 @@ func (svc service) IssueToken(ctx context.Context, identity, secret, description
 		Description: description,
 	})
 	if err != nil {
-		return &grpcTokenV1.Token{}, errors.Wrap(errIssueToken, err)
+		return &grpcTokenV1.Token{}, err
 	}
 
 	return token, nil
@@ -229,7 +228,7 @@ func (svc service) RefreshToken(ctx context.Context, session authn.Session, refr
 	}
 	token, err := svc.token.Refresh(ctx, &grpcTokenV1.RefreshReq{RefreshToken: refreshToken, Verified: !dbUser.VerifiedAt.IsZero()})
 	if err != nil {
-		return &grpcTokenV1.Token{}, errors.Wrap(errIssueToken, err)
+		return &grpcTokenV1.Token{}, err
 	}
 
 	return token, nil

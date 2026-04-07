@@ -1,10 +1,10 @@
 <div align="center">
 
 # Magistrala
-  
-### Planetary event-driven infrastructure
-  
-**Made with ❤️ by [Abstract Machines](https://absmach.eu/)**
+
+### A Modern IoT Platform Framework for Scalable IoT
+
+**Made with ❤ by [Abstract Machines](https://absmach.eu/)**
 
 [![Build Status](https://github.com/absmach/magistrala/actions/workflows/build.yaml/badge.svg?branch=main)](https://github.com/absmach/magistrala/actions/workflows/build.yaml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/absmach/magistrala)](https://goreportcard.com/report/github.com/absmach/magistrala)
@@ -14,140 +14,152 @@
 [![Coverage](https://codecov.io/gh/absmach/magistrala/graph/badge.svg?token=nPCEr5nW8S)](https://codecov.io/gh/absmach/magistrala)
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Matrix](https://img.shields.io/matrix/supermq%3Amatrix.org?label=Chat&style=flat&logo=matrix&logoColor=white)](https://matrix.to/#/#supermq:matrix.org)
-  
-### [Guide](https://magistrala.absmach.eu/docs/) | [Contributing](CONTRIBUTING.md) | [Website](https://absmach.eu/) | [Chat](https://matrix.to/#/#supermq:matrix.org)
 
+[Guide](https://magistrala.absmach.eu/docs/) | [Contributing](CONTRIBUTING.md) | [Website](https://absmach.eu/) | [Chat](https://matrix.to/#/#supermq:matrix.org)
 </div>
 
-## Introduction 📖
+## Introduction 🌍
 
-Magistrala is a distributed, highly scalable, and secure open-source cloud platform for messaging and event-driven architecture (EDA). It is a planetarily distributed, highly scalable, and secure platform that serves as a robust foundation for building advanced real-time and reactive systems.
+Magistrala is an open-source IoT platform built for engineers who need full control over their messaging, device management, and data pipelines.
 
-## Why Magistrala Stands Out 🚀
+It is built on top of [FluxMQ](https://github.com/absmach/fluxmq), a modern message broker designed for both messaging and event streams. Magistrala provides everything around it: identity, access control, device provisioning, data processing, and observability.
 
-Magistrala bridges the gap between various network protocols (HTTP, MQTT, WebSocket, CoAP, and more) to provide a seamless messaging experience. Whether you're working on IoT solutions, real-time data pipelines, or event-driven systems, Magistrala has you covered. 🌐✨
+IoT systems usually involve brokers, databases, rule engines, and custom services. Magistrala does not pretend those pieces disappear. It provides a coherent framework for integrating them into a single system with a consistent model for identity, access control, messaging, and observability.
 
-## Key Features 🌟
+**What it is:**
+- An event-driven IoT middleware platform
+- A unified control plane for devices, users, and data
+- A foundation for building scalable IoT systems
 
-- **Multi-Protocol Connectivity**: HTTP, MQTT, WebSocket, CoAP, and more! 🌉
-- **Secure by Design**: Mutual TLS (mTLS) with X.509 Certificates, JWT support, and multi-protocol authorization. 🔒
-- **Fine-Grained Access Control**: Support for ABAC and RBAC policies. 📜
-- **Multi-Tenant**: Manage multiple domains seamlessly. 🏢
-- **Multi-User**: Unlimited organizational hierarchies for user management. 👥
-- **Application Management**: Group and share messaging clients for streamlined operations. 📱
-- **Ease of Use**: Simple and powerful communication channel management, grouping, and sharing. ✨
-- **Personal Access Tokens (PATs)**: Scoped and revocable tokens for enhanced security. 🔑
-- **Observability**: Integrated logging and instrumentation with Prometheus and OpenTelemetry. 📈
-- **Event Sourcing**: Build robust and scalable architectures. ⚡
-- **Edge and IoT Ready**: Supports MQTT and CoAP protocols for seamless IoT gateway and sensor communication and management. 🌍
-- **Developer-Friendly**: SDKs, CLI tools, and comprehensive documentation to get you started. 👩‍💻👨‍💻
-- **Production-Ready**: Container-based deployment using Docker and Kubernetes. 🐳☸️
+**What it is not:**
+- Not just an MQTT broker
+- Not a black-box SaaS
+- Not tied to a single cloud or vendor
 
-## Installation 🛠️
+---
 
-There are multiple ways to run Magistrala.
-First, clone the repository and position to it:
+## 🧩 IoT Platform Framework
+
+We call Magistrala a **framework**, not just a platform.
+
+It is extremely flexible and lets you build systems the way you want — from simple prototypes to complex, large-scale deployments — without forcing you into rigid patterns.
+
+At the same time, it avoids the typical complexity of many IoT platforms, where you need to learn an entirely new set of concepts before you can even get started.
+
+Magistrala is built around a small number of core concepts:
+- users
+- clients (devices)
+- channels
+- messages
+- policies
+
+Most engineers are already familiar with these ideas, so you can start building immediately.
+
+You can keep things simple:
+- connect devices
+- send messages
+- store data
+
+Or you can go deeper:
+- define complex access control policies
+- build event-driven pipelines
+- integrate custom processing and automation
+
+Magistrala scales with your needs — simple when you want it, powerful when you need it.
+
+---
+
+## 🚀 Key Benefits
+
+- **A Coherent System, Not a Mess of Integrations**
+  Build IoT systems from multiple components without ending up with fragmented security, messaging, and operations.
+
+- **Event-Driven at the Core**
+  Everything is built around events — enabling real-time processing, streaming, and scalable data flows.
+
+- **Protocol-Native, Not Forced Abstractions**
+  MQTT, HTTP, WebSocket, and CoAP are treated as first-class citizens, each with their own semantics.
+
+- **Security Built Into the Model**
+  Identity, authentication, and authorization are part of the system design — not bolted on later.
+
+- **Flexible by Design**
+  Start simple or build complex systems — without changing platforms or rewriting your architecture.
+
+- **Runs Where You Need It**
+  Cloud, edge, or hybrid — no vendor lock-in, no hidden dependencies.
+---
+## ✨ Features
+
+Magistrala provides a complete set of building blocks for IoT systems — from device connectivity to data processing and observability — without forcing a rigid architecture.
+
+### 🔐 Identity & Access
+
+- Multi-tenant domains for isolating environments
+- Users, roles, and organizational hierarchies
+- Fine-grained access control (ABAC + RBAC)
+- Mutual TLS (X.509) and JWT-based authentication
+- Personal Access Tokens (PATs) with scoping and revocation
+
+### 🔌 Connectivity
+
+- Native support for MQTT, HTTP, WebSocket, and CoAP
+- Consistent authentication and authorization across protocols
+- Designed for both cloud services and constrained devices
+
+### 📦 Device & Application Model
+
+- Device (client) provisioning and lifecycle management
+- Channels for grouping and controlling message flow
+- Application-level grouping and sharing of clients
+- Simple but flexible communication model
+
+### ⚙️ Processing & Automation
+
+- Rules engine for message processing and routing
+- Alarms and triggers for reacting to events
+- Scheduled actions for time-based workflows
+- Event-driven architecture as the foundation
+
+### 📊 Observability
+
+- Audit logs for tracking system activity
+- Metrics and tracing via Prometheus and OpenTelemetry
+- Built-in visibility into system behavior and data flows
+
+### 🚀 Deployment & Operations
+
+- Container-native (Docker, Kubernetes)
+- Designed for cloud, edge, and hybrid deployments
+- Works with external storage and processing systems
+- Scales from small setups to production environments
+
+### 🧑‍💻 Developer Experience
+
+- CLI and SDKs for fast integration
+- Straightforward APIs and concepts
+- Documentation focused on getting you running quickly
+---
+
+## Installation
 
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-```
-
-To run the latest stable (tagged) version, use:
-
-```bash
-# Run with latest stable tagged version
-make run_stable
-```
-
-To run the latest version, use:
-
-```bash
-# Run with latest development version (from main branch)
 make run_latest
 ```
 
-The `make run_stable` command will:
-- Checkout the repository to the latest git tag
-- Update the version in the environment configuration
-- Start the services with the stable release
+---
 
-**Note:** After running `make run_stable`, you'll be on a detached HEAD state. To return to your working branch:
-
-```bash
-git checkout main
-```
-
-### Running on Apple Silicon (M1/M2/M3) Macs
-
-When running Magistrala on Apple Silicon Macs, the Makefile will automatically detect your ARM64 architecture and build Docker images locally. 
-
-**If using Docker Desktop:**
-
-1. **Enable Apple Virtualization Framework**: In Docker Desktop, go to:
-   - Settings → General → Enable "Use the new Virtualization framework"
-   
-2. **Enable Rosetta for x86_64 Emulation**: In Docker Desktop, go to:
-   - Settings → General → Enable "Use Rosetta for x86_64/amd64 emulation on Apple Silicon"
-
-After enabling these options, restart Docker Desktop, then run `make run_stable` or `make run_latest` as usual.
-
-To manually run Magistrala, clone the repository and start all core services:
-
-```bash
-docker compose -f docker/docker-compose.yaml --env-file docker/.env up
-```
-
-### Usage 📤📥
-
-**Using the CLI :**
+## Usage
 
 ```bash
 make cli
-./build/magistrala-cli status
+./build/cli health <service>
 ```
 
-This command retrieves the status of the Magistrala server and outputs it to the console.
+---
 
-**Using HTTP with Curl :**
+## License
 
-```bash
-curl -X GET http://localhost:8080/status
-```
-
-This request fetches the server status over HTTP and provides a JSON response.
-
-See our [CLI documentation](https://magistrala.absmach.eu/docs/dev-guide/cli/introduction-to-cli/) for more details.
-
-## Documentation 📚
-
-The official documentation is hosted at [Magistrala docs page](https://magistrala.absmach.eu/docs/).
-
-Documentation is auto-generated, check out the instructions in the [docs repository](https://github.com/absmach/magistrala-docs).
-If you spot an error or a need for corrections, please let us know - or even better: send us a PR! 💌
-
-## Community and Contributing 🤝
-
-Thank you for your interest in Magistrala and the desire to contribute!
-
-1. Take a look at our [open issues](https://github.com/absmach/magistrala/issues). The [good-first-issue](https://github.com/absmach/magistrala/labels/good-first-issue) label is specifically for issues that are great for getting started.
-2. Checkout the [contribution guide](CONTRIBUTING.md) to learn more about our style and conventions.
-3. Make your changes compatible to our workflow.
-
-Join our community:
-
-- [Matrix Room](https://matrix.to/#/#supermq\:matrix.org)
-
-## Professional Support 💼
-
-Need help deploying Magistrala or integrating it into your system? Reach out to **[Abstract Machines](https://absmach.eu/)** for professional support and guidance.
-
-## License 📜
-
-Magistrala is open-source software licensed under the [Apache License 2.0](LICENSE). Contributions are welcome!
-
-## Acknowledgments 🙌
-
-Special thanks to the amazing contributors who make Magistrala possible. Check out the [MAINTAINERS](MAINTAINERS) file to see the team behind the magic.
-
-Ready to build the future of messaging and event-driven systems? Let's get started! 🚀
+Apache-2.0

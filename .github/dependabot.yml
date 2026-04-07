@@ -5,9 +5,11 @@ version: 2
 updates:
   - package-ecosystem: "github-actions"
     directory: "/"
+    target-branch: "main"
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:00"
       timezone: "Europe/Paris"
     groups:
       gh-dependency:
@@ -16,16 +18,24 @@ updates:
 
   - package-ecosystem: "gomod"
     directory: "/"
+    target-branch: "main"
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:15"
       timezone: "Europe/Paris"
+    groups:
+      go-dependency:
+        patterns:
+          - "*"
 
   - package-ecosystem: "docker"
     directory: "/docker"
+    target-branch: "main"
     schedule:
       interval: "weekly"
       day: "monday"
+      time: "06:30"
       timezone: "Europe/Paris"
     groups:
       docker-dependency:

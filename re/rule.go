@@ -45,21 +45,21 @@ var outputRegistry = map[outputs.OutputType]func() Runnable{
 }
 
 type Rule struct {
-	ID           string                    `json:"id"`
-	Name         string                    `json:"name"`
-	DomainID     string                    `json:"domain"`
-	Metadata     Metadata                  `json:"metadata,omitempty"`
-	Tags         []string                  `json:"tags,omitempty"`
-	InputChannel string                    `json:"input_channel"`
-	InputTopic   string                    `json:"input_topic"`
-	Logic        Script                    `json:"logic"`
-	Outputs      Outputs                   `json:"outputs,omitempty"`
-	Schedule     schedule.Schedule         `json:"schedule,omitempty"`
-	Status       Status                    `json:"status"`
-	CreatedAt    time.Time                 `json:"created_at"`
-	CreatedBy    string                    `json:"created_by"`
-	UpdatedAt    time.Time                 `json:"updated_at"`
-	UpdatedBy    string                    `json:"updated_by"`
+	ID           string            `json:"id"`
+	Name         string            `json:"name"`
+	DomainID     string            `json:"domain"`
+	Metadata     Metadata          `json:"metadata,omitempty"`
+	Tags         []string          `json:"tags,omitempty"`
+	InputChannel string            `json:"input_channel"`
+	InputTopic   string            `json:"input_topic"`
+	Logic        Script            `json:"logic"`
+	Outputs      Outputs           `json:"outputs,omitempty"`
+	Schedule     schedule.Schedule `json:"schedule,omitempty"`
+	Status       Status            `json:"status"`
+	CreatedAt    time.Time         `json:"created_at"`
+	CreatedBy    string            `json:"created_by"`
+	UpdatedAt    time.Time         `json:"updated_at"`
+	UpdatedBy    string            `json:"updated_by"`
 	// Extended
 	RoleID                    string                    `json:"role_id,omitempty"`
 	RoleName                  string                    `json:"role_name,omitempty"`

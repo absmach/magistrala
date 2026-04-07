@@ -18,25 +18,25 @@ import (
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string             `db:"id"`
-	Name            string             `db:"name"`
-	DomainID        string             `db:"domain_id"`
-	Tags            pgtype.TextArray   `db:"tags,omitempty"`
-	Metadata        []byte             `db:"metadata,omitempty"`
-	InputChannel    string             `db:"input_channel"`
-	InputTopic      sql.NullString     `db:"input_topic"`
-	LogicType       re.ScriptType      `db:"logic_type"`
-	LogicValue      string             `db:"logic_value"`
-	Outputs         []byte             `db:"outputs"`
-	StartDateTime   sql.NullTime       `db:"start_datetime"`
-	Time            sql.NullTime       `db:"time"`
-	Recurring       schedule.Recurring `db:"recurring"`
-	RecurringPeriod uint               `db:"recurring_period"`
-	Status          re.Status          `db:"status"`
-	CreatedAt       time.Time          `db:"created_at"`
-	CreatedBy       string             `db:"created_by"`
-	UpdatedAt       time.Time          `db:"updated_at"`
-	UpdatedBy       string             `db:"updated_by"`
+	ID                        string             `db:"id"`
+	Name                      string             `db:"name"`
+	DomainID                  string             `db:"domain_id"`
+	Tags                      pgtype.TextArray   `db:"tags,omitempty"`
+	Metadata                  []byte             `db:"metadata,omitempty"`
+	InputChannel              string             `db:"input_channel"`
+	InputTopic                sql.NullString     `db:"input_topic"`
+	LogicType                 re.ScriptType      `db:"logic_type"`
+	LogicValue                string             `db:"logic_value"`
+	Outputs                   []byte             `db:"outputs"`
+	StartDateTime             sql.NullTime       `db:"start_datetime"`
+	Time                      sql.NullTime       `db:"time"`
+	Recurring                 schedule.Recurring `db:"recurring"`
+	RecurringPeriod           uint               `db:"recurring_period"`
+	Status                    re.Status          `db:"status"`
+	CreatedAt                 time.Time          `db:"created_at"`
+	CreatedBy                 string             `db:"created_by"`
+	UpdatedAt                 time.Time          `db:"updated_at"`
+	UpdatedBy                 string             `db:"updated_by"`
 	MemberID                  string             `db:"member_id,omitempty"`
 	RoleID                    string             `db:"role_id,omitempty"`
 	RoleName                  string             `db:"role_name,omitempty"`

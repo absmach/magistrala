@@ -153,20 +153,20 @@ func (rm ReqMetric) Validate() error {
 }
 
 type ReportConfig struct {
-	ID             string                    `json:"id"`
-	Name           string                    `json:"name"`
-	Description    string                    `json:"description"`
-	DomainID       string                    `json:"domain_id"`
-	Schedule       schedule.Schedule         `json:"schedule,omitempty"`
-	Config         *MetricConfig             `json:"config,omitempty"`
-	Email          *EmailSetting             `json:"email,omitempty"`
-	Metrics        []ReqMetric               `json:"metrics,omitempty"`
-	ReportTemplate ReportTemplate            `json:"report_template,omitempty"`
-	Status         Status                    `json:"status"`
-	CreatedAt      time.Time                 `json:"created_at"`
-	CreatedBy      string                    `json:"created_by,omitempty"`
-	UpdatedAt      time.Time                 `json:"updated_at"`
-	UpdatedBy      string                    `json:"updated_by,omitempty"`
+	ID             string            `json:"id"`
+	Name           string            `json:"name"`
+	Description    string            `json:"description"`
+	DomainID       string            `json:"domain_id"`
+	Schedule       schedule.Schedule `json:"schedule,omitempty"`
+	Config         *MetricConfig     `json:"config,omitempty"`
+	Email          *EmailSetting     `json:"email,omitempty"`
+	Metrics        []ReqMetric       `json:"metrics,omitempty"`
+	ReportTemplate ReportTemplate    `json:"report_template,omitempty"`
+	Status         Status            `json:"status"`
+	CreatedAt      time.Time         `json:"created_at"`
+	CreatedBy      string            `json:"created_by,omitempty"`
+	UpdatedAt      time.Time         `json:"updated_at"`
+	UpdatedBy      string            `json:"updated_by,omitempty"`
 	// Extended
 	RoleID                    string                    `json:"role_id,omitempty"`
 	RoleName                  string                    `json:"role_name,omitempty"`

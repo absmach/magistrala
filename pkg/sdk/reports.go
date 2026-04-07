@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const (
@@ -21,20 +22,21 @@ const (
 
 // ReportConfig represents a report configuration.
 type ReportConfig struct {
-	ID             string         `json:"id,omitempty"`
-	Name           string         `json:"name,omitempty"`
-	Description    string         `json:"description,omitempty"`
-	DomainID       string         `json:"domain_id,omitempty"`
-	Schedule       any            `json:"schedule,omitempty"`
-	Config         any            `json:"config,omitempty"`
-	Email          any            `json:"email,omitempty"`
-	Metrics        any            `json:"metrics,omitempty"`
-	ReportTemplate ReportTemplate `json:"report_template,omitempty"`
-	Status         string         `json:"status,omitempty"`
-	CreatedAt      time.Time      `json:"created_at,omitempty"`
-	CreatedBy      string         `json:"created_by,omitempty"`
-	UpdatedAt      time.Time      `json:"updated_at,omitempty"`
-	UpdatedBy      string         `json:"updated_by,omitempty"`
+	ID             string                    `json:"id,omitempty"`
+	Name           string                    `json:"name,omitempty"`
+	Description    string                    `json:"description,omitempty"`
+	DomainID       string                    `json:"domain_id,omitempty"`
+	Schedule       any                       `json:"schedule,omitempty"`
+	Config         any                       `json:"config,omitempty"`
+	Email          any                       `json:"email,omitempty"`
+	Metrics        any                       `json:"metrics,omitempty"`
+	ReportTemplate ReportTemplate            `json:"report_template,omitempty"`
+	Status         string                    `json:"status,omitempty"`
+	CreatedAt      time.Time                 `json:"created_at,omitempty"`
+	CreatedBy      string                    `json:"created_by,omitempty"`
+	UpdatedAt      time.Time                 `json:"updated_at,omitempty"`
+	UpdatedBy      string                    `json:"updated_by,omitempty"`
+	Roles          []roles.MemberRoleActions `json:"roles,omitempty"`
 }
 
 type ReportTemplate any

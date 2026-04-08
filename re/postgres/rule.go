@@ -13,31 +13,40 @@ import (
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 	"github.com/jackc/pgtype"
+	"github.com/lib/pq"
 )
 
 // dbRule represents the database structure for a Rule.
 type dbRule struct {
-	ID              string             `db:"id"`
-	Name            string             `db:"name"`
-	DomainID        string             `db:"domain_id"`
-	Tags            pgtype.TextArray   `db:"tags,omitempty"`
-	Metadata        []byte             `db:"metadata,omitempty"`
-	InputChannel    string             `db:"input_channel"`
-	InputTopic      sql.NullString     `db:"input_topic"`
-	LogicType       re.ScriptType      `db:"logic_type"`
-	LogicValue      string             `db:"logic_value"`
-	Outputs         []byte             `db:"outputs"`
-	StartDateTime   sql.NullTime       `db:"start_datetime"`
-	Time            sql.NullTime       `db:"time"`
-	Recurring       schedule.Recurring `db:"recurring"`
-	RecurringPeriod uint               `db:"recurring_period"`
-	Status          re.Status          `db:"status"`
-	CreatedAt       time.Time          `db:"created_at"`
-	CreatedBy       string             `db:"created_by"`
-	UpdatedAt       time.Time          `db:"updated_at"`
-	UpdatedBy       string             `db:"updated_by"`
-	MemberID        string             `db:"member_id,omitempty"`
-	Roles           json.RawMessage    `db:"roles,omitempty"`
+	ID                        string             `db:"id"`
+	Name                      string             `db:"name"`
+	DomainID                  string             `db:"domain_id"`
+	Tags                      pgtype.TextArray   `db:"tags,omitempty"`
+	Metadata                  []byte             `db:"metadata,omitempty"`
+	InputChannel              string             `db:"input_channel"`
+	InputTopic                sql.NullString     `db:"input_topic"`
+	LogicType                 re.ScriptType      `db:"logic_type"`
+	LogicValue                string             `db:"logic_value"`
+	Outputs                   []byte             `db:"outputs"`
+	StartDateTime             sql.NullTime       `db:"start_datetime"`
+	Time                      sql.NullTime       `db:"time"`
+	Recurring                 schedule.Recurring `db:"recurring"`
+	RecurringPeriod           uint               `db:"recurring_period"`
+	Status                    re.Status          `db:"status"`
+	CreatedAt                 time.Time          `db:"created_at"`
+	CreatedBy                 string             `db:"created_by"`
+	UpdatedAt                 time.Time          `db:"updated_at"`
+	UpdatedBy                 string             `db:"updated_by"`
+	MemberID                  string             `db:"member_id,omitempty"`
+	RoleID                    string             `db:"role_id,omitempty"`
+	RoleName                  string             `db:"role_name,omitempty"`
+	Actions                   pq.StringArray     `db:"actions,omitempty"`
+	AccessType                string             `db:"access_type,omitempty"`
+	AccessProviderId          string             `db:"access_provider_id,omitempty"`
+	AccessProviderRoleId      string             `db:"access_provider_role_id,omitempty"`
+	AccessProviderRoleName    string             `db:"access_provider_role_name,omitempty"`
+	AccessProviderRoleActions pq.StringArray     `db:"access_provider_role_actions,omitempty"`
+	Roles                     json.RawMessage    `db:"roles,omitempty"`
 }
 
 func ruleToDb(r re.Rule) (dbRule, error) {
@@ -137,12 +146,20 @@ func dbToRule(dto dbRule) (re.Rule, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Status:    dto.Status,
-		CreatedAt: dto.CreatedAt,
-		CreatedBy: dto.CreatedBy,
-		UpdatedAt: dto.UpdatedAt,
-		UpdatedBy: dto.UpdatedBy,
-		Roles:     roles,
+		Status:                    dto.Status,
+		CreatedAt:                 dto.CreatedAt,
+		CreatedBy:                 dto.CreatedBy,
+		UpdatedAt:                 dto.UpdatedAt,
+		UpdatedBy:                 dto.UpdatedBy,
+		RoleID:                    dto.RoleID,
+		RoleName:                  dto.RoleName,
+		Actions:                   []string(dto.Actions),
+		AccessType:                dto.AccessType,
+		AccessProviderId:          dto.AccessProviderId,
+		AccessProviderRoleId:      dto.AccessProviderRoleId,
+		AccessProviderRoleName:    dto.AccessProviderRoleName,
+		AccessProviderRoleActions: []string(dto.AccessProviderRoleActions),
+		Roles:                     roles,
 	}, nil
 }
 

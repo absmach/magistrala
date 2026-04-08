@@ -12,29 +12,38 @@ import (
 	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/reports"
+	"github.com/lib/pq"
 )
 
 // dbReport represents the database structure for a Report.
 type dbReport struct {
-	ID              string                 `db:"id"`
-	Name            string                 `db:"name"`
-	Description     string                 `db:"description"`
-	DomainID        string                 `db:"domain_id"`
-	StartDateTime   sql.NullTime           `db:"start_datetime"`
-	Due             sql.NullTime           `db:"due"`
-	Recurring       schedule.Recurring     `db:"recurring"`
-	RecurringPeriod uint                   `db:"recurring_period"`
-	Status          reports.Status         `db:"status"`
-	CreatedAt       time.Time              `db:"created_at"`
-	CreatedBy       string                 `db:"created_by"`
-	UpdatedAt       time.Time              `db:"updated_at"`
-	UpdatedBy       string                 `db:"updated_by"`
-	Config          []byte                 `db:"config,omitempty"`
-	Metrics         []byte                 `db:"metrics"`
-	Email           []byte                 `db:"email"`
-	ReportTemplate  reports.ReportTemplate `db:"report_template"`
-	MemberID        string                 `db:"member_id,omitempty"`
-	Roles           json.RawMessage        `db:"roles,omitempty"`
+	ID                        string                 `db:"id"`
+	Name                      string                 `db:"name"`
+	Description               string                 `db:"description"`
+	DomainID                  string                 `db:"domain_id"`
+	StartDateTime             sql.NullTime           `db:"start_datetime"`
+	Due                       sql.NullTime           `db:"due"`
+	Recurring                 schedule.Recurring     `db:"recurring"`
+	RecurringPeriod           uint                   `db:"recurring_period"`
+	Status                    reports.Status         `db:"status"`
+	CreatedAt                 time.Time              `db:"created_at"`
+	CreatedBy                 string                 `db:"created_by"`
+	UpdatedAt                 time.Time              `db:"updated_at"`
+	UpdatedBy                 string                 `db:"updated_by"`
+	Config                    []byte                 `db:"config,omitempty"`
+	Metrics                   []byte                 `db:"metrics"`
+	Email                     []byte                 `db:"email"`
+	ReportTemplate            reports.ReportTemplate `db:"report_template"`
+	MemberID                  string                 `db:"member_id,omitempty"`
+	RoleID                    string                 `db:"role_id,omitempty"`
+	RoleName                  string                 `db:"role_name,omitempty"`
+	Actions                   pq.StringArray         `db:"actions,omitempty"`
+	AccessType                string                 `db:"access_type,omitempty"`
+	AccessProviderId          string                 `db:"access_provider_id,omitempty"`
+	AccessProviderRoleId      string                 `db:"access_provider_role_id,omitempty"`
+	AccessProviderRoleName    string                 `db:"access_provider_role_name,omitempty"`
+	AccessProviderRoleActions pq.StringArray         `db:"access_provider_role_actions,omitempty"`
+	Roles                     json.RawMessage        `db:"roles,omitempty"`
 }
 
 func reportToDb(r reports.ReportConfig) (dbReport, error) {
@@ -136,14 +145,22 @@ func dbToReport(dto dbReport) (reports.ReportConfig, error) {
 			Recurring:       dto.Recurring,
 			RecurringPeriod: dto.RecurringPeriod,
 		},
-		Email:          &email,
-		Status:         dto.Status,
-		CreatedAt:      dto.CreatedAt,
-		CreatedBy:      dto.CreatedBy,
-		UpdatedAt:      dto.UpdatedAt,
-		UpdatedBy:      dto.UpdatedBy,
-		ReportTemplate: dto.ReportTemplate,
-		Roles:          roles,
+		Email:                     &email,
+		Status:                    dto.Status,
+		CreatedAt:                 dto.CreatedAt,
+		CreatedBy:                 dto.CreatedBy,
+		UpdatedAt:                 dto.UpdatedAt,
+		UpdatedBy:                 dto.UpdatedBy,
+		ReportTemplate:            dto.ReportTemplate,
+		RoleID:                    dto.RoleID,
+		RoleName:                  dto.RoleName,
+		Actions:                   []string(dto.Actions),
+		AccessType:                dto.AccessType,
+		AccessProviderId:          dto.AccessProviderId,
+		AccessProviderRoleId:      dto.AccessProviderRoleId,
+		AccessProviderRoleName:    dto.AccessProviderRoleName,
+		AccessProviderRoleActions: []string(dto.AccessProviderRoleActions),
+		Roles:                     roles,
 	}
 
 	return rpt, nil

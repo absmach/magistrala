@@ -404,37 +404,64 @@ func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta
 
 func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
 	pm.UserID = userID
-	clauses := []string{
-		`(
-			EXISTS (
-				SELECT 1
-				FROM rules_roles rr
-				JOIN rules_role_members rrm ON rrm.role_id = rr.id
-				WHERE rr.entity_id = r.id AND rrm.member_id = :user_id
-			)
-			OR EXISTS (
-				SELECT 1
-				FROM domains_roles dr
-				JOIN domains_role_members drm ON drm.role_id = dr.id
-				JOIN domains_role_actions dra ON dra.role_id = dr.id
-				WHERE dr.entity_id = r.domain_id
-					AND drm.member_id = :user_id
-					AND dra.action LIKE 'rule%'
-			)
-		)`,
+
+	additionalConditions := pageRulesQueryConditions(pm)
+	additionalWhereClause := ""
+	if len(additionalConditions) > 0 {
+		additionalWhereClause = "AND " + strings.Join(additionalConditions, " AND ")
 	}
-	clauses = append(clauses, pageRulesQueryConditions(pm)...)
+
 	orderClause := rulesOrderClause(pm)
 	pgData := rulesPageData(pm)
 
-	whereClause := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
-
 	innerQ := fmt.Sprintf(`
-		SELECT DISTINCT r.id, r.name, r.domain_id, r.tags, r.input_channel, r.input_topic, r.logic_type, r.logic_value, r.outputs,
-			r.start_datetime, r.time, r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status
-		FROM rules r
-		%s
-	`, whereClause)
+		WITH direct_rules AS (
+			SELECT r.id, r.name, r.domain_id, r.tags, r.metadata, r.input_channel, r.input_topic,
+				r.logic_type, r.logic_value, r.outputs, r.start_datetime, r.time,
+				r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status,
+				rr.id AS role_id,
+				rr."name" AS role_name,
+				array_remove(array_agg(DISTINCT rra."action"), NULL) AS actions,
+				'direct' AS access_type,
+				'' AS access_provider_id,
+				'' AS access_provider_role_id,
+				'' AS access_provider_role_name,
+				CAST(array[] AS text[]) AS access_provider_role_actions
+			FROM rules_role_members rrm
+			JOIN rules_roles rr ON rr.id = rrm.role_id
+			JOIN rules r ON r.id = rr.entity_id
+			LEFT JOIN rules_role_actions rra ON rra.role_id = rrm.role_id
+			WHERE rrm.member_id = :user_id
+			%s
+			GROUP BY r.id, rr.id, rr."name"
+		),
+		domain_rules AS (
+			SELECT r.id, r.name, r.domain_id, r.tags, r.metadata, r.input_channel, r.input_topic,
+				r.logic_type, r.logic_value, r.outputs, r.start_datetime, r.time,
+				r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status,
+				'' AS role_id,
+				'' AS role_name,
+				CAST(array[] AS text[]) AS actions,
+				'domain' AS access_type,
+				d.id AS access_provider_id,
+				dr.id AS access_provider_role_id,
+				dr."name" AS access_provider_role_name,
+				array_agg(DISTINCT dra."action") AS access_provider_role_actions
+			FROM domains_role_members drm
+			JOIN domains_role_actions dra ON dra.role_id = drm.role_id
+			JOIN domains_roles dr ON dr.id = drm.role_id
+			JOIN domains d ON d.id = dr.entity_id
+			JOIN rules r ON r.domain_id = d.id
+			WHERE drm.member_id = :user_id
+			AND dra.action LIKE 'rule%%'
+			AND NOT EXISTS (SELECT 1 FROM direct_rules tmp WHERE tmp.id = r.id)
+			%s
+			GROUP BY r.id, d.id, dr.id, dr."name"
+		)
+		SELECT * FROM direct_rules
+		UNION ALL
+		SELECT * FROM domain_rules
+	`, additionalWhereClause, additionalWhereClause)
 
 	q := fmt.Sprintf(`
 		SELECT * FROM (%s) AS sub %s %s;

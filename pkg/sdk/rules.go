@@ -10,27 +10,29 @@ import (
 	"net/http"
 
 	"github.com/absmach/magistrala/pkg/errors"
+	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const rulesEndpoint = "rules"
 
 // Rule represents a rule configuration.
 type Rule struct {
-	ID           string   `json:"id,omitempty"`
-	Name         string   `json:"name,omitempty"`
-	DomainID     string   `json:"domain,omitempty"`
-	Metadata     Metadata `json:"metadata,omitempty"`
-	Tags         []string `json:"tags,omitempty"`
-	InputChannel string   `json:"input_channel,omitempty"`
-	InputTopic   string   `json:"input_topic,omitempty"`
-	Logic        any      `json:"logic,omitempty"`
-	Outputs      any      `json:"outputs,omitempty"`
-	Schedule     any      `json:"schedule,omitempty"`
-	Status       string   `json:"status,omitempty"`
-	CreatedAt    string   `json:"created_at,omitempty"`
-	CreatedBy    string   `json:"created_by,omitempty"`
-	UpdatedAt    string   `json:"updated_at,omitempty"`
-	UpdatedBy    string   `json:"updated_by,omitempty"`
+	ID           string                    `json:"id,omitempty"`
+	Name         string                    `json:"name,omitempty"`
+	DomainID     string                    `json:"domain,omitempty"`
+	Metadata     Metadata                  `json:"metadata,omitempty"`
+	Tags         []string                  `json:"tags,omitempty"`
+	InputChannel string                    `json:"input_channel,omitempty"`
+	InputTopic   string                    `json:"input_topic,omitempty"`
+	Logic        any                       `json:"logic,omitempty"`
+	Outputs      any                       `json:"outputs,omitempty"`
+	Schedule     any                       `json:"schedule,omitempty"`
+	Status       string                    `json:"status,omitempty"`
+	CreatedAt    string                    `json:"created_at,omitempty"`
+	CreatedBy    string                    `json:"created_by,omitempty"`
+	UpdatedAt    string                    `json:"updated_at,omitempty"`
+	UpdatedBy    string                    `json:"updated_by,omitempty"`
+	Roles        []roles.MemberRoleActions `json:"roles,omitempty"`
 }
 
 type Page struct {

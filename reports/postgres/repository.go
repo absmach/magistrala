@@ -452,38 +452,65 @@ func (repo *PostgresRepository) ListAllReportsConfig(ctx context.Context, pm rep
 }
 
 func (repo *PostgresRepository) ListUserReportsConfig(ctx context.Context, userID string, pm reports.PageMeta) (reports.ReportConfigPage, error) {
-	clauses := []string{
-		`(
-			EXISTS (
-				SELECT 1
-				FROM reports_roles rr
-				JOIN reports_role_members rrm ON rrm.role_id = rr.id
-				WHERE rr.entity_id = rc.id AND rrm.member_id = :user_id
-			)
-			OR EXISTS (
-				SELECT 1
-				FROM domains_roles dr
-				JOIN domains_role_members drm ON drm.role_id = dr.id
-				JOIN domains_role_actions dra ON dra.role_id = dr.id
-				WHERE dr.entity_id = rc.domain_id
-					AND drm.member_id = :user_id
-					AND dra.action LIKE 'report%'
-			)
-		)`,
+	pm.UserID = userID
+
+	additionalConditions := pageReportQueryConditions(pm)
+	additionalWhereClause := ""
+	if len(additionalConditions) > 0 {
+		additionalWhereClause = "AND " + strings.Join(additionalConditions, " AND ")
 	}
-	clauses = append(clauses, pageReportQueryConditions(pm)...)
+
 	orderClause := reportsOrderClause(pm)
 	pgData := reportsPageData(pm)
 
-	pm.UserID = userID
-	whereClause := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
-
 	innerQ := fmt.Sprintf(`
-		SELECT DISTINCT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,
-			rc.start_datetime, rc.due, rc.recurring, rc.recurring_period, rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status
-		FROM report_config rc
-		%s
-	`, whereClause)
+		WITH direct_reports AS (
+			SELECT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,
+				rc.start_datetime, rc.due, rc.recurring, rc.recurring_period,
+				rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status,
+				rr.id AS role_id,
+				rr."name" AS role_name,
+				array_remove(array_agg(DISTINCT rra."action"), NULL) AS actions,
+				'direct' AS access_type,
+				'' AS access_provider_id,
+				'' AS access_provider_role_id,
+				'' AS access_provider_role_name,
+				CAST(array[] AS text[]) AS access_provider_role_actions
+			FROM reports_role_members rrm
+			JOIN reports_roles rr ON rr.id = rrm.role_id
+			JOIN report_config rc ON rc.id = rr.entity_id
+			LEFT JOIN reports_role_actions rra ON rra.role_id = rrm.role_id
+			WHERE rrm.member_id = :user_id
+			%s
+			GROUP BY rc.id, rr.id, rr."name"
+		),
+		domain_reports AS (
+			SELECT rc.id, rc.name, rc.description, rc.domain_id, rc.metrics, rc.email, rc.config,
+				rc.start_datetime, rc.due, rc.recurring, rc.recurring_period,
+				rc.created_at, rc.created_by, rc.updated_at, rc.updated_by, rc.status,
+				'' AS role_id,
+				'' AS role_name,
+				CAST(array[] AS text[]) AS actions,
+				'domain' AS access_type,
+				d.id AS access_provider_id,
+				dr.id AS access_provider_role_id,
+				dr."name" AS access_provider_role_name,
+				array_agg(DISTINCT dra."action") AS access_provider_role_actions
+			FROM domains_role_members drm
+			JOIN domains_role_actions dra ON dra.role_id = drm.role_id
+			JOIN domains_roles dr ON dr.id = drm.role_id
+			JOIN domains d ON d.id = dr.entity_id
+			JOIN report_config rc ON rc.domain_id = d.id
+			WHERE drm.member_id = :user_id
+			AND dra.action LIKE 'report%%'
+			AND NOT EXISTS (SELECT 1 FROM direct_reports tmp WHERE tmp.id = rc.id)
+			%s
+			GROUP BY rc.id, d.id, dr.id, dr."name"
+		)
+		SELECT * FROM direct_reports
+		UNION ALL
+		SELECT * FROM domain_reports
+	`, additionalWhereClause, additionalWhereClause)
 
 	q := fmt.Sprintf(`
 		SELECT * FROM (%s) AS sub %s %s;

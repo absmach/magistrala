@@ -8,12 +8,12 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**/*.md'
-      - 'docs/**'
-      - '.github/workflows/**'
-      - 'LICENSE'
-      - 'MAINTAINERS'
-      - 'CODEOWNERS'
+      - "**/*.md"
+      - "docs/**"
+      - ".github/workflows/**"
+      - "LICENSE"
+      - "MAINTAINERS"
+      - "CODEOWNERS"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -29,6 +29,7 @@ jobs:
     needs: [lint-and-build]
     permissions:
       contents: read
+      packages: write
 
     steps:
       - name: Checkout code

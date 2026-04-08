@@ -29,7 +29,7 @@ func TestMain(m *testing.M) {
 }
 
 func setupRedisTokensClient() auth.UserActiveTokensCache {
-	tc, err := cache.NewUserActiveTokensCache(storeClient, 10*time.Minute)
+	tc, err := cache.NewUserActiveTokensCache(storeClient)
 	if err != nil {
 		panic(err)
 	}

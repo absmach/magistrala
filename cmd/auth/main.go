@@ -293,7 +293,7 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 
 func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider magistrala.IDProvider) (auth.Service, error) {
 	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
-	tokensCache, err := cache.NewUserActiveTokensCache(cacheClient, keyDuration)
+	tokensCache, err := cache.NewUserActiveTokensCache(cacheClient)
 	if err != nil {
 		return nil, err
 	}

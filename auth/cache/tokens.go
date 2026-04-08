@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/auth"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -22,30 +21,23 @@ const (
 var _ auth.UserActiveTokensCache = (*tokensCache)(nil)
 
 type tokensCache struct {
-	client      *redis.Client
-	keyDuration time.Duration
+	client *redis.Client
 }
 
 // NewUserActiveTokensCache returns redis auth cache implementation.
-func NewUserActiveTokensCache(client *redis.Client, duration time.Duration) (auth.UserActiveTokensCache, error) {
-	if duration == 0 {
-		return nil, errors.New("token cache duration must not be zero")
-	}
-	return &tokensCache{
-		client:      client,
-		keyDuration: duration,
-	}, nil
+func NewUserActiveTokensCache(client *redis.Client) (auth.UserActiveTokensCache, error) {
+	return &tokensCache{client: client}, nil
 }
 
 // SaveActive saves an active refresh token ID for a user with optional description.
 func (tc *tokensCache) SaveActive(ctx context.Context, userID, tokenID, description string, expiry time.Time) error {
-	ttl := min(tc.keyDuration, time.Until(expiry))
+	ttl := time.Until(expiry)
 
 	pipe := tc.client.TxPipeline()
 
 	pipe.Set(ctx, tokenKey(tokenID), description, ttl)
 	pipe.ZAdd(ctx, userTokensKey(userID), redis.Z{
-		Score:  float64(time.Now().Add(ttl).Unix()),
+		Score:  float64(expiry.Unix()),
 		Member: tokenID,
 	})
 

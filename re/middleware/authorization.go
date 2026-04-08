@@ -6,6 +6,7 @@ package middleware
 import (
 	"context"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/authn"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -156,12 +157,16 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 
 	var pat *smqauthz.PATReq
 	if session.PatID != "" {
+		entityID := obj
+		if objType == policies.DomainType {
+			entityID = auth.AnyIDs
+		}
 		opName := am.entitiesOps.OperationName(operations.EntityType, op)
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
-			EntityID:   session.DomainID,
-			EntityType: operations.EntityType,
+			EntityID:   entityID,
+			EntityType: auth.RulesType.String(),
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}

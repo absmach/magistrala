@@ -42,6 +42,16 @@ func TestEntityTypeString(t *testing.T) {
 			expected: "messages",
 		},
 		{
+			desc:     "Rules entity type",
+			et:       auth.RulesType,
+			expected: "rules",
+		},
+		{
+			desc:     "Reports entity type",
+			et:       auth.ReportsType,
+			expected: "reports",
+		},
+		{
 			desc:     "Unknown entity type",
 			et:       auth.EntityType(100),
 			expected: "unknown domain entity type 100",
@@ -85,6 +95,18 @@ func TestParseEntityType(t *testing.T) {
 			desc:     "Parse dashboards",
 			et:       "dashboards",
 			expected: auth.DashboardType,
+			err:      false,
+		},
+		{
+			desc:     "Parse rules",
+			et:       "rules",
+			expected: auth.RulesType,
+			err:      false,
+		},
+		{
+			desc:     "Parse reports",
+			et:       "reports",
+			expected: auth.ReportsType,
 			err:      false,
 		},
 		{
@@ -133,6 +155,18 @@ func TestEntityTypeMarshalJSON(t *testing.T) {
 			expected: []byte(`"clients"`),
 			err:      nil,
 		},
+		{
+			desc:     "Marshal rules",
+			et:       auth.RulesType,
+			expected: []byte(`"rules"`),
+			err:      nil,
+		},
+		{
+			desc:     "Marshal reports",
+			et:       auth.ReportsType,
+			expected: []byte(`"reports"`),
+			err:      nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -161,6 +195,18 @@ func TestEntityTypeUnmarshalJSON(t *testing.T) {
 			desc:     "Unmarshal channels",
 			data:     []byte(`"channels"`),
 			expected: auth.ChannelsType,
+			err:      false,
+		},
+		{
+			desc:     "Unmarshal rules",
+			data:     []byte(`"rules"`),
+			expected: auth.RulesType,
+			err:      false,
+		},
+		{
+			desc:     "Unmarshal reports",
+			data:     []byte(`"reports"`),
+			expected: auth.ReportsType,
 			err:      false,
 		},
 		{

@@ -141,8 +141,8 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 		pat = &smqauthz.PATReq{
 			UserID:     session.UserID,
 			PatID:      session.PatID,
-			EntityID:   session.DomainID,
-			EntityType: operations.EntityType,
+			EntityID:   auth.AnyIDs,
+			EntityType: auth.RulesType.String(),
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}

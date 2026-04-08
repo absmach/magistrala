@@ -33,15 +33,15 @@ func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 			PermissionRequired: true,
 		},
 		OpAssignAlarm: {
-			Name:               "assign",
+			Name:               "alarm_assign",
 			PermissionRequired: true,
 		},
 		OpAcknowledgeAlarm: {
-			Name:               "acknowledge",
+			Name:               "alarm_acknowledge",
 			PermissionRequired: true,
 		},
 		OpResolveAlarm: {
-			Name:               "resolve",
+			Name:               "alarm_resolve",
 			PermissionRequired: true,
 		},
 		OpUpdateAlarm: {

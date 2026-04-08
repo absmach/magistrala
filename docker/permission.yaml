@@ -137,9 +137,9 @@ alarm:
     - view: alarm_read_permission
     - update: alarm_update_permission
     - delete: alarm_delete_permission
-    - assign: alarm_assign_permission
-    - acknowledge: alarm_acknowledge_permission
-    - resolve: alarm_resolve_permission
+    - alarm_assign: alarm_assign_permission
+    - alarm_acknowledge: alarm_acknowledge_permission
+    - alarm_resolve: alarm_resolve_permission
 
 rule:
   operations:

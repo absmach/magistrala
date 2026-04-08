@@ -44,7 +44,17 @@ const (
 	OpMessageSubscribe = "message_subscribe"
 )
 
-var errInvalidEntityOp = errors.NewRequestError("operation not valid for entity type")
+var (
+	errInvalidEntityOp                 = errors.NewRequestError("operation not valid for entity type")
+	errAlarmOpRequiresWildcardEntityID = errors.NewRequestError("alarm operations on rules entity type require wildcard entity ID")
+)
+
+// alarmOnlyOperations are RulesType operations authorized at the domain level; only wildcard entity ID is valid.
+var alarmOnlyOperations = map[string]struct{}{
+	"alarm_assign":      {},
+	"alarm_acknowledge": {},
+	"alarm_resolve":     {},
+}
 
 type Operation = permissions.Operation
 
@@ -293,6 +303,12 @@ func (s *Scope) Validate() error {
 
 	if !IsValidOperationForEntity(s.EntityType, s.Operation) {
 		return errors.Wrap(apiutil.ErrInvalidQueryParams, errInvalidEntityOp)
+	}
+
+	if s.EntityType == RulesType {
+		if _, ok := alarmOnlyOperations[s.Operation]; ok && s.EntityID != AnyIDs {
+			return errors.Wrap(apiutil.ErrInvalidQueryParams, errAlarmOpRequiresWildcardEntityID)
+		}
 	}
 
 	return nil

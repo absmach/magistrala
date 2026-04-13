@@ -3,13 +3,14 @@
 
 package auth
 
-import smqauth "github.com/absmach/magistrala/auth"
+import "github.com/absmach/magistrala/auth"
 
 type authenticateRes struct {
-	id       string
-	userID   string
-	userRole smqauth.Role
-	verified bool
+	id        string
+	userID    string
+	userRole  auth.Role
+	verified  bool
+	tokenType auth.KeyType
 }
 
 type authorizeRes struct {

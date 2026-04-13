@@ -343,9 +343,8 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	if !ok {
 		return Token{}, ErrRevokedToken
 	}
-	refreshID := k.ID
 	key.Type = AccessKey
-	key.ID = ""
+	key.ID = k.ID
 	key.Subject = k.Subject
 	key.Role = k.Role
 
@@ -361,7 +360,6 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 
 	key.ExpiresAt = k.ExpiresAt
 	key.Type = RefreshKey
-	key.ID = refreshID
 	refresh, err := svc.tokenizer.Issue(key)
 	if err != nil {
 		return Token{}, errors.Wrap(errIssueTmp, err)

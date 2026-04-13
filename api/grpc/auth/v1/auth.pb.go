@@ -10,11 +10,12 @@
 package v1
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -74,6 +75,7 @@ type AuthNRes struct {
 	UserId        string                 `protobuf:"bytes,2,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	UserRole      uint32                 `protobuf:"varint,3,opt,name=user_role,json=userRole,proto3" json:"user_role,omitempty"`
 	Verified      bool                   `protobuf:"varint,4,opt,name=verified,proto3" json:"verified,omitempty"`
+	TokenType     uint32                 `protobuf:"varint,5,opt,name=token_type,json=tokenType,proto3" json:"token_type,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,6 +136,13 @@ func (x *AuthNRes) GetVerified() bool {
 		return x.Verified
 	}
 	return false
+}
+
+func (x *AuthNRes) GetTokenType() uint32 {
+	if x != nil {
+		return x.TokenType
+	}
+	return 0
 }
 
 type PolicyReq struct {
@@ -438,12 +447,14 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\n" +
 	"\x12auth/v1/auth.proto\x12\aauth.v1\" \n" +
 	"\bAuthNReq\x12\x14\n" +
-	"\x05token\x18\x01 \x01(\tR\x05token\"l\n" +
+	"\x05token\x18\x01 \x01(\tR\x05token\"\x8b\x01\n" +
 	"\bAuthNRes\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x17\n" +
 	"\auser_id\x18\x02 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tuser_role\x18\x03 \x01(\rR\buserRole\x12\x1a\n" +
-	"\bverified\x18\x04 \x01(\bR\bverified\"\xa3\x02\n" +
+	"\bverified\x18\x04 \x01(\bR\bverified\x12\x1d\n" +
+	"\n" +
+	"token_type\x18\x05 \x01(\rR\ttokenType\"\xa3\x02\n" +
 	"\tPolicyReq\x12\x16\n" +
 	"\x06domain\x18\x01 \x01(\tR\x06domain\x12!\n" +
 	"\fsubject_type\x18\x02 \x01(\tR\vsubjectType\x12!\n" +

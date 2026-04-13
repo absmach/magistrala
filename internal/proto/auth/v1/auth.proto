@@ -23,6 +23,7 @@ message AuthNRes {
   string user_id = 2;
   uint32 user_role = 3;
   bool verified = 4;
+  uint32 token_type = 5;
 }
 
 message PolicyReq {

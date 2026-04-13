@@ -303,17 +303,21 @@ func TestIssue(t *testing.T) {
 	}
 
 	cases4 := []struct {
-		desc          string
-		key           auth.Key
-		token         string
-		parseRes      auth.Key
-		parseErr      error
-		roleCheckErr  error
-		issueErr      error
-		cacheRes      bool
-		cacheErr      error
-		saveActiveErr error
-		err           error
+		desc                    string
+		key                     auth.Key
+		token                   string
+		parseRes                auth.Key
+		parseErr                error
+		roleCheckErr            error
+		issueErr                error
+		issueRefreshErr         error
+		cacheRes                bool
+		cacheErr                error
+		saveActiveErr           error
+		accessToken             string
+		newRefreshToken         string
+		assertRefreshIDHandling bool
+		err                     error
 	}{
 		{
 			desc: "issue refresh key",
@@ -327,6 +331,36 @@ func TestIssue(t *testing.T) {
 			parseRes: refreshkey,
 			cacheRes: true,
 			err:      nil,
+		},
+		{
+			desc: "issue refresh key does not put refresh ID on access token",
+			key: auth.Key{
+				Type:     auth.RefreshKey,
+				Verified: true,
+			},
+			token:                   refreshToken,
+			parseRes:                refreshkey,
+			cacheRes:                true,
+			accessToken:             "access-token",
+			newRefreshToken:         "refresh-token",
+			assertRefreshIDHandling: true,
+			err:                     nil,
+		},
+		{
+			desc: "issue refresh key with failed to issue refresh token",
+			key: auth.Key{
+				Type:     auth.RefreshKey,
+				IssuedAt: time.Now(),
+				Subject:  userID,
+				Role:     auth.UserRole,
+			},
+			token:           refreshToken,
+			parseRes:        refreshkey,
+			cacheRes:        true,
+			accessToken:     "access-token",
+			newRefreshToken: "refresh-token",
+			issueRefreshErr: svcerr.ErrAuthentication,
+			err:             svcerr.ErrAuthentication,
 		},
 		{
 			desc: "issue refresh key with invalid token",
@@ -411,13 +445,39 @@ func TestIssue(t *testing.T) {
 	}
 	for _, tc := range cases4 {
 		t.Run(tc.desc, func(t *testing.T) {
-			tokenizerCall := tokenizer.On("Issue", mock.Anything, mock.Anything).Return(tc.token, tc.issueErr)
+			svc, _ := newService(t)
+			accessToken := tc.accessToken
+			if accessToken == "" {
+				accessToken = tc.token
+			}
+			newRefreshToken := tc.newRefreshToken
+			if newRefreshToken == "" {
+				newRefreshToken = tc.token
+			}
+			tokenizer.On("Issue", mock.MatchedBy(func(key auth.Key) bool {
+				if key.Type != auth.AccessKey {
+					return false
+				}
+				if tc.assertRefreshIDHandling && key.ID != "" {
+					return false
+				}
+				return key.Subject == tc.parseRes.Subject && key.Role == tc.parseRes.Role
+			})).Return(accessToken, tc.issueErr)
+			tokenizer.On("Issue", mock.MatchedBy(func(key auth.Key) bool {
+				if key.Type != auth.RefreshKey {
+					return false
+				}
+				if tc.assertRefreshIDHandling && key.ID != tc.parseRes.ID {
+					return false
+				}
+				return key.Subject == tc.parseRes.Subject && key.Role == tc.parseRes.Role
+			})).Return(newRefreshToken, tc.issueRefreshErr)
 			tokenizerCall1 := tokenizer.On("Parse", mock.Anything, tc.token).Return(tc.parseRes, tc.parseErr)
 			tokenizerCall2 := tokenizer.On("Revoke", mock.Anything, tc.token).Return(tc.parseErr)
 			cacheCall := tokensCache.On("IsActive", context.Background(), tc.parseRes.ID).Return(tc.cacheRes, tc.cacheErr)
 			saveActiveCall := tokensCache.On("SaveActive", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.saveActiveErr)
 			policyCall := pEvaluator.On("CheckPolicy", mock.Anything, policies.Policy{
-				Subject:     tc.key.Subject,
+				Subject:     tc.parseRes.Subject,
 				SubjectType: policies.UserType,
 				Permission:  policies.MembershipPermission,
 				Object:      policies.MagistralaObject,
@@ -425,7 +485,6 @@ func TestIssue(t *testing.T) {
 			}).Return(tc.roleCheckErr)
 			_, err := svc.Issue(context.Background(), tc.token, tc.key)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.err, err))
-			tokenizerCall.Unset()
 			tokenizerCall1.Unset()
 			tokenizerCall2.Unset()
 			policyCall.Unset()

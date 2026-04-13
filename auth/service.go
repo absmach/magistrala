@@ -343,14 +343,14 @@ func (svc service) refreshKey(ctx context.Context, token string, key Key) (Token
 	if !ok {
 		return Token{}, ErrRevokedToken
 	}
-	key.Type = AccessKey
 	key.ID = k.ID
+	key.Type = AccessKey
 	key.Subject = k.Subject
-	key.Role = k.Role
 
 	if err := svc.checkUserRole(ctx, key); err != nil {
 		return Token{}, errors.Wrap(errIssueUser, err)
 	}
+	key.Role = k.Role
 
 	key.ExpiresAt = time.Now().UTC().Add(svc.loginDuration)
 	access, err := svc.tokenizer.Issue(key)

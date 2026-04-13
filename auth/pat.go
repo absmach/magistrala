@@ -70,6 +70,9 @@ const (
 	MessagesType
 	DomainsType
 	UsersType
+	ReportsType
+	AlarmsType
+	RulesType
 )
 
 const (
@@ -80,6 +83,9 @@ const (
 	MessagesStr      = "messages"
 	DomainsStr       = "domains"
 	UsersStr         = "users"
+	ReportsStr       = "report"
+	AlarmsStr        = "alarm"
+	RulesStr         = "rule"
 )
 
 func (et EntityType) String() string {
@@ -98,6 +104,12 @@ func (et EntityType) String() string {
 		return DomainsStr
 	case UsersType:
 		return UsersStr
+	case ReportsType:
+		return ReportsStr
+	case AlarmsType:
+		return AlarmsStr
+	case RulesType:
+		return RulesStr
 	default:
 		return fmt.Sprintf("unknown domain entity type %d", et)
 	}
@@ -119,6 +131,12 @@ func ParseEntityType(et string) (EntityType, error) {
 		return DomainsType, nil
 	case UsersStr:
 		return UsersType, nil
+	case ReportsStr:
+		return ReportsType, nil
+	case AlarmsStr:
+		return AlarmsType, nil
+	case RulesStr:
+		return RulesType, nil
 	default:
 		return 0, fmt.Errorf("unknown domain entity type %s", et)
 	}
@@ -147,7 +165,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case ClientsType, ChannelsType, GroupsType, DomainsType:
+	case ClientsType, ChannelsType, GroupsType, DomainsType, ReportsType, AlarmsType, RulesType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare

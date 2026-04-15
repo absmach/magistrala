@@ -59,8 +59,6 @@ const (
 	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	defDB            = "bootstrap"
 	defSvcHTTPPort   = "9013"
-
-	streamID = "magistrala.bootstrap"
 )
 
 type config struct {

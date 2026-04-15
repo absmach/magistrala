@@ -549,7 +549,7 @@ func TestUpdate(t *testing.T) {
 			svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client:      bs.Client(),
-				method:      http.MethodPut,
+				method:      http.MethodPatch,
 				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,

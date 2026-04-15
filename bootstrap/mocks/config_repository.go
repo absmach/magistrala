@@ -311,6 +311,84 @@ func (_c *ConfigRepository_ListExisting_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// HasServiceConnections provides a mock function for the type ConfigRepository
+func (_mock *ConfigRepository) HasServiceConnections(ctx context.Context, domainID string, clientID string, channelIDs []string) (bool, error) {
+	ret := _mock.Called(ctx, domainID, clientID, channelIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasServiceConnections")
+	}
+
+	var r0 bool
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string) (bool, error)); ok {
+		return returnFunc(ctx, domainID, clientID, channelIDs)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string) bool); ok {
+		r0 = returnFunc(ctx, domainID, clientID, channelIDs)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string) error); ok {
+		r1 = returnFunc(ctx, domainID, clientID, channelIDs)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// ConfigRepository_HasServiceConnections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasServiceConnections'
+type ConfigRepository_HasServiceConnections_Call struct {
+	*mock.Call
+}
+
+// HasServiceConnections is a helper method to define mock.On call
+//   - ctx context.Context
+//   - domainID string
+//   - clientID string
+//   - channelIDs []string
+func (_e *ConfigRepository_Expecter) HasServiceConnections(ctx interface{}, domainID interface{}, clientID interface{}, channelIDs interface{}) *ConfigRepository_HasServiceConnections_Call {
+	return &ConfigRepository_HasServiceConnections_Call{Call: _e.mock.On("HasServiceConnections", ctx, domainID, clientID, channelIDs)}
+}
+
+func (_c *ConfigRepository_HasServiceConnections_Call) Run(run func(ctx context.Context, domainID string, clientID string, channelIDs []string)) *ConfigRepository_HasServiceConnections_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *ConfigRepository_HasServiceConnections_Call) Return(b bool, err error) *ConfigRepository_HasServiceConnections_Call {
+	_c.Call.Return(b, err)
+	return _c
+}
+
+func (_c *ConfigRepository_HasServiceConnections_Call) RunAndReturn(run func(ctx context.Context, domainID string, clientID string, channelIDs []string) (bool, error)) *ConfigRepository_HasServiceConnections_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Remove provides a mock function for the type ConfigRepository
 func (_mock *ConfigRepository) Remove(ctx context.Context, domainID string, id string) error {
 	ret := _mock.Called(ctx, domainID, id)

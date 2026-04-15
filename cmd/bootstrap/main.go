@@ -16,18 +16,21 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	httpapi "github.com/absmach/magistrala/bootstrap/api"
-	"github.com/absmach/magistrala/bootstrap/events/consumer"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
+	channelspg "github.com/absmach/magistrala/channels/postgres"
+	clientspg "github.com/absmach/magistrala/clients/postgres"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
+	bootconsumer "github.com/absmach/magistrala/pkg/bootstrap/events/consumer"
+	chconsumer "github.com/absmach/magistrala/pkg/channels/events/consumer"
+	cliconsumer "github.com/absmach/magistrala/pkg/clients/events/consumer"
 	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
-	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
@@ -42,7 +45,6 @@ import (
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -58,7 +60,6 @@ const (
 	defDB            = "bootstrap"
 	defSvcHTTPPort   = "9013"
 
-	stream   = "events.magistrala.clients"
 	streamID = "magistrala.bootstrap"
 )
 
@@ -108,7 +109,14 @@ func main() {
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(err.Error())
 	}
-	db, err := pgclient.Setup(dbConfig, *bootstrappg.Migration())
+	migration, err := bootstrappg.Migration()
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+
+	db, err := pgclient.Setup(dbConfig, *migration)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -176,16 +184,17 @@ func main() {
 	defer authzClient.Close()
 	logger.Info("AuthZ successfully connected to auth gRPC server " + authzClient.Secure())
 
+	database := pgclient.NewDatabase(db, dbConfig, tracer)
+
 	// Create new service
-	svc, err := newService(ctx, authz, policySvc, db, tracer, logger, cfg, dbConfig)
+	svc, err := newService(ctx, authz, policySvc, database, tracer, logger, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
 		return
 	}
-
-	if err = subscribeToClientsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to clients event store: %s", err))
+	if err = subscribeToEventStore(ctx, svc, database, cfg, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe to event store: %s", err))
 		exitCode = 1
 		return
 	}
@@ -218,8 +227,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
-	database := pgclient.NewDatabase(db, dbConfig, tracer)
+func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
 
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
@@ -248,18 +256,22 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	return svc, nil
 }
 
-func subscribeToClientsES(ctx context.Context, svc bootstrap.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "bootstrap-es-sub", logger)
-	if err != nil {
+func subscribeToEventStore(ctx context.Context, svc bootstrap.Service, database pgclient.Database, cfg config, logger *slog.Logger) error {
+	if err := bootconsumer.BootstrapEventsSubscribe(ctx, svc, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
 		return err
 	}
 
-	subConfig := events.SubscriberConfig{
-		Stream:   stream,
-		Consumer: cfg.ESConsumerName,
-		Handler:  consumer.NewEventHandler(svc),
+	clientsRepo := clientspg.NewRepository(database)
+	if err := cliconsumer.ClientsEventsSubscribe(ctx, clientsRepo, cfg.ESURL, cfg.ESConsumerName+"-clients", logger); err != nil {
+		return err
 	}
-	return subscriber.Subscribe(ctx, subConfig)
+
+	channelsRepo := channelspg.NewRepository(database)
+	if err := chconsumer.ChannelsEventsSubscribe(ctx, channelsRepo, cfg.ESURL, cfg.ESConsumerName+"-channels", logger); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {

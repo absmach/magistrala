@@ -69,7 +69,7 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 					api.EncodeResponse,
 					opts...), "view").ServeHTTP)
 
-				r.Put("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
+				r.Patch("/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 					updateEndpoint(svc),
 					decodeUpdateRequest,
 					api.EncodeResponse,
@@ -81,13 +81,13 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 					api.EncodeResponse,
 					opts...), "remove").ServeHTTP)
 
-				r.Patch("/certs/{certID}", otelhttp.NewHandler(kithttp.NewServer(
+				r.Patch("/certs/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 					updateCertEndpoint(svc),
 					decodeUpdateCertRequest,
 					api.EncodeResponse,
 					opts...), "update_cert").ServeHTTP)
 
-				r.Put("/connections/{connID}", otelhttp.NewHandler(kithttp.NewServer(
+				r.Put("/connections/{configID}", otelhttp.NewHandler(kithttp.NewServer(
 					updateConnEndpoint(svc),
 					decodeUpdateConnRequest,
 					api.EncodeResponse,
@@ -162,7 +162,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	req := updateCertReq{
-		clientID: chi.URLParam(r, "certID"),
+		clientID: chi.URLParam(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
@@ -178,7 +178,7 @@ func decodeUpdateConnRequest(_ context.Context, r *http.Request) (any, error) {
 
 	req := updateConnReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "connID"),
+		id:    chi.URLParam(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)

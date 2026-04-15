@@ -36,7 +36,7 @@ type Channel struct {
 	Name        string         `json:"name,omitempty"`
 	Metadata    map[string]any `json:"metadata,omitempty"`
 	DomainID    string         `json:"domain_id"`
-	Parent      string         `json:"parent_id,omitempty"`
+	Parent      string         `json:"parent_group_id,omitempty"`
 	Description string         `json:"description,omitempty"`
 	CreatedAt   time.Time      `json:"created_at"`
 	UpdatedAt   time.Time      `json:"updated_at,omitempty"`

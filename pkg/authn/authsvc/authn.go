@@ -7,6 +7,7 @@ import (
 	"context"
 
 	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
+	mgauth "github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/auth/api/grpc/auth"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -43,7 +44,7 @@ func (a authentication) Authenticate(ctx context.Context, token string) (authn.S
 		return authn.Session{}, errors.Wrap(errors.ErrAuthentication, err)
 	}
 
-	if res.GetId() != "" {
+	if res.GetTokenType() == uint32(mgauth.PersonalAccessToken) {
 		return authn.Session{Type: authn.PersonalAccessToken, PatID: res.GetId(), UserID: res.GetUserId(), Role: authn.Role(res.GetUserRole())}, nil
 	}
 

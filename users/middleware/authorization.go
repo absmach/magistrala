@@ -10,6 +10,7 @@ import (
 	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/pkg/authn"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
+	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/users"
@@ -38,8 +39,12 @@ func (am *authorizationMiddleware) VerifyEmail(ctx context.Context, verification
 
 func (am *authorizationMiddleware) Register(ctx context.Context, session authn.Session, user users.User, selfRegister bool) (users.User, error) {
 	if selfRegister {
-		if err := am.checkSuperAdmin(ctx, session); err == nil {
+		switch err := am.checkSuperAdmin(ctx, session); {
+		case err == nil:
 			session.SuperAdmin = true
+		case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		default:
+			return users.User{}, err
 		}
 	}
 
@@ -47,8 +52,12 @@ func (am *authorizationMiddleware) Register(ctx context.Context, session authn.S
 }
 
 func (am *authorizationMiddleware) View(ctx context.Context, session authn.Session, id string) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.View(ctx, session, id)
@@ -59,8 +68,12 @@ func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) ListUsers(ctx context.Context, session authn.Session, pm users.Page) (users.UsersPage, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.UsersPage{}, err
 	}
 
 	return am.svc.ListUsers(ctx, session, pm)
@@ -71,40 +84,60 @@ func (am *authorizationMiddleware) SearchUsers(ctx context.Context, pm users.Pag
 }
 
 func (am *authorizationMiddleware) Update(ctx context.Context, session authn.Session, id string, user users.UserReq) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.Update(ctx, session, id, user)
 }
 
 func (am *authorizationMiddleware) UpdateTags(ctx context.Context, session authn.Session, id string, user users.UserReq) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.UpdateTags(ctx, session, id, user)
 }
 
 func (am *authorizationMiddleware) UpdateEmail(ctx context.Context, session authn.Session, id, email string) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.UpdateEmail(ctx, session, id, email)
 }
 
 func (am *authorizationMiddleware) UpdateUsername(ctx context.Context, session authn.Session, id, username string) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.UpdateUsername(ctx, session, id, username)
 }
 
 func (am *authorizationMiddleware) UpdateProfilePicture(ctx context.Context, session authn.Session, id string, usr users.UserReq) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.UpdateProfilePicture(ctx, session, id, usr)
@@ -135,24 +168,36 @@ func (am *authorizationMiddleware) UpdateRole(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) Enable(ctx context.Context, session authn.Session, id string) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.Enable(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) Disable(ctx context.Context, session authn.Session, id string) (users.User, error) {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return users.User{}, err
 	}
 
 	return am.svc.Disable(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) Delete(ctx context.Context, session authn.Session, id string) error {
-	if err := am.checkSuperAdmin(ctx, session); err == nil {
+	switch err := am.checkSuperAdmin(ctx, session); {
+	case err == nil:
 		session.SuperAdmin = true
+	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+	default:
+		return err
 	}
 
 	return am.svc.Delete(ctx, session, id)

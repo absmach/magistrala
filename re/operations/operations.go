@@ -23,7 +23,7 @@ const (
 func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 	return map[permissions.Operation]permissions.OperationDetails{
 		OpAddRule: {
-			Name:               "add",
+			Name:               "create",
 			PermissionRequired: true,
 		},
 		OpViewRule: {

@@ -44,7 +44,17 @@ const (
 	OpMessageSubscribe = "message_subscribe"
 )
 
-var errInvalidEntityOp = errors.NewRequestError("operation not valid for entity type")
+var (
+	errInvalidEntityOp                 = errors.NewRequestError("operation not valid for entity type")
+	errAlarmOpRequiresWildcardEntityID = errors.NewRequestError("alarm operations on rules entity type require wildcard entity ID")
+)
+
+// alarmOnlyOperations are RulesType operations authorized at the domain level; only wildcard entity ID is valid.
+var alarmOnlyOperations = map[string]struct{}{
+	"alarm_assign":      {},
+	"alarm_acknowledge": {},
+	"alarm_resolve":     {},
+}
 
 type Operation = permissions.Operation
 
@@ -70,6 +80,8 @@ const (
 	MessagesType
 	DomainsType
 	UsersType
+	RulesType
+	ReportsType
 )
 
 const (
@@ -80,6 +92,8 @@ const (
 	MessagesStr      = "messages"
 	DomainsStr       = "domains"
 	UsersStr         = "users"
+	RulesScopeStr    = "rules"
+	ReportsScopeStr  = "reports"
 )
 
 func (et EntityType) String() string {
@@ -98,6 +112,10 @@ func (et EntityType) String() string {
 		return DomainsStr
 	case UsersType:
 		return UsersStr
+	case RulesType:
+		return RulesScopeStr
+	case ReportsType:
+		return ReportsScopeStr
 	default:
 		return fmt.Sprintf("unknown domain entity type %d", et)
 	}
@@ -119,6 +137,10 @@ func ParseEntityType(et string) (EntityType, error) {
 		return DomainsType, nil
 	case UsersStr:
 		return UsersType, nil
+	case RulesScopeStr:
+		return RulesType, nil
+	case ReportsScopeStr:
+		return ReportsType, nil
 	default:
 		return 0, fmt.Errorf("unknown domain entity type %s", et)
 	}
@@ -147,7 +169,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case ClientsType, ChannelsType, GroupsType, DomainsType:
+	case ClientsType, ChannelsType, GroupsType, DomainsType, RulesType, ReportsType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare
@@ -281,6 +303,12 @@ func (s *Scope) Validate() error {
 
 	if !IsValidOperationForEntity(s.EntityType, s.Operation) {
 		return errors.Wrap(apiutil.ErrInvalidQueryParams, errInvalidEntityOp)
+	}
+
+	if s.EntityType == RulesType {
+		if _, ok := alarmOnlyOperations[s.Operation]; ok && s.EntityID != AnyIDs {
+			return errors.Wrap(apiutil.ErrInvalidQueryParams, errAlarmOpRequiresWildcardEntityID)
+		}
 	}
 
 	return nil

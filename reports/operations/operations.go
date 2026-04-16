@@ -26,7 +26,7 @@ const (
 func OperationDetails() map[permissions.Operation]permissions.OperationDetails {
 	return map[permissions.Operation]permissions.OperationDetails{
 		OpAddReportConfig: {
-			Name:               "add",
+			Name:               "create",
 			PermissionRequired: true,
 		},
 		OpViewReportConfig: {

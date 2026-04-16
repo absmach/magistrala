@@ -45,6 +45,7 @@ import (
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/magistrala/reports"
 	httpapi "github.com/absmach/magistrala/reports/api"
+	reportsevents "github.com/absmach/magistrala/reports/events"
 	"github.com/absmach/magistrala/reports/middleware"
 	"github.com/absmach/magistrala/reports/operations"
 	repg "github.com/absmach/magistrala/reports/postgres"
@@ -348,6 +349,11 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 	csvc, err := reports.NewService(repo, runInfo, policyService, idp, ticker.NewTicker(time.Second*30), emailClient, readersClient, template, cfg.ConverterURL, availableActions, builtInRoles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create reports service: %w", err)
+	}
+
+	csvc, err = reportsevents.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init reports event store middleware: %w", err)
 	}
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)

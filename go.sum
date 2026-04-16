@@ -53,8 +53,8 @@ github.com/authzed/cel-go v0.20.2 h1:GlmLecGry7Z8HU0k+hmaHHUV05ZHrsFxduXHtIePvck
 github.com/authzed/cel-go v0.20.2/go.mod h1:pJHVFWbqUHV1J+klQoZubdKswlbxcsbojda3mye9kiU=
 github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8 h1:y17oq4U8n+k1OcIGGDsjYdIdp4QywGcE7ZphIvtfEbo=
 github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8/go.mod h1:Pf1ZSi41EePvx1GC1DeEJw5dn35iUcxZHqpHuG1Rpic=
-github.com/authzed/spicedb v1.51.0 h1:Nx202o/6vEXibw+GlPOHX5DwFHu8gYB9vYM5+UXHzvo=
-github.com/authzed/spicedb v1.51.0/go.mod h1:v1Nn+0sDO42tP6D3fpt1Spz9Ai0+957cyv+G42Nt9f0=
+github.com/authzed/spicedb v1.51.1 h1:e3dBske2/3La0a4uB0X1spGq1cUfadvzgnUebv+7iTU=
+github.com/authzed/spicedb v1.51.1/go.mod h1:ulbtswLb6AjZ5ExguZTlOlIb7Q9b12FOWhHjh6I7T0Q=
 github.com/aws/aws-sdk-go v1.34.0/go.mod h1:5zCpMtNQVjRREroY7sYe8lOMRSxkhG6MZveU8YkpAk0=
 github.com/aws/aws-sdk-go v1.40.45 h1:QN1nsY27ssD/JmW4s83qmSb+uL6DG4GmCDzjmJB4xUI=
 github.com/aws/aws-sdk-go v1.40.45/go.mod h1:585smgzpB/KqRA+K3y/NL/oYRqQvpNJYvLm+LY1U59Q=

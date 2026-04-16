@@ -4,8 +4,6 @@
 package events
 
 import (
-	"maps"
-
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/reports"
@@ -50,11 +48,9 @@ type createReportConfigEvent struct {
 }
 
 func (e createReportConfigEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"id":   e.cfg.ID,
-		"name": e.cfg.Name,
-	}
-	maps.Copy(val, e.baseReportEvent.Encode())
+	val := e.baseReportEvent.Encode()
+	val["id"] = e.cfg.ID
+	val["name"] = e.cfg.Name
 	val["operation"] = reportCreate
 	return val, nil
 }

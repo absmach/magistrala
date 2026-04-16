@@ -286,7 +286,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(cfg, database, runInfo, authz, ec, logger, readersClient, template, callout, tracer)
+	svc, err := newService(ctx, cfg, database, runInfo, authz, ec, logger, readersClient, template, callout, tracer)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -326,7 +326,7 @@ func main() {
 	}
 }
 
-func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
+func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 

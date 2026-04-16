@@ -30,7 +30,7 @@ var (
 		DomainID: testsutil.GenerateUUID(&testing.T{}),
 		UserID:   testsutil.GenerateUUID(&testing.T{}),
 	}
-	validReportConfig = generateTestReportConfig(&testing.T{})
+	validReportConfig     = generateTestReportConfig(&testing.T{})
 	validReportConfigPage = reports.ReportConfigPage{
 		PageMeta: reports.PageMeta{
 			Limit:  10,

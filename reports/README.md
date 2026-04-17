@@ -85,6 +85,19 @@ The service is configured using the following environment variables (values show
 | `MG_REPORTS_DEFAULT_TEMPLATE` | Use on-disk HTML template when non-empty | "" |
 | `MG_PDF_CONVERTER_URL` | HTML-to-PDF conversion endpoint | `http://pdf-generator:3000/forms/chromium/convert/html` |
 
+### Callout
+
+| Variable | Description | Default |
+| --- | --- | --- |
+| `MG_REPORTS_CALLOUT_URLS` | Callout target URLs | "" |
+| `MG_REPORTS_CALLOUT_METHOD` | Callout HTTP method | `POST` |
+| `MG_REPORTS_CALLOUT_TLS_VERIFICATION` | TLS verification for callout | `false` |
+| `MG_REPORTS_CALLOUT_TIMEOUT` | Callout timeout | `10s` |
+| `MG_REPORTS_CALLOUT_CA_CERT` | Callout CA cert path | "" |
+| `MG_REPORTS_CALLOUT_CERT` | Callout client cert path | "" |
+| `MG_REPORTS_CALLOUT_KEY` | Callout client key path | "" |
+| `MG_REPORTS_CALLOUT_OPERATIONS` | Callout operations filter | "" |
+
 ## Features
 
 - **Report generation**: Build report data from time-series messages.

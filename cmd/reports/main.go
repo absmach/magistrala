@@ -45,6 +45,7 @@ import (
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
 	"github.com/absmach/magistrala/reports"
 	httpapi "github.com/absmach/magistrala/reports/api"
+	reportsevents "github.com/absmach/magistrala/reports/events"
 	"github.com/absmach/magistrala/reports/middleware"
 	"github.com/absmach/magistrala/reports/operations"
 	repg "github.com/absmach/magistrala/reports/postgres"
@@ -285,7 +286,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(cfg, database, runInfo, authz, ec, logger, readersClient, template, callout, tracer)
+	svc, err := newService(ctx, cfg, database, runInfo, authz, ec, logger, readersClient, template, callout, tracer)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -325,7 +326,7 @@ func main() {
 	}
 }
 
-func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
+func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -348,6 +349,11 @@ func newService(cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, a
 	csvc, err := reports.NewService(repo, runInfo, policyService, idp, ticker.NewTicker(time.Second*30), emailClient, readersClient, template, cfg.ConverterURL, availableActions, builtInRoles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create reports service: %w", err)
+	}
+
+	csvc, err = reportsevents.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to init reports event store middleware: %w", err)
 	}
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)

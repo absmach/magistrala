@@ -83,7 +83,7 @@ type listRuleEvent struct {
 
 // Encode implements the events.Event interface for listRuleEvent.
 func (lre listRuleEvent) Encode() (map[string]any, error) {
-	val := lre.PageMeta.EventEncode()
+	val := lre.EventEncode()
 	maps.Copy(val, lre.baseRuleEvent.Encode())
 	val["operation"] = ruleList
 	return val, nil

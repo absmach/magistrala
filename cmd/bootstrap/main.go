@@ -226,7 +226,6 @@ func main() {
 }
 
 func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
-
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 
 	config := mgsdk.Config{

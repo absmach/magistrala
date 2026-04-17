@@ -715,97 +715,85 @@ func TestConnectClient(t *testing.T) {
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
 
-	c := config
-	// Use UUID to prevent conflicts.
-	uid, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
-	c.ExternalID = uid.String()
-	c.ExternalKey = uid.String()
-	c.State = bootstrap.Inactive
-	saved, err := repo.Save(context.Background(), c, channels)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
-	connectedClient := c
-
-	randomClient := c
-	randomClientID, _ := uuid.NewV4()
-	randomClient.ClientID = randomClientID.String()
-
-	emptyClient := c
-	emptyClient.ClientID = ""
-
 	cases := []struct {
-		desc        string
-		domainID    string
-		id          string
-		state       bootstrap.State
-		channels    []bootstrap.Channel
-		connections []string
-		err         error
+		desc          string
+		saveConfig    bool
+		initialState  bootstrap.State
+		connections   []int
+		clientID      string
+		channel       int
+		err           error
+		checkState    bool
+		expectedState bootstrap.State
 	}{
 		{
-			desc:        "connect disconnected client",
-			domainID:    c.DomainID,
-			id:          saved,
-			state:       bootstrap.Inactive,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
+			desc:          "connect disconnected client",
+			saveConfig:    true,
+			initialState:  bootstrap.Inactive,
+			connections:   []int{0, 1},
+			channel:       0,
+			err:           nil,
+			checkState:    true,
+			expectedState: bootstrap.Active,
 		},
 		{
-			desc:        "connect already connected client",
-			domainID:    c.DomainID,
-			id:          connectedClient.ClientID,
-			state:       connectedClient.State,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
+			desc:          "connect already active client",
+			saveConfig:    true,
+			initialState:  bootstrap.Active,
+			connections:   []int{0, 1},
+			channel:       0,
+			err:           nil,
+			checkState:    true,
+			expectedState: bootstrap.Active,
 		},
 		{
 			desc:        "connect non-existent client",
-			domainID:    c.DomainID,
-			id:          wrongID,
-			channels:    c.Channels,
-			connections: channels,
+			saveConfig:  true,
+			connections: []int{0, 1},
+			clientID:    wrongID,
+			channel:     0,
 			err:         repoerr.ErrNotFound,
 		},
 		{
-			desc:        "connect random client",
-			domainID:    c.DomainID,
-			id:          randomClient.ClientID,
-			channels:    c.Channels,
-			connections: channels,
-			err:         repoerr.ErrNotFound,
+			desc:          "connect client without channel connection",
+			saveConfig:    true,
+			initialState:  bootstrap.Inactive,
+			connections:   []int{1},
+			channel:       0,
+			err:           repoerr.ErrNotFound,
+			checkState:    true,
+			expectedState: bootstrap.Inactive,
 		},
 		{
-			desc:        "connect empty client",
-			domainID:    c.DomainID,
-			id:          emptyClient.ClientID,
-			channels:    c.Channels,
-			connections: channels,
-			err:         repoerr.ErrNotFound,
+			desc:     "connect empty client",
+			clientID: "",
+			err:      repoerr.ErrNotFound,
 		},
 	}
 	for _, tc := range cases {
-		for i, ch := range tc.channels {
-			if i == 0 {
-				err = repo.ConnectClient(context.Background(), ch.ID, tc.id)
-				assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+		t.Run(tc.desc, func(t *testing.T) {
+			c := uniqueConfig(t, tc.initialState)
+			clientID := tc.clientID
+			if tc.saveConfig {
+				saved, err := repo.Save(context.Background(), c, selectChannelIDs(c, tc.connections...))
+				assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+				if clientID == "" {
+					clientID = saved
+				}
+			}
+			channelID := selectChannelID(c, tc.channel)
+
+			err := repo.ConnectClient(context.Background(), channelID, clientID)
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+
+			if tc.checkState {
 				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
 				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-				assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
-			} else {
-				_ = repo.ConnectClient(context.Background(), ch.ID, tc.id)
+				assert.Equal(t, tc.expectedState, cfg.State, fmt.Sprintf("expected %s to have state %d", cfg.ClientID, tc.expectedState))
 			}
-		}
-
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
-		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-		assert.Equal(t, cfg.State, bootstrap.Active, fmt.Sprintf("expected to be active when a connection is added from %s", cfg))
+		})
 	}
 }
 
@@ -814,92 +802,130 @@ func TestDisconnectClient(t *testing.T) {
 	err := deleteChannels(context.Background(), repo)
 	require.Nil(t, err, "Channels cleanup expected to succeed.")
 
-	c := config
-	// Use UUID to prevent conflicts.
-	uid, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
-	c.ExternalID = uid.String()
-	c.ExternalKey = uid.String()
-	c.State = bootstrap.Inactive
-	saved, err := repo.Save(context.Background(), c, channels)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-
 	wrongID := testsutil.GenerateUUID(&testing.T{})
 
-	connectedClient := c
-
-	randomClient := c
-	randomClientID, _ := uuid.NewV4()
-	randomClient.ClientID = randomClientID.String()
-
-	emptyClient := c
-	emptyClient.ClientID = ""
-
 	cases := []struct {
-		desc        string
-		domainID    string
-		id          string
-		state       bootstrap.State
-		channels    []bootstrap.Channel
-		connections []string
-		err         error
+		desc          string
+		saveConfig    bool
+		initialState  bootstrap.State
+		connections   []int
+		clientID      string
+		channel       int
+		err           error
+		checkState    bool
+		expectedState bootstrap.State
 	}{
 		{
-			desc:        "disconnect connected client",
-			domainID:    c.DomainID,
-			id:          connectedClient.ClientID,
-			state:       connectedClient.State,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
+			desc:          "disconnect active connected client",
+			saveConfig:    true,
+			initialState:  bootstrap.Active,
+			connections:   []int{0, 1},
+			channel:       0,
+			err:           nil,
+			checkState:    true,
+			expectedState: bootstrap.Inactive,
 		},
 		{
-			desc:        "disconnect already disconnected client",
-			domainID:    c.DomainID,
-			id:          saved,
-			state:       bootstrap.Inactive,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
+			desc:          "disconnect already inactive client",
+			saveConfig:    true,
+			initialState:  bootstrap.Inactive,
+			connections:   []int{0, 1},
+			channel:       0,
+			err:           nil,
+			checkState:    true,
+			expectedState: bootstrap.Inactive,
+		},
+		{
+			desc:          "disconnect client without channel connection",
+			saveConfig:    true,
+			initialState:  bootstrap.Active,
+			connections:   []int{1},
+			channel:       0,
+			err:           nil,
+			checkState:    true,
+			expectedState: bootstrap.Active,
 		},
 		{
 			desc:        "disconnect invalid client",
-			domainID:    c.DomainID,
-			id:          wrongID,
-			channels:    c.Channels,
-			connections: channels,
+			saveConfig:  true,
+			connections: []int{0, 1},
+			clientID:    wrongID,
+			channel:     0,
 			err:         nil,
 		},
 		{
-			desc:        "disconnect random client",
-			domainID:    c.DomainID,
-			id:          randomClient.ClientID,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
-		},
-		{
-			desc:        "disconnect empty client",
-			domainID:    c.DomainID,
-			id:          emptyClient.ClientID,
-			channels:    c.Channels,
-			connections: channels,
-			err:         nil,
+			desc:     "disconnect empty client",
+			clientID: "",
+			err:      nil,
 		},
 	}
 
 	for _, tc := range cases {
-		for _, ch := range tc.channels {
-			err = repo.DisconnectClient(context.Background(), ch.ID, tc.id)
-			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
-		}
+		t.Run(tc.desc, func(t *testing.T) {
+			c := uniqueConfig(t, tc.initialState)
+			clientID := tc.clientID
+			if tc.saveConfig {
+				saved, err := repo.Save(context.Background(), c, selectChannelIDs(c, tc.connections...))
+				assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+				if clientID == "" {
+					clientID = saved
+				}
+			}
+			channelID := selectChannelID(c, tc.channel)
 
-		cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
-		assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
-		assert.Equal(t, cfg.State, bootstrap.Inactive, fmt.Sprintf("expected to be inactive when a connection is removed from %s", cfg))
+			err := repo.DisconnectClient(context.Background(), channelID, clientID)
+			assert.Equal(t, tc.err, err, fmt.Sprintf("%s: Expected error: %s, got: %s.\n", tc.desc, tc.err, err))
+
+			if tc.checkState {
+				cfg, err := repo.RetrieveByID(context.Background(), c.DomainID, c.ClientID)
+				assert.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+				assert.Equal(t, tc.expectedState, cfg.State, fmt.Sprintf("expected %s to have state %d", cfg.ClientID, tc.expectedState))
+			}
+		})
 	}
+}
+
+func uniqueConfig(t *testing.T, state bootstrap.State) bootstrap.Config {
+	t.Helper()
+
+	uid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+
+	cfg := config
+	cfg.ClientSecret = uid.String()
+	cfg.ClientID = uid.String()
+	cfg.ExternalID = uid.String()
+	cfg.ExternalKey = uid.String()
+	cfg.State = state
+	for i := range cfg.Channels {
+		chID, err := uuid.NewV4()
+		require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+		cfg.Channels[i].ID = chID.String()
+	}
+	return cfg
+}
+
+func selectChannelIDs(cfg bootstrap.Config, indexes ...int) []string {
+	if len(indexes) == 0 {
+		ids := make([]string, 0, len(cfg.Channels))
+		for _, ch := range cfg.Channels {
+			ids = append(ids, ch.ID)
+		}
+		return ids
+	}
+
+	ids := make([]string, 0, len(indexes))
+	for _, idx := range indexes {
+		ids = append(ids, cfg.Channels[idx].ID)
+	}
+	return ids
+}
+
+func selectChannelID(cfg bootstrap.Config, idx int) string {
+	if len(cfg.Channels) == 0 {
+		return channels[0]
+	}
+	return cfg.Channels[idx].ID
 }
 
 func deleteChannels(ctx context.Context, repo bootstrap.ConfigRepository) error {

@@ -143,6 +143,15 @@ func TestAdd(t *testing.T) {
 			err:             svcerr.ErrMalformedEntity,
 		},
 		{
+			desc:       "add a config with failed client connection",
+			config:     config,
+			token:      validToken,
+			userID:     validID,
+			domainID:   domainID,
+			connectErr: bootstrap.ErrClients,
+			err:        bootstrap.ErrClients,
+		},
+		{
 			desc:     "add empty config",
 			config:   bootstrap.Config{},
 			token:    validToken,
@@ -159,8 +168,7 @@ func TestAdd(t *testing.T) {
 			repoCall2 := sdk.On("DeleteClient", mock.Anything, tc.config.ClientID, tc.domainID, tc.token).Return(tc.deleteClientErr)
 			repoCall3 := boot.On("ListExisting", context.Background(), tc.domainID, mock.Anything).Return(tc.config.Channels, tc.listExistingErr)
 			repoCall4 := boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
-			repoCall5 := boot.On("HasServiceConnections", context.Background(), tc.domainID, mock.Anything, mock.Anything).Return(false, nil).Maybe()
-			sdkCall := sdk.On("ConnectClients", mock.Anything, mock.Anything, mock.Anything, connTypes, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr)).Maybe()
+			sdkCall := sdk.On("ConnectClients", mock.Anything, mock.Anything, mock.Anything, connTypes, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr))
 			_, err := svc.Add(context.Background(), tc.session, tc.token, tc.config)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			repoCall.Unset()
@@ -168,7 +176,6 @@ func TestAdd(t *testing.T) {
 			repoCall2.Unset()
 			repoCall3.Unset()
 			repoCall4.Unset()
-			repoCall5.Unset()
 			sdkCall.Unset()
 		})
 	}
@@ -446,23 +453,28 @@ func TestUpdateConnections(t *testing.T) {
 	ch := channel
 
 	cases := []struct {
-		desc        string
-		token       string
-		session     smqauthn.Session
-		id          string
-		state       bootstrap.State
-		userID      string
-		domainID    string
-		connections []string
-		updateErr   error
-		clientErr   error
-		channelErr  error
-		retrieveErr error
-		listErr     error
-		err         error
+		desc           string
+		config         bootstrap.Config
+		token          string
+		session        smqauthn.Session
+		id             string
+		state          bootstrap.State
+		userID         string
+		domainID       string
+		connections    []string
+		updateErr      error
+		changeStateErr error
+		clientErr      error
+		channelErr     error
+		connectErr     error
+		disconnectErr  error
+		retrieveErr    error
+		listErr        error
+		err            error
 	}{
 		{
 			desc:        "update connections for config with state Inactive",
+			config:      c,
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
@@ -473,6 +485,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections for config with state Active",
+			config:      activeConf,
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
@@ -483,6 +496,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with invalid channels",
+			config:      c,
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
@@ -491,18 +505,51 @@ func TestUpdateConnections(t *testing.T) {
 			channelErr:  errors.NewSDKError(svcerr.ErrNotFound),
 			err:         svcerr.ErrNotFound,
 		},
+		{
+			desc:        "update connections with failed connect",
+			config:      c,
+			token:       validToken,
+			userID:      validID,
+			domainID:    domainID,
+			id:          c.ClientID,
+			connections: []string{ch.ID},
+			connectErr:  bootstrap.ErrClients,
+			err:         bootstrap.ErrClients,
+		},
+		{
+			desc:          "update connections with failed disconnect",
+			config:        activeConf,
+			token:         validToken,
+			userID:        validID,
+			domainID:      domainID,
+			id:            activeConf.ClientID,
+			connections:   []string{ch.ID},
+			disconnectErr: bootstrap.ErrClients,
+			err:           bootstrap.ErrClients,
+		},
+		{
+			desc:           "update connections with failed change state",
+			config:         c,
+			token:          validToken,
+			userID:         validID,
+			domainID:       domainID,
+			id:             c.ClientID,
+			connections:    []string{ch.ID},
+			changeStateErr: svcerr.ErrUpdateEntity,
+			err:            svcerr.ErrUpdateEntity,
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
 			sdkCall := sdk.On("Channel", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
-			repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(c.Channels, tc.listErr)
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(tc.config, tc.retrieveErr)
+			repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.config.Channels, tc.listErr)
 			repoCall2 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr)
-			repoCall3 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
-			connectCall := sdk.On("Connect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(nil).Maybe()
-			disconnectCall := sdk.On("Disconnect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(nil).Maybe()
+			repoCall3 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.changeStateErr)
+			connectCall := sdk.On("Connect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr))
+			disconnectCall := sdk.On("Disconnect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.disconnectErr))
 			err := svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.id, tc.connections)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			sdkCall.Unset()
@@ -1009,8 +1056,11 @@ func TestChangeState(t *testing.T) {
 	svc := newService()
 
 	c := config
+	activeConfig := config
+	activeConfig.State = bootstrap.Active
 	cases := []struct {
 		desc          string
+		config        bootstrap.Config
 		state         bootstrap.State
 		id            string
 		token         string
@@ -1019,12 +1069,13 @@ func TestChangeState(t *testing.T) {
 		domainID      string
 		retrieveErr   error
 		connectErr    errors.SDKError
-		disconenctErr error
+		disconnectErr error
 		stateErr      error
 		err           error
 	}{
 		{
 			desc:        "change state of non-existing config",
+			config:      c,
 			state:       bootstrap.Active,
 			id:          unknown,
 			token:       validToken,
@@ -1035,6 +1086,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:     "change state to Active",
+			config:   c,
 			state:    bootstrap.Active,
 			id:       c.ClientID,
 			token:    validToken,
@@ -1044,6 +1096,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:     "change state to current state",
+			config:   activeConfig,
 			state:    bootstrap.Active,
 			id:       c.ClientID,
 			token:    validToken,
@@ -1053,6 +1106,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:     "change state to Inactive",
+			config:   activeConfig,
 			state:    bootstrap.Inactive,
 			id:       c.ClientID,
 			token:    validToken,
@@ -1061,7 +1115,19 @@ func TestChangeState(t *testing.T) {
 			err:      nil,
 		},
 		{
+			desc:          "change state with failed Disconnect",
+			config:        activeConfig,
+			state:         bootstrap.Inactive,
+			id:            c.ClientID,
+			token:         validToken,
+			userID:        validID,
+			domainID:      domainID,
+			disconnectErr: bootstrap.ErrClients,
+			err:           bootstrap.ErrClients,
+		},
+		{
 			desc:       "change state with failed Connect",
+			config:     c,
 			state:      bootstrap.Active,
 			id:         c.ClientID,
 			token:      validToken,
@@ -1072,6 +1138,7 @@ func TestChangeState(t *testing.T) {
 		},
 		{
 			desc:     "change state with invalid state",
+			config:   c,
 			state:    bootstrap.State(2),
 			id:       c.ClientID,
 			token:    validToken,
@@ -1085,9 +1152,9 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			tc.session = smqauthn.Session{UserID: tc.userID, DomainID: tc.domainID, DomainUserID: validID}
-			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(c, tc.retrieveErr)
+			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(tc.config, tc.retrieveErr)
 			sdkCall := sdk.On("Connect", mock.Anything, mock.Anything, mock.Anything, tc.token).Return(tc.connectErr)
-			sdkCall1 := sdk.On("Disconnect", mock.Anything, mock.Anything, mock.Anything, tc.token).Return(nil).Maybe()
+			sdkCall1 := sdk.On("Disconnect", mock.Anything, mock.Anything, mock.Anything, tc.token).Return(errors.NewSDKError(tc.disconnectErr))
 			repoCall1 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 			err := svc.ChangeState(context.Background(), tc.session, tc.token, tc.id, tc.state)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

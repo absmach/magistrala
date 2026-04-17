@@ -2082,6 +2082,7 @@ func TestOAuthCallback(t *testing.T) {
 		retrieveByEmailErr      error
 		saveResponse            users.User
 		addPoliciesErr          error
+		updateVerifiedAtErr     error
 		err                     error
 	}{
 		{
@@ -2136,6 +2137,18 @@ func TestOAuthCallback(t *testing.T) {
 			},
 			err: nil,
 		},
+		{
+			desc: "oauth signin callback with failed update verified at",
+			user: users.User{
+				Email: "test@example.com",
+			},
+			retrieveByEmailResponse: users.User{
+				ID:   testsutil.GenerateUUID(t),
+				Role: users.UserRole,
+			},
+			updateVerifiedAtErr: svcerr.ErrUpdateEntity,
+			err:                 svcerr.ErrUpdateEntity,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
@@ -2144,7 +2157,7 @@ func TestOAuthCallback(t *testing.T) {
 			repoCall2 := cRepo.On("UpdateVerifiedAt", context.Background(), mock.MatchedBy(func(u users.User) bool {
 				assert.NotEmpty(t, u.ID, "UpdateVerifiedAt must be called with non-empty user ID")
 				return u.ID != ""
-			})).Maybe().Return(tc.retrieveByEmailResponse, nil)
+			})).Return(tc.retrieveByEmailResponse, tc.updateVerifiedAtErr)
 			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
 			_, err := svc.OAuthCallback(context.Background(), tc.user)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))

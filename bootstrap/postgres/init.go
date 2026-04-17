@@ -74,74 +74,27 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			{
 				Id: "configs_4",
 				Up: []string{
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'mainflux_client'
-						) AND NOT EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'client_id'
-						) THEN
-							ALTER TABLE configs RENAME COLUMN mainflux_client TO client_id;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'mainflux_key'
-						) AND NOT EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'client_secret'
-						) THEN
-							ALTER TABLE configs RENAME COLUMN mainflux_key TO client_secret;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'channels' AND column_name = 'mainflux_channel'
-						) AND NOT EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'channels' AND column_name = 'id'
-						) THEN
-							ALTER TABLE channels RENAME COLUMN mainflux_channel TO id;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS client_id TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS client_secret CHAR(36)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS id VARCHAR(36)`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_client TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_key CHAR(36)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS mainflux_channel TEXT`,
+					`UPDATE configs SET client_id = mainflux_client WHERE client_id IS NULL AND mainflux_client IS NOT NULL`,
+					`UPDATE configs SET client_secret = mainflux_key WHERE client_secret IS NULL AND mainflux_key IS NOT NULL`,
+					`UPDATE channels SET id = mainflux_channel WHERE id IS NULL AND mainflux_channel IS NOT NULL`,
 				},
 			},
 			{
 				Id: "configs_5",
 				Up: []string{
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'owner'
-						) AND NOT EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'configs' AND column_name = 'domain_id'
-						) THEN
-							ALTER TABLE configs RENAME COLUMN owner TO domain_id;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'channels' AND column_name = 'owner'
-						) AND NOT EXISTS (
-							SELECT 1 FROM information_schema.columns
-							WHERE table_schema = 'public' AND table_name = 'channels' AND column_name = 'domain_id'
-						) THEN
-							ALTER TABLE channels RENAME COLUMN owner TO domain_id;
-						END IF;
-
-						IF NOT EXISTS (
-							SELECT 1
-							FROM pg_constraint
-							WHERE conname = 'configs_name_domain_id_key'
-								AND conrelid = 'configs'::regclass
-						) THEN
-							ALTER TABLE configs ADD CONSTRAINT configs_name_domain_id_key UNIQUE (name, domain_id);
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS domain_id VARCHAR(256)`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS owner VARCHAR(254)`,
+					`UPDATE configs SET domain_id = owner WHERE domain_id IS NULL AND owner IS NOT NULL`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS domain_id VARCHAR(256)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS owner VARCHAR(254)`,
+					`UPDATE channels SET domain_id = owner WHERE domain_id IS NULL AND owner IS NOT NULL`,
+					`CREATE UNIQUE INDEX IF NOT EXISTS configs_name_domain_id_key ON configs (name, domain_id)`,
 				},
 			},
 			{
@@ -149,90 +102,28 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Up: []string{
 					`ALTER TABLE IF EXISTS channels ALTER COLUMN metadata TYPE JSONB USING metadata::jsonb`,
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS id VARCHAR(36)`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'magistrala_channel'
-						) THEN
-							UPDATE channels SET id = magistrala_channel WHERE id IS NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'mainflux_channel'
-						) THEN
-							UPDATE channels SET id = mainflux_channel WHERE id IS NULL;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS magistrala_channel TEXT`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS mainflux_channel TEXT`,
+					`UPDATE channels SET id = magistrala_channel WHERE id IS NULL AND magistrala_channel IS NOT NULL`,
+					`UPDATE channels SET id = mainflux_channel WHERE id IS NULL AND mainflux_channel IS NOT NULL`,
 					`ALTER TABLE IF EXISTS channels ALTER COLUMN id SET NOT NULL`,
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_group_id VARCHAR(36)`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'parent_id'
-						) THEN
-							UPDATE channels SET parent_group_id = parent_id WHERE parent_group_id IS NULL;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)`,
+					`UPDATE channels SET parent_group_id = parent_id WHERE parent_group_id IS NULL AND parent_id IS NOT NULL`,
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS tags TEXT[]`,
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS created_by VARCHAR(254)`,
 					`CREATE UNIQUE INDEX IF NOT EXISTS channels_id_key ON channels (id)`,
 					`CREATE UNIQUE INDEX IF NOT EXISTS channels_id_domain_id_key ON channels (id, domain_id)`,
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS client_id TEXT`,
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS client_secret CHAR(36)`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'magistrala_client'
-						) THEN
-							UPDATE configs SET client_id = magistrala_client WHERE client_id IS NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'magistrala_secret'
-						) THEN
-							UPDATE configs SET client_secret = magistrala_secret WHERE client_secret IS NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'mainflux_client'
-						) THEN
-							UPDATE configs SET client_id = mainflux_client WHERE client_id IS NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'mainflux_key'
-						) THEN
-							UPDATE configs SET client_secret = mainflux_key WHERE client_secret IS NULL;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_client TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_secret TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_client TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_key TEXT`,
+					`UPDATE configs SET client_id = magistrala_client WHERE client_id IS NULL AND magistrala_client IS NOT NULL`,
+					`UPDATE configs SET client_secret = magistrala_secret WHERE client_secret IS NULL AND magistrala_secret IS NOT NULL`,
+					`UPDATE configs SET client_id = mainflux_client WHERE client_id IS NULL AND mainflux_client IS NOT NULL`,
+					`UPDATE configs SET client_secret = mainflux_key WHERE client_secret IS NULL AND mainflux_key IS NOT NULL`,
 					`ALTER TABLE IF EXISTS configs ALTER COLUMN client_id SET NOT NULL`,
 					`ALTER TABLE IF EXISTS configs ALTER COLUMN client_secret SET NOT NULL`,
 					`CREATE UNIQUE INDEX IF NOT EXISTS configs_client_id_key ON configs (client_id)`,
@@ -245,26 +136,30 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 						FOREIGN KEY (channel_id, domain_id) REFERENCES channels (id, domain_id) ON DELETE CASCADE ON UPDATE CASCADE,
 						FOREIGN KEY (config_id, domain_id) REFERENCES configs (client_id, domain_id) ON DELETE CASCADE ON UPDATE CASCADE
 					)`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.tables
-							WHERE table_schema = 'public' AND table_name = 'connections'
-						) AND EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'connections'
-								AND column_name = 'config_id'
-						) THEN
-							INSERT INTO config_channels (channel_id, config_id, domain_id)
-							SELECT channel_id, config_id, COALESCE(config_owner, channel_owner, '')
-							FROM connections
-							ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING;
-						END IF;
-					END $$`,
-					`DROP TABLE IF EXISTS connections`,
+					`CREATE TABLE IF NOT EXISTS connections (
+						channel_id    VARCHAR(36),
+						domain_id     VARCHAR(256),
+						client_id     VARCHAR(36),
+						type          SMALLINT,
+						config_id     TEXT,
+						channel_owner VARCHAR(256),
+						config_owner  VARCHAR(256)
+					)`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS channel_id VARCHAR(36)`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS domain_id VARCHAR(256)`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS client_id VARCHAR(36)`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS type SMALLINT`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS config_id TEXT`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS channel_owner VARCHAR(256)`,
+					`ALTER TABLE IF EXISTS connections ADD COLUMN IF NOT EXISTS config_owner VARCHAR(256)`,
+					`CREATE UNIQUE INDEX IF NOT EXISTS connections_pkey
+						ON connections (channel_id, domain_id, client_id, type)
+						WHERE client_id IS NOT NULL AND type IS NOT NULL`,
+					`INSERT INTO config_channels (channel_id, config_id, domain_id)
+						SELECT channel_id, config_id, COALESCE(config_owner, channel_owner, domain_id, '')
+						FROM connections
+						WHERE channel_id IS NOT NULL AND config_id IS NOT NULL
+						ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`,
 					`CREATE TABLE IF NOT EXISTS service_connections (
 						channel_id TEXT NOT NULL,
 						client_id  TEXT NOT NULL,
@@ -280,22 +175,33 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				Id: "configs_7",
 				Up: []string{
 					`DROP TABLE IF EXISTS service_connections`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.tables
-							WHERE table_schema = 'public' AND table_name = 'clients'
-						) AND NOT EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'clients'
-								AND column_name = 'name'
-						) THEN
-							DROP TABLE clients;
-						END IF;
-					END $$`,
+					`CREATE TABLE IF NOT EXISTS clients (
+						id			       VARCHAR(36) PRIMARY KEY,
+						name		       VARCHAR(1024),
+						domain_id	       VARCHAR(36) NOT NULL,
+						parent_group_id    VARCHAR(36) DEFAULT NULL,
+						identity	       VARCHAR(254),
+						secret		       VARCHAR(4096) NOT NULL,
+						tags		       TEXT[],
+						metadata	       JSONB,
+						created_at	       TIMESTAMP,
+						updated_at	       TIMESTAMP,
+						updated_by         VARCHAR(254),
+						status		       SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0),
+						UNIQUE		       (domain_id, secret),
+						UNIQUE		       (domain_id, name),
+						UNIQUE		       (domain_id, id)
+					)`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS name VARCHAR(1024)`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS domain_id VARCHAR(36) NOT NULL DEFAULT ''`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS parent_group_id VARCHAR(36) DEFAULT NULL`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS identity VARCHAR(254)`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS tags TEXT[]`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS metadata JSONB`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS updated_by VARCHAR(254)`,
+					`ALTER TABLE IF EXISTS clients ADD COLUMN IF NOT EXISTS status SMALLINT NOT NULL DEFAULT 0 CHECK (status >= 0)`,
+					`CREATE UNIQUE INDEX IF NOT EXISTS clients_domain_id_secret_key ON clients (domain_id, secret)`,
+					`CREATE UNIQUE INDEX IF NOT EXISTS clients_domain_id_id_key ON clients (domain_id, id)`,
 				},
 				Down: []string{
 					`CREATE TABLE IF NOT EXISTS service_connections (
@@ -329,74 +235,26 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			{
 				Id: "configs_9",
 				Up: []string{
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'magistrala_client'
-						) THEN
-							UPDATE configs SET client_id = magistrala_client WHERE (client_id IS NULL OR client_id = '') AND magistrala_client IS NOT NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'magistrala_secret'
-						) THEN
-							UPDATE configs SET client_secret = magistrala_secret WHERE (client_secret IS NULL OR client_secret = '') AND magistrala_secret IS NOT NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'mainflux_client'
-						) THEN
-							UPDATE configs SET client_id = mainflux_client WHERE (client_id IS NULL OR client_id = '') AND mainflux_client IS NOT NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'configs'
-								AND column_name = 'mainflux_key'
-						) THEN
-							UPDATE configs SET client_secret = mainflux_key WHERE (client_secret IS NULL OR client_secret = '') AND mainflux_key IS NOT NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'magistrala_channel'
-						) THEN
-							UPDATE channels SET id = magistrala_channel WHERE (id IS NULL OR id = '') AND magistrala_channel IS NOT NULL;
-						END IF;
-
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'mainflux_channel'
-						) THEN
-							UPDATE channels SET id = mainflux_channel WHERE (id IS NULL OR id = '') AND mainflux_channel IS NOT NULL;
-						END IF;
-					END $$`,
-					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS magistrala_client`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_client TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_secret TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_client TEXT`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_key TEXT`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS magistrala_channel TEXT`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS mainflux_channel TEXT`,
+					`UPDATE configs SET client_id = magistrala_client WHERE (client_id IS NULL OR client_id = '') AND magistrala_client IS NOT NULL`,
+					`UPDATE configs SET client_secret = magistrala_secret WHERE (client_secret IS NULL OR client_secret = '') AND magistrala_secret IS NOT NULL`,
+					`UPDATE configs SET client_id = mainflux_client WHERE (client_id IS NULL OR client_id = '') AND mainflux_client IS NOT NULL`,
+					`UPDATE configs SET client_secret = mainflux_key WHERE (client_secret IS NULL OR client_secret = '') AND mainflux_key IS NOT NULL`,
+					`UPDATE channels SET id = magistrala_channel WHERE (id IS NULL OR id = '') AND magistrala_channel IS NOT NULL`,
+					`UPDATE channels SET id = mainflux_channel WHERE (id IS NULL OR id = '') AND mainflux_channel IS NOT NULL`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS magistrala_client CASCADE`,
 					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS magistrala_secret`,
-					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS mainflux_client`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS mainflux_client CASCADE`,
 					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS mainflux_key`,
-					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS magistrala_channel`,
-					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS mainflux_channel`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS owner CASCADE`,
+					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS magistrala_channel CASCADE`,
+					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS mainflux_channel CASCADE`,
+					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS owner CASCADE`,
 				},
 				Down: []string{
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_client TEXT`,
@@ -410,34 +268,15 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			{
 				Id: "configs_10",
 				Up: []string{
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'parent_id'
-						) THEN
-							UPDATE channels SET parent_group_id = parent_id WHERE (parent_group_id IS NULL OR parent_group_id = '') AND parent_id IS NOT NULL;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_group_id VARCHAR(36)`,
+					`UPDATE channels SET parent_group_id = parent_id WHERE (parent_group_id IS NULL OR parent_group_id = '') AND parent_id IS NOT NULL`,
 					`ALTER TABLE IF EXISTS channels DROP COLUMN IF EXISTS parent_id`,
 				},
 				Down: []string{
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)`,
-					`DO $$
-					BEGIN
-						IF EXISTS (
-							SELECT 1
-							FROM information_schema.columns
-							WHERE table_schema = 'public'
-								AND table_name = 'channels'
-								AND column_name = 'parent_group_id'
-						) THEN
-							UPDATE channels SET parent_id = parent_group_id WHERE parent_id IS NULL;
-						END IF;
-					END $$`,
+					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_group_id VARCHAR(36)`,
+					`UPDATE channels SET parent_id = parent_group_id WHERE parent_id IS NULL AND parent_group_id IS NOT NULL`,
 				},
 			},
 		},

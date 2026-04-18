@@ -5,7 +5,9 @@ package grpc
 
 import (
 	"context"
+	stderrors "errors"
 	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
@@ -20,9 +22,16 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/policies"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 var _ authv1connect.AuthServiceHandler = (*connectServer)(nil)
+
+const (
+	transientRetryAttempts = 2
+	transientRetryBackoff  = 75 * time.Millisecond
+)
 
 type connectServer struct {
 	authv1connect.UnimplementedAuthServiceHandler
@@ -50,14 +59,23 @@ func (s *connectServer) Authenticate(ctx context.Context, req *connect.Request[a
 	password := req.Msg.GetPassword()
 
 	token := authn.AuthPack(authn.BasicAuth, username, password)
-	res, err := s.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{Token: token})
+	var res *grpcClientsV1.AuthnRes
+	err := withTransientRetry(ctx, func(callCtx context.Context) error {
+		var callErr error
+		res, callErr = s.clients.Authenticate(callCtx, &grpcClientsV1.AuthnReq{Token: token})
+		return callErr
+	})
 	if err != nil {
 		if !shouldTryDomainAuth(req.Msg, username, password) {
 			return nil, encodeError(err)
 		}
 
 		token = authn.AuthPack(authn.DomainAuth, username, password)
-		res, err = s.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{Token: token})
+		err = withTransientRetry(ctx, func(callCtx context.Context) error {
+			var callErr error
+			res, callErr = s.clients.Authenticate(callCtx, &grpcClientsV1.AuthnReq{Token: token})
+			return callErr
+		})
 		if err != nil {
 			return nil, encodeError(err)
 		}
@@ -81,9 +99,15 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 
 	switch connType {
 	case connections.Publish:
-		domainID, channelID, _, topicType, err = s.parser.ParsePublishTopic(ctx, req.Msg.GetTopic(), true)
+		err = withTransientRetry(ctx, func(callCtx context.Context) error {
+			domainID, channelID, _, topicType, err = s.parser.ParsePublishTopic(callCtx, req.Msg.GetTopic(), true)
+			return err
+		})
 	case connections.Subscribe:
-		domainID, channelID, _, topicType, err = s.parser.ParseSubscribeTopic(ctx, req.Msg.GetTopic(), true)
+		err = withTransientRetry(ctx, func(callCtx context.Context) error {
+			domainID, channelID, _, topicType, err = s.parser.ParseSubscribeTopic(callCtx, req.Msg.GetTopic(), true)
+			return err
+		})
 	}
 	if err != nil {
 		if shouldDenyAuthorize(err) {
@@ -103,7 +127,12 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 		ChannelId:  channelID,
 		DomainId:   domainID,
 	}
-	res, err := s.channels.Authorize(ctx, ar)
+	var authzRes *grpcChannelsV1.AuthzRes
+	err = withTransientRetry(ctx, func(callCtx context.Context) error {
+		var callErr error
+		authzRes, callErr = s.channels.Authorize(callCtx, ar)
+		return callErr
+	})
 	if err != nil {
 		if shouldDenyAuthorize(err) {
 			return connect.NewResponse(&authv1.AuthzRes{Authorized: false}), nil
@@ -112,7 +141,7 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 	}
 
 	return connect.NewResponse(&authv1.AuthzRes{
-		Authorized: res.GetAuthorized(),
+		Authorized: authzRes.GetAuthorized(),
 	}), nil
 }
 
@@ -141,6 +170,97 @@ func shouldDenyAuthorize(err error) bool {
 	// Backward compatibility for gRPC client layers that may return
 	// Internal with a payload containing "entity not found".
 	return strings.Contains(err.Error(), svcerr.ErrNotFound.Error())
+}
+
+func withTransientRetry(ctx context.Context, fn func(context.Context) error) error {
+	var err error
+	for attempt := 0; attempt < transientRetryAttempts; attempt++ {
+		err = fn(ctx)
+		if err == nil {
+			return nil
+		}
+		if !isTransientError(err) || attempt == transientRetryAttempts-1 {
+			break
+		}
+		if !sleepWithContext(ctx, transientRetryBackoff) {
+			if ctxErr := ctx.Err(); ctxErr != nil {
+				err = ctxErr
+			}
+			break
+		}
+	}
+	return err
+}
+
+func sleepWithContext(ctx context.Context, d time.Duration) bool {
+	timer := time.NewTimer(d)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return false
+	case <-timer.C:
+		return true
+	}
+}
+
+func isTransientError(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	// Permanent errors must not be retried.
+	switch {
+	case shouldDenyAuthorize(err),
+		errors.Contains(err, svcerr.ErrAuthentication),
+		errors.Contains(err, svcerr.ErrAuthorization),
+		errors.Contains(err, smqauth.ErrKeyExpired),
+		errors.Contains(err, errors.ErrMalformedEntity),
+		errors.Contains(err, messaging.ErrMalformedTopic),
+		err == apiutil.ErrMissingID:
+		return false
+	}
+
+	var connectErr *connect.Error
+	if stderrors.As(err, &connectErr) {
+		switch connectErr.Code() {
+		case connect.CodeUnavailable, connect.CodeDeadlineExceeded, connect.CodeAborted, connect.CodeResourceExhausted:
+			return true
+		default:
+			return false
+		}
+	}
+
+	if st, ok := status.FromError(err); ok {
+		switch st.Code() {
+		case codes.Unavailable, codes.DeadlineExceeded, codes.Aborted, codes.ResourceExhausted:
+			return true
+		default:
+			return false
+		}
+	}
+
+	msg := strings.ToLower(err.Error())
+	retryableFragments := []string{
+		"unavailable",
+		"deadline exceeded",
+		"timed out",
+		"timeout",
+		"eof",
+		"connection reset",
+		"broken pipe",
+		"connection refused",
+		"transport is closing",
+		"http2: client connection lost",
+		"server is closing",
+	}
+	for _, frag := range retryableFragments {
+		if strings.Contains(msg, frag) {
+			return true
+		}
+	}
+
+	return false
 }
 
 func encodeError(err error) error {

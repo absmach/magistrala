@@ -181,7 +181,7 @@ func (sdk mgSDK) UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domai
 		return errors.NewSDKError(err)
 	}
 
-	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
+	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
 
 	return sdkerr
 }

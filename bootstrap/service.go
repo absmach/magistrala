@@ -12,13 +12,14 @@ import (
 	"github.com/absmach/magistrala"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
 var (
+	connTypes = []string{"Publish", "Subscribe"}
+
 	// ErrClients indicates failure to communicate with Magistrala Clients service.
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrClients = errors.New("failed to receive response from Clients service")
@@ -164,8 +165,21 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 
 	cfg.ClientID = mgClient.ID
 	cfg.DomainID = session.DomainID
-	cfg.State = Inactive
 	cfg.ClientSecret = mgClient.Credentials.Secret
+	cfg.State = Inactive
+
+	// Create actual connections via SDK if there are channels to connect
+	if len(toConnect) > 0 {
+		for _, channelID := range toConnect {
+			if err := bs.sdk.ConnectClients(ctx, channelID, []string{cfg.ClientID}, connTypes, session.DomainID, token); err != nil {
+				if errors.Contains(err, svcerr.ErrConflict) {
+					continue
+				}
+				return Config{}, ErrClients
+			}
+		}
+		cfg.State = Active
+	}
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
@@ -214,8 +228,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
-
-	add, remove := bs.updateList(cfg, connections)
+	currentChannels := bs.toIDList(cfg.Channels)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(ctx, session.DomainID, connections)
@@ -229,34 +242,30 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	}
 
 	cfg.Channels = channels
-	var connect, disconnect []string
 
+	nextState := Active
 	if cfg.State == Active {
-		connect = add
-		disconnect = remove
+		nextState = Inactive
 	}
 
-	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectClients(ctx, c, []string{id}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-			if errors.Contains(err, repoerr.ErrNotFound) {
-				continue
-			}
+	switch nextState {
+	case Active:
+		if err := bs.connectChannels(ctx, session.DomainID, token, id, connections); err != nil {
+			return ErrClients
+		}
+	case Inactive:
+		disconnect := uniqueStrings(append(currentChannels, connections...))
+		if err := bs.disconnectChannels(ctx, session.DomainID, token, id, disconnect); err != nil {
 			return ErrClients
 		}
 	}
 
-	for _, c := range connect {
-		conIDs := mgsdk.Connection{
-			ChannelIDs: []string{c},
-			ClientIDs:  []string{id},
-			Types:      []string{"Publish", "Subscribe"},
-		}
-		if err := bs.sdk.Connect(ctx, conIDs, session.DomainID, token); err != nil {
-			return ErrClients
-		}
-	}
 	if err := bs.configs.UpdateConnections(ctx, session.DomainID, id, channels, connections); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
+	}
+
+	if err := bs.configs.ChangeState(ctx, session.DomainID, id, nextState); err != nil {
+		return errors.Wrap(errChangeState, err)
 	}
 	return nil
 }
@@ -335,23 +344,12 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Ses
 
 	switch state {
 	case Active:
-		for _, c := range cfg.Channels {
-			if err := bs.sdk.ConnectClients(ctx, c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-				// Ignore conflict errors as they indicate the connection already exists.
-				if errors.Contains(err, svcerr.ErrConflict) {
-					continue
-				}
-				return ErrClients
-			}
+		if err := bs.connectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
+			return ErrClients
 		}
 	case Inactive:
-		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectClients(ctx, c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-				if errors.Contains(err, repoerr.ErrNotFound) {
-					continue
-				}
-				return ErrClients
-			}
+		if err := bs.disconnectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
+			return ErrClients
 		}
 	}
 	if err := bs.configs.ChangeState(ctx, session.DomainID, id, state); err != nil {
@@ -393,6 +391,22 @@ func (bs bootstrapService) DisconnectClientHandler(ctx context.Context, channelI
 		return errors.Wrap(errDisconnectClient, err)
 	}
 	return nil
+}
+
+func (bs bootstrapService) connectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
+	return bs.sdk.Connect(ctx, mgsdk.Connection{
+		ChannelIDs: channelIDs,
+		ClientIDs:  []string{clientID},
+		Types:      connTypes,
+	}, domainID, token)
+}
+
+func (bs bootstrapService) disconnectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
+	return bs.sdk.Disconnect(ctx, mgsdk.Connection{
+		ChannelIDs: channelIDs,
+		ClientIDs:  []string{clientID},
+		Types:      connTypes,
+	}, domainID, token)
 }
 
 // Method client retrieves Magistrala Client creating one if an empty ID is passed.
@@ -447,39 +461,28 @@ func (bs bootstrapService) connectionChannels(ctx context.Context, channels, exi
 	return ret, nil
 }
 
-// Method updateList accepts config and channel IDs and returns three lists:
-// 1) IDs of Channels to be added
-// 2) IDs of Channels to be removed
-// 3) IDs of common Channels for these two configs.
-func (bs bootstrapService) updateList(cfg Config, connections []string) (add, remove []string) {
-	disconnect := make(map[string]bool, len(cfg.Channels))
-	for _, c := range cfg.Channels {
-		disconnect[c.ID] = true
-	}
-
-	for _, c := range connections {
-		if disconnect[c] {
-			// Don't disconnect common elements.
-			delete(disconnect, c)
-			continue
-		}
-		// Connect new elements.
-		add = append(add, c)
-	}
-
-	for v := range disconnect {
-		remove = append(remove, v)
-	}
-
-	return
-}
-
 func (bs bootstrapService) toIDList(channels []Channel) []string {
 	var ret []string
 	for _, ch := range channels {
 		ret = append(ret, ch.ID)
 	}
 
+	return ret
+}
+
+func uniqueStrings(ids []string) []string {
+	seen := make(map[string]struct{}, len(ids))
+	ret := make([]string, 0, len(ids))
+	for _, id := range ids {
+		if id == "" {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+		ret = append(ret, id)
+	}
 	return ret
 }
 

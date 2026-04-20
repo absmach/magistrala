@@ -124,18 +124,19 @@ func TestAdd(t *testing.T) {
 	invalidConfig.Channels = []bootstrap.Channel{{ID: "empty"}}
 
 	cases := []struct {
-		desc      string
-		config    bootstrap.Config
-		token     string
-		session   smqauthn.Session
-		id        string
-		domainID  string
-		clientErr error
-		channel   []bootstrap.Channel
-		listErr   error
-		saveErr   error
-		err       error
-		event     map[string]any
+		desc       string
+		config     bootstrap.Config
+		token      string
+		session    smqauthn.Session
+		id         string
+		domainID   string
+		clientErr  error
+		connectErr error
+		channel    []bootstrap.Channel
+		listErr    error
+		saveErr    error
+		err        error
+		event      map[string]any
 	}{
 		{
 			desc:     "create config successfully",
@@ -155,6 +156,16 @@ func TestAdd(t *testing.T) {
 				"operation":   configCreate,
 			},
 			err: nil,
+		},
+		{
+			desc:       "create config with failed client connection",
+			config:     config,
+			token:      validToken,
+			id:         validID,
+			domainID:   domainID,
+			event:      nil,
+			connectErr: bootstrap.ErrClients,
+			err:        bootstrap.ErrClients,
 		},
 		{
 			desc:      "create config with failed to fetch client",
@@ -192,6 +203,7 @@ func TestAdd(t *testing.T) {
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
 		sdkCall := tv.sdk.On("Client", mock.Anything, tc.config.ClientID, tc.domainID, tc.token).Return(mgsdk.Client{ID: tc.config.ClientID, Credentials: mgsdk.ClientCredentials{Secret: tc.config.ClientSecret}}, errors.NewSDKError(tc.clientErr))
+		sdkCall1 := tv.sdk.On("ConnectClients", mock.Anything, mock.Anything, mock.Anything, []string{"Publish", "Subscribe"}, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr))
 		repoCall := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall1 := tv.boot.On("Save", context.Background(), mock.Anything, mock.Anything).Return(mock.Anything, tc.saveErr)
 
@@ -213,6 +225,7 @@ func TestAdd(t *testing.T) {
 		test(t, tc.event, event, tc.desc)
 
 		sdkCall.Unset()
+		sdkCall1.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 	}
@@ -393,25 +406,32 @@ func TestUpdateConnections(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	tv := newTestVariable(t, redisURL)
+	activeConfig := config
+	activeConfig.State = bootstrap.Active
 
 	cases := []struct {
-		desc        string
-		configID    string
-		id          string
-		domainID    string
-		token       string
-		session     smqauthn.Session
-		connections []string
-		clientErr   error
-		channelErr  error
-		retrieveErr error
-		listErr     error
-		updateErr   error
-		err         error
-		event       map[string]any
+		desc           string
+		config         bootstrap.Config
+		configID       string
+		id             string
+		domainID       string
+		token          string
+		session        smqauthn.Session
+		connections    []string
+		clientErr      error
+		channelErr     error
+		connectErr     error
+		disconnectErr  error
+		retrieveErr    error
+		listErr        error
+		updateErr      error
+		changeStateErr error
+		err            error
+		event          map[string]any
 	}{
 		{
 			desc:        "update connections successfully",
+			config:      config,
 			configID:    config.ClientID,
 			token:       validToken,
 			id:          validID,
@@ -427,6 +447,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with failed channel fetch",
+			config:      config,
 			configID:    config.ClientID,
 			token:       validToken,
 			id:          validID,
@@ -438,6 +459,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with failed RetrieveByID",
+			config:      config,
 			configID:    config.ClientID,
 			token:       validToken,
 			id:          validID,
@@ -449,6 +471,7 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with failed ListExisting",
+			config:      config,
 			configID:    config.ClientID,
 			token:       validToken,
 			id:          validID,
@@ -459,7 +482,32 @@ func TestUpdateConnections(t *testing.T) {
 			event:       nil,
 		},
 		{
+			desc:        "update connections with failed connect",
+			config:      config,
+			configID:    config.ClientID,
+			token:       validToken,
+			id:          validID,
+			domainID:    domainID,
+			connections: []string{config.Channels[0].ID},
+			connectErr:  bootstrap.ErrClients,
+			err:         bootstrap.ErrClients,
+			event:       nil,
+		},
+		{
+			desc:          "update connections with failed disconnect",
+			config:        activeConfig,
+			configID:      activeConfig.ClientID,
+			token:         validToken,
+			id:            validID,
+			domainID:      domainID,
+			connections:   []string{config.Channels[0].ID},
+			disconnectErr: bootstrap.ErrClients,
+			err:           bootstrap.ErrClients,
+			event:         nil,
+		},
+		{
 			desc:        "update connections with failed UpdateConnections",
+			config:      config,
 			configID:    config.ClientID,
 			token:       validToken,
 			id:          validID,
@@ -469,15 +517,30 @@ func TestUpdateConnections(t *testing.T) {
 			err:         svcerr.ErrUpdateEntity,
 			event:       nil,
 		},
+		{
+			desc:           "update connections with failed ChangeState",
+			config:         config,
+			configID:       config.ClientID,
+			token:          validToken,
+			id:             validID,
+			domainID:       domainID,
+			connections:    []string{config.Channels[0].ID},
+			changeStateErr: svcerr.ErrUpdateEntity,
+			err:            svcerr.ErrUpdateEntity,
+			event:          nil,
+		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
 		sdkCall := tv.sdk.On("Channel", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(mgsdk.Channel{}, tc.channelErr)
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(config, tc.retrieveErr)
-		repoCall1 := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(config.Channels, tc.listErr)
+		connectCall := tv.sdk.On("Connect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr))
+		disconnectCall := tv.sdk.On("Disconnect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.disconnectErr))
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(tc.config, tc.retrieveErr)
+		repoCall1 := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall2 := tv.boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
+		repoCall3 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.changeStateErr)
 		err := tv.svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.configID, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -495,9 +558,12 @@ func TestUpdateConnections(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 		sdkCall.Unset()
+		connectCall.Unset()
+		disconnectCall.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
+		repoCall3.Unset()
 	}
 }
 

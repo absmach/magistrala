@@ -344,7 +344,7 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 			UserID:     session.UserID,
 			PatID:      session.PatID,
 			EntityID:   entityID,
-			EntityType: auth.ChannelsType.String(),
+			EntityType: patEntityType(entityType),
 			Operation:  opName,
 			Domain:     session.DomainID,
 		}
@@ -355,6 +355,15 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, session authn.
 	}
 
 	return nil
+}
+
+func patEntityType(entityType string) string {
+	switch entityType {
+	case policies.ClientType:
+		return auth.ClientsType.String()
+	default:
+		return auth.ChannelsType.String()
+	}
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {

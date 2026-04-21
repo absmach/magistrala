@@ -32,6 +32,11 @@ func TestEntityTypeString(t *testing.T) {
 			expected: "clients",
 		},
 		{
+			desc:     "Bootstrap entity type",
+			et:       auth.BootstrapType,
+			expected: "bootstrap",
+		},
+		{
 			desc:     "Dashboard entity type",
 			et:       auth.DashboardType,
 			expected: "dashboards",
@@ -89,6 +94,12 @@ func TestParseEntityType(t *testing.T) {
 			desc:     "Parse clients",
 			et:       "clients",
 			expected: auth.ClientsType,
+			err:      false,
+		},
+		{
+			desc:     "Parse bootstrap",
+			et:       "bootstrap",
+			expected: auth.BootstrapType,
 			err:      false,
 		},
 		{
@@ -156,6 +167,12 @@ func TestEntityTypeMarshalJSON(t *testing.T) {
 			err:      nil,
 		},
 		{
+			desc:     "Marshal bootstrap",
+			et:       auth.BootstrapType,
+			expected: []byte(`"bootstrap"`),
+			err:      nil,
+		},
+		{
 			desc:     "Marshal rules",
 			et:       auth.RulesType,
 			expected: []byte(`"rules"`),
@@ -195,6 +212,12 @@ func TestEntityTypeUnmarshalJSON(t *testing.T) {
 			desc:     "Unmarshal channels",
 			data:     []byte(`"channels"`),
 			expected: auth.ChannelsType,
+			err:      false,
+		},
+		{
+			desc:     "Unmarshal bootstrap",
+			data:     []byte(`"bootstrap"`),
+			expected: auth.BootstrapType,
 			err:      false,
 		},
 		{
@@ -250,6 +273,12 @@ func TestEntityTypeMarshalText(t *testing.T) {
 			expected: []byte("channels"),
 			err:      nil,
 		},
+		{
+			desc:     "Marshal bootstrap as text",
+			et:       auth.BootstrapType,
+			expected: []byte("bootstrap"),
+			err:      nil,
+		},
 	}
 
 	for _, tc := range cases {
@@ -278,6 +307,12 @@ func TestEntityTypeUnmarshalText(t *testing.T) {
 			desc:     "Unmarshal channels from text",
 			data:     []byte("channels"),
 			expected: auth.ChannelsType,
+			err:      false,
+		},
+		{
+			desc:     "Unmarshal bootstrap from text",
+			data:     []byte("bootstrap"),
+			expected: auth.BootstrapType,
 			err:      false,
 		},
 		{

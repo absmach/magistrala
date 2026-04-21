@@ -131,6 +131,8 @@ func TestAuthorize(t *testing.T) {
 		token        string
 		authRequest  *grpcAuthV1.AuthZReq
 		authResponse *grpcAuthV1.AuthZRes
+		expectedReq  *policies.Policy
+		expectedPAT  *auth.PATAuthz
 		err          error
 	}{
 		{
@@ -269,6 +271,47 @@ func TestAuthorize(t *testing.T) {
 			},
 			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
 			err:          nil,
+		},
+		{
+			desc:  "authorize bootstrap PAT keeps PAT domain when policy domain is empty",
+			token: validPATToken,
+			authRequest: &grpcAuthV1.AuthZReq{
+				PolicyReq: &grpcAuthV1.PolicyReq{
+					Subject:     id,
+					SubjectType: policies.UserType,
+					SubjectKind: policies.UsersKind,
+					Permission:  policies.MembershipPermission,
+					ObjectType:  policies.DomainType,
+					Object:      domainID,
+				},
+				PatReq: &grpcAuthV1.PATReq{
+					PatId:      id,
+					Domain:     domainID,
+					Operation:  "create",
+					UserId:     id,
+					EntityId:   auth.AnyIDs,
+					EntityType: auth.BootstrapStr,
+				},
+			},
+			authResponse: &grpcAuthV1.AuthZRes{Authorized: true},
+			expectedReq: &policies.Policy{
+				Domain:      domainID,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     id,
+				Permission:  policies.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Object:      domainID,
+			},
+			expectedPAT: &auth.PATAuthz{
+				PatID:      id,
+				UserID:     id,
+				EntityType: auth.BootstrapType,
+				EntityID:   auth.AnyIDs,
+				Operation:  "create",
+				Domain:     domainID,
+			},
+			err: nil,
 		},
 		{
 			desc:  "authorize user with unauthorized PAT token",

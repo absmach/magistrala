@@ -6,9 +6,11 @@ package middleware
 import (
 	"context"
 
+	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/bootstrap"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/authz"
+	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 )
 
@@ -16,6 +18,15 @@ const (
 	updatePermission = "update_permission"
 	readPermission   = "read_permission"
 	deletePermission = "delete_permission"
+
+	createOperation            = "create"
+	viewOperation              = "view"
+	updateOperation            = "update"
+	updateCertOperation        = "update_cert"
+	updateConnectionsOperation = "update_connections"
+	listOperation              = "list"
+	removeOperation            = "remove"
+	changeStateOperation       = "change_state"
 )
 
 var _ bootstrap.Service = (*authorizationMiddleware)(nil)
@@ -34,7 +45,7 @@ func AuthorizationMiddleware(svc bootstrap.Service, authz authz.Authorization) b
 }
 
 func (am *authorizationMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID); err != nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, createOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -42,7 +53,7 @@ func (am *authorizationMiddleware) Add(ctx context.Context, session smqauthn.Ses
 }
 
 func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, readPermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, readPermission, policies.ClientType, id, viewOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -50,7 +61,7 @@ func (am *authorizationMiddleware) View(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.Session, cfg bootstrap.Config) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, cfg.ClientID); err != nil {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, cfg.ClientID, updateOperation, cfg.ClientID); err != nil {
 		return err
 	}
 
@@ -58,7 +69,7 @@ func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.
 }
 
 func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, clientID); err != nil {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, clientID, updateCertOperation, clientID); err != nil {
 		return bootstrap.Config{}, err
 	}
 
@@ -66,7 +77,7 @@ func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqau
 }
 
 func (am *authorizationMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id, updateConnectionsOperation, id); err != nil {
 		return err
 	}
 
@@ -74,10 +85,10 @@ func (am *authorizationMiddleware) UpdateConnections(ctx context.Context, sessio
 }
 
 func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
-	if err := am.checkSuperAdmin(ctx, session.DomainUserID); err == nil {
+	if err := am.checkSuperAdmin(ctx, session); err == nil {
 		session.SuperAdmin = true
 	}
-	if err := am.authorize(ctx, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID); err == nil {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID, listOperation, auth.AnyIDs); err == nil {
 		session.SuperAdmin = true
 	}
 
@@ -85,7 +96,7 @@ func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Se
 }
 
 func (am *authorizationMiddleware) Remove(ctx context.Context, session smqauthn.Session, id string) error {
-	if err := am.authorize(ctx, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, deletePermission, policies.ClientType, id); err != nil {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, deletePermission, policies.ClientType, id, removeOperation, id); err != nil {
 		return err
 	}
 
@@ -97,6 +108,10 @@ func (am *authorizationMiddleware) Bootstrap(ctx context.Context, externalKey, e
 }
 
 func (am *authorizationMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) error {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id, changeStateOperation, id); err != nil {
+		return err
+	}
+
 	return am.svc.ChangeState(ctx, session, token, id, state)
 }
 
@@ -120,10 +135,13 @@ func (am *authorizationMiddleware) DisconnectClientHandler(ctx context.Context, 
 	return am.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
 
-func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, adminID string) error {
+func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session smqauthn.Session) error {
+	if session.Role != smqauthn.SuperAdminRole {
+		return svcerr.ErrSuperAdminAction
+	}
 	if err := am.authz.Authorize(ctx, authz.PolicyReq{
 		SubjectType: policies.UserType,
-		Subject:     adminID,
+		Subject:     session.UserID,
 		Permission:  policies.AdminPermission,
 		ObjectType:  policies.PlatformType,
 		Object:      policies.MagistralaObject,
@@ -133,7 +151,7 @@ func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, adminID 
 	return nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, domain, subjType, subjKind, subj, perm, objType, obj string) error {
+func (am *authorizationMiddleware) authorize(ctx context.Context, session smqauthn.Session, domain, subjType, subjKind, subj, perm, objType, obj, operation, entityID string) error {
 	req := authz.PolicyReq{
 		Domain:      domain,
 		SubjectType: subjType,
@@ -143,7 +161,20 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, domain, subjTy
 		ObjectType:  objType,
 		Object:      obj,
 	}
-	if err := am.authz.Authorize(ctx, req, nil); err != nil {
+
+	var pat *authz.PATReq
+	if session.PatID != "" {
+		pat = &authz.PATReq{
+			UserID:     session.UserID,
+			PatID:      session.PatID,
+			EntityID:   entityID,
+			EntityType: auth.BootstrapType.String(),
+			Operation:  operation,
+			Domain:     session.DomainID,
+		}
+	}
+
+	if err := am.authz.Authorize(ctx, req, pat); err != nil {
 		return err
 	}
 	return nil

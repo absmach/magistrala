@@ -76,6 +76,7 @@ const (
 	GroupsType EntityType = iota
 	ChannelsType
 	ClientsType
+	BootstrapType
 	DashboardType
 	MessagesType
 	DomainsType
@@ -88,6 +89,7 @@ const (
 	GroupsScopeStr   = "groups"
 	ChannelsScopeStr = "channels"
 	ClientsScopeStr  = "clients"
+	BootstrapStr     = "bootstrap"
 	DashboardsStr    = "dashboards"
 	MessagesStr      = "messages"
 	DomainsStr       = "domains"
@@ -104,6 +106,8 @@ func (et EntityType) String() string {
 		return ChannelsScopeStr
 	case ClientsType:
 		return ClientsScopeStr
+	case BootstrapType:
+		return BootstrapStr
 	case DashboardType:
 		return DashboardsStr
 	case MessagesType:
@@ -129,6 +133,8 @@ func ParseEntityType(et string) (EntityType, error) {
 		return ChannelsType, nil
 	case ClientsScopeStr:
 		return ClientsType, nil
+	case BootstrapStr:
+		return BootstrapType, nil
 	case DashboardsStr:
 		return DashboardType, nil
 	case MessagesStr:
@@ -169,7 +175,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case ClientsType, ChannelsType, GroupsType, DomainsType, RulesType, ReportsType:
+	case ClientsType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare

@@ -154,7 +154,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	id := cfg.ClientID
 	mgClient, err := bs.client(ctx, session.DomainID, id, token)
 	if err != nil {
-		return Config{}, errors.Wrap(errClientNotFound, err)
+		return Config{}, propagateSDKErr(errClientNotFound, err)
 	}
 
 	for _, channel := range cfg.Channels {
@@ -175,7 +175,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 				if errors.Contains(err, svcerr.ErrConflict) {
 					continue
 				}
-				return Config{}, ErrClients
+				return Config{}, propagateSDKErr(ErrClients, err)
 			}
 		}
 		cfg.State = Active
@@ -251,12 +251,12 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	switch nextState {
 	case Active:
 		if err := bs.connectChannels(ctx, session.DomainID, token, id, connections); err != nil {
-			return ErrClients
+			return propagateSDKErr(ErrClients, err)
 		}
 	case Inactive:
 		disconnect := uniqueStrings(append(currentChannels, connections...))
 		if err := bs.disconnectChannels(ctx, session.DomainID, token, id, disconnect); err != nil {
-			return ErrClients
+			return propagateSDKErr(ErrClients, err)
 		}
 	}
 
@@ -345,11 +345,11 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Ses
 	switch state {
 	case Active:
 		if err := bs.connectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
-			return ErrClients
+			return propagateSDKErr(ErrClients, err)
 		}
 	case Inactive:
 		if err := bs.disconnectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
-			return ErrClients
+			return propagateSDKErr(ErrClients, err)
 		}
 	}
 	if err := bs.configs.ChangeState(ctx, session.DomainID, id, state); err != nil {
@@ -419,16 +419,23 @@ func (bs bootstrapService) client(ctx context.Context, domainID, id, token strin
 		}
 		client, sdkErr := bs.sdk.CreateClient(ctx, mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
 		if sdkErr != nil {
-			return mgsdk.Client{}, errors.Wrap(errCreateClient, sdkErr)
+			return mgsdk.Client{}, propagateSDKErr(errCreateClient, sdkErr)
 		}
 		return client, nil
 	}
 	// If Client ID is provided, then retrieve client
 	client, sdkErr := bs.sdk.Client(ctx, id, domainID, token)
 	if sdkErr != nil {
-		return mgsdk.Client{}, errors.Wrap(ErrClients, sdkErr)
+		return mgsdk.Client{}, propagateSDKErr(ErrClients, sdkErr)
 	}
 	return client, nil
+}
+
+func propagateSDKErr(fallback, err error) error {
+	if sdkErr, ok := err.(errors.SDKError); ok {
+		return sdkErr
+	}
+	return errors.Wrap(fallback, err)
 }
 
 func (bs bootstrapService) connectionChannels(ctx context.Context, channels, existing []string, domainID, token string) ([]Channel, error) {

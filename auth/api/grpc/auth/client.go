@@ -94,6 +94,9 @@ func (client authGrpcClient) Authorize(ctx context.Context, req *grpcAuthV1.Auth
 		}
 
 		if patReq != nil {
+			if patReq.GetDomain() != "" {
+				authReqData.Domain = patReq.GetDomain()
+			}
 			authReqData.UserID = patReq.GetUserId()
 			authReqData.PatID = patReq.GetPatId()
 			authReqData.EntityType = patReq.GetEntityType()

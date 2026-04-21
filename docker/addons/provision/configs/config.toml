@@ -3,9 +3,6 @@
 
 [bootstrap]
   [bootstrap.content]
-    [bootstrap.content.agent.edgex]
-      url = "http://localhost:48090/api/v1/"
-
     [bootstrap.content.agent.log]
       level = "info"
 
@@ -17,7 +14,7 @@
       url = "localhost:1883"
 
     [bootstrap.content.agent.server]
-      nats_url = "localhost:4222"
+      fluxmq_url = "amqp://guest:guest@localhost:5682/"
       port = "9000"
   
     [bootstrap.content.agent.heartbeat]
@@ -29,7 +26,7 @@
 
     [bootstrap.content.export.exp]
       log_level = "debug"
-      nats = "nats://localhost:4222"
+      fluxmq = "amqp://guest:guest@localhost:5682/"
       port = "8172"
       cache_url = "localhost:6379"
       cache_pass = ""
@@ -37,12 +34,12 @@
 
     [bootstrap.content.export.mqtt]
       ca_path = "ca.crt"
-      cert_path = "thing.crt"
+      cert_path = "client.crt"
       channel = ""
       host = "tcp://localhost:1883"
       mtls = false
       password = ""
-      priv_key_path = "thing.key"
+      priv_key_path = "client.key"
       qos = 0
       retain = false
       skip_tls_ver = false
@@ -50,7 +47,7 @@
 
     [[bootstrap.content.export.routes]]
       mqtt_topic = ""
-      nats_topic = ">"
+      fluxmq_topic = "#"
       subtopic = ""
       type = "plain"
       workers = 10

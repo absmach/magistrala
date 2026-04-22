@@ -498,7 +498,12 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 	queries := []string{}
 
 	if len(clientIDs) != 0 {
-		queries = append(queries, fmt.Sprintf("client_id IN ('%s')", strings.Join(clientIDs, "','")))
+		var arr pgtype.TextArray
+		if err := arr.Set(clientIDs); err != nil {
+			return "", nil
+		}
+		params = append(params, arr)
+		queries = append(queries, fmt.Sprintf("client_id = ANY($%d)", len(params)))
 	} else if domainID != "" {
 		params = append(params, domainID)
 		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
@@ -581,7 +586,8 @@ func insertConnections(_ context.Context, cfg bootstrap.Config, connections []st
 
 func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) error {
 	if len(connections) == 0 {
-		return nil
+		_, err := tx.Exec(`DELETE FROM config_channels WHERE config_id = $1 AND domain_id = $2`, id, domainID)
+		return err
 	}
 	q := `DELETE FROM config_channels
 		WHERE config_id = $1 AND domain_id = $2

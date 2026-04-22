@@ -124,6 +124,8 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`UPDATE configs SET client_secret = magistrala_secret WHERE client_secret IS NULL AND magistrala_secret IS NOT NULL`,
 					`UPDATE configs SET client_id = mainflux_client WHERE client_id IS NULL AND mainflux_client IS NOT NULL`,
 					`UPDATE configs SET client_secret = mainflux_key WHERE client_secret IS NULL AND mainflux_key IS NOT NULL`,
+					`DELETE FROM configs WHERE client_id IS NULL OR client_id = ''`,
+					`DELETE FROM channels WHERE id IS NULL OR id = ''`,
 					`ALTER TABLE IF EXISTS configs ALTER COLUMN client_id SET NOT NULL`,
 					`ALTER TABLE IF EXISTS configs ALTER COLUMN client_secret SET NOT NULL`,
 					`CREATE UNIQUE INDEX IF NOT EXISTS configs_client_id_key ON configs (client_id)`,
@@ -159,6 +161,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 						SELECT channel_id, config_id, COALESCE(config_owner, channel_owner, domain_id, '')
 						FROM connections
 						WHERE channel_id IS NOT NULL AND config_id IS NOT NULL
+						AND COALESCE(config_owner, channel_owner, domain_id, '') != ''
 						ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`,
 					`CREATE TABLE IF NOT EXISTS service_connections (
 						channel_id TEXT NOT NULL,

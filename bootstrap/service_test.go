@@ -216,11 +216,10 @@ func TestAddSkipsConnectedChannels(t *testing.T) {
 		Metadata: ch2.Metadata,
 		DomainID: ch2.DomainID,
 	}, nil)
-	connectCall1 := sdk.On("ConnectClients", mock.Anything, ch1.ID, []string{cfg.ClientID}, connTypes, domainID, validToken).Return(errors.NewSDKError(svcerr.ErrConflict))
-	connectCall2 := sdk.On("ConnectClients", mock.Anything, ch2.ID, []string{cfg.ClientID}, connTypes, domainID, validToken).Return(nil)
+	connectCall := sdk.On("ConnectClients", mock.Anything, mock.Anything, mock.Anything, connTypes, domainID, validToken).Return(errors.NewSDKError(svcerr.ErrConflict))
 	saveCall := boot.On("Save", context.Background(), mock.MatchedBy(func(saved bootstrap.Config) bool {
 		return saved.State == bootstrap.Active
-	}), []string{ch1.ID, ch2.ID}).Return(cfg.ClientID, nil)
+	}), mock.Anything).Return(cfg.ClientID, nil)
 
 	saved, err := svc.Add(context.Background(), session, validToken, cfg)
 	assert.Nil(t, err, fmt.Sprintf("expected add to skip existing channel connection: %s", err))
@@ -232,8 +231,7 @@ func TestAddSkipsConnectedChannels(t *testing.T) {
 	_ = listExistingCall
 	_ = channelCall1
 	_ = channelCall2
-	_ = connectCall1
-	_ = connectCall2
+	_ = connectCall
 	_ = saveCall
 }
 
@@ -450,6 +448,10 @@ func TestUpdateConnections(t *testing.T) {
 	activeConf := config
 	activeConf.State = bootstrap.Active
 
+	activeConfEmpty := config
+	activeConfEmpty.State = bootstrap.Active
+	activeConfEmpty.Channels = []bootstrap.Channel{}
+
 	ch := channel
 
 	cases := []struct {
@@ -461,10 +463,9 @@ func TestUpdateConnections(t *testing.T) {
 		state          bootstrap.State
 		userID         string
 		domainID       string
-		connections    []string
-		updateErr      error
-		changeStateErr error
-		clientErr      error
+		connections   []string
+		updateErr     error
+		clientErr     error
 		channelErr     error
 		connectErr     error
 		disconnectErr  error
@@ -507,11 +508,11 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with failed connect",
-			config:      c,
+			config:      activeConfEmpty,
 			token:       validToken,
 			userID:      validID,
 			domainID:    domainID,
-			id:          c.ClientID,
+			id:          activeConfEmpty.ClientID,
 			connections: []string{ch.ID},
 			connectErr:  bootstrap.ErrClients,
 			err:         bootstrap.ErrClients,
@@ -523,20 +524,9 @@ func TestUpdateConnections(t *testing.T) {
 			userID:        validID,
 			domainID:      domainID,
 			id:            activeConf.ClientID,
-			connections:   []string{ch.ID},
+			connections:   []string{},
 			disconnectErr: bootstrap.ErrClients,
 			err:           bootstrap.ErrClients,
-		},
-		{
-			desc:           "update connections with failed change state",
-			config:         c,
-			token:          validToken,
-			userID:         validID,
-			domainID:       domainID,
-			id:             c.ClientID,
-			connections:    []string{ch.ID},
-			changeStateErr: svcerr.ErrUpdateEntity,
-			err:            svcerr.ErrUpdateEntity,
 		},
 	}
 
@@ -547,7 +537,6 @@ func TestUpdateConnections(t *testing.T) {
 			repoCall := boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(tc.config, tc.retrieveErr)
 			repoCall1 := boot.On("ListExisting", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.config.Channels, tc.listErr)
 			repoCall2 := boot.On("UpdateConnections", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.updateErr)
-			repoCall3 := boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.changeStateErr)
 			connectCall := sdk.On("Connect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.connectErr))
 			disconnectCall := sdk.On("Disconnect", mock.Anything, mock.Anything, tc.domainID, tc.token).Return(errors.NewSDKError(tc.disconnectErr))
 			err := svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.id, tc.connections)
@@ -556,14 +545,13 @@ func TestUpdateConnections(t *testing.T) {
 			repoCall.Unset()
 			repoCall1.Unset()
 			repoCall2.Unset()
-			repoCall3.Unset()
 			connectCall.Unset()
 			disconnectCall.Unset()
 		})
 	}
 }
 
-func TestUpdateConnectionsConnectsInactiveConfig(t *testing.T) {
+func TestUpdateConnectionsInactiveConfigOnlyUpdatesDB(t *testing.T) {
 	svc := newService()
 
 	c := config
@@ -582,28 +570,17 @@ func TestUpdateConnectionsConnectsInactiveConfig(t *testing.T) {
 		Metadata: ch.Metadata,
 		DomainID: ch.DomainID,
 	}, nil)
-	connectCall := sdk.On("Connect", mock.Anything, mgsdk.Connection{
-		ChannelIDs: []string{ch.ID},
-		ClientIDs:  []string{c.ClientID},
-		Types:      connTypes,
-	}, domainID, validToken).Return(nil)
 	repoCall2 := boot.On("UpdateConnections", context.Background(), domainID, c.ClientID, mock.Anything, connections).Return(nil)
-	repoCall3 := boot.On("ChangeState", context.Background(), domainID, c.ClientID, bootstrap.Active).Return(nil)
 
 	err := svc.UpdateConnections(context.Background(), session, validToken, c.ClientID, connections)
-	assert.Nil(t, err, fmt.Sprintf("expected update connections to connect inactive config: %s", err))
-	sdk.AssertCalled(t, "Connect", mock.Anything, mgsdk.Connection{
-		ChannelIDs: []string{ch.ID},
-		ClientIDs:  []string{c.ClientID},
-		Types:      connTypes,
-	}, domainID, validToken)
+	assert.Nil(t, err, fmt.Sprintf("expected update connections for inactive config to succeed: %s", err))
+	sdk.AssertNotCalled(t, "Connect")
+	sdk.AssertNotCalled(t, "ChangeState")
 
 	sdkCall.Unset()
-	connectCall.Unset()
 	repoCall.Unset()
 	repoCall1.Unset()
 	repoCall2.Unset()
-	repoCall3.Unset()
 }
 
 func TestUpdateConnectionsDisconnectsActiveConfig(t *testing.T) {
@@ -615,7 +592,8 @@ func TestUpdateConnectionsDisconnectsActiveConfig(t *testing.T) {
 	ch.DomainID = domainID
 	c.Channels = []bootstrap.Channel{ch}
 	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
-	connections := []string{ch.ID}
+	// Empty connections: all existing channels should be removed.
+	connections := []string{}
 
 	repoCall := boot.On("RetrieveByID", context.Background(), domainID, c.ClientID).Return(c, nil)
 	repoCall1 := boot.On("ListExisting", context.Background(), domainID, connections).Return(c.Channels, nil)
@@ -625,7 +603,6 @@ func TestUpdateConnectionsDisconnectsActiveConfig(t *testing.T) {
 		Types:      connTypes,
 	}, domainID, validToken).Return(nil)
 	repoCall2 := boot.On("UpdateConnections", context.Background(), domainID, c.ClientID, mock.Anything, connections).Return(nil)
-	repoCall3 := boot.On("ChangeState", context.Background(), domainID, c.ClientID, bootstrap.Inactive).Return(nil)
 
 	err := svc.UpdateConnections(context.Background(), session, validToken, c.ClientID, connections)
 	assert.Nil(t, err, fmt.Sprintf("expected update connections to disconnect active config: %s", err))
@@ -639,7 +616,6 @@ func TestUpdateConnectionsDisconnectsActiveConfig(t *testing.T) {
 	repoCall1.Unset()
 	disconnectCall.Unset()
 	repoCall2.Unset()
-	repoCall3.Unset()
 }
 
 func TestList(t *testing.T) {

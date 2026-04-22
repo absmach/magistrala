@@ -19,6 +19,8 @@ import (
 )
 
 var (
+	connTypes = []string{"Publish", "Subscribe"}
+
 	// ErrClients indicates failure to communicate with Magistrala Clients service.
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrClients = errors.New("failed to receive response from Clients service")
@@ -153,7 +155,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	id := cfg.ClientID
 	mgClient, err := bs.client(ctx, session.DomainID, id, token)
 	if err != nil {
-		return Config{}, errors.Wrap(errClientNotFound, err)
+		return Config{}, propagateSDKErr(errClientNotFound, err)
 	}
 
 	for _, channel := range cfg.Channels {
@@ -164,17 +166,35 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 
 	cfg.ClientID = mgClient.ID
 	cfg.DomainID = session.DomainID
-	cfg.State = Inactive
 	cfg.ClientSecret = mgClient.Credentials.Secret
+	cfg.State = Inactive
+
+	var connected []string
+	for _, channelID := range toConnect {
+		if err := bs.sdk.ConnectClients(ctx, channelID, []string{cfg.ClientID}, connTypes, session.DomainID, token); err != nil {
+			if errors.Contains(err, svcerr.ErrConflict) {
+				continue
+			}
+			for _, cid := range connected {
+				_ = bs.sdk.DisconnectClients(ctx, cid, []string{cfg.ClientID}, connTypes, session.DomainID, token)
+			}
+			return Config{}, propagateSDKErr(ErrClients, err)
+		}
+		connected = append(connected, channelID)
+	}
+	if len(toConnect) > 0 {
+		cfg.State = Active
+	}
 
 	saved, err := bs.configs.Save(ctx, cfg, toConnect)
 	if err != nil {
-		// If id is empty, then a new client has been created function - bs.client(id, token)
-		// So, on bootstrap config save error , delete the newly created client.
 		if id == "" {
 			if errT := bs.sdk.DeleteClient(ctx, cfg.ClientID, cfg.DomainID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
+		}
+		for _, cid := range connected {
+			_ = bs.sdk.DisconnectClients(ctx, cid, []string{cfg.ClientID}, connTypes, session.DomainID, token)
 		}
 		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
@@ -214,8 +234,7 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	if err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
-
-	add, remove := bs.updateList(cfg, connections)
+	currentChannels := bs.toIDList(cfg.Channels)
 
 	// Check if channels exist. This is the way to prevent fetching channels that already exist.
 	existing, err := bs.configs.ListExisting(ctx, session.DomainID, connections)
@@ -229,32 +248,39 @@ func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqaut
 	}
 
 	cfg.Channels = channels
-	var connect, disconnect []string
 
 	if cfg.State == Active {
-		connect = add
-		disconnect = remove
-	}
-
-	for _, c := range disconnect {
-		if err := bs.sdk.DisconnectClients(ctx, c, []string{id}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-			if errors.Contains(err, repoerr.ErrNotFound) {
-				continue
+		currentSet := make(map[string]bool, len(currentChannels))
+		for _, chID := range currentChannels {
+			currentSet[chID] = true
+		}
+		connectionSet := make(map[string]bool, len(connections))
+		for _, chID := range connections {
+			connectionSet[chID] = true
+		}
+		var add, remove []string
+		for _, chID := range connections {
+			if !currentSet[chID] {
+				add = append(add, chID)
 			}
-			return ErrClients
+		}
+		for _, chID := range currentChannels {
+			if !connectionSet[chID] {
+				remove = append(remove, chID)
+			}
+		}
+		if len(add) > 0 {
+			if err := bs.connectChannels(ctx, session.DomainID, token, id, add); err != nil {
+				return propagateSDKErr(ErrClients, err)
+			}
+		}
+		if len(remove) > 0 {
+			if err := bs.disconnectChannels(ctx, session.DomainID, token, id, remove); err != nil {
+				return propagateSDKErr(ErrClients, err)
+			}
 		}
 	}
 
-	for _, c := range connect {
-		conIDs := mgsdk.Connection{
-			ChannelIDs: []string{c},
-			ClientIDs:  []string{id},
-			Types:      []string{"Publish", "Subscribe"},
-		}
-		if err := bs.sdk.Connect(ctx, conIDs, session.DomainID, token); err != nil {
-			return ErrClients
-		}
-	}
 	if err := bs.configs.UpdateConnections(ctx, session.DomainID, id, channels, connections); err != nil {
 		return errors.Wrap(errUpdateConnections, err)
 	}
@@ -335,23 +361,12 @@ func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Ses
 
 	switch state {
 	case Active:
-		for _, c := range cfg.Channels {
-			if err := bs.sdk.ConnectClients(ctx, c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-				// Ignore conflict errors as they indicate the connection already exists.
-				if errors.Contains(err, svcerr.ErrConflict) {
-					continue
-				}
-				return ErrClients
-			}
+		if err := bs.connectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
+			return propagateSDKErr(ErrClients, err)
 		}
 	case Inactive:
-		for _, c := range cfg.Channels {
-			if err := bs.sdk.DisconnectClients(ctx, c.ID, []string{cfg.ClientID}, []string{"Publish", "Subscribe"}, session.DomainID, token); err != nil {
-				if errors.Contains(err, repoerr.ErrNotFound) {
-					continue
-				}
-				return ErrClients
-			}
+		if err := bs.disconnectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
+			return propagateSDKErr(ErrClients, err)
 		}
 	}
 	if err := bs.configs.ChangeState(ctx, session.DomainID, id, state); err != nil {
@@ -395,6 +410,36 @@ func (bs bootstrapService) DisconnectClientHandler(ctx context.Context, channelI
 	return nil
 }
 
+func (bs bootstrapService) connectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
+	if len(channelIDs) == 0 {
+		return nil
+	}
+	err := bs.sdk.Connect(ctx, mgsdk.Connection{
+		ChannelIDs: channelIDs,
+		ClientIDs:  []string{clientID},
+		Types:      connTypes,
+	}, domainID, token)
+	if err != nil && !errors.Contains(err, svcerr.ErrConflict) {
+		return err
+	}
+	return nil
+}
+
+func (bs bootstrapService) disconnectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
+	if len(channelIDs) == 0 {
+		return nil
+	}
+	err := bs.sdk.Disconnect(ctx, mgsdk.Connection{
+		ChannelIDs: channelIDs,
+		ClientIDs:  []string{clientID},
+		Types:      connTypes,
+	}, domainID, token)
+	if err != nil && !errors.Contains(err, repoerr.ErrNotFound) {
+		return err
+	}
+	return nil
+}
+
 // Method client retrieves Magistrala Client creating one if an empty ID is passed.
 func (bs bootstrapService) client(ctx context.Context, domainID, id, token string) (mgsdk.Client, error) {
 	// If Client ID is not provided, then create new client.
@@ -405,16 +450,23 @@ func (bs bootstrapService) client(ctx context.Context, domainID, id, token strin
 		}
 		client, sdkErr := bs.sdk.CreateClient(ctx, mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
 		if sdkErr != nil {
-			return mgsdk.Client{}, errors.Wrap(errCreateClient, sdkErr)
+			return mgsdk.Client{}, propagateSDKErr(errCreateClient, sdkErr)
 		}
 		return client, nil
 	}
 	// If Client ID is provided, then retrieve client
 	client, sdkErr := bs.sdk.Client(ctx, id, domainID, token)
 	if sdkErr != nil {
-		return mgsdk.Client{}, errors.Wrap(ErrClients, sdkErr)
+		return mgsdk.Client{}, propagateSDKErr(ErrClients, sdkErr)
 	}
 	return client, nil
+}
+
+func propagateSDKErr(fallback, err error) error {
+	if sdkErr, ok := err.(errors.SDKError); ok {
+		return sdkErr
+	}
+	return errors.Wrap(fallback, err)
 }
 
 func (bs bootstrapService) connectionChannels(ctx context.Context, channels, existing []string, domainID, token string) ([]Channel, error) {
@@ -445,33 +497,6 @@ func (bs bootstrapService) connectionChannels(ctx context.Context, channels, exi
 	}
 
 	return ret, nil
-}
-
-// Method updateList accepts config and channel IDs and returns three lists:
-// 1) IDs of Channels to be added
-// 2) IDs of Channels to be removed
-// 3) IDs of common Channels for these two configs.
-func (bs bootstrapService) updateList(cfg Config, connections []string) (add, remove []string) {
-	disconnect := make(map[string]bool, len(cfg.Channels))
-	for _, c := range cfg.Channels {
-		disconnect[c.ID] = true
-	}
-
-	for _, c := range connections {
-		if disconnect[c] {
-			// Don't disconnect common elements.
-			delete(disconnect, c)
-			continue
-		}
-		// Connect new elements.
-		add = append(add, c)
-	}
-
-	for v := range disconnect {
-		remove = append(remove, v)
-	}
-
-	return
 }
 
 func (bs bootstrapService) toIDList(channels []Channel) []string {

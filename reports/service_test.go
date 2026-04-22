@@ -184,9 +184,9 @@ func TestAddReportConfig(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("AddReportConfig", mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
-			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies).Maybe()
+			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies)
 			repoCall1 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
-			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr).Maybe()
+			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr)
 			res, err := svc.AddReportConfig(context.Background(), tc.session, tc.cfg)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {

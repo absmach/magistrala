@@ -32,9 +32,6 @@ var (
 	errDisconnectClient = errors.New("failed to disconnect client in bootstrap configuration in database")
 )
 
-const cleanupQuery = `DELETE FROM channels ch WHERE NOT EXISTS (
-						 SELECT channel_id FROM connections c WHERE ch.magistrala_channel = c.channel_id);`
-
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
 type configRepository struct {
@@ -49,8 +46,8 @@ func NewConfigRepository(db postgres.Database, log *slog.Logger) bootstrap.Confi
 }
 
 func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsConnIDs []string) (clientID string, err error) {
-	q := `INSERT INTO configs (magistrala_client, domain_id, name, client_cert, client_key, ca_cert, magistrala_secret, external_id, external_key, content, state)
-	VALUES (:magistrala_client, :domain_id, :name, :client_cert, :client_key, :ca_cert, :magistrala_secret, :external_id, :external_key, :content, :state)`
+	q := `INSERT INTO configs (client_id, domain_id, name, client_cert, client_key, ca_cert, client_secret, external_id, external_key, content, state)
+	VALUES (:client_id, :domain_id, :name, :client_cert, :client_key, :ca_cert, :client_secret, :external_id, :external_key, :content, :state)`
 
 	tx, err := cr.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -90,9 +87,9 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsCo
 }
 
 func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Config, error) {
-	q := `SELECT magistrala_client, magistrala_secret, external_id, external_key, name, content, state, client_cert, ca_cert
+	q := `SELECT client_id, client_secret, external_id, external_key, name, content, state, client_cert, ca_cert
 		  FROM configs
-		  WHERE magistrala_client = :magistrala_client AND domain_id = :domain_id`
+		  WHERE client_id = :client_id AND domain_id = :domain_id`
 
 	dbcfg := dbConfig{
 		ClientID: id,
@@ -111,10 +108,10 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 		return bootstrap.Config{}, err
 	}
 
-	q = `SELECT magistrala_channel, name, metadata FROM channels ch
-		 INNER JOIN connections conn
-		 ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.domain_id
-		 WHERE conn.config_id = :magistrala_client AND conn.domain_id = :domain_id`
+	q = `SELECT ch.id, ch.name, ch.metadata FROM channels ch
+		 INNER JOIN config_channels conn
+		 ON ch.id = conn.channel_id AND ch.domain_id = conn.domain_id
+		 WHERE conn.config_id = :client_id AND conn.domain_id = :domain_id`
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
@@ -149,8 +146,8 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 	search, params := buildRetrieveQueryParams(domainID, clientIDs, filter)
 	n := len(params)
 
-	q := `SELECT magistrala_client, magistrala_secret, external_id, external_key, name, content, state
-		  FROM configs %s ORDER BY magistrala_client LIMIT $%d OFFSET $%d`
+	q := `SELECT client_id, client_secret, external_id, external_key, name, content, state
+		  FROM configs %s ORDER BY client_id LIMIT $%d OFFSET $%d`
 	q = fmt.Sprintf(q, search, n+1, n+2)
 
 	rows, err := cr.db.QueryContext(ctx, q, append(params, limit, offset)...)
@@ -192,7 +189,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 }
 
 func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID string) (bootstrap.Config, error) {
-	q := `SELECT magistrala_client, magistrala_secret, external_key, domain_id, name, client_cert, client_key, ca_cert, content, state
+	q := `SELECT client_id, client_secret, external_key, domain_id, name, client_cert, client_key, ca_cert, content, state
 		  FROM configs
 		  WHERE external_id = :external_id`
 	dbcfg := dbConfig{
@@ -212,10 +209,10 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	q = `SELECT magistrala_channel, name, metadata FROM channels ch
-     INNER JOIN connections conn
-     ON ch.magistrala_channel = conn.channel_id AND ch.domain_id = conn.domain_id
-     WHERE conn.config_id = :magistrala_client AND conn.domain_id = :domain_id`
+	q = `SELECT ch.id, ch.name, ch.metadata FROM channels ch
+     INNER JOIN config_channels conn
+     ON ch.id = conn.channel_id AND ch.domain_id = conn.domain_id
+     WHERE conn.config_id = :client_id AND conn.domain_id = :domain_id`
 
 	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
 	if err != nil {
@@ -248,7 +245,7 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
-	q := `UPDATE configs SET name = :name, content = :content WHERE magistrala_client = :magistrala_client AND domain_id = :domain_id `
+	q := `UPDATE configs SET name = :name, content = :content WHERE client_id = :client_id AND domain_id = :domain_id `
 
 	dbcfg := dbConfig{
 		Name:     nullString(cfg.Name),
@@ -275,8 +272,8 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 }
 
 func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE magistrala_client = :magistrala_client AND domain_id = :domain_id
-	RETURNING magistrala_client, client_cert, client_key, ca_cert`
+	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE client_id = :client_id AND domain_id = :domain_id
+	RETURNING client_id, client_cert, client_key, ca_cert, domain_id`
 
 	dbcfg := dbConfig{
 		ClientID:   clientID,
@@ -338,7 +335,7 @@ func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id s
 }
 
 func (cr configRepository) Remove(ctx context.Context, domainID, id string) error {
-	q := `DELETE FROM configs WHERE magistrala_client = :magistrala_client AND domain_id = :domain_id`
+	q := `DELETE FROM configs WHERE client_id = :client_id AND domain_id = :domain_id`
 	dbcfg := dbConfig{
 		ClientID: id,
 		DomainID: domainID,
@@ -348,15 +345,11 @@ func (cr configRepository) Remove(ctx context.Context, domainID, id string) erro
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 
-	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
-		cr.log.Warn("Failed to clean dangling channels after removal")
-	}
-
 	return nil
 }
 
 func (cr configRepository) ChangeState(ctx context.Context, domainID, id string, state bootstrap.State) error {
-	q := `UPDATE configs SET state = :state WHERE magistrala_client = :magistrala_client AND domain_id = :domain_id;`
+	q := `UPDATE configs SET state = :state WHERE client_id = :client_id AND domain_id = :domain_id;`
 
 	dbcfg := dbConfig{
 		ClientID: id,
@@ -392,7 +385,7 @@ func (cr configRepository) ListExisting(ctx context.Context, domainID string, id
 		return []bootstrap.Channel{}, err
 	}
 
-	q := "SELECT magistrala_channel, name, metadata FROM channels WHERE domain_id = $1 AND magistrala_channel = ANY ($2)"
+	q := "SELECT id, name, metadata FROM channels WHERE domain_id = $1 AND id = ANY ($2)"
 	rows, err := cr.db.QueryxContext(ctx, q, domainID, chans)
 	if err != nil {
 		return []bootstrap.Channel{}, errors.Wrap(repoerr.ErrViewEntity, err)
@@ -418,12 +411,8 @@ func (cr configRepository) ListExisting(ctx context.Context, domainID string, id
 }
 
 func (cr configRepository) RemoveClient(ctx context.Context, id string) error {
-	q := `DELETE FROM configs WHERE magistrala_client = $1`
+	q := `DELETE FROM configs WHERE client_id = $1`
 	_, err := cr.db.ExecContext(ctx, q, id)
-
-	if _, err := cr.db.ExecContext(ctx, cleanupQuery); err != nil {
-		cr.log.Warn("Failed to clean dangling channels after removal")
-	}
 	if err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
@@ -431,21 +420,47 @@ func (cr configRepository) RemoveClient(ctx context.Context, id string) error {
 }
 
 func (cr configRepository) UpdateChannel(ctx context.Context, c bootstrap.Channel) error {
-	dbch, err := toDBChannel("", c)
+	dbch, err := toDBChannel(c.DomainID, c)
 	if err != nil {
 		return errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by
-			WHERE magistrala_channel = :magistrala_channel`
-	if _, err = cr.db.NamedExecContext(ctx, q, dbch); err != nil {
+	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by,
+			domain_id = COALESCE(:domain_id, domain_id), id = :id, parent_group_id = :parent_group_id,
+			description = :description, status = :status
+			WHERE id = :id`
+	res, err := cr.db.NamedExecContext(ctx, q, dbch)
+	if err != nil {
+		return errors.Wrap(errUpdateChannels, err)
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrap(errUpdateChannels, err)
+	}
+	if rows > 0 || !dbch.DomainID.Valid {
+		return nil
+	}
+
+	insertQ := `INSERT INTO channels (id, domain_id, name, metadata, parent_group_id, description, created_at, updated_at, updated_by, status)
+		VALUES (:id, :domain_id, :name, :metadata, :parent_group_id, :description, :created_at, :updated_at, :updated_by, :status)
+		ON CONFLICT (id) DO UPDATE SET
+			name = EXCLUDED.name,
+			metadata = EXCLUDED.metadata,
+			parent_group_id = EXCLUDED.parent_group_id,
+			description = EXCLUDED.description,
+			updated_at = EXCLUDED.updated_at,
+			updated_by = EXCLUDED.updated_by,
+			status = EXCLUDED.status,
+			domain_id = EXCLUDED.domain_id`
+	if _, err = cr.db.NamedExecContext(ctx, insertQ, dbch); err != nil {
 		return errors.Wrap(errUpdateChannels, err)
 	}
 	return nil
 }
 
 func (cr configRepository) RemoveChannel(ctx context.Context, id string) error {
-	q := `DELETE FROM channels WHERE magistrala_channel = $1`
+	q := `DELETE FROM channels WHERE id = $1`
 	if _, err := cr.db.ExecContext(ctx, q, id); err != nil {
 		return errors.Wrap(errRemoveChannels, err)
 	}
@@ -454,8 +469,8 @@ func (cr configRepository) RemoveChannel(ctx context.Context, id string) error {
 
 func (cr configRepository) ConnectClient(ctx context.Context, channelID, clientID string) error {
 	q := `UPDATE configs SET state = $1
-		WHERE magistrala_client = $2
-		AND EXISTS (SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
+		WHERE client_id = $2
+		AND EXISTS (SELECT 1 FROM config_channels WHERE config_id = $2 AND channel_id = $3)`
 
 	result, err := cr.db.ExecContext(ctx, q, bootstrap.Active, clientID, channelID)
 	if err != nil {
@@ -469,8 +484,8 @@ func (cr configRepository) ConnectClient(ctx context.Context, channelID, clientI
 
 func (cr configRepository) DisconnectClient(ctx context.Context, channelID, clientID string) error {
 	q := `UPDATE configs SET state = $1
-		WHERE magistrala_client = $2
-		AND EXISTS (SELECT 1 FROM connections WHERE config_id = $2 AND channel_id = $3)`
+		WHERE client_id = $2
+		AND EXISTS (SELECT 1 FROM config_channels WHERE config_id = $2 AND channel_id = $3)`
 	_, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, clientID, channelID)
 	if err != nil {
 		return errors.Wrap(errDisconnectClient, err)
@@ -483,7 +498,12 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 	queries := []string{}
 
 	if len(clientIDs) != 0 {
-		queries = append(queries, fmt.Sprintf("magistrala_client IN ('%s')", strings.Join(clientIDs, "','")))
+		var arr pgtype.TextArray
+		if err := arr.Set(clientIDs); err != nil {
+			return "", nil
+		}
+		params = append(params, arr)
+		queries = append(queries, fmt.Sprintf("client_id = ANY($%d)", len(params)))
 	} else if domainID != "" {
 		params = append(params, domainID)
 		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
@@ -529,8 +549,8 @@ func insertChannels(domainID string, channels []bootstrap.Channel, tx *sqlx.Tx) 
 		}
 		chans = append(chans, dbch)
 	}
-	q := `INSERT INTO channels (magistrala_channel, domain_id, name, metadata, parent_id, description, created_at, updated_at, updated_by, status)
-		  VALUES (:magistrala_channel, :domain_id, :name, :metadata, :parent_id, :description, :created_at, :updated_at, :updated_by, :status)`
+	q := `INSERT INTO channels (id, domain_id, name, metadata, parent_group_id, description, created_at, updated_at, updated_by, status)
+		  VALUES (:id, :domain_id, :name, :metadata, :parent_group_id, :description, :created_at, :updated_at, :updated_by, :status)`
 	if _, err := tx.NamedExec(q, chans); err != nil {
 		e := err
 		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
@@ -546,9 +566,9 @@ func insertConnections(_ context.Context, cfg bootstrap.Config, connections []st
 	if len(connections) == 0 {
 		return nil
 	}
-
-	q := `INSERT INTO connections (config_id, channel_id, domain_id)
-      VALUES (:config_id, :channel_id, :domain_id)`
+	q := `INSERT INTO config_channels (config_id, channel_id, domain_id)
+      VALUES (:config_id, :channel_id, :domain_id)
+	  ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`
 
 	conns := []dbConnection{}
 	for _, conn := range connections {
@@ -566,12 +586,12 @@ func insertConnections(_ context.Context, cfg bootstrap.Config, connections []st
 
 func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) error {
 	if len(connections) == 0 {
-		return nil
+		_, err := tx.Exec(`DELETE FROM config_channels WHERE config_id = $1 AND domain_id = $2`, id, domainID)
+		return err
 	}
-
-	q := `DELETE FROM connections
-		  WHERE config_id = $1 AND domain_id = $2
-		  AND channel_id NOT IN ($3)`
+	q := `DELETE FROM config_channels
+		WHERE config_id = $1 AND domain_id = $2
+		AND channel_id <> ALL($3)`
 
 	var conn pgtype.TextArray
 	if err := conn.Set(connections); err != nil {
@@ -582,14 +602,11 @@ func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) e
 	if err != nil {
 		return err
 	}
+	_, _ = res.RowsAffected()
 
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	q = `INSERT INTO connections (config_id, channel_id, domain_id)
-		 VALUES (:config_id, :channel_id, :domain_id)`
+	q = `INSERT INTO config_channels (config_id, channel_id, domain_id)
+		 VALUES (:config_id, :channel_id, :domain_id)
+		 ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`
 
 	conns := []dbConnection{}
 	for _, conn := range connections {
@@ -605,13 +622,7 @@ func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) e
 		return err
 	}
 
-	if cnt == 0 {
-		return nil
-	}
-
-	_, err = tx.Exec(cleanupQuery)
-
-	return err
+	return nil
 }
 
 func nullString(s string) sql.NullString {
@@ -638,8 +649,8 @@ func nullTime(t time.Time) sql.NullTime {
 
 type dbConfig struct {
 	DomainID     string          `db:"domain_id"`
-	ClientID     string          `db:"magistrala_client"`
-	ClientSecret string          `db:"magistrala_secret"`
+	ClientID     string          `db:"client_id"`
+	ClientSecret string          `db:"client_secret"`
 	Name         sql.NullString  `db:"name"`
 	ClientCert   sql.NullString  `db:"client_cert"`
 	ClientKey    sql.NullString  `db:"client_key"`
@@ -699,11 +710,11 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 }
 
 type dbChannel struct {
-	ID          string         `db:"magistrala_channel"`
+	ID          string         `db:"id"`
 	Name        sql.NullString `db:"name"`
 	DomainID    sql.NullString `db:"domain_id"`
 	Metadata    string         `db:"metadata"`
-	Parent      sql.NullString `db:"parent_id,omitempty"`
+	Parent      sql.NullString `db:"parent_group_id,omitempty"`
 	Description string         `db:"description,omitempty"`
 	CreatedAt   time.Time      `db:"created_at"`
 	UpdatedAt   sql.NullTime   `db:"updated_at,omitempty"`
@@ -712,13 +723,17 @@ type dbChannel struct {
 }
 
 func toDBChannel(domainID string, ch bootstrap.Channel) (dbChannel, error) {
+	createdAt := ch.CreatedAt
+	if createdAt.IsZero() {
+		createdAt = time.Now().UTC()
+	}
 	dbch := dbChannel{
 		ID:          ch.ID,
 		Name:        nullString(ch.Name),
 		DomainID:    nullString(domainID),
 		Parent:      nullString(ch.Parent),
 		Description: ch.Description,
-		CreatedAt:   ch.CreatedAt,
+		CreatedAt:   createdAt,
 		UpdatedAt:   nullTime(ch.UpdatedAt),
 		UpdatedBy:   nullString(ch.UpdatedBy),
 		Status:      ch.Status,
@@ -740,7 +755,6 @@ func toChannel(dbch dbChannel) (bootstrap.Channel, error) {
 		CreatedAt:   dbch.CreatedAt,
 		Status:      dbch.Status,
 	}
-
 	if dbch.Name.Valid {
 		ch.Name = dbch.Name.String
 	}

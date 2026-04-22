@@ -455,23 +455,23 @@ func TestUpdateConnections(t *testing.T) {
 	ch := channel
 
 	cases := []struct {
-		desc           string
-		config         bootstrap.Config
-		token          string
-		session        smqauthn.Session
-		id             string
-		state          bootstrap.State
-		userID         string
-		domainID       string
+		desc          string
+		config        bootstrap.Config
+		token         string
+		session       smqauthn.Session
+		id            string
+		state         bootstrap.State
+		userID        string
+		domainID      string
 		connections   []string
 		updateErr     error
 		clientErr     error
-		channelErr     error
-		connectErr     error
-		disconnectErr  error
-		retrieveErr    error
-		listErr        error
-		err            error
+		channelErr    error
+		connectErr    error
+		disconnectErr error
+		retrieveErr   error
+		listErr       error
+		err           error
 	}{
 		{
 			desc:        "update connections for config with state Inactive",

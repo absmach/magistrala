@@ -409,25 +409,28 @@ func TestUpdateConnections(t *testing.T) {
 	activeConfig := config
 	activeConfig.State = bootstrap.Active
 
+	activeConfigEmpty := config
+	activeConfigEmpty.State = bootstrap.Active
+	activeConfigEmpty.Channels = []bootstrap.Channel{}
+
 	cases := []struct {
-		desc           string
-		config         bootstrap.Config
-		configID       string
-		id             string
-		domainID       string
-		token          string
-		session        smqauthn.Session
-		connections    []string
-		clientErr      error
-		channelErr     error
-		connectErr     error
-		disconnectErr  error
-		retrieveErr    error
-		listErr        error
-		updateErr      error
-		changeStateErr error
-		err            error
-		event          map[string]any
+		desc          string
+		config        bootstrap.Config
+		configID      string
+		id            string
+		domainID      string
+		token         string
+		session       smqauthn.Session
+		connections   []string
+		clientErr     error
+		channelErr    error
+		connectErr    error
+		disconnectErr error
+		retrieveErr   error
+		listErr       error
+		updateErr     error
+		err           error
+		event         map[string]any
 	}{
 		{
 			desc:        "update connections successfully",
@@ -483,8 +486,8 @@ func TestUpdateConnections(t *testing.T) {
 		},
 		{
 			desc:        "update connections with failed connect",
-			config:      config,
-			configID:    config.ClientID,
+			config:      activeConfigEmpty,
+			configID:    activeConfigEmpty.ClientID,
 			token:       validToken,
 			id:          validID,
 			domainID:    domainID,
@@ -500,7 +503,7 @@ func TestUpdateConnections(t *testing.T) {
 			token:         validToken,
 			id:            validID,
 			domainID:      domainID,
-			connections:   []string{config.Channels[0].ID},
+			connections:   []string{},
 			disconnectErr: bootstrap.ErrClients,
 			err:           bootstrap.ErrClients,
 			event:         nil,
@@ -517,18 +520,6 @@ func TestUpdateConnections(t *testing.T) {
 			err:         svcerr.ErrUpdateEntity,
 			event:       nil,
 		},
-		{
-			desc:           "update connections with failed ChangeState",
-			config:         config,
-			configID:       config.ClientID,
-			token:          validToken,
-			id:             validID,
-			domainID:       domainID,
-			connections:    []string{config.Channels[0].ID},
-			changeStateErr: svcerr.ErrUpdateEntity,
-			err:            svcerr.ErrUpdateEntity,
-			event:          nil,
-		},
 	}
 
 	lastID := "0"
@@ -540,7 +531,6 @@ func TestUpdateConnections(t *testing.T) {
 		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.configID).Return(tc.config, tc.retrieveErr)
 		repoCall1 := tv.boot.On("ListExisting", context.Background(), domainID, mock.Anything, mock.Anything).Return(tc.config.Channels, tc.listErr)
 		repoCall2 := tv.boot.On("UpdateConnections", context.Background(), tc.domainID, tc.configID, mock.Anything, tc.connections).Return(tc.updateErr)
-		repoCall3 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.changeStateErr)
 		err := tv.svc.UpdateConnections(context.Background(), tc.session, tc.token, tc.configID, tc.connections)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -563,7 +553,6 @@ func TestUpdateConnections(t *testing.T) {
 		repoCall.Unset()
 		repoCall1.Unset()
 		repoCall2.Unset()
-		repoCall3.Unset()
 	}
 }
 
@@ -1119,7 +1108,8 @@ func TestChangeState(t *testing.T) {
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
 		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		sdkCall1 := tv.sdk.On("ConnectClients", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
+		sdkCall1 := tv.sdk.On("Connect", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
+		sdkCall2 := tv.sdk.On("Disconnect", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(errors.NewSDKError(tc.connectErr))
 		repoCall1 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
 		err := tv.svc.ChangeState(context.Background(), tc.session, tc.token, tc.id, tc.state)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1138,6 +1128,7 @@ func TestChangeState(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 		sdkCall1.Unset()
+		sdkCall2.Unset()
 		repoCall.Unset()
 		repoCall1.Unset()
 	}

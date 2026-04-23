@@ -193,9 +193,11 @@ func (es *eventHandler) removeDomainMembersHandler(ctx context.Context, data map
 		return errors.Wrap(errRemoveDomainMembersEvent, err)
 	}
 
-	for _, memberID := range memberIDs {
-		if err := es.entityRoleManager.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
-			return errors.Wrap(errRemoveDomainMembersEvent, err)
+	if es.entityRoleManager != nil {
+		for _, memberID := range memberIDs {
+			if err := es.entityRoleManager.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
+				return errors.Wrap(errRemoveDomainMembersEvent, err)
+			}
 		}
 	}
 

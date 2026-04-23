@@ -269,12 +269,6 @@ func main() {
 	ddatabase := pgclient.NewDatabase(db, dbConfig, tracer)
 	drepo := dpostgres.NewRepository(ddatabase)
 
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
-		exitCode = 1
-		return
-	}
-
 	regrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration : %s", err))
@@ -297,6 +291,12 @@ func main() {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
 
+		return
+	}
+
+	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, svc, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
+		exitCode = 1
 		return
 	}
 	subCfg := messaging.SubscriberConfig{

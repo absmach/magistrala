@@ -174,12 +174,46 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			{
 				Id: "domain_7",
 				Up: []string{
-					`UPDATE domains 
+					`UPDATE domains
 					 SET metadata = (COALESCE(metadata, '{}'::jsonb) || COALESCE(metadata->'ui', '{}'::jsonb)) - 'ui'
 					 WHERE metadata ? 'ui' AND jsonb_typeof(metadata->'ui') = 'object'`,
 				},
 				Down: []string{
 					`SELECT 1`,
+				},
+			},
+			{
+				Id: "domain_8",
+				Up: []string{
+					`INSERT INTO domains_role_actions (role_id, action)
+					 SELECT dr.id, a.action
+					 FROM domains_roles dr
+					 CROSS JOIN (VALUES
+						('rule_create'),
+						('rule_read'),
+						('rule_update'),
+						('rule_delete'),
+						('rule_manage_role'),
+						('rule_add_role_users'),
+						('rule_remove_role_users'),
+						('rule_view_role_users')
+					 ) AS a(action)
+					 WHERE dr.name = 'admin'
+					 ON CONFLICT DO NOTHING;`,
+				},
+				Down: []string{
+					`DELETE FROM domains_role_actions
+					 WHERE action IN (
+						'rule_create',
+						'rule_read',
+						'rule_update',
+						'rule_delete',
+						'rule_manage_role',
+						'rule_add_role_users',
+						'rule_remove_role_users',
+						'rule_view_role_users'
+					 )
+					 AND role_id IN (SELECT id FROM domains_roles WHERE name = 'admin');`,
 				},
 			},
 		},

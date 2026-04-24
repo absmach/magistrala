@@ -100,6 +100,10 @@ func (rmm *RoleManagerMetricsMiddleware) ListEntityMembers(ctx context.Context, 
 	return rmm.svc.ListEntityMembers(ctx, session, entityID, pageQuery)
 }
 
+func (rmm *RoleManagerMetricsMiddleware) RemoveMemberFromDomain(ctx context.Context, domainID, memberID string) error {
+	return rmm.svc.RemoveMemberFromDomain(ctx, domainID, memberID)
+}
+
 func (rmm *RoleManagerMetricsMiddleware) RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, members []string) error {
 	return rmm.svc.RemoveEntityMembers(ctx, session, entityID, members)
 }

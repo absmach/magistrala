@@ -231,20 +231,29 @@ func (r ProvisionManageService) RemoveMemberFromDomain(ctx context.Context, doma
 	switch r.entityType {
 	case policies.ClientType,
 		policies.ChannelType,
-		policies.GroupType:
-		role, err := r.repo.RetrieveRoleByDomainMember(ctx, domainID, memberID)
+		policies.GroupType,
+		policies.RulesType,
+		policies.ReportsType:
+		roleIDs, err := r.repo.RetrieveRoleByDomainMember(ctx, domainID, memberID)
 		if err != nil {
 			return errors.Wrap(svcerr.ErrRemoveEntity, err)
 		}
 
-		pr := policies.Policy{
-			ObjectType:  policies.RoleType,
-			Object:      role,
-			SubjectType: policies.UserType,
+		deletePolicies := make([]policies.Policy, 0, len(roleIDs))
+		for _, roleID := range roleIDs {
+			deletePolicies = append(deletePolicies, policies.Policy{
+				Subject:     policies.EncodeDomainUserID(domainID, memberID),
+				SubjectType: policies.UserType,
+				Relation:    policies.MemberRelation,
+				Object:      roleID,
+				ObjectType:  policies.RoleType,
+			})
 		}
 
-		if err := r.policy.DeletePolicyFilter(ctx, pr); err != nil {
-			return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		if len(deletePolicies) > 0 {
+			if err := r.policy.DeletePolicies(ctx, deletePolicies); err != nil {
+				return errors.Wrap(svcerr.ErrDeletePolicies, err)
+			}
 		}
 
 		if err := r.repo.RemoveMemberFromDomain(ctx, domainID, memberID); err != nil {
@@ -660,21 +669,25 @@ func (r ProvisionManageService) ListEntityMembers(ctx context.Context, session a
 func (r ProvisionManageService) RemoveEntityMembers(ctx context.Context, session authn.Session, entityID string, memberIDs []string) error {
 	deletePolicies := []policies.Policy{}
 	for _, memberID := range memberIDs {
-		roleID, err := r.repo.RetrieveRoleByEntityMember(ctx, entityID, memberID)
+		roleIDs, err := r.repo.RetrieveRoleByEntityMember(ctx, entityID, memberID)
 		if err != nil {
 			return errors.Wrap(svcerr.ErrRemoveEntity, err)
 		}
-		deletePolicies = append(deletePolicies, policies.Policy{
-			Subject:     policies.EncodeDomainUserID(session.DomainID, memberID),
-			SubjectType: policies.UserType,
-			Relation:    policies.MemberRelation,
-			ObjectType:  policies.RoleType,
-			Object:      roleID,
-		})
+		for _, roleID := range roleIDs {
+			deletePolicies = append(deletePolicies, policies.Policy{
+				Subject:     policies.EncodeDomainUserID(session.DomainID, memberID),
+				SubjectType: policies.UserType,
+				Relation:    policies.MemberRelation,
+				ObjectType:  policies.RoleType,
+				Object:      roleID,
+			})
+		}
 	}
 
-	if err := r.policy.DeletePolicies(ctx, deletePolicies); err != nil {
-		return errors.Wrap(svcerr.ErrDeletePolicies, err)
+	if len(deletePolicies) > 0 {
+		if err := r.policy.DeletePolicies(ctx, deletePolicies); err != nil {
+			return errors.Wrap(svcerr.ErrDeletePolicies, err)
+		}
 	}
 	if err := r.repo.RemoveEntityMembers(ctx, entityID, memberIDs); err != nil {
 		return err

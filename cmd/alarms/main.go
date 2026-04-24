@@ -158,7 +158,7 @@ func main() {
 	ddatabase := postgres.NewDatabase(db, dbConfig, tracer)
 	drepo := dpostgres.NewRepository(ddatabase)
 
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, nil, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
 		exitCode = 1
 		return

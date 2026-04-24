@@ -1682,22 +1682,24 @@ func (_c *Repository_RetrieveRole_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // RetrieveRoleByDomainMember provides a mock function for the type Repository
-func (_mock *Repository) RetrieveRoleByDomainMember(ctx context.Context, domainID string, memberID string) (string, error) {
+func (_mock *Repository) RetrieveRoleByDomainMember(ctx context.Context, domainID string, memberID string) ([]string, error) {
 	ret := _mock.Called(ctx, domainID, memberID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveRoleByDomainMember")
 	}
 
-	var r0 string
+	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
 		return returnFunc(ctx, domainID, memberID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
 		r0 = returnFunc(ctx, domainID, memberID)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, domainID, memberID)
@@ -1743,33 +1745,35 @@ func (_c *Repository_RetrieveRoleByDomainMember_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *Repository_RetrieveRoleByDomainMember_Call) Return(s string, err error) *Repository_RetrieveRoleByDomainMember_Call {
-	_c.Call.Return(s, err)
+func (_c *Repository_RetrieveRoleByDomainMember_Call) Return(strings []string, err error) *Repository_RetrieveRoleByDomainMember_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *Repository_RetrieveRoleByDomainMember_Call) RunAndReturn(run func(ctx context.Context, domainID string, memberID string) (string, error)) *Repository_RetrieveRoleByDomainMember_Call {
+func (_c *Repository_RetrieveRoleByDomainMember_Call) RunAndReturn(run func(ctx context.Context, domainID string, memberID string) ([]string, error)) *Repository_RetrieveRoleByDomainMember_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RetrieveRoleByEntityMember provides a mock function for the type Repository
-func (_mock *Repository) RetrieveRoleByEntityMember(ctx context.Context, entityID string, memberID string) (string, error) {
+func (_mock *Repository) RetrieveRoleByEntityMember(ctx context.Context, entityID string, memberID string) ([]string, error) {
 	ret := _mock.Called(ctx, entityID, memberID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveRoleByEntityMember")
 	}
 
-	var r0 string
+	var r0 []string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) ([]string, error)); ok {
 		return returnFunc(ctx, entityID, memberID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
 		r0 = returnFunc(ctx, entityID, memberID)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
 		r1 = returnFunc(ctx, entityID, memberID)
@@ -1815,12 +1819,12 @@ func (_c *Repository_RetrieveRoleByEntityMember_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *Repository_RetrieveRoleByEntityMember_Call) Return(s string, err error) *Repository_RetrieveRoleByEntityMember_Call {
-	_c.Call.Return(s, err)
+func (_c *Repository_RetrieveRoleByEntityMember_Call) Return(strings []string, err error) *Repository_RetrieveRoleByEntityMember_Call {
+	_c.Call.Return(strings, err)
 	return _c
 }
 
-func (_c *Repository_RetrieveRoleByEntityMember_Call) RunAndReturn(run func(ctx context.Context, entityID string, memberID string) (string, error)) *Repository_RetrieveRoleByEntityMember_Call {
+func (_c *Repository_RetrieveRoleByEntityMember_Call) RunAndReturn(run func(ctx context.Context, entityID string, memberID string) ([]string, error)) *Repository_RetrieveRoleByEntityMember_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -196,7 +196,21 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 						('rule_manage_role'),
 						('rule_add_role_users'),
 						('rule_remove_role_users'),
-						('rule_view_role_users')
+						('rule_view_role_users'),
+						('alarm_update'),
+						('alarm_read'),
+						('alarm_delete'),
+						('alarm_assign'),
+						('alarm_acknowledge'),
+						('alarm_resolve'),
+						('report_create'),
+						('report_read'),
+						('report_update'),
+						('report_delete'),
+						('report_manage_role'),
+						('report_add_role_users'),
+						('report_remove_role_users'),
+						('report_view_role_users')
 					 ) AS a(action)
 					 WHERE dr.name = 'admin'
 					 ON CONFLICT DO NOTHING;`,
@@ -211,7 +225,21 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 						'rule_manage_role',
 						'rule_add_role_users',
 						'rule_remove_role_users',
-						'rule_view_role_users'
+						'rule_view_role_users',
+						'alarm_update',
+						'alarm_read',
+						'alarm_delete',
+						'alarm_assign',
+						'alarm_acknowledge',
+						'alarm_resolve',
+						'report_create',
+						'report_read',
+						'report_update',
+						'report_delete',
+						'report_manage_role',
+						'report_add_role_users',
+						'report_remove_role_users',
+						'report_view_role_users'
 					 )
 					 AND role_id IN (SELECT id FROM domains_roles WHERE name = 'admin');`,
 				},

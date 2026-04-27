@@ -13,7 +13,7 @@ import (
 	"os"
 	"strings"
 
-	smqlog "github.com/absmach/magistrala/logger"
+	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/policies/spicedb"
@@ -32,9 +32,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const (
-	cmdName = "re_backfill_roles"
-)
+const cmdName = "re_backfill_roles"
 
 var (
 	logLevel            = "info"
@@ -69,15 +67,19 @@ func main() {
 		log.Fatalf("invalid limit %d: limit must be >= 0", limit)
 	}
 
-	logger, err := smqlog.New(os.Stdout, logLevel)
+	logger, err := mglog.New(os.Stdout, logLevel)
 	if err != nil {
 		log.Fatalf("failed to init logger: %s", err)
 	}
 
+	var exitCode int
+	defer mglog.ExitWithError(&exitCode)
+
 	sqlDB, err := pgclient.Connect(dbConfig)
 	if err != nil {
 		logger.Error("failed to connect to postgres", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 	defer sqlDB.Close()
 
@@ -87,7 +89,8 @@ func main() {
 	rulesWithoutRoles, err := listRulesWithoutRoles(ctx, database, limit)
 	if err != nil {
 		logger.Error("failed to list rules without roles", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	logger.Info("loaded rules without roles", "count", len(rulesWithoutRoles), "dry_run", dryRun)
@@ -98,19 +101,22 @@ func main() {
 	availableActions, builtInRoles, err := availableActionsAndBuiltInRoles(spicedbSchemaFile)
 	if err != nil {
 		logger.Error("failed to load built-in role actions", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	adminRoleActions, err := builtInRoleActionStrings(builtInRoles, re.BuiltInRoleAdmin)
 	if err != nil {
 		logger.Error("failed to resolve built-in admin role actions", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	authzedClient, err := newAuthzedClient(spicedbHost, spicedbPort, spicedbPreSharedKey)
 	if err != nil {
 		logger.Error("failed to connect to spicedb", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	if dryRun {
@@ -242,7 +248,8 @@ func main() {
 	)
 	if err != nil {
 		logger.Error("failed to create roles provisioner", "error", err)
-		os.Exit(1)
+		exitCode = 1
+		return
 	}
 
 	var processed, skipped, failed int
@@ -373,7 +380,7 @@ func main() {
 	)
 
 	if failed > 0 {
-		os.Exit(1)
+		exitCode = 1
 	}
 }
 

@@ -33,19 +33,19 @@ import (
 // ---------------------------------------------------------------------------
 
 var (
-	// Domains database
+	// Domains database.
 	domainsDB = dbConfig{host: "localhost", port: "6003", user: "magistrala", pass: "magistrala", name: "domains"}
 
-	// RE (rules engine) database
+	// RE (rules engine) database.
 	reDB = dbConfig{host: "localhost", port: "6009", user: "magistrala", pass: "magistrala", name: "rules_engine"}
 
-	// Reports database
+	// Reports database.
 	reportsDB = dbConfig{host: "localhost", port: "6020", user: "magistrala", pass: "magistrala", name: "reports"}
 
-	// Alarms database
+	// Alarms database.
 	alarmsDB = dbConfig{host: "localhost", port: "6019", user: "magistrala", pass: "magistrala", name: "alarms"}
 
-	// SpiceDB
+	// SpiceDB.
 	spicedbHost         = "localhost"
 	spicedbPort         = "50051"
 	spicedbPreSharedKey = "12345678"
@@ -67,32 +67,32 @@ const (
 	user1ID = "u0000000-0000-0000-0000-000000000001"
 	user2ID = "u0000000-0000-0000-0000-000000000002"
 
-	// Domain role (admin)
+	// Domain role (admin).
 	domainRoleID   = "dr000000-0000-0000-0000-000000000001"
 	domainRoleName = "admin"
 
-	// Rules — orphans (no rules_roles entry)
+	// Rules — orphans (no rules_roles entry).
 	rule1ID = "r0000000-0000-0000-0000-000000000001" // created_by=user1 (domain member)  → backfill should assign member
 	rule2ID = "r0000000-0000-0000-0000-000000000002" // created_by=user2 (NOT member)     → backfill should provision role without member
 	rule3ID = "r0000000-0000-0000-0000-000000000003" // created_by=user1, SpiceDB parent already exists → test policyExists
 	rule4ID = "r0000000-0000-0000-0000-000000000004" // created_by=NULL                   → should be skipped
 	rule5ID = "r0000000-0000-0000-0000-000000000005" // empty domain_id                   → should be skipped
 
-	// Rule with pre-existing role — should NOT appear in orphan list
+	// Rule with pre-existing role — should NOT appear in orphan list.
 	rule6ID     = "r0000000-0000-0000-0000-000000000006"
 	rule6RoleID = "rr000000-0000-0000-0000-000000000006"
 
-	// Reports — orphans (no reports_roles entry)
+	// Reports — orphans (no reports_roles entry).
 	report1ID = "rp000000-0000-0000-0000-000000000001" // created_by=user1 (domain member)
 	report2ID = "rp000000-0000-0000-0000-000000000002" // created_by=user2 (NOT member)
 	report3ID = "rp000000-0000-0000-0000-000000000003" // created_by=user1, SpiceDB parent already exists
 	report4ID = "rp000000-0000-0000-0000-000000000004" // created_by=NULL → skipped
 
-	// Report with pre-existing role
+	// Report with pre-existing role.
 	report5ID     = "rp000000-0000-0000-0000-000000000005"
 	report5RoleID = "rpr00000-0000-0000-0000-000000000005"
 
-	// Alarms (live in alarms DB)
+	// Alarms (live in alarms DB).
 	alarm1ID = "a0000000-0000-0000-0000-000000000001"
 	alarm2ID = "a0000000-0000-0000-0000-000000000002"
 )
@@ -399,10 +399,11 @@ func mustConnect(cfg dbConfig) *sql.DB {
 		log.Fatalf("failed to open %s: %v", cfg.name, err)
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
 	if err := db.PingContext(ctx); err != nil {
+		cancel()
 		log.Fatalf("failed to ping %s at %s:%s: %v", cfg.name, cfg.host, cfg.port, err)
 	}
+	cancel()
 	return db
 }
 
@@ -415,7 +416,7 @@ func mustExec(ctx context.Context, db *sql.DB, query string, args ...any) {
 func strPtr(s string) *string { return &s }
 
 func printSummary() {
-	fmt.Println(`
+	fmt.Print(`
 === SEED DATA SUMMARY ===
 
 Domain:  ` + domainID + ` ("` + domainName + `")

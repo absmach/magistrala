@@ -47,7 +47,7 @@ var (
 		Host:    "localhost",
 		Port:    "15432",
 		User:    "postgres",
-		Pass:    "supermq",
+		Pass:    "magistrala",
 		Name:    "rules_engine",
 		SSLMode: "disable",
 	}

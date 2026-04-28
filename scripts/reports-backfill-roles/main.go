@@ -44,11 +44,11 @@ var (
 	spicedbHost         = "localhost"
 	spicedbPort         = "50051"
 	spicedbPreSharedKey = "12345678"
-	spicedbSchemaFile   = "docker/spicedb/combined-schema.zed"
+	spicedbSchemaFile   = "docker/spicedb/schema.zed"
 	dbConfig            = pgclient.Config{
 		Host:    "localhost",
-		Port:    "15432",
-		User:    "postgres",
+		Port:    "6020",
+		User:    "magistrala",
 		Pass:    "magistrala",
 		Name:    "reports",
 		SSLMode: "disable",

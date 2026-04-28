@@ -183,83 +183,65 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				},
 			},
 			{
-				Id: "domain_8",
+				Id: "domains_roles_4",
 				Up: []string{
-					`DO $$
-					 BEGIN
-					   IF EXISTS (
-					     SELECT 1 FROM information_schema.tables
-					     WHERE table_schema = current_schema()
-					     AND table_name = 'domains_role_actions'
-					   ) THEN
-					     INSERT INTO domains_role_actions (role_id, action)
-					     SELECT dr.id, a.action
-					     FROM domains_roles dr
-					     CROSS JOIN (VALUES
-					       ('rule_create'),
-					       ('rule_read'),
-					       ('rule_update'),
-					       ('rule_delete'),
-					       ('rule_manage_role'),
-					       ('rule_add_role_users'),
-					       ('rule_remove_role_users'),
-					       ('rule_view_role_users'),
-					       ('alarm_update'),
-					       ('alarm_read'),
-					       ('alarm_delete'),
-					       ('alarm_assign'),
-					       ('alarm_acknowledge'),
-					       ('alarm_resolve'),
-					       ('report_create'),
-					       ('report_read'),
-					       ('report_update'),
-					       ('report_delete'),
-					       ('report_manage_role'),
-					       ('report_add_role_users'),
-					       ('report_remove_role_users'),
-					       ('report_view_role_users')
-					     ) AS a(action)
-					     WHERE dr.name = 'admin'
-					     ON CONFLICT DO NOTHING;
-					   END IF;
-					 END $$;`,
+					`INSERT INTO domains_role_actions (role_id, action)
+					 SELECT dr.id, a.action
+					 FROM domains_roles dr
+					 CROSS JOIN (VALUES
+						('rule_create'),
+						('rule_read'),
+						('rule_update'),
+						('rule_delete'),
+						('rule_manage_role'),
+						('rule_add_role_users'),
+						('rule_remove_role_users'),
+						('rule_view_role_users'),
+						('alarm_update'),
+						('alarm_read'),
+						('alarm_delete'),
+						('alarm_assign'),
+						('alarm_acknowledge'),
+						('alarm_resolve'),
+						('report_create'),
+						('report_read'),
+						('report_update'),
+						('report_delete'),
+						('report_manage_role'),
+						('report_add_role_users'),
+						('report_remove_role_users'),
+						('report_view_role_users')
+					 ) AS a(action)
+					 WHERE dr.name = 'admin'
+					 ON CONFLICT DO NOTHING;`,
 				},
 				Down: []string{
-					`DO $$
-					 BEGIN
-					   IF EXISTS (
-					     SELECT 1 FROM information_schema.tables
-					     WHERE table_schema = current_schema()
-					     AND table_name = 'domains_role_actions'
-					   ) THEN
-					     DELETE FROM domains_role_actions
-					     WHERE action IN (
-					       'rule_create',
-					       'rule_read',
-					       'rule_update',
-					       'rule_delete',
-					       'rule_manage_role',
-					       'rule_add_role_users',
-					       'rule_remove_role_users',
-					       'rule_view_role_users',
-					       'alarm_update',
-					       'alarm_read',
-					       'alarm_delete',
-					       'alarm_assign',
-					       'alarm_acknowledge',
-					       'alarm_resolve',
-					       'report_create',
-					       'report_read',
-					       'report_update',
-					       'report_delete',
-					       'report_manage_role',
-					       'report_add_role_users',
-					       'report_remove_role_users',
-					       'report_view_role_users'
-					     )
-					     AND role_id IN (SELECT id FROM domains_roles WHERE name = 'admin');
-					   END IF;
-					 END $$;`,
+					`DELETE FROM domains_role_actions
+					 WHERE action IN (
+						'rule_create',
+						'rule_read',
+						'rule_update',
+						'rule_delete',
+						'rule_manage_role',
+						'rule_add_role_users',
+						'rule_remove_role_users',
+						'rule_view_role_users',
+						'alarm_update',
+						'alarm_read',
+						'alarm_delete',
+						'alarm_assign',
+						'alarm_acknowledge',
+						'alarm_resolve',
+						'report_create',
+						'report_read',
+						'report_update',
+						'report_delete',
+						'report_manage_role',
+						'report_add_role_users',
+						'report_remove_role_users',
+						'report_view_role_users'
+					 )
+					 AND role_id IN (SELECT id FROM domains_roles WHERE name = 'admin');`,
 				},
 			},
 		},

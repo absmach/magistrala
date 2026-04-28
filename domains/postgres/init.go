@@ -183,7 +183,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				},
 			},
 			{
-				Id: "domain_8",
+				Id: "domains_roles_4",
 				Up: []string{
 					`INSERT INTO domains_role_actions (role_id, action)
 					 SELECT dr.id, a.action

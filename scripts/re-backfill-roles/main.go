@@ -406,7 +406,6 @@ func listRulesWithoutRoles(ctx context.Context, db pgclient.Database, limit int)
 
 	rows, err := db.NamedQueryContext(ctx, query, params)
 	if err != nil {
-		fmt.Println("got here", err)
 		return nil, errors.Wrap(fmt.Errorf("failed to query rules without roles"), err)
 	}
 	defer rows.Close()

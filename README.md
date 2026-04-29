@@ -151,6 +151,54 @@ make run_latest
 
 ---
 
+## Upgrade from v0.19.0 to v0.20.0
+
+Before upgrading, back up the Domains, Rules Engine, Reports, Alarms, Auth, and SpiceDB databases.
+
+v0.20.0 adds new domain admin actions for alarms and reports, and it requires existing rules and reports to have their built-in admin roles backfilled. The service database migrations run when the v0.20.0 services start, then the role backfill scripts must be run once.
+
+For the default Docker Compose setup:
+
+```bash
+cd docker
+
+docker compose up -d \
+  spicedb-db spicedb-migrate spicedb \
+  auth-db auth \
+  domains-db domains \
+  re-db re \
+  reports-db reports \
+  alarms-db alarms
+```
+
+Wait until the services are running. The `auth` service must start successfully because it loads the SpiceDB schema.
+
+From the repository root, run the backfills:
+
+```bash
+go run ./scripts/re-backfill-roles/
+go run ./scripts/reports-backfill-roles/
+```
+
+The scripts are idempotent. If they are interrupted, fix the issue and run them again.
+
+Expected successful summaries:
+
+```text
+backfill finished processed=<number> skipped=<number> failed=0
+```
+
+After the backfills finish, verify that the services are still running:
+
+```bash
+cd docker
+docker compose ps re reports alarms domains auth spicedb
+```
+
+For non-default deployments, make sure the database and SpiceDB connection settings used by the backfill scripts match your environment before running them.
+
+---
+
 ## Usage
 
 ```bash

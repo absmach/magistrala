@@ -137,12 +137,16 @@ alarm:
     - view: alarm_read_permission
     - update: alarm_update_permission
     - delete: alarm_delete_permission
+    - assign: alarm_assign_permission
+    - acknowledge: alarm_acknowledge_permission
+    - resolve: alarm_resolve_permission
     - alarm_assign: alarm_assign_permission
     - alarm_acknowledge: alarm_acknowledge_permission
     - alarm_resolve: alarm_resolve_permission
 
 rule:
   operations:
+    - add: rule_create_permission
     - create: rule_create_permission
     - list: rule_read_permission
     - view: read_permission
@@ -174,6 +178,7 @@ rule:
 
 report:
   operations:
+    - add: report_create_permission
     - create: report_create_permission
     - list: report_read_permission
     - generate: report_read_permission

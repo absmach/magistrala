@@ -287,3 +287,161 @@ func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		return stateRes{}, nil
 	}
 }
+
+func createProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(createProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		saved, err := svc.CreateProfile(ctx, session, req.Profile)
+		if err != nil {
+			return nil, err
+		}
+		return profileRes{Profile: saved, created: true}, nil
+	}
+}
+
+func viewProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(viewProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		p, err := svc.ViewProfile(ctx, session, req.profileID)
+		if err != nil {
+			return nil, err
+		}
+		return profileRes{Profile: p}, nil
+	}
+}
+
+func updateProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(updateProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		req.Profile.ID = req.profileID
+		if err := svc.UpdateProfile(ctx, session, req.Profile); err != nil {
+			return nil, err
+		}
+		return profileRes{Profile: req.Profile}, nil
+	}
+}
+
+func deleteProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deleteProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		if err := svc.DeleteProfile(ctx, session, req.profileID); err != nil {
+			return nil, err
+		}
+		return removeRes{}, nil
+	}
+}
+
+func listProfilesEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(listProfilesReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		page, err := svc.ListProfiles(ctx, session, req.offset, req.limit)
+		if err != nil {
+			return nil, err
+		}
+		return profilesPageRes{ProfilesPage: page}, nil
+	}
+}
+
+func assignProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(assignProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		if err := svc.AssignProfile(ctx, session, req.configID, req.ProfileID); err != nil {
+			return nil, err
+		}
+		return removeRes{}, nil
+	}
+}
+
+func bindResourcesEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(bindResourcesReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		if err := svc.BindResources(ctx, session, req.token, req.configID, req.Bindings); err != nil {
+			return nil, err
+		}
+		return removeRes{}, nil
+	}
+}
+
+func listBindingsEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(listBindingsReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		snapshots, err := svc.ListBindings(ctx, session, req.configID)
+		if err != nil {
+			return nil, err
+		}
+		return bindingsRes{Bindings: snapshots}, nil
+	}
+}
+
+func refreshBindingsEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(refreshBindingsReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		if err := svc.RefreshBindings(ctx, session, req.token, req.configID); err != nil {
+			return nil, err
+		}
+		return removeRes{}, nil
+	}
+}

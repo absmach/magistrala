@@ -100,6 +100,69 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 			decodeStateRequest,
 			api.EncodeResponse,
 			opts...), "update_state").ServeHTTP)
+
+		// Profile and enrollment binding endpoints.
+		r.Route("/bootstrap", func(r chi.Router) {
+			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
+
+			r.Route("/profiles", func(r chi.Router) {
+				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
+					createProfileEndpoint(svc),
+					decodeCreateProfileRequest,
+					api.EncodeResponse,
+					opts...), "create_profile").ServeHTTP)
+
+				r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
+					listProfilesEndpoint(svc),
+					decodeListProfilesRequest,
+					api.EncodeResponse,
+					opts...), "list_profiles").ServeHTTP)
+
+				r.Get("/{profileID}", otelhttp.NewHandler(kithttp.NewServer(
+					viewProfileEndpoint(svc),
+					decodeProfileEntityRequest,
+					api.EncodeResponse,
+					opts...), "view_profile").ServeHTTP)
+
+				r.Patch("/{profileID}", otelhttp.NewHandler(kithttp.NewServer(
+					updateProfileEndpoint(svc),
+					decodeUpdateProfileRequest,
+					api.EncodeResponse,
+					opts...), "update_profile").ServeHTTP)
+
+				r.Delete("/{profileID}", otelhttp.NewHandler(kithttp.NewServer(
+					deleteProfileEndpoint(svc),
+					decodeDeleteProfileRequest,
+					api.EncodeResponse,
+					opts...), "delete_profile").ServeHTTP)
+			})
+
+			r.Route("/enrollments", func(r chi.Router) {
+				r.Patch("/{configID}/profile", otelhttp.NewHandler(kithttp.NewServer(
+					assignProfileEndpoint(svc),
+					decodeAssignProfileRequest,
+					api.EncodeResponse,
+					opts...), "assign_profile").ServeHTTP)
+
+				r.Put("/{configID}/bindings", otelhttp.NewHandler(kithttp.NewServer(
+					bindResourcesEndpoint(svc),
+					decodeBindResourcesRequest,
+					api.EncodeResponse,
+					opts...), "bind_resources").ServeHTTP)
+
+				r.Get("/{configID}/bindings", otelhttp.NewHandler(kithttp.NewServer(
+					listBindingsEndpoint(svc),
+					decodeEnrollmentEntityRequest,
+					api.EncodeResponse,
+					opts...), "list_bindings").ServeHTTP)
+
+				r.Post("/{configID}/bindings/refresh", otelhttp.NewHandler(kithttp.NewServer(
+					refreshBindingsEndpoint(svc),
+					decodeRefreshBindingsRequest,
+					api.EncodeResponse,
+					opts...), "refresh_bindings").ServeHTTP)
+			})
+		})
 	})
 
 	r.Route("/clients/bootstrap", func(r chi.Router) {
@@ -280,4 +343,82 @@ func contains(l []string, s string) bool {
 		}
 	}
 	return false
+}
+
+func decodeCreateProfileRequest(_ context.Context, r *http.Request) (any, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, apiutil.ErrUnsupportedContentType
+	}
+	var req createProfileReq
+	if err := json.NewDecoder(r.Body).Decode(&req.Profile); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
+	}
+	return req, nil
+}
+
+func decodeListProfilesRequest(_ context.Context, r *http.Request) (any, error) {
+	o, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	l, err := apiutil.ReadNumQuery[uint64](r, limitKey, defLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return listProfilesReq{offset: o, limit: l}, nil
+}
+
+func decodeProfileEntityRequest(_ context.Context, r *http.Request) (any, error) {
+	return viewProfileReq{profileID: chi.URLParam(r, "profileID")}, nil
+}
+
+func decodeDeleteProfileRequest(_ context.Context, r *http.Request) (any, error) {
+	return deleteProfileReq{profileID: chi.URLParam(r, "profileID")}, nil
+}
+
+func decodeUpdateProfileRequest(_ context.Context, r *http.Request) (any, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, apiutil.ErrUnsupportedContentType
+	}
+	req := updateProfileReq{profileID: chi.URLParam(r, "profileID")}
+	if err := json.NewDecoder(r.Body).Decode(&req.Profile); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
+	}
+	return req, nil
+}
+
+func decodeAssignProfileRequest(_ context.Context, r *http.Request) (any, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, apiutil.ErrUnsupportedContentType
+	}
+	req := assignProfileReq{configID: chi.URLParam(r, "configID")}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
+	}
+	return req, nil
+}
+
+func decodeBindResourcesRequest(_ context.Context, r *http.Request) (any, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, apiutil.ErrUnsupportedContentType
+	}
+	req := bindResourcesReq{
+		token:    apiutil.ExtractBearerToken(r),
+		configID: chi.URLParam(r, "configID"),
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
+	}
+	return req, nil
+}
+
+func decodeEnrollmentEntityRequest(_ context.Context, r *http.Request) (any, error) {
+	return listBindingsReq{configID: chi.URLParam(r, "configID")}, nil
+}
+
+func decodeRefreshBindingsRequest(_ context.Context, r *http.Request) (any, error) {
+	return refreshBindingsReq{
+		token:    apiutil.ExtractBearerToken(r),
+		configID: chi.URLParam(r, "configID"),
+	}, nil
 }

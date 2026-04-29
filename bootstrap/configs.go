@@ -26,8 +26,10 @@ type Config struct {
 	Channels     []Channel `json:"channels,omitempty"`
 	ExternalID   string    `json:"external_id"`
 	ExternalKey  string    `json:"external_key"`
-	Content      string    `json:"content,omitempty"`
-	State        State     `json:"state"`
+	Content      string         `json:"content,omitempty"`
+	State        State          `json:"state"`
+	ProfileID    string         `json:"profile_id,omitempty"`
+	RenderContext map[string]any `json:"render_context,omitempty"`
 }
 
 // Channel represents Magistrala channel corresponding Magistrala Client is connected to.

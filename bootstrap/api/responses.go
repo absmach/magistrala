@@ -142,3 +142,45 @@ func (res updateConfigRes) Headers() map[string]string {
 func (res updateConfigRes) Empty() bool {
 	return false
 }
+
+// profileRes is returned on create (201) or update (200).
+type profileRes struct {
+	bootstrap.Profile
+	created bool
+}
+
+func (res profileRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+	return http.StatusOK
+}
+
+func (res profileRes) Headers() map[string]string {
+	if res.created {
+		return map[string]string{
+			"Location": fmt.Sprintf("/bootstrap/profiles/%s", res.ID),
+		}
+	}
+	return map[string]string{}
+}
+
+func (res profileRes) Empty() bool { return false }
+
+// profilesPageRes is returned by ListProfiles.
+type profilesPageRes struct {
+	bootstrap.ProfilesPage
+}
+
+func (res profilesPageRes) Code() int                 { return http.StatusOK }
+func (res profilesPageRes) Headers() map[string]string { return map[string]string{} }
+func (res profilesPageRes) Empty() bool                { return false }
+
+// bindingsRes is returned by ListBindings.
+type bindingsRes struct {
+	Bindings []bootstrap.BindingSnapshot `json:"bindings"`
+}
+
+func (res bindingsRes) Code() int                 { return http.StatusOK }
+func (res bindingsRes) Headers() map[string]string { return map[string]string{} }
+func (res bindingsRes) Empty() bool                { return false }

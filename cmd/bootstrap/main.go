@@ -20,16 +20,11 @@ import (
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
-	channelspg "github.com/absmach/magistrala/channels/postgres"
-	clientspg "github.com/absmach/magistrala/clients/postgres"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	bootconsumer "github.com/absmach/magistrala/pkg/bootstrap/events/consumer"
-	chconsumer "github.com/absmach/magistrala/pkg/channels/events/consumer"
-	cliconsumer "github.com/absmach/magistrala/pkg/clients/events/consumer"
 	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
@@ -191,11 +186,6 @@ func main() {
 		exitCode = 1
 		return
 	}
-	if err = subscribeToEventStore(ctx, svc, database, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to event store: %s", err))
-		exitCode = 1
-		return
-	}
 
 	logger.Info("Subscribed to Event Store")
 
@@ -251,24 +241,6 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	svc = tracing.New(svc, tracer)
 
 	return svc, nil
-}
-
-func subscribeToEventStore(ctx context.Context, svc bootstrap.Service, database pgclient.Database, cfg config, logger *slog.Logger) error {
-	if err := bootconsumer.BootstrapEventsSubscribe(ctx, svc, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		return err
-	}
-
-	clientsRepo := clientspg.NewRepository(database)
-	if err := cliconsumer.ClientsEventsSubscribe(ctx, clientsRepo, cfg.ESURL, cfg.ESConsumerName+"-clients", logger); err != nil {
-		return err
-	}
-
-	channelsRepo := channelspg.NewRepository(database)
-	if err := chconsumer.ChannelsEventsSubscribe(ctx, channelsRepo, cfg.ESURL, cfg.ESConsumerName+"-channels", logger); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {

@@ -135,6 +135,69 @@ func (am *authorizationMiddleware) DisconnectClientHandler(ctx context.Context, 
 	return am.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
 
+func (am *authorizationMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, createOperation, auth.AnyIDs); err != nil {
+		return bootstrap.Profile{}, err
+	}
+	return am.svc.CreateProfile(ctx, session, p)
+}
+
+func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, viewOperation, auth.AnyIDs); err != nil {
+		return bootstrap.Profile{}, err
+	}
+	return am.svc.ViewProfile(ctx, session, profileID)
+}
+
+func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, auth.AnyIDs); err != nil {
+		return err
+	}
+	return am.svc.UpdateProfile(ctx, session, p)
+}
+
+func (am *authorizationMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, listOperation, auth.AnyIDs); err != nil {
+		return bootstrap.ProfilesPage{}, err
+	}
+	return am.svc.ListProfiles(ctx, session, offset, limit)
+}
+
+func (am *authorizationMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, removeOperation, auth.AnyIDs); err != nil {
+		return err
+	}
+	return am.svc.DeleteProfile(ctx, session, profileID)
+}
+
+func (am *authorizationMiddleware) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, configID, updateOperation, configID); err != nil {
+		return err
+	}
+	return am.svc.AssignProfile(ctx, session, configID, profileID)
+}
+
+func (am *authorizationMiddleware) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, configID, updateOperation, configID); err != nil {
+		return err
+	}
+	return am.svc.BindResources(ctx, session, token, configID, bindings)
+}
+
+func (am *authorizationMiddleware) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, readPermission, policies.ClientType, configID, viewOperation, configID); err != nil {
+		return nil, err
+	}
+	return am.svc.ListBindings(ctx, session, configID)
+}
+
+func (am *authorizationMiddleware) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, configID, updateOperation, configID); err != nil {
+		return err
+	}
+	return am.svc.RefreshBindings(ctx, session, token, configID)
+}
+
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session smqauthn.Session) error {
 	if session.Role != smqauthn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction

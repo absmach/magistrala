@@ -4,10 +4,6 @@
 package postgres
 
 import (
-	channelspg "github.com/absmach/magistrala/channels/postgres"
-	clientspg "github.com/absmach/magistrala/clients/postgres"
-	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	migrate "github.com/rubenv/sql-migrate"
 )
 
@@ -229,15 +225,6 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			{
 				Id: "configs_8",
 				Up: []string{
-					`SELECT 1`,
-				},
-				Down: []string{
-					`SELECT 1`,
-				},
-			},
-			{
-				Id: "configs_9",
-				Up: []string{
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_client TEXT`,
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS magistrala_secret TEXT`,
 					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS mainflux_client TEXT`,
@@ -269,7 +256,7 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 				},
 			},
 			{
-				Id: "configs_10",
+				Id: "configs_9",
 				Up: []string{
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_id VARCHAR(36)`,
 					`ALTER TABLE IF EXISTS channels ADD COLUMN IF NOT EXISTS parent_group_id VARCHAR(36)`,
@@ -282,37 +269,60 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 					`UPDATE channels SET parent_id = parent_group_id WHERE parent_id IS NULL AND parent_group_id IS NOT NULL`,
 				},
 			},
+			{
+				Id: "configs_10",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS profiles (
+						id               VARCHAR(36) PRIMARY KEY,
+						domain_id        VARCHAR(36) NOT NULL,
+						name             VARCHAR(1024) NOT NULL,
+						description      TEXT,
+						template_format  VARCHAR(64) NOT NULL DEFAULT 'go-template',
+						content_template TEXT,
+						defaults         JSONB,
+						version          INT NOT NULL DEFAULT 1,
+						created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+						updated_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+						UNIQUE (domain_id, name)
+					)`,
+					`CREATE INDEX IF NOT EXISTS idx_profiles_domain_id ON profiles (domain_id)`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS profiles`,
+				},
+			},
+			{
+				Id: "configs_11",
+				Up: []string{
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS profile_id VARCHAR(36) REFERENCES profiles (id) ON DELETE SET NULL`,
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS render_context JSONB`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS render_context`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS profile_id`,
+				},
+			},
+			{
+				Id: "configs_12",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS binding_snapshots (
+						config_id       TEXT NOT NULL,
+						slot            VARCHAR(256) NOT NULL,
+						type            VARCHAR(64) NOT NULL,
+						resource_id     TEXT NOT NULL,
+						snapshot        JSONB,
+						secret_snapshot BYTEA,
+						updated_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+						PRIMARY KEY (config_id, slot)
+					)`,
+					`CREATE INDEX IF NOT EXISTS idx_binding_snapshots_config_id ON binding_snapshots (config_id)`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS binding_snapshots`,
+				},
+			},
 		},
 	}
-
-	channelsMigration, err := channelspg.Migration()
-	if err != nil {
-		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
-	}
-
-	seen := make(map[string]struct{}, len(bootstrapMigration.Migrations))
-	for _, migration := range bootstrapMigration.Migrations {
-		seen[migration.Id] = struct{}{}
-	}
-
-	appendMigrations := func(migrations []*migrate.Migration) {
-		for _, migration := range migrations {
-			if _, ok := seen[migration.Id]; ok {
-				continue
-			}
-			seen[migration.Id] = struct{}{}
-			bootstrapMigration.Migrations = append(bootstrapMigration.Migrations, migration)
-		}
-	}
-
-	appendMigrations(channelsMigration.Migrations)
-
-	clientsMigration, err := clientspg.Migration()
-	if err != nil {
-		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
-	}
-
-	appendMigrations(clientsMigration.Migrations)
 
 	return bootstrapMigration, nil
 }

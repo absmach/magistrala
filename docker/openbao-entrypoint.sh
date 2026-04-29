@@ -27,6 +27,33 @@ EOF
 
 export BAO_ADDR=http://127.0.0.1:8200
 
+wait_for_bao() {
+  local retries=30
+  while [ "$retries" -gt 0 ]; do
+    local code=0
+    bao status -format=json >/dev/null 2>&1 || code=$?
+    # exit 0 = unsealed, exit 2 = sealed — both mean the server is up and responding
+    if [ "$code" -eq 0 ] || [ "$code" -eq 2 ]; then
+      return 0
+    fi
+    retries=$((retries - 1))
+    sleep 2
+  done
+  echo "ERROR: OpenBao server did not become ready in time" >&2
+  exit 1
+}
+
+unseal_bao() {
+  local key1="$1" key2="$2" key3="$3"
+  if [ -z "$key1" ] || [ -z "$key2" ] || [ -z "$key3" ]; then
+    echo "ERROR: One or more unseal keys are empty — cannot unseal" >&2
+    exit 1
+  fi
+  bao operator unseal "$key1"
+  bao operator unseal "$key2"
+  bao operator unseal "$key3"
+}
+
 create_pki_policy() {
   cat > /opt/openbao/config/pki-policy.hcl << EOF
 path "pki_int/issue/${MG_CERTS_OPENBAO_PKI_ROLE}" {
@@ -92,12 +119,10 @@ if [ -n "$MG_CERTS_OPENBAO_UNSEAL_KEY_1" ] && [ -n "$MG_CERTS_OPENBAO_UNSEAL_KEY
   echo "Using pre-configured unseal keys and root token..."
   bao server -config=/opt/openbao/config/config.hcl > /opt/openbao/logs/server.log 2>&1 &
   BAO_PID=$!
-  sleep 5
-  
-  bao operator unseal "$MG_CERTS_OPENBAO_UNSEAL_KEY_1"
-  bao operator unseal "$MG_CERTS_OPENBAO_UNSEAL_KEY_2"
-  bao operator unseal "$MG_CERTS_OPENBAO_UNSEAL_KEY_3"
-  
+  wait_for_bao
+
+  unseal_bao "$MG_CERTS_OPENBAO_UNSEAL_KEY_1" "$MG_CERTS_OPENBAO_UNSEAL_KEY_2" "$MG_CERTS_OPENBAO_UNSEAL_KEY_3"
+
   export BAO_TOKEN=$MG_CERTS_OPENBAO_ROOT_TOKEN
 else
   # Initialize OpenBao if not already done
@@ -105,21 +130,18 @@ else
     echo "Initializing OpenBao for the first time..."
     bao server -config=/opt/openbao/config/config.hcl > /opt/openbao/logs/server.log 2>&1 &
     BAO_PID=$!
-    sleep 5
+    wait_for_bao
 
     # Initialize with 5 key shares and threshold of 3
     bao operator init -key-shares=5 -key-threshold=3 -format=json > /opt/openbao/data/init.json
 
     # Extract unseal keys and root token
-    UNSEAL_KEY_1=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[0]')
-    UNSEAL_KEY_2=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[1]')
-    UNSEAL_KEY_3=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[2]')
-    ROOT_TOKEN=$(cat /opt/openbao/data/init.json | jq -r '.root_token')
+    UNSEAL_KEY_1=$(jq -r '.unseal_keys_b64[0]' /opt/openbao/data/init.json)
+    UNSEAL_KEY_2=$(jq -r '.unseal_keys_b64[1]' /opt/openbao/data/init.json)
+    UNSEAL_KEY_3=$(jq -r '.unseal_keys_b64[2]' /opt/openbao/data/init.json)
+    ROOT_TOKEN=$(jq -r '.root_token' /opt/openbao/data/init.json)
 
-    # Unseal OpenBao
-    bao operator unseal "$UNSEAL_KEY_1"
-    bao operator unseal "$UNSEAL_KEY_2"
-    bao operator unseal "$UNSEAL_KEY_3"
+    unseal_bao "$UNSEAL_KEY_1" "$UNSEAL_KEY_2" "$UNSEAL_KEY_3"
 
     export BAO_TOKEN=$ROOT_TOKEN
     echo "OpenBao initialized successfully!"
@@ -127,24 +149,22 @@ else
     echo "OpenBao already initialized, starting server..."
     bao server -config=/opt/openbao/config/config.hcl > /opt/openbao/logs/server.log 2>&1 &
     BAO_PID=$!
-    sleep 5
+    wait_for_bao
 
     # Check if OpenBao is sealed and unseal if necessary
-    if bao status -format=json | jq -e '.sealed == true' >/dev/null; then
+    if bao status -format=json | jq -e '.sealed == true' >/dev/null 2>&1; then
       echo "OpenBao is sealed, unsealing..."
-      UNSEAL_KEY_1=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[0]')
-      UNSEAL_KEY_2=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[1]')
-      UNSEAL_KEY_3=$(cat /opt/openbao/data/init.json | jq -r '.unseal_keys_b64[2]')
+      UNSEAL_KEY_1=$(jq -r '.unseal_keys_b64[0]' /opt/openbao/data/init.json)
+      UNSEAL_KEY_2=$(jq -r '.unseal_keys_b64[1]' /opt/openbao/data/init.json)
+      UNSEAL_KEY_3=$(jq -r '.unseal_keys_b64[2]' /opt/openbao/data/init.json)
 
-      bao operator unseal "$UNSEAL_KEY_1"
-      bao operator unseal "$UNSEAL_KEY_2"
-      bao operator unseal "$UNSEAL_KEY_3"
+      unseal_bao "$UNSEAL_KEY_1" "$UNSEAL_KEY_2" "$UNSEAL_KEY_3"
       echo "OpenBao unsealed successfully!"
     else
       echo "OpenBao is already unsealed!"
     fi
 
-    ROOT_TOKEN=$(cat /opt/openbao/data/init.json | jq -r '.root_token')
+    ROOT_TOKEN=$(jq -r '.root_token' /opt/openbao/data/init.json)
     export BAO_TOKEN=$ROOT_TOKEN
   fi
 fi

@@ -161,3 +161,126 @@ func (req changeStateReq) validate() error {
 
 	return nil
 }
+
+// --- Profile requests ---
+
+type createProfileReq struct {
+	bootstrap.Profile
+}
+
+func (req createProfileReq) validate() error {
+	if req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type viewProfileReq struct {
+	profileID string
+}
+
+func (req viewProfileReq) validate() error {
+	if req.profileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type updateProfileReq struct {
+	profileID string
+	bootstrap.Profile
+}
+
+func (req updateProfileReq) validate() error {
+	if req.profileID == "" || req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type deleteProfileReq struct {
+	profileID string
+}
+
+func (req deleteProfileReq) validate() error {
+	if req.profileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type listProfilesReq struct {
+	offset uint64
+	limit  uint64
+}
+
+func (req listProfilesReq) validate() error {
+	if req.limit == 0 || req.limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+	return nil
+}
+
+// --- Enrollment binding requests ---
+
+type assignProfileReq struct {
+	configID  string
+	ProfileID string `json:"profile_id"`
+}
+
+func (req assignProfileReq) validate() error {
+	if req.configID == "" || req.ProfileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type bindResourcesReq struct {
+	token    string
+	configID string
+	Bindings []bootstrap.BindingRequest `json:"bindings"`
+}
+
+func (req bindResourcesReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
+	if len(req.Bindings) == 0 {
+		return apiutil.ErrEmptyList
+	}
+	for _, b := range req.Bindings {
+		if b.Slot == "" || b.Type == "" || b.ResourceID == "" {
+			return apiutil.ErrMissingID
+		}
+	}
+	return nil
+}
+
+type listBindingsReq struct {
+	configID string
+}
+
+func (req listBindingsReq) validate() error {
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type refreshBindingsReq struct {
+	token    string
+	configID string
+}
+
+func (req refreshBindingsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}

@@ -56,6 +56,16 @@ var (
 	errConnectionChannels = errors.New("failed to check channels connections")
 	errClientNotFound     = errors.New("failed to find client")
 	errUpdateCert         = errors.New("failed to update cert")
+
+	errCreateProfile  = errors.New("failed to create profile")
+	errViewProfile    = errors.New("failed to view profile")
+	errUpdateProfile  = errors.New("failed to update profile")
+	errDeleteProfile  = errors.New("failed to delete profile")
+	errListProfiles   = errors.New("failed to list profiles")
+	errAssignProfile  = errors.New("failed to assign profile to enrollment")
+	errBindResources  = errors.New("failed to bind resources")
+	errListBindings   = errors.New("failed to list bindings")
+	errRefreshBinding = errors.New("failed to refresh bindings")
 )
 
 var _ Service = (*bootstrapService)(nil)
@@ -109,6 +119,36 @@ type Service interface {
 
 	// DisconnectClientHandler changes state of the Config to inactive when disconnect event occurs.
 	DisconnectClientHandler(ctx context.Context, channelID, clientID string) error
+
+	// CreateProfile persists a new device Profile.
+	CreateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
+
+	// ViewProfile returns the Profile with the given ID.
+	ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (Profile, error)
+
+	// UpdateProfile updates editable fields of the given Profile.
+	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error
+
+	// ListProfiles returns a page of Profiles belonging to the domain.
+	ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (ProfilesPage, error)
+
+	// DeleteProfile removes the Profile with the given ID.
+	DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error
+
+	// AssignProfile sets the ProfileID on an existing enrollment (Config).
+	AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error
+
+	// BindResources resolves the requested bindings through their owning services,
+	// stores snapshots, and marks the enrollment renderable when all required slots
+	// are satisfied.
+	BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []BindingRequest) error
+
+	// ListBindings returns all stored binding snapshots for an enrollment.
+	ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]BindingSnapshot, error)
+
+	// RefreshBindings re-resolves all existing bindings for an enrollment and
+	// updates the stored snapshots.
+	RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error
 }
 
 // ConfigReader is used to parse Config into format which will be encoded
@@ -122,6 +162,10 @@ type ConfigReader interface {
 type bootstrapService struct {
 	policies   policies.Service
 	configs    ConfigRepository
+	profiles   ProfileRepository
+	bindings   BindingStore
+	resolver   BindingResolver
+	renderer   Renderer
 	sdk        mgsdk.SDK
 	encKey     []byte
 	idProvider magistrala.IDProvider
@@ -131,6 +175,31 @@ type bootstrapService struct {
 func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
+		sdk:        sdk,
+		policies:   policyService,
+		encKey:     encKey,
+		idProvider: idp,
+	}
+}
+
+// NewWithProfiles returns a Bootstrap service with profile and binding support enabled.
+func NewWithProfiles(
+	policyService policies.Service,
+	configs ConfigRepository,
+	profiles ProfileRepository,
+	bindings BindingStore,
+	resolver BindingResolver,
+	renderer Renderer,
+	sdk mgsdk.SDK,
+	encKey []byte,
+	idp magistrala.IDProvider,
+) Service {
+	return &bootstrapService{
+		configs:    configs,
+		profiles:   profiles,
+		bindings:   bindings,
+		resolver:   resolver,
+		renderer:   renderer,
 		sdk:        sdk,
 		policies:   policyService,
 		encKey:     encKey,
@@ -507,6 +576,159 @@ func (bs bootstrapService) toIDList(channels []Channel) []string {
 
 	return ret
 }
+
+// --- Profile management ---
+
+func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error) {
+	if bs.profiles == nil {
+		return Profile{}, errors.Wrap(errCreateProfile, errors.New("profile repository not configured"))
+	}
+	id, err := bs.idProvider.ID()
+	if err != nil {
+		return Profile{}, errors.Wrap(errCreateProfile, err)
+	}
+	p.ID = id
+	p.DomainID = session.DomainID
+	if p.Version == 0 {
+		p.Version = 1
+	}
+	saved, err := bs.profiles.Save(ctx, p)
+	if err != nil {
+		return Profile{}, errors.Wrap(errCreateProfile, err)
+	}
+	return saved, nil
+}
+
+func (bs bootstrapService) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (Profile, error) {
+	if bs.profiles == nil {
+		return Profile{}, errors.Wrap(errViewProfile, errors.New("profile repository not configured"))
+	}
+	p, err := bs.profiles.RetrieveByID(ctx, session.DomainID, profileID)
+	if err != nil {
+		return Profile{}, errors.Wrap(errViewProfile, err)
+	}
+	return p, nil
+}
+
+func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error {
+	if bs.profiles == nil {
+		return errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
+	}
+	p.DomainID = session.DomainID
+	if err := bs.profiles.Update(ctx, p); err != nil {
+		return errors.Wrap(errUpdateProfile, err)
+	}
+	return nil
+}
+
+func (bs bootstrapService) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (ProfilesPage, error) {
+	if bs.profiles == nil {
+		return ProfilesPage{}, errors.Wrap(errListProfiles, errors.New("profile repository not configured"))
+	}
+	page, err := bs.profiles.RetrieveAll(ctx, session.DomainID, offset, limit)
+	if err != nil {
+		return ProfilesPage{}, errors.Wrap(errListProfiles, err)
+	}
+	return page, nil
+}
+
+func (bs bootstrapService) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
+	if bs.profiles == nil {
+		return errors.Wrap(errDeleteProfile, errors.New("profile repository not configured"))
+	}
+	if err := bs.profiles.Delete(ctx, session.DomainID, profileID); err != nil {
+		return errors.Wrap(errDeleteProfile, err)
+	}
+	return nil
+}
+
+// --- Enrollment-profile assignment ---
+
+func (bs bootstrapService) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
+	if bs.profiles == nil {
+		return errors.Wrap(errAssignProfile, errors.New("profile repository not configured"))
+	}
+	// Validate profile exists in domain.
+	if _, err := bs.profiles.RetrieveByID(ctx, session.DomainID, profileID); err != nil {
+		return errors.Wrap(errAssignProfile, err)
+	}
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	if err != nil {
+		return errors.Wrap(errAssignProfile, err)
+	}
+	cfg.ProfileID = profileID
+	if err := bs.configs.Update(ctx, cfg); err != nil {
+		return errors.Wrap(errAssignProfile, err)
+	}
+	return nil
+}
+
+// --- Binding management ---
+
+func (bs bootstrapService) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, requested []BindingRequest) error {
+	if bs.profiles == nil || bs.bindings == nil || bs.resolver == nil {
+		return errors.Wrap(errBindResources, errors.New("binding support not configured"))
+	}
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	if err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	snapshots, err := bs.resolver.Resolve(ctx, ResolveRequest{
+		Enrollment: cfg,
+		Token:      token,
+		Requested:  requested,
+	})
+	if err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	return bs.bindings.Save(ctx, configID, snapshots)
+}
+
+func (bs bootstrapService) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]BindingSnapshot, error) {
+	if bs.bindings == nil {
+		return nil, errors.Wrap(errListBindings, errors.New("binding support not configured"))
+	}
+	if _, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID); err != nil {
+		return nil, errors.Wrap(errListBindings, err)
+	}
+	snapshots, err := bs.bindings.Retrieve(ctx, configID)
+	if err != nil {
+		return nil, errors.Wrap(errListBindings, err)
+	}
+	return snapshots, nil
+}
+
+func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
+	if bs.profiles == nil || bs.bindings == nil || bs.resolver == nil {
+		return errors.Wrap(errRefreshBinding, errors.New("binding support not configured"))
+	}
+	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	if err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
+	existing, err := bs.bindings.Retrieve(ctx, configID)
+	if err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
+	if len(existing) == 0 {
+		return nil
+	}
+	// Re-resolve every existing binding to refresh its snapshot.
+	requested := make([]BindingRequest, len(existing))
+	for i, b := range existing {
+		requested[i] = BindingRequest{Slot: b.Slot, Type: b.Type, ResourceID: b.ResourceID}
+	}
+	refreshed, err := bs.resolver.Resolve(ctx, ResolveRequest{
+		Enrollment: cfg,
+		Token:      token,
+		Requested:  requested,
+	})
+	if err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
+	return bs.bindings.Save(ctx, configID, refreshed)
+}
+
 
 func (bs bootstrapService) dec(in string) (string, error) {
 	ciphertext, err := hex.DecodeString(in)

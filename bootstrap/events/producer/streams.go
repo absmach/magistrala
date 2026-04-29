@@ -251,3 +251,39 @@ func (es *eventStore) DisconnectClientHandler(ctx context.Context, channelID, cl
 
 	return es.Publish(ctx, disconnectStream, ev)
 }
+
+func (es *eventStore) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
+	return es.svc.CreateProfile(ctx, session, p)
+}
+
+func (es *eventStore) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
+	return es.svc.ViewProfile(ctx, session, profileID)
+}
+
+func (es *eventStore) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+	return es.svc.UpdateProfile(ctx, session, p)
+}
+
+func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+	return es.svc.ListProfiles(ctx, session, offset, limit)
+}
+
+func (es *eventStore) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
+	return es.svc.DeleteProfile(ctx, session, profileID)
+}
+
+func (es *eventStore) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
+	return es.svc.AssignProfile(ctx, session, configID, profileID)
+}
+
+func (es *eventStore) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
+	return es.svc.BindResources(ctx, session, token, configID, bindings)
+}
+
+func (es *eventStore) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
+	return es.svc.ListBindings(ctx, session, configID)
+}
+
+func (es *eventStore) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
+	return es.svc.RefreshBindings(ctx, session, token, configID)
+}

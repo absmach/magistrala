@@ -180,3 +180,78 @@ func (tm *tracingMiddleware) DisconnectClientHandler(ctx context.Context, channe
 
 	return tm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
+
+func (tm *tracingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_create_profile", trace.WithAttributes(
+		attribute.String("name", p.Name),
+		attribute.String("domain_id", p.DomainID),
+	))
+	defer span.End()
+	return tm.svc.CreateProfile(ctx, session, p)
+}
+
+func (tm *tracingMiddleware) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_view_profile", trace.WithAttributes(
+		attribute.String("profile_id", profileID),
+	))
+	defer span.End()
+	return tm.svc.ViewProfile(ctx, session, profileID)
+}
+
+func (tm *tracingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_update_profile", trace.WithAttributes(
+		attribute.String("profile_id", p.ID),
+	))
+	defer span.End()
+	return tm.svc.UpdateProfile(ctx, session, p)
+}
+
+func (tm *tracingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_list_profiles", trace.WithAttributes(
+		attribute.Int64("offset", int64(offset)),
+		attribute.Int64("limit", int64(limit)),
+	))
+	defer span.End()
+	return tm.svc.ListProfiles(ctx, session, offset, limit)
+}
+
+func (tm *tracingMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_delete_profile", trace.WithAttributes(
+		attribute.String("profile_id", profileID),
+	))
+	defer span.End()
+	return tm.svc.DeleteProfile(ctx, session, profileID)
+}
+
+func (tm *tracingMiddleware) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_assign_profile", trace.WithAttributes(
+		attribute.String("config_id", configID),
+		attribute.String("profile_id", profileID),
+	))
+	defer span.End()
+	return tm.svc.AssignProfile(ctx, session, configID, profileID)
+}
+
+func (tm *tracingMiddleware) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_bind_resources", trace.WithAttributes(
+		attribute.String("config_id", configID),
+	))
+	defer span.End()
+	return tm.svc.BindResources(ctx, session, token, configID, bindings)
+}
+
+func (tm *tracingMiddleware) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_list_bindings", trace.WithAttributes(
+		attribute.String("config_id", configID),
+	))
+	defer span.End()
+	return tm.svc.ListBindings(ctx, session, configID)
+}
+
+func (tm *tracingMiddleware) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
+	ctx, span := tm.tracer.Start(ctx, "svc_refresh_bindings", trace.WithAttributes(
+		attribute.String("config_id", configID),
+	))
+	defer span.End()
+	return tm.svc.RefreshBindings(ctx, session, token, configID)
+}

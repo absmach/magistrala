@@ -257,15 +257,7 @@ func main() {
 	defer authzClient.Close()
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
-	ddatabase := pgclient.NewDatabase(db, dbConfig, tracer)
-	drepo := dpostgres.NewRepository(ddatabase)
-
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
-		exitCode = 1
-		return
-	}
-
+	drepo := dpostgres.NewRepository(pgclient.NewDatabase(db, dbConfig, tracer))
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	regrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -291,6 +283,12 @@ func main() {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
 
+		return
+	}
+
+	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, svc, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
+		exitCode = 1
 		return
 	}
 

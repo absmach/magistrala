@@ -975,6 +975,83 @@ func (_c *SDK_AddRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rul
 	return _c
 }
 
+// AssignBootstrapProfile provides a mock function for the type SDK
+func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, profileID, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AssignBootstrapProfile")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, configID, profileID, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_AssignBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignBootstrapProfile'
+type SDK_AssignBootstrapProfile_Call struct {
+	*mock.Call
+}
+
+// AssignBootstrapProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - configID string
+//   - profileID string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) AssignBootstrapProfile(ctx interface{}, configID interface{}, profileID interface{}, domainID interface{}, token interface{}) *SDK_AssignBootstrapProfile_Call {
+	return &SDK_AssignBootstrapProfile_Call{Call: _e.mock.On("AssignBootstrapProfile", ctx, configID, profileID, domainID, token)}
+}
+
+func (_c *SDK_AssignBootstrapProfile_Call) Run(run func(ctx context.Context, configID string, profileID string, domainID string, token string)) *SDK_AssignBootstrapProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AssignBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_AssignBootstrapProfile_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_AssignBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError) *SDK_AssignBootstrapProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AvailableClientRoleActions provides a mock function for the type SDK
 func (_mock *SDK) AvailableClientRoleActions(ctx context.Context, domainID string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, domainID, token)
@@ -1197,6 +1274,83 @@ func (_c *SDK_AvailableGroupRoleActions_Call) RunAndReturn(run func(ctx context.
 	return _c
 }
 
+// BindBootstrapResources provides a mock function for the type SDK
+func (_mock *SDK) BindBootstrapResources(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, bindings, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BindBootstrapResources")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []sdk.BootstrapBindingRequest, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, configID, bindings, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_BindBootstrapResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BindBootstrapResources'
+type SDK_BindBootstrapResources_Call struct {
+	*mock.Call
+}
+
+// BindBootstrapResources is a helper method to define mock.On call
+//   - ctx context.Context
+//   - configID string
+//   - bindings []sdk.BootstrapBindingRequest
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) BindBootstrapResources(ctx interface{}, configID interface{}, bindings interface{}, domainID interface{}, token interface{}) *SDK_BindBootstrapResources_Call {
+	return &SDK_BindBootstrapResources_Call{Call: _e.mock.On("BindBootstrapResources", ctx, configID, bindings, domainID, token)}
+}
+
+func (_c *SDK_BindBootstrapResources_Call) Run(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string)) *SDK_BindBootstrapResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 []sdk.BootstrapBindingRequest
+		if args[2] != nil {
+			arg2 = args[2].([]sdk.BootstrapBindingRequest)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_BindBootstrapResources_Call) Return(sDKError errors.SDKError) *SDK_BindBootstrapResources_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_BindBootstrapResources_Call) RunAndReturn(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError) *SDK_BindBootstrapResources_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Bootstrap provides a mock function for the type SDK
 func (_mock *SDK) Bootstrap(ctx context.Context, externalID string, externalKey string) (sdk.BootstrapConfig, errors.SDKError) {
 	ret := _mock.Called(ctx, externalID, externalKey)
@@ -1267,6 +1421,168 @@ func (_c *SDK_Bootstrap_Call) Return(bootstrapConfig sdk.BootstrapConfig, sDKErr
 }
 
 func (_c *SDK_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, externalID string, externalKey string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_Bootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BootstrapBindings provides a mock function for the type SDK
+func (_mock *SDK) BootstrapBindings(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError) {
+	ret := _mock.Called(ctx, configID, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BootstrapBindings")
+	}
+
+	var r0 []sdk.BootstrapBindingSnapshot
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)); ok {
+		return returnFunc(ctx, configID, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) []sdk.BootstrapBindingSnapshot); ok {
+		r0 = returnFunc(ctx, configID, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]sdk.BootstrapBindingSnapshot)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, configID, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_BootstrapBindings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BootstrapBindings'
+type SDK_BootstrapBindings_Call struct {
+	*mock.Call
+}
+
+// BootstrapBindings is a helper method to define mock.On call
+//   - ctx context.Context
+//   - configID string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) BootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_BootstrapBindings_Call {
+	return &SDK_BootstrapBindings_Call{Call: _e.mock.On("BootstrapBindings", ctx, configID, domainID, token)}
+}
+
+func (_c *SDK_BootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_BootstrapBindings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_BootstrapBindings_Call) Return(bootstrapBindingSnapshots []sdk.BootstrapBindingSnapshot, sDKError errors.SDKError) *SDK_BootstrapBindings_Call {
+	_c.Call.Return(bootstrapBindingSnapshots, sDKError)
+	return _c
+}
+
+func (_c *SDK_BootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)) *SDK_BootstrapBindings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BootstrapProfiles provides a mock function for the type SDK
+func (_mock *SDK) BootstrapProfiles(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BootstrapProfiles")
+	}
+
+	var r0 sdk.BootstrapProfilesPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.BootstrapProfilesPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.BootstrapProfilesPage); ok {
+		r0 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapProfilesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_BootstrapProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BootstrapProfiles'
+type SDK_BootstrapProfiles_Call struct {
+	*mock.Call
+}
+
+// BootstrapProfiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) BootstrapProfiles(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_BootstrapProfiles_Call {
+	return &SDK_BootstrapProfiles_Call{Call: _e.mock.On("BootstrapProfiles", ctx, pm, domainID, token)}
+}
+
+func (_c *SDK_BootstrapProfiles_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_BootstrapProfiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_BootstrapProfiles_Call) Return(bootstrapProfilesPage sdk.BootstrapProfilesPage, sDKError errors.SDKError) *SDK_BootstrapProfiles_Call {
+	_c.Call.Return(bootstrapProfilesPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_BootstrapProfiles_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError)) *SDK_BootstrapProfiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2339,6 +2655,86 @@ func (_c *SDK_ConnectClients_Call) Return(sDKError errors.SDKError) *SDK_Connect
 }
 
 func (_c *SDK_ConnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string) errors.SDKError) *SDK_ConnectClients_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateBootstrapProfile provides a mock function for the type SDK
+func (_mock *SDK) CreateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
+	ret := _mock.Called(ctx, profile, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateBootstrapProfile")
+	}
+
+	var r0 sdk.BootstrapProfile
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
+		return returnFunc(ctx, profile, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) sdk.BootstrapProfile); ok {
+		r0 = returnFunc(ctx, profile, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapProfile)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, profile, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_CreateBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateBootstrapProfile'
+type SDK_CreateBootstrapProfile_Call struct {
+	*mock.Call
+}
+
+// CreateBootstrapProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - profile sdk.BootstrapProfile
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) CreateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_CreateBootstrapProfile_Call {
+	return &SDK_CreateBootstrapProfile_Call{Call: _e.mock.On("CreateBootstrapProfile", ctx, profile, domainID, token)}
+}
+
+func (_c *SDK_CreateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_CreateBootstrapProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapProfile
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapProfile)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_CreateBootstrapProfile_Call) Return(bootstrapProfile sdk.BootstrapProfile, sDKError errors.SDKError) *SDK_CreateBootstrapProfile_Call {
+	_c.Call.Return(bootstrapProfile, sDKError)
+	return _c
+}
+
+func (_c *SDK_CreateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_CreateBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8360,6 +8756,77 @@ func (_c *SDK_ReadMessages_Call) RunAndReturn(run func(ctx context.Context, pm s
 	return _c
 }
 
+// RefreshBootstrapBindings provides a mock function for the type SDK
+func (_mock *SDK) RefreshBootstrapBindings(ctx context.Context, configID string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefreshBootstrapBindings")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, configID, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RefreshBootstrapBindings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefreshBootstrapBindings'
+type SDK_RefreshBootstrapBindings_Call struct {
+	*mock.Call
+}
+
+// RefreshBootstrapBindings is a helper method to define mock.On call
+//   - ctx context.Context
+//   - configID string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_RefreshBootstrapBindings_Call {
+	return &SDK_RefreshBootstrapBindings_Call{Call: _e.mock.On("RefreshBootstrapBindings", ctx, configID, domainID, token)}
+}
+
+func (_c *SDK_RefreshBootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_RefreshBootstrapBindings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RefreshBootstrapBindings_Call) Return(sDKError errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RefreshBootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RefreshToken provides a mock function for the type SDK
 func (_mock *SDK) RefreshToken(ctx context.Context, token string) (sdk.Token, errors.SDKError) {
 	ret := _mock.Called(ctx, token)
@@ -9079,6 +9546,77 @@ func (_c *SDK_RemoveBootstrap_Call) Return(sDKError errors.SDKError) *SDK_Remove
 }
 
 func (_c *SDK_RemoveBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveBootstrapProfile provides a mock function for the type SDK
+func (_mock *SDK) RemoveBootstrapProfile(ctx context.Context, id string, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveBootstrapProfile")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveBootstrapProfile'
+type SDK_RemoveBootstrapProfile_Call struct {
+	*mock.Call
+}
+
+// RemoveBootstrapProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrapProfile_Call {
+	return &SDK_RemoveBootstrapProfile_Call{Call: _e.mock.On("RemoveBootstrapProfile", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_RemoveBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrapProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -11250,6 +11788,77 @@ func (_c *SDK_UpdateBootstrapConnection_Call) Return(sDKError errors.SDKError) *
 }
 
 func (_c *SDK_UpdateBootstrapConnection_Call) RunAndReturn(run func(ctx context.Context, id string, channels []string, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapConnection_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateBootstrapProfile provides a mock function for the type SDK
+func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, profile, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateBootstrapProfile")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, profile, domainID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_UpdateBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBootstrapProfile'
+type SDK_UpdateBootstrapProfile_Call struct {
+	*mock.Call
+}
+
+// UpdateBootstrapProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - profile sdk.BootstrapProfile
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapProfile_Call {
+	return &SDK_UpdateBootstrapProfile_Call{Call: _e.mock.On("UpdateBootstrapProfile", ctx, profile, domainID, token)}
+}
+
+func (_c *SDK_UpdateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_UpdateBootstrapProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.BootstrapProfile
+		if args[1] != nil {
+			arg1 = args[1].(sdk.BootstrapProfile)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -13594,6 +14203,86 @@ func (_c *SDK_ViewBootstrap_Call) RunAndReturn(run func(ctx context.Context, id 
 	return _c
 }
 
+// ViewBootstrapProfile provides a mock function for the type SDK
+func (_mock *SDK) ViewBootstrapProfile(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
+	ret := _mock.Called(ctx, id, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewBootstrapProfile")
+	}
+
+	var r0 sdk.BootstrapProfile
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
+		return returnFunc(ctx, id, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapProfile); ok {
+		r0 = returnFunc(ctx, id, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.BootstrapProfile)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ViewBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewBootstrapProfile'
+type SDK_ViewBootstrapProfile_Call struct {
+	*mock.Call
+}
+
+// ViewBootstrapProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ViewBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrapProfile_Call {
+	return &SDK_ViewBootstrapProfile_Call{Call: _e.mock.On("ViewBootstrapProfile", ctx, id, domainID, token)}
+}
+
+func (_c *SDK_ViewBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrapProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ViewBootstrapProfile_Call) Return(bootstrapProfile sdk.BootstrapProfile, sDKError errors.SDKError) *SDK_ViewBootstrapProfile_Call {
+	_c.Call.Return(bootstrapProfile, sDKError)
+	return _c
+}
+
+func (_c *SDK_ViewBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_ViewBootstrapProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ViewCA provides a mock function for the type SDK
 func (_mock *SDK) ViewCA(ctx context.Context) (sdk.Certificate, errors.SDKError) {
 	ret := _mock.Called(ctx)
@@ -14125,572 +14814,6 @@ func (_c *SDK_Whitelist_Call) Return(sDKError errors.SDKError) *SDK_Whitelist_Ca
 }
 
 func (_c *SDK_Whitelist_Call) RunAndReturn(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, domainID string, token string) errors.SDKError) *SDK_Whitelist_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AssignBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, profileID, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssignBootstrapProfile")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, profileID, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(errors.SDKError)
-	}
-	return r0
-}
-
-type SDK_AssignBootstrapProfile_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) AssignBootstrapProfile(ctx interface{}, configID interface{}, profileID interface{}, domainID interface{}, token interface{}) *SDK_AssignBootstrapProfile_Call {
-	return &SDK_AssignBootstrapProfile_Call{Call: _e.mock.On("AssignBootstrapProfile", ctx, configID, profileID, domainID, token)}
-}
-
-func (_c *SDK_AssignBootstrapProfile_Call) Run(run func(ctx context.Context, configID string, profileID string, domainID string, token string)) *SDK_AssignBootstrapProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(arg0, arg1, arg2, arg3, arg4)
-	})
-	return _c
-}
-
-func (_c *SDK_AssignBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_AssignBootstrapProfile_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_AssignBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError) *SDK_AssignBootstrapProfile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// BindBootstrapResources provides a mock function for the type SDK
-func (_mock *SDK) BindBootstrapResources(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, bindings, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BindBootstrapResources")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []sdk.BootstrapBindingRequest, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, bindings, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(errors.SDKError)
-	}
-	return r0
-}
-
-type SDK_BindBootstrapResources_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) BindBootstrapResources(ctx interface{}, configID interface{}, bindings interface{}, domainID interface{}, token interface{}) *SDK_BindBootstrapResources_Call {
-	return &SDK_BindBootstrapResources_Call{Call: _e.mock.On("BindBootstrapResources", ctx, configID, bindings, domainID, token)}
-}
-
-func (_c *SDK_BindBootstrapResources_Call) Run(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string)) *SDK_BindBootstrapResources_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 []sdk.BootstrapBindingRequest
-		if args[2] != nil {
-			arg2 = args[2].([]sdk.BootstrapBindingRequest)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(arg0, arg1, arg2, arg3, arg4)
-	})
-	return _c
-}
-
-func (_c *SDK_BindBootstrapResources_Call) Return(sDKError errors.SDKError) *SDK_BindBootstrapResources_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_BindBootstrapResources_Call) RunAndReturn(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError) *SDK_BindBootstrapResources_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// BootstrapBindings provides a mock function for the type SDK
-func (_mock *SDK) BootstrapBindings(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError) {
-	ret := _mock.Called(ctx, configID, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BootstrapBindings")
-	}
-
-	var r0 []sdk.BootstrapBindingSnapshot
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)); ok {
-		return returnFunc(ctx, configID, domainID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) []sdk.BootstrapBindingSnapshot); ok {
-		r0 = returnFunc(ctx, configID, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).([]sdk.BootstrapBindingSnapshot)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, configID, domainID, token)
-	} else if ret.Get(1) != nil {
-		r1 = ret.Get(1).(errors.SDKError)
-	}
-	return r0, r1
-}
-
-type SDK_BootstrapBindings_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) BootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_BootstrapBindings_Call {
-	return &SDK_BootstrapBindings_Call{Call: _e.mock.On("BootstrapBindings", ctx, configID, domainID, token)}
-}
-
-func (_c *SDK_BootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_BootstrapBindings_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_BootstrapBindings_Call) Return(bindings []sdk.BootstrapBindingSnapshot, sDKError errors.SDKError) *SDK_BootstrapBindings_Call {
-	_c.Call.Return(bindings, sDKError)
-	return _c
-}
-
-func (_c *SDK_BootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)) *SDK_BootstrapBindings_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// BootstrapProfiles provides a mock function for the type SDK
-func (_mock *SDK) BootstrapProfiles(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for BootstrapProfiles")
-	}
-
-	var r0 sdk.BootstrapProfilesPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.BootstrapProfilesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.BootstrapProfilesPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.BootstrapProfilesPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
-	} else if ret.Get(1) != nil {
-		r1 = ret.Get(1).(errors.SDKError)
-	}
-	return r0, r1
-}
-
-type SDK_BootstrapProfiles_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) BootstrapProfiles(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_BootstrapProfiles_Call {
-	return &SDK_BootstrapProfiles_Call{Call: _e.mock.On("BootstrapProfiles", ctx, pm, domainID, token)}
-}
-
-func (_c *SDK_BootstrapProfiles_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_BootstrapProfiles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.PageMetadata
-		if args[1] != nil {
-			arg1 = args[1].(sdk.PageMetadata)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_BootstrapProfiles_Call) Return(page sdk.BootstrapProfilesPage, sDKError errors.SDKError) *SDK_BootstrapProfiles_Call {
-	_c.Call.Return(page, sDKError)
-	return _c
-}
-
-func (_c *SDK_BootstrapProfiles_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError)) *SDK_BootstrapProfiles_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) CreateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
-	ret := _mock.Called(ctx, profile, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateBootstrapProfile")
-	}
-
-	var r0 sdk.BootstrapProfile
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
-		return returnFunc(ctx, profile, domainID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) sdk.BootstrapProfile); ok {
-		r0 = returnFunc(ctx, profile, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.BootstrapProfile)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, profile, domainID, token)
-	} else if ret.Get(1) != nil {
-		r1 = ret.Get(1).(errors.SDKError)
-	}
-	return r0, r1
-}
-
-type SDK_CreateBootstrapProfile_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) CreateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_CreateBootstrapProfile_Call {
-	return &SDK_CreateBootstrapProfile_Call{Call: _e.mock.On("CreateBootstrapProfile", ctx, profile, domainID, token)}
-}
-
-func (_c *SDK_CreateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_CreateBootstrapProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.BootstrapProfile
-		if args[1] != nil {
-			arg1 = args[1].(sdk.BootstrapProfile)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_CreateBootstrapProfile_Call) Return(profile sdk.BootstrapProfile, sDKError errors.SDKError) *SDK_CreateBootstrapProfile_Call {
-	_c.Call.Return(profile, sDKError)
-	return _c
-}
-
-func (_c *SDK_CreateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_CreateBootstrapProfile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RefreshBootstrapBindings provides a mock function for the type SDK
-func (_mock *SDK) RefreshBootstrapBindings(ctx context.Context, configID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RefreshBootstrapBindings")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(errors.SDKError)
-	}
-	return r0
-}
-
-type SDK_RefreshBootstrapBindings_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_RefreshBootstrapBindings_Call {
-	return &SDK_RefreshBootstrapBindings_Call{Call: _e.mock.On("RefreshBootstrapBindings", ctx, configID, domainID, token)}
-}
-
-func (_c *SDK_RefreshBootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_RefreshBootstrapBindings_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_RefreshBootstrapBindings_Call) Return(sDKError errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RefreshBootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) RemoveBootstrapProfile(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveBootstrapProfile")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(errors.SDKError)
-	}
-	return r0
-}
-
-type SDK_RemoveBootstrapProfile_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrapProfile_Call {
-	return &SDK_RemoveBootstrapProfile_Call{Call: _e.mock.On("RemoveBootstrapProfile", ctx, id, domainID, token)}
-}
-
-func (_c *SDK_RemoveBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrapProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_RemoveBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RemoveBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, profile, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateBootstrapProfile")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, profile, domainID, token)
-	} else if ret.Get(0) != nil {
-		r0 = ret.Get(0).(errors.SDKError)
-	}
-	return r0
-}
-
-type SDK_UpdateBootstrapProfile_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapProfile_Call {
-	return &SDK_UpdateBootstrapProfile_Call{Call: _e.mock.On("UpdateBootstrapProfile", ctx, profile, domainID, token)}
-}
-
-func (_c *SDK_UpdateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_UpdateBootstrapProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.BootstrapProfile
-		if args[1] != nil {
-			arg1 = args[1].(sdk.BootstrapProfile)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_UpdateBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// ViewBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) ViewBootstrapProfile(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ViewBootstrapProfile")
-	}
-
-	var r0 sdk.BootstrapProfile
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapProfile); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.BootstrapProfile)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
-	} else if ret.Get(1) != nil {
-		r1 = ret.Get(1).(errors.SDKError)
-	}
-	return r0, r1
-}
-
-type SDK_ViewBootstrapProfile_Call struct {
-	*mock.Call
-}
-
-func (_e *SDK_Expecter) ViewBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrapProfile_Call {
-	return &SDK_ViewBootstrapProfile_Call{Call: _e.mock.On("ViewBootstrapProfile", ctx, id, domainID, token)}
-}
-
-func (_c *SDK_ViewBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrapProfile_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(arg0, arg1, arg2, arg3)
-	})
-	return _c
-}
-
-func (_c *SDK_ViewBootstrapProfile_Call) Return(profile sdk.BootstrapProfile, sDKError errors.SDKError) *SDK_ViewBootstrapProfile_Call {
-	_c.Call.Return(profile, sDKError)
-	return _c
-}
-
-func (_c *SDK_ViewBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_ViewBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -14,6 +14,9 @@ type TemplateFormat string
 const (
 	TemplateFormatGoTemplate TemplateFormat = "go-template"
 	TemplateFormatRaw        TemplateFormat = "raw"
+	TemplateFormatJSON       TemplateFormat = "json"
+	TemplateFormatYAML       TemplateFormat = "yaml"
+	TemplateFormatTOML       TemplateFormat = "toml"
 )
 
 // Profile is a user-managed device configuration template.
@@ -25,9 +28,18 @@ type Profile struct {
 	TemplateFormat  TemplateFormat `json:"template_format"`
 	ContentTemplate string         `json:"content_template,omitempty"`
 	Defaults        map[string]any `json:"defaults,omitempty"`
+	BindingSlots    []BindingSlot  `json:"binding_slots,omitempty"`
 	Version         int            `json:"version,omitempty"`
 	CreatedAt       time.Time      `json:"created_at,omitempty"`
 	UpdatedAt       time.Time      `json:"updated_at,omitempty"`
+}
+
+// BindingSlot declares a named resource placeholder that a profile template can use.
+type BindingSlot struct {
+	Name     string   `json:"name"`
+	Type     string   `json:"type"`
+	Required bool     `json:"required"`
+	Fields   []string `json:"fields,omitempty"`
 }
 
 // ProfilesPage contains pagination metadata and a slice of Profiles.

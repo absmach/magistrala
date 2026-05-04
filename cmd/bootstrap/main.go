@@ -17,6 +17,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	httpapi "github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
+	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
@@ -212,6 +213,8 @@ func main() {
 
 func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
+	repoProfile := bootstrappg.NewProfileRepository(database, logger)
+	repoBindings := bootstrappg.NewBindingRepository(database, logger)
 
 	config := mgsdk.Config{
 		ClientsURL:  cfg.ClientsURL,
@@ -220,8 +223,21 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
+	resolver := bootstrap.NewSDKResolver(sdk)
+	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.New(policySvc, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	svc := bootstrap.NewWithProfiles(
+		policySvc,
+		repoConfig,
+		repoProfile,
+		repoBindings,
+		resolver,
+		renderer,
+		sdk,
+		bootstraphasher.New(),
+		[]byte(cfg.EncKey),
+		idp,
+	)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, "bootstrap-es-pub")
 	if err != nil {

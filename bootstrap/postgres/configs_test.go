@@ -22,13 +22,12 @@ import (
 const numConfigs = 10
 
 var config = bootstrap.Config{
-	ClientID:     "mg-client",
-	ClientSecret: "mg-key",
-	ExternalID:   "external-id",
-	ExternalKey:  "external-key",
-	DomainID:     testsutil.GenerateUUID(&testing.T{}),
-	Content:      "content",
-	State:        bootstrap.Inactive,
+	ID:          "mg-client",
+	ExternalID:  "external-id",
+	ExternalKey: "external-key",
+	DomainID:    testsutil.GenerateUUID(&testing.T{}),
+	Content:     "content",
+	Status:      bootstrap.Inactive,
 }
 
 func TestSave(t *testing.T) {
@@ -38,11 +37,9 @@ func TestSave(t *testing.T) {
 
 	duplicateClient := config
 	duplicateClient.ExternalID = diff
-	duplicateClient.ClientSecret = diff
 
 	duplicateExternal := config
-	duplicateExternal.ClientID = diff
-	duplicateExternal.ClientSecret = diff
+	duplicateExternal.ID = diff
 
 	cases := []struct {
 		desc   string
@@ -69,7 +66,7 @@ func TestSave(t *testing.T) {
 		id, err := repo.Save(context.Background(), tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		if err == nil {
-			assert.Equal(t, id, tc.config.ClientID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ClientID, id))
+			assert.Equal(t, id, tc.config.ID, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.config.ID, id))
 		}
 	}
 }
@@ -81,8 +78,7 @@ func TestRetrieveByID(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	id, err := repo.Save(context.Background(), c)
@@ -141,13 +137,12 @@ func TestRetrieveAll(t *testing.T) {
 		require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
 		c.ExternalID = uid.String()
 		c.Name = fmt.Sprintf("name %d", i)
-		c.ClientID = uid.String()
-		c.ClientSecret = uid.String()
+		c.ID = uid.String()
 
-		clientIDs[i] = c.ClientID
+		clientIDs[i] = c.ID
 
 		if i%2 == 0 {
-			c.State = bootstrap.Active
+			c.Status = bootstrap.Active
 		}
 
 		_, err = repo.Save(context.Background(), c)
@@ -192,7 +187,7 @@ func TestRetrieveAll(t *testing.T) {
 			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
-			filter:   bootstrap.Filter{FullMatch: map[string]string{"state": bootstrap.Active.String()}},
+			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
 			size:     numConfigs / 2,
 		},
 		{
@@ -244,8 +239,7 @@ func TestRetrieveByExternalID(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c)
@@ -280,8 +274,7 @@ func TestUpdate(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c)
@@ -323,8 +316,7 @@ func TestUpdateCert(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	_, err = repo.Save(context.Background(), c)
@@ -358,13 +350,13 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:     "update a config",
-			clientID: c.ClientID,
+			clientID: c.ID,
 			cert:     "cert",
 			certKey:  "certKey",
 			ca:       "ca",
 			domainID: c.DomainID,
 			expectedConfig: bootstrap.Config{
-				ClientID:   c.ClientID,
+				ID:         c.ID,
 				ClientCert: "cert",
 				CACert:     "ca",
 				ClientKey:  "certKey",
@@ -387,8 +379,7 @@ func TestRemove(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	id, err := repo.Save(context.Background(), c)
@@ -405,15 +396,14 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-func TestChangeState(t *testing.T) {
+func TestChangeStatus(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 
 	c := config
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	saved, err := repo.Save(context.Background(), c)
@@ -423,40 +413,71 @@ func TestChangeState(t *testing.T) {
 		desc     string
 		domainID string
 		id       string
-		state    bootstrap.State
+		status   bootstrap.Status
 		err      error
 	}{
 		{
-			desc:     "change state with wrong domain ID ",
+			desc:     "change status with wrong domain ID ",
 			id:       saved,
 			domainID: "2",
 			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:     "change state with wrong id",
+			desc:     "change status with wrong id",
 			id:       "wrong",
 			domainID: c.DomainID,
 			err:      repoerr.ErrNotFound,
 		},
 		{
-			desc:     "change state to Active",
+			desc:     "change status to Active",
 			id:       saved,
 			domainID: c.DomainID,
-			state:    bootstrap.Active,
+			status:   bootstrap.Active,
 			err:      nil,
 		},
 		{
-			desc:     "change state to Inactive",
+			desc:     "change status to Inactive",
 			id:       saved,
 			domainID: c.DomainID,
-			state:    bootstrap.Inactive,
+			status:   bootstrap.Inactive,
 			err:      nil,
 		},
 	}
 	for _, tc := range cases {
-		err := repo.ChangeState(context.Background(), tc.domainID, tc.id, tc.state)
+		err := repo.ChangeStatus(context.Background(), tc.domainID, tc.id, tc.status)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
+}
+
+func TestAssignProfile(t *testing.T) {
+	configRepo := postgres.NewConfigRepository(db, testLog)
+	profileRepo := postgres.NewProfileRepository(db, testLog)
+
+	c := config
+	uid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
+	c.ID = uid.String()
+	c.ExternalID = uid.String()
+	c.ExternalKey = uid.String()
+	saved, err := configRepo.Save(context.Background(), c)
+	require.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
+
+	profileID := testsutil.GenerateUUID(t)
+	_, err = profileRepo.Save(context.Background(), bootstrap.Profile{
+		ID:             profileID,
+		DomainID:       c.DomainID,
+		Name:           "edge-gateway",
+		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		Version:        1,
+	})
+	require.Nil(t, err, fmt.Sprintf("Saving profile expected to succeed: %s.\n", err))
+
+	err = configRepo.AssignProfile(context.Background(), c.DomainID, saved, profileID)
+	require.Nil(t, err, fmt.Sprintf("Assigning profile expected to succeed: %s.\n", err))
+
+	stored, err := configRepo.RetrieveByID(context.Background(), c.DomainID, saved)
+	require.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
+	assert.Equal(t, profileID, stored.ProfileID, "expected profile assignment to round-trip through the repository")
 }
 
 func TestRemoveClient(t *testing.T) {
@@ -466,8 +487,7 @@ func TestRemoveClient(t *testing.T) {
 	// Use UUID to prevent conflicts.
 	uid, err := uuid.NewV4()
 	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ClientSecret = uid.String()
-	c.ClientID = uid.String()
+	c.ID = uid.String()
 	c.ExternalID = uid.String()
 	c.ExternalKey = uid.String()
 	saved, err := repo.Save(context.Background(), c)

@@ -119,21 +119,59 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 			},
 			{
+				Id: "configs_8",
+				Up: []string{
+					`DO $$
+					BEGIN
+						IF EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'client_id'
+						) AND NOT EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'id'
+						) THEN
+							ALTER TABLE configs RENAME COLUMN client_id TO id;
+						END IF;
+					END $$`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS client_secret`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS configs ADD COLUMN IF NOT EXISTS client_secret TEXT`,
+					`DO $$
+					BEGIN
+						IF EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'id'
+						) AND NOT EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'client_id'
+						) THEN
+							ALTER TABLE configs RENAME COLUMN id TO client_id;
+						END IF;
+					END $$`,
+				},
+			},
+			{
 				Id: "configs_10",
 				Up: []string{
 					`CREATE TABLE IF NOT EXISTS profiles (
-						id               VARCHAR(36) PRIMARY KEY,
-						domain_id        VARCHAR(36) NOT NULL,
-						name             VARCHAR(1024) NOT NULL,
-						description      TEXT,
-						template_format  VARCHAR(64) NOT NULL DEFAULT 'go-template',
-						content_template TEXT,
-						defaults         JSONB,
-						version          INT NOT NULL DEFAULT 1,
-						created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
-						updated_at       TIMESTAMP NOT NULL DEFAULT NOW(),
-						UNIQUE (domain_id, name)
-					)`,
+							id               VARCHAR(36) PRIMARY KEY,
+							domain_id        VARCHAR(36) NOT NULL,
+							name             VARCHAR(1024) NOT NULL,
+							description      TEXT,
+							template_format  VARCHAR(64) NOT NULL DEFAULT 'go-template',
+							content_template TEXT,
+							defaults         JSONB,
+							binding_slots    JSONB,
+							version          INT NOT NULL DEFAULT 1,
+							created_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+							updated_at       TIMESTAMP NOT NULL DEFAULT NOW(),
+							UNIQUE (domain_id, name)
+						)`,
 					`CREATE INDEX IF NOT EXISTS idx_profiles_domain_id ON profiles (domain_id)`,
 				},
 				Down: []string{
@@ -154,20 +192,127 @@ func Migration() *migrate.MemoryMigrationSource {
 			{
 				Id: "configs_12",
 				Up: []string{
-					`CREATE TABLE IF NOT EXISTS binding_snapshots (
-						config_id       TEXT NOT NULL,
-						slot            VARCHAR(256) NOT NULL,
-						type            VARCHAR(64) NOT NULL,
-						resource_id     TEXT NOT NULL,
-						snapshot        JSONB,
-						secret_snapshot BYTEA,
-						updated_at      TIMESTAMP NOT NULL DEFAULT NOW(),
-						PRIMARY KEY (config_id, slot)
-					)`,
-					`CREATE INDEX IF NOT EXISTS idx_binding_snapshots_config_id ON binding_snapshots (config_id)`,
+					`CREATE TABLE IF NOT EXISTS bindings (
+							config_id       TEXT NOT NULL,
+							slot            VARCHAR(256) NOT NULL,
+							type            VARCHAR(64) NOT NULL,
+							resource_id     TEXT NOT NULL,
+							snapshot        JSONB,
+							secret_snapshot BYTEA,
+							updated_at      TIMESTAMP NOT NULL DEFAULT NOW(),
+							PRIMARY KEY (config_id, slot)
+						)`,
+					`CREATE INDEX IF NOT EXISTS idx_bindings_config_id ON bindings (config_id)`,
 				},
 				Down: []string{
-					`DROP TABLE IF EXISTS binding_snapshots`,
+					`DROP TABLE IF EXISTS bindings`,
+				},
+			},
+			{
+				Id: "configs_13",
+				Up: []string{
+					`DO $$
+					BEGIN
+						IF EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'state'
+						) AND NOT EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'status'
+						) THEN
+							ALTER TABLE configs RENAME COLUMN state TO status;
+						END IF;
+					END $$`,
+				},
+				Down: []string{
+					`DO $$
+					BEGIN
+						IF EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'status'
+						) AND NOT EXISTS (
+							SELECT 1
+							FROM information_schema.columns
+							WHERE table_name = 'configs' AND column_name = 'state'
+						) THEN
+							ALTER TABLE configs RENAME COLUMN status TO state;
+						END IF;
+					END $$`,
+				},
+			},
+			{
+				Id: "configs_14",
+				Up: []string{
+					`DO $$
+						BEGIN
+							IF EXISTS (
+								SELECT 1
+								FROM information_schema.tables
+								WHERE table_name = 'binding_snapshots'
+							) AND NOT EXISTS (
+								SELECT 1
+								FROM information_schema.tables
+								WHERE table_name = 'bindings'
+							) THEN
+								ALTER TABLE binding_snapshots RENAME TO bindings;
+							END IF;
+						END $$`,
+					`DO $$
+						BEGIN
+							IF EXISTS (
+								SELECT 1
+								FROM pg_class
+								WHERE relname = 'idx_binding_snapshots_config_id'
+							) AND NOT EXISTS (
+								SELECT 1
+								FROM pg_class
+								WHERE relname = 'idx_bindings_config_id'
+							) THEN
+								ALTER INDEX idx_binding_snapshots_config_id RENAME TO idx_bindings_config_id;
+							END IF;
+						END $$`,
+				},
+				Down: []string{
+					`DO $$
+						BEGIN
+							IF EXISTS (
+								SELECT 1
+								FROM information_schema.tables
+								WHERE table_name = 'bindings'
+							) AND NOT EXISTS (
+								SELECT 1
+								FROM information_schema.tables
+								WHERE table_name = 'binding_snapshots'
+							) THEN
+								ALTER TABLE bindings RENAME TO binding_snapshots;
+							END IF;
+						END $$`,
+					`DO $$
+						BEGIN
+							IF EXISTS (
+								SELECT 1
+								FROM pg_class
+								WHERE relname = 'idx_bindings_config_id'
+							) AND NOT EXISTS (
+								SELECT 1
+								FROM pg_class
+								WHERE relname = 'idx_binding_snapshots_config_id'
+							) THEN
+								ALTER INDEX idx_bindings_config_id RENAME TO idx_binding_snapshots_config_id;
+							END IF;
+						END $$`,
+				},
+			},
+			{
+				Id: "configs_15",
+				Up: []string{
+					`ALTER TABLE IF EXISTS profiles ADD COLUMN IF NOT EXISTS binding_slots JSONB`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS profiles DROP COLUMN IF EXISTS binding_slots`,
 				},
 			},
 		},

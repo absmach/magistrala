@@ -16,12 +16,11 @@ import (
 // This is used as a response from ConfigReader and can easily be
 // replaced with any other response format.
 type bootstrapRes struct {
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	Content      string `json:"content,omitempty"`
-	ClientCert   string `json:"client_cert,omitempty"`
-	ClientKey    string `json:"client_key,omitempty"`
-	CACert       string `json:"ca_cert,omitempty"`
+	ID         string `json:"id,omitempty"`
+	Content    string `json:"content,omitempty"`
+	ClientCert string `json:"client_cert,omitempty"`
+	ClientKey  string `json:"client_key,omitempty"`
+	CACert     string `json:"ca_cert,omitempty"`
 }
 
 func (res bootstrapRes) Code() int {
@@ -48,12 +47,11 @@ func NewConfigReader(encKey []byte) ConfigReader {
 
 func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
 	res := bootstrapRes{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		Content:      cfg.Content,
-		ClientCert:   cfg.ClientCert,
-		ClientKey:    cfg.ClientKey,
-		CACert:       cfg.CACert,
+		ID:         cfg.ID,
+		Content:    cfg.Content,
+		ClientCert: cfg.ClientCert,
+		ClientKey:  cfg.ClientKey,
+		CACert:     cfg.CACert,
 	}
 	if secure {
 		b, err := json.Marshal(res)

@@ -32,7 +32,7 @@ func (lm *loggingMiddleware) Add(ctx context.Context, session smqauthn.Session, 
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", saved.ClientID),
+			slog.String("config_id", saved.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -51,7 +51,7 @@ func (lm *loggingMiddleware) View(ctx context.Context, session smqauthn.Session,
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
+			slog.String("config_id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -71,7 +71,7 @@ func (lm *loggingMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.Group("config",
-				slog.String("client_id", cfg.ClientID),
+				slog.String("config_id", cfg.ID),
 				slog.String("name", cfg.Name),
 			),
 		}
@@ -92,7 +92,7 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", cfg.ClientID),
+			slog.String("config_id", cfg.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -135,7 +135,7 @@ func (lm *loggingMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
+			slog.String("config_id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))

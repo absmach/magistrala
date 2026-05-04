@@ -37,14 +37,14 @@ func (r renderer) Render(profile Profile, enrollment Config, bindings []BindingS
 	switch profile.TemplateFormat {
 	case TemplateFormatRaw:
 		return []byte(profile.ContentTemplate), nil
-	case TemplateFormatGoTemplate, "":
-		return r.renderGoTemplate(profile, rctx)
+	case TemplateFormatGoTemplate, TemplateFormatJSON, TemplateFormatYAML, TemplateFormatTOML, "":
+		return r.renderTemplate(profile, rctx)
 	default:
 		return nil, fmt.Errorf("%w: unsupported template format %q", ErrRenderFailed, profile.TemplateFormat)
 	}
 }
 
-func (r renderer) renderGoTemplate(profile Profile, rctx RenderContext) ([]byte, error) {
+func (r renderer) renderTemplate(profile Profile, rctx RenderContext) ([]byte, error) {
 	t, err := template.New("bootstrap").
 		Option("missingkey=error").
 		Funcs(allowlistedFuncs()).
@@ -58,32 +58,38 @@ func (r renderer) renderGoTemplate(profile Profile, rctx RenderContext) ([]byte,
 		return nil, fmt.Errorf("%w: %w", ErrRenderFailed, err)
 	}
 
-	return validateRenderedOutput(buf.Bytes(), string(profile.TemplateFormat)), nil
+	out, err := validateRenderedOutput(buf.Bytes(), profile.TemplateFormat)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
 }
 
 // validateRenderedOutput checks that the rendered bytes are valid for the
 // declared output format. It returns the original bytes on success and wraps
 // ErrRenderFailed on failure.
-func validateRenderedOutput(out []byte, format string) []byte {
-	// Validation is best-effort; unrecognised formats are passed through.
+func validateRenderedOutput(out []byte, format TemplateFormat) ([]byte, error) {
+	// Unrecognised formats are passed through. Recognised structured formats
+	// must parse successfully so broken templates fail before reaching devices.
 	switch format {
-	case "json":
+	case TemplateFormatJSON:
 		var v any
 		if err := json.Unmarshal(out, &v); err != nil {
-			return out // caller sees malformed JSON but we don't panic
+			return nil, fmt.Errorf("%w: invalid json output: %w", ErrRenderFailed, err)
 		}
-	case "yaml":
+	case TemplateFormatYAML:
 		var v any
 		if err := yaml.Unmarshal(out, &v); err != nil {
-			return out
+			return nil, fmt.Errorf("%w: invalid yaml output: %w", ErrRenderFailed, err)
 		}
-	case "toml":
+	case TemplateFormatTOML:
 		var v any
 		if err := toml.Unmarshal(out, &v); err != nil {
-			return out
+			return nil, fmt.Errorf("%w: invalid toml output: %w", ErrRenderFailed, err)
 		}
 	}
-	return out
+	return out, nil
 }
 
 // buildRenderContext constructs the typed RenderContext from stored data.
@@ -99,10 +105,9 @@ func buildRenderContext(profile Profile, enrollment Config, bindings []BindingSn
 
 	bctx := make(map[string]BindingContext, len(bindings))
 	for _, b := range bindings {
-		id, _ := b.Snapshot["id"].(string)
 		bctx[b.Slot] = BindingContext{
 			Type:     b.Type,
-			ID:       id,
+			ID:       b.ResourceID,
 			Snapshot: b.Snapshot,
 			Secret:   b.SecretSnapshot,
 		}
@@ -110,7 +115,7 @@ func buildRenderContext(profile Profile, enrollment Config, bindings []BindingSn
 
 	return RenderContext{
 		Device: DeviceContext{
-			ID:         enrollment.ClientID,
+			ID:         enrollment.ID,
 			ExternalID: enrollment.ExternalID,
 			DomainID:   enrollment.DomainID,
 		},
@@ -123,7 +128,6 @@ func buildRenderContext(profile Profile, enrollment Config, bindings []BindingSn
 // No function in this map may call an external service or perform I/O.
 func allowlistedFuncs() template.FuncMap {
 	return template.FuncMap{
-		// index is built-in; provide explicit helpers for clarity.
 		"toJSON": func(v any) (string, error) {
 			b, err := json.Marshal(v)
 			if err != nil {

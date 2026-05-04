@@ -231,3 +231,177 @@ func TestCert(t *testing.T) {
 		})
 	}
 }
+
+func TestProvisionUsesBootstrapEnrollmentID(t *testing.T) {
+	cfg := validConfig
+	cfg.Bootstrap = provision.Bootstrap{
+		X509Provision: true,
+		Provision:     true,
+		AutoWhiteList: true,
+		Content: map[string]any{
+			"broker": "mqtt://localhost:1883",
+		},
+	}
+	cfg.Clients[0].Metadata = map[string]any{
+		"external_id": "placeholder",
+	}
+	cfg.Channels[0].Name = "control-channel"
+	cfg.Channels[0].Metadata = map[string]any{
+		"type": "control",
+	}
+	cfg.Cert.TTL = "1h"
+
+	const (
+		name        = "gateway-1"
+		externalID  = "AA:BB:CC:DD"
+		externalKey = "secret"
+		certPEM     = "cert-pem"
+		keyPEM      = "key-pem"
+		serial      = "serial-1"
+	)
+
+	clientID := testsutil.GenerateUUID(t)
+	channelID := testsutil.GenerateUUID(t)
+	bootstrapID := testsutil.GenerateUUID(t)
+	domainID := testsutil.GenerateUUID(t)
+
+	clientMetadata := map[string]any{
+		"external_id": externalID,
+	}
+	var updatedClient smqSDK.Client
+
+	mgsdk := new(sdkmocks.SDK)
+	svc := provision.New(cfg, mgsdk, mglog.NewMock())
+
+	createClientCall := mgsdk.On(
+		"CreateClient",
+		mock.Anything,
+		mock.Anything,
+		domainID,
+		validToken,
+	).Return(smqSDK.Client{ID: clientID}, nil)
+
+	clientCall := mgsdk.On(
+		"Client",
+		mock.Anything,
+		clientID,
+		domainID,
+		validToken,
+	).Return(smqSDK.Client{ID: clientID, Name: name, Metadata: clientMetadata}, nil).Twice()
+
+	createChannelCall := mgsdk.On(
+		"CreateChannel",
+		mock.Anything,
+		mock.Anything,
+		domainID,
+		validToken,
+	).Return(smqSDK.Channel{ID: channelID}, nil)
+
+	channelCall := mgsdk.On(
+		"Channel",
+		mock.Anything,
+		channelID,
+		domainID,
+		validToken,
+	).Return(smqSDK.Channel{ID: channelID, Metadata: smqSDK.Metadata{"type": "control"}}, nil)
+
+	addBootstrapCall := mgsdk.On(
+		"AddBootstrap",
+		mock.Anything,
+		mock.Anything,
+		domainID,
+		validToken,
+	).Return(bootstrapID, nil)
+
+	viewBootstrapCall := mgsdk.On(
+		"ViewBootstrap",
+		mock.Anything,
+		bootstrapID,
+		domainID,
+		validToken,
+	).Return(smqSDK.BootstrapConfig{
+		ID:          bootstrapID,
+		ExternalID:  externalID,
+		ExternalKey: externalKey,
+	}, nil)
+
+	issueCertCall := mgsdk.On(
+		"IssueCert",
+		mock.Anything,
+		clientID,
+		cfg.Cert.TTL,
+		mock.Anything,
+		mock.Anything,
+		domainID,
+		validToken,
+	).Return(smqSDK.Certificate{SerialNumber: serial}, nil)
+
+	viewCertCall := mgsdk.On(
+		"ViewCert",
+		mock.Anything,
+		serial,
+		domainID,
+		validToken,
+	).Return(smqSDK.Certificate{Certificate: certPEM, Key: keyPEM}, nil)
+
+	updateBootstrapCertsCall := mgsdk.On(
+		"UpdateBootstrapCerts",
+		mock.Anything,
+		bootstrapID,
+		certPEM,
+		keyPEM,
+		"",
+		domainID,
+		validToken,
+	).Return(smqSDK.BootstrapConfig{
+		ID:          bootstrapID,
+		ExternalID:  externalID,
+		ExternalKey: externalKey,
+		ClientCert:  certPEM,
+		ClientKey:   keyPEM,
+	}, nil)
+
+	whitelistCall := mgsdk.On(
+		"Whitelist",
+		mock.Anything,
+		bootstrapID,
+		smqSDK.BootstrapEnabledStatus,
+		domainID,
+		validToken,
+	).Return(nil)
+
+	updateClientCall := mgsdk.On(
+		"UpdateClient",
+		mock.Anything,
+		mock.Anything,
+		domainID,
+		validToken,
+	).Run(func(args mock.Arguments) {
+		updatedClient = args.Get(1).(smqSDK.Client)
+	}).Return(smqSDK.Client{ID: clientID}, nil)
+
+	res, err := svc.Provision(context.Background(), domainID, validToken, name, externalID, externalKey)
+	assert.NoError(t, err)
+	assert.Len(t, res.Clients, 1)
+	assert.Len(t, res.Channels, 1)
+	assert.True(t, res.Whitelisted[bootstrapID])
+	assert.Equal(t, certPEM, res.ClientCert[clientID])
+	assert.Equal(t, keyPEM, res.ClientKey[clientID])
+	assert.Equal(t, clientID, updatedClient.ID)
+	assert.Equal(t, bootstrapID, updatedClient.Metadata["cfg_id"])
+	assert.Equal(t, externalID, updatedClient.Metadata["external_id"])
+	assert.Equal(t, channelID, updatedClient.Metadata["ctrl_channel_id"])
+	assert.Equal(t, "gateway", updatedClient.Metadata["type"])
+
+	createClientCall.Unset()
+	clientCall.Unset()
+	createChannelCall.Unset()
+	channelCall.Unset()
+	addBootstrapCall.Unset()
+	viewBootstrapCall.Unset()
+	issueCertCall.Unset()
+	viewCertCall.Unset()
+	updateBootstrapCertsCall.Unset()
+	whitelistCall.Unset()
+	updateClientCall.Unset()
+}

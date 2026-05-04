@@ -24,12 +24,20 @@ var (
 	clientID   = testsutil.GenerateUUID(&testing.T{})
 	channelID  = testsutil.GenerateUUID(&testing.T{})
 	domainID   = testsutil.GenerateUUID(&testing.T{})
+	profileID  = testsutil.GenerateUUID(&testing.T{})
 	bootConfig = mgsdk.BootstrapConfig{
-		ClientID:    clientID,
-		Channels:    []string{channelID},
+		ID:          clientID,
 		Name:        "Test Bootstrap",
 		ExternalID:  "09:6:0:sb:sa",
 		ExternalKey: "key",
+	}
+	bootProfile = mgsdk.BootstrapProfile{
+		ID:              profileID,
+		Name:            "Test Profile",
+		Description:     "Test profile",
+		TemplateFormat:  "go-template",
+		ContentTemplate: "{\"device_id\":\"{{ .Device.ID }}\"}",
+		Version:         1,
 	}
 	validToken   = "validToken"
 	invalidToken = "invalidToken"
@@ -44,8 +52,8 @@ func TestCreateBootstrapConfigCmd(t *testing.T) {
 	bootCmd := cli.NewBootstrapCmd()
 	rootCmd := setFlags(bootCmd)
 
-	jsonConfig := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]}", clientID, "Test Bootstrap", channelID)
-	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"client_id\": \"%s\", \"external_key\":\"key\", \"name\": \"%s\", \"channels\":[\"%s\"]", clientID, "Test Bootstrap", channelID)
+	jsonConfig := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"external_key\":\"key\", \"name\": \"%s\"}", "Test Bootstrap")
+	invalidJson := fmt.Sprintf("{\"external_id\":\"09:6:0:sb:sa\", \"external_key\":\"key\", \"name\": \"%s\"", "Test Bootstrap")
 	cases := []struct {
 		desc          string
 		args          []string
@@ -473,7 +481,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 	bootCmd := cli.NewBootstrapCmd()
 	rootCmd := setFlags(bootCmd)
 
-	jsonConfig := fmt.Sprintf("{\"client_id\": \"%s\", \"state\":%d}", clientID, 1)
+	jsonConfig := fmt.Sprintf("{\"client_id\": \"%s\", \"status\":%d}", clientID, 1)
 
 	cases := []struct {
 		desc          string
@@ -504,7 +512,7 @@ func TestWhitelistConfigCmd(t *testing.T) {
 		{
 			desc: "whitelist config with invalid json",
 			args: []string{
-				fmt.Sprintf("{\"client_id\": \"%s\", \"state\":%d", clientID, 1),
+				fmt.Sprintf("{\"client_id\": \"%s\", \"status\":%d", clientID, 1),
 				domainID,
 				validToken,
 			},
@@ -628,6 +636,236 @@ func TestBootstrapConfigCmd(t *testing.T) {
 			}
 			sdkCall.Unset()
 			sdkCall1.Unset()
+		})
+	}
+}
+
+func TestBootstrapProfilesCmd(t *testing.T) {
+	sdkMock := new(sdkmocks.SDK)
+	cli.SetSDK(sdkMock)
+	bootCmd := cli.NewBootstrapCmd()
+	rootCmd := setFlags(bootCmd)
+
+	profilePayload, err := json.Marshal(bootProfile)
+	assert.Nil(t, err)
+	jsonProfile := string(profilePayload)
+
+	cases := []struct {
+		desc          string
+		args          []string
+		profile       mgsdk.BootstrapProfile
+		page          mgsdk.BootstrapProfilesPage
+		sdkErr        errors.SDKError
+		logType       outputLog
+		errLogMessage string
+	}{
+		{
+			desc: "create bootstrap profile successfully",
+			args: []string{
+				"create",
+				jsonProfile,
+				domainID,
+				validToken,
+			},
+			profile: bootProfile,
+			logType: entityLog,
+		},
+		{
+			desc: "get all bootstrap profiles successfully",
+			args: []string{
+				"get",
+				all,
+				domainID,
+				validToken,
+			},
+			page: mgsdk.BootstrapProfilesPage{
+				PageRes: mgsdk.PageRes{
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
+				},
+				Profiles: []mgsdk.BootstrapProfile{bootProfile},
+			},
+			logType: entityLog,
+		},
+		{
+			desc: "view bootstrap profile successfully",
+			args: []string{
+				"get",
+				profileID,
+				domainID,
+				validToken,
+			},
+			profile: bootProfile,
+			logType: entityLog,
+		},
+		{
+			desc: "update bootstrap profile successfully",
+			args: []string{
+				"update",
+				jsonProfile,
+				domainID,
+				validToken,
+			},
+			logType: okLog,
+		},
+		{
+			desc: "remove bootstrap profile successfully",
+			args: []string{
+				"remove",
+				profileID,
+				domainID,
+				validToken,
+			},
+			logType: okLog,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var gotProfile mgsdk.BootstrapProfile
+			var gotPage mgsdk.BootstrapProfilesPage
+
+			createCall := sdkMock.On("CreateBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.profile, tc.sdkErr)
+			listCall := sdkMock.On("BootstrapProfiles", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
+			viewCall := sdkMock.On("ViewBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.profile, tc.sdkErr)
+			updateCall := sdkMock.On("UpdateBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			removeCall := sdkMock.On("RemoveBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+
+			out := executeCommand(t, rootCmd, append([]string{"profiles"}, tc.args...)...)
+
+			switch tc.logType {
+			case entityLog:
+				if tc.args[0] == "get" && tc.args[1] == all {
+					err := json.Unmarshal([]byte(out), &gotPage)
+					assert.Nil(t, err)
+					assert.Equal(t, tc.page, gotPage, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.page, gotPage))
+				} else {
+					err := json.Unmarshal([]byte(out), &gotProfile)
+					assert.Nil(t, err)
+					assert.Equal(t, tc.profile, gotProfile, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.profile, gotProfile))
+				}
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
+
+			createCall.Unset()
+			listCall.Unset()
+			viewCall.Unset()
+			updateCall.Unset()
+			removeCall.Unset()
+		})
+	}
+}
+
+func TestBootstrapEnrollmentsCmd(t *testing.T) {
+	sdkMock := new(sdkmocks.SDK)
+	cli.SetSDK(sdkMock)
+	bootCmd := cli.NewBootstrapCmd()
+	rootCmd := setFlags(bootCmd)
+
+	bindings := []mgsdk.BootstrapBindingRequest{
+		{
+			Slot:       "mqtt_client",
+			Type:       "client",
+			ResourceID: clientID,
+		},
+	}
+	snapshots := []mgsdk.BootstrapBindingSnapshot{
+		{
+			ConfigID:   clientID,
+			Slot:       "mqtt_client",
+			Type:       "client",
+			ResourceID: clientID,
+		},
+	}
+	jsonBindings := fmt.Sprintf("[{\"slot\":\"%s\",\"type\":\"%s\",\"resource_id\":\"%s\"}]", bindings[0].Slot, bindings[0].Type, bindings[0].ResourceID)
+
+	cases := []struct {
+		desc          string
+		args          []string
+		snapshots     []mgsdk.BootstrapBindingSnapshot
+		sdkErr        errors.SDKError
+		logType       outputLog
+		errLogMessage string
+	}{
+		{
+			desc: "assign bootstrap profile successfully",
+			args: []string{
+				"assign-profile",
+				clientID,
+				profileID,
+				domainID,
+				validToken,
+			},
+			logType: okLog,
+		},
+		{
+			desc: "bind bootstrap resources successfully",
+			args: []string{
+				"bind",
+				clientID,
+				jsonBindings,
+				domainID,
+				validToken,
+			},
+			logType: okLog,
+		},
+		{
+			desc: "get bootstrap bindings successfully",
+			args: []string{
+				"get-bindings",
+				clientID,
+				domainID,
+				validToken,
+			},
+			snapshots: snapshots,
+			logType:   entityLog,
+		},
+		{
+			desc: "refresh bootstrap bindings successfully",
+			args: []string{
+				"refresh-bindings",
+				clientID,
+				domainID,
+				validToken,
+			},
+			logType: okLog,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var gotSnapshots []mgsdk.BootstrapBindingSnapshot
+
+			assignCall := sdkMock.On("AssignBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			bindCall := sdkMock.On("BindBootstrapResources", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			listCall := sdkMock.On("BootstrapBindings", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.snapshots, tc.sdkErr)
+			refreshCall := sdkMock.On("RefreshBootstrapBindings", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+
+			out := executeCommand(t, rootCmd, append([]string{"enrollments"}, tc.args...)...)
+
+			switch tc.logType {
+			case entityLog:
+				err := json.Unmarshal([]byte(out), &gotSnapshots)
+				assert.Nil(t, err)
+				assert.Equal(t, tc.snapshots, gotSnapshots, fmt.Sprintf("%s unexpected response: expected: %v, got: %v", tc.desc, tc.snapshots, gotSnapshots))
+			case okLog:
+				assert.True(t, strings.Contains(out, "ok"), fmt.Sprintf("%s unexpected response: expected success message, got: %v", tc.desc, out))
+			case errLog:
+				assert.Equal(t, tc.errLogMessage, out, fmt.Sprintf("%s unexpected error response: expected %s got errLogMessage:%s", tc.desc, tc.errLogMessage, out))
+			case usageLog:
+				assert.False(t, strings.Contains(out, rootCmd.Use), fmt.Sprintf("%s invalid usage: %s", tc.desc, out))
+			}
+
+			assignCall.Unset()
+			bindCall.Unset()
+			listCall.Unset()
+			refreshCall.Unset()
 		})
 	}
 }

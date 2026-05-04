@@ -5,24 +5,20 @@ package bootstrap
 
 import "context"
 
-// Config represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding Magistrala entities.
-// MGClient represents corresponding Magistrala Client ID.
-// MGKey is key of corresponding Magistrala Client.
+// Config represents a bootstrap enrollment.
 type Config struct {
-	ClientID      string         `json:"client_id"`
-	ClientSecret  string         `json:"client_secret"`
-	DomainID      string         `json:"domain_id,omitempty"`
-	Name          string         `json:"name,omitempty"`
-	ClientCert    string         `json:"client_cert,omitempty"`
-	ClientKey     string         `json:"client_key,omitempty"`
-	CACert        string         `json:"ca_cert,omitempty"`
-	ExternalID    string         `json:"external_id"`
-	ExternalKey   string         `json:"external_key"`
-	Content       string         `json:"content,omitempty"`
-	State         State          `json:"state"`
-	ProfileID     string         `json:"profile_id,omitempty"`
-	RenderContext map[string]any `json:"render_context,omitempty"`
+	ID              string         `json:"id"`
+	DomainID        string         `json:"domain_id,omitempty"`
+	Name            string         `json:"name,omitempty"`
+	ClientCert      string         `json:"client_cert,omitempty"`
+	ClientKey       string         `json:"client_key,omitempty"`
+	CACert          string         `json:"ca_cert,omitempty"`
+	ExternalID      string         `json:"external_id"`
+	ExternalKey     string         `json:"external_key"`
+	Content         string         `json:"content,omitempty"`
+	Status          Status         `json:"status"`
+	ProfileID       string         `json:"profile_id,omitempty"`
+	RenderContext   map[string]any `json:"render_context,omitempty"`
 }
 
 // Filter is used for the search filters.
@@ -61,6 +57,9 @@ type ConfigRepository interface {
 	// to indicate operation failure.
 	Update(ctx context.Context, cfg Config) error
 
+	// AssignProfile sets the profile reference for the given Config.
+	AssignProfile(ctx context.Context, domainID, id, profileID string) error
+
 	// UpdateCerts updates and returns an existing Config certificate and domainID.
 	// A non-nil error is returned to indicate operation failure.
 	UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (Config, error)
@@ -69,8 +68,8 @@ type ConfigRepository interface {
 	// by the specified user.
 	Remove(ctx context.Context, domainID, id string) error
 
-	// ChangeState changes the State of the Config owned by the specific user.
-	ChangeState(ctx context.Context, domainID, id string, state State) error
+	// ChangeStatus changes the Status of the Config owned by the specific user.
+	ChangeStatus(ctx context.Context, domainID, id string, status Status) error
 
 	// RemoveClient removes Config of the Client with the given ID.
 	// Used as a handler for client remove events.

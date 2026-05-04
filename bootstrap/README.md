@@ -4,9 +4,9 @@ New devices need to be configured properly and connected to the Magistrala. Boot
 
 1. Creating new Magistrala Clients
 2. Providing basic configuration for the newly created Clients
-3. Enabling/disabling Clients
+3. Enabling/disabling bootstrap enrollments
 
-Pre-provisioning a new Client is as simple as sending Configuration data to the Bootstrap service. Once the Client is online, it sends a request for initial config to Bootstrap service. Bootstrap service provides an API for enabling and disabling Clients. Only enabled Clients can exchange messages over Magistrala. Bootstrapping does not implicitly enable Clients, it has to be done manually.
+Pre-provisioning a new Client is as simple as sending Configuration data to the Bootstrap service. Once the Client is online, it sends a request for initial config to Bootstrap service. Bootstrap service provides an API for enabling and disabling bootstrap enrollments. Bootstrapping does not implicitly enable an enrollment; it has to be done manually.
 
 In order to bootstrap successfully, the Client needs to send bootstrapping request to the specific URL, as well as a secret key. This key and URL are pre-provisioned during the manufacturing process. If the Client is provisioned on the Bootstrap service side, the corresponding configuration will be sent as a response. Otherwise, the Client will be saved so that it can be provisioned later.
 
@@ -20,14 +20,14 @@ Client Configuration consists of two logical parts: the custom configuration tha
 
 > Note: list of channels contains IDs of the Magistrala channels. These channels are _pre-provisioned_ on the Magistrala side and, unlike corresponding Magistrala Client, Bootstrap service is not able to create Magistrala Channels.
 
-Enabling and disabling Client (adding Client to/from whitelist) is as simple as connecting corresponding Magistrala Client to the given list of Channels. Configuration keeps _state_ of the Client:
+Enabling and disabling a bootstrap enrollment is an enrollment toggle. Configuration keeps a _status_:
 
-| State    | What it means                                  |
-| -------- | ---------------------------------------------- |
-| Inactive | Client is created, but isn't enabled           |
-| Active   | Client is able to communicate using Magistrala |
+| Status   | What it means                                               |
+| -------- | ----------------------------------------------------------- |
+| disabled | Enrollment exists, but bootstrap is not allowed             |
+| enabled  | Enrollment can be used to fetch bootstrap configuration     |
 
-Switching between states `Active` and `Inactive` enables and disables Client, respectively.
+Switching between statuses `enabled` and `disabled` enables and disables the enrollment, respectively.
 
 Client configuration also contains the so-called `external ID` and `external key`. An external ID is a unique identifier of corresponding Client. For example, a device MAC address is a good choice for external ID. External key is a secret key that is used for authentication during the bootstrapping procedure.
 

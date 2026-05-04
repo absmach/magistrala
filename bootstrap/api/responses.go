@@ -61,15 +61,16 @@ func (res configRes) Empty() bool {
 }
 
 type viewRes struct {
-	ClientID     string          `json:"client_id,omitempty"`
-	CLientSecret string          `json:"client_secret,omitempty"`
-	ExternalID   string          `json:"external_id"`
-	ExternalKey  string          `json:"external_key,omitempty"`
-	Content      string          `json:"content,omitempty"`
-	Name         string          `json:"name,omitempty"`
-	State        bootstrap.State `json:"state"`
-	ClientCert   string          `json:"client_cert,omitempty"`
-	CACert       string          `json:"ca_cert,omitempty"`
+	ID            string           `json:"id,omitempty"`
+	ExternalID    string           `json:"external_id"`
+	Content       string           `json:"content,omitempty"`
+	Name          string           `json:"name,omitempty"`
+	Status        bootstrap.Status `json:"status"`
+	ProfileID     string           `json:"profile_id,omitempty"`
+	RenderContext map[string]any   `json:"render_context,omitempty"`
+	ClientCert    string           `json:"client_cert,omitempty"`
+	CACert        string           `json:"ca_cert,omitempty"`
+	ClientKey     string           `json:"client_key,omitempty"`
 }
 
 func (res viewRes) Code() int {
@@ -120,7 +121,7 @@ func (res changeConfigStatusRes) Empty() bool {
 }
 
 type updateConfigRes struct {
-	ClientID   string `json:"client_id,omitempty"`
+	ID         string `json:"id,omitempty"`
 	CACert     string `json:"ca_cert,omitempty"`
 	ClientCert string `json:"client_cert,omitempty"`
 	ClientKey  string `json:"client_key,omitempty"`
@@ -167,15 +168,33 @@ type profilesPageRes struct {
 	bootstrap.ProfilesPage
 }
 
-func (res profilesPageRes) Code() int                 { return http.StatusOK }
+func (res profilesPageRes) Code() int                  { return http.StatusOK }
 func (res profilesPageRes) Headers() map[string]string { return map[string]string{} }
 func (res profilesPageRes) Empty() bool                { return false }
+
+// profileSlotsRes is returned by profile slots endpoint.
+type profileSlotsRes struct {
+	BindingSlots []bootstrap.BindingSlot `json:"binding_slots"`
+}
+
+func (res profileSlotsRes) Code() int                  { return http.StatusOK }
+func (res profileSlotsRes) Headers() map[string]string { return map[string]string{} }
+func (res profileSlotsRes) Empty() bool                { return false }
+
+// renderPreviewRes is returned by profile render-preview endpoint.
+type renderPreviewRes struct {
+	Content string `json:"content"`
+}
+
+func (res renderPreviewRes) Code() int                  { return http.StatusOK }
+func (res renderPreviewRes) Headers() map[string]string { return map[string]string{} }
+func (res renderPreviewRes) Empty() bool                { return false }
 
 // bindingsRes is returned by ListBindings.
 type bindingsRes struct {
 	Bindings []bootstrap.BindingSnapshot `json:"bindings"`
 }
 
-func (res bindingsRes) Code() int                 { return http.StatusOK }
+func (res bindingsRes) Code() int                  { return http.StatusOK }
 func (res bindingsRes) Headers() map[string]string { return map[string]string{} }
 func (res bindingsRes) Empty() bool                { return false }

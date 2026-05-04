@@ -17,7 +17,6 @@ import (
 const (
 	externalIDKey = "external_id"
 	gateway       = "gateway"
-	Active        = 1
 
 	control = "control"
 	data    = "data"
@@ -52,7 +51,7 @@ type Service interface {
 	// - create a Client based on external_id (eg. MAC address)
 	// - create multiple Channels
 	// - create Bootstrap configuration
-	// - whitelist Client in Bootstrap configuration == connect Client to Channels
+	// - enable created Bootstrap enrollments
 	Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (Result, error)
 
 	// Mapping returns current configuration used for provision
@@ -103,7 +102,8 @@ func (ps *provisionService) Mapping() map[string]any {
 func (ps *provisionService) Provision(ctx context.Context, domainID, token, name, externalID, externalKey string) (res Result, err error) {
 	var channels []smqSDK.Channel
 	var clients []smqSDK.Client
-	defer ps.recover(ctx, &err, &clients, &channels, domainID, token)
+	var bootstrapIDs []string
+	defer ps.recover(ctx, &err, &clients, &channels, &bootstrapIDs, domainID, token)
 
 	token, err = ps.createTokenIfEmpty(ctx, token)
 	if err != nil {
@@ -170,24 +170,19 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 		ClientKey:   map[string]string{},
 	}
 
-	var bsConfig sdk.BootstrapConfig
+	content, err := json.Marshal(ps.conf.Bootstrap.Content)
+	if err != nil {
+		return Result{}, errors.Wrap(ErrFailedBootstrap, err)
+	}
+
+	bootstrapConfigs := make(map[string]sdk.BootstrapConfig)
+	var gatewayConfig sdk.BootstrapConfig
+	var gatewayClientID string
 	for _, c := range clients {
-		var chanIDs []string
-
-		for _, ch := range channels {
-			chanIDs = append(chanIDs, ch.ID)
-		}
-		content, err := json.Marshal(ps.conf.Bootstrap.Content)
-		if err != nil {
-			return Result{}, errors.Wrap(ErrFailedBootstrap, err)
-		}
-
 		if ps.conf.Bootstrap.Provision && needsBootstrap(c) {
 			bsReq := sdk.BootstrapConfig{
-				ClientID:    c.ID,
 				ExternalID:  externalID,
 				ExternalKey: externalKey,
-				Channels:    chanIDs,
 				CACert:      res.CACert,
 				ClientCert:  "",
 				ClientKey:   "",
@@ -197,11 +192,15 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 			if err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrap, err)
 			}
+			bootstrapIDs = append(bootstrapIDs, bsid)
 
-			bsConfig, err = ps.sdk.ViewBootstrap(ctx, bsid, domainID, token)
+			bsConfig, err := ps.sdk.ViewBootstrap(ctx, bsid, domainID, token)
 			if err != nil {
 				return Result{}, errors.Wrap(ErrFailedBootstrapValidate, err)
 			}
+			bootstrapConfigs[c.ID] = bsConfig
+			gatewayConfig = bsConfig
+			gatewayClientID = c.ID
 		}
 
 		if ps.conf.Bootstrap.X509Provision {
@@ -221,24 +220,33 @@ func (ps *provisionService) Provision(ctx context.Context, domainID, token, name
 			res.ClientKey[c.ID] = cert.Key
 			res.CACert = ""
 
-			if needsBootstrap(c) {
-				if _, err = ps.sdk.UpdateBootstrapCerts(ctx, bsConfig.ClientID, cert.Certificate, cert.Key, "", domainID, token); err != nil {
+			if bsConfig, ok := bootstrapConfigs[c.ID]; ok {
+				updated, err := ps.sdk.UpdateBootstrapCerts(ctx, bsConfig.ID, cert.Certificate, cert.Key, "", domainID, token)
+				if err != nil {
 					return Result{}, errors.Wrap(ErrFailedCertCreation, err)
+				}
+				bootstrapConfigs[c.ID] = updated
+				if gatewayClientID == c.ID {
+					gatewayConfig = updated
 				}
 			}
 		}
 
 		if ps.conf.Bootstrap.AutoWhiteList {
-			if err := ps.sdk.Whitelist(ctx, c.ID, Active, domainID, token); err != nil {
-				res.Error = err.Error()
-				return res, ErrClientUpdate
+			if bsConfig, ok := bootstrapConfigs[c.ID]; ok {
+				if err := ps.sdk.Whitelist(ctx, bsConfig.ID, smqSDK.BootstrapEnabledStatus, domainID, token); err != nil {
+					res.Error = err.Error()
+					return res, ErrClientUpdate
+				}
+				res.Whitelisted[bsConfig.ID] = true
 			}
-			res.Whitelisted[c.ID] = true
 		}
 	}
 
-	if err = ps.updateGateway(ctx, domainID, token, bsConfig, channels); err != nil {
-		return res, err
+	if gatewayClientID != "" && gatewayConfig.ID != "" {
+		if err = ps.updateGateway(ctx, domainID, token, gatewayClientID, gatewayConfig, externalKey, channels); err != nil {
+			return res, err
+		}
 	}
 	return res, nil
 }
@@ -292,7 +300,7 @@ func (ps *provisionService) createTokenIfEmpty(ctx context.Context, token string
 	return tkn.AccessToken, nil
 }
 
-func (ps *provisionService) updateGateway(ctx context.Context, domainID, token string, bs sdk.BootstrapConfig, channels []smqSDK.Channel) error {
+func (ps *provisionService) updateGateway(ctx context.Context, domainID, token, gatewayClientID string, bs sdk.BootstrapConfig, externalKey string, channels []smqSDK.Channel) error {
 	var gw Gateway
 	for _, ch := range channels {
 		switch ch.Metadata["type"] {
@@ -305,11 +313,11 @@ func (ps *provisionService) updateGateway(ctx context.Context, domainID, token s
 		}
 	}
 	gw.ExternalID = bs.ExternalID
-	gw.ExternalKey = bs.ExternalKey
-	gw.CfgID = bs.ClientID
+	gw.ExternalKey = externalKey
+	gw.CfgID = bs.ID
 	gw.Type = gateway
 
-	c, sdkerr := ps.sdk.Client(ctx, bs.ClientID, domainID, token)
+	c, sdkerr := ps.sdk.Client(ctx, gatewayClientID, domainID, token)
 	if sdkerr != nil {
 		return errors.Wrap(ErrGatewayUpdate, sdkerr)
 	}
@@ -343,11 +351,17 @@ func clean(ctx context.Context, ps *provisionService, clients []smqSDK.Client, c
 	}
 }
 
-func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, domainID, token string) {
+func (ps *provisionService) removeBootstraps(ctx context.Context, ids []string, domainID, token string) {
+	for _, id := range ids {
+		ps.errLog(ps.sdk.RemoveBootstrap(ctx, id, domainID, token))
+	}
+}
+
+func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK.Client, chs *[]smqSDK.Channel, bootstrapIDs *[]string, domainID, token string) {
 	if e == nil {
 		return
 	}
-	clients, channels, err := *ths, *chs, *e
+	clients, channels, bootstraps, err := *ths, *chs, *bootstrapIDs, *e
 
 	if errors.Contains(err, ErrFailedClientRetrieval) || errors.Contains(err, ErrFailedChannelCreation) {
 		for _, c := range clients {
@@ -364,23 +378,8 @@ func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK
 
 	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
 		clean(ctx, ps, clients, channels, domainID, token)
-		for _, c := range clients {
-			if needsBootstrap(c) {
-				ps.errLog(ps.sdk.RemoveBootstrap(ctx, c.ID, domainID, token))
-			}
-		}
+		ps.removeBootstraps(ctx, bootstraps, domainID, token)
 		return
-	}
-
-	if errors.Contains(err, ErrFailedBootstrapValidate) || errors.Contains(err, ErrFailedCertCreation) {
-		clean(ctx, ps, clients, channels, domainID, token)
-		for _, c := range clients {
-			if needsBootstrap(c) {
-				bs, err := ps.sdk.ViewBootstrap(ctx, c.ID, domainID, token)
-				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(ctx, bs.ClientID, domainID, token))
-			}
-		}
 	}
 
 	if errors.Contains(err, ErrClientUpdate) || errors.Contains(err, ErrGatewayUpdate) {
@@ -390,12 +389,8 @@ func (ps *provisionService) recover(ctx context.Context, e *error, ths *[]smqSDK
 				err := ps.sdk.RevokeCert(ctx, c.ID, domainID, token)
 				ps.errLog(err)
 			}
-			if needsBootstrap(c) {
-				bs, err := ps.sdk.ViewBootstrap(ctx, c.ID, domainID, token)
-				ps.errLog(errors.Wrap(ErrFailedBootstrapRetrieval, err))
-				ps.errLog(ps.sdk.RemoveBootstrap(ctx, bs.ClientID, domainID, token))
-			}
 		}
+		ps.removeBootstraps(ctx, bootstraps, domainID, token)
 		return
 	}
 }

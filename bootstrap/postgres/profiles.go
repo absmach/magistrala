@@ -32,8 +32,8 @@ func NewProfileRepository(db postgres.Database, log *slog.Logger) bootstrap.Prof
 }
 
 func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
-	q := `INSERT INTO profiles (id, domain_id, name, description, template_format, content_template, defaults, version, created_at, updated_at)
-		  VALUES (:id, :domain_id, :name, :description, :template_format, :content_template, :defaults, :version, :created_at, :updated_at)`
+	q := `INSERT INTO profiles (id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at)
+		  VALUES (:id, :domain_id, :name, :description, :template_format, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
 
 	now := time.Now().UTC()
 	p.CreatedAt = now
@@ -55,7 +55,7 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 }
 
 func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Profile, error) {
-	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, version, created_at, updated_at
+	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at
 		  FROM profiles WHERE id = $1 AND domain_id = $2`
 
 	var dbp dbProfile
@@ -70,7 +70,7 @@ func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id strin
 }
 
 func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, offset, limit uint64) (bootstrap.ProfilesPage, error) {
-	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, version, created_at, updated_at
+	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at
 		  FROM profiles WHERE domain_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
 
 	rows, err := pr.db.QueryxContext(ctx, q, domainID, limit, offset)
@@ -108,7 +108,7 @@ func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, of
 
 func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) error {
 	q := `UPDATE profiles SET name = :name, description = :description, template_format = :template_format,
-		  content_template = :content_template, defaults = :defaults, version = version + 1, updated_at = :updated_at
+		  content_template = :content_template, defaults = :defaults, binding_slots = :binding_slots, version = version + 1, updated_at = :updated_at
 		  WHERE id = :id AND domain_id = :domain_id`
 
 	p.UpdatedAt = time.Now().UTC()
@@ -149,6 +149,7 @@ type dbProfile struct {
 	TemplateFormat  string         `db:"template_format"`
 	ContentTemplate sql.NullString `db:"content_template"`
 	Defaults        []byte         `db:"defaults"`
+	BindingSlots    []byte         `db:"binding_slots"`
 	Version         int            `db:"version"`
 	CreatedAt       time.Time      `db:"created_at"`
 	UpdatedAt       time.Time      `db:"updated_at"`
@@ -156,6 +157,10 @@ type dbProfile struct {
 
 func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 	defaults, err := json.Marshal(p.Defaults)
+	if err != nil {
+		return dbProfile{}, err
+	}
+	bindingSlots, err := json.Marshal(p.BindingSlots)
 	if err != nil {
 		return dbProfile{}, err
 	}
@@ -167,6 +172,7 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 		TemplateFormat:  string(p.TemplateFormat),
 		ContentTemplate: nullString(p.ContentTemplate),
 		Defaults:        defaults,
+		BindingSlots:    bindingSlots,
 		Version:         p.Version,
 		CreatedAt:       p.CreatedAt,
 		UpdatedAt:       p.UpdatedAt,
@@ -191,6 +197,11 @@ func toProfile(dbp dbProfile) (bootstrap.Profile, error) {
 	}
 	if len(dbp.Defaults) > 0 && string(dbp.Defaults) != "null" {
 		if err := json.Unmarshal(dbp.Defaults, &p.Defaults); err != nil {
+			return bootstrap.Profile{}, err
+		}
+	}
+	if len(dbp.BindingSlots) > 0 && string(dbp.BindingSlots) != "null" {
+		if err := json.Unmarshal(dbp.BindingSlots, &p.BindingSlots); err != nil {
 			return bootstrap.Profile{}, err
 		}
 	}

@@ -32,7 +32,7 @@ func (br bindingRepository) Save(ctx context.Context, configID string, bindings 
 	if len(bindings) == 0 {
 		return nil
 	}
-	q := `INSERT INTO binding_snapshots (config_id, slot, type, resource_id, snapshot, secret_snapshot, updated_at)
+	q := `INSERT INTO bindings (config_id, slot, type, resource_id, snapshot, secret_snapshot, updated_at)
 		  VALUES (:config_id, :slot, :type, :resource_id, :snapshot, :secret_snapshot, :updated_at)
 		  ON CONFLICT (config_id, slot) DO UPDATE SET
 		      type            = EXCLUDED.type,
@@ -61,7 +61,7 @@ func (br bindingRepository) Save(ctx context.Context, configID string, bindings 
 
 func (br bindingRepository) Retrieve(ctx context.Context, configID string) ([]bootstrap.BindingSnapshot, error) {
 	q := `SELECT config_id, slot, type, resource_id, snapshot, secret_snapshot, updated_at
-		  FROM binding_snapshots WHERE config_id = $1 ORDER BY slot`
+		  FROM bindings WHERE config_id = $1 ORDER BY slot`
 
 	rows, err := br.db.QueryxContext(ctx, q, configID)
 	if err != nil {
@@ -86,7 +86,7 @@ func (br bindingRepository) Retrieve(ctx context.Context, configID string) ([]bo
 }
 
 func (br bindingRepository) Delete(ctx context.Context, configID, slot string) error {
-	q := `DELETE FROM binding_snapshots WHERE config_id = $1 AND slot = $2`
+	q := `DELETE FROM bindings WHERE config_id = $1 AND slot = $2`
 	if _, err := br.db.ExecContext(ctx, q, configID, slot); err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}

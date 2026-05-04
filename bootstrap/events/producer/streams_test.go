@@ -13,6 +13,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
+	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
@@ -21,7 +22,6 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	policysvc "github.com/absmach/magistrala/pkg/policies"
 	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
-	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/redis/go-redis/v9"
@@ -31,12 +31,12 @@ import (
 )
 
 const (
-	streamID        = "magistrala.bootstrap"
-	email           = "user@example.com"
-	validToken      = "validToken"
-	invalidToken    = "invalid"
-	unknownClientID = "unknown"
-	defaultTimout   = 5
+	streamID      = "magistrala.bootstrap"
+	email         = "user@example.com"
+	validToken    = "validToken"
+	invalidToken  = "invalid"
+	unknownID     = "unknown"
+	defaultTimout = 5
 
 	configPrefix        = "config."
 	configCreate        = configPrefix + "create"
@@ -62,11 +62,11 @@ var (
 	validID  = testsutil.GenerateUUID(&testing.T{})
 
 	config = bootstrap.Config{
-		ClientID:     testsutil.GenerateUUID(&testing.T{}),
-		ClientSecret: testsutil.GenerateUUID(&testing.T{}),
-		ExternalID:   testsutil.GenerateUUID(&testing.T{}),
-		ExternalKey:  testsutil.GenerateUUID(&testing.T{}),
-		Content:      "config",
+		ID:          testsutil.GenerateUUID(&testing.T{}),
+		ExternalID:  testsutil.GenerateUUID(&testing.T{}),
+		ExternalKey: testsutil.GenerateUUID(&testing.T{}),
+		Content:     "config",
+		Status:      bootstrap.EnabledStatus,
 	}
 )
 
@@ -82,7 +82,7 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	policies := new(policymocks.Service)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(policies, boot, sdk, encKey, idp)
+	svc := bootstrap.New(policies, boot, sdk, bootstraphasher.New(), encKey, idp)
 	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
@@ -119,7 +119,7 @@ func TestAdd(t *testing.T) {
 			id:       validID,
 			domainID: domainID,
 			event: map[string]any{
-				"client_id":   "1",
+				"config_id":   "1",
 				"domain_id":   domainID,
 				"name":        config.Name,
 				"external_id": config.ExternalID,
@@ -144,7 +144,6 @@ func TestAdd(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		sdkCall := tv.sdk.On("Client", mock.Anything, tc.config.ClientID, tc.domainID, tc.token).Return(mgsdk.Client{ID: tc.config.ClientID, Credentials: mgsdk.ClientCredentials{Secret: tc.config.ClientSecret}}, errors.NewSDKError(tc.clientErr))
 		repoCall := tv.boot.On("Save", context.Background(), mock.Anything).Return(mock.Anything, tc.saveErr)
 
 		_, err := tv.svc.Add(context.Background(), tc.session, tc.token, tc.config)
@@ -164,7 +163,6 @@ func TestAdd(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 
-		sdkCall.Unset()
 		repoCall.Unset()
 	}
 }
@@ -176,7 +174,7 @@ func TestView(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	nonExisting := config
-	nonExisting.ClientID = unknownClientID
+	nonExisting.ID = unknownID
 
 	cases := []struct {
 		desc        string
@@ -197,7 +195,7 @@ func TestView(t *testing.T) {
 			domainID: domainID,
 			err:      nil,
 			event: map[string]any{
-				"client_id":   config.ClientID,
+				"config_id":   config.ID,
 				"domain_id":   config.DomainID,
 				"name":        config.Name,
 				"external_id": config.ExternalID,
@@ -221,8 +219,8 @@ func TestView(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ClientID).Return(config, tc.retrieveErr)
-		_, err := tv.svc.View(context.Background(), tc.session, tc.config.ClientID)
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ID).Return(config, tc.retrieveErr)
+		_, err := tv.svc.View(context.Background(), tc.session, tc.config.ID)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -255,7 +253,7 @@ func TestUpdate(t *testing.T) {
 	modified.Name = "new name"
 
 	nonExisting := config
-	nonExisting.ClientID = unknownClientID
+	nonExisting.ID = unknownID
 
 	cases := []struct {
 		desc      string
@@ -281,9 +279,9 @@ func TestUpdate(t *testing.T) {
 				"timestamp":   time.Now().UnixNano(),
 				"operation":   configUpdate,
 				"external_id": modified.ExternalID,
-				"client_id":   modified.ClientID,
+				"config_id":   modified.ID,
 				"domain_id":   domainID,
-				"state":       "0",
+				"status":      bootstrap.Disabled,
 				"occurred_at": time.Now().UnixNano(),
 			},
 		},
@@ -347,7 +345,7 @@ func TestUpdateCert(t *testing.T) {
 	}{
 		{
 			desc:       "update cert successfully",
-			configID:   config.ClientID,
+			configID:   config.ID,
 			userID:     validID,
 			domainID:   domainID,
 			token:      validToken,
@@ -356,11 +354,10 @@ func TestUpdateCert(t *testing.T) {
 			caCert:     "caCert",
 			err:        nil,
 			event: map[string]any{
-				"client_secret": config.ClientSecret,
-				"client_cert":   "clientCert",
-				"client_key":    "clientKey",
-				"ca_cert":       "caCert",
-				"operation":     certUpdate,
+				"client_cert": "clientCert",
+				"client_key":  "clientKey",
+				"ca_cert":     "caCert",
+				"operation":   certUpdate,
 			},
 		},
 		{
@@ -378,7 +375,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:       "update cert with empty client certificate",
-			configID:   config.ClientID,
+			configID:   config.ID,
 			token:      validToken,
 			userID:     validID,
 			domainID:   domainID,
@@ -390,7 +387,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:       "update cert with empty client key",
-			configID:   config.ClientID,
+			configID:   config.ID,
 			token:      validToken,
 			userID:     validID,
 			domainID:   domainID,
@@ -402,7 +399,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:       "update cert with empty CA certificate",
-			configID:   config.ClientID,
+			configID:   config.ID,
 			token:      validToken,
 			userID:     validID,
 			domainID:   domainID,
@@ -452,7 +449,7 @@ func TestList(t *testing.T) {
 		c.ExternalKey = testsutil.GenerateUUID(t)
 		c.Name = fmt.Sprintf("%s-%d", config.Name, i)
 		if i == 41 {
-			c.State = bootstrap.Active
+			c.Status = bootstrap.Active
 		}
 		saved = append(saved, c)
 	}
@@ -491,7 +488,7 @@ func TestList(t *testing.T) {
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]any{
-				"client_id":   c.ClientID,
+				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
 				"external_id": c.ExternalID,
@@ -518,7 +515,7 @@ func TestList(t *testing.T) {
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]any{
-				"client_id":   c.ClientID,
+				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
 				"external_id": c.ExternalID,
@@ -545,7 +542,7 @@ func TestList(t *testing.T) {
 			listObjectsResponse: policysvc.PolicyPage{},
 			err:                 nil,
 			event: map[string]any{
-				"client_id":   c.ClientID,
+				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
 				"name":        c.Name,
 				"external_id": c.ExternalID,
@@ -651,7 +648,7 @@ func TestRemove(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	nonExisting := config
-	nonExisting.ClientID = unknownClientID
+	nonExisting.ID = unknownID
 
 	cases := []struct {
 		desc      string
@@ -666,20 +663,20 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			desc:     "remove config successfully",
-			configID: config.ClientID,
+			configID: config.ID,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,
 			err:      nil,
 			event: map[string]any{
-				"client_id": config.ClientID,
+				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
 				"operation": configRemove,
 			},
 		},
 		{
 			desc:      "remove config with failed removal",
-			configID:  nonExisting.ClientID,
+			configID:  nonExisting.ID,
 			token:     validToken,
 			userID:    validID,
 			domainID:  domainID,
@@ -789,18 +786,18 @@ func TestEnableConfig(t *testing.T) {
 		domainID    string
 		session     smqauthn.Session
 		retrieveErr error
-		stateErr    error
+		statusErr   error
 		err         error
 		event       map[string]any
 	}{
 		{
 			desc:     "enable config",
-			id:       config.ClientID,
+			id:       config.ID,
 			userID:   validID,
 			domainID: domainID,
 			err:      nil,
 			event: map[string]any{
-				"client_id": config.ClientID,
+				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
 				"operation": clientEnable,
 			},
@@ -815,21 +812,24 @@ func TestEnableConfig(t *testing.T) {
 			event:       nil,
 		},
 		{
-			desc:     "enable with repo state error",
-			id:       config.ClientID,
-			userID:   validID,
-			domainID: domainID,
-			stateErr: svcerr.ErrUpdateEntity,
-			err:      svcerr.ErrUpdateEntity,
-			event:    nil,
+			desc:      "enable with repo status error",
+			id:        config.ID,
+			userID:    validID,
+			domainID:  domainID,
+			statusErr: svcerr.ErrUpdateEntity,
+			err:       svcerr.ErrUpdateEntity,
+			event:     nil,
 		},
 	}
+
+	disabledConfig := config
+	disabledConfig.Status = bootstrap.DisabledStatus
 
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
-		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		repoCall1 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
+		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(disabledConfig, tc.retrieveErr)
+		repoCall1 := tv.boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 		_, err := tv.svc.EnableConfig(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
@@ -864,18 +864,18 @@ func TestDisableConfig(t *testing.T) {
 		domainID    string
 		session     smqauthn.Session
 		retrieveErr error
-		stateErr    error
+		statusErr   error
 		err         error
 		event       map[string]any
 	}{
 		{
 			desc:     "disable config",
-			id:       config.ClientID,
+			id:       config.ID,
 			userID:   validID,
 			domainID: domainID,
 			err:      nil,
 			event: map[string]any{
-				"client_id": config.ClientID,
+				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
 				"operation": clientDisable,
 			},
@@ -890,13 +890,13 @@ func TestDisableConfig(t *testing.T) {
 			event:       nil,
 		},
 		{
-			desc:     "disable with repo state error",
-			id:       config.ClientID,
-			userID:   validID,
-			domainID: domainID,
-			stateErr: svcerr.ErrUpdateEntity,
-			err:      svcerr.ErrUpdateEntity,
-			event:    nil,
+			desc:      "disable with repo status error",
+			id:        config.ID,
+			userID:    validID,
+			domainID:  domainID,
+			statusErr: svcerr.ErrUpdateEntity,
+			err:       svcerr.ErrUpdateEntity,
+			event:     nil,
 		},
 	}
 
@@ -904,7 +904,7 @@ func TestDisableConfig(t *testing.T) {
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
 		repoCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.id).Return(config, tc.retrieveErr)
-		repoCall1 := tv.boot.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.stateErr)
+		repoCall1 := tv.boot.On("ChangeStatus", context.Background(), mock.Anything, mock.Anything, mock.Anything).Return(tc.statusErr)
 		_, err := tv.svc.DisableConfig(context.Background(), tc.session, tc.id)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 

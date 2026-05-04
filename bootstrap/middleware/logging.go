@@ -105,26 +105,6 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	return lm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
-// UpdateConnections logs the update_connections request. It logs bootstrap ID and the time it took to complete the request.
-// If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
-			slog.Any("connections", connections),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update config connections failed", args...)
-			return
-		}
-		lm.logger.Info("Update config connections completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.UpdateConnections(ctx, session, token, id, connections)
-}
-
 // List logs the list request. It logs offset, limit and the time it took to complete the request.
 // If the request fails, it logs the error.
 func (lm *loggingMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (res bootstrap.ConfigsPage, err error) {
@@ -185,43 +165,38 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return lm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-func (lm *loggingMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) (err error) {
+func (lm *loggingMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("id", id),
-			slog.Any("state", state),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Change client state failed", args...)
+			lm.logger.Warn("Enable config failed", args...)
 			return
 		}
-		lm.logger.Info("Change client state completed successfully", args...)
+		lm.logger.Info("Enable config completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ChangeState(ctx, session, token, id, state)
+	return lm.svc.EnableConfig(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) (err error) {
+func (lm *loggingMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.Group("channel",
-				slog.String("id", channel.ID),
-				slog.String("name", channel.Name),
-				slog.Any("metadata", channel.Metadata),
-			),
+			slog.String("id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update channel handler failed", args...)
+			lm.logger.Warn("Disable config failed", args...)
 			return
 		}
-		lm.logger.Info("Update channel handler completed successfully", args...)
+		lm.logger.Info("Disable config completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateChannelHandler(ctx, channel)
+	return lm.svc.DisableConfig(ctx, session, id)
 }
 
 func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string) (err error) {
@@ -239,59 +214,6 @@ func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 	}(time.Now())
 
 	return lm.svc.RemoveConfigHandler(ctx, id)
-}
-
-func (lm *loggingMiddleware) RemoveChannelHandler(ctx context.Context, id string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", id),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove channel handler failed", args...)
-			return
-		}
-		lm.logger.Info("Remove channel handler completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.RemoveChannelHandler(ctx, id)
-}
-
-func (lm *loggingMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.String("client_id", clientID),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Connect client handler failed", args...)
-			return
-		}
-		lm.logger.Info("Connect client handler completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.ConnectClientHandler(ctx, channelID, clientID)
-}
-
-func (lm *loggingMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.String("client_id", clientID),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Disconnect client handler failed", args...)
-			return
-		}
-		lm.logger.Info("Disconnect client handler completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
 
 func (lm *loggingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (saved bootstrap.Profile, err error) {

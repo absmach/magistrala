@@ -19,9 +19,6 @@ const (
 	stream = "events.magistrala.*.*"
 
 	clientRemove = "client.remove"
-
-	channelConnect    = "channel.connect"
-	channelDisconnect = "channel.disconnect"
 )
 
 type eventHandler struct {
@@ -58,13 +55,8 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 	}
 
 	op, _ := msg["operation"].(string)
-	switch op {
-	case clientRemove:
+	if op == clientRemove {
 		return es.removeConfigHandler(ctx, msg)
-	case channelConnect:
-		return es.connectHandler(ctx, decodeConnection(msg))
-	case channelDisconnect:
-		return es.disconnectHandler(ctx, decodeConnection(msg))
 	}
 
 	return nil
@@ -77,36 +69,6 @@ func (es *eventHandler) removeConfigHandler(ctx context.Context, data map[string
 	}
 	if err := es.svc.RemoveConfigHandler(ctx, id); err != nil && !mgerrors.Contains(err, repoerr.ErrNotFound) {
 		return err
-	}
-	return nil
-}
-
-func (es *eventHandler) connectHandler(ctx context.Context, ce connectionEvent) error {
-	if len(ce.channelIDs) == 0 || len(ce.clientIDs) == 0 {
-		return svcerr.ErrMalformedEntity
-	}
-
-	for _, channelID := range ce.channelIDs {
-		for _, clientID := range ce.clientIDs {
-			if err := es.svc.ConnectClientHandler(ctx, channelID, clientID); err != nil && !mgerrors.Contains(err, repoerr.ErrNotFound) {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-func (es *eventHandler) disconnectHandler(ctx context.Context, ce connectionEvent) error {
-	if len(ce.channelIDs) == 0 || len(ce.clientIDs) == 0 {
-		return svcerr.ErrMalformedEntity
-	}
-
-	for _, channelID := range ce.channelIDs {
-		for _, clientID := range ce.clientIDs {
-			if err := es.svc.DisconnectClientHandler(ctx, channelID, clientID); err != nil && !mgerrors.Contains(err, repoerr.ErrNotFound) {
-				return err
-			}
-		}
 	}
 	return nil
 }

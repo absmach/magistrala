@@ -70,10 +70,7 @@ func TestMain(m *testing.M) {
 		SSLRootCert: "",
 	}
 
-	migration, err := postgres.Migration()
-	if err != nil {
-		testLog.Error(fmt.Sprintf("Could not create bootstrap migration source: %s", err))
-	}
+	migration := postgres.Migration()
 
 	if db, err = pgclient.Setup(dbConfig, *migration); err != nil {
 		testLog.Error(fmt.Sprintf("Could not setup test DB connection: %s", err))

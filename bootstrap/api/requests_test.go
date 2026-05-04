@@ -8,15 +8,9 @@ import (
 	"testing"
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
-	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/stretchr/testify/assert"
 )
 
-var (
-	channel1 = testsutil.GenerateUUID(&testing.T{})
-	channel2 = testsutil.GenerateUUID(&testing.T{})
-)
 
 func TestAddReqValidation(t *testing.T) {
 	cases := []struct {
@@ -24,7 +18,6 @@ func TestAddReqValidation(t *testing.T) {
 		token       string
 		externalID  string
 		externalKey string
-		channels    []string
 		err         error
 	}{
 		{
@@ -32,7 +25,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "external-key",
-			channels:    []string{channel1, channel2},
 			err:         nil,
 		},
 		{
@@ -40,7 +32,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "",
 			externalID:  "external-id",
 			externalKey: "external-key",
-			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrBearerToken,
 		},
 		{
@@ -48,7 +39,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "",
 			externalKey: "external-key",
-			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrMissingID,
 		},
 		{
@@ -56,7 +46,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
-			channels:    []string{channel1, channel2},
 			err:         apiutil.ErrBearerKey,
 		},
 		{
@@ -64,23 +53,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "",
 			externalKey: "",
-			channels:    []string{channel1, channel2},
-			err:         apiutil.ErrMissingID,
-		},
-		{
-			desc:        "empty channels",
-			token:       "token",
-			externalID:  "external-id",
-			externalKey: "external-key",
-			channels:    []string{},
-			err:         apiutil.ErrEmptyList,
-		},
-		{
-			desc:        "empty channel value",
-			token:       "token",
-			externalID:  "external-id",
-			externalKey: "external-key",
-			channels:    []string{channel1, ""},
 			err:         apiutil.ErrMissingID,
 		},
 	}
@@ -90,7 +62,6 @@ func TestAddReqValidation(t *testing.T) {
 			token:       tc.token,
 			ExternalID:  tc.externalID,
 			ExternalKey: tc.externalKey,
-			Channels:    tc.channels,
 		}
 
 		err := req.validate()
@@ -172,39 +143,6 @@ func TestUpdateCertReqValidation(t *testing.T) {
 	}
 }
 
-func TestUpdateConnReqValidation(t *testing.T) {
-	cases := []struct {
-		desc  string
-		id    string
-		token string
-
-		err error
-	}{
-		{
-			desc:  "empty token",
-			token: "",
-			id:    "id",
-			err:   apiutil.ErrBearerToken,
-		},
-		{
-			desc:  "empty id",
-			token: "token",
-			id:    "",
-			err:   apiutil.ErrMissingID,
-		},
-	}
-
-	for _, tc := range cases {
-		req := updateConnReq{
-			token: tc.token,
-			id:    tc.id,
-		}
-
-		err := req.validate()
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-	}
-}
-
 func TestListReqValidation(t *testing.T) {
 	cases := []struct {
 		desc   string
@@ -269,42 +207,37 @@ func TestBootstrapReqValidation(t *testing.T) {
 	}
 }
 
-func TestChangeStateReqValidation(t *testing.T) {
+func TestChangeConfigStatusReqValidation(t *testing.T) {
 	cases := []struct {
 		desc  string
 		token string
 		id    string
-		state bootstrap.State
 		err   error
 	}{
 		{
 			desc:  "empty token",
 			token: "",
 			id:    "id",
-			state: bootstrap.State(1),
 			err:   apiutil.ErrBearerToken,
 		},
 		{
 			desc:  "empty id",
 			token: "token",
 			id:    "",
-			state: bootstrap.State(0),
 			err:   apiutil.ErrMissingID,
 		},
 		{
-			desc:  "invalid state",
+			desc:  "valid request",
 			token: "token",
 			id:    "id",
-			state: bootstrap.State(14),
-			err:   bootstrap.ErrBootstrapState,
+			err:   nil,
 		},
 	}
 
 	for _, tc := range cases {
-		req := changeStateReq{
+		req := changeConfigStatusReq{
 			token: tc.token,
 			id:    tc.id,
-			State: tc.state,
 		}
 
 		err := req.validate()

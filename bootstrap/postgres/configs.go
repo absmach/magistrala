@@ -6,30 +6,17 @@ package postgres
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/clients"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jackc/pgerrcode"
 	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jmoiron/sqlx"
-)
-
-var (
-	errSaveChannels     = errors.New("failed to insert channels to database")
-	errSaveConnections  = errors.New("failed to insert connections to database")
-	errUpdateChannels   = errors.New("failed to update channels in bootstrap configuration database")
-	errRemoveChannels   = errors.New("failed to remove channels from bootstrap configuration in database")
-	errConnectClient    = errors.New("failed to connect client in bootstrap configuration in database")
-	errDisconnectClient = errors.New("failed to disconnect client in bootstrap configuration in database")
 )
 
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
@@ -45,42 +32,19 @@ func NewConfigRepository(db postgres.Database, log *slog.Logger) bootstrap.Confi
 	return &configRepository{db: db, log: log}
 }
 
-func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config, chsConnIDs []string) (clientID string, err error) {
+func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config) (string, error) {
 	q := `INSERT INTO configs (client_id, domain_id, name, client_cert, client_key, ca_cert, client_secret, external_id, external_key, content, state)
 	VALUES (:client_id, :domain_id, :name, :client_cert, :client_key, :ca_cert, :client_secret, :external_id, :external_key, :content, :state)`
 
-	tx, err := cr.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
-	}
 	dbcfg := toDBConfig(cfg)
-
-	defer func() {
-		if err != nil {
-			err = cr.rollback("Save method", err, tx)
-		}
-	}()
-
-	if _, err := tx.NamedExec(q, dbcfg); err != nil {
+	if _, err := cr.db.NamedExecContext(ctx, q, dbcfg); err != nil {
 		switch pgErr := err.(type) {
 		case *pgconn.PgError:
 			if pgErr.Code == pgerrcode.UniqueViolation {
-				err = repoerr.ErrConflict
+				return "", repoerr.ErrConflict
 			}
 		}
-		return "", err
-	}
-
-	if err := insertChannels(cfg.DomainID, cfg.Channels, tx); err != nil {
-		return "", errors.Wrap(errSaveChannels, err)
-	}
-
-	if err := insertConnections(ctx, cfg, chsConnIDs, tx); err != nil {
-		return "", errors.Wrap(errSaveConnections, err)
-	}
-
-	if commitErr := tx.Commit(); commitErr != nil {
-		return "", commitErr
+		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
 	return cfg.ClientID, nil
@@ -108,38 +72,7 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 		return bootstrap.Config{}, err
 	}
 
-	q = `SELECT ch.id, ch.name, ch.metadata FROM channels ch
-		 INNER JOIN config_channels conn
-		 ON ch.id = conn.channel_id AND ch.domain_id = conn.domain_id
-		 WHERE conn.config_id = :client_id AND conn.domain_id = :domain_id`
-
-	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
-	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	chans := []bootstrap.Channel{}
-	for rows.Next() {
-		dbch := dbChannel{}
-		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read connected client due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-		dbch.DomainID = nullString(dbcfg.DomainID)
-
-		ch, err := toChannel(dbch)
-		if err != nil {
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-		chans = append(chans, ch)
-	}
-
-	cfg := toConfig(dbcfg)
-	cfg.Channels = chans
-
-	return cfg, nil
+	return toConfig(dbcfg), nil
 }
 
 func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
@@ -209,39 +142,7 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	q = `SELECT ch.id, ch.name, ch.metadata FROM channels ch
-     INNER JOIN config_channels conn
-     ON ch.id = conn.channel_id AND ch.domain_id = conn.domain_id
-     WHERE conn.config_id = :client_id AND conn.domain_id = :domain_id`
-
-	rows, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
-	if err != nil {
-		cr.log.Error(fmt.Sprintf("Failed to retrieve connected due to %s", err))
-		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-	defer rows.Close()
-
-	channels := []bootstrap.Channel{}
-	for rows.Next() {
-		dbch := dbChannel{}
-		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read connected client due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-
-		ch, err := toChannel(dbch)
-		if err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
-			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-
-		channels = append(channels, ch)
-	}
-
-	cfg := toConfig(dbcfg)
-	cfg.Channels = channels
-
-	return cfg, nil
+	return toConfig(dbcfg), nil
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
@@ -300,40 +201,6 @@ func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, c
 	return toConfig(dbcfg), nil
 }
 
-func (cr configRepository) UpdateConnections(ctx context.Context, domainID, id string, channels []bootstrap.Channel, connections []string) (err error) {
-	tx, err := cr.db.BeginTxx(ctx, nil)
-	if err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	defer func() {
-		if err != nil {
-			err = cr.rollback("UpdateConnections method", err, tx)
-		} else {
-			if commitErr := tx.Commit(); commitErr != nil {
-				err = commitErr
-			}
-		}
-	}()
-
-	if err = insertChannels(domainID, channels, tx); err != nil {
-		err = errors.Wrap(repoerr.ErrUpdateEntity, err)
-		return err
-	}
-
-	if err = updateConnections(domainID, id, connections, tx); err != nil {
-		if e, ok := err.(*pgconn.PgError); ok {
-			if e.Code == pgerrcode.ForeignKeyViolation {
-				err = repoerr.ErrNotFound
-			}
-		}
-		err = errors.Wrap(repoerr.ErrUpdateEntity, err)
-		return err
-	}
-
-	return nil
-}
-
 func (cr configRepository) Remove(ctx context.Context, domainID, id string) error {
 	q := `DELETE FROM configs WHERE client_id = :client_id AND domain_id = :domain_id`
 	dbcfg := dbConfig{
@@ -374,121 +241,11 @@ func (cr configRepository) ChangeState(ctx context.Context, domainID, id string,
 	return nil
 }
 
-func (cr configRepository) ListExisting(ctx context.Context, domainID string, ids []string) ([]bootstrap.Channel, error) {
-	var channels []bootstrap.Channel
-	if len(ids) == 0 {
-		return channels, nil
-	}
-
-	var chans pgtype.TextArray
-	if err := chans.Set(ids); err != nil {
-		return []bootstrap.Channel{}, err
-	}
-
-	q := "SELECT id, name, metadata FROM channels WHERE domain_id = $1 AND id = ANY ($2)"
-	rows, err := cr.db.QueryxContext(ctx, q, domainID, chans)
-	if err != nil {
-		return []bootstrap.Channel{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	for rows.Next() {
-		var dbch dbChannel
-		if err := rows.StructScan(&dbch); err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to read retrieved channels due to %s", err))
-			return []bootstrap.Channel{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-
-		ch, err := toChannel(dbch)
-		if err != nil {
-			cr.log.Error(fmt.Sprintf("Failed to deserialize channel due to %s", err))
-			return []bootstrap.Channel{}, err
-		}
-
-		channels = append(channels, ch)
-	}
-
-	return channels, nil
-}
-
 func (cr configRepository) RemoveClient(ctx context.Context, id string) error {
 	q := `DELETE FROM configs WHERE client_id = $1`
 	_, err := cr.db.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
-	}
-	return nil
-}
-
-func (cr configRepository) UpdateChannel(ctx context.Context, c bootstrap.Channel) error {
-	dbch, err := toDBChannel(c.DomainID, c)
-	if err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
-	}
-
-	q := `UPDATE channels SET name = :name, metadata = :metadata, updated_at = :updated_at, updated_by = :updated_by,
-			domain_id = COALESCE(:domain_id, domain_id), id = :id, parent_group_id = :parent_group_id,
-			description = :description, status = :status
-			WHERE id = :id`
-	res, err := cr.db.NamedExecContext(ctx, q, dbch)
-	if err != nil {
-		return errors.Wrap(errUpdateChannels, err)
-	}
-
-	rows, err := res.RowsAffected()
-	if err != nil {
-		return errors.Wrap(errUpdateChannels, err)
-	}
-	if rows > 0 || !dbch.DomainID.Valid {
-		return nil
-	}
-
-	insertQ := `INSERT INTO channels (id, domain_id, name, metadata, parent_group_id, description, created_at, updated_at, updated_by, status)
-		VALUES (:id, :domain_id, :name, :metadata, :parent_group_id, :description, :created_at, :updated_at, :updated_by, :status)
-		ON CONFLICT (id) DO UPDATE SET
-			name = EXCLUDED.name,
-			metadata = EXCLUDED.metadata,
-			parent_group_id = EXCLUDED.parent_group_id,
-			description = EXCLUDED.description,
-			updated_at = EXCLUDED.updated_at,
-			updated_by = EXCLUDED.updated_by,
-			status = EXCLUDED.status,
-			domain_id = EXCLUDED.domain_id`
-	if _, err = cr.db.NamedExecContext(ctx, insertQ, dbch); err != nil {
-		return errors.Wrap(errUpdateChannels, err)
-	}
-	return nil
-}
-
-func (cr configRepository) RemoveChannel(ctx context.Context, id string) error {
-	q := `DELETE FROM channels WHERE id = $1`
-	if _, err := cr.db.ExecContext(ctx, q, id); err != nil {
-		return errors.Wrap(errRemoveChannels, err)
-	}
-	return nil
-}
-
-func (cr configRepository) ConnectClient(ctx context.Context, channelID, clientID string) error {
-	q := `UPDATE configs SET state = $1
-		WHERE client_id = $2
-		AND EXISTS (SELECT 1 FROM config_channels WHERE config_id = $2 AND channel_id = $3)`
-
-	result, err := cr.db.ExecContext(ctx, q, bootstrap.Active, clientID, channelID)
-	if err != nil {
-		return errors.Wrap(errConnectClient, err)
-	}
-	if rows, _ := result.RowsAffected(); rows == 0 {
-		return repoerr.ErrNotFound
-	}
-	return nil
-}
-
-func (cr configRepository) DisconnectClient(ctx context.Context, channelID, clientID string) error {
-	q := `UPDATE configs SET state = $1
-		WHERE client_id = $2
-		AND EXISTS (SELECT 1 FROM config_channels WHERE config_id = $2 AND channel_id = $3)`
-	_, err := cr.db.ExecContext(ctx, q, bootstrap.Inactive, clientID, channelID)
-	if err != nil {
-		return errors.Wrap(errDisconnectClient, err)
 	}
 	return nil
 }
@@ -509,7 +266,6 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
 	}
 
-	// Adjust the starting point for placeholders based on the current length of params
 	counter := len(params) + 1
 	for k, v := range filter.FullMatch {
 		params = append(params, v)
@@ -528,123 +284,11 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 	return "", params
 }
 
-func (cr configRepository) rollback(content string, defErr error, tx *sqlx.Tx) error {
-	if err := tx.Rollback(); err != nil {
-		return errors.Wrap(defErr, errors.Wrap(errors.New("failed to rollback at "+content), err))
-	}
-
-	return defErr
-}
-
-func insertChannels(domainID string, channels []bootstrap.Channel, tx *sqlx.Tx) error {
-	if len(channels) == 0 {
-		return nil
-	}
-
-	var chans []dbChannel
-	for _, ch := range channels {
-		dbch, err := toDBChannel(domainID, ch)
-		if err != nil {
-			return err
-		}
-		chans = append(chans, dbch)
-	}
-	q := `INSERT INTO channels (id, domain_id, name, metadata, parent_group_id, description, created_at, updated_at, updated_by, status)
-		  VALUES (:id, :domain_id, :name, :metadata, :parent_group_id, :description, :created_at, :updated_at, :updated_by, :status)`
-	if _, err := tx.NamedExec(q, chans); err != nil {
-		e := err
-		if pqErr, ok := err.(*pgconn.PgError); ok && pqErr.Code == pgerrcode.UniqueViolation {
-			e = repoerr.ErrConflict
-		}
-		return e
-	}
-
-	return nil
-}
-
-func insertConnections(_ context.Context, cfg bootstrap.Config, connections []string, tx *sqlx.Tx) error {
-	if len(connections) == 0 {
-		return nil
-	}
-	q := `INSERT INTO config_channels (config_id, channel_id, domain_id)
-      VALUES (:config_id, :channel_id, :domain_id)
-	  ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`
-
-	conns := []dbConnection{}
-	for _, conn := range connections {
-		dbconn := dbConnection{
-			Config:   cfg.ClientID,
-			Channel:  conn,
-			DomainID: cfg.DomainID,
-		}
-		conns = append(conns, dbconn)
-	}
-	_, err := tx.NamedExec(q, conns)
-
-	return err
-}
-
-func updateConnections(domainID, id string, connections []string, tx *sqlx.Tx) error {
-	if len(connections) == 0 {
-		_, err := tx.Exec(`DELETE FROM config_channels WHERE config_id = $1 AND domain_id = $2`, id, domainID)
-		return err
-	}
-	q := `DELETE FROM config_channels
-		WHERE config_id = $1 AND domain_id = $2
-		AND channel_id <> ALL($3)`
-
-	var conn pgtype.TextArray
-	if err := conn.Set(connections); err != nil {
-		return err
-	}
-
-	res, err := tx.Exec(q, id, domainID, conn)
-	if err != nil {
-		return err
-	}
-	_, _ = res.RowsAffected()
-
-	q = `INSERT INTO config_channels (config_id, channel_id, domain_id)
-		 VALUES (:config_id, :channel_id, :domain_id)
-		 ON CONFLICT (channel_id, config_id, domain_id) DO NOTHING`
-
-	conns := []dbConnection{}
-	for _, conn := range connections {
-		dbconn := dbConnection{
-			Config:   id,
-			Channel:  conn,
-			DomainID: domainID,
-		}
-		conns = append(conns, dbconn)
-	}
-
-	if _, err := tx.NamedExec(q, conns); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func nullString(s string) sql.NullString {
 	if s == "" {
 		return sql.NullString{}
 	}
-
-	return sql.NullString{
-		String: s,
-		Valid:  true,
-	}
-}
-
-func nullTime(t time.Time) sql.NullTime {
-	if t.IsZero() {
-		return sql.NullTime{}
-	}
-
-	return sql.NullTime{
-		Time:  t,
-		Valid: true,
-	}
+	return sql.NullString{String: s, Valid: true}
 }
 
 type dbConfig struct {
@@ -690,96 +334,17 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 	if dbcfg.Name.Valid {
 		cfg.Name = dbcfg.Name.String
 	}
-
 	if dbcfg.Content.Valid {
 		cfg.Content = dbcfg.Content.String
 	}
-
 	if dbcfg.ClientCert.Valid {
 		cfg.ClientCert = dbcfg.ClientCert.String
 	}
-
 	if dbcfg.ClientKey.Valid {
 		cfg.ClientKey = dbcfg.ClientKey.String
 	}
-
 	if dbcfg.CaCert.Valid {
 		cfg.CACert = dbcfg.CaCert.String
 	}
 	return cfg
-}
-
-type dbChannel struct {
-	ID          string         `db:"id"`
-	Name        sql.NullString `db:"name"`
-	DomainID    sql.NullString `db:"domain_id"`
-	Metadata    string         `db:"metadata"`
-	Parent      sql.NullString `db:"parent_group_id,omitempty"`
-	Description string         `db:"description,omitempty"`
-	CreatedAt   time.Time      `db:"created_at"`
-	UpdatedAt   sql.NullTime   `db:"updated_at,omitempty"`
-	UpdatedBy   sql.NullString `db:"updated_by,omitempty"`
-	Status      clients.Status `db:"status"`
-}
-
-func toDBChannel(domainID string, ch bootstrap.Channel) (dbChannel, error) {
-	createdAt := ch.CreatedAt
-	if createdAt.IsZero() {
-		createdAt = time.Now().UTC()
-	}
-	dbch := dbChannel{
-		ID:          ch.ID,
-		Name:        nullString(ch.Name),
-		DomainID:    nullString(domainID),
-		Parent:      nullString(ch.Parent),
-		Description: ch.Description,
-		CreatedAt:   createdAt,
-		UpdatedAt:   nullTime(ch.UpdatedAt),
-		UpdatedBy:   nullString(ch.UpdatedBy),
-		Status:      ch.Status,
-	}
-
-	metadata, err := json.Marshal(ch.Metadata)
-	if err != nil {
-		return dbChannel{}, errors.Wrap(errors.ErrMalformedEntity, err)
-	}
-
-	dbch.Metadata = string(metadata)
-	return dbch, nil
-}
-
-func toChannel(dbch dbChannel) (bootstrap.Channel, error) {
-	ch := bootstrap.Channel{
-		ID:          dbch.ID,
-		Description: dbch.Description,
-		CreatedAt:   dbch.CreatedAt,
-		Status:      dbch.Status,
-	}
-	if dbch.Name.Valid {
-		ch.Name = dbch.Name.String
-	}
-	if dbch.DomainID.Valid {
-		ch.DomainID = dbch.DomainID.String
-	}
-	if dbch.Parent.Valid {
-		ch.Parent = dbch.Parent.String
-	}
-	if dbch.UpdatedBy.Valid {
-		ch.UpdatedBy = dbch.UpdatedBy.String
-	}
-	if dbch.UpdatedAt.Valid {
-		ch.UpdatedAt = dbch.UpdatedAt.Time
-	}
-
-	if err := json.Unmarshal([]byte(dbch.Metadata), &ch.Metadata); err != nil {
-		return bootstrap.Channel{}, errors.Wrap(errors.ErrMalformedEntity, err)
-	}
-
-	return ch, nil
-}
-
-type dbConnection struct {
-	Config   string `db:"config_id"`
-	Channel  string `db:"channel_id"`
-	DomainID string `db:"domain_id"`
 }

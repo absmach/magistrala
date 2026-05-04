@@ -12,15 +12,12 @@ import (
 	"github.com/absmach/magistrala"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
 var (
-	connTypes = []string{"Publish", "Subscribe"}
-
 	// ErrClients indicates failure to communicate with Magistrala Clients service.
 	// It can be due to networking error or invalid/unauthenticated request.
 	ErrClients = errors.New("failed to receive response from Clients service")
@@ -40,22 +37,13 @@ var (
 	// ErrBootstrapState indicates an invalid bootstrap state.
 	ErrBootstrapState = errors.NewRequestError("invalid bootstrap state")
 
-	// ErrNotInSameDomain indicates entities are not in the same domain.
-	errNotInSameDomain = errors.New("entities are not in the same domain")
-
-	errUpdateConnections  = errors.New("failed to update connections")
-	errRemoveBootstrap    = errors.New("failed to remove bootstrap configuration")
-	errChangeState        = errors.New("failed to change state of bootstrap configuration")
-	errUpdateChannel      = errors.New("failed to update channel")
-	errRemoveConfig       = errors.New("failed to remove bootstrap configuration")
-	errRemoveChannel      = errors.New("failed to remove channel")
-	errCreateClient       = errors.New("failed to create client")
-	errConnectClient      = errors.New("failed to connect client")
-	errDisconnectClient   = errors.New("failed to disconnect client")
-	errCheckChannels      = errors.New("failed to check if channels exists")
-	errConnectionChannels = errors.New("failed to check channels connections")
-	errClientNotFound     = errors.New("failed to find client")
-	errUpdateCert         = errors.New("failed to update cert")
+	errRemoveBootstrap = errors.New("failed to remove bootstrap configuration")
+	errEnableConfig  = errors.New("failed to enable bootstrap configuration")
+	errDisableConfig = errors.New("failed to disable bootstrap configuration")
+	errRemoveConfig    = errors.New("failed to remove bootstrap configuration")
+	errCreateClient    = errors.New("failed to create client")
+	errClientNotFound  = errors.New("failed to find client")
+	errUpdateCert      = errors.New("failed to update cert")
 
 	errCreateProfile  = errors.New("failed to create profile")
 	errViewProfile    = errors.New("failed to view profile")
@@ -86,9 +74,6 @@ type Service interface {
 	// A non-nil error is returned to indicate operation failure.
 	UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (Config, error)
 
-	// UpdateConnections updates list of Channels related to given Config.
-	UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error
-
 	// List returns subset of Configs with given search params that belong to the
 	// user identified by the given token.
 	List(ctx context.Context, session smqauthn.Session, filter Filter, offset, limit uint64) (ConfigsPage, error)
@@ -99,26 +84,17 @@ type Service interface {
 	// Bootstrap returns Config to the Client with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
-	// ChangeState changes state of the Client with given client ID and domain ID.
-	ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state State) error
+	// EnableConfig activates the Config so its device can successfully bootstrap.
+	EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
+
+	// DisableConfig deactivates the Config, preventing its device from bootstrapping.
+	DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
 	// handlers for events. That's why these methods surpass ownership check.
 
-	// UpdateChannelHandler updates Channel with data received from an event.
-	UpdateChannelHandler(ctx context.Context, channel Channel) error
-
 	// RemoveConfigHandler removes Configuration with id received from an event.
 	RemoveConfigHandler(ctx context.Context, id string) error
-
-	// RemoveChannelHandler removes Channel with id received from an event.
-	RemoveChannelHandler(ctx context.Context, id string) error
-
-	// ConnectClientHandler changes state of the Config to active when connect event occurs.
-	ConnectClientHandler(ctx context.Context, channelID, clientID string) error
-
-	// DisconnectClientHandler changes state of the Config to inactive when disconnect event occurs.
-	DisconnectClientHandler(ctx context.Context, channelID, clientID string) error
 
 	// CreateProfile persists a new device Profile.
 	CreateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
@@ -208,29 +184,10 @@ func NewWithProfiles(
 }
 
 func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, token string, cfg Config) (Config, error) {
-	toConnect := bs.toIDList(cfg.Channels)
-
-	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(ctx, session.DomainID, toConnect)
-	if err != nil {
-		return Config{}, errors.Wrap(errCheckChannels, err)
-	}
-
-	cfg.Channels, err = bs.connectionChannels(ctx, toConnect, bs.toIDList(existing), session.DomainID, token)
-	if err != nil {
-		return Config{}, errors.Wrap(errConnectionChannels, err)
-	}
-
 	id := cfg.ClientID
 	mgClient, err := bs.client(ctx, session.DomainID, id, token)
 	if err != nil {
 		return Config{}, propagateSDKErr(errClientNotFound, err)
-	}
-
-	for _, channel := range cfg.Channels {
-		if channel.DomainID != mgClient.DomainID {
-			return Config{}, errors.Wrap(svcerr.ErrMalformedEntity, errNotInSameDomain)
-		}
 	}
 
 	cfg.ClientID = mgClient.ID
@@ -238,39 +195,17 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	cfg.ClientSecret = mgClient.Credentials.Secret
 	cfg.State = Inactive
 
-	var connected []string
-	for _, channelID := range toConnect {
-		if err := bs.sdk.ConnectClients(ctx, channelID, []string{cfg.ClientID}, connTypes, session.DomainID, token); err != nil {
-			if errors.Contains(err, svcerr.ErrConflict) {
-				continue
-			}
-			for _, cid := range connected {
-				_ = bs.sdk.DisconnectClients(ctx, cid, []string{cfg.ClientID}, connTypes, session.DomainID, token)
-			}
-			return Config{}, propagateSDKErr(ErrClients, err)
-		}
-		connected = append(connected, channelID)
-	}
-	if len(toConnect) > 0 {
-		cfg.State = Active
-	}
-
-	saved, err := bs.configs.Save(ctx, cfg, toConnect)
+	saved, err := bs.configs.Save(ctx, cfg)
 	if err != nil {
 		if id == "" {
 			if errT := bs.sdk.DeleteClient(ctx, cfg.ClientID, cfg.DomainID, token); errT != nil {
 				err = errors.Wrap(err, errT)
 			}
 		}
-		for _, cid := range connected {
-			_ = bs.sdk.DisconnectClients(ctx, cid, []string{cfg.ClientID}, connTypes, session.DomainID, token)
-		}
 		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
 
 	cfg.ClientID = saved
-	cfg.Channels = append(cfg.Channels, existing...)
-
 	return cfg, nil
 }
 
@@ -285,7 +220,7 @@ func (bs bootstrapService) View(ctx context.Context, session smqauthn.Session, i
 func (bs bootstrapService) Update(ctx context.Context, session smqauthn.Session, cfg Config) error {
 	cfg.DomainID = session.DomainID
 	if err := bs.configs.Update(ctx, cfg); err != nil {
-		return errors.Wrap(errUpdateConnections, err)
+		return errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
 	return nil
 }
@@ -298,63 +233,6 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Sess
 	return cfg, nil
 }
 
-func (bs bootstrapService) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
-	if err != nil {
-		return errors.Wrap(errUpdateConnections, err)
-	}
-	currentChannels := bs.toIDList(cfg.Channels)
-
-	// Check if channels exist. This is the way to prevent fetching channels that already exist.
-	existing, err := bs.configs.ListExisting(ctx, session.DomainID, connections)
-	if err != nil {
-		return errors.Wrap(errUpdateConnections, err)
-	}
-
-	channels, err := bs.connectionChannels(ctx, connections, bs.toIDList(existing), session.DomainID, token)
-	if err != nil {
-		return errors.Wrap(errUpdateConnections, err)
-	}
-
-	cfg.Channels = channels
-
-	if cfg.State == Active {
-		currentSet := make(map[string]bool, len(currentChannels))
-		for _, chID := range currentChannels {
-			currentSet[chID] = true
-		}
-		connectionSet := make(map[string]bool, len(connections))
-		for _, chID := range connections {
-			connectionSet[chID] = true
-		}
-		var add, remove []string
-		for _, chID := range connections {
-			if !currentSet[chID] {
-				add = append(add, chID)
-			}
-		}
-		for _, chID := range currentChannels {
-			if !connectionSet[chID] {
-				remove = append(remove, chID)
-			}
-		}
-		if len(add) > 0 {
-			if err := bs.connectChannels(ctx, session.DomainID, token, id, add); err != nil {
-				return propagateSDKErr(ErrClients, err)
-			}
-		}
-		if len(remove) > 0 {
-			if err := bs.disconnectChannels(ctx, session.DomainID, token, id, remove); err != nil {
-				return propagateSDKErr(ErrClients, err)
-			}
-		}
-	}
-
-	if err := bs.configs.UpdateConnections(ctx, session.DomainID, id, channels, connections); err != nil {
-		return errors.Wrap(errUpdateConnections, err)
-	}
-	return nil
-}
 
 func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
 	tids, err := bs.policies.ListAllObjects(ctx, policies.Policy{
@@ -414,97 +292,47 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 	if cfg.ExternalKey != externalKey {
 		return Config{}, ErrExternalKey
 	}
+	if cfg.State == Inactive {
+		return Config{}, ErrBootstrap
+	}
 
 	return cfg, nil
 }
 
-func (bs bootstrapService) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state State) error {
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, id)
+func (bs bootstrapService) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
+	cfg, err := bs.changeConfigState(ctx, session.DomainID, id, Active)
 	if err != nil {
-		return errors.Wrap(errChangeState, err)
+		return Config{}, errors.Wrap(errEnableConfig, err)
 	}
-
-	if cfg.State == state {
-		return nil
-	}
-
-	switch state {
-	case Active:
-		if err := bs.connectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
-			return propagateSDKErr(ErrClients, err)
-		}
-	case Inactive:
-		if err := bs.disconnectChannels(ctx, session.DomainID, token, cfg.ClientID, bs.toIDList(cfg.Channels)); err != nil {
-			return propagateSDKErr(ErrClients, err)
-		}
-	}
-	if err := bs.configs.ChangeState(ctx, session.DomainID, id, state); err != nil {
-		return errors.Wrap(errChangeState, err)
-	}
-	return nil
+	return cfg, nil
 }
 
-func (bs bootstrapService) UpdateChannelHandler(ctx context.Context, channel Channel) error {
-	if err := bs.configs.UpdateChannel(ctx, channel); err != nil {
-		return errors.Wrap(errUpdateChannel, err)
+func (bs bootstrapService) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
+	cfg, err := bs.changeConfigState(ctx, session.DomainID, id, Inactive)
+	if err != nil {
+		return Config{}, errors.Wrap(errDisableConfig, err)
 	}
-	return nil
+	return cfg, nil
+}
+
+func (bs bootstrapService) changeConfigState(ctx context.Context, domainID, id string, state State) (Config, error) {
+	cfg, err := bs.configs.RetrieveByID(ctx, domainID, id)
+	if err != nil {
+		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
+	}
+	if cfg.State == state {
+		return Config{}, svcerr.ErrStatusAlreadyAssigned
+	}
+	if err := bs.configs.ChangeState(ctx, domainID, id, state); err != nil {
+		return Config{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
+	}
+	cfg.State = state
+	return cfg, nil
 }
 
 func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) error {
 	if err := bs.configs.RemoveClient(ctx, id); err != nil {
 		return errors.Wrap(errRemoveConfig, err)
-	}
-	return nil
-}
-
-func (bs bootstrapService) RemoveChannelHandler(ctx context.Context, id string) error {
-	if err := bs.configs.RemoveChannel(ctx, id); err != nil {
-		return errors.Wrap(errRemoveChannel, err)
-	}
-	return nil
-}
-
-func (bs bootstrapService) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	if err := bs.configs.ConnectClient(ctx, channelID, clientID); err != nil {
-		return errors.Wrap(errConnectClient, err)
-	}
-	return nil
-}
-
-func (bs bootstrapService) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	if err := bs.configs.DisconnectClient(ctx, channelID, clientID); err != nil {
-		return errors.Wrap(errDisconnectClient, err)
-	}
-	return nil
-}
-
-func (bs bootstrapService) connectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
-	if len(channelIDs) == 0 {
-		return nil
-	}
-	err := bs.sdk.Connect(ctx, mgsdk.Connection{
-		ChannelIDs: channelIDs,
-		ClientIDs:  []string{clientID},
-		Types:      connTypes,
-	}, domainID, token)
-	if err != nil && !errors.Contains(err, svcerr.ErrConflict) {
-		return err
-	}
-	return nil
-}
-
-func (bs bootstrapService) disconnectChannels(ctx context.Context, domainID, token, clientID string, channelIDs []string) error {
-	if len(channelIDs) == 0 {
-		return nil
-	}
-	err := bs.sdk.Disconnect(ctx, mgsdk.Connection{
-		ChannelIDs: channelIDs,
-		ClientIDs:  []string{clientID},
-		Types:      connTypes,
-	}, domainID, token)
-	if err != nil && !errors.Contains(err, repoerr.ErrNotFound) {
-		return err
 	}
 	return nil
 }
@@ -536,45 +364,6 @@ func propagateSDKErr(fallback, err error) error {
 		return sdkErr
 	}
 	return errors.Wrap(fallback, err)
-}
-
-func (bs bootstrapService) connectionChannels(ctx context.Context, channels, existing []string, domainID, token string) ([]Channel, error) {
-	add := make(map[string]bool, len(channels))
-	for _, ch := range channels {
-		add[ch] = true
-	}
-
-	for _, ch := range existing {
-		if add[ch] {
-			delete(add, ch)
-		}
-	}
-
-	var ret []Channel
-	for id := range add {
-		ch, err := bs.sdk.Channel(ctx, id, domainID, token)
-		if err != nil {
-			return nil, errors.Wrap(errors.ErrMalformedEntity, err)
-		}
-
-		ret = append(ret, Channel{
-			ID:       ch.ID,
-			Name:     ch.Name,
-			Metadata: ch.Metadata,
-			DomainID: ch.DomainID,
-		})
-	}
-
-	return ret, nil
-}
-
-func (bs bootstrapService) toIDList(channels []Channel) []string {
-	var ret []string
-	for _, ch := range channels {
-		ret = append(ret, ch.ID)
-	}
-
-	return ret
 }
 
 // --- Profile management ---

@@ -102,12 +102,7 @@ func main() {
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(err.Error())
 	}
-	migration, err := bootstrappg.Migration()
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
+	migration := bootstrappg.Migration()
 
 	db, err := pgclient.Setup(dbConfig, *migration)
 	if err != nil {

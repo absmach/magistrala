@@ -26,16 +26,10 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		channels := []bootstrap.Channel{}
-		for _, c := range req.Channels {
-			channels = append(channels, bootstrap.Channel{ID: c})
-		}
-
 		config := bootstrap.Config{
 			ClientID:    req.ClientID,
 			ExternalID:  req.ExternalID,
 			ExternalKey: req.ExternalKey,
-			Channels:    channels,
 			Name:        req.Name,
 			ClientCert:  req.ClientCert,
 			ClientKey:   req.ClientKey,
@@ -102,19 +96,9 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		var channels []channelRes
-		for _, ch := range config.Channels {
-			channels = append(channels, channelRes{
-				ID:       ch.ID,
-				Name:     ch.Name,
-				Metadata: ch.Metadata,
-			})
-		}
-
 		res := viewRes{
 			ClientID:     config.ClientID,
 			CLientSecret: config.ClientSecret,
-			Channels:     channels,
 			ExternalID:   config.ExternalID,
 			ExternalKey:  config.ExternalKey,
 			Name:         config.Name,
@@ -157,31 +141,6 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	}
 }
 
-func updateConnEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request any) (any, error) {
-		req := request.(updateConnReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-
-		if err := svc.UpdateConnections(ctx, session, req.token, req.id, req.Channels); err != nil {
-			return nil, err
-		}
-
-		res := configRes{
-			id:      req.id,
-			created: false,
-		}
-
-		return res, nil
-	}
-}
-
 func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listReq)
@@ -206,19 +165,9 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		for _, cfg := range page.Configs {
-			var channels []channelRes
-			for _, ch := range cfg.Channels {
-				channels = append(channels, channelRes{
-					ID:       ch.ID,
-					Name:     ch.Name,
-					Metadata: ch.Metadata,
-				})
-			}
-
 			view := viewRes{
 				ClientID:     cfg.ClientID,
 				CLientSecret: cfg.ClientSecret,
-				Channels:     channels,
 				ExternalID:   cfg.ExternalID,
 				ExternalKey:  cfg.ExternalKey,
 				Name:         cfg.Name,
@@ -268,9 +217,9 @@ func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, sec
 	}
 }
 
-func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+func enableConfigEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(changeStateReq)
+		req := request.(changeConfigStatusReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
@@ -280,11 +229,33 @@ func stateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 
-		if err := svc.ChangeState(ctx, session, req.token, req.id, req.State); err != nil {
+		cfg, err := svc.EnableConfig(ctx, session, req.id)
+		if err != nil {
 			return nil, err
 		}
 
-		return stateRes{}, nil
+		return changeConfigStatusRes{Config: cfg}, nil
+	}
+}
+
+func disableConfigEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(changeConfigStatusReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+
+		cfg, err := svc.DisableConfig(ctx, session, req.id)
+		if err != nil {
+			return nil, err
+		}
+
+		return changeConfigStatusRes{Config: cfg}, nil
 	}
 }
 

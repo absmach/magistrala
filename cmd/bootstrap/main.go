@@ -16,8 +16,8 @@ import (
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
 	httpapi "github.com/absmach/magistrala/bootstrap/api"
-	"github.com/absmach/magistrala/bootstrap/events/consumer"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
+	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
@@ -27,7 +27,6 @@ import (
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
 	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
-	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
@@ -42,7 +41,6 @@ import (
 	"github.com/authzed/authzed-go/v1"
 	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
-	"github.com/jmoiron/sqlx"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -57,9 +55,6 @@ const (
 	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	defDB            = "bootstrap"
 	defSvcHTTPPort   = "9013"
-
-	stream   = "events.magistrala.clients"
-	streamID = "magistrala.bootstrap"
 )
 
 type config struct {
@@ -108,7 +103,9 @@ func main() {
 	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
 		logger.Error(err.Error())
 	}
-	db, err := pgclient.Setup(dbConfig, *bootstrappg.Migration())
+	migration := bootstrappg.Migration()
+
+	db, err := pgclient.Setup(dbConfig, *migration)
 	if err != nil {
 		logger.Error(err.Error())
 		exitCode = 1
@@ -176,16 +173,12 @@ func main() {
 	defer authzClient.Close()
 	logger.Info("AuthZ successfully connected to auth gRPC server " + authzClient.Secure())
 
+	database := pgclient.NewDatabase(db, dbConfig, tracer)
+
 	// Create new service
-	svc, err := newService(ctx, authz, policySvc, db, tracer, logger, cfg, dbConfig)
+	svc, err := newService(ctx, authz, policySvc, database, tracer, logger, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
-	if err = subscribeToClientsES(ctx, svc, cfg, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to clients event store: %s", err))
 		exitCode = 1
 		return
 	}
@@ -218,10 +211,10 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, db *sqlx.DB, tracer trace.Tracer, logger *slog.Logger, cfg config, dbConfig pgclient.Config) (bootstrap.Service, error) {
-	database := pgclient.NewDatabase(db, dbConfig, tracer)
-
+func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
+	repoProfile := bootstrappg.NewProfileRepository(database, logger)
+	repoBindings := bootstrappg.NewBindingRepository(database, logger)
 
 	config := mgsdk.Config{
 		ClientsURL:  cfg.ClientsURL,
@@ -230,8 +223,21 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 
 	sdk := mgsdk.NewSDK(config)
 	idp := uuid.New()
+	resolver := bootstrap.NewSDKResolver(sdk)
+	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.New(policySvc, repoConfig, sdk, []byte(cfg.EncKey), idp)
+	svc := bootstrap.NewWithProfiles(
+		policySvc,
+		repoConfig,
+		repoProfile,
+		repoBindings,
+		resolver,
+		renderer,
+		sdk,
+		bootstraphasher.New(),
+		[]byte(cfg.EncKey),
+		idp,
+	)
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, "bootstrap-es-pub")
 	if err != nil {
@@ -246,20 +252,6 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	svc = tracing.New(svc, tracer)
 
 	return svc, nil
-}
-
-func subscribeToClientsES(ctx context.Context, svc bootstrap.Service, cfg config, logger *slog.Logger) error {
-	subscriber, err := store.NewSubscriber(ctx, cfg.ESURL, "bootstrap-es-sub", logger)
-	if err != nil {
-		return err
-	}
-
-	subConfig := events.SubscriberConfig{
-		Stream:   stream,
-		Consumer: cfg.ESConsumerName,
-		Handler:  consumer.NewEventHandler(svc),
-	}
-	return subscriber.Subscribe(ctx, subConfig)
 }
 
 func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {

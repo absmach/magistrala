@@ -70,6 +70,12 @@ type BootstrapPage struct {
 	PageRes
 }
 
+// BootstrapProfilesPage contains list of bootstrap profiles in a page with proper metadata.
+type BootstrapProfilesPage struct {
+	Profiles []BootstrapProfile `json:"profiles"`
+	PageRes
+}
+
 // SubscriptionPage contains list of subscriptions in a page with proper metadata.
 type SubscriptionPage struct {
 	Subscriptions []Subscription `json:"subscriptions"`

@@ -38,7 +38,6 @@ const (
 	invalidToken = "invalid"
 	email        = "test@example.com"
 	unknown      = "unknown"
-	channelsNum  = 3
 	contentType  = "application/json"
 	wrongID      = "wrong_id"
 
@@ -49,44 +48,32 @@ const (
 )
 
 var (
-	encKey          = []byte("1234567891011121")
-	metadata        = map[string]any{"meta": "data"}
-	addExternalID   = testsutil.GenerateUUID(&testing.T{})
-	addExternalKey  = testsutil.GenerateUUID(&testing.T{})
-	addClientID     = testsutil.GenerateUUID(&testing.T{})
-	addClientSecret = testsutil.GenerateUUID(&testing.T{})
-	addReq          = struct {
-		ClientID     string   `json:"client_id"`
-		ClientSecret string   `json:"client_secret"`
-		ExternalID   string   `json:"external_id"`
-		ExternalKey  string   `json:"external_key"`
-		Channels     []string `json:"channels"`
-		Name         string   `json:"name"`
-		Content      string   `json:"content"`
+	encKey         = []byte("1234567891011121")
+	addExternalID  = testsutil.GenerateUUID(&testing.T{})
+	addExternalKey = testsutil.GenerateUUID(&testing.T{})
+	addID          = testsutil.GenerateUUID(&testing.T{})
+	addReq         = struct {
+		ExternalID  string `json:"external_id"`
+		ExternalKey string `json:"external_key"`
+		Name        string `json:"name"`
+		Content     string `json:"content"`
 	}{
-		ClientID:     addClientID,
-		ClientSecret: addClientSecret,
-		ExternalID:   addExternalID,
-		ExternalKey:  addExternalKey,
-		Channels:     []string{"1"},
-		Name:         "name",
-		Content:      "config",
+		ExternalID:  addExternalID,
+		ExternalKey: addExternalKey,
+		Name:        "name",
+		Content:     "config",
 	}
 
 	updateReq = struct {
-		Channels     []string        `json:"channels,omitempty"`
-		Content      string          `json:"content,omitempty"`
-		State        bootstrap.State `json:"state,omitempty"`
-		ClientCert   string          `json:"client_cert,omitempty"`
-		ClientSecret string          `json:"client_secret,omitempty"`
-		CACert       string          `json:"ca_cert,omitempty"`
+		Content    string           `json:"content,omitempty"`
+		Status     bootstrap.Status `json:"status,omitempty"`
+		ClientCert string           `json:"client_cert,omitempty"`
+		CACert     string           `json:"ca_cert,omitempty"`
 	}{
-		Channels:     []string{"1"},
-		Content:      "config update",
-		State:        1,
-		ClientCert:   "newcert",
-		ClientSecret: "newkey",
-		CACert:       "newca",
+		Content:    "config update",
+		Status:     1,
+		ClientCert: "newcert",
+		CACert:     "newca",
 	}
 
 	missingIDRes              = toJSON(apiutil.ErrMissingID)
@@ -108,21 +95,14 @@ type testRequest struct {
 
 func newConfig() bootstrap.Config {
 	return bootstrap.Config{
-		ClientID:     addClientID,
-		ClientSecret: addClientSecret,
-		ExternalID:   addExternalID,
-		ExternalKey:  addExternalKey,
-		Channels: []bootstrap.Channel{
-			{
-				ID:       "1",
-				Metadata: metadata,
-			},
-		},
-		Name:       addName,
-		Content:    addContent,
-		ClientCert: "newcert",
-		ClientKey:  "newkey",
-		CACert:     "newca",
+		ID:          addID,
+		ExternalID:  addExternalID,
+		ExternalKey: addExternalKey,
+		Name:        addName,
+		Content:     addContent,
+		ClientCert:  "newcert",
+		ClientKey:   "newkey",
+		CACert:      "newca",
 	}
 }
 
@@ -200,14 +180,6 @@ func TestAdd(t *testing.T) {
 
 	data := toJSON(addReq)
 
-	neID := addReq
-	neID.ClientID = testsutil.GenerateUUID(t)
-	neData := toJSON(neID)
-
-	invalidChannels := addReq
-	invalidChannels.Channels = []string{wrongID}
-	wrongData := toJSON(invalidChannels)
-
 	cases := []struct {
 		desc            string
 		req             string
@@ -238,7 +210,7 @@ func TestAdd(t *testing.T) {
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusCreated,
-			location:    "/clients/configs/" + c.ClientID,
+			location:    "/clients/configs/" + c.ID,
 			err:         nil,
 		},
 		{
@@ -254,26 +226,6 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add an existing config",
 			req:         data,
-			domainID:    domainID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrConflict,
-		},
-		{
-			desc:        "add a config with non-existent ID",
-			req:         neData,
-			domainID:    domainID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrConflict,
-		},
-		{
-			desc:        "add a config with invalid channels",
-			req:         wrongData,
 			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
@@ -354,20 +306,12 @@ func TestView(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	var channels []channel
-	for _, ch := range c.Channels {
-		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-	}
-
 	data := config{
-		ClientID:     c.ClientID,
-		ClientSecret: c.ClientSecret,
-		State:        c.State,
-		Channels:     channels,
-		ExternalID:   c.ExternalID,
-		ExternalKey:  c.ExternalKey,
-		Name:         c.Name,
-		Content:      c.Content,
+		ID:         c.ID,
+		Status:     c.Status,
+		ExternalID: c.ExternalID,
+		Name:       c.Name,
+		Content:    c.Content,
 	}
 
 	cases := []struct {
@@ -383,7 +327,7 @@ func TestView(t *testing.T) {
 		{
 			desc:            "view a config with invalid token",
 			token:           invalidToken,
-			id:              c.ClientID,
+			id:              c.ID,
 			status:          http.StatusUnauthorized,
 			res:             config{},
 			authenticateErr: svcerr.ErrAuthentication,
@@ -392,7 +336,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config",
 			token:  validToken,
-			id:     c.ClientID,
+			id:     c.ID,
 			status: http.StatusOK,
 			res:    data,
 			err:    nil,
@@ -408,7 +352,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view a config with an empty token",
 			token:  "",
-			id:     c.ClientID,
+			id:     c.ID,
 			status: http.StatusUnauthorized,
 			res:    config{},
 			err:    apiutil.ErrBearerToken,
@@ -416,7 +360,7 @@ func TestView(t *testing.T) {
 		{
 			desc:   "view config without authorization",
 			token:  validToken,
-			id:     c.ClientID,
+			id:     c.ID,
 			status: http.StatusForbidden,
 			res:    config{},
 			err:    svcerr.ErrAuthorization,
@@ -445,10 +389,6 @@ func TestView(t *testing.T) {
 				assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
 			}
 
-			assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
-			// Empty channels to prevent order mismatch.
-			tc.res.Channels = []channel{}
-			view.Channels = []channel{}
 			assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
 			svcCall.Unset()
 			authCall.Unset()
@@ -477,7 +417,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:            "update with invalid token",
 			req:             data,
-			id:              c.ClientID,
+			id:              c.ID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -487,7 +427,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -496,7 +436,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -505,7 +445,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -523,7 +463,7 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -531,7 +471,7 @@ func TestUpdate(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          c.ClientID,
+			id:          c.ID,
 			req:         "",
 			token:       validToken,
 			contentType: contentType,
@@ -549,7 +489,7 @@ func TestUpdate(t *testing.T) {
 			svcCall := svc.On("Update", mock.Anything, tc.session, mock.Anything).Return(tc.err)
 			req := testRequest{
 				client:      bs.Client(),
-				method:      http.MethodPut,
+				method:      http.MethodPatch,
 				url:         fmt.Sprintf("%s/%s/clients/configs/%s", bs.URL, domainID, tc.id),
 				contentType: tc.contentType,
 				token:       tc.token,
@@ -585,7 +525,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:            "update with invalid token",
 			req:             data,
-			id:              c.ClientID,
+			id:              c.ID,
 			token:           invalidToken,
 			contentType:     contentType,
 			status:          http.StatusUnauthorized,
@@ -595,7 +535,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update with an empty token",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       "",
 			contentType: contentType,
 			status:      http.StatusUnauthorized,
@@ -604,7 +544,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a valid config",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusOK,
@@ -613,7 +553,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with wrong content type",
 			req:         data,
-			id:          c.ClientID,
+			id:          c.ID,
 			token:       validToken,
 			contentType: "",
 			status:      http.StatusUnsupportedMediaType,
@@ -631,7 +571,6 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
-			id:          c.ClientSecret,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,
@@ -639,7 +578,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:        "update a config with an empty request",
-			id:          c.ClientID,
+			id:          c.ID,
 			req:         "",
 			token:       validToken,
 			contentType: contentType,
@@ -672,130 +611,9 @@ func TestUpdateCert(t *testing.T) {
 	}
 }
 
-func TestUpdateConnections(t *testing.T) {
-	bs, svc, auth := newBootstrapServer()
-	defer bs.Close()
-	c := newConfig()
-	data := toJSON(updateReq)
-
-	invalidChannels := updateReq
-	invalidChannels.Channels = []string{wrongID}
-
-	wrongData := toJSON(invalidChannels)
-
-	cases := []struct {
-		desc            string
-		req             string
-		id              string
-		token           string
-		session         smqauthn.Session
-		contentType     string
-		status          int
-		authenticateErr error
-		err             error
-	}{
-		{
-			desc:            "update connections with invalid token",
-			req:             data,
-			id:              c.ClientID,
-			token:           invalidToken,
-			contentType:     contentType,
-			status:          http.StatusUnauthorized,
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             svcerr.ErrAuthentication,
-		},
-		{
-			desc:        "update connections with an empty token",
-			req:         data,
-			id:          c.ClientID,
-			token:       "",
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
-		},
-		{
-			desc:        "update connections valid config",
-			req:         data,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
-		},
-		{
-			desc:        "update connections with wrong content type",
-			req:         data,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: "",
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc:        "update connections for a non-existing config",
-			req:         data,
-			id:          wrongID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "update connections with invalid channels",
-			req:         wrongData,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "update a config with invalid request format",
-			req:         "}",
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-		{
-			desc:        "update a config with an empty request",
-			id:          c.ClientID,
-			req:         "",
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
-			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
-			req := testRequest{
-				client:      bs.Client(),
-				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/clients/configs/connections/%s", bs.URL, domainID, tc.id),
-				contentType: tc.contentType,
-				token:       tc.token,
-				body:        strings.NewReader(tc.req),
-			}
-			res, err := req.make()
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-			repoCall.Unset()
-			authCall.Unset()
-		})
-	}
-}
-
 func TestList(t *testing.T) {
 	configNum := 101
-	changedStateNum := 20
+	changedStatusNum := 20
 	var active, inactive []config
 	list := make([]config, configNum)
 
@@ -807,43 +625,32 @@ func TestList(t *testing.T) {
 
 	for i := 0; i < configNum; i++ {
 		c.ExternalID = strconv.Itoa(i)
-		c.ClientSecret = c.ExternalID
 		c.Name = fmt.Sprintf("%s-%d", addName, i)
 		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 
-		var channels []channel
-		for _, ch := range c.Channels {
-			channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-		}
 		s := config{
-			ClientID:     c.ClientID,
-			ClientSecret: c.ClientSecret,
-			Channels:     channels,
-			ExternalID:   c.ExternalID,
-			ExternalKey:  c.ExternalKey,
-			Name:         c.Name,
-			Content:      c.Content,
-			State:        c.State,
+			ID:         c.ID,
+			ExternalID: c.ExternalID,
+			Name:       c.Name,
+			Content:    c.Content,
+			Status:     c.Status,
 		}
 		list[i] = s
 	}
-	// Change state of first 20 elements for filtering tests.
-	for i := 0; i < changedStateNum; i++ {
-		state := bootstrap.Active
+	// Change status of first 20 elements for filtering tests.
+	for i := 0; i < changedStatusNum; i++ {
 		if i%2 == 0 {
-			state = bootstrap.Inactive
-		}
-		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		err := svc.ChangeState(context.Background(), smqauthn.Session{}, validToken, list[i].ClientID, state)
-		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
-
-		svcCall.Unset()
-
-		list[i].State = state
-		if state == bootstrap.Inactive {
+			// Even elements remain inactive (default status).
 			inactive = append(inactive, list[i])
 			continue
 		}
+		// Odd elements are enabled (active).
+		enabledCfg := bootstrap.Config{ID: list[i].ID, Status: bootstrap.Active}
+		svcCall := svc.On("EnableConfig", context.Background(), mock.Anything, mock.Anything).Return(enabledCfg, nil)
+		_, err := svc.EnableConfig(context.Background(), smqauthn.Session{}, list[i].ID)
+		assert.Nil(t, err, fmt.Sprintf("Enabling config expected to succeed: %s.\n", err))
+		svcCall.Unset()
+		list[i].Status = bootstrap.Active
 		active = append(active, list[i])
 	}
 
@@ -979,7 +786,7 @@ func TestList(t *testing.T) {
 		{
 			desc:   "view list with invalid query parameters",
 			token:  validToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d&key=%%", path, 10, 10, bootstrap.Inactive),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&status=%s&key=%%", path, 10, 10, bootstrap.Disabled),
 			status: http.StatusBadRequest,
 			res:    configPage{},
 			err:    apiutil.ErrInvalidQueryParams,
@@ -987,7 +794,7 @@ func TestList(t *testing.T) {
 		{
 			desc:   "view first 10 active",
 			token:  validToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 20, bootstrap.Active),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&status=%s", path, 0, 20, bootstrap.Enabled),
 			status: http.StatusOK,
 			res: configPage{
 				Total:   uint64(len(active)),
@@ -1000,7 +807,7 @@ func TestList(t *testing.T) {
 		{
 			desc:   "view first 10 inactive",
 			token:  validToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 20, bootstrap.Inactive),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&status=%s", path, 0, 20, bootstrap.Disabled),
 			status: http.StatusOK,
 			res: configPage{
 				Total:   uint64(len(list) - len(inactive)),
@@ -1013,7 +820,7 @@ func TestList(t *testing.T) {
 		{
 			desc:   "view first 5 active",
 			token:  validToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 0, 10, bootstrap.Active),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&status=%s", path, 0, 10, bootstrap.Enabled),
 			status: http.StatusOK,
 			res: configPage{
 				Total:   uint64(len(active)),
@@ -1026,7 +833,7 @@ func TestList(t *testing.T) {
 		{
 			desc:   "view last 5 inactive",
 			token:  validToken,
-			url:    fmt.Sprintf("%s?offset=%d&limit=%d&state=%d", path, 10, 10, bootstrap.Inactive),
+			url:    fmt.Sprintf("%s?offset=%d&limit=%d&status=%s", path, 10, 10, bootstrap.Disabled),
 			status: http.StatusOK,
 			res: configPage{
 				Total:   uint64(len(list) - len(active)),
@@ -1085,7 +892,7 @@ func TestRemove(t *testing.T) {
 	}{
 		{
 			desc:            "remove with invalid token",
-			id:              c.ClientID,
+			id:              c.ID,
 			token:           invalidToken,
 			status:          http.StatusUnauthorized,
 			authenticateErr: svcerr.ErrAuthentication,
@@ -1093,7 +900,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:   "remove with an empty token",
-			id:     c.ClientID,
+			id:     c.ID,
 			token:  "",
 			status: http.StatusUnauthorized,
 			err:    apiutil.ErrBearerToken,
@@ -1107,7 +914,7 @@ func TestRemove(t *testing.T) {
 		},
 		{
 			desc:   "remove config",
-			id:     c.ClientID,
+			id:     c.ID,
 			token:  validToken,
 			status: http.StatusNoContent,
 			err:    nil,
@@ -1151,27 +958,18 @@ func TestBootstrap(t *testing.T) {
 	encExternKey, err := enc([]byte(c.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting config expected to succeed: %s.\n", err))
 
-	var channels []channel
-	for _, ch := range c.Channels {
-		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-	}
-
 	s := struct {
-		ClientID     string    `json:"client_id"`
-		ClientSecret string    `json:"client_secret"`
-		Channels     []channel `json:"channels"`
-		Content      string    `json:"content"`
-		ClientCert   string    `json:"client_cert"`
-		ClientKey    string    `json:"client_key"`
-		CACert       string    `json:"ca_cert"`
+		ID         string `json:"id"`
+		Content    string `json:"content"`
+		ClientCert string `json:"client_cert"`
+		ClientKey  string `json:"client_key"`
+		CACert     string `json:"ca_cert"`
 	}{
-		ClientID:     c.ClientID,
-		ClientSecret: c.ClientSecret,
-		Channels:     channels,
-		Content:      c.Content,
-		ClientCert:   c.ClientCert,
-		ClientKey:    c.ClientKey,
-		CACert:       c.CACert,
+		ID:         c.ID,
+		Content:    c.Content,
+		ClientCert: c.ClientCert,
+		ClientKey:  c.ClientKey,
+		CACert:     c.CACert,
 	}
 
 	data := toJSON(s)
@@ -1276,97 +1074,63 @@ func TestBootstrap(t *testing.T) {
 	}
 }
 
-func TestChangeState(t *testing.T) {
+func TestChangeStatus(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
 
-	inactive := fmt.Sprintf("{\"state\": %d}", bootstrap.Inactive)
-	active := fmt.Sprintf("{\"state\": %d}", bootstrap.Active)
+	activeCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.Active}
+	inactiveCfg := bootstrap.Config{ID: c.ID, Status: bootstrap.Inactive}
 
 	cases := []struct {
 		desc            string
 		id              string
 		token           string
 		session         smqauthn.Session
-		state           string
-		contentType     string
+		action          string
 		status          int
 		authenticateErr error
-		err             error
+		svcCfg          bootstrap.Config
+		svcErr          error
 	}{
 		{
-			desc:            "change state with invalid token",
-			id:              c.ClientID,
+			desc:            "enable with invalid token",
+			id:              c.ID,
 			token:           invalidToken,
-			state:           active,
-			contentType:     contentType,
+			action:          "enable",
 			status:          http.StatusUnauthorized,
 			authenticateErr: svcerr.ErrAuthentication,
-			err:             svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "change state with an empty token",
-			id:          c.ClientID,
-			token:       "",
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
+			desc:   "enable with empty token",
+			id:     c.ID,
+			token:  "",
+			action: "enable",
+			status: http.StatusUnauthorized,
 		},
 		{
-			desc:        "change state with invalid content type",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       active,
-			contentType: "",
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
+			desc:   "enable config",
+			id:     c.ID,
+			token:  validToken,
+			action: "enable",
+			status: http.StatusOK,
+			svcCfg: activeCfg,
 		},
 		{
-			desc:        "change state to active",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
+			desc:   "disable config",
+			id:     c.ID,
+			token:  validToken,
+			action: "disable",
+			status: http.StatusOK,
+			svcCfg: inactiveCfg,
 		},
 		{
-			desc:        "change state to inactive",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       inactive,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
-		},
-		{
-			desc:        "change state of non-existing config",
-			id:          wrongID,
-			token:       validToken,
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "change state to invalid value",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       fmt.Sprintf("{\"state\": %d}", -3),
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-		{
-			desc:        "change state with invalid data",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       "",
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
+			desc:   "enable non-existing config",
+			id:     wrongID,
+			token:  validToken,
+			action: "enable",
+			status: http.StatusNotFound,
+			svcErr: svcerr.ErrNotFound,
 		},
 	}
 
@@ -1376,14 +1140,16 @@ func TestChangeState(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+			methodName := "EnableConfig"
+			if tc.action == "disable" {
+				methodName = "DisableConfig"
+			}
+			svcCall := svc.On(methodName, mock.Anything, tc.session, mock.Anything).Return(tc.svcCfg, tc.svcErr)
 			req := testRequest{
-				client:      bs.Client(),
-				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/clients/state/%s", bs.URL, domainID, tc.id),
-				token:       tc.token,
-				contentType: tc.contentType,
-				body:        strings.NewReader(tc.state),
+				client: bs.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s/%s", bs.URL, domainID, tc.id, tc.action),
+				token:  tc.token,
 			}
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -1394,21 +1160,185 @@ func TestChangeState(t *testing.T) {
 	}
 }
 
-type channel struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
+func TestUploadProfile(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+
+	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	saved := bootstrap.Profile{
+		ID:              testsutil.GenerateUUID(t),
+		Name:            "gateway",
+		TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+		ContentTemplate: "{{ .Device.ID }}",
+	}
+
+	cases := []struct {
+		desc        string
+		contentType string
+		body        string
+		profile     bootstrap.Profile
+	}{
+		{
+			desc:        "upload JSON profile",
+			contentType: "application/json",
+			body:        `{"name":"gateway","template_format":"go-template","content_template":"{{ .Device.ID }}"}`,
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+		{
+			desc:        "upload YAML profile",
+			contentType: "application/yaml",
+			body:        "name: gateway\ntemplate_format: go-template\ncontent_template: '{{ .Device.ID }}'\n",
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+		{
+			desc:        "upload TOML profile",
+			contentType: "application/toml",
+			body:        "name = 'gateway'\ntemplate_format = 'go-template'\ncontent_template = '{{ .Device.ID }}'\n",
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+			svcCall := svc.On("CreateProfile", mock.Anything, session, tc.profile).Return(saved, nil)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/upload", bs.URL, domainID),
+				contentType: tc.contentType,
+				token:       validToken,
+				body:        strings.NewReader(tc.body),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, http.StatusCreated, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, http.StatusCreated, res.StatusCode))
+			assert.Equal(t, "/bootstrap/profiles/"+saved.ID, res.Header.Get("Location"))
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestProfileSlots(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+
+	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	profileID := testsutil.GenerateUUID(t)
+	slots := []bootstrap.BindingSlot{
+		{Name: "mqtt_client", Type: "client", Required: true, Fields: []string{"id", "secret"}},
+		{Name: "telemetry", Type: "channel", Required: true, Fields: []string{"id", "topic"}},
+	}
+	profile := bootstrap.Profile{
+		ID:           profileID,
+		Name:         "gateway",
+		BindingSlots: slots,
+	}
+	authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+	svcCall := svc.On("ViewProfile", mock.Anything, session, profileID).Return(profile, nil)
+
+	req := testRequest{
+		client: bs.Client(),
+		method: http.MethodGet,
+		url:    fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/slots", bs.URL, domainID, profileID),
+		token:  validToken,
+	}
+	res, err := req.make()
+	assert.Nil(t, err, fmt.Sprintf("profile slots unexpected error %s", err))
+	assert.Equal(t, http.StatusOK, res.StatusCode, fmt.Sprintf("expected status code %d got %d", http.StatusOK, res.StatusCode))
+
+	var got struct {
+		BindingSlots []bootstrap.BindingSlot `json:"binding_slots"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&got)
+	assert.Nil(t, err, fmt.Sprintf("decoding profile slots expected to succeed: %s", err))
+	assert.ElementsMatch(t, slots, got.BindingSlots)
+
+	svcCall.Unset()
+	authCall.Unset()
+}
+
+func TestRenderPreview(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+
+	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	profileID := testsutil.GenerateUUID(t)
+	configID := testsutil.GenerateUUID(t)
+	profile := bootstrap.Profile{
+		ID:              profileID,
+		Name:            "gateway",
+		TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+		ContentTemplate: `device={{ .Device.ID }} site={{ .Vars.site }} topic={{ index (index .Bindings "telemetry").Snapshot "topic" }}`,
+	}
+	authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+	svcCall := svc.On("ViewProfile", mock.Anything, session, profileID).Return(profile, nil)
+
+	reqBody := struct {
+		Config   bootstrap.Config            `json:"config"`
+		Bindings []bootstrap.BindingSnapshot `json:"bindings"`
+	}{
+		Config: bootstrap.Config{
+			ID:         configID,
+			ExternalID: "gw-001",
+			RenderContext: map[string]any{
+				"site": "warehouse-1",
+			},
+		},
+		Bindings: []bootstrap.BindingSnapshot{
+			{
+				Slot:       "telemetry",
+				Type:       "channel",
+				ResourceID: "ch-1",
+				Snapshot: map[string]any{
+					"topic": "devices/gw-001/telemetry",
+				},
+			},
+		},
+	}
+
+	req := testRequest{
+		client:      bs.Client(),
+		method:      http.MethodPost,
+		url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, domainID, profileID),
+		contentType: contentType,
+		token:       validToken,
+		body:        strings.NewReader(toJSON(reqBody)),
+	}
+	res, err := req.make()
+	assert.Nil(t, err, fmt.Sprintf("render preview unexpected error %s", err))
+	assert.Equal(t, http.StatusOK, res.StatusCode, fmt.Sprintf("expected status code %d got %d", http.StatusOK, res.StatusCode))
+
+	var got struct {
+		Content string `json:"content"`
+	}
+	err = json.NewDecoder(res.Body).Decode(&got)
+	assert.Nil(t, err, fmt.Sprintf("decoding render preview expected to succeed: %s", err))
+	assert.Equal(t, "device="+configID+" site=warehouse-1 topic=devices/gw-001/telemetry", got.Content)
+
+	svcCall.Unset()
+	authCall.Unset()
 }
 
 type config struct {
-	ClientID     string          `json:"client_id,omitempty"`
-	ClientSecret string          `json:"client_secret,omitempty"`
-	Channels     []channel       `json:"channels,omitempty"`
-	ExternalID   string          `json:"external_id"`
-	ExternalKey  string          `json:"external_key,omitempty"`
-	Content      string          `json:"content,omitempty"`
-	Name         string          `json:"name"`
-	State        bootstrap.State `json:"state"`
+	ID         string           `json:"id,omitempty"`
+	ExternalID string           `json:"external_id"`
+	Content    string           `json:"content,omitempty"`
+	Name       string           `json:"name"`
+	Status     bootstrap.Status `json:"status"`
 }
 
 type configPage struct {

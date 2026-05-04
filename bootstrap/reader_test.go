@@ -17,20 +17,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type readChan struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
-}
-
 type readResp struct {
-	ClientID     string     `json:"client_id"`
-	ClientSecret string     `json:"client_secret"`
-	Channels     []readChan `json:"channels"`
-	Content      string     `json:"content,omitempty"`
-	ClientCert   string     `json:"client_cert,omitempty"`
-	ClientKey    string     `json:"client_key,omitempty"`
-	CACert       string     `json:"ca_cert,omitempty"`
+	ID         string `json:"id"`
+	Content    string `json:"content,omitempty"`
+	ClientCert string `json:"client_cert,omitempty"`
+	ClientKey  string `json:"client_key,omitempty"`
+	CACert     string `json:"ca_cert,omitempty"`
 }
 
 func dec(in []byte) ([]byte, error) {
@@ -50,30 +42,14 @@ func dec(in []byte) ([]byte, error) {
 
 func TestReadConfig(t *testing.T) {
 	cfg := bootstrap.Config{
-		ClientID:     "smq_id",
-		ClientCert:   "client_cert",
-		ClientKey:    "client_key",
-		CACert:       "ca_cert",
-		ClientSecret: "smq_key",
-		Channels: []bootstrap.Channel{
-			{
-				ID:       "smq_id",
-				Name:     "smq_name",
-				Metadata: map[string]any{"key": "value}"},
-			},
-		},
-		Content: "content",
+		ID:         "smq_id",
+		ClientCert: "client_cert",
+		ClientKey:  "client_key",
+		CACert:     "ca_cert",
+		Content:    "content",
 	}
 	ret := readResp{
-		ClientID:     "smq_id",
-		ClientSecret: "smq_key",
-		Channels: []readChan{
-			{
-				ID:       "smq_id",
-				Name:     "smq_name",
-				Metadata: map[string]any{"key": "value}"},
-			},
-		},
+		ID:         "smq_id",
 		Content:    "content",
 		ClientCert: "client_cert",
 		ClientKey:  "client_key",

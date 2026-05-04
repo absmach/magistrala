@@ -31,85 +31,74 @@ import (
 )
 
 var (
-	externalId      = testsutil.GenerateUUID(&testing.T{})
-	externalKey     = testsutil.GenerateUUID(&testing.T{})
-	clientId        = testsutil.GenerateUUID(&testing.T{})
-	clientSecret    = testsutil.GenerateUUID(&testing.T{})
-	channel1Id      = testsutil.GenerateUUID(&testing.T{})
-	channel2Id      = testsutil.GenerateUUID(&testing.T{})
-	clientCert      = "newcert"
-	clientKey       = "newkey"
-	caCert          = "newca"
-	content         = "newcontent"
-	state           = 1
-	bsName          = "test"
-	encKey          = []byte("1234567891011121")
+	externalId  = testsutil.GenerateUUID(&testing.T{})
+	externalKey = testsutil.GenerateUUID(&testing.T{})
+	clientId    = testsutil.GenerateUUID(&testing.T{})
+	channel1Id  = testsutil.GenerateUUID(&testing.T{})
+	channel2Id  = testsutil.GenerateUUID(&testing.T{})
+	clientCert  = "newcert"
+	clientKey   = "newkey"
+	caCert      = "newca"
+	content     = "newcontent"
+	bsName      = "test"
+	encKey      = []byte("1234567891011121")
+
 	bootstrapConfig = bootstrap.Config{
-		ClientID:   clientId,
-		Name:       "test",
-		ClientCert: clientCert,
-		ClientKey:  clientKey,
-		CACert:     caCert,
-		Channels: []bootstrap.Channel{
-			{
-				ID: channel1Id,
-			},
-			{
-				ID: channel2Id,
-			},
-		},
+		ID:          clientId,
+		Name:        bsName,
+		ClientCert:  clientCert,
+		ClientKey:   clientKey,
+		CACert:      caCert,
 		ExternalID:  externalId,
 		ExternalKey: externalKey,
 		Content:     content,
-		State:       bootstrap.Inactive,
+		Status:      bootstrap.Inactive,
 	}
+
 	sdkBootstrapConfig = sdk.BootstrapConfig{
-		Channels:     []string{channel1Id, channel2Id},
-		ExternalID:   externalId,
-		ExternalKey:  externalKey,
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Name:         bsName,
-		ClientCert:   clientCert,
-		ClientKey:    clientKey,
-		CACert:       caCert,
-		Content:      content,
-		State:        state,
+		ExternalID:  externalId,
+		ExternalKey: externalKey,
+		ID:          clientId,
+		Name:        bsName,
+		ClientCert:  clientCert,
+		ClientKey:   clientKey,
+		CACert:      caCert,
+		Content:     content,
+		Status:      sdk.BootstrapDisabledStatus,
 	}
-	sdkBootstrapConfigRes = sdk.BootstrapConfig{
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Channels: []sdk.Channel{
-			{
-				ID: channel1Id,
-			},
-			{
-				ID: channel2Id,
-			},
-		},
+
+	sdkBootstrapListRes = sdk.BootstrapConfig{
+		ID:         clientId,
+		ExternalID: externalId,
+		Name:       bsName,
+		Content:    content,
+		Status:     sdk.BootstrapDisabledStatus,
+	}
+
+	sdkBootstrapCertRes = sdk.BootstrapConfig{
+		ID:         clientId,
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
 		CACert:     caCert,
 	}
+
+	sdkBootstrapReadRes = sdk.BootstrapConfig{
+		ID:         clientId,
+		Content:    content,
+		ClientCert: clientCert,
+		ClientKey:  clientKey,
+		CACert:     caCert,
+	}
+
 	readConfigResponse = struct {
-		ClientID     string             `json:"client_id"`
-		ClientSecret string             `json:"client_secret"`
-		Channels     []readerChannelRes `json:"channels"`
-		Content      string             `json:"content,omitempty"`
-		ClientCert   string             `json:"client_cert,omitempty"`
-		ClientKey    string             `json:"client_key,omitempty"`
-		CACert       string             `json:"ca_cert,omitempty"`
+		ID         string `json:"id"`
+		Content    string `json:"content,omitempty"`
+		ClientCert string `json:"client_cert,omitempty"`
+		ClientKey  string `json:"client_key,omitempty"`
+		CACert     string `json:"ca_cert,omitempty"`
 	}{
-		ClientID:     clientId,
-		ClientSecret: clientSecret,
-		Channels: []readerChannelRes{
-			{
-				ID: channel1Id,
-			},
-			{
-				ID: channel2Id,
-			},
-		},
+		ID:         clientId,
+		Content:    content,
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
 		CACert:     caCert,
@@ -118,14 +107,8 @@ var (
 
 var (
 	errMarshalChan = errors.New("json: unsupported type: chan int")
-	errJsonEOF     = errors.New("unexpected end of JSON input")
+	errJSONEOF     = errors.New("unexpected end of JSON input")
 )
-
-type readerChannelRes struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
-}
 
 func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, *authnmocks.Authentication) {
 	bsvc := new(bmocks.Service)
@@ -139,124 +122,112 @@ func setupBootstrap() (*httptest.Server, *bmocks.Service, *bmocks.ConfigReader, 
 	return httptest.NewServer(mux), bsvc, reader, authn
 }
 
+func bootstrapSession() smqauthn.Session {
+	return smqauthn.Session{
+		DomainUserID: domainID + "_" + validID,
+		UserID:       validID,
+		DomainID:     domainID,
+	}
+}
+
 func TestAddBootstrap(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
+
+	createCfg := sdkBootstrapConfig
+	createCfg.ID = ""
+
+	svcReq := bootstrap.Config{
+		ExternalID:  externalId,
+		ExternalKey: externalKey,
+		Name:        bsName,
+		ClientCert:  clientCert,
+		ClientKey:   clientKey,
+		CACert:      caCert,
+		Content:     content,
 	}
-	mgsdk := sdk.NewSDK(conf)
-
-	neID := sdkBootstrapConfig
-	neID.ClientID = "non-existent"
-
-	neReqId := bootstrapConfig
-	neReqId.ClientID = "non-existent"
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		cfg             sdk.BootstrapConfig
-		svcReq          bootstrap.Config
-		svcRes          bootstrap.Config
-		svcErr          error
-		authenticateErr error
-		response        string
-		err             errors.SDKError
+		desc           string
+		token          string
+		cfg            sdk.BootstrapConfig
+		svcReq         bootstrap.Config
+		svcRes         bootstrap.Config
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedID     string
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "add successfully",
-			domainID: domainID,
-			token:    validToken,
-			cfg:      sdkBootstrapConfig,
-			svcReq:   bootstrapConfig,
-			svcRes:   bootstrapConfig,
-			svcErr:   nil,
-			err:      nil,
+			desc:          "add successfully",
+			token:         validToken,
+			cfg:           createCfg,
+			svcReq:        svcReq,
+			svcRes:        bootstrapConfig,
+			expectSvcCall: true,
+			expectedID:    clientId,
 		},
 		{
-			desc:            "add with invalid token",
-			domainID:        domainID,
-			token:           invalidToken,
-			cfg:             sdkBootstrapConfig,
-			svcReq:          bootstrapConfig,
-			svcRes:          bootstrap.Config{},
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "add with invalid token",
+			token:          invalidToken,
+			cfg:            createCfg,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "add with config that cannot be marshalled",
-			domainID: domainID,
-			token:    validToken,
+			desc:  "add with config that cannot be marshalled",
+			token: validToken,
 			cfg: sdk.BootstrapConfig{
-				Channels: map[string]any{
-					"channel1": make(chan int),
+				RenderContext: map[string]any{
+					"broken": make(chan int),
 				},
-				ExternalID:   externalId,
-				ExternalKey:  externalKey,
-				ClientID:     clientId,
-				ClientSecret: clientSecret,
-				Name:         bsName,
-				ClientCert:   clientCert,
-				ClientKey:    clientKey,
-				CACert:       caCert,
-				Content:      content,
+				ExternalID:  externalId,
+				ExternalKey: externalKey,
 			},
-			svcReq: bootstrap.Config{},
-			svcRes: bootstrap.Config{},
-			svcErr: nil,
-			err:    errors.NewSDKError(errMarshalChan),
+			expectedSDKErr: errors.NewSDKError(errMarshalChan),
 		},
 		{
-			desc:     "add an existing config",
-			domainID: domainID,
-			token:    validToken,
-			cfg:      sdkBootstrapConfig,
-			svcReq:   bootstrapConfig,
-			svcRes:   bootstrap.Config{},
-			svcErr:   svcerr.ErrConflict,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrConflict, http.StatusBadRequest),
+			desc:           "add with missing required fields",
+			token:          validToken,
+			cfg:            sdk.BootstrapConfig{},
+			expectedSDKErr: errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
 		},
 		{
-			desc:     "add empty config",
-			domainID: domainID,
-			token:    validToken,
-			cfg:      sdk.BootstrapConfig{},
-			svcReq:   bootstrap.Config{},
-			svcRes:   bootstrap.Config{},
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrMissingID, http.StatusBadRequest),
-		},
-		{
-			desc:     "add with non-existent client Id",
-			domainID: domainID,
-			token:    validToken,
-			cfg:      neID,
-			svcReq:   neReqId,
-			svcRes:   bootstrap.Config{},
-			svcErr:   svcerr.ErrNotFound,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+			desc:           "add with service failure",
+			token:          validToken,
+			cfg:            createCfg,
+			svcReq:         svcReq,
+			svcRes:         bootstrap.Config{},
+			svcErr:         svcerr.ErrNotFound,
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("Add", mock.Anything, tc.session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
-			resp, err := mgsdk.AddBootstrap(context.Background(), tc.cfg, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if err == nil {
-				assert.Equal(t, bootstrapConfig.ClientID, resp)
-				ok := svcCall.Parent.AssertCalled(t, "Add", mock.Anything, tc.session, tc.token, tc.svcReq)
-				assert.True(t, ok)
+
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("Add", mock.Anything, session, tc.token, tc.svcReq).Return(tc.svcRes, tc.svcErr)
 			}
-			svcCall.Unset()
+
+			resp, err := mgsdk.AddBootstrap(context.Background(), tc.cfg, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedID, resp)
+			if tc.expectSvcCall {
+				svcCall.Unset()
+			}
 			authCall.Unset()
 		})
 	}
@@ -266,249 +237,179 @@ func TestListBootstraps(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	configRes := sdk.BootstrapConfig{
-		Channels: []sdk.Channel{
-			{
-				ID: channel1Id,
-			},
-			{
-				ID: channel2Id,
-			},
-		},
-		ClientID:    clientId,
-		Name:        bsName,
-		ExternalID:  externalId,
-		ExternalKey: externalKey,
-		Content:     content,
-	}
-	unmarshalableConfig := bootstrapConfig
-	unmarshalableConfig.Channels = []bootstrap.Channel{
-		{
-			ID: channel1Id,
-			Metadata: map[string]any{
-				"test": make(chan int),
-			},
-		},
-	}
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		pageMeta        sdk.PageMetadata
-		svcResp         bootstrap.ConfigsPage
-		svcErr          error
-		authenticateErr error
-		response        sdk.BootstrapPage
-		err             errors.SDKError
+		desc           string
+		token          string
+		pm             sdk.PageMetadata
+		svcResp        bootstrap.ConfigsPage
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedResp   sdk.BootstrapPage
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "list successfully",
-			domainID: domainID,
-			token:    validToken,
-			pageMeta: sdk.PageMetadata{
+			desc:  "list successfully",
+			token: validToken,
+			pm: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
 			},
 			svcResp: bootstrap.ConfigsPage{
 				Total:   1,
 				Offset:  0,
+				Limit:   10,
 				Configs: []bootstrap.Config{bootstrapConfig},
 			},
-			response: sdk.BootstrapPage{
+			expectSvcCall: true,
+			expectedResp: sdk.BootstrapPage{
 				PageRes: sdk.PageRes{
-					Total: 1,
+					Total:  1,
+					Offset: 0,
+					Limit:  10,
 				},
-				Configs: []sdk.BootstrapConfig{configRes},
+				Configs: []sdk.BootstrapConfig{sdkBootstrapListRes},
 			},
-			err: nil,
 		},
 		{
-			desc:     "list with invalid token",
-			domainID: domainID,
-			token:    invalidToken,
-			pageMeta: sdk.PageMetadata{
+			desc:  "list with invalid token",
+			token: invalidToken,
+			pm: sdk.PageMetadata{
 				Offset: 0,
 				Limit:  10,
 			},
-			svcResp:         bootstrap.ConfigsPage{},
-			authenticateErr: svcerr.ErrAuthentication,
-			response:        sdk.BootstrapPage{},
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "list with empty token",
-			domainID: domainID,
-			token:    "",
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcResp:  bootstrap.ConfigsPage{},
-			svcErr:   nil,
-			response: sdk.BootstrapPage{},
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
-		},
-		{
-			desc:     "list with invalid query params",
-			domainID: domainID,
-			token:    validToken,
-			pageMeta: sdk.PageMetadata{
-				Offset: 1,
-				Limit:  10,
+			desc:  "list with invalid query params",
+			token: validToken,
+			pm: sdk.PageMetadata{
 				Metadata: map[string]any{
 					"test": make(chan int),
 				},
 			},
-			svcResp:  bootstrap.ConfigsPage{},
-			svcErr:   nil,
-			response: sdk.BootstrapPage{},
-			err:      errors.NewSDKError(errMarshalChan),
-		},
-		{
-			desc:     "list with response that cannot be unmarshalled",
-			domainID: domainID,
-			token:    validToken,
-			pageMeta: sdk.PageMetadata{
-				Offset: 0,
-				Limit:  10,
-			},
-			svcResp: bootstrap.ConfigsPage{
-				Total:   1,
-				Offset:  0,
-				Configs: []bootstrap.Config{unmarshalableConfig},
-			},
-			svcErr:   nil,
-			response: sdk.BootstrapPage{},
-			err:      errors.NewSDKError(errJsonEOF),
+			expectedSDKErr: errors.NewSDKError(errMarshalChan),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.Bootstraps(context.Background(), tc.pageMeta, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			assert.Equal(t, tc.response, resp)
-			if err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "List", mock.Anything, tc.session, mock.Anything, tc.pageMeta.Offset, tc.pageMeta.Limit)
-				assert.True(t, ok)
+			if tc.expectedSDKErr == nil || tc.authErr != nil {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("List", mock.Anything, session, mock.Anything, tc.pm.Offset, tc.pm.Limit).Return(tc.svcResp, tc.svcErr)
+			}
+
+			resp, err := mgsdk.Bootstraps(context.Background(), tc.pm, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedResp, resp)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
 
-func TestWhiteList(t *testing.T) {
+func TestWhitelist(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	active := 1
-	inactive := 0
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		clientID        string
-		state           int
-		svcReq          bootstrap.State
-		svcErr          error
-		authenticateErr error
-		err             errors.SDKError
+		desc           string
+		token          string
+		clientID       string
+		status         sdk.BootstrapStatus
+		method         string
+		svcResp        bootstrap.Config
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "whitelist to active state successfully",
-			domainID: domainID,
-			token:    validToken,
-			clientID: clientId,
-			state:    active,
-			svcReq:   bootstrap.Active,
-			svcErr:   nil,
-			err:      nil,
+			desc:          "enable bootstrap successfully",
+			token:         validToken,
+			clientID:      clientId,
+			status:        sdk.BootstrapEnabledStatus,
+			method:        "EnableConfig",
+			svcResp:       bootstrap.Config{ID: clientId, Status: bootstrap.Active},
+			expectSvcCall: true,
 		},
 		{
-			desc:     "whitelist to inactive state successfully",
-			domainID: domainID,
-			token:    validToken,
-			clientID: clientId,
-			state:    inactive,
-			svcReq:   bootstrap.Inactive,
-			svcErr:   nil,
-			err:      nil,
+			desc:          "disable bootstrap successfully",
+			token:         validToken,
+			clientID:      clientId,
+			status:        sdk.BootstrapDisabledStatus,
+			method:        "DisableConfig",
+			svcResp:       bootstrap.Config{ID: clientId, Status: bootstrap.Inactive},
+			expectSvcCall: true,
 		},
 		{
-			desc:            "whitelist with invalid token",
-			domainID:        domainID,
-			token:           invalidToken,
-			clientID:        clientId,
-			state:           active,
-			svcReq:          bootstrap.Active,
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "whitelist with invalid token",
+			token:          invalidToken,
+			clientID:       clientId,
+			status:         sdk.BootstrapEnabledStatus,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "whitelist with empty token",
-			domainID: domainID,
-			token:    "",
-			clientID: clientId,
-			state:    active,
-			svcReq:   bootstrap.Active,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:           "whitelist with invalid status",
+			token:          validToken,
+			clientID:       clientId,
+			status:         sdk.BootstrapStatus("invalid"),
+			expectedSDKErr: errors.NewSDKErrorWithStatus(errors.New("invalid bootstrap status"), http.StatusBadRequest),
 		},
 		{
-			desc:     "whitelist with invalid state",
-			domainID: domainID,
-			token:    validToken,
-			clientID: clientId,
-			state:    -1,
-			svcReq:   bootstrap.Active,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(bootstrap.ErrBootstrapState, http.StatusBadRequest),
-		},
-		{
-			desc:     "whitelist with empty client Id",
-			domainID: domainID,
-			token:    validToken,
-			clientID: "",
-			state:    1,
-			svcReq:   bootstrap.Active,
-			svcErr:   nil,
-			err:      errors.NewSDKError(apiutil.ErrMissingID),
+			desc:           "whitelist with empty client id",
+			token:          validToken,
+			clientID:       "",
+			status:         sdk.BootstrapEnabledStatus,
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.Whitelist(context.Background(), tc.clientID, tc.state, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "ChangeState", mock.Anything, tc.session, tc.token, tc.clientID, tc.svcReq)
-				assert.True(t, ok)
+			if tc.clientID != "" && (tc.status == sdk.BootstrapDisabledStatus || tc.status == sdk.BootstrapEnabledStatus) {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On(tc.method, mock.Anything, session, tc.clientID).Return(tc.svcResp, tc.svcErr)
+			}
+
+			err := mgsdk.Whitelist(context.Background(), tc.clientID, tc.status, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
@@ -517,120 +418,77 @@ func TestViewBootstrap(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	viewBoostrapRes := sdk.BootstrapConfig{
-		ClientID:    clientId,
-		Channels:    sdkBootstrapConfigRes.Channels,
-		ExternalID:  externalId,
-		ExternalKey: externalKey,
-		Name:        bsName,
-		Content:     content,
-		State:       0,
-	}
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		id              string
-		svcResp         bootstrap.Config
-		svcErr          error
-		authenticateErr error
-		response        sdk.BootstrapConfig
-		err             errors.SDKError
+		desc           string
+		token          string
+		id             string
+		svcResp        bootstrap.Config
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedResp   sdk.BootstrapConfig
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "view successfully",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			svcResp:  bootstrapConfig,
-			svcErr:   nil,
-			response: viewBoostrapRes,
-			err:      nil,
+			desc:          "view successfully",
+			token:         validToken,
+			id:            clientId,
+			svcResp:       bootstrapConfig,
+			expectSvcCall: true,
+			expectedResp:  sdkBootstrapListRes,
 		},
 		{
-			desc:            "view with invalid token",
-			domainID:        domainID,
-			token:           invalidToken,
-			id:              clientId,
-			svcResp:         bootstrap.Config{},
-			authenticateErr: svcerr.ErrAuthentication,
-			response:        sdk.BootstrapConfig{},
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "view with invalid token",
+			token:          invalidToken,
+			id:             clientId,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "view with empty token",
-			domainID: domainID,
-			token:    "",
-			id:       clientId,
-			svcResp:  bootstrap.Config{},
-			svcErr:   nil,
-			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:           "view with non-existent client id",
+			token:          validToken,
+			id:             invalid,
+			svcResp:        bootstrap.Config{},
+			svcErr:         svcerr.ErrNotFound,
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
 		},
 		{
-			desc:     "view with non-existent client Id",
-			domainID: domainID,
-			token:    validToken,
-			id:       invalid,
-			svcResp:  bootstrap.Config{},
-			svcErr:   svcerr.ErrNotFound,
-			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "view with response that cannot be unmarshalled",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			svcResp: bootstrap.Config{
-				ClientID: clientId,
-				Channels: []bootstrap.Channel{
-					{
-						ID: channel1Id,
-						Metadata: map[string]any{
-							"test": make(chan int),
-						},
-					},
-				},
-			},
-			svcErr:   nil,
-			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKError(errJsonEOF),
-		},
-		{
-			desc:     "view with empty client Id",
-			domainID: domainID,
-			token:    validToken,
-			id:       "",
-			svcResp:  bootstrap.Config{},
-			svcErr:   nil,
-			response: sdk.BootstrapConfig{},
-			err:      errors.NewSDKError(apiutil.ErrMissingID),
+			desc:           "view with empty client id",
+			token:          validToken,
+			id:             "",
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("View", mock.Anything, tc.session, tc.id).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.ViewBootstrap(context.Background(), tc.id, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			assert.Equal(t, tc.response, resp)
-			if err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "View", mock.Anything, tc.session, tc.id)
-				assert.True(t, ok)
+			if tc.id != "" {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("View", mock.Anything, session, tc.id).Return(tc.svcResp, tc.svcErr)
+			}
+
+			resp, err := mgsdk.ViewBootstrap(context.Background(), tc.id, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedResp, resp)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
@@ -639,160 +497,80 @@ func TestUpdateBootstrap(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc              string
-		domainID          string
-		token             string
-		session           smqauthn.Session
-		cfg               sdk.BootstrapConfig
-		svcReq            bootstrap.Config
-		svcErr            error
-		authenticationErr error
-		err               errors.SDKError
+		desc           string
+		token          string
+		cfg            sdk.BootstrapConfig
+		svcReq         bootstrap.Config
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "update successfully",
-			domainID: domainID,
-			token:    validToken,
-			cfg:      sdkBootstrapConfig,
+			desc:  "update successfully",
+			token: validToken,
+			cfg:   sdkBootstrapConfig,
 			svcReq: bootstrap.Config{
-				ClientID: clientId,
-				Name:     bsName,
-				Content:  content,
+				ID:      clientId,
+				Name:    bsName,
+				Content: content,
 			},
-			svcErr: nil,
-			err:    nil,
+			expectSvcCall: true,
 		},
 		{
-			desc:     "update with invalid token",
-			domainID: domainID,
-			token:    invalidToken,
-			cfg:      sdkBootstrapConfig,
-			svcReq: bootstrap.Config{
-				ClientID: clientId,
-				Name:     bsName,
-				Content:  content,
-			},
-			authenticationErr: svcerr.ErrAuthentication,
-			err:               errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "update with invalid token",
+			token:          invalidToken,
+			cfg:            sdkBootstrapConfig,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "update with empty token",
-			domainID: domainID,
-			token:    "",
-			cfg:      sdkBootstrapConfig,
-			svcReq:   bootstrap.Config{},
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
+			desc:           "update with empty client id",
+			token:          validToken,
+			cfg:            sdk.BootstrapConfig{},
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:     "update with config that cannot be marshalled",
-			domainID: domainID,
-			token:    validToken,
+			desc:  "update with config that cannot be marshalled",
+			token: validToken,
 			cfg: sdk.BootstrapConfig{
-				Channels: map[string]any{
-					"channel1": make(chan int),
+				ID: clientId,
+				RenderContext: map[string]any{
+					"broken": make(chan int),
 				},
-				ExternalID:   externalId,
-				ExternalKey:  externalKey,
-				ClientID:     clientId,
-				ClientSecret: clientSecret,
-				Name:         bsName,
-				ClientCert:   clientCert,
-				ClientKey:    clientKey,
-				CACert:       caCert,
-				Content:      content,
 			},
-			svcReq: bootstrap.Config{
-				ClientID: clientId,
-				Name:     bsName,
-				Content:  content,
-			},
-			svcErr: nil,
-			err:    errors.NewSDKError(errMarshalChan),
-		},
-		{
-			desc:     "update with non-existent client Id",
-			domainID: domainID,
-			token:    validToken,
-			cfg: sdk.BootstrapConfig{
-				ClientID: invalid,
-				Channels: []sdk.Channel{
-					{
-						ID: channel1Id,
-					},
-				},
-				ExternalID:  externalId,
-				ExternalKey: externalKey,
-				Content:     content,
-				Name:        bsName,
-			},
-			svcReq: bootstrap.Config{
-				ClientID: invalid,
-				Name:     bsName,
-				Content:  content,
-			},
-			svcErr: svcerr.ErrNotFound,
-			err:    errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "update with empty client Id",
-			domainID: domainID,
-			token:    validToken,
-			cfg: sdk.BootstrapConfig{
-				ClientID: "",
-				Channels: []sdk.Channel{
-					{
-						ID: channel1Id,
-					},
-				},
-				ExternalID:  externalId,
-				ExternalKey: externalKey,
-				Content:     content,
-				Name:        bsName,
-			},
-			svcReq: bootstrap.Config{
-				ClientID: "",
-				Name:     bsName,
-				Content:  content,
-			},
-			svcErr: nil,
-			err:    errors.NewSDKError(apiutil.ErrMissingID),
-		},
-		{
-			desc:     "update with config with only client Id",
-			domainID: domainID,
-			token:    validToken,
-			cfg: sdk.BootstrapConfig{
-				ClientID: clientId,
-			},
-			svcReq: bootstrap.Config{
-				ClientID: clientId,
-			},
-			svcErr: nil,
-			err:    nil,
+			expectedSDKErr: errors.NewSDKError(errMarshalChan),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticationErr)
-			svcCall := bsvc.On("Update", mock.Anything, tc.session, tc.svcReq).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrap(context.Background(), tc.cfg, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Update", mock.Anything, tc.session, tc.svcReq)
-				assert.True(t, ok)
+			if tc.cfg.ID != "" {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("Update", mock.Anything, session, tc.svcReq).Return(tc.svcErr)
+			}
+
+			err := mgsdk.UpdateBootstrap(context.Background(), tc.cfg, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
@@ -801,418 +579,237 @@ func TestUpdateBootstrapCerts(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
-
-	updateconfigRes := sdk.BootstrapConfig{
-		ClientID:   clientId,
-		ClientCert: clientCert,
-		CACert:     caCert,
-		ClientKey:  clientKey,
-	}
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		id              string
-		clientCert      string
-		clientKey       string
-		caCert          string
-		svcResp         bootstrap.Config
-		svcErr          error
-		authenticateErr error
-		response        sdk.BootstrapConfig
-		err             errors.SDKError
+		desc           string
+		token          string
+		id             string
+		cert           string
+		key            string
+		ca             string
+		svcResp        bootstrap.Config
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedResp   sdk.BootstrapConfig
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:       "update certs successfully",
-			domainID:   domainID,
-			token:      validToken,
-			id:         clientId,
-			clientCert: clientCert,
-			clientKey:  clientKey,
-			caCert:     caCert,
-			svcResp:    bootstrapConfig,
-			svcErr:     nil,
-			response:   updateconfigRes,
-			err:        nil,
+			desc:          "update certs successfully",
+			token:         validToken,
+			id:            clientId,
+			cert:          clientCert,
+			key:           clientKey,
+			ca:            caCert,
+			svcResp:       bootstrapConfig,
+			expectSvcCall: true,
+			expectedResp:  sdkBootstrapCertRes,
 		},
 		{
-			desc:            "update certs with invalid token",
-			domainID:        domainID,
-			token:           validToken,
-			id:              clientId,
-			clientCert:      clientCert,
-			clientKey:       clientKey,
-			caCert:          caCert,
-			svcResp:         bootstrap.Config{},
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "update certs with invalid token",
+			token:          invalidToken,
+			id:             clientId,
+			cert:           clientCert,
+			key:            clientKey,
+			ca:             caCert,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:       "update certs with empty token",
-			domainID:   domainID,
-			token:      "",
-			id:         clientId,
-			clientCert: clientCert,
-			clientKey:  clientKey,
-			caCert:     caCert,
-			svcResp:    bootstrap.Config{},
-			svcErr:     nil,
-			err:        errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
-		},
-		{
-			desc:       "update certs with non-existent client Id",
-			domainID:   domainID,
-			token:      validToken,
-			id:         invalid,
-			clientCert: clientCert,
-			clientKey:  clientKey,
-			caCert:     caCert,
-			svcResp:    bootstrap.Config{},
-			svcErr:     svcerr.ErrNotFound,
-			err:        errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:       "update certs with empty certs",
-			domainID:   domainID,
-			token:      validToken,
-			id:         clientId,
-			clientCert: "",
-			clientKey:  "",
-			caCert:     "",
-			svcResp:    bootstrap.Config{},
-			svcErr:     nil,
-			err:        nil,
-		},
-		{
-			desc:       "update certs with empty id",
-			domainID:   domainID,
-			token:      validToken,
-			id:         "",
-			clientCert: clientCert,
-			clientKey:  clientKey,
-			caCert:     caCert,
-			svcResp:    bootstrap.Config{},
-			svcErr:     nil,
-			err:        errors.NewSDKError(apiutil.ErrMissingID),
+			desc:           "update certs with empty id",
+			token:          validToken,
+			id:             "",
+			cert:           clientCert,
+			key:            clientKey,
+			ca:             caCert,
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("UpdateCert", mock.Anything, tc.session, tc.id, tc.clientCert, tc.clientKey, tc.caCert).Return(tc.svcResp, tc.svcErr)
-			resp, err := mgsdk.UpdateBootstrapCerts(context.Background(), tc.id, tc.clientCert, tc.clientKey, tc.caCert, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if err == nil {
-				assert.Equal(t, tc.response, resp)
+			if tc.id != "" {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("UpdateCert", mock.Anything, session, tc.id, tc.cert, tc.key, tc.ca).Return(tc.svcResp, tc.svcErr)
+			}
+
+			resp, err := mgsdk.UpdateBootstrapCerts(context.Background(), tc.id, tc.cert, tc.key, tc.ca, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedResp, resp)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
 
 func TestUpdateBootstrapConnection(t *testing.T) {
-	bs, bsvc, _, auth := setupBootstrap()
-	defer bs.Close()
+	mgsdk := sdk.NewSDK(sdk.Config{})
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
+	err := mgsdk.UpdateBootstrapConnection(context.Background(), clientId, []string{channel1Id, channel2Id}, domainID, validToken)
+	assert.Equal(t, errors.NewSDKError(errors.New("bootstrap connection updates are no longer supported")), err)
 
-	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		id              string
-		channels        []string
-		svcRes          bootstrap.Config
-		svcErr          error
-		authenticateErr error
-		err             errors.SDKError
-	}{
-		{
-			desc:     "update connection successfully",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			channels: []string{channel1Id, channel2Id},
-			svcErr:   nil,
-			err:      nil,
-		},
-		{
-			desc:            "update connection with invalid token",
-			domainID:        domainID,
-			token:           invalidToken,
-			id:              clientId,
-			channels:        []string{channel1Id, channel2Id},
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
-		},
-		{
-			desc:     "update connection with empty token",
-			domainID: domainID,
-			token:    "",
-			id:       clientId,
-			channels: []string{channel1Id, channel2Id},
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
-		},
-		{
-			desc:     "update connection with non-existent client Id",
-			domainID: domainID,
-			token:    validToken,
-			id:       invalid,
-			channels: []string{channel1Id, channel2Id},
-			svcErr:   svcerr.ErrNotFound,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "update connection with non-existent channel Id",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			channels: []string{invalid},
-			svcErr:   svcerr.ErrNotFound,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "update connection with empty channels",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			channels: []string{},
-			svcErr:   svcerr.ErrUpdateEntity,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrUpdateEntity, http.StatusUnprocessableEntity),
-		},
-		{
-			desc:     "update connection with empty id",
-			domainID: domainID,
-			token:    validToken,
-			id:       "",
-			channels: []string{channel1Id, channel2Id},
-			svcErr:   nil,
-			err:      errors.NewSDKError(apiutil.ErrMissingID),
-		},
-	}
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
-			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels).Return(tc.svcErr)
-			err := mgsdk.UpdateBootstrapConnection(context.Background(), tc.id, tc.channels, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "UpdateConnections", mock.Anything, tc.session, tc.token, tc.id, tc.channels)
-				assert.True(t, ok)
-			}
-			svcCall.Unset()
-			authCall.Unset()
-		})
-	}
+	err = mgsdk.UpdateBootstrapConnection(context.Background(), "", []string{channel1Id}, domainID, validToken)
+	assert.Equal(t, errors.NewSDKError(apiutil.ErrMissingID), err)
 }
 
 func TestRemoveBootstrap(t *testing.T) {
 	bs, bsvc, _, auth := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc            string
-		domainID        string
-		token           string
-		session         smqauthn.Session
-		id              string
-		svcErr          error
-		authenticateErr error
-		err             errors.SDKError
+		desc           string
+		token          string
+		id             string
+		svcErr         error
+		authErr        error
+		expectSvcCall  bool
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:     "remove successfully",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			svcErr:   nil,
-			err:      nil,
+			desc:          "remove successfully",
+			token:         validToken,
+			id:            clientId,
+			expectSvcCall: true,
 		},
 		{
-			desc:            "remove with invalid token",
-			domainID:        domainID,
-			token:           invalidToken,
-			id:              clientId,
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "remove with invalid token",
+			token:          invalidToken,
+			id:             clientId,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
 		},
 		{
-			desc:     "remove with non-existent client Id",
-			domainID: domainID,
-			token:    validToken,
-			id:       invalid,
-			svcErr:   svcerr.ErrNotFound,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "remove removed bootstrap",
-			domainID: domainID,
-			token:    validToken,
-			id:       clientId,
-			svcErr:   svcerr.ErrNotFound,
-			err:      errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
-		},
-		{
-			desc:     "remove with empty token",
-			domainID: domainID,
-			token:    "",
-			id:       clientId,
-			svcErr:   nil,
-			err:      errors.NewSDKErrorWithStatus(apiutil.ErrBearerToken, http.StatusUnauthorized),
-		},
-		{
-			desc:     "remove with empty id",
-			domainID: domainID,
-			token:    validToken,
-			id:       "",
-			svcErr:   nil,
-			err:      errors.NewSDKError(apiutil.ErrMissingID),
+			desc:           "remove with empty id",
+			token:          validToken,
+			id:             "",
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
+			var authCall *mock.Call
+			session := smqauthn.Session{}
 			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+				session = bootstrapSession()
 			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := bsvc.On("Remove", mock.Anything, tc.session, tc.id).Return(tc.svcErr)
-			err := mgsdk.RemoveBootstrap(context.Background(), tc.id, tc.domainID, tc.token)
-			assert.Equal(t, tc.err, err)
-			if tc.err == nil {
-				ok := svcCall.Parent.AssertCalled(t, "Remove", mock.Anything, tc.session, tc.id)
-				assert.True(t, ok)
+			if tc.id != "" {
+				authCall = auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
 			}
-			svcCall.Unset()
-			authCall.Unset()
+
+			var svcCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("Remove", mock.Anything, session, tc.id).Return(tc.svcErr)
+			}
+
+			err := mgsdk.RemoveBootstrap(context.Background(), tc.id, domainID, tc.token)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if authCall != nil {
+				authCall.Unset()
+			}
 		})
 	}
 }
 
-func TestBoostrap(t *testing.T) {
+func TestBootstrap(t *testing.T) {
 	bs, bsvc, reader, _ := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
 	cases := []struct {
-		desc        string
-		token       string
-		externalID  string
-		externalKey string
-		svcResp     bootstrap.Config
-		svcErr      error
-		readerResp  any
-		readerErr   error
-		response    sdk.BootstrapConfig
-		err         errors.SDKError
+		desc           string
+		externalID     string
+		externalKey    string
+		svcResp        bootstrap.Config
+		svcErr         error
+		readerResp     any
+		readerErr      error
+		expectSvcCall  bool
+		expectedResp   sdk.BootstrapConfig
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:        "bootstrap successfully",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  readConfigResponse,
-			readerErr:   nil,
-			response:    sdkBootstrapConfigRes,
-			err:         nil,
+			desc:          "bootstrap successfully",
+			externalID:    externalId,
+			externalKey:   externalKey,
+			svcResp:       bootstrapConfig,
+			readerResp:    readConfigResponse,
+			expectSvcCall: true,
+			expectedResp:  sdkBootstrapReadRes,
 		},
 		{
-			desc:        "bootstrap with invalid token",
-			token:       invalidToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			svcResp:     bootstrap.Config{},
-			svcErr:      svcerr.ErrAuthentication,
-			readerResp:  bootstrap.Config{},
-			readerErr:   nil,
-			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "bootstrap with reader error",
+			externalID:     externalId,
+			externalKey:    externalKey,
+			svcResp:        bootstrapConfig,
+			readerErr:      errJSONEOF,
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(errJSONEOF, http.StatusInternalServerError),
 		},
 		{
-			desc:        "bootstrap with error in reader",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   errJsonEOF,
-			err:         errors.NewSDKErrorWithStatus(errJsonEOF, http.StatusInternalServerError),
+			desc:           "bootstrap with malformed response",
+			externalID:     externalId,
+			externalKey:    externalKey,
+			svcResp:        bootstrapConfig,
+			readerResp:     []byte{0},
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKError(errors.New("json: cannot unmarshal string into Go value of type sdk.BootstrapConfig")),
 		},
 		{
-			desc:        "boostrap with response that cannot be unmarshalled",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   nil,
-			err:         errors.NewSDKError(errors.New("json: cannot unmarshal string into Go value of type map[string]json.RawMessage")),
+			desc:           "bootstrap with empty id",
+			externalID:     "",
+			externalKey:    externalKey,
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 		{
-			desc:        "bootstrap with empty id",
-			token:       validToken,
-			externalID:  "",
-			externalKey: externalKey,
-			svcResp:     bootstrap.Config{},
-			svcErr:      nil,
-			readerResp:  bootstrap.Config{},
-			readerErr:   nil,
-			err:         errors.NewSDKError(apiutil.ErrMissingID),
-		},
-		{
-			desc:        "boostrap with empty key",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: "",
-			svcResp:     bootstrap.Config{},
-			svcErr:      nil,
-			readerResp:  bootstrap.Config{},
-			readerErr:   nil,
-			err:         errors.NewSDKErrorWithStatus(apiutil.ErrBearerKey, http.StatusUnauthorized),
+			desc:           "bootstrap with empty key",
+			externalID:     externalId,
+			externalKey:    "",
+			expectedSDKErr: errors.NewSDKErrorWithStatus(apiutil.ErrBearerKey, http.StatusUnauthorized),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("Bootstrap", mock.Anything, tc.externalKey, tc.externalID, false).Return(tc.svcResp, tc.svcErr)
-			readerCall := reader.On("ReadConfig", tc.svcResp, false).Return(tc.readerResp, tc.readerErr)
-			resp, err := mgsdk.Bootstrap(context.Background(), tc.externalID, tc.externalKey)
-			assert.Equal(t, tc.err, err)
-			if err == nil {
-				assert.Equal(t, tc.response, resp)
-				ok := svcCall.Parent.AssertCalled(t, "Bootstrap", mock.Anything, tc.externalKey, tc.externalID, false)
-				assert.True(t, ok)
+			var svcCall *mock.Call
+			var readerCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("Bootstrap", mock.Anything, tc.externalKey, tc.externalID, false).Return(tc.svcResp, tc.svcErr)
+				readerCall = reader.On("ReadConfig", tc.svcResp, false).Return(tc.readerResp, tc.readerErr)
 			}
-			svcCall.Unset()
-			readerCall.Unset()
+
+			resp, err := mgsdk.Bootstrap(context.Background(), tc.externalID, tc.externalKey)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedResp, resp)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if readerCall != nil {
+				readerCall.Unset()
+			}
 		})
 	}
 }
@@ -1221,115 +818,92 @@ func TestBootstrapSecure(t *testing.T) {
 	bs, bsvc, reader, _ := setupBootstrap()
 	defer bs.Close()
 
-	conf := sdk.Config{
-		BootstrapURL: bs.URL,
-	}
-	mgsdk := sdk.NewSDK(conf)
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
 
-	b, err := json.Marshal(readConfigResponse)
+	body, err := json.Marshal(readConfigResponse)
 	assert.Nil(t, err, fmt.Sprintf("Marshalling bootstrap response expected to succeed: %s.\n", err))
-	encResponse, err := encrypt(b, encKey)
+
+	encResponse, err := encrypt(body, encKey)
 	assert.Nil(t, err, fmt.Sprintf("Encrypting bootstrap response expected to succeed: %s.\n", err))
 
 	cases := []struct {
-		desc        string
-		token       string
-		externalID  string
-		externalKey string
-		cryptoKey   string
-		svcResp     bootstrap.Config
-		svcErr      error
-		readerResp  []byte
-		readerErr   error
-		response    sdk.BootstrapConfig
-		err         errors.SDKError
+		desc           string
+		externalID     string
+		externalKey    string
+		cryptoKey      string
+		svcResp        bootstrap.Config
+		svcErr         error
+		readerResp     []byte
+		readerErr      error
+		expectSvcCall  bool
+		expectedResp   sdk.BootstrapConfig
+		expectedSDKErr errors.SDKError
 	}{
 		{
-			desc:        "bootstrap successfully",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			cryptoKey:   string(encKey),
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  encResponse,
-			readerErr:   nil,
-			response:    sdkBootstrapConfigRes,
-			err:         nil,
+			desc:          "secure bootstrap successfully",
+			externalID:    externalId,
+			externalKey:   externalKey,
+			cryptoKey:     string(encKey),
+			svcResp:       bootstrapConfig,
+			readerResp:    encResponse,
+			expectSvcCall: true,
+			expectedResp:  sdkBootstrapReadRes,
 		},
 		{
-			desc:        "bootstrap with invalid token",
-			token:       invalidToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			cryptoKey:   string(encKey),
-			svcResp:     bootstrap.Config{},
-			svcErr:      svcerr.ErrAuthentication,
-			readerResp:  []byte{0},
-			readerErr:   nil,
-			err:         errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+			desc:           "secure bootstrap with invalid crypto key",
+			externalID:     externalId,
+			externalKey:    externalKey,
+			cryptoKey:      invalid,
+			expectedSDKErr: errors.NewSDKError(errors.New("crypto/aes: invalid key size 7")),
 		},
 		{
-			desc:        "booostrap with invalid crypto key",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			cryptoKey:   invalid,
-			svcResp:     bootstrap.Config{},
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   nil,
-			err:         errors.NewSDKError(errors.New("crypto/aes: invalid key size 7")),
+			desc:           "secure bootstrap with reader error",
+			externalID:     externalId,
+			externalKey:    externalKey,
+			cryptoKey:      string(encKey),
+			svcResp:        bootstrapConfig,
+			readerErr:      errJSONEOF,
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(errJSONEOF, http.StatusInternalServerError),
 		},
 		{
-			desc:        "bootstrap with error in reader",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			cryptoKey:   string(encKey),
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   errJsonEOF,
-			err:         errors.NewSDKErrorWithStatus(errJsonEOF, http.StatusInternalServerError),
+			desc:           "secure bootstrap with malformed response",
+			externalID:     externalId,
+			externalKey:    externalKey,
+			cryptoKey:      string(encKey),
+			svcResp:        bootstrapConfig,
+			readerResp:     []byte{0},
+			expectSvcCall:  true,
+			expectedSDKErr: errors.NewSDKError(errJSONEOF),
 		},
 		{
-			desc:        "bootstrap with response that cannot be unmarshalled",
-			token:       validToken,
-			externalID:  externalId,
-			externalKey: externalKey,
-			cryptoKey:   string(encKey),
-			svcResp:     bootstrapConfig,
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   nil,
-			err:         errors.NewSDKError(errJsonEOF),
-		},
-		{
-			desc:        "bootstrap with empty id",
-			token:       validToken,
-			externalID:  "",
-			externalKey: externalKey,
-			svcResp:     bootstrap.Config{},
-			svcErr:      nil,
-			readerResp:  []byte{0},
-			readerErr:   nil,
-			err:         errors.NewSDKError(apiutil.ErrMissingID),
+			desc:           "secure bootstrap with empty id",
+			externalID:     "",
+			externalKey:    externalKey,
+			cryptoKey:      string(encKey),
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
 		},
 	}
+
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := bsvc.On("Bootstrap", mock.Anything, mock.Anything, tc.externalID, true).Return(tc.svcResp, tc.svcErr)
-			readerCall := reader.On("ReadConfig", tc.svcResp, true).Return(tc.readerResp, tc.readerErr)
-			resp, err := mgsdk.BootstrapSecure(context.Background(), tc.externalID, tc.externalKey, tc.cryptoKey)
-			assert.Equal(t, tc.err, err)
-			if err == nil {
-				assert.Equal(t, sdkBootstrapConfigRes, resp)
-				ok := svcCall.Parent.AssertCalled(t, "Bootstrap", mock.Anything, mock.Anything, tc.externalID, true)
-				assert.True(t, ok)
+			var svcCall *mock.Call
+			var readerCall *mock.Call
+			if tc.expectSvcCall {
+				svcCall = bsvc.On("Bootstrap", mock.Anything, mock.Anything, tc.externalID, true).Return(tc.svcResp, tc.svcErr)
+				readerCall = reader.On("ReadConfig", tc.svcResp, true).Return(tc.readerResp, tc.readerErr)
 			}
-			svcCall.Unset()
-			readerCall.Unset()
+
+			resp, err := mgsdk.BootstrapSecure(context.Background(), tc.externalID, tc.externalKey, tc.cryptoKey)
+
+			assert.Equal(t, tc.expectedSDKErr, err)
+			assert.Equal(t, tc.expectedResp, resp)
+			if svcCall != nil {
+				svcCall.Unset()
+			}
+			if readerCall != nil {
+				readerCall.Unset()
+			}
 		})
 	}
 }

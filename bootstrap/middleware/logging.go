@@ -32,7 +32,7 @@ func (lm *loggingMiddleware) Add(ctx context.Context, session smqauthn.Session, 
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", saved.ClientID),
+			slog.String("config_id", saved.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -51,7 +51,7 @@ func (lm *loggingMiddleware) View(ctx context.Context, session smqauthn.Session,
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
+			slog.String("config_id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -71,7 +71,7 @@ func (lm *loggingMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.Group("config",
-				slog.String("client_id", cfg.ClientID),
+				slog.String("config_id", cfg.ID),
 				slog.String("name", cfg.Name),
 			),
 		}
@@ -92,7 +92,7 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", cfg.ClientID),
+			slog.String("config_id", cfg.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -103,26 +103,6 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	}(time.Now())
 
 	return lm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
-}
-
-// UpdateConnections logs the update_connections request. It logs bootstrap ID and the time it took to complete the request.
-// If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
-			slog.Any("connections", connections),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update config connections failed", args...)
-			return
-		}
-		lm.logger.Info("Update config connections completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.UpdateConnections(ctx, session, token, id, connections)
 }
 
 // List logs the list request. It logs offset, limit and the time it took to complete the request.
@@ -155,7 +135,7 @@ func (lm *loggingMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("client_id", id),
+			slog.String("config_id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
@@ -185,43 +165,38 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return lm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-func (lm *loggingMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) (err error) {
+func (lm *loggingMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("id", id),
-			slog.Any("state", state),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Change client state failed", args...)
+			lm.logger.Warn("Enable config failed", args...)
 			return
 		}
-		lm.logger.Info("Change client state completed successfully", args...)
+		lm.logger.Info("Enable config completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ChangeState(ctx, session, token, id, state)
+	return lm.svc.EnableConfig(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) (err error) {
+func (lm *loggingMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.Group("channel",
-				slog.String("id", channel.ID),
-				slog.String("name", channel.Name),
-				slog.Any("metadata", channel.Metadata),
-			),
+			slog.String("id", id),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Update channel handler failed", args...)
+			lm.logger.Warn("Disable config failed", args...)
 			return
 		}
-		lm.logger.Info("Update channel handler completed successfully", args...)
+		lm.logger.Info("Disable config completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateChannelHandler(ctx, channel)
+	return lm.svc.DisableConfig(ctx, session, id)
 }
 
 func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string) (err error) {
@@ -241,55 +216,157 @@ func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 	return lm.svc.RemoveConfigHandler(ctx, id)
 }
 
-func (lm *loggingMiddleware) RemoveChannelHandler(ctx context.Context, id string) (err error) {
+func (lm *loggingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (saved bootstrap.Profile, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", id),
+			slog.String("profile_id", saved.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove channel handler failed", args...)
+			lm.logger.Warn("Create profile failed", args...)
 			return
 		}
-		lm.logger.Info("Remove channel handler completed successfully", args...)
+		lm.logger.Info("Create profile completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.RemoveChannelHandler(ctx, id)
+	return lm.svc.CreateProfile(ctx, session, p)
 }
 
-func (lm *loggingMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
+func (lm *loggingMiddleware) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (p bootstrap.Profile, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.String("client_id", clientID),
+			slog.String("profile_id", profileID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Connect client handler failed", args...)
+			lm.logger.Warn("View profile failed", args...)
 			return
 		}
-		lm.logger.Info("Connect client handler completed successfully", args...)
+		lm.logger.Info("View profile completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ConnectClientHandler(ctx, channelID, clientID)
+	return lm.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (lm *loggingMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
+func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
-			slog.String("channel_id", channelID),
-			slog.String("client_id", clientID),
+			slog.String("profile_id", p.ID),
 		}
 		if err != nil {
 			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Disconnect client handler failed", args...)
+			lm.logger.Warn("Update profile failed", args...)
 			return
 		}
-		lm.logger.Info("Disconnect client handler completed successfully", args...)
+		lm.logger.Info("Update profile completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.DisconnectClientHandler(ctx, channelID, clientID)
+	return lm.svc.UpdateProfile(ctx, session, p)
+}
+
+func (lm *loggingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (page bootstrap.ProfilesPage, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.Uint64("offset", offset),
+			slog.Uint64("limit", limit),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("List profiles failed", args...)
+			return
+		}
+		lm.logger.Info("List profiles completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.ListProfiles(ctx, session, offset, limit)
+}
+
+func (lm *loggingMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("profile_id", profileID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Delete profile failed", args...)
+			return
+		}
+		lm.logger.Info("Delete profile completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.DeleteProfile(ctx, session, profileID)
+}
+
+func (lm *loggingMiddleware) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("config_id", configID),
+			slog.String("profile_id", profileID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Assign profile failed", args...)
+			return
+		}
+		lm.logger.Info("Assign profile completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.AssignProfile(ctx, session, configID, profileID)
+}
+
+func (lm *loggingMiddleware) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("config_id", configID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Bind resources failed", args...)
+			return
+		}
+		lm.logger.Info("Bind resources completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.BindResources(ctx, session, token, configID, bindings)
+}
+
+func (lm *loggingMiddleware) ListBindings(ctx context.Context, session smqauthn.Session, configID string) (snapshots []bootstrap.BindingSnapshot, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("config_id", configID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("List bindings failed", args...)
+			return
+		}
+		lm.logger.Info("List bindings completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.ListBindings(ctx, session, configID)
+}
+
+func (lm *loggingMiddleware) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) (err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("config_id", configID),
+		}
+		if err != nil {
+			args = append(args, slog.Any("error", err))
+			lm.logger.Warn("Refresh bindings failed", args...)
+			return
+		}
+		lm.logger.Info("Refresh bindings completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.RefreshBindings(ctx, session, token, configID)
 }

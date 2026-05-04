@@ -71,16 +71,6 @@ func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	return mm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
-// UpdateConnections instruments UpdateConnections method with metrics.
-func (mm *metricsMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) (err error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "update_connections").Add(1)
-		mm.latency.With("method", "update_connections").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.svc.UpdateConnections(ctx, session, token, id, connections)
-}
-
 // List instruments List method with metrics.
 func (mm *metricsMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (saved bootstrap.ConfigsPage, err error) {
 	defer func(begin time.Time) {
@@ -111,24 +101,22 @@ func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return mm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-// ChangeState instruments ChangeState method with metrics.
-func (mm *metricsMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) (err error) {
+func (mm *metricsMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "change_state").Add(1)
-		mm.latency.With("method", "change_state").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "enable_config").Add(1)
+		mm.latency.With("method", "enable_config").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.ChangeState(ctx, session, token, id, state)
+	return mm.svc.EnableConfig(ctx, session, id)
 }
 
-// UpdateChannelHandler instruments UpdateChannelHandler method with metrics.
-func (mm *metricsMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) (err error) {
+func (mm *metricsMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "update_channel").Add(1)
-		mm.latency.With("method", "update_channel").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "disable_config").Add(1)
+		mm.latency.With("method", "disable_config").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateChannelHandler(ctx, channel)
+	return mm.svc.DisableConfig(ctx, session, id)
 }
 
 // RemoveConfigHandler instruments RemoveConfigHandler method with metrics.
@@ -141,32 +129,74 @@ func (mm *metricsMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 	return mm.svc.RemoveConfigHandler(ctx, id)
 }
 
-// RemoveChannelHandler instruments RemoveChannelHandler method with metrics.
-func (mm *metricsMiddleware) RemoveChannelHandler(ctx context.Context, id string) (err error) {
+func (mm *metricsMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "remove_channel").Add(1)
-		mm.latency.With("method", "remove_channel").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "create_profile").Add(1)
+		mm.latency.With("method", "create_profile").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-
-	return mm.svc.RemoveChannelHandler(ctx, id)
+	return mm.svc.CreateProfile(ctx, session, p)
 }
 
-// ConnectClientHandler instruments ConnectClientHandler method with metrics.
-func (mm *metricsMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
+func (mm *metricsMiddleware) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "connect_client_handler").Add(1)
-		mm.latency.With("method", "connect_client_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "view_profile").Add(1)
+		mm.latency.With("method", "view_profile").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-
-	return mm.svc.ConnectClientHandler(ctx, channelID, clientID)
+	return mm.svc.ViewProfile(ctx, session, profileID)
 }
 
-// DisconnectClientHandler instruments DisconnectClientHandler method with metrics.
-func (mm *metricsMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) (err error) {
+func (mm *metricsMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
 	defer func(begin time.Time) {
-		mm.counter.With("method", "disconnect_client_handler").Add(1)
-		mm.latency.With("method", "disconnect_client_handler").Observe(time.Since(begin).Seconds())
+		mm.counter.With("method", "update_profile").Add(1)
+		mm.latency.With("method", "update_profile").Observe(time.Since(begin).Seconds())
 	}(time.Now())
+	return mm.svc.UpdateProfile(ctx, session, p)
+}
 
-	return mm.svc.DisconnectClientHandler(ctx, channelID, clientID)
+func (mm *metricsMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "list_profiles").Add(1)
+		mm.latency.With("method", "list_profiles").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.ListProfiles(ctx, session, offset, limit)
+}
+
+func (mm *metricsMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "delete_profile").Add(1)
+		mm.latency.With("method", "delete_profile").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.DeleteProfile(ctx, session, profileID)
+}
+
+func (mm *metricsMiddleware) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "assign_profile").Add(1)
+		mm.latency.With("method", "assign_profile").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.AssignProfile(ctx, session, configID, profileID)
+}
+
+func (mm *metricsMiddleware) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "bind_resources").Add(1)
+		mm.latency.With("method", "bind_resources").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.BindResources(ctx, session, token, configID, bindings)
+}
+
+func (mm *metricsMiddleware) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "list_bindings").Add(1)
+		mm.latency.With("method", "list_bindings").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.ListBindings(ctx, session, configID)
+}
+
+func (mm *metricsMiddleware) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "refresh_bindings").Add(1)
+		mm.latency.With("method", "refresh_bindings").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+	return mm.svc.RefreshBindings(ctx, session, token, configID)
 }

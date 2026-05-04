@@ -3,45 +3,22 @@
 
 package bootstrap
 
-import (
-	"context"
-	"time"
+import "context"
 
-	"github.com/absmach/magistrala/clients"
-)
-
-// Config represents Configuration entity. It wraps information about external entity
-// as well as info about corresponding Magistrala entities.
-// MGClient represents corresponding Magistrala Client ID.
-// MGKey is key of corresponding Magistrala Client.
-// MGChannels is a list of Magistrala Channels corresponding Magistrala Client connects to.
+// Config represents a bootstrap enrollment.
 type Config struct {
-	ClientID     string    `json:"client_id"`
-	ClientSecret string    `json:"client_secret"`
-	DomainID     string    `json:"domain_id,omitempty"`
-	Name         string    `json:"name,omitempty"`
-	ClientCert   string    `json:"client_cert,omitempty"`
-	ClientKey    string    `json:"client_key,omitempty"`
-	CACert       string    `json:"ca_cert,omitempty"`
-	Channels     []Channel `json:"channels,omitempty"`
-	ExternalID   string    `json:"external_id"`
-	ExternalKey  string    `json:"external_key"`
-	Content      string    `json:"content,omitempty"`
-	State        State     `json:"state"`
-}
-
-// Channel represents Magistrala channel corresponding Magistrala Client is connected to.
-type Channel struct {
-	ID          string         `json:"id"`
-	Name        string         `json:"name,omitempty"`
-	Metadata    map[string]any `json:"metadata,omitempty"`
-	DomainID    string         `json:"domain_id"`
-	Parent      string         `json:"parent_id,omitempty"`
-	Description string         `json:"description,omitempty"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at,omitempty"`
-	UpdatedBy   string         `json:"updated_by,omitempty"`
-	Status      clients.Status `json:"status"`
+	ID            string         `json:"id"`
+	DomainID      string         `json:"domain_id,omitempty"`
+	Name          string         `json:"name,omitempty"`
+	ClientCert    string         `json:"client_cert,omitempty"`
+	ClientKey     string         `json:"client_key,omitempty"`
+	CACert        string         `json:"ca_cert,omitempty"`
+	ExternalID    string         `json:"external_id"`
+	ExternalKey   string         `json:"external_key"`
+	Content       string         `json:"content,omitempty"`
+	Status        Status         `json:"status"`
+	ProfileID     string         `json:"profile_id,omitempty"`
+	RenderContext map[string]any `json:"render_context,omitempty"`
 }
 
 // Filter is used for the search filters.
@@ -63,7 +40,7 @@ type ConfigsPage struct {
 type ConfigRepository interface {
 	// Save persists the Config. Successful operation is indicated by non-nil
 	// error response.
-	Save(ctx context.Context, cfg Config, chsConnIDs []string) (string, error)
+	Save(ctx context.Context, cfg Config) (string, error)
 
 	// RetrieveByID retrieves the Config having the provided identifier, that is owned
 	// by the specified user.
@@ -80,39 +57,21 @@ type ConfigRepository interface {
 	// to indicate operation failure.
 	Update(ctx context.Context, cfg Config) error
 
+	// AssignProfile sets the profile reference for the given Config.
+	AssignProfile(ctx context.Context, domainID, id, profileID string) error
+
 	// UpdateCerts updates and returns an existing Config certificate and domainID.
 	// A non-nil error is returned to indicate operation failure.
 	UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (Config, error)
-
-	// UpdateConnections updates a list of Channels the Config is connected to
-	// adding new Channels if needed.
-	UpdateConnections(ctx context.Context, domainID, id string, channels []Channel, connections []string) error
 
 	// Remove removes the Config having the provided identifier, that is owned
 	// by the specified user.
 	Remove(ctx context.Context, domainID, id string) error
 
-	// ChangeState changes of the Config, that is owned by the specific user.
-	ChangeState(ctx context.Context, domainID, id string, state State) error
-
-	// ListExisting retrieves those channels from the given list that exist in DB.
-	ListExisting(ctx context.Context, domainID string, ids []string) ([]Channel, error)
-
-	// Methods RemoveClient, UpdateChannel, and RemoveChannel are related to
-	// event sourcing. That's why these methods surpass ownership check.
+	// ChangeStatus changes the Status of the Config owned by the specific user.
+	ChangeStatus(ctx context.Context, domainID, id string, status Status) error
 
 	// RemoveClient removes Config of the Client with the given ID.
+	// Used as a handler for client remove events.
 	RemoveClient(ctx context.Context, id string) error
-
-	// UpdateChannel updates channel with the given ID.
-	UpdateChannel(ctx context.Context, c Channel) error
-
-	// RemoveChannel removes channel with the given ID.
-	RemoveChannel(ctx context.Context, id string) error
-
-	// ConnectClient changes state of the Config when the corresponding Client is connected to the Channel.
-	ConnectClient(ctx context.Context, channelID, clientID string) error
-
-	// DisconnectClient changes state of the Config when the corresponding Client is disconnected from the Channel.
-	DisconnectClient(ctx context.Context, channelID, clientID string) error
 }

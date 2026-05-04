@@ -121,6 +121,150 @@ func (_c *Service_Add_Call) RunAndReturn(run func(ctx context.Context, session a
 	return _c
 }
 
+// AssignProfile provides a mock function for the type Service
+func (_mock *Service) AssignProfile(ctx context.Context, session authn.Session, configID string, profileID string) error {
+	ret := _mock.Called(ctx, session, configID, profileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AssignProfile")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) error); ok {
+		r0 = returnFunc(ctx, session, configID, profileID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_AssignProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignProfile'
+type Service_AssignProfile_Call struct {
+	*mock.Call
+}
+
+// AssignProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - configID string
+//   - profileID string
+func (_e *Service_Expecter) AssignProfile(ctx interface{}, session interface{}, configID interface{}, profileID interface{}) *Service_AssignProfile_Call {
+	return &Service_AssignProfile_Call{Call: _e.mock.On("AssignProfile", ctx, session, configID, profileID)}
+}
+
+func (_c *Service_AssignProfile_Call) Run(run func(ctx context.Context, session authn.Session, configID string, profileID string)) *Service_AssignProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_AssignProfile_Call) Return(err error) *Service_AssignProfile_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_AssignProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, configID string, profileID string) error) *Service_AssignProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// BindResources provides a mock function for the type Service
+func (_mock *Service) BindResources(ctx context.Context, session authn.Session, token string, configID string, bindings []bootstrap.BindingRequest) error {
+	ret := _mock.Called(ctx, session, token, configID, bindings)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BindResources")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []bootstrap.BindingRequest) error); ok {
+		r0 = returnFunc(ctx, session, token, configID, bindings)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_BindResources_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BindResources'
+type Service_BindResources_Call struct {
+	*mock.Call
+}
+
+// BindResources is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - token string
+//   - configID string
+//   - bindings []bootstrap.BindingRequest
+func (_e *Service_Expecter) BindResources(ctx interface{}, session interface{}, token interface{}, configID interface{}, bindings interface{}) *Service_BindResources_Call {
+	return &Service_BindResources_Call{Call: _e.mock.On("BindResources", ctx, session, token, configID, bindings)}
+}
+
+func (_c *Service_BindResources_Call) Run(run func(ctx context.Context, session authn.Session, token string, configID string, bindings []bootstrap.BindingRequest)) *Service_BindResources_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 []bootstrap.BindingRequest
+		if args[4] != nil {
+			arg4 = args[4].([]bootstrap.BindingRequest)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_BindResources_Call) Return(err error) *Service_BindResources_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_BindResources_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, token string, configID string, bindings []bootstrap.BindingRequest) error) *Service_BindResources_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Bootstrap provides a mock function for the type Service
 func (_mock *Service) Bootstrap(ctx context.Context, externalKey string, externalID string, secure bool) (bootstrap.Config, error) {
 	ret := _mock.Called(ctx, externalKey, externalID, secure)
@@ -199,39 +343,109 @@ func (_c *Service_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, ext
 	return _c
 }
 
-// ChangeState provides a mock function for the type Service
-func (_mock *Service) ChangeState(ctx context.Context, session authn.Session, token string, id string, state bootstrap.State) error {
-	ret := _mock.Called(ctx, session, token, id, state)
+// CreateProfile provides a mock function for the type Service
+func (_mock *Service) CreateProfile(ctx context.Context, session authn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
+	ret := _mock.Called(ctx, session, p)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ChangeState")
+		panic("no return value specified for CreateProfile")
+	}
+
+	var r0 bootstrap.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) (bootstrap.Profile, error)); ok {
+		return returnFunc(ctx, session, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) bootstrap.Profile); ok {
+		r0 = returnFunc(ctx, session, p)
+	} else {
+		r0 = ret.Get(0).(bootstrap.Profile)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, bootstrap.Profile) error); ok {
+		r1 = returnFunc(ctx, session, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_CreateProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateProfile'
+type Service_CreateProfile_Call struct {
+	*mock.Call
+}
+
+// CreateProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - p bootstrap.Profile
+func (_e *Service_Expecter) CreateProfile(ctx interface{}, session interface{}, p interface{}) *Service_CreateProfile_Call {
+	return &Service_CreateProfile_Call{Call: _e.mock.On("CreateProfile", ctx, session, p)}
+}
+
+func (_c *Service_CreateProfile_Call) Run(run func(ctx context.Context, session authn.Session, p bootstrap.Profile)) *Service_CreateProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 bootstrap.Profile
+		if args[2] != nil {
+			arg2 = args[2].(bootstrap.Profile)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_CreateProfile_Call) Return(profile bootstrap.Profile, err error) *Service_CreateProfile_Call {
+	_c.Call.Return(profile, err)
+	return _c
+}
+
+func (_c *Service_CreateProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, p bootstrap.Profile) (bootstrap.Profile, error)) *Service_CreateProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteProfile provides a mock function for the type Service
+func (_mock *Service) DeleteProfile(ctx context.Context, session authn.Session, profileID string) error {
+	ret := _mock.Called(ctx, session, profileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteProfile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, bootstrap.State) error); ok {
-		r0 = returnFunc(ctx, session, token, id, state)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) error); ok {
+		r0 = returnFunc(ctx, session, profileID)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// Service_ChangeState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ChangeState'
-type Service_ChangeState_Call struct {
+// Service_DeleteProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteProfile'
+type Service_DeleteProfile_Call struct {
 	*mock.Call
 }
 
-// ChangeState is a helper method to define mock.On call
+// DeleteProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - session authn.Session
-//   - token string
-//   - id string
-//   - state bootstrap.State
-func (_e *Service_Expecter) ChangeState(ctx interface{}, session interface{}, token interface{}, id interface{}, state interface{}) *Service_ChangeState_Call {
-	return &Service_ChangeState_Call{Call: _e.mock.On("ChangeState", ctx, session, token, id, state)}
+//   - profileID string
+func (_e *Service_Expecter) DeleteProfile(ctx interface{}, session interface{}, profileID interface{}) *Service_DeleteProfile_Call {
+	return &Service_DeleteProfile_Call{Call: _e.mock.On("DeleteProfile", ctx, session, profileID)}
 }
 
-func (_c *Service_ChangeState_Call) Run(run func(ctx context.Context, session authn.Session, token string, id string, state bootstrap.State)) *Service_ChangeState_Call {
+func (_c *Service_DeleteProfile_Call) Run(run func(ctx context.Context, session authn.Session, profileID string)) *Service_DeleteProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -245,74 +459,73 @@ func (_c *Service_ChangeState_Call) Run(run func(ctx context.Context, session au
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 bootstrap.State
-		if args[4] != nil {
-			arg4 = args[4].(bootstrap.State)
-		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
-			arg4,
 		)
 	})
 	return _c
 }
 
-func (_c *Service_ChangeState_Call) Return(err error) *Service_ChangeState_Call {
+func (_c *Service_DeleteProfile_Call) Return(err error) *Service_DeleteProfile_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Service_ChangeState_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, token string, id string, state bootstrap.State) error) *Service_ChangeState_Call {
+func (_c *Service_DeleteProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, profileID string) error) *Service_DeleteProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ConnectClientHandler provides a mock function for the type Service
-func (_mock *Service) ConnectClientHandler(ctx context.Context, channelID string, clientID string) error {
-	ret := _mock.Called(ctx, channelID, clientID)
+// DisableConfig provides a mock function for the type Service
+func (_mock *Service) DisableConfig(ctx context.Context, session authn.Session, id string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ConnectClientHandler")
+		panic("no return value specified for DisableConfig")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, channelID, clientID)
-	} else {
-		r0 = ret.Error(0)
+	var r0 bootstrap.Config
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (bootstrap.Config, error)); ok {
+		return returnFunc(ctx, session, id)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) bootstrap.Config); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(bootstrap.Config)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// Service_ConnectClientHandler_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConnectClientHandler'
-type Service_ConnectClientHandler_Call struct {
+// Service_DisableConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableConfig'
+type Service_DisableConfig_Call struct {
 	*mock.Call
 }
 
-// ConnectClientHandler is a helper method to define mock.On call
+// DisableConfig is a helper method to define mock.On call
 //   - ctx context.Context
-//   - channelID string
-//   - clientID string
-func (_e *Service_Expecter) ConnectClientHandler(ctx interface{}, channelID interface{}, clientID interface{}) *Service_ConnectClientHandler_Call {
-	return &Service_ConnectClientHandler_Call{Call: _e.mock.On("ConnectClientHandler", ctx, channelID, clientID)}
+//   - session authn.Session
+//   - id string
+func (_e *Service_Expecter) DisableConfig(ctx interface{}, session interface{}, id interface{}) *Service_DisableConfig_Call {
+	return &Service_DisableConfig_Call{Call: _e.mock.On("DisableConfig", ctx, session, id)}
 }
 
-func (_c *Service_ConnectClientHandler_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *Service_ConnectClientHandler_Call {
+func (_c *Service_DisableConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_DisableConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 authn.Session
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(authn.Session)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -327,55 +540,64 @@ func (_c *Service_ConnectClientHandler_Call) Run(run func(ctx context.Context, c
 	return _c
 }
 
-func (_c *Service_ConnectClientHandler_Call) Return(err error) *Service_ConnectClientHandler_Call {
-	_c.Call.Return(err)
+func (_c *Service_DisableConfig_Call) Return(config bootstrap.Config, err error) *Service_DisableConfig_Call {
+	_c.Call.Return(config, err)
 	return _c
 }
 
-func (_c *Service_ConnectClientHandler_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientID string) error) *Service_ConnectClientHandler_Call {
+func (_c *Service_DisableConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (bootstrap.Config, error)) *Service_DisableConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DisconnectClientHandler provides a mock function for the type Service
-func (_mock *Service) DisconnectClientHandler(ctx context.Context, channelID string, clientID string) error {
-	ret := _mock.Called(ctx, channelID, clientID)
+// EnableConfig provides a mock function for the type Service
+func (_mock *Service) EnableConfig(ctx context.Context, session authn.Session, id string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, session, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisconnectClientHandler")
+		panic("no return value specified for EnableConfig")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, channelID, clientID)
-	} else {
-		r0 = ret.Error(0)
+	var r0 bootstrap.Config
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (bootstrap.Config, error)); ok {
+		return returnFunc(ctx, session, id)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) bootstrap.Config); ok {
+		r0 = returnFunc(ctx, session, id)
+	} else {
+		r0 = ret.Get(0).(bootstrap.Config)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// Service_DisconnectClientHandler_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisconnectClientHandler'
-type Service_DisconnectClientHandler_Call struct {
+// Service_EnableConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableConfig'
+type Service_EnableConfig_Call struct {
 	*mock.Call
 }
 
-// DisconnectClientHandler is a helper method to define mock.On call
+// EnableConfig is a helper method to define mock.On call
 //   - ctx context.Context
-//   - channelID string
-//   - clientID string
-func (_e *Service_Expecter) DisconnectClientHandler(ctx interface{}, channelID interface{}, clientID interface{}) *Service_DisconnectClientHandler_Call {
-	return &Service_DisconnectClientHandler_Call{Call: _e.mock.On("DisconnectClientHandler", ctx, channelID, clientID)}
+//   - session authn.Session
+//   - id string
+func (_e *Service_Expecter) EnableConfig(ctx interface{}, session interface{}, id interface{}) *Service_EnableConfig_Call {
+	return &Service_EnableConfig_Call{Call: _e.mock.On("EnableConfig", ctx, session, id)}
 }
 
-func (_c *Service_DisconnectClientHandler_Call) Run(run func(ctx context.Context, channelID string, clientID string)) *Service_DisconnectClientHandler_Call {
+func (_c *Service_EnableConfig_Call) Run(run func(ctx context.Context, session authn.Session, id string)) *Service_EnableConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 authn.Session
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(authn.Session)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -390,12 +612,12 @@ func (_c *Service_DisconnectClientHandler_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *Service_DisconnectClientHandler_Call) Return(err error) *Service_DisconnectClientHandler_Call {
-	_c.Call.Return(err)
+func (_c *Service_EnableConfig_Call) Return(config bootstrap.Config, err error) *Service_EnableConfig_Call {
+	_c.Call.Return(config, err)
 	return _c
 }
 
-func (_c *Service_DisconnectClientHandler_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientID string) error) *Service_DisconnectClientHandler_Call {
+func (_c *Service_EnableConfig_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (bootstrap.Config, error)) *Service_EnableConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -484,6 +706,227 @@ func (_c *Service_List_Call) RunAndReturn(run func(ctx context.Context, session 
 	return _c
 }
 
+// ListBindings provides a mock function for the type Service
+func (_mock *Service) ListBindings(ctx context.Context, session authn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
+	ret := _mock.Called(ctx, session, configID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListBindings")
+	}
+
+	var r0 []bootstrap.BindingSnapshot
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) ([]bootstrap.BindingSnapshot, error)); ok {
+		return returnFunc(ctx, session, configID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) []bootstrap.BindingSnapshot); ok {
+		r0 = returnFunc(ctx, session, configID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]bootstrap.BindingSnapshot)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, configID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListBindings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListBindings'
+type Service_ListBindings_Call struct {
+	*mock.Call
+}
+
+// ListBindings is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - configID string
+func (_e *Service_Expecter) ListBindings(ctx interface{}, session interface{}, configID interface{}) *Service_ListBindings_Call {
+	return &Service_ListBindings_Call{Call: _e.mock.On("ListBindings", ctx, session, configID)}
+}
+
+func (_c *Service_ListBindings_Call) Run(run func(ctx context.Context, session authn.Session, configID string)) *Service_ListBindings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListBindings_Call) Return(bindingSnapshots []bootstrap.BindingSnapshot, err error) *Service_ListBindings_Call {
+	_c.Call.Return(bindingSnapshots, err)
+	return _c
+}
+
+func (_c *Service_ListBindings_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, configID string) ([]bootstrap.BindingSnapshot, error)) *Service_ListBindings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListProfiles provides a mock function for the type Service
+func (_mock *Service) ListProfiles(ctx context.Context, session authn.Session, offset uint64, limit uint64) (bootstrap.ProfilesPage, error) {
+	ret := _mock.Called(ctx, session, offset, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListProfiles")
+	}
+
+	var r0 bootstrap.ProfilesPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64) (bootstrap.ProfilesPage, error)); ok {
+		return returnFunc(ctx, session, offset, limit)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64) bootstrap.ProfilesPage); ok {
+		r0 = returnFunc(ctx, session, offset, limit)
+	} else {
+		r0 = ret.Get(0).(bootstrap.ProfilesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, uint64, uint64) error); ok {
+		r1 = returnFunc(ctx, session, offset, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ListProfiles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListProfiles'
+type Service_ListProfiles_Call struct {
+	*mock.Call
+}
+
+// ListProfiles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - offset uint64
+//   - limit uint64
+func (_e *Service_Expecter) ListProfiles(ctx interface{}, session interface{}, offset interface{}, limit interface{}) *Service_ListProfiles_Call {
+	return &Service_ListProfiles_Call{Call: _e.mock.On("ListProfiles", ctx, session, offset, limit)}
+}
+
+func (_c *Service_ListProfiles_Call) Run(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64)) *Service_ListProfiles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 uint64
+		if args[2] != nil {
+			arg2 = args[2].(uint64)
+		}
+		var arg3 uint64
+		if args[3] != nil {
+			arg3 = args[3].(uint64)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ListProfiles_Call) Return(profilesPage bootstrap.ProfilesPage, err error) *Service_ListProfiles_Call {
+	_c.Call.Return(profilesPage, err)
+	return _c
+}
+
+func (_c *Service_ListProfiles_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64) (bootstrap.ProfilesPage, error)) *Service_ListProfiles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RefreshBindings provides a mock function for the type Service
+func (_mock *Service) RefreshBindings(ctx context.Context, session authn.Session, token string, configID string) error {
+	ret := _mock.Called(ctx, session, token, configID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RefreshBindings")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string) error); ok {
+		r0 = returnFunc(ctx, session, token, configID)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// Service_RefreshBindings_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RefreshBindings'
+type Service_RefreshBindings_Call struct {
+	*mock.Call
+}
+
+// RefreshBindings is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - token string
+//   - configID string
+func (_e *Service_Expecter) RefreshBindings(ctx interface{}, session interface{}, token interface{}, configID interface{}) *Service_RefreshBindings_Call {
+	return &Service_RefreshBindings_Call{Call: _e.mock.On("RefreshBindings", ctx, session, token, configID)}
+}
+
+func (_c *Service_RefreshBindings_Call) Run(run func(ctx context.Context, session authn.Session, token string, configID string)) *Service_RefreshBindings_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_RefreshBindings_Call) Return(err error) *Service_RefreshBindings_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *Service_RefreshBindings_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, token string, configID string) error) *Service_RefreshBindings_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Remove provides a mock function for the type Service
 func (_mock *Service) Remove(ctx context.Context, session authn.Session, id string) error {
 	ret := _mock.Called(ctx, session, id)
@@ -543,63 +986,6 @@ func (_c *Service_Remove_Call) Return(err error) *Service_Remove_Call {
 }
 
 func (_c *Service_Remove_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) error) *Service_Remove_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveChannelHandler provides a mock function for the type Service
-func (_mock *Service) RemoveChannelHandler(ctx context.Context, id string) error {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveChannelHandler")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Service_RemoveChannelHandler_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveChannelHandler'
-type Service_RemoveChannelHandler_Call struct {
-	*mock.Call
-}
-
-// RemoveChannelHandler is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *Service_Expecter) RemoveChannelHandler(ctx interface{}, id interface{}) *Service_RemoveChannelHandler_Call {
-	return &Service_RemoveChannelHandler_Call{Call: _e.mock.On("RemoveChannelHandler", ctx, id)}
-}
-
-func (_c *Service_RemoveChannelHandler_Call) Run(run func(ctx context.Context, id string)) *Service_RemoveChannelHandler_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Service_RemoveChannelHandler_Call) Return(err error) *Service_RemoveChannelHandler_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Service_RemoveChannelHandler_Call) RunAndReturn(run func(ctx context.Context, id string) error) *Service_RemoveChannelHandler_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -814,96 +1200,37 @@ func (_c *Service_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, se
 	return _c
 }
 
-// UpdateChannelHandler provides a mock function for the type Service
-func (_mock *Service) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
-	ret := _mock.Called(ctx, channel)
+// UpdateProfile provides a mock function for the type Service
+func (_mock *Service) UpdateProfile(ctx context.Context, session authn.Session, p bootstrap.Profile) error {
+	ret := _mock.Called(ctx, session, p)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateChannelHandler")
+		panic("no return value specified for UpdateProfile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Channel) error); ok {
-		r0 = returnFunc(ctx, channel)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) error); ok {
+		r0 = returnFunc(ctx, session, p)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// Service_UpdateChannelHandler_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateChannelHandler'
-type Service_UpdateChannelHandler_Call struct {
+// Service_UpdateProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfile'
+type Service_UpdateProfile_Call struct {
 	*mock.Call
 }
 
-// UpdateChannelHandler is a helper method to define mock.On call
-//   - ctx context.Context
-//   - channel bootstrap.Channel
-func (_e *Service_Expecter) UpdateChannelHandler(ctx interface{}, channel interface{}) *Service_UpdateChannelHandler_Call {
-	return &Service_UpdateChannelHandler_Call{Call: _e.mock.On("UpdateChannelHandler", ctx, channel)}
-}
-
-func (_c *Service_UpdateChannelHandler_Call) Run(run func(ctx context.Context, channel bootstrap.Channel)) *Service_UpdateChannelHandler_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 bootstrap.Channel
-		if args[1] != nil {
-			arg1 = args[1].(bootstrap.Channel)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *Service_UpdateChannelHandler_Call) Return(err error) *Service_UpdateChannelHandler_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *Service_UpdateChannelHandler_Call) RunAndReturn(run func(ctx context.Context, channel bootstrap.Channel) error) *Service_UpdateChannelHandler_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateConnections provides a mock function for the type Service
-func (_mock *Service) UpdateConnections(ctx context.Context, session authn.Session, token string, id string, connections []string) error {
-	ret := _mock.Called(ctx, session, token, id, connections)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateConnections")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, []string) error); ok {
-		r0 = returnFunc(ctx, session, token, id, connections)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// Service_UpdateConnections_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateConnections'
-type Service_UpdateConnections_Call struct {
-	*mock.Call
-}
-
-// UpdateConnections is a helper method to define mock.On call
+// UpdateProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - session authn.Session
-//   - token string
-//   - id string
-//   - connections []string
-func (_e *Service_Expecter) UpdateConnections(ctx interface{}, session interface{}, token interface{}, id interface{}, connections interface{}) *Service_UpdateConnections_Call {
-	return &Service_UpdateConnections_Call{Call: _e.mock.On("UpdateConnections", ctx, session, token, id, connections)}
+//   - p bootstrap.Profile
+func (_e *Service_Expecter) UpdateProfile(ctx interface{}, session interface{}, p interface{}) *Service_UpdateProfile_Call {
+	return &Service_UpdateProfile_Call{Call: _e.mock.On("UpdateProfile", ctx, session, p)}
 }
 
-func (_c *Service_UpdateConnections_Call) Run(run func(ctx context.Context, session authn.Session, token string, id string, connections []string)) *Service_UpdateConnections_Call {
+func (_c *Service_UpdateProfile_Call) Run(run func(ctx context.Context, session authn.Session, p bootstrap.Profile)) *Service_UpdateProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -913,35 +1240,25 @@ func (_c *Service_UpdateConnections_Call) Run(run func(ctx context.Context, sess
 		if args[1] != nil {
 			arg1 = args[1].(authn.Session)
 		}
-		var arg2 string
+		var arg2 bootstrap.Profile
 		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 []string
-		if args[4] != nil {
-			arg4 = args[4].([]string)
+			arg2 = args[2].(bootstrap.Profile)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
-			arg4,
 		)
 	})
 	return _c
 }
 
-func (_c *Service_UpdateConnections_Call) Return(err error) *Service_UpdateConnections_Call {
+func (_c *Service_UpdateProfile_Call) Return(err error) *Service_UpdateProfile_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *Service_UpdateConnections_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, token string, id string, connections []string) error) *Service_UpdateConnections_Call {
+func (_c *Service_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, p bootstrap.Profile) error) *Service_UpdateProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1014,6 +1331,78 @@ func (_c *Service_View_Call) Return(config bootstrap.Config, err error) *Service
 }
 
 func (_c *Service_View_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string) (bootstrap.Config, error)) *Service_View_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ViewProfile provides a mock function for the type Service
+func (_mock *Service) ViewProfile(ctx context.Context, session authn.Session, profileID string) (bootstrap.Profile, error) {
+	ret := _mock.Called(ctx, session, profileID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ViewProfile")
+	}
+
+	var r0 bootstrap.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) (bootstrap.Profile, error)); ok {
+		return returnFunc(ctx, session, profileID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string) bootstrap.Profile); ok {
+		r0 = returnFunc(ctx, session, profileID)
+	} else {
+		r0 = ret.Get(0).(bootstrap.Profile)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string) error); ok {
+		r1 = returnFunc(ctx, session, profileID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// Service_ViewProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ViewProfile'
+type Service_ViewProfile_Call struct {
+	*mock.Call
+}
+
+// ViewProfile is a helper method to define mock.On call
+//   - ctx context.Context
+//   - session authn.Session
+//   - profileID string
+func (_e *Service_Expecter) ViewProfile(ctx interface{}, session interface{}, profileID interface{}) *Service_ViewProfile_Call {
+	return &Service_ViewProfile_Call{Call: _e.mock.On("ViewProfile", ctx, session, profileID)}
+}
+
+func (_c *Service_ViewProfile_Call) Run(run func(ctx context.Context, session authn.Session, profileID string)) *Service_ViewProfile_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 authn.Session
+		if args[1] != nil {
+			arg1 = args[1].(authn.Session)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *Service_ViewProfile_Call) Return(profile bootstrap.Profile, err error) *Service_ViewProfile_Call {
+	_c.Call.Return(profile, err)
+	return _c
+}
+
+func (_c *Service_ViewProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, profileID string) (bootstrap.Profile, error)) *Service_ViewProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

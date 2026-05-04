@@ -11,16 +11,16 @@ import (
 const maxLimitSize = 100
 
 type addReq struct {
-	token       string
-	ClientID    string   `json:"client_id"`
-	ExternalID  string   `json:"external_id"`
-	ExternalKey string   `json:"external_key"`
-	Channels    []string `json:"channels"`
-	Name        string   `json:"name"`
-	Content     string   `json:"content"`
-	ClientCert  string   `json:"client_cert"`
-	ClientKey   string   `json:"client_key"`
-	CACert      string   `json:"ca_cert"`
+	token         string
+	ExternalID    string         `json:"external_id"`
+	ExternalKey   string         `json:"external_key"`
+	Name          string         `json:"name"`
+	Content       string         `json:"content"`
+	ClientCert    string         `json:"client_cert"`
+	ClientKey     string         `json:"client_key"`
+	CACert        string         `json:"ca_cert"`
+	ProfileID     string         `json:"profile_id"`
+	RenderContext map[string]any `json:"render_context"`
 }
 
 func (req addReq) validate() error {
@@ -34,16 +34,6 @@ func (req addReq) validate() error {
 
 	if req.ExternalKey == "" {
 		return apiutil.ErrBearerKey
-	}
-
-	if len(req.Channels) == 0 {
-		return apiutil.ErrEmptyList
-	}
-
-	for _, channel := range req.Channels {
-		if channel == "" {
-			return apiutil.ErrMissingID
-		}
 	}
 
 	return nil
@@ -90,24 +80,6 @@ func (req updateCertReq) validate() error {
 	return nil
 }
 
-type updateConnReq struct {
-	token    string
-	id       string
-	Channels []string `json:"channels"`
-}
-
-func (req updateConnReq) validate() error {
-	if req.token == "" {
-		return apiutil.ErrBearerToken
-	}
-
-	if req.id == "" {
-		return apiutil.ErrMissingID
-	}
-
-	return nil
-}
-
 type listReq struct {
 	filter bootstrap.Filter
 	offset uint64
@@ -139,13 +111,12 @@ func (req bootstrapReq) validate() error {
 	return nil
 }
 
-type changeStateReq struct {
+type changeConfigStatusReq struct {
 	token string
 	id    string
-	State bootstrap.State `json:"state"`
 }
 
-func (req changeStateReq) validate() error {
+func (req changeConfigStatusReq) validate() error {
 	if req.token == "" {
 		return apiutil.ErrBearerToken
 	}
@@ -154,10 +125,153 @@ func (req changeStateReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	if req.State != bootstrap.Inactive &&
-		req.State != bootstrap.Active {
-		return bootstrap.ErrBootstrapState
-	}
+	return nil
+}
 
+// --- Profile requests ---
+
+type createProfileReq struct {
+	bootstrap.Profile
+}
+
+func (req createProfileReq) validate() error {
+	if req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type uploadProfileReq struct {
+	bootstrap.Profile
+}
+
+func (req uploadProfileReq) validate() error {
+	if req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type viewProfileReq struct {
+	profileID string
+}
+
+func (req viewProfileReq) validate() error {
+	if req.profileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type updateProfileReq struct {
+	profileID string
+	bootstrap.Profile
+}
+
+func (req updateProfileReq) validate() error {
+	if req.profileID == "" || req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type renderPreviewReq struct {
+	profileID     string
+	Config        bootstrap.Config            `json:"config"`
+	RenderContext map[string]any              `json:"render_context,omitempty"`
+	Bindings      []bootstrap.BindingSnapshot `json:"bindings,omitempty"`
+}
+
+func (req renderPreviewReq) validate() error {
+	if req.profileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type deleteProfileReq struct {
+	profileID string
+}
+
+func (req deleteProfileReq) validate() error {
+	if req.profileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type listProfilesReq struct {
+	offset uint64
+	limit  uint64
+}
+
+func (req listProfilesReq) validate() error {
+	if req.limit == 0 || req.limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+	return nil
+}
+
+// --- Enrollment binding requests ---
+
+type assignProfileReq struct {
+	configID  string
+	ProfileID string `json:"profile_id"`
+}
+
+func (req assignProfileReq) validate() error {
+	if req.configID == "" || req.ProfileID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type bindResourcesReq struct {
+	token    string
+	configID string
+	Bindings []bootstrap.BindingRequest `json:"bindings"`
+}
+
+func (req bindResourcesReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
+	if len(req.Bindings) == 0 {
+		return apiutil.ErrEmptyList
+	}
+	for _, b := range req.Bindings {
+		if b.Slot == "" || b.Type == "" || b.ResourceID == "" {
+			return apiutil.ErrMissingID
+		}
+	}
+	return nil
+}
+
+type listBindingsReq struct {
+	configID string
+}
+
+func (req listBindingsReq) validate() error {
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type refreshBindingsReq struct {
+	token    string
+	configID string
+}
+
+func (req refreshBindingsReq) validate() error {
+	if req.token == "" {
+		return apiutil.ErrBearerToken
+	}
+	if req.configID == "" {
+		return apiutil.ErrMissingID
+	}
 	return nil
 }

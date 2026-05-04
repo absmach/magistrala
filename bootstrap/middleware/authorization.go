@@ -15,10 +15,6 @@ import (
 )
 
 const (
-	updatePermission = "update_permission"
-	readPermission   = "read_permission"
-	deletePermission = "delete_permission"
-
 	createOperation      = "create"
 	viewOperation        = "view"
 	updateOperation      = "update"

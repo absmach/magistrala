@@ -36,10 +36,23 @@ type ServiceConf struct {
 
 // Bootstrap represetns the Bootstrap config.
 type Bootstrap struct {
-	X509Provision bool           `toml:"x509_provision" env:"MG_PROVISION_X509_PROVISIONING"      envDefault:"false"`
-	Provision     bool           `toml:"provision"      env:"MG_PROVISION_BS_CONFIG_PROVISIONING" envDefault:"true"`
-	AutoWhiteList bool           `toml:"autowhite_list" env:"MG_PROVISION_BS_AUTO_WHITELIST"      envDefault:"true"`
-	Content       map[string]any `toml:"content"`
+	X509Provision bool               `toml:"x509_provision" env:"MG_PROVISION_X509_PROVISIONING"      envDefault:"false"`
+	Provision     bool               `toml:"provision"      env:"MG_PROVISION_BS_CONFIG_PROVISIONING" envDefault:"true"`
+	AutoWhiteList bool               `toml:"autowhite_list" env:"MG_PROVISION_BS_AUTO_WHITELIST"      envDefault:"true"`
+	ProfileID     string             `toml:"profile_id"     env:"MG_PROVISION_BS_PROFILE_ID"          envDefault:""`
+	RenderContext map[string]any     `toml:"render_context,omitempty"`
+	Bindings      []BootstrapBinding `toml:"bindings,omitempty"`
+	Content       map[string]any     `toml:"content"`
+}
+
+// BootstrapBinding maps a bootstrap profile slot to one of the resources
+// created by provision.
+type BootstrapBinding struct {
+	Slot          string `toml:"slot"           json:"slot"`
+	Type          string `toml:"type"           json:"type"`
+	Name          string `toml:"name"           json:"name,omitempty"`
+	MetadataKey   string `toml:"metadata_key"   json:"metadata_key,omitempty"`
+	MetadataValue string `toml:"metadata_value" json:"metadata_value,omitempty"`
 }
 
 // Gateway represetns the Gateway config.
@@ -98,6 +111,9 @@ func Read(file string) (Config, error) {
 	var c Config
 	if err := toml.Unmarshal(data, &c); err != nil {
 		return Config{}, fmt.Errorf("Error unmarshaling toml: %w", err)
+	}
+	if len(c.Bootstrap.RenderContext) == 0 {
+		c.Bootstrap.RenderContext = nil
 	}
 
 	return c, nil

@@ -49,7 +49,6 @@ const (
 
 var (
 	encKey         = []byte("1234567891011121")
-	metadata       = map[string]any{"meta": "data"}
 	addExternalID  = testsutil.GenerateUUID(&testing.T{})
 	addExternalKey = testsutil.GenerateUUID(&testing.T{})
 	addID          = testsutil.GenerateUUID(&testing.T{})

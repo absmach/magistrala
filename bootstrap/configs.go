@@ -7,18 +7,18 @@ import "context"
 
 // Config represents a bootstrap enrollment.
 type Config struct {
-	ID              string         `json:"id"`
-	DomainID        string         `json:"domain_id,omitempty"`
-	Name            string         `json:"name,omitempty"`
-	ClientCert      string         `json:"client_cert,omitempty"`
-	ClientKey       string         `json:"client_key,omitempty"`
-	CACert          string         `json:"ca_cert,omitempty"`
-	ExternalID      string         `json:"external_id"`
-	ExternalKey     string         `json:"external_key"`
-	Content         string         `json:"content,omitempty"`
-	Status          Status         `json:"status"`
-	ProfileID       string         `json:"profile_id,omitempty"`
-	RenderContext   map[string]any `json:"render_context,omitempty"`
+	ID            string         `json:"id"`
+	DomainID      string         `json:"domain_id,omitempty"`
+	Name          string         `json:"name,omitempty"`
+	ClientCert    string         `json:"client_cert,omitempty"`
+	ClientKey     string         `json:"client_key,omitempty"`
+	CACert        string         `json:"ca_cert,omitempty"`
+	ExternalID    string         `json:"external_id"`
+	ExternalKey   string         `json:"external_key"`
+	Content       string         `json:"content,omitempty"`
+	Status        Status         `json:"status"`
+	ProfileID     string         `json:"profile_id,omitempty"`
+	RenderContext map[string]any `json:"render_context,omitempty"`
 }
 
 // Filter is used for the search filters.

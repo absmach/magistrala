@@ -12,23 +12,16 @@ import (
 	"net/http"
 )
 
-// bootstrapRes represent Magistrala Response to the Bootatrap request.
+// bootstrapRes represent Magistrala Response to the Bootstrap request.
 // This is used as a response from ConfigReader and can easily be
-// replace with any other response format.
+// replaced with any other response format.
 type bootstrapRes struct {
-	ClientID     string       `json:"client_id"`
-	ClientSecret string       `json:"client_secret"`
-	Channels     []channelRes `json:"channels"`
-	Content      string       `json:"content,omitempty"`
-	ClientCert   string       `json:"client_cert,omitempty"`
-	ClientKey    string       `json:"client_key,omitempty"`
-	CACert       string       `json:"ca_cert,omitempty"`
-}
-
-type channelRes struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
+	ClientID     string `json:"client_id"`
+	ClientSecret string `json:"client_secret"`
+	Content      string `json:"content,omitempty"`
+	ClientCert   string `json:"client_cert,omitempty"`
+	ClientKey    string `json:"client_key,omitempty"`
+	CACert       string `json:"ca_cert,omitempty"`
 }
 
 func (res bootstrapRes) Code() int {
@@ -54,15 +47,9 @@ func NewConfigReader(encKey []byte) ConfigReader {
 }
 
 func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
-	var channels []channelRes
-	for _, ch := range cfg.Channels {
-		channels = append(channels, channelRes{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-	}
-
 	res := bootstrapRes{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
-		Channels:     channels,
 		Content:      cfg.Content,
 		ClientCert:   cfg.ClientCert,
 		ClientKey:    cfg.ClientKey,

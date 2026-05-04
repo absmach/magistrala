@@ -22,7 +22,6 @@ import (
 const (
 	configsEndpoint        = "clients/configs"
 	bootstrapEndpoint      = "clients/bootstrap"
-	whitelistEndpoint      = "clients/state"
 	bootstrapCertsEndpoint = "clients/configs/certs"
 	bootstrapConnEndpoint  = "clients/configs/connections"
 	secureEndpoint         = "secure"

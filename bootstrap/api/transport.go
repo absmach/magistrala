@@ -87,19 +87,20 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 					api.EncodeResponse,
 					opts...), "update_cert").ServeHTTP)
 
-				r.Put("/connections/{configID}", otelhttp.NewHandler(kithttp.NewServer(
-					updateConnEndpoint(svc),
-					decodeUpdateConnRequest,
+				r.Post("/{configID}/enable", otelhttp.NewHandler(kithttp.NewServer(
+					enableConfigEndpoint(svc),
+					decodeChangeConfigStatusRequest,
 					api.EncodeResponse,
-					opts...), "update_connections").ServeHTTP)
+					opts...), "enable_config").ServeHTTP)
+
+				r.Post("/{configID}/disable", otelhttp.NewHandler(kithttp.NewServer(
+					disableConfigEndpoint(svc),
+					decodeChangeConfigStatusRequest,
+					api.EncodeResponse,
+					opts...), "disable_config").ServeHTTP)
+
 			})
 		})
-
-		r.With(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware()).Put("/state/{clientID}", otelhttp.NewHandler(kithttp.NewServer(
-			stateEndpoint(svc),
-			decodeStateRequest,
-			api.EncodeResponse,
-			opts...), "update_state").ServeHTTP)
 
 		// Profile and enrollment binding endpoints.
 		r.Route("/bootstrap", func(r chi.Router) {
@@ -234,22 +235,6 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 	return req, nil
 }
 
-func decodeUpdateConnRequest(_ context.Context, r *http.Request) (any, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, apiutil.ErrUnsupportedContentType
-	}
-
-	req := updateConnReq{
-		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "configID"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
-	}
-
-	return req, nil
-}
-
 func decodeListRequest(_ context.Context, r *http.Request) (any, error) {
 	o, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
@@ -284,20 +269,11 @@ func decodeBootstrapRequest(_ context.Context, r *http.Request) (any, error) {
 	return req, nil
 }
 
-func decodeStateRequest(_ context.Context, r *http.Request) (any, error) {
-	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
-		return nil, apiutil.ErrUnsupportedContentType
-	}
-
-	req := changeStateReq{
+func decodeChangeConfigStatusRequest(_ context.Context, r *http.Request) (any, error) {
+	return changeConfigStatusReq{
 		token: apiutil.ExtractBearerToken(r),
-		id:    chi.URLParam(r, "clientID"),
-	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
-	}
-
-	return req, nil
+		id:    chi.URLParam(r, "configID"),
+	}, nil
 }
 
 func decodeEntityRequest(_ context.Context, r *http.Request) (any, error) {

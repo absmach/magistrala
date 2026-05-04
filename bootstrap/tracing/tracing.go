@@ -72,17 +72,6 @@ func (tm *tracingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 	return tm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
-// UpdateConnections traces the "UpdateConnections" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_update_connections", trace.WithAttributes(
-		attribute.String("id", id),
-		attribute.StringSlice("connections", connections),
-	))
-	defer span.End()
-
-	return tm.svc.UpdateConnections(ctx, session, token, id, connections)
-}
-
 // List traces the "List" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_users", trace.WithAttributes(
@@ -116,27 +105,22 @@ func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 	return tm.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-// ChangeState traces the "ChangeState" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_change_state", trace.WithAttributes(
+func (tm *tracingMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_enable_config", trace.WithAttributes(
 		attribute.String("id", id),
-		attribute.String("state", state.String()),
 	))
 	defer span.End()
 
-	return tm.svc.ChangeState(ctx, session, token, id, state)
+	return tm.svc.EnableConfig(ctx, session, id)
 }
 
-// UpdateChannelHandler traces the "UpdateChannelHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_update_channel_handler", trace.WithAttributes(
-		attribute.String("id", channel.ID),
-		attribute.String("name", channel.Name),
-		attribute.String("description", channel.Description),
+func (tm *tracingMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_disable_config", trace.WithAttributes(
+		attribute.String("id", id),
 	))
 	defer span.End()
 
-	return tm.svc.UpdateChannelHandler(ctx, channel)
+	return tm.svc.DisableConfig(ctx, session, id)
 }
 
 // RemoveConfigHandler traces the "RemoveConfigHandler" operation of the wrapped bootstrap.Service.
@@ -147,38 +131,6 @@ func (tm *tracingMiddleware) RemoveConfigHandler(ctx context.Context, id string)
 	defer span.End()
 
 	return tm.svc.RemoveConfigHandler(ctx, id)
-}
-
-// RemoveChannelHandler traces the "RemoveChannelHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) RemoveChannelHandler(ctx context.Context, id string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_remove_channel_handler", trace.WithAttributes(
-		attribute.String("id", id),
-	))
-	defer span.End()
-
-	return tm.svc.RemoveChannelHandler(ctx, id)
-}
-
-// ConnectClientHandler traces the "ConnectClientHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_connect_client_handler", trace.WithAttributes(
-		attribute.String("channel_id", channelID),
-		attribute.String("client_id", clientID),
-	))
-	defer span.End()
-
-	return tm.svc.ConnectClientHandler(ctx, channelID, clientID)
-}
-
-// DisconnectClientHandler traces the "DisconnectClientHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_disconnect_client_handler", trace.WithAttributes(
-		attribute.String("channel_id", channelID),
-		attribute.String("client_id", clientID),
-	))
-	defer span.End()
-
-	return tm.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
 
 func (tm *tracingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {

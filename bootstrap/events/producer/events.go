@@ -17,26 +17,19 @@ const (
 	configList          = configPrefix + "list"
 	configHandlerRemove = configPrefix + "remove_handler"
 
-	clientPrefix            = "bootstrap.client."
-	clientBootstrap         = clientPrefix + "bootstrap"
-	clientStateChange       = clientPrefix + "change_state"
-	clientUpdateConnections = clientPrefix + "update_connections"
-	clientConnect           = clientPrefix + "connect"
-	clientDisconnect        = clientPrefix + "disconnect"
-
-	channelPrefix        = "bootstrap.channel."
-	channelHandlerRemove = channelPrefix + "remove_handler"
-	channelUpdateHandler = channelPrefix + "update_handler"
-
-	certUpdate = "bootstrap.cert.update"
+	clientPrefix    = "bootstrap.client."
+	clientBootstrap = clientPrefix + "bootstrap"
+	clientEnable    = clientPrefix + "enable"
+	clientDisable   = clientPrefix + "disable"
+	certUpdate      = "bootstrap.cert.update"
 )
 
 var (
 	_ events.Event = (*configEvent)(nil)
 	_ events.Event = (*removeConfigEvent)(nil)
 	_ events.Event = (*bootstrapEvent)(nil)
-	_ events.Event = (*changeStateEvent)(nil)
-	_ events.Event = (*updateConnectionsEvent)(nil)
+	_ events.Event = (*enableConfigEvent)(nil)
+	_ events.Event = (*disableConfigEvent)(nil)
 	_ events.Event = (*updateCertEvent)(nil)
 	_ events.Event = (*listConfigsEvent)(nil)
 	_ events.Event = (*removeHandlerEvent)(nil)
@@ -66,13 +59,6 @@ func (ce configEvent) Encode() (map[string]any, error) {
 	}
 	if ce.ExternalID != "" {
 		val["external_id"] = ce.ExternalID
-	}
-	if len(ce.Channels) > 0 {
-		channels := make([]string, len(ce.Channels))
-		for i, ch := range ce.Channels {
-			channels[i] = ch.ID
-		}
-		val["channels"] = channels
 	}
 	if ce.ClientCert != "" {
 		val["client_cert"] = ce.ClientCert
@@ -152,13 +138,6 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 	if be.ExternalID != "" {
 		val["external_id"] = be.ExternalID
 	}
-	if len(be.Channels) > 0 {
-		channels := make([]string, len(be.Channels))
-		for i, ch := range be.Channels {
-			channels[i] = ch.ID
-		}
-		val["channels"] = channels
-	}
 	if be.ClientCert != "" {
 		val["client_cert"] = be.ClientCert
 	}
@@ -174,29 +153,25 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 	return val, nil
 }
 
-type changeStateEvent struct {
-	mgClient string
-	state    bootstrap.State
+type enableConfigEvent struct {
+	clientID string
 }
 
-func (cse changeStateEvent) Encode() (map[string]any, error) {
+func (e enableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id": cse.mgClient,
-		"state":     cse.state.String(),
-		"operation": clientStateChange,
+		"client_id": e.clientID,
+		"operation": clientEnable,
 	}, nil
 }
 
-type updateConnectionsEvent struct {
-	mgClient   string
-	mgChannels []string
+type disableConfigEvent struct {
+	clientID string
 }
 
-func (uce updateConnectionsEvent) Encode() (map[string]any, error) {
+func (e disableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id": uce.mgClient,
-		"channels":  uce.mgChannels,
-		"operation": clientUpdateConnections,
+		"client_id": e.clientID,
+		"operation": clientDisable,
 	}, nil
 }
 
@@ -229,49 +204,3 @@ func (rhe removeHandlerEvent) Encode() (map[string]any, error) {
 	}, nil
 }
 
-type updateChannelHandlerEvent struct {
-	bootstrap.Channel
-}
-
-func (uche updateChannelHandlerEvent) Encode() (map[string]any, error) {
-	val := map[string]any{
-		"operation": channelUpdateHandler,
-	}
-
-	if uche.ID != "" {
-		val["channel_id"] = uche.ID
-	}
-	if uche.Name != "" {
-		val["name"] = uche.Name
-	}
-	if uche.Metadata != nil {
-		val["metadata"] = uche.Metadata
-	}
-	return val, nil
-}
-
-type connectClientEvent struct {
-	clientID  string
-	channelID string
-}
-
-func (cte connectClientEvent) Encode() (map[string]any, error) {
-	return map[string]any{
-		"client_id":  cte.clientID,
-		"channel_id": cte.channelID,
-		"operation":  clientConnect,
-	}, nil
-}
-
-type disconnectClientEvent struct {
-	clientID  string
-	channelID string
-}
-
-func (dte disconnectClientEvent) Encode() (map[string]any, error) {
-	return map[string]any{
-		"client_id":  dte.clientID,
-		"channel_id": dte.channelID,
-		"operation":  clientDisconnect,
-	}, nil
-}

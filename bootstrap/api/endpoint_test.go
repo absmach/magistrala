@@ -38,8 +38,7 @@ const (
 	invalidToken = "invalid"
 	email        = "test@example.com"
 	unknown      = "unknown"
-	channelsNum  = 3
-	contentType  = "application/json"
+	contentType = "application/json"
 	wrongID      = "wrong_id"
 
 	addName    = "name"
@@ -55,33 +54,29 @@ var (
 	addExternalKey  = testsutil.GenerateUUID(&testing.T{})
 	addClientID     = testsutil.GenerateUUID(&testing.T{})
 	addClientSecret = testsutil.GenerateUUID(&testing.T{})
-	addReq          = struct {
-		ClientID     string   `json:"client_id"`
-		ClientSecret string   `json:"client_secret"`
-		ExternalID   string   `json:"external_id"`
-		ExternalKey  string   `json:"external_key"`
-		Channels     []string `json:"channels"`
-		Name         string   `json:"name"`
-		Content      string   `json:"content"`
+	addReq = struct {
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		ExternalID   string `json:"external_id"`
+		ExternalKey  string `json:"external_key"`
+		Name         string `json:"name"`
+		Content      string `json:"content"`
 	}{
 		ClientID:     addClientID,
 		ClientSecret: addClientSecret,
 		ExternalID:   addExternalID,
 		ExternalKey:  addExternalKey,
-		Channels:     []string{"1"},
 		Name:         "name",
 		Content:      "config",
 	}
 
 	updateReq = struct {
-		Channels     []string        `json:"channels,omitempty"`
 		Content      string          `json:"content,omitempty"`
 		State        bootstrap.State `json:"state,omitempty"`
 		ClientCert   string          `json:"client_cert,omitempty"`
 		ClientSecret string          `json:"client_secret,omitempty"`
 		CACert       string          `json:"ca_cert,omitempty"`
 	}{
-		Channels:     []string{"1"},
 		Content:      "config update",
 		State:        1,
 		ClientCert:   "newcert",
@@ -112,17 +107,11 @@ func newConfig() bootstrap.Config {
 		ClientSecret: addClientSecret,
 		ExternalID:   addExternalID,
 		ExternalKey:  addExternalKey,
-		Channels: []bootstrap.Channel{
-			{
-				ID:       "1",
-				Metadata: metadata,
-			},
-		},
-		Name:       addName,
-		Content:    addContent,
-		ClientCert: "newcert",
-		ClientKey:  "newkey",
-		CACert:     "newca",
+		Name:         addName,
+		Content:      addContent,
+		ClientCert:   "newcert",
+		ClientKey:    "newkey",
+		CACert:       "newca",
 	}
 }
 
@@ -204,10 +193,6 @@ func TestAdd(t *testing.T) {
 	neID.ClientID = testsutil.GenerateUUID(t)
 	neData := toJSON(neID)
 
-	invalidChannels := addReq
-	invalidChannels.Channels = []string{wrongID}
-	wrongData := toJSON(invalidChannels)
-
 	cases := []struct {
 		desc            string
 		req             string
@@ -264,16 +249,6 @@ func TestAdd(t *testing.T) {
 		{
 			desc:        "add a config with non-existent ID",
 			req:         neData,
-			domainID:    domainID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			location:    "",
-			err:         svcerr.ErrConflict,
-		},
-		{
-			desc:        "add a config with invalid channels",
-			req:         wrongData,
 			domainID:    domainID,
 			token:       validToken,
 			contentType: contentType,
@@ -354,16 +329,10 @@ func TestView(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	var channels []channel
-	for _, ch := range c.Channels {
-		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-	}
-
 	data := config{
 		ClientID:     c.ClientID,
 		ClientSecret: c.ClientSecret,
 		State:        c.State,
-		Channels:     channels,
 		ExternalID:   c.ExternalID,
 		ExternalKey:  c.ExternalKey,
 		Name:         c.Name,
@@ -445,10 +414,6 @@ func TestView(t *testing.T) {
 				assert.Nil(t, err, fmt.Sprintf("Decoding expected to succeed %s: %s", tc.desc, err))
 			}
 
-			assert.ElementsMatch(t, tc.res.Channels, view.Channels, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res.Channels, view.Channels))
-			// Empty channels to prevent order mismatch.
-			tc.res.Channels = []channel{}
-			view.Channels = []channel{}
 			assert.Equal(t, tc.res, view, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, view))
 			svcCall.Unset()
 			authCall.Unset()
@@ -672,126 +637,6 @@ func TestUpdateCert(t *testing.T) {
 	}
 }
 
-func TestUpdateConnections(t *testing.T) {
-	bs, svc, auth := newBootstrapServer()
-	defer bs.Close()
-	c := newConfig()
-	data := toJSON(updateReq)
-
-	invalidChannels := updateReq
-	invalidChannels.Channels = []string{wrongID}
-
-	wrongData := toJSON(invalidChannels)
-
-	cases := []struct {
-		desc            string
-		req             string
-		id              string
-		token           string
-		session         smqauthn.Session
-		contentType     string
-		status          int
-		authenticateErr error
-		err             error
-	}{
-		{
-			desc:            "update connections with invalid token",
-			req:             data,
-			id:              c.ClientID,
-			token:           invalidToken,
-			contentType:     contentType,
-			status:          http.StatusUnauthorized,
-			authenticateErr: svcerr.ErrAuthentication,
-			err:             svcerr.ErrAuthentication,
-		},
-		{
-			desc:        "update connections with an empty token",
-			req:         data,
-			id:          c.ClientID,
-			token:       "",
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
-		},
-		{
-			desc:        "update connections valid config",
-			req:         data,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
-		},
-		{
-			desc:        "update connections with wrong content type",
-			req:         data,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: "",
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
-		},
-		{
-			desc:        "update connections for a non-existing config",
-			req:         data,
-			id:          wrongID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "update connections with invalid channels",
-			req:         wrongData,
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "update a config with invalid request format",
-			req:         "}",
-			id:          c.ClientID,
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-		{
-			desc:        "update a config with an empty request",
-			id:          c.ClientID,
-			req:         "",
-			token:       validToken,
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			if tc.token == validToken {
-				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
-			}
-			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			repoCall := svc.On("UpdateConnections", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
-			req := testRequest{
-				client:      bs.Client(),
-				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/clients/configs/connections/%s", bs.URL, domainID, tc.id),
-				contentType: tc.contentType,
-				token:       tc.token,
-				body:        strings.NewReader(tc.req),
-			}
-			res, err := req.make()
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-			repoCall.Unset()
-			authCall.Unset()
-		})
-	}
-}
 
 func TestList(t *testing.T) {
 	configNum := 101
@@ -811,14 +656,9 @@ func TestList(t *testing.T) {
 		c.Name = fmt.Sprintf("%s-%d", addName, i)
 		c.ExternalKey = fmt.Sprintf("%s%s", addExternalKey, strconv.Itoa(i))
 
-		var channels []channel
-		for _, ch := range c.Channels {
-			channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-		}
 		s := config{
 			ClientID:     c.ClientID,
 			ClientSecret: c.ClientSecret,
-			Channels:     channels,
 			ExternalID:   c.ExternalID,
 			ExternalKey:  c.ExternalKey,
 			Name:         c.Name,
@@ -829,21 +669,18 @@ func TestList(t *testing.T) {
 	}
 	// Change state of first 20 elements for filtering tests.
 	for i := 0; i < changedStateNum; i++ {
-		state := bootstrap.Active
 		if i%2 == 0 {
-			state = bootstrap.Inactive
-		}
-		svcCall := svc.On("ChangeState", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-		err := svc.ChangeState(context.Background(), smqauthn.Session{}, validToken, list[i].ClientID, state)
-		assert.Nil(t, err, fmt.Sprintf("Changing state expected to succeed: %s.\n", err))
-
-		svcCall.Unset()
-
-		list[i].State = state
-		if state == bootstrap.Inactive {
+			// Even elements remain inactive (default state).
 			inactive = append(inactive, list[i])
 			continue
 		}
+		// Odd elements are enabled (active).
+		enabledCfg := bootstrap.Config{ClientID: list[i].ClientID, State: bootstrap.Active}
+		svcCall := svc.On("EnableConfig", context.Background(), mock.Anything, mock.Anything).Return(enabledCfg, nil)
+		_, err := svc.EnableConfig(context.Background(), smqauthn.Session{}, list[i].ClientID)
+		assert.Nil(t, err, fmt.Sprintf("Enabling config expected to succeed: %s.\n", err))
+		svcCall.Unset()
+		list[i].State = bootstrap.Active
 		active = append(active, list[i])
 	}
 
@@ -1151,23 +988,16 @@ func TestBootstrap(t *testing.T) {
 	encExternKey, err := enc([]byte(c.ExternalKey))
 	assert.Nil(t, err, fmt.Sprintf("Encrypting config expected to succeed: %s.\n", err))
 
-	var channels []channel
-	for _, ch := range c.Channels {
-		channels = append(channels, channel{ID: ch.ID, Name: ch.Name, Metadata: ch.Metadata})
-	}
-
 	s := struct {
-		ClientID     string    `json:"client_id"`
-		ClientSecret string    `json:"client_secret"`
-		Channels     []channel `json:"channels"`
-		Content      string    `json:"content"`
-		ClientCert   string    `json:"client_cert"`
-		ClientKey    string    `json:"client_key"`
-		CACert       string    `json:"ca_cert"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		Content      string `json:"content"`
+		ClientCert   string `json:"client_cert"`
+		ClientKey    string `json:"client_key"`
+		CACert       string `json:"ca_cert"`
 	}{
 		ClientID:     c.ClientID,
 		ClientSecret: c.ClientSecret,
-		Channels:     channels,
 		Content:      c.Content,
 		ClientCert:   c.ClientCert,
 		ClientKey:    c.ClientKey,
@@ -1281,92 +1111,58 @@ func TestChangeState(t *testing.T) {
 	defer bs.Close()
 	c := newConfig()
 
-	inactive := fmt.Sprintf("{\"state\": %d}", bootstrap.Inactive)
-	active := fmt.Sprintf("{\"state\": %d}", bootstrap.Active)
+	activeCfg := bootstrap.Config{ClientID: c.ClientID, State: bootstrap.Active}
+	inactiveCfg := bootstrap.Config{ClientID: c.ClientID, State: bootstrap.Inactive}
 
 	cases := []struct {
 		desc            string
 		id              string
 		token           string
 		session         smqauthn.Session
-		state           string
-		contentType     string
+		action          string
 		status          int
 		authenticateErr error
-		err             error
+		svcCfg          bootstrap.Config
+		svcErr          error
 	}{
 		{
-			desc:            "change state with invalid token",
+			desc:            "enable with invalid token",
 			id:              c.ClientID,
 			token:           invalidToken,
-			state:           active,
-			contentType:     contentType,
+			action:          "enable",
 			status:          http.StatusUnauthorized,
 			authenticateErr: svcerr.ErrAuthentication,
-			err:             svcerr.ErrAuthentication,
 		},
 		{
-			desc:        "change state with an empty token",
-			id:          c.ClientID,
-			token:       "",
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusUnauthorized,
-			err:         apiutil.ErrBearerToken,
+			desc:   "enable with empty token",
+			id:     c.ClientID,
+			token:  "",
+			action: "enable",
+			status: http.StatusUnauthorized,
 		},
 		{
-			desc:        "change state with invalid content type",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       active,
-			contentType: "",
-			status:      http.StatusUnsupportedMediaType,
-			err:         apiutil.ErrUnsupportedContentType,
+			desc:   "enable config",
+			id:     c.ClientID,
+			token:  validToken,
+			action: "enable",
+			status: http.StatusOK,
+			svcCfg: activeCfg,
 		},
 		{
-			desc:        "change state to active",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
+			desc:   "disable config",
+			id:     c.ClientID,
+			token:  validToken,
+			action: "disable",
+			status: http.StatusOK,
+			svcCfg: inactiveCfg,
 		},
 		{
-			desc:        "change state to inactive",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       inactive,
-			contentType: contentType,
-			status:      http.StatusOK,
-			err:         nil,
-		},
-		{
-			desc:        "change state of non-existing config",
-			id:          wrongID,
-			token:       validToken,
-			state:       active,
-			contentType: contentType,
-			status:      http.StatusNotFound,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "change state to invalid value",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       fmt.Sprintf("{\"state\": %d}", -3),
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
-		},
-		{
-			desc:        "change state with invalid data",
-			id:          c.ClientID,
-			token:       validToken,
-			state:       "",
-			contentType: contentType,
-			status:      http.StatusBadRequest,
-			err:         svcerr.ErrMalformedEntity,
+			desc:   "enable non-existing config",
+			id:     wrongID,
+			token:  validToken,
+			action: "enable",
+			status: http.StatusNotFound,
+			svcErr: svcerr.ErrNotFound,
 		},
 	}
 
@@ -1376,14 +1172,16 @@ func TestChangeState(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := svc.On("ChangeState", mock.Anything, tc.session, tc.token, mock.Anything, mock.Anything).Return(tc.err)
+			methodName := "EnableConfig"
+			if tc.action == "disable" {
+				methodName = "DisableConfig"
+			}
+			svcCall := svc.On(methodName, mock.Anything, tc.session, mock.Anything).Return(tc.svcCfg, tc.svcErr)
 			req := testRequest{
-				client:      bs.Client(),
-				method:      http.MethodPut,
-				url:         fmt.Sprintf("%s/%s/clients/state/%s", bs.URL, domainID, tc.id),
-				token:       tc.token,
-				contentType: tc.contentType,
-				body:        strings.NewReader(tc.state),
+				client: bs.Client(),
+				method: http.MethodPost,
+				url:    fmt.Sprintf("%s/%s/clients/configs/%s/%s", bs.URL, domainID, tc.id, tc.action),
+				token:  tc.token,
 			}
 			res, err := req.make()
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
@@ -1394,16 +1192,9 @@ func TestChangeState(t *testing.T) {
 	}
 }
 
-type channel struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
-}
-
 type config struct {
 	ClientID     string          `json:"client_id,omitempty"`
 	ClientSecret string          `json:"client_secret,omitempty"`
-	Channels     []channel       `json:"channels,omitempty"`
 	ExternalID   string          `json:"external_id"`
 	ExternalKey  string          `json:"external_key,omitempty"`
 	Content      string          `json:"content,omitempty"`

@@ -14,7 +14,7 @@ import (
 var (
 	_ magistrala.Response = (*removeRes)(nil)
 	_ magistrala.Response = (*configRes)(nil)
-	_ magistrala.Response = (*stateRes)(nil)
+	_ magistrala.Response = (*changeConfigStatusRes)(nil)
 	_ magistrala.Response = (*viewRes)(nil)
 	_ magistrala.Response = (*listRes)(nil)
 )
@@ -60,16 +60,9 @@ func (res configRes) Empty() bool {
 	return true
 }
 
-type channelRes struct {
-	ID       string `json:"id"`
-	Name     string `json:"name,omitempty"`
-	Metadata any    `json:"metadata,omitempty"`
-}
-
 type viewRes struct {
 	ClientID     string          `json:"client_id,omitempty"`
 	CLientSecret string          `json:"client_secret,omitempty"`
-	Channels     []channelRes    `json:"channels,omitempty"`
 	ExternalID   string          `json:"external_id"`
 	ExternalKey  string          `json:"external_key,omitempty"`
 	Content      string          `json:"content,omitempty"`
@@ -110,18 +103,20 @@ func (res listRes) Empty() bool {
 	return false
 }
 
-type stateRes struct{}
+type changeConfigStatusRes struct {
+	bootstrap.Config
+}
 
-func (res stateRes) Code() int {
+func (res changeConfigStatusRes) Code() int {
 	return http.StatusOK
 }
 
-func (res stateRes) Headers() map[string]string {
+func (res changeConfigStatusRes) Headers() map[string]string {
 	return map[string]string{}
 }
 
-func (res stateRes) Empty() bool {
-	return true
+func (res changeConfigStatusRes) Empty() bool {
+	return false
 }
 
 type updateConfigRes struct {

@@ -23,8 +23,7 @@ const (
 	viewOperation              = "view"
 	updateOperation            = "update"
 	updateCertOperation        = "update_cert"
-	updateConnectionsOperation = "update_connections"
-	listOperation              = "list"
+	listOperation = "list"
 	removeOperation            = "remove"
 	changeStateOperation       = "change_state"
 )
@@ -76,14 +75,6 @@ func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqau
 	return am.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
 }
 
-func (am *authorizationMiddleware) UpdateConnections(ctx context.Context, session smqauthn.Session, token, id string, connections []string) error {
-	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id, updateConnectionsOperation, id); err != nil {
-		return err
-	}
-
-	return am.svc.UpdateConnections(ctx, session, token, id, connections)
-}
-
 func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {
 	if err := am.checkSuperAdmin(ctx, session); err == nil {
 		session.SuperAdmin = true
@@ -107,32 +98,24 @@ func (am *authorizationMiddleware) Bootstrap(ctx context.Context, externalKey, e
 	return am.svc.Bootstrap(ctx, externalKey, externalID, secure)
 }
 
-func (am *authorizationMiddleware) ChangeState(ctx context.Context, session smqauthn.Session, token, id string, state bootstrap.State) error {
+func (am *authorizationMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
 	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id, changeStateOperation, id); err != nil {
-		return err
+		return bootstrap.Config{}, err
 	}
 
-	return am.svc.ChangeState(ctx, session, token, id, state)
+	return am.svc.EnableConfig(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) UpdateChannelHandler(ctx context.Context, channel bootstrap.Channel) error {
-	return am.svc.UpdateChannelHandler(ctx, channel)
+func (am *authorizationMiddleware) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
+	if err := am.authorize(ctx, session, session.DomainID, policies.UserType, policies.UsersKind, session.DomainUserID, updatePermission, policies.ClientType, id, changeStateOperation, id); err != nil {
+		return bootstrap.Config{}, err
+	}
+
+	return am.svc.DisableConfig(ctx, session, id)
 }
 
 func (am *authorizationMiddleware) RemoveConfigHandler(ctx context.Context, id string) error {
 	return am.svc.RemoveConfigHandler(ctx, id)
-}
-
-func (am *authorizationMiddleware) RemoveChannelHandler(ctx context.Context, id string) error {
-	return am.svc.RemoveChannelHandler(ctx, id)
-}
-
-func (am *authorizationMiddleware) ConnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	return am.svc.ConnectClientHandler(ctx, channelID, clientID)
-}
-
-func (am *authorizationMiddleware) DisconnectClientHandler(ctx context.Context, channelID, clientID string) error {
-	return am.svc.DisconnectClientHandler(ctx, channelID, clientID)
 }
 
 func (am *authorizationMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {

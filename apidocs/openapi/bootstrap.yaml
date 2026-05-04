@@ -5,7 +5,8 @@ openapi: 3.0.1
 info:
   title: Magistrala Bootstrap service
   description: |
-    HTTP API for managing platform clients configuration.
+    HTTP API for managing platform clients configuration, device profiles,
+    and enrollment bindings.
     Some useful links:
     - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
@@ -13,7 +14,7 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.18.5
+  version: 0.19.0
 
 servers:
   - url: http://localhost:9013
@@ -21,18 +22,24 @@ servers:
 
 tags:
   - name: configs
-    description: Everything about your Configs
+    description: Bootstrap enrollment configurations
     externalDocs:
       description: Find out more about Configs
       url: https://magistrala.absmach.eu/docs/
+  - name: profiles
+    description: Device configuration profiles and templates
+  - name: enrollments
+    description: Enrollment profile assignment and resource bindings
 
 paths:
+  # ── Enrollment configs ────────────────────────────────────────────────────
+
   /{domainID}/clients/configs:
     post:
       operationId: createConfig
-      summary: Adds new config
+      summary: Adds a new enrollment config
       description: |
-        Adds new config to the list of config owned by user identified using
+        Adds a new bootstrap enrollment config owned by the user identified by
         the provided access token.
       tags:
         - configs
@@ -49,33 +56,24 @@ paths:
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
-        "404":
-          description: A non-existent entity request.
         "409":
-          description: Failed due to using an existing identity.
+          description: Failed due to using an existing external ID.
         "415":
           description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-        "503":
-          description: Failed to receive response from the clients service.
     get:
       operationId: getConfigs
       summary: Retrieves managed configs
       description: |
-        Retrieves a list of managed configs. Due to performance concerns, data
-        is retrieved in subsets. The API configs must ensure that the entire
-        dataset is consumed either by making subsequent requests, or by
-        increasing the subset size of the initial request.
+        Retrieves a paginated list of managed enrollment configs.
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
-        - $ref: "#/components/parameters/State"
+        - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/Name"
       responses:
         "200":
@@ -84,47 +82,39 @@ paths:
           description: Failed due to malformed query parameters.
         "401":
           description: Missing or invalid access token provided.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /{domainID}/clients/configs/{configID}:
     get:
       operationId: getConfig
-      summary: Retrieves config info (with channels).
+      summary: Retrieves a config
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
+        - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
           $ref: "#/components/responses/ConfigRes"
-        "400":
-          description: Missing or invalid config.
         "401":
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
-    put:
+    patch:
       operationId: updateConfig
       summary: Updates config info
       description: |
-        Update is performed by replacing the current resource data with values
-        provided in a request payload. Note that the owner, ID, external ID,
-        external key, Magistrala Client ID and key cannot be changed.
+        Updates name and content of an existing enrollment config.
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
+        - $ref: "#/components/parameters/ConfigID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigUpdateReq"
       responses:
@@ -140,52 +130,42 @@ paths:
           description: Config does not exist.
         "415":
           description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
       operationId: removeConfig
-      summary: Removes a Config
-      description: |
-        Removes a Config. In case of successful removal the service will ensure
-        that the removed config is disconnected from all of the Magistrala channels.
+      summary: Removes a config
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
+        - $ref: "#/components/parameters/ConfigID"
       responses:
         "204":
           description: Config removed.
-        "400":
-          description: Failed due to malformed config ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
   /{domainID}/clients/configs/certs/{configID}:
     patch:
       operationId: updateConfigCerts
-      summary: Updates certs
+      summary: Updates client certificates
       description: |
-        Update is performed by replacing the current certificate data with values
-        provided in a request payload.
+        Replaces the certificate fields (client_cert, client_key, ca_cert) of an
+        existing enrollment config.
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
+        - $ref: "#/components/parameters/ConfigID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
       responses:
         "200":
-          description: Config updated.
           $ref: "#/components/responses/ConfigUpdateCertsRes"
         "400":
           description: Failed due to malformed JSON.
@@ -197,125 +177,455 @@ paths:
           description: Config does not exist.
         "415":
           description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/connections/{configID}:
-    put:
-      operationId: updateConfigConnections
-      summary: Updates channels the client is connected to
+  /{domainID}/clients/configs/{configID}/enable:
+    post:
+      operationId: enableConfig
+      summary: Enables a config
       description: |
-        Update connections performs update of the channel list corresponding
-        Client is connected to.
+        Enables the enrollment config, allowing its device to bootstrap.
       tags:
         - configs
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
-      requestBody:
-        $ref: "#/components/requestBodies/ConfigConnUpdateReq"
+        - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
-          description: Config updated.
+          $ref: "#/components/responses/ConfigRes"
         "400":
-          description: Failed due to malformed JSON.
+          description: Config is already enabled.
         "401":
           description: Missing or invalid access token provided.
         "403":
           description: Failed to perform authorization over the entity.
         "404":
           description: Config does not exist.
-        "415":
-          description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /clients/bootstrap/{externalId}:
+  /{domainID}/clients/configs/{configID}/disable:
+    post:
+      operationId: disableConfig
+      summary: Disables a config
+      description: |
+        Disables the enrollment config, preventing its device from bootstrapping.
+      tags:
+        - configs
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
+      responses:
+        "200":
+          $ref: "#/components/responses/ConfigRes"
+        "400":
+          description: Config is already disabled.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "404":
+          description: Config does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  # ── Device bootstrap ──────────────────────────────────────────────────────
+
+  /clients/bootstrap/{externalID}:
     get:
       operationId: getBootstrapConfig
-      summary: Retrieves configuration.
+      summary: Retrieves a bootstrap configuration
       description: |
-        Retrieves a configuration with given external ID and external key.
+        Returns the rendered bootstrap configuration for a device identified by
+        its external ID and external key.
       tags:
         - configs
       security:
         - bootstrapAuth: []
       parameters:
-        - $ref: "#/components/parameters/ExternalId"
+        - $ref: "#/components/parameters/ExternalID"
       responses:
         "200":
           $ref: "#/components/responses/BootstrapConfigRes"
         "400":
-          description: Failed due to malformed JSON.
+          description: Missing or invalid external ID.
         "401":
-          description: Missing or invalid external key provided.
+          description: Missing or invalid external key.
+        "403":
+          description: Config is disabled.
         "404":
-          description: Failed to retrieve corresponding config.
-        "422":
-          description: Database can't process request.
+          description: No config found for the given external ID.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /clients/bootstrap/secure/{externalId}:
+  /clients/bootstrap/secure/{externalID}:
     get:
       operationId: getSecureBootstrapConfig
-      summary: Retrieves configuration.
+      summary: Retrieves an encrypted bootstrap configuration
       description: |
-        Retrieves a configuration with given external ID and encrypted external key.
+        Returns the rendered bootstrap configuration encrypted with the device's
+        AES key. The external key must be hex-encoded and AES-encrypted.
       tags:
         - configs
       security:
         - bootstrapEncAuth: []
       parameters:
-        - $ref: "#/components/parameters/ExternalId"
+        - $ref: "#/components/parameters/ExternalID"
       responses:
         "200":
-          $ref: "#/components/responses/BootstrapConfigRes"
+          description: Encrypted bootstrap payload (binary).
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+        "400":
+          description: Missing or invalid external ID.
+        "401":
+          description: Missing or invalid encrypted external key.
+        "403":
+          description: Config is disabled.
+        "404":
+          description: No config found for the given external ID.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  # ── Device profiles ───────────────────────────────────────────────────────
+
+  /{domainID}/clients/bootstrap/profiles:
+    post:
+      operationId: createProfile
+      summary: Creates a device profile
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        $ref: "#/components/requestBodies/ProfileCreateReq"
+      responses:
+        "201":
+          $ref: "#/components/responses/ProfileRes"
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "403":
+          description: Failed to perform authorization over the entity.
+        "409":
+          description: A profile with the same name already exists in this domain.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    get:
+      operationId: listProfiles
+      summary: Lists device profiles
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProfileListRes"
+        "400":
+          description: Failed due to malformed query parameters.
+        "401":
+          description: Missing or invalid access token provided.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/profiles/upload:
+    post:
+      operationId: uploadProfile
+      summary: Uploads a device profile
+      description: |
+        Uploads a profile definition. Accepts JSON, YAML, or TOML payloads
+        depending on the Content-Type header.
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Profile"
+          application/yaml:
+            schema:
+              $ref: "#/components/schemas/Profile"
+          application/toml:
+            schema:
+              $ref: "#/components/schemas/Profile"
+      responses:
+        "201":
+          $ref: "#/components/responses/ProfileRes"
+        "400":
+          description: Failed due to malformed body.
+        "401":
+          description: Missing or invalid access token provided.
+        "415":
+          description: Unsupported content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/profiles/{profileID}:
+    get:
+      operationId: getProfile
+      summary: Retrieves a device profile
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ProfileID"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProfileRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Profile does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    patch:
+      operationId: updateProfile
+      summary: Updates a device profile
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ProfileID"
+      requestBody:
+        $ref: "#/components/requestBodies/ProfileUpdateReq"
+      responses:
+        "200":
+          $ref: "#/components/responses/ProfileRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
           description: Missing or invalid access token provided.
         "404":
-          description: |
-            Failed to retrieve corresponding config.
-        "422":
-          description: Database can't process request.
+          description: Profile does not exist.
+        "415":
+          description: Missing or invalid content type.
         "500":
           $ref: "#/components/responses/ServiceError"
-
-  /{domainID}/clients/state/{configID}:
-    put:
-      operationId: updateConfigState
-      summary: Updates Config state.
-      description: |
-        Updating state represents enabling/disabling Config, i.e. connecting
-        and disconnecting corresponding Magistrala Client to the list of Channels.
+    delete:
+      operationId: deleteProfile
+      summary: Deletes a device profile
       tags:
-        - configs
+        - profiles
       parameters:
         - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigId"
-      requestBody:
-        $ref: "#/components/requestBodies/ConfigStateUpdateReq"
+        - $ref: "#/components/parameters/ProfileID"
       responses:
         "204":
-          description: Config removed.
-        "400":
-          description: Failed due to malformed config's ID.
+          description: Profile deleted.
         "401":
           description: Missing or invalid access token provided.
         "404":
-          description: A non-existent entity request.
-        "415":
-          description: Missing or invalid content type.
-        "422":
-          description: Database can't process request.
+          description: Profile does not exist.
         "500":
           $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/profiles/{profileID}/slots:
+    get:
+      operationId: getProfileSlots
+      summary: Retrieves the binding slots declared by a profile
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ProfileID"
+      responses:
+        "200":
+          description: Binding slots retrieved.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  slots:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/BindingSlot"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Profile does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/profiles/{profileID}/render-preview:
+    post:
+      operationId: renderPreview
+      summary: Renders a profile template preview
+      description: |
+        Renders the profile's content template with the supplied device context
+        and binding snapshots. No external service calls are made — all data
+        must be supplied in the request body.
+      tags:
+        - profiles
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ProfileID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                config:
+                  $ref: "#/components/schemas/Config"
+                render_context:
+                  type: object
+                  additionalProperties: true
+                  description: Per-device variable overrides.
+                bindings:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/BindingSnapshot"
+      responses:
+        "200":
+          description: Rendered template output.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  rendered:
+                    type: string
+        "400":
+          description: Template rendering failed.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Profile does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  # ── Enrollment bindings ───────────────────────────────────────────────────
+
+  /{domainID}/clients/bootstrap/enrollments/{configID}/profile:
+    patch:
+      operationId: assignProfile
+      summary: Assigns a profile to an enrollment
+      tags:
+        - enrollments
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                profile_id:
+                  type: string
+                  format: uuid
+              required:
+                - profile_id
+      responses:
+        "200":
+          description: Profile assigned.
+        "400":
+          description: Failed due to malformed JSON.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Config or profile does not exist.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/enrollments/{configID}/bindings:
+    put:
+      operationId: bindResources
+      summary: Binds resources to profile slots
+      description: |
+        Resolves the requested resource bindings via their owning services,
+        stores snapshots, and marks the enrollment renderable when all required
+        slots are satisfied.
+      tags:
+        - enrollments
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                bindings:
+                  type: array
+                  minItems: 1
+                  items:
+                    $ref: "#/components/schemas/BindingRequest"
+              required:
+                - bindings
+      responses:
+        "200":
+          description: Bindings stored.
+        "400":
+          description: Failed due to malformed JSON or invalid binding request.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Config or resource not found.
+        "415":
+          description: Missing or invalid content type.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+    get:
+      operationId: listBindings
+      summary: Lists binding snapshots for an enrollment
+      tags:
+        - enrollments
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
+      responses:
+        "200":
+          $ref: "#/components/responses/BindingsRes"
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Config does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/enrollments/{configID}/bindings/refresh:
+    post:
+      operationId: refreshBindings
+      summary: Refreshes all binding snapshots
+      description: |
+        Re-resolves every existing binding for the enrollment and updates the
+        stored snapshots with current resource data.
+      tags:
+        - enrollments
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
+      responses:
+        "200":
+          description: Bindings refreshed.
+        "401":
+          description: Missing or invalid access token provided.
+        "404":
+          description: Config does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  # ── Health ────────────────────────────────────────────────────────────────
 
   /health:
     get:
@@ -331,179 +641,270 @@ paths:
 
 components:
   schemas:
-    State:
-      type: integer
-      enum: [0, 1]
+    Status:
+      type: string
+      enum: [enabled, disabled]
+      description: Enrollment status.
+
     Config:
       type: object
       properties:
-        client_id:
+        id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Client ID.
-        magistrala_secret:
+          description: Enrollment ID.
+        domain_id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Client key.
-        channels:
-          type: array
-          minItems: 0
-          items:
-            type: object
-            properties:
-              id:
-                type: string
-                format: uuid
-                description: Channel unique identifier.
-              name:
-                type: string
-                description: Name of the Channel.
-              metadata:
-                type: object
-                description: Custom metadata related to the Channel.
+          description: Domain the enrollment belongs to.
         external_id:
           type: string
-          description: External ID (MAC address or some unique identifier).
+          description: External device identifier (e.g. MAC address).
         external_key:
           type: string
-          description: External key.
+          description: External authentication key (write-only; not returned after creation).
+        name:
+          type: string
+          description: Human-readable name.
         content:
           type: string
-          description: Free-form custom configuration.
-        state:
-          $ref: "#/components/schemas/State"
+          description: Legacy free-form configuration payload.
+        status:
+          $ref: "#/components/schemas/Status"
+        profile_id:
+          type: string
+          format: uuid
+          description: ID of the device profile used for template rendering.
+        render_context:
+          type: object
+          additionalProperties: true
+          description: Per-device variable values injected into the profile template.
         client_cert:
           type: string
-          description: Client certificate.
+          description: Client TLS certificate (PEM).
+        client_key:
+          type: string
+          description: Client TLS private key (PEM).
         ca_cert:
           type: string
-          description: Issuing CA certificate.
+          description: CA certificate (PEM).
       required:
         - external_id
         - external_key
+
     ConfigList:
       type: object
       properties:
         total:
           type: integer
-          description: Total number of results.
           minimum: 0
         offset:
           type: integer
-          description: Number of items to skip during retrieval.
           minimum: 0
           default: 0
         limit:
           type: integer
-          description: Size of the subset to retrieve.
           maximum: 100
           default: 10
         configs:
           type: array
-          minItems: 0
-          uniqueItems: true
           items:
             $ref: "#/components/schemas/Config"
       required:
         - configs
+
     BootstrapConfig:
       type: object
+      description: Rendered configuration returned to a bootstrapping device.
       properties:
-        client_id:
+        id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Client ID.
-        client_key:
-          type: string
-          format: uuid
-          description: Corresponding Magistrala Client key.
-        channels:
-          type: array
-          minItems: 0
-          items:
-            type: string
+          description: Enrollment ID.
         content:
           type: string
-          description: Free-form custom configuration.
+          description: Rendered configuration payload.
         client_cert:
           type: string
-          description: Client certificate.
-      required:
-        - client_id
-        - client_key
-        - channels
-        - content
+          description: Client TLS certificate (PEM).
+        client_key:
+          type: string
+          description: Client TLS private key (PEM).
+        ca_cert:
+          type: string
+          description: CA certificate (PEM).
+
     ConfigUpdateCerts:
       type: object
       properties:
-        client_id:
+        id:
           type: string
           format: uuid
-          description: Corresponding Magistrala Client ID.
         client_cert:
           type: string
-          description: Client certificate.
         client_key:
           type: string
-          description: Key for the client_cert.
         ca_cert:
           type: string
-          description: Issuing CA certificate.
+        domain_id:
+          type: string
+          format: uuid
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        domain_id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+        description:
+          type: string
+        template_format:
+          type: string
+          enum: [go-template, raw]
+          default: go-template
+        content_template:
+          type: string
+          description: Template text rendered at bootstrap time.
+        defaults:
+          type: object
+          additionalProperties: true
+          description: Default variable values merged with per-device render_context.
+        binding_slots:
+          type: array
+          items:
+            $ref: "#/components/schemas/BindingSlot"
+          description: Named resource slots declared by this profile.
+        version:
+          type: integer
+          readOnly: true
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+        updated_at:
+          type: string
+          format: date-time
+          readOnly: true
       required:
-        - client_id
-        - client_key
-        - channels
-        - content
+        - name
+        - template_format
+
+    ProfileList:
+      type: object
+      properties:
+        total:
+          type: integer
+          minimum: 0
+        offset:
+          type: integer
+          minimum: 0
+        limit:
+          type: integer
+          maximum: 100
+        profiles:
+          type: array
+          items:
+            $ref: "#/components/schemas/Profile"
+
+    BindingSlot:
+      type: object
+      description: A named resource placeholder declared by a profile.
+      properties:
+        name:
+          type: string
+          description: Slot name referenced in the template (e.g. "mqtt_client").
+        type:
+          type: string
+          enum: [client, channel, cert]
+          description: Expected resource type.
+        required:
+          type: boolean
+          default: true
+          description: Whether the slot must be bound before the device can bootstrap.
+        fields:
+          type: array
+          items:
+            type: string
+          description: Resource fields snapshotted at binding time.
+      required:
+        - name
+        - type
+
+    BindingRequest:
+      type: object
+      description: A request to bind a profile slot to a concrete resource.
+      properties:
+        slot:
+          type: string
+          description: Profile slot name to fill.
+        type:
+          type: string
+          enum: [client, channel, cert]
+        resource_id:
+          type: string
+          format: uuid
+          description: ID of the resource in its owning service.
+      required:
+        - slot
+        - type
+        - resource_id
+
+    BindingSnapshot:
+      type: object
+      description: Bootstrap-owned snapshot of a bound resource.
+      properties:
+        config_id:
+          type: string
+          format: uuid
+        slot:
+          type: string
+        type:
+          type: string
+        resource_id:
+          type: string
+          format: uuid
+        snapshot:
+          type: object
+          additionalProperties: true
+          description: Non-secret resource fields captured at binding time.
+        updated_at:
+          type: string
+          format: date-time
 
   parameters:
-    ConfigId:
+    ConfigID:
       name: configID
-      description: Unique Config identifier. It's the ID of the corresponding Client.
+      description: Unique enrollment config identifier.
       in: path
       schema:
         type: string
         format: uuid
       required: true
-    ExternalId:
-      name: externalId
-      description: Unique Config identifier provided by external entity.
+
+    ProfileID:
+      name: profileID
+      description: Unique profile identifier.
+      in: path
+      schema:
+        type: string
+        format: uuid
+      required: true
+
+    ExternalID:
+      name: externalID
+      description: External device identifier provided at registration.
       in: path
       schema:
         type: string
       required: true
-    Limit:
-      name: limit
-      description: Size of the subset to retrieve.
-      in: query
-      schema:
-        type: integer
-        default: 10
-        maximum: 100
-        minimum: 1
-      required: false
-    Offset:
-      name: offset
-      description: Number of items to skip during retrieval.
-      in: query
-      schema:
-        type: integer
-        default: 0
-        minimum: 0
-      required: false
-    State:
-      name: state
-      description: A state of items
-      in: query
-      schema:
-        $ref: "#/components/schemas/State"
-      required: false
-    Name:
-      name: name
-      description: Name of the config. Search by name is partial-match and case-insensitive.
-      in: query
-      schema:
-        type: string
-      required: false
+
     DomainID:
       name: domainID
       description: Unique domain identifier.
@@ -514,9 +915,46 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
+    Limit:
+      name: limit
+      description: Maximum number of items to return.
+      in: query
+      schema:
+        type: integer
+        default: 10
+        maximum: 100
+        minimum: 1
+      required: false
+
+    Offset:
+      name: offset
+      description: Number of items to skip.
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      required: false
+
+    Status:
+      name: status
+      description: Filter by enrollment status.
+      in: query
+      schema:
+        $ref: "#/components/schemas/Status"
+      required: false
+
+    Name:
+      name: name
+      description: Filter by name (partial, case-insensitive match).
+      in: query
+      schema:
+        type: string
+      required: false
+
   requestBodies:
     ConfigCreateReq:
-      description: JSON-formatted document describing the new config.
+      description: New enrollment config.
       required: true
       content:
         application/json:
@@ -525,51 +963,44 @@ components:
             properties:
               external_id:
                 type: string
-                description: External ID (MAC address or some unique identifier).
               external_key:
-                type: string
-                description: External key.
-              client_id:
-                type: string
-                format: uuid
-                description: ID of the corresponding Magistrala Client.
-              channels:
-                type: array
-                minItems: 0
-                items:
-                  type: string
-                  format: uuid
-              content:
                 type: string
               name:
                 type: string
+              content:
+                type: string
+              profile_id:
+                type: string
+                format: uuid
+              render_context:
+                type: object
+                additionalProperties: true
               client_cert:
                 type: string
-                description: Client Certificate.
               client_key:
                 type: string
-                description: Client Private Key.
               ca_cert:
                 type: string
             required:
               - external_id
               - external_key
+
     ConfigUpdateReq:
-      description: JSON-formatted document describing the updated client.
+      description: Fields to update on an enrollment config.
+      required: true
       content:
         application/json:
           schema:
             type: object
             properties:
-              content:
-                type: string
               name:
                 type: string
-            required:
-              - content
-              - name
+              content:
+                type: string
+
     ConfigCertUpdateReq:
-      description: JSON-formatted document describing the updated client.
+      description: Replacement certificate fields.
+      required: true
       content:
         application/json:
           schema:
@@ -581,94 +1012,97 @@ components:
                 type: string
               ca_cert:
                 type: string
-    ConfigConnUpdateReq:
-      description: Array if IDs the client is be connected to.
+
+    ProfileCreateReq:
+      description: New device profile.
+      required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              channels:
-                type: array
-                minItems: 0
-                items:
-                  type: string
-                  format: uuid
-    ConfigStateUpdateReq:
-      description: Update the state of the Config.
+            $ref: "#/components/schemas/Profile"
+
+    ProfileUpdateReq:
+      description: Updated device profile fields.
+      required: true
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              state:
-                $ref: "#/components/schemas/State"
+            $ref: "#/components/schemas/Profile"
 
   responses:
     ConfigCreateRes:
       description: Config registered.
       headers:
         Location:
-          content:
-            text/plain:
-              schema:
-                type: string
-                description: Created configuration's relative URL (i.e. /clients/configs/{configID}).
+          schema:
+            type: string
+          description: Relative URL of the created config (e.g. /clients/configs/{configID}).
+
     ConfigListRes:
-      description: Data retrieved. Configs from this list don't contain channels.
+      description: Configs retrieved.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ConfigList"
+
     ConfigRes:
-      description: Data retrieved.
+      description: Config retrieved.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/Config"
-      links:
-        update:
-          operationId: updateConfig
-          parameters:
-            configID: $response.body#/id
-        updateCerts:
-          operationId: updateConfigCerts
-          parameters:
-            configID: $response.body#/id
-        updateConnections:
-          operationId: updateConfigConnections
-          parameters:
-            configID: $response.body#/id
-        updateState:
-          operationId: updateConfigState
-          parameters:
-            configID: $response.body#/id
-        delete:
-          operationId: removeConfig
-          parameters:
-            configID: $response.body#/id
-    BootstrapConfigRes:
-      description: |
-        Data retrieved. If secure, a response is encrypted using
-        the secret key, so the response is in the binary form.
-      content:
-        application/json:
-          schema:
-            $ref: "#/components/schemas/BootstrapConfig"
-    ServiceError:
-      description: Unexpected server-side error occurred.
-    HealthRes:
-      description: Service Health Check.
-      content:
-        application/health+json:
-          schema:
-            $ref: "./schemas/health_info.yaml"
+
     ConfigUpdateCertsRes:
-      description: Data retrieved. Config certs updated.
+      description: Config certificates updated.
       content:
         application/json:
           schema:
             $ref: "#/components/schemas/ConfigUpdateCerts"
+
+    BootstrapConfigRes:
+      description: |
+        Rendered bootstrap configuration. For the secure endpoint the response
+        body is AES-encrypted binary rather than JSON.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/BootstrapConfig"
+
+    ProfileRes:
+      description: Profile retrieved or created.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Profile"
+
+    ProfileListRes:
+      description: Profiles retrieved.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ProfileList"
+
+    BindingsRes:
+      description: Binding snapshots retrieved.
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              bindings:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BindingSnapshot"
+
+    ServiceError:
+      description: Unexpected server-side error occurred.
+
+    HealthRes:
+      description: Service health check.
+      content:
+        application/health+json:
+          schema:
+            $ref: "./schemas/health_info.yaml"
 
   securitySchemes:
     bearerAuth:
@@ -676,24 +1110,23 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: |
-        * Users access: "Authorization: Bearer <user_token>"
+        User access token: "Authorization: Bearer <user_token>"
 
     bootstrapAuth:
       type: http
       scheme: bearer
       bearerFormat: string
       description: |
-        * Clients access: "Authorization: Client <external_key>"
+        Device access: "Authorization: Client <external_key>"
 
     bootstrapEncAuth:
       type: http
       scheme: bearer
-      bearerFormat: aes-sha256-uuid
+      bearerFormat: aes-uuid
       description: |
-        * Clients access: "Authorization: Client <external_enc_key>"
-        Hex-encoded configuration external key encrypted using
-        the AES algorithm and SHA256 sum of the external key
-        itself as an encryption key.
+        Device access with AES-encrypted key: "Authorization: Client <external_enc_key>"
+        The external key must be hex-encoded and encrypted with AES using the
+        SHA256 of the external key itself as the encryption key.
 
 security:
   - bearerAuth: []

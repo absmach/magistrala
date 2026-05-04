@@ -195,12 +195,12 @@ func toProfile(dbp dbProfile) (bootstrap.Profile, error) {
 	if dbp.ContentTemplate.Valid {
 		p.ContentTemplate = dbp.ContentTemplate.String
 	}
-	if len(dbp.Defaults) > 0 && string(dbp.Defaults) != "null" {
+	if len(dbp.Defaults) > 0 && string(dbp.Defaults) != jsonNull {
 		if err := json.Unmarshal(dbp.Defaults, &p.Defaults); err != nil {
 			return bootstrap.Profile{}, err
 		}
 	}
-	if len(dbp.BindingSlots) > 0 && string(dbp.BindingSlots) != "null" {
+	if len(dbp.BindingSlots) > 0 && string(dbp.BindingSlots) != jsonNull {
 		if err := json.Unmarshal(dbp.BindingSlots, &p.BindingSlots); err != nil {
 			return bootstrap.Profile{}, err
 		}

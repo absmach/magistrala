@@ -20,6 +20,8 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+const jsonNull = "null"
+
 var _ bootstrap.ConfigRepository = (*configRepository)(nil)
 
 type configRepository struct {
@@ -110,7 +112,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 		if profileID.Valid {
 			c.ProfileID = profileID.String
 		}
-		if len(renderContext) > 0 && string(renderContext) != "null" {
+		if len(renderContext) > 0 && string(renderContext) != jsonNull {
 			if err := json.Unmarshal(renderContext, &c.RenderContext); err != nil {
 				cr.log.Error(fmt.Sprintf("Failed to decode render context due to %s", err))
 				return bootstrap.ConfigsPage{}
@@ -396,7 +398,7 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 	if dbcfg.Content.Valid {
 		cfg.Content = dbcfg.Content.String
 	}
-	if len(dbcfg.RenderContext) > 0 && string(dbcfg.RenderContext) != "null" {
+	if len(dbcfg.RenderContext) > 0 && string(dbcfg.RenderContext) != jsonNull {
 		_ = json.Unmarshal(dbcfg.RenderContext, &cfg.RenderContext)
 	}
 	if dbcfg.ClientCert.Valid {

@@ -132,12 +132,12 @@ func toBindingSnapshot(dbb dbBindingSnapshot) (bootstrap.BindingSnapshot, error)
 		ResourceID: dbb.ResourceID,
 		UpdatedAt:  dbb.UpdatedAt,
 	}
-	if len(dbb.Snapshot) > 0 && string(dbb.Snapshot) != "null" {
+	if len(dbb.Snapshot) > 0 && string(dbb.Snapshot) != jsonNull {
 		if err := json.Unmarshal(dbb.Snapshot, &b.Snapshot); err != nil {
 			return bootstrap.BindingSnapshot{}, err
 		}
 	}
-	if len(dbb.SecretSnapshot) > 0 && string(dbb.SecretSnapshot) != "null" {
+	if len(dbb.SecretSnapshot) > 0 && string(dbb.SecretSnapshot) != jsonNull {
 		if err := json.Unmarshal(dbb.SecretSnapshot, &b.SecretSnapshot); err != nil {
 			return bootstrap.BindingSnapshot{}, err
 		}

@@ -238,6 +238,22 @@ func TestProvisionUsesBootstrapEnrollmentID(t *testing.T) {
 		X509Provision: true,
 		Provision:     true,
 		AutoWhiteList: true,
+		ProfileID:     "gateway-profile",
+		RenderContext: map[string]any{
+			"site": "warehouse-1",
+		},
+		Bindings: []provision.BootstrapBinding{
+			{
+				Slot: "mqtt_client",
+				Type: "client",
+			},
+			{
+				Slot:          "control",
+				Type:          "channel",
+				MetadataKey:   "type",
+				MetadataValue: "control",
+			},
+		},
 		Content: map[string]any{
 			"broker": "mqtt://localhost:1883",
 		},
@@ -308,7 +324,12 @@ func TestProvisionUsesBootstrapEnrollmentID(t *testing.T) {
 	addBootstrapCall := mgsdk.On(
 		"AddBootstrap",
 		mock.Anything,
-		mock.Anything,
+		mock.MatchedBy(func(cfg smqSDK.BootstrapConfig) bool {
+			return cfg.ProfileID == "gateway-profile" &&
+				cfg.RenderContext["site"] == "warehouse-1" &&
+				cfg.RenderContext["external_id"] == externalID &&
+				cfg.RenderContext["name"] == name
+		}),
 		domainID,
 		validToken,
 	).Return(bootstrapID, nil)
@@ -324,6 +345,26 @@ func TestProvisionUsesBootstrapEnrollmentID(t *testing.T) {
 		ExternalID:  externalID,
 		ExternalKey: externalKey,
 	}, nil)
+
+	bindBootstrapResourcesCall := mgsdk.On(
+		"BindBootstrapResources",
+		mock.Anything,
+		bootstrapID,
+		[]smqSDK.BootstrapBindingRequest{
+			{
+				Slot:       "mqtt_client",
+				Type:       "client",
+				ResourceID: clientID,
+			},
+			{
+				Slot:       "control",
+				Type:       "channel",
+				ResourceID: channelID,
+			},
+		},
+		domainID,
+		validToken,
+	).Return(nil)
 
 	issueCertCall := mgsdk.On(
 		"IssueCert",
@@ -397,8 +438,9 @@ func TestProvisionUsesBootstrapEnrollmentID(t *testing.T) {
 	clientCall.Unset()
 	createChannelCall.Unset()
 	channelCall.Unset()
-	addBootstrapCall.Unset()
+	_ = addBootstrapCall
 	viewBootstrapCall.Unset()
+	bindBootstrapResourcesCall.Unset()
 	issueCertCall.Unset()
 	viewCertCall.Unset()
 	updateBootstrapCertsCall.Unset()

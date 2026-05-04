@@ -11,15 +11,16 @@ import (
 const maxLimitSize = 100
 
 type addReq struct {
-	token       string
-	ClientID    string `json:"client_id"`
-	ExternalID  string `json:"external_id"`
-	ExternalKey string `json:"external_key"`
-	Name        string `json:"name"`
-	Content     string `json:"content"`
-	ClientCert  string `json:"client_cert"`
-	ClientKey   string `json:"client_key"`
-	CACert      string `json:"ca_cert"`
+	token         string
+	ExternalID    string         `json:"external_id"`
+	ExternalKey   string         `json:"external_key"`
+	Name          string         `json:"name"`
+	Content       string         `json:"content"`
+	ClientCert    string         `json:"client_cert"`
+	ClientKey     string         `json:"client_key"`
+	CACert        string         `json:"ca_cert"`
+	ProfileID     string         `json:"profile_id"`
+	RenderContext map[string]any `json:"render_context"`
 }
 
 func (req addReq) validate() error {
@@ -140,6 +141,17 @@ func (req createProfileReq) validate() error {
 	return nil
 }
 
+type uploadProfileReq struct {
+	bootstrap.Profile
+}
+
+func (req uploadProfileReq) validate() error {
+	if req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
 type viewProfileReq struct {
 	profileID string
 }
@@ -158,6 +170,20 @@ type updateProfileReq struct {
 
 func (req updateProfileReq) validate() error {
 	if req.profileID == "" || req.Name == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
+}
+
+type renderPreviewReq struct {
+	profileID     string
+	Config        bootstrap.Config            `json:"config"`
+	RenderContext map[string]any              `json:"render_context,omitempty"`
+	Bindings      []bootstrap.BindingSnapshot `json:"bindings,omitempty"`
+}
+
+func (req renderPreviewReq) validate() error {
+	if req.profileID == "" {
 		return apiutil.ErrMissingID
 	}
 	return nil

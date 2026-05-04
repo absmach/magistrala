@@ -27,14 +27,15 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
-			ClientID:    req.ClientID,
-			ExternalID:  req.ExternalID,
-			ExternalKey: req.ExternalKey,
-			Name:        req.Name,
-			ClientCert:  req.ClientCert,
-			ClientKey:   req.ClientKey,
-			CACert:      req.CACert,
-			Content:     req.Content,
+			ExternalID:    req.ExternalID,
+			ExternalKey:   req.ExternalKey,
+			Name:          req.Name,
+			ClientCert:    req.ClientCert,
+			ClientKey:     req.ClientKey,
+			CACert:        req.CACert,
+			Content:       req.Content,
+			ProfileID:     req.ProfileID,
+			RenderContext: req.RenderContext,
 		}
 
 		saved, err := svc.Add(ctx, session, req.token, config)
@@ -43,7 +44,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      saved.ClientID,
+			id:      saved.ID,
 			created: true,
 		}
 
@@ -69,7 +70,7 @@ func updateCertEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := updateConfigRes{
-			ClientID:   cfg.ClientID,
+			ID:         cfg.ID,
 			ClientCert: cfg.ClientCert,
 			CACert:     cfg.CACert,
 			ClientKey:  cfg.ClientKey,
@@ -97,13 +98,13 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := viewRes{
-			ClientID:     config.ClientID,
-			CLientSecret: config.ClientSecret,
-			ExternalID:   config.ExternalID,
-			ExternalKey:  config.ExternalKey,
-			Name:         config.Name,
-			Content:      config.Content,
-			State:        config.State,
+			ID:            config.ID,
+			ExternalID:    config.ExternalID,
+			Name:          config.Name,
+			Content:       config.Content,
+			Status:        config.Status,
+			ProfileID:     config.ProfileID,
+			RenderContext: config.RenderContext,
 		}
 
 		return res, nil
@@ -123,9 +124,9 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
-			ClientID: req.id,
-			Name:     req.Name,
-			Content:  req.Content,
+			ID:      req.id,
+			Name:    req.Name,
+			Content: req.Content,
 		}
 
 		if err := svc.Update(ctx, session, config); err != nil {
@@ -133,7 +134,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      config.ClientID,
+			id:      config.ID,
 			created: false,
 		}
 
@@ -166,13 +167,13 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 
 		for _, cfg := range page.Configs {
 			view := viewRes{
-				ClientID:     cfg.ClientID,
-				CLientSecret: cfg.ClientSecret,
-				ExternalID:   cfg.ExternalID,
-				ExternalKey:  cfg.ExternalKey,
-				Name:         cfg.Name,
-				Content:      cfg.Content,
-				State:        cfg.State,
+				ID:            cfg.ID,
+				ExternalID:    cfg.ExternalID,
+				Name:          cfg.Name,
+				Content:       cfg.Content,
+				Status:        cfg.Status,
+				ProfileID:     cfg.ProfileID,
+				RenderContext: cfg.RenderContext,
 			}
 			res.Configs = append(res.Configs, view)
 		}
@@ -277,6 +278,24 @@ func createProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	}
 }
 
+func uploadProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(uploadProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		saved, err := svc.CreateProfile(ctx, session, req.Profile)
+		if err != nil {
+			return nil, err
+		}
+		return profileRes{Profile: saved, created: true}, nil
+	}
+}
+
 func viewProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(viewProfileReq)
@@ -292,6 +311,55 @@ func viewProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 		return profileRes{Profile: p}, nil
+	}
+}
+
+func profileSlotsEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(viewProfileReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		p, err := svc.ViewProfile(ctx, session, req.profileID)
+		if err != nil {
+			return nil, err
+		}
+		return profileSlotsRes{BindingSlots: p.BindingSlots}, nil
+	}
+}
+
+func renderPreviewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(renderPreviewReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		p, err := svc.ViewProfile(ctx, session, req.profileID)
+		if err != nil {
+			return nil, err
+		}
+
+		cfg := req.Config
+		cfg.DomainID = session.DomainID
+		cfg.ProfileID = p.ID
+		if cfg.RenderContext == nil {
+			cfg.RenderContext = req.RenderContext
+		}
+
+		rendered, err := bootstrap.NewRenderer().Render(p, cfg, req.Bindings)
+		if err != nil {
+			return nil, err
+		}
+
+		return renderPreviewRes{Content: string(rendered)}, nil
 	}
 }
 

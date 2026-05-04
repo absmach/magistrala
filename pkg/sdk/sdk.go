@@ -1619,11 +1619,20 @@ type SDK interface {
 	// AddBootstrap add bootstrap configuration
 	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, smqerrors.SDKError)
 
+	// CreateBootstrapProfile creates a bootstrap profile template.
+	CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
+
 	// ViewBootstrap returns Client Config with given ID belonging to the user identified by the given token.
 	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
 
+	// ViewBootstrapProfile returns bootstrap profile with the given ID.
+	ViewBootstrapProfile(ctx context.Context, id, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
+
 	// UpdateBootstrap updates editable fields of the provided Config.
 	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) smqerrors.SDKError
+
+	// UpdateBootstrapProfile updates editable fields of the provided bootstrap profile.
+	UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) smqerrors.SDKError
 
 	// UpdateBootstrapCerts updates bootstrap config certificates.
 	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
@@ -1634,6 +1643,9 @@ type SDK interface {
 	// RemoveBootstrap removes Config with specified token that belongs to the user identified by the given token.
 	RemoveBootstrap(ctx context.Context, id, domainID, token string) smqerrors.SDKError
 
+	// RemoveBootstrapProfile removes a bootstrap profile with the given ID.
+	RemoveBootstrapProfile(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+
 	// Bootstrap returns Config to the Client with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, smqerrors.SDKError)
 
@@ -1643,8 +1655,23 @@ type SDK interface {
 	// Bootstraps retrieves a list of managed configs.
 	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, smqerrors.SDKError)
 
-	// Whitelist updates Client state Config with given ID belonging to the user identified by the given token.
-	Whitelist(ctx context.Context, clientID string, state int, domainID, token string) smqerrors.SDKError
+	// BootstrapProfiles retrieves a list of bootstrap profiles.
+	BootstrapProfiles(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapProfilesPage, smqerrors.SDKError)
+
+	// Whitelist updates Client bootstrap status with given ID belonging to the user identified by the given token.
+	Whitelist(ctx context.Context, clientID string, status BootstrapStatus, domainID, token string) smqerrors.SDKError
+
+	// AssignBootstrapProfile assigns a bootstrap profile to the given enrollment.
+	AssignBootstrapProfile(ctx context.Context, configID, profileID, domainID, token string) smqerrors.SDKError
+
+	// BindBootstrapResources stores resolved binding snapshots for the given enrollment.
+	BindBootstrapResources(ctx context.Context, configID string, bindings []BootstrapBindingRequest, domainID, token string) smqerrors.SDKError
+
+	// BootstrapBindings lists stored binding snapshots for the given enrollment.
+	BootstrapBindings(ctx context.Context, configID, domainID, token string) ([]BootstrapBindingSnapshot, smqerrors.SDKError)
+
+	// RefreshBootstrapBindings refreshes stored binding snapshots for the given enrollment.
+	RefreshBootstrapBindings(ctx context.Context, configID, domainID, token string) smqerrors.SDKError
 
 	// ReadMessages reads messages of specified channel.
 	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, smqerrors.SDKError)

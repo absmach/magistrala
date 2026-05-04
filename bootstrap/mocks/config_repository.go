@@ -42,38 +42,38 @@ func (_m *ConfigRepository) EXPECT() *ConfigRepository_Expecter {
 	return &ConfigRepository_Expecter{mock: &_m.Mock}
 }
 
-// ChangeState provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) ChangeState(ctx context.Context, domainID string, id string, state bootstrap.State) error {
-	ret := _mock.Called(ctx, domainID, id, state)
+// AssignProfile provides a mock function for the type ConfigRepository
+func (_mock *ConfigRepository) AssignProfile(ctx context.Context, domainID string, id string, profileID string) error {
+	ret := _mock.Called(ctx, domainID, id, profileID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ChangeState")
+		panic("no return value specified for AssignProfile")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.State) error); ok {
-		r0 = returnFunc(ctx, domainID, id, state)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+		r0 = returnFunc(ctx, domainID, id, profileID)
 	} else {
 		r0 = ret.Error(0)
 	}
 	return r0
 }
 
-// ConfigRepository_ChangeState_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ChangeState'
-type ConfigRepository_ChangeState_Call struct {
+// ConfigRepository_AssignProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssignProfile'
+type ConfigRepository_AssignProfile_Call struct {
 	*mock.Call
 }
 
-// ChangeState is a helper method to define mock.On call
+// AssignProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - domainID string
 //   - id string
-//   - state bootstrap.State
-func (_e *ConfigRepository_Expecter) ChangeState(ctx interface{}, domainID interface{}, id interface{}, state interface{}) *ConfigRepository_ChangeState_Call {
-	return &ConfigRepository_ChangeState_Call{Call: _e.mock.On("ChangeState", ctx, domainID, id, state)}
+//   - profileID string
+func (_e *ConfigRepository_Expecter) AssignProfile(ctx interface{}, domainID interface{}, id interface{}, profileID interface{}) *ConfigRepository_AssignProfile_Call {
+	return &ConfigRepository_AssignProfile_Call{Call: _e.mock.On("AssignProfile", ctx, domainID, id, profileID)}
 }
 
-func (_c *ConfigRepository_ChangeState_Call) Run(run func(ctx context.Context, domainID string, id string, state bootstrap.State)) *ConfigRepository_ChangeState_Call {
+func (_c *ConfigRepository_AssignProfile_Call) Run(run func(ctx context.Context, domainID string, id string, profileID string)) *ConfigRepository_AssignProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -87,9 +87,9 @@ func (_c *ConfigRepository_ChangeState_Call) Run(run func(ctx context.Context, d
 		if args[2] != nil {
 			arg2 = args[2].(string)
 		}
-		var arg3 bootstrap.State
+		var arg3 string
 		if args[3] != nil {
-			arg3 = args[3].(bootstrap.State)
+			arg3 = args[3].(string)
 		}
 		run(
 			arg0,
@@ -101,12 +101,81 @@ func (_c *ConfigRepository_ChangeState_Call) Run(run func(ctx context.Context, d
 	return _c
 }
 
-func (_c *ConfigRepository_ChangeState_Call) Return(err error) *ConfigRepository_ChangeState_Call {
+func (_c *ConfigRepository_AssignProfile_Call) Return(err error) *ConfigRepository_AssignProfile_Call {
 	_c.Call.Return(err)
 	return _c
 }
 
-func (_c *ConfigRepository_ChangeState_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, state bootstrap.State) error) *ConfigRepository_ChangeState_Call {
+func (_c *ConfigRepository_AssignProfile_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, profileID string) error) *ConfigRepository_AssignProfile_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ChangeStatus provides a mock function for the type ConfigRepository
+func (_mock *ConfigRepository) ChangeStatus(ctx context.Context, domainID string, id string, status bootstrap.Status) error {
+	ret := _mock.Called(ctx, domainID, id, status)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ChangeStatus")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bootstrap.Status) error); ok {
+		r0 = returnFunc(ctx, domainID, id, status)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// ConfigRepository_ChangeStatus_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ChangeStatus'
+type ConfigRepository_ChangeStatus_Call struct {
+	*mock.Call
+}
+
+// ChangeStatus is a helper method to define mock.On call
+//   - ctx context.Context
+//   - domainID string
+//   - id string
+//   - status bootstrap.Status
+func (_e *ConfigRepository_Expecter) ChangeStatus(ctx interface{}, domainID interface{}, id interface{}, status interface{}) *ConfigRepository_ChangeStatus_Call {
+	return &ConfigRepository_ChangeStatus_Call{Call: _e.mock.On("ChangeStatus", ctx, domainID, id, status)}
+}
+
+func (_c *ConfigRepository_ChangeStatus_Call) Run(run func(ctx context.Context, domainID string, id string, status bootstrap.Status)) *ConfigRepository_ChangeStatus_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 bootstrap.Status
+		if args[3] != nil {
+			arg3 = args[3].(bootstrap.Status)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *ConfigRepository_ChangeStatus_Call) Return(err error) *ConfigRepository_ChangeStatus_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *ConfigRepository_ChangeStatus_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, status bootstrap.Status) error) *ConfigRepository_ChangeStatus_Call {
 	_c.Call.Return(run)
 	return _c
 }

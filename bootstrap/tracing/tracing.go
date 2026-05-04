@@ -27,12 +27,12 @@ func New(svc bootstrap.Service, tracer trace.Tracer) bootstrap.Service {
 // Add traces the "Add" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Add(ctx context.Context, session smqauthn.Session, token string, cfg bootstrap.Config) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_register_user", trace.WithAttributes(
-		attribute.String("client_id", cfg.ClientID),
+		attribute.String("config_id", cfg.ID),
 		attribute.String("domain_id ", cfg.DomainID),
 		attribute.String("name", cfg.Name),
 		attribute.String("external_id", cfg.ExternalID),
 		attribute.String("content", cfg.Content),
-		attribute.String("state", cfg.State.String()),
+		attribute.String("status", cfg.Status.String()),
 	))
 	defer span.End()
 
@@ -54,7 +54,7 @@ func (tm *tracingMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 	ctx, span := tm.tracer.Start(ctx, "svc_update_user", trace.WithAttributes(
 		attribute.String("name", cfg.Name),
 		attribute.String("content", cfg.Content),
-		attribute.String("client_id", cfg.ClientID),
+		attribute.String("config_id", cfg.ID),
 		attribute.String("domain_id ", cfg.DomainID),
 	))
 	defer span.End()
@@ -96,7 +96,6 @@ func (tm *tracingMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 // Bootstrap traces the "Bootstrap" operation of the wrapped bootstrap.Service.
 func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_bootstrap_user", trace.WithAttributes(
-		attribute.String("external_key", externalKey),
 		attribute.String("external_id", externalID),
 		attribute.Bool("secure", secure),
 	))

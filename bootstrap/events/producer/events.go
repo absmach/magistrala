@@ -42,11 +42,11 @@ type configEvent struct {
 
 func (ce configEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
-		"state":     ce.State.String(),
+		"status":    ce.Status.String(),
 		"operation": ce.operation,
 	}
-	if ce.ClientID != "" {
-		val["client_id"] = ce.ClientID
+	if ce.ID != "" {
+		val["config_id"] = ce.ID
 	}
 	if ce.Content != "" {
 		val["content"] = ce.Content
@@ -77,12 +77,12 @@ func (ce configEvent) Encode() (map[string]any, error) {
 }
 
 type removeConfigEvent struct {
-	client string
+	config string
 }
 
 func (rce removeConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id": rce.client,
+		"config_id": rce.config,
 		"operation": configRemove,
 	}, nil
 }
@@ -123,8 +123,8 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 		"operation":   clientBootstrap,
 	}
 
-	if be.ClientID != "" {
-		val["client_id"] = be.ClientID
+	if be.ID != "" {
+		val["config_id"] = be.ID
 	}
 	if be.Content != "" {
 		val["content"] = be.Content
@@ -154,29 +154,29 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 }
 
 type enableConfigEvent struct {
-	clientID string
+	configID string
 }
 
 func (e enableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id": e.clientID,
+		"config_id": e.configID,
 		"operation": clientEnable,
 	}, nil
 }
 
 type disableConfigEvent struct {
-	clientID string
+	configID string
 }
 
 func (e disableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id": e.clientID,
+		"config_id": e.configID,
 		"operation": clientDisable,
 	}, nil
 }
 
 type updateCertEvent struct {
-	clientID   string
+	configID   string
 	clientCert string
 	clientKey  string
 	caCert     string
@@ -184,7 +184,7 @@ type updateCertEvent struct {
 
 func (uce updateCertEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"client_id":   uce.clientID,
+		"config_id":   uce.configID,
 		"client_cert": uce.clientCert,
 		"client_key":  uce.clientKey,
 		"ca_cert":     uce.caCert,
@@ -203,4 +203,3 @@ func (rhe removeHandlerEvent) Encode() (map[string]any, error) {
 		"operation": rhe.operation,
 	}, nil
 }
-

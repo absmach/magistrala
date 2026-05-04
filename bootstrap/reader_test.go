@@ -18,12 +18,11 @@ import (
 )
 
 type readResp struct {
-	ClientID     string `json:"client_id"`
-	ClientSecret string `json:"client_secret"`
-	Content      string `json:"content,omitempty"`
-	ClientCert   string `json:"client_cert,omitempty"`
-	ClientKey    string `json:"client_key,omitempty"`
-	CACert       string `json:"ca_cert,omitempty"`
+	ID         string `json:"id"`
+	Content    string `json:"content,omitempty"`
+	ClientCert string `json:"client_cert,omitempty"`
+	ClientKey  string `json:"client_key,omitempty"`
+	CACert     string `json:"ca_cert,omitempty"`
 }
 
 func dec(in []byte) ([]byte, error) {
@@ -43,20 +42,18 @@ func dec(in []byte) ([]byte, error) {
 
 func TestReadConfig(t *testing.T) {
 	cfg := bootstrap.Config{
-		ClientID:     "smq_id",
-		ClientCert:   "client_cert",
-		ClientKey:    "client_key",
-		CACert:       "ca_cert",
-		ClientSecret: "smq_key",
-		Content:      "content",
+		ID:         "smq_id",
+		ClientCert: "client_cert",
+		ClientKey:  "client_key",
+		CACert:     "ca_cert",
+		Content:    "content",
 	}
 	ret := readResp{
-		ClientID:     "smq_id",
-		ClientSecret: "smq_key",
-		Content:      "content",
-		ClientCert:   "client_cert",
-		ClientKey:    "client_key",
-		CACert:       "ca_cert",
+		ID:         "smq_id",
+		Content:    "content",
+		ClientCert: "client_cert",
+		ClientKey:  "client_key",
+		CACert:     "ca_cert",
 	}
 
 	bin, err := json.Marshal(ret)

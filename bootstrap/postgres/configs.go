@@ -6,6 +6,7 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -33,10 +34,13 @@ func NewConfigRepository(db postgres.Database, log *slog.Logger) bootstrap.Confi
 }
 
 func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config) (string, error) {
-	q := `INSERT INTO configs (client_id, domain_id, name, client_cert, client_key, ca_cert, client_secret, external_id, external_key, content, state)
-	VALUES (:client_id, :domain_id, :name, :client_cert, :client_key, :ca_cert, :client_secret, :external_id, :external_key, :content, :state)`
+	q := `INSERT INTO configs (id, domain_id, name, client_cert, client_key, ca_cert, external_id, external_key, content, status, profile_id, render_context)
+	VALUES (:id, :domain_id, :name, :client_cert, :client_key, :ca_cert, :external_id, :external_key, :content, :status, :profile_id, :render_context)`
 
-	dbcfg := toDBConfig(cfg)
+	dbcfg, err := toDBConfig(cfg)
+	if err != nil {
+		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
+	}
 	if _, err := cr.db.NamedExecContext(ctx, q, dbcfg); err != nil {
 		switch pgErr := err.(type) {
 		case *pgconn.PgError:
@@ -47,16 +51,16 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config) (stri
 		return "", errors.Wrap(repoerr.ErrCreateEntity, err)
 	}
 
-	return cfg.ClientID, nil
+	return cfg.ID, nil
 }
 
 func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Config, error) {
-	q := `SELECT client_id, client_secret, external_id, external_key, name, content, state, client_cert, ca_cert
+	q := `SELECT id, external_id, name, content, status, client_cert, client_key, ca_cert, profile_id, render_context
 		  FROM configs
-		  WHERE client_id = :client_id AND domain_id = :domain_id`
+		  WHERE id = :id AND domain_id = :domain_id`
 
 	dbcfg := dbConfig{
-		ClientID: id,
+		ID:       id,
 		DomainID: domainID,
 	}
 	row, err := cr.db.NamedQueryContext(ctx, q, dbcfg)
@@ -79,8 +83,8 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 	search, params := buildRetrieveQueryParams(domainID, clientIDs, filter)
 	n := len(params)
 
-	q := `SELECT client_id, client_secret, external_id, external_key, name, content, state
-		  FROM configs %s ORDER BY client_id LIMIT $%d OFFSET $%d`
+	q := `SELECT id, external_id, name, content, status, profile_id, render_context
+		  FROM configs %s ORDER BY id LIMIT $%d OFFSET $%d`
 	q = fmt.Sprintf(q, search, n+1, n+2)
 
 	rows, err := cr.db.QueryContext(ctx, q, append(params, limit, offset)...)
@@ -90,18 +94,28 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 	}
 	defer rows.Close()
 
-	var name, content sql.NullString
+	var name, content, profileID sql.NullString
+	var renderContext []byte
 	configs := []bootstrap.Config{}
 
 	for rows.Next() {
 		c := bootstrap.Config{DomainID: domainID}
-		if err := rows.Scan(&c.ClientID, &c.ClientSecret, &c.ExternalID, &c.ExternalKey, &name, &content, &c.State); err != nil {
+		if err := rows.Scan(&c.ID, &c.ExternalID, &name, &content, &c.Status, &profileID, &renderContext); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return bootstrap.ConfigsPage{}
 		}
 
 		c.Name = name.String
 		c.Content = content.String
+		if profileID.Valid {
+			c.ProfileID = profileID.String
+		}
+		if len(renderContext) > 0 && string(renderContext) != "null" {
+			if err := json.Unmarshal(renderContext, &c.RenderContext); err != nil {
+				cr.log.Error(fmt.Sprintf("Failed to decode render context due to %s", err))
+				return bootstrap.ConfigsPage{}
+			}
+		}
 		configs = append(configs, c)
 	}
 
@@ -122,7 +136,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, cli
 }
 
 func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID string) (bootstrap.Config, error) {
-	q := `SELECT client_id, client_secret, external_key, domain_id, name, client_cert, client_key, ca_cert, content, state
+	q := `SELECT id, external_key, domain_id, name, client_cert, client_key, ca_cert, content, status, profile_id, render_context
 		  FROM configs
 		  WHERE external_id = :external_id`
 	dbcfg := dbConfig{
@@ -146,12 +160,12 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
-	q := `UPDATE configs SET name = :name, content = :content WHERE client_id = :client_id AND domain_id = :domain_id `
+	q := `UPDATE configs SET name = :name, content = :content WHERE id = :id AND domain_id = :domain_id `
 
 	dbcfg := dbConfig{
 		Name:     nullString(cfg.Name),
 		Content:  nullString(cfg.Content),
-		ClientID: cfg.ClientID,
+		ID:       cfg.ID,
 		DomainID: cfg.DomainID,
 	}
 
@@ -172,12 +186,38 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 	return nil
 }
 
-func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE client_id = :client_id AND domain_id = :domain_id
-	RETURNING client_id, client_cert, client_key, ca_cert, domain_id`
+func (cr configRepository) AssignProfile(ctx context.Context, domainID, id, profileID string) error {
+	q := `UPDATE configs SET profile_id = :profile_id WHERE id = :id AND domain_id = :domain_id`
 
 	dbcfg := dbConfig{
-		ClientID:   clientID,
+		ID:        id,
+		DomainID:  domainID,
+		ProfileID: nullString(profileID),
+	}
+
+	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	cnt, err := res.RowsAffected()
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
+
+	if cnt == 0 {
+		return repoerr.ErrNotFound
+	}
+
+	return nil
+}
+
+func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE id = :id AND domain_id = :domain_id
+	RETURNING id, client_cert, client_key, ca_cert, domain_id`
+
+	dbcfg := dbConfig{
+		ID:         clientID,
 		ClientCert: nullString(clientCert),
 		DomainID:   domainID,
 		ClientKey:  nullString(clientKey),
@@ -202,9 +242,9 @@ func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, c
 }
 
 func (cr configRepository) Remove(ctx context.Context, domainID, id string) error {
-	q := `DELETE FROM configs WHERE client_id = :client_id AND domain_id = :domain_id`
+	q := `DELETE FROM configs WHERE id = :id AND domain_id = :domain_id`
 	dbcfg := dbConfig{
-		ClientID: id,
+		ID:       id,
 		DomainID: domainID,
 	}
 
@@ -215,12 +255,12 @@ func (cr configRepository) Remove(ctx context.Context, domainID, id string) erro
 	return nil
 }
 
-func (cr configRepository) ChangeState(ctx context.Context, domainID, id string, state bootstrap.State) error {
-	q := `UPDATE configs SET state = :state WHERE client_id = :client_id AND domain_id = :domain_id;`
+func (cr configRepository) ChangeStatus(ctx context.Context, domainID, id string, status bootstrap.Status) error {
+	q := `UPDATE configs SET status = :status WHERE id = :id AND domain_id = :domain_id;`
 
 	dbcfg := dbConfig{
-		ClientID: id,
-		State:    state,
+		ID:       id,
+		Status:   status,
 		DomainID: domainID,
 	}
 
@@ -242,7 +282,7 @@ func (cr configRepository) ChangeState(ctx context.Context, domainID, id string,
 }
 
 func (cr configRepository) RemoveClient(ctx context.Context, id string) error {
-	q := `DELETE FROM configs WHERE client_id = $1`
+	q := `DELETE FROM configs WHERE id = $1`
 	_, err := cr.db.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
@@ -260,7 +300,7 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 			return "", nil
 		}
 		params = append(params, arr)
-		queries = append(queries, fmt.Sprintf("client_id = ANY($%d)", len(params)))
+		queries = append(queries, fmt.Sprintf("id = ANY($%d)", len(params)))
 	} else if domainID != "" {
 		params = append(params, domainID)
 		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
@@ -268,6 +308,16 @@ func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootst
 
 	counter := len(params) + 1
 	for k, v := range filter.FullMatch {
+		if k == "status" {
+			status, err := bootstrap.ToStatus(v)
+			if err != nil {
+				return "", nil
+			}
+			params = append(params, status)
+			queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
+			counter++
+			continue
+		}
 		params = append(params, v)
 		queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 		counter++
@@ -292,43 +342,52 @@ func nullString(s string) sql.NullString {
 }
 
 type dbConfig struct {
-	DomainID     string          `db:"domain_id"`
-	ClientID     string          `db:"client_id"`
-	ClientSecret string          `db:"client_secret"`
-	Name         sql.NullString  `db:"name"`
-	ClientCert   sql.NullString  `db:"client_cert"`
-	ClientKey    sql.NullString  `db:"client_key"`
-	CaCert       sql.NullString  `db:"ca_cert"`
-	ExternalID   string          `db:"external_id"`
-	ExternalKey  string          `db:"external_key"`
-	Content      sql.NullString  `db:"content"`
-	State        bootstrap.State `db:"state"`
+	DomainID      string           `db:"domain_id"`
+	ID            string           `db:"id"`
+	Name          sql.NullString   `db:"name"`
+	ClientCert    sql.NullString   `db:"client_cert"`
+	ClientKey     sql.NullString   `db:"client_key"`
+	CaCert        sql.NullString   `db:"ca_cert"`
+	ExternalID    string           `db:"external_id"`
+	ExternalKey   string           `db:"external_key"`
+	Content       sql.NullString   `db:"content"`
+	Status        bootstrap.Status `db:"status"`
+	ProfileID     sql.NullString   `db:"profile_id"`
+	RenderContext []byte           `db:"render_context"`
 }
 
-func toDBConfig(cfg bootstrap.Config) dbConfig {
-	return dbConfig{
-		ClientID:     cfg.ClientID,
-		ClientSecret: cfg.ClientSecret,
-		DomainID:     cfg.DomainID,
-		Name:         nullString(cfg.Name),
-		ClientCert:   nullString(cfg.ClientCert),
-		ClientKey:    nullString(cfg.ClientKey),
-		CaCert:       nullString(cfg.CACert),
-		ExternalID:   cfg.ExternalID,
-		ExternalKey:  cfg.ExternalKey,
-		Content:      nullString(cfg.Content),
-		State:        cfg.State,
+func toDBConfig(cfg bootstrap.Config) (dbConfig, error) {
+	renderContext, err := json.Marshal(cfg.RenderContext)
+	if err != nil {
+		return dbConfig{}, err
 	}
+
+	return dbConfig{
+		ID:            cfg.ID,
+		DomainID:      cfg.DomainID,
+		Name:          nullString(cfg.Name),
+		ClientCert:    nullString(cfg.ClientCert),
+		ClientKey:     nullString(cfg.ClientKey),
+		CaCert:        nullString(cfg.CACert),
+		ExternalID:    cfg.ExternalID,
+		ExternalKey:   cfg.ExternalKey,
+		Content:       nullString(cfg.Content),
+		Status:        cfg.Status,
+		ProfileID:     nullString(cfg.ProfileID),
+		RenderContext: renderContext,
+	}, nil
 }
 
 func toConfig(dbcfg dbConfig) bootstrap.Config {
 	cfg := bootstrap.Config{
-		ClientID:     dbcfg.ClientID,
-		ClientSecret: dbcfg.ClientSecret,
-		DomainID:     dbcfg.DomainID,
-		ExternalID:   dbcfg.ExternalID,
-		ExternalKey:  dbcfg.ExternalKey,
-		State:        dbcfg.State,
+		ID:          dbcfg.ID,
+		DomainID:    dbcfg.DomainID,
+		ExternalID:  dbcfg.ExternalID,
+		ExternalKey: dbcfg.ExternalKey,
+		Status:      dbcfg.Status,
+	}
+	if dbcfg.ProfileID.Valid {
+		cfg.ProfileID = dbcfg.ProfileID.String
 	}
 
 	if dbcfg.Name.Valid {
@@ -336,6 +395,9 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 	}
 	if dbcfg.Content.Valid {
 		cfg.Content = dbcfg.Content.String
+	}
+	if len(dbcfg.RenderContext) > 0 && string(dbcfg.RenderContext) != "null" {
+		_ = json.Unmarshal(dbcfg.RenderContext, &cfg.RenderContext)
 	}
 	if dbcfg.ClientCert.Valid {
 		cfg.ClientCert = dbcfg.ClientCert.String

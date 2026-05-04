@@ -18,10 +18,6 @@ import (
 )
 
 var (
-	// ErrClients indicates failure to communicate with Magistrala Clients service.
-	// It can be due to networking error or invalid/unauthenticated request.
-	ErrClients = errors.New("failed to receive response from Clients service")
-
 	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key.
 	ErrExternalKey = errors.NewAuthZError("failed to get bootstrap configuration for given external key")
 
@@ -34,26 +30,25 @@ var (
 	// ErrAddBootstrap indicates error in adding bootstrap configuration.
 	ErrAddBootstrap = errors.NewServiceError("failed to add bootstrap configuration")
 
-	// ErrBootstrapState indicates an invalid bootstrap state.
-	ErrBootstrapState = errors.NewRequestError("invalid bootstrap state")
+	// ErrBootstrapStatus indicates an invalid bootstrap status.
+	ErrBootstrapStatus = errors.NewRequestError("invalid bootstrap status")
 
 	errRemoveBootstrap = errors.New("failed to remove bootstrap configuration")
-	errEnableConfig  = errors.New("failed to enable bootstrap configuration")
-	errDisableConfig = errors.New("failed to disable bootstrap configuration")
+	errEnableConfig    = errors.New("failed to enable bootstrap configuration")
+	errDisableConfig   = errors.New("failed to disable bootstrap configuration")
 	errRemoveConfig    = errors.New("failed to remove bootstrap configuration")
-	errCreateClient    = errors.New("failed to create client")
-	errClientNotFound  = errors.New("failed to find client")
 	errUpdateCert      = errors.New("failed to update cert")
 
-	errCreateProfile  = errors.New("failed to create profile")
-	errViewProfile    = errors.New("failed to view profile")
-	errUpdateProfile  = errors.New("failed to update profile")
-	errDeleteProfile  = errors.New("failed to delete profile")
-	errListProfiles   = errors.New("failed to list profiles")
-	errAssignProfile  = errors.New("failed to assign profile to enrollment")
-	errBindResources  = errors.New("failed to bind resources")
-	errListBindings   = errors.New("failed to list bindings")
-	errRefreshBinding = errors.New("failed to refresh bindings")
+	errCreateProfile   = errors.New("failed to create profile")
+	errViewProfile     = errors.New("failed to view profile")
+	errUpdateProfile   = errors.New("failed to update profile")
+	errDeleteProfile   = errors.New("failed to delete profile")
+	errListProfiles    = errors.New("failed to list profiles")
+	errAssignProfile   = errors.New("failed to assign profile to enrollment")
+	errBindResources   = errors.New("failed to bind resources")
+	errListBindings    = errors.New("failed to list bindings")
+	errRefreshBinding  = errors.New("failed to refresh bindings")
+	errRenderBootstrap = errors.New("failed to render bootstrap configuration")
 )
 
 var _ Service = (*bootstrapService)(nil)
@@ -84,10 +79,10 @@ type Service interface {
 	// Bootstrap returns Config to the Client with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
 
-	// EnableConfig activates the Config so its device can successfully bootstrap.
+	// EnableConfig enables the Config so its device can successfully bootstrap.
 	EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
 
-	// DisableConfig deactivates the Config, preventing its device from bootstrapping.
+	// DisableConfig disables the Config, preventing its device from bootstrapping.
 	DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
 
 	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
@@ -142,15 +137,17 @@ type bootstrapService struct {
 	bindings   BindingStore
 	resolver   BindingResolver
 	renderer   Renderer
+	hasher     Hasher
 	sdk        mgsdk.SDK
 	encKey     []byte
 	idProvider magistrala.IDProvider
 }
 
 // New returns new Bootstrap service.
-func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, encKey []byte, idp magistrala.IDProvider) Service {
+func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, hasher Hasher, encKey []byte, idp magistrala.IDProvider) Service {
 	return &bootstrapService{
 		configs:    configs,
+		hasher:     hasher,
 		sdk:        sdk,
 		policies:   policyService,
 		encKey:     encKey,
@@ -167,6 +164,7 @@ func NewWithProfiles(
 	resolver BindingResolver,
 	renderer Renderer,
 	sdk mgsdk.SDK,
+	hasher Hasher,
 	encKey []byte,
 	idp magistrala.IDProvider,
 ) Service {
@@ -176,6 +174,7 @@ func NewWithProfiles(
 		bindings:   bindings,
 		resolver:   resolver,
 		renderer:   renderer,
+		hasher:     hasher,
 		sdk:        sdk,
 		policies:   policyService,
 		encKey:     encKey,
@@ -184,28 +183,27 @@ func NewWithProfiles(
 }
 
 func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, token string, cfg Config) (Config, error) {
-	id := cfg.ClientID
-	mgClient, err := bs.client(ctx, session.DomainID, id, token)
+	id, err := bs.idProvider.ID()
 	if err != nil {
-		return Config{}, propagateSDKErr(errClientNotFound, err)
-	}
-
-	cfg.ClientID = mgClient.ID
-	cfg.DomainID = session.DomainID
-	cfg.ClientSecret = mgClient.Credentials.Secret
-	cfg.State = Inactive
-
-	saved, err := bs.configs.Save(ctx, cfg)
-	if err != nil {
-		if id == "" {
-			if errT := bs.sdk.DeleteClient(ctx, cfg.ClientID, cfg.DomainID, token); errT != nil {
-				err = errors.Wrap(err, errT)
-			}
-		}
 		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
 
-	cfg.ClientID = saved
+	hashedKey, err := bs.hasher.Hash(cfg.ExternalKey)
+	if err != nil {
+		return Config{}, errors.Wrap(ErrAddBootstrap, err)
+	}
+
+	cfg.ID = id
+	cfg.DomainID = session.DomainID
+	cfg.Status = DisabledStatus
+	cfg.ExternalKey = hashedKey
+
+	saved, err := bs.configs.Save(ctx, cfg)
+	if err != nil {
+		return Config{}, errors.Wrap(ErrAddBootstrap, err)
+	}
+
+	cfg.ID = saved
 	return cfg, nil
 }
 
@@ -233,41 +231,8 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Sess
 	return cfg, nil
 }
 
-
-func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
-	tids, err := bs.policies.ListAllObjects(ctx, policies.Policy{
-		SubjectType: policies.UserType,
-		Subject:     userID,
-		Permission:  policies.ViewPermission,
-		ObjectType:  policies.ClientType,
-	})
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-	return tids.Policies, nil
-}
-
 func (bs bootstrapService) List(ctx context.Context, session smqauthn.Session, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	if session.SuperAdmin {
-		return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
-	}
-
-	// Handle non-admin users
-	clientIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
-	if err != nil {
-		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-
-	if len(clientIDs) == 0 {
-		return ConfigsPage{
-			Total:   0,
-			Offset:  offset,
-			Limit:   limit,
-			Configs: []Config{},
-		}, nil
-	}
-
-	return bs.configs.RetrieveAll(ctx, session.DomainID, clientIDs, filter, offset, limit), nil
+	return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, session smqauthn.Session, id string) error {
@@ -289,18 +254,58 @@ func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalI
 		}
 		externalKey = dec
 	}
-	if cfg.ExternalKey != externalKey {
+
+	if err := bs.hasher.Compare(externalKey, cfg.ExternalKey); err != nil {
 		return Config{}, ErrExternalKey
 	}
-	if cfg.State == Inactive {
+	if cfg.Status == DisabledStatus {
 		return Config{}, ErrBootstrap
+	}
+
+	cfg, err = bs.renderBootstrapConfig(ctx, cfg)
+	if err != nil {
+		return Config{}, errors.Wrap(ErrBootstrap, err)
 	}
 
 	return cfg, nil
 }
 
+func (bs bootstrapService) renderBootstrapConfig(ctx context.Context, cfg Config) (Config, error) {
+	if cfg.ProfileID == "" {
+		return cfg, nil
+	}
+	if bs.profiles == nil || bs.bindings == nil || bs.renderer == nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, errors.New("profile rendering support not configured"))
+	}
+
+	profile, err := bs.profiles.RetrieveByID(ctx, cfg.DomainID, cfg.ProfileID)
+	if err != nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, err)
+	}
+
+	bindings, err := bs.bindings.Retrieve(ctx, cfg.ID)
+	if err != nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, err)
+	}
+	if err := validateRequiredBindings(profile, bindings); err != nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, err)
+	}
+	bindings, err = bs.decryptSecretSnapshots(bindings)
+	if err != nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, err)
+	}
+
+	rendered, err := bs.renderer.Render(profile, cfg, bindings)
+	if err != nil {
+		return Config{}, errors.Wrap(errRenderBootstrap, err)
+	}
+
+	cfg.Content = string(rendered)
+	return cfg, nil
+}
+
 func (bs bootstrapService) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
-	cfg, err := bs.changeConfigState(ctx, session.DomainID, id, Active)
+	cfg, err := bs.changeConfigStatus(ctx, session.DomainID, id, EnabledStatus)
 	if err != nil {
 		return Config{}, errors.Wrap(errEnableConfig, err)
 	}
@@ -308,25 +313,25 @@ func (bs bootstrapService) EnableConfig(ctx context.Context, session smqauthn.Se
 }
 
 func (bs bootstrapService) DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error) {
-	cfg, err := bs.changeConfigState(ctx, session.DomainID, id, Inactive)
+	cfg, err := bs.changeConfigStatus(ctx, session.DomainID, id, DisabledStatus)
 	if err != nil {
 		return Config{}, errors.Wrap(errDisableConfig, err)
 	}
 	return cfg, nil
 }
 
-func (bs bootstrapService) changeConfigState(ctx context.Context, domainID, id string, state State) (Config, error) {
+func (bs bootstrapService) changeConfigStatus(ctx context.Context, domainID, id string, status Status) (Config, error) {
 	cfg, err := bs.configs.RetrieveByID(ctx, domainID, id)
 	if err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
-	if cfg.State == state {
+	if cfg.Status == status {
 		return Config{}, svcerr.ErrStatusAlreadyAssigned
 	}
-	if err := bs.configs.ChangeState(ctx, domainID, id, state); err != nil {
+	if err := bs.configs.ChangeStatus(ctx, domainID, id, status); err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
 	}
-	cfg.State = state
+	cfg.Status = status
 	return cfg, nil
 }
 
@@ -335,35 +340,6 @@ func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) e
 		return errors.Wrap(errRemoveConfig, err)
 	}
 	return nil
-}
-
-// Method client retrieves Magistrala Client creating one if an empty ID is passed.
-func (bs bootstrapService) client(ctx context.Context, domainID, id, token string) (mgsdk.Client, error) {
-	// If Client ID is not provided, then create new client.
-	if id == "" {
-		id, err := bs.idProvider.ID()
-		if err != nil {
-			return mgsdk.Client{}, errors.Wrap(errCreateClient, err)
-		}
-		client, sdkErr := bs.sdk.CreateClient(ctx, mgsdk.Client{ID: id, Name: "Bootstrapped Client " + id}, domainID, token)
-		if sdkErr != nil {
-			return mgsdk.Client{}, propagateSDKErr(errCreateClient, sdkErr)
-		}
-		return client, nil
-	}
-	// If Client ID is provided, then retrieve client
-	client, sdkErr := bs.sdk.Client(ctx, id, domainID, token)
-	if sdkErr != nil {
-		return mgsdk.Client{}, propagateSDKErr(ErrClients, sdkErr)
-	}
-	return client, nil
-}
-
-func propagateSDKErr(fallback, err error) error {
-	if sdkErr, ok := err.(errors.SDKError); ok {
-		return sdkErr
-	}
-	return errors.Wrap(fallback, err)
 }
 
 // --- Profile management ---
@@ -378,8 +354,14 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 	}
 	p.ID = id
 	p.DomainID = session.DomainID
+	if p.TemplateFormat == "" {
+		p.TemplateFormat = TemplateFormatGoTemplate
+	}
 	if p.Version == 0 {
 		p.Version = 1
+	}
+	if err := validateProfileBindingSlots(p); err != nil {
+		return Profile{}, errors.Wrap(errCreateProfile, err)
 	}
 	saved, err := bs.profiles.Save(ctx, p)
 	if err != nil {
@@ -404,6 +386,12 @@ func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.S
 		return errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
 	p.DomainID = session.DomainID
+	if p.TemplateFormat == "" {
+		p.TemplateFormat = TemplateFormatGoTemplate
+	}
+	if err := validateProfileBindingSlots(p); err != nil {
+		return errors.Wrap(errUpdateProfile, err)
+	}
 	if err := bs.profiles.Update(ctx, p); err != nil {
 		return errors.Wrap(errUpdateProfile, err)
 	}
@@ -441,12 +429,7 @@ func (bs bootstrapService) AssignProfile(ctx context.Context, session smqauthn.S
 	if _, err := bs.profiles.RetrieveByID(ctx, session.DomainID, profileID); err != nil {
 		return errors.Wrap(errAssignProfile, err)
 	}
-	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
-	if err != nil {
-		return errors.Wrap(errAssignProfile, err)
-	}
-	cfg.ProfileID = profileID
-	if err := bs.configs.Update(ctx, cfg); err != nil {
+	if err := bs.configs.AssignProfile(ctx, session.DomainID, configID, profileID); err != nil {
 		return errors.Wrap(errAssignProfile, err)
 	}
 	return nil
@@ -462,11 +445,29 @@ func (bs bootstrapService) BindResources(ctx context.Context, session smqauthn.S
 	if err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
+	profile, err := bs.profiles.RetrieveByID(ctx, session.DomainID, cfg.ProfileID)
+	if err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	if err := validateRequestedBindings(profile, requested); err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
 	snapshots, err := bs.resolver.Resolve(ctx, ResolveRequest{
 		Enrollment: cfg,
 		Token:      token,
 		Requested:  requested,
 	})
+	if err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	existing, err := bs.bindings.Retrieve(ctx, configID)
+	if err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	if err := validateRequiredBindings(profile, mergeBindingSnapshots(existing, snapshots)); err != nil {
+		return errors.Wrap(errBindResources, err)
+	}
+	snapshots, err = bs.encryptSecretSnapshots(snapshots)
 	if err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
@@ -484,7 +485,7 @@ func (bs bootstrapService) ListBindings(ctx context.Context, session smqauthn.Se
 	if err != nil {
 		return nil, errors.Wrap(errListBindings, err)
 	}
-	return snapshots, nil
+	return hideSecretSnapshots(snapshots), nil
 }
 
 func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
@@ -492,6 +493,10 @@ func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn
 		return errors.Wrap(errRefreshBinding, errors.New("binding support not configured"))
 	}
 	cfg, err := bs.configs.RetrieveByID(ctx, session.DomainID, configID)
+	if err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
+	profile, err := bs.profiles.RetrieveByID(ctx, session.DomainID, cfg.ProfileID)
 	if err != nil {
 		return errors.Wrap(errRefreshBinding, err)
 	}
@@ -507,6 +512,9 @@ func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn
 	for i, b := range existing {
 		requested[i] = BindingRequest{Slot: b.Slot, Type: b.Type, ResourceID: b.ResourceID}
 	}
+	if err := validateRequestedBindings(profile, requested); err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
 	refreshed, err := bs.resolver.Resolve(ctx, ResolveRequest{
 		Enrollment: cfg,
 		Token:      token,
@@ -515,9 +523,15 @@ func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn
 	if err != nil {
 		return errors.Wrap(errRefreshBinding, err)
 	}
+	if err := validateRequiredBindings(profile, refreshed); err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
+	refreshed, err = bs.encryptSecretSnapshots(refreshed)
+	if err != nil {
+		return errors.Wrap(errRefreshBinding, err)
+	}
 	return bs.bindings.Save(ctx, configID, refreshed)
 }
-
 
 func (bs bootstrapService) dec(in string) (string, error) {
 	ciphertext, err := hex.DecodeString(in)

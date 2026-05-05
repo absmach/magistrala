@@ -36,6 +36,7 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 		  VALUES (:id, :domain_id, :name, :description, :template_format, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
 
 	now := time.Now().UTC()
+	p.Version = 0
 	p.CreatedAt = now
 	p.UpdatedAt = now
 

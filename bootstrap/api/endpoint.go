@@ -142,12 +142,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		res := configRes{
-			ID:      config.ID,
-			created: false,
-		}
-
-		return res, nil
+		return updateRes{}, nil
 	}
 }
 

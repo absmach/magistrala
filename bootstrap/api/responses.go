@@ -33,6 +33,20 @@ func (res removeRes) Empty() bool {
 	return true
 }
 
+type updateRes struct{}
+
+func (res updateRes) Code() int {
+	return http.StatusOK
+}
+
+func (res updateRes) Headers() map[string]string {
+	return map[string]string{}
+}
+
+func (res updateRes) Empty() bool {
+	return true
+}
+
 type configRes struct {
 	ID            string           `json:"id"`
 	ExternalID    string           `json:"external_id"`

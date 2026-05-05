@@ -396,17 +396,19 @@ func TestList(t *testing.T) {
 		saved = append(saved, c)
 	}
 	cases := []struct {
-		desc        string
-		config      bootstrap.ConfigsPage
-		filter      bootstrap.Filter
-		offset      uint64
-		limit       uint64
-		token       string
-		session     smqauthn.Session
-		userID      string
-		domainID    string
-		retrieveErr error
-		err         error
+		desc                string
+		config              bootstrap.ConfigsPage
+		filter              bootstrap.Filter
+		offset              uint64
+		limit               uint64
+		token               string
+		session             smqauthn.Session
+		userID              string
+		domainID            string
+		listObjectsResponse policysvc.PolicyPage
+		listObjectsErr      error
+		retrieveErr         error
+		err                 error
 	}{
 		{
 			desc: "list configs successfully as super admin",
@@ -462,14 +464,15 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   0,
-			limit:    10,
-			err:      nil,
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{validID}},
+			offset:              0,
+			limit:               10,
+			err:                 nil,
 		},
 		{
 			desc: "list configs with specified name as super admin",
@@ -513,14 +516,15 @@ func TestList(t *testing.T) {
 				Limit:   100,
 				Configs: saved[95:96],
 			},
-			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   0,
-			limit:    100,
-			err:      nil,
+			filter:              bootstrap.Filter{PartialMatch: map[string]string{"name": "95"}},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{validID}},
+			offset:              0,
+			limit:               100,
+			err:                 nil,
 		},
 		{
 			desc: "list last page as super admin",
@@ -564,14 +568,15 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[95:],
 			},
-			filter:   bootstrap.Filter{},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   95,
-			limit:    10,
-			err:      nil,
+			filter:              bootstrap.Filter{},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{validID}},
+			offset:              95,
+			limit:               10,
+			err:                 nil,
 		},
 		{
 			desc: "list configs with Active status as super admin",
@@ -615,14 +620,15 @@ func TestList(t *testing.T) {
 				Limit:   20,
 				Configs: []bootstrap.Config{saved[41]},
 			},
-			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
-			token:    validToken,
-			userID:   validID,
-			domainID: domainID,
-			session:  smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			offset:   35,
-			limit:    20,
-			err:      nil,
+			filter:              bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
+			token:               validToken,
+			userID:              validID,
+			domainID:            domainID,
+			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			listObjectsResponse: policysvc.PolicyPage{Policies: []string{validID}},
+			offset:              35,
+			limit:               20,
+			err:                 nil,
 		},
 		{
 			desc:     "list configs with empty result",
@@ -643,7 +649,7 @@ func TestList(t *testing.T) {
 			repoCall := boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 			var policyCall *mock.Call
 			if !tc.session.SuperAdmin {
-				policyCall = policies.On("ListAllObjects", mock.Anything, mock.Anything).Return(policysvc.PolicyPage{}, nil)
+				policyCall = policies.On("ListAllObjects", mock.Anything, mock.Anything).Return(tc.listObjectsResponse, tc.listObjectsErr)
 			}
 
 			result, err := svc.List(context.Background(), tc.session, tc.filter, tc.offset, tc.limit)

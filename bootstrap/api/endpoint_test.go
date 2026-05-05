@@ -571,6 +571,7 @@ func TestUpdateCert(t *testing.T) {
 		{
 			desc:        "update a config with invalid request format",
 			req:         "}",
+			id:          c.ID,
 			token:       validToken,
 			contentType: contentType,
 			status:      http.StatusBadRequest,

@@ -44,8 +44,17 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      saved.ID,
-			created: true,
+			ID:            saved.ID,
+			ExternalID:    saved.ExternalID,
+			Name:          saved.Name,
+			Content:       saved.Content,
+			Status:        saved.Status,
+			ProfileID:     saved.ProfileID,
+			RenderContext: saved.RenderContext,
+			ClientCert:    saved.ClientCert,
+			CACert:        saved.CACert,
+			ClientKey:     saved.ClientKey,
+			created:       true,
 		}
 
 		return res, nil
@@ -134,7 +143,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			id:      config.ID,
+			ID:      config.ID,
 			created: false,
 		}
 

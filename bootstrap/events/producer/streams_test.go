@@ -101,16 +101,15 @@ func TestAdd(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	cases := []struct {
-		desc      string
-		config    bootstrap.Config
-		token     string
-		session   smqauthn.Session
-		id        string
-		domainID  string
-		clientErr error
-		saveErr   error
-		err       error
-		event     map[string]any
+		desc     string
+		config   bootstrap.Config
+		token    string
+		session  smqauthn.Session
+		id       string
+		domainID string
+		saveErr  error
+		err      error
+		event    map[string]any
 	}{
 		{
 			desc:     "create config successfully",
@@ -130,14 +129,14 @@ func TestAdd(t *testing.T) {
 			err: nil,
 		},
 		{
-			desc:      "create config with failed to fetch client",
-			config:    config,
-			token:     validToken,
-			id:        validID,
-			domainID:  domainID,
-			event:     nil,
-			clientErr: svcerr.ErrNotFound,
-			err:       svcerr.ErrNotFound,
+			desc:     "create config with failed to save",
+			config:   config,
+			token:    validToken,
+			id:       validID,
+			domainID: domainID,
+			event:    nil,
+			saveErr:  svcerr.ErrCreateEntity,
+			err:      svcerr.ErrCreateEntity,
 		},
 	}
 

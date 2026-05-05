@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
+	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
@@ -200,6 +201,9 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 
 	saved, err := bs.configs.Save(ctx, cfg)
 	if err != nil {
+		if errors.Contains(err, repoerr.ErrConflict) {
+			return Config{}, errors.Wrap(svcerr.ErrConflict, err)
+		}
 		return Config{}, errors.Wrap(ErrAddBootstrap, err)
 	}
 
@@ -232,7 +236,38 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Sess
 }
 
 func (bs bootstrapService) List(ctx context.Context, session smqauthn.Session, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
+	if session.SuperAdmin {
+		return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
+	}
+
+	clientIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
+	if err != nil {
+		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+
+	if len(clientIDs) == 0 {
+		return ConfigsPage{
+			Total:   0,
+			Offset:  offset,
+			Limit:   limit,
+			Configs: []Config{},
+		}, nil
+	}
+
+	return bs.configs.RetrieveAll(ctx, session.DomainID, clientIDs, filter, offset, limit), nil
+}
+
+func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
+	tids, err := bs.policies.ListAllObjects(ctx, policies.Policy{
+		SubjectType: policies.UserType,
+		Subject:     userID,
+		Permission:  policies.ViewPermission,
+		ObjectType:  policies.ClientType,
+	})
+	if err != nil {
+		return nil, errors.Wrap(svcerr.ErrNotFound, err)
+	}
+	return tids.Policies, nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, session smqauthn.Session, id string) error {

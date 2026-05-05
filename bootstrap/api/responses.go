@@ -34,8 +34,17 @@ func (res removeRes) Empty() bool {
 }
 
 type configRes struct {
-	id      string
-	created bool
+	ID            string           `json:"id"`
+	ExternalID    string           `json:"external_id"`
+	Name          string           `json:"name,omitempty"`
+	Content       string           `json:"content,omitempty"`
+	Status        bootstrap.Status `json:"status"`
+	ProfileID     string           `json:"profile_id,omitempty"`
+	RenderContext map[string]any   `json:"render_context,omitempty"`
+	ClientCert    string           `json:"client_cert,omitempty"`
+	CACert        string           `json:"ca_cert,omitempty"`
+	ClientKey     string           `json:"client_key,omitempty"`
+	created       bool
 }
 
 func (res configRes) Code() int {
@@ -49,7 +58,7 @@ func (res configRes) Code() int {
 func (res configRes) Headers() map[string]string {
 	if res.created {
 		return map[string]string{
-			"Location": fmt.Sprintf("/clients/configs/%s", res.id),
+			"Location": fmt.Sprintf("/clients/configs/%s", res.ID),
 		}
 	}
 
@@ -57,7 +66,7 @@ func (res configRes) Headers() map[string]string {
 }
 
 func (res configRes) Empty() bool {
-	return true
+	return false
 }
 
 type viewRes struct {

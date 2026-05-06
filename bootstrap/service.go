@@ -361,7 +361,7 @@ func (bs bootstrapService) changeConfigStatus(ctx context.Context, domainID, id 
 		return Config{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 	if cfg.Status == status {
-		return Config{}, svcerr.ErrStatusAlreadyAssigned
+		return cfg, nil
 	}
 	if err := bs.configs.ChangeStatus(ctx, domainID, id, status); err != nil {
 		return Config{}, errors.Wrap(svcerr.ErrUpdateEntity, err)
@@ -392,9 +392,7 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 	if p.TemplateFormat == "" {
 		p.TemplateFormat = TemplateFormatGoTemplate
 	}
-	if p.Version == 0 {
-		p.Version = 1
-	}
+	p.Version = 1
 	if err := validateProfileBindingSlots(p); err != nil {
 		return Profile{}, errors.Wrap(errCreateProfile, err)
 	}

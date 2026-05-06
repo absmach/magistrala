@@ -78,7 +78,11 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 		return bootstrap.Config{}, err
 	}
 
-	return toConfig(dbcfg), nil
+	cfg, err := toConfig(dbcfg)
+	if err != nil {
+		return bootstrap.Config{}, err
+	}
+	return cfg, nil
 }
 
 func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
@@ -158,7 +162,11 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 		return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
-	return toConfig(dbcfg), nil
+	cfg, err := toConfig(dbcfg)
+	if err != nil {
+		return bootstrap.Config{}, err
+	}
+	return cfg, nil
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
@@ -240,7 +248,11 @@ func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, c
 		return bootstrap.Config{}, err
 	}
 
-	return toConfig(dbcfg), nil
+	cfg, err := toConfig(dbcfg)
+	if err != nil {
+		return bootstrap.Config{}, err
+	}
+	return cfg, nil
 }
 
 func (cr configRepository) Remove(ctx context.Context, domainID, id string) error {
@@ -380,7 +392,7 @@ func toDBConfig(cfg bootstrap.Config) (dbConfig, error) {
 	}, nil
 }
 
-func toConfig(dbcfg dbConfig) bootstrap.Config {
+func toConfig(dbcfg dbConfig) (bootstrap.Config, error) {
 	cfg := bootstrap.Config{
 		ID:          dbcfg.ID,
 		DomainID:    dbcfg.DomainID,
@@ -399,7 +411,9 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 		cfg.Content = dbcfg.Content.String
 	}
 	if len(dbcfg.RenderContext) > 0 && string(dbcfg.RenderContext) != jsonNull {
-		_ = json.Unmarshal(dbcfg.RenderContext, &cfg.RenderContext)
+		if err := json.Unmarshal(dbcfg.RenderContext, &cfg.RenderContext); err != nil {
+			return bootstrap.Config{}, errors.Wrap(repoerr.ErrViewEntity, err)
+		}
 	}
 	if dbcfg.ClientCert.Valid {
 		cfg.ClientCert = dbcfg.ClientCert.String
@@ -410,5 +424,5 @@ func toConfig(dbcfg dbConfig) bootstrap.Config {
 	if dbcfg.CaCert.Valid {
 		cfg.CACert = dbcfg.CaCert.String
 	}
-	return cfg
+	return cfg, nil
 }

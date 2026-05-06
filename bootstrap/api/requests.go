@@ -136,7 +136,7 @@ type createProfileReq struct {
 
 func (req createProfileReq) validate() error {
 	if req.Name == "" {
-		return apiutil.ErrMissingID
+		return apiutil.ErrMissingName
 	}
 	return nil
 }
@@ -147,7 +147,7 @@ type uploadProfileReq struct {
 
 func (req uploadProfileReq) validate() error {
 	if req.Name == "" {
-		return apiutil.ErrMissingID
+		return apiutil.ErrMissingName
 	}
 	return nil
 }
@@ -169,7 +169,7 @@ type updateProfileReq struct {
 }
 
 func (req updateProfileReq) validate() error {
-	if req.profileID == "" || req.Name == "" {
+	if req.profileID == "" {
 		return apiutil.ErrMissingID
 	}
 	return nil

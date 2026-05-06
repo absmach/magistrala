@@ -38,12 +38,12 @@ const (
 	unknownID     = "unknown"
 	defaultTimout = 5
 
-	configPrefix        = "config."
-	configCreate        = configPrefix + "create"
-	configView          = configPrefix + "view"
-	configUpdate        = configPrefix + "update"
-	configRemove        = configPrefix + "remove"
-	configList          = configPrefix + "list"
+	configPrefix    = "config."
+	configCreate    = configPrefix + "create"
+	configView      = configPrefix + "view"
+	configUpdate    = configPrefix + "update"
+	configRemove    = configPrefix + "remove"
+	configList      = configPrefix + "list"
 	clientPrefix    = "client."
 	clientBootstrap = clientPrefix + "bootstrap"
 	clientEnable    = clientPrefix + "enable"
@@ -922,7 +922,6 @@ func TestDisableConfig(t *testing.T) {
 		repoCall1.Unset()
 	}
 }
-
 
 func test(t *testing.T, expected, actual map[string]any, description string) {
 	if expected != nil && actual != nil {

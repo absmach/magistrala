@@ -70,5 +70,4 @@ type ConfigRepository interface {
 
 	// ChangeStatus changes the Status of the Config owned by the specific user.
 	ChangeStatus(ctx context.Context, domainID, id string, status Status) error
-
 }

@@ -31,12 +31,9 @@ import (
 )
 
 const (
-	streamID      = "magistrala.bootstrap"
-	email         = "user@example.com"
-	validToken    = "validToken"
-	invalidToken  = "invalid"
-	unknownID     = "unknown"
-	defaultTimout = 5
+	streamID   = "magistrala.bootstrap"
+	validToken = "validToken"
+	unknownID  = "unknown"
 
 	configPrefix    = "config."
 	configCreate    = configPrefix + "create"
@@ -46,11 +43,10 @@ const (
 	configList      = configPrefix + "list"
 	clientPrefix    = "client."
 	clientBootstrap = clientPrefix + "bootstrap"
-	clientEnable    = clientPrefix + "enable"
-	clientDisable   = clientPrefix + "disable"
+	configEnable    = configPrefix + "enable"
+	configDisable   = configPrefix + "disable"
 
 	certUpdate = "cert.update"
-	instanceID = "5de9b29a-feb9-11ed-be56-0242ac120002"
 )
 
 var (
@@ -796,7 +792,7 @@ func TestEnableConfig(t *testing.T) {
 			event: map[string]any{
 				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
-				"operation": clientEnable,
+				"operation": configEnable,
 			},
 		},
 		{
@@ -874,7 +870,7 @@ func TestDisableConfig(t *testing.T) {
 			event: map[string]any{
 				"config_id": config.ID,
 				"timestamp": time.Now().Unix(),
-				"operation": clientDisable,
+				"operation": configDisable,
 			},
 		},
 		{

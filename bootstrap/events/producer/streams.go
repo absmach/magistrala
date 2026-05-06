@@ -14,17 +14,23 @@ import (
 var _ bootstrap.Service = (*eventStore)(nil)
 
 const (
-	magistralaPrefix    = "magistrala."
-	createStream        = magistralaPrefix + configCreate
-	viewStream          = magistralaPrefix + configView
-	listStream          = magistralaPrefix + configList
-	updateStream        = magistralaPrefix + configUpdate
-	removeStream        = magistralaPrefix + configRemove
-	updateCertStream    = magistralaPrefix + certUpdate
-	removeHandlerStream = magistralaPrefix + configHandlerRemove
-	bootstrapStream     = magistralaPrefix + clientBootstrap
-	enableConfigStream  = magistralaPrefix + clientEnable
-	disableConfigStream = magistralaPrefix + clientDisable
+	magistralaPrefix      = "magistrala."
+	createStream          = magistralaPrefix + configCreate
+	listStream            = magistralaPrefix + configList
+	removeStream          = magistralaPrefix + configRemove
+	updateCertStream      = magistralaPrefix + certUpdate
+	bootstrapStream       = magistralaPrefix + clientBootstrap
+	enableConfigStream    = magistralaPrefix + configEnable
+	disableConfigStream   = magistralaPrefix + configDisable
+	createProfileStream   = magistralaPrefix + profileCreate
+	viewProfileStream     = magistralaPrefix + profileView
+	updateProfileStream   = magistralaPrefix + profileUpdate
+	listProfilesStream    = magistralaPrefix + profileList
+	deleteProfileStream   = magistralaPrefix + profileDelete
+	assignProfileStream   = magistralaPrefix + profileAssign
+	bindResourcesStream   = magistralaPrefix + bindingsBind
+	listBindingsStream    = magistralaPrefix + bindingsList
+	refreshBindingsStream = magistralaPrefix + bindingsRefresh
 )
 
 type eventStore struct {
@@ -67,7 +73,7 @@ func (es *eventStore) View(ctx context.Context, session smqauthn.Session, id str
 		cfg, configView,
 	}
 
-	if err := es.Publish(ctx, configView, ev); err != nil {
+	if err := es.Publish(ctx, magistralaPrefix+configView, ev); err != nil {
 		return cfg, err
 	}
 
@@ -83,7 +89,7 @@ func (es *eventStore) Update(ctx context.Context, session smqauthn.Session, cfg 
 		cfg, configUpdate,
 	}
 
-	return es.Publish(ctx, configUpdate, ev)
+	return es.Publish(ctx, magistralaPrefix+configUpdate, ev)
 }
 
 func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
@@ -185,37 +191,93 @@ func (es *eventStore) DisableConfig(ctx context.Context, session smqauthn.Sessio
 }
 
 func (es *eventStore) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
-	return es.svc.CreateProfile(ctx, session, p)
+	saved, err := es.svc.CreateProfile(ctx, session, p)
+	if err != nil {
+		return saved, err
+	}
+	ev := profileEvent{saved, profileCreate}
+	if err := es.Publish(ctx, createProfileStream, ev); err != nil {
+		return saved, err
+	}
+	return saved, nil
 }
 
 func (es *eventStore) ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (bootstrap.Profile, error) {
-	return es.svc.ViewProfile(ctx, session, profileID)
+	p, err := es.svc.ViewProfile(ctx, session, profileID)
+	if err != nil {
+		return p, err
+	}
+	ev := profileEvent{p, profileView}
+	if err := es.Publish(ctx, viewProfileStream, ev); err != nil {
+		return p, err
+	}
+	return p, nil
 }
 
 func (es *eventStore) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
-	return es.svc.UpdateProfile(ctx, session, p)
+	if err := es.svc.UpdateProfile(ctx, session, p); err != nil {
+		return err
+	}
+	ev := profileEvent{p, profileUpdate}
+	return es.Publish(ctx, updateProfileStream, ev)
 }
 
 func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
-	return es.svc.ListProfiles(ctx, session, offset, limit)
+	pp, err := es.svc.ListProfiles(ctx, session, offset, limit)
+	if err != nil {
+		return pp, err
+	}
+	ev := profileEvent{operation: profileList}
+	if err := es.Publish(ctx, listProfilesStream, ev); err != nil {
+		return pp, err
+	}
+	return pp, nil
 }
 
 func (es *eventStore) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {
-	return es.svc.DeleteProfile(ctx, session, profileID)
+	if err := es.svc.DeleteProfile(ctx, session, profileID); err != nil {
+		return err
+	}
+	ev := deleteProfileEvent{profileID: profileID}
+	return es.Publish(ctx, deleteProfileStream, ev)
 }
 
 func (es *eventStore) AssignProfile(ctx context.Context, session smqauthn.Session, configID, profileID string) error {
-	return es.svc.AssignProfile(ctx, session, configID, profileID)
+	if err := es.svc.AssignProfile(ctx, session, configID, profileID); err != nil {
+		return err
+	}
+	ev := assignProfileEvent{configID: configID, profileID: profileID}
+	return es.Publish(ctx, assignProfileStream, ev)
 }
 
 func (es *eventStore) BindResources(ctx context.Context, session smqauthn.Session, token, configID string, bindings []bootstrap.BindingRequest) error {
-	return es.svc.BindResources(ctx, session, token, configID, bindings)
+	if err := es.svc.BindResources(ctx, session, token, configID, bindings); err != nil {
+		return err
+	}
+	slots := make([]string, len(bindings))
+	for i, b := range bindings {
+		slots[i] = b.Slot
+	}
+	ev := bindResourcesEvent{configID: configID, slots: slots}
+	return es.Publish(ctx, bindResourcesStream, ev)
 }
 
 func (es *eventStore) ListBindings(ctx context.Context, session smqauthn.Session, configID string) ([]bootstrap.BindingSnapshot, error) {
-	return es.svc.ListBindings(ctx, session, configID)
+	bs, err := es.svc.ListBindings(ctx, session, configID)
+	if err != nil {
+		return bs, err
+	}
+	ev := listBindingsEvent{configID: configID}
+	if err := es.Publish(ctx, listBindingsStream, ev); err != nil {
+		return bs, err
+	}
+	return bs, nil
 }
 
 func (es *eventStore) RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error {
-	return es.svc.RefreshBindings(ctx, session, token, configID)
+	if err := es.svc.RefreshBindings(ctx, session, token, configID); err != nil {
+		return err
+	}
+	ev := refreshBindingsEvent{configID: configID}
+	return es.Publish(ctx, refreshBindingsStream, ev)
 }

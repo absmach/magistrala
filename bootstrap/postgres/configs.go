@@ -295,15 +295,6 @@ func (cr configRepository) ChangeStatus(ctx context.Context, domainID, id string
 	return nil
 }
 
-func (cr configRepository) RemoveClient(ctx context.Context, id string) error {
-	q := `DELETE FROM configs WHERE id = $1`
-	_, err := cr.db.ExecContext(ctx, q, id)
-	if err != nil {
-		return errors.Wrap(repoerr.ErrRemoveEntity, err)
-	}
-	return nil
-}
-
 func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootstrap.Filter) (string, []any) {
 	params := []any{}
 	queries := []string{}

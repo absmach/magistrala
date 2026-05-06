@@ -44,8 +44,6 @@ const (
 	configUpdate        = configPrefix + "update"
 	configRemove        = configPrefix + "remove"
 	configList          = configPrefix + "list"
-	configHandlerRemove = configPrefix + "remove_handler"
-
 	clientPrefix    = "client."
 	clientBootstrap = clientPrefix + "bootstrap"
 	clientEnable    = clientPrefix + "enable"
@@ -925,69 +923,6 @@ func TestDisableConfig(t *testing.T) {
 	}
 }
 
-func TestRemoveConfigHandler(t *testing.T) {
-	err := redisClient.FlushAll(context.Background()).Err()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	tv := newTestVariable(t, redisURL)
-
-	configID := testsutil.GenerateUUID(t)
-
-	cases := []struct {
-		desc     string
-		configID string
-		err      error
-		event    map[string]any
-	}{
-		{
-			desc:     "remove config handler successfully",
-			configID: configID,
-			err:      nil,
-			event: map[string]any{
-				"config_id":   configID,
-				"operation":   configHandlerRemove,
-				"timestamp":   time.Now().UnixNano(),
-				"occurred_at": time.Now().UnixNano(),
-			},
-		},
-		{
-			desc:     "remove non-existing config handler",
-			configID: "unknown",
-			err:      nil,
-			event:    nil,
-		},
-		{
-			desc:     "remove config handler with empty ID",
-			configID: "",
-			err:      nil,
-			event:    nil,
-		},
-	}
-
-	lastID := "0"
-	for _, tc := range cases {
-		repoCall := tv.boot.On("RemoveClient", context.Background(), mock.Anything).Return(tc.err)
-		err := tv.svc.RemoveConfigHandler(context.Background(), tc.configID)
-		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-
-		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
-			Streams: []string{streamID, lastID},
-			Count:   1,
-			Block:   time.Second,
-		}).Val()
-
-		var event map[string]any
-		if len(streams) > 0 && len(streams[0].Messages) > 0 {
-			msg := streams[0].Messages[0]
-			event = msg.Values
-			event["timestamp"] = msg.ID
-			lastID = msg.ID
-		}
-
-		test(t, tc.event, event, tc.desc)
-		repoCall.Unset()
-	}
-}
 
 func test(t *testing.T, expected, actual map[string]any, description string) {
 	if expected != nil && actual != nil {

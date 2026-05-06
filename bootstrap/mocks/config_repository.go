@@ -243,63 +243,6 @@ func (_c *ConfigRepository_Remove_Call) RunAndReturn(run func(ctx context.Contex
 	return _c
 }
 
-// RemoveClient provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) RemoveClient(ctx context.Context, id string) error {
-	ret := _mock.Called(ctx, id)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveClient")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, id)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// ConfigRepository_RemoveClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveClient'
-type ConfigRepository_RemoveClient_Call struct {
-	*mock.Call
-}
-
-// RemoveClient is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-func (_e *ConfigRepository_Expecter) RemoveClient(ctx interface{}, id interface{}) *ConfigRepository_RemoveClient_Call {
-	return &ConfigRepository_RemoveClient_Call{Call: _e.mock.On("RemoveClient", ctx, id)}
-}
-
-func (_c *ConfigRepository_RemoveClient_Call) Run(run func(ctx context.Context, id string)) *ConfigRepository_RemoveClient_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *ConfigRepository_RemoveClient_Call) Return(err error) *ConfigRepository_RemoveClient_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *ConfigRepository_RemoveClient_Call) RunAndReturn(run func(ctx context.Context, id string) error) *ConfigRepository_RemoveClient_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RetrieveAll provides a mock function for the type ConfigRepository
 func (_mock *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
 	ret := _mock.Called(ctx, domainID, clientIDs, filter, offset, limit)

@@ -119,16 +119,6 @@ func (mm *metricsMiddleware) DisableConfig(ctx context.Context, session smqauthn
 	return mm.svc.DisableConfig(ctx, session, id)
 }
 
-// RemoveConfigHandler instruments RemoveConfigHandler method with metrics.
-func (mm *metricsMiddleware) RemoveConfigHandler(ctx context.Context, id string) (err error) {
-	defer func(begin time.Time) {
-		mm.counter.With("method", "remove_config").Add(1)
-		mm.latency.With("method", "remove_config").Observe(time.Since(begin).Seconds())
-	}(time.Now())
-
-	return mm.svc.RemoveConfigHandler(ctx, id)
-}
-
 func (mm *metricsMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "create_profile").Add(1)

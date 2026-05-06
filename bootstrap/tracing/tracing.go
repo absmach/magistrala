@@ -122,16 +122,6 @@ func (tm *tracingMiddleware) DisableConfig(ctx context.Context, session smqauthn
 	return tm.svc.DisableConfig(ctx, session, id)
 }
 
-// RemoveConfigHandler traces the "RemoveConfigHandler" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) RemoveConfigHandler(ctx context.Context, id string) error {
-	ctx, span := tm.tracer.Start(ctx, "svc_remove_config_handler", trace.WithAttributes(
-		attribute.String("id", id),
-	))
-	defer span.End()
-
-	return tm.svc.RemoveConfigHandler(ctx, id)
-}
-
 func (tm *tracingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_create_profile", trace.WithAttributes(
 		attribute.String("name", p.Name),

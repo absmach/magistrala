@@ -110,10 +110,6 @@ func (am *authorizationMiddleware) DisableConfig(ctx context.Context, session sm
 	return am.svc.DisableConfig(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) RemoveConfigHandler(ctx context.Context, id string) error {
-	return am.svc.RemoveConfigHandler(ctx, id)
-}
-
 func (am *authorizationMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, createOperation, auth.AnyIDs); err != nil {
 		return bootstrap.Profile{}, err

@@ -8,18 +8,11 @@ import (
 	"log/slog"
 
 	"github.com/absmach/magistrala/bootstrap"
-	mgerrors "github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 )
 
-const (
-	stream = "events.magistrala.*.*"
-
-	clientRemove = "client.remove"
-)
+const stream = "events.magistrala.*.*"
 
 type eventHandler struct {
 	svc bootstrap.Service
@@ -48,27 +41,6 @@ func NewEventHandler(svc bootstrap.Service) events.EventHandler {
 	}
 }
 
-func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
-	msg, err := event.Encode()
-	if err != nil {
-		return err
-	}
-
-	op, _ := msg["operation"].(string)
-	if op == clientRemove {
-		return es.removeConfigHandler(ctx, msg)
-	}
-
-	return nil
-}
-
-func (es *eventHandler) removeConfigHandler(ctx context.Context, data map[string]any) error {
-	id := readString(data, "id")
-	if id == "" {
-		return svcerr.ErrMalformedEntity
-	}
-	if err := es.svc.RemoveConfigHandler(ctx, id); err != nil && !mgerrors.Contains(err, repoerr.ErrNotFound) {
-		return err
-	}
+func (es *eventHandler) Handle(_ context.Context, _ events.Event) error {
 	return nil
 }

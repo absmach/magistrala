@@ -184,19 +184,6 @@ func (es *eventStore) DisableConfig(ctx context.Context, session smqauthn.Sessio
 	return cfg, nil
 }
 
-func (es *eventStore) RemoveConfigHandler(ctx context.Context, id string) error {
-	if err := es.svc.RemoveConfigHandler(ctx, id); err != nil {
-		return err
-	}
-
-	ev := removeHandlerEvent{
-		id:        id,
-		operation: configHandlerRemove,
-	}
-
-	return es.Publish(ctx, removeHandlerStream, ev)
-}
-
 func (es *eventStore) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	return es.svc.CreateProfile(ctx, session, p)
 }

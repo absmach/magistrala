@@ -37,7 +37,6 @@ var (
 	errRemoveBootstrap = errors.New("failed to remove bootstrap configuration")
 	errEnableConfig    = errors.New("failed to enable bootstrap configuration")
 	errDisableConfig   = errors.New("failed to disable bootstrap configuration")
-	errRemoveConfig    = errors.New("failed to remove bootstrap configuration")
 	errUpdateCert      = errors.New("failed to update cert")
 
 	errCreateProfile   = errors.New("failed to create profile")
@@ -85,12 +84,6 @@ type Service interface {
 
 	// DisableConfig disables the Config, preventing its device from bootstrapping.
 	DisableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
-
-	// Methods RemoveConfig, UpdateChannel, and RemoveChannel are used as
-	// handlers for events. That's why these methods surpass ownership check.
-
-	// RemoveConfigHandler removes Configuration with id received from an event.
-	RemoveConfigHandler(ctx context.Context, id string) error
 
 	// CreateProfile persists a new device Profile.
 	CreateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
@@ -368,13 +361,6 @@ func (bs bootstrapService) changeConfigStatus(ctx context.Context, domainID, id 
 	}
 	cfg.Status = status
 	return cfg, nil
-}
-
-func (bs bootstrapService) RemoveConfigHandler(ctx context.Context, id string) error {
-	if err := bs.configs.RemoveClient(ctx, id); err != nil {
-		return errors.Wrap(errRemoveConfig, err)
-	}
-	return nil
 }
 
 // --- Profile management ---

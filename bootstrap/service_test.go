@@ -1011,36 +1011,6 @@ func TestDisableConfig(t *testing.T) {
 	}
 }
 
-func TestRemoveConfigHandler(t *testing.T) {
-	svc := newService()
-
-	cases := []struct {
-		desc string
-		id   string
-		err  error
-	}{
-		{
-			desc: "remove an existing config",
-			id:   config.ID,
-			err:  nil,
-		},
-		{
-			desc: "remove a non-existing channel",
-			id:   "unknown",
-			err:  nil,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := boot.On("RemoveClient", context.Background(), mock.Anything).Return(tc.err)
-			err := svc.RemoveConfigHandler(context.Background(), tc.id)
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			repoCall.Unset()
-		})
-	}
-}
-
 func TestAssignProfile(t *testing.T) {
 	profile := bootstrap.Profile{
 		ID:             testsutil.GenerateUUID(t),

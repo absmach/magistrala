@@ -199,23 +199,6 @@ func (lm *loggingMiddleware) DisableConfig(ctx context.Context, session smqauthn
 	return lm.svc.DisableConfig(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) RemoveConfigHandler(ctx context.Context, id string) (err error) {
-	defer func(begin time.Time) {
-		args := []any{
-			slog.String("duration", time.Since(begin).String()),
-			slog.String("config_id", id),
-		}
-		if err != nil {
-			args = append(args, slog.Any("error", err))
-			lm.logger.Warn("Remove config handler failed", args...)
-			return
-		}
-		lm.logger.Info("Remove config handler completed successfully", args...)
-	}(time.Now())
-
-	return lm.svc.RemoveConfigHandler(ctx, id)
-}
-
 func (lm *loggingMiddleware) CreateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (saved bootstrap.Profile, err error) {
 	defer func(begin time.Time) {
 		args := []any{

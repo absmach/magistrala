@@ -479,21 +479,3 @@ func TestAssignProfile(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Retrieving config expected to succeed: %s.\n", err))
 	assert.Equal(t, profileID, stored.ProfileID, "expected profile assignment to round-trip through the repository")
 }
-
-func TestRemoveClient(t *testing.T) {
-	repo := postgres.NewConfigRepository(db, testLog)
-
-	c := config
-	// Use UUID to prevent conflicts.
-	uid, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("Got unexpected error: %s.\n", err))
-	c.ID = uid.String()
-	c.ExternalID = uid.String()
-	c.ExternalKey = uid.String()
-	saved, err := repo.Save(context.Background(), c)
-	assert.Nil(t, err, fmt.Sprintf("Saving config expected to succeed: %s.\n", err))
-	for i := 0; i < 2; i++ {
-		err := repo.RemoveClient(context.Background(), saved)
-		assert.Nil(t, err, fmt.Sprintf("an unexpected error occurred: %s\n", err))
-	}
-}

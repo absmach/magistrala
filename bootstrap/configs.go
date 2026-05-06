@@ -71,7 +71,4 @@ type ConfigRepository interface {
 	// ChangeStatus changes the Status of the Config owned by the specific user.
 	ChangeStatus(ctx context.Context, domainID, id string, status Status) error
 
-	// RemoveClient removes Config of the Client with the given ID.
-	// Used as a handler for client remove events.
-	RemoveClient(ctx context.Context, id string) error
 }

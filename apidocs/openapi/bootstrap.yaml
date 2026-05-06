@@ -186,6 +186,7 @@ paths:
       summary: Enables a config
       description: |
         Enables the enrollment config, allowing its device to bootstrap.
+        Idempotent — returns the current config without error if already enabled.
       tags:
         - configs
       parameters:
@@ -194,8 +195,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ConfigRes"
-        "400":
-          description: Config is already enabled.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -211,6 +210,7 @@ paths:
       summary: Disables a config
       description: |
         Disables the enrollment config, preventing its device from bootstrapping.
+        Idempotent — returns the current config without error if already disabled.
       tags:
         - configs
       parameters:
@@ -219,8 +219,6 @@ paths:
       responses:
         "200":
           $ref: "#/components/responses/ConfigRes"
-        "400":
-          description: Config is already disabled.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -1022,12 +1020,29 @@ components:
             $ref: "#/components/schemas/Profile"
 
     ProfileUpdateReq:
-      description: Updated device profile fields.
+      description: Updated device profile fields. All fields are optional.
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Profile"
+            type: object
+            properties:
+              name:
+                type: string
+              description:
+                type: string
+              template_format:
+                type: string
+                enum: [go-template, raw]
+              content_template:
+                type: string
+              defaults:
+                type: object
+                additionalProperties: true
+              binding_slots:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BindingSlot"
 
   responses:
     ConfigCreateRes:

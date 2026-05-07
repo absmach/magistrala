@@ -470,7 +470,7 @@ func (bs bootstrapService) connectChannels(ctx context.Context, cfg Config, toke
 		ChannelIDs: channelIDs,
 	}
 	if sdkErr := bs.sdk.Connect(ctx, conn, cfg.DomainID, token); sdkErr != nil {
-		return errors.Wrap(errBindResources, errors.New(sdkErr.Error()))
+		return errors.Wrap(errBindResources, sdkErr)
 	}
 	return nil
 }

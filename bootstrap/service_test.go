@@ -1066,6 +1066,14 @@ func TestCreateProfile(t *testing.T) {
 			err: errors.New("invalid binding slot: duplicate slot \"mqtt\""),
 		},
 		{
+			desc: "create profile with invalid template syntax",
+			profile: bootstrap.Profile{
+				Name:            "test",
+				ContentTemplate: `{{ index .Vars \"mqtt_url\" }}`,
+			},
+			err: bootstrap.ErrRenderFailed,
+		},
+		{
 			desc:    "create profile with repository save error",
 			profile: validProfile,
 			saveErr: svcerr.ErrCreateEntity,
@@ -1182,6 +1190,15 @@ func TestUpdateProfile(t *testing.T) {
 			err: errors.New("invalid binding slot: duplicate slot \"slot1\""),
 		},
 		{
+			desc: "update profile with invalid template syntax",
+			profile: bootstrap.Profile{
+				ID:              validProfile.ID,
+				Name:            "test",
+				ContentTemplate: `{{ index .Vars \"mqtt_url\" }}`,
+			},
+			err: bootstrap.ErrRenderFailed,
+		},
+		{
 			desc:      "update profile with repository error",
 			profile:   validProfile,
 			updateErr: svcerr.ErrUpdateEntity,
@@ -1289,10 +1306,25 @@ func TestBindResources(t *testing.T) {
 		},
 	}
 
+	channelProfile := bootstrap.Profile{
+		ID:       testsutil.GenerateUUID(t),
+		DomainID: domainID,
+		Name:     "channel-profile",
+		BindingSlots: []bootstrap.BindingSlot{
+			{Name: "data", Type: "channel", Required: true},
+		},
+	}
+
 	cfg := bootstrap.Config{
 		ID:        config.ID,
 		DomainID:  domainID,
 		ProfileID: profile.ID,
+	}
+
+	channelCfg := bootstrap.Config{
+		ID:        config.ID,
+		DomainID:  domainID,
+		ProfileID: channelProfile.ID,
 	}
 
 	snapshot := bootstrap.BindingSnapshot{
@@ -1303,8 +1335,20 @@ func TestBindResources(t *testing.T) {
 		Snapshot:   map[string]any{"id": validID},
 	}
 
+	channelSnapshot := bootstrap.BindingSnapshot{
+		ConfigID:   config.ID,
+		Slot:       "data",
+		Type:       "channel",
+		ResourceID: validID,
+		Snapshot:   map[string]any{"id": validID},
+	}
+
 	requested := []bootstrap.BindingRequest{
 		{Slot: "mqtt", Type: "client", ResourceID: validID},
+	}
+
+	channelRequested := []bootstrap.BindingRequest{
+		{Slot: "data", Type: "channel", ResourceID: validID},
 	}
 
 	cases := []struct {
@@ -1316,7 +1360,9 @@ func TestBindResources(t *testing.T) {
 		resolveErr  error
 		retrieveErr error
 		saveErr     error
+		connectErr  errors.SDKError
 		snapshots   []bootstrap.BindingSnapshot
+		useChannel  bool
 		err         error
 	}{
 		{
@@ -1383,16 +1429,38 @@ func TestBindResources(t *testing.T) {
 			bindings:  requested,
 			snapshots: []bootstrap.BindingSnapshot{snapshot},
 		},
+		{
+			desc:        "bind channel resource and connect successfully",
+			configID:    config.ID,
+			bindings:    channelRequested,
+			snapshots:   []bootstrap.BindingSnapshot{channelSnapshot},
+			useChannel:  true,
+		},
+		{
+			desc:        "bind channel resource with connect error",
+			configID:    config.ID,
+			bindings:    channelRequested,
+			snapshots:   []bootstrap.BindingSnapshot{channelSnapshot},
+			useChannel:  true,
+			connectErr:  errors.NewSDKError(errors.New("connect failed")),
+			err:         errors.New("connect failed"),
+		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(cfg, tc.cfgErr)
-			profileRepo.On("RetrieveByID", context.Background(), domainID, profile.ID).Return(profile, tc.prErr)
+			activeCfg, activeProfile := cfg, profile
+			if tc.useChannel {
+				activeCfg = channelCfg
+				activeProfile = channelProfile
+			}
+			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(activeCfg, tc.cfgErr)
+			profileRepo.On("RetrieveByID", context.Background(), domainID, activeProfile.ID).Return(activeProfile, tc.prErr)
 			resolver.On("Resolve", context.Background(), mock.Anything).Return(tc.snapshots, tc.resolveErr)
 			bindingStore.On("Retrieve", context.Background(), tc.configID).Return([]bootstrap.BindingSnapshot{}, tc.retrieveErr)
 			bindingStore.On("Save", context.Background(), tc.configID, mock.Anything).Return(tc.saveErr)
+			sdk.On("Connect", context.Background(), mock.Anything, domainID, validToken).Return(tc.connectErr)
 
 			err := svc.BindResources(context.Background(), session, validToken, tc.configID, tc.bindings)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))

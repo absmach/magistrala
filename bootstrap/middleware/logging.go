@@ -155,7 +155,7 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 			slog.String("external_id", externalID),
 		}
 		if err != nil {
-			args = append(args, slog.Any("error", err))
+			args = append(args, slog.String("error", err.Error()))
 			lm.logger.Warn("View bootstrap config failed", args...)
 			return
 		}

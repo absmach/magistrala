@@ -5,6 +5,7 @@ package bootstrap
 
 import (
 	"fmt"
+	"text/template"
 
 	"github.com/absmach/magistrala/pkg/errors"
 )
@@ -94,4 +95,15 @@ func mergeBindingSnapshots(existing, updated []BindingSnapshot) []BindingSnapsho
 		bindings = append(bindings, binding)
 	}
 	return bindings
+}
+
+func validateProfileTemplate(p Profile) error {
+	if p.ContentTemplate == "" || p.TemplateFormat == TemplateFormatRaw {
+		return nil
+	}
+	_, err := template.New("bootstrap").Funcs(allowlistedFuncs()).Parse(p.ContentTemplate)
+	if err != nil {
+		return errors.Wrap(ErrRenderFailed, err)
+	}
+	return nil
 }

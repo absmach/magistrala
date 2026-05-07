@@ -1360,7 +1360,6 @@ func TestBindResources(t *testing.T) {
 		resolveErr  error
 		retrieveErr error
 		saveErr     error
-		connectErr  errors.SDKError
 		snapshots   []bootstrap.BindingSnapshot
 		useChannel  bool
 		err         error
@@ -1430,20 +1429,11 @@ func TestBindResources(t *testing.T) {
 			snapshots: []bootstrap.BindingSnapshot{snapshot},
 		},
 		{
-			desc:       "bind channel resource and connect successfully",
+			desc:       "bind channel resource successfully",
 			configID:   config.ID,
 			bindings:   channelRequested,
 			snapshots:  []bootstrap.BindingSnapshot{channelSnapshot},
 			useChannel: true,
-		},
-		{
-			desc:       "bind channel resource with connect error",
-			configID:   config.ID,
-			bindings:   channelRequested,
-			snapshots:  []bootstrap.BindingSnapshot{channelSnapshot},
-			useChannel: true,
-			connectErr: errors.NewSDKError(errors.New("connect failed")),
-			err:        errors.New("connect failed"),
 		},
 	}
 
@@ -1460,7 +1450,6 @@ func TestBindResources(t *testing.T) {
 			resolver.On("Resolve", context.Background(), mock.Anything).Return(tc.snapshots, tc.resolveErr)
 			bindingStore.On("Retrieve", context.Background(), tc.configID).Return([]bootstrap.BindingSnapshot{}, tc.retrieveErr)
 			bindingStore.On("Save", context.Background(), tc.configID, mock.Anything).Return(tc.saveErr)
-			sdk.On("Connect", context.Background(), mock.Anything, domainID, validToken).Return(tc.connectErr)
 
 			err := svc.BindResources(context.Background(), session, validToken, tc.configID, tc.bindings)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))

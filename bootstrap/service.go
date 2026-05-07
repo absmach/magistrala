@@ -452,26 +452,6 @@ func (bs bootstrapService) BindResources(ctx context.Context, session smqauthn.S
 	if err := bs.bindings.Save(ctx, configID, snapshots); err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
-	return bs.connectChannels(ctx, cfg, token, snapshots)
-}
-
-func (bs bootstrapService) connectChannels(ctx context.Context, cfg Config, token string, snapshots []BindingSnapshot) error {
-	var channelIDs []string
-	for _, snap := range snapshots {
-		if snap.Type == "channel" {
-			channelIDs = append(channelIDs, snap.ResourceID)
-		}
-	}
-	if len(channelIDs) == 0 {
-		return nil
-	}
-	conn := mgsdk.Connection{
-		ClientIDs:  []string{cfg.ID},
-		ChannelIDs: channelIDs,
-	}
-	if sdkErr := bs.sdk.Connect(ctx, conn, cfg.DomainID, token); sdkErr != nil {
-		return errors.Wrap(errBindResources, sdkErr)
-	}
 	return nil
 }
 

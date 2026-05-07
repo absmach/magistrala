@@ -71,7 +71,7 @@ var (
 		CACert     string           `json:"ca_cert,omitempty"`
 	}{
 		Content:    "config update",
-		Status:     1,
+		Status:     bootstrap.EnabledStatus,
 		ClientCert: "newcert",
 		CACert:     "newca",
 	}

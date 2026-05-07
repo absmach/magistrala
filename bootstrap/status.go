@@ -16,14 +16,18 @@ type Status uint8
 
 // Possible bootstrap enrollment statuses.
 const (
-	DisabledStatus Status = iota
-	EnabledStatus
+	EnabledStatus Status = iota
+	DisabledStatus
+	// AllStatus is used for querying purposes to list configs irrespective
+	// of their status. It is never stored in the database.
+	AllStatus
 )
 
 // String representation of bootstrap status values.
 const (
 	Disabled = "disabled"
 	Enabled  = "enabled"
+	All      = "all"
 	Unknown  = "unknown"
 )
 
@@ -40,6 +44,8 @@ func (s Status) String() string {
 		return Disabled
 	case EnabledStatus:
 		return Enabled
+	case AllStatus:
+		return All
 	default:
 		return Unknown
 	}
@@ -48,10 +54,12 @@ func (s Status) String() string {
 // ToStatus converts a string or legacy numeric string value to Status.
 func ToStatus(status string) (Status, error) {
 	switch strings.ToLower(status) {
-	case Disabled, "0":
-		return DisabledStatus, nil
-	case Enabled, "1":
+	case "", Enabled, "0":
 		return EnabledStatus, nil
+	case Disabled, "1":
+		return DisabledStatus, nil
+	case All:
+		return AllStatus, nil
 	}
 	return Status(0), svcerr.ErrInvalidStatus
 }

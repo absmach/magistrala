@@ -173,7 +173,7 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 
 	cfg.ID = id
 	cfg.DomainID = session.DomainID
-	cfg.Status = DisabledStatus
+	cfg.Status = Active
 	cfg.ExternalKey = hashedKey
 
 	saved, err := bs.configs.Save(ctx, cfg)

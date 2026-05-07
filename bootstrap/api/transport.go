@@ -278,11 +278,15 @@ func decodeListRequest(_ context.Context, r *http.Request) (any, error) {
 		offset: o,
 		limit:  l,
 	}
-	if status, ok := req.filter.FullMatch["status"]; ok {
-		parsed, err := bootstrap.ToStatus(status)
-		if err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidQueryParams)
-		}
+
+	rawStatus := q.Get("status")
+	parsed, err := bootstrap.ToStatus(rawStatus)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, apiutil.ErrInvalidQueryParams)
+	}
+	if parsed == bootstrap.AllStatus {
+		delete(req.filter.FullMatch, "status")
+	} else {
 		req.filter.FullMatch["status"] = parsed.String()
 	}
 

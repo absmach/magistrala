@@ -310,6 +310,9 @@ func buildRetrieveQueryParams(domainID string, filter bootstrap.Filter) (string,
 			if err != nil {
 				return "", nil
 			}
+			if status == bootstrap.AllStatus {
+				continue
+			}
 			params = append(params, status)
 			queries = append(queries, fmt.Sprintf("%s = $%d", k, counter))
 			counter++

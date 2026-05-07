@@ -820,6 +820,8 @@ func TestEnableConfig(t *testing.T) {
 	c := config
 	activeConfig := config
 	activeConfig.Status = bootstrap.Active
+	inactiveConfig := config
+	inactiveConfig.Status = bootstrap.Inactive
 
 	cases := []struct {
 		desc        string
@@ -843,7 +845,7 @@ func TestEnableConfig(t *testing.T) {
 		},
 		{
 			desc:     "enable inactive config",
-			config:   c,
+			config:   inactiveConfig,
 			id:       c.ID,
 			userID:   validID,
 			domainID: domainID,
@@ -859,7 +861,7 @@ func TestEnableConfig(t *testing.T) {
 		},
 		{
 			desc:      "enable with repo error",
-			config:    c,
+			config:    inactiveConfig,
 			id:        c.ID,
 			userID:    validID,
 			domainID:  domainID,
@@ -887,6 +889,8 @@ func TestDisableConfig(t *testing.T) {
 	c := config
 	activeConfig := config
 	activeConfig.Status = bootstrap.Active
+	inactiveConfig := config
+	inactiveConfig.Status = bootstrap.Inactive
 
 	cases := []struct {
 		desc        string
@@ -918,7 +922,7 @@ func TestDisableConfig(t *testing.T) {
 		},
 		{
 			desc:     "disable already inactive config",
-			config:   c,
+			config:   inactiveConfig,
 			id:       c.ID,
 			userID:   validID,
 			domainID: domainID,

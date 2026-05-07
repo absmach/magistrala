@@ -30,21 +30,15 @@ import (
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	"github.com/authzed/authzed-go/v1"
-	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -113,14 +107,6 @@ func main() {
 	}
 	defer db.Close()
 
-	policySvc, err := newPolicyService(cfg, logger)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	logger.Info("Policy client successfully connected to spicedb gRPC server")
-
 	tp, err := jaeger.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to init Jaeger: %s", err))
@@ -176,7 +162,7 @@ func main() {
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 
 	// Create new service
-	svc, err := newService(ctx, authz, policySvc, database, tracer, logger, cfg)
+	svc, err := newService(ctx, authz, database, tracer, logger, cfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create %s service: %s", svcName, err))
 		exitCode = 1
@@ -209,7 +195,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, authz smqauthz.Authorization, policySvc policies.Service, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
+func newService(ctx context.Context, authz smqauthz.Authorization, database pgclient.Database, tracer trace.Tracer, logger *slog.Logger, cfg config) (bootstrap.Service, error) {
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 	repoProfile := bootstrappg.NewProfileRepository(database, logger)
 	repoBindings := bootstrappg.NewBindingRepository(database, logger)
@@ -224,8 +210,7 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	resolver := bootstrap.NewSDKResolver(sdk)
 	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.NewWithProfiles(
-		policySvc,
+	svc := bootstrap.New(
 		repoConfig,
 		repoProfile,
 		repoBindings,
@@ -250,18 +235,4 @@ func newService(ctx context.Context, authz smqauthz.Authorization, policySvc pol
 	svc = tracing.New(svc, tracer)
 
 	return svc, nil
-}
-
-func newPolicyService(cfg config, logger *slog.Logger) (policies.Service, error) {
-	client, err := authzed.NewClientWithExperimentalAPIs(
-		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
-	)
-	if err != nil {
-		return nil, err
-	}
-	policySvc := spicedb.NewPolicyService(client, logger)
-
-	return policySvc, nil
 }

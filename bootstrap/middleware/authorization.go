@@ -63,12 +63,12 @@ func (am *authorizationMiddleware) Update(ctx context.Context, session smqauthn.
 	return am.svc.Update(ctx, session, cfg)
 }
 
-func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateCertOperation, clientID); err != nil {
+func (am *authorizationMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateCertOperation, id); err != nil {
 		return bootstrap.Config{}, err
 	}
 
-	return am.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
+	return am.svc.UpdateCert(ctx, session, id, clientCert, clientKey, caCert)
 }
 
 func (am *authorizationMiddleware) List(ctx context.Context, session smqauthn.Session, filter bootstrap.Filter, offset, limit uint64) (bootstrap.ConfigsPage, error) {

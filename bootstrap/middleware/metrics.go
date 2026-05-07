@@ -62,13 +62,13 @@ func (mm *metricsMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 }
 
 // UpdateCert instruments UpdateCert method with metrics.
-func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
+func (mm *metricsMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_cert").Add(1)
 		mm.latency.With("method", "update_cert").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
+	return mm.svc.UpdateCert(ctx, session, id, clientCert, clientKey, caCert)
 }
 
 // List instruments List method with metrics.

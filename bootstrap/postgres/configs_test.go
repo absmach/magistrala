@@ -127,8 +127,6 @@ func TestRetrieveByID(t *testing.T) {
 func TestRetrieveAll(t *testing.T) {
 	repo := postgres.NewConfigRepository(db, testLog)
 
-	clientIDs := make([]string, numConfigs)
-
 	for i := 0; i < numConfigs; i++ {
 		c := config
 
@@ -138,8 +136,6 @@ func TestRetrieveAll(t *testing.T) {
 		c.ExternalID = uid.String()
 		c.Name = fmt.Sprintf("name %d", i)
 		c.ID = uid.String()
-
-		clientIDs[i] = c.ID
 
 		if i%2 == 0 {
 			c.Status = bootstrap.Active
@@ -151,7 +147,6 @@ func TestRetrieveAll(t *testing.T) {
 	cases := []struct {
 		desc     string
 		domainID string
-		clientID []string
 		offset   uint64
 		limit    uint64
 		filter   bootstrap.Filter
@@ -160,7 +155,6 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all configs",
 			domainID: config.DomainID,
-			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     numConfigs,
@@ -168,7 +162,6 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve a subset of configs",
 			domainID: config.DomainID,
-			clientID: []string{},
 			offset:   5,
 			limit:    uint64(numConfigs - 5),
 			size:     numConfigs - 5,
@@ -176,7 +169,6 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve with wrong domain ID ",
 			domainID: "2",
-			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			size:     0,
@@ -184,7 +176,6 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all active configs ",
 			domainID: config.DomainID,
-			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{FullMatch: map[string]string{"status": bootstrap.Active.String()}},
@@ -193,7 +184,6 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve all with partial match filter",
 			domainID: config.DomainID,
-			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
@@ -202,31 +192,14 @@ func TestRetrieveAll(t *testing.T) {
 		{
 			desc:     "retrieve search by name",
 			domainID: config.DomainID,
-			clientID: []string{},
 			offset:   0,
 			limit:    uint64(numConfigs),
 			filter:   bootstrap.Filter{PartialMatch: map[string]string{"name": "1"}},
 			size:     1,
 		},
-		{
-			desc:     "retrieve by valid clientIDs",
-			domainID: config.DomainID,
-			clientID: clientIDs,
-			offset:   0,
-			limit:    uint64(numConfigs),
-			size:     10,
-		},
-		{
-			desc:     "retrieve by non-existing clientID",
-			domainID: config.DomainID,
-			clientID: []string{"non-existing"},
-			offset:   0,
-			limit:    uint64(numConfigs),
-			size:     0,
-		},
 	}
 	for _, tc := range cases {
-		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.clientID, tc.filter, tc.offset, tc.limit)
+		ret := repo.RetrieveAll(context.Background(), tc.domainID, tc.filter, tc.offset, tc.limit)
 		size := len(ret.Configs)
 		assert.Equal(t, tc.size, size, fmt.Sprintf("%s: expected %d got %d\n", tc.desc, tc.size, size))
 	}
@@ -330,7 +303,7 @@ func TestUpdateCert(t *testing.T) {
 
 	cases := []struct {
 		desc           string
-		clientID       string
+		configID       string
 		domainID       string
 		cert           string
 		certKey        string
@@ -340,7 +313,7 @@ func TestUpdateCert(t *testing.T) {
 	}{
 		{
 			desc:           "update with wrong domain ID ",
-			clientID:       "",
+			configID:       "",
 			cert:           "cert",
 			certKey:        "certKey",
 			ca:             "",
@@ -350,7 +323,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 		{
 			desc:     "update a config",
-			clientID: c.ID,
+			configID: c.ID,
 			cert:     "cert",
 			certKey:  "certKey",
 			ca:       "ca",
@@ -366,7 +339,7 @@ func TestUpdateCert(t *testing.T) {
 		},
 	}
 	for _, tc := range cases {
-		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.clientID, tc.cert, tc.certKey, tc.ca)
+		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.configID, tc.cert, tc.certKey, tc.ca)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
 	}

@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	"github.com/absmach/magistrala/pkg/policies"
 	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
@@ -67,7 +66,7 @@ type Service interface {
 
 	// UpdateCert updates an existing Config certificate and token.
 	// A non-nil error is returned to indicate operation failure.
-	UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (Config, error)
+	UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (Config, error)
 
 	// List returns subset of Configs with given search params that belong to the
 	// user identified by the given token.
@@ -125,7 +124,6 @@ type ConfigReader interface {
 }
 
 type bootstrapService struct {
-	policies   policies.Service
 	configs    ConfigRepository
 	profiles   ProfileRepository
 	bindings   BindingStore
@@ -138,20 +136,7 @@ type bootstrapService struct {
 }
 
 // New returns new Bootstrap service.
-func New(policyService policies.Service, configs ConfigRepository, sdk mgsdk.SDK, hasher Hasher, encKey []byte, idp magistrala.IDProvider) Service {
-	return &bootstrapService{
-		configs:    configs,
-		hasher:     hasher,
-		sdk:        sdk,
-		policies:   policyService,
-		encKey:     encKey,
-		idProvider: idp,
-	}
-}
-
-// NewWithProfiles returns a Bootstrap service with profile and binding support enabled.
-func NewWithProfiles(
-	policyService policies.Service,
+func New(
 	configs ConfigRepository,
 	profiles ProfileRepository,
 	bindings BindingStore,
@@ -170,7 +155,6 @@ func NewWithProfiles(
 		renderer:   renderer,
 		hasher:     hasher,
 		sdk:        sdk,
-		policies:   policyService,
 		encKey:     encKey,
 		idProvider: idp,
 	}
@@ -220,8 +204,8 @@ func (bs bootstrapService) Update(ctx context.Context, session smqauthn.Session,
 	return nil
 }
 
-func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (Config, error) {
-	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, clientID, clientCert, clientKey, caCert)
+func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (Config, error) {
+	cfg, err := bs.configs.UpdateCert(ctx, session.DomainID, id, clientCert, clientKey, caCert)
 	if err != nil {
 		return Config{}, errors.Wrap(errUpdateCert, err)
 	}
@@ -229,38 +213,7 @@ func (bs bootstrapService) UpdateCert(ctx context.Context, session smqauthn.Sess
 }
 
 func (bs bootstrapService) List(ctx context.Context, session smqauthn.Session, filter Filter, offset, limit uint64) (ConfigsPage, error) {
-	if session.SuperAdmin {
-		return bs.configs.RetrieveAll(ctx, session.DomainID, []string{}, filter, offset, limit), nil
-	}
-
-	clientIDs, err := bs.listClientIDs(ctx, session.DomainUserID)
-	if err != nil {
-		return ConfigsPage{}, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-
-	if len(clientIDs) == 0 {
-		return ConfigsPage{
-			Total:   0,
-			Offset:  offset,
-			Limit:   limit,
-			Configs: []Config{},
-		}, nil
-	}
-
-	return bs.configs.RetrieveAll(ctx, session.DomainID, clientIDs, filter, offset, limit), nil
-}
-
-func (bs bootstrapService) listClientIDs(ctx context.Context, userID string) ([]string, error) {
-	tids, err := bs.policies.ListAllObjects(ctx, policies.Policy{
-		SubjectType: policies.UserType,
-		Subject:     userID,
-		Permission:  policies.ViewPermission,
-		ObjectType:  policies.ClientType,
-	})
-	if err != nil {
-		return nil, errors.Wrap(svcerr.ErrNotFound, err)
-	}
-	return tids.Policies, nil
+	return bs.configs.RetrieveAll(ctx, session.DomainID, filter, offset, limit), nil
 }
 
 func (bs bootstrapService) Remove(ctx context.Context, session smqauthn.Session, id string) error {

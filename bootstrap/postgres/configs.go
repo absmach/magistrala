@@ -16,7 +16,6 @@ import (
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgtype"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -85,8 +84,8 @@ func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string
 	return cfg, nil
 }
 
-func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
-	search, params := buildRetrieveQueryParams(domainID, clientIDs, filter)
+func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, filter bootstrap.Filter, offset, limit uint64) bootstrap.ConfigsPage {
+	search, params := buildRetrieveQueryParams(domainID, filter)
 	n := len(params)
 
 	q := `SELECT id, external_id, name, content, status, profile_id, render_context
@@ -222,12 +221,12 @@ func (cr configRepository) AssignProfile(ctx context.Context, domainID, id, prof
 	return nil
 }
 
-func (cr configRepository) UpdateCert(ctx context.Context, domainID, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+func (cr configRepository) UpdateCert(ctx context.Context, domainID, id, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
 	q := `UPDATE configs SET client_cert = :client_cert, client_key = :client_key, ca_cert = :ca_cert WHERE id = :id AND domain_id = :domain_id
 	RETURNING id, client_cert, client_key, ca_cert, domain_id`
 
 	dbcfg := dbConfig{
-		ID:         clientID,
+		ID:         id,
 		ClientCert: nullString(clientCert),
 		DomainID:   domainID,
 		ClientKey:  nullString(clientKey),
@@ -295,18 +294,11 @@ func (cr configRepository) ChangeStatus(ctx context.Context, domainID, id string
 	return nil
 }
 
-func buildRetrieveQueryParams(domainID string, clientIDs []string, filter bootstrap.Filter) (string, []any) {
+func buildRetrieveQueryParams(domainID string, filter bootstrap.Filter) (string, []any) {
 	params := []any{}
 	queries := []string{}
 
-	if len(clientIDs) != 0 {
-		var arr pgtype.TextArray
-		if err := arr.Set(clientIDs); err != nil {
-			return "", nil
-		}
-		params = append(params, arr)
-		queries = append(queries, fmt.Sprintf("id = ANY($%d)", len(params)))
-	} else if domainID != "" {
+	if domainID != "" {
 		params = append(params, domainID)
 		queries = append(queries, fmt.Sprintf("domain_id = $%d", len(params)))
 	}

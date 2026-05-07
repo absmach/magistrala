@@ -248,7 +248,7 @@ func decodeUpdateCertRequest(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	req := updateCertReq{
-		clientID: chi.URLParam(r, "configID"),
+		configID: chi.URLParam(r, "configID"),
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)

@@ -86,9 +86,9 @@ func (lm *loggingMiddleware) Update(ctx context.Context, session smqauthn.Sessio
 	return lm.svc.Update(ctx, session, cfg)
 }
 
-// UpdateCert logs the update_cert request. It logs client ID and the time it took to complete the request.
+// UpdateCert logs the update_cert request. It logs config ID and the time it took to complete the request.
 // If the request fails, it logs the error.
-func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
+func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -102,7 +102,7 @@ func (lm *loggingMiddleware) UpdateCert(ctx context.Context, session smqauthn.Se
 		lm.logger.Info("Update bootstrap config certificate completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
+	return lm.svc.UpdateCert(ctx, session, id, clientCert, clientKey, caCert)
 }
 
 // List logs the list request. It logs offset, limit and the time it took to complete the request.

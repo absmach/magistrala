@@ -20,8 +20,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events/store"
-	policysvc "github.com/absmach/magistrala/pkg/policies"
-	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/redis/go-redis/v9"
@@ -65,26 +63,23 @@ var (
 )
 
 type testVariable struct {
-	svc      bootstrap.Service
-	boot     *mocks.ConfigRepository
-	policies *policymocks.Service
-	sdk      *sdkmocks.SDK
+	svc  bootstrap.Service
+	boot *mocks.ConfigRepository
+	sdk  *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
-	policies := new(policymocks.Service)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(policies, boot, sdk, bootstraphasher.New(), encKey, idp)
+	svc := bootstrap.New(boot, nil, nil, nil, nil, sdk, bootstraphasher.New(), encKey, idp)
 	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
 	return testVariable{
-		svc:      svc,
-		boot:     boot,
-		policies: policies,
-		sdk:      sdk,
+		svc:  svc,
+		boot: boot,
+		sdk:  sdk,
 	}
 }
 
@@ -457,11 +452,9 @@ func TestList(t *testing.T) {
 		filter              bootstrap.Filter
 		offset              uint64
 		limit               uint64
-		listObjectsResponse policysvc.PolicyPage
-		listObjectsErr      error
-		retrieveErr         error
-		err                 error
-		event               map[string]any
+		retrieveErr error
+		err         error
+		event       map[string]any
 	}{
 		{
 			desc:     "list successfully as super admin",
@@ -475,11 +468,10 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			err:                 nil,
+			filter: bootstrap.Filter{},
+			offset: 0,
+			limit:  10,
+			err:    nil,
 			event: map[string]any{
 				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
@@ -502,11 +494,10 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			err:                 nil,
+			filter: bootstrap.Filter{},
+			offset: 0,
+			limit:  10,
+			err:    nil,
 			event: map[string]any{
 				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
@@ -529,11 +520,10 @@ func TestList(t *testing.T) {
 				Limit:   10,
 				Configs: saved[0:10],
 			},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			err:                 nil,
+			filter: bootstrap.Filter{},
+			offset: 0,
+			limit:  10,
+			err:    nil,
 			event: map[string]any{
 				"config_id":   c.ID,
 				"domain_id":   c.DomainID,
@@ -545,72 +535,49 @@ func TestList(t *testing.T) {
 			},
 		},
 		{
-			desc:                "list as non admin with failed list all objects",
-			token:               validToken,
-			userID:              validID,
-			domainID:            domainID,
-			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			listObjectsErr:      svcerr.ErrNotFound,
-			err:                 svcerr.ErrNotFound,
-			event:               nil,
+			desc:        "list as super admin with failed retrieve all",
+			token:       validToken,
+			userID:      validID,
+			domainID:    domainID,
+			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
+			retrieveErr: nil,
+			err:         nil,
+			event:       nil,
 		},
 		{
-			desc:                "list as super admin with failed retrieve all",
-			token:               validToken,
-			userID:              validID,
-			domainID:            domainID,
-			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			retrieveErr:         nil,
-			err:                 nil,
-			event:               nil,
+			desc:        "list as domain admin with failed retrieve all",
+			token:       validToken,
+			userID:      validID,
+			domainID:    domainID,
+			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
+			retrieveErr: nil,
+			err:         nil,
+			event:       nil,
 		},
 		{
-			desc:                "list as domain admin with failed retrieve all",
-			token:               validToken,
-			userID:              validID,
-			domainID:            domainID,
-			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID, SuperAdmin: true},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			retrieveErr:         nil,
-			err:                 nil,
-			event:               nil,
-		},
-		{
-			desc:                "list as non admin with failed retrieve all",
-			token:               validToken,
-			userID:              validID,
-			domainID:            domainID,
-			session:             smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
-			filter:              bootstrap.Filter{},
-			offset:              0,
-			limit:               10,
-			listObjectsResponse: policysvc.PolicyPage{},
-			retrieveErr:         nil,
-			err:                 nil,
-			event:               nil,
+			desc:        "list as non admin with failed retrieve all",
+			token:       validToken,
+			userID:      validID,
+			domainID:    domainID,
+			session:     smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID},
+			filter:      bootstrap.Filter{},
+			offset:      0,
+			limit:       10,
+			retrieveErr: nil,
+			err:         nil,
+			event:       nil,
 		},
 	}
 
 	lastID := "0"
 	for _, tc := range cases {
-		policyCall := tv.policies.On("ListAllObjects", mock.Anything, policysvc.Policy{
-			SubjectType: policysvc.UserType,
-			Subject:     tc.userID,
-			Permission:  policysvc.ViewPermission,
-			ObjectType:  policysvc.ClientType,
-		}).Return(tc.listObjectsResponse, tc.listObjectsErr)
-		repoCall := tv.boot.On("RetrieveAll", context.Background(), mock.Anything, mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
+		repoCall := tv.boot.On("RetrieveAll", context.Background(), mock.Anything, tc.filter, tc.offset, tc.limit).Return(tc.config, tc.retrieveErr)
 
 		_, err := tv.svc.List(context.Background(), tc.session, tc.filter, tc.offset, tc.limit)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -629,7 +596,6 @@ func TestList(t *testing.T) {
 
 		test(t, tc.event, event, tc.desc)
 
-		policyCall.Unset()
 		repoCall.Unset()
 	}
 }

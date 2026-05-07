@@ -244,16 +244,16 @@ func (_c *ConfigRepository_Remove_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // RetrieveAll provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
-	ret := _mock.Called(ctx, domainID, clientIDs, filter, offset, limit)
+func (_mock *ConfigRepository) RetrieveAll(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage {
+	ret := _mock.Called(ctx, domainID, filter, offset, limit)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
 	}
 
 	var r0 bootstrap.ConfigsPage
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
-		r0 = returnFunc(ctx, domainID, clientIDs, filter, offset, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bootstrap.Filter, uint64, uint64) bootstrap.ConfigsPage); ok {
+		r0 = returnFunc(ctx, domainID, filter, offset, limit)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ConfigsPage)
 	}
@@ -268,15 +268,14 @@ type ConfigRepository_RetrieveAll_Call struct {
 // RetrieveAll is a helper method to define mock.On call
 //   - ctx context.Context
 //   - domainID string
-//   - clientIDs []string
 //   - filter bootstrap.Filter
 //   - offset uint64
 //   - limit uint64
-func (_e *ConfigRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, clientIDs interface{}, filter interface{}, offset interface{}, limit interface{}) *ConfigRepository_RetrieveAll_Call {
-	return &ConfigRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, clientIDs, filter, offset, limit)}
+func (_e *ConfigRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, filter interface{}, offset interface{}, limit interface{}) *ConfigRepository_RetrieveAll_Call {
+	return &ConfigRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, filter, offset, limit)}
 }
 
-func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset uint64, limit uint64)) *ConfigRepository_RetrieveAll_Call {
+func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64)) *ConfigRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -286,21 +285,17 @@ func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, d
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 []string
+		var arg2 bootstrap.Filter
 		if args[2] != nil {
-			arg2 = args[2].([]string)
+			arg2 = args[2].(bootstrap.Filter)
 		}
-		var arg3 bootstrap.Filter
+		var arg3 uint64
 		if args[3] != nil {
-			arg3 = args[3].(bootstrap.Filter)
+			arg3 = args[3].(uint64)
 		}
 		var arg4 uint64
 		if args[4] != nil {
 			arg4 = args[4].(uint64)
-		}
-		var arg5 uint64
-		if args[5] != nil {
-			arg5 = args[5].(uint64)
 		}
 		run(
 			arg0,
@@ -308,7 +303,6 @@ func (_c *ConfigRepository_RetrieveAll_Call) Run(run func(ctx context.Context, d
 			arg2,
 			arg3,
 			arg4,
-			arg5,
 		)
 	})
 	return _c
@@ -319,7 +313,7 @@ func (_c *ConfigRepository_RetrieveAll_Call) Return(configsPage bootstrap.Config
 	return _c
 }
 
-func (_c *ConfigRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, domainID string, clientIDs []string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage) *ConfigRepository_RetrieveAll_Call {
+func (_c *ConfigRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, domainID string, filter bootstrap.Filter, offset uint64, limit uint64) bootstrap.ConfigsPage) *ConfigRepository_RetrieveAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -586,8 +580,8 @@ func (_c *ConfigRepository_Update_Call) RunAndReturn(run func(ctx context.Contex
 }
 
 // UpdateCert provides a mock function for the type ConfigRepository
-func (_mock *ConfigRepository) UpdateCert(ctx context.Context, domainID string, clientID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
-	ret := _mock.Called(ctx, domainID, clientID, clientCert, clientKey, caCert)
+func (_mock *ConfigRepository) UpdateCert(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, domainID, id, clientCert, clientKey, caCert)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCert")
@@ -596,15 +590,15 @@ func (_mock *ConfigRepository) UpdateCert(ctx context.Context, domainID string, 
 	var r0 bootstrap.Config
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (bootstrap.Config, error)); ok {
-		return returnFunc(ctx, domainID, clientID, clientCert, clientKey, caCert)
+		return returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) bootstrap.Config); ok {
-		r0 = returnFunc(ctx, domainID, clientID, clientCert, clientKey, caCert)
+		r0 = returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) error); ok {
-		r1 = returnFunc(ctx, domainID, clientID, clientCert, clientKey, caCert)
+		r1 = returnFunc(ctx, domainID, id, clientCert, clientKey, caCert)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -619,15 +613,15 @@ type ConfigRepository_UpdateCert_Call struct {
 // UpdateCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - domainID string
-//   - clientID string
+//   - id string
 //   - clientCert string
 //   - clientKey string
 //   - caCert string
-func (_e *ConfigRepository_Expecter) UpdateCert(ctx interface{}, domainID interface{}, clientID interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *ConfigRepository_UpdateCert_Call {
-	return &ConfigRepository_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, domainID, clientID, clientCert, clientKey, caCert)}
+func (_e *ConfigRepository_Expecter) UpdateCert(ctx interface{}, domainID interface{}, id interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *ConfigRepository_UpdateCert_Call {
+	return &ConfigRepository_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, domainID, id, clientCert, clientKey, caCert)}
 }
 
-func (_c *ConfigRepository_UpdateCert_Call) Run(run func(ctx context.Context, domainID string, clientID string, clientCert string, clientKey string, caCert string)) *ConfigRepository_UpdateCert_Call {
+func (_c *ConfigRepository_UpdateCert_Call) Run(run func(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string)) *ConfigRepository_UpdateCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -670,7 +664,7 @@ func (_c *ConfigRepository_UpdateCert_Call) Return(config bootstrap.Config, err 
 	return _c
 }
 
-func (_c *ConfigRepository_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, domainID string, clientID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *ConfigRepository_UpdateCert_Call {
+func (_c *ConfigRepository_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, domainID string, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *ConfigRepository_UpdateCert_Call {
 	_c.Call.Return(run)
 	return _c
 }

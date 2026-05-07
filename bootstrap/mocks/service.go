@@ -1054,8 +1054,8 @@ func (_c *Service_Update_Call) RunAndReturn(run func(ctx context.Context, sessio
 }
 
 // UpdateCert provides a mock function for the type Service
-func (_mock *Service) UpdateCert(ctx context.Context, session authn.Session, clientID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
-	ret := _mock.Called(ctx, session, clientID, clientCert, clientKey, caCert)
+func (_mock *Service) UpdateCert(ctx context.Context, session authn.Session, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, session, id, clientCert, clientKey, caCert)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateCert")
@@ -1064,15 +1064,15 @@ func (_mock *Service) UpdateCert(ctx context.Context, session authn.Session, cli
 	var r0 bootstrap.Config
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string, string) (bootstrap.Config, error)); ok {
-		return returnFunc(ctx, session, clientID, clientCert, clientKey, caCert)
+		return returnFunc(ctx, session, id, clientCert, clientKey, caCert)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, string, string, string, string) bootstrap.Config); ok {
-		r0 = returnFunc(ctx, session, clientID, clientCert, clientKey, caCert)
+		r0 = returnFunc(ctx, session, id, clientCert, clientKey, caCert)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, string, string, string, string) error); ok {
-		r1 = returnFunc(ctx, session, clientID, clientCert, clientKey, caCert)
+		r1 = returnFunc(ctx, session, id, clientCert, clientKey, caCert)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1087,15 +1087,15 @@ type Service_UpdateCert_Call struct {
 // UpdateCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - session authn.Session
-//   - clientID string
+//   - id string
 //   - clientCert string
 //   - clientKey string
 //   - caCert string
-func (_e *Service_Expecter) UpdateCert(ctx interface{}, session interface{}, clientID interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *Service_UpdateCert_Call {
-	return &Service_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, session, clientID, clientCert, clientKey, caCert)}
+func (_e *Service_Expecter) UpdateCert(ctx interface{}, session interface{}, id interface{}, clientCert interface{}, clientKey interface{}, caCert interface{}) *Service_UpdateCert_Call {
+	return &Service_UpdateCert_Call{Call: _e.mock.On("UpdateCert", ctx, session, id, clientCert, clientKey, caCert)}
 }
 
-func (_c *Service_UpdateCert_Call) Run(run func(ctx context.Context, session authn.Session, clientID string, clientCert string, clientKey string, caCert string)) *Service_UpdateCert_Call {
+func (_c *Service_UpdateCert_Call) Run(run func(ctx context.Context, session authn.Session, id string, clientCert string, clientKey string, caCert string)) *Service_UpdateCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1138,7 +1138,7 @@ func (_c *Service_UpdateCert_Call) Return(config bootstrap.Config, err error) *S
 	return _c
 }
 
-func (_c *Service_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, clientID string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *Service_UpdateCert_Call {
+func (_c *Service_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, id string, clientCert string, clientKey string, caCert string) (bootstrap.Config, error)) *Service_UpdateCert_Call {
 	_c.Call.Return(run)
 	return _c
 }

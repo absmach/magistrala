@@ -92,14 +92,14 @@ func (es *eventStore) Update(ctx context.Context, session smqauthn.Session, cfg 
 	return es.Publish(ctx, magistralaPrefix+configUpdate, ev)
 }
 
-func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, clientID, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
-	cfg, err := es.svc.UpdateCert(ctx, session, clientID, clientCert, clientKey, caCert)
+func (es eventStore) UpdateCert(ctx context.Context, session smqauthn.Session, id, clientCert, clientKey, caCert string) (bootstrap.Config, error) {
+	cfg, err := es.svc.UpdateCert(ctx, session, id, clientCert, clientKey, caCert)
 	if err != nil {
 		return cfg, err
 	}
 
 	ev := updateCertEvent{
-		configID:   clientID,
+		configID:   id,
 		clientCert: clientCert,
 		clientKey:  clientKey,
 		caCert:     caCert,

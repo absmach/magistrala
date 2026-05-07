@@ -173,6 +173,10 @@ packages:
       ConfigRepository:
       ConfigReader:
       Service:
+      ProfileRepository:
+      BindingStore:
+      BindingResolver:
+      Renderer:
   github.com/absmach/magistrala/provision:
     interfaces:
       Service:

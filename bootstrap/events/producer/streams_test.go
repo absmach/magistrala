@@ -443,15 +443,15 @@ func TestList(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc                string
-		token               string
-		session             smqauthn.Session
-		userID              string
-		domainID            string
-		config              bootstrap.ConfigsPage
-		filter              bootstrap.Filter
-		offset              uint64
-		limit               uint64
+		desc        string
+		token       string
+		session     smqauthn.Session
+		userID      string
+		domainID    string
+		config      bootstrap.ConfigsPage
+		filter      bootstrap.Filter
+		offset      uint64
+		limit       uint64
 		retrieveErr error
 		err         error
 		event       map[string]any

@@ -11,8 +11,6 @@ import (
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/re"
 )
 
@@ -21,18 +19,16 @@ var _ re.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    re.Service
-	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc re.Service, logger *slog.Logger) re.Service {
 	return &loggingMiddleware{
-		logger:                       logger,
-		svc:                          svc,
-		RoleManagerLoggingMiddleware: rolemw.NewLogging("re", svc, logger),
+		logger: logger,
+		svc:    svc,
 	}
 }
 
-func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, rps []roles.RoleProvision, err error) {
+func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (res re.Rule, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -46,7 +42,7 @@ func (lm *loggingMiddleware) AddRule(ctx context.Context, session authn.Session,
 		}
 		lm.logger.Info("Add rule completed successfully", args...)
 	}(time.Now())
-	res, rps, err = lm.svc.AddRule(ctx, session, r)
+	res, err = lm.svc.AddRule(ctx, session, r)
 	return
 }
 

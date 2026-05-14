@@ -27,7 +27,7 @@ func NewTracingMiddleware(tracer trace.Tracer, svc alarms.Service) alarms.Servic
 	}
 }
 
-func (tm *tracingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) error {
+func (tm *tracingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "create_alarm", trace.WithAttributes(
 		attribute.String("rule_id", alarm.RuleID),
 		attribute.String("measurement", alarm.Measurement),

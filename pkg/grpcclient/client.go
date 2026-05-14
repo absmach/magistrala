@@ -13,11 +13,6 @@ import (
 	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
 	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
 	tokengrpc "github.com/absmach/magistrala/auth/api/grpc/token"
-	channelsgrpc "github.com/absmach/magistrala/channels/api/grpc"
-	clientsauth "github.com/absmach/magistrala/clients/api/grpc"
-	domainsgrpc "github.com/absmach/magistrala/domains/api/grpc"
-	groupsgrpc "github.com/absmach/magistrala/groups/api/grpc"
-	usersgrpc "github.com/absmach/magistrala/users/api/grpc"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 
@@ -55,7 +50,7 @@ func SetupDomainsClient(ctx context.Context, cfg Config) (grpcDomainsV1.DomainsS
 		return nil, nil, err
 	}
 
-	return domainsgrpc.NewDomainsClient(client.Connection(), cfg.Timeout), client, nil
+	return grpcDomainsV1.NewDomainsServiceClient(client.Connection()), client, nil
 }
 
 // SetupClientsClient loads clients gRPC configuration and creates new clients gRPC client.
@@ -69,7 +64,7 @@ func SetupClientsClient(ctx context.Context, cfg Config) (grpcClientsV1.ClientsS
 		return nil, nil, err
 	}
 
-	return clientsauth.NewClient(client.Connection(), cfg.Timeout), client, nil
+	return grpcClientsV1.NewClientsServiceClient(client.Connection()), client, nil
 }
 
 // SetupChannelsClient loads channels gRPC configuration and creates new channels gRPC client.
@@ -83,7 +78,7 @@ func SetupChannelsClient(ctx context.Context, cfg Config) (grpcChannelsV1.Channe
 		return nil, nil, err
 	}
 
-	return channelsgrpc.NewClient(client.Connection(), cfg.Timeout), client, nil
+	return grpcChannelsV1.NewChannelsServiceClient(client.Connection()), client, nil
 }
 
 // SetupGroupsClient loads groups gRPC configuration and creates new groups gRPC client.
@@ -97,7 +92,7 @@ func SetupGroupsClient(ctx context.Context, cfg Config) (grpcGroupsV1.GroupsServ
 		return nil, nil, err
 	}
 
-	return groupsgrpc.NewClient(client.Connection(), cfg.Timeout), client, nil
+	return grpcGroupsV1.NewGroupsServiceClient(client.Connection()), client, nil
 }
 
 // SetupUsersClient loads users gRPC configuration and creates new users gRPC client.
@@ -111,5 +106,5 @@ func SetupUsersClient(ctx context.Context, cfg Config) (grpcUsersV1.UsersService
 		return nil, nil, err
 	}
 
-	return usersgrpc.NewClient(client.Connection(), cfg.Timeout), client, nil
+	return grpcUsersV1.NewUsersServiceClient(client.Connection()), client, nil
 }

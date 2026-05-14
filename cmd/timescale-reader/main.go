@@ -14,9 +14,9 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
-	"github.com/absmach/magistrala/pkg/authn/authsvc"
-	"github.com/absmach/magistrala/pkg/grpcclient"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
@@ -36,16 +36,13 @@ import (
 )
 
 const (
-	svcName           = "timescaledb-reader"
-	envPrefixDB       = "MG_TIMESCALE_"
-	envPrefixHTTP     = "MG_TIMESCALE_READER_HTTP_"
-	envPrefixAuth     = "MG_AUTH_GRPC_"
-	envPrefixClients  = "MG_CLIENTS_GRPC_"
-	envPrefixChannels = "MG_CHANNELS_GRPC_"
-	defDB             = "messages"
-	defSvcHTTPPort    = "9011"
-	defSvcGRPCPort    = "7011"
-	envPrefixGrpc     = "MG_TIMESCALE_READER_GRPC_"
+	svcName        = "timescaledb-reader"
+	envPrefixDB    = "MG_TIMESCALE_"
+	envPrefixHTTP  = "MG_TIMESCALE_READER_HTTP_"
+	defDB          = "messages"
+	defSvcHTTPPort = "9011"
+	defSvcGRPCPort = "7011"
+	envPrefixGrpc  = "MG_TIMESCALE_READER_GRPC_"
 )
 
 type config struct {
@@ -106,54 +103,11 @@ func main() {
 		grpcReadersV1.RegisterReadersServiceServer(srv, readersgrpcapi.NewReadersServer(repo))
 	}
 
-	clientsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
-	clientsClient, clientsHandler, err := grpcclient.SetupClientsClient(ctx, clientsClientCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer clientsHandler.Close()
-
-	logger.Info("Clients service gRPC client successfully connected to clients gRPC server " + clientsHandler.Secure())
-
-	channelsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&channelsClientCfg, env.Options{Prefix: envPrefixChannels}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load channels gRPC client configuration : %s", err))
-		exitCode = 1
-		return
-	}
-
-	channelsClient, channelsHandler, err := grpcclient.SetupChannelsClient(ctx, channelsClientCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer channelsHandler.Close()
-	logger.Info("Channels service gRPC client successfully connected to channels gRPC server " + channelsHandler.Secure())
-
-	authnCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authnCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
-		exitCode = 1
-		return
-	}
-
-	authn, authnHandler, err := authsvc.NewAuthentication(ctx, authnCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer authnHandler.Close()
-	logger.Info("authn successfully connected to auth gRPC server " + authnHandler.Secure())
+	atomCfg := atom.LoadConfig()
+	authn := atomauthn.NewAuthentication()
+	clientsClient := atom.NewClientsCompat(authn)
+	channelsClient := atom.NewChannelsCompat(atom.NewClient(atomCfg))
+	logger.Info("AuthN/AuthZ configured to use Atom")
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {

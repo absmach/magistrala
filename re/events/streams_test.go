@@ -15,7 +15,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/events"
 	"github.com/absmach/magistrala/re/mocks"
@@ -60,41 +59,38 @@ func TestAddRule(t *testing.T) {
 	validCtx := context.WithValue(context.Background(), middleware.RequestIDKey, testsutil.GenerateUUID(t))
 
 	cases := []struct {
-		desc       string
-		session    authn.Session
-		rule       re.Rule
-		svcRes     re.Rule
-		svcRoleRes []roles.RoleProvision
-		svcErr     error
-		resp       re.Rule
-		err        error
+		desc    string
+		session authn.Session
+		rule    re.Rule
+		svcRes  re.Rule
+		svcErr  error
+		resp    re.Rule
+		err     error
 	}{
 		{
-			desc:       "publish successfully",
-			session:    validSession,
-			rule:       validRule,
-			svcRes:     validRule,
-			svcRoleRes: []roles.RoleProvision{},
-			svcErr:     nil,
-			resp:       validRule,
-			err:        nil,
+			desc:    "publish successfully",
+			session: validSession,
+			rule:    validRule,
+			svcRes:  validRule,
+			svcErr:  nil,
+			resp:    validRule,
+			err:     nil,
 		},
 		{
-			desc:       "failed to publish with service error",
-			session:    validSession,
-			rule:       validRule,
-			svcRes:     re.Rule{},
-			svcRoleRes: []roles.RoleProvision{},
-			svcErr:     svcerr.ErrCreateEntity,
-			resp:       re.Rule{},
-			err:        svcerr.ErrCreateEntity,
+			desc:    "failed to publish with service error",
+			session: validSession,
+			rule:    validRule,
+			svcRes:  re.Rule{},
+			svcErr:  svcerr.ErrCreateEntity,
+			resp:    re.Rule{},
+			err:     svcerr.ErrCreateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("AddRule", validCtx, tc.session, tc.rule).Return(tc.svcRes, tc.svcRoleRes, tc.svcErr)
-			resp, _, err := nsvc.AddRule(validCtx, tc.session, tc.rule)
+			svcCall := svc.On("AddRule", validCtx, tc.session, tc.rule).Return(tc.svcRes, tc.svcErr)
+			resp, err := nsvc.AddRule(validCtx, tc.session, tc.rule)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			assert.Equal(t, tc.resp, resp, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.resp, resp))
 			svcCall.Unset()

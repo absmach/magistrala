@@ -36,20 +36,15 @@ The service is configured using the following environment variables (values show
 | `MG_REPORTS_DB_SSL_KEY` | PostgreSQL SSL client key | "" |
 | `MG_REPORTS_DB_SSL_ROOT_CERT` | PostgreSQL SSL root cert | "" |
 
-### Auth and domains gRPC
+### Atom
 
 | Variable | Description | Default |
 | --- | --- | --- |
-| `MG_AUTH_GRPC_URL` | Auth gRPC endpoint | `auth:7001` |
-| `MG_AUTH_GRPC_TIMEOUT` | Auth gRPC timeout | `300s` |
-| `MG_AUTH_GRPC_CLIENT_CERT` | Auth gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.crt}` |
-| `MG_AUTH_GRPC_CLIENT_KEY` | Auth gRPC client key path | `${GRPC_MTLS:+./ssl/certs/auth-grpc-client.key}` |
-| `MG_AUTH_GRPC_SERVER_CA_CERTS` | Auth gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
-| `MG_DOMAINS_GRPC_URL` | Domains gRPC endpoint | `domains:7003` |
-| `MG_DOMAINS_GRPC_TIMEOUT` | Domains gRPC timeout | `300s` |
-| `MG_DOMAINS_GRPC_CLIENT_CERT` | Domains gRPC client cert path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.crt}` |
-| `MG_DOMAINS_GRPC_CLIENT_KEY` | Domains gRPC client key path | `${GRPC_MTLS:+./ssl/certs/domains-grpc-client.key}` |
-| `MG_DOMAINS_GRPC_SERVER_CA_CERTS` | Domains gRPC server CA path | `${GRPC_MTLS:+./ssl/certs/ca.crt}` |
+| `ATOM_URL` | Atom HTTP endpoint | `http://atom:8080` |
+| `ATOM_JWKS_URL` | Atom JWKS endpoint for JWT verification | `http://atom:8080/.well-known/jwks.json` |
+| `ATOM_ADMIN_USERNAME` | Atom admin login for service projections | `atom-admin` |
+| `ATOM_ADMIN_SECRET` | Atom admin secret for service projections | `change-me` |
+| `ATOM_TIMEOUT` | Atom request timeout | `5s` |
 | `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
 | `MG_SPICEDB_PRE_SHARED_KEY` | SpiceDB pre-shared key | `12345678` |
 | `MG_SPICEDB_HOST` | SpiceDB host | `magistrala-spicedb` |

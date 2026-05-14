@@ -21,7 +21,6 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	pubsubmocks "github.com/absmach/magistrala/pkg/messaging/mocks"
 	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
-	"github.com/absmach/magistrala/pkg/roles"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	tmocks "github.com/absmach/magistrala/pkg/ticker/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -69,11 +68,7 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 	readersSvc := new(readmocks.ReadersServiceClient)
 	e := new(emocks.Emailer)
 	policy := new(policymocks.Service)
-	availableActions := []roles.Action{}
-	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
-		"admin": availableActions,
-	}
-	svc, err := re.NewService(repo, runInfo, policy, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc, availableActions, builtInRoles)
+	svc, err := re.NewService(repo, runInfo, idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc)
 	if err != nil {
 		t.Fatalf("Failed to create service: %v", err)
 	}
@@ -82,19 +77,15 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (re.Service, *mocks.R
 
 func TestAddRule(t *testing.T) {
 	// nolint:dogsled
-	svc, repo, _, _, _, policies := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _, _, _ := newService(t, make(chan pkglog.RunInfo))
 	ruleName := namegen.Generate()
 	now := time.Now().Add(time.Hour)
 	cases := []struct {
-		desc           string
-		session        authn.Session
-		rule           re.Rule
-		res            re.Rule
-		err            error
-		addPoliciesErr error
-		deletePolicies error
-		addRoleErr     error
-		deleteErr      error
+		desc    string
+		session authn.Session
+		rule    re.Rule
+		res     re.Rule
+		err     error
 	}{
 		{
 			desc: "Add rule successfully",
@@ -124,10 +115,7 @@ func TestAddRule(t *testing.T) {
 				CreatedBy: userID,
 				DomainID:  domainID,
 			},
-			err:            nil,
-			addPoliciesErr: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
+			err: nil,
 		},
 		{
 			desc: "Add rule with failed repo",
@@ -144,11 +132,7 @@ func TestAddRule(t *testing.T) {
 					Time:            now,
 				},
 			},
-			err:            repoerr.ErrCreateEntity,
-			addPoliciesErr: nil,
-			deletePolicies: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
+			err: repoerr.ErrCreateEntity,
 		},
 		{
 			desc: "Add rule with non-zero StartDateTime",
@@ -180,136 +164,7 @@ func TestAddRule(t *testing.T) {
 				CreatedBy: userID,
 				DomainID:  domainID,
 			},
-			err:            nil,
-			addPoliciesErr: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
-		},
-		{
-			desc: "Add rule with failed to add roles and failed to delete policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addRoleErr:     svcerr.ErrCreateEntity,
-			deletePolicies: svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRemoveEntity,
-		},
-		{
-			desc: "Add rule with failed to add policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrAddPolicies,
-		},
-		{
-			desc: "Add rule with failed to add policies and failed rollback",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			deleteErr:      svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRollbackRepo,
-		},
-		{
-			desc: "Add rule with failed to add roles",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addRoleErr: svcerr.ErrCreateEntity,
-			err:        svcerr.ErrAddPolicies,
+			err: nil,
 		},
 		{
 			desc: "Add rule with Go script containing goroutines",
@@ -330,10 +185,7 @@ func TestAddRule(t *testing.T) {
 					Time:            now,
 				},
 			},
-			err:            re.ErrGoroutinesNotAllowed,
-			addPoliciesErr: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
+			err: re.ErrGoroutinesNotAllowed,
 		},
 		{
 			desc: "Add rule with Go script containing panic",
@@ -354,160 +206,64 @@ func TestAddRule(t *testing.T) {
 					Time:            now,
 				},
 			},
-			err:            re.ErrPanicNotAllowed,
-			addPoliciesErr: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
-		},
-		{
-			desc: "Add rule with failed to add roles and failed to delete policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addRoleErr:     svcerr.ErrCreateEntity,
-			deletePolicies: svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRemoveEntity,
-		},
-		{
-			desc: "Add rule with failed to add policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrAddPolicies,
-		},
-		{
-			desc: "Add rule with failed to add policies and failed rollback",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addPoliciesErr: svcerr.ErrAuthorization,
-			deleteErr:      svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRollbackRepo,
-		},
-		{
-			desc: "Add rule with failed to add roles",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			rule: re.Rule{
-				Name:         ruleName,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-			},
-			res: re.Rule{
-				Name:         ruleName,
-				ID:           ruleID,
-				InputChannel: inputChannel,
-				Schedule: pkgSch.Schedule{
-					Recurring:       pkgSch.Daily,
-					RecurringPeriod: 1,
-					Time:            now,
-				},
-				Status:    re.EnabledStatus,
-				CreatedBy: userID,
-				DomainID:  domainID,
-			},
-			addRoleErr: svcerr.ErrCreateEntity,
-			err:        svcerr.ErrAddPolicies,
+			err: re.ErrPanicNotAllowed,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("AddRule", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
-			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies)
-			repoCall1 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
-			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr)
-			res, _, err := svc.AddRule(context.Background(), tc.session, tc.rule)
+			res, err := svc.AddRule(context.Background(), tc.session, tc.rule)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
 				assert.NotEmpty(t, res.ID, "expected non-empty result in ID")
 				assert.Equal(t, tc.rule.Name, res.Name)
 				assert.Equal(t, tc.rule.Schedule, res.Schedule)
 			}
-			policyCall.Unset()
-			policyCall2.Unset()
 			repoCall.Unset()
-			repoCall1.Unset()
-			repoCall2.Unset()
 		})
 	}
+}
+
+func TestAddRuleWithoutRoleProvisioning(t *testing.T) {
+	repo := new(mocks.Repository)
+	mockTicker := new(tmocks.Ticker)
+	idProvider := uuid.NewMock()
+	pubsub := pubsubmocks.NewPubSub(t)
+	readersSvc := new(readmocks.ReadersServiceClient)
+	e := new(emocks.Emailer)
+
+	svc, err := re.NewService(repo, make(chan pkglog.RunInfo), idProvider, pubsub, pubsub, pubsub, mockTicker, e, readersSvc)
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+
+	session := authn.Session{
+		UserID:   userID,
+		DomainID: domainID,
+	}
+	rule := re.Rule{
+		Name:         ruleName,
+		InputChannel: inputChannel,
+		Schedule: pkgSch.Schedule{
+			Recurring:       pkgSch.Daily,
+			RecurringPeriod: 1,
+			Time:            time.Now().Add(time.Hour),
+		},
+	}
+	saved := rule
+	saved.ID = ruleID
+	saved.Status = re.EnabledStatus
+	saved.CreatedBy = userID
+	saved.DomainID = domainID
+
+	repo.On("AddRule", mock.Anything, mock.Anything).Return(saved, nil).Once()
+
+	res, err := svc.AddRule(context.Background(), session, rule)
+	assert.NoError(t, err)
+	assert.Equal(t, saved.ID, res.ID)
+	repo.AssertNotCalled(t, "AddRoles", mock.Anything, mock.Anything)
+	repo.AssertExpectations(t)
 }
 
 func TestViewRule(t *testing.T) {
@@ -982,11 +738,7 @@ func TestListRules(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var repoCall *mock.Call
-			if tc.superAdmin {
-				repoCall = repo.On("ListAllRules", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			} else {
-				repoCall = repo.On("ListUserRules", mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			}
+			repoCall = repo.On("ListAllRules", mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.ListRules(context.Background(), tc.session, tc.pageMeta)
 
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -1175,7 +927,6 @@ func TestHandle(t *testing.T) {
 		page       re.Page
 		listErr    error
 		publishErr error
-		emailErr   error
 		expectErr  bool
 	}{
 		{
@@ -1420,37 +1171,6 @@ func TestHandle(t *testing.T) {
 				},
 			},
 			listErr: nil,
-		},
-		{
-			desc: "consume message with Lua script and failed Email output",
-			message: &messaging.Message{
-				Channel: inputChannel,
-				Created: now.Unix(),
-				Payload: []byte(`{"temperature": 25.5}`),
-			},
-			page: re.Page{
-				Rules: []re.Rule{
-					{
-						ID:           testsutil.GenerateUUID(t),
-						Name:         namegen.Generate(),
-						InputChannel: inputChannel,
-						Status:       re.EnabledStatus,
-						Logic: re.Script{
-							Type:  re.LuaType,
-							Value: `return message.payload`,
-						},
-						Outputs: re.Outputs{
-							&outputs.Email{
-								To:      []string{"test@example.com"},
-								Subject: "Temperature Alert",
-								Content: "Temperature: {{.Result}}",
-							},
-						},
-						Schedule: schedule,
-					},
-				},
-			},
-			emailErr: errors.New("failed to send email"),
 		},
 		{
 			desc: "consume message with rules using GoType",
@@ -1849,8 +1569,8 @@ func TestHandle(t *testing.T) {
 					err = tc.listErr
 				}
 			})
-			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr)
-			repoCall2 := emailer.On("SendEmailNotification", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.emailErr)
+			repoCall1 := pubmocks.On("Publish", mock.Anything, mock.Anything, mock.Anything).Return(tc.publishErr).Maybe()
+			repoCall2 := emailer.On("SendEmailNotification", mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil).Maybe()
 
 			err = svc.Handle(tc.message)
 			assert.Nil(t, err)

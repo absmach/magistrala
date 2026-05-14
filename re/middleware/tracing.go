@@ -8,8 +8,6 @@ import (
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	smqTracing "github.com/absmach/magistrala/pkg/tracing"
 	"github.com/absmach/magistrala/re"
 	"go.opentelemetry.io/otel/attribute"
@@ -19,20 +17,18 @@ import (
 type tracingMiddleware struct {
 	tracer trace.Tracer
 	svc    re.Service
-	rolemw.RoleManagerTracing
 }
 
 var _ re.Service = (*tracingMiddleware)(nil)
 
 func NewTracingMiddleware(tracer trace.Tracer, svc re.Service) re.Service {
 	return &tracingMiddleware{
-		tracer:             tracer,
-		svc:                svc,
-		RoleManagerTracing: rolemw.NewTracing("re", svc, tracer),
+		tracer: tracer,
+		svc:    svc,
 	}
 }
 
-func (tm *tracingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
+func (tm *tracingMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	ctx, span := smqTracing.StartSpan(ctx, tm.tracer, "add_rule", trace.WithAttributes(
 		attribute.String("name", r.Name),
 		attribute.String("domain_id", r.DomainID),

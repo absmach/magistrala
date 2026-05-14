@@ -13,12 +13,12 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
+	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/notifications/emailer"
 	"github.com/absmach/magistrala/notifications/events"
 	"github.com/absmach/magistrala/notifications/middleware"
 	"github.com/absmach/magistrala/pkg/events/store"
-	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
@@ -28,9 +28,8 @@ import (
 )
 
 const (
-	svcName        = "notifications"
-	envPrefixUsers = "MG_USERS_GRPC_"
-	defEmailPort   = "25"
+	svcName      = "notifications"
+	defEmailPort = "25"
 )
 
 type config struct {
@@ -89,21 +88,14 @@ func main() {
 		}
 	}()
 
-	usersClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&usersClientCfg, env.Options{Prefix: envPrefixUsers}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load users gRPC client configuration : %s", err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-
-	usersClient, usersHandler, err := grpcclient.SetupUsersClient(ctx, usersClientCfg)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to setup users gRPC client: %s", err))
-		exitCode = 1
-		return
-	}
-	defer usersHandler.Close()
-	logger.Info("Successfully connected to users gRPC server " + usersHandler.Secure())
+	usersResolver := emailer.NewAtomUserResolver(atom.NewClient(atomCfg))
+	logger.Info("Notifications user lookup configured to use Atom")
 
 	emailerCfg := emailer.Config{
 		FromAddress:        cfg.EmailFromAddress,
@@ -118,7 +110,7 @@ func main() {
 		EmailPassword:      cfg.EmailPassword,
 	}
 
-	notifier, err := emailer.New(usersClient, emailerCfg)
+	notifier, err := emailer.New(usersResolver, emailerCfg)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create emailer: %s", err))
 		exitCode = 1

@@ -8,7 +8,6 @@ import (
 
 	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
-	"github.com/absmach/magistrala/domains"
 	pkgDomains "github.com/absmach/magistrala/pkg/domains"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 )
@@ -28,14 +27,14 @@ func NewAuthorization(ctx context.Context, cfg grpcclient.Config) (pkgDomains.Au
 	return authorization{domainsSvcClient: domainsClient}, domainsClient, domainsHandler, nil
 }
 
-func (a authorization) RetrieveStatus(ctx context.Context, id string) (domains.Status, error) {
+func (a authorization) RetrieveStatus(ctx context.Context, id string) (pkgDomains.Status, error) {
 	req := grpcCommonV1.RetrieveEntityReq{
 		Id: id,
 	}
 	res, err := a.domainsSvcClient.RetrieveStatus(ctx, &req)
 	if err != nil {
-		return domains.AllStatus, err
+		return pkgDomains.AllStatus, err
 	}
 
-	return domains.Status(res.Entity.GetStatus()), nil
+	return pkgDomains.Status(res.Entity.GetStatus()), nil
 }

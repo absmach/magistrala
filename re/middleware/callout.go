@@ -12,9 +12,6 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/policies"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/roles"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 )
@@ -25,37 +22,30 @@ type calloutMiddleware struct {
 	svc         re.Service
 	callout     callout.Callout
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
-	rolemw.RoleManagerCalloutMiddleware
 }
 
 const entityType = "rule"
 
-func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
-	call, err := rolemw.NewCallout(mgPolicies.RulesType, svc, callout, roleOps)
-	if err != nil {
-		return nil, err
-	}
-
+func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (re.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
 
 	return &calloutMiddleware{
-		svc:                          svc,
-		callout:                      callout,
-		entitiesOps:                  entitiesOps,
-		RoleManagerCalloutMiddleware: call,
+		svc:         svc,
+		callout:     callout,
+		entitiesOps: entitiesOps,
 	}, nil
 }
 
-func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
+func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	params := map[string]any{
 		"entities": r,
 		"count":    1,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpAddRule, params); err != nil {
-		return re.Rule{}, nil, err
+		return re.Rule{}, err
 	}
 
 	return cm.svc.AddRule(ctx, session, r)

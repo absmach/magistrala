@@ -21,12 +21,15 @@ import (
 	"connectrpc.com/otelconnect"
 	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
 	fluxmqgrpc "github.com/absmach/magistrala/fluxmq/api/grpc"
+	fluxmqhttp "github.com/absmach/magistrala/fluxmq/api/http"
+	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
-	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
-	"github.com/absmach/magistrala/pkg/grpcclient"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
+	broker "github.com/absmach/magistrala/pkg/messaging/brokers"
 	"github.com/absmach/magistrala/pkg/server"
+	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/net/http2"
@@ -35,17 +38,16 @@ import (
 )
 
 const (
-	svcName           = "fluxmq-auth"
-	defSvcGRPCPort    = "7016"
-	envPrefixClients  = "MG_CLIENTS_GRPC_"
-	envPrefixChannels = "MG_CHANNELS_GRPC_"
-	envPrefixDomains  = "MG_DOMAINS_GRPC_"
-	envPrefixCache    = "MG_FLUXMQ_CACHE_"
-	envPrefixGRPC     = "MG_FLUXMQ_GRPC_"
+	svcName        = "fluxmq-auth"
+	defSvcGRPCPort = "7016"
+	envPrefixCache = "MG_FLUXMQ_CACHE_"
+	envPrefixGRPC  = "MG_FLUXMQ_GRPC_"
+	envPrefixHTTP  = "MG_FLUXMQ_PUBLISH_HTTP_"
 )
 
 type config struct {
 	LogLevel   string  `env:"MG_FLUXMQ_LOG_LEVEL"    envDefault:"info"`
+	BrokerURL  string  `env:"MG_MESSAGE_BROKER_URL"  envDefault:"amqp://guest:guest@localhost:5682/"`
 	JaegerURL  url.URL `env:"MG_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
 	InstanceID string  `env:"MG_FLUXMQ_INSTANCE_ID"   envDefault:""`
@@ -88,53 +90,18 @@ func main() {
 		}
 	}()
 
-	// Connect to Domains gRPC service (needed for topic route resolution).
-	domsGrpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration: %s", err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-	_, domainsClient, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer domainsHandler.Close()
-	logger.Info("Domains gRPC client connected " + domainsHandler.Secure())
-
-	// Connect to Clients gRPC service (authentication).
-	clientsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&clientsClientCfg, env.Options{Prefix: envPrefixClients}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load clients gRPC client configuration: %s", err))
-		exitCode = 1
-		return
-	}
-	clientsClient, clientsHandler, err := grpcclient.SetupClientsClient(ctx, clientsClientCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer clientsHandler.Close()
-	logger.Info("Clients gRPC client connected " + clientsHandler.Secure())
-
-	// Connect to Channels gRPC service (authorization + route resolution).
-	channelsClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&channelsClientCfg, env.Options{Prefix: envPrefixChannels}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load channels gRPC client configuration: %s", err))
-		exitCode = 1
-		return
-	}
-	channelsClient, channelsHandler, err := grpcclient.SetupChannelsClient(ctx, channelsClientCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer channelsHandler.Close()
-	logger.Info("Channels gRPC client connected " + channelsHandler.Secure())
+	atomAuthz := atom.NewClient(atomCfg)
+	authn := atomauthn.NewAuthentication()
+	clientsClient := atom.NewClientsCompat(authn)
+	domainsClient := atom.NewDomainsCompat(atomAuthz)
+	channelsClient := atom.NewChannelsCompat(atomAuthz)
+	logger.Info("FluxMQ authentication, authorization, and route resolution configured to use Atom")
 
 	// Topic parser with cache for route resolution.
 	cacheConfig := messaging.CacheConfig{}
@@ -166,7 +133,7 @@ func main() {
 		return
 	}
 	path, handler := authv1connect.NewAuthServiceHandler(
-		fluxmqgrpc.NewServer(clientsClient, channelsClient, parser),
+		fluxmqgrpc.NewServer(clientsClient, channelsClient, parser, atomAuthz),
 		connect.WithInterceptors(otelInterceptor),
 	)
 	mux.Handle(path, handler)
@@ -186,6 +153,29 @@ func main() {
 		MaxHeaderBytes:    grpcServerConfig.MaxHeaderBytes,
 	}
 
+	publisher, err := broker.NewPublisher(ctx, cfg.BrokerURL, broker.ConnectionName("fluxmq-ui-publish-proxy"))
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create publish proxy message publisher: %s", err))
+		exitCode = 1
+		return
+	}
+	defer publisher.Close()
+
+	httpServerConfig := server.Config{Port: "9026"}
+	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
+		logger.Error(fmt.Sprintf("failed to load publish proxy HTTP server configuration: %s", err))
+		exitCode = 1
+		return
+	}
+	hs := httpserver.NewServer(
+		ctx,
+		cancel,
+		"fluxmq-publish",
+		httpServerConfig,
+		fluxmqhttp.MakePublishHandler(authn, atomAuthz, publisher),
+		logger,
+	)
+
 	g.Go(func() error {
 		logger.Info(fmt.Sprintf("%s service h2c server listening at %s", svcName, address))
 		var err error
@@ -203,9 +193,16 @@ func main() {
 	})
 
 	g.Go(func() error {
+		return hs.Start()
+	})
+
+	g.Go(func() error {
 		<-ctx.Done()
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), server.StopWaitTime) //nolint:contextcheck
 		defer shutdownCancel()
+		if err := hs.Stop(); err != nil {
+			return fmt.Errorf("failed to shutdown publish proxy server: %w", err)
+		}
 		if err := httpServer.Shutdown(shutdownCtx); err != nil { //nolint:contextcheck
 			return fmt.Errorf("failed to shutdown %s server: %w", svcName, err)
 		}

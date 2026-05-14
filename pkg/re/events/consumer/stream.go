@@ -10,7 +10,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
-	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 	"github.com/absmach/magistrala/re"
 )
 
@@ -38,8 +37,7 @@ var (
 )
 
 type eventHandler struct {
-	repo              re.Repository
-	rolesEventHandler rconsumer.EventHandler
+	repo re.Repository
 }
 
 func RulesEventsSubscribe(ctx context.Context, repo re.Repository, esURL, esConsumerName string, logger *slog.Logger) error {
@@ -59,10 +57,8 @@ func RulesEventsSubscribe(ctx context.Context, repo re.Repository, esURL, esCons
 
 // NewEventHandler returns new event store handler.
 func NewEventHandler(repo re.Repository) events.EventHandler {
-	reh := rconsumer.NewEventHandler("rule", repo)
 	return &eventHandler{
-		repo:              repo,
-		rolesEventHandler: reh,
+		repo: repo,
 	}
 }
 
@@ -94,20 +90,16 @@ func (es *eventHandler) Handle(ctx context.Context, event events.Event) error {
 		return es.removeRuleHandler(ctx, msg)
 	}
 
-	return es.rolesEventHandler.Handle(ctx, op, msg)
+	return nil
 }
 
 func (es *eventHandler) addRuleHandler(ctx context.Context, data map[string]any) error {
-	r, rps, err := decodeAddRuleEvent(data)
+	r, err := decodeAddRuleEvent(data)
 	if err != nil {
 		return errors.Wrap(errAddRuleEvent, err)
 	}
 
 	if _, err := es.repo.AddRule(ctx, r); err != nil {
-		return errors.Wrap(errAddRuleEvent, err)
-	}
-
-	if _, err := es.repo.AddRoles(ctx, rps); err != nil {
 		return errors.Wrap(errAddRuleEvent, err)
 	}
 

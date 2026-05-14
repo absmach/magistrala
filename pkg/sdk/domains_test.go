@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -51,7 +54,6 @@ var (
 		Metadata: sdkDomain.Metadata,
 		Tags:     sdkDomain.Tags,
 		Route:    sdkDomain.Route,
-		Roles:    validRoles,
 	}
 	updatedDomianName = "updated-domain"
 )
@@ -461,9 +463,6 @@ func TestViewDomain(t *testing.T) {
 			}
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
-			if tc.withRoles {
-				assert.Equal(t, resp.Roles, validRoles, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, validRoles, resp.Roles))
-			}
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "RetrieveDomain", mock.Anything, tc.session, tc.domainID, false)
 				assert.True(t, ok)
@@ -2363,7 +2362,6 @@ func generateTestDomain(t *testing.T) (domains.Domain, sdk.Domain) {
 		CreatedAt: ad.CreatedAt,
 		UpdatedBy: ad.UpdatedBy,
 		UpdatedAt: ad.UpdatedAt,
-		Roles:     ad.Roles,
 	}
 	return ad, sd
 }

@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -598,6 +601,7 @@ func TestViewClient(t *testing.T) {
 
 	sdkClient := generateTestClient(t, false)
 	sdkClientWithRoles := generateTestClient(t, true)
+	sdkClientWithRolesResponse := sdkClientWithRoles
 	conf := sdk.Config{
 		ClientsURL: ts.URL,
 	}
@@ -641,7 +645,7 @@ func TestViewClient(t *testing.T) {
 			clientID:  sdkClientWithRoles.ID,
 			svcRes:    convertClient(sdkClientWithRoles),
 			svcErr:    nil,
-			response:  sdkClientWithRoles,
+			response:  sdkClientWithRolesResponse,
 			err:       nil,
 		},
 		{
@@ -725,9 +729,6 @@ func TestViewClient(t *testing.T) {
 			}
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
-			if tc.withRoles {
-				assert.Equal(t, resp.Roles, validRoles, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, validRoles, resp.Roles))
-			}
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "View", mock.Anything, tc.session, tc.clientID, tc.withRoles)
 				assert.True(t, ok)
@@ -3260,14 +3261,10 @@ func TestListAvailableClientRoleActions(t *testing.T) {
 	}
 }
 
-func generateTestClient(t *testing.T, withRoles bool) sdk.Client {
+func generateTestClient(t *testing.T, _ bool) sdk.Client {
 	createdAt, err := time.Parse(time.RFC3339, "2023-03-03T00:00:00Z")
 	assert.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
 	updatedAt := createdAt
-	var rl []roles.MemberRoleActions
-	if withRoles {
-		rl = validRoles
-	}
 	return sdk.Client{
 		ID:   testsutil.GenerateUUID(t),
 		Name: "clientname",
@@ -3281,6 +3278,5 @@ func generateTestClient(t *testing.T, withRoles bool) sdk.Client {
 		Status:          clients.EnabledStatus.String(),
 		CreatedAt:       createdAt,
 		UpdatedAt:       updatedAt,
-		Roles:           rl,
 	}
 }

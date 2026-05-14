@@ -106,7 +106,7 @@ func (a Alarm) Validate() error {
 
 // Service specifies an API that must be fulfilled by the domain service.
 type Service interface {
-	CreateAlarm(ctx context.Context, alarm Alarm) error
+	CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, session authn.Session, id string) (Alarm, error)
 	ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error)
@@ -118,6 +118,5 @@ type Repository interface {
 	UpdateAlarm(ctx context.Context, alarm Alarm) (Alarm, error)
 	ViewAlarm(ctx context.Context, alarmID, domainID string) (Alarm, error)
 	ListAllAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error)
-	ListUserAlarms(ctx context.Context, userID string, pm PageMetadata) (AlarmsPage, error)
 	DeleteAlarm(ctx context.Context, id string) error
 }

@@ -13,10 +13,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	apiutil "github.com/absmach/magistrala/api/http/util"
-	"github.com/absmach/magistrala/clients"
-	"github.com/absmach/magistrala/groups"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/users"
 	"github.com/gofrs/uuid/v5"
 )
 
@@ -80,9 +77,9 @@ const (
 	DefStartLevel   = 1
 	DefEndLevel     = 0
 	DefStatus       = "enabled"
-	DefClientStatus = clients.Enabled
-	DefUserStatus   = users.Enabled
-	DefGroupStatus  = groups.Enabled
+	DefClientStatus = "enabled"
+	DefUserStatus   = "enabled"
+	DefGroupStatus  = "enabled"
 
 	// ContentType represents JSON content type.
 	ContentType = "application/json"

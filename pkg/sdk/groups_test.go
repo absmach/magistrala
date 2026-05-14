@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -669,9 +672,6 @@ func TestViewGroup(t *testing.T) {
 
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
-			if tc.withRoles {
-				assert.Equal(t, resp.Roles, validRoles, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, validRoles, resp.Roles))
-			}
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "ViewGroup", mock.Anything, tc.session, tc.groupID, tc.withRoles)
 				assert.True(t, ok)
@@ -3843,7 +3843,6 @@ func generateTestGroup(t *testing.T) sdk.Group {
 		CreatedAt:   createdAt,
 		UpdatedAt:   updatedAt,
 		Status:      groups.EnabledStatus.String(),
-		Roles:       validRoles,
 	}
 	return gr
 }

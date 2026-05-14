@@ -44,20 +44,29 @@ func (_m *Service) EXPECT() *Service_Expecter {
 }
 
 // CreateAlarm provides a mock function for the type Service
-func (_mock *Service) CreateAlarm(ctx context.Context, alarm alarms.Alarm) error {
+func (_mock *Service) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
 	ret := _mock.Called(ctx, alarm)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateAlarm")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, alarms.Alarm) error); ok {
+	var r0 alarms.Alarm
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, alarms.Alarm) (alarms.Alarm, error)); ok {
+		return returnFunc(ctx, alarm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, alarms.Alarm) alarms.Alarm); ok {
 		r0 = returnFunc(ctx, alarm)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(alarms.Alarm)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, alarms.Alarm) error); ok {
+		r1 = returnFunc(ctx, alarm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Service_CreateAlarm_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateAlarm'
@@ -90,12 +99,12 @@ func (_c *Service_CreateAlarm_Call) Run(run func(ctx context.Context, alarm alar
 	return _c
 }
 
-func (_c *Service_CreateAlarm_Call) Return(err error) *Service_CreateAlarm_Call {
-	_c.Call.Return(err)
+func (_c *Service_CreateAlarm_Call) Return(alarm1 alarms.Alarm, err error) *Service_CreateAlarm_Call {
+	_c.Call.Return(alarm1, err)
 	return _c
 }
 
-func (_c *Service_CreateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm alarms.Alarm) error) *Service_CreateAlarm_Call {
+func (_c *Service_CreateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error)) *Service_CreateAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }

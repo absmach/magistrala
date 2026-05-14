@@ -17,29 +17,21 @@ import (
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
-	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/internal/email"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
-	authnsvc "github.com/absmach/magistrala/pkg/authn/authsvc"
-	mgauthz "github.com/absmach/magistrala/pkg/authz"
-	authzsvc "github.com/absmach/magistrala/pkg/authz/authsvc"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	"github.com/absmach/magistrala/pkg/callout"
-	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
 	"github.com/absmach/magistrala/pkg/emailer"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/permissions"
-	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/policies/spicedb"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
-	spicedbdecoder "github.com/absmach/magistrala/pkg/spicedb"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/pkg/uuid"
 	grpcClient "github.com/absmach/magistrala/readers/api/grpc"
@@ -49,14 +41,10 @@ import (
 	"github.com/absmach/magistrala/reports/middleware"
 	"github.com/absmach/magistrala/reports/operations"
 	repg "github.com/absmach/magistrala/reports/postgres"
-	"github.com/authzed/authzed-go/v1"
-	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/go-chi/chi/v5"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
@@ -64,11 +52,9 @@ const (
 	envPrefixDB      = "MG_REPORTS_DB_"
 	envPrefixHTTP    = "MG_REPORTS_HTTP_"
 	envPrefixCallout = "MG_REPORTS_CALLOUT_"
-	envPrefixAuth    = "MG_AUTH_GRPC_"
 	defDB            = "repo"
 	defSvcHTTPPort   = "9017"
 	envPrefixGrpc    = "MG_TIMESCALE_READER_GRPC_"
-	envPrefixDomains = "MG_DOMAINS_GRPC_"
 	templatePath     = "template/reports_default_template.html"
 	reportEntity     = "report"
 )
@@ -90,10 +76,6 @@ type config struct {
 	BrokerURL           string  `env:"MG_MESSAGE_BROKER_URL"         envDefault:"nats://localhost:4222"`
 	DefaultTemplatePath string  `env:"MG_REPORTS_DEFAULT_TEMPLATE"    envDefault:""`
 	ConverterURL        string  `env:"MG_PDF_CONVERTER_URL"           envDefault:"http://localhost:4000/pdf"`
-	SpicedbHost         string  `env:"MG_SPICEDB_HOST"               envDefault:"localhost"`
-	SpicedbPort         string  `env:"MG_SPICEDB_PORT"               envDefault:"50051"`
-	SpicedbPreSharedKey string  `env:"MG_SPICEDB_PRE_SHARED_KEY"     envDefault:"12345678"`
-	SpicedbSchemaFile   string  `env:"MG_SPICEDB_SCHEMA_FILE"        envDefault:"schema.zed"`
 	PermissionsFile     string  `env:"MG_PERMISSIONS_FILE"           envDefault:"permission.yaml"`
 }
 
@@ -216,56 +198,17 @@ func main() {
 		return
 	}
 
-	grpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&grpcCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
-		exitCode = 1
-
-		return
-	}
-	authn, authnClient, err := authnsvc.NewAuthentication(ctx, grpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-
-		return
-	}
-	am := smqauthn.NewAuthNMiddleware(authn)
-	defer authnClient.Close()
-	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-
-	domsGrpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer domainsHandler.Close()
+	authnSvc := atomauthn.NewAuthentication()
+	logger.Info("AuthN configured to use Atom bearer tokens")
+	am := smqauthn.NewAuthNMiddleware(authnSvc)
 
-	authz, authzClient, err := authzsvc.NewAuthorization(ctx, grpcCfg, domAuthz)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer authzClient.Close()
-	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
-
-	ddatabase := pgclient.NewDatabase(db, dbConfig, tracer)
-	drepo := dpostgres.NewRepository(ddatabase)
-
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
-		exitCode = 1
-		return
-	}
-
+	logger.Info("AuthZ configured to use Atom PDP")
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
 	regrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -286,7 +229,7 @@ func main() {
 
 	runInfo := make(chan pkglog.RunInfo, channBuffer)
 
-	svc, err := newService(ctx, cfg, database, runInfo, authz, ec, logger, readersClient, template, callout, tracer)
+	svc, err := newService(ctx, cfg, database, runInfo, ec, logger, readersClient, template, callout, tracer)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create services: %s", err))
 		exitCode = 1
@@ -326,7 +269,7 @@ func main() {
 	}
 }
 
-func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, authz mgauthz.Authorization, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
+func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo chan pkglog.RunInfo, ec email.Config, logger *slog.Logger, readersClient grpcReadersV1.ReadersServiceClient, template reports.ReportTemplate, callout callout.Callout, tracer trace.Tracer) (reports.Service, error) {
 	repo := repg.NewRepository(db)
 	idp := uuid.New()
 
@@ -335,21 +278,14 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 		logger.Error(fmt.Sprintf("failed to configure e-mailing util: %s", err.Error()))
 	}
 
-	policyService, err := newSpiceDBPolicyServiceEvaluator(cfg, logger)
-	if err != nil {
-		return nil, err
-	}
-	logger.Info("Policy service successfully connected to SpiceDB gRPC server")
+	atomCfg := atom.LoadConfig()
 
-	availableActions, builtInRoles, err := availableActionsAndBuiltInRoles(cfg.SpicedbSchemaFile)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get available actions and built-in roles: %w", err)
-	}
-
-	csvc, err := reports.NewService(repo, runInfo, policyService, idp, ticker.NewTicker(time.Second*30), emailClient, readersClient, template, cfg.ConverterURL, availableActions, builtInRoles)
+	var csvc reports.Service
+	csvc, err = reports.NewService(repo, runInfo, idp, ticker.NewTicker(time.Second*30), emailClient, readersClient, template, cfg.ConverterURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create reports service: %w", err)
 	}
+	csvc = reports.WithAtom(csvc, atom.NewClient(atomCfg))
 
 	csvc, err = reportsevents.NewEventStoreMiddleware(ctx, csvc, cfg.ESURL)
 	if err != nil {
@@ -361,7 +297,7 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 		return nil, fmt.Errorf("failed to parse permissions file: %w", err)
 	}
 
-	reportOps, reportRoleOps, err := permConfig.GetEntityPermissions(reportEntity)
+	reportOps, _, err := permConfig.GetEntityPermissions(reportEntity)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get report permissions: %w", err)
 	}
@@ -378,16 +314,11 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 		return nil, fmt.Errorf("failed to create entities operations: %w", err)
 	}
 
-	roleOps, err := permissions.NewOperations(roles.Operations(), reportRoleOps)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create role operations: %w", err)
-	}
-
-	csvc, err = middleware.AuthorizationMiddleware(csvc, authz, entitiesOps, roleOps)
+	csvc, err = middleware.AtomAuthorizationMiddleware(csvc, atom.NewClient(atomCfg), entitiesOps)
 	if err != nil {
 		return nil, err
 	}
-	csvc, err = middleware.NewCallout(csvc, callout, entitiesOps, roleOps)
+	csvc, err = middleware.NewCallout(csvc, callout, entitiesOps)
 	if err != nil {
 		return nil, err
 	}
@@ -397,31 +328,4 @@ func newService(ctx context.Context, cfg config, db pgclient.Database, runInfo c
 	csvc = middleware.NewTracingMiddleware(tracer, csvc)
 
 	return csvc, nil
-}
-
-func newSpiceDBPolicyServiceEvaluator(cfg config, logger *slog.Logger) (policies.Service, error) {
-	client, err := authzed.NewClientWithExperimentalAPIs(
-		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
-	)
-	if err != nil {
-		return nil, err
-	}
-	ps := spicedb.NewPolicyService(client, logger)
-
-	return ps, nil
-}
-
-func availableActionsAndBuiltInRoles(spicedbSchemaFile string) ([]roles.Action, map[roles.BuiltInRoleName][]roles.Action, error) {
-	availableActions, err := spicedbdecoder.GetActionsFromSchema(spicedbSchemaFile, reportEntity)
-	if err != nil {
-		return []roles.Action{}, map[roles.BuiltInRoleName][]roles.Action{}, err
-	}
-
-	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
-		reports.BuiltInRoleAdmin: availableActions,
-	}
-
-	return availableActions, builtInRoles, err
 }

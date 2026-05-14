@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -762,9 +765,6 @@ func TestViewChannel(t *testing.T) {
 
 			assert.Equal(t, tc.err, err)
 			assert.Equal(t, tc.response, resp)
-			if tc.withRoles {
-				assert.Equal(t, resp.Roles, validRoles, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, validRoles, resp.Roles))
-			}
 			if tc.err == nil {
 				ok := svcCall.Parent.AssertCalled(t, "ViewChannel", mock.Anything, tc.session, tc.channelID, tc.withRoles)
 				assert.True(t, ok)
@@ -2133,7 +2133,6 @@ func generateTestChannel(t *testing.T) sdk.Channel {
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 		Status:    channels.EnabledStatus.String(),
-		Roles:     validRoles,
 	}
 	return ch
 }

@@ -20,13 +20,11 @@ import (
 	"github.com/absmach/magistrala/certs/middleware"
 	"github.com/absmach/magistrala/certs/pki"
 	"github.com/absmach/magistrala/certs/postgres"
+	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
-	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
-	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
-	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/jaeger"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
@@ -43,16 +41,14 @@ import (
 )
 
 const (
-	svcName          = "certs"
-	envPrefixHTTP    = "MG_CERTS_HTTP_"
-	envPrefixDB      = "MG_CERTS_DB_"
-	envPrefixGRPC    = "MG_CERTS_GRPC_"
-	envPrefixAuth    = "MG_AUTH_GRPC_"
-	envPrefixDomains = "MG_DOMAINS_GRPC_"
-	defSvcHTTPPort   = "9010"
-	defSvcGRPCPort   = "7012"
-	defDB            = "certs"
-	serviceTokenKey  = "SERVICE_TOKEN="
+	svcName         = "certs"
+	envPrefixHTTP   = "MG_CERTS_HTTP_"
+	envPrefixDB     = "MG_CERTS_DB_"
+	envPrefixGRPC   = "MG_CERTS_GRPC_"
+	defSvcHTTPPort  = "9010"
+	defSvcGRPCPort  = "7012"
+	defDB           = "certs"
+	serviceTokenKey = "SERVICE_TOKEN="
 )
 
 type config struct {
@@ -184,44 +180,17 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	domsGrpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer domainsHandler.Close()
-
-	authClientConfig := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authClientConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
-		exitCode = 1
-		return
-	}
-
-	authn, authnHandler, err := authsvcAuthn.NewAuthentication(ctx, authClientConfig)
-	if err != nil {
-		logger.Error("failed to create authn " + err.Error())
-		exitCode = 1
-		return
-	}
-	defer authnHandler.Close()
-	logger.Info("Authn successfully connected to auth gRPC server " + authnHandler.Secure())
+	atomClient := atom.NewClient(atomCfg)
+	authn := atomauthn.NewAuthentication()
 	authnMiddleware := smqauthn.NewAuthNMiddleware(authn)
-	authz, authzHandler, err := authsvcAuthz.NewAuthorization(ctx, authClientConfig, domAuthz)
-	if err != nil {
-		logger.Error("failed to create authz " + err.Error())
-		exitCode = 1
-		return
-	}
-	defer authzHandler.Close()
-	logger.Info("Authz successfully connected to auth gRPC server " + authzHandler.Secure())
+	authz := atom.NewAuthorizationCompat(atomClient)
+	logger.Info("AuthN/AuthZ configured to use Atom")
 	httpServerConfig := mgserver.Config{Port: defSvcHTTPPort}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load %s gRPC server configuration : %s", svcName, err))

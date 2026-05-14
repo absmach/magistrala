@@ -13,28 +13,17 @@ import (
 	api "github.com/absmach/magistrala/api/http"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/postgres"
-	rolesPostgres "github.com/absmach/magistrala/pkg/roles/repo/postgres"
 	"github.com/absmach/magistrala/re"
-)
-
-const (
-	rolesTableNamePrefix = "rules"
-	entityTableName      = "rules"
-	entityIDColumnName   = "id"
 )
 
 type PostgresRepository struct {
 	DB postgres.Database
-	rolesPostgres.Repository
 }
 
 func NewRepository(db postgres.Database) re.Repository {
-	rolesRepo := rolesPostgres.NewRepository(db, mgPolicies.RulesType, rolesTableNamePrefix, entityTableName, entityIDColumnName)
 	return &PostgresRepository{
-		DB:         db,
-		Repository: rolesRepo,
+		DB: db,
 	}
 }
 
@@ -93,157 +82,6 @@ func (repo *PostgresRepository) ViewRule(ctx context.Context, id string) (re.Rul
 	}
 
 	return ret, nil
-}
-
-func (repo *PostgresRepository) RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (re.Rule, error) {
-	query := `
-	WITH selected_rule AS (
-		SELECT
-			r.id,
-			r.domain_id
-		FROM
-			rules r
-		WHERE
-			r.id = :id
-		LIMIT 1
-	),
-	selected_rule_roles AS (
-		SELECT
-			rr.entity_id AS rule_id,
-			rrm.member_id AS member_id,
-			rr.id AS role_id,
-			rr."name" AS role_name,
-			jsonb_agg(DISTINCT rra."action") AS actions,
-			'direct' AS access_type,
-			'' AS access_provider_id
-		FROM
-			rules_roles rr
-		JOIN
-			rules_role_members rrm ON rr.id = rrm.role_id
-		JOIN
-			rules_role_actions rra ON rr.id = rra.role_id
-		JOIN
-			selected_rule sr ON sr.id = rr.entity_id
-			AND rrm.member_id = :member_id
-		GROUP BY
-			rr.entity_id, rr.id, rr.name, rrm.member_id
-	),
-	selected_domain_roles AS (
-		SELECT
-			sr.id AS rule_id,
-			drm.member_id AS member_id,
-			dr.id AS role_id,
-			dr."name" AS role_name,
-			jsonb_agg(DISTINCT all_actions."action") AS actions,
-			'domain' AS access_type,
-			dr.entity_id AS access_provider_id
-		FROM
-			domains d
-		JOIN
-			selected_rule sr ON sr.domain_id = d.id
-		JOIN
-			domains_roles dr ON dr.entity_id = d.id
-		JOIN
-			domains_role_members drm ON dr.id = drm.role_id
-		JOIN
-			domains_role_actions dra ON dr.id = dra.role_id
-		JOIN
-			domains_role_actions all_actions ON dr.id = all_actions.role_id
-		WHERE
-			drm.member_id = :member_id
-			AND dra."action" LIKE 'rule%'
-		GROUP BY
-			sr.id, dr.entity_id, dr.id, dr."name", drm.member_id
-	),
-	all_roles AS (
-		SELECT
-			srr.rule_id,
-			srr.member_id,
-			srr.role_id,
-			srr.role_name,
-			srr.actions,
-			srr.access_type,
-			srr.access_provider_id
-		FROM
-			selected_rule_roles srr
-		UNION
-		SELECT
-			sdr.rule_id,
-			sdr.member_id,
-			sdr.role_id,
-			sdr.role_name,
-			sdr.actions,
-			sdr.access_type,
-			sdr.access_provider_id
-		FROM
-			selected_domain_roles sdr
-	),
-	final_roles AS (
-		SELECT
-			ar.rule_id,
-			ar.member_id,
-			jsonb_agg(
-				jsonb_build_object(
-					'role_id', ar.role_id,
-					'role_name', ar.role_name,
-					'actions', ar.actions,
-					'access_type', ar.access_type,
-					'access_provider_id', ar.access_provider_id
-				)
-			) AS roles
-		FROM all_roles ar
-		GROUP BY
-			ar.rule_id, ar.member_id
-	)
-	SELECT
-		r2.id,
-		r2."name",
-		r2.domain_id,
-		r2.tags,
-		r2.metadata,
-		r2.input_channel,
-		r2.input_topic,
-		r2.outputs,
-		r2.status,
-		r2.logic_type,
-		r2.logic_value,
-		r2.time,
-		r2.recurring,
-		r2.recurring_period,
-		r2.start_datetime,
-		r2.created_at,
-		r2.created_by,
-		r2.updated_at,
-		r2.updated_by,
-		fr.member_id,
-		fr.roles
-	FROM rules r2
-	JOIN final_roles fr ON fr.rule_id = r2.id
-	`
-	parameters := map[string]any{
-		"id":        id,
-		"member_id": memberID,
-	}
-	row, err := repo.DB.NamedQueryContext(ctx, query, parameters)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-	defer row.Close()
-
-	dbrule := dbRule{}
-	if !row.Next() {
-		return re.Rule{}, repoerr.ErrNotFound
-	}
-
-	if err := row.StructScan(&dbrule); err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	r, err := dbToRule(dbrule)
-	if err != nil {
-		return re.Rule{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-	return r, nil
 }
 
 func (repo *PostgresRepository) UpdateRuleStatus(ctx context.Context, r re.Rule) (re.Rule, error) {
@@ -400,104 +238,6 @@ func (repo *PostgresRepository) ListAllRules(ctx context.Context, pm re.PageMeta
 	}
 
 	return ret, nil
-}
-
-func (repo *PostgresRepository) ListUserRules(ctx context.Context, userID string, pm re.PageMeta) (re.Page, error) {
-	pm.UserID = userID
-
-	additionalConditions := pageRulesQueryConditions(pm)
-	additionalWhereClause := ""
-	if len(additionalConditions) > 0 {
-		additionalWhereClause = "AND " + strings.Join(additionalConditions, " AND ")
-	}
-
-	orderClause := rulesOrderClause(pm)
-	pgData := rulesPageData(pm)
-
-	innerQ := fmt.Sprintf(`
-		WITH direct_rules AS (
-			SELECT r.id, r.name, r.domain_id, r.tags, r.metadata, r.input_channel, r.input_topic,
-				r.logic_type, r.logic_value, r.outputs, r.start_datetime, r.time,
-				r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status,
-				rr.id AS role_id,
-				rr."name" AS role_name,
-				array_remove(array_agg(DISTINCT rra."action"), NULL) AS actions,
-				'direct' AS access_type,
-				'' AS access_provider_id,
-				'' AS access_provider_role_id,
-				'' AS access_provider_role_name,
-				CAST(array[] AS text[]) AS access_provider_role_actions
-			FROM rules_role_members rrm
-			JOIN rules_roles rr ON rr.id = rrm.role_id
-			JOIN rules r ON r.id = rr.entity_id
-			LEFT JOIN rules_role_actions rra ON rra.role_id = rrm.role_id
-			WHERE rrm.member_id = :user_id
-			%s
-			GROUP BY r.id, rr.id, rr."name"
-		),
-		domain_rules AS (
-			SELECT r.id, r.name, r.domain_id, r.tags, r.metadata, r.input_channel, r.input_topic,
-				r.logic_type, r.logic_value, r.outputs, r.start_datetime, r.time,
-				r.recurring, r.recurring_period, r.created_at, r.created_by, r.updated_at, r.updated_by, r.status,
-				'' AS role_id,
-				'' AS role_name,
-				CAST(array[] AS text[]) AS actions,
-				'domain' AS access_type,
-				d.id AS access_provider_id,
-				dr.id AS access_provider_role_id,
-				dr."name" AS access_provider_role_name,
-				array_agg(DISTINCT dra."action") AS access_provider_role_actions
-			FROM domains_role_members drm
-			JOIN domains_role_actions dra ON dra.role_id = drm.role_id
-			JOIN domains_roles dr ON dr.id = drm.role_id
-			JOIN domains d ON d.id = dr.entity_id
-			JOIN rules r ON r.domain_id = d.id
-			WHERE drm.member_id = :user_id
-			AND dra.action LIKE 'rule%%'
-			AND NOT EXISTS (SELECT 1 FROM direct_rules tmp WHERE tmp.id = r.id)
-			%s
-			GROUP BY r.id, d.id, dr.id, dr."name"
-		)
-		SELECT * FROM direct_rules
-		UNION ALL
-		SELECT * FROM domain_rules
-	`, additionalWhereClause, additionalWhereClause)
-
-	q := fmt.Sprintf(`
-		SELECT * FROM (%s) AS sub %s %s;
-	`, innerQ, orderClause, pgData)
-
-	rows, err := repo.DB.NamedQueryContext(ctx, q, pm)
-	if err != nil {
-		return re.Page{}, err
-	}
-	defer rows.Close()
-
-	var rules []re.Rule
-	for rows.Next() {
-		var r dbRule
-		if err := rows.StructScan(&r); err != nil {
-			return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
-		}
-		ret, err := dbToRule(r)
-		if err != nil {
-			return re.Page{}, err
-		}
-		rules = append(rules, ret)
-	}
-
-	cq := fmt.Sprintf(`SELECT COUNT(*) FROM (%s) AS count_sub;`, innerQ)
-	total, err := postgres.Total(ctx, repo.DB, cq, pm)
-	if err != nil {
-		return re.Page{}, errors.Wrap(repoerr.ErrViewEntity, err)
-	}
-
-	return re.Page{
-		Total:  total,
-		Offset: pm.Offset,
-		Limit:  pm.Limit,
-		Rules:  rules,
-	}, nil
 }
 
 func (repo *PostgresRepository) UpdateRuleDue(ctx context.Context, id string, due time.Time) (re.Rule, error) {

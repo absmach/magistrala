@@ -8,8 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/roles"
-	rconsumer "github.com/absmach/magistrala/pkg/roles/rolemanager/events/consumer"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re"
 )
@@ -33,6 +31,7 @@ var (
 	errUpdatedAt      = errors.New("failed to parse 'updated_at' time")
 	errDecodeLogic    = errors.New("failed to decode 'logic'")
 	errDecodeSchedule = errors.New("failed to decode 'schedule'")
+	errStringValue    = errors.New("invalid string value")
 )
 
 // ToRule decodes a map[string]any event payload into a re.Rule.
@@ -82,7 +81,7 @@ func ToRule(data map[string]any) (re.Rule, error) {
 	}
 
 	if itags, ok := data["tags"].([]any); ok {
-		tags, err := rconsumer.ToStrings(itags)
+		tags, err := toStrings(itags)
 		if err != nil {
 			return re.Rule{}, errors.Wrap(errTags, err)
 		}
@@ -138,21 +137,25 @@ func ToRule(data map[string]any) (re.Rule, error) {
 	return r, nil
 }
 
-func decodeAddRuleEvent(data map[string]any) (re.Rule, []roles.RoleProvision, error) {
+func toStrings(values []any) ([]string, error) {
+	strings := make([]string, 0, len(values))
+	for _, value := range values {
+		str, ok := value.(string)
+		if !ok {
+			return nil, errStringValue
+		}
+		strings = append(strings, str)
+	}
+	return strings, nil
+}
+
+func decodeAddRuleEvent(data map[string]any) (re.Rule, error) {
 	r, err := ToRule(data)
 	if err != nil {
-		return re.Rule{}, nil, errors.Wrap(errDecodeAddRuleEvent, err)
+		return re.Rule{}, errors.Wrap(errDecodeAddRuleEvent, err)
 	}
 
-	var rps []roles.RoleProvision
-	if irps, ok := data["roles_provisioned"].([]any); ok {
-		rps, err = rconsumer.ToRoleProvisions(irps)
-		if err != nil {
-			return re.Rule{}, nil, errors.Wrap(errDecodeAddRuleEvent, err)
-		}
-	}
-
-	return r, rps, nil
+	return r, nil
 }
 
 func decodeUpdateRuleEvent(data map[string]any) (re.Rule, error) {

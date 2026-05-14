@@ -18,7 +18,6 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
-	"github.com/absmach/magistrala/pkg/roles"
 	pkgSch "github.com/absmach/magistrala/pkg/schedule"
 	tmocks "github.com/absmach/magistrala/pkg/ticker/mocks"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -62,12 +61,7 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (reports.Service, *mo
 	e := new(emocks.Emailer)
 	policy := new(policymocks.Service)
 
-	availableActions := []roles.Action{}
-	builtInRoles := map[roles.BuiltInRoleName][]roles.Action{
-		"admin": availableActions,
-	}
-
-	svc, err := reports.NewService(repo, runInfo, policy, idProvider, mockTicker, e, readersSvc, template, "", availableActions, builtInRoles)
+	svc, err := reports.NewService(repo, runInfo, idProvider, mockTicker, e, readersSvc, template, "")
 	if err != nil {
 		t.Fatalf("Failed to create service: %v", err)
 	}
@@ -75,18 +69,14 @@ func newService(t *testing.T, runInfo chan pkglog.RunInfo) (reports.Service, *mo
 }
 
 func TestAddReportConfig(t *testing.T) {
-	svc, repo, _, policies := newService(t, make(chan pkglog.RunInfo))
+	svc, repo, _, _ := newService(t, make(chan pkglog.RunInfo))
 
 	cases := []struct {
-		desc           string
-		session        authn.Session
-		cfg            reports.ReportConfig
-		res            reports.ReportConfig
-		err            error
-		addPoliciesErr error
-		deletePolicies error
-		addRoleErr     error
-		deleteErr      error
+		desc    string
+		session authn.Session
+		cfg     reports.ReportConfig
+		res     reports.ReportConfig
+		err     error
 	}{
 		{
 			desc: "Add report config successfully",
@@ -98,11 +88,8 @@ func TestAddReportConfig(t *testing.T) {
 				Name:     reportName,
 				Schedule: schedule,
 			},
-			res:            rptConfig,
-			err:            nil,
-			addPoliciesErr: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
+			res: rptConfig,
+			err: nil,
 		},
 		{
 			desc: "Add report config with failed repo",
@@ -114,79 +101,13 @@ func TestAddReportConfig(t *testing.T) {
 				Name:     reportName,
 				Schedule: schedule,
 			},
-			err:            repoerr.ErrCreateEntity,
-			addPoliciesErr: nil,
-			deletePolicies: nil,
-			addRoleErr:     nil,
-			deleteErr:      nil,
-		},
-		{
-			desc: "Add report config with failed to add policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			cfg: reports.ReportConfig{
-				Name:     reportName,
-				Schedule: schedule,
-			},
-			res:            rptConfig,
-			addPoliciesErr: svcerr.ErrAuthorization,
-			err:            svcerr.ErrAddPolicies,
-		},
-		{
-			desc: "Add report config with failed to add policies and failed rollback",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			cfg: reports.ReportConfig{
-				Name:     reportName,
-				Schedule: schedule,
-			},
-			res:            rptConfig,
-			addPoliciesErr: svcerr.ErrAuthorization,
-			deleteErr:      svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRollbackRepo,
-		},
-		{
-			desc: "Add report config with failed to add roles",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			cfg: reports.ReportConfig{
-				Name:     reportName,
-				Schedule: schedule,
-			},
-			res:        rptConfig,
-			addRoleErr: svcerr.ErrCreateEntity,
-			err:        svcerr.ErrAddPolicies,
-		},
-		{
-			desc: "Add report config with failed to add roles and failed to delete policies",
-			session: authn.Session{
-				UserID:   userID,
-				DomainID: domainID,
-			},
-			cfg: reports.ReportConfig{
-				Name:     reportName,
-				Schedule: schedule,
-			},
-			res:            rptConfig,
-			addRoleErr:     svcerr.ErrCreateEntity,
-			deletePolicies: svcerr.ErrRemoveEntity,
-			err:            svcerr.ErrRemoveEntity,
+			err: repoerr.ErrCreateEntity,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			repoCall := repo.On("AddReportConfig", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			policyCall := policies.On("AddPolicies", context.Background(), mock.Anything).Return(tc.addPoliciesErr)
-			policyCall2 := policies.On("DeletePolicies", context.Background(), mock.Anything).Return(tc.deletePolicies)
-			repoCall1 := repo.On("AddRoles", context.Background(), mock.Anything).Return([]roles.RoleProvision{}, tc.addRoleErr)
-			repoCall2 := repo.On("Remove", context.Background(), mock.Anything).Return(tc.deleteErr)
 			res, err := svc.AddReportConfig(context.Background(), tc.session, tc.cfg)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {
@@ -194,13 +115,44 @@ func TestAddReportConfig(t *testing.T) {
 				assert.Equal(t, tc.cfg.Name, res.Name)
 				assert.Equal(t, tc.cfg.Schedule, res.Schedule)
 			}
-			policyCall.Unset()
-			policyCall2.Unset()
 			repoCall.Unset()
-			repoCall1.Unset()
-			repoCall2.Unset()
 		})
 	}
+}
+
+func TestAddReportConfigWithoutRoleProvisioning(t *testing.T) {
+	repo := new(mocks.Repository)
+	mockTicker := new(tmocks.Ticker)
+	idProvider := uuid.NewMock()
+	readersSvc := new(readmocks.ReadersServiceClient)
+	e := new(emocks.Emailer)
+
+	svc, err := reports.NewService(repo, make(chan pkglog.RunInfo), idProvider, mockTicker, e, readersSvc, template, "")
+	if err != nil {
+		t.Fatalf("Failed to create service: %v", err)
+	}
+
+	session := authn.Session{
+		UserID:   userID,
+		DomainID: domainID,
+	}
+	cfg := reports.ReportConfig{
+		Name:     reportName,
+		Schedule: schedule,
+	}
+	saved := cfg
+	saved.ID = rptConfig.ID
+	saved.Status = reports.EnabledStatus
+	saved.CreatedBy = userID
+	saved.DomainID = domainID
+
+	repo.On("AddReportConfig", mock.Anything, mock.Anything).Return(saved, nil).Once()
+
+	res, err := svc.AddReportConfig(context.Background(), session, cfg)
+	assert.NoError(t, err)
+	assert.Equal(t, saved.ID, res.ID)
+	repo.AssertNotCalled(t, "AddRoles", mock.Anything, mock.Anything)
+	repo.AssertExpectations(t)
 }
 
 func TestViewReportConfig(t *testing.T) {
@@ -435,11 +387,7 @@ func TestListReportsConfig(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			var repoCall *mock.Call
-			if tc.superAdmin {
-				repoCall = repo.On("ListAllReportsConfig", mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			} else {
-				repoCall = repo.On("ListUserReportsConfig", mock.Anything, mock.Anything, mock.Anything).Return(tc.res, tc.err)
-			}
+			repoCall = repo.On("ListAllReportsConfig", mock.Anything, mock.Anything).Return(tc.res, tc.err)
 			res, err := svc.ListReportsConfig(context.Background(), tc.session, tc.pageMeta)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 			if err == nil {

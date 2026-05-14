@@ -4,8 +4,8 @@
 override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports bootstrap provision journal fluxmq
-TEST_API_SERVICES = journal auth certs clients users channels groups domains
+SERVICES = notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader alarms reports journal fluxmq
+TEST_API_SERVICES = journal certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -199,12 +199,11 @@ define test_api_service
 	--phases=examples,stateful
 endef
 
-test_api_users: TEST_API_URL := http://localhost:9002
-test_api_clients: TEST_API_URL := http://localhost:9006
-test_api_domains: TEST_API_URL := http://localhost:9003
-test_api_channels: TEST_API_URL := http://localhost:9005
-test_api_groups: TEST_API_URL := http://localhost:9004
-test_api_auth: TEST_API_URL := http://localhost:9001
+test_api_users: TEST_API_URL := http://localhost:9000
+test_api_clients: TEST_API_URL := http://localhost:9000
+test_api_domains: TEST_API_URL := http://localhost:9000
+test_api_channels: TEST_API_URL := http://localhost:9000
+test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_journal: TEST_API_URL := http://localhost:9021
 
@@ -262,7 +261,7 @@ rundev:
 	cd scripts && ./run.sh
 
 grpc_mtls_certs:
-	$(MAKE) -C docker/ssl auth_grpc_certs clients_grpc_certs
+	$(MAKE) -C docker/ssl clients_grpc_certs
 
 check_tls:
 ifeq ($(GRPC_TLS),true)
@@ -284,7 +283,7 @@ check_certs: check_mtls check_tls
 ifeq ($(GRPC_MTLS_CERT_FILES_EXISTS),0)
 ifeq ($(filter true,$(GRPC_MTLS) $(GRPC_TLS)),true)
 ifeq ($(filter $(DEFAULT_DOCKER_COMPOSE_COMMAND),$(DOCKER_COMPOSE_COMMAND)),$(DEFAULT_DOCKER_COMPOSE_COMMAND))
-	$(MAKE) -C docker/ssl auth_grpc_certs clients_grpc_certs
+	$(MAKE) -C docker/ssl clients_grpc_certs
 endif
 endif
 endif
@@ -312,7 +311,7 @@ run_stable: check_certs
 
 run_addons: check_certs
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
-	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file ./docker/.env -p $(DOCKER_PROJECT) up -d auth domains jaeger
+	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file ./docker/.env -p $(DOCKER_PROJECT) up -d atom jaeger
 	@for SVC in $(RUN_ADDON_ARGS); do \
 		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done

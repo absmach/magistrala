@@ -11,7 +11,6 @@ import (
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/re/outputs"
 )
@@ -60,16 +59,6 @@ type Rule struct {
 	CreatedBy    string            `json:"created_by"`
 	UpdatedAt    time.Time         `json:"updated_at"`
 	UpdatedBy    string            `json:"updated_by"`
-	// Extended
-	RoleID                    string                    `json:"role_id,omitempty"`
-	RoleName                  string                    `json:"role_name,omitempty"`
-	Actions                   []string                  `json:"actions,omitempty"`
-	AccessType                string                    `json:"access_type,omitempty"`
-	AccessProviderId          string                    `json:"access_provider_id,omitempty"`
-	AccessProviderRoleId      string                    `json:"access_provider_role_id,omitempty"`
-	AccessProviderRoleName    string                    `json:"access_provider_role_name,omitempty"`
-	AccessProviderRoleActions []string                  `json:"access_provider_role_actions,omitempty"`
-	Roles                     []roles.MemberRoleActions `json:"roles,omitempty"`
 }
 
 // EventEncode converts a Rule struct to map[string]any at event producer.
@@ -237,7 +226,7 @@ type Page struct {
 
 type Service interface {
 	messaging.MessageHandler
-	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, []roles.RoleProvision, error)
+	AddRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (Rule, error)
 	UpdateRule(ctx context.Context, session authn.Session, r Rule) (Rule, error)
 	UpdateRuleTags(ctx context.Context, session authn.Session, r Rule) (Rule, error)
@@ -248,20 +237,16 @@ type Service interface {
 	DisableRule(ctx context.Context, session authn.Session, id string) (Rule, error)
 
 	StartScheduler(ctx context.Context) error
-	roles.RoleManager
 }
 
 type Repository interface {
 	AddRule(ctx context.Context, r Rule) (Rule, error)
 	ViewRule(ctx context.Context, id string) (Rule, error)
-	RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (Rule, error)
 	UpdateRule(ctx context.Context, r Rule) (Rule, error)
 	UpdateRuleTags(ctx context.Context, r Rule) (Rule, error)
 	UpdateRuleSchedule(ctx context.Context, r Rule) (Rule, error)
 	RemoveRule(ctx context.Context, id string) error
 	UpdateRuleStatus(ctx context.Context, r Rule) (Rule, error)
 	ListAllRules(ctx context.Context, pm PageMeta) (Page, error)
-	ListUserRules(ctx context.Context, userID string, pm PageMeta) (Page, error)
 	UpdateRuleDue(ctx context.Context, id string, due time.Time) (Rule, error)
-	roles.Repository
 }

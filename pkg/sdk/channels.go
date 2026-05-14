@@ -12,7 +12,6 @@ import (
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const (
@@ -22,19 +21,18 @@ const (
 
 // Channel represents magistrala channel.
 type Channel struct {
-	ID          string                    `json:"id,omitempty"`
-	Name        string                    `json:"name,omitempty"`
-	Tags        []string                  `json:"tags,omitempty"`
-	Route       string                    `json:"route,omitempty"`
-	ParentGroup string                    `json:"parent_group_id,omitempty"`
-	DomainID    string                    `json:"domain_id,omitempty"`
-	Metadata    Metadata                  `json:"metadata,omitempty"`
-	CreatedAt   time.Time                 `json:"created_at,omitempty"`
-	UpdatedAt   time.Time                 `json:"updated_at,omitempty"`
-	UpdatedBy   string                    `json:"updated_by,omitempty"`
-	Status      string                    `json:"status,omitempty"`
-	Permissions []string                  `json:"permissions,omitempty"`
-	Roles       []roles.MemberRoleActions `json:"roles,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
+	Route       string    `json:"route,omitempty"`
+	ParentGroup string    `json:"parent_group_id,omitempty"`
+	DomainID    string    `json:"domain_id,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	Permissions []string  `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateChannel(ctx context.Context, c Channel, domainID, token string) (Channel, errors.SDKError) {

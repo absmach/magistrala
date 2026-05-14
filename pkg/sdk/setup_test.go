@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -138,7 +141,6 @@ func convertGroup(g sdk.Group) groups.Group {
 		AccessProviderRoleId:      g.AccessProviderRoleId,
 		AccessProviderRoleName:    g.AccessProviderRoleName,
 		AccessProviderRoleActions: g.AccessProviderRoleActions,
-		Roles:                     g.Roles,
 	}
 }
 
@@ -207,7 +209,6 @@ func convertClient(c sdk.Client) clients.Client {
 		UpdatedAt:       c.UpdatedAt,
 		UpdatedBy:       c.UpdatedBy,
 		Status:          status,
-		Roles:           c.Roles,
 	}
 }
 
@@ -231,7 +232,6 @@ func convertChannel(g sdk.Channel) channels.Channel {
 		UpdatedAt:   g.UpdatedAt,
 		UpdatedBy:   g.UpdatedBy,
 		Status:      status,
-		Roles:       g.Roles,
 	}
 }
 

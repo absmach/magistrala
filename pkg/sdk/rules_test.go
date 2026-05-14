@@ -1,3 +1,6 @@
+//go:build oldservices
+// +build oldservices
+
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
@@ -12,7 +15,6 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/api"
@@ -96,7 +98,7 @@ func TestAddRule(t *testing.T) {
 				tc.session = smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
 			}
 			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
-			svcCall := rsvc.On("AddRule", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, []roles.RoleProvision(nil), tc.svcErr)
+			svcCall := rsvc.On("AddRule", mock.Anything, tc.session, mock.Anything).Return(tc.svcRes, tc.svcErr)
 			result, err := mgsdk.AddRule(context.Background(), tc.rule, domainID, tc.token)
 			assert.Equal(t, tc.wantErr, err != nil)
 			if !tc.wantErr {

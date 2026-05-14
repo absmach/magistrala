@@ -12,7 +12,6 @@ import (
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const (
@@ -22,19 +21,18 @@ const (
 
 // Domain represents magistrala domain.
 type Domain struct {
-	ID          string                    `json:"id,omitempty"`
-	Name        string                    `json:"name,omitempty"`
-	Metadata    Metadata                  `json:"metadata,omitempty"`
-	Tags        []string                  `json:"tags,omitempty"`
-	Route       string                    `json:"route,omitempty"`
-	Status      string                    `json:"status,omitempty"`
-	Permission  string                    `json:"permission,omitempty"`
-	CreatedBy   string                    `json:"created_by,omitempty"`
-	CreatedAt   time.Time                 `json:"created_at,omitempty"`
-	UpdatedBy   string                    `json:"updated_by,omitempty"`
-	UpdatedAt   time.Time                 `json:"updated_at,omitempty"`
-	Permissions []string                  `json:"permissions,omitempty"`
-	Roles       []roles.MemberRoleActions `json:"roles,omitempty"`
+	ID          string    `json:"id,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Metadata    Metadata  `json:"metadata,omitempty"`
+	Tags        []string  `json:"tags,omitempty"`
+	Route       string    `json:"route,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	Permission  string    `json:"permission,omitempty"`
+	CreatedBy   string    `json:"created_by,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedBy   string    `json:"updated_by,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	Permissions []string  `json:"permissions,omitempty"`
 }
 
 func (sdk mgSDK) CreateDomain(ctx context.Context, domain Domain, token string) (Domain, errors.SDKError) {

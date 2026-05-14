@@ -48,7 +48,8 @@ func (h handler) Handle(msg *messaging.Message) (err error) {
 		return err
 	}
 
-	return h.svc.CreateAlarm(context.Background(), alarm)
+	_, err = h.svc.CreateAlarm(context.Background(), alarm)
+	return err
 }
 
 func (h handler) Cancel() error {

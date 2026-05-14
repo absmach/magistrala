@@ -82,7 +82,7 @@ func (es *EventHandler) Handle(ctx context.Context, op any, msg map[string]any) 
 	case es.removeEntityMembers:
 		return es.RemoveEntityMembersHandler(ctx, msg)
 	case es.removeMemberFromAllRoles:
-		return es.RemoveMemberFromAllEntityHandler(ctx, msg)
+		return es.RemoveMemberFromAllRolesHandler(ctx, msg)
 	}
 	return nil
 }
@@ -251,13 +251,19 @@ func (es *EventHandler) RemoveEntityMembersHandler(ctx context.Context, data map
 	if err != nil {
 		return fmt.Errorf(errRemoveEntityRoleMembersEvent, es.entityType, err)
 	}
-
-	// added when repo is implemented.
-	_ = entityID
-	_ = mems
+	if err := es.repo.RemoveEntityMembers(ctx, entityID, mems); err != nil {
+		return fmt.Errorf(errRemoveEntityRoleMembersEvent, es.entityType, err)
+	}
 	return nil
 }
 
-func (es *EventHandler) RemoveMemberFromAllEntityHandler(ctx context.Context, data map[string]any) error {
+func (es *EventHandler) RemoveMemberFromAllRolesHandler(ctx context.Context, data map[string]any) error {
+	memberID, ok := data["member_id"].(string)
+	if !ok {
+		return fmt.Errorf(errRemoveEntityRoleMembersEvent, es.entityType, errMembers)
+	}
+	if err := es.repo.RemoveMemberFromAllRoles(ctx, memberID); err != nil {
+		return fmt.Errorf(errRemoveEntityRoleMembersEvent, es.entityType, err)
+	}
 	return nil
 }

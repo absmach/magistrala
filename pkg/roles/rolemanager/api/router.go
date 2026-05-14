@@ -34,7 +34,7 @@ func EntityRoleMangerRouter(svc roles.RoleManager, d Decoder, r chi.Router, opts
 			opts...,
 		), "list_entity_members").ServeHTTP)
 
-		r.Delete("/", otelhttp.NewHandler(kithttp.NewServer(
+		r.Delete("/members", otelhttp.NewHandler(kithttp.NewServer(
 			RemoveEntityMembersEndpoint(svc),
 			d.DecodeListEntityMembers,
 			api.EncodeResponse,

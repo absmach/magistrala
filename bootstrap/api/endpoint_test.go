@@ -65,15 +65,17 @@ var (
 	}
 
 	updateReq = struct {
-		Content    string           `json:"content,omitempty"`
-		Status     bootstrap.Status `json:"status,omitempty"`
-		ClientCert string           `json:"client_cert,omitempty"`
-		CACert     string           `json:"ca_cert,omitempty"`
+		Content       string           `json:"content,omitempty"`
+		Status        bootstrap.Status `json:"status,omitempty"`
+		ClientCert    string           `json:"client_cert,omitempty"`
+		CACert        string           `json:"ca_cert,omitempty"`
+		RenderContext map[string]any   `json:"render_context,omitempty"`
 	}{
-		Content:    "config update",
-		Status:     bootstrap.EnabledStatus,
-		ClientCert: "newcert",
-		CACert:     "newca",
+		Content:       "config update",
+		Status:        bootstrap.EnabledStatus,
+		ClientCert:    "newcert",
+		CACert:        "newca",
+		RenderContext: map[string]any{"site": "warehouse-2", "region": "mombasa"},
 	}
 
 	missingIDRes              = toJSON(apiutil.ErrMissingID)
@@ -477,6 +479,17 @@ func TestUpdate(t *testing.T) {
 			contentType: contentType,
 			status:      http.StatusBadRequest,
 			err:         svcerr.ErrMalformedEntity,
+		},
+		{
+			desc: "update a config render_context",
+			req: toJSON(struct {
+				RenderContext map[string]any `json:"render_context"`
+			}{RenderContext: map[string]any{"site": "warehouse-2", "region": "mombasa"}}),
+			id:          c.ID,
+			token:       validToken,
+			contentType: contentType,
+			status:      http.StatusOK,
+			err:         nil,
 		},
 	}
 

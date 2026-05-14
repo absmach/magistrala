@@ -10,7 +10,9 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "auth/api/http/**"
+      - "core/**"
+      - "cmd/core/**"
+      - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
       - "domains/api/http/**"
@@ -20,9 +22,9 @@ on:
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
-      - "re/api/**"
-      - "alarms/api/**"
-      - "reports/api/**"
+      - "re/**"
+      - "alarms/**"
+      - "reports/**"
       - "apidocs/openapi/**"
   pull_request:
     branches:
@@ -30,7 +32,9 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "auth/api/http/**"
+      - "core/**"
+      - "cmd/core/**"
+      - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
       - "domains/api/http/**"
@@ -40,9 +44,9 @@ on:
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
-      - "re/api/**"
-      - "alarms/api/**"
-      - "reports/api/**"
+      - "re/**"
+      - "alarms/**"
+      - "reports/**"
       - "apidocs/openapi/**"
 
 concurrency:
@@ -50,17 +54,16 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TOKENS_URL: http://localhost:9002/users/tokens/issue
-  CREATE_DOMAINS_URL: http://localhost:9003/domains
+  TOKENS_URL: http://localhost:9000/users/tokens/issue
+  CREATE_DOMAINS_URL: http://localhost:9000/domains
   USER_IDENTITY: admin@example.com
   USER_SECRET: 12345678
   DOMAIN_NAME: demo-test
-  USERS_URL: http://localhost:9002
-  DOMAIN_URL: http://localhost:9003
-  CLIENTS_URL: http://localhost:9006
-  CHANNELS_URL: http://localhost:9005
-  GROUPS_URL: http://localhost:9004
-  AUTH_URL: http://localhost:9001
+  USERS_URL: http://localhost:9000
+  DOMAIN_URL: http://localhost:9000
+  CLIENTS_URL: http://localhost:9000
+  CHANNELS_URL: http://localhost:9000
+  GROUPS_URL: http://localhost:9000
   JOURNAL_URL: http://localhost:9021
   BOOTSTRAP_URL: http://localhost:9013
   CERTS_URL: http://localhost:9019
@@ -96,28 +99,39 @@ jobs:
               - "apidocs/openapi/journal.yaml"
               - "journal/api/**"
 
-            auth:
-              - "apidocs/openapi/auth.yaml"
-              - "auth/api/http/**"
-
             domains:
               - "apidocs/openapi/domains.yaml"
+              - "core/**"
+              - "cmd/core/**"
+              - "internal/atom/**"
               - "domains/api/http/**"
 
             clients:
               - "apidocs/openapi/clients.yaml"
+              - "core/**"
+              - "cmd/core/**"
+              - "internal/atom/**"
               - "clients/api/http/**"
 
             channels:
               - "apidocs/openapi/channels.yaml"
+              - "core/**"
+              - "cmd/core/**"
+              - "internal/atom/**"
               - "channels/api/http/**"
 
             groups:
               - "apidocs/openapi/groups.yaml"
+              - "core/**"
+              - "cmd/core/**"
+              - "internal/atom/**"
               - "groups/api/http/**"
 
             users:
               - "apidocs/openapi/users.yaml"
+              - "core/**"
+              - "cmd/core/**"
+              - "internal/atom/**"
               - "users/api/**"
 
             bootstrap:
@@ -134,15 +148,21 @@ jobs:
 
             re:
               - "apidocs/openapi/rules.yaml"
-              - "re/api/**"
+              - "re/**"
+              - "cmd/re/**"
+              - "internal/atom/**"
 
             alarms:
               - "apidocs/openapi/alarms.yaml"
-              - "alarms/api/**"
+              - "alarms/**"
+              - "cmd/alarms/**"
+              - "internal/atom/**"
 
             reports:
               - "apidocs/openapi/reports.yaml"
-              - "reports/api/**"
+              - "reports/**"
+              - "cmd/reports/**"
+              - "internal/atom/**"
 
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
@@ -157,7 +177,7 @@ jobs:
 
           # Check if services are responding
           for i in {1..30}; do
-            if curl -f -s http://localhost:9002/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost:9000/health > /dev/null 2>&1; then
               echo "Services are ready!"
               break
             fi
@@ -206,15 +226,6 @@ jobs:
         with:
           schema: apidocs/openapi/channels.yaml
           base-url: ${{ env.CHANNELS_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-
-      - name: Run Auth API tests
-        if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/auth.yaml
-          base-url: ${{ env.AUTH_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 

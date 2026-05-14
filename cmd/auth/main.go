@@ -26,26 +26,23 @@ import (
 	apostgres "github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/auth/tokenizer/asymmetric"
 	"github.com/absmach/magistrala/auth/tokenizer/symmetric"
+	"github.com/absmach/magistrala/internal/atom"
 	redisclient "github.com/absmach/magistrala/internal/clients/redis"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/jaeger"
-	"github.com/absmach/magistrala/pkg/policies/spicedb"
+	"github.com/absmach/magistrala/pkg/policies"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
 	grpcserver "github.com/absmach/magistrala/pkg/server/grpc"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	v1 "github.com/authzed/authzed-go/proto/authzed/api/v1"
-	"github.com/authzed/authzed-go/v1"
-	"github.com/authzed/grpcutil"
 	"github.com/caarlos0/env/v11"
 	"github.com/jmoiron/sqlx"
 	"github.com/redis/go-redis/v9"
 	"go.opentelemetry.io/otel/trace"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -71,10 +68,6 @@ type config struct {
 	ActiveKeyPath                 string        `env:"MG_AUTH_KEYS_ACTIVE_KEY_PATH"              envDefault:"./keys/active.key"`
 	RetiringKeyPath               string        `env:"MG_AUTH_KEYS_RETIRING_KEY_PATH"            envDefault:""`
 	InvitationDuration            time.Duration `env:"MG_AUTH_INVITATION_DURATION"               envDefault:"168h"`
-	SpicedbHost                   string        `env:"MG_SPICEDB_HOST"                           envDefault:"localhost"`
-	SpicedbPort                   string        `env:"MG_SPICEDB_PORT"                           envDefault:"50051"`
-	SpicedbSchemaFile             string        `env:"MG_SPICEDB_SCHEMA_FILE"                    envDefault:"./docker/spicedb/schema.zed"`
-	SpicedbPreSharedKey           string        `env:"MG_SPICEDB_PRE_SHARED_KEY"                 envDefault:"12345678"`
 	TraceRatio                    float64       `env:"MG_JAEGER_TRACE_RATIO"                     envDefault:"1.0"`
 	ESURL                         string        `env:"MG_ES_URL"                                 envDefault:"amqp://guest:guest@localhost:5682/"`
 	CacheURL                      string        `env:"MG_AUTH_CACHE_URL"                         envDefault:"redis://localhost:6379/0"`
@@ -143,12 +136,15 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	spicedbclient, err := initSpiceDB(ctx, cfg)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to init spicedb grpc client : %s\n", err.Error()))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required for auth authorization")
 		exitCode = 1
 		return
 	}
+	atomClient := atom.NewClient(atomCfg)
+	policyEvaluator := atom.NewPolicyEvaluator(atomClient)
+	logger.Info("AuthZ configured to use Atom PDP")
 
 	isSymmetric, err := auth.IsSymmetricAlgorithm(cfg.KeyAlgorithm)
 	if err != nil {
@@ -183,7 +179,7 @@ func main() {
 		}
 	}
 
-	svc, err := newService(db, tracer, cfg, dbConfig, logger, spicedbclient, cacheclient, cfg.CacheKeyDuration, tokenizer, idProvider)
+	svc, err := newService(db, tracer, cfg, dbConfig, logger, policyEvaluator, nil, cacheclient, cfg.CacheKeyDuration, tokenizer, idProvider)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create service : %s\n", err.Error()))
 		exitCode = 1
@@ -234,36 +230,6 @@ func main() {
 	}
 }
 
-func initSpiceDB(ctx context.Context, cfg config) (*authzed.ClientWithExperimental, error) {
-	client, err := authzed.NewClientWithExperimentalAPIs(
-		fmt.Sprintf("%s:%s", cfg.SpicedbHost, cfg.SpicedbPort),
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpcutil.WithInsecureBearerToken(cfg.SpicedbPreSharedKey),
-	)
-	if err != nil {
-		return client, err
-	}
-
-	if err := initSchema(ctx, client, cfg.SpicedbSchemaFile); err != nil {
-		return client, err
-	}
-
-	return client, nil
-}
-
-func initSchema(ctx context.Context, client *authzed.ClientWithExperimental, schemaFilePath string) error {
-	schemaContent, err := os.ReadFile(schemaFilePath)
-	if err != nil {
-		return fmt.Errorf("failed to read spice db schema file : %w", err)
-	}
-
-	if _, err = client.SchemaServiceClient.WriteSchema(ctx, &v1.WriteSchemaRequest{Schema: string(schemaContent)}); err != nil {
-		return fmt.Errorf("failed to create schema in spicedb : %w", err)
-	}
-
-	return nil
-}
-
 func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	if isSymmetric {
 		if cfg.SecretKey == "secret" {
@@ -291,7 +257,7 @@ func validateKeyConfig(isSymmetric bool, cfg config, l *slog.Logger) error {
 	return nil
 }
 
-func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, spicedbClient *authzed.ClientWithExperimental, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider magistrala.IDProvider) (auth.Service, error) {
+func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.Config, logger *slog.Logger, policyEvaluator policies.Evaluator, policyService policies.Service, cacheClient *redis.Client, keyDuration time.Duration, tokenizer auth.Tokenizer, idProvider magistrala.IDProvider) (auth.Service, error) {
 	patsCache := cache.NewPatsCache(cacheClient, keyDuration)
 	tokensCache, err := cache.NewUserActiveTokensCache(cacheClient)
 	if err != nil {
@@ -303,10 +269,7 @@ func newService(db *sqlx.DB, tracer trace.Tracer, cfg config, dbConfig pgclient.
 	patsRepo := apostgres.NewPatRepo(database, patsCache)
 	hasher := hasher.New()
 
-	pEvaluator := spicedb.NewPolicyEvaluator(spicedbClient, logger)
-	pService := spicedb.NewPolicyService(spicedbClient, logger)
-
-	svc := auth.New(keysRepo, patsRepo, nil, tokensCache, hasher, idProvider, tokenizer, pEvaluator, pService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
+	svc := auth.New(keysRepo, patsRepo, nil, tokensCache, hasher, idProvider, tokenizer, policyEvaluator, policyService, cfg.AccessDuration, cfg.RefreshDuration, cfg.InvitationDuration)
 	svc = middleware.NewLogging(svc, logger)
 	counter, latency := prometheus.MakeMetrics("auth", "api")
 	svc = middleware.NewMetrics(svc, counter, latency)

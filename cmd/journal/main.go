@@ -14,7 +14,7 @@ import (
 
 	chclient "github.com/absmach/callhome/pkg/client"
 	"github.com/absmach/magistrala"
-	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/journal"
 	httpapi "github.com/absmach/magistrala/journal/api"
 	"github.com/absmach/magistrala/journal/events"
@@ -22,13 +22,9 @@ import (
 	journalpg "github.com/absmach/magistrala/journal/postgres"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
-	authsvcAuthn "github.com/absmach/magistrala/pkg/authn/authsvc"
-	jwksAuthn "github.com/absmach/magistrala/pkg/authn/jwks"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
-	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
 	"github.com/absmach/magistrala/pkg/events/store"
-	"github.com/absmach/magistrala/pkg/grpcclient"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/postgres"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
@@ -43,24 +39,20 @@ import (
 )
 
 const (
-	svcName          = "journal"
-	envPrefixDB      = "MG_JOURNAL_DB_"
-	envPrefixHTTP    = "MG_JOURNAL_HTTP_"
-	envPrefixAuth    = "MG_AUTH_GRPC_"
-	envPrefixDomains = "MG_DOMAINS_GRPC_"
-	defDB            = "journal"
-	defSvcHTTPPort   = "9021"
+	svcName        = "journal"
+	envPrefixDB    = "MG_JOURNAL_DB_"
+	envPrefixHTTP  = "MG_JOURNAL_HTTP_"
+	defDB          = "journal"
+	defSvcHTTPPort = "9021"
 )
 
 type config struct {
-	LogLevel         string  `env:"MG_JOURNAL_LOG_LEVEL"   envDefault:"info"`
-	ESURL            string  `env:"MG_ES_URL"              envDefault:"amqp://guest:guest@localhost:5682/"`
-	JaegerURL        url.URL `env:"MG_JAEGER_URL"          envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry    bool    `env:"MG_SEND_TELEMETRY"      envDefault:"true"`
-	InstanceID       string  `env:"MG_JOURNAL_INSTANCE_ID" envDefault:""`
-	TraceRatio       float64 `env:"MG_JAEGER_TRACE_RATIO"  envDefault:"1.0"`
-	AuthKeyAlgorithm string  `env:"MG_AUTH_KEYS_ALGORITHM" envDefault:"RS256"`
-	JWKSURL          string  `env:"MG_AUTH_JWKS_URL"       envDefault:"http://auth:9001/keys/.well-known/jwks.json"`
+	LogLevel      string  `env:"MG_JOURNAL_LOG_LEVEL"   envDefault:"info"`
+	ESURL         string  `env:"MG_ES_URL"              envDefault:"amqp://guest:guest@localhost:5682/"`
+	JaegerURL     url.URL `env:"MG_JAEGER_URL"          envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"      envDefault:"true"`
+	InstanceID    string  `env:"MG_JOURNAL_INSTANCE_ID" envDefault:""`
+	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"  envDefault:"1.0"`
 }
 
 func main() {
@@ -102,65 +94,17 @@ func main() {
 	}
 	defer db.Close()
 
-	authClientCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authClientCfg, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load auth gRPC client configuration : %s", err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-
-	isSymmetric, err := auth.IsSymmetricAlgorithm(cfg.AuthKeyAlgorithm)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to parse auth key algorithm : %s", err))
-		exitCode = 1
-		return
-	}
-	var authn smqauthn.Authentication
-	var authnClient grpcclient.Handler
-	switch {
-	case !isSymmetric:
-		authn, authnClient, err = jwksAuthn.NewAuthentication(ctx, cfg.JWKSURL, authClientCfg)
-		if err != nil {
-			logger.Error(err.Error())
-			exitCode = 1
-			return
-		}
-		defer authnClient.Close()
-		logger.Info("AuthN successfully set up jwks authentication on " + cfg.JWKSURL)
-	default:
-		authn, authnClient, err = authsvcAuthn.NewAuthentication(ctx, authClientCfg)
-		if err != nil {
-			logger.Error(err.Error())
-			exitCode = 1
-			return
-		}
-		defer authnClient.Close()
-		logger.Info("AuthN successfully connected to auth gRPC server " + authnClient.Secure())
-	}
+	atomClient := atom.NewClient(atomCfg)
+	authn := atomauthn.NewAuthentication()
 	authnMiddleware := smqauthn.NewAuthNMiddleware(authn)
-
-	domsGrpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
-		exitCode = 1
-		return
-	}
-	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer domainsHandler.Close()
-
-	authz, authzHandler, err := authsvcAuthz.NewAuthorization(ctx, authClientCfg, domAuthz)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer authzHandler.Close()
-	logger.Info("AuthZ successfully connected to auth gRPC server " + authzHandler.Secure())
+	authz := atom.NewAuthorizationCompat(atomClient)
+	logger.Info("AuthN/AuthZ configured to use Atom")
 
 	tp, err := jaegerclient.NewProvider(ctx, svcName, cfg.JaegerURL, cfg.InstanceID, cfg.TraceRatio)
 	if err != nil {

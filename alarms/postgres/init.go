@@ -4,9 +4,6 @@
 package postgres
 
 import (
-	"github.com/absmach/magistrala/pkg/errors"
-	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
-	rpostgres "github.com/absmach/magistrala/re/postgres"
 	_ "github.com/jackc/pgx/v5/stdlib" // required for SQL access
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -53,13 +50,6 @@ func Migration() (*migrate.MemoryMigrationSource, error) {
 			},
 		},
 	}
-
-	rulesMigration, err := rpostgres.Migration()
-	if err != nil {
-		return &migrate.MemoryMigrationSource{}, errors.Wrap(repoerr.ErrRoleMigration, err)
-	}
-
-	alarmsMigration.Migrations = append(alarmsMigration.Migrations, rulesMigration.Migrations...)
 
 	return alarmsMigration, nil
 }

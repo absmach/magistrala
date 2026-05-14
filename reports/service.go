@@ -17,12 +17,9 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
-	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/pkg/reltime"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/ticker"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
-	"github.com/absmach/magistrala/reports/operations"
 )
 
 const limit = 1000
@@ -36,24 +33,18 @@ type report struct {
 	readers         grpcReadersV1.ReadersServiceClient
 	defaultTemplate ReportTemplate
 	converterURL    string
-	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp magistrala.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
-	if err != nil {
-		return nil, err
-	}
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp magistrala.IDProvider, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, template ReportTemplate, converterURL string) (Service, error) {
 	return &report{
-		repo:                   repo,
-		idp:                    idp,
-		runInfo:                runInfo,
-		email:                  emailer,
-		ticker:                 tck,
-		readers:                readers,
-		defaultTemplate:        template,
-		converterURL:           converterURL,
-		ProvisionManageService: rpms,
+		repo:            repo,
+		idp:             idp,
+		runInfo:         runInfo,
+		email:           emailer,
+		ticker:          tck,
+		readers:         readers,
+		defaultTemplate: template,
+		converterURL:    converterURL,
 	}, nil
 }
 
@@ -88,37 +79,11 @@ func (r *report) AddReportConfig(ctx context.Context, session authn.Session, cfg
 		}
 	}()
 
-	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
-		BuiltInRoleAdmin: {roles.Member(session.UserID)},
-	}
-
-	optionalPolicies := []policies.Policy{
-		{
-			SubjectType: policies.DomainType,
-			Subject:     session.DomainID,
-			Relation:    policies.DomainRelation,
-			ObjectType:  operations.EntityType,
-			Object:      reportConfig.ID,
-		},
-	}
-
-	_, err = r.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{reportConfig.ID}, optionalPolicies, newBuiltInRoleMembers)
-	if err != nil {
-		return ReportConfig{}, errors.Wrap(svcerr.ErrAddPolicies, err)
-	}
-
 	return reportConfig, nil
 }
 
 func (r *report) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (ReportConfig, error) {
-	var cfg ReportConfig
-	var err error
-	switch withRoles {
-	case true:
-		cfg, err = r.repo.RetrieveByIDWithRoles(ctx, id, session.UserID)
-	default:
-		cfg, err = r.repo.ViewReportConfig(ctx, id)
-	}
+	cfg, err := r.repo.ViewReportConfig(ctx, id)
 	if err != nil {
 		return ReportConfig{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -159,14 +124,7 @@ func (r *report) RemoveReportConfig(ctx context.Context, session authn.Session, 
 
 func (r *report) ListReportsConfig(ctx context.Context, session authn.Session, pm PageMeta) (ReportConfigPage, error) {
 	pm.Domain = session.DomainID
-	if session.SuperAdmin {
-		page, err := r.repo.ListAllReportsConfig(ctx, pm)
-		if err != nil {
-			return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
-		}
-		return page, nil
-	}
-	page, err := r.repo.ListUserReportsConfig(ctx, session.UserID, pm)
+	page, err := r.repo.ListAllReportsConfig(ctx, pm)
 	if err != nil {
 		return ReportConfigPage{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

@@ -14,7 +14,6 @@ import (
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/reltime"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/schedule"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 )
@@ -167,16 +166,6 @@ type ReportConfig struct {
 	CreatedBy      string            `json:"created_by,omitempty"`
 	UpdatedAt      time.Time         `json:"updated_at"`
 	UpdatedBy      string            `json:"updated_by,omitempty"`
-	// Extended
-	RoleID                    string                    `json:"role_id,omitempty"`
-	RoleName                  string                    `json:"role_name,omitempty"`
-	Actions                   []string                  `json:"actions,omitempty"`
-	AccessType                string                    `json:"access_type,omitempty"`
-	AccessProviderId          string                    `json:"access_provider_id,omitempty"`
-	AccessProviderRoleId      string                    `json:"access_provider_role_id,omitempty"`
-	AccessProviderRoleName    string                    `json:"access_provider_role_name,omitempty"`
-	AccessProviderRoleActions []string                  `json:"access_provider_role_actions,omitempty"`
-	Roles                     []roles.MemberRoleActions `json:"roles,omitempty"`
 }
 
 type ReportConfigPage struct {
@@ -410,19 +399,16 @@ type PageMeta struct {
 type Repository interface {
 	AddReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ViewReportConfig(ctx context.Context, id string) (ReportConfig, error)
-	RetrieveByIDWithRoles(ctx context.Context, id, memberID string) (ReportConfig, error)
 	UpdateReportConfig(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	UpdateReportSchedule(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	RemoveReportConfig(ctx context.Context, id string) error
 	UpdateReportConfigStatus(ctx context.Context, cfg ReportConfig) (ReportConfig, error)
 	ListAllReportsConfig(ctx context.Context, pm PageMeta) (ReportConfigPage, error)
-	ListUserReportsConfig(ctx context.Context, userID string, pm PageMeta) (ReportConfigPage, error)
 	UpdateReportDue(ctx context.Context, id string, due time.Time) (ReportConfig, error)
 
 	UpdateReportTemplate(ctx context.Context, domainID, reportID string, template ReportTemplate) error
 	ViewReportTemplate(ctx context.Context, domainID, reportID string) (ReportTemplate, error)
 	DeleteReportTemplate(ctx context.Context, domainID, reportID string) error
-	roles.Repository
 }
 
 type Service interface {
@@ -441,5 +427,4 @@ type Service interface {
 
 	GenerateReport(ctx context.Context, session authn.Session, config ReportConfig, action ReportAction) (ReportPage, error)
 	StartScheduler(ctx context.Context) error
-	roles.RoleManager
 }

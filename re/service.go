@@ -15,10 +15,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	pkglog "github.com/absmach/magistrala/pkg/logger"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/pkg/ticker"
-	"github.com/absmach/magistrala/re/operations"
 )
 
 var (
@@ -36,39 +33,33 @@ type re struct {
 	ticker     ticker.Ticker
 	email      emailer.Emailer
 	readers    grpcReadersV1.ReadersServiceClient
-	roles.ProvisionManageService
 }
 
-func NewService(repo Repository, runInfo chan pkglog.RunInfo, policy policies.Service, idp magistrala.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient, availableActions []roles.Action, builtInRoles map[roles.BuiltInRoleName][]roles.Action) (Service, error) {
-	rpms, err := roles.NewProvisionManageService(operations.EntityType, repo, policy, idp, availableActions, builtInRoles)
-	if err != nil {
-		return nil, err
-	}
+func NewService(repo Repository, runInfo chan pkglog.RunInfo, idp magistrala.IDProvider, rePubSub messaging.PubSub, writersPub, alarmsPub messaging.Publisher, tck ticker.Ticker, emailer emailer.Emailer, readers grpcReadersV1.ReadersServiceClient) (Service, error) {
 	return &re{
-		repo:                   repo,
-		idp:                    idp,
-		runInfo:                runInfo,
-		rePubSub:               rePubSub,
-		writersPub:             writersPub,
-		alarmsPub:              alarmsPub,
-		ticker:                 tck,
-		email:                  emailer,
-		readers:                readers,
-		ProvisionManageService: rpms,
+		repo:       repo,
+		idp:        idp,
+		runInfo:    runInfo,
+		rePubSub:   rePubSub,
+		writersPub: writersPub,
+		alarmsPub:  alarmsPub,
+		ticker:     tck,
+		email:      emailer,
+		readers:    readers,
 	}, nil
 }
 
-func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retRps []roles.RoleProvision, retErr error) {
+func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRule Rule, retErr error) {
 	if r.Logic.Type == GoType && goKeywordRegex.MatchString(r.Logic.Value) {
-		return Rule{}, nil, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrGoroutinesNotAllowed)
 	}
 	if r.Logic.Type == GoType && panicRegex.MatchString(r.Logic.Value) {
-		return Rule{}, nil, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
+		return Rule{}, errors.Wrap(svcerr.ErrMalformedEntity, ErrPanicNotAllowed)
 	}
 
 	id, err := re.idp.ID()
 	if err != nil {
-		return Rule{}, nil, err
+		return Rule{}, err
 	}
 	now := time.Now().UTC()
 	r.CreatedAt = now
@@ -84,7 +75,7 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 
 	rule, err := re.repo.AddRule(ctx, r)
 	if err != nil {
-		return Rule{}, nil, errors.Wrap(svcerr.ErrCreateEntity, err)
+		return Rule{}, errors.Wrap(svcerr.ErrCreateEntity, err)
 	}
 
 	defer func() {
@@ -95,37 +86,11 @@ func (re *re) AddRule(ctx context.Context, session authn.Session, r Rule) (retRu
 		}
 	}()
 
-	newBuiltInRoleMembers := map[roles.BuiltInRoleName][]roles.Member{
-		BuiltInRoleAdmin: {roles.Member(session.UserID)},
-	}
-
-	optionalPolicies := []policies.Policy{
-		{
-			SubjectType: policies.DomainType,
-			Subject:     session.DomainID,
-			Relation:    policies.DomainRelation,
-			ObjectType:  operations.EntityType,
-			Object:      rule.ID,
-		},
-	}
-
-	rps, err := re.AddNewEntitiesRoles(ctx, session.DomainID, session.UserID, []string{rule.ID}, optionalPolicies, newBuiltInRoleMembers)
-	if err != nil {
-		return Rule{}, nil, errors.Wrap(svcerr.ErrAddPolicies, err)
-	}
-
-	return rule, rps, nil
+	return rule, nil
 }
 
 func (re *re) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (Rule, error) {
-	var rule Rule
-	var err error
-	switch withRoles {
-	case true:
-		rule, err = re.repo.RetrieveByIDWithRoles(ctx, id, session.UserID)
-	default:
-		rule, err = re.repo.ViewRule(ctx, id)
-	}
+	rule, err := re.repo.ViewRule(ctx, id)
 	if err != nil {
 		return Rule{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}
@@ -175,14 +140,7 @@ func (re *re) UpdateRuleSchedule(ctx context.Context, session authn.Session, r R
 
 func (re *re) ListRules(ctx context.Context, session authn.Session, pm PageMeta) (Page, error) {
 	pm.Domain = session.DomainID
-	if session.SuperAdmin {
-		page, err := re.repo.ListAllRules(ctx, pm)
-		if err != nil {
-			return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
-		}
-		return page, nil
-	}
-	page, err := re.repo.ListUserRules(ctx, session.UserID, pm)
+	page, err := re.repo.ListAllRules(ctx, pm)
 	if err != nil {
 		return Page{}, errors.Wrap(svcerr.ErrViewEntity, err)
 	}

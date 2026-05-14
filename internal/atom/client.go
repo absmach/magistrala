@@ -1,0 +1,689 @@
+// Copyright (c) Abstract Machines
+// SPDX-License-Identifier: Apache-2.0
+
+package atom
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"io"
+	"net/http"
+	"strings"
+)
+
+type Client struct {
+	baseURL       string
+	token         string
+	adminUsername string
+	adminSecret   string
+	userAgent     string
+	httpClient    *http.Client
+}
+
+func NewClient(cfg Config) *Client {
+	timeout := cfg.Timeout
+	if timeout == 0 {
+		timeout = defaultTimeout
+	}
+	return &Client{
+		baseURL:       strings.TrimRight(cfg.URL, "/"),
+		token:         cfg.Token,
+		adminUsername: cfg.AdminUsername,
+		adminSecret:   cfg.AdminSecret,
+		userAgent:     cfg.UserAgent,
+		httpClient: &http.Client{
+			Timeout: timeout,
+		},
+	}
+}
+
+func (c *Client) UpsertTenant(ctx context.Context, tenant Tenant) error {
+	if tenant.ID == "" {
+		_, err := c.CreateTenant(ctx, tenant)
+		return err
+	}
+	if _, err := c.CreateTenant(ctx, tenant); err == nil || !IsConflict(err) {
+		return err
+	}
+	_, err := c.UpdateTenant(ctx, tenant.ID, tenant)
+	return err
+}
+
+func (c *Client) CreateTenant(ctx context.Context, tenant Tenant) (Tenant, error) {
+	var out struct {
+		CreateTenant Tenant `json:"createTenant"`
+	}
+	err := c.graphQL(ctx, `mutation CreateTenant($input: CreateTenantInput!) {
+		createTenant(input: $input) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"input": tenantCreateInput(tenant)}, &out)
+	return out.CreateTenant, err
+}
+
+func (c *Client) GetTenant(ctx context.Context, id string) (Tenant, error) {
+	var out struct {
+		Tenant Tenant `json:"tenant"`
+	}
+	err := c.graphQL(ctx, `query Tenant($id: ID!) {
+		tenant(id: $id) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id}, &out)
+	return out.Tenant, err
+}
+
+func (c *Client) UpdateTenant(ctx context.Context, id string, tenant Tenant) (Tenant, error) {
+	var out struct {
+		UpdateTenant Tenant `json:"updateTenant"`
+	}
+	err := c.graphQL(ctx, `mutation UpdateTenant($id: ID!, $input: UpdateTenantInput!) {
+		updateTenant(id: $id, input: $input) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id, "input": tenantUpdateInput(tenant)}, &out)
+	return out.UpdateTenant, err
+}
+
+func (c *Client) ChangeTenantStatus(ctx context.Context, id, action string) (Tenant, error) {
+	field := map[string]string{
+		"enable":  "enableTenant",
+		"disable": "disableTenant",
+		"freeze":  "freezeTenant",
+	}[action]
+	if field == "" {
+		return Tenant{}, Error{StatusCode: http.StatusBadRequest, Message: "unsupported tenant status action: " + action}
+	}
+	var out map[string]Tenant
+	err := c.graphQL(ctx, fmt.Sprintf(`mutation ChangeTenantStatus($id: ID!) {
+		%s(id: $id) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+	}`, field), map[string]any{"id": id}, &out)
+	if err != nil {
+		return Tenant{}, err
+	}
+	return out[field], nil
+}
+
+func (c *Client) UpsertEntity(ctx context.Context, entity Entity) error {
+	if entity.ID == "" {
+		_, err := c.CreateEntity(ctx, entity)
+		return err
+	}
+	if _, err := c.CreateEntity(ctx, entity); err == nil || !IsConflict(err) {
+		return err
+	}
+	_, err := c.UpdateEntity(ctx, entity.ID, entity)
+	return err
+}
+
+func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error) {
+	var out struct {
+		CreateEntity Entity `json:"createEntity"`
+	}
+	err := c.graphQL(ctx, `mutation CreateEntity($input: CreateEntityInput!) {
+		createEntity(input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"input": entityCreateInput(entity)}, &out)
+	return out.CreateEntity, err
+}
+
+func (c *Client) GetEntity(ctx context.Context, id string) (Entity, error) {
+	var out struct {
+		Entity Entity `json:"entity"`
+	}
+	err := c.graphQL(ctx, `query Entity($id: ID!) {
+		entity(id: $id) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id}, &out)
+	return out.Entity, err
+}
+
+func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (Entity, error) {
+	var out struct {
+		UpdateEntity Entity `json:"updateEntity"`
+	}
+	err := c.graphQL(ctx, `mutation UpdateEntity($id: ID!, $input: UpdateEntityInput!) {
+		updateEntity(id: $id, input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id, "input": entityUpdateInput(entity)}, &out)
+	return out.UpdateEntity, err
+}
+
+func (c *Client) UpsertGroup(ctx context.Context, group Group) error {
+	if group.ID == "" {
+		_, err := c.CreateGroup(ctx, group)
+		return err
+	}
+	if _, err := c.CreateGroup(ctx, group); err == nil || !IsConflict(err) {
+		return err
+	}
+	_, err := c.UpdateGroup(ctx, group.ID, group)
+	return err
+}
+
+func (c *Client) CreateGroup(ctx context.Context, group Group) (Group, error) {
+	var out struct {
+		CreateGroup Group `json:"createGroup"`
+	}
+	err := c.graphQL(ctx, `mutation CreateGroup($input: CreateGroupInput!) {
+		createGroup(input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"input": groupCreateInput(group)}, &out)
+	return out.CreateGroup, err
+}
+
+func (c *Client) GetGroup(ctx context.Context, id string) (Group, error) {
+	var out struct {
+		Group Group `json:"group"`
+	}
+	err := c.graphQL(ctx, `query Group($id: ID!) {
+		group(id: $id) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id}, &out)
+	return out.Group, err
+}
+
+func (c *Client) UpdateGroup(ctx context.Context, id string, group Group) (Group, error) {
+	var out struct {
+		UpdateGroup Group `json:"updateGroup"`
+	}
+	err := c.graphQL(ctx, `mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
+		updateGroup(id: $id, input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id, "input": groupUpdateInput(group)}, &out)
+	return out.UpdateGroup, err
+}
+
+func (c *Client) UpsertResource(ctx context.Context, resource Resource) error {
+	if resource.ID == "" {
+		_, err := c.CreateResource(ctx, resource)
+		return err
+	}
+	if _, err := c.CreateResource(ctx, resource); err == nil || !IsConflict(err) {
+		return err
+	}
+	_, err := c.UpdateResource(ctx, resource.ID, resource)
+	return err
+}
+
+func (c *Client) CreateResource(ctx context.Context, resource Resource) (Resource, error) {
+	var out struct {
+		CreateResource Resource `json:"createResource"`
+	}
+	err := c.graphQL(ctx, `mutation CreateResource($input: CreateResourceInput!) {
+		createResource(input: $input) { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"input": resourceCreateInput(resource)}, &out)
+	return out.CreateResource, err
+}
+
+func (c *Client) GetResource(ctx context.Context, id string) (Resource, error) {
+	var out struct {
+		Resource Resource `json:"resource"`
+	}
+	err := c.graphQL(ctx, `query Resource($id: ID!) {
+		resource(id: $id) { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id}, &out)
+	return out.Resource, err
+}
+
+func (c *Client) UpdateResource(ctx context.Context, id string, resource Resource) (Resource, error) {
+	var out struct {
+		UpdateResource Resource `json:"updateResource"`
+	}
+	err := c.graphQL(ctx, `mutation UpdateResource($id: ID!, $input: UpdateResourceInput!) {
+		updateResource(id: $id, input: $input) { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id, "input": resourceUpdateInput(resource)}, &out)
+	return out.UpdateResource, err
+}
+
+func (c *Client) DeleteTenant(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation DeleteTenant($id: ID!) { deleteTenant(id: $id) }`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) ListTenants(ctx context.Context, q Query) (TenantList, error) {
+	var out struct {
+		Tenants TenantList `json:"tenants"`
+	}
+	err := c.graphQL(ctx, `query Tenants($q: String, $name: String, $route: String, $status: TenantStatus, $limit: Int, $offset: Int) {
+		tenants(q: $q, name: $name, route: $route, status: $status, limit: $limit, offset: $offset) {
+			total
+			items { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+		}
+	}`, queryVariables(q), &out)
+	return out.Tenants, err
+}
+
+func (c *Client) CheckAuthz(ctx context.Context, req AuthzRequest) (AuthzResponse, error) {
+	var out struct {
+		AuthzCheck AuthzResponse `json:"authzCheck"`
+	}
+	err := c.graphQL(ctx, `mutation AuthzCheck($input: AuthzCheckInput!) {
+		authzCheck(input: $input) { allowed reason }
+	}`, map[string]any{"input": authzInput(req)}, &out)
+	return out.AuthzCheck, err
+}
+
+func (c *Client) CheckAuthzWithToken(ctx context.Context, token string, req AuthzRequest) (AuthzResponse, error) {
+	var out struct {
+		AuthzCheck AuthzResponse `json:"authzCheck"`
+	}
+	err := c.graphQLWithToken(ctx, `mutation AuthzCheck($input: AuthzCheckInput!) {
+		authzCheck(input: $input) { allowed reason }
+	}`, map[string]any{"input": authzInput(req)}, &out, token)
+	return out.AuthzCheck, err
+}
+
+func (c *Client) ListCapabilities(ctx context.Context) (CapabilityList, error) {
+	var out struct {
+		Capabilities CapabilityList `json:"capabilities"`
+	}
+	err := c.graphQL(ctx, `query Capabilities {
+		capabilities { items { id name resource_kind: resourceKind description } }
+	}`, nil, &out)
+	return out.Capabilities, err
+}
+
+func (c *Client) CapabilityID(ctx context.Context, name string) (string, error) {
+	list, err := c.ListCapabilities(ctx)
+	if err != nil {
+		return "", err
+	}
+	for _, capability := range list.Items {
+		if capability.Name == name {
+			return capability.ID, nil
+		}
+	}
+	return "", Error{StatusCode: http.StatusNotFound, Message: "capability " + name + " not found"}
+}
+
+func (c *Client) CreatePolicy(ctx context.Context, policy CreatePolicyBinding) (PolicyBinding, error) {
+	var out struct {
+		CreatePolicy PolicyBinding `json:"createPolicy"`
+	}
+	err := c.graphQL(ctx, `mutation CreatePolicy($input: CreatePolicyInput!) {
+		createPolicy(input: $input) {
+			id tenant_id: tenantId subject_kind: subjectKind subject_id: subjectId grant_kind: grantKind grant_id: grantId scope_kind: scopeKind scope_ref: scopeRef effect conditions created_at: createdAt
+		}
+	}`, map[string]any{"input": policyInput(policy)}, &out)
+	return out.CreatePolicy, err
+}
+
+func (c *Client) LoginPassword(ctx context.Context, identifier, secret string) (LoginResponse, error) {
+	var out LoginResponse
+	err := c.doWithToken(ctx, http.MethodPost, "/auth/login", LoginRequest{
+		Identifier: identifier,
+		Secret:     secret,
+		Kind:       "password",
+	}, &out, "")
+	return out, err
+}
+
+func (c *Client) Introspect(ctx context.Context, token string) (IntrospectionResponse, error) {
+	var out IntrospectionResponse
+	err := c.doWithToken(ctx, http.MethodGet, "/auth/introspect", nil, &out, token)
+	return out, err
+}
+
+func (c *Client) DeleteEntity(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation DeleteEntity($id: ID!) { deleteEntity(id: $id) }`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) CreatePassword(ctx context.Context, entityID, password string) error {
+	return c.graphQL(ctx, `mutation CreatePassword($entityId: ID!, $password: String!) {
+		createPassword(entityId: $entityId, password: $password)
+	}`, map[string]any{"entityId": entityID, "password": password}, nil)
+}
+
+func (c *Client) ListEntities(ctx context.Context, q Query) (EntityList, error) {
+	var out struct {
+		Entities EntityList `json:"entities"`
+	}
+	err := c.graphQL(ctx, `query Entities($q: String, $kind: EntityKind, $tenantId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
+		entities(q: $q, kind: $kind, tenantId: $tenantId, status: $status, limit: $limit, offset: $offset) {
+			total
+			items { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, objectQueryVariables(q), &out)
+	return out.Entities, err
+}
+
+func (c *Client) DeleteGroup(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation DeleteGroup($id: ID!) { deleteGroup(id: $id) }`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) ListGroups(ctx context.Context, q Query) (GroupList, error) {
+	var out struct {
+		Groups GroupList `json:"groups"`
+	}
+	err := c.graphQL(ctx, `query Groups($q: String, $tenantId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
+		groups(q: $q, tenantId: $tenantId, status: $status, limit: $limit, offset: $offset) {
+			total
+			items { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, objectQueryVariables(q), &out)
+	return out.Groups, err
+}
+
+func (c *Client) DeleteResource(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation DeleteResource($id: ID!) { deleteResource(id: $id) }`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) ListResources(ctx context.Context, q Query) (ResourceList, error) {
+	var out struct {
+		Resources ResourceList `json:"resources"`
+	}
+	vars := objectQueryVariables(q)
+	if q.Name != "" && q.Q == "" {
+		vars["q"] = q.Name
+	}
+	err := c.graphQL(ctx, `query Resources($q: String, $kind: String, $tenantId: ID, $limit: Int, $offset: Int) {
+		resources(q: $q, kind: $kind, tenantId: $tenantId, limit: $limit, offset: $offset) {
+			total
+			items { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, vars, &out)
+	return out.Resources, err
+}
+
+type graphQLRequest struct {
+	Query     string         `json:"query"`
+	Variables map[string]any `json:"variables,omitempty"`
+}
+
+type graphQLErrorItem struct {
+	Message string `json:"message"`
+}
+
+type graphQLResponse struct {
+	Data   json.RawMessage    `json:"data"`
+	Errors []graphQLErrorItem `json:"errors,omitempty"`
+}
+
+func (c *Client) graphQL(ctx context.Context, query string, variables map[string]any, out any) error {
+	var response graphQLResponse
+	if err := c.do(ctx, http.MethodPost, "/graphql", graphQLRequest{Query: query, Variables: variables}, &response); err != nil {
+		return err
+	}
+	return decodeGraphQLResponse(response, out)
+}
+
+func (c *Client) graphQLWithToken(ctx context.Context, query string, variables map[string]any, out any, token string) error {
+	var response graphQLResponse
+	if err := c.doWithToken(ctx, http.MethodPost, "/graphql", graphQLRequest{Query: query, Variables: variables}, &response, token); err != nil {
+		return err
+	}
+	return decodeGraphQLResponse(response, out)
+}
+
+func decodeGraphQLResponse(response graphQLResponse, out any) error {
+	if len(response.Errors) > 0 {
+		return graphQLErr(response.Errors)
+	}
+	if out == nil {
+		return nil
+	}
+	if len(response.Data) == 0 {
+		return Error{StatusCode: http.StatusInternalServerError, Message: "atom GraphQL response did not include data"}
+	}
+	return json.Unmarshal(response.Data, out)
+}
+
+func graphQLErr(errors []graphQLErrorItem) error {
+	messages := make([]string, 0, len(errors))
+	for _, err := range errors {
+		if err.Message != "" {
+			messages = append(messages, err.Message)
+		}
+	}
+	message := strings.Join(messages, "; ")
+	lower := strings.ToLower(message)
+	status := http.StatusBadRequest
+	switch {
+	case strings.Contains(lower, "duplicate") || strings.Contains(lower, "already exists") || strings.Contains(lower, "unique"):
+		status = http.StatusConflict
+	case strings.Contains(lower, "not found"):
+		status = http.StatusNotFound
+	case strings.Contains(lower, "unauthenticated") || strings.Contains(lower, "authentication"):
+		status = http.StatusUnauthorized
+	case strings.Contains(lower, "forbidden") || strings.Contains(lower, "authorization") || strings.Contains(lower, "access denied"):
+		status = http.StatusForbidden
+	}
+	return Error{StatusCode: status, Message: message}
+}
+
+func tenantCreateInput(tenant Tenant) map[string]any {
+	input := map[string]any{"name": tenant.Name}
+	setIfNotEmpty(input, "id", tenant.ID)
+	setIfNotEmpty(input, "route", tenant.Route)
+	if tenant.Tags != nil {
+		input["tags"] = tenant.Tags
+	}
+	if tenant.Attributes != nil {
+		input["attributes"] = tenant.Attributes
+	}
+	return input
+}
+
+func tenantUpdateInput(tenant Tenant) map[string]any {
+	input := map[string]any{}
+	setIfNotEmpty(input, "name", tenant.Name)
+	setIfNotEmpty(input, "route", tenant.Route)
+	if tenant.Tags != nil {
+		input["tags"] = tenant.Tags
+	}
+	if tenant.Attributes != nil {
+		input["attributes"] = tenant.Attributes
+	}
+	return input
+}
+
+func entityCreateInput(entity Entity) map[string]any {
+	input := map[string]any{"name": entity.Name}
+	setIfNotEmpty(input, "id", entity.ID)
+	setIfNotEmpty(input, "kind", entity.Kind)
+	setIfNotEmpty(input, "tenantId", entity.TenantID)
+	if entity.Attributes != nil {
+		input["attributes"] = entity.Attributes
+	} else {
+		input["attributes"] = map[string]any{}
+	}
+	return input
+}
+
+func entityUpdateInput(entity Entity) map[string]any {
+	input := map[string]any{}
+	setIfNotEmpty(input, "name", entity.Name)
+	setIfNotEmpty(input, "status", entity.Status)
+	if entity.Attributes != nil {
+		input["attributes"] = entity.Attributes
+	}
+	return input
+}
+
+func groupCreateInput(group Group) map[string]any {
+	input := map[string]any{"name": group.Name}
+	setIfNotEmpty(input, "id", group.ID)
+	setIfNotEmpty(input, "tenantId", group.TenantID)
+	setIfNotEmpty(input, "description", group.Description)
+	if group.Attributes != nil {
+		input["attributes"] = group.Attributes
+	}
+	return input
+}
+
+func groupUpdateInput(group Group) map[string]any {
+	input := map[string]any{}
+	setIfNotEmpty(input, "name", group.Name)
+	setIfNotEmpty(input, "description", group.Description)
+	setIfNotEmpty(input, "status", group.Status)
+	if group.Attributes != nil {
+		input["attributes"] = group.Attributes
+	}
+	return input
+}
+
+func resourceCreateInput(resource Resource) map[string]any {
+	input := map[string]any{"kind": resource.Kind}
+	setIfNotEmpty(input, "id", resource.ID)
+	setIfNotEmpty(input, "name", resource.Name)
+	setIfNotEmpty(input, "tenantId", resource.TenantID)
+	setIfNotEmpty(input, "ownerId", resource.OwnerID)
+	if resource.Attributes != nil {
+		input["attributes"] = resource.Attributes
+	}
+	return input
+}
+
+func resourceUpdateInput(resource Resource) map[string]any {
+	input := map[string]any{}
+	setIfNotEmpty(input, "name", resource.Name)
+	if resource.Attributes != nil {
+		input["attributes"] = resource.Attributes
+	}
+	return input
+}
+
+func authzInput(req AuthzRequest) map[string]any {
+	input := map[string]any{
+		"subjectId": req.SubjectID,
+		"action":    req.Action,
+	}
+	setIfNotEmpty(input, "resourceId", req.ResourceID)
+	setIfNotEmpty(input, "objectKind", req.ObjectKind)
+	setIfNotEmpty(input, "objectId", req.ObjectID)
+	if req.Context != nil {
+		input["context"] = req.Context
+	}
+	return input
+}
+
+func policyInput(policy CreatePolicyBinding) map[string]any {
+	input := map[string]any{
+		"subjectKind": policy.SubjectKind,
+		"subjectId":   policy.SubjectID,
+		"grantKind":   policy.GrantKind,
+		"grantId":     policy.GrantID,
+		"scopeKind":   policy.ScopeKind,
+	}
+	setIfNotEmpty(input, "tenantId", policy.TenantID)
+	setIfNotEmpty(input, "scopeRef", policy.ScopeRef)
+	setIfNotEmpty(input, "effect", policy.Effect)
+	if policy.Conditions != nil {
+		input["conditions"] = policy.Conditions
+	}
+	return input
+}
+
+func queryVariables(q Query) map[string]any {
+	vars := map[string]any{}
+	setIfNotEmpty(vars, "q", q.Q)
+	setIfNotEmpty(vars, "name", q.Name)
+	setIfNotEmpty(vars, "route", q.Route)
+	setIfNotEmpty(vars, "kind", q.Kind)
+	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, "status", q.Status)
+	if q.Limit > 0 {
+		vars["limit"] = int(q.Limit)
+	}
+	if q.Offset > 0 {
+		vars["offset"] = int(q.Offset)
+	}
+	return vars
+}
+
+func objectQueryVariables(q Query) map[string]any {
+	vars := map[string]any{}
+	setIfNotEmpty(vars, "q", q.Q)
+	setIfNotEmpty(vars, "kind", q.Kind)
+	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, "status", q.Status)
+	if q.Limit > 0 {
+		vars["limit"] = int(q.Limit)
+	}
+	if q.Offset > 0 {
+		vars["offset"] = int(q.Offset)
+	}
+	return vars
+}
+
+func setIfNotEmpty(values map[string]any, key, value string) {
+	if value != "" {
+		values[key] = value
+	}
+}
+
+func (c *Client) do(ctx context.Context, method, path string, in, out any) error {
+	token := c.token
+	if token == "" && c.adminSecret != "" {
+		adminToken, err := c.loginAdmin(ctx)
+		if err != nil {
+			return err
+		}
+		token = adminToken
+	}
+	return c.doWithToken(ctx, method, path, in, out, token)
+}
+
+func (c *Client) loginAdmin(ctx context.Context) (string, error) {
+	username := c.adminUsername
+	if username == "" {
+		username = defaultAdminUsername
+	}
+	resp, err := c.LoginPassword(ctx, username, c.adminSecret)
+	if err != nil {
+		return "", err
+	}
+	return resp.Token, nil
+}
+
+func (c *Client) doWithToken(ctx context.Context, method, path string, in, out any, token string) error {
+	if c.baseURL == "" {
+		return Error{StatusCode: 0, Message: "atom URL is empty"}
+	}
+
+	var body io.Reader
+	if in != nil {
+		data, err := json.Marshal(in)
+		if err != nil {
+			return err
+		}
+		body = bytes.NewReader(data)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.baseURL+path, body)
+	if err != nil {
+		return err
+	}
+	if in != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+	req.Header.Set("Accept", "application/json")
+	if c.userAgent != "" {
+		req.Header.Set("User-Agent", c.userAgent)
+	}
+	if token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		msg, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+		return Error{StatusCode: resp.StatusCode, Message: strings.TrimSpace(string(msg))}
+	}
+	if out == nil || resp.StatusCode == http.StatusNoContent {
+		return nil
+	}
+	return json.NewDecoder(resp.Body).Decode(out)
+}
+
+type Error struct {
+	StatusCode int
+	Message    string
+}
+
+func (e Error) Error() string {
+	if e.Message == "" {
+		return fmt.Sprintf("atom request failed with status %d", e.StatusCode)
+	}
+	return fmt.Sprintf("atom request failed with status %d: %s", e.StatusCode, e.Message)
+}
+
+func IsConflict(err error) bool {
+	ae, ok := err.(Error)
+	return ok && ae.StatusCode == http.StatusConflict
+}

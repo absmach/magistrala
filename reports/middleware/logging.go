@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/reports"
 )
 
@@ -18,14 +17,12 @@ var _ reports.Service = (*loggingMiddleware)(nil)
 type loggingMiddleware struct {
 	logger *slog.Logger
 	svc    reports.Service
-	rolemw.RoleManagerLoggingMiddleware
 }
 
 func LoggingMiddleware(svc reports.Service, logger *slog.Logger) reports.Service {
 	return &loggingMiddleware{
-		logger:                       logger,
-		svc:                          svc,
-		RoleManagerLoggingMiddleware: rolemw.NewLogging("reports", svc, logger),
+		logger: logger,
+		svc:    svc,
 	}
 }
 

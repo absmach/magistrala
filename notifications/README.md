@@ -9,19 +9,19 @@ This service listens to invitation events from the domains service and sends ema
 - Someone accepts their domain invitation (`invitation.accept`)
 - Someone rejects their domain invitation (`invitation.reject`)
 
-The service uses gRPC to fetch user information from the users service and sends styled email notifications using SMTP.
+The service fetches user information from Atom entities and sends styled email notifications using SMTP.
 
 ## Features
 
 - **Event-Driven**: Listens to invitation events from the event store (NATS/RabbitMQ)
-- **gRPC Integration**: Fetches user details (name, email) from the users service
+- **Atom Integration**: Fetches user details (name, email) from Atom
 - **Beautiful Email Templates**: Styled HTML email templates with Magistrala branding (#083662)
 - **Configurable**: Email server settings and templates are fully configurable
 
 ## Architecture
 
 ```
-domains service → event store → notifications service → users service (gRPC)
+domains service → event store → notifications service → Atom
                                          ↓
                                     SMTP Server → Email Recipients
 ```
@@ -49,12 +49,12 @@ The service is configured using environment variables:
 - `MG_EMAIL_ACCEPTANCE_TEMPLATE` - Path to acceptance email template
 - `MG_EMAIL_REJECTION_TEMPLATE` - Path to rejection email template
 
-### gRPC Configuration (Users Service)
-- `MG_USERS_GRPC_URL` - Users service gRPC URL
-- `MG_USERS_GRPC_TIMEOUT` - gRPC request timeout
-- `MG_USERS_GRPC_CLIENT_CERT` - Client certificate path
-- `MG_USERS_GRPC_CLIENT_KEY` - Client key path
-- `MG_USERS_GRPC_SERVER_CA_CERTS` - Server CA certificates path
+### Atom Configuration
+- `ATOM_URL` - Atom HTTP URL
+- `ATOM_SERVICE_TOKEN` - Service bearer token, if provisioned
+- `ATOM_SERVICE_USERNAME` / `ATOM_SERVICE_SECRET` - Service credential fallback
+- `ATOM_ADMIN_USERNAME` / `ATOM_ADMIN_SECRET` - Admin credential fallback
+- `ATOM_TIMEOUT` - Atom HTTP timeout
 
 ## Running the Service
 
@@ -108,6 +108,6 @@ The service consists of:
 
 ## Dependencies
 
-- Users service (gRPC) - for fetching user information
+- Atom - for fetching user information
 - Event store (NATS/RabbitMQ) - for receiving invitation events
 - SMTP server - for sending emails

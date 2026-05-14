@@ -8,7 +8,6 @@ import (
 
 	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
 	"github.com/absmach/magistrala/auth/api/grpc/auth"
-	"github.com/absmach/magistrala/domains"
 	"github.com/absmach/magistrala/pkg/authz"
 	pkgDomians "github.com/absmach/magistrala/pkg/domains"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -102,7 +101,7 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 	}
 
 	switch status {
-	case domains.FreezeStatus:
+	case pkgDomians.FreezeStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,
@@ -114,7 +113,7 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 		})
 
 		return err
-	case domains.DisabledStatus:
+	case pkgDomians.DisabledStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,
@@ -126,7 +125,7 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 		})
 
 		return err
-	case domains.EnabledStatus:
+	case pkgDomians.EnabledStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,

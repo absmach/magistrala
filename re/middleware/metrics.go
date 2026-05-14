@@ -9,8 +9,6 @@ import (
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/re"
 	"github.com/go-kit/kit/metrics"
 )
@@ -19,21 +17,19 @@ type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
 	service re.Service
-	rolemw.RoleManagerMetricsMiddleware
 }
 
 var _ re.Service = (*metricsMiddleware)(nil)
 
 func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, service re.Service) re.Service {
 	return &metricsMiddleware{
-		counter:                      counter,
-		latency:                      latency,
-		service:                      service,
-		RoleManagerMetricsMiddleware: rolemw.NewMetrics("re", service, counter, latency),
+		counter: counter,
+		latency: latency,
+		service: service,
 	}
 }
 
-func (mm *metricsMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
+func (mm *metricsMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "add_rule").Add(1)
 		mm.latency.With("method", "add_rule").Observe(time.Since(begin).Seconds())

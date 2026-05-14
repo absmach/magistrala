@@ -13,7 +13,7 @@ import (
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
 	apiutil "github.com/absmach/magistrala/api/http/util"
-	smqauth "github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -28,6 +28,7 @@ type connectServer struct {
 	authv1connect.UnimplementedAuthServiceHandler
 	clients  grpcClientsV1.ClientsServiceClient
 	channels grpcChannelsV1.ChannelsServiceClient
+	atomAuth atom.Authorizer
 	parser   messaging.TopicParser
 }
 
@@ -37,10 +38,16 @@ func NewServer(
 	clients grpcClientsV1.ClientsServiceClient,
 	channels grpcChannelsV1.ChannelsServiceClient,
 	parser messaging.TopicParser,
+	atomAuth ...atom.Authorizer,
 ) authv1connect.AuthServiceHandler {
+	var authz atom.Authorizer
+	if len(atomAuth) > 0 {
+		authz = atomAuth[0]
+	}
 	return &connectServer{
 		clients:  clients,
 		channels: channels,
+		atomAuth: authz,
 		parser:   parser,
 	}
 }
@@ -94,6 +101,29 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 
 	if topicType == messaging.HealthType {
 		return connect.NewResponse(&authv1.AuthzRes{Authorized: true}), nil
+	}
+
+	if s.atomAuth != nil {
+		res, err := s.atomAuth.CheckAuthz(ctx, atom.AuthzRequest{
+			SubjectID:  req.Msg.GetExternalId(),
+			Action:     "connect",
+			ResourceID: channelID,
+			ObjectKind: atom.KindChannel,
+			ObjectID:   channelID,
+			Context: map[string]any{
+				"domain_id":   domainID,
+				"client_type": policies.ClientType,
+				"connection":  connType.String(),
+				"topic_type":  uint32(topicType),
+			},
+		})
+		if err != nil {
+			if shouldDenyAuthorize(err) {
+				return connect.NewResponse(&authv1.AuthzRes{Authorized: false}), nil
+			}
+			return nil, encodeError(err)
+		}
+		return connect.NewResponse(&authv1.AuthzRes{Authorized: res.Allowed}), nil
 	}
 
 	ar := &grpcChannelsV1.AuthzReq{
@@ -151,7 +181,7 @@ func encodeError(err error) error {
 		err == apiutil.ErrMissingID:
 		return connect.NewError(connect.CodeInvalidArgument, err)
 	case errors.Contains(err, svcerr.ErrAuthentication),
-		errors.Contains(err, smqauth.ErrKeyExpired):
+		strings.Contains(err.Error(), "use of expired key"):
 		return connect.NewError(connect.CodeUnauthenticated, err)
 	case errors.Contains(err, svcerr.ErrAuthorization):
 		return connect.NewError(connect.CodePermissionDenied, err)

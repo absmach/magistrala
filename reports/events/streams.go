@@ -9,7 +9,6 @@ import (
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
-	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/absmach/magistrala/reports"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -25,7 +24,6 @@ var _ reports.Service = (*eventStore)(nil)
 type eventStore struct {
 	events.Publisher
 	svc reports.Service
-	rmEvents.RoleManagerEventStore
 }
 
 func NewEventStoreMiddleware(ctx context.Context, svc reports.Service, url string) (reports.Service, error) {
@@ -34,12 +32,9 @@ func NewEventStoreMiddleware(ctx context.Context, svc reports.Service, url strin
 		return nil, err
 	}
 
-	res := rmEvents.NewRoleManagerEventStore("reports", reportPrefix, svc, publisher)
-
 	return &eventStore{
-		svc:                   svc,
-		Publisher:             publisher,
-		RoleManagerEventStore: res,
+		svc:       svc,
+		Publisher: publisher,
 	}, nil
 }
 

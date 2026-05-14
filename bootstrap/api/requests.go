@@ -52,9 +52,10 @@ func (req entityReq) validate() error {
 }
 
 type updateReq struct {
-	id      string
-	Name    string `json:"name"`
-	Content string `json:"content"`
+	id            string
+	Name          string         `json:"name"`
+	Content       string         `json:"content"`
+	RenderContext map[string]any `json:"render_context"`
 }
 
 func (req updateReq) validate() error {

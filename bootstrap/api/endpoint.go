@@ -133,9 +133,10 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		config := bootstrap.Config{
-			ID:      req.id,
-			Name:    req.Name,
-			Content: req.Content,
+			ID:            req.id,
+			Name:          req.Name,
+			Content:       req.Content,
+			RenderContext: req.RenderContext,
 		}
 
 		if err := svc.Update(ctx, session, config); err != nil {

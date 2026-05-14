@@ -199,6 +199,12 @@ func TestUpdate(t *testing.T) {
 	modifiedCreated.Content = "new-config"
 	modifiedCreated.Name = "new name"
 
+	modifiedRenderContext := c
+	modifiedRenderContext.RenderContext = map[string]any{
+		"site":   "warehouse-2",
+		"region": "mombasa",
+	}
+
 	nonExisting := c
 	nonExisting.ID = unknown
 
@@ -215,6 +221,14 @@ func TestUpdate(t *testing.T) {
 		{
 			desc:     "update a config with status Created",
 			config:   modifiedCreated,
+			token:    validToken,
+			userID:   validID,
+			domainID: domainID,
+			err:      nil,
+		},
+		{
+			desc:     "update a config render_context",
+			config:   modifiedRenderContext,
 			token:    validToken,
 			userID:   validID,
 			domainID: domainID,

@@ -169,13 +169,19 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
-	q := `UPDATE configs SET name = :name, content = :content WHERE id = :id AND domain_id = :domain_id `
+	q := `UPDATE configs SET name = :name, content = :content, render_context = :render_context WHERE id = :id AND domain_id = :domain_id `
+
+	renderContext, err := json.Marshal(cfg.RenderContext)
+	if err != nil {
+		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	}
 
 	dbcfg := dbConfig{
-		Name:     nullString(cfg.Name),
-		Content:  nullString(cfg.Content),
-		ID:       cfg.ID,
-		DomainID: cfg.DomainID,
+		Name:          nullString(cfg.Name),
+		Content:       nullString(cfg.Content),
+		RenderContext: renderContext,
+		ID:            cfg.ID,
+		DomainID:      cfg.DomainID,
 	}
 
 	res, err := cr.db.NamedExecContext(ctx, q, dbcfg)

@@ -256,17 +256,23 @@ func TestUpdate(t *testing.T) {
 	c.Content = "new content"
 	c.Name = "new name"
 
+	withRenderContext := c
+	withRenderContext.RenderContext = map[string]any{
+		"site":   "warehouse-2",
+		"region": "mombasa",
+	}
+
 	wrongDomainID := c
 	wrongDomainID.DomainID = "3"
 
 	cases := []struct {
-		desc   string
-		id     string
-		config bootstrap.Config
-		err    error
+		desc          string
+		config        bootstrap.Config
+		renderContext map[string]any
+		err           error
 	}{
 		{
-			desc:   "update with wrong domainID ",
+			desc:   "update with wrong domainID",
 			config: wrongDomainID,
 			err:    repoerr.ErrNotFound,
 		},
@@ -275,10 +281,21 @@ func TestUpdate(t *testing.T) {
 			config: c,
 			err:    nil,
 		},
+		{
+			desc:          "update a config render_context",
+			config:        withRenderContext,
+			renderContext: map[string]any{"site": "warehouse-2", "region": "mombasa"},
+			err:           nil,
+		},
 	}
 	for _, tc := range cases {
 		err := repo.Update(context.Background(), tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		if tc.err == nil && tc.renderContext != nil {
+			saved, err := repo.RetrieveByID(context.Background(), tc.config.DomainID, tc.config.ID)
+			require.Nil(t, err, fmt.Sprintf("%s: unexpected retrieve error: %s\n", tc.desc, err))
+			assert.Equal(t, tc.renderContext, saved.RenderContext, fmt.Sprintf("%s: expected render_context %v got %v\n", tc.desc, tc.renderContext, saved.RenderContext))
+		}
 	}
 }
 

@@ -1182,7 +1182,7 @@ func TestUploadProfile(t *testing.T) {
 	saved := bootstrap.Profile{
 		ID:              testsutil.GenerateUUID(t),
 		Name:            "gateway",
-		ContentFormat:  bootstrap.ContentFormatGoTemplate,
+		ContentFormat:   bootstrap.ContentFormatGoTemplate,
 		ContentTemplate: "{{ .Device.ID }}",
 	}
 
@@ -1198,7 +1198,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        `{"name":"gateway","content_format":"go-template","content_template":"{{ .Device.ID }}"}`,
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatGoTemplate,
+				ContentFormat:   bootstrap.ContentFormatGoTemplate,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1208,7 +1208,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        "name: gateway\ncontent_format: go-template\ncontent_template: '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatGoTemplate,
+				ContentFormat:   bootstrap.ContentFormatGoTemplate,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1218,7 +1218,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        "name = 'gateway'\ncontent_format = 'go-template'\ncontent_template = '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatGoTemplate,
+				ContentFormat:   bootstrap.ContentFormatGoTemplate,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1228,7 +1228,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        `{"name":"gateway","content_template":"{{ .Device.ID }}"}`,
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatJSON,
+				ContentFormat:   bootstrap.ContentFormatJSON,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1238,7 +1238,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        "name: gateway\ncontent_template: '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatYAML,
+				ContentFormat:   bootstrap.ContentFormatYAML,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1248,7 +1248,7 @@ func TestUploadProfile(t *testing.T) {
 			body:        "name = 'gateway'\ncontent_template = '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				ContentFormat:  bootstrap.ContentFormatTOML,
+				ContentFormat:   bootstrap.ContentFormatTOML,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1326,11 +1326,11 @@ func TestListProfiles(t *testing.T) {
 			status:          http.StatusUnauthorized,
 		},
 		{
-			desc:   "list profiles with limit exceeding max",
-			token:  validToken,
+			desc:    "list profiles with limit exceeding max",
+			token:   validToken,
 			session: session,
-			url:    fmt.Sprintf("%s?offset=0&limit=101", path),
-			status: http.StatusBadRequest,
+			url:     fmt.Sprintf("%s?offset=0&limit=101", path),
+			status:  http.StatusBadRequest,
 		},
 	}
 

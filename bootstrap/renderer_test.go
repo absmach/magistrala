@@ -60,7 +60,7 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			_, err := renderer.Render(
 				bootstrap.Profile{
-					ContentFormat:  tc.format,
+					ContentFormat:   tc.format,
 					ContentTemplate: tc.template,
 				},
 				bootstrap.Config{ID: "config-id"},

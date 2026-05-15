@@ -454,11 +454,11 @@ func TestAssignProfile(t *testing.T) {
 
 	profileID := testsutil.GenerateUUID(t)
 	_, err = profileRepo.Save(context.Background(), bootstrap.Profile{
-		ID:             profileID,
-		DomainID:       c.DomainID,
-		Name:           "edge-gateway",
+		ID:            profileID,
+		DomainID:      c.DomainID,
+		Name:          "edge-gateway",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
-		Version:        1,
+		Version:       1,
 	})
 	require.Nil(t, err, fmt.Sprintf("Saving profile expected to succeed: %s.\n", err))
 

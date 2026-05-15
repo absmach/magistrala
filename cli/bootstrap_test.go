@@ -35,7 +35,7 @@ var (
 		ID:              profileID,
 		Name:            "Test Profile",
 		Description:     "Test profile",
-		TemplateFormat:  "go-template",
+		ContentFormat:   "go-template",
 		ContentTemplate: "{\"device_id\":\"{{ .Device.ID }}\"}",
 		Version:         1,
 	}
@@ -707,7 +707,8 @@ func TestBootstrapProfilesCmd(t *testing.T) {
 				domainID,
 				validToken,
 			},
-			logType: okLog,
+			profile: bootProfile,
+			logType: entityLog,
 		},
 		{
 			desc: "remove bootstrap profile successfully",
@@ -729,7 +730,7 @@ func TestBootstrapProfilesCmd(t *testing.T) {
 			createCall := sdkMock.On("CreateBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.profile, tc.sdkErr)
 			listCall := sdkMock.On("BootstrapProfiles", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.page, tc.sdkErr)
 			viewCall := sdkMock.On("ViewBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.profile, tc.sdkErr)
-			updateCall := sdkMock.On("UpdateBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
+			updateCall := sdkMock.On("UpdateBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.profile, tc.sdkErr)
 			removeCall := sdkMock.On("RemoveBootstrapProfile", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.sdkErr)
 
 			out := executeCommand(t, rootCmd, append([]string{"profiles"}, tc.args...)...)

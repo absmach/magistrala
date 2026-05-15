@@ -139,10 +139,34 @@ func applyProfilesOrdering(q string) string {
 }
 
 func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
-	q := `UPDATE profiles SET name = :name, description = :description, content_format = :content_format,
-		  content_template = :content_template, defaults = :defaults, binding_slots = :binding_slots, version = version + 1, updated_at = :updated_at
+	var query []string
+	var upq string
+	if p.Name != "" {
+		query = append(query, "name = :name,")
+	}
+	if p.Description != "" {
+		query = append(query, "description = :description,")
+	}
+	if p.ContentFormat != "" {
+		query = append(query, "content_format = :content_format,")
+	}
+	if p.ContentTemplate != "" {
+		query = append(query, "content_template = :content_template,")
+	}
+	if p.Defaults != nil {
+		query = append(query, "defaults = :defaults,")
+	}
+	if p.BindingSlots != nil {
+		query = append(query, "binding_slots = :binding_slots,")
+	}
+	if len(query) > 0 {
+		upq = strings.Join(query, " ")
+	}
+
+	q := fmt.Sprintf(`UPDATE profiles SET %s version = version + 1, updated_at = :updated_at
 		  WHERE id = :id AND domain_id = :domain_id
-		  RETURNING id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at`
+		  RETURNING id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at`,
+		upq)
 
 	p.UpdatedAt = time.Now().UTC()
 	dbp, err := toDBProfile(p)

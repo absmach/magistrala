@@ -109,7 +109,7 @@ type BootstrapProfile struct {
 	DomainID        string         `json:"domain_id,omitempty"`
 	Name            string         `json:"name,omitempty"`
 	Description     string         `json:"description,omitempty"`
-	TemplateFormat  string         `json:"template_format,omitempty"`
+	ContentFormat   string         `json:"content_format,omitempty"`
 	ContentTemplate string         `json:"content_template,omitempty"`
 	Defaults        map[string]any `json:"defaults,omitempty"`
 	BindingSlots    []BindingSlot  `json:"binding_slots,omitempty"`
@@ -302,19 +302,28 @@ func (sdk mgSDK) UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domai
 	return sdkerr
 }
 
-func (sdk mgSDK) UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) errors.SDKError {
+func (sdk mgSDK) UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, errors.SDKError) {
 	if profile.ID == "" {
-		return errors.NewSDKError(apiutil.ErrMissingID)
+		return BootstrapProfile{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
 	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapProfilesPath, profile.ID)
 	data, err := json.Marshal(profile)
 	if err != nil {
-		return errors.NewSDKError(err)
+		return BootstrapProfile{}, errors.NewSDKError(err)
 	}
 
-	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
-	return sdkerr
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
+	if sdkerr != nil {
+		return BootstrapProfile{}, sdkerr
+	}
+
+	var updated BootstrapProfile
+	if err := json.Unmarshal(body, &updated); err != nil {
+		return BootstrapProfile{}, errors.NewSDKError(err)
+	}
+
+	return updated, nil
 }
 
 func (sdk mgSDK) UpdateBootstrapCerts(ctx context.Context, id, clientCert, clientKey, ca, domainID, token string) (BootstrapConfig, errors.SDKError) {

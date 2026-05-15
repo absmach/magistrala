@@ -272,12 +272,13 @@ var cmdBootstrap = []cobra.Command{
 					return
 				}
 
-				if err := sdk.UpdateBootstrapProfile(cmd.Context(), profile, args[2], args[3]); err != nil {
+				updated, err := sdk.UpdateBootstrapProfile(cmd.Context(), profile, args[2], args[3])
+				if err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
 
-				logOKCmd(*cmd)
+				logJSONCmd(*cmd, updated)
 			case "remove":
 				if len(args) != 4 {
 					logUsageCmd(*cmd, cmd.Use)

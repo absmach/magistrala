@@ -27,9 +27,9 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			template: `{"device_id":"{{ .Device.ID }}"}`,
 		},
 		{
-			desc:     "invalid JSON output",
+			desc:     "invalid output for JSON format",
 			format:   bootstrap.ContentFormatJSON,
-			template: `{"device_id":`,
+			template: `[unclosed bracket`,
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
@@ -38,9 +38,9 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			template: "device_id: {{ .Device.ID }}",
 		},
 		{
-			desc:     "invalid YAML output",
+			desc:     "invalid output for YAML format",
 			format:   bootstrap.ContentFormatYAML,
-			template: "device_id: [",
+			template: "[unclosed bracket",
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
@@ -49,10 +49,25 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			template: `device_id = "{{ .Device.ID }}"`,
 		},
 		{
-			desc:     "invalid TOML output",
+			desc:     "invalid output for TOML format",
 			format:   bootstrap.ContentFormatTOML,
-			template: `device_id = `,
+			template: `[unclosed bracket`,
 			err:      bootstrap.ErrRenderFailed,
+		},
+		{
+			desc:     "JSON template auto-converted to TOML",
+			format:   bootstrap.ContentFormatTOML,
+			template: `{"device_id":"{{ .Device.ID }}"}`,
+		},
+		{
+			desc:     "TOML template auto-converted to JSON",
+			format:   bootstrap.ContentFormatJSON,
+			template: `device_id = "{{ .Device.ID }}"`,
+		},
+		{
+			desc:     "YAML template auto-converted to TOML",
+			format:   bootstrap.ContentFormatTOML,
+			template: "device_id: {{ .Device.ID }}",
 		},
 	}
 

@@ -8,25 +8,25 @@ import (
 	"time"
 )
 
-// TemplateFormat enumerates supported content template formats.
-type TemplateFormat string
+// ContentFormat enumerates the supported output formats for rendered profile templates.
+type ContentFormat string
 
 const (
-	TemplateFormatGoTemplate TemplateFormat = "go-template"
-	TemplateFormatRaw        TemplateFormat = "raw"
-	TemplateFormatJSON       TemplateFormat = "json"
-	TemplateFormatYAML       TemplateFormat = "yaml"
-	TemplateFormatTOML       TemplateFormat = "toml"
+	ContentFormatGoTemplate ContentFormat = "go-template"
+	ContentFormatRaw        ContentFormat = "raw"
+	ContentFormatJSON       ContentFormat = "json"
+	ContentFormatYAML       ContentFormat = "yaml"
+	ContentFormatTOML       ContentFormat = "toml"
 )
 
 // Profile is a user-managed device configuration template.
 type Profile struct {
-	ID              string         `json:"id"`
-	DomainID        string         `json:"domain_id,omitempty"`
-	Name            string         `json:"name"`
-	Description     string         `json:"description,omitempty"`
-	TemplateFormat  TemplateFormat `json:"template_format"`
-	ContentTemplate string         `json:"content_template,omitempty"`
+	ID              string        `json:"id"`
+	DomainID        string        `json:"domain_id,omitempty"`
+	Name            string        `json:"name"`
+	Description     string        `json:"description,omitempty"`
+	ContentFormat   ContentFormat `json:"content_format"`
+	ContentTemplate string        `json:"content_template,omitempty"`
 	Defaults        map[string]any `json:"defaults,omitempty"`
 	BindingSlots    []BindingSlot  `json:"binding_slots,omitempty"`
 	Version         int            `json:"version,omitempty"`
@@ -58,8 +58,8 @@ type ProfileRepository interface {
 	// RetrieveByID returns the Profile with the given ID inside the given domain.
 	RetrieveByID(ctx context.Context, domainID, id string) (Profile, error)
 
-	// RetrieveAll returns a page of Profiles belonging to the given domain.
-	RetrieveAll(ctx context.Context, domainID string, offset, limit uint64) (ProfilesPage, error)
+	// RetrieveAll returns a page of Profiles belonging to the given domain, optionally filtered by name.
+	RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (ProfilesPage, error)
 
 	// Update updates editable fields of the given Profile.
 	Update(ctx context.Context, p Profile) error

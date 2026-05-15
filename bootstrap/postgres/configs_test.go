@@ -457,7 +457,7 @@ func TestAssignProfile(t *testing.T) {
 		ID:             profileID,
 		DomainID:       c.DomainID,
 		Name:           "edge-gateway",
-		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
 		Version:        1,
 	})
 	require.Nil(t, err, fmt.Sprintf("Saving profile expected to succeed: %s.\n", err))

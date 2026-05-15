@@ -735,7 +735,7 @@ func TestBootstrapRender(t *testing.T) {
 		ID:              testsutil.GenerateUUID(&testing.T{}),
 		DomainID:        domainID,
 		Name:            "gateway-profile",
-		TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+		ContentFormat:  bootstrap.ContentFormatGoTemplate,
 		ContentTemplate: `{"mode":"profile"}`,
 	}
 	bindings := []bootstrap.BindingSnapshot{
@@ -971,7 +971,7 @@ func TestAssignProfile(t *testing.T) {
 		ID:             testsutil.GenerateUUID(t),
 		DomainID:       domainID,
 		Name:           "gateway-profile",
-		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
 		Version:        1,
 	}
 
@@ -1035,7 +1035,7 @@ func TestCreateProfile(t *testing.T) {
 
 	validProfile := bootstrap.Profile{
 		Name:           "test-profile",
-		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
 	}
 
 	cases := []struct {
@@ -1107,7 +1107,7 @@ func TestCreateProfile(t *testing.T) {
 			if tc.err == nil {
 				assert.NotEmpty(t, saved.ID, fmt.Sprintf("%s: expected non-empty profile ID\n", tc.desc))
 				assert.Equal(t, domainID, saved.DomainID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, domainID, saved.DomainID))
-				assert.Equal(t, bootstrap.TemplateFormatGoTemplate, saved.TemplateFormat, fmt.Sprintf("%s: expected go-template format\n", tc.desc))
+				assert.Equal(t, bootstrap.ContentFormatGoTemplate, saved.ContentFormat, fmt.Sprintf("%s: expected go-template format\n", tc.desc))
 				assert.Equal(t, 1, saved.Version, fmt.Sprintf("%s: expected version 1\n", tc.desc))
 			}
 			saveCall.Unset()
@@ -1122,7 +1122,7 @@ func TestViewProfile(t *testing.T) {
 		ID:             testsutil.GenerateUUID(t),
 		DomainID:       domainID,
 		Name:           "view-profile",
-		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
 		Version:        1,
 	}
 
@@ -1165,7 +1165,7 @@ func TestUpdateProfile(t *testing.T) {
 		ID:             testsutil.GenerateUUID(t),
 		DomainID:       domainID,
 		Name:           "updated-profile",
-		TemplateFormat: bootstrap.TemplateFormatGoTemplate,
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
 	}
 
 	cases := []struct {
@@ -1235,15 +1235,17 @@ func TestListProfiles(t *testing.T) {
 	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
 
 	profiles := []bootstrap.Profile{
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p1", TemplateFormat: bootstrap.TemplateFormatGoTemplate, Version: 1},
-		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p2", TemplateFormat: bootstrap.TemplateFormatGoTemplate, Version: 1},
+		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p1", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
+		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p2", ContentFormat: bootstrap.ContentFormatGoTemplate, Version: 1},
 	}
 	page := bootstrap.ProfilesPage{Total: 2, Offset: 0, Limit: 10, Profiles: profiles}
+	filteredPage := bootstrap.ProfilesPage{Total: 1, Offset: 0, Limit: 10, Profiles: profiles[:1]}
 
 	cases := []struct {
 		desc    string
 		offset  uint64
 		limit   uint64
+		name    string
 		page    bootstrap.ProfilesPage
 		listErr error
 		err     error
@@ -1252,6 +1254,12 @@ func TestListProfiles(t *testing.T) {
 			desc:  "list profiles successfully",
 			limit: 10,
 			page:  page,
+		},
+		{
+			desc:  "list profiles filtered by name",
+			limit: 10,
+			name:  "p1",
+			page:  filteredPage,
 		},
 		{
 			desc:    "list profiles with repository error",
@@ -1264,8 +1272,8 @@ func TestListProfiles(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			listCall := profileRepo.On("RetrieveAll", context.Background(), domainID, tc.offset, tc.limit).Return(tc.page, tc.listErr)
-			got, err := svc.ListProfiles(context.Background(), session, tc.offset, tc.limit)
+			listCall := profileRepo.On("RetrieveAll", context.Background(), domainID, tc.offset, tc.limit, tc.name).Return(tc.page, tc.listErr)
+			got, err := svc.ListProfiles(context.Background(), session, tc.offset, tc.limit, tc.name)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			if tc.err == nil {
 				assert.Equal(t, tc.page, got, fmt.Sprintf("%s: expected page %v got %v\n", tc.desc, tc.page, got))

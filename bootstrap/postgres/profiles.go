@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/absmach/magistrala/bootstrap"
@@ -32,8 +33,8 @@ func NewProfileRepository(db postgres.Database, log *slog.Logger) bootstrap.Prof
 }
 
 func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
-	q := `INSERT INTO profiles (id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at)
-		  VALUES (:id, :domain_id, :name, :description, :template_format, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
+	q := `INSERT INTO profiles (id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at)
+		  VALUES (:id, :domain_id, :name, :description, :content_format, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
 
 	now := time.Now().UTC()
 	p.CreatedAt = now
@@ -55,25 +56,35 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 }
 
 func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Profile, error) {
-	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at
-		  FROM profiles WHERE id = $1 AND domain_id = $2`
+	q := `SELECT id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at
+		  FROM profiles WHERE id = :id AND domain_id = :domain_id`
 
+	rows, err := pr.db.NamedQueryContext(ctx, q, dbProfile{ID: id, DomainID: domainID})
+	if err != nil {
+		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrViewEntity, err)
+	}
+	defer rows.Close()
+
+	if !rows.Next() {
+		return bootstrap.Profile{}, repoerr.ErrNotFound
+	}
 	var dbp dbProfile
-	if err := pr.db.QueryRowxContext(ctx, q, id, domainID).StructScan(&dbp); err != nil {
-		if err == sql.ErrNoRows {
-			return bootstrap.Profile{}, repoerr.ErrNotFound
-		}
+	if err := rows.StructScan(&dbp); err != nil {
 		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
 	return toProfile(dbp)
 }
 
-func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, offset, limit uint64) (bootstrap.ProfilesPage, error) {
-	q := `SELECT id, domain_id, name, description, template_format, content_template, defaults, binding_slots, version, created_at, updated_at
-		  FROM profiles WHERE domain_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`
+func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	dbPage := dbProfilesPage{DomainID: domainID, Offset: offset, Limit: limit, Name: name}
+	pageQuery := profilesPageQuery(dbPage)
+	q := fmt.Sprintf(`SELECT id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at
+		  FROM profiles %s`, pageQuery)
+	q = applyProfilesOrdering(q)
+	q = fmt.Sprintf(`%s LIMIT :limit OFFSET :offset`, q)
 
-	rows, err := pr.db.QueryxContext(ctx, q, domainID, limit, offset)
+	rows, err := pr.db.NamedQueryContext(ctx, q, dbPage)
 	if err != nil {
 		return bootstrap.ProfilesPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -93,8 +104,9 @@ func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, of
 		profiles = append(profiles, p)
 	}
 
-	var total uint64
-	if err := pr.db.QueryRowxContext(ctx, `SELECT COUNT(*) FROM profiles WHERE domain_id = $1`, domainID).Scan(&total); err != nil {
+	cq := fmt.Sprintf(`SELECT COUNT(*) FROM profiles %s`, pageQuery)
+	total, err := postgres.Total(ctx, pr.db, cq, dbPage)
+	if err != nil {
 		return bootstrap.ProfilesPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
 
@@ -106,8 +118,28 @@ func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, of
 	}, nil
 }
 
+type dbProfilesPage struct {
+	DomainID string `db:"domain_id"`
+	Offset   uint64 `db:"offset"`
+	Limit    uint64 `db:"limit"`
+	Name     string `db:"name"`
+}
+
+func profilesPageQuery(pm dbProfilesPage) string {
+	var query []string
+	query = append(query, "domain_id = :domain_id")
+	if pm.Name != "" {
+		query = append(query, "name ILIKE '%' || :name || '%'")
+	}
+	return fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
+}
+
+func applyProfilesOrdering(q string) string {
+	return fmt.Sprintf("%s ORDER BY created_at DESC", q)
+}
+
 func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) error {
-	q := `UPDATE profiles SET name = :name, description = :description, template_format = :template_format,
+	q := `UPDATE profiles SET name = :name, description = :description, content_format = :content_format,
 		  content_template = :content_template, defaults = :defaults, binding_slots = :binding_slots, version = version + 1, updated_at = :updated_at
 		  WHERE id = :id AND domain_id = :domain_id`
 
@@ -133,8 +165,8 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) err
 }
 
 func (pr profileRepository) Delete(ctx context.Context, domainID, id string) error {
-	q := `DELETE FROM profiles WHERE id = $1 AND domain_id = $2`
-	if _, err := pr.db.ExecContext(ctx, q, id, domainID); err != nil {
+	q := `DELETE FROM profiles WHERE id = :id AND domain_id = :domain_id`
+	if _, err := pr.db.NamedExecContext(ctx, q, dbProfile{ID: id, DomainID: domainID}); err != nil {
 		return errors.Wrap(repoerr.ErrRemoveEntity, err)
 	}
 	return nil
@@ -146,7 +178,7 @@ type dbProfile struct {
 	DomainID        string         `db:"domain_id"`
 	Name            string         `db:"name"`
 	Description     sql.NullString `db:"description"`
-	TemplateFormat  string         `db:"template_format"`
+	ContentFormat   string         `db:"content_format"`
 	ContentTemplate sql.NullString `db:"content_template"`
 	Defaults        []byte         `db:"defaults"`
 	BindingSlots    []byte         `db:"binding_slots"`
@@ -169,7 +201,7 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 		DomainID:        p.DomainID,
 		Name:            p.Name,
 		Description:     nullString(p.Description),
-		TemplateFormat:  string(p.TemplateFormat),
+		ContentFormat:   string(p.ContentFormat),
 		ContentTemplate: nullString(p.ContentTemplate),
 		Defaults:        defaults,
 		BindingSlots:    bindingSlots,
@@ -181,13 +213,13 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 
 func toProfile(dbp dbProfile) (bootstrap.Profile, error) {
 	p := bootstrap.Profile{
-		ID:             dbp.ID,
-		DomainID:       dbp.DomainID,
-		Name:           dbp.Name,
-		TemplateFormat: bootstrap.TemplateFormat(dbp.TemplateFormat),
-		Version:        dbp.Version,
-		CreatedAt:      dbp.CreatedAt,
-		UpdatedAt:      dbp.UpdatedAt,
+		ID:            dbp.ID,
+		DomainID:      dbp.DomainID,
+		Name:          dbp.Name,
+		ContentFormat: bootstrap.ContentFormat(dbp.ContentFormat),
+		Version:       dbp.Version,
+		CreatedAt:     dbp.CreatedAt,
+		UpdatedAt:     dbp.UpdatedAt,
 	}
 	if dbp.Description.Valid {
 		p.Description = dbp.Description.String

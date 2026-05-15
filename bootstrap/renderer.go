@@ -34,13 +34,13 @@ func NewRenderer() Renderer {
 func (r renderer) Render(profile Profile, enrollment Config, bindings []BindingSnapshot) ([]byte, error) {
 	rctx := buildRenderContext(profile, enrollment, bindings)
 
-	switch profile.TemplateFormat {
-	case TemplateFormatRaw:
+	switch profile.ContentFormat {
+	case ContentFormatRaw:
 		return []byte(profile.ContentTemplate), nil
-	case TemplateFormatGoTemplate, TemplateFormatJSON, TemplateFormatYAML, TemplateFormatTOML, "":
+	case ContentFormatGoTemplate, ContentFormatJSON, ContentFormatYAML, ContentFormatTOML, "":
 		return r.renderTemplate(profile, rctx)
 	default:
-		return nil, fmt.Errorf("%w: unsupported template format %q", ErrRenderFailed, profile.TemplateFormat)
+		return nil, fmt.Errorf("%w: unsupported template format %q", ErrRenderFailed, profile.ContentFormat)
 	}
 }
 
@@ -58,7 +58,7 @@ func (r renderer) renderTemplate(profile Profile, rctx RenderContext) ([]byte, e
 		return nil, fmt.Errorf("%w: %w", ErrRenderFailed, err)
 	}
 
-	out, err := validateRenderedOutput(buf.Bytes(), profile.TemplateFormat)
+	out, err := validateRenderedOutput(buf.Bytes(), profile.ContentFormat)
 	if err != nil {
 		return nil, err
 	}
@@ -69,21 +69,21 @@ func (r renderer) renderTemplate(profile Profile, rctx RenderContext) ([]byte, e
 // validateRenderedOutput checks that the rendered bytes are valid for the
 // declared output format. It returns the original bytes on success and wraps
 // ErrRenderFailed on failure.
-func validateRenderedOutput(out []byte, format TemplateFormat) ([]byte, error) {
+func validateRenderedOutput(out []byte, format ContentFormat) ([]byte, error) {
 	// Unrecognised formats are passed through. Recognised structured formats
 	// must parse successfully so broken templates fail before reaching devices.
 	switch format {
-	case TemplateFormatJSON:
+	case ContentFormatJSON:
 		var v any
 		if err := json.Unmarshal(out, &v); err != nil {
 			return nil, fmt.Errorf("%w: invalid json output: %w", ErrRenderFailed, err)
 		}
-	case TemplateFormatYAML:
+	case ContentFormatYAML:
 		var v any
 		if err := yaml.Unmarshal(out, &v); err != nil {
 			return nil, fmt.Errorf("%w: invalid yaml output: %w", ErrRenderFailed, err)
 		}
-	case TemplateFormatTOML:
+	case ContentFormatTOML:
 		var v any
 		if err := toml.Unmarshal(out, &v); err != nil {
 			return nil, fmt.Errorf("%w: invalid toml output: %w", ErrRenderFailed, err)

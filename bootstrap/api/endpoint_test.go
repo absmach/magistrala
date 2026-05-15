@@ -1182,7 +1182,7 @@ func TestUploadProfile(t *testing.T) {
 	saved := bootstrap.Profile{
 		ID:              testsutil.GenerateUUID(t),
 		Name:            "gateway",
-		TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+		ContentFormat:  bootstrap.ContentFormatGoTemplate,
 		ContentTemplate: "{{ .Device.ID }}",
 	}
 
@@ -1195,30 +1195,60 @@ func TestUploadProfile(t *testing.T) {
 		{
 			desc:        "upload JSON profile",
 			contentType: "application/json",
-			body:        `{"name":"gateway","template_format":"go-template","content_template":"{{ .Device.ID }}"}`,
+			body:        `{"name":"gateway","content_format":"go-template","content_template":"{{ .Device.ID }}"}`,
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentFormat:  bootstrap.ContentFormatGoTemplate,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
 		{
 			desc:        "upload YAML profile",
 			contentType: "application/yaml",
-			body:        "name: gateway\ntemplate_format: go-template\ncontent_template: '{{ .Device.ID }}'\n",
+			body:        "name: gateway\ncontent_format: go-template\ncontent_template: '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentFormat:  bootstrap.ContentFormatGoTemplate,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
 		{
 			desc:        "upload TOML profile",
 			contentType: "application/toml",
-			body:        "name = 'gateway'\ntemplate_format = 'go-template'\ncontent_template = '{{ .Device.ID }}'\n",
+			body:        "name = 'gateway'\ncontent_format = 'go-template'\ncontent_template = '{{ .Device.ID }}'\n",
 			profile: bootstrap.Profile{
 				Name:            "gateway",
-				TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+				ContentFormat:  bootstrap.ContentFormatGoTemplate,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+		{
+			desc:        "upload JSON profile without content_format infers json",
+			contentType: "application/json",
+			body:        `{"name":"gateway","content_template":"{{ .Device.ID }}"}`,
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				ContentFormat:  bootstrap.ContentFormatJSON,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+		{
+			desc:        "upload YAML profile without content_format infers yaml",
+			contentType: "application/yaml",
+			body:        "name: gateway\ncontent_template: '{{ .Device.ID }}'\n",
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				ContentFormat:  bootstrap.ContentFormatYAML,
+				ContentTemplate: "{{ .Device.ID }}",
+			},
+		},
+		{
+			desc:        "upload TOML profile without content_format infers toml",
+			contentType: "application/toml",
+			body:        "name = 'gateway'\ncontent_template = '{{ .Device.ID }}'\n",
+			profile: bootstrap.Profile{
+				Name:            "gateway",
+				ContentFormat:  bootstrap.ContentFormatTOML,
 				ContentTemplate: "{{ .Device.ID }}",
 			},
 		},
@@ -1242,6 +1272,83 @@ func TestUploadProfile(t *testing.T) {
 			assert.Equal(t, "/bootstrap/profiles/"+saved.ID, res.Header.Get("Location"))
 			svcCall.Unset()
 			authCall.Unset()
+		})
+	}
+}
+
+func TestListProfiles(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+
+	session := smqauthn.Session{DomainUserID: domainID + "_" + validID, UserID: validID, DomainID: domainID}
+	path := fmt.Sprintf("%s/%s/clients/bootstrap/profiles", bs.URL, domainID)
+
+	profiles := []bootstrap.Profile{
+		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "gateway-profile"},
+		{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "sensor-profile"},
+	}
+	fullPage := bootstrap.ProfilesPage{Total: 2, Offset: 0, Limit: 10, Profiles: profiles}
+	filteredPage := bootstrap.ProfilesPage{Total: 1, Offset: 0, Limit: 10, Profiles: profiles[:1]}
+
+	cases := []struct {
+		desc            string
+		token           string
+		session         smqauthn.Session
+		url             string
+		name            string
+		svcPage         bootstrap.ProfilesPage
+		svcErr          error
+		authenticateErr error
+		status          int
+	}{
+		{
+			desc:    "list profiles successfully",
+			token:   validToken,
+			session: session,
+			url:     fmt.Sprintf("%s?offset=0&limit=10", path),
+			svcPage: fullPage,
+			status:  http.StatusOK,
+		},
+		{
+			desc:    "list profiles filtered by name",
+			token:   validToken,
+			session: session,
+			url:     fmt.Sprintf("%s?offset=0&limit=10&name=gateway-profile", path),
+			name:    "gateway-profile",
+			svcPage: filteredPage,
+			status:  http.StatusOK,
+		},
+		{
+			desc:            "list profiles with invalid token",
+			token:           invalidToken,
+			url:             fmt.Sprintf("%s?offset=0&limit=10", path),
+			authenticateErr: svcerr.ErrAuthentication,
+			status:          http.StatusUnauthorized,
+		},
+		{
+			desc:   "list profiles with limit exceeding max",
+			token:  validToken,
+			session: session,
+			url:    fmt.Sprintf("%s?offset=0&limit=101", path),
+			status: http.StatusBadRequest,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(tc.session, tc.authenticateErr)
+			svcCall := svc.On("ListProfiles", mock.Anything, tc.session, mock.Anything, mock.Anything, tc.name).Return(tc.svcPage, tc.svcErr)
+			req := testRequest{
+				client: bs.Client(),
+				method: http.MethodGet,
+				url:    tc.url,
+				token:  tc.token,
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status %d got %d", tc.desc, tc.status, res.StatusCode))
+			authCall.Unset()
+			svcCall.Unset()
 		})
 	}
 }
@@ -1295,56 +1402,119 @@ func TestRenderPreview(t *testing.T) {
 	profile := bootstrap.Profile{
 		ID:              profileID,
 		Name:            "gateway",
-		TemplateFormat:  bootstrap.TemplateFormatGoTemplate,
+		ContentFormat:   bootstrap.ContentFormatGoTemplate,
 		ContentTemplate: `device={{ .Device.ID }} site={{ .Vars.site }} topic={{ index (index .Bindings "telemetry").Snapshot "topic" }}`,
 	}
-	authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
-	svcCall := svc.On("ViewProfile", mock.Anything, session, profileID).Return(profile, nil)
 
-	reqBody := struct {
+	storedConfig := bootstrap.Config{
+		ID:         configID,
+		ExternalID: "gw-001",
+		DomainID:   domainID,
+		RenderContext: map[string]any{
+			"site": "warehouse-1",
+		},
+	}
+	storedBindings := []bootstrap.BindingSnapshot{
+		{
+			Slot:       "telemetry",
+			Type:       "channel",
+			ResourceID: "ch-1",
+			Snapshot:   map[string]any{"topic": "devices/gw-001/telemetry"},
+		},
+	}
+
+	inlineReqBody := struct {
 		Config   bootstrap.Config            `json:"config"`
 		Bindings []bootstrap.BindingSnapshot `json:"bindings"`
 	}{
 		Config: bootstrap.Config{
-			ID:         configID,
-			ExternalID: "gw-001",
-			RenderContext: map[string]any{
-				"site": "warehouse-1",
-			},
+			ID:            configID,
+			ExternalID:    "gw-001",
+			RenderContext: map[string]any{"site": "warehouse-1"},
 		},
-		Bindings: []bootstrap.BindingSnapshot{
-			{
-				Slot:       "telemetry",
-				Type:       "channel",
-				ResourceID: "ch-1",
-				Snapshot: map[string]any{
-					"topic": "devices/gw-001/telemetry",
-				},
-			},
+		Bindings: storedBindings,
+	}
+
+	configIDReqBody := struct {
+		ConfigID string `json:"config_id"`
+	}{
+		ConfigID: configID,
+	}
+
+	expectedContent := "device=" + configID + " site=warehouse-1 topic=devices/gw-001/telemetry"
+
+	cases := []struct {
+		desc        string
+		body        string
+		profileErr  error
+		configErr   error
+		bindingsErr error
+		status      int
+	}{
+		{
+			desc:   "render preview with inline config and bindings",
+			body:   toJSON(inlineReqBody),
+			status: http.StatusOK,
+		},
+		{
+			desc:   "render preview with config_id loads from db",
+			body:   toJSON(configIDReqBody),
+			status: http.StatusOK,
+		},
+		{
+			desc:      "render preview with config_id and config not found",
+			body:      toJSON(configIDReqBody),
+			configErr: svcerr.ErrNotFound,
+			status:    http.StatusNotFound,
+		},
+		{
+			desc:        "render preview with config_id and bindings error",
+			body:        toJSON(configIDReqBody),
+			bindingsErr: svcerr.ErrViewEntity,
+			status:      http.StatusUnprocessableEntity,
+		},
+		{
+			desc:       "render preview with profile not found",
+			body:       toJSON(inlineReqBody),
+			profileErr: svcerr.ErrNotFound,
+			status:     http.StatusNotFound,
 		},
 	}
 
-	req := testRequest{
-		client:      bs.Client(),
-		method:      http.MethodPost,
-		url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, domainID, profileID),
-		contentType: contentType,
-		token:       validToken,
-		body:        strings.NewReader(toJSON(reqBody)),
-	}
-	res, err := req.make()
-	assert.Nil(t, err, fmt.Sprintf("render preview unexpected error %s", err))
-	assert.Equal(t, http.StatusOK, res.StatusCode, fmt.Sprintf("expected status code %d got %d", http.StatusOK, res.StatusCode))
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+			svcCall := svc.On("ViewProfile", mock.Anything, session, profileID).Return(profile, tc.profileErr)
+			svcCall2 := svc.On("View", mock.Anything, session, configID).Return(storedConfig, tc.configErr)
+			svcCall3 := svc.On("ListBindings", mock.Anything, session, configID).Return(storedBindings, tc.bindingsErr)
 
-	var got struct {
-		Content string `json:"content"`
-	}
-	err = json.NewDecoder(res.Body).Decode(&got)
-	assert.Nil(t, err, fmt.Sprintf("decoding render preview expected to succeed: %s", err))
-	assert.Equal(t, "device="+configID+" site=warehouse-1 topic=devices/gw-001/telemetry", got.Content)
+			req := testRequest{
+				client:      bs.Client(),
+				method:      http.MethodPost,
+				url:         fmt.Sprintf("%s/%s/clients/bootstrap/profiles/%s/render-preview", bs.URL, domainID, profileID),
+				contentType: contentType,
+				token:       validToken,
+				body:        strings.NewReader(tc.body),
+			}
+			res, err := req.make()
+			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
+			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
 
-	svcCall.Unset()
-	authCall.Unset()
+			if tc.status == http.StatusOK {
+				var got struct {
+					Content string `json:"content"`
+				}
+				err = json.NewDecoder(res.Body).Decode(&got)
+				assert.Nil(t, err, fmt.Sprintf("%s: decoding expected to succeed: %s", tc.desc, err))
+				assert.Equal(t, expectedContent, got.Content, fmt.Sprintf("%s: expected content %q got %q", tc.desc, expectedContent, got.Content))
+			}
+
+			svcCall3.Unset()
+			svcCall2.Unset()
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
 }
 
 type config struct {

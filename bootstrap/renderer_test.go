@@ -17,40 +17,40 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		format   bootstrap.TemplateFormat
+		format   bootstrap.ContentFormat
 		template string
 		err      error
 	}{
 		{
 			desc:     "valid JSON output",
-			format:   bootstrap.TemplateFormatJSON,
+			format:   bootstrap.ContentFormatJSON,
 			template: `{"device_id":"{{ .Device.ID }}"}`,
 		},
 		{
 			desc:     "invalid JSON output",
-			format:   bootstrap.TemplateFormatJSON,
+			format:   bootstrap.ContentFormatJSON,
 			template: `{"device_id":`,
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
 			desc:     "valid YAML output",
-			format:   bootstrap.TemplateFormatYAML,
+			format:   bootstrap.ContentFormatYAML,
 			template: "device_id: {{ .Device.ID }}",
 		},
 		{
 			desc:     "invalid YAML output",
-			format:   bootstrap.TemplateFormatYAML,
+			format:   bootstrap.ContentFormatYAML,
 			template: "device_id: [",
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
 			desc:     "valid TOML output",
-			format:   bootstrap.TemplateFormatTOML,
+			format:   bootstrap.ContentFormatTOML,
 			template: `device_id = "{{ .Device.ID }}"`,
 		},
 		{
 			desc:     "invalid TOML output",
-			format:   bootstrap.TemplateFormatTOML,
+			format:   bootstrap.ContentFormatTOML,
 			template: `device_id = `,
 			err:      bootstrap.ErrRenderFailed,
 		},
@@ -60,7 +60,7 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			_, err := renderer.Render(
 				bootstrap.Profile{
-					TemplateFormat:  tc.format,
+					ContentFormat:  tc.format,
 					ContentTemplate: tc.template,
 				},
 				bootstrap.Config{ID: "config-id"},

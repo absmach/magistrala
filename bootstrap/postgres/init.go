@@ -315,6 +315,15 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE IF EXISTS profiles DROP COLUMN IF EXISTS binding_slots`,
 				},
 			},
+			{
+				Id: "configs_16",
+				Up: []string{
+					`ALTER TABLE IF EXISTS profiles RENAME COLUMN template_format TO content_format`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS profiles RENAME COLUMN content_format TO template_format`,
+				},
+			},
 		},
 	}
 }

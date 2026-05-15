@@ -781,8 +781,8 @@ func (_c *Service_ListBindings_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // ListProfiles provides a mock function for the type Service
-func (_mock *Service) ListProfiles(ctx context.Context, session authn.Session, offset uint64, limit uint64) (bootstrap.ProfilesPage, error) {
-	ret := _mock.Called(ctx, session, offset, limit)
+func (_mock *Service) ListProfiles(ctx context.Context, session authn.Session, offset uint64, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	ret := _mock.Called(ctx, session, offset, limit, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListProfiles")
@@ -790,16 +790,16 @@ func (_mock *Service) ListProfiles(ctx context.Context, session authn.Session, o
 
 	var r0 bootstrap.ProfilesPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64) (bootstrap.ProfilesPage, error)); ok {
-		return returnFunc(ctx, session, offset, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64, string) (bootstrap.ProfilesPage, error)); ok {
+		return returnFunc(ctx, session, offset, limit, name)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64) bootstrap.ProfilesPage); ok {
-		r0 = returnFunc(ctx, session, offset, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, uint64, uint64, string) bootstrap.ProfilesPage); ok {
+		r0 = returnFunc(ctx, session, offset, limit, name)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ProfilesPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, uint64, uint64) error); ok {
-		r1 = returnFunc(ctx, session, offset, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, uint64, uint64, string) error); ok {
+		r1 = returnFunc(ctx, session, offset, limit, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -816,11 +816,12 @@ type Service_ListProfiles_Call struct {
 //   - session authn.Session
 //   - offset uint64
 //   - limit uint64
-func (_e *Service_Expecter) ListProfiles(ctx interface{}, session interface{}, offset interface{}, limit interface{}) *Service_ListProfiles_Call {
-	return &Service_ListProfiles_Call{Call: _e.mock.On("ListProfiles", ctx, session, offset, limit)}
+//   - name string
+func (_e *Service_Expecter) ListProfiles(ctx interface{}, session interface{}, offset interface{}, limit interface{}, name interface{}) *Service_ListProfiles_Call {
+	return &Service_ListProfiles_Call{Call: _e.mock.On("ListProfiles", ctx, session, offset, limit, name)}
 }
 
-func (_c *Service_ListProfiles_Call) Run(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64)) *Service_ListProfiles_Call {
+func (_c *Service_ListProfiles_Call) Run(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64, name string)) *Service_ListProfiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -838,11 +839,16 @@ func (_c *Service_ListProfiles_Call) Run(run func(ctx context.Context, session a
 		if args[3] != nil {
 			arg3 = args[3].(uint64)
 		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -853,7 +859,7 @@ func (_c *Service_ListProfiles_Call) Return(profilesPage bootstrap.ProfilesPage,
 	return _c
 }
 
-func (_c *Service_ListProfiles_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64) (bootstrap.ProfilesPage, error)) *Service_ListProfiles_Call {
+func (_c *Service_ListProfiles_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, offset uint64, limit uint64, name string) (bootstrap.ProfilesPage, error)) *Service_ListProfiles_Call {
 	_c.Call.Return(run)
 	return _c
 }

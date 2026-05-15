@@ -147,13 +147,13 @@ func (tm *tracingMiddleware) UpdateProfile(ctx context.Context, session smqauthn
 	return tm.svc.UpdateProfile(ctx, session, p)
 }
 
-func (tm *tracingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+func (tm *tracingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_list_profiles", trace.WithAttributes(
 		attribute.Int64("offset", int64(offset)),
 		attribute.Int64("limit", int64(limit)),
 	))
 	defer span.End()
-	return tm.svc.ListProfiles(ctx, session, offset, limit)
+	return tm.svc.ListProfiles(ctx, session, offset, limit, name)
 }
 
 func (tm *tracingMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {

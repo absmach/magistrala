@@ -143,12 +143,12 @@ func (mm *metricsMiddleware) UpdateProfile(ctx context.Context, session smqauthn
 	return mm.svc.UpdateProfile(ctx, session, p)
 }
 
-func (mm *metricsMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+func (mm *metricsMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "list_profiles").Add(1)
 		mm.latency.With("method", "list_profiles").Observe(time.Since(begin).Seconds())
 	}(time.Now())
-	return mm.svc.ListProfiles(ctx, session, offset, limit)
+	return mm.svc.ListProfiles(ctx, session, offset, limit, name)
 }
 
 func (mm *metricsMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {

@@ -98,7 +98,7 @@ func mergeBindingSnapshots(existing, updated []BindingSnapshot) []BindingSnapsho
 }
 
 func validateProfileTemplate(p Profile) error {
-	if p.ContentTemplate == "" || p.TemplateFormat == TemplateFormatRaw {
+	if p.ContentTemplate == "" || p.ContentFormat == ContentFormatRaw {
 		return nil
 	}
 	_, err := template.New("bootstrap").Funcs(allowlistedFuncs()).Parse(p.ContentTemplate)

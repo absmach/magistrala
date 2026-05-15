@@ -368,13 +368,16 @@ func decodeCreateProfileRequest(_ context.Context, r *http.Request) (any, error)
 func decodeUploadProfileRequest(_ context.Context, r *http.Request) (any, error) {
 	contentType := r.Header.Get("Content-Type")
 	var req uploadProfileReq
+	var inferredFormat bootstrap.ContentFormat
 
 	switch {
 	case strings.Contains(contentType, "json"):
+		inferredFormat = bootstrap.ContentFormatJSON
 		if err := json.NewDecoder(r.Body).Decode(&req.Profile); err != nil {
 			return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 		}
 	case strings.Contains(contentType, yamlContentType):
+		inferredFormat = bootstrap.ContentFormatYAML
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
@@ -383,6 +386,7 @@ func decodeUploadProfileRequest(_ context.Context, r *http.Request) (any, error)
 			return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
 		}
 	case strings.Contains(contentType, tomlContentType):
+		inferredFormat = bootstrap.ContentFormatTOML
 		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
@@ -392,6 +396,10 @@ func decodeUploadProfileRequest(_ context.Context, r *http.Request) (any, error)
 		}
 	default:
 		return nil, apiutil.ErrUnsupportedContentType
+	}
+
+	if req.Profile.ContentFormat == "" {
+		req.Profile.ContentFormat = inferredFormat
 	}
 
 	return req, nil
@@ -430,7 +438,11 @@ func decodeListProfilesRequest(_ context.Context, r *http.Request) (any, error) 
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	return listProfilesReq{offset: o, limit: l}, nil
+	n, err := apiutil.ReadStringQuery(r, api.NameKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	return listProfilesReq{offset: o, limit: l, name: n}, nil
 }
 
 func decodeProfileEntityRequest(_ context.Context, r *http.Request) (any, error) {

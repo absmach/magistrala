@@ -222,8 +222,8 @@ func (es *eventStore) UpdateProfile(ctx context.Context, session smqauthn.Sessio
 	return es.Publish(ctx, updateProfileStream, ev)
 }
 
-func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
-	pp, err := es.svc.ListProfiles(ctx, session, offset, limit)
+func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	pp, err := es.svc.ListProfiles(ctx, session, offset, limit, name)
 	if err != nil {
 		return pp, err
 	}

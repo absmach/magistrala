@@ -329,7 +329,7 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 	p.ID = id
 	p.DomainID = session.DomainID
 	if p.ContentFormat == "" {
-		p.ContentFormat = ContentFormatGoTemplate
+		p.ContentFormat = ContentFormatJSON
 	}
 	p.Version = 1
 	if err := validateProfileBindingSlots(p); err != nil {
@@ -361,9 +361,6 @@ func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.S
 		return Profile{}, errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
 	p.DomainID = session.DomainID
-	if p.ContentFormat == "" {
-		p.ContentFormat = ContentFormatGoTemplate
-	}
 	if err := validateProfileBindingSlots(p); err != nil {
 		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}

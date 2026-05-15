@@ -1039,18 +1039,21 @@ func TestCreateProfile(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc    string
-		profile bootstrap.Profile
-		saveErr error
-		err     error
+		desc       string
+		profile    bootstrap.Profile
+		saveErr    error
+		err        error
+		wantFormat bootstrap.ContentFormat
 	}{
 		{
-			desc:    "create profile successfully",
-			profile: validProfile,
+			desc:       "create profile successfully",
+			profile:    validProfile,
+			wantFormat: bootstrap.ContentFormatGoTemplate,
 		},
 		{
-			desc:    "create profile defaults to go-template format",
-			profile: bootstrap.Profile{Name: "no-format"},
+			desc:       "create profile defaults to json format",
+			profile:    bootstrap.Profile{Name: "no-format"},
+			wantFormat: bootstrap.ContentFormatJSON,
 		},
 		{
 			desc: "create profile with invalid slot: empty name",
@@ -1107,7 +1110,7 @@ func TestCreateProfile(t *testing.T) {
 			if tc.err == nil {
 				assert.NotEmpty(t, saved.ID, fmt.Sprintf("%s: expected non-empty profile ID\n", tc.desc))
 				assert.Equal(t, domainID, saved.DomainID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, domainID, saved.DomainID))
-				assert.Equal(t, bootstrap.ContentFormatGoTemplate, saved.ContentFormat, fmt.Sprintf("%s: expected go-template format\n", tc.desc))
+				assert.Equal(t, tc.wantFormat, saved.ContentFormat, fmt.Sprintf("%s: expected %s format\n", tc.desc, tc.wantFormat))
 				assert.Equal(t, 1, saved.Version, fmt.Sprintf("%s: expected version 1\n", tc.desc))
 			}
 			saveCall.Unset()
@@ -1179,7 +1182,7 @@ func TestUpdateProfile(t *testing.T) {
 			profile: validProfile,
 		},
 		{
-			desc:    "update profile defaults to go-template format",
+			desc:    "update profile with only name",
 			profile: bootstrap.Profile{ID: validProfile.ID, Name: "no-format"},
 		},
 		{

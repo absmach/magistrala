@@ -16,8 +16,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/absmach/magistrala/pkg/postgres"
-	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 var _ bootstrap.ProfileRepository = (*profileRepository)(nil)
@@ -46,10 +44,7 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 	}
 
 	if _, err = pr.db.NamedExecContext(ctx, q, dbp); err != nil {
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UniqueViolation {
-			return bootstrap.Profile{}, repoerr.ErrConflict
-		}
-		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrCreateEntity, err)
+		return bootstrap.Profile{}, postgres.HandleError(repoerr.ErrCreateEntity, err)
 	}
 
 	return p, nil
@@ -176,7 +171,7 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bo
 
 	rows, err := pr.db.NamedQueryContext(ctx, q, dbp)
 	if err != nil {
-		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return bootstrap.Profile{}, postgres.HandleError(repoerr.ErrUpdateEntity, err)
 	}
 	defer rows.Close()
 

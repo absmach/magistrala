@@ -90,8 +90,8 @@ type Service interface {
 	// ViewProfile returns the Profile with the given ID.
 	ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (Profile, error)
 
-	// UpdateProfile updates editable fields of the given Profile.
-	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error
+	// UpdateProfile updates editable fields of the given Profile and returns the updated Profile.
+	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
 
 	// ListProfiles returns a page of Profiles belonging to the domain.
 	ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (ProfilesPage, error)
@@ -356,24 +356,25 @@ func (bs bootstrapService) ViewProfile(ctx context.Context, session smqauthn.Ses
 	return p, nil
 }
 
-func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error {
+func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error) {
 	if bs.profiles == nil {
-		return errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
+		return Profile{}, errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
 	p.DomainID = session.DomainID
 	if p.ContentFormat == "" {
 		p.ContentFormat = ContentFormatGoTemplate
 	}
 	if err := validateProfileBindingSlots(p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
 	if err := validateProfileTemplate(p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
-	if err := bs.profiles.Update(ctx, p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+	updated, err := bs.profiles.Update(ctx, p)
+	if err != nil {
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
-	return nil
+	return updated, nil
 }
 
 func (bs bootstrapService) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (ProfilesPage, error) {

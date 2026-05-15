@@ -135,7 +135,7 @@ func (mm *metricsMiddleware) ViewProfile(ctx context.Context, session smqauthn.S
 	return mm.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (mm *metricsMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+func (mm *metricsMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "update_profile").Add(1)
 		mm.latency.With("method", "update_profile").Observe(time.Since(begin).Seconds())

@@ -138,30 +138,33 @@ func applyProfilesOrdering(q string) string {
 	return fmt.Sprintf("%s ORDER BY created_at DESC", q)
 }
 
-func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) error {
+func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
 	q := `UPDATE profiles SET name = :name, description = :description, content_format = :content_format,
 		  content_template = :content_template, defaults = :defaults, binding_slots = :binding_slots, version = version + 1, updated_at = :updated_at
-		  WHERE id = :id AND domain_id = :domain_id`
+		  WHERE id = :id AND domain_id = :domain_id
+		  RETURNING id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at`
 
 	p.UpdatedAt = time.Now().UTC()
 	dbp, err := toDBProfile(p)
 	if err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	res, err := pr.db.NamedExecContext(ctx, q, dbp)
+	rows, err := pr.db.NamedQueryContext(ctx, q, dbp)
 	if err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
-	cnt, err := res.RowsAffected()
-	if err != nil {
-		return errors.Wrap(repoerr.ErrUpdateEntity, err)
+	defer rows.Close()
+
+	if !rows.Next() {
+		return bootstrap.Profile{}, repoerr.ErrNotFound
 	}
-	if cnt == 0 {
-		return repoerr.ErrNotFound
+	var updated dbProfile
+	if err := rows.StructScan(&updated); err != nil {
+		return bootstrap.Profile{}, errors.Wrap(repoerr.ErrUpdateEntity, err)
 	}
 
-	return nil
+	return toProfile(updated)
 }
 
 func (pr profileRepository) Delete(ctx context.Context, domainID, id string) error {

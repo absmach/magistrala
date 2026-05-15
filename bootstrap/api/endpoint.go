@@ -393,10 +393,11 @@ func updateProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 		req.Profile.ID = req.profileID
-		if err := svc.UpdateProfile(ctx, session, req.Profile); err != nil {
+		updated, err := svc.UpdateProfile(ctx, session, req.Profile)
+		if err != nil {
 			return nil, err
 		}
-		return profileRes{Profile: req.Profile}, nil
+		return profileRes{Profile: updated}, nil
 	}
 }
 

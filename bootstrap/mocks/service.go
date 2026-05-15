@@ -1150,20 +1150,29 @@ func (_c *Service_UpdateCert_Call) RunAndReturn(run func(ctx context.Context, se
 }
 
 // UpdateProfile provides a mock function for the type Service
-func (_mock *Service) UpdateProfile(ctx context.Context, session authn.Session, p bootstrap.Profile) error {
+func (_mock *Service) UpdateProfile(ctx context.Context, session authn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ret := _mock.Called(ctx, session, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateProfile")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) error); ok {
+	var r0 bootstrap.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) (bootstrap.Profile, error)); ok {
+		return returnFunc(ctx, session, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, authn.Session, bootstrap.Profile) bootstrap.Profile); ok {
 		r0 = returnFunc(ctx, session, p)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bootstrap.Profile)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, authn.Session, bootstrap.Profile) error); ok {
+		r1 = returnFunc(ctx, session, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // Service_UpdateProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateProfile'
@@ -1202,12 +1211,12 @@ func (_c *Service_UpdateProfile_Call) Run(run func(ctx context.Context, session 
 	return _c
 }
 
-func (_c *Service_UpdateProfile_Call) Return(err error) *Service_UpdateProfile_Call {
-	_c.Call.Return(err)
+func (_c *Service_UpdateProfile_Call) Return(profile bootstrap.Profile, err error) *Service_UpdateProfile_Call {
+	_c.Call.Return(profile, err)
 	return _c
 }
 
-func (_c *Service_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, p bootstrap.Profile) error) *Service_UpdateProfile_Call {
+func (_c *Service_UpdateProfile_Call) RunAndReturn(run func(ctx context.Context, session authn.Session, p bootstrap.Profile) (bootstrap.Profile, error)) *Service_UpdateProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

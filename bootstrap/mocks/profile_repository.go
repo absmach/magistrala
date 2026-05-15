@@ -328,20 +328,29 @@ func (_c *ProfileRepository_Save_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // Update provides a mock function for the type ProfileRepository
-func (_mock *ProfileRepository) Update(ctx context.Context, p bootstrap.Profile) error {
+func (_mock *ProfileRepository) Update(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) error); ok {
+	var r0 bootstrap.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) (bootstrap.Profile, error)); ok {
+		return returnFunc(ctx, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) bootstrap.Profile); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bootstrap.Profile)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, bootstrap.Profile) error); ok {
+		r1 = returnFunc(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // ProfileRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
@@ -374,12 +383,12 @@ func (_c *ProfileRepository_Update_Call) Run(run func(ctx context.Context, p boo
 	return _c
 }
 
-func (_c *ProfileRepository_Update_Call) Return(err error) *ProfileRepository_Update_Call {
-	_c.Call.Return(err)
+func (_c *ProfileRepository_Update_Call) Return(profile bootstrap.Profile, err error) *ProfileRepository_Update_Call {
+	_c.Call.Return(profile, err)
 	return _c
 }
 
-func (_c *ProfileRepository_Update_Call) RunAndReturn(run func(ctx context.Context, p bootstrap.Profile) error) *ProfileRepository_Update_Call {
+func (_c *ProfileRepository_Update_Call) RunAndReturn(run func(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error)) *ProfileRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

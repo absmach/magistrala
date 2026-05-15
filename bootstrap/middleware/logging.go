@@ -233,7 +233,7 @@ func (lm *loggingMiddleware) ViewProfile(ctx context.Context, session smqauthn.S
 	return lm.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (err error) {
+func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (updated bootstrap.Profile, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),

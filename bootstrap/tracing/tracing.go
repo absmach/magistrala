@@ -139,7 +139,7 @@ func (tm *tracingMiddleware) ViewProfile(ctx context.Context, session smqauthn.S
 	return tm.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (tm *tracingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+func (tm *tracingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ctx, span := tm.tracer.Start(ctx, "svc_update_profile", trace.WithAttributes(
 		attribute.String("profile_id", p.ID),
 	))

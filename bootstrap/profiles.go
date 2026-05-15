@@ -21,12 +21,12 @@ const (
 
 // Profile is a user-managed device configuration template.
 type Profile struct {
-	ID              string        `json:"id"`
-	DomainID        string        `json:"domain_id,omitempty"`
-	Name            string        `json:"name"`
-	Description     string        `json:"description,omitempty"`
-	ContentFormat   ContentFormat `json:"content_format"`
-	ContentTemplate string        `json:"content_template,omitempty"`
+	ID              string         `json:"id"`
+	DomainID        string         `json:"domain_id,omitempty"`
+	Name            string         `json:"name"`
+	Description     string         `json:"description,omitempty"`
+	ContentFormat   ContentFormat  `json:"content_format"`
+	ContentTemplate string         `json:"content_template,omitempty"`
 	Defaults        map[string]any `json:"defaults,omitempty"`
 	BindingSlots    []BindingSlot  `json:"binding_slots,omitempty"`
 	Version         int            `json:"version,omitempty"`
@@ -61,8 +61,8 @@ type ProfileRepository interface {
 	// RetrieveAll returns a page of Profiles belonging to the given domain, optionally filtered by name.
 	RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (ProfilesPage, error)
 
-	// Update updates editable fields of the given Profile.
-	Update(ctx context.Context, p Profile) error
+	// Update updates editable fields of the given Profile and returns the updated Profile.
+	Update(ctx context.Context, p Profile) (Profile, error)
 
 	// Delete removes the Profile with the given ID from the given domain.
 	Delete(ctx context.Context, domainID, id string) error

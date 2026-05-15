@@ -124,9 +124,9 @@ func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session smqa
 	return am.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, auth.AnyIDs); err != nil {
-		return err
+		return bootstrap.Profile{}, err
 	}
 	return am.svc.UpdateProfile(ctx, session, p)
 }

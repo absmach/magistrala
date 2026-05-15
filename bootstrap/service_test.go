@@ -735,7 +735,7 @@ func TestBootstrapRender(t *testing.T) {
 		ID:              testsutil.GenerateUUID(&testing.T{}),
 		DomainID:        domainID,
 		Name:            "gateway-profile",
-		ContentFormat:  bootstrap.ContentFormatGoTemplate,
+		ContentFormat:   bootstrap.ContentFormatGoTemplate,
 		ContentTemplate: `{"mode":"profile"}`,
 	}
 	bindings := []bootstrap.BindingSnapshot{
@@ -968,11 +968,11 @@ func TestDisableConfig(t *testing.T) {
 
 func TestAssignProfile(t *testing.T) {
 	profile := bootstrap.Profile{
-		ID:             testsutil.GenerateUUID(t),
-		DomainID:       domainID,
-		Name:           "gateway-profile",
+		ID:            testsutil.GenerateUUID(t),
+		DomainID:      domainID,
+		Name:          "gateway-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
-		Version:        1,
+		Version:       1,
 	}
 
 	cases := []struct {
@@ -1034,7 +1034,7 @@ func TestCreateProfile(t *testing.T) {
 	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
 
 	validProfile := bootstrap.Profile{
-		Name:           "test-profile",
+		Name:          "test-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
 	}
 
@@ -1119,11 +1119,11 @@ func TestViewProfile(t *testing.T) {
 	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
 
 	profile := bootstrap.Profile{
-		ID:             testsutil.GenerateUUID(t),
-		DomainID:       domainID,
-		Name:           "view-profile",
+		ID:            testsutil.GenerateUUID(t),
+		DomainID:      domainID,
+		Name:          "view-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
-		Version:        1,
+		Version:       1,
 	}
 
 	cases := []struct {
@@ -1162,9 +1162,9 @@ func TestUpdateProfile(t *testing.T) {
 	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
 
 	validProfile := bootstrap.Profile{
-		ID:             testsutil.GenerateUUID(t),
-		DomainID:       domainID,
-		Name:           "updated-profile",
+		ID:            testsutil.GenerateUUID(t),
+		DomainID:      domainID,
+		Name:          "updated-profile",
 		ContentFormat: bootstrap.ContentFormatGoTemplate,
 	}
 
@@ -1223,8 +1223,8 @@ func TestUpdateProfile(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
 			svc := newService()
-			updateCall := profileRepo.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
-			err := svc.UpdateProfile(context.Background(), session, tc.profile)
+			updateCall := profileRepo.On("Update", context.Background(), mock.Anything).Return(tc.profile, tc.updateErr)
+			_, err := svc.UpdateProfile(context.Background(), session, tc.profile)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
 			updateCall.Unset()
 		})

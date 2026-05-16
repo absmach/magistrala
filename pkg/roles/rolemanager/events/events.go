@@ -25,6 +25,7 @@ const (
 	CheckRoleMembers         = "role.members.check"
 	RemoveRoleMembers        = "role.members.remove"
 	RemoveRoleAllMembers     = "role.members.remove_all"
+	RemoveMemberFromDomain   = "role.domain.member.remove"
 	ListEntityMembers        = "members.list"
 	RemoveEntityMembers      = "members.remove"
 	RemoveMemberFromAllRoles = "role.members.remove_from_all_roles"
@@ -369,6 +370,23 @@ func (leme listEntityMembersEvent) Encode() (map[string]any, error) {
 		"limit":      leme.limit,
 		"offset":     leme.offset,
 		"request_id": leme.requestID,
+	}
+	return val, nil
+}
+
+type removeMemberFromDomainEvent struct {
+	operationPrefix string
+	domainID        string
+	memberID        string
+	requestID       string
+}
+
+func (rmde removeMemberFromDomainEvent) Encode() (map[string]any, error) {
+	val := map[string]any{
+		"operation":  rmde.operationPrefix + RemoveMemberFromDomain,
+		"domain_id":  rmde.domainID,
+		"member_id":  rmde.memberID,
+		"request_id": rmde.requestID,
 	}
 	return val, nil
 }

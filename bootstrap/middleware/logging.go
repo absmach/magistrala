@@ -233,7 +233,7 @@ func (lm *loggingMiddleware) ViewProfile(ctx context.Context, session smqauthn.S
 	return lm.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (err error) {
+func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (updated bootstrap.Profile, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -250,7 +250,7 @@ func (lm *loggingMiddleware) UpdateProfile(ctx context.Context, session smqauthn
 	return lm.svc.UpdateProfile(ctx, session, p)
 }
 
-func (lm *loggingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (page bootstrap.ProfilesPage, err error) {
+func (lm *loggingMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (page bootstrap.ProfilesPage, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -265,7 +265,7 @@ func (lm *loggingMiddleware) ListProfiles(ctx context.Context, session smqauthn.
 		lm.logger.Info("List profiles completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.ListProfiles(ctx, session, offset, limit)
+	return lm.svc.ListProfiles(ctx, session, offset, limit, name)
 }
 
 func (lm *loggingMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) (err error) {

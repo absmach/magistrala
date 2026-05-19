@@ -90,11 +90,11 @@ type Service interface {
 	// ViewProfile returns the Profile with the given ID.
 	ViewProfile(ctx context.Context, session smqauthn.Session, profileID string) (Profile, error)
 
-	// UpdateProfile updates editable fields of the given Profile.
-	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error
+	// UpdateProfile updates editable fields of the given Profile and returns the updated Profile.
+	UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error)
 
 	// ListProfiles returns a page of Profiles belonging to the domain.
-	ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (ProfilesPage, error)
+	ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (ProfilesPage, error)
 
 	// DeleteProfile removes the Profile with the given ID.
 	DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error
@@ -328,8 +328,8 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 	}
 	p.ID = id
 	p.DomainID = session.DomainID
-	if p.TemplateFormat == "" {
-		p.TemplateFormat = TemplateFormatGoTemplate
+	if p.ContentFormat == "" {
+		p.ContentFormat = ContentFormatJSON
 	}
 	p.Version = 1
 	if err := validateProfileBindingSlots(p); err != nil {
@@ -356,31 +356,29 @@ func (bs bootstrapService) ViewProfile(ctx context.Context, session smqauthn.Ses
 	return p, nil
 }
 
-func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) error {
+func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.Session, p Profile) (Profile, error) {
 	if bs.profiles == nil {
-		return errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
+		return Profile{}, errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
 	p.DomainID = session.DomainID
-	if p.TemplateFormat == "" {
-		p.TemplateFormat = TemplateFormatGoTemplate
-	}
 	if err := validateProfileBindingSlots(p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
 	if err := validateProfileTemplate(p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
-	if err := bs.profiles.Update(ctx, p); err != nil {
-		return errors.Wrap(errUpdateProfile, err)
+	updated, err := bs.profiles.Update(ctx, p)
+	if err != nil {
+		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
-	return nil
+	return updated, nil
 }
 
-func (bs bootstrapService) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (ProfilesPage, error) {
+func (bs bootstrapService) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (ProfilesPage, error) {
 	if bs.profiles == nil {
 		return ProfilesPage{}, errors.Wrap(errListProfiles, errors.New("profile repository not configured"))
 	}
-	page, err := bs.profiles.RetrieveAll(ctx, session.DomainID, offset, limit)
+	page, err := bs.profiles.RetrieveAll(ctx, session.DomainID, offset, limit, name)
 	if err != nil {
 		return ProfilesPage{}, errors.Wrap(errListProfiles, err)
 	}

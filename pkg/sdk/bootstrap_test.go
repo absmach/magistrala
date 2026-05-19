@@ -908,6 +908,312 @@ func TestBootstrapSecure(t *testing.T) {
 	}
 }
 
+func TestCreateBootstrapProfile(t *testing.T) {
+	bs, bsvc, _, auth := setupBootstrap()
+	defer bs.Close()
+
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
+
+	profile := sdk.BootstrapProfile{
+		Name:          "gateway-profile",
+		ContentFormat: "go-template",
+	}
+	saved := bootstrap.Profile{
+		ID:            testsutil.GenerateUUID(t),
+		DomainID:      domainID,
+		Name:          "gateway-profile",
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
+	}
+
+	cases := []struct {
+		desc           string
+		token          string
+		profile        sdk.BootstrapProfile
+		svcResp        bootstrap.Profile
+		svcErr         error
+		authErr        error
+		expectedSDKErr errors.SDKError
+	}{
+		{
+			desc:    "create profile successfully",
+			token:   validToken,
+			profile: profile,
+			svcResp: saved,
+		},
+		{
+			desc:           "create profile with invalid token",
+			token:          invalidToken,
+			profile:        profile,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:           "create profile with empty name",
+			token:          validToken,
+			profile:        sdk.BootstrapProfile{},
+			expectedSDKErr: errors.NewSDKErrorWithStatus(apiutil.ErrMissingName, http.StatusBadRequest),
+		},
+		{
+			desc:           "create profile with service error",
+			token:          validToken,
+			profile:        profile,
+			svcErr:         svcerr.ErrCreateEntity,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrCreateEntity, http.StatusUnprocessableEntity),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			session := smqauthn.Session{}
+			if tc.token == validToken {
+				session = bootstrapSession()
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
+			svcCall := bsvc.On("CreateProfile", mock.Anything, session, mock.Anything).Return(tc.svcResp, tc.svcErr)
+
+			_, err := mgsdk.CreateBootstrapProfile(context.Background(), tc.profile, domainID, tc.token)
+			assert.Equal(t, tc.expectedSDKErr, err)
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestViewBootstrapProfile(t *testing.T) {
+	bs, bsvc, _, auth := setupBootstrap()
+	defer bs.Close()
+
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
+
+	profileID := testsutil.GenerateUUID(t)
+	saved := bootstrap.Profile{
+		ID:            profileID,
+		DomainID:      domainID,
+		Name:          "gateway-profile",
+		ContentFormat: bootstrap.ContentFormatGoTemplate,
+	}
+	expected := sdk.BootstrapProfile{
+		ID:            profileID,
+		DomainID:      domainID,
+		Name:          "gateway-profile",
+		ContentFormat: "go-template",
+	}
+
+	cases := []struct {
+		desc           string
+		token          string
+		profileID      string
+		svcResp        bootstrap.Profile
+		svcErr         error
+		authErr        error
+		expectedResp   sdk.BootstrapProfile
+		expectedSDKErr errors.SDKError
+	}{
+		{
+			desc:         "view profile successfully",
+			token:        validToken,
+			profileID:    profileID,
+			svcResp:      saved,
+			expectedResp: expected,
+		},
+		{
+			desc:           "view profile with invalid token",
+			token:          invalidToken,
+			profileID:      profileID,
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:           "view profile with empty id",
+			token:          validToken,
+			profileID:      "",
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
+		},
+		{
+			desc:           "view profile not found",
+			token:          validToken,
+			profileID:      profileID,
+			svcErr:         svcerr.ErrNotFound,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			session := smqauthn.Session{}
+			if tc.token == validToken {
+				session = bootstrapSession()
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
+			svcCall := bsvc.On("ViewProfile", mock.Anything, session, tc.profileID).Return(tc.svcResp, tc.svcErr)
+
+			resp, err := mgsdk.ViewBootstrapProfile(context.Background(), tc.profileID, domainID, tc.token)
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if tc.expectedSDKErr == nil {
+				assert.Equal(t, tc.expectedResp, resp)
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestUpdateBootstrapProfile(t *testing.T) {
+	bs, bsvc, _, auth := setupBootstrap()
+	defer bs.Close()
+
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
+
+	profileID := testsutil.GenerateUUID(t)
+	updatedProfile := bootstrap.Profile{
+		ID:            profileID,
+		DomainID:      domainID,
+		Name:          "updated-name",
+		ContentFormat: bootstrap.ContentFormatYAML,
+	}
+	expectedResp := sdk.BootstrapProfile{
+		ID:            profileID,
+		DomainID:      domainID,
+		Name:          "updated-name",
+		ContentFormat: "yaml",
+	}
+
+	cases := []struct {
+		desc           string
+		token          string
+		profile        sdk.BootstrapProfile
+		svcResp        bootstrap.Profile
+		svcErr         error
+		authErr        error
+		expectedResp   sdk.BootstrapProfile
+		expectedSDKErr errors.SDKError
+	}{
+		{
+			desc:  "update profile successfully",
+			token: validToken,
+			profile: sdk.BootstrapProfile{
+				ID:            profileID,
+				Name:          "updated-name",
+				ContentFormat: "yaml",
+			},
+			svcResp:      updatedProfile,
+			expectedResp: expectedResp,
+		},
+		{
+			desc:  "update profile with invalid token",
+			token: invalidToken,
+			profile: sdk.BootstrapProfile{
+				ID: profileID,
+			},
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+		{
+			desc:           "update profile with empty id",
+			token:          validToken,
+			profile:        sdk.BootstrapProfile{},
+			expectedSDKErr: errors.NewSDKError(apiutil.ErrMissingID),
+		},
+		{
+			desc:  "update profile not found",
+			token: validToken,
+			profile: sdk.BootstrapProfile{
+				ID: profileID,
+			},
+			svcErr:         svcerr.ErrNotFound,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrNotFound, http.StatusNotFound),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			session := smqauthn.Session{}
+			if tc.token == validToken {
+				session = bootstrapSession()
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
+			svcCall := bsvc.On("UpdateProfile", mock.Anything, session, mock.Anything).Return(tc.svcResp, tc.svcErr)
+
+			resp, err := mgsdk.UpdateBootstrapProfile(context.Background(), tc.profile, domainID, tc.token)
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if tc.expectedSDKErr == nil {
+				assert.Equal(t, tc.expectedResp, resp)
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestBootstrapProfiles(t *testing.T) {
+	bs, bsvc, _, auth := setupBootstrap()
+	defer bs.Close()
+
+	mgsdk := sdk.NewSDK(sdk.Config{BootstrapURL: bs.URL})
+
+	profiles := bootstrap.ProfilesPage{
+		Total:  2,
+		Offset: 0,
+		Limit:  10,
+		Profiles: []bootstrap.Profile{
+			{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p1", ContentFormat: bootstrap.ContentFormatGoTemplate},
+			{ID: testsutil.GenerateUUID(t), DomainID: domainID, Name: "p2", ContentFormat: bootstrap.ContentFormatYAML},
+		},
+	}
+
+	cases := []struct {
+		desc           string
+		token          string
+		pageMeta       sdk.PageMetadata
+		svcResp        bootstrap.ProfilesPage
+		svcErr         error
+		authErr        error
+		expectedCount  int
+		expectedSDKErr errors.SDKError
+	}{
+		{
+			desc:          "list profiles successfully",
+			token:         validToken,
+			pageMeta:      sdk.PageMetadata{Offset: 0, Limit: 10},
+			svcResp:       profiles,
+			expectedCount: 2,
+		},
+		{
+			desc:          "list profiles filtered by name",
+			token:         validToken,
+			pageMeta:      sdk.PageMetadata{Offset: 0, Limit: 10, Name: "p1"},
+			svcResp:       bootstrap.ProfilesPage{Total: 1, Profiles: profiles.Profiles[:1]},
+			expectedCount: 1,
+		},
+		{
+			desc:           "list profiles with invalid token",
+			token:          invalidToken,
+			pageMeta:       sdk.PageMetadata{Offset: 0, Limit: 10},
+			authErr:        svcerr.ErrAuthentication,
+			expectedSDKErr: errors.NewSDKErrorWithStatus(svcerr.ErrAuthentication, http.StatusUnauthorized),
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			session := smqauthn.Session{}
+			if tc.token == validToken {
+				session = bootstrapSession()
+			}
+			authCall := auth.On("Authenticate", mock.Anything, tc.token).Return(session, tc.authErr)
+			svcCall := bsvc.On("ListProfiles", mock.Anything, session, mock.Anything, mock.Anything, mock.Anything).Return(tc.svcResp, tc.svcErr)
+
+			resp, err := mgsdk.BootstrapProfiles(context.Background(), tc.pageMeta, domainID, tc.token)
+			assert.Equal(t, tc.expectedSDKErr, err)
+			if tc.expectedSDKErr == nil {
+				assert.Equal(t, tc.expectedCount, len(resp.Profiles))
+			}
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
 func encrypt(in, encKey []byte) ([]byte, error) {
 	block, err := aes.NewCipher(encKey)
 	if err != nil {

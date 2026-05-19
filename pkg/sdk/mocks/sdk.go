@@ -11793,22 +11793,31 @@ func (_c *SDK_UpdateBootstrapConnection_Call) RunAndReturn(run func(ctx context.
 }
 
 // UpdateBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError {
+func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
 	ret := _mock.Called(ctx, profile, domainID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapProfile")
 	}
 
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
+	var r0 sdk.BootstrapProfile
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
+		return returnFunc(ctx, profile, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) sdk.BootstrapProfile); ok {
 		r0 = returnFunc(ctx, profile, domainID, token)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
+		r0 = ret.Get(0).(sdk.BootstrapProfile)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, profile, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
 		}
 	}
-	return r0
+	return r0, r1
 }
 
 // SDK_UpdateBootstrapProfile_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateBootstrapProfile'
@@ -11853,12 +11862,12 @@ func (_c *SDK_UpdateBootstrapProfile_Call) Run(run func(ctx context.Context, pro
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
-	_c.Call.Return(sDKError)
+func (_c *SDK_UpdateBootstrapProfile_Call) Return(bootstrapProfile sdk.BootstrapProfile, sDKError errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
+	_c.Call.Return(bootstrapProfile, sDKError)
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapProfile_Call {
+func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_UpdateBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }

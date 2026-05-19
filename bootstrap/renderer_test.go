@@ -17,42 +17,57 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 
 	cases := []struct {
 		desc     string
-		format   bootstrap.TemplateFormat
+		format   bootstrap.ContentFormat
 		template string
 		err      error
 	}{
 		{
 			desc:     "valid JSON output",
-			format:   bootstrap.TemplateFormatJSON,
+			format:   bootstrap.ContentFormatJSON,
 			template: `{"device_id":"{{ .Device.ID }}"}`,
 		},
 		{
-			desc:     "invalid JSON output",
-			format:   bootstrap.TemplateFormatJSON,
-			template: `{"device_id":`,
+			desc:     "invalid output for JSON format",
+			format:   bootstrap.ContentFormatJSON,
+			template: `[unclosed bracket`,
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
 			desc:     "valid YAML output",
-			format:   bootstrap.TemplateFormatYAML,
+			format:   bootstrap.ContentFormatYAML,
 			template: "device_id: {{ .Device.ID }}",
 		},
 		{
-			desc:     "invalid YAML output",
-			format:   bootstrap.TemplateFormatYAML,
-			template: "device_id: [",
+			desc:     "invalid output for YAML format",
+			format:   bootstrap.ContentFormatYAML,
+			template: "[unclosed bracket",
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
 			desc:     "valid TOML output",
-			format:   bootstrap.TemplateFormatTOML,
+			format:   bootstrap.ContentFormatTOML,
 			template: `device_id = "{{ .Device.ID }}"`,
 		},
 		{
-			desc:     "invalid TOML output",
-			format:   bootstrap.TemplateFormatTOML,
-			template: `device_id = `,
+			desc:     "invalid output for TOML format",
+			format:   bootstrap.ContentFormatTOML,
+			template: `[unclosed bracket`,
 			err:      bootstrap.ErrRenderFailed,
+		},
+		{
+			desc:     "JSON template auto-converted to TOML",
+			format:   bootstrap.ContentFormatTOML,
+			template: `{"device_id":"{{ .Device.ID }}"}`,
+		},
+		{
+			desc:     "TOML template auto-converted to JSON",
+			format:   bootstrap.ContentFormatJSON,
+			template: `device_id = "{{ .Device.ID }}"`,
+		},
+		{
+			desc:     "YAML template auto-converted to TOML",
+			format:   bootstrap.ContentFormatTOML,
+			template: "device_id: {{ .Device.ID }}",
 		},
 	}
 
@@ -60,7 +75,7 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			_, err := renderer.Render(
 				bootstrap.Profile{
-					TemplateFormat:  tc.format,
+					ContentFormat:   tc.format,
 					ContentTemplate: tc.template,
 				},
 				bootstrap.Config{ID: "config-id"},

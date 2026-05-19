@@ -214,16 +214,17 @@ func (es *eventStore) ViewProfile(ctx context.Context, session smqauthn.Session,
 	return p, nil
 }
 
-func (es *eventStore) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
-	if err := es.svc.UpdateProfile(ctx, session, p); err != nil {
-		return err
+func (es *eventStore) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
+	updated, err := es.svc.UpdateProfile(ctx, session, p)
+	if err != nil {
+		return bootstrap.Profile{}, err
 	}
-	ev := profileEvent{p, profileUpdate}
-	return es.Publish(ctx, updateProfileStream, ev)
+	ev := profileEvent{updated, profileUpdate}
+	return updated, es.Publish(ctx, updateProfileStream, ev)
 }
 
-func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
-	pp, err := es.svc.ListProfiles(ctx, session, offset, limit)
+func (es *eventStore) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	pp, err := es.svc.ListProfiles(ctx, session, offset, limit, name)
 	if err != nil {
 		return pp, err
 	}

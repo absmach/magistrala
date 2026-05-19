@@ -124,18 +124,18 @@ func (am *authorizationMiddleware) ViewProfile(ctx context.Context, session smqa
 	return am.svc.ViewProfile(ctx, session, profileID)
 }
 
-func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) error {
+func (am *authorizationMiddleware) UpdateProfile(ctx context.Context, session smqauthn.Session, p bootstrap.Profile) (bootstrap.Profile, error) {
 	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, updateOperation, auth.AnyIDs); err != nil {
-		return err
+		return bootstrap.Profile{}, err
 	}
 	return am.svc.UpdateProfile(ctx, session, p)
 }
 
-func (am *authorizationMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64) (bootstrap.ProfilesPage, error) {
+func (am *authorizationMiddleware) ListProfiles(ctx context.Context, session smqauthn.Session, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
 	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, listOperation, auth.AnyIDs); err != nil {
 		return bootstrap.ProfilesPage{}, err
 	}
-	return am.svc.ListProfiles(ctx, session, offset, limit)
+	return am.svc.ListProfiles(ctx, session, offset, limit, name)
 }
 
 func (am *authorizationMiddleware) DeleteProfile(ctx context.Context, session smqauthn.Session, profileID string) error {

@@ -106,8 +106,8 @@ func (_c *ProfileRepository_Delete_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // RetrieveAll provides a mock function for the type ProfileRepository
-func (_mock *ProfileRepository) RetrieveAll(ctx context.Context, domainID string, offset uint64, limit uint64) (bootstrap.ProfilesPage, error) {
-	ret := _mock.Called(ctx, domainID, offset, limit)
+func (_mock *ProfileRepository) RetrieveAll(ctx context.Context, domainID string, offset uint64, limit uint64, name string) (bootstrap.ProfilesPage, error) {
+	ret := _mock.Called(ctx, domainID, offset, limit, name)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RetrieveAll")
@@ -115,16 +115,16 @@ func (_mock *ProfileRepository) RetrieveAll(ctx context.Context, domainID string
 
 	var r0 bootstrap.ProfilesPage
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) (bootstrap.ProfilesPage, error)); ok {
-		return returnFunc(ctx, domainID, offset, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64, string) (bootstrap.ProfilesPage, error)); ok {
+		return returnFunc(ctx, domainID, offset, limit, name)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64) bootstrap.ProfilesPage); ok {
-		r0 = returnFunc(ctx, domainID, offset, limit)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, uint64, uint64, string) bootstrap.ProfilesPage); ok {
+		r0 = returnFunc(ctx, domainID, offset, limit, name)
 	} else {
 		r0 = ret.Get(0).(bootstrap.ProfilesPage)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, uint64, uint64) error); ok {
-		r1 = returnFunc(ctx, domainID, offset, limit)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, uint64, uint64, string) error); ok {
+		r1 = returnFunc(ctx, domainID, offset, limit, name)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -141,11 +141,12 @@ type ProfileRepository_RetrieveAll_Call struct {
 //   - domainID string
 //   - offset uint64
 //   - limit uint64
-func (_e *ProfileRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, offset interface{}, limit interface{}) *ProfileRepository_RetrieveAll_Call {
-	return &ProfileRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, offset, limit)}
+//   - name string
+func (_e *ProfileRepository_Expecter) RetrieveAll(ctx interface{}, domainID interface{}, offset interface{}, limit interface{}, name interface{}) *ProfileRepository_RetrieveAll_Call {
+	return &ProfileRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, domainID, offset, limit, name)}
 }
 
-func (_c *ProfileRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, offset uint64, limit uint64)) *ProfileRepository_RetrieveAll_Call {
+func (_c *ProfileRepository_RetrieveAll_Call) Run(run func(ctx context.Context, domainID string, offset uint64, limit uint64, name string)) *ProfileRepository_RetrieveAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -163,11 +164,16 @@ func (_c *ProfileRepository_RetrieveAll_Call) Run(run func(ctx context.Context, 
 		if args[3] != nil {
 			arg3 = args[3].(uint64)
 		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
 		run(
 			arg0,
 			arg1,
 			arg2,
 			arg3,
+			arg4,
 		)
 	})
 	return _c
@@ -178,7 +184,7 @@ func (_c *ProfileRepository_RetrieveAll_Call) Return(profilesPage bootstrap.Prof
 	return _c
 }
 
-func (_c *ProfileRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, domainID string, offset uint64, limit uint64) (bootstrap.ProfilesPage, error)) *ProfileRepository_RetrieveAll_Call {
+func (_c *ProfileRepository_RetrieveAll_Call) RunAndReturn(run func(ctx context.Context, domainID string, offset uint64, limit uint64, name string) (bootstrap.ProfilesPage, error)) *ProfileRepository_RetrieveAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -322,20 +328,29 @@ func (_c *ProfileRepository_Save_Call) RunAndReturn(run func(ctx context.Context
 }
 
 // Update provides a mock function for the type ProfileRepository
-func (_mock *ProfileRepository) Update(ctx context.Context, p bootstrap.Profile) error {
+func (_mock *ProfileRepository) Update(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
 	ret := _mock.Called(ctx, p)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) error); ok {
+	var r0 bootstrap.Profile
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) (bootstrap.Profile, error)); ok {
+		return returnFunc(ctx, p)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, bootstrap.Profile) bootstrap.Profile); ok {
 		r0 = returnFunc(ctx, p)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bootstrap.Profile)
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, bootstrap.Profile) error); ok {
+		r1 = returnFunc(ctx, p)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // ProfileRepository_Update_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Update'
@@ -368,12 +383,12 @@ func (_c *ProfileRepository_Update_Call) Run(run func(ctx context.Context, p boo
 	return _c
 }
 
-func (_c *ProfileRepository_Update_Call) Return(err error) *ProfileRepository_Update_Call {
-	_c.Call.Return(err)
+func (_c *ProfileRepository_Update_Call) Return(profile bootstrap.Profile, err error) *ProfileRepository_Update_Call {
+	_c.Call.Return(profile, err)
 	return _c
 }
 
-func (_c *ProfileRepository_Update_Call) RunAndReturn(run func(ctx context.Context, p bootstrap.Profile) error) *ProfileRepository_Update_Call {
+func (_c *ProfileRepository_Update_Call) RunAndReturn(run func(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error)) *ProfileRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

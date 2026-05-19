@@ -1631,8 +1631,8 @@ type SDK interface {
 	// UpdateBootstrap updates editable fields of the provided Config.
 	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) smqerrors.SDKError
 
-	// UpdateBootstrapProfile updates editable fields of the provided bootstrap profile.
-	UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) smqerrors.SDKError
+	// UpdateBootstrapProfile updates editable fields of the provided bootstrap profile and returns the updated profile.
+	UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
 
 	// UpdateBootstrapCerts updates bootstrap config certificates.
 	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, smqerrors.SDKError)

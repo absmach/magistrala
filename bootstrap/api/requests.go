@@ -178,6 +178,7 @@ func (req updateProfileReq) validate() error {
 
 type renderPreviewReq struct {
 	profileID     string
+	ConfigID      string                      `json:"config_id,omitempty"`
 	Config        bootstrap.Config            `json:"config"`
 	RenderContext map[string]any              `json:"render_context,omitempty"`
 	Bindings      []bootstrap.BindingSnapshot `json:"bindings,omitempty"`
@@ -204,6 +205,7 @@ func (req deleteProfileReq) validate() error {
 type listProfilesReq struct {
 	offset uint64
 	limit  uint64
+	name   string
 }
 
 func (req listProfilesReq) validate() error {

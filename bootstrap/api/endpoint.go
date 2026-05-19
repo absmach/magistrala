@@ -353,13 +353,27 @@ func renderPreviewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		cfg := req.Config
+		bindings := req.Bindings
+
+		if req.ConfigID != "" {
+			stored, err := svc.View(ctx, session, req.ConfigID)
+			if err != nil {
+				return nil, err
+			}
+			cfg = stored
+			bindings, err = svc.ListBindings(ctx, session, req.ConfigID)
+			if err != nil {
+				return nil, err
+			}
+		}
+
 		cfg.DomainID = session.DomainID
 		cfg.ProfileID = p.ID
 		if cfg.RenderContext == nil {
 			cfg.RenderContext = req.RenderContext
 		}
 
-		rendered, err := bootstrap.NewRenderer().Render(p, cfg, req.Bindings)
+		rendered, err := bootstrap.NewRenderer().Render(p, cfg, bindings)
 		if err != nil {
 			return nil, err
 		}
@@ -379,10 +393,11 @@ func updateProfileEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, svcerr.ErrAuthorization
 		}
 		req.Profile.ID = req.profileID
-		if err := svc.UpdateProfile(ctx, session, req.Profile); err != nil {
+		updated, err := svc.UpdateProfile(ctx, session, req.Profile)
+		if err != nil {
 			return nil, err
 		}
-		return profileRes{Profile: req.Profile}, nil
+		return profileRes{Profile: updated}, nil
 	}
 }
 
@@ -413,7 +428,7 @@ func listProfilesEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		if !ok {
 			return nil, svcerr.ErrAuthorization
 		}
-		page, err := svc.ListProfiles(ctx, session, req.offset, req.limit)
+		page, err := svc.ListProfiles(ctx, session, req.offset, req.limit, req.name)
 		if err != nil {
 			return nil, err
 		}

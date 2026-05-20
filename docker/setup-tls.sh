@@ -11,7 +11,7 @@ COMPOSE_FILE="$ROOT_DIR/docker/docker-compose.yaml"
 HOST=${MG_PUBLIC_HOST:-}
 EMAIL=${MG_LETSENCRYPT_EMAIL:-}
 LETSENCRYPT_ENABLED=${MG_LETSENCRYPT_ENABLED:-true}
-STAGING=${MG_LETSENCRYPT_STAGING:-true}
+STAGING=${MG_LETSENCRYPT_STAGING:-false}
 FORCE_RENEWAL=${MG_LETSENCRYPT_FORCE_RENEWAL:-false}
 PROJECT=${DOCKER_PROJECT:-magistrala}
 TIMEOUT_SECONDS=${MG_LETSENCRYPT_TIMEOUT_SECONDS:-180}
@@ -19,7 +19,8 @@ TIMEOUT_SECONDS=${MG_LETSENCRYPT_TIMEOUT_SECONDS:-180}
 usage() {
 	cat <<EOF
 Usage:
-  MG_PUBLIC_HOST=example.com MG_LETSENCRYPT_EMAIL=admin@example.com [MG_LETSENCRYPT_STAGING=false] $0
+  MG_PUBLIC_HOST=example.com MG_LETSENCRYPT_EMAIL=admin@example.com $0
+  MG_PUBLIC_HOST=example.com MG_LETSENCRYPT_EMAIL=admin@example.com MG_LETSENCRYPT_STAGING=true $0
   MG_PUBLIC_HOST=example.com MG_LETSENCRYPT_ENABLED=false $0
 
 Required:
@@ -31,7 +32,8 @@ Optional:
   MG_LETSENCRYPT_ENABLED     true by default. Set false to use the fallback
                              Nginx certificate and comment out Let's Encrypt
                              cert/key paths in docker/.env.
-  MG_LETSENCRYPT_STAGING     true by default. Set false for production certs.
+  MG_LETSENCRYPT_STAGING     false by default (production certs). Set true for
+                             Let's Encrypt staging (testing only).
   MG_LETSENCRYPT_FORCE_RENEWAL
                              false by default. Set true to replace an existing cert.
   DOCKER_PROJECT             Compose project name. Defaults to magistrala.
@@ -111,6 +113,16 @@ comment_env() {
 	mv "$tmp" "$ENV_FILE"
 }
 
+comment_env_any() {
+	key=$1
+	tmp=$(mktemp)
+	awk -v key="$key" '
+		index($0, key "=") == 1 { print "# " $0; next }
+		{ print }
+	' "$ENV_FILE" > "$tmp"
+	mv "$tmp" "$ENV_FILE"
+}
+
 compose() {
 	docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" -p "$PROJECT" "$@"
 }
@@ -152,7 +164,7 @@ wait_for_nginx_http() {
 	done
 
 	echo "Timed out waiting for Nginx to accept HTTP traffic." >&2
-	docker logs --tail 80 magistrala-nginx >&2 || true
+	compose logs --tail 80 nginx >&2 || true
 	exit 1
 }
 
@@ -165,9 +177,23 @@ if [ "$LETSENCRYPT_ENABLED" = "false" ]; then
 	FORCE_RENEWAL=false
 fi
 
-if [ "$LETSENCRYPT_ENABLED" = "true" ] && [ "$STAGING" = "false" ] && [ -f "$cert_file" ]; then
-	if openssl x509 -in "$cert_file" -noout -issuer 2>/dev/null | grep -q "STAGING"; then
-		FORCE_RENEWAL=true
+if [ "$LETSENCRYPT_ENABLED" = "true" ] && [ "$STAGING" = "false" ]; then
+	live_dir="$ROOT_DIR/docker/ssl/letsencrypt/live/$HOST"
+	if [ -d "$live_dir" ]; then
+		needs_cleanup=false
+		if openssl x509 -in "$cert_file" -noout -issuer 2>/dev/null | grep -q "STAGING"; then
+			echo "Existing staging certificate detected; replacing with a production certificate."
+			needs_cleanup=true
+		elif [ ! -L "$cert_file" ] || [ ! -L "$key_file" ]; then
+			echo "Broken certificate symlinks detected; removing stale data for a fresh issuance."
+			needs_cleanup=true
+		fi
+		if [ "$needs_cleanup" = "true" ]; then
+			FORCE_RENEWAL=true
+			rm -rf "$live_dir" \
+				"$ROOT_DIR/docker/ssl/letsencrypt/archive/$HOST" \
+				"$ROOT_DIR/docker/ssl/letsencrypt/renewal/$HOST.conf"
+		fi
 	fi
 fi
 
@@ -180,8 +206,8 @@ set_env MG_LETSENCRYPT_EMAIL "$EMAIL"
 set_env MG_LETSENCRYPT_STAGING "$STAGING"
 set_env MG_LETSENCRYPT_FORCE_RENEWAL "$FORCE_RENEWAL"
 set_env MG_NGINX_SERVER_NAME "$HOST"
-comment_env MG_NGINX_SERVER_CERT "$cert_path"
-comment_env MG_NGINX_SERVER_KEY "$key_path"
+comment_env_any MG_NGINX_SERVER_CERT
+comment_env_any MG_NGINX_SERVER_KEY
 set_env MG_UI_DOCKER_ACCEPT_EULA yes
 
 set_env MG_OAUTH_UI_REDIRECT_URL "https://$HOST/api/auth/token"
@@ -217,22 +243,25 @@ wait_for_nginx_http
 echo "Requesting Let's Encrypt certificate for $HOST"
 MG_UI_DOCKER_ACCEPT_EULA=yes COMPOSE_PROFILES=letsencrypt compose up -d --force-recreate certbot
 
+cert_ready() {
+	compose logs certbot 2>&1 | \
+		grep -qE "Successfully received certificate|Certificate not yet due for renewal"
+}
+
 elapsed=0
-while [ "$elapsed" -lt "$TIMEOUT_SECONDS" ]; do
-	if [ -s "$cert_file" ] && [ -s "$key_file" ]; then
-		break
-	fi
-	sleep 2
-	elapsed=$((elapsed + 2))
+until cert_ready || [ "$elapsed" -ge "$TIMEOUT_SECONDS" ]; do
+	compose logs --tail 3 certbot 2>&1 | sed 's/^/  [certbot] /'
+	sleep 5
+	elapsed=$((elapsed + 5))
 done
 
-if [ ! -s "$cert_file" ] || [ ! -s "$key_file" ]; then
-	echo "Timed out waiting for Let's Encrypt certificate files." >&2
-	docker logs --tail 80 magistrala-certbot >&2 || true
+if ! cert_ready; then
+	echo "Timed out waiting for Let's Encrypt certificate." >&2
+	compose logs --tail 80 certbot >&2 || true
 	exit 1
 fi
 
-echo "Switching Nginx to the issued certificate"
+echo "Certificate obtained. Switching Nginx to the issued certificate."
 set_env MG_NGINX_SERVER_CERT "$cert_path"
 set_env MG_NGINX_SERVER_KEY "$key_path"
 set_env MG_LETSENCRYPT_FORCE_RENEWAL false

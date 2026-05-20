@@ -294,12 +294,12 @@ run_latest: check_certs
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_tls:
-	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=false] [force=true]" && exit 2)
-	@if [ "$(or $(letsencrypt),true)" != "false" ] && [ -z "$(email)" ]; then echo "Usage: make run_tls host=example.com email=admin@example.com [letsencrypt=false] [staging=false] [force=true]"; exit 2; fi
+	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)
+	@if [ "$(or $(letsencrypt),true)" != "false" ] && [ -z "$(email)" ]; then echo "Usage: make run_tls host=example.com email=admin@example.com [letsencrypt=false] [staging=true] [force=true]"; exit 2; fi
 	MG_PUBLIC_HOST="$(host)" \
 	MG_LETSENCRYPT_ENABLED="$(or $(letsencrypt),true)" \
 	MG_LETSENCRYPT_EMAIL="$(email)" \
-	MG_LETSENCRYPT_STAGING="$(or $(staging),true)" \
+	MG_LETSENCRYPT_STAGING="$(or $(staging),false)" \
 	MG_LETSENCRYPT_FORCE_RENEWAL="$(or $(force),false)" \
 	DOCKER_PROJECT="$(DOCKER_PROJECT)" \
 	./docker/setup-tls.sh

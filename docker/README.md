@@ -129,15 +129,70 @@ services:
 Nginx is the entry point for all traffic to Magistrala.
 By using environment variables file at `docker/.env` you can modify the below given Nginx directive.
 
-| Environment Variable | Description |
-|----------------------|-------------|
-| `MG_NGINX_SERVER_NAME` | `MG_NGINX_SERVER_NAME` environmental variable is used to configure nginx directive `server_name`. If environmental variable `MG_NGINX_SERVER_NAME` is empty then default value `localhost` will set to `server_name`. |
-| `MG_NGINX_SERVER_CERT` | `MG_NGINX_SERVER_CERT` environmental variable is used to configure nginx directive `ssl_certificate`. If environmental variable `MG_NGINX_SERVER_CERT` is empty then by default server certificate in the path `docker/ssl/certs/magistrala-server.crt`  will be assigned. |
-| `MG_NGINX_SERVER_KEY` | `MG_NGINX_SERVER_KEY` environmental variable is used to configure nginx directive `ssl_certificate_key`. If environmental variable `MG_NGINX_SERVER_KEY` is empty then by default server certificate key in the path `docker/ssl/certs/magistrala-server.key`  will be assigned. |
-| `MG_NGINX_SERVER_CLIENT_CA` | `MG_NGINX_SERVER_CLIENT_CA` environmental variable is used to configure nginx directive `ssl_client_certificate`. If environmental variable `MG_NGINX_SERVER_CLIENT_CA` is empty then by default certificate in the path `docker/ssl/certs/ca.crt` will be assigned. |
-| `MG_NGINX_SERVER_DHPARAM` | `MG_NGINX_SERVER_DHPARAM` environmental variable is used to configure nginx directive `ssl_dhparam`. If environmental variable `MG_NGINX_SERVER_DHPARAM` is empty then by default file in the path `docker/ssl/dhparam.pem` will be assigned. |
+| Environment Variable           | Description                                                                                                                                                                                                                                                                      |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `MG_PUBLIC_HOST`               | Public DNS name for the Docker host. This value is used by UI URLs and Let's Encrypt certificate requests.                                                                                                                                                                       |
+| `MG_UI_HOST`                   | Internal Compose hostname for the UI service. Defaults to `ui`.                                                                                                                                                                                                                  |
+| `MG_LETSENCRYPT_ENABLED`       | Set to `true` to request and use a Let's Encrypt certificate. Set to `false` to comment out the Let's Encrypt cert/key paths and use the fallback Nginx certificate.                                                                                                             |
+| `MG_LETSENCRYPT_EMAIL`         | Email address used by Let's Encrypt for expiry and account notifications. Required when running the `letsencrypt` profile.                                                                                                                                                       |
+| `MG_LETSENCRYPT_STAGING`       | Set to `true` to request staging certificates while testing. Set to `false` for trusted production certificates.                                                                                                                                                                 |
+| `MG_LETSENCRYPT_FORCE_RENEWAL` | Set to `true` for one certbot run when replacing a staging certificate with a production certificate. Set it back to `false` after the production certificate is issued.                                                                                                         |
+| `MG_NGINX_SERVER_NAME`         | `MG_NGINX_SERVER_NAME` environmental variable is used to configure nginx directive `server_name`. If environmental variable `MG_NGINX_SERVER_NAME` is empty then default value `localhost` will set to `server_name`.                                                            |
+| `MG_NGINX_SERVER_CERT`         | `MG_NGINX_SERVER_CERT` environmental variable is used to configure nginx directive `ssl_certificate`. If environmental variable `MG_NGINX_SERVER_CERT` is empty then by default server certificate in the path `docker/ssl/certs/magistrala-server.crt`  will be assigned.       |
+| `MG_NGINX_SERVER_KEY`          | `MG_NGINX_SERVER_KEY` environmental variable is used to configure nginx directive `ssl_certificate_key`. If environmental variable `MG_NGINX_SERVER_KEY` is empty then by default server certificate key in the path `docker/ssl/certs/magistrala-server.key`  will be assigned. |
+| `MG_NGINX_SERVER_CLIENT_CA`    | `MG_NGINX_SERVER_CLIENT_CA` environmental variable is used to configure nginx directive `ssl_client_certificate`. If environmental variable `MG_NGINX_SERVER_CLIENT_CA` is empty then by default certificate in the path `docker/ssl/certs/ca.crt` will be assigned.             |
+| `MG_NGINX_SERVER_DHPARAM`      | `MG_NGINX_SERVER_DHPARAM` environmental variable is used to configure nginx directive `ssl_dhparam`. If environmental variable `MG_NGINX_SERVER_DHPARAM` is empty then by default file in the path `docker/ssl/dhparam.pem` will be assigned.                                    |
 
 Adjust these values in `.env` to configure TLS / SSL behavior for your deployment.
+
+### HTTPS UI with Let's Encrypt
+
+The Compose stack can request and renew a Let's Encrypt certificate with the optional `letsencrypt` profile. This secures the public Nginx entrypoint and serves the UI through `https://${MG_PUBLIC_HOST}/`. Plain UI requests to `/` are redirected to HTTPS, while API and messaging routes keep their existing protocol behavior. Certbot stores challenge files and issued certificates under ignored local paths in `docker/ssl/`.
+
+Prerequisites:
+
+- `MG_PUBLIC_HOST` must resolve to the Docker host.
+- Ports `80` and `443` must be reachable from the public internet.
+- Set `MG_LETSENCRYPT_EMAIL` before requesting a certificate.
+
+For a staging certificate, run one command from the project root:
+
+```bash
+make run_tls host=example.com email=admin@example.com
+```
+
+For a trusted production certificate, set `staging=false`:
+
+```bash
+make run_tls host=example.com email=admin@example.com staging=false
+```
+
+The target updates `docker/.env`, starts the Compose stack with the fallback certificate, runs certbot, switches Nginx to the issued certificate, and recreates Nginx. It also sets `MG_UI_DOCKER_ACCEPT_EULA=yes` for the UI container and configures public UI URLs to `https://${MG_PUBLIC_HOST}`.
+
+To configure the same instance without Let's Encrypt, use:
+
+```bash
+make run_tls host=example.com letsencrypt=false
+```
+
+That command updates `docker/.env`, comments out `MG_NGINX_SERVER_CERT` and `MG_NGINX_SERVER_KEY`, stops certbot if it exists, and runs the stack with the fallback Nginx certificate.
+
+If you are replacing an existing valid certificate and want certbot to request a new one immediately, pass `force=true`:
+
+```bash
+make run_tls host=example.com email=admin@example.com staging=false force=true
+```
+
+The generated certificate paths in `docker/.env` are:
+
+```env
+MG_NGINX_SERVER_CERT=./ssl/letsencrypt/live/<host>/fullchain.pem
+MG_NGINX_SERVER_KEY=./ssl/letsencrypt/live/<host>/privkey.pem
+```
+
+The setup script comments or uncomments those values automatically. Operators should not need to edit them by hand.
+
+The certbot service keeps running and checks renewal twice a day. When a certificate is renewed, it sends a `HUP` signal to the Nginx process so new TLS handshakes use the renewed certificate.
 
 ## Makefile Integration
 

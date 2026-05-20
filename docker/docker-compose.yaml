@@ -525,6 +525,8 @@ services:
       - type: bind
         source: ${MG_NGINX_SERVER_DHPARAM:-./ssl/dhparam.pem}
         target: /etc/ssl/certs/dhparam.pem
+      - ./ssl/letsencrypt:/etc/letsencrypt:ro
+      - ./ssl/certbot-www:/var/www/certbot:ro
     ports:
       - ${MG_NGINX_HTTP_PORT}:${MG_NGINX_HTTP_PORT}
       - ${MG_NGINX_SSL_PORT}:${MG_NGINX_SSL_PORT}
@@ -543,6 +545,63 @@ services:
       nofile:
         soft: 65536
         hard: 65536
+
+  certbot:
+    image: docker.io/certbot/certbot:v2.11.0
+    container_name: magistrala-certbot
+    profiles:
+      - letsencrypt
+    depends_on:
+      - nginx
+    pid: "service:nginx"
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./ssl/letsencrypt:/etc/letsencrypt
+      - ./ssl/certbot-www:/var/www/certbot
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ -z "$${MG_PUBLIC_HOST}" ] || [ "$${MG_PUBLIC_HOST}" = "localhost" ]; then
+          echo "Set MG_PUBLIC_HOST to a public DNS name before requesting a Let's Encrypt certificate." >&2
+          exit 1
+        fi
+        if [ -z "$${MG_LETSENCRYPT_EMAIL}" ]; then
+          echo "Set MG_LETSENCRYPT_EMAIL before requesting a Let's Encrypt certificate." >&2
+          exit 1
+        fi
+
+        staging_arg=""
+        if [ "$${MG_LETSENCRYPT_STAGING}" = "true" ]; then
+          staging_arg="--staging"
+        fi
+        renewal_arg="--keep-until-expiring"
+        if [ "$${MG_LETSENCRYPT_FORCE_RENEWAL}" = "true" ]; then
+          renewal_arg="--force-renewal"
+        fi
+
+        certbot certonly \
+          --webroot \
+          --webroot-path /var/www/certbot \
+          --domain "$${MG_PUBLIC_HOST}" \
+          --email "$${MG_LETSENCRYPT_EMAIL}" \
+          --agree-tos \
+          --no-eff-email \
+          --non-interactive \
+          $${renewal_arg} \
+          $${staging_arg}
+
+        while :; do
+          certbot renew \
+            --webroot \
+            --webroot-path /var/www/certbot \
+            --quiet \
+            --deploy-hook "kill -HUP 1" \
+            $${staging_arg}
+          sleep 12h & wait $$!
+        done
 
   clients-db:
     image: docker.io/postgres:18.0-alpine3.22

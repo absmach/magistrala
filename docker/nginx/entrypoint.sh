@@ -9,6 +9,7 @@ fi
 
 envsubst '
     ${MG_NGINX_SERVER_NAME}
+    ${MG_UI_HOST}
     ${MG_AUTH_HTTP_PORT}
     ${MG_DOMAINS_HTTP_PORT}
     ${MG_GROUPS_HTTP_PORT}

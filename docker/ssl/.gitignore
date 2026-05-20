@@ -7,3 +7,5 @@
 *conf
 client.crt
 client.key
+certbot-www/
+letsencrypt/

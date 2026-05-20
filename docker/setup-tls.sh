@@ -115,6 +115,24 @@ compose() {
 	docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" -p "$PROJECT" "$@"
 }
 
+write_ui_proxy() {
+	ui_host=${MG_UI_HOST:-ui}
+	cat > "$ROOT_DIR/docker/nginx/snippets/ui-proxy.conf" <<NGINX
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+# Written by docker/setup-tls.sh – do not edit manually.
+
+location / {
+    if (\$scheme = http) {
+        return 301 https://\$host\$request_uri;
+    }
+    include snippets/proxy-headers.conf;
+    include snippets/ws-upgrade.conf;
+    proxy_pass http://${ui_host}:3000;
+}
+NGINX
+}
+
 wait_for_nginx_http() {
 	if ! command -v curl >/dev/null 2>&1; then
 		return 0
@@ -180,6 +198,8 @@ set_env MG_UI_CLI_COAP_HOST "$HOST"
 set_env MG_UI_CLI_HTTP_URL "https://$HOST/http"
 
 mkdir -p "$ROOT_DIR/docker/ssl/letsencrypt" "$ROOT_DIR/docker/ssl/certbot-www"
+
+write_ui_proxy
 
 if [ "$LETSENCRYPT_ENABLED" = "false" ]; then
 	echo "Starting Magistrala with the fallback Nginx certificate"

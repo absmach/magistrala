@@ -6,7 +6,7 @@ require (
 	connectrpc.com/otelconnect v0.9.0
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/fluxmq v0.0.0-20260402075516-078522f369d4
+	github.com/absmach/fluxmq v0.0.0-20260521074240-1213ee086274
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.9.0
 	github.com/authzed/grpcutil v0.0.0-20250221190651-1985b19b35b8
@@ -136,7 +136,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jzelinskie/stringz v0.0.3 // indirect
-	github.com/klauspost/compress v1.18.5 // indirect
+	github.com/klauspost/compress v1.18.6 // indirect
 	github.com/lestrrat-go/blackmagic v1.0.4 // indirect
 	github.com/lestrrat-go/httpcc v1.0.1 // indirect
 	github.com/lestrrat-go/httprc v1.0.6 // indirect

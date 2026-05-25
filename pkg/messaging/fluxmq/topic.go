@@ -78,15 +78,6 @@ func queueFilter(prefix, topic string) string {
 	return queuePrefix + prefix + "/" + path
 }
 
-func queueTopic(prefix, topic string) string {
-	topic = strings.TrimPrefix(strings.TrimSpace(topic), "/")
-	if topic == "" {
-		return queuePrefix + prefix
-	}
-
-	return queuePrefix + prefix + "/" + topic
-}
-
 func parseMQTTTopic(prefix, topic string) (domainID, channelID, subtopic string, err error) {
 	topic = strings.TrimPrefix(strings.TrimSpace(topic), "/")
 	if !strings.HasPrefix(topic, prefix+"/") {

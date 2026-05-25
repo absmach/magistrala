@@ -7,6 +7,7 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
+	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -77,8 +78,26 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
 	}
 
+	cleanTopic := strings.TrimPrefix(strings.TrimSpace(topic), "/")
+	if cleanTopic == "" {
+		return ErrEmptyTopic
+	}
+
+	// $queue/-prefixed topics are routed to the durable stream queue.
+	if queueName, ok := strings.CutPrefix(cleanTopic, queuePrefix); ok {
+		return pub.client.PublishToQueueWithOptionsContext(ctx, &fluxamqp.QueuePublishOptions{
+			QueueName:  queueName,
+			Payload:    msg.GetPayload(),
+			Properties: props,
+		})
+	}
+
+	// Normalize to "prefix/subTopic" — strip any existing prefix to avoid doubling.
+	subTopic := strings.TrimPrefix(cleanTopic, pub.prefix+"/")
+	publishTopic := pub.prefix + "/" + subTopic
+
 	return pub.client.PublishWithOptionsContext(ctx, &fluxamqp.PublishOptions{
-		Topic:      queueTopic(pub.prefix, topic),
+		Topic:      publishTopic,
 		Payload:    msg.GetPayload(),
 		Properties: props,
 	})

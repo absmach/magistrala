@@ -107,6 +107,8 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 		opts.Offset = "first"
 	}
 
+	fmt.Println("subscribing to topic:", opts.QueueName, "with filter", opts.Filter)
+
 	if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
 		if err := ps.handle(cfg.Handler, msg); err != nil {
 			ps.logWarn("failed to process FluxMQ stream message", "error", err, "topic", cfg.Topic, "consumer_group", group)

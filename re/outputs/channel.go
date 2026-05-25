@@ -10,8 +10,6 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
-const protocol = "nats"
-
 type ChannelPublisher struct {
 	RePubSub messaging.PubSub `json:"-"`
 	Channel  string           `json:"channel"`
@@ -31,7 +29,7 @@ func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val 
 		Created:   msg.Created,
 		Channel:   p.Channel,
 		Subtopic:  p.Topic,
-		Protocol:  protocol,
+		Protocol:  msg.Protocol,
 		Payload:   data,
 	}
 

@@ -5,7 +5,6 @@ package fluxmq
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"strconv"
 	"strings"
@@ -86,7 +85,6 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 
 	// $queue/-prefixed topics are routed to the durable stream queue.
 	if queueName, ok := strings.CutPrefix(cleanTopic, queuePrefix); ok {
-		fmt.Println("publish to queue", queueName)
 		return pub.client.PublishToQueueWithOptionsContext(ctx, &fluxamqp.QueuePublishOptions{
 			QueueName:  queueName,
 			Payload:    msg.GetPayload(),
@@ -101,7 +99,6 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 	// Non-default prefix publishers (e.g. "writers", "alarms") are stream-backed:
 	// route to the durable queue so stream subscribers receive the message.
 	if pub.prefix != msgPrefix {
-		fmt.Println("publish to queue (stream publisher)", publishTopic)
 		return pub.client.PublishToQueueWithOptionsContext(ctx, &fluxamqp.QueuePublishOptions{
 			QueueName:  publishTopic,
 			Payload:    msg.GetPayload(),
@@ -109,7 +106,6 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		})
 	}
 
-	fmt.Println("publishing to topic", publishTopic)
 	return pub.client.PublishWithOptionsContext(ctx, &fluxamqp.PublishOptions{
 		Topic:      publishTopic,
 		Payload:    msg.GetPayload(),

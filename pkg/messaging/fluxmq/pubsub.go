@@ -107,8 +107,6 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 		opts.Offset = "first"
 	}
 
-	fmt.Println("subscribing to topic:", opts.QueueName, "with filter", opts.Filter)
-
 	if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
 		if err := ps.handle(cfg.Handler, msg); err != nil {
 			ps.logWarn("failed to process FluxMQ stream message", "error", err, "topic", cfg.Topic, "consumer_group", group)
@@ -198,7 +196,13 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 	handleErr := h.Handle(m)
 	ackType := ps.errAckType(handleErr)
 	if handleErr != nil {
-		ps.logWarn("failed to handle message", "ack_type", ackType.String(), "error", handleErr)
+		ps.logWarn("failed to handle message",
+			"channel", m.Channel,
+			"domain", m.Domain,
+			"subtopic", m.Subtopic,
+			"publisher", m.Publisher,
+			"error", handleErr,
+		)
 	}
 
 	if ackErr := ps.handleAck(ackType, msg); ackErr != nil {

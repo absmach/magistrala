@@ -196,7 +196,13 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 	handleErr := h.Handle(m)
 	ackType := ps.errAckType(handleErr)
 	if handleErr != nil {
-		ps.logWarn("failed to handle message", "ack_type", ackType.String(), "error", handleErr)
+		ps.logWarn("failed to handle message",
+			"channel", m.Channel,
+			"domain", m.Domain,
+			"subtopic", m.Subtopic,
+			"publisher", m.Publisher,
+			"error", handleErr,
+		)
 	}
 
 	if ackErr := ps.handleAck(ackType, msg); ackErr != nil {

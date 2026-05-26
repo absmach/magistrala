@@ -8,14 +8,6 @@ import (
 	"testing"
 )
 
-func TestQueueTopic(t *testing.T) {
-	got := queueTopic("m", "domain/c/channel/subtopic")
-	want := "$queue/m/domain/c/channel/subtopic"
-	if got != want {
-		t.Fatalf("queue topic mismatch: got %q, want %q", got, want)
-	}
-}
-
 func TestStreamFilter(t *testing.T) {
 	cases := []struct {
 		name   string

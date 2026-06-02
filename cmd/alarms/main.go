@@ -27,11 +27,9 @@ import (
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
-	rconsumer "github.com/absmach/magistrala/pkg/re/events/consumer"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	rpostgres "github.com/absmach/magistrala/re/postgres"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
@@ -51,8 +49,6 @@ type config struct {
 	InstanceID      string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL       url.URL `env:"MG_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	ESURL           string  `env:"MG_ES_URL"             envDefault:"nats://localhost:4222"`
-	ESConsumerName  string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
 	PermissionsFile string  `env:"MG_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
@@ -117,14 +113,6 @@ func main() {
 	logger.Info("AuthN configured to use Atom bearer tokens")
 	logger.Info("AuthZ configured to use Atom PDP")
 	am := smqauthn.NewAuthNMiddleware(atomauthn.NewAuthentication())
-	rdatabase := postgres.NewDatabase(db, dbConfig, tracer)
-	rrepo := rpostgres.NewRepository(rdatabase)
-
-	if err := rconsumer.RulesEventsSubscribe(ctx, rrepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to rules events: %s", err))
-		exitCode = 1
-		return
-	}
 
 	idp := uuid.New()
 

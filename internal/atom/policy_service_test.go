@@ -11,30 +11,63 @@ import (
 )
 
 type fakePolicyClient struct {
-	entities []Entity
-	allowed  map[string]bool
-	checks   []AuthzRequest
+	authorized AuthorizedObjectIDs
+	queries    []AuthorizedObjectIDsQuery
+	capID      string
+	blocks     []CreatePermissionBlock
+	created    []CreateDirectPolicy
+	policies   []DirectPolicy
+	deleted    []string
 }
 
-func (f *fakePolicyClient) ListEntities(context.Context, Query) (EntityList, error) {
-	return EntityList{
-		Items: f.entities,
-		Total: uint64(len(f.entities)),
+func (f *fakePolicyClient) AuthorizedObjectIDs(_ context.Context, q AuthorizedObjectIDsQuery) (AuthorizedObjectIDs, error) {
+	f.queries = append(f.queries, q)
+	return f.authorized, nil
+}
+
+func (f *fakePolicyClient) CheckAuthz(context.Context, AuthzRequest) (AuthzResponse, error) {
+	return AuthzResponse{Allowed: true}, nil
+}
+
+func (f *fakePolicyClient) CapabilityID(context.Context, string) (string, error) {
+	if f.capID == "" {
+		return "cap-publish", nil
+	}
+	return f.capID, nil
+}
+
+func (f *fakePolicyClient) CreatePermissionBlock(_ context.Context, block CreatePermissionBlock) (PermissionBlock, error) {
+	f.blocks = append(f.blocks, block)
+	return PermissionBlock{
+		ID:         "block-1",
+		TenantID:   block.TenantID,
+		ScopeMode:  block.ScopeMode,
+		ObjectKind: block.ObjectKind,
+		ObjectType: block.ObjectType,
+		ObjectID:   block.ObjectID,
+		Effect:     block.Effect,
+		Conditions: block.Conditions,
+		Actions:    []Capability{{ID: block.ActionIDs[0]}},
 	}, nil
 }
 
-func (f *fakePolicyClient) CheckAuthz(_ context.Context, req AuthzRequest) (AuthzResponse, error) {
-	f.checks = append(f.checks, req)
-	return AuthzResponse{Allowed: f.allowed[req.ObjectID]}, nil
+func (f *fakePolicyClient) CreateDirectPolicy(_ context.Context, policy CreateDirectPolicy) (DirectPolicy, error) {
+	f.created = append(f.created, policy)
+	return DirectPolicy{ID: "policy-1", PermissionBlockID: policy.PermissionBlockID}, nil
 }
 
-func TestPolicyServiceListAllObjectsFiltersByAtomAuthz(t *testing.T) {
+func (f *fakePolicyClient) ListDirectPolicies(context.Context, DirectPolicyQuery) (DirectPolicyList, error) {
+	return DirectPolicyList{Items: f.policies, Total: uint64(len(f.policies))}, nil
+}
+
+func (f *fakePolicyClient) DeleteDirectPolicy(_ context.Context, id string) error {
+	f.deleted = append(f.deleted, id)
+	return nil
+}
+
+func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 	client := &fakePolicyClient{
-		entities: []Entity{
-			{ID: "client-1", Kind: entityKind(KindClient)},
-			{ID: "client-2", Kind: entityKind(KindClient)},
-		},
-		allowed: map[string]bool{"client-2": true},
+		authorized: AuthorizedObjectIDs{IDs: []string{"client-2"}, Total: 1},
 	}
 	svc := NewPolicyService(client)
 
@@ -51,11 +84,100 @@ func TestPolicyServiceListAllObjectsFiltersByAtomAuthz(t *testing.T) {
 	if len(page.Policies) != 1 || page.Policies[0] != "client-2" {
 		t.Fatalf("unexpected policies: %+v", page.Policies)
 	}
-	if len(client.checks) != 2 {
-		t.Fatalf("unexpected authz checks: %d", len(client.checks))
+	if len(client.queries) != 1 {
+		t.Fatalf("unexpected authorized object queries: %d", len(client.queries))
 	}
-	if client.checks[0].SubjectID != "user-1" || client.checks[0].Action != policies.ViewPermission || client.checks[0].ObjectKind != "entity" {
-		t.Fatalf("unexpected authz request: %+v", client.checks[0])
+	query := client.queries[0]
+	if query.SubjectID != "user-1" ||
+		query.Action != "read" ||
+		query.ObjectKind != "entity" ||
+		query.ObjectType != entityKind(KindClient) ||
+		query.TenantID != "domain-1" {
+		t.Fatalf("unexpected authorized object query: %+v", query)
+	}
+}
+
+func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
+	client := &fakePolicyClient{capID: "cap-publish"}
+	svc := NewPolicyService(client)
+
+	err := svc.AddPolicy(context.Background(), policies.Policy{
+		Domain:      "domain-1",
+		Subject:     "domain-1_client-1",
+		SubjectType: policies.ClientType,
+		Object:      "channel-1",
+		ObjectType:  policies.ChannelType,
+		Permission:  policies.PublishPermission,
+	})
+	if err != nil {
+		t.Fatalf("add policy failed: %v", err)
+	}
+	if len(client.blocks) != 1 || len(client.created) != 1 {
+		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
+	}
+	block := client.blocks[0]
+	if block.TenantID != "domain-1" ||
+		block.ScopeMode != "object" ||
+		block.ObjectKind != "resource" ||
+		block.ObjectType != "resource:channel" ||
+		block.ObjectID != "channel-1" ||
+		block.Effect != "allow" ||
+		len(block.ActionIDs) != 1 ||
+		block.ActionIDs[0] != "cap-publish" {
+		t.Fatalf("unexpected permission block: %+v", block)
+	}
+	created := client.created[0]
+	if created.TenantID != "domain-1" ||
+		created.SubjectKind != "entity" ||
+		created.SubjectID != "client-1" ||
+		created.PermissionBlockID != "block-1" {
+		t.Fatalf("unexpected direct policy: %+v", created)
+	}
+}
+
+func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testing.T) {
+	client := &fakePolicyClient{
+		capID: "cap-subscribe",
+		policies: []DirectPolicy{
+			{
+				ID: "keep",
+				PermissionBlock: PermissionBlock{
+					ID:         "keep-block",
+					ScopeMode:  "object",
+					ObjectKind: "resource",
+					ObjectType: "resource:channel",
+					ObjectID:   "channel-1",
+					Actions:    []Capability{{ID: "cap-other"}},
+				},
+			},
+			{
+				ID: "delete",
+				PermissionBlock: PermissionBlock{
+					ID:         "delete-block",
+					ScopeMode:  "object",
+					ObjectKind: "resource",
+					ObjectType: "resource:channel",
+					ObjectID:   "channel-1",
+					Actions:    []Capability{{ID: "cap-subscribe"}},
+				},
+			},
+		},
+	}
+	svc := NewPolicyService(client)
+
+	err := svc.DeletePolicyFilter(context.Background(), policies.Policy{
+		Domain:      "domain-1",
+		Subject:     "domain-1_client-1",
+		SubjectType: policies.ClientType,
+		Object:      "channel-1",
+		ObjectType:  policies.ChannelType,
+		Permission:  policies.SubscribePermission,
+	})
+	if err != nil {
+		t.Fatalf("delete policy failed: %v", err)
+	}
+	if len(client.deleted) != 1 || client.deleted[0] != "delete" {
+		t.Fatalf("unexpected deleted policies: %+v", client.deleted)
 	}
 }
 

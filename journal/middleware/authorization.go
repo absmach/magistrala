@@ -39,7 +39,7 @@ func (am *authorizationMiddleware) RetrieveAll(ctx context.Context, session smqa
 	permission := readPermission
 	objectType := page.EntityType.String()
 	object := page.EntityID
-	subject := session.DomainUserID
+	subject := subjectID(session)
 
 	// If the entity is a user, we need to check if the user is an admin
 	if page.EntityType.String() == policies.UserType {
@@ -70,7 +70,7 @@ func (am *authorizationMiddleware) RetrieveClientTelemetry(ctx context.Context, 
 		Domain:      session.DomainID,
 		SubjectType: policies.UserType,
 		SubjectKind: policies.UsersKind,
-		Subject:     session.DomainUserID,
+		Subject:     subjectID(session),
 		Permission:  readPermission,
 		ObjectType:  policies.ClientType,
 		Object:      clientID,
@@ -81,4 +81,11 @@ func (am *authorizationMiddleware) RetrieveClientTelemetry(ctx context.Context, 
 	}
 
 	return am.svc.RetrieveClientTelemetry(ctx, session, clientID)
+}
+
+func subjectID(session smqauthn.Session) string {
+	if session.UserID != "" {
+		return session.UserID
+	}
+	return session.DomainUserID
 }

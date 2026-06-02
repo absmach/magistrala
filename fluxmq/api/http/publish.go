@@ -110,10 +110,7 @@ func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
 	}
 
 	subtopic := cleanSubtopic(req.Subtopic)
-	topic := fmt.Sprintf("m/%s/c/%s", domainID, channelID)
-	if subtopic != "" {
-		topic = topic + "/" + subtopic
-	}
+	topic := messaging.EncodeTopicSuffix(domainID, channelID, subtopic)
 
 	msg := &messaging.Message{
 		Domain:    domainID,
@@ -146,7 +143,7 @@ func (h publishHandler) ensureUserPublish(
 		SubjectID:  userID,
 		Action:     "publish",
 		ResourceID: channelID,
-		ObjectKind: atom.KindChannel,
+		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
 			"domain_id":           domainID,
@@ -199,7 +196,7 @@ func (h publishHandler) ensureClientPublisher(
 		SubjectID:  clientID,
 		Action:     "publish",
 		ResourceID: channelID,
-		ObjectKind: atom.KindChannel,
+		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
 			"domain_id": domainID,

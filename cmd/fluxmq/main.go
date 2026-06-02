@@ -9,6 +9,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -27,7 +28,7 @@ import (
 	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
-	broker "github.com/absmach/magistrala/pkg/messaging/brokers"
+	fluxmqbroker "github.com/absmach/magistrala/pkg/messaging/fluxmq"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -51,6 +52,27 @@ type config struct {
 	JaegerURL  url.URL `env:"MG_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
 	InstanceID string  `env:"MG_FLUXMQ_INSTANCE_ID"   envDefault:""`
+}
+
+type fanoutPublisher struct {
+	publishers []messaging.Publisher
+}
+
+func (fp fanoutPublisher) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
+	for _, publisher := range fp.publishers {
+		if err := publisher.Publish(ctx, topic, msg); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (fp fanoutPublisher) Close() error {
+	errs := make([]error, 0, len(fp.publishers))
+	for _, publisher := range fp.publishers {
+		errs = append(errs, publisher.Close())
+	}
+	return errors.Join(errs...)
 }
 
 func main() {
@@ -153,13 +175,31 @@ func main() {
 		MaxHeaderBytes:    grpcServerConfig.MaxHeaderBytes,
 	}
 
-	publisher, err := broker.NewPublisher(ctx, cfg.BrokerURL, broker.ConnectionName("fluxmq-ui-publish-proxy"))
+	messagePublisher, err := fluxmqbroker.NewUndeclaredPublisher(
+		ctx,
+		cfg.BrokerURL,
+		fluxmqbroker.ConnectionName("fluxmq-ui-message-publish-proxy"),
+	)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create publish proxy message publisher: %s", err))
 		exitCode = 1
 		return
 	}
-	defer publisher.Close()
+	defer messagePublisher.Close()
+
+	writerPublisher, err := fluxmqbroker.NewUndeclaredPublisher(
+		ctx,
+		cfg.BrokerURL,
+		fluxmqbroker.Prefix("writers"),
+		fluxmqbroker.ConnectionName("fluxmq-ui-publish-proxy"),
+	)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create publish proxy writer publisher: %s", err))
+		exitCode = 1
+		return
+	}
+	defer writerPublisher.Close()
+	publisher := fanoutPublisher{publishers: []messaging.Publisher{messagePublisher, writerPublisher}}
 
 	httpServerConfig := server.Config{Port: "9026"}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {

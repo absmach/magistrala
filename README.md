@@ -141,6 +141,138 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 - Documentation focused on getting you running quickly
 ---
 
+## Atom Integration Model
+
+Magistrala uses **Atom** as the backend for identity, authorization, and the core catalog.
+
+Atom is the source of truth for:
+- domains
+- users
+- clients
+- channels
+- groups
+- roles
+- access policies
+
+Magistrala services such as rules, alarms, and reports remain Magistrala services, but they use Atom for identity and authorization.
+
+### Core Entity Mapping
+
+| Magistrala concept | Atom concept | Meaning |
+|--------------------|--------------|---------|
+| Domain | Tenant | Isolation boundary for one organization, project, or environment |
+| User | Entity with kind `human` | A person who logs in and uses the UI/API |
+| Client | Entity with kind `device` | A device or application that sends/receives data |
+| Channel | Resource with kind `channel` | A messaging/data path that clients can publish or subscribe to |
+| Group | Group | A collection of users, clients, channels, or other grouped objects |
+
+In simple terms:
+
+```text
+MG Domain  = Atom Tenant
+MG User    = Atom Human Entity
+MG Client  = Atom Device Entity
+MG Channel = Atom Channel Resource
+MG Group   = Atom Group
+```
+
+### Actions, Permission Blocks, Roles, and Assignments
+
+Atom access control has these basic parts:
+
+| Atom word | Simple meaning | Example |
+|-----------|----------------|---------|
+| Action | One permission verb | `read`, `write`, `delete`, `role.manage`, `policy.manage` |
+| Permission Block | Where actions apply | all channels in domain `d1` can `read`, `publish` |
+| Role | A bundle of permission blocks | `tenant-admin` bundles domain, role, and member access |
+| Role Assignment | Who gets a role | give `user1` the `tenant-admin` role |
+
+Read an assignment like this:
+
+```text
+Give <who> this <role>.
+The role contains permission blocks that say where and what.
+```
+
+Example:
+
+```text
+Give user1 the tenant-admin role on domain d1.
+```
+
+That means:
+
+```text
+user1 can use the tenant-admin permissions inside domain d1.
+```
+
+### How MG Roles Work With Atom
+
+MG UI shows actions such as:
+- read
+- update
+- delete
+- manage roles
+- add/remove members
+- publish
+- subscribe
+
+These are mapped to Atom actions:
+
+| MG action | Atom action |
+|-----------|-----------------|
+| view/read | `read` |
+| create/update/edit/connect | `write` |
+| delete/remove | `delete` |
+| manage roles | `role.manage` |
+| add/remove members or access | `policy.manage` |
+| channel publish | `publish` |
+| channel subscribe | `subscribe` |
+
+So when MG UI checks:
+
+```text
+Can user1 manage roles for client1?
+```
+
+Atom checks:
+
+```text
+Does user1 have role.manage on client1, or on the domain that contains client1?
+```
+
+When MG UI checks:
+
+```text
+Can user1 add a member to channel1?
+```
+
+Atom checks:
+
+```text
+Does user1 have policy.manage on channel1, or on the domain that contains channel1?
+```
+
+### Practical Rule
+
+If a user is domain admin, they usually receive a tenant-scoped role in Atom.
+
+That tenant-scoped role can allow them to manage objects inside the domain:
+- clients
+- channels
+- groups
+- rules
+- alarms
+- reports
+
+For narrower access, create object-scoped roles. For example:
+
+```text
+Give user2 a reader role only on channel1.
+```
+
+Then user2 can read only that channel, not the whole domain.
+
 ## Installation
 
 ```bash

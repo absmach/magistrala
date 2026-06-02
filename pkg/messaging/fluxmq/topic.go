@@ -5,6 +5,7 @@ package fluxmq
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
@@ -110,6 +111,32 @@ func stringHeader(headers map[string]any, key string) string {
 		return string(s)
 	default:
 		return ""
+	}
+}
+
+func int64Header(headers map[string]any, key string) (int64, bool) {
+	if headers == nil {
+		return 0, false
+	}
+	v, ok := headers[key]
+	if !ok {
+		return 0, false
+	}
+	switch val := v.(type) {
+	case int64:
+		return val, true
+	case int:
+		return int64(val), true
+	case int32:
+		return int64(val), true
+	case string:
+		parsed, err := strconv.ParseInt(val, 10, 64)
+		return parsed, err == nil
+	case []byte:
+		parsed, err := strconv.ParseInt(string(val), 10, 64)
+		return parsed, err == nil
+	default:
+		return 0, false
 	}
 }
 

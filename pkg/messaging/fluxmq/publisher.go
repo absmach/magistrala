@@ -21,7 +21,17 @@ type publisher struct {
 }
 
 // NewPublisher creates a FluxMQ-backed message publisher.
-func NewPublisher(_ context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
+func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
+	return newPublisher(ctx, url, true, opts...)
+}
+
+// NewUndeclaredPublisher creates a FluxMQ-backed publisher without declaring
+// the stream queue. Use it only when another service owns queue declaration.
+func NewUndeclaredPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
+	return newPublisher(ctx, url, false, opts...)
+}
+
+func newPublisher(_ context.Context, url string, declare bool, opts ...messaging.Option) (messaging.Publisher, error) {
 	pub := &publisher{
 		options: defaultOptions(),
 	}
@@ -52,9 +62,11 @@ func NewPublisher(_ context.Context, url string, opts ...messaging.Option) (mess
 	if err := client.Connect(); err != nil {
 		return nil, err
 	}
-	if err := declareStream(client, pub.prefix); err != nil {
-		_ = client.Close()
-		return nil, err
+	if declare {
+		if err := declareStream(client, pub.prefix); err != nil {
+			_ = client.Close()
+			return nil, err
+		}
 	}
 
 	pub.client = client

@@ -7,8 +7,10 @@ import (
 	"context"
 	"testing"
 
+	channelsv1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
+	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/stretchr/testify/assert"
@@ -63,4 +65,29 @@ func TestAuthorizeDenied(t *testing.T) {
 	err := atom.Authorize(context.Background(), client, authn.Session{UserID: "user-1"}, "view", policies.RulesType, "rule-1", atom.KindRule)
 
 	assert.True(t, errors.Contains(err, errors.ErrAuthorization))
+}
+
+func TestChannelsCompatAuthorizeBuildsResourceRequest(t *testing.T) {
+	client := &authzClient{res: atom.AuthzResponse{Allowed: true}}
+	compat := atom.NewChannelsCompat(client)
+
+	res, err := compat.Authorize(context.Background(), &channelsv1.AuthzReq{
+		ClientId:  "domain-1_user-1",
+		DomainId:  "domain-1",
+		Type:      uint32(connections.Subscribe),
+		ChannelId: "channel-1",
+	})
+
+	assert.NoError(t, err)
+	assert.True(t, res.GetAuthorized())
+	assert.Equal(t, atom.AuthzRequest{
+		SubjectID:  "user-1",
+		Action:     "subscribe",
+		ResourceID: "channel-1",
+		ObjectKind: "resource",
+		ObjectID:   "channel-1",
+		Context: map[string]any{
+			"domain_id": "domain-1",
+		},
+	}, client.req)
 }

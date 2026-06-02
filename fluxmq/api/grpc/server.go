@@ -108,7 +108,7 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 			SubjectID:  req.Msg.GetExternalId(),
 			Action:     "connect",
 			ResourceID: channelID,
-			ObjectKind: atom.KindChannel,
+			ObjectKind: "resource",
 			ObjectID:   channelID,
 			Context: map[string]any{
 				"domain_id":   domainID,

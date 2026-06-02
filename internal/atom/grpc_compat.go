@@ -120,7 +120,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 		SubjectID:  subjectID,
 		Action:     action,
 		ResourceID: in.GetChannelId(),
-		ObjectKind: KindChannel,
+		ObjectKind: "resource",
 		ObjectID:   in.GetChannelId(),
 		Context: map[string]any{
 			"domain_id": in.GetDomainId(),

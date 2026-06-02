@@ -265,12 +265,12 @@ func (c *Client) CheckAuthzWithToken(ctx context.Context, token string, req Auth
 
 func (c *Client) ListCapabilities(ctx context.Context) (CapabilityList, error) {
 	var out struct {
-		Capabilities CapabilityList `json:"capabilities"`
+		Actions CapabilityList `json:"actions"`
 	}
-	err := c.graphQL(ctx, `query Capabilities {
-		capabilities { items { id name resource_kind: resourceKind description } }
+	err := c.graphQL(ctx, `query Actions {
+		actions { items { id name description } }
 	}`, nil, &out)
-	return out.Capabilities, err
+	return out.Actions, err
 }
 
 func (c *Client) CapabilityID(ctx context.Context, name string) (string, error) {
@@ -286,16 +286,69 @@ func (c *Client) CapabilityID(ctx context.Context, name string) (string, error) 
 	return "", Error{StatusCode: http.StatusNotFound, Message: "capability " + name + " not found"}
 }
 
-func (c *Client) CreatePolicy(ctx context.Context, policy CreatePolicyBinding) (PolicyBinding, error) {
+func (c *Client) CreatePermissionBlock(ctx context.Context, block CreatePermissionBlock) (PermissionBlock, error) {
 	var out struct {
-		CreatePolicy PolicyBinding `json:"createPolicy"`
+		CreatePermissionBlock PermissionBlock `json:"createPermissionBlock"`
 	}
-	err := c.graphQL(ctx, `mutation CreatePolicy($input: CreatePolicyInput!) {
-		createPolicy(input: $input) {
-			id tenant_id: tenantId subject_kind: subjectKind subject_id: subjectId grant_kind: grantKind grant_id: grantId scope_kind: scopeKind scope_ref: scopeRef effect conditions created_at: createdAt
+	err := c.graphQL(ctx, `mutation CreatePermissionBlock($input: CreatePermissionBlockInput!) {
+		createPermissionBlock(input: $input) {
+			id tenant_id: tenantId scope_mode: scopeMode object_kind: objectKind object_type: objectType object_id: objectId group_id: groupId effect conditions
+			actions { id name description }
 		}
-	}`, map[string]any{"input": policyInput(policy)}, &out)
-	return out.CreatePolicy, err
+	}`, map[string]any{"input": permissionBlockInput(block)}, &out)
+	return out.CreatePermissionBlock, err
+}
+
+func (c *Client) CreateDirectPolicy(ctx context.Context, policy CreateDirectPolicy) (DirectPolicy, error) {
+	var out struct {
+		CreateDirectPolicy DirectPolicy `json:"createDirectPolicy"`
+	}
+	err := c.graphQL(ctx, `mutation CreateDirectPolicy($input: CreateDirectPolicyInput!) {
+		createDirectPolicy(input: $input) {
+			id tenant_id: tenantId subject_kind: subjectKind subject_id: subjectId permission_block_id: permissionBlockId created_at: createdAt
+			permission_block: permissionBlock {
+				id tenant_id: tenantId scope_mode: scopeMode object_kind: objectKind object_type: objectType object_id: objectId group_id: groupId effect conditions
+				actions { id name description }
+			}
+		}
+	}`, map[string]any{"input": directPolicyInput(policy)}, &out)
+	return out.CreateDirectPolicy, err
+}
+
+func (c *Client) ListDirectPolicies(ctx context.Context, q DirectPolicyQuery) (DirectPolicyList, error) {
+	var out struct {
+		DirectPolicies DirectPolicyList `json:"directPolicies"`
+	}
+	err := c.graphQL(ctx, `query DirectPolicies($tenantId: ID, $subjectKind: SubjectKind, $subjectId: ID, $limit: Int, $offset: Int) {
+		directPolicies(tenantId: $tenantId, subjectKind: $subjectKind, subjectId: $subjectId, limit: $limit, offset: $offset) {
+			total
+			items {
+				id tenant_id: tenantId subject_kind: subjectKind subject_id: subjectId permission_block_id: permissionBlockId created_at: createdAt
+				permission_block: permissionBlock {
+					id tenant_id: tenantId scope_mode: scopeMode object_kind: objectKind object_type: objectType object_id: objectId group_id: groupId effect conditions
+					actions { id name description }
+				}
+			}
+		}
+	}`, directPolicyQueryVariables(q), &out)
+	return out.DirectPolicies, err
+}
+
+func (c *Client) DeleteDirectPolicy(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation DeleteDirectPolicy($id: ID!) { deleteDirectPolicy(id: $id) }`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) AuthorizedObjectIDs(ctx context.Context, q AuthorizedObjectIDsQuery) (AuthorizedObjectIDs, error) {
+	var out struct {
+		AuthorizedObjectIDs AuthorizedObjectIDs `json:"authorizedObjectIds"`
+	}
+	err := c.graphQL(ctx, `query AuthorizedObjectIDs($input: AuthorizedObjectIdsInput!) {
+		authorizedObjectIds(input: $input) {
+			ids
+			total
+		}
+	}`, authorizedObjectIDVariables(q), &out)
+	return out.AuthorizedObjectIDs, err
 }
 
 func (c *Client) LoginPassword(ctx context.Context, identifier, secret string) (LoginResponse, error) {
@@ -547,21 +600,63 @@ func authzInput(req AuthzRequest) map[string]any {
 	return input
 }
 
-func policyInput(policy CreatePolicyBinding) map[string]any {
+func permissionBlockInput(block CreatePermissionBlock) map[string]any {
 	input := map[string]any{
-		"subjectKind": policy.SubjectKind,
-		"subjectId":   policy.SubjectID,
-		"grantKind":   policy.GrantKind,
-		"grantId":     policy.GrantID,
-		"scopeKind":   policy.ScopeKind,
+		"scopeMode": block.ScopeMode,
+		"actionIds": block.ActionIDs,
 	}
-	setIfNotEmpty(input, "tenantId", policy.TenantID)
-	setIfNotEmpty(input, "scopeRef", policy.ScopeRef)
-	setIfNotEmpty(input, "effect", policy.Effect)
-	if policy.Conditions != nil {
-		input["conditions"] = policy.Conditions
+	setIfNotEmpty(input, "tenantId", block.TenantID)
+	setIfNotEmpty(input, "objectKind", block.ObjectKind)
+	setIfNotEmpty(input, "objectType", block.ObjectType)
+	setIfNotEmpty(input, "objectId", block.ObjectID)
+	setIfNotEmpty(input, "groupId", block.GroupID)
+	setIfNotEmpty(input, "effect", block.Effect)
+	if block.Conditions != nil {
+		input["conditions"] = block.Conditions
 	}
 	return input
+}
+
+func directPolicyInput(policy CreateDirectPolicy) map[string]any {
+	input := map[string]any{
+		"subjectKind":       policy.SubjectKind,
+		"subjectId":         policy.SubjectID,
+		"permissionBlockId": policy.PermissionBlockID,
+	}
+	setIfNotEmpty(input, "tenantId", policy.TenantID)
+	return input
+}
+
+func directPolicyQueryVariables(q DirectPolicyQuery) map[string]any {
+	vars := map[string]any{}
+	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, "subjectKind", q.SubjectKind)
+	setIfNotEmpty(vars, "subjectId", q.SubjectID)
+	if q.Limit > 0 {
+		vars["limit"] = int(q.Limit)
+	}
+	if q.Offset > 0 {
+		vars["offset"] = int(q.Offset)
+	}
+	return vars
+}
+
+func authorizedObjectIDVariables(q AuthorizedObjectIDsQuery) map[string]any {
+	input := map[string]any{
+		"subjectId":  q.SubjectID,
+		"action":     q.Action,
+		"objectKind": q.ObjectKind,
+	}
+	setIfNotEmpty(input, "objectType", q.ObjectType)
+	setIfNotEmpty(input, "tenantId", q.TenantID)
+	setIfNotEmpty(input, "q", q.Q)
+	if q.Limit > 0 {
+		input["limit"] = int(q.Limit)
+	}
+	if q.Offset > 0 {
+		input["offset"] = int(q.Offset)
+	}
+	return map[string]any{"input": input}
 }
 
 func queryVariables(q Query) map[string]any {

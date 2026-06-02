@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -226,11 +225,12 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		protocol = "mqtt"
 	}
 
-	created := ts.UnixNano()
-	if s := stringHeader(headers, "created"); s != "" {
-		if v, err := strconv.ParseInt(s, 10, 64); err == nil {
-			created = v
-		}
+	created := time.Now().UnixNano()
+	if !ts.IsZero() {
+		created = ts.UnixNano()
+	}
+	if v, ok := int64Header(headers, "created"); ok {
+		created = v
 	}
 
 	return &messaging.Message{

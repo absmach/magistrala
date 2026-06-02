@@ -139,7 +139,7 @@ func TestMessageFromDelivery(t *testing.T) {
 		{
 			name:      "use explicit publisher header when present",
 			body:      []byte("raw"),
-			headers:   map[string]any{"external_id": "tenant-user", "client_id": "client-22"},
+			headers:   map[string]any{"external_id": "tenant-user", "client_id": "client-22", "created": int64(1710000000000000250)},
 			ts:        time.Unix(1710000000, 250),
 			prefix:    "m",
 			mqttTopic: "m/dom/c/ch",
@@ -151,7 +151,7 @@ func TestMessageFromDelivery(t *testing.T) {
 				Publisher: "tenant-user",
 				ClientId:  "client-22",
 				Protocol:  "mqtt",
-				Created:   time.Unix(1710000000, 250).UnixNano(),
+				Created:   1710000000000000250,
 			},
 		},
 		{
@@ -212,5 +212,17 @@ func TestMessageFromDelivery(t *testing.T) {
 				t.Fatalf("created mismatch: got %d, want %d", got.Created, tc.want.Created)
 			}
 		})
+	}
+}
+
+func TestMessageFromDeliveryZeroTimestampFallsBackToNow(t *testing.T) {
+	before := time.Now().UnixNano()
+	got, err := messageFromDelivery([]byte("raw"), nil, time.Time{}, "m", "m/dom/c/ch")
+	after := time.Now().UnixNano()
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if got.Created < before || got.Created > after {
+		t.Fatalf("expected created timestamp between %d and %d, got %d", before, after, got.Created)
 	}
 }

@@ -81,40 +81,84 @@ type AuthzResponse struct {
 }
 
 type Capability struct {
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	ResourceKind string `json:"resource_kind,omitempty"`
-	Description  string `json:"description,omitempty"`
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
 }
 
 type CapabilityList struct {
 	Items []Capability `json:"items"`
 }
 
-type PolicyBinding struct {
-	ID          string         `json:"id"`
-	TenantID    string         `json:"tenant_id,omitempty"`
-	SubjectKind string         `json:"subject_kind"`
-	SubjectID   string         `json:"subject_id"`
-	GrantKind   string         `json:"grant_kind"`
-	GrantID     string         `json:"grant_id"`
-	ScopeKind   string         `json:"scope_kind"`
-	ScopeRef    string         `json:"scope_ref,omitempty"`
-	Effect      string         `json:"effect"`
-	Conditions  map[string]any `json:"conditions,omitempty"`
-	CreatedAt   time.Time      `json:"created_at,omitempty"`
+type PermissionBlock struct {
+	ID         string         `json:"id"`
+	TenantID   string         `json:"tenant_id,omitempty"`
+	ScopeMode  string         `json:"scope_mode"`
+	ObjectKind string         `json:"object_kind,omitempty"`
+	ObjectType string         `json:"object_type,omitempty"`
+	ObjectID   string         `json:"object_id,omitempty"`
+	GroupID    string         `json:"group_id,omitempty"`
+	Effect     string         `json:"effect"`
+	Conditions map[string]any `json:"conditions,omitempty"`
+	Actions    []Capability   `json:"actions,omitempty"`
 }
 
-type CreatePolicyBinding struct {
-	TenantID    string         `json:"tenant_id,omitempty"`
-	SubjectKind string         `json:"subject_kind"`
-	SubjectID   string         `json:"subject_id"`
-	GrantKind   string         `json:"grant_kind"`
-	GrantID     string         `json:"grant_id"`
-	ScopeKind   string         `json:"scope_kind"`
-	ScopeRef    string         `json:"scope_ref,omitempty"`
-	Effect      string         `json:"effect,omitempty"`
-	Conditions  map[string]any `json:"conditions,omitempty"`
+type CreatePermissionBlock struct {
+	TenantID   string         `json:"tenant_id,omitempty"`
+	ScopeMode  string         `json:"scope_mode"`
+	ObjectKind string         `json:"object_kind,omitempty"`
+	ObjectType string         `json:"object_type,omitempty"`
+	ObjectID   string         `json:"object_id,omitempty"`
+	GroupID    string         `json:"group_id,omitempty"`
+	Effect     string         `json:"effect,omitempty"`
+	Conditions map[string]any `json:"conditions,omitempty"`
+	ActionIDs  []string       `json:"action_ids"`
+}
+
+type DirectPolicy struct {
+	ID                string          `json:"id"`
+	TenantID          string          `json:"tenant_id,omitempty"`
+	SubjectKind       string          `json:"subject_kind"`
+	SubjectID         string          `json:"subject_id"`
+	PermissionBlockID string          `json:"permission_block_id"`
+	PermissionBlock   PermissionBlock `json:"permission_block,omitempty"`
+	CreatedAt         time.Time       `json:"created_at,omitempty"`
+}
+
+type CreateDirectPolicy struct {
+	TenantID          string `json:"tenant_id,omitempty"`
+	SubjectKind       string `json:"subject_kind"`
+	SubjectID         string `json:"subject_id"`
+	PermissionBlockID string `json:"permission_block_id"`
+}
+
+type DirectPolicyQuery struct {
+	TenantID    string
+	SubjectKind string
+	SubjectID   string
+	Limit       uint64
+	Offset      uint64
+}
+
+type DirectPolicyList struct {
+	Items []DirectPolicy `json:"items"`
+	Total uint64         `json:"total"`
+}
+
+type AuthorizedObjectIDsQuery struct {
+	SubjectID  string
+	Action     string
+	ObjectKind string
+	ObjectType string
+	TenantID   string
+	Q          string
+	Limit      uint64
+	Offset     uint64
+}
+
+type AuthorizedObjectIDs struct {
+	IDs   []string `json:"ids"`
+	Total uint64   `json:"total"`
 }
 
 type TokenClaims struct {

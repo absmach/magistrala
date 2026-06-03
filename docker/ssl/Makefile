@@ -85,11 +85,15 @@ server_cert:
 	openssl req -new -sha256 -newkey rsa:4096 -nodes -keyout $(CRT_LOCATION)/magistrala-server.key \
 				-out $(CRT_LOCATION)/magistrala-server.csr -subj "/CN=$(CN_SRV)/O=$(O)/OU=$(OU_CRT)/emailAddress=$(EA)"
 
-	# Sign server CSR.
-	openssl x509 -req -days 1000 -in $(CRT_LOCATION)/magistrala-server.csr -CA $(CRT_LOCATION)/ca.crt -CAkey $(CRT_LOCATION)/ca.key -CAcreateserial -out $(CRT_LOCATION)/magistrala-server.crt
+	# Sign server CSR with SANs for container hostnames.
+	printf '[v3_req]\nsubjectAltName=DNS:localhost,DNS:nginx,DNS:%s' "$(CN_SRV)" > $(CRT_LOCATION)/magistrala-server.san
+	openssl x509 -req -days 1000 -in $(CRT_LOCATION)/magistrala-server.csr \
+		-CA $(CRT_LOCATION)/ca.crt -CAkey $(CRT_LOCATION)/ca.key -CAcreateserial \
+		-out $(CRT_LOCATION)/magistrala-server.crt \
+		-extfile $(CRT_LOCATION)/magistrala-server.san -extensions v3_req
 
-	# Remove CSR.
-	rm $(CRT_LOCATION)/magistrala-server.csr
+	# Remove CSR and SAN config.
+	rm $(CRT_LOCATION)/magistrala-server.csr $(CRT_LOCATION)/magistrala-server.san
 
 client_cert:
 	# Create magistrala server key and CSR.

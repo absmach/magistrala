@@ -75,6 +75,19 @@ func (fp fanoutPublisher) Close() error {
 	return errors.Join(errs...)
 }
 
+type writerBridgeHandler struct {
+	ctx       context.Context
+	publisher messaging.Publisher
+}
+
+func (h writerBridgeHandler) Handle(msg *messaging.Message) error {
+	return h.publisher.Publish(h.ctx, messaging.EncodeMessageTopic(msg), msg)
+}
+
+func (h writerBridgeHandler) Cancel() error {
+	return nil
+}
+
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	g, ctx := errgroup.WithContext(ctx)
@@ -120,7 +133,7 @@ func main() {
 	}
 	atomAuthz := atom.NewClient(atomCfg)
 	authn := atomauthn.NewAuthentication()
-	clientsClient := atom.NewClientsCompat(authn)
+	clientsClient := atom.NewClientsCompat(authn, atomAuthz)
 	domainsClient := atom.NewDomainsCompat(atomAuthz)
 	channelsClient := atom.NewChannelsCompat(atomAuthz)
 	logger.Info("FluxMQ authentication, authorization, and route resolution configured to use Atom")
@@ -200,6 +213,31 @@ func main() {
 	}
 	defer writerPublisher.Close()
 	publisher := fanoutPublisher{publishers: []messaging.Publisher{messagePublisher, writerPublisher}}
+
+	writerBridge, err := fluxmqbroker.NewPubSub(
+		ctx,
+		cfg.BrokerURL,
+		logger,
+		fluxmqbroker.DirectTopicOnly(),
+		fluxmqbroker.ConnectionName("fluxmq-mqtt-writer-bridge"),
+	)
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to create MQTT writer bridge subscriber: %s", err))
+		exitCode = 1
+		return
+	}
+	defer writerBridge.Close()
+	if err := writerBridge.Subscribe(ctx, messaging.SubscriberConfig{
+		ID:             cfg.InstanceID + "-mqtt-writer-bridge",
+		Topic:          "m/#",
+		Handler:        writerBridgeHandler{ctx: ctx, publisher: writerPublisher},
+		DeliveryPolicy: messaging.DeliverNewPolicy,
+	}); err != nil {
+		logger.Error(fmt.Sprintf("failed to subscribe MQTT writer bridge: %s", err))
+		exitCode = 1
+		return
+	}
+	logger.Info("FluxMQ MQTT writer bridge subscribed", "topic", "m/#")
 
 	httpServerConfig := server.Config{Port: "9026"}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {

@@ -5,6 +5,7 @@ package atom
 
 import (
 	"context"
+	"net/http"
 	"strings"
 
 	channelsv1 "github.com/absmach/magistrala/api/grpc/channels/v1"
@@ -19,23 +20,47 @@ import (
 )
 
 type AtomClientsCompat struct {
-	Authn smqauthn.Authentication
+	Authn  smqauthn.Authentication
+	Client *Client
 }
 
-func NewClientsCompat(authn smqauthn.Authentication) clientsv1.ClientsServiceClient {
-	return AtomClientsCompat{Authn: authn}
+func NewClientsCompat(authn smqauthn.Authentication, client ...*Client) clientsv1.ClientsServiceClient {
+	atomClient := NewClient(LoadConfig())
+	if len(client) > 0 && client[0] != nil {
+		atomClient = client[0]
+	}
+	return AtomClientsCompat{Authn: authn, Client: atomClient}
 }
 
 func (c AtomClientsCompat) Authenticate(ctx context.Context, in *clientsv1.AuthnReq, _ ...grpc.CallOption) (*clientsv1.AuthnRes, error) {
 	token := in.GetToken()
-	if _, _, key, err := smqauthn.AuthUnpack(token); err == nil {
-		token = key
+	if prefix, id, key, err := smqauthn.AuthUnpack(token); err == nil {
+		switch prefix {
+		case smqauthn.BasicAuth:
+			res, loginErr := c.Client.LoginPassword(ctx, id, key)
+			if loginErr == nil {
+				return &clientsv1.AuthnRes{Authenticated: true, Id: res.EntityID}, nil
+			}
+			if !isAtomUnauthorized(loginErr) {
+				return nil, loginErr
+			}
+			token = key
+		case smqauthn.DomainAuth:
+			token = key
+		case smqauthn.Unknown:
+			token = key
+		}
 	}
 	session, err := c.Authn.Authenticate(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 	return &clientsv1.AuthnRes{Authenticated: true, Id: session.UserID}, nil
+}
+
+func isAtomUnauthorized(err error) bool {
+	atomErr, ok := err.(Error)
+	return ok && atomErr.StatusCode == http.StatusUnauthorized
 }
 
 func (c AtomClientsCompat) RetrieveEntity(context.Context, *commonv1.RetrieveEntityReq, ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {

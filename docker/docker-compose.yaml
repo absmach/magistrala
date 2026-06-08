@@ -26,8 +26,6 @@ volumes:
   magistrala-re-db-volume:
   magistrala-alarms-db-volume:
   magistrala-reports-db-volume:
-  magistrala-certs-db-volume:
-  magistrala-openbao-data:
   magistrala-timescale-writer-volume:
   magistrala-fluxmq-node1-volume:
   magistrala-fluxmq-node2-volume:
@@ -65,6 +63,7 @@ services:
     environment:
       DATABASE_URL: postgres://${ATOM_DB_USER}:${ATOM_DB_PASSWORD}@atom-db:5432/${ATOM_DB_NAME}
       LISTEN_ADDR: 0.0.0.0:8080
+      GRPC_ADDR: ${ATOM_GRPC_ADDR:-0.0.0.0:8081}
       JWT_SECRET: ${ATOM_JWT_SECRET}
       JWT_EXPIRY_SECS: ${ATOM_JWT_EXPIRY_SECS}
       ATOM_PUBLIC_BASE_URL: ${ATOM_PUBLIC_URL}
@@ -81,18 +80,25 @@ services:
       ATOM_SMTP_TLS: ${ATOM_SMTP_TLS}
       ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
       ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
+      ATOM_CERTS_ENABLED: ${ATOM_CERTS_ENABLED:-true}
+      ATOM_CERTS_CA_MODE: ${ATOM_CERTS_CA_MODE:-file_root_issuer}
+      ATOM_CERTS_ROOT_CA_CERT_PATH: ${ATOM_CERTS_ROOT_CA_CERT_PATH:-/certs/ca.crt}
+      ATOM_CERTS_ROOT_CA_KEY_PATH: ${ATOM_CERTS_ROOT_CA_KEY_PATH:-/certs/ca.key}
+      ATOM_CERTS_LEAF_DEFAULT_TTL_SECS: ${ATOM_CERTS_LEAF_DEFAULT_TTL_SECS:-2592000}
+      ATOM_CERTS_LEAF_MAX_TTL_SECS: ${ATOM_CERTS_LEAF_MAX_TTL_SECS:-2592000}
       ATOM_MIN_PASSWORD_CHARS: ${ATOM_MIN_PASSWORD_CHARS}
       RUST_LOG: ${ATOM_RUST_LOG}
     ports:
       - ${ATOM_HTTP_PORT}:8080
+    volumes:
+      - ${ATOM_CERTS_CA_DIR:-./ssl/certs}:/certs:ro
     networks:
       - magistrala-base-net
 
   atom-ui:
-    image: ghcr.io/absmach/atom-ui:${ATOM_UI_RELEASE_TAG:-latest}
+    image: ghcr.io/absmach/atom-ui:latest
     container_name: magistrala-atom-ui
     restart: on-failure
-    profiles: ["atom-ui"]
     depends_on:
       - atom
     environment:
@@ -1922,122 +1928,3 @@ services:
       - "4000:3000"
     networks:
       - magistrala-base-net
-
-  certs:
-    image: ghcr.io/absmach/magistrala/certs:${MG_RELEASE_TAG}
-    container_name: magistrala-certs
-    depends_on:
-      openbao:
-        condition: service_healthy
-      certs-db:
-        condition: service_started
-    restart: on-failure
-    networks:
-      - magistrala-base-net
-    environment:
-      MG_CERTS_LOG_LEVEL: ${MG_CERTS_LOG_LEVEL}
-      MG_CERTS_HTTP_HOST: ${MG_CERTS_HTTP_HOST}
-      MG_CERTS_HTTP_PORT: ${MG_CERTS_HTTP_PORT}
-      MG_CERTS_GRPC_HOST: ${MG_CERTS_GRPC_HOST}
-      MG_CERTS_GRPC_PORT: ${MG_CERTS_GRPC_PORT}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_CERTS_OPENBAO_HOST: ${MG_CERTS_OPENBAO_HOST}
-      MG_CERTS_OPENBAO_APP_ROLE: ${MG_CERTS_OPENBAO_APP_ROLE}
-      MG_CERTS_OPENBAO_APP_SECRET: ${MG_CERTS_OPENBAO_APP_SECRET}
-      MG_CERTS_OPENBAO_NAMESPACE: ${MG_CERTS_OPENBAO_NAMESPACE}
-      MG_CERTS_OPENBAO_PKI_PATH: ${MG_CERTS_OPENBAO_PKI_PATH}
-      MG_CERTS_OPENBAO_ROLE: ${MG_CERTS_OPENBAO_ROLE}
-      MG_CERTS_OPENBAO_SECRET_ID_TTL: ${MG_CERTS_OPENBAO_SECRET_ID_TTL}
-      MG_CERTS_DB_HOST: ${MG_CERTS_DB_HOST}
-      MG_CERTS_DB_PORT: ${MG_CERTS_DB_PORT}
-      MG_CERTS_DB_USER: ${MG_CERTS_DB_USER}
-      MG_CERTS_DB_PASS: ${MG_CERTS_DB_PASS}
-      MG_CERTS_DB: ${MG_CERTS_DB}
-      MG_CERTS_DB_SSL_MODE: ${MG_CERTS_DB_SSL_MODE}
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_TOKEN: ${ATOM_SERVICE_TOKEN}
-      ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
-      ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
-      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
-      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
-      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
-      ATOM_ADMIN_TOKEN: ${ATOM_ADMIN_TOKEN}
-      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME}
-      ATOM_ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-      MG_CERTS_SECRET: ${MG_CERTS_SECRET}
-      MG_CERTS_SERVICE_TOKEN_PATH: ${MG_CERTS_SERVICE_TOKEN_PATH}
-      MG_CERTS_SECRET_ID_PATH: ${MG_CERTS_SECRET_ID_PATH}
-      MG_CERTS_SECRET_RENEW_THRESHOLD: ${MG_CERTS_SECRET_RENEW_THRESHOLD}
-      MG_CERTS_SECRET_CHECK_INTERVAL: ${MG_CERTS_SECRET_CHECK_INTERVAL}
-      MG_ALLOW_UNVERIFIED_USER: ${MG_ALLOW_UNVERIFIED_USER}
-    ports:
-      - ${MG_CERTS_HTTP_PORT}:${MG_CERTS_HTTP_PORT}
-      - ${MG_CERTS_GRPC_PORT}:${MG_CERTS_GRPC_PORT}
-    volumes:
-      - magistrala-openbao-data:/openbao:ro
-
-  certs-db:
-    image: docker.io/postgres:16.2-alpine
-    container_name: magistrala-certs-db
-    restart: on-failure
-    networks:
-      - magistrala-base-net
-    command: postgres -c "max_connections=${MG_CERTS_DB_MAX_CONNECTIONS}"
-    environment:
-      POSTGRES_USER: ${MG_CERTS_DB_USER}
-      POSTGRES_PASSWORD: ${MG_CERTS_DB_PASS}
-      POSTGRES_DB: ${MG_CERTS_DB}
-    ports:
-      - 5454:5432
-    volumes:
-      - magistrala-certs-db-volume:/var/lib/postgresql/data
-
-  openbao:
-    image: openbao/openbao:2.4.0
-    container_name: magistrala-openbao
-    restart: on-failure
-    networks:
-      - magistrala-base-net
-    ports:
-      - 8200:8200
-    healthcheck:
-      test: ["CMD", "sh", "-c", "test -f /opt/openbao/data/service_token"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 30s
-    environment:
-      - BAO_ADDR=http://127.0.0.1:8200
-      - BAO_LOG_LEVEL=info
-      - MG_CERTS_OPENBAO_PKI_ROLE=${MG_CERTS_OPENBAO_ROLE}
-      - MG_CERTS_OPENBAO_APP_ROLE=${MG_CERTS_OPENBAO_APP_ROLE}
-      - MG_CERTS_OPENBAO_APP_SECRET=${MG_CERTS_OPENBAO_APP_SECRET}
-      - MG_CERTS_OPENBAO_SECRET_ID_TTL=${MG_CERTS_OPENBAO_SECRET_ID_TTL}
-      - MG_CERTS_OPENBAO_NAMESPACE=${MG_CERTS_OPENBAO_NAMESPACE}
-      - MG_CERTS_OPENBAO_PKI_CA_CN=${MG_CERTS_OPENBAO_PKI_CA_CN}
-      - MG_CERTS_OPENBAO_PKI_CA_OU=${MG_CERTS_OPENBAO_PKI_CA_OU}
-      - MG_CERTS_OPENBAO_PKI_CA_O=${MG_CERTS_OPENBAO_PKI_CA_O}
-      - MG_CERTS_OPENBAO_PKI_CA_C=${MG_CERTS_OPENBAO_PKI_CA_C}
-      - MG_CERTS_OPENBAO_PKI_CA_L=${MG_CERTS_OPENBAO_PKI_CA_L}
-      - MG_CERTS_OPENBAO_PKI_CA_ST=${MG_CERTS_OPENBAO_PKI_CA_ST}
-      - MG_CERTS_OPENBAO_PKI_CA_ADDR=${MG_CERTS_OPENBAO_PKI_CA_ADDR}
-      - MG_CERTS_OPENBAO_PKI_CA_PO=${MG_CERTS_OPENBAO_PKI_CA_PO}
-      - MG_CERTS_OPENBAO_PKI_CA_DNS_NAMES=${MG_CERTS_OPENBAO_PKI_CA_DNS_NAMES}
-      - MG_CERTS_OPENBAO_PKI_CA_IP_ADDRESSES=${MG_CERTS_OPENBAO_PKI_CA_IP_ADDRESSES}
-      - MG_CERTS_OPENBAO_PKI_CA_URI_SANS=${MG_CERTS_OPENBAO_PKI_CA_URI_SANS}
-      - MG_CERTS_OPENBAO_PKI_CA_EMAIL_ADDRESSES=${MG_CERTS_OPENBAO_PKI_CA_EMAIL_ADDRESSES}
-      - MG_CERTS_OPENBAO_UNSEAL_KEY_1=${MG_CERTS_OPENBAO_UNSEAL_KEY_1}
-      - MG_CERTS_OPENBAO_UNSEAL_KEY_2=${MG_CERTS_OPENBAO_UNSEAL_KEY_2}
-      - MG_CERTS_OPENBAO_UNSEAL_KEY_3=${MG_CERTS_OPENBAO_UNSEAL_KEY_3}
-      - MG_CERTS_OPENBAO_ROOT_TOKEN=${MG_CERTS_OPENBAO_ROOT_TOKEN}
-    cap_add:
-      - IPC_LOCK
-    mem_swappiness: 0
-    volumes:
-      - magistrala-openbao-data:/opt/openbao/data
-      - magistrala-openbao-data:/opt/openbao/config
-      - ./openbao-entrypoint.sh:/entrypoint.sh
-    entrypoint: /bin/sh
-    command: /entrypoint.sh

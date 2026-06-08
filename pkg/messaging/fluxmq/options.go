@@ -20,6 +20,7 @@ type options struct {
 	prefix             string
 	connectionName     string
 	directTopicIngress bool
+	directTopicOnly    bool
 }
 
 func defaultOptions() options {
@@ -77,6 +78,25 @@ func DirectTopicIngress() messaging.Option {
 			return nil
 		case *pubsub:
 			v.directTopicIngress = true
+		default:
+			return ErrInvalidType
+		}
+
+		return nil
+	}
+}
+
+// DirectTopicOnly subscribes only to regular MQTT topics and skips stream queue
+// consumption. This is intended for bridge services that observe broker-native
+// topics without also consuming queued messages.
+func DirectTopicOnly() messaging.Option {
+	return func(val any) error {
+		switch v := val.(type) {
+		case *publisher:
+			return nil
+		case *pubsub:
+			v.directTopicIngress = true
+			v.directTopicOnly = true
 		default:
 			return ErrInvalidType
 		}

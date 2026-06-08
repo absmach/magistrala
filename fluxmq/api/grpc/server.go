@@ -104,9 +104,13 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 	}
 
 	if s.atomAuth != nil {
+		action := "subscribe"
+		if connType == connections.Publish {
+			action = "publish"
+		}
 		res, err := s.atomAuth.CheckAuthz(ctx, atom.AuthzRequest{
 			SubjectID:  req.Msg.GetExternalId(),
-			Action:     "connect",
+			Action:     action,
 			ResourceID: channelID,
 			ObjectKind: "resource",
 			ObjectID:   channelID,

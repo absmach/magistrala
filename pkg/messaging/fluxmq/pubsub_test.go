@@ -226,3 +226,16 @@ func TestMessageFromDeliveryZeroTimestampFallsBackToNow(t *testing.T) {
 		t.Fatalf("expected created timestamp between %d and %d, got %d", before, after, got.Created)
 	}
 }
+
+func TestDirectTopicOnlyEnablesDirectIngressAndSkipsStream(t *testing.T) {
+	ps := &pubsub{}
+	if err := DirectTopicOnly()(ps); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !ps.directTopicIngress {
+		t.Fatal("expected direct topic ingress to be enabled")
+	}
+	if !ps.directTopicOnly {
+		t.Fatal("expected stream consumption to be skipped")
+	}
+}

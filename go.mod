@@ -6,7 +6,7 @@ require (
 	connectrpc.com/otelconnect v0.9.0
 	github.com/0x6flab/namegenerator v1.4.0
 	github.com/absmach/callhome v0.18.2
-	github.com/absmach/fluxmq v0.21.0
+	github.com/absmach/fluxmq v0.21.1-0.20260605184741-81649b5788af
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.10.0
 	github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2

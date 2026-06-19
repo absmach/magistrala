@@ -113,6 +113,27 @@ services:
     networks:
       - magistrala-base-net
 
+  atom-bootstrap:
+    image: ghcr.io/absmach/magistrala/atom-bootstrap:${MG_RELEASE_TAG}
+    container_name: magistrala-atom-bootstrap
+    restart: on-failure
+    depends_on:
+      - atom
+    environment:
+      ATOM_URL: ${ATOM_URL}
+      ATOM_SERVICE_TOKEN: ${ATOM_SERVICE_TOKEN}
+      ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
+      ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
+      ATOM_ADMIN_TOKEN: ${ATOM_ADMIN_TOKEN}
+      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME}
+      ATOM_ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
+      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
+      MG_ATOM_BOOTSTRAP_RETRIES: ${MG_ATOM_BOOTSTRAP_RETRIES:-30}
+      MG_ATOM_BOOTSTRAP_RETRY_INTERVAL: ${MG_ATOM_BOOTSTRAP_RETRY_INTERVAL:-2s}
+      MG_ATOM_BOOTSTRAP_TIMEOUT: ${MG_ATOM_BOOTSTRAP_TIMEOUT:-30s}
+    networks:
+      - magistrala-base-net
+
   domains-db:
     image: docker.io/postgres:18.0-alpine3.22
     container_name: magistrala-domains-db
@@ -323,9 +344,12 @@ services:
     image: ghcr.io/absmach/magistrala/journal:${MG_RELEASE_TAG}
     container_name: magistrala-journal
     depends_on:
-      - journal-db
-      - atom
-      - nginx
+      journal-db:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_JOURNAL_LOG_LEVEL: ${MG_JOURNAL_LOG_LEVEL}
@@ -495,9 +519,14 @@ services:
     container_name: magistrala-clients
     profiles: ["legacy-core"]
     depends_on:
-      - clients-db
-      - users
-      - nginx
+      clients-db:
+        condition: service_started
+      users:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_CLIENTS_LOG_LEVEL: ${MG_CLIENTS_LOG_LEVEL}
@@ -1011,7 +1040,10 @@ services:
     image: ghcr.io/absmach/magistrala/notifications:${MG_RELEASE_TAG}
     container_name: magistrala-notifications
     depends_on:
-      - nginx
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_NOTIFICATIONS_LOG_LEVEL: ${MG_NOTIFICATIONS_LOG_LEVEL}
@@ -1294,6 +1326,9 @@ services:
   fluxmq-auth:
     image: ghcr.io/absmach/magistrala/fluxmq:${MG_RELEASE_TAG}
     container_name: magistrala-fluxmq-auth
+    depends_on:
+      atom-bootstrap:
+        condition: service_completed_successfully
     restart: on-failure
     environment:
       MG_FLUXMQ_LOG_LEVEL: ${MG_FLUXMQ_LOG_LEVEL}
@@ -1438,6 +1473,8 @@ services:
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
     depends_on:
+      atom-bootstrap:
+        condition: service_completed_successfully
       ui-backend-db:
         condition: service_healthy
       seaweedfs-s3:
@@ -1578,7 +1615,10 @@ services:
     image: ghcr.io/absmach/magistrala/timescale-reader:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-reader
     depends_on:
-      - timescale
+      timescale:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
     restart: on-failure
     environment:
       MG_TIMESCALE_READER_LOG_LEVEL: ${MG_TIMESCALE_READER_LOG_LEVEL}
@@ -1709,8 +1749,12 @@ services:
     image: ghcr.io/absmach/magistrala/re:${MG_RELEASE_TAG}
     container_name: magistrala-re
     depends_on:
-      - re-db
-      - nginx
+      re-db:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_RE_LOG_LEVEL: ${MG_RE_LOG_LEVEL}
@@ -1794,8 +1838,12 @@ services:
     image: ghcr.io/absmach/magistrala/alarms:${MG_RELEASE_TAG}
     container_name: magistrala-alarms
     depends_on:
-      - alarms-db
-      - nginx
+      alarms-db:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_ALARMS_LOG_LEVEL: ${MG_ALARMS_LOG_LEVEL}
@@ -1858,8 +1906,12 @@ services:
     image: ghcr.io/absmach/magistrala/reports:${MG_RELEASE_TAG}
     container_name: magistrala-reports
     depends_on:
-      - reports-db
-      - nginx
+      reports-db:
+        condition: service_started
+      atom-bootstrap:
+        condition: service_completed_successfully
+      nginx:
+        condition: service_started
     restart: on-failure
     environment:
       MG_REPORTS_LOG_LEVEL: ${MG_REPORTS_LOG_LEVEL}

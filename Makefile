@@ -144,7 +144,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run_latest run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -291,6 +291,10 @@ endif
 run_latest: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+run_latest_ci: check_certs
+	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_tls:
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)

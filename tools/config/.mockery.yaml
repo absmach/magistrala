@@ -12,20 +12,6 @@ force-file-write: true
 include-auto-generated: true
 
 packages:
-  github.com/absmach/magistrala/api/grpc/clients/v1:
-    interfaces:
-      ClientsServiceClient:
-        config:
-          dir: "./clients/mocks"
-          structname: "ClientsServiceClient"
-          filename: "clients_client.go"
-  github.com/absmach/magistrala/api/grpc/domains/v1:
-    interfaces:
-      DomainsServiceClient:
-        config:
-          dir: "./domains/mocks"
-          structname: "DomainsServiceClient"
-          filename: "domains_client.go"
   github.com/absmach/magistrala/api/grpc/token/v1:
     interfaces:
       TokenServiceClient:
@@ -33,20 +19,6 @@ packages:
           dir: "./auth/mocks"
           structname: "TokenServiceClient"
           filename: "token_client.go"
-  github.com/absmach/magistrala/api/grpc/channels/v1:
-    interfaces:
-      ChannelsServiceClient:
-        config:
-          dir: "./channels/mocks"
-          structname: "ChannelsServiceClient"
-          filename: "channels_client.go"
-  github.com/absmach/magistrala/api/grpc/groups/v1:
-    interfaces:
-      GroupsServiceClient:
-        config:
-          dir: "./groups/mocks"
-          structname: "GroupsServiceClient"
-          filename: "groups_client.go"
   github.com/absmach/magistrala/api/grpc/certs/v1:
     interfaces:
       CertsServiceClient:
@@ -79,22 +51,6 @@ packages:
       PATS:
       PATSRepository:
       Service:
-  github.com/absmach/magistrala/channels:
-    interfaces:
-      Cache:
-      Repository:
-      Service:
-  github.com/absmach/magistrala/channels/private:
-    interfaces:
-      Service:
-  github.com/absmach/magistrala/clients:
-    interfaces:
-      Repository:
-      Cache:
-      Service:
-  github.com/absmach/magistrala/clients/private:
-    interfaces:
-      Service:
   github.com/absmach/magistrala/certs:
     interfaces:
       Agent:
@@ -107,21 +63,6 @@ packages:
     interfaces:
       Service:
       SubscriptionsRepository:
-  github.com/absmach/magistrala/domains:
-    interfaces:
-      Repository:
-      Cache:
-      Service:
-  github.com/absmach/magistrala/domains/private:
-    interfaces:
-      Service:
-  github.com/absmach/magistrala/groups:
-    interfaces:
-      Repository:
-      Service:
-  github.com/absmach/magistrala/groups/private:
-    interfaces:
-      Service:
   github.com/absmach/magistrala/journal:
     interfaces:
       Repository:
@@ -143,18 +84,10 @@ packages:
   github.com/absmach/magistrala/pkg/messaging:
     interfaces:
       PubSub:
-  github.com/absmach/magistrala/pkg/oauth2:
-    interfaces:
-      Provider:
   github.com/absmach/magistrala/pkg/policies:
     interfaces:
       Evaluator:
       Service:
-  github.com/absmach/magistrala/pkg/roles:
-    interfaces:
-      Provisioner:
-      RoleManager:
-      Repository:
   github.com/absmach/magistrala/pkg/callout:
     interfaces:
       Callout:
@@ -168,18 +101,6 @@ packages:
     interfaces:
       Repository:
       Service:
-  github.com/absmach/magistrala/bootstrap:
-    interfaces:
-      ConfigRepository:
-      ConfigReader:
-      Service:
-      ProfileRepository:
-      BindingStore:
-      BindingResolver:
-      Renderer:
-  github.com/absmach/magistrala/provision:
-    interfaces:
-      Service:
   github.com/absmach/magistrala/alarms:
     interfaces:
       Service:
@@ -188,12 +109,6 @@ packages:
     interfaces:
       Service:
       Repository:
-  github.com/absmach/magistrala/users:
-    interfaces:
-      Emailer:
-      Hasher:
-      Repository:
-      Service:
   github.com/absmach/magistrala/notifications:
     interfaces:
       Notifier:

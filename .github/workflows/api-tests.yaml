@@ -154,7 +154,7 @@ jobs:
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Start containers
-        run: make run_latest up args="-d" && make run_addons up args="-d"
+        run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 
       - name: Wait for services to be ready
         run: |
@@ -289,4 +289,4 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: make run_latest down args="-v" && make run_addons down args="-v"
+        run: make run_latest_ci down args="-v" && make run_addons down args="-v"

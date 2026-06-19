@@ -10,8 +10,10 @@ import (
 	"time"
 )
 
-const defaultTimeout = 5 * time.Second
-const defaultAdminUsername = "admin"
+const (
+	defaultTimeout       = 5 * time.Second
+	defaultAdminUsername = "admin"
+)
 
 // Config controls Magistrala's optional Atom integration.
 type Config struct {

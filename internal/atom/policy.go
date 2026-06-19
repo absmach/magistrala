@@ -58,21 +58,21 @@ func policyAction(pr policies.Policy) string {
 func policyObjectKind(pr policies.Policy) string {
 	switch pr.ObjectType {
 	case policies.DomainType:
-		return "tenant"
+		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
 	case policies.ClientType:
-		return "entity"
+		return atomObjectKindEntity
 	case policies.GroupType:
-		return "group"
+		return atomObjectKindGroup
 	case policies.ChannelType:
-		return "resource"
+		return atomObjectKindResource
 	case policies.RulesType:
-		return "resource"
+		return atomObjectKindResource
 	case policies.ReportsType:
-		return "resource"
+		return atomObjectKindResource
 	case policies.AlarmsType:
-		return "resource"
+		return atomObjectKindResource
 	default:
 		return pr.ObjectType
 	}

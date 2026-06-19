@@ -37,12 +37,12 @@ func TestAtomClientsCompatAuthenticatesBasicPasswordWithAtomLogin(t *testing.T) 
 		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
 			t.Fatalf("decode login request: %v", err)
 		}
-		if got.Identifier != "entity-1" || got.Secret != "device-secret" || got.Kind != "password" {
+		if got.Identifier != testEntityID || got.Secret != testDeviceSecret || got.Kind != "password" {
 			t.Fatalf("unexpected login request: %+v", got)
 		}
 		_ = json.NewEncoder(w).Encode(LoginResponse{
 			Token:     "jwt",
-			EntityID:  "entity-1",
+			EntityID:  testEntityID,
 			SessionID: "session-1",
 			ExpiresAt: time.Now().Add(time.Hour),
 		})
@@ -51,13 +51,13 @@ func TestAtomClientsCompatAuthenticatesBasicPasswordWithAtomLogin(t *testing.T) 
 
 	fallback := &recordingAuthn{}
 	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
-	token := smqauthn.AuthPack(smqauthn.BasicAuth, "entity-1", "device-secret")
+	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, testDeviceSecret)
 
 	res, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
 	if err != nil {
 		t.Fatalf("authenticate basic password: %v", err)
 	}
-	if !res.GetAuthenticated() || res.GetId() != "entity-1" {
+	if !res.GetAuthenticated() || res.GetId() != testEntityID {
 		t.Fatalf("unexpected response: %+v", res)
 	}
 	if fallback.called {
@@ -73,7 +73,7 @@ func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicPasswordRejected(t *tes
 
 	fallback := &recordingAuthn{session: smqauthn.Session{UserID: "entity-2"}}
 	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
-	token := smqauthn.AuthPack(smqauthn.BasicAuth, "entity-1", "atom_token")
+	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, "atom_token")
 
 	res, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
 	if err != nil {
@@ -95,7 +95,7 @@ func TestAtomClientsCompatDoesNotHideAtomPasswordLoginFailures(t *testing.T) {
 
 	fallback := &recordingAuthn{session: smqauthn.Session{UserID: "entity-2"}}
 	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
-	token := smqauthn.AuthPack(smqauthn.BasicAuth, "entity-1", "device-secret")
+	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, testDeviceSecret)
 
 	_, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
 	if err == nil {

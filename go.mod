@@ -1,6 +1,6 @@
 module github.com/absmach/magistrala
 
-go 1.26.3
+go 1.26.4
 
 require (
 	connectrpc.com/otelconnect v0.9.0
@@ -10,7 +10,7 @@ require (
 	github.com/absmach/senml v1.0.8
 	github.com/authzed/authzed-go v1.10.0
 	github.com/authzed/grpcutil v0.0.0-20260105210157-e237581949c2
-	github.com/authzed/spicedb v1.53.0
+	github.com/authzed/spicedb v1.54.0
 	github.com/caarlos0/env/v10 v10.0.0
 	github.com/caarlos0/env/v11 v11.4.1
 	github.com/dgraph-io/ristretto/v2 v2.4.0
@@ -156,7 +156,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
 	github.com/opencontainers/runc v1.2.8 // indirect
-	github.com/pelletier/go-toml/v2 v2.3.1
+	github.com/pelletier/go-toml/v2 v2.4.0
 	github.com/pion/dtls/v3 v3.1.4 // indirect
 	github.com/pion/logging v0.2.4 // indirect
 	github.com/pion/transport/v4 v4.0.2 // indirect
@@ -165,7 +165,7 @@ require (
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.68.1 // indirect
 	github.com/prometheus/procfs v0.20.1 // indirect
-	github.com/rabbitmq/amqp091-go v1.11.0
+	github.com/rabbitmq/amqp091-go v1.12.0
 	github.com/rs/zerolog v1.35.1 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sagikazarmark/locafero v0.12.0 // indirect

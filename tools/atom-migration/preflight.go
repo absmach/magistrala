@@ -15,9 +15,11 @@ func (m *migrator) preflight(ctx context.Context, rep *report) error {
 	checks := []func(context.Context, *report) error{
 		m.pfEmails,
 		m.pfHumanNames,
+		m.pfTenantNames,
 		m.pfTenantAlias,
 		m.pfEntityResourceAlias,
 		m.pfClientNames,
+		m.pfGroupNames,
 		m.pfOrphans,
 	}
 	for _, c := range checks {
@@ -81,7 +83,47 @@ func (m *migrator) pfHumanNames(ctx context.Context, rep *report) error {
 		return out
 	})
 	for name, n := range dups {
-		rep.block("human entity name %q collides across %d users (entities name,tenant unique)", name, n)
+		// entities(name, tenant_id) is NULLS DISTINCT and humans have tenant_id
+		// NULL, so duplicate human names do NOT violate the index — advisory only.
+		rep.warn("human entity name %q used by %d users (allowed; tenant NULL is NULLS DISTINCT)", name, n)
+	}
+	return nil
+}
+
+// pfTenantNames: tenants.name is UNIQUE and NOT NULL. Magistrala domain.name is
+// nullable and non-unique, so empty or duplicate names break the load.
+func (m *migrator) pfTenantNames(ctx context.Context, rep *report) error {
+	doms, err := readDomains(ctx, m.domainsDB)
+	if err != nil {
+		return err
+	}
+	names := make([]string, 0, len(doms))
+	for _, d := range doms {
+		if !d.Name.Valid || strings.TrimSpace(d.Name.String) == "" {
+			rep.block("domain %s has empty name (tenants.name is NOT NULL UNIQUE)", d.ID)
+			continue
+		}
+		names = append(names, d.Name.String)
+	}
+	for name, n := range dupGroups(func() []string { return names }) {
+		rep.block("domain name %q used by %d domains (tenants.name is UNIQUE)", name, n)
+	}
+	return nil
+}
+
+// pfGroupNames: object_groups(name, tenant_id) is UNIQUE. Magistrala dropped the
+// groups (domain_id, name) constraint, so same-domain dups are possible.
+func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
+	grps, err := readGroups(ctx, m.groupsDB)
+	if err != nil {
+		return err
+	}
+	keys := make([]string, 0, len(grps))
+	for _, g := range grps {
+		keys = append(keys, g.DomainID+"|"+g.Name)
+	}
+	for k, n := range dupGroups(func() []string { return keys }) {
+		rep.block("group name collision (%s) across %d groups in one tenant", k, n)
 	}
 	return nil
 }

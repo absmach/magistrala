@@ -487,10 +487,18 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 		roleID := derivedUUID("role", f.prefix, r.ID)
 		blockID := derivedUUID("block", f.prefix, r.ID)
 
+		// Atom roles are unique on (name, tenant_id). Magistrala object roles are
+		// per-instance, so many objects in one tenant can share a role name
+		// (e.g. every client has an "admin" role). Embed the object id to keep the
+		// Atom role name unique within the tenant.
+		roleName := f.prefix + ":" + r.EntityID + ":" + r.Name
+		if f.scopeMode == "tenant" {
+			roleName = f.prefix + ":" + r.Name // domain roles: one set per tenant
+		}
 		if err := m.exec(ctx,
 			`INSERT INTO roles (id, name, tenant_id, description, created_at, updated_at)
 			 VALUES ($1,$2,$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
-			roleID, f.prefix+":"+r.Name, tenant, "migrated from "+f.prefix+"_roles "+r.ID,
+			roleID, roleName, tenant, "migrated from "+f.prefix+"_roles "+r.ID,
 			ntToTime(r.CreatedAt), ntPtr(r.UpdatedAt),
 		); err != nil {
 			return err

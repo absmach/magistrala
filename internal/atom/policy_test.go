@@ -28,7 +28,7 @@ func TestPolicyEvaluatorCheckPolicy(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, atom.AuthzRequest{
 		SubjectID:  "user-1",
-		Action:     policies.ViewPermission,
+		Action:     "read",
 		ResourceID: "rule-1",
 		ObjectKind: "resource",
 		ObjectID:   "rule-1",

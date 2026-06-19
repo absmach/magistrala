@@ -84,8 +84,8 @@ func CapabilityName(action string) string {
 		return atomActionSubscribe
 	case normalized == "generate", normalized == "execute":
 		return atomActionExecute
-	case normalized == "list":
-		return "list"
+	case normalized == atomActionList:
+		return atomActionList
 	default:
 		return normalized
 	}

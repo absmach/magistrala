@@ -50,9 +50,9 @@ func policySubjectID(pr policies.Policy) string {
 
 func policyAction(pr policies.Policy) string {
 	if pr.Permission != "" {
-		return pr.Permission
+		return CapabilityName(pr.Permission)
 	}
-	return pr.Relation
+	return CapabilityName(pr.Relation)
 }
 
 func policyObjectKind(pr policies.Policy) string {

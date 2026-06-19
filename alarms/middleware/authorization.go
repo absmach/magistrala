@@ -120,6 +120,9 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListAlarms, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+		}
 	default:
 		return alarms.AlarmsPage{}, err
 	}

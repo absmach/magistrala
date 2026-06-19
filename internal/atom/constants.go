@@ -11,6 +11,7 @@ const (
 	atomActionPublish   = "publish"
 	atomActionSubscribe = "subscribe"
 	atomActionExecute   = "execute"
+	atomActionList      = "list"
 )
 
 const (

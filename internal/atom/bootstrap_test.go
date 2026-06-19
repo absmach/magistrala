@@ -103,7 +103,7 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 		t.Fatalf("bootstrap failed: %v", err)
 	}
 
-	for _, name := range []string{atomActionRead, atomActionWrite, atomActionDelete, atomActionManage, atomActionPublish, atomActionSubscribe, atomActionExecute} {
+	for _, name := range []string{atomActionRead, atomActionWrite, atomActionDelete, atomActionManage, atomActionPublish, atomActionSubscribe, atomActionExecute, atomActionList} {
 		if _, ok := actions[name]; !ok {
 			t.Fatalf("action %q was not ensured", name)
 		}
@@ -113,8 +113,11 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	}
 	assertApplicability(t, applicability, "publish-id", "resource:channel")
 	assertApplicability(t, applicability, "execute-id", "resource:rule")
+	assertApplicability(t, applicability, "list-id", "resource:rule")
 	assertApplicability(t, applicability, "execute-id", "resource:report")
+	assertApplicability(t, applicability, "list-id", "resource:report")
 	assertApplicability(t, applicability, "manage-id", "resource:alarm")
+	assertApplicability(t, applicability, "list-id", "resource:alarm")
 	if len(assignmentRules) != len(magistralaActionAssignmentRules) {
 		t.Fatalf("unexpected assignment guardrail count: got %d want %d", len(assignmentRules), len(magistralaActionAssignmentRules))
 	}

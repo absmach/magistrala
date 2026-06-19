@@ -267,9 +267,9 @@ func (c *Client) ListCapabilities(ctx context.Context) (CapabilityList, error) {
 	var out struct {
 		Actions CapabilityList `json:"actions"`
 	}
-	err := c.graphQL(ctx, `query Actions {
-		actions { items { id name description } }
-	}`, nil, &out)
+	err := c.graphQL(ctx, `query Actions($limit: Int!) {
+		actions(limit: $limit) { total items { id name description } }
+	}`, map[string]any{"limit": 100}, &out)
 	return out.Actions, err
 }
 
@@ -284,6 +284,116 @@ func (c *Client) CapabilityID(ctx context.Context, name string) (string, error) 
 		}
 	}
 	return "", Error{StatusCode: http.StatusNotFound, Message: "capability " + name + " not found"}
+}
+
+func (c *Client) CreateCapability(ctx context.Context, name, description string) (Capability, error) {
+	var out struct {
+		CreateAction Capability `json:"createAction"`
+	}
+	input := map[string]any{"name": name}
+	setIfNotEmpty(input, "description", description)
+	err := c.graphQL(ctx, `mutation CreateAction($input: CreateActionInput!) {
+		createAction(input: $input) { id name description }
+	}`, map[string]any{"input": input}, &out)
+	return out.CreateAction, err
+}
+
+func (c *Client) AddCapabilityApplicability(ctx context.Context, actionID, objectKind, objectType string) (CapabilityApplicability, error) {
+	var out struct {
+		AddActionApplicability CapabilityApplicability `json:"addActionApplicability"`
+	}
+	input := map[string]any{
+		"actionId":   actionID,
+		"objectKind": objectKind,
+	}
+	setIfNotEmpty(input, "objectType", objectType)
+	err := c.graphQL(ctx, `mutation AddActionApplicability($input: AddActionApplicabilityInput!) {
+		addActionApplicability(input: $input) {
+			action_id: actionId
+			action_name: actionName
+			description
+			object_kind: objectKind
+			object_type: objectType
+		}
+	}`, map[string]any{"input": input}, &out)
+	return out.AddActionApplicability, err
+}
+
+func (c *Client) ListActionAssignmentRules(ctx context.Context, spec ActionAssignmentRuleSpec) (ActionAssignmentRuleList, error) {
+	var out struct {
+		ActionAssignmentRules ActionAssignmentRuleList `json:"actionAssignmentRules"`
+	}
+	vars := map[string]any{"limit": 100, "offset": 0}
+	setIfNotEmpty(vars, "tenantId", spec.TenantID)
+	setIfNotEmpty(vars, "entityKind", spec.EntityKind)
+	setIfNotEmpty(vars, "actionName", spec.ActionName)
+	setIfNotEmpty(vars, "objectKind", spec.ObjectKind)
+	setIfNotEmpty(vars, "objectType", spec.ObjectType)
+	setIfNotEmpty(vars, "decision", spec.Decision)
+	err := c.graphQL(ctx, `query ActionAssignmentRules(
+		$tenantId: ID,
+		$entityKind: EntityKind,
+		$actionName: String,
+		$objectKind: String,
+		$objectType: String,
+		$decision: ActionAssignmentRuleDecision,
+		$limit: Int!,
+		$offset: Int!
+	) {
+		actionAssignmentRules(
+			tenantId: $tenantId,
+			entityKind: $entityKind,
+			actionName: $actionName,
+			objectKind: $objectKind,
+			objectType: $objectType,
+			decision: $decision,
+			limit: $limit,
+			offset: $offset
+		) {
+			total
+			items {
+				id
+				tenant_id: tenantId
+				entity_kind: entityKind
+				action_name: actionName
+				object_kind: objectKind
+				object_type: objectType
+				decision
+				is_absolute: isAbsolute
+				created_at: createdAt
+			}
+		}
+	}`, vars, &out)
+	return out.ActionAssignmentRules, err
+}
+
+func (c *Client) CreateActionAssignmentRule(ctx context.Context, spec ActionAssignmentRuleSpec) (ActionAssignmentRule, error) {
+	var out struct {
+		CreateActionAssignmentRule ActionAssignmentRule `json:"createActionAssignmentRule"`
+	}
+	input := map[string]any{
+		"entityKind": spec.EntityKind,
+		"actionName": spec.ActionName,
+		"objectKind": spec.ObjectKind,
+		"decision":   spec.Decision,
+		"isAbsolute": spec.IsAbsolute,
+	}
+	setIfNotEmpty(input, "tenantId", spec.TenantID)
+	setIfNotEmpty(input, "objectType", spec.ObjectType)
+	err := c.graphQL(ctx, `mutation CreateActionAssignmentRule($input: CreateActionAssignmentRuleInput!) {
+		createActionAssignmentRule(input: $input) {
+			id
+			tenant_id: tenantId
+			entity_kind: entityKind
+			action_name: actionName
+			object_kind: objectKind
+			object_type: objectType
+			decision
+			is_absolute: isAbsolute
+			created_at: createdAt
+		}
+	}`, map[string]any{"input": input}, &out)
+	return out.CreateActionAssignmentRule, err
 }
 
 func (c *Client) CreatePermissionBlock(ctx context.Context, block CreatePermissionBlock) (PermissionBlock, error) {

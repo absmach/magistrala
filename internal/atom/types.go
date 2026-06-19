@@ -88,6 +88,49 @@ type Capability struct {
 
 type CapabilityList struct {
 	Items []Capability `json:"items"`
+	Total int64        `json:"total,omitempty"`
+}
+
+type CapabilityApplicability struct {
+	ActionID    string `json:"action_id"`
+	ActionName  string `json:"action_name"`
+	Description string `json:"description,omitempty"`
+	ObjectKind  string `json:"object_kind"`
+	ObjectType  string `json:"object_type,omitempty"`
+}
+
+type CapabilityApplicabilitySpec struct {
+	ActionName  string
+	Description string
+	ObjectKind  string
+	ObjectType  string
+}
+
+type ActionAssignmentRule struct {
+	ID         string `json:"id"`
+	TenantID   string `json:"tenant_id,omitempty"`
+	EntityKind string `json:"entity_kind"`
+	ActionName string `json:"action_name"`
+	ObjectKind string `json:"object_kind"`
+	ObjectType string `json:"object_type,omitempty"`
+	Decision   string `json:"decision"`
+	IsAbsolute bool   `json:"is_absolute"`
+	CreatedAt  string `json:"created_at,omitempty"`
+}
+
+type ActionAssignmentRuleList struct {
+	Items []ActionAssignmentRule `json:"items"`
+	Total int64                  `json:"total,omitempty"`
+}
+
+type ActionAssignmentRuleSpec struct {
+	TenantID   string
+	EntityKind string
+	ActionName string
+	ObjectKind string
+	ObjectType string
+	Decision   string
+	IsAbsolute bool
 }
 
 type PermissionBlock struct {

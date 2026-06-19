@@ -21,7 +21,7 @@ type loggingMiddleware struct {
 	svc    auth.Service
 }
 
-// NewLogging adds logging facilities to the core service.
+// NewLogging adds logging facilities to the service.
 func NewLogging(svc auth.Service, logger *slog.Logger) auth.Service {
 	return &loggingMiddleware{logger, svc}
 }

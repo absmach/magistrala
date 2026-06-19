@@ -27,7 +27,7 @@ import "github.com/absmach/magistrala/pkg/authn"
 | `events` | Event store client abstractions and subscriber utilities. |
 | `prometheus` | Metrics collectors for request counts/latency. |
 | `jaeger`, `tracing` | OpenTelemetry tracing configuration and instrumentation helpers. |
-| `channels`, `clients`, `groups`, `domains`, `roles` | Shared types and helpers for core Magistrala domain services. |
+| `channels`, `clients`, `groups`, `domains`, `roles` | Shared types and helpers for Magistrala domain services. |
 | `messaging`, `connections`, `callout` | Messaging DTOs, connection types, and outbound callout helpers. |
 | `sdk` | Go SDK for interacting with Magistrala services. |
 | `errors` | Error wrappers with consistent error typing. |

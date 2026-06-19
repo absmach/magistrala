@@ -20,7 +20,7 @@ type metricsMiddleware struct {
 	svc     readers.MessageRepository
 }
 
-// MetricsMiddleware instruments core service by tracking request count and latency.
+// MetricsMiddleware instruments service by tracking request count and latency.
 func MetricsMiddleware(svc readers.MessageRepository, counter metrics.Counter, latency metrics.Histogram) readers.MessageRepository {
 	return &metricsMiddleware{
 		counter: counter,

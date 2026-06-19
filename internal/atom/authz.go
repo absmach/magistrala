@@ -47,23 +47,23 @@ func SubjectID(session authn.Session) string {
 func ObjectKind(legacyObjectType, resourceKind string) string {
 	switch legacyObjectType {
 	case policies.DomainType:
-		return "tenant"
+		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
 	case policies.ClientType:
-		return "entity"
+		return atomObjectKindEntity
 	case policies.GroupType:
-		return "group"
+		return atomObjectKindGroup
 	case policies.ChannelType, policies.RulesType, policies.ReportsType, policies.AlarmsType:
-		return "resource"
+		return atomObjectKindResource
 	}
 	switch resourceKind {
-	case KindClient, "device":
-		return "entity"
-	case "group":
-		return "group"
+	case KindClient, atomKindDevice:
+		return atomObjectKindEntity
+	case atomKindGroup:
+		return atomObjectKindGroup
 	case KindChannel, KindRule, KindReport, KindAlarm:
-		return "resource"
+		return atomObjectKindResource
 	default:
 		return resourceKind
 	}

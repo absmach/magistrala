@@ -188,9 +188,9 @@ func isSupportedObjectList(pr policies.Policy) bool {
 
 func policyGrantSubjectKind(pr policies.Policy) string {
 	if pr.SubjectType == policies.GroupType || pr.SubjectKind == policies.GroupsKind {
-		return "group"
+		return atomObjectKindGroup
 	}
-	return "entity"
+	return atomObjectKindEntity
 }
 
 func policyGrantScopeMode(pr policies.Policy) string {
@@ -198,28 +198,28 @@ func policyGrantScopeMode(pr policies.Policy) string {
 	case policies.PlatformType:
 		return "platform"
 	case policies.DomainType:
-		return "tenant"
+		return atomObjectKindTenant
 	default:
-		return "object"
+		return atomScopeModeObject
 	}
 }
 
 func policyGrantObjectKind(pr policies.Policy) string {
-	if policyGrantScopeMode(pr) != "object" {
+	if policyGrantScopeMode(pr) != atomScopeModeObject {
 		return ""
 	}
 	if pr.ObjectType == policies.ClientType {
-		return "entity"
+		return atomObjectKindEntity
 	}
-	return "resource"
+	return atomObjectKindResource
 }
 
 func policyGrantObjectType(pr policies.Policy) string {
-	if policyGrantScopeMode(pr) != "object" {
+	if policyGrantScopeMode(pr) != atomScopeModeObject {
 		return ""
 	}
 	if pr.ObjectType == policies.ClientType {
-		return "entity:" + entityKind(KindClient)
+		return atomObjectKindEntity + ":" + entityKind(KindClient)
 	}
 	switch pr.ObjectType {
 	case policies.ChannelType:

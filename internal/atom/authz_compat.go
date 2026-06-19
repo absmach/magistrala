@@ -57,12 +57,12 @@ func CapabilityName(action string) string {
 	case normalized == policies.AdminPermission,
 		normalized == "admin_permission",
 		strings.Contains(normalized, "manage_role"):
-		return "manage"
+		return atomActionManage
 	case normalized == policies.ViewPermission,
-		normalized == "read",
+		normalized == atomActionRead,
 		strings.Contains(normalized, "read"),
 		strings.Contains(normalized, "view"):
-		return "read"
+		return atomActionRead
 	case normalized == policies.CreatePermission,
 		normalized == "write",
 		strings.Contains(normalized, "create"),
@@ -73,17 +73,17 @@ func CapabilityName(action string) string {
 		strings.Contains(normalized, "assign"),
 		strings.Contains(normalized, "acknowledge"),
 		strings.Contains(normalized, "resolve"):
-		return "write"
+		return atomActionWrite
 	case normalized == policies.DeletePermission,
 		strings.Contains(normalized, "delete"),
 		strings.Contains(normalized, "remove"):
-		return "delete"
+		return atomActionDelete
 	case normalized == policies.PublishPermission:
-		return "publish"
+		return atomActionPublish
 	case normalized == policies.SubscribePermission:
-		return "subscribe"
+		return atomActionSubscribe
 	case normalized == "generate", normalized == "execute":
-		return "execute"
+		return atomActionExecute
 	case normalized == "list":
 		return "list"
 	default:
@@ -98,9 +98,9 @@ func legacyResourceKind(objectKind, objectType string) string {
 	case policies.ClientsKind, policies.NewClientKind:
 		return "client"
 	case policies.GroupsKind, policies.NewGroupKind:
-		return "group"
+		return atomObjectKindGroup
 	case policies.DomainsKind:
-		return "tenant"
+		return atomObjectKindTenant
 	default:
 		switch objectType {
 		case policies.ChannelType:
@@ -108,9 +108,9 @@ func legacyResourceKind(objectKind, objectType string) string {
 		case policies.ClientType:
 			return "client"
 		case policies.GroupType:
-			return "group"
+			return atomObjectKindGroup
 		case policies.DomainType:
-			return "tenant"
+			return atomObjectKindTenant
 		case policies.RulesType:
 			return KindRule
 		case policies.ReportsType:

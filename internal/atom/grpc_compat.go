@@ -145,7 +145,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 		SubjectID:  subjectID,
 		Action:     action,
 		ResourceID: in.GetChannelId(),
-		ObjectKind: "resource",
+		ObjectKind: atomObjectKindResource,
 		ObjectID:   in.GetChannelId(),
 		Context: map[string]any{
 			"domain_id": in.GetDomainId(),
@@ -196,11 +196,11 @@ func (c AtomChannelsCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.
 
 func atomStatusCode(value string) uint32 {
 	switch strings.ToLower(value) {
-	case "", "active", "enabled":
+	case "", atomStatusActive, atomStatusEnabled:
 		return 0
-	case "inactive", "disabled", "frozen", "suspended":
+	case atomStatusInactive, atomStatusDisabled, atomStatusFrozen, atomStatusSuspended:
 		return 1
-	case "deleted":
+	case atomStatusDeleted:
 		return 2
 	default:
 		return 0

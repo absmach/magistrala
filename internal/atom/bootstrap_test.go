@@ -15,16 +15,16 @@ import (
 
 func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *testing.T) {
 	actions := map[string]Capability{
-		"read":   {ID: "read-id", Name: "read"},
-		"write":  {ID: "write-id", Name: "write"},
-		"delete": {ID: "delete-id", Name: "delete"},
-		"manage": {ID: "manage-id", Name: "manage"},
+		atomActionRead:   {ID: "read-id", Name: atomActionRead},
+		atomActionWrite:  {ID: "write-id", Name: atomActionWrite},
+		atomActionDelete: {ID: "delete-id", Name: atomActionDelete},
+		atomActionManage: {ID: "manage-id", Name: atomActionManage},
 	}
 	var applicability []map[string]any
 	var assignmentRules []map[string]any
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/graphql" {
+		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		var payload struct {
@@ -103,7 +103,7 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 		t.Fatalf("bootstrap failed: %v", err)
 	}
 
-	for _, name := range []string{"read", "write", "delete", "manage", "publish", "subscribe", "execute"} {
+	for _, name := range []string{atomActionRead, atomActionWrite, atomActionDelete, atomActionManage, atomActionPublish, atomActionSubscribe, atomActionExecute} {
 		if _, ok := actions[name]; !ok {
 			t.Fatalf("action %q was not ensured", name)
 		}
@@ -118,14 +118,14 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	if len(assignmentRules) != len(magistralaActionAssignmentRules) {
 		t.Fatalf("unexpected assignment guardrail count: got %d want %d", len(assignmentRules), len(magistralaActionAssignmentRules))
 	}
-	assertAssignmentRule(t, assignmentRules, "device", "publish", "resource", "resource:channel", "allow")
-	assertAssignmentRule(t, assignmentRules, "device", "subscribe", "resource", "resource:channel", "allow")
+	assertAssignmentRule(t, assignmentRules, atomKindDevice, atomActionPublish, atomObjectKindResource, "resource:channel", "allow")
+	assertAssignmentRule(t, assignmentRules, atomKindDevice, atomActionSubscribe, atomObjectKindResource, "resource:channel", "allow")
 }
 
 func assertApplicability(t *testing.T, entries []map[string]any, actionID, objectType string) {
 	t.Helper()
 	for _, entry := range entries {
-		if entry["actionId"] == actionID && entry["objectKind"] == "resource" && entry["objectType"] == objectType {
+		if entry["actionId"] == actionID && entry["objectKind"] == atomObjectKindResource && entry["objectType"] == objectType {
 			return
 		}
 	}

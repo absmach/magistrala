@@ -1,0 +1,7 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+services:
+  atom-ui:
+    profiles:
+      - atom-ui

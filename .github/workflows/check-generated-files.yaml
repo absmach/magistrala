@@ -50,6 +50,7 @@ jobs:
               - "pkg/messaging/*.pb.go"
 
             mocks:
+              - "tools/config/.mockery.yaml"
               - ".github/workflows/check-generated-files.yaml"
               - "pkg/sdk/sdk.go"
               - "users/postgres/clients.go"

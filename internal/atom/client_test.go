@@ -17,7 +17,7 @@ import (
 func TestUpsertResourceCreatesThenUpdatesOnConflict(t *testing.T) {
 	var operations []string
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/graphql" {
+		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		body, _ := io.ReadAll(r.Body)
@@ -61,7 +61,7 @@ func TestUpsertResourceCreatesThenUpdatesOnConflict(t *testing.T) {
 
 func TestListResources(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost || r.URL.Path != "/graphql" {
+		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		var payload struct {
@@ -70,7 +70,7 @@ func TestListResources(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
-		if payload.Variables["kind"] != KindRule || payload.Variables["tenantId"] != "domain-1" {
+		if payload.Variables["kind"] != KindRule || payload.Variables["tenantId"] != testDomainID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -85,7 +85,7 @@ func TestListResources(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.ListResources(context.Background(), Query{Kind: KindRule, TenantID: "domain-1"})
+	got, err := client.ListResources(context.Background(), Query{Kind: KindRule, TenantID: testDomainID})
 	if err != nil {
 		t.Fatalf("list failed: %v", err)
 	}

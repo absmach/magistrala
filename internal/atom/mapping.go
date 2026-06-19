@@ -53,14 +53,14 @@ func EntityFromFields(f ObjectFields) Entity {
 
 func tenantStatus(status string) string {
 	switch status {
-	case "enabled":
-		return "active"
-	case "disabled":
-		return "inactive"
+	case atomStatusEnabled:
+		return atomStatusActive
+	case atomStatusDisabled:
+		return atomStatusInactive
 	case "freezed":
-		return "frozen"
-	case "deleted":
-		return "deleted"
+		return atomStatusFrozen
+	case atomStatusDeleted:
+		return atomStatusDeleted
 	default:
 		return status
 	}
@@ -68,10 +68,10 @@ func tenantStatus(status string) string {
 
 func entityStatus(status string) string {
 	switch status {
-	case "enabled":
-		return "active"
-	case "disabled", "deleted":
-		return "inactive"
+	case atomStatusEnabled:
+		return atomStatusActive
+	case atomStatusDisabled, atomStatusDeleted:
+		return atomStatusInactive
 	default:
 		return status
 	}
@@ -80,9 +80,9 @@ func entityStatus(status string) string {
 func entityKind(kind string) string {
 	switch kind {
 	case KindUser:
-		return "human"
+		return atomKindHuman
 	case KindClient:
-		return "device"
+		return atomKindDevice
 	default:
 		return kind
 	}
@@ -175,7 +175,8 @@ func cloneMap(in map[string]any) map[string]any {
 func timeString(t interface {
 	IsZero() bool
 	Format(string) string
-}) string {
+},
+) string {
 	if t.IsZero() {
 		return ""
 	}

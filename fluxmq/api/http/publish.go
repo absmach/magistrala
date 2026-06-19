@@ -61,7 +61,9 @@ func MakePublishHandler(
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(http.StatusOK)
-		_ = json.NewEncoder(w).Encode(publishResponse{Status: "ok"})
+		if err := json.NewEncoder(w).Encode(publishResponse{Status: "ok"}); err != nil {
+			return
+		}
 	})
 	return r
 }
@@ -129,7 +131,9 @@ func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(http.StatusAccepted)
-	_ = json.NewEncoder(w).Encode(publishResponse{Status: "accepted"})
+	if err := json.NewEncoder(w).Encode(publishResponse{Status: "accepted"}); err != nil {
+		return
+	}
 }
 
 func (h publishHandler) ensureUserPublish(
@@ -248,5 +252,7 @@ func attrString(attrs atom.Attributes, key string) string {
 func writeError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", contentType)
 	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(errorResponse{Error: message})
+	if err := json.NewEncoder(w).Encode(errorResponse{Error: message}); err != nil {
+		return
+	}
 }

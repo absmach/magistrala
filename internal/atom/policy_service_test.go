@@ -73,8 +73,8 @@ func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 
 	page, err := svc.ListAllObjects(context.Background(), policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     "domain-1_user-1",
-		Domain:      "domain-1",
+		Subject:     testDomainID + "_user-1",
+		Domain:      testDomainID,
 		ObjectType:  policies.ClientType,
 		Permission:  policies.ViewPermission,
 	})
@@ -89,10 +89,10 @@ func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 	}
 	query := client.queries[0]
 	if query.SubjectID != "user-1" ||
-		query.Action != "read" ||
-		query.ObjectKind != "entity" ||
+		query.Action != atomActionRead ||
+		query.ObjectKind != atomObjectKindEntity ||
 		query.ObjectType != entityKind(KindClient) ||
-		query.TenantID != "domain-1" {
+		query.TenantID != testDomainID {
 		t.Fatalf("unexpected authorized object query: %+v", query)
 	}
 }
@@ -102,8 +102,8 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	err := svc.AddPolicy(context.Background(), policies.Policy{
-		Domain:      "domain-1",
-		Subject:     "domain-1_client-1",
+		Domain:      testDomainID,
+		Subject:     testDomainID + "_client-1",
 		SubjectType: policies.ClientType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
@@ -116,9 +116,9 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
 	}
 	block := client.blocks[0]
-	if block.TenantID != "domain-1" ||
-		block.ScopeMode != "object" ||
-		block.ObjectKind != "resource" ||
+	if block.TenantID != testDomainID ||
+		block.ScopeMode != atomScopeModeObject ||
+		block.ObjectKind != atomObjectKindResource ||
 		block.ObjectType != "resource:channel" ||
 		block.ObjectID != "channel-1" ||
 		block.Effect != "allow" ||
@@ -127,8 +127,8 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 		t.Fatalf("unexpected permission block: %+v", block)
 	}
 	created := client.created[0]
-	if created.TenantID != "domain-1" ||
-		created.SubjectKind != "entity" ||
+	if created.TenantID != testDomainID ||
+		created.SubjectKind != atomObjectKindEntity ||
 		created.SubjectID != "client-1" ||
 		created.PermissionBlockID != "block-1" {
 		t.Fatalf("unexpected direct policy: %+v", created)
@@ -144,7 +144,7 @@ func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testi
 				PermissionBlock: PermissionBlock{
 					ID:         "keep-block",
 					ScopeMode:  "object",
-					ObjectKind: "resource",
+					ObjectKind: atomObjectKindResource,
 					ObjectType: "resource:channel",
 					ObjectID:   "channel-1",
 					Actions:    []Capability{{ID: "cap-other"}},
@@ -155,7 +155,7 @@ func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testi
 				PermissionBlock: PermissionBlock{
 					ID:         "delete-block",
 					ScopeMode:  "object",
-					ObjectKind: "resource",
+					ObjectKind: atomObjectKindResource,
 					ObjectType: "resource:channel",
 					ObjectID:   "channel-1",
 					Actions:    []Capability{{ID: "cap-subscribe"}},
@@ -166,7 +166,7 @@ func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testi
 	svc := NewPolicyService(client)
 
 	err := svc.DeletePolicyFilter(context.Background(), policies.Policy{
-		Domain:      "domain-1",
+		Domain:      testDomainID,
 		Subject:     "domain-1_client-1",
 		SubjectType: policies.ClientType,
 		Object:      "channel-1",

@@ -49,13 +49,22 @@ go run ./tools/atom-migration ... --apply
 | `--report-dir` | `tools/atom-migration/report` | JSON+markdown report output |
 | `--unmapped-action` | `manage` | fallback for unmapped MG actions: `manage` or `skip` |
 
-## What it does NOT migrate
+## Credentials are re-issued, not carried
 
+Atom authenticates API keys by a credential UUID embedded in the key
+(`atom_<32hex>_<64hex>`, argon2 over the raw 32-byte secret — see Atom
+`src/auth.rs`). Magistrala secrets fit neither the format nor the lookup, so:
+
+- **Device keys** are re-issued. On `--apply` the migrator writes
+  `report/device-keys-<stamp>.csv` (`client_id,domain_id,identity,api_key`, mode
+  0600). Re-provision devices/bootstrap configs from it, then delete it — the
+  plaintext secret is shown only once.
 - **User passwords** (bcrypt → argon2 unconvertible): users land with no password
-  credential. Report lists every user for the email-based reset flow.
-- **PAT secrets** (hashed, unrecoverable): PAT metadata migrates; secrets must be
-  re-issued. Listed in the report's `pat_reissue` TODO.
-- Transient data: OTP verifications, short-lived auth `keys`, login attempts.
+  credential. Report's `password_reset` TODO lists every user for the email reset.
+- **PAT secrets** (hashed + format): metadata migrates, secret must be re-issued.
+  Report's `pat_reissue` TODO.
+- Transient data not migrated: OTP verifications, short-lived auth `keys`, login
+  attempts.
 
 ## Idempotency
 

@@ -6,8 +6,11 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -33,6 +36,9 @@ type migrator struct {
 	clientDomain  map[string]string // client id -> domain id
 	channelDomain map[string]string
 	groupDomain   map[string]string
+
+	reportDir  string
+	deviceKeys [][]string // client_id, domain_id, identity, plaintext key (apply only)
 }
 
 func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error) {
@@ -104,7 +110,32 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 			return fmt.Errorf("phase %s: %w", p.name, err)
 		}
 	}
+	if m.apply && len(m.deviceKeys) > 0 {
+		if err := m.writeDeviceKeys(); err != nil {
+			return fmt.Errorf("write device keys: %w", err)
+		}
+	}
 	return nil
+}
+
+// writeDeviceKeys exports the re-issued device API keys (secret shown once) for
+// re-provisioning. Treat the file as a secret and delete after use.
+func (m *migrator) writeDeviceKeys() error {
+	if err := os.MkdirAll(m.reportDir, 0o755); err != nil {
+		return err
+	}
+	path := filepath.Join(m.reportDir, "device-keys-"+time.Now().UTC().Format("20060102-150405")+".csv")
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	w := csv.NewWriter(f)
+	defer w.Flush()
+	if err := w.Write([]string{"client_id", "domain_id", "identity", "api_key"}); err != nil {
+		return err
+	}
+	return w.WriteAll(m.deviceKeys)
 }
 
 func (m *migrator) loadLookups(ctx context.Context) error {
@@ -267,23 +298,29 @@ func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
 		if _, ok := m.clientDomain[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
 			continue
 		}
-		hash, err := hashArgon2id([]byte(c.Secret.String))
+		// Atom cannot reuse the Magistrala secret (format + lookup differ); the
+		// device key is re-issued in atom_<credId>_<secret> form and exported for
+		// re-provisioning. See newAtomAPIKey / PLAN §5.
+		credID, plaintext, hash, err := newAtomAPIKey(c.ID)
 		if err != nil {
 			return err
 		}
-		// Deterministic credential id so re-runs are idempotent.
-		credID := derivedUUID("cred", "device", c.ID)
 		if err := m.exec(ctx,
 			`INSERT INTO credentials (id, entity_id, kind, identifier, secret_hash, metadata, status)
-			 VALUES ($1,$2,'api_key',$3,$4,'{"source":"magistrala-client-secret"}',$5)
+			 VALUES ($1,$2,'api_key',$3,$4,'{"source":"magistrala-client-reissued"}',$5)
 			 ON CONFLICT (id) DO NOTHING`,
 			credID, c.ID, c.ID, hash, statusCred(c.Status),
 		); err != nil {
 			return err
 		}
+		if m.apply {
+			m.deviceKeys = append(m.deviceKeys, []string{c.ID, c.DomainID, c.Identity.String, plaintext})
+		}
 		rep.count("credentials.devices", 1)
 	}
-	rep.todo("device_key_format", "confirm Atom device-auth accepts bare secret looked up by identifier (PLAN §5)")
+	if len(m.deviceKeys) > 0 {
+		rep.todo("device_reprovision", fmt.Sprintf("%d device keys re-issued -> see device-keys CSV in report dir", len(m.deviceKeys)))
+	}
 	return nil
 }
 

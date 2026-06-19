@@ -50,6 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("init: %v", err)
 	}
+	m.reportDir = *reportDir
 	defer m.Close()
 
 	rep := newReport(mode)

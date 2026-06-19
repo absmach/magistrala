@@ -108,9 +108,9 @@ Magistrala groups organize clients/channels within a domain (hierarchical,
 | `parent_id` | `object_group_hierarchy(parent_id, child_id, tenant_id)` |
 Client/channel `parent_group_id` → `object_group_entities` / `object_group_resources`.
 
-> If any Magistrala groups are used purely as *principal* groupings (users), they'd
-> map to `principal_groups` instead. Default Magistrala groups are object groupings,
-> so use `object_groups`. Flag mixed cases in the dry-run report.
+> Confirmed: Magistrala groups have no user-membership table — only
+> `parent_group_id` (clients/channels) and group-scoped roles. They are always
+> object groupings → `object_groups`. There is no principal-group case to handle.
 
 ---
 
@@ -168,23 +168,31 @@ ones are already reflected as memberships.
 
 ## 5. Credentials (PATs + device secrets)
 
-### Device secrets (clients.secret)
-Plaintext in Magistrala (looked up `WHERE secret = ...`). Stored in Atom as
-`credentials(kind='api_key', secret_hash=argon2(secret))`.
+### Device secrets (clients.secret) — RESOLVED: re-issue keys
 
-**Caveat — key format:** Atom's native API-key format is
-`atom_<credId>_<secret>` with O(1) lookup by embedded id. A raw Magistrala secret
-has no envelope. Two sub-options (pick during implementation, default = A):
-- **A. Carry raw secret as-is** into `secret_hash`=argon2(secret), `identifier`=
-  client id. Requires Atom's device-auth path to accept a bare secret and look up
-  by identifier. Confirm Atom supports this lookup mode; if not, choose B.
-- **B. Re-issue keys.** Generate new `atom_...` keys; export an id→newkey CSV so
-  devices/bootstrap configs can be reflashed. Higher operational cost.
+Magistrala stores the device secret in plaintext (looked up `WHERE secret = ...`).
+Atom **cannot reuse it.** Verified against Atom source (`src/auth.rs`):
+- `auth_from_api_key` calls `parse_api_key` then looks up `WHERE c.id = <embedded
+  cred id>` — lookup is by the credential UUID **embedded in the key**, not by an
+  identifier.
+- `parse_api_key` requires exactly `atom_<32 hex cred-id>_<64 hex secret>` (secret
+  must be 32 raw bytes); anything else is rejected as malformed.
 
-This is the main Atom-side compatibility question to confirm before running.
+So a raw Magistrala secret neither fits the format nor is reachable by lookup.
+**Resolution: re-issue.** `phaseDeviceCreds` (`newAtomAPIKey`) mints a fresh
+`atom_<credId>_<secret>` per device, stores `argon2(raw 32-byte secret)` with
+`credentials.id = credId`, and exports `device-keys-<stamp>.csv`
+(`client_id, domain_id, identity, api_key`, mode 0600) for re-provisioning
+(bootstrap configs / device reflash). Credential id is derived (uuidv5 of client
+id) so re-runs are idempotent; the plaintext key is only emitted by the apply run
+that generated it. Validated: emitted key parses and argon2-verifies exactly as
+Atom's auth path does.
 
-### PATs (auth.pats + pat_scopes)
-`pats.secret` is hashed (Magistrala PAT format), so plaintext isn't recoverable.
+### PATs (auth.pats + pat_scopes) — RESOLVED: re-issue
+
+`pats.secret` is hashed (Magistrala PAT format), so plaintext isn't recoverable;
+even if it were, it would not fit Atom's `atom_<credId>_<secret>` format (same
+constraint as device keys above). So PATs are **re-issue, no exception.**
 - Migrate metadata as `credentials(kind='api_key', entity_id=user_id,
   identifier=pat.id, metadata={name,description,scopes,expires_at,...},
   status=revoked?‘revoked’:‘active’, expires_at)`.
@@ -285,13 +293,20 @@ tools/atom-migration/
 
 ---
 
-## 11. Open items to confirm before build
+## 11. Open items — status
 
-1. **Device key format** (§5): does Atom's device-auth accept a bare secret looked
-   up by `identifier`, or must keys be re-issued in `atom_<id>_<secret>` form?
-2. **argon2 params** Atom expects (so migrator-produced hashes verify).
-3. **Groups semantics** (§3.5): confirm all Magistrala groups are object groupings
-   (→ object_groups) vs any principal groupings.
-4. **PAT re-issue** acceptance (§5) — same plaintext limitation as passwords.
-5. Whether `created_by`/`owner_id` referencing **non-migrated/system** users should
-   be nulled or pointed at the seeded admin entity.
+1. **Device key format** (§5) — RESOLVED. Atom looks up by embedded cred UUID and
+   requires `atom_<32hex>_<64hex>`; MG secrets can't be carried → re-issue + CSV
+   export. Implemented + validated.
+2. **argon2 params** — RESOLVED. Atom uses `Argon2::default()` (argon2id, v=19,
+   m=19456, t=2, p=1, 32-byte tag); migrator emits the matching PHC string and
+   re-issued keys verify against Atom's path.
+3. **Groups semantics** (§3.5) — RESOLVED. Magistrala groups have no user-member
+   table; only `parent_group_id` (clients/channels) + group-scoped roles. They are
+   object groupings → `object_groups`. No principal-group case.
+4. **PAT re-issue** (§5) — RESOLVED. Re-issue, no exception (hashed + format).
+5. `created_by`/`owner_id` to non-migrated/system users — current behaviour:
+   `tenants.created_by/updated_by` and `resources.owner_id` are set only when the
+   referenced user migrated, else left NULL. Operator may prefer pointing these at
+   the seeded admin entity (`...0001`); a one-line change in the backfill/owner
+   logic if desired. **Only remaining choice.**

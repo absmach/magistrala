@@ -203,9 +203,12 @@ constraint as device keys above). So PATs are **re-issue, no exception.**
 
 ---
 
-## 6. Data-quality guardrails (run as pre-flight, fail loud)
+## 6. Data-quality guardrails (pre-flight, fail loud) — IMPLEMENTED
 
-Atom migrations 004/005 enforce alias rules. Pre-flight the source data:
+`preflight.go` runs all checks read-only before any write. Blocking issues abort
+an `--apply` run (`preflightGate`); warnings are advisory. Dry-run reports both.
+Checks below; the email check matters mainly for dumps merged across instances
+(a single Magistrala enforces email/username uniqueness in its own tables).
 1. **Tenant alias** (domain.route): lowercase-fold; must match slug regex and **not**
    be UUID-shaped; globally unique case-insensitively. Offending rows → report,
    require operator fix or null the alias.

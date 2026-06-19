@@ -87,6 +87,12 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 	if err := m.loadLookups(ctx); err != nil {
 		return fmt.Errorf("load atom lookups: %w", err)
 	}
+	if err := m.preflight(ctx, rep); err != nil {
+		return fmt.Errorf("preflight: %w", err)
+	}
+	if err := m.preflightGate(rep); err != nil {
+		return err
+	}
 	// Order is FK-safe; see PLAN.md §7.
 	phases := []struct {
 		name string

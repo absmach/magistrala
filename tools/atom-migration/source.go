@@ -190,6 +190,20 @@ func readPATs(ctx context.Context, db *sqlx.DB) ([]srcPAT, error) {
 	return out, db.SelectContext(ctx, &out, q)
 }
 
+type srcPATScope struct {
+	PatID      string         `db:"pat_id"`
+	DomainID   sql.NullString `db:"domain_id"`
+	EntityType string         `db:"entity_type"`
+	Operation  string         `db:"operation"`
+	EntityID   string         `db:"entity_id"`
+}
+
+func readPATScopes(ctx context.Context, db *sqlx.DB) ([]srcPATScope, error) {
+	var out []srcPATScope
+	q := `SELECT pat_id, domain_id, entity_type, operation, entity_id FROM pat_scopes`
+	return out, db.SelectContext(ctx, &out, q)
+}
+
 type srcInvitation struct {
 	InvitedBy   string       `db:"invited_by"`
 	InviteeID   string       `db:"invitee_user_id"`

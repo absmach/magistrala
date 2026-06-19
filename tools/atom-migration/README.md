@@ -38,6 +38,20 @@ go run ./tools/atom-migration \
 go run ./tools/atom-migration ... --apply
 ```
 
+A pre-flight runs first (read-only): blocking data-quality issues (duplicate
+emails, per-tenant alias/name collisions) abort the apply before any write;
+warnings are advisory. Same checks run in dry-run for the report.
+
+## Verify (after apply)
+
+```bash
+go run ./tools/atom-migration ... --verify
+```
+
+Read-only reconciliation: every source row that should have migrated must exist in
+Atom (tenants, entities, resources, object_groups) and every device→channel
+connection must have a matching authz edge. Missing rows are reported as blocking.
+
 ## Flags
 
 | flag | default | meaning |

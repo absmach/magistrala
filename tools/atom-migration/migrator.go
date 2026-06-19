@@ -578,9 +578,25 @@ func (m *migrator) insertBlock(ctx context.Context, blockID string, f roleScope,
 }
 
 func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
-	conns, err := readConnections(ctx, m.clientsDB)
+	// Both clients-db and channels-db keep their own connections copy; union and
+	// dedup so neither side's view is missed.
+	cliConns, err := readConnections(ctx, m.clientsDB)
 	if err != nil {
 		return err
+	}
+	chConns, err := readConnections(ctx, m.channelsDB)
+	if err != nil {
+		return err
+	}
+	seenConn := map[string]bool{}
+	conns := make([]srcConnection, 0, len(cliConns)+len(chConns))
+	for _, c := range append(cliConns, chConns...) {
+		k := c.ChannelID + "|" + c.ClientID + "|" + c.DomainID + "|" + fmt.Sprint(c.Type)
+		if seenConn[k] {
+			continue
+		}
+		seenConn[k] = true
+		conns = append(conns, c)
 	}
 	for _, c := range conns {
 		dom, ok := m.channelDomain[c.ChannelID]
@@ -626,6 +642,17 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 	if err != nil {
 		return err
 	}
+	scopeRows, err := readPATScopes(ctx, m.authDB)
+	if err != nil {
+		return err
+	}
+	scopesByPAT := map[string][]map[string]string{}
+	for _, s := range scopeRows {
+		scopesByPAT[s.PatID] = append(scopesByPAT[s.PatID], map[string]string{
+			"domain_id": s.DomainID.String, "entity_type": s.EntityType,
+			"operation": s.Operation, "entity_id": s.EntityID,
+		})
+	}
 	for _, p := range pats {
 		if !p.UserID.Valid || !m.migratedUsers[p.UserID.String] {
 			rep.skip("pat_orphan_user")
@@ -637,7 +664,7 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 		}
 		meta, _ := json.Marshal(map[string]any{
 			"source": "magistrala-pat", "name": p.Name, "description": p.Desc.String,
-			"needs_reissue": true,
+			"needs_reissue": true, "scopes": scopesByPAT[p.ID],
 		})
 		// secret_hash NULL: Magistrala PAT secret is not convertible (see PLAN §5).
 		if err := m.exec(ctx,

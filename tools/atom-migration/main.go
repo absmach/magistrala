@@ -28,6 +28,7 @@ func main() {
 		reportDir  = flag.String("report-dir", "tools/atom-migration/report", "directory for the JSON+markdown report")
 		fromHost   = flag.Bool("from-host", false, "connect to source DBs via localhost mapped ports instead of compose service names")
 		unmappedOK = flag.String("unmapped-action", "manage", "fallback Atom action for unmapped Magistrala actions: manage|skip")
+		verify     = flag.Bool("verify", false, "verify a completed migration (reconcile source vs Atom); read-only, no load")
 	)
 	flag.Parse()
 
@@ -38,7 +39,10 @@ func main() {
 	cfg.UnmappedAction = *unmappedOK
 
 	mode := "DRY-RUN"
-	if *apply {
+	switch {
+	case *verify:
+		mode = "VERIFY"
+	case *apply:
 		mode = "APPLY"
 	}
 	log.Printf("atom-migration starting (%s)", mode)
@@ -54,10 +58,14 @@ func main() {
 	defer m.Close()
 
 	rep := newReport(mode)
-	if err := m.Run(ctx, rep); err != nil {
+	run := m.Run
+	if *verify {
+		run = m.Verify
+	}
+	if err := run(ctx, rep); err != nil {
 		rep.Errorf("fatal: %v", err)
 		_ = rep.Write(*reportDir)
-		log.Fatalf("run: %v", err)
+		log.Fatalf("%s: %v", mode, err)
 	}
 
 	if err := rep.Write(*reportDir); err != nil {

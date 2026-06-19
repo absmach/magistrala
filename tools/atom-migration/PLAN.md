@@ -193,6 +193,9 @@ Atom's auth path does.
 `pats.secret` is hashed (Magistrala PAT format), so plaintext isn't recoverable;
 even if it were, it would not fit Atom's `atom_<credId>_<secret>` format (same
 constraint as device keys above). So PATs are **re-issue, no exception.**
+`pat_scopes` are preserved in the credential `metadata.scopes` array
+(`domain_id, entity_type, operation, entity_id`) for reference / future policy
+reconstruction.
 - Migrate metadata as `credentials(kind='api_key', entity_id=user_id,
   identifier=pat.id, metadata={name,description,scopes,expires_at,...},
   status=revoked?‘revoked’:‘active’, expires_at)`.
@@ -287,12 +290,17 @@ tools/atom-migration/
 
 ## 10. Verification
 
-- Row-count reconciliation per mapping (source vs target), in the report.
-- Spot auth checks via Atom `POST /authz/check` for a sample of
-  (user, domain, action) and (device, channel, publish) that were allowed pre-migration.
-- Admin login (seeded atom-admin) works; a migrated user can complete password reset.
-- A migrated device authenticates (validates §5 key-format decision).
-- Tenant/entity/resource counts and alias uniqueness hold.
+`--verify` (`verify.go`, read-only) reconciles a completed migration:
+- every source id that should have migrated exists in Atom (tenants, human +
+  device entities, resources, object_groups); missing rows → blocking.
+- every device→channel connection has a matching authz edge (direct_policy +
+  object-scope block + publish/subscribe action); missing → blocking.
+
+Still recommended manually post-cutover:
+- Spot `POST /authz/check` for a sample of (user, domain, action) and
+  (device, channel, publish) allowed pre-migration.
+- Admin login (seeded atom-admin) works; a migrated user completes password reset.
+- A re-issued device key authenticates (§5).
 
 ---
 

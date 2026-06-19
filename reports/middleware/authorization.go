@@ -105,6 +105,9 @@ func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, sessio
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListReportsConfig, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
+		}
 	default:
 		return reports.ReportConfigPage{}, err
 	}

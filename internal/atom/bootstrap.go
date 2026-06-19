@@ -16,6 +16,7 @@ var magistralaActionDescriptions = map[string]string{
 	atomActionPublish:   "Publish messages to a channel",
 	atomActionSubscribe: "Subscribe to channel messages",
 	atomActionExecute:   "Execute a command or action",
+	atomActionList:      "List objects",
 }
 
 var magistralaActionApplicability = []CapabilityApplicabilitySpec{
@@ -31,17 +32,20 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: "resource:rule"},
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: "resource:rule"},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: "resource:rule"},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: "resource:rule"},
 
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: "resource:report"},
 
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: "resource:alarm"},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: "resource:alarm"},
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: "resource:alarm"},
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: "resource:alarm"},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: "resource:alarm"},
 }
 
 var magistralaActionAssignmentRules = []ActionAssignmentRuleSpec{

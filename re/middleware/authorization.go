@@ -101,6 +101,9 @@ func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListRules, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return re.Page{}, errors.Wrap(errDomainViewRules, err)
+		}
 	default:
 		return re.Page{}, err
 	}

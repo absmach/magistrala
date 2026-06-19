@@ -19,7 +19,7 @@ type loggingMiddleware struct {
 	svc    readers.MessageRepository
 }
 
-// LoggingMiddleware adds logging facilities to the core service.
+// LoggingMiddleware adds logging facilities to the service.
 func LoggingMiddleware(svc readers.MessageRepository, logger *slog.Logger) readers.MessageRepository {
 	return &loggingMiddleware{
 		logger: logger,

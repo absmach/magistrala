@@ -46,7 +46,7 @@ It is extremely flexible and lets you build systems the way you want — from si
 
 At the same time, it avoids the typical complexity of many IoT platforms, where you need to learn an entirely new set of concepts before you can even get started.
 
-Magistrala is built around a small number of core concepts:
+Magistrala is built around a small number of main concepts:
 - users
 - clients (devices)
 - channels
@@ -143,7 +143,7 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 
 ## Atom Integration Model
 
-Magistrala uses **Atom** as the backend for identity, authorization, and the core catalog.
+Magistrala uses **Atom** as the backend for identity, authorization, and the catalog.
 
 Atom is the source of truth for:
 - domains

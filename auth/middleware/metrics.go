@@ -22,7 +22,7 @@ type metricsMiddleware struct {
 	svc     auth.Service
 }
 
-// NewMetrics instruments core service by tracking request count and latency.
+// NewMetrics instruments service by tracking request count and latency.
 func NewMetrics(svc auth.Service, counter metrics.Counter, latency metrics.Histogram) auth.Service {
 	return &metricsMiddleware{
 		counter: counter,

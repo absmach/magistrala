@@ -10,8 +10,6 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "core/**"
-      - "cmd/core/**"
       - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
@@ -32,8 +30,6 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "core/**"
-      - "cmd/core/**"
       - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
@@ -101,36 +97,26 @@ jobs:
 
             domains:
               - "apidocs/openapi/domains.yaml"
-              - "core/**"
-              - "cmd/core/**"
               - "internal/atom/**"
               - "domains/api/http/**"
 
             clients:
               - "apidocs/openapi/clients.yaml"
-              - "core/**"
-              - "cmd/core/**"
               - "internal/atom/**"
               - "clients/api/http/**"
 
             channels:
               - "apidocs/openapi/channels.yaml"
-              - "core/**"
-              - "cmd/core/**"
               - "internal/atom/**"
               - "channels/api/http/**"
 
             groups:
               - "apidocs/openapi/groups.yaml"
-              - "core/**"
-              - "cmd/core/**"
               - "internal/atom/**"
               - "groups/api/http/**"
 
             users:
               - "apidocs/openapi/users.yaml"
-              - "core/**"
-              - "cmd/core/**"
               - "internal/atom/**"
               - "users/api/**"
 

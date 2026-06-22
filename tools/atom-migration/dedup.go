@@ -103,6 +103,63 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 		}
 		m.groupName[g.ID] = final
 	}
+
+	if err := m.dedupUsers(ctx, rep); err != nil {
+		return err
+	}
+	return nil
+}
+
+// dedupUsers computes collision-free entity names for users. Magistrala users
+// are platform-global, so they land in Atom's tenant-less namespace
+// (entities.tenant_id IS NULL). Migration 006 collapsed NULL tenant_id to a
+// sentinel UUID, making that whole namespace a single unique scope shared with
+// the bootstrap system entities (admin, mg-service). Pre-seed those existing
+// tenant-less names so a colliding migrated user is renamed rather than
+// tripping idx_entities_name_tenant. Names already owned by a user we are about
+// to migrate (same id) are not reserved: those re-run idempotently via
+// ON CONFLICT (id) and must keep their original name.
+func (m *migrator) dedupUsers(ctx context.Context, rep *report) error {
+	users, err := readUsers(ctx, m.usersDB)
+	if err != nil {
+		return err
+	}
+	srcID := map[string]bool{}
+	for _, u := range users {
+		srcID[u.ID] = true
+	}
+
+	uNames := newAllocator(false)
+	rows, err := m.atom.QueryxContext(ctx,
+		`SELECT id, name FROM entities WHERE tenant_id IS NULL`)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var id, name string
+		if err := rows.Scan(&id, &name); err != nil {
+			rows.Close()
+			return err
+		}
+		if srcID[id] {
+			continue // re-run of this user; ON CONFLICT (id) keeps its name
+		}
+		uNames.take("", name, id) // reserve the system/foreign name
+	}
+	rows.Close()
+
+	sort.SliceStable(users, func(i, j int) bool {
+		return earlier(users[i].CreatedAt, users[i].ID, users[j].CreatedAt, users[j].ID)
+	})
+	for _, u := range users {
+		base := firstNonEmpty(u.Username.String, u.Email.String, u.ID)
+		final := uNames.take("", base, u.ID)
+		if final != base {
+			rep.warn("user %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", u.ID, base, final)
+			rep.count("renamed.users", 1)
+		}
+		m.userName[u.ID] = final
+	}
 	return nil
 }
 

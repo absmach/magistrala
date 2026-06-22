@@ -40,6 +40,7 @@ type migrator struct {
 	// Collision-free names/aliases computed by buildDedup (Atom enforces unique
 	// constraints Magistrala dropped). Keyed by source id; "" alias = NULL.
 	tenantName   map[string]string
+	userName     map[string]string
 	deviceName   map[string]string
 	groupName    map[string]string
 	tenantAlias  map[string]string
@@ -62,6 +63,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		channelDomain: map[string]string{},
 		groupDomain:   map[string]string{},
 		tenantName:    map[string]string{},
+		userName:      map[string]string{},
 		deviceName:    map[string]string{},
 		groupName:     map[string]string{},
 		tenantAlias:   map[string]string{},
@@ -238,7 +240,7 @@ func (m *migrator) phaseUsers(ctx context.Context, rep *report) error {
 		putStr(extra, "username", u.Username)
 		putStr(extra, "profile_picture", u.ProfilePicture)
 		putStr(extra, "auth_provider", u.AuthProvider)
-		name := firstNonEmpty(u.Username.String, u.Email.String, u.ID)
+		name := m.userName[u.ID]
 
 		if err := m.exec(ctx,
 			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, created_at, updated_at)

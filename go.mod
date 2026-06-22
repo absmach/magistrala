@@ -37,7 +37,7 @@ require (
 	github.com/openbao/openbao/api/v2 v2.5.1
 	github.com/ory/dockertest/v3 v3.12.0
 	github.com/pelletier/go-toml v1.9.5
-	github.com/plgd-dev/go-coap/v3 v3.5.1
+	github.com/plgd-dev/go-coap/v3 v3.5.3
 	github.com/prometheus/client_golang v1.23.2
 	github.com/redis/go-redis/v9 v9.20.1
 	github.com/rubenv/sql-migrate v1.8.1

@@ -100,13 +100,13 @@ func (m *migrator) pfTenantNames(ctx context.Context, rep *report) error {
 	names := make([]string, 0, len(doms))
 	for _, d := range doms {
 		if !d.Name.Valid || strings.TrimSpace(d.Name.String) == "" {
-			rep.block("domain %s has empty name (tenants.name is NOT NULL UNIQUE)", d.ID)
+			rep.warn("domain %s has empty name -> will use its id (tenants.name is NOT NULL UNIQUE)", d.ID)
 			continue
 		}
 		names = append(names, d.Name.String)
 	}
 	for name, n := range dupGroups(func() []string { return names }) {
-		rep.block("domain name %q used by %d domains (tenants.name is UNIQUE)", name, n)
+		rep.warn("domain name %q used by %d domains -> duplicates auto-renamed (tenants.name is UNIQUE)", name, n)
 	}
 	return nil
 }
@@ -123,7 +123,7 @@ func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
 		keys = append(keys, g.DomainID+"|"+g.Name)
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
-		rep.block("group name collision (%s) across %d groups in one tenant", k, n)
+		rep.warn("group name collision (%s) across %d groups in one tenant -> duplicates auto-renamed", k, n)
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func (m *migrator) pfTenantAlias(ctx context.Context, rep *report) error {
 		valid = append(valid, a)
 	}
 	for a, n := range dupGroups(func() []string { return valid }) {
-		rep.block("tenant alias %q collides case-insensitively across %d domains", a, n)
+		rep.warn("tenant alias %q collides case-insensitively across %d domains -> duplicates auto-suffixed", a, n)
 	}
 	return nil
 }
@@ -180,7 +180,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 		cKeys = append(cKeys, c.DomainID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return cKeys }) {
-		rep.block("device alias collision (%s) across %d clients in one tenant", k, n)
+		rep.warn("device alias collision (%s) across %d clients in one tenant -> duplicates auto-suffixed", k, n)
 	}
 	rKeys := []string{}
 	for _, ch := range chans {
@@ -195,7 +195,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 		rKeys = append(rKeys, ch.DomainID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return rKeys }) {
-		rep.block("channel alias collision (%s) across %d channels in one tenant", k, n)
+		rep.warn("channel alias collision (%s) across %d channels in one tenant -> duplicates auto-suffixed", k, n)
 	}
 	return nil
 }
@@ -213,7 +213,7 @@ func (m *migrator) pfClientNames(ctx context.Context, rep *report) error {
 		keys = append(keys, c.DomainID+"|"+firstNonEmpty(c.Name.String, c.ID))
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
-		rep.block("device name collision (%s) across %d clients in one tenant", k, n)
+		rep.warn("device name collision (%s) across %d clients in one tenant -> duplicates auto-renamed", k, n)
 	}
 	return nil
 }

@@ -37,6 +37,15 @@ type migrator struct {
 	channelDomain map[string]string
 	groupDomain   map[string]string
 
+	// Collision-free names/aliases computed by buildDedup (Atom enforces unique
+	// constraints Magistrala dropped). Keyed by source id; "" alias = NULL.
+	tenantName   map[string]string
+	deviceName   map[string]string
+	groupName    map[string]string
+	tenantAlias  map[string]string
+	clientAlias  map[string]string
+	channelAlias map[string]string
+
 	reportDir  string
 	deviceKeys [][]string // client_id, domain_id, identity, plaintext key (apply only)
 }
@@ -52,6 +61,12 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		clientDomain:  map[string]string{},
 		channelDomain: map[string]string{},
 		groupDomain:   map[string]string{},
+		tenantName:    map[string]string{},
+		deviceName:    map[string]string{},
+		groupName:     map[string]string{},
+		tenantAlias:   map[string]string{},
+		clientAlias:   map[string]string{},
+		channelAlias:  map[string]string{},
 	}
 	var err error
 	open := func(name, dsn string) *sqlx.DB {
@@ -92,6 +107,9 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 	}
 	if err := m.preflightGate(rep); err != nil {
 		return err
+	}
+	if err := m.buildDedup(ctx, rep); err != nil {
+		return fmt.Errorf("dedup: %w", err)
 	}
 	// Order is FK-safe; see PLAN.md §7.
 	phases := []struct {
@@ -192,11 +210,11 @@ func (m *migrator) phaseTenants(ctx context.Context, rep *report) error {
 		return err
 	}
 	for _, d := range rows {
-		alias := nullAlias(d.Route, "tenant "+d.ID, rep)
+		alias := aliasOrNil(m.tenantAlias[d.ID])
 		if err := m.exec(ctx,
 			`INSERT INTO tenants (id, name, alias, status, tags, attributes, created_at, updated_at)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
-			d.ID, nsToStr(d.Name), alias, tenantStatus(d.Status),
+			d.ID, m.tenantName[d.ID], alias, tenantStatus(d.Status),
 			pqArr(d.Tags), attrs(d.Metadata, nil), ntToTime(d.CreatedAt), ntPtr(d.UpdatedAt),
 		); err != nil {
 			return err
@@ -280,8 +298,8 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 		m.clientDomain[c.ID] = c.DomainID
 		extra := map[string]any{}
 		putStr(extra, "identity", c.Identity)
-		alias := nullAlias(c.Identity, "client "+c.ID, rep)
-		name := firstNonEmpty(c.Name.String, c.ID)
+		alias := aliasOrNil(m.clientAlias[c.ID])
+		name := m.deviceName[c.ID]
 		if err := m.exec(ctx,
 			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, alias, created_at, updated_at)
 			 VALUES ($1,'device',$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING`,
@@ -341,7 +359,7 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 			continue
 		}
 		m.channelDomain[ch.ID] = ch.DomainID
-		alias := nullAlias(ch.Route, "channel "+ch.ID, rep)
+		alias := aliasOrNil(m.channelAlias[ch.ID])
 		owner := sql.NullString{}
 		if ch.CreatedBy.Valid && m.migratedUsers[ch.CreatedBy.String] {
 			owner = ch.CreatedBy
@@ -375,7 +393,7 @@ func (m *migrator) phaseGroups(ctx context.Context, rep *report) error {
 		if err := m.exec(ctx,
 			`INSERT INTO object_groups (id, name, tenant_id, description, status, attributes, created_at, updated_at)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
-			g.ID, g.Name, g.DomainID, nsToStr(g.Description), entityStatus(g.Status),
+			g.ID, m.groupName[g.ID], g.DomainID, nsToStr(g.Description), entityStatus(g.Status),
 			attrs(g.Metadata, map[string]any{"tags": []string(g.Tags)}),
 			ntToTime(g.CreatedAt), ntToTime(g.UpdatedAt), // object_groups.updated_at is NOT NULL
 		); err != nil {
@@ -756,19 +774,6 @@ func actorOrNil(ns sql.NullString, migrated map[string]bool) any {
 }
 
 // --- small helpers ---
-
-func nullAlias(ns sql.NullString, ctxLabel string, rep *report) any {
-	if !ns.Valid {
-		return nil
-	}
-	a, ok := normalizeAlias(ns.String)
-	if !ok {
-		rep.warn("alias dropped for %s: %q not a valid slug", ctxLabel, ns.String)
-		rep.skip("alias_dropped")
-		return nil
-	}
-	return a
-}
 
 func nsToStr(ns sql.NullString) string {
 	if ns.Valid {

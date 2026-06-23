@@ -36,7 +36,7 @@ They mount the `magistrala_magistrala-<svc>-db-volume` volumes and attach to
 ## Run (dry-run is default — writes nothing)
 
 The migrator needs to reach every source DB **and** the Atom DB. Atom must already
-have its schema applied (run Atom once, or apply `migrations/001..005`).
+have its schema applied (run Atom once, or apply `migrations/001_initial.sql`).
 
 Run the image on the compose network. Mount the repo at `/work` so the default
 `--env docker/.env` and `--report-dir` resolve, and reach source DBs by their

@@ -38,11 +38,12 @@ All `magistrala/magistrala`, port 5432, on network `magistrala-base-net`:
 
 ### Target (Atom — single Postgres)
 
-`atom` DB, schema from `migrations/001..005`. Relevant tables:
+`atom` DB, schema from the squashed `migrations/001_initial.sql`. Relevant tables:
 `tenants, entities, credentials, entity_emails, resources, principal_groups,
 object_groups, *_group_hierarchy, object_group_entities, object_group_resources,
 tenant_memberships, roles, permission_blocks, permission_block_actions,
-role_permission_blocks, role_assignments, direct_policies, profiles`.
+role_permission_blocks, role_assignments, direct_policies, profiles,
+profile_versions`.
 
 Seeded fixed UUIDs already present in Atom (do **not** collide):
 `...0001` admin entity, `...0002` atom-admin role, `...0003` mg-service entity,
@@ -67,7 +68,7 @@ Seeded fixed UUIDs already present in Atom (do **not** collide):
 ### 3.2 users → entities (kind=`human`)
 | Magistrala `users` | Atom |
 |---|---|
-| `id` | `entities.id` (preserved), `kind='human'`, `tenant_id=NULL` (users are global; domain membership handled in §4), `profile` = seeded `user` profile |
+| `id` | `entities.id` (preserved), `kind='human'`, `tenant_id=NULL` (users are global; domain membership handled in §4), `profile_id` / `profile_version_id` = seeded active `user` profile |
 | `first_name,last_name,username,profile_picture,auth_provider` | `entities.attributes` JSON |
 | `metadata` | merged into `attributes` |
 | `email` | `entity_emails.email`; `verified_at` → `entity_emails.verified_at` |
@@ -75,12 +76,15 @@ Seeded fixed UUIDs already present in Atom (do **not** collide):
 | `status` 0/1 | `entities.status` `active`/`inactive` |
 | `role` (0 user / 1 admin) | if admin → also assign Atom `atom-admin` role (`role_assignments`) |
 
+Every migrated human is also inserted into Atom's seeded `authenticated-users`
+principal group, matching Atom's normal `create_entity` side effect.
+
 `users_verifications` → not migrated (transient OTPs).
 
 ### 3.3 clients (things/devices) → entities (kind=`device`)
 | Magistrala `clients` | Atom |
 |---|---|
-| `id` | `entities.id` (preserved), `kind='device'`, `tenant_id=domain_id`, `profile`=`client` |
+| `id` | `entities.id` (preserved), `kind='device'`, `tenant_id=domain_id`, `profile_id` / `profile_version_id` = seeded active `client` profile |
 | `name` | `entities.name` (per-tenant unique — handle collisions, §6) |
 | `tags,metadata,private_metadata` | `attributes` |
 | `identity` | `attributes.identity` (and/or `entities.alias` if slug-valid) |
@@ -278,7 +282,7 @@ tools/atom-migration/
 1. `docker compose stop` Magistrala **app** services (users, clients, channels,
    groups, domains, auth, adapters) — keep the `*-db` containers running.
 2. Backup: `pg_dump` each source DB.
-3. Start Atom Postgres; let Atom run once to apply `migrations/001..005`
+3. Start Atom Postgres; let Atom run once to apply `migrations/001_initial.sql`
    (or run migrations standalone), then stop Atom app.
 4. Run migrator `--dry-run`; review report; fix guardrail violations (§6).
 5. Run migrator `--apply`.

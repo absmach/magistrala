@@ -28,8 +28,9 @@ type migrator struct {
 	authDB     *sqlx.DB
 	atom       *sqlx.DB
 
-	profileID map[string]string // profile key (e.g. "user","client") -> uuid
-	actionID  map[string]string // action name -> uuid
+	profileID        map[string]string // profile key (e.g. "user","client") -> uuid
+	profileVersionID map[string]string // profile key -> latest active profile_versions.id
+	actionID         map[string]string // action name -> uuid
 
 	migratedUsers map[string]bool
 	tenants       map[string]bool   // domain ids that became tenants
@@ -53,22 +54,23 @@ type migrator struct {
 
 func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error) {
 	m := &migrator{
-		cfg:           cfg,
-		apply:         apply,
-		profileID:     map[string]string{},
-		actionID:      map[string]string{},
-		migratedUsers: map[string]bool{},
-		tenants:       map[string]bool{},
-		clientDomain:  map[string]string{},
-		channelDomain: map[string]string{},
-		groupDomain:   map[string]string{},
-		tenantName:    map[string]string{},
-		userName:      map[string]string{},
-		deviceName:    map[string]string{},
-		groupName:     map[string]string{},
-		tenantAlias:   map[string]string{},
-		clientAlias:   map[string]string{},
-		channelAlias:  map[string]string{},
+		cfg:              cfg,
+		apply:            apply,
+		profileID:        map[string]string{},
+		profileVersionID: map[string]string{},
+		actionID:         map[string]string{},
+		migratedUsers:    map[string]bool{},
+		tenants:          map[string]bool{},
+		clientDomain:     map[string]string{},
+		channelDomain:    map[string]string{},
+		groupDomain:      map[string]string{},
+		tenantName:       map[string]string{},
+		userName:         map[string]string{},
+		deviceName:       map[string]string{},
+		groupName:        map[string]string{},
+		tenantAlias:      map[string]string{},
+		clientAlias:      map[string]string{},
+		channelAlias:     map[string]string{},
 	}
 	var err error
 	open := func(name, dsn string) *sqlx.DB {
@@ -91,6 +93,8 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 	}
 	return m, nil
 }
+
+const authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
 
 func (m *migrator) Close() {
 	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.atom} {
@@ -166,16 +170,30 @@ func (m *migrator) writeDeviceKeys() error {
 
 func (m *migrator) loadLookups(ctx context.Context) error {
 	rows, err := m.atom.QueryxContext(ctx,
-		`SELECT key, id FROM profiles WHERE object_kind = 'entity'`)
+		`SELECT p.key, p.id, pv.id
+		   FROM profiles p
+		   LEFT JOIN LATERAL (
+		       SELECT id
+		       FROM profile_versions
+		       WHERE profile_id = p.id
+		         AND status = 'active'
+		       ORDER BY version DESC
+		       LIMIT 1
+		   ) pv ON TRUE
+		  WHERE p.object_kind = 'entity'`)
 	if err != nil {
 		return err
 	}
 	for rows.Next() {
 		var k, id string
-		if err := rows.Scan(&k, &id); err != nil {
+		var versionID sql.NullString
+		if err := rows.Scan(&k, &id, &versionID); err != nil {
 			return err
 		}
 		m.profileID[k] = id
+		if versionID.Valid {
+			m.profileVersionID[k] = versionID.String
+		}
 	}
 	rows.Close()
 
@@ -233,6 +251,7 @@ func (m *migrator) phaseUsers(ctx context.Context, rep *report) error {
 		return err
 	}
 	prof := nullStr(m.profileID["user"])
+	profVer := nullStr(m.profileVersionID["user"])
 	for _, u := range rows {
 		extra := map[string]any{}
 		putStr(extra, "first_name", u.FirstName)
@@ -243,15 +262,24 @@ func (m *migrator) phaseUsers(ctx context.Context, rep *report) error {
 		name := m.userName[u.ID]
 
 		if err := m.exec(ctx,
-			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, created_at, updated_at)
-			 VALUES ($1,'human',$2,NULL,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
+			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, profile_version_id, created_at, updated_at)
+			 VALUES ($1,'human',$2,NULL,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
 			u.ID, name, entityStatus(u.Status), attrs(u.Metadata, extra), prof,
-			ntToTime(u.CreatedAt), ntPtr(u.UpdatedAt),
+			profVer, ntToTime(u.CreatedAt), ntPtr(u.UpdatedAt),
 		); err != nil {
 			return err
 		}
 		m.migratedUsers[u.ID] = true
 		rep.count("entities.users", 1)
+
+		if err := m.exec(ctx,
+			`INSERT INTO principal_group_members (group_id, entity_id)
+			 VALUES ($1,$2) ON CONFLICT DO NOTHING`,
+			authenticatedUsersGroupID, u.ID,
+		); err != nil {
+			return err
+		}
+		rep.count("principal_group_members.authenticated_users", 1)
 
 		// email (force-reset: no password credential migrated)
 		if u.Email.Valid && u.Email.String != "" {
@@ -291,6 +319,7 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 		return err
 	}
 	prof := nullStr(m.profileID["client"])
+	profVer := nullStr(m.profileVersionID["client"])
 	for _, c := range rows {
 		if !m.tenants[c.DomainID] {
 			rep.skip("client_orphan_domain")
@@ -303,10 +332,10 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 		alias := aliasOrNil(m.clientAlias[c.ID])
 		name := m.deviceName[c.ID]
 		if err := m.exec(ctx,
-			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, alias, created_at, updated_at)
-			 VALUES ($1,'device',$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT (id) DO NOTHING`,
+			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, profile_version_id, alias, created_at, updated_at)
+			 VALUES ($1,'device',$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
 			c.ID, name, c.DomainID, entityStatus(c.Status), attrs(c.Metadata, extra),
-			prof, alias, ntToTime(c.CreatedAt), ntPtr(c.UpdatedAt),
+			prof, profVer, alias, ntToTime(c.CreatedAt), ntPtr(c.UpdatedAt),
 		); err != nil {
 			return err
 		}

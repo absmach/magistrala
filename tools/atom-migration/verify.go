@@ -26,6 +26,11 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	if err != nil {
 		return err
 	}
+	atomAuthenticatedUsers, err := idSet(ctx, m.atom,
+		`SELECT entity_id::text FROM principal_group_members WHERE group_id = $1`, authenticatedUsersGroupID)
+	if err != nil {
+		return err
+	}
 	atomResources, err := idSet(ctx, m.atom, `SELECT id::text FROM resources`)
 	if err != nil {
 		return err
@@ -47,7 +52,9 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	if err != nil {
 		return err
 	}
-	m.reconcile(rep, "entities.users", idsOf(len(users), func(i int) (string, bool) { return users[i].ID, true }), atomEntities)
+	userIDs := idsOf(len(users), func(i int) (string, bool) { return users[i].ID, true })
+	m.reconcile(rep, "entities.users", userIDs, atomEntities)
+	m.reconcile(rep, "principal_group_members.authenticated_users", userIDs, atomAuthenticatedUsers)
 
 	// 3. device entities (only those with a valid domain were migrated)
 	clients, err := readClients(ctx, m.clientsDB)
@@ -170,8 +177,8 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 
 // --- helpers ---
 
-func idSet(ctx context.Context, db *sqlx.DB, query string) (map[string]bool, error) {
-	rows, err := db.QueryxContext(ctx, query)
+func idSet(ctx context.Context, db *sqlx.DB, query string, args ...any) (map[string]bool, error) {
+	rows, err := db.QueryxContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}

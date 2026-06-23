@@ -44,9 +44,10 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			err:      bootstrap.ErrRenderFailed,
 		},
 		{
-			desc:     "valid TOML output",
-			format:   bootstrap.ContentFormatTOML,
-			template: `device_id = "{{ .Device.ID }}"`,
+			desc:   "valid TOML output",
+			format: bootstrap.ContentFormatTOML,
+			template: `[device]
+			device_id = "{{ .Device.ID }}"`,
 		},
 		{
 			desc:     "invalid output for TOML format",

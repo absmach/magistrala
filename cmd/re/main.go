@@ -265,15 +265,7 @@ func main() {
 	logger.Info("AuthZ  successfully connected to auth gRPC server " + authnClient.Secure())
 
 	database := pgclient.NewDatabase(db, dbConfig, tracer)
-
-	ddatabase := pgclient.NewDatabase(db, dbConfig, tracer)
-	drepo := dpostgres.NewRepository(ddatabase)
-
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
-		exitCode = 1
-		return
-	}
+	drepo := dpostgres.NewRepository(pgclient.NewDatabase(db, dbConfig, tracer))
 
 	regrpcCfg := grpcclient.Config{}
 	if err := env.ParseWithOptions(&regrpcCfg, env.Options{Prefix: envPrefixGrpc}); err != nil {
@@ -299,6 +291,13 @@ func main() {
 
 		return
 	}
+
+	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, svc, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
+		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
+		exitCode = 1
+		return
+	}
+
 	subCfg := messaging.SubscriberConfig{
 		ID:             svcName,
 		Topic:          smqbrokers.SubjectAllMessages,

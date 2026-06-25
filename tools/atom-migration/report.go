@@ -26,7 +26,7 @@ type report struct {
 	Blocking  []string       `json:"blocking"` // must fix before --apply
 	Errors    []string       `json:"errors"`
 
-	// TODO lists surfaced for operators (force-reset users, re-issue PATs, etc.)
+	// Follow-up lists surfaced for operators (force-reset users, re-issue PATs, etc.)
 	Todo map[string][]string `json:"todo"`
 }
 
@@ -52,13 +52,13 @@ func (r *report) skip(reason string) {
 	r.mu.Unlock()
 }
 
-func (r *report) warn(format string, a ...any) {
+func (r *report) warnf(format string, a ...any) {
 	r.mu.Lock()
 	r.Warnings = append(r.Warnings, fmt.Sprintf(format, a...))
 	r.mu.Unlock()
 }
 
-func (r *report) block(format string, a ...any) {
+func (r *report) blockf(format string, a ...any) {
 	r.mu.Lock()
 	r.Blocking = append(r.Blocking, fmt.Sprintf(format, a...))
 	r.mu.Unlock()
@@ -87,7 +87,10 @@ func (r *report) Write(dir string) error {
 		return err
 	}
 	stamp := r.StartedAt.Format("20060102-150405")
-	b, _ := json.MarshalIndent(r, "", "  ")
+	b, err := json.MarshalIndent(r, "", "  ")
+	if err != nil {
+		return err
+	}
 	if err := os.WriteFile(filepath.Join(dir, "report-"+stamp+".json"), b, 0o644); err != nil {
 		return err
 	}

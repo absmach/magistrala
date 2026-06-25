@@ -112,7 +112,7 @@ func (m *migrator) reconcile(rep *report, label string, expected []string, atom 
 	}
 	rep.count("verify."+label+".expected", len(expected))
 	if missing > 0 {
-		rep.block("verify %s: %d of %d expected rows missing from Atom", label, missing, len(expected))
+		rep.blockf("verify %s: %d of %d expected rows missing from Atom", label, missing, len(expected))
 	} else {
 		rep.count("verify."+label+".ok", len(expected))
 	}
@@ -168,7 +168,7 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 	}
 	rep.count("verify.connections.expected", expected)
 	if missing > 0 {
-		rep.block("verify connections: %d of %d device->channel edges missing", missing, expected)
+		rep.blockf("verify connections: %d of %d device->channel edges missing", missing, expected)
 	} else {
 		rep.count("verify.connections.ok", expected)
 	}

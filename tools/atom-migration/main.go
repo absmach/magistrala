@@ -21,6 +21,10 @@ import (
 )
 
 func main() {
+	os.Exit(runMain())
+}
+
+func runMain() int {
 	var (
 		envPath    = flag.String("env", "docker/.env", "path to Magistrala docker/.env (DB hosts/creds)")
 		atomDSN    = flag.String("atom-dsn", envOr("ATOM_DATABASE_URL", ""), "Atom Postgres DSN (overrides --env atom block)")
@@ -34,7 +38,8 @@ func main() {
 
 	cfg, err := loadConfig(*envPath, *atomDSN, *fromHost)
 	if err != nil {
-		log.Fatalf("config: %v", err)
+		log.Printf("config: %v", err)
+		return 1
 	}
 	cfg.UnmappedAction = *unmappedOK
 
@@ -52,7 +57,8 @@ func main() {
 
 	m, err := newMigrator(ctx, cfg, *apply)
 	if err != nil {
-		log.Fatalf("init: %v", err)
+		log.Printf("init: %v", err)
+		return 1
 	}
 	m.reportDir = *reportDir
 	defer m.Close()
@@ -64,17 +70,22 @@ func main() {
 	}
 	if err := run(ctx, rep); err != nil {
 		rep.Errorf("fatal: %v", err)
-		_ = rep.Write(*reportDir)
-		log.Fatalf("%s: %v", mode, err)
+		if writeErr := rep.Write(*reportDir); writeErr != nil {
+			log.Printf("report: %v", writeErr)
+		}
+		log.Printf("%s: %v", mode, err)
+		return 1
 	}
 
 	if err := rep.Write(*reportDir); err != nil {
-		log.Fatalf("report: %v", err)
+		log.Printf("report: %v", err)
+		return 1
 	}
 	fmt.Print(rep.Summary())
 	if rep.HasBlocking() && *apply {
-		os.Exit(2)
+		return 2
 	}
+	return 0
 }
 
 func envOr(k, def string) string {

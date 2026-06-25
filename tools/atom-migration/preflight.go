@@ -63,7 +63,7 @@ func (m *migrator) pfEmails(ctx context.Context, rep *report) error {
 		return out
 	})
 	for email, n := range dups {
-		rep.block("email %q used by %d users (entity_emails.email is UNIQUE)", email, n)
+		rep.blockf("email %q used by %d users (entity_emails.email is UNIQUE)", email, n)
 	}
 	return nil
 }
@@ -85,7 +85,7 @@ func (m *migrator) pfHumanNames(ctx context.Context, rep *report) error {
 	for name, n := range dups {
 		// entities(name, tenant_id) is NULLS DISTINCT and humans have tenant_id
 		// NULL, so duplicate human names do NOT violate the index — advisory only.
-		rep.warn("human entity name %q used by %d users (allowed; tenant NULL is NULLS DISTINCT)", name, n)
+		rep.warnf("human entity name %q used by %d users (allowed; tenant NULL is NULLS DISTINCT)", name, n)
 	}
 	return nil
 }
@@ -100,13 +100,13 @@ func (m *migrator) pfTenantNames(ctx context.Context, rep *report) error {
 	names := make([]string, 0, len(doms))
 	for _, d := range doms {
 		if !d.Name.Valid || strings.TrimSpace(d.Name.String) == "" {
-			rep.warn("domain %s has empty name -> will use its id (tenants.name is NOT NULL UNIQUE)", d.ID)
+			rep.warnf("domain %s has empty name -> will use its id (tenants.name is NOT NULL UNIQUE)", d.ID)
 			continue
 		}
 		names = append(names, d.Name.String)
 	}
 	for name, n := range dupGroups(func() []string { return names }) {
-		rep.warn("domain name %q used by %d domains -> duplicates auto-renamed (tenants.name is UNIQUE)", name, n)
+		rep.warnf("domain name %q used by %d domains -> duplicates auto-renamed (tenants.name is UNIQUE)", name, n)
 	}
 	return nil
 }
@@ -123,7 +123,7 @@ func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
 		keys = append(keys, g.DomainID+"|"+g.Name)
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
-		rep.warn("group name collision (%s) across %d groups in one tenant -> duplicates auto-renamed", k, n)
+		rep.warnf("group name collision (%s) across %d groups in one tenant -> duplicates auto-renamed", k, n)
 	}
 	return nil
 }
@@ -143,13 +143,13 @@ func (m *migrator) pfTenantAlias(ctx context.Context, rep *report) error {
 		}
 		a, ok := normalizeAlias(d.Route.String)
 		if !ok {
-			rep.warn("tenant %s alias %q invalid slug -> dropped", d.ID, d.Route.String)
+			rep.warnf("tenant %s alias %q invalid slug -> dropped", d.ID, d.Route.String)
 			continue
 		}
 		valid = append(valid, a)
 	}
 	for a, n := range dupGroups(func() []string { return valid }) {
-		rep.warn("tenant alias %q collides case-insensitively across %d domains -> duplicates auto-suffixed", a, n)
+		rep.warnf("tenant alias %q collides case-insensitively across %d domains -> duplicates auto-suffixed", a, n)
 	}
 	return nil
 }
@@ -174,13 +174,13 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 		}
 		a, ok := normalizeAlias(c.Identity.String)
 		if !ok {
-			rep.warn("client %s alias %q invalid slug -> dropped", c.ID, c.Identity.String)
+			rep.warnf("client %s alias %q invalid slug -> dropped", c.ID, c.Identity.String)
 			continue
 		}
 		cKeys = append(cKeys, c.DomainID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return cKeys }) {
-		rep.warn("device alias collision (%s) across %d clients in one tenant -> duplicates auto-suffixed", k, n)
+		rep.warnf("device alias collision (%s) across %d clients in one tenant -> duplicates auto-suffixed", k, n)
 	}
 	rKeys := []string{}
 	for _, ch := range chans {
@@ -189,13 +189,13 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 		}
 		a, ok := normalizeAlias(ch.Route.String)
 		if !ok {
-			rep.warn("channel %s alias %q invalid slug -> dropped", ch.ID, ch.Route.String)
+			rep.warnf("channel %s alias %q invalid slug -> dropped", ch.ID, ch.Route.String)
 			continue
 		}
 		rKeys = append(rKeys, ch.DomainID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return rKeys }) {
-		rep.warn("channel alias collision (%s) across %d channels in one tenant -> duplicates auto-suffixed", k, n)
+		rep.warnf("channel alias collision (%s) across %d channels in one tenant -> duplicates auto-suffixed", k, n)
 	}
 	return nil
 }
@@ -213,7 +213,7 @@ func (m *migrator) pfClientNames(ctx context.Context, rep *report) error {
 		keys = append(keys, c.DomainID+"|"+firstNonEmpty(c.Name.String, c.ID))
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
-		rep.warn("device name collision (%s) across %d clients in one tenant -> duplicates auto-renamed", k, n)
+		rep.warnf("device name collision (%s) across %d clients in one tenant -> duplicates auto-renamed", k, n)
 	}
 	return nil
 }
@@ -237,7 +237,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 			}
 		}
 		if n > 0 {
-			rep.warn("%d %s reference a missing domain -> will be skipped", n, label)
+			rep.warnf("%d %s reference a missing domain -> will be skipped", n, label)
 		}
 	}
 	clients, err := readClients(ctx, m.clientsDB)

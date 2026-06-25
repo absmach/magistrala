@@ -15,6 +15,17 @@ import (
 // keeps the migration idempotent across re-runs.
 var uuidNS = uuid.MustParse("a70a0000-0000-5000-a000-000000000000")
 
+const (
+	statusActive = "active"
+
+	actionCreate    = "create"
+	actionDelete    = "delete"
+	actionManage    = "manage"
+	actionPublish   = "publish"
+	actionRead      = "read"
+	actionSubscribe = "subscribe"
+)
+
 func derivedUUID(parts ...string) string {
 	return uuid.NewSHA1(uuidNS, []byte(strings.Join(parts, "|"))).String()
 }
@@ -25,7 +36,7 @@ func derivedUUID(parts ...string) string {
 func entityStatus(s int16) string {
 	switch s {
 	case 0:
-		return "active"
+		return statusActive
 	case 1:
 		return "inactive"
 	default:
@@ -37,13 +48,13 @@ func entityStatus(s int16) string {
 func tenantStatus(s int16) string {
 	switch s {
 	case 0:
-		return "active"
+		return statusActive
 	case 1:
 		return "inactive"
 	case 2:
 		return "frozen"
 	default:
-		return "active"
+		return statusActive
 	}
 }
 
@@ -81,33 +92,33 @@ func normalizeAlias(raw string) (string, bool) {
 func mapAction(a string) (string, bool) {
 	a = strings.ToLower(strings.TrimSpace(a))
 	switch a {
-	case "publish":
-		return "publish", true
-	case "subscribe":
-		return "subscribe", true
-	case "create":
-		return "create", true
+	case actionPublish:
+		return actionPublish, true
+	case actionSubscribe:
+		return actionSubscribe, true
+	case actionCreate:
+		return actionCreate, true
 	case "update":
 		return "write", true
-	case "delete":
-		return "delete", true
+	case actionDelete:
+		return actionDelete, true
 	case "read", "view":
-		return "read", true
-	case "admin", "manage":
-		return "manage", true
+		return actionRead, true
+	case "admin", actionManage:
+		return actionManage, true
 	}
 	switch {
 	case strings.HasSuffix(a, "_view_role_users"), strings.HasSuffix(a, "_read"),
 		strings.HasSuffix(a, "_view"), strings.Contains(a, "_read_"):
-		return "read", true
-	case strings.Contains(a, "create"):
-		return "create", true
+		return actionRead, true
+	case strings.Contains(a, actionCreate):
+		return actionCreate, true
 	case strings.HasSuffix(a, "_update"):
 		return "write", true
 	case strings.Contains(a, "_delete"):
-		return "delete", true
+		return actionDelete, true
 	case strings.HasSuffix(a, "_manage_role"):
-		return "manage", true
+		return actionManage, true
 	case strings.HasSuffix(a, "_add_role_users"), strings.HasSuffix(a, "_remove_role_users"),
 		strings.Contains(a, "membership"), strings.Contains(a, "_connect"):
 		return "policy.manage", true
@@ -121,9 +132,9 @@ func mapAction(a string) (string, bool) {
 func connectionAction(t int16) (string, bool) {
 	switch t {
 	case 1:
-		return "publish", true
+		return actionPublish, true
 	case 2:
-		return "subscribe", true
+		return actionSubscribe, true
 	default:
 		return "", false
 	}

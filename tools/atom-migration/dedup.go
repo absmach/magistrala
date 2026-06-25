@@ -38,7 +38,7 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 		}
 		final := tNames.take("", base, d.ID)
 		if final != base {
-			rep.warn("tenant %s name %q -> %q (tenants.name is UNIQUE)", d.ID, base, final)
+			rep.warnf("tenant %s name %q -> %q (tenants.name is UNIQUE)", d.ID, base, final)
 			rep.count("renamed.tenants", 1)
 		}
 		m.tenantName[d.ID] = final
@@ -61,7 +61,7 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 		base := firstNonEmpty(strings.TrimSpace(nsToStr(c.Name)), c.ID)
 		final := dNames.take(c.DomainID, base, c.ID)
 		if final != base {
-			rep.warn("device %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", c.ID, base, final)
+			rep.warnf("device %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", c.ID, base, final)
 			rep.count("renamed.devices", 1)
 		}
 		m.deviceName[c.ID] = final
@@ -98,7 +98,7 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 		base := firstNonEmpty(strings.TrimSpace(g.Name), g.ID)
 		final := gNames.take(g.DomainID, base, g.ID)
 		if final != base {
-			rep.warn("group %s name %q -> %q (object_groups(name, tenant_id) is UNIQUE)", g.ID, base, final)
+			rep.warnf("group %s name %q -> %q (object_groups(name, tenant_id) is UNIQUE)", g.ID, base, final)
 			rep.count("renamed.groups", 1)
 		}
 		m.groupName[g.ID] = final
@@ -155,7 +155,7 @@ func (m *migrator) dedupUsers(ctx context.Context, rep *report) error {
 		base := firstNonEmpty(u.Username.String, u.Email.String, u.ID)
 		final := uNames.take("", base, u.ID)
 		if final != base {
-			rep.warn("user %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", u.ID, base, final)
+			rep.warnf("user %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", u.ID, base, final)
 			rep.count("renamed.users", 1)
 		}
 		m.userName[u.ID] = final
@@ -173,13 +173,13 @@ func (m *migrator) dedupAlias(a *allocator, scope string, raw sql.NullString, la
 	}
 	norm, ok := normalizeAlias(raw.String)
 	if !ok {
-		rep.warn("alias dropped for %s: %q not a valid slug", label, raw.String)
+		rep.warnf("alias dropped for %s: %q not a valid slug", label, raw.String)
 		rep.skip("alias_dropped")
 		return ""
 	}
 	final := a.take(scope, norm, idSuffix(raw))
 	if final != norm {
-		rep.warn("alias for %s %q -> %q (alias is UNIQUE within tenant)", label, norm, final)
+		rep.warnf("alias for %s %q -> %q (alias is UNIQUE within tenant)", label, norm, final)
 		rep.count("renamed.aliases", 1)
 	}
 	return final

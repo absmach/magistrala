@@ -166,7 +166,9 @@ func (f *fakeAtomTokenServer) handle(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
 	case "/auth/introspect":
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
-		_ = json.NewEncoder(w).Encode(IntrospectionResponse{Active: f.active[token], EntityID: "entity-1"})
+		if err := json.NewEncoder(w).Encode(IntrospectionResponse{Active: f.active[token], EntityID: "entity-1"}); err != nil {
+			f.t.Fatalf("encode introspection response: %v", err)
+		}
 	case atomGraphQLPath:
 		f.handleGraphQL(w, r)
 	default:
@@ -194,20 +196,24 @@ func (f *fakeAtomTokenServer) handleGraphQL(w http.ResponseWriter, r *http.Reque
 		credentialID := credentialIDForIndex(f.nextID)
 		key := apiKeyForCredentialID(credentialID)
 		f.active[key] = true
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		if err := json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"createApiKey": APIKeyResponse{
 					CredentialID: credentialID,
 					Key:          key,
 				},
 			},
-		})
+		}); err != nil {
+			f.t.Fatalf("encode create API key response: %v", err)
+		}
 	case strings.Contains(payload.Query, "revokeCredential"):
 		credentialID := payload.Variables["credentialId"].(string)
 		f.revoked = append(f.revoked, credentialID)
-		_ = json.NewEncoder(w).Encode(map[string]any{
+		if err := json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{"revokeCredential": true},
-		})
+		}); err != nil {
+			f.t.Fatalf("encode revoke credential response: %v", err)
+		}
 	default:
 		f.t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 	}

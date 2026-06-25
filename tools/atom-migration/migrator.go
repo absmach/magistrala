@@ -289,7 +289,7 @@ func (m *migrator) phaseUsers(ctx context.Context, rep *report) error {
 				u.ID, u.Email.String, ntPtr(u.VerifiedAt),
 			); err != nil {
 				// likely global email-unique conflict
-				rep.warn("user %s email %q not inserted (conflict?)", u.ID, u.Email.String)
+				rep.warnf("user %s email %q not inserted (conflict?)", u.ID, u.Email.String)
 				rep.skip("email_conflict")
 			} else {
 				rep.count("entity_emails", 1)
@@ -323,7 +323,7 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 	for _, c := range rows {
 		if !m.tenants[c.DomainID] {
 			rep.skip("client_orphan_domain")
-			rep.warn("client %s skipped: domain %s not migrated", c.ID, c.DomainID)
+			rep.warnf("client %s skipped: domain %s not migrated", c.ID, c.DomainID)
 			continue
 		}
 		m.clientDomain[c.ID] = c.DomainID
@@ -570,11 +570,11 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 			if !ok {
 				if m.cfg.UnmappedAction == "skip" {
 					rep.skip("action_unmapped_skipped")
-					rep.warn("unmapped action %q (%s) skipped", raw, f.prefix)
+					rep.warnf("unmapped action %q (%s) skipped", raw, f.prefix)
 					continue
 				}
 				atom = "manage"
-				rep.warn("unmapped action %q (%s) -> manage", raw, f.prefix)
+				rep.warnf("unmapped action %q (%s) -> manage", raw, f.prefix)
 			}
 			aid, ok := m.actionID[atom]
 			if !ok || seen[atom] {
@@ -719,10 +719,13 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 		if p.Revoked.Valid && p.Revoked.Bool {
 			status = "revoked"
 		}
-		meta, _ := json.Marshal(map[string]any{
+		meta, err := json.Marshal(map[string]any{
 			"source": "magistrala-pat", "name": p.Name, "description": p.Desc.String,
 			"needs_reissue": true, "scopes": scopesByPAT[p.ID],
 		})
+		if err != nil {
+			return err
+		}
 		// secret_hash NULL: Magistrala PAT secret is not convertible (see PLAN §5).
 		if err := m.exec(ctx,
 			`INSERT INTO credentials (id, entity_id, kind, identifier, metadata, status, expires_at)

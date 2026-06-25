@@ -271,9 +271,18 @@ jobs:
             pkg-transformers) dir="pkg/transformers" ;;
             pkg-ulid) dir="pkg/ulid" ;;
             pkg-uuid) dir="pkg/uuid" ;;
+            channels) dir="pkg/channels" ;;
+            clients) dir="pkg/clients" ;;
+            domains) dir="pkg/domains" ;;
             groups) dir="pkg/groups" ;;
             *) dir="${{ matrix.module }}" ;;
           esac
+
+          if [[ ! -d "$dir" ]]; then
+            echo "Skipping ${{ matrix.module }}; ./$dir is not present in this branch"
+            echo "mode: atomic" > coverage-${{ matrix.module }}.out
+            exit 0
+          fi
 
           go test -mod=readonly --race -v -count=1 -failfast -coverprofile=coverage-${{ matrix.module }}.out ./$dir/...
 

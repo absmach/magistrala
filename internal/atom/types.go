@@ -232,6 +232,12 @@ type LoginResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
+type APIKeyResponse struct {
+	CredentialID string     `json:"credentialId"`
+	Key          string     `json:"key"`
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
+}
+
 type ResourceList struct {
 	Items []Resource `json:"items"`
 	Total uint64     `json:"total"`

@@ -487,6 +487,31 @@ func (c *Client) CreatePassword(ctx context.Context, entityID, password string) 
 	}`, map[string]any{"entityId": entityID, "password": password}, nil)
 }
 
+func (c *Client) CreateAPIKey(ctx context.Context, entityID, description string) (APIKeyResponse, error) {
+	var out struct {
+		CreateAPIKey APIKeyResponse `json:"createApiKey"`
+	}
+	err := c.graphQL(ctx, `mutation CreateAPIKey($entityId: ID!, $input: CreateApiKeyInput!) {
+		createApiKey(entityId: $entityId, input: $input) {
+			credentialId
+			key
+			expiresAt
+		}
+	}`, map[string]any{
+		"entityId": entityID,
+		"input": map[string]any{
+			"description": description,
+		},
+	}, &out)
+	return out.CreateAPIKey, err
+}
+
+func (c *Client) RevokeCredential(ctx context.Context, entityID, credentialID string) error {
+	return c.graphQL(ctx, `mutation RevokeCredential($entityId: ID!, $credentialId: ID!) {
+		revokeCredential(entityId: $entityId, credentialId: $credentialId)
+	}`, map[string]any{"entityId": entityID, "credentialId": credentialID}, nil)
+}
+
 func (c *Client) ListEntities(ctx context.Context, q Query) (EntityList, error) {
 	var out struct {
 		Entities EntityList `json:"entities"`
@@ -891,4 +916,9 @@ func (e Error) Error() string {
 func IsConflict(err error) bool {
 	ae, ok := err.(Error)
 	return ok && ae.StatusCode == http.StatusConflict
+}
+
+func IsNotFound(err error) bool {
+	ae, ok := err.(Error)
+	return ok && ae.StatusCode == http.StatusNotFound
 }

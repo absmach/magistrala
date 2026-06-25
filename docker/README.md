@@ -13,13 +13,22 @@ Follow the [official Docker Compose installation guide](https://docs.docker.com/
 Run the following commands from the project root directory.
 
 ```bash
-docker compose -f docker/docker-compose.yaml up
+make provision_atom_tokens
+make run_latest
+```
+
+`make provision_atom_tokens` starts Atom, creates per-service Atom API keys, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+
+If you use `docker compose` directly instead of the Makefile, pass both env files:
+
+```bash
+docker compose -f docker/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To start additional addon services:
 
 ```bash
-docker compose -f docker/addons/<path>/docker-compose.yaml up
+docker compose -f docker/addons/<path>/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `MG_RELEASE_TAG` in `.env` before running these commands.
@@ -215,7 +224,8 @@ make dockers    # builds all Docker images
 Start services with Docker compose:
 
 ```bash
-docker compose -f docker/docker-compose.yaml up
+make provision_atom_tokens
+make run_latest
 ```
 
 To clean up:

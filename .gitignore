@@ -19,6 +19,9 @@ coverage
 # Ignore Openbao data directory as it contains runtime-generated data
 docker/addons/certs/openbao/
 
+# Ignore generated local Atom service tokens.
+docker/.env.tokens
+
 # Ignore SeaweedFS data directory as it contains runtime-generated data
 docker/data/*
 

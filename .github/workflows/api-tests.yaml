@@ -153,6 +153,9 @@ jobs:
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
+      - name: Provision Atom service tokens
+        run: make provision_atom_tokens
+
       - name: Start containers
         run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 

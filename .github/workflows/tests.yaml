@@ -271,6 +271,7 @@ jobs:
             pkg-transformers) dir="pkg/transformers" ;;
             pkg-ulid) dir="pkg/ulid" ;;
             pkg-uuid) dir="pkg/uuid" ;;
+            groups) dir="pkg/groups" ;;
             *) dir="${{ matrix.module }}" ;;
           esac
 

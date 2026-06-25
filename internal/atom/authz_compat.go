@@ -43,7 +43,7 @@ func (a AuthorizationCompat) Authorize(ctx context.Context, pr smqauthz.PolicyRe
 		},
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.Allowed {
 		return errors.ErrAuthorization

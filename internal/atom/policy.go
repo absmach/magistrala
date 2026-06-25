@@ -33,7 +33,7 @@ func (pe PolicyEvaluator) CheckPolicy(ctx context.Context, pr policies.Policy) e
 		},
 	})
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.Allowed {
 		return errors.ErrAuthorization

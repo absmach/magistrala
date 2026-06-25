@@ -240,7 +240,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Bootstrap API tests
-        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('bootstrap/api/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/bootstrap.yaml

@@ -29,7 +29,7 @@ func Authorize(ctx context.Context, client Authorizer, session authn.Session, ac
 	}
 	res, err := client.CheckAuthz(ctx, req)
 	if err != nil {
-		return err
+		return errors.Wrap(errors.ErrAuthorization, err)
 	}
 	if !res.Allowed {
 		return errors.ErrAuthorization

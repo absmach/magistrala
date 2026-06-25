@@ -261,8 +261,20 @@ func TestEncodeError(t *testing.T) {
 			hasBody: true,
 		},
 		{
+			desc:    "Generic Authentication Failed",
+			err:     errors.ErrAuthentication,
+			code:    http.StatusUnauthorized,
+			hasBody: true,
+		},
+		{
 			desc:    "AuthZError - Authorization Failed",
 			err:     svcerr.ErrAuthorization,
+			code:    http.StatusForbidden,
+			hasBody: true,
+		},
+		{
+			desc:    "Generic Authorization Failed",
+			err:     errors.Wrap(errors.New("not authorized"), errors.ErrAuthorization),
 			code:    http.StatusForbidden,
 			hasBody: true,
 		},

@@ -127,7 +127,8 @@ queues:
       max_length_bytes: 1073741824
 
 auth:
-  provider: "atom"
+  url: "http://fluxmq-auth:7016"
+  transport: "grpc"
   timeout: 15s
   protocols:
     mqtt: true
@@ -135,15 +136,3 @@ auth:
     coap: true
     amqp: true
     amqp091: false
-  identity_cache_size: 50000
-  identity_cache_ttl: 1h
-  atom:
-    grpc_addr: "atom:8081"
-    insecure: true
-    service_token_env: "FLUXMQ_ATOM_SERVICE_TOKEN"
-    service_token_file: ""
-    topic_format: "magistrala"
-    authn_cache_ttl: 30s
-    alias_cache_ttl: 5m
-    decision_cache_ttl: 0s
-    unsupported_topic_policy: "deny"

@@ -339,10 +339,8 @@ services:
     user: "0:0"
     command: ["-config", "/etc/fluxmq/config.yaml"]
     depends_on:
-      atom-bootstrap:
-        condition: service_completed_successfully
-    environment:
-      FLUXMQ_ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_FLUXMQ_NODE1}
+      fluxmq-auth:
+        condition: service_started
     restart: on-failure
     ports:
       - ${MG_COAP_PORT}:5683/udp
@@ -362,10 +360,8 @@ services:
     depends_on:
       fluxmq-node1:
         condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
-    environment:
-      FLUXMQ_ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_FLUXMQ_NODE2}
+      fluxmq-auth:
+        condition: service_started
     restart: on-failure
     ports:
       - ${MG_FLUXMQ_API_PORT_2}:8082
@@ -384,10 +380,8 @@ services:
     depends_on:
       fluxmq-node1:
         condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
-    environment:
-      FLUXMQ_ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_FLUXMQ_NODE3}
+      fluxmq-auth:
+        condition: service_started
     restart: on-failure
     ports:
       - ${MG_FLUXMQ_API_PORT_3}:8082
@@ -397,6 +391,40 @@ services:
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
+
+  fluxmq-auth:
+    image: ghcr.io/absmach/magistrala/fluxmq:${MG_RELEASE_TAG}
+    container_name: magistrala-fluxmq-auth
+    depends_on:
+      atom-bootstrap:
+        condition: service_completed_successfully
+    restart: on-failure
+    environment:
+      MG_FLUXMQ_LOG_LEVEL: ${MG_FLUXMQ_LOG_LEVEL}
+      MG_FLUXMQ_GRPC_HOST: ${MG_FLUXMQ_GRPC_HOST}
+      MG_FLUXMQ_GRPC_PORT: ${MG_FLUXMQ_GRPC_PORT}
+      MG_FLUXMQ_INSTANCE_ID: ${MG_FLUXMQ_INSTANCE_ID}
+      MG_FLUXMQ_CACHE_NUM_COUNTERS: ${MG_FLUXMQ_CACHE_NUM_COUNTERS}
+      MG_FLUXMQ_CACHE_MAX_COST: ${MG_FLUXMQ_CACHE_MAX_COST}
+      MG_FLUXMQ_CACHE_BUFFER_ITEMS: ${MG_FLUXMQ_CACHE_BUFFER_ITEMS}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_FLUXMQ_PUBLISH_HTTP_HOST: ${MG_FLUXMQ_PUBLISH_HTTP_HOST}
+      MG_FLUXMQ_PUBLISH_HTTP_PORT: ${MG_FLUXMQ_PUBLISH_HTTP_PORT}
+      ATOM_URL: ${ATOM_URL}
+      ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_FLUXMQ_AUTH}
+      ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
+      ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
+      ATOM_ADMIN_TOKEN: ${ATOM_ADMIN_TOKEN}
+      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME}
+      ATOM_ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
+      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
+      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
+      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
+      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
+      MG_JAEGER_URL: ${MG_JAEGER_URL}
+      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+    networks:
+      - magistrala-base-net
 
   ui:
     image: ghcr.io/absmach/magistrala/ui-mg:${MG_RELEASE_TAG}
@@ -417,6 +445,7 @@ services:
       MG_GROUPS_URL: ${MG_GROUPS_URL}
       MG_BOOTSTRAP_URL: ${MG_BOOTSTRAP_URL}
       MG_HTTP_ADAPTER_URL: ${MG_HTTP_ADAPTER_URL}
+      MG_PUBLISH_PROXY_URL: ${MG_PUBLISH_PROXY_URL}
       MG_READER_URL: ${MG_READER_URL}
       MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
       MG_JOURNAL_URL: ${MG_JOURNAL_URL}

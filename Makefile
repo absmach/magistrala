@@ -4,7 +4,7 @@
 override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = atom-bootstrap notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader alarms reports journal
+SERVICES = atom-bootstrap notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader alarms reports journal fluxmq
 TEST_API_SERVICES = journal certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
@@ -24,6 +24,7 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-z
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config restart
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 ATOM_TOKENS_ENV ?= docker/.env.tokens
+REQUIRED_ATOM_TOKEN_ENVS := MG_ATOM_TOKEN_FLUXMQ_AUTH MG_ATOM_TOKEN_FLUXMQ_NODE1 MG_ATOM_TOKEN_FLUXMQ_NODE2 MG_ATOM_TOKEN_FLUXMQ_NODE3 MG_ATOM_TOKEN_JOURNAL MG_ATOM_TOKEN_NOTIFICATIONS MG_ATOM_TOKEN_TIMESCALE_READER MG_ATOM_TOKEN_RE MG_ATOM_TOKEN_ALARMS MG_ATOM_TOKEN_REPORTS MG_ATOM_TOKEN_POSTGRES_READER
 DOCKER_BASE_ENV_FILES := --env-file docker/.env
 DOCKER_ENV_FILES = $(if $(filter down,$(DOCKER_COMPOSE_COMMAND)),$(DOCKER_BASE_ENV_FILES),$(DOCKER_BASE_ENV_FILES) --env-file $(ATOM_TOKENS_ENV))
 DOCKER_PROVISION_ENV_FILES = $(DOCKER_BASE_ENV_FILES) $(if $(wildcard $(ATOM_TOKENS_ENV)),--env-file $(ATOM_TOKENS_ENV))
@@ -86,9 +87,21 @@ define make_docker_dev
 endef
 
 define require_atom_tokens_env
-	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ] && [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
-		echo "Missing $(ATOM_TOKENS_ENV). Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
-		exit 2; \
+	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		if [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
+			echo "Missing $(ATOM_TOKENS_ENV). Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+		missing=""; \
+		for env_name in $(REQUIRED_ATOM_TOKEN_ENVS); do \
+			if ! grep -q "^$${env_name}=" "$(ATOM_TOKENS_ENV)"; then \
+				missing="$${missing} $${env_name}"; \
+			fi; \
+		done; \
+		if [ -n "$${missing}" ]; then \
+			echo "Missing Atom service token(s) in $(ATOM_TOKENS_ENV):$${missing}. Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
 	fi
 endef
 

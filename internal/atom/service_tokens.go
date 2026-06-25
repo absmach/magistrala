@@ -36,6 +36,7 @@ type TokenProvisionResult struct {
 
 func DefaultServiceTokenSpecs() []ServiceTokenSpec {
 	return []ServiceTokenSpec{
+		{Name: "fluxmq-auth", Env: "MG_ATOM_TOKEN_FLUXMQ_AUTH", Description: "Magistrala Docker Compose token for fluxmq-auth"},
 		{Name: "fluxmq-node1", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE1", Description: "Magistrala Docker Compose token for fluxmq-node1"},
 		{Name: "fluxmq-node2", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE2", Description: "Magistrala Docker Compose token for fluxmq-node2"},
 		{Name: "fluxmq-node3", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE3", Description: "Magistrala Docker Compose token for fluxmq-node3"},

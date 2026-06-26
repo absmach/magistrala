@@ -108,6 +108,10 @@ func mapAction(a string) (string, bool) {
 		return actionManage, true
 	}
 	switch {
+	case strings.HasSuffix(a, "_publish"):
+		return actionPublish, true
+	case strings.HasSuffix(a, "_subscribe"):
+		return actionSubscribe, true
 	case strings.HasSuffix(a, "_view_role_users"), strings.HasSuffix(a, "_read"),
 		strings.HasSuffix(a, "_view"), strings.Contains(a, "_read_"):
 		return actionRead, true

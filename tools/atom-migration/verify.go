@@ -150,6 +150,26 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 	if err != nil {
 		return err
 	}
+	clients, err := readClients(ctx, m.clientsDB)
+	if err != nil {
+		return err
+	}
+	clientDomain := map[string]string{}
+	for _, c := range clients {
+		if domSet[c.DomainID] {
+			clientDomain[c.ID] = c.DomainID
+		}
+	}
+	channels, err := readChannels(ctx, m.channelsDB)
+	if err != nil {
+		return err
+	}
+	channelDomain := map[string]string{}
+	for _, c := range channels {
+		if domSet[c.DomainID] {
+			channelDomain[c.ID] = c.DomainID
+		}
+	}
 	// Build atom edge set: subject_id | channel(object_id) | action.
 	edges := map[string]bool{}
 	rows, err := m.atom.QueryxContext(ctx, `
@@ -176,7 +196,15 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 	expected, missing := 0, 0
 	for _, c := range append(cli, ch...) {
 		act, ok := connectionAction(c.Type)
-		if !ok || !domSet[c.DomainID] {
+		if !ok {
+			continue
+		}
+		chDom, ok := channelDomain[c.ChannelID]
+		if !ok {
+			continue
+		}
+		clDom, ok := clientDomain[c.ClientID]
+		if !ok || clDom != chDom || c.DomainID != chDom {
 			continue
 		}
 		k := c.ClientID + "|" + c.ChannelID + "|" + act

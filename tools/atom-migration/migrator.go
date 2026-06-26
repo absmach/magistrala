@@ -36,11 +36,13 @@ type migrator struct {
 	profileVersionID map[string]string // profile key -> latest active profile_versions.id
 	actionID         map[string]string // action name -> uuid
 
-	migratedUsers map[string]bool
-	tenants       map[string]bool   // domain ids that became tenants
-	clientDomain  map[string]string // client id -> domain id
-	channelDomain map[string]string
-	groupDomain   map[string]string
+	migratedUsers  map[string]bool
+	migratedRoles  map[string]bool
+	tenants        map[string]bool   // domain ids that became tenants
+	clientDomain   map[string]string // client id -> domain id
+	channelDomain  map[string]string
+	groupDomain    map[string]string
+	resourceDomain map[string]string // resource id -> tenant id
 
 	// Collision-free names/aliases computed by buildDedup (Atom enforces unique
 	// constraints Magistrala dropped). Keyed by source id; "" alias = NULL.
@@ -64,10 +66,12 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		profileVersionID: map[string]string{},
 		actionID:         map[string]string{},
 		migratedUsers:    map[string]bool{},
+		migratedRoles:    map[string]bool{},
 		tenants:          map[string]bool{},
 		clientDomain:     map[string]string{},
 		channelDomain:    map[string]string{},
 		groupDomain:      map[string]string{},
+		resourceDomain:   map[string]string{},
 		tenantName:       map[string]string{},
 		userName:         map[string]string{},
 		deviceName:       map[string]string{},
@@ -339,6 +343,8 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 		m.clientDomain[c.ID] = c.DomainID
 		extra := map[string]any{}
 		putStr(extra, "identity", c.Identity)
+		putTags(extra, c.Tags)
+		putJSON(extra, "private_metadata", c.PrivateMeta)
 		alias := aliasOrNil(m.clientAlias[c.ID])
 		name := m.deviceName[c.ID]
 		if err := m.exec(ctx,
@@ -400,12 +406,14 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 			continue
 		}
 		m.channelDomain[ch.ID] = ch.DomainID
+		m.resourceDomain[ch.ID] = ch.DomainID
 		alias := aliasOrNil(m.channelAlias[ch.ID])
 		owner := sql.NullString{}
 		if ch.CreatedBy.Valid && m.migratedUsers[ch.CreatedBy.String] {
 			owner = ch.CreatedBy
 		}
 		extra := map[string]any{"status": entityStatus(ch.Status)}
+		putTags(extra, ch.Tags)
 		if err := m.exec(ctx,
 			`INSERT INTO resources (id, kind, name, tenant_id, owner_id, attributes, alias, created_at, updated_at)
 			 VALUES ($1,'channel',$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
@@ -462,6 +470,7 @@ func (m *migrator) phaseRules(ctx context.Context, rep *report) error {
 			rep.skip("rule_orphan_domain")
 			continue
 		}
+		m.resourceDomain[r.ID] = r.DomainID
 		name := uniqueResName(seen, r.DomainID, firstNonEmpty(nsToStr(r.Name), r.ID))
 		extra := map[string]any{
 			"status":     entityStatus(r.Status),
@@ -512,6 +521,7 @@ func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
 			rep.skip("report_orphan_domain")
 			continue
 		}
+		m.resourceDomain[rp.ID] = rp.DomainID
 		name := uniqueResName(seen, rp.DomainID, firstNonEmpty(nsToStr(rp.Name), rp.ID))
 		extra := map[string]any{"status": entityStatus(rp.Status)}
 		putStr(extra, "description", rp.Description)
@@ -560,6 +570,7 @@ func (m *migrator) phaseAlarms(ctx context.Context, rep *report) error {
 			rep.skip("alarm_orphan_domain")
 			continue
 		}
+		m.resourceDomain[a.ID] = a.DomainID
 		name := uniqueResName(seen, a.DomainID, firstNonEmpty(a.Measurement, a.ID))
 		extra := map[string]any{
 			"rule_id":      a.RuleID,
@@ -697,6 +708,8 @@ func (m *migrator) phaseRoles(ctx context.Context, rep *report) error {
 		{"domains", m.domainsDB, func(id string) (string, bool) { return id, m.tenants[id] }, "tenant", ""},
 		{"clients", m.clientsDB, func(id string) (string, bool) { d, ok := m.clientDomain[id]; return d, ok }, "object", "entity"},
 		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelDomain[id]; return d, ok }, "object", "resource"},
+		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, "object", "resource"},
+		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, "object", "resource"},
 		{"groups", m.groupsDB, func(id string) (string, bool) { d, ok := m.groupDomain[id]; return d, ok }, "group", ""},
 	}
 	for _, f := range families {
@@ -723,7 +736,6 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 			continue
 		}
 		roleID := derivedUUID("role", f.prefix, r.ID)
-		blockID := derivedUUID("block", f.prefix, r.ID)
 
 		// Atom roles are unique on (name, tenant_id). Magistrala object roles are
 		// per-instance, so many objects in one tenant can share a role name
@@ -741,19 +753,12 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 		); err != nil {
 			return err
 		}
+		m.migratedRoles[roleID] = true
 		rep.count("roles", 1)
 
-		if err := m.insertBlock(ctx, blockID, f, r.EntityID, tenant); err != nil {
-			return err
-		}
-		if err := m.exec(ctx,
-			`INSERT INTO role_permission_blocks (role_id, permission_block_id)
-			 VALUES ($1,$2) ON CONFLICT DO NOTHING`, roleID, blockID); err != nil {
-			return err
-		}
-
 		// actions -> permission_block_actions
-		seen := map[string]bool{}
+		seen := map[string]bool{} // block id + atom action
+		insertedBlocks := map[string]bool{}
 		for _, raw := range actsByRole[r.ID] {
 			atom, ok := mapAction(raw)
 			if !ok {
@@ -766,21 +771,43 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 				rep.warnf("unmapped action %q (%s) -> manage", raw, f.prefix)
 			}
 			aid, ok := m.actionID[atom]
-			if !ok || seen[atom] {
+			if !ok {
 				continue
 			}
-			seen[atom] = true
-			if err := m.exec(ctx,
-				`INSERT INTO permission_block_actions (permission_block_id, action_id)
-				 VALUES ($1,$2) ON CONFLICT DO NOTHING`, blockID, aid); err != nil {
-				return err
+			for _, block := range f.blockPlans(r.ID, r.EntityID, tenant, raw) {
+				if !insertedBlocks[block.ID] {
+					if err := m.insertBlock(ctx, block); err != nil {
+						return err
+					}
+					if err := m.exec(ctx,
+						`INSERT INTO role_permission_blocks (role_id, permission_block_id)
+						 VALUES ($1,$2) ON CONFLICT DO NOTHING`, roleID, block.ID); err != nil {
+						return err
+					}
+					insertedBlocks[block.ID] = true
+				}
+				seenKey := block.ID + "|" + atom
+				if seen[seenKey] {
+					continue
+				}
+				seen[seenKey] = true
+				if err := m.exec(ctx,
+					`INSERT INTO permission_block_actions (permission_block_id, action_id)
+					 VALUES ($1,$2) ON CONFLICT DO NOTHING`, block.ID, aid); err != nil {
+					return err
+				}
+				rep.count("permission_block_actions", 1)
 			}
-			rep.count("permission_block_actions", 1)
 		}
 
 		// members -> role_assignments (+ tenant_memberships for domain roles)
 		for _, mem := range mems {
 			if mem.RoleID != r.ID {
+				continue
+			}
+			if !m.migratedUsers[mem.MemberID] {
+				rep.skip("role_orphan_member")
+				rep.warnf("%s role %s member %s skipped: user not migrated", f.prefix, r.ID, mem.MemberID)
 				continue
 			}
 			if err := m.exec(ctx,
@@ -805,22 +832,86 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 	return nil
 }
 
-func (m *migrator) insertBlock(ctx context.Context, blockID string, f roleScope, objectID, tenant string) error {
-	switch f.scopeMode {
-	case "tenant":
-		return m.exec(ctx,
-			`INSERT INTO permission_blocks (id, tenant_id, scope_mode, effect, conditions)
-			 VALUES ($1,$2,'tenant','allow','{}') ON CONFLICT (id) DO NOTHING`, blockID, tenant)
-	case "group":
-		return m.exec(ctx,
-			`INSERT INTO permission_blocks (id, tenant_id, scope_mode, group_id, effect, conditions)
-			 VALUES ($1,$2,'group',$3,'allow','{}') ON CONFLICT (id) DO NOTHING`, blockID, tenant, objectID)
-	default: // object
-		return m.exec(ctx,
-			`INSERT INTO permission_blocks (id, tenant_id, scope_mode, object_kind, object_id, effect, conditions)
-			 VALUES ($1,$2,'object',$3,$4,'allow','{}') ON CONFLICT (id) DO NOTHING`,
-			blockID, tenant, f.objKind, objectID)
+type permissionBlockPlan struct {
+	ID         string
+	TenantID   string
+	ScopeMode  string
+	ObjectKind any
+	ObjectType any
+	ObjectID   any
+	GroupID    any
+}
+
+func (f roleScope) blockPlans(roleID, objectID, tenant, rawAction string) []permissionBlockPlan {
+	if f.scopeMode != "group" {
+		blockID := derivedUUID("block", f.prefix, roleID)
+		switch f.scopeMode {
+		case "tenant":
+			return []permissionBlockPlan{{
+				ID: blockID, TenantID: tenant, ScopeMode: "tenant",
+			}}
+		default:
+			return []permissionBlockPlan{{
+				ID: blockID, TenantID: tenant, ScopeMode: "object",
+				ObjectKind: f.objKind, ObjectID: objectID,
+			}}
+		}
 	}
+
+	action := strings.ToLower(strings.TrimSpace(rawAction))
+	switch {
+	case strings.HasPrefix(action, "subgroup_client"):
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", "entity", "entity:device")}
+	case strings.HasPrefix(action, "client"):
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", "entity", "entity:device")}
+	case strings.HasPrefix(action, "subgroup_channel"):
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", "resource", "resource:channel")}
+	case strings.HasPrefix(action, "channel"):
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", "resource", "resource:channel")}
+	case strings.HasPrefix(action, "subgroup"):
+		return []permissionBlockPlan{groupKindBlock(roleID, tenant, objectID, "descendant")}
+	default:
+		return []permissionBlockPlan{{
+			ID:       derivedUUID("block", "groups", roleID, "self"),
+			TenantID: tenant, ScopeMode: "object", ObjectKind: "group", ObjectID: objectID,
+		}}
+	}
+}
+
+func groupObjectBlock(roleID, tenant, groupID, depth, objectKind, objectType string) permissionBlockPlan {
+	scopeMode := "group_direct_objects"
+	if depth == "descendant" {
+		scopeMode = "group_descendant_objects"
+	}
+	return permissionBlockPlan{
+		ID:         derivedUUID("block", "groups", roleID, depth, objectType),
+		TenantID:   tenant,
+		ScopeMode:  scopeMode,
+		ObjectKind: objectKind,
+		ObjectType: objectType,
+		GroupID:    groupID,
+	}
+}
+
+func groupKindBlock(roleID, tenant, groupID, depth string) permissionBlockPlan {
+	scopeMode := "group_child_groups"
+	if depth == "descendant" {
+		scopeMode = "group_descendant_groups"
+	}
+	return permissionBlockPlan{
+		ID:        derivedUUID("block", "groups", roleID, depth, "group"),
+		TenantID:  tenant,
+		ScopeMode: scopeMode,
+		GroupID:   groupID,
+	}
+}
+
+func (m *migrator) insertBlock(ctx context.Context, b permissionBlockPlan) error {
+	return m.exec(ctx,
+		`INSERT INTO permission_blocks
+		   (id, tenant_id, scope_mode, object_kind, object_type, object_id, group_id, effect, conditions)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,'allow','{}') ON CONFLICT (id) DO NOTHING`,
+		b.ID, b.TenantID, b.ScopeMode, b.ObjectKind, b.ObjectType, b.ObjectID, b.GroupID)
 }
 
 func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
@@ -848,6 +939,16 @@ func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
 		dom, ok := m.channelDomain[c.ChannelID]
 		if !ok {
 			rep.skip("conn_orphan_channel")
+			continue
+		}
+		clientDom, ok := m.clientDomain[c.ClientID]
+		if !ok {
+			rep.skip("conn_orphan_client")
+			continue
+		}
+		if clientDom != dom || c.DomainID != dom {
+			rep.skip("conn_domain_mismatch")
+			rep.warnf("connection client=%s channel=%s skipped: connection domain=%s client domain=%s channel domain=%s", c.ClientID, c.ChannelID, c.DomainID, clientDom, dom)
 			continue
 		}
 		act, ok := connectionAction(c.Type)
@@ -949,11 +1050,17 @@ func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
 			invitee = sql.NullString{String: iv.InviteeID, Valid: true}
 		}
 		roleID := derivedUUID("role", "domains", iv.RoleID)
+		roleArg := any(roleID)
+		if !m.migratedRoles[roleID] {
+			roleArg = nil
+			rep.skip("invitation_orphan_role")
+			rep.warnf("invitation for tenant %s invitee %s has missing role %s; role_id set NULL", iv.DomainID, iv.InviteeID, iv.RoleID)
+		}
 		if err := m.exec(ctx,
 			`INSERT INTO tenant_invitations (id, tenant_id, invitee_user_id, invited_by, role_id, created_at, rejected_at)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
 			derivedUUID("inv", iv.DomainID, iv.InviteeID), iv.DomainID, invitee, iv.InvitedBy,
-			roleID, ntToTime(iv.CreatedAt), ntPtr(iv.RejectedAt),
+			roleArg, ntToTime(iv.CreatedAt), ntPtr(iv.RejectedAt),
 		); err != nil {
 			return err
 		}
@@ -1043,6 +1150,18 @@ func pqArr(a []string) any {
 func putStr(m map[string]any, k string, v sql.NullString) {
 	if v.Valid && v.String != "" {
 		m[k] = v.String
+	}
+}
+
+func putTags(m map[string]any, tags []string) {
+	if len(tags) > 0 {
+		m["tags"] = []string(tags)
+	}
+}
+
+func putJSON(m map[string]any, k string, b []byte) {
+	if len(b) > 0 {
+		m[k] = json.RawMessage(b)
 	}
 }
 

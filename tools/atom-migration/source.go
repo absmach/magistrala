@@ -52,6 +52,7 @@ type srcClient struct {
 	Secret        sql.NullString `db:"secret"`
 	Tags          pq.StringArray `db:"tags"`
 	Metadata      []byte         `db:"metadata"`
+	PrivateMeta   []byte         `db:"private_metadata"`
 	Status        int16          `db:"status"`
 	CreatedAt     sql.NullTime   `db:"created_at"`
 	UpdatedAt     sql.NullTime   `db:"updated_at"`
@@ -210,7 +211,7 @@ func readUsers(ctx context.Context, db *sqlx.DB) ([]srcUser, error) {
 
 func readClients(ctx context.Context, db *sqlx.DB) ([]srcClient, error) {
 	var out []srcClient
-	q := `SELECT id, name, domain_id, parent_group_id, identity, secret, tags, metadata,
+	q := `SELECT id, name, domain_id, parent_group_id, identity, secret, tags, metadata, private_metadata,
 	             status, created_at, updated_at
 	      FROM clients`
 	return out, db.SelectContext(ctx, &out, q)

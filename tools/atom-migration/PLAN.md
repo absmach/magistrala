@@ -11,7 +11,7 @@ database. Implemented as Go scripts.
 | Topic | Decision |
 |-------|----------|
 | Passwords | **Force reset.** Users migrate with no `password` credential; they reset via Atom's email flow on first login. (bcrypt → argon2 is not convertible without plaintext.) |
-| Scope | Core IAM + Roles & policies + Connections + PATs. |
+| Scope | Core IAM + roles & policies + connections + PATs + rules/reports/alarms as Atom resources. |
 | Execution | **Offline one-shot.** Stop Magistrala app services, snapshot, transform, load, start Atom. |
 | IDs | **Preserve Magistrala UUIDs** as Atom UUIDs (PKs and FKs). Magistrala IDs are 36-char UUID strings — directly usable as Atom `UUID` PKs. Keeps audit trails, message payloads, external references, and SpiceDB-derived links intact. |
 
@@ -31,6 +31,9 @@ All `magistrala/magistrala`, port 5432, on network `magistrala-base-net`:
 | `channels-db` | `channels` | `channels`, `connections`, `channels_roles*` |
 | `groups-db` | `groups` | `groups`, `groups_roles*` |
 | `auth-db` | `auth` | `pats`, `pat_scopes` (skip `keys` — short-lived JWTs; skip legacy `policies`/`domains` mirror) |
+| `re-db` | `rules_engine` | `rules`, `rules_roles*` |
+| `reports-db` | `reports` | `report_config`, `reports_roles*` |
+| `alarms-db` | `alarms` | `alarms` |
 
 > Note: `groups` migrations are embedded into clients **and** channels **and** the
 > standalone groups service. The authoritative groups data for default compose is
@@ -120,8 +123,9 @@ these tables carry no `(domain_id, name)` constraint; alarms (no name) use
 | `alarms.alarms` (id) | `kind='alarm'`; `rule_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, severity, alarm_status, assignee/assigned/acknowledged/resolved*` → `attributes` |
 
 > Atom `resources.kind` must permit `rule`, `report`, `alarm` (in addition to
-> `channel`). These resources are not wired into group membership or roles —
-> Magistrala has no role family or `parent_group_id` for them.
+> `channel`). Rules and reports have object-specific role families and those are
+> migrated as resource-scoped roles. Alarms have no role family or
+> `parent_group_id`, so only the resource rows are migrated for alarms.
 
 ### 3.5 groups → object_groups
 Magistrala groups organize clients/channels within a domain (hierarchical,
@@ -143,7 +147,8 @@ Client/channel `parent_group_id` → `object_group_entities` / `object_group_res
 
 Magistrala authz = per-service role tables (`<prefix>_roles`, `_role_actions`,
 `_role_members`) enforced via SpiceDB. Atom replaces SpiceDB; we reconstruct authz
-**from the SQL role tables** (no need to read SpiceDB directly).
+**from the SQL role tables** (no need to read SpiceDB directly). Migrated role
+families: `domains`, `clients`, `channels`, `groups`, `rules`, and `reports`.
 
 Magistrala role shape: each role row is bound to a specific object instance
 (`entity_id` = the domain/client/channel/group id), has a set of action strings,
@@ -153,13 +158,19 @@ Mapping per Magistrala role row → Atom:
 1. **`roles`** row (preserve `id`, `name`, `tenant_id` = owning domain when known).
 2. **`permission_blocks`** row scoped to the object:
    - domain roles → `scope_mode='tenant'`, `tenant_id=entity_id`
-   - client/channel/group roles → `scope_mode='object'`, `object_id=entity_id`
+   - client/channel/rule/report roles → `scope_mode='object'`, `object_id=entity_id`
+   - group roles → supported Atom group scopes:
+     direct `client*` / `channel*` actions use `group_direct_objects`;
+     `subgroup_client*` / `subgroup_channel*` actions use
+     `group_descendant_objects`; `subgroup*` group actions use
+     `group_descendant_groups`; direct group-management actions use object scope
+     on the object group itself.
    - `effect='allow'`, `conditions='{}'`
 3. **`permission_block_actions`** ← map each Magistrala action string to Atom actions
    via a translation table (below).
 4. **`role_permission_blocks`** links role → block.
-5. **`role_assignments`** one per `_role_member` (`subject_kind='entity'`,
-   `subject_id=member_id`, `role_id`, `tenant_id`).
+5. **`role_assignments`** one per `_role_member` whose user migrated
+   (`subject_kind='entity'`, `subject_id=member_id`, `role_id`, `tenant_id`).
 6. For **domain** role members, also insert **`tenant_memberships`**
    (`tenant_id`, `entity_id`, `status='active'`).
 
@@ -186,8 +197,10 @@ execute, manage, policy.manage, role.manage, authz.check`.
 
 ### Invitations
 `domains.invitations` → `tenant_invitations` (preserve domain_id, invitee_user_id,
-invited_by, role_id; map confirmed/rejected timestamps). Pending only; accepted
-ones are already reflected as memberships.
+invited_by, role_id when the role migrated; map confirmed/rejected timestamps).
+Pending only; accepted ones are already reflected as memberships. If the source
+invitation references a stale role, the Atom `role_id` is written as `NULL` to
+avoid a foreign-key failure while preserving the invitation record.
 
 ---
 
@@ -246,7 +259,9 @@ Checks below; the email check matters mainly for dumps merged across instances
    `resources` names — Magistrala already enforces `(domain_id, name)` so this is
    usually safe; still verify (users have no tenant, so global human-name dupes are
    fine because humans are keyed by id/email).
-4. **FK integrity**: skip rows whose `domain_id` has no surviving tenant; report.
+4. **FK integrity**: skip rows whose `domain_id` has no surviving tenant; skip
+   role members whose user did not migrate; set stale invitation roles to `NULL`;
+   report all cases.
 5. **Email uniqueness**: `entity_emails.email` is globally UNIQUE — dedupe/report
    conflicting user emails before load.
 

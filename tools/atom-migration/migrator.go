@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -26,6 +27,9 @@ type migrator struct {
 	channelsDB *sqlx.DB
 	groupsDB   *sqlx.DB
 	authDB     *sqlx.DB
+	reDB       *sqlx.DB
+	reportsDB  *sqlx.DB
+	alarmsDB   *sqlx.DB
 	atom       *sqlx.DB
 
 	profileID        map[string]string // profile key (e.g. "user","client") -> uuid
@@ -87,6 +91,9 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 	m.channelsDB = open("channels", cfg.Channels.DSN())
 	m.groupsDB = open("groups", cfg.Groups.DSN())
 	m.authDB = open("auth", cfg.Auth.DSN())
+	m.reDB = open("rules_engine", cfg.RE.DSN())
+	m.reportsDB = open("reports", cfg.Reports.DSN())
+	m.alarmsDB = open("alarms", cfg.Alarms.DSN())
 	m.atom = open("atom", cfg.AtomDSN)
 	if err != nil {
 		return nil, err
@@ -97,7 +104,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 const authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
 
 func (m *migrator) Close() {
-	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.atom} {
+	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.alarmsDB, m.atom} {
 		if db != nil {
 			_ = db.Close()
 		}
@@ -127,6 +134,9 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 		{"entities.clients", m.phaseClients},
 		{"credentials.devices", m.phaseDeviceCreds},
 		{"resources.channels", m.phaseChannels},
+		{"resources.rules", m.phaseRules},
+		{"resources.reports", m.phaseReports},
+		{"resources.alarms", m.phaseAlarms},
 		{"object_groups", m.phaseGroups},
 		{"group_membership", m.phaseGroupMembership},
 		{"roles", m.phaseRoles},
@@ -405,6 +415,185 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 			return err
 		}
 		rep.count("resources.channels", 1)
+	}
+	return nil
+}
+
+// insertResource writes one row into Atom resources (kind = channel/rule/report/
+// alarm). Entity-specific columns Magistrala has but Atom resources lack are
+// folded into the attributes JSONB. ON CONFLICT (id) keeps it idempotent.
+func (m *migrator) insertResource(ctx context.Context, id, kind, name, tenant string, owner sql.NullString, attributes string, createdAt time.Time, updatedAt any) error {
+	return m.exec(ctx,
+		`INSERT INTO resources (id, kind, name, tenant_id, owner_id, attributes, created_at, updated_at)
+		 VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
+		id, kind, name, tenant, owner, attributes, createdAt, updatedAt)
+}
+
+// ownerOf returns created_by only when it maps to a migrated human (resources.
+// owner_id is an FK to entities); otherwise NULL.
+func (m *migrator) ownerOf(createdBy sql.NullString) sql.NullString {
+	if createdBy.Valid && m.migratedUsers[createdBy.String] {
+		return createdBy
+	}
+	return sql.NullString{}
+}
+
+// uniqueResName makes a resource name unique within a tenant (Atom enforces
+// resources(name, tenant_id); rules/reports/alarms carry no such Magistrala
+// constraint, so same-tenant dups are possible). Suffixes -2, -3, … on collision.
+func uniqueResName(seen map[string]int, tenant, name string) string {
+	key := tenant + "|" + strings.ToLower(name)
+	seen[key]++
+	if seen[key] == 1 {
+		return name
+	}
+	return fmt.Sprintf("%s-%d", name, seen[key])
+}
+
+// phaseRules: rules_engine.rules -> resources (kind=rule).
+func (m *migrator) phaseRules(ctx context.Context, rep *report) error {
+	rows, err := readRules(ctx, m.reDB)
+	if err != nil {
+		return err
+	}
+	seen := map[string]int{}
+	for _, r := range rows {
+		if !m.tenants[r.DomainID] {
+			rep.skip("rule_orphan_domain")
+			continue
+		}
+		name := uniqueResName(seen, r.DomainID, firstNonEmpty(nsToStr(r.Name), r.ID))
+		extra := map[string]any{
+			"status":     entityStatus(r.Status),
+			"logic_type": r.LogicType,
+		}
+		putStr(extra, "input_channel", r.InputChannel)
+		putStr(extra, "input_topic", r.InputTopic)
+		putStr(extra, "updated_by", r.UpdatedBy)
+		if len(r.Outputs) > 0 {
+			extra["outputs"] = r.Outputs
+		}
+		if len(r.LogicValue) > 0 {
+			extra["logic_value"] = r.LogicValue // base64-encoded in JSON
+		}
+		if r.Recurring.Valid {
+			extra["recurring"] = r.Recurring.Int16
+		}
+		if r.RecurringPeriod.Valid {
+			extra["recurring_period"] = r.RecurringPeriod.Int16
+		}
+		if r.Time.Valid {
+			extra["time"] = r.Time.Time
+		}
+		if r.StartDatetime.Valid {
+			extra["start_datetime"] = r.StartDatetime.Time
+		}
+		if len(r.Tags) > 0 {
+			extra["tags"] = []string(r.Tags)
+		}
+		if err := m.insertResource(ctx, r.ID, "rule", name, r.DomainID, m.ownerOf(r.CreatedBy),
+			attrs(r.Metadata, extra), ntToTime(r.CreatedAt), ntPtr(r.UpdatedAt)); err != nil {
+			return err
+		}
+		rep.count("resources.rules", 1)
+	}
+	return nil
+}
+
+// phaseReports: reports.report_config -> resources (kind=report).
+func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
+	rows, err := readReports(ctx, m.reportsDB)
+	if err != nil {
+		return err
+	}
+	seen := map[string]int{}
+	for _, rp := range rows {
+		if !m.tenants[rp.DomainID] {
+			rep.skip("report_orphan_domain")
+			continue
+		}
+		name := uniqueResName(seen, rp.DomainID, firstNonEmpty(nsToStr(rp.Name), rp.ID))
+		extra := map[string]any{"status": entityStatus(rp.Status)}
+		putStr(extra, "description", rp.Description)
+		putStr(extra, "report_template", rp.ReportTemplate)
+		putStr(extra, "updated_by", rp.UpdatedBy)
+		if len(rp.Config) > 0 {
+			extra["config"] = rp.Config
+		}
+		if len(rp.Email) > 0 {
+			extra["email"] = rp.Email
+		}
+		if len(rp.Metrics) > 0 {
+			extra["metrics"] = rp.Metrics
+		}
+		if rp.Due.Valid {
+			extra["due"] = rp.Due.Time
+		}
+		if rp.Recurring.Valid {
+			extra["recurring"] = rp.Recurring.Int16
+		}
+		if rp.RecurringPeriod.Valid {
+			extra["recurring_period"] = rp.RecurringPeriod.Int16
+		}
+		if rp.StartDatetime.Valid {
+			extra["start_datetime"] = rp.StartDatetime.Time
+		}
+		if err := m.insertResource(ctx, rp.ID, "report", name, rp.DomainID, m.ownerOf(rp.CreatedBy),
+			attrs(nil, extra), ntToTime(rp.CreatedAt), ntPtr(rp.UpdatedAt)); err != nil {
+			return err
+		}
+		rep.count("resources.reports", 1)
+	}
+	return nil
+}
+
+// phaseAlarms: alarms.alarms -> resources (kind=alarm). Alarms have no name in
+// Magistrala; the measurement is used (id fallback), deduped per tenant.
+func (m *migrator) phaseAlarms(ctx context.Context, rep *report) error {
+	rows, err := readAlarms(ctx, m.alarmsDB)
+	if err != nil {
+		return err
+	}
+	seen := map[string]int{}
+	for _, a := range rows {
+		if !m.tenants[a.DomainID] {
+			rep.skip("alarm_orphan_domain")
+			continue
+		}
+		name := uniqueResName(seen, a.DomainID, firstNonEmpty(a.Measurement, a.ID))
+		extra := map[string]any{
+			"rule_id":      a.RuleID,
+			"channel_id":   a.ChannelID,
+			"client_id":    a.ClientID,
+			"subtopic":     a.Subtopic,
+			"measurement":  a.Measurement,
+			"value":        a.Value,
+			"unit":         a.Unit,
+			"threshold":    a.Threshold,
+			"cause":        a.Cause,
+			"alarm_status": a.Status,
+			"severity":     a.Severity,
+		}
+		putStr(extra, "assignee_id", a.AssigneeID)
+		putStr(extra, "updated_by", a.UpdatedBy)
+		putStr(extra, "assigned_by", a.AssignedBy)
+		putStr(extra, "acknowledged_by", a.AcknowledgedBy)
+		putStr(extra, "resolved_by", a.ResolvedBy)
+		if a.AssignedAt.Valid {
+			extra["assigned_at"] = a.AssignedAt.Time
+		}
+		if a.AcknowledgedAt.Valid {
+			extra["acknowledged_at"] = a.AcknowledgedAt.Time
+		}
+		if a.ResolvedAt.Valid {
+			extra["resolved_at"] = a.ResolvedAt.Time
+		}
+		// Alarms carry no created_by; owner_id stays NULL.
+		if err := m.insertResource(ctx, a.ID, "alarm", name, a.DomainID, sql.NullString{},
+			attrs(a.Metadata, extra), ntToTime(a.CreatedAt), ntPtr(a.UpdatedAt)); err != nil {
+			return err
+		}
+		rep.count("resources.alarms", 1)
 	}
 	return nil
 }

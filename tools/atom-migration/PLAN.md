@@ -102,6 +102,27 @@ principal group, matching Atom's normal `create_entity` side effect.
 | `created_by` | `owner_id` (if the user migrated) |
 | `parent_group_id` | `object_group_resources` membership |
 
+### 3.4b rules / reports / alarms → resources
+
+Rules-engine rules, report configs, and alarms are domain-scoped objects with no
+Atom-native table, so they become **resources** alongside channels, distinguished
+by `kind`. Service-specific columns Atom resources lack are folded into
+`attributes` (JSONB). `tenant_id=domain_id`; rows whose domain has no surviving
+tenant are skipped (§6.4). `owner_id`=`created_by` when that user migrated
+(alarms have no `created_by` → NULL). Names are deduped per tenant (§6.3) since
+these tables carry no `(domain_id, name)` constraint; alarms (no name) use
+`measurement` with an `id` fallback.
+
+| Source | Atom `resources` |
+|---|---|
+| `rules_engine.rules` (id) | `kind='rule'`; `input_channel/topic, outputs, logic_type/value, recurring*, time, start_datetime, tags, status` → `attributes` |
+| `reports.report_config` (id) | `kind='report'`; `description, config, email, metrics, report_template, due, recurring*, start_datetime, status` → `attributes` |
+| `alarms.alarms` (id) | `kind='alarm'`; `rule_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, severity, alarm_status, assignee/assigned/acknowledged/resolved*` → `attributes` |
+
+> Atom `resources.kind` must permit `rule`, `report`, `alarm` (in addition to
+> `channel`). These resources are not wired into group membership or roles —
+> Magistrala has no role family or `parent_group_id` for them.
+
 ### 3.5 groups → object_groups
 Magistrala groups organize clients/channels within a domain (hierarchical,
 `parent_id` + `path` ltree). Map to **object_groups**:
@@ -238,7 +259,7 @@ Checks below; the email check matters mainly for dumps merged across instances
 3. …then backfill tenants.created_by/updated_by and resources.owner_id
 4. entity_emails
 5. credentials (device api_key; PAT metadata)
-6. resources (channels)
+6. resources (channels, rules, reports, alarms)
 7. object_groups → object_group_hierarchy → object_group_entities/resources
 8. roles → permission_blocks → permission_block_actions → role_permission_blocks
 9. role_assignments, direct_policies

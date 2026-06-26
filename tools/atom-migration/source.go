@@ -6,6 +6,7 @@ package main
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/lib/pq"
@@ -119,6 +120,78 @@ type srcPAT struct {
 	IssuedAt  sql.NullTime   `db:"issued_at"`
 }
 
+// srcRule is a rules-engine rule (rules_engine.rules) -> Atom resource kind=rule.
+type srcRule struct {
+	ID              string          `db:"id"`
+	Name            sql.NullString  `db:"name"`
+	DomainID        string          `db:"domain_id"`
+	Metadata        []byte          `db:"metadata"`
+	CreatedBy       sql.NullString  `db:"created_by"`
+	CreatedAt       sql.NullTime    `db:"created_at"`
+	UpdatedAt       sql.NullTime    `db:"updated_at"`
+	UpdatedBy       sql.NullString  `db:"updated_by"`
+	InputChannel    sql.NullString  `db:"input_channel"`
+	InputTopic      sql.NullString  `db:"input_topic"`
+	Outputs         json.RawMessage `db:"outputs"`
+	Status          int16           `db:"status"`
+	LogicType       int16           `db:"logic_type"`
+	LogicValue      []byte          `db:"logic_value"`
+	Time            sql.NullTime    `db:"time"`
+	Recurring       sql.NullInt16   `db:"recurring"`
+	RecurringPeriod sql.NullInt16   `db:"recurring_period"`
+	StartDatetime   sql.NullTime    `db:"start_datetime"`
+	Tags            pq.StringArray  `db:"tags"`
+}
+
+// srcReport is a report config (reports.report_config) -> Atom resource kind=report.
+type srcReport struct {
+	ID              string          `db:"id"`
+	Name            sql.NullString  `db:"name"`
+	Description     sql.NullString  `db:"description"`
+	DomainID        string          `db:"domain_id"`
+	Status          int16           `db:"status"`
+	CreatedAt       sql.NullTime    `db:"created_at"`
+	CreatedBy       sql.NullString  `db:"created_by"`
+	UpdatedAt       sql.NullTime    `db:"updated_at"`
+	UpdatedBy       sql.NullString  `db:"updated_by"`
+	Due             sql.NullTime    `db:"due"`
+	Recurring       sql.NullInt16   `db:"recurring"`
+	RecurringPeriod sql.NullInt16   `db:"recurring_period"`
+	StartDatetime   sql.NullTime    `db:"start_datetime"`
+	Config          json.RawMessage `db:"config"`
+	Email           json.RawMessage `db:"email"`
+	Metrics         json.RawMessage `db:"metrics"`
+	ReportTemplate  sql.NullString  `db:"report_template"`
+}
+
+// srcAlarm is an alarm (alarms.alarms) -> Atom resource kind=alarm.
+type srcAlarm struct {
+	ID             string         `db:"id"`
+	RuleID         string         `db:"rule_id"`
+	DomainID       string         `db:"domain_id"`
+	ChannelID      string         `db:"channel_id"`
+	Subtopic       string         `db:"subtopic"`
+	ClientID       string         `db:"client_id"`
+	Measurement    string         `db:"measurement"`
+	Value          string         `db:"value"`
+	Unit           string         `db:"unit"`
+	Threshold      string         `db:"threshold"`
+	Cause          string         `db:"cause"`
+	Status         int16          `db:"status"`
+	Severity       int16          `db:"severity"`
+	AssigneeID     sql.NullString `db:"assignee_id"`
+	CreatedAt      sql.NullTime   `db:"created_at"`
+	UpdatedAt      sql.NullTime   `db:"updated_at"`
+	UpdatedBy      sql.NullString `db:"updated_by"`
+	AssignedAt     sql.NullTime   `db:"assigned_at"`
+	AssignedBy     sql.NullString `db:"assigned_by"`
+	AcknowledgedAt sql.NullTime   `db:"acknowledged_at"`
+	AcknowledgedBy sql.NullString `db:"acknowledged_by"`
+	ResolvedAt     sql.NullTime   `db:"resolved_at"`
+	ResolvedBy     sql.NullString `db:"resolved_by"`
+	Metadata       []byte         `db:"metadata"`
+}
+
 // --- readers ---
 
 func readDomains(ctx context.Context, db *sqlx.DB) ([]srcDomain, error) {
@@ -161,6 +234,34 @@ func readGroups(ctx context.Context, db *sqlx.DB) ([]srcGroup, error) {
 	q := `SELECT id, parent_id, domain_id, name, description, metadata, tags, status,
 	             created_at, updated_at
 	      FROM groups`
+	return out, db.SelectContext(ctx, &out, q)
+}
+
+func readRules(ctx context.Context, db *sqlx.DB) ([]srcRule, error) {
+	var out []srcRule
+	q := `SELECT id, name, domain_id, metadata, created_by, created_at, updated_at, updated_by,
+	             input_channel, input_topic, outputs, status, logic_type, logic_value,
+	             "time", recurring, recurring_period, start_datetime, tags
+	      FROM rules`
+	return out, db.SelectContext(ctx, &out, q)
+}
+
+func readReports(ctx context.Context, db *sqlx.DB) ([]srcReport, error) {
+	var out []srcReport
+	q := `SELECT id, name, description, domain_id, status, created_at, created_by, updated_at,
+	             updated_by, due, recurring, recurring_period, start_datetime,
+	             config, email, metrics, report_template
+	      FROM report_config`
+	return out, db.SelectContext(ctx, &out, q)
+}
+
+func readAlarms(ctx context.Context, db *sqlx.DB) ([]srcAlarm, error) {
+	var out []srcAlarm
+	q := `SELECT id, rule_id, domain_id, channel_id, subtopic, client_id, measurement, value,
+	             unit, threshold, cause, status, severity, assignee_id, created_at, updated_at,
+	             updated_by, assigned_at, assigned_by, acknowledged_at, acknowledged_by,
+	             resolved_at, resolved_by, metadata
+	      FROM alarms`
 	return out, db.SelectContext(ctx, &out, q)
 }
 

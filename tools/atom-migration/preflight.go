@@ -273,6 +273,39 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 		}
 		return out
 	}, "groups")
+	rules, err := readRules(ctx, m.reDB)
+	if err != nil {
+		return err
+	}
+	count(func() []string {
+		out := make([]string, len(rules))
+		for i, r := range rules {
+			out[i] = r.DomainID
+		}
+		return out
+	}, "rules")
+	reports, err := readReports(ctx, m.reportsDB)
+	if err != nil {
+		return err
+	}
+	count(func() []string {
+		out := make([]string, len(reports))
+		for i, r := range reports {
+			out[i] = r.DomainID
+		}
+		return out
+	}, "reports")
+	alarms, err := readAlarms(ctx, m.alarmsDB)
+	if err != nil {
+		return err
+	}
+	count(func() []string {
+		out := make([]string, len(alarms))
+		for i, a := range alarms {
+			out[i] = a.DomainID
+		}
+		return out
+	}, "alarms")
 	return nil
 }
 

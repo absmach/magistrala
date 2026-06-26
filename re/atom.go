@@ -85,7 +85,6 @@ func ruleProjection(r Rule) atom.Resource {
 		OwnerID:   r.CreatedBy,
 		Status:    r.Status.String(),
 		Tags:      r.Tags,
-		Metadata:  map[string]any(r.Metadata),
 		CreatedBy: r.CreatedBy,
 		UpdatedBy: r.UpdatedBy,
 		CreatedAt: r.CreatedAt,
@@ -93,6 +92,5 @@ func ruleProjection(r Rule) atom.Resource {
 	})
 	res.Attributes["input_channel"] = r.InputChannel
 	res.Attributes["input_topic"] = r.InputTopic
-	res.Attributes["scheduled_at"] = r.Schedule.Time
 	return res
 }

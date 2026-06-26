@@ -5,6 +5,7 @@ package alarms
 
 import (
 	"context"
+	"time"
 
 	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
@@ -71,8 +72,26 @@ func alarmProjection(a Alarm) atom.Resource {
 	res.Attributes["rule_id"] = a.RuleID
 	res.Attributes["channel_id"] = a.ChannelID
 	res.Attributes["client_id"] = a.ClientID
+	res.Attributes["subtopic"] = a.Subtopic
 	res.Attributes["severity"] = a.Severity
 	res.Attributes["measurement"] = a.Measurement
+	res.Attributes["value"] = a.Value
+	res.Attributes["unit"] = a.Unit
+	res.Attributes["threshold"] = a.Threshold
+	res.Attributes["cause"] = a.Cause
 	res.Attributes["assignee_id"] = a.AssigneeID
+	res.Attributes["assigned_at"] = alarmTimeString(a.AssignedAt)
+	res.Attributes["assigned_by"] = a.AssignedBy
+	res.Attributes["acknowledged_at"] = alarmTimeString(a.AcknowledgedAt)
+	res.Attributes["acknowledged_by"] = a.AcknowledgedBy
+	res.Attributes["resolved_at"] = alarmTimeString(a.ResolvedAt)
+	res.Attributes["resolved_by"] = a.ResolvedBy
 	return res
+}
+
+func alarmTimeString(ts time.Time) string {
+	if ts.IsZero() {
+		return ""
+	}
+	return ts.Format(time.RFC3339Nano)
 }

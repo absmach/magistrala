@@ -22,6 +22,9 @@ func TestAtomServiceCreateAlarmProjectsCreatedAlarm(t *testing.T) {
 			ClientID:    "client-1",
 			Cause:       "high temperature",
 			Measurement: "temperature",
+			Value:       "92.4",
+			Unit:        "C",
+			Threshold:   "80",
 			Severity:    90,
 			Status:      ActiveStatus,
 		},
@@ -39,6 +42,9 @@ func TestAtomServiceCreateAlarmProjectsCreatedAlarm(t *testing.T) {
 	}
 	if projector.resource.Attributes["rule_id"] != "rule-1" {
 		t.Fatalf("missing rule projection: %#v", projector.resource.Attributes)
+	}
+	if projector.resource.Attributes["value"] != "92.4" || projector.resource.Attributes["threshold"] != "80" {
+		t.Fatalf("missing alarm value projection: %#v", projector.resource.Attributes)
 	}
 }
 

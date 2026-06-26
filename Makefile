@@ -25,6 +25,8 @@ DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config restart
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 ATOM_TOKENS_ENV ?= docker/.env.tokens
 REQUIRED_ATOM_TOKEN_ENVS := MG_ATOM_TOKEN_FLUXMQ_AUTH MG_ATOM_TOKEN_FLUXMQ_NODE1 MG_ATOM_TOKEN_FLUXMQ_NODE2 MG_ATOM_TOKEN_FLUXMQ_NODE3 MG_ATOM_TOKEN_JOURNAL MG_ATOM_TOKEN_NOTIFICATIONS MG_ATOM_TOKEN_TIMESCALE_READER MG_ATOM_TOKEN_RE MG_ATOM_TOKEN_ALARMS MG_ATOM_TOKEN_REPORTS MG_ATOM_TOKEN_POSTGRES_READER
+PROVISION_ATOM_TOKENS ?= false
+PROVISION_ATOM_TOKEN_GOALS := provision-atom-tokens
 DOCKER_BASE_ENV_FILES := --env-file docker/.env
 DOCKER_ENV_FILES = $(if $(filter down,$(DOCKER_COMPOSE_COMMAND)),$(DOCKER_BASE_ENV_FILES),$(DOCKER_BASE_ENV_FILES) --env-file $(ATOM_TOKENS_ENV))
 DOCKER_PROVISION_ENV_FILES = $(DOCKER_BASE_ENV_FILES) $(if $(wildcard $(ATOM_TOKENS_ENV)),--env-file $(ATOM_TOKENS_ENV))
@@ -106,7 +108,7 @@ define require_atom_tokens_env
 endef
 
 define ensure_atom_tokens_env
-	@if [ "$(strip $(DOCKER_COMPOSE_COMMAND))" = "$(DEFAULT_DOCKER_COMPOSE_COMMAND)" ]; then \
+	@if [ "$(PROVISION_ATOM_TOKENS)" = "true" ] && [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
 		$(MAKE) provision_atom_tokens; \
 	elif [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
 		if [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
@@ -173,6 +175,9 @@ DOCKER_PLATFORM ?=
 ifneq ($(filter run%,$(firstword $(MAKECMDGOALS))),)
   temp_args := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   DOCKER_COMPOSE_COMMAND := $(if $(filter $(DOCKER_COMPOSE_COMMANDS_SUPPORTED),$(temp_args)), $(filter $(DOCKER_COMPOSE_COMMANDS_SUPPORTED),$(temp_args)), $(DEFAULT_DOCKER_COMPOSE_COMMAND))
+  ifneq ($(filter $(PROVISION_ATOM_TOKEN_GOALS),$(temp_args)),)
+    override PROVISION_ATOM_TOKENS := true
+  endif
   $(eval $(DOCKER_COMPOSE_COMMAND):;@)
 endif
 
@@ -192,7 +197,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -312,9 +317,12 @@ grpc_mtls_certs:
 	$(MAKE) -C docker/ssl clients_grpc_certs
 
 provision_atom_tokens:
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d atom
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
 	$(MAKE) docker_atom-bootstrap
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) run --rm --no-deps --user "$(HOST_UID):$(HOST_GID)" -v "$(PWD)/docker:/host/docker" atom-bootstrap provision-tokens --output /host/docker/.env.tokens
+
+provision-atom-tokens:
+	@:
 
 check_tls:
 ifeq ($(GRPC_TLS),true)

@@ -7,6 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -14,8 +15,6 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/policies"
-	"github.com/absmach/magistrala/pkg/roles"
-	rolemgr "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/re"
 	"github.com/absmach/magistrala/re/operations"
 )
@@ -30,30 +29,36 @@ var (
 type authorizationMiddleware struct {
 	svc         re.Service
 	authz       smqauthz.Authorization
+	atomAuthz   atom.Authorizer
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
-	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 // AuthorizationMiddleware adds authorization to the re service.
-func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (re.Service, error) {
+func AuthorizationMiddleware(svc re.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (re.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
-	if err != nil {
-		return nil, err
-	}
 	return &authorizationMiddleware{
-		svc:                                svc,
-		authz:                              authz,
-		entitiesOps:                        entitiesOps,
-		RoleManagerAuthorizationMiddleware: ram,
+		svc:         svc,
+		authz:       authz,
+		entitiesOps: entitiesOps,
 	}, nil
 }
 
-func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
+func AtomAuthorizationMiddleware(svc re.Service, authz atom.Authorizer, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (re.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+	return &authorizationMiddleware{
+		svc:         svc,
+		atomAuthz:   authz,
+		entitiesOps: entitiesOps,
+	}, nil
+}
+
+func (am *authorizationMiddleware) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	if err := am.authorize(ctx, operations.OpAddRule, session, policies.DomainType, session.DomainID); err != nil {
-		return re.Rule{}, nil, errors.Wrap(errDomainCreateRules, err)
+		return re.Rule{}, errors.Wrap(errDomainCreateRules, err)
 	}
 
 	return am.svc.AddRule(ctx, session, r)
@@ -96,6 +101,9 @@ func (am *authorizationMiddleware) ListRules(ctx context.Context, session authn.
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListRules, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return re.Page{}, errors.Wrap(errDomainViewRules, err)
+		}
 	default:
 		return re.Page{}, err
 	}
@@ -144,6 +152,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 	if err != nil {
 		return err
 	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, perm.String(), objType, obj, atom.KindRule)
+	}
 
 	pr := smqauthz.PolicyReq{
 		Domain:      session.DomainID,
@@ -182,6 +193,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
 	if session.Role != authn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction
+	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, policies.AdminPermission, policies.PlatformType, policies.MagistralaObject, policies.PlatformType)
 	}
 	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
 		SubjectType: policies.UserType,

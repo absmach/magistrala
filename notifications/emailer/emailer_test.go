@@ -9,12 +9,10 @@ import (
 	"os"
 	"testing"
 
-	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
 	"github.com/absmach/magistrala/notifications"
 	"github.com/absmach/magistrala/notifications/emailer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"google.golang.org/grpc"
 )
 
 const (
@@ -37,15 +35,14 @@ const (
 
 type mockUsersClient struct {
 	mock.Mock
-	grpcUsersV1.UsersServiceClient
 }
 
-func (m *mockUsersClient) RetrieveUsers(ctx context.Context, req *grpcUsersV1.RetrieveUsersReq, opts ...grpc.CallOption) (*grpcUsersV1.RetrieveUsersRes, error) {
-	args := m.Called(ctx, req, opts)
+func (m *mockUsersClient) FetchUsers(ctx context.Context, userIDs []string) (map[string]emailer.User, error) {
+	args := m.Called(ctx, userIDs)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}
-	return args.Get(0).(*grpcUsersV1.RetrieveUsersRes), args.Error(1)
+	return args.Get(0).(map[string]emailer.User), args.Error(1)
 }
 
 func TestNotify(t *testing.T) {
@@ -90,24 +87,22 @@ func TestNotify(t *testing.T) {
 				RoleName:   roleName,
 			},
 			setupMock: func() {
-				usersClient.On("RetrieveUsers", mock.Anything, mock.MatchedBy(func(req *grpcUsersV1.RetrieveUsersReq) bool {
-					return len(req.Ids) == 2 &&
-						((req.Ids[0] == inviterID && req.Ids[1] == inviteeID) ||
-							(req.Ids[0] == inviteeID && req.Ids[1] == inviterID))
-				}), mock.Anything).Return(&grpcUsersV1.RetrieveUsersRes{
-					Users: []*grpcUsersV1.User{
-						{
-							Id:        inviterID,
-							Email:     inviterEmail,
-							FirstName: inviterFirst,
-							LastName:  inviterLast,
-						},
-						{
-							Id:        inviteeID,
-							Email:     inviteeEmail,
-							FirstName: inviteeFirst,
-							LastName:  inviteeLast,
-						},
+				usersClient.On("FetchUsers", mock.Anything, mock.MatchedBy(func(userIDs []string) bool {
+					return len(userIDs) == 2 &&
+						((userIDs[0] == inviterID && userIDs[1] == inviteeID) ||
+							(userIDs[0] == inviteeID && userIDs[1] == inviterID))
+				})).Return(map[string]emailer.User{
+					inviterID: {
+						ID:        inviterID,
+						Email:     inviterEmail,
+						FirstName: inviterFirst,
+						LastName:  inviterLast,
+					},
+					inviteeID: {
+						ID:        inviteeID,
+						Email:     inviteeEmail,
+						FirstName: inviteeFirst,
+						LastName:  inviteeLast,
 					},
 				}, nil).Once()
 			},
@@ -125,22 +120,20 @@ func TestNotify(t *testing.T) {
 				RoleName:   roleName,
 			},
 			setupMock: func() {
-				usersClient.On("RetrieveUsers", mock.Anything, mock.MatchedBy(func(req *grpcUsersV1.RetrieveUsersReq) bool {
-					return len(req.Ids) == 2
-				}), mock.Anything).Return(&grpcUsersV1.RetrieveUsersRes{
-					Users: []*grpcUsersV1.User{
-						{
-							Id:        inviterID,
-							Email:     inviterEmail,
-							FirstName: inviterFirst,
-							LastName:  inviterLast,
-						},
-						{
-							Id:        inviteeID,
-							Email:     inviteeEmail,
-							FirstName: inviteeFirst,
-							LastName:  inviteeLast,
-						},
+				usersClient.On("FetchUsers", mock.Anything, mock.MatchedBy(func(userIDs []string) bool {
+					return len(userIDs) == 2
+				})).Return(map[string]emailer.User{
+					inviterID: {
+						ID:        inviterID,
+						Email:     inviterEmail,
+						FirstName: inviterFirst,
+						LastName:  inviterLast,
+					},
+					inviteeID: {
+						ID:        inviteeID,
+						Email:     inviteeEmail,
+						FirstName: inviteeFirst,
+						LastName:  inviteeLast,
 					},
 				}, nil).Once()
 			},
@@ -158,22 +151,20 @@ func TestNotify(t *testing.T) {
 				RoleName:   roleName,
 			},
 			setupMock: func() {
-				usersClient.On("RetrieveUsers", mock.Anything, mock.MatchedBy(func(req *grpcUsersV1.RetrieveUsersReq) bool {
-					return len(req.Ids) == 2
-				}), mock.Anything).Return(&grpcUsersV1.RetrieveUsersRes{
-					Users: []*grpcUsersV1.User{
-						{
-							Id:        inviterID,
-							Email:     inviterEmail,
-							FirstName: inviterFirst,
-							LastName:  inviterLast,
-						},
-						{
-							Id:        inviteeID,
-							Email:     inviteeEmail,
-							FirstName: inviteeFirst,
-							LastName:  inviteeLast,
-						},
+				usersClient.On("FetchUsers", mock.Anything, mock.MatchedBy(func(userIDs []string) bool {
+					return len(userIDs) == 2
+				})).Return(map[string]emailer.User{
+					inviterID: {
+						ID:        inviterID,
+						Email:     inviterEmail,
+						FirstName: inviterFirst,
+						LastName:  inviterLast,
+					},
+					inviteeID: {
+						ID:        inviteeID,
+						Email:     inviteeEmail,
+						FirstName: inviteeFirst,
+						LastName:  inviteeLast,
 					},
 				}, nil).Once()
 			},
@@ -191,9 +182,9 @@ func TestNotify(t *testing.T) {
 				RoleName:   roleName,
 			},
 			setupMock: func() {
-				usersClient.On("RetrieveUsers", mock.Anything, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("grpc error")).Once()
+				usersClient.On("FetchUsers", mock.Anything, mock.Anything).Return(nil, fmt.Errorf("atom error")).Once()
 			},
-			expectedError: fmt.Errorf("grpc error"),
+			expectedError: fmt.Errorf("atom error"),
 		},
 	}
 

@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -94,29 +93,31 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 	}
 
 	group := formatConsumerName(cfg.Topic, cfg.ID)
-	opts := &fluxamqp.StreamConsumeOptions{
-		QueueName:     ps.prefix,
-		Filter:        streamFilter(ps.prefix, cfg.Topic),
-		ConsumerGroup: group,
-	}
+	sub := subscription{}
 
-	switch cfg.DeliveryPolicy {
-	case messaging.DeliverNewPolicy:
-		opts.Offset = "last"
-	case messaging.DeliverAllPolicy:
-		opts.Offset = "first"
-	}
-
-	if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
-		if err := ps.handle(cfg.Handler, msg); err != nil {
-			ps.logWarn("failed to process FluxMQ stream message", "error", err, "topic", cfg.Topic, "consumer_group", group)
+	if !ps.directTopicOnly {
+		opts := &fluxamqp.StreamConsumeOptions{
+			QueueName:     ps.prefix,
+			Filter:        streamFilter(ps.prefix, cfg.Topic),
+			ConsumerGroup: group,
 		}
-	}); err != nil {
-		return err
-	}
 
-	sub := subscription{
-		streamTopic: queueFilter(ps.prefix, cfg.Topic),
+		switch cfg.DeliveryPolicy {
+		case messaging.DeliverNewPolicy:
+			opts.Offset = "last"
+		case messaging.DeliverAllPolicy:
+			opts.Offset = "first"
+		}
+
+		if err := ps.client.SubscribeToStream(opts, func(msg *fluxamqp.QueueMessage) {
+			if err := ps.handle(cfg.Handler, msg); err != nil {
+				ps.logWarn("failed to process FluxMQ stream message", "error", err, "topic", cfg.Topic, "consumer_group", group)
+			}
+		}); err != nil {
+			return err
+		}
+
+		sub.streamTopic = queueFilter(ps.prefix, cfg.Topic)
 	}
 	if ps.directTopicIngress {
 		// Subscribe to regular MQTT topics so that messages published directly
@@ -127,7 +128,9 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 				ps.logWarn("failed to process FluxMQ topic message", "error", err, "topic", sub.mqttTopic)
 			}
 		}); err != nil {
-			_ = ps.client.UnsubscribeFromStream(sub.streamTopic)
+			if sub.streamTopic != "" {
+				_ = ps.client.UnsubscribeFromStream(sub.streamTopic)
+			}
 
 			return err
 		}
@@ -156,7 +159,10 @@ func (ps *pubsub) Unsubscribe(_ context.Context, id, topic string) error {
 		return ErrNotSubscribed
 	}
 
-	streamErr := ps.client.UnsubscribeFromStream(sub.streamTopic)
+	var streamErr error
+	if sub.streamTopic != "" {
+		streamErr = ps.client.UnsubscribeFromStream(sub.streamTopic)
+	}
 	var topicErr error
 	if sub.mqttTopic != "" {
 		topicErr = ps.client.Unsubscribe(sub.mqttTopic)
@@ -226,11 +232,12 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		protocol = "mqtt"
 	}
 
-	created := ts.UnixNano()
-	if s := stringHeader(headers, "created"); s != "" {
-		if v, err := strconv.ParseInt(s, 10, 64); err == nil {
-			created = v
-		}
+	created := time.Now().UnixNano()
+	if !ts.IsZero() {
+		created = ts.UnixNano()
+	}
+	if v, ok := int64Header(headers, "created"); ok {
+		created = v
 	}
 
 	return &messaging.Message{

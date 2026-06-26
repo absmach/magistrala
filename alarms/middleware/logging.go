@@ -27,7 +27,7 @@ func NewLoggingMiddleware(logger *slog.Logger, service alarms.Service) alarms.Se
 	}
 }
 
-func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (err error) {
+func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (created alarms.Alarm, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -52,7 +52,7 @@ func (lm *loggingMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm
 			lm.logger.Warn("Create alarm failed", args...)
 			return
 		}
-		if alarm.ID != "" {
+		if created.ID != "" {
 			lm.logger.Info("Create alarm completed successfully", args...)
 		}
 	}(time.Now())

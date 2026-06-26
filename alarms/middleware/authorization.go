@@ -9,6 +9,7 @@ import (
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/magistrala/alarms/operations"
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -26,6 +27,7 @@ var (
 type authorizationMiddleware struct {
 	svc         alarms.Service
 	authz       smqauthz.Authorization
+	atomAuthz   atom.Authorizer
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
 }
 
@@ -43,7 +45,19 @@ func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization
 	}, nil
 }
 
-func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) error {
+func NewAtomAuthorizationMiddleware(svc alarms.Service, authz atom.Authorizer, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (alarms.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &authorizationMiddleware{
+		svc:         svc,
+		atomAuthz:   authz,
+		entitiesOps: entitiesOps,
+	}, nil
+}
+
+func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms.Alarm) (alarms.Alarm, error) {
 	return am.svc.CreateAlarm(ctx, alarm)
 }
 
@@ -58,17 +72,19 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
-		domainUserID := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
-		if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
-			Domain:      session.DomainID,
-			SubjectType: policies.UserType,
-			SubjectKind: policies.UsersKind,
-			Subject:     domainUserID,
-			Permission:  policies.MembershipPermission,
-			ObjectType:  policies.DomainType,
-			Object:      session.DomainID,
-		}, nil); err != nil {
-			return alarms.Alarm{}, err
+		if am.atomAuthz == nil {
+			domainUserID := auth.EncodeDomainUserID(session.DomainID, alarm.AssigneeID)
+			if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
+				Domain:      session.DomainID,
+				SubjectType: policies.UserType,
+				SubjectKind: policies.UsersKind,
+				Subject:     domainUserID,
+				Permission:  policies.MembershipPermission,
+				ObjectType:  policies.DomainType,
+				Object:      session.DomainID,
+			}, nil); err != nil {
+				return alarms.Alarm{}, err
+			}
 		}
 	}
 
@@ -104,6 +120,9 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListAlarms, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+		}
 	default:
 		return alarms.AlarmsPage{}, err
 	}
@@ -123,6 +142,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
+	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, perm.String(), objType, obj, atom.KindAlarm)
 	}
 
 	pr := smqauthz.PolicyReq{
@@ -158,6 +180,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
 	if session.Role != authn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction
+	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, policies.AdminPermission, policies.PlatformType, policies.MagistralaObject, policies.PlatformType)
 	}
 	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
 		SubjectType: policies.UserType,

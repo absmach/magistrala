@@ -17,38 +17,30 @@ import (
 	"github.com/absmach/magistrala/alarms/middleware"
 	"github.com/absmach/magistrala/alarms/operations"
 	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
-	dpostgres "github.com/absmach/magistrala/domains/postgres"
+	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
-	"github.com/absmach/magistrala/pkg/authn/authsvc"
-	authsvcAuthz "github.com/absmach/magistrala/pkg/authz/authsvc"
-	dconsumer "github.com/absmach/magistrala/pkg/domains/events/consumer"
-	domainsAuthz "github.com/absmach/magistrala/pkg/domains/grpcclient"
-	"github.com/absmach/magistrala/pkg/grpcclient"
+	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	"github.com/absmach/magistrala/pkg/jaeger"
 	"github.com/absmach/magistrala/pkg/messaging"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
-	rconsumer "github.com/absmach/magistrala/pkg/re/events/consumer"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
-	rpostgres "github.com/absmach/magistrala/re/postgres"
 	"github.com/caarlos0/env/v11"
 	"golang.org/x/sync/errgroup"
 )
 
 const (
-	svcName          = "alarms"
-	envPrefixDB      = "MG_ALARMS_DB_"
-	envPrefixHTTP    = "MG_ALARMS_HTTP_"
-	envPrefixAuth    = "MG_AUTH_GRPC_"
-	defDB            = "alarms"
-	defSvcHTTPPort   = "8050"
-	envPrefixDomains = "MG_DOMAINS_GRPC_"
-	alarmEntity      = "alarm"
+	svcName        = "alarms"
+	envPrefixDB    = "MG_ALARMS_DB_"
+	envPrefixHTTP  = "MG_ALARMS_HTTP_"
+	defDB          = "alarms"
+	defSvcHTTPPort = "8050"
+	alarmEntity    = "alarm"
 )
 
 type config struct {
@@ -57,8 +49,6 @@ type config struct {
 	InstanceID      string  `env:"MG_ALARMS_INSTANCE_ID"  envDefault:""`
 	JaegerURL       url.URL `env:"MG_JAEGER_URL"         envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio      float64 `env:"MG_JAEGER_TRACE_RATIO" envDefault:"1.0"`
-	ESURL           string  `env:"MG_ES_URL"             envDefault:"nats://localhost:4222"`
-	ESConsumerName  string  `env:"MG_ALARMS_EVENT_CONSUMER" envDefault:"alarms"`
 	PermissionsFile string  `env:"MG_PERMISSIONS_FILE"             envDefault:"permission.yaml"`
 }
 
@@ -114,68 +104,20 @@ func main() {
 
 	repo := alarmsRepo.NewAlarmsRepo(db)
 
-	authConfig := grpcclient.Config{}
-	if err := env.ParseWithOptions(&authConfig, env.Options{Prefix: envPrefixAuth}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load %s auth configuration : %s", svcName, err))
+	atomCfg := atom.LoadConfig()
+	if atomCfg.URL == "" {
+		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-	authn, authnClient, err := authsvc.NewAuthentication(ctx, authConfig)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	am := smqauthn.NewAuthNMiddleware(authn)
-	defer authnClient.Close()
-	logger.Info("AuthN  successfully connected to auth gRPC server " + authnClient.Secure())
-
-	domsGrpcCfg := grpcclient.Config{}
-	if err := env.ParseWithOptions(&domsGrpcCfg, env.Options{Prefix: envPrefixDomains}); err != nil {
-		logger.Error(fmt.Sprintf("failed to load domains gRPC client configuration : %s", err))
-		exitCode = 1
-		return
-	}
-
-	domAuthz, _, domainsHandler, err := domainsAuthz.NewAuthorization(ctx, domsGrpcCfg)
-	if err != nil {
-		logger.Error(err.Error())
-		exitCode = 1
-		return
-	}
-	defer domainsHandler.Close()
-
-	authz, authzHandler, err := authsvcAuthz.NewAuthorization(ctx, authConfig, domAuthz)
-	if err != nil {
-		logger.Error("failed to create authz " + err.Error())
-		exitCode = 1
-		return
-	}
-	defer authzHandler.Close()
-
-	logger.Info("AuthZ successfully connected to auth gRPC server " + authzHandler.Secure())
-
-	ddatabase := postgres.NewDatabase(db, dbConfig, tracer)
-	drepo := dpostgres.NewRepository(ddatabase)
-
-	if err := dconsumer.DomainsEventsSubscribe(ctx, drepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to create domains event store : %s", err))
-		exitCode = 1
-		return
-	}
-
-	rdatabase := postgres.NewDatabase(db, dbConfig, tracer)
-	rrepo := rpostgres.NewRepository(rdatabase)
-
-	if err := rconsumer.RulesEventsSubscribe(ctx, rrepo, cfg.ESURL, cfg.ESConsumerName, logger); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe to rules events: %s", err))
-		exitCode = 1
-		return
-	}
+	logger.Info("AuthN configured to use Atom bearer tokens")
+	logger.Info("AuthZ configured to use Atom PDP")
+	am := smqauthn.NewAuthNMiddleware(atomauthn.NewAuthentication())
 
 	idp := uuid.New()
 
 	svc := alarms.NewService(idp, repo)
+	svc = alarms.WithAtom(svc, atom.NewClient(atomCfg))
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
 	if err != nil {
@@ -205,7 +147,7 @@ func main() {
 		return
 	}
 
-	svc, err = middleware.NewAuthorizationMiddleware(svc, authz, entitiesOps)
+	svc, err = middleware.NewAtomAuthorizationMiddleware(svc, atom.NewClient(atomCfg), entitiesOps)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
 		exitCode = 1

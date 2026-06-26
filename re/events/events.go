@@ -8,7 +8,6 @@ import (
 
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/events"
-	"github.com/absmach/magistrala/pkg/roles"
 	"github.com/absmach/magistrala/re"
 )
 
@@ -60,8 +59,7 @@ func (bre baseRuleEvent) Encode() map[string]any {
 }
 
 type createRuleEvent struct {
-	rule             re.Rule
-	rolesProvisioned []roles.RoleProvision
+	rule re.Rule
 	baseRuleEvent
 }
 
@@ -72,7 +70,6 @@ func (cre createRuleEvent) Encode() (map[string]any, error) {
 	}
 	maps.Copy(val, cre.baseRuleEvent.Encode())
 	val["operation"] = ruleCreate
-	val["roles_provisioned"] = cre.rolesProvisioned
 	return val, nil
 }
 

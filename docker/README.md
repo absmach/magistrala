@@ -13,13 +13,22 @@ Follow the [official Docker Compose installation guide](https://docs.docker.com/
 Run the following commands from the project root directory.
 
 ```bash
-docker compose -f docker/docker-compose.yaml up
+make provision_atom_tokens
+make run_latest
+```
+
+`make provision_atom_tokens` starts Atom, creates per-service Atom API keys, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+
+If you use `docker compose` directly instead of the Makefile, pass both env files:
+
+```bash
+docker compose -f docker/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To start additional addon services:
 
 ```bash
-docker compose -f docker/addons/<path>/docker-compose.yaml up
+docker compose -f docker/addons/<path>/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `MG_RELEASE_TAG` in `.env` before running these commands.
@@ -29,7 +38,7 @@ To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `
 Magistrala supports configurable MQTT broker and Message broker, which also acts as an events store. Magistrala uses two types of brokers:
 
 1. **MQTT_BROKER**: Handles MQTT communication between MQTT adapters and message broker. This can either be `RabbitMQ` or `NATS`.
-2. **MESSAGE_BROKER**: Manages message exchange between Magistrala core, optional, and external services. This can either be `NATS` or `RabbitMQ`. This is used to store messages for distributed processing.
+2. **MESSAGE_BROKER**: Manages message exchange between Magistrala services and external services. This can either be `NATS` or `RabbitMQ`. This is used to store messages for distributed processing.
 
 Events store: This is used by Magistrala services to store events for distributed processing. Magistrala uses a single service to be the message broker and events store. This can either be `NATS` or `RabbitMQ`. Redis can also be used as an events store, but it requires a message broker to be deployed along with it for message exchange.
 
@@ -198,7 +207,7 @@ The certbot service keeps running and checks renewal twice a day. When a certifi
 
 The included `Makefile` defines build and Docker‑build targets for all Magistrala services. Key points:
 
-- `SERVICES`: list of core services (auth, clients, channels, http, coap, mqtt, ws, etc.)
+- `SERVICES`: list of services (auth, clients, channels, http, coap, mqtt, ws, etc.)
 
 - `DOCKERS`, `DOCKERS_DEV`: build targets for production and development Docker images
 - `make dockers`, `make dockers_dev`: always tag images as `ghcr.io/absmach/magistrala/<service>`
@@ -215,7 +224,8 @@ make dockers    # builds all Docker images
 Start services with Docker compose:
 
 ```bash
-docker compose -f docker/docker-compose.yaml up
+make provision_atom_tokens
+make run_latest
 ```
 
 To clean up:

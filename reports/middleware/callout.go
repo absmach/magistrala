@@ -11,8 +11,6 @@ import (
 	"github.com/absmach/magistrala/pkg/callout"
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/policies"
-	mgPolicies "github.com/absmach/magistrala/pkg/policies"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/magistrala/reports/operations"
 )
@@ -23,26 +21,19 @@ type calloutMiddleware struct {
 	svc         reports.Service
 	callout     callout.Callout
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
-	rolemw.RoleManagerCalloutMiddleware
 }
 
 const entityType = "report"
 
-func NewCallout(svc reports.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (reports.Service, error) {
-	call, err := rolemw.NewCallout(mgPolicies.ReportsType, svc, callout, roleOps)
-	if err != nil {
-		return nil, err
-	}
-
+func NewCallout(svc reports.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (reports.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
 
 	return &calloutMiddleware{
-		svc:                          svc,
-		callout:                      callout,
-		entitiesOps:                  entitiesOps,
-		RoleManagerCalloutMiddleware: call,
+		svc:         svc,
+		callout:     callout,
+		entitiesOps: entitiesOps,
 	}, nil
 }
 

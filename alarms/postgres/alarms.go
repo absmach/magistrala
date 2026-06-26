@@ -198,35 +198,6 @@ func (r *repository) ListAllAlarms(ctx context.Context, pm alarms.PageMetadata) 
 	return r.alarmsPage(ctx, comQuery, pm)
 }
 
-func (r *repository) ListUserAlarms(ctx context.Context, userID string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
-	clauses := []string{
-		`(
-			EXISTS (
-				SELECT 1
-				FROM rules_roles rr
-				JOIN rules_role_members rrm ON rrm.role_id = rr.id
-				WHERE rr.entity_id = alarms.rule_id AND rrm.member_id = :user_id
-			)
-			OR EXISTS (
-				SELECT 1
-				FROM domains_roles dr
-				JOIN domains_role_members drm ON drm.role_id = dr.id
-				JOIN domains_role_actions dra ON dra.role_id = dr.id
-				WHERE dr.entity_id = alarms.domain_id
-					AND drm.member_id = :user_id
-					AND dra.action LIKE 'alarm%'
-			)
-		)`,
-	}
-
-	clauses = append(clauses, pageQueryConditions(pm)...)
-	query := fmt.Sprintf("WHERE %s", strings.Join(clauses, " AND "))
-	pm.UserID = userID
-	comQuery := fmt.Sprintf(`SELECT DISTINCT %s FROM alarms %s`, alarmColumns, query)
-
-	return r.alarmsPage(ctx, comQuery, pm)
-}
-
 func (r *repository) alarmsPage(ctx context.Context, comQuery string, pm alarms.PageMetadata) (alarms.AlarmsPage, error) {
 	dir := api.DescDir
 	if pm.Dir == api.AscDir {

@@ -9,7 +9,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
 	"github.com/absmach/magistrala/internal/email"
 	"github.com/absmach/magistrala/notifications"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -27,8 +26,22 @@ const (
 
 var _ notifications.Notifier = (*notifier)(nil)
 
+// User contains the user fields needed by notification templates.
+type User struct {
+	ID        string
+	Email     string
+	Username  string
+	FirstName string
+	LastName  string
+}
+
+// UserResolver resolves notification principals from the active identity store.
+type UserResolver interface {
+	FetchUsers(ctx context.Context, userIDs []string) (map[string]User, error)
+}
+
 type notifier struct {
-	usersClient   grpcUsersV1.UsersServiceClient
+	users         UserResolver
 	agents        map[notifications.NotificationType]*email.Agent
 	fromName      string
 	domainAltName string
@@ -49,7 +62,7 @@ type Config struct {
 }
 
 // New creates a new email notifier.
-func New(usersClient grpcUsersV1.UsersServiceClient, cfg Config) (notifications.Notifier, error) {
+func New(users UserResolver, cfg Config) (notifications.Notifier, error) {
 	templates := map[notifications.NotificationType]string{
 		notifications.Invitation: cfg.InvitationTemplate,
 		notifications.Acceptance: cfg.AcceptanceTemplate,
@@ -75,7 +88,7 @@ func New(usersClient grpcUsersV1.UsersServiceClient, cfg Config) (notifications.
 	}
 
 	return &notifier{
-		usersClient:   usersClient,
+		users:         users,
 		agents:        agents,
 		fromName:      cfg.FromName,
 		domainAltName: cfg.DomainAltName,
@@ -156,27 +169,11 @@ func (n *notifier) buildEmailContent(notifType notifications.NotificationType, i
 	}
 }
 
-func (n *notifier) fetchUsers(ctx context.Context, userIDs []string) (map[string]*grpcUsersV1.User, error) {
-	req := &grpcUsersV1.RetrieveUsersReq{
-		Ids:    userIDs,
-		Limit:  uint64(len(userIDs)),
-		Offset: 0,
-	}
-
-	res, err := n.usersClient.RetrieveUsers(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	users := make(map[string]*grpcUsersV1.User)
-	for _, user := range res.Users {
-		users[user.Id] = user
-	}
-
-	return users, nil
+func (n *notifier) fetchUsers(ctx context.Context, userIDs []string) (map[string]User, error) {
+	return n.users.FetchUsers(ctx, userIDs)
 }
 
-func (n *notifier) userDisplayName(user *grpcUsersV1.User) string {
+func (n *notifier) userDisplayName(user User) string {
 	if user.FirstName != "" && user.LastName != "" {
 		return fmt.Sprintf("%s %s", user.FirstName, user.LastName)
 	}
@@ -189,7 +186,7 @@ func (n *notifier) userDisplayName(user *grpcUsersV1.User) string {
 	if user.Email != "" {
 		return user.Email
 	}
-	return user.Id
+	return user.ID
 }
 
 func titleFirst(s string) string {

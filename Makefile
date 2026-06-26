@@ -4,8 +4,8 @@
 override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = auth users clients groups channels domains notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader cli alarms reports bootstrap provision journal fluxmq
-TEST_API_SERVICES = journal auth certs clients users channels groups domains
+SERVICES = atom-bootstrap notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader alarms reports journal fluxmq
+TEST_API_SERVICES = journal certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -23,6 +23,15 @@ space:= $(empty) $(empty)
 DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config restart
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
+ATOM_TOKENS_ENV ?= docker/.env.tokens
+REQUIRED_ATOM_TOKEN_ENVS := MG_ATOM_TOKEN_FLUXMQ_AUTH MG_ATOM_TOKEN_FLUXMQ_NODE1 MG_ATOM_TOKEN_FLUXMQ_NODE2 MG_ATOM_TOKEN_FLUXMQ_NODE3 MG_ATOM_TOKEN_JOURNAL MG_ATOM_TOKEN_NOTIFICATIONS MG_ATOM_TOKEN_TIMESCALE_READER MG_ATOM_TOKEN_RE MG_ATOM_TOKEN_ALARMS MG_ATOM_TOKEN_REPORTS MG_ATOM_TOKEN_POSTGRES_READER
+PROVISION_ATOM_TOKENS ?= false
+PROVISION_ATOM_TOKEN_GOALS := provision-atom-tokens
+DOCKER_BASE_ENV_FILES := --env-file docker/.env
+DOCKER_ENV_FILES = $(if $(filter down,$(DOCKER_COMPOSE_COMMAND)),$(DOCKER_BASE_ENV_FILES),$(DOCKER_BASE_ENV_FILES) --env-file $(ATOM_TOKENS_ENV))
+DOCKER_PROVISION_ENV_FILES = $(DOCKER_BASE_ENV_FILES) $(if $(wildcard $(ATOM_TOKENS_ENV)),--env-file $(ATOM_TOKENS_ENV))
+HOST_UID := $(shell id -u)
+HOST_GID := $(shell id -g)
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY = $(GOBIN)/mockery
 MOCKERY_VERSION=3.6.4
@@ -79,7 +88,48 @@ define make_docker_dev
 		-f docker/Dockerfile.dev ./build
 endef
 
+define require_atom_tokens_env
+	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		if [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
+			echo "Missing $(ATOM_TOKENS_ENV). Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+		missing=""; \
+		for env_name in $(REQUIRED_ATOM_TOKEN_ENVS); do \
+			if ! grep -q "^$${env_name}=" "$(ATOM_TOKENS_ENV)"; then \
+				missing="$${missing} $${env_name}"; \
+			fi; \
+		done; \
+		if [ -n "$${missing}" ]; then \
+			echo "Missing Atom service token(s) in $(ATOM_TOKENS_ENV):$${missing}. Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+	fi
+endef
+
+define ensure_atom_tokens_env
+	@if [ "$(PROVISION_ATOM_TOKENS)" = "true" ] && [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		$(MAKE) provision_atom_tokens; \
+	elif [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		if [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
+			echo "Missing $(ATOM_TOKENS_ENV). Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+		missing=""; \
+		for env_name in $(REQUIRED_ATOM_TOKEN_ENVS); do \
+			if ! grep -q "^$${env_name}=" "$(ATOM_TOKENS_ENV)"; then \
+				missing="$${missing} $${env_name}"; \
+			fi; \
+		done; \
+		if [ -n "$${missing}" ]; then \
+			echo "Missing Atom service token(s) in $(ATOM_TOKENS_ENV):$${missing}. Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+	fi
+endef
+
 define run_with_arch_detection
+	$(call require_atom_tokens_env)
 	@echo "Detecting architecture..."
 	@if [ "$(DETECTED_ARCH)" = "arm64" ] || [ "$(DETECTED_ARCH)" = "aarch64" ]; then \
 		echo "ARM64 architecture detected."; \
@@ -89,12 +139,12 @@ define run_with_arch_detection
 				docker tag $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc $(MG_DOCKER_IMAGE_NAME_PREFIX)/$$svc:latest; \
 		done; \
 		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env && rm -f docker/.env.bak; \
-		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
+		docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	else \
 		echo "x86_64 architecture detected."; \
 		git checkout $(1); \
 		sed -i.bak 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(2)/' docker/.env && rm -f docker/.env.bak; \
-		docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
+		docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args); \
 	fi
 endef
 
@@ -125,6 +175,9 @@ DOCKER_PLATFORM ?=
 ifneq ($(filter run%,$(firstword $(MAKECMDGOALS))),)
   temp_args := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
   DOCKER_COMPOSE_COMMAND := $(if $(filter $(DOCKER_COMPOSE_COMMANDS_SUPPORTED),$(temp_args)), $(filter $(DOCKER_COMPOSE_COMMANDS_SUPPORTED),$(temp_args)), $(DEFAULT_DOCKER_COMPOSE_COMMAND))
+  ifneq ($(filter $(PROVISION_ATOM_TOKEN_GOALS),$(temp_args)),)
+    override PROVISION_ATOM_TOKENS := true
+  endif
   $(eval $(DOCKER_COMPOSE_COMMAND):;@)
 endif
 
@@ -144,7 +197,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release run_latest run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -199,12 +252,11 @@ define test_api_service
 	--phases=examples,stateful
 endef
 
-test_api_users: TEST_API_URL := http://localhost:9002
-test_api_clients: TEST_API_URL := http://localhost:9006
-test_api_domains: TEST_API_URL := http://localhost:9003
-test_api_channels: TEST_API_URL := http://localhost:9005
-test_api_groups: TEST_API_URL := http://localhost:9004
-test_api_auth: TEST_API_URL := http://localhost:9001
+test_api_users: TEST_API_URL := http://localhost:9000
+test_api_clients: TEST_API_URL := http://localhost:9000
+test_api_domains: TEST_API_URL := http://localhost:9000
+test_api_channels: TEST_API_URL := http://localhost:9000
+test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
 test_api_journal: TEST_API_URL := http://localhost:9021
 
@@ -262,7 +314,15 @@ rundev:
 	cd scripts && ./run.sh
 
 grpc_mtls_certs:
-	$(MAKE) -C docker/ssl auth_grpc_certs clients_grpc_certs
+	$(MAKE) -C docker/ssl clients_grpc_certs
+
+provision_atom_tokens:
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
+	$(MAKE) docker_atom-bootstrap
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) run --rm --no-deps --user "$(HOST_UID):$(HOST_GID)" -v "$(PWD)/docker:/host/docker" atom-bootstrap provision-tokens --output /host/docker/.env.tokens
+
+provision-atom-tokens:
+	@:
 
 check_tls:
 ifeq ($(GRPC_TLS),true)
@@ -284,14 +344,20 @@ check_certs: check_mtls check_tls
 ifeq ($(GRPC_MTLS_CERT_FILES_EXISTS),0)
 ifeq ($(filter true,$(GRPC_MTLS) $(GRPC_TLS)),true)
 ifeq ($(filter $(DEFAULT_DOCKER_COMPOSE_COMMAND),$(DOCKER_COMPOSE_COMMAND)),$(DEFAULT_DOCKER_COMPOSE_COMMAND))
-	$(MAKE) -C docker/ssl auth_grpc_certs clients_grpc_certs
+	$(MAKE) -C docker/ssl clients_grpc_certs
 endif
 endif
 endif
 
 run_latest: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(call ensure_atom_tokens_env)
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+run_latest_ci: check_certs
+	$(call require_atom_tokens_env)
+	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_tls:
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)
@@ -305,17 +371,20 @@ run_tls:
 	./docker/setup-tls.sh
 
 run_stable: check_certs
+	$(call require_atom_tokens_env)
 	$(eval version = $(shell git describe --abbrev=0 --tags))
 	git checkout $(version)
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(version)/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_addons: check_certs
+	$(call require_atom_tokens_env)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
-	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml --env-file ./docker/.env -p $(DOCKER_PROJECT) up -d auth domains jaeger
+	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d atom jaeger
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) --env-file ./docker/.env $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) $(DOCKER_ENV_FILES) $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done
 
 run_live: check_certs
-	GOPATH=$(go env GOPATH) $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-live.yaml --env-file docker/.env -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(call require_atom_tokens_env)
+	GOPATH=$(go env GOPATH) $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-live.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)

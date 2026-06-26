@@ -46,7 +46,7 @@ It is extremely flexible and lets you build systems the way you want — from si
 
 At the same time, it avoids the typical complexity of many IoT platforms, where you need to learn an entirely new set of concepts before you can even get started.
 
-Magistrala is built around a small number of core concepts:
+Magistrala is built around a small number of main concepts:
 - users
 - clients (devices)
 - channels
@@ -141,6 +141,138 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 - Documentation focused on getting you running quickly
 ---
 
+## Atom Integration Model
+
+Magistrala uses **Atom** as the backend for identity, authorization, and the catalog.
+
+Atom is the source of truth for:
+- domains
+- users
+- clients
+- channels
+- groups
+- roles
+- access policies
+
+Magistrala services such as rules, alarms, and reports remain Magistrala services, but they use Atom for identity and authorization.
+
+### Core Entity Mapping
+
+| Magistrala concept | Atom concept | Meaning |
+|--------------------|--------------|---------|
+| Domain | Tenant | Isolation boundary for one organization, project, or environment |
+| User | Entity with kind `human` | A person who logs in and uses the UI/API |
+| Client | Entity with kind `device` | A device or application that sends/receives data |
+| Channel | Resource with kind `channel` | A messaging/data path that clients can publish or subscribe to |
+| Group | Group | A collection of users, clients, channels, or other grouped objects |
+
+In simple terms:
+
+```text
+MG Domain  = Atom Tenant
+MG User    = Atom Human Entity
+MG Client  = Atom Device Entity
+MG Channel = Atom Channel Resource
+MG Group   = Atom Group
+```
+
+### Actions, Permission Blocks, Roles, and Assignments
+
+Atom access control has these basic parts:
+
+| Atom word | Simple meaning | Example |
+|-----------|----------------|---------|
+| Action | One permission verb | `read`, `write`, `delete`, `role.manage`, `policy.manage` |
+| Permission Block | Where actions apply | all channels in domain `d1` can `read`, `publish` |
+| Role | A bundle of permission blocks | `tenant-admin` bundles domain, role, and member access |
+| Role Assignment | Who gets a role | give `user1` the `tenant-admin` role |
+
+Read an assignment like this:
+
+```text
+Give <who> this <role>.
+The role contains permission blocks that say where and what.
+```
+
+Example:
+
+```text
+Give user1 the tenant-admin role on domain d1.
+```
+
+That means:
+
+```text
+user1 can use the tenant-admin permissions inside domain d1.
+```
+
+### How MG Roles Work With Atom
+
+MG UI shows actions such as:
+- read
+- update
+- delete
+- manage roles
+- add/remove members
+- publish
+- subscribe
+
+These are mapped to Atom actions:
+
+| MG action | Atom action |
+|-----------|-----------------|
+| view/read | `read` |
+| create/update/edit/connect | `write` |
+| delete/remove | `delete` |
+| manage roles | `role.manage` |
+| add/remove members or access | `policy.manage` |
+| channel publish | `publish` |
+| channel subscribe | `subscribe` |
+
+So when MG UI checks:
+
+```text
+Can user1 manage roles for client1?
+```
+
+Atom checks:
+
+```text
+Does user1 have role.manage on client1, or on the domain that contains client1?
+```
+
+When MG UI checks:
+
+```text
+Can user1 add a member to channel1?
+```
+
+Atom checks:
+
+```text
+Does user1 have policy.manage on channel1, or on the domain that contains channel1?
+```
+
+### Practical Rule
+
+If a user is domain admin, they usually receive a tenant-scoped role in Atom.
+
+That tenant-scoped role can allow them to manage objects inside the domain:
+- clients
+- channels
+- groups
+- rules
+- alarms
+- reports
+
+For narrower access, create object-scoped roles. For example:
+
+```text
+Give user2 a reader role only on channel1.
+```
+
+Then user2 can read only that channel, not the whole domain.
+
 ## Installation
 
 ```bash
@@ -148,54 +280,6 @@ git clone https://github.com/absmach/magistrala.git
 cd magistrala
 make run_latest
 ```
-
----
-
-## Upgrade from v0.19.0 to v0.20.0
-
-Before upgrading, back up the Domains, Rules Engine, Reports, Alarms, Auth, and SpiceDB databases.
-
-v0.20.0 adds new domain admin actions for alarms and reports, and it requires existing rules and reports to have their built-in admin roles backfilled. The service database migrations run when the v0.20.0 services start, then the role backfill scripts must be run once.
-
-For the default Docker Compose setup:
-
-```bash
-cd docker
-
-docker compose up -d \
-  spicedb-db spicedb-migrate spicedb \
-  auth-db auth \
-  domains-db domains \
-  re-db re \
-  reports-db reports \
-  alarms-db alarms
-```
-
-Wait until the services are running. The `auth` service must start successfully because it loads the SpiceDB schema.
-
-From the repository root, run the backfills:
-
-```bash
-go run ./scripts/re-backfill-roles/
-go run ./scripts/reports-backfill-roles/
-```
-
-The scripts are idempotent. If they are interrupted, fix the issue and run them again.
-
-Expected successful summaries:
-
-```text
-backfill finished processed=<number> skipped=<number> failed=0
-```
-
-After the backfills finish, verify that the services are still running:
-
-```bash
-cd docker
-docker compose ps re reports alarms domains auth spicedb
-```
-
-For non-default deployments, make sure the database and SpiceDB connection settings used by the backfill scripts match your environment before running them.
 
 ---
 

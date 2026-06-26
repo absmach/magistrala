@@ -4,7 +4,7 @@ Consumers provide an abstraction for various “Magistrala consumers”.
 
 A consumer is a generic plugin‑style service that handles received messages — for example, writing them to a database, sending notifications, or transforming them. Before consuming, messages from Magistrala can be transformed (e.g. to JSON or SenML) to match what a specific consumer expects.
 
-This service (Notifiers) is optional — to use it, core services must be running (e.g. message broker + clients + channels etc.).
+This service (Notifiers) is optional — to use it, services must be running (e.g. message broker + clients + channels etc.).
 
 ## Concepts & Consumer Types
 
@@ -25,7 +25,7 @@ When a subscriber receives messages from the message broker:
 2. The transformed message is passed to a consumer — either synchronously (BlockingConsumer) or asynchronously (AsyncConsumer).  
 3. The consumer handles the message (e.g. storing to DB, sending notifications, writing files, etc.).
 
-Consumers are decoupled from core messaging logic, making them flexible and pluggable.
+Consumers are decoupled from messaging logic, making them flexible and pluggable.
 
 ## Supported Consumers
 

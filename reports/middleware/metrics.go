@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/absmach/magistrala/pkg/authn"
-	rolemw "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/reports"
 	"github.com/go-kit/kit/metrics"
 )
@@ -17,17 +16,15 @@ type metricsMiddleware struct {
 	counter metrics.Counter
 	latency metrics.Histogram
 	service reports.Service
-	rolemw.RoleManagerMetricsMiddleware
 }
 
 var _ reports.Service = (*metricsMiddleware)(nil)
 
 func NewMetricsMiddleware(counter metrics.Counter, latency metrics.Histogram, service reports.Service) reports.Service {
 	return &metricsMiddleware{
-		counter:                      counter,
-		latency:                      latency,
-		service:                      service,
-		RoleManagerMetricsMiddleware: rolemw.NewMetrics("reports", service, counter, latency),
+		counter: counter,
+		latency: latency,
+		service: service,
 	}
 }
 

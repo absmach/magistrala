@@ -10,8 +10,6 @@ import (
 	"github.com/absmach/magistrala/pkg/events"
 	"github.com/absmach/magistrala/pkg/events/store"
 	"github.com/absmach/magistrala/pkg/messaging"
-	"github.com/absmach/magistrala/pkg/roles"
-	rmEvents "github.com/absmach/magistrala/pkg/roles/rolemanager/events"
 	"github.com/absmach/magistrala/re"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -34,7 +32,6 @@ var _ re.Service = (*eventStore)(nil)
 type eventStore struct {
 	events.Publisher
 	svc re.Service
-	rmEvents.RoleManagerEventStore
 }
 
 // NewEventStoreMiddleware returns wrapper around rules service that sends
@@ -45,29 +42,25 @@ func NewEventStoreMiddleware(ctx context.Context, svc re.Service, url string) (r
 		return nil, err
 	}
 
-	res := rmEvents.NewRoleManagerEventStore("rules", rulePrefix, svc, publisher)
-
 	return &eventStore{
-		svc:                   svc,
-		Publisher:             publisher,
-		RoleManagerEventStore: res,
+		svc:       svc,
+		Publisher: publisher,
 	}, nil
 }
 
-func (es *eventStore) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, []roles.RoleProvision, error) {
-	rule, rps, err := es.svc.AddRule(ctx, session, r)
+func (es *eventStore) AddRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
+	rule, err := es.svc.AddRule(ctx, session, r)
 	if err != nil {
-		return rule, rps, err
+		return rule, err
 	}
 	event := createRuleEvent{
-		rule:             rule,
-		rolesProvisioned: rps,
-		baseRuleEvent:    newBaseRuleEvent(session, middleware.GetReqID(ctx)),
+		rule:          rule,
+		baseRuleEvent: newBaseRuleEvent(session, middleware.GetReqID(ctx)),
 	}
 	if err := es.Publish(ctx, CreateStream, event); err != nil {
-		return rule, rps, err
+		return rule, err
 	}
-	return rule, rps, nil
+	return rule, nil
 }
 
 func (es *eventStore) ListRules(ctx context.Context, session authn.Session, pm re.PageMeta) (re.Page, error) {

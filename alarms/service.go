@@ -26,10 +26,10 @@ func NewService(idp magistrala.IDProvider, repo Repository) Service {
 	}
 }
 
-func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
+func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error) {
 	id, err := s.idp.ID()
 	if err != nil {
-		return err
+		return Alarm{}, err
 	}
 	alarm.ID = id
 	if alarm.CreatedAt.IsZero() {
@@ -37,14 +37,18 @@ func (s *service) CreateAlarm(ctx context.Context, alarm Alarm) error {
 	}
 
 	if err := alarm.Validate(); err != nil {
-		return err
+		return Alarm{}, err
 	}
 
-	if _, err = s.repo.CreateAlarm(ctx, alarm); err != nil && err != repoerr.ErrNotFound {
-		return err
+	created, err := s.repo.CreateAlarm(ctx, alarm)
+	if err != nil && err != repoerr.ErrNotFound {
+		return Alarm{}, err
+	}
+	if err == repoerr.ErrNotFound {
+		return Alarm{}, nil
 	}
 
-	return nil
+	return created, nil
 }
 
 func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID string) (Alarm, error) {
@@ -52,10 +56,8 @@ func (s *service) ViewAlarm(ctx context.Context, session authn.Session, alarmID 
 }
 
 func (s *service) ListAlarms(ctx context.Context, session authn.Session, pm PageMetadata) (AlarmsPage, error) {
-	if session.SuperAdmin {
-		return s.repo.ListAllAlarms(ctx, pm)
-	}
-	return s.repo.ListUserAlarms(ctx, session.UserID, pm)
+	pm.DomainID = session.DomainID
+	return s.repo.ListAllAlarms(ctx, pm)
 }
 
 func (s *service) DeleteAlarm(ctx context.Context, session authn.Session, alarmID string) error {

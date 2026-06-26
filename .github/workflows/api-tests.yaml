@@ -10,7 +10,7 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "auth/api/http/**"
+      - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
       - "domains/api/http/**"
@@ -20,9 +20,9 @@ on:
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
-      - "re/api/**"
-      - "alarms/api/**"
-      - "reports/api/**"
+      - "re/**"
+      - "alarms/**"
+      - "reports/**"
       - "apidocs/openapi/**"
   pull_request:
     branches:
@@ -30,7 +30,7 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "auth/api/http/**"
+      - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
       - "domains/api/http/**"
@@ -40,9 +40,9 @@ on:
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
-      - "re/api/**"
-      - "alarms/api/**"
-      - "reports/api/**"
+      - "re/**"
+      - "alarms/**"
+      - "reports/**"
       - "apidocs/openapi/**"
 
 concurrency:
@@ -50,17 +50,15 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  TOKENS_URL: http://localhost:9002/users/tokens/issue
-  CREATE_DOMAINS_URL: http://localhost:9003/domains
-  USER_IDENTITY: admin@example.com
+  ATOM_LOGIN_URL: http://localhost/auth/login
+  USER_IDENTITY: admin
   USER_SECRET: 12345678
   DOMAIN_NAME: demo-test
-  USERS_URL: http://localhost:9002
-  DOMAIN_URL: http://localhost:9003
-  CLIENTS_URL: http://localhost:9006
-  CHANNELS_URL: http://localhost:9005
-  GROUPS_URL: http://localhost:9004
-  AUTH_URL: http://localhost:9001
+  USERS_URL: http://localhost
+  DOMAIN_URL: http://localhost
+  CLIENTS_URL: http://localhost
+  CHANNELS_URL: http://localhost
+  GROUPS_URL: http://localhost
   JOURNAL_URL: http://localhost:9021
   BOOTSTRAP_URL: http://localhost:9013
   CERTS_URL: http://localhost:9019
@@ -96,28 +94,29 @@ jobs:
               - "apidocs/openapi/journal.yaml"
               - "journal/api/**"
 
-            auth:
-              - "apidocs/openapi/auth.yaml"
-              - "auth/api/http/**"
-
             domains:
               - "apidocs/openapi/domains.yaml"
+              - "internal/atom/**"
               - "domains/api/http/**"
 
             clients:
               - "apidocs/openapi/clients.yaml"
+              - "internal/atom/**"
               - "clients/api/http/**"
 
             channels:
               - "apidocs/openapi/channels.yaml"
+              - "internal/atom/**"
               - "channels/api/http/**"
 
             groups:
               - "apidocs/openapi/groups.yaml"
+              - "internal/atom/**"
               - "groups/api/http/**"
 
             users:
               - "apidocs/openapi/users.yaml"
+              - "internal/atom/**"
               - "users/api/**"
 
             bootstrap:
@@ -134,21 +133,30 @@ jobs:
 
             re:
               - "apidocs/openapi/rules.yaml"
-              - "re/api/**"
+              - "re/**"
+              - "cmd/re/**"
+              - "internal/atom/**"
 
             alarms:
               - "apidocs/openapi/alarms.yaml"
-              - "alarms/api/**"
+              - "alarms/**"
+              - "cmd/alarms/**"
+              - "internal/atom/**"
 
             reports:
               - "apidocs/openapi/reports.yaml"
-              - "reports/api/**"
+              - "reports/**"
+              - "cmd/reports/**"
+              - "internal/atom/**"
 
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
+      - name: Provision Atom service tokens
+        run: make provision_atom_tokens
+
       - name: Start containers
-        run: make run_latest up args="-d" && make run_addons up args="-d"
+        run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 
       - name: Wait for services to be ready
         run: |
@@ -157,24 +165,28 @@ jobs:
 
           # Check if services are responding
           for i in {1..30}; do
-            if curl -f -s http://localhost:9002/health > /dev/null 2>&1; then
+            if curl -f -s http://localhost/health > /dev/null 2>&1; then
               echo "Services are ready!"
-              break
+              exit 0
             fi
             echo "Waiting for services... ($i/30)"
             sleep 2
           done
 
+          echo "Services failed to become ready" >&2
+          docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml --env-file docker/.env --env-file docker/.env.tokens -p "${USER_REPO:-absmach_magistrala}" ps || true
+          docker logs --tail 100 magistrala-nginx || true
+          docker logs --tail 100 magistrala-atom || true
+          docker logs --tail 100 magistrala-atom-bootstrap || true
+          exit 1
+
       - name: Set access token
         run: |
-          export USER_TOKEN=$(curl -sSX POST $TOKENS_URL -H "Content-Type: application/json" -d "{\"identity\": \"$USER_IDENTITY\",\"secret\": \"$USER_SECRET\"}" | jq -r .access_token)
-          export DOMAIN_ID=$(curl -sSX POST $CREATE_DOMAINS_URL -H "Content-Type: application/json" -H "Authorization: Bearer $USER_TOKEN" -d "{\"name\":\"$DOMAIN_NAME\",\"route\":\"$DOMAIN_NAME\"}" | jq -r .id)
+          export USER_TOKEN=$(curl -fsS -X POST "$ATOM_LOGIN_URL" -H "Content-Type: application/json" -d "{\"identifier\":\"$USER_IDENTITY\",\"secret\":\"$USER_SECRET\",\"kind\":\"password\"}" | jq -er .token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
-          export CLIENT_SECRET=$(magistrala-cli provision test | /usr/bin/grep -Eo '"secret": "[^"]+"' | awk 'NR % 2 == 0' | sed 's/"secret": "\(.*\)"/\1/')
-          echo "CLIENT_SECRET=$CLIENT_SECRET" >> $GITHUB_ENV
 
       - name: Run Users API tests
-        if: steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('users/api/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/users.yaml
@@ -183,7 +195,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --exclude-operation-id=requestPasswordReset --phases=examples'
 
       - name: Run Groups API tests
-        if: steps.changes.outputs.groups == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.groups == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('groups/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/groups.yaml
@@ -192,7 +204,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Clients API tests
-        if: steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('clients/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/clients.yaml
@@ -201,7 +213,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Channels API tests
-        if: steps.changes.outputs.channels == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.channels == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('channels/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/channels.yaml
@@ -209,17 +221,8 @@ jobs:
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
-      - name: Run Auth API tests
-        if: steps.changes.outputs.auth == 'true' || steps.changes.outputs.workflow == 'true'
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/auth.yaml
-          base-url: ${{ env.AUTH_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-
       - name: Run Domains API tests
-        if: steps.changes.outputs.domains == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.domains == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('domains/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/domains.yaml
@@ -237,7 +240,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Bootstrap API tests
-        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('bootstrap/api/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/bootstrap.yaml
@@ -246,7 +249,7 @@ jobs:
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
 
       - name: Run Certs API tests
-        if: steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true'
+        if: (steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('docker/addons/certs/docker-compose.yaml') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/certs.yaml
@@ -292,4 +295,4 @@ jobs:
 
       - name: Stop containers
         if: always()
-        run: make run_latest down args="-v" && make run_addons down args="-v"
+        run: make run_latest_ci down args="-v" && make run_addons down args="-v"

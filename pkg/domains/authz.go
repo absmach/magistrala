@@ -5,10 +5,17 @@ package domains
 
 import (
 	"context"
+)
 
-	"github.com/absmach/magistrala/domains"
+type Status uint8
+
+const (
+	EnabledStatus Status = iota
+	DisabledStatus
+	FreezeStatus
+	AllStatus
 )
 
 type Authorization interface {
-	RetrieveStatus(ctx context.Context, id string) (domains.Status, error)
+	RetrieveStatus(ctx context.Context, id string) (Status, error)
 }

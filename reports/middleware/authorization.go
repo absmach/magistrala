@@ -7,13 +7,13 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/auth"
+	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	smqauthz "github.com/absmach/magistrala/pkg/authz"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/permissions"
 	"github.com/absmach/magistrala/pkg/policies"
-	rolemgr "github.com/absmach/magistrala/pkg/roles/rolemanager/middleware"
 	"github.com/absmach/magistrala/reports"
 	"github.com/absmach/magistrala/reports/operations"
 )
@@ -33,24 +33,30 @@ var (
 type authorizationMiddleware struct {
 	svc         reports.Service
 	authz       smqauthz.Authorization
+	atomAuthz   atom.Authorizer
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
-	rolemgr.RoleManagerAuthorizationMiddleware
 }
 
 // AuthorizationMiddleware adds authorization to the reports service.
-func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation], roleOps permissions.Operations[permissions.RoleOperation]) (reports.Service, error) {
+func AuthorizationMiddleware(svc reports.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (reports.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
-	ram, err := rolemgr.NewAuthorization(operations.EntityType, svc, authz, roleOps)
-	if err != nil {
+	return &authorizationMiddleware{
+		svc:         svc,
+		authz:       authz,
+		entitiesOps: entitiesOps,
+	}, nil
+}
+
+func AtomAuthorizationMiddleware(svc reports.Service, authz atom.Authorizer, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (reports.Service, error) {
+	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
 	}
 	return &authorizationMiddleware{
-		svc:                                svc,
-		authz:                              authz,
-		entitiesOps:                        entitiesOps,
-		RoleManagerAuthorizationMiddleware: ram,
+		svc:         svc,
+		atomAuthz:   authz,
+		entitiesOps: entitiesOps,
 	}, nil
 }
 
@@ -99,6 +105,9 @@ func (am *authorizationMiddleware) ListReportsConfig(ctx context.Context, sessio
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
+		if err := am.authorize(ctx, operations.OpListReportsConfig, session, operations.EntityType, auth.AnyIDs); err != nil {
+			return reports.ReportConfigPage{}, errors.Wrap(errDomainViewConfigs, err)
+		}
 	default:
 		return reports.ReportConfigPage{}, err
 	}
@@ -163,6 +172,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 	if err != nil {
 		return err
 	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, perm.String(), objType, obj, atom.KindReport)
+	}
 
 	pr := smqauthz.PolicyReq{
 		Domain:      session.DomainID,
@@ -201,6 +213,9 @@ func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session authn.Session) error {
 	if session.Role != authn.SuperAdminRole {
 		return svcerr.ErrSuperAdminAction
+	}
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, policies.AdminPermission, policies.PlatformType, policies.MagistralaObject, policies.PlatformType)
 	}
 	if err := am.authz.Authorize(ctx, smqauthz.PolicyReq{
 		SubjectType: policies.UserType,

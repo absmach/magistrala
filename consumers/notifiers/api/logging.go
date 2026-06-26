@@ -20,7 +20,7 @@ type loggingMiddleware struct {
 	svc    notifiers.Service
 }
 
-// LoggingMiddleware adds logging facilities to the core service.
+// LoggingMiddleware adds logging facilities to the service.
 func LoggingMiddleware(svc notifiers.Service, logger *slog.Logger) notifiers.Service {
 	return &loggingMiddleware{logger, svc}
 }

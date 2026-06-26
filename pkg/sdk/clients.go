@@ -12,7 +12,6 @@ import (
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/pkg/errors"
-	"github.com/absmach/magistrala/pkg/roles"
 )
 
 const (
@@ -27,20 +26,19 @@ const (
 
 // Client represents magistrala client.
 type Client struct {
-	ID              string                    `json:"id,omitempty"`
-	Name            string                    `json:"name,omitempty"`
-	Tags            []string                  `json:"tags,omitempty"`
-	DomainID        string                    `json:"domain_id,omitempty"`
-	ParentGroup     string                    `json:"parent_group_id,omitempty"`
-	Credentials     ClientCredentials         `json:"credentials"`
-	Metadata        map[string]any            `json:"metadata,omitempty"`
-	PrivateMetadata map[string]any            `json:"private_metadata,omitempty"`
-	CreatedAt       time.Time                 `json:"created_at,omitempty"`
-	UpdatedAt       time.Time                 `json:"updated_at,omitempty"`
-	UpdatedBy       string                    `json:"updated_by,omitempty"`
-	Status          string                    `json:"status,omitempty"`
-	Permissions     []string                  `json:"permissions,omitempty"`
-	Roles           []roles.MemberRoleActions `json:"roles,omitempty"`
+	ID              string            `json:"id,omitempty"`
+	Name            string            `json:"name,omitempty"`
+	Tags            []string          `json:"tags,omitempty"`
+	DomainID        string            `json:"domain_id,omitempty"`
+	ParentGroup     string            `json:"parent_group_id,omitempty"`
+	Credentials     ClientCredentials `json:"credentials"`
+	Metadata        map[string]any    `json:"metadata,omitempty"`
+	PrivateMetadata map[string]any    `json:"private_metadata,omitempty"`
+	CreatedAt       time.Time         `json:"created_at,omitempty"`
+	UpdatedAt       time.Time         `json:"updated_at,omitempty"`
+	UpdatedBy       string            `json:"updated_by,omitempty"`
+	Status          string            `json:"status,omitempty"`
+	Permissions     []string          `json:"permissions,omitempty"`
 }
 
 type ClientCredentials struct {

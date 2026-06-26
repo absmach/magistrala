@@ -111,13 +111,19 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	if len(applicability) != len(magistralaActionApplicability) {
 		t.Fatalf("unexpected applicability count: got %d want %d", len(applicability), len(magistralaActionApplicability))
 	}
-	assertApplicability(t, applicability, "publish-id", "resource:channel")
-	assertApplicability(t, applicability, "execute-id", "resource:rule")
-	assertApplicability(t, applicability, "list-id", "resource:rule")
-	assertApplicability(t, applicability, "execute-id", "resource:report")
-	assertApplicability(t, applicability, "list-id", "resource:report")
-	assertApplicability(t, applicability, "manage-id", "resource:alarm")
-	assertApplicability(t, applicability, "list-id", "resource:alarm")
+	assertApplicability(t, applicability, "write-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "read-id", atomObjectKindGroup, "")
+	assertApplicability(t, applicability, "write-id", atomObjectKindGroup, "")
+	assertApplicability(t, applicability, "delete-id", atomObjectKindGroup, "")
+	assertApplicability(t, applicability, "manage-id", atomObjectKindGroup, "")
+	assertApplicability(t, applicability, "list-id", atomObjectKindGroup, "")
+	assertApplicability(t, applicability, "publish-id", atomObjectKindResource, "resource:channel")
+	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:report")
+	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:report")
+	assertApplicability(t, applicability, "manage-id", atomObjectKindResource, "resource:alarm")
+	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:alarm")
 	if len(assignmentRules) != len(magistralaActionAssignmentRules) {
 		t.Fatalf("unexpected assignment guardrail count: got %d want %d", len(assignmentRules), len(magistralaActionAssignmentRules))
 	}
@@ -125,14 +131,15 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	assertAssignmentRule(t, assignmentRules, atomKindDevice, atomActionSubscribe, atomObjectKindResource, "resource:channel", "allow")
 }
 
-func assertApplicability(t *testing.T, entries []map[string]any, actionID, objectType string) {
+func assertApplicability(t *testing.T, entries []map[string]any, actionID, objectKind, objectType string) {
 	t.Helper()
 	for _, entry := range entries {
-		if entry["actionId"] == actionID && entry["objectKind"] == atomObjectKindResource && entry["objectType"] == objectType {
+		entryObjectType, _ := entry["objectType"].(string)
+		if entry["actionId"] == actionID && entry["objectKind"] == objectKind && entryObjectType == objectType {
 			return
 		}
 	}
-	t.Fatalf("missing applicability action=%s object_type=%s", actionID, objectType)
+	t.Fatalf("missing applicability action=%s object=%s:%s", actionID, objectKind, objectType)
 }
 
 func assertAssignmentRule(t *testing.T, entries []map[string]any, entityKind, actionName, objectKind, objectType, decision string) {

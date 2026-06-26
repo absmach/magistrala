@@ -20,6 +20,14 @@ var magistralaActionDescriptions = map[string]string{
 }
 
 var magistralaActionApplicability = []CapabilityApplicabilitySpec{
+	{ActionName: atomActionWrite, ObjectKind: atomObjectKindTenant},
+
+	{ActionName: atomActionRead, ObjectKind: atomObjectKindGroup},
+	{ActionName: atomActionWrite, ObjectKind: atomObjectKindGroup},
+	{ActionName: atomActionDelete, ObjectKind: atomObjectKindGroup},
+	{ActionName: atomActionManage, ObjectKind: atomObjectKindGroup},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindGroup},
+
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: "resource:channel"},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: "resource:channel"},
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: "resource:channel"},

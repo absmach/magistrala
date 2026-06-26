@@ -208,8 +208,11 @@ func policyGrantObjectKind(pr policies.Policy) string {
 	if policyGrantScopeMode(pr) != atomScopeModeObject {
 		return ""
 	}
-	if pr.ObjectType == policies.ClientType {
+	switch pr.ObjectType {
+	case policies.ClientType:
 		return atomObjectKindEntity
+	case policies.GroupType:
+		return atomObjectKindGroup
 	}
 	return atomObjectKindResource
 }

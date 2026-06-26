@@ -135,6 +135,44 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 	}
 }
 
+func TestPolicyServiceAddPolicyCreatesGroupCapabilityPolicy(t *testing.T) {
+	client := &fakePolicyClient{capID: "cap-read"}
+	svc := NewPolicyService(client)
+
+	err := svc.AddPolicy(context.Background(), policies.Policy{
+		Domain:      testDomainID,
+		Subject:     testDomainID + "_user-1",
+		SubjectType: policies.UserType,
+		Object:      "group-1",
+		ObjectType:  policies.GroupType,
+		Permission:  policies.ViewPermission,
+	})
+	if err != nil {
+		t.Fatalf("add policy failed: %v", err)
+	}
+	if len(client.blocks) != 1 || len(client.created) != 1 {
+		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
+	}
+	block := client.blocks[0]
+	if block.TenantID != testDomainID ||
+		block.ScopeMode != atomScopeModeObject ||
+		block.ObjectKind != atomObjectKindGroup ||
+		block.ObjectType != "" ||
+		block.ObjectID != "group-1" ||
+		block.Effect != "allow" ||
+		len(block.ActionIDs) != 1 ||
+		block.ActionIDs[0] != "cap-read" {
+		t.Fatalf("unexpected permission block: %+v", block)
+	}
+	created := client.created[0]
+	if created.TenantID != testDomainID ||
+		created.SubjectKind != atomObjectKindEntity ||
+		created.SubjectID != "user-1" ||
+		created.PermissionBlockID != "block-1" {
+		t.Fatalf("unexpected direct policy: %+v", created)
+	}
+}
+
 func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testing.T) {
 	client := &fakePolicyClient{
 		capID: "cap-subscribe",

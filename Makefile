@@ -105,6 +105,27 @@ define require_atom_tokens_env
 	fi
 endef
 
+define ensure_atom_tokens_env
+	@if [ "$(strip $(DOCKER_COMPOSE_COMMAND))" = "$(DEFAULT_DOCKER_COMPOSE_COMMAND)" ]; then \
+		$(MAKE) provision_atom_tokens; \
+	elif [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		if [ ! -f "$(ATOM_TOKENS_ENV)" ]; then \
+			echo "Missing $(ATOM_TOKENS_ENV). Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+		missing=""; \
+		for env_name in $(REQUIRED_ATOM_TOKEN_ENVS); do \
+			if ! grep -q "^$${env_name}=" "$(ATOM_TOKENS_ENV)"; then \
+				missing="$${missing} $${env_name}"; \
+			fi; \
+		done; \
+		if [ -n "$${missing}" ]; then \
+			echo "Missing Atom service token(s) in $(ATOM_TOKENS_ENV):$${missing}. Run 'make provision_atom_tokens' before starting the Docker Compose stack."; \
+			exit 2; \
+		fi; \
+	fi
+endef
+
 define run_with_arch_detection
 	$(call require_atom_tokens_env)
 	@echo "Detecting architecture..."
@@ -321,8 +342,8 @@ endif
 endif
 
 run_latest: check_certs
-	$(call require_atom_tokens_env)
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
+	$(call ensure_atom_tokens_env)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_latest_ci: check_certs

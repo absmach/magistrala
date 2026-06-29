@@ -16,6 +16,7 @@ import (
 	"github.com/absmach/magistrala/alarms/consumer"
 	"github.com/absmach/magistrala/alarms/middleware"
 	"github.com/absmach/magistrala/alarms/operations"
+	alarmsRepo "github.com/absmach/magistrala/alarms/postgres"
 	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
@@ -24,6 +25,7 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
 	"github.com/absmach/magistrala/pkg/permissions"
+	"github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
@@ -34,7 +36,9 @@ import (
 
 const (
 	svcName        = "alarms"
+	envPrefixDB    = "MG_ALARMS_DB_"
 	envPrefixHTTP  = "MG_ALARMS_HTTP_"
+	defDB          = "alarms"
 	defSvcHTTPPort = "8050"
 	alarmEntity    = "alarm"
 )
@@ -78,21 +82,42 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
+	dbConfig := postgres.Config{Name: defDB}
+	if err := env.ParseWithOptions(&dbConfig, env.Options{Prefix: envPrefixDB}); err != nil {
+		logger.Error(err.Error())
+	}
+
+	migrations, err := alarmsRepo.Migration()
+	if err != nil {
+		logger.Error(fmt.Sprintf("failed to load migrations: %s", err))
+		exitCode = 1
+		return
+	}
+
+	db, err := postgres.Setup(dbConfig, *migrations)
+	if err != nil {
+		logger.Error(err.Error())
+		exitCode = 1
+		return
+	}
+	defer db.Close()
+
+	repo := alarmsRepo.NewAlarmsRepo(db)
+
 	atomCfg := atom.LoadConfig()
 	if atomCfg.URL == "" {
 		logger.Error("ATOM_URL is required")
 		exitCode = 1
 		return
 	}
-	atomClient := atom.NewClient(atomCfg)
 	logger.Info("AuthN configured to use Atom bearer tokens")
 	logger.Info("AuthZ configured to use Atom PDP")
 	am := smqauthn.NewAuthNMiddleware(atomauthn.NewAuthentication())
 
 	idp := uuid.New()
 
-	repo := alarms.NewAtomRepository(atomClient)
 	svc := alarms.NewService(idp, repo)
+	svc = alarms.WithAtom(svc, atom.NewClient(atomCfg))
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
 	if err != nil {
@@ -122,7 +147,7 @@ func main() {
 		return
 	}
 
-	svc, err = middleware.NewAtomAuthorizationMiddleware(svc, atomClient, entitiesOps)
+	svc, err = middleware.NewAtomAuthorizationMiddleware(svc, atom.NewClient(atomCfg), entitiesOps)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create authorization middleware: %s", err))
 		exitCode = 1

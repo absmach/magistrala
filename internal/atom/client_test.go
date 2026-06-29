@@ -65,21 +65,13 @@ func TestListResources(t *testing.T) {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		var payload struct {
-			Query     string         `json:"query"`
 			Variables map[string]any `json:"variables"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
-		if !strings.Contains(payload.Query, "$attributesContains: JSON") || !strings.Contains(payload.Query, "attributesContains: $attributesContains") {
-			t.Fatalf("query does not include attributesContains: %s", payload.Query)
-		}
 		if payload.Variables["kind"] != KindRule || payload.Variables["tenantId"] != testDomainID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
-		}
-		attrs, ok := payload.Variables["attributesContains"].(map[string]any)
-		if !ok || attrs["status"] != "active" {
-			t.Fatalf("unexpected attributesContains: %+v", payload.Variables)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
@@ -93,11 +85,7 @@ func TestListResources(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.ListResources(context.Background(), Query{
-		Kind:               KindRule,
-		TenantID:           testDomainID,
-		AttributesContains: Attributes{"status": "active"},
-	})
+	got, err := client.ListResources(context.Background(), Query{Kind: KindRule, TenantID: testDomainID})
 	if err != nil {
 		t.Fatalf("list failed: %v", err)
 	}

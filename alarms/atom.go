@@ -4,17 +4,63 @@
 package alarms
 
 import (
-	"fmt"
+	"context"
 	"time"
 
 	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/authn"
 )
+
+type atomService struct {
+	Service
+	projector atom.Projector
+}
+
+func WithAtom(svc Service, projector atom.Projector) Service {
+	if projector == nil {
+		return svc
+	}
+	return atomService{Service: svc, projector: projector}
+}
+
+func (svc atomService) CreateAlarm(ctx context.Context, alarm Alarm) (Alarm, error) {
+	created, err := svc.Service.CreateAlarm(ctx, alarm)
+	if err != nil {
+		return created, err
+	}
+	if created.ID == "" {
+		return created, nil
+	}
+	if err := svc.projector.UpsertResource(ctx, alarmProjection(created)); err != nil {
+		return created, nil
+	}
+	return created, nil
+}
+
+func (svc atomService) UpdateAlarm(ctx context.Context, session authn.Session, alarm Alarm) (Alarm, error) {
+	updated, err := svc.Service.UpdateAlarm(ctx, session, alarm)
+	if err != nil {
+		return updated, err
+	}
+	if err := svc.projector.UpsertResource(ctx, alarmProjection(updated)); err != nil {
+		return updated, nil
+	}
+	return updated, nil
+}
+
+func (svc atomService) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
+	if err := svc.Service.DeleteAlarm(ctx, session, id); err != nil {
+		return err
+	}
+	_ = svc.projector.DeleteResource(ctx, id)
+	return nil
+}
 
 func alarmProjection(a Alarm) atom.Resource {
 	res := atom.ResourceFromFields(atom.ObjectFields{
 		ID:        a.ID,
 		Kind:      atom.KindAlarm,
-		Name:      alarmName(a),
+		Name:      a.Cause,
 		TenantID:  a.DomainID,
 		OwnerID:   a.AssigneeID,
 		Status:    a.Status.String(),
@@ -33,7 +79,6 @@ func alarmProjection(a Alarm) atom.Resource {
 	res.Attributes["unit"] = a.Unit
 	res.Attributes["threshold"] = a.Threshold
 	res.Attributes["cause"] = a.Cause
-	res.Attributes["alarm_status"] = uint8(a.Status)
 	res.Attributes["assignee_id"] = a.AssigneeID
 	res.Attributes["assigned_at"] = alarmTimeString(a.AssignedAt)
 	res.Attributes["assigned_by"] = a.AssignedBy
@@ -42,19 +87,6 @@ func alarmProjection(a Alarm) atom.Resource {
 	res.Attributes["resolved_at"] = alarmTimeString(a.ResolvedAt)
 	res.Attributes["resolved_by"] = a.ResolvedBy
 	return res
-}
-
-func alarmName(a Alarm) string {
-	if a.Cause != "" && a.Measurement != "" {
-		return fmt.Sprintf("%s: %s", a.Measurement, a.Cause)
-	}
-	if a.Cause != "" {
-		return a.Cause
-	}
-	if a.Measurement != "" {
-		return fmt.Sprintf("%s alarm", a.Measurement)
-	}
-	return a.ID
 }
 
 func alarmTimeString(ts time.Time) string {

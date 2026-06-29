@@ -554,11 +554,8 @@ func (c *Client) ListResources(ctx context.Context, q Query) (ResourceList, erro
 	if q.Name != "" && q.Q == "" {
 		vars["q"] = q.Name
 	}
-	if len(q.AttributesContains) > 0 {
-		vars["attributesContains"] = q.AttributesContains
-	}
-	err := c.graphQL(ctx, `query Resources($q: String, $kind: String, $tenantId: ID, $attributesContains: JSON, $limit: Int, $offset: Int) {
-		resources(q: $q, kind: $kind, tenantId: $tenantId, attributesContains: $attributesContains, limit: $limit, offset: $offset) {
+	err := c.graphQL(ctx, `query Resources($q: String, $kind: String, $tenantId: ID, $limit: Int, $offset: Int) {
+		resources(q: $q, kind: $kind, tenantId: $tenantId, limit: $limit, offset: $offset) {
 			total
 			items { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
 		}

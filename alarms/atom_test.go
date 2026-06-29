@@ -4,66 +4,80 @@
 package alarms
 
 import (
+	"context"
 	"testing"
 
 	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/authn"
 )
 
-func TestAlarmProjectionBuildsAtomResource(t *testing.T) {
-	resource := alarmProjection(Alarm{
-		ID:          "alarm-1",
-		RuleID:      "rule-1",
-		DomainID:    "domain-1",
-		ChannelID:   "channel-1",
-		ClientID:    "client-1",
-		Cause:       "high temperature",
-		Measurement: "temperature",
-		Value:       "92.4",
-		Unit:        "C",
-		Threshold:   "80",
-		Severity:    90,
-		Status:      ActiveStatus,
-	})
+func TestAtomServiceCreateAlarmProjectsCreatedAlarm(t *testing.T) {
+	projector := &alarmProjector{}
+	svc := WithAtom(alarmService{
+		create: Alarm{
+			ID:          "alarm-1",
+			RuleID:      "rule-1",
+			DomainID:    "domain-1",
+			ChannelID:   "channel-1",
+			ClientID:    "client-1",
+			Cause:       "high temperature",
+			Measurement: "temperature",
+			Value:       "92.4",
+			Unit:        "C",
+			Threshold:   "80",
+			Severity:    90,
+			Status:      ActiveStatus,
+		},
+	}, projector)
 
-	if resource.ID != "alarm-1" || resource.Kind != atom.KindAlarm || resource.Name != "temperature: high temperature" {
-		t.Fatalf("unexpected projection: %#v", resource)
+	created, err := svc.CreateAlarm(context.Background(), Alarm{RuleID: "rule-1"})
+	if err != nil {
+		t.Fatalf("create alarm: %v", err)
 	}
-	if resource.Attributes["rule_id"] != "rule-1" {
-		t.Fatalf("missing rule projection: %#v", resource.Attributes)
+	if created.ID != "alarm-1" {
+		t.Fatalf("unexpected created alarm: %#v", created)
 	}
-	if resource.Attributes["value"] != "92.4" || resource.Attributes["threshold"] != "80" {
-		t.Fatalf("missing alarm value projection: %#v", resource.Attributes)
+	if projector.resource.ID != "alarm-1" || projector.resource.Kind != atom.KindAlarm {
+		t.Fatalf("unexpected projection: %#v", projector.resource)
+	}
+	if projector.resource.Attributes["rule_id"] != "rule-1" {
+		t.Fatalf("missing rule projection: %#v", projector.resource.Attributes)
+	}
+	if projector.resource.Attributes["value"] != "92.4" || projector.resource.Attributes["threshold"] != "80" {
+		t.Fatalf("missing alarm value projection: %#v", projector.resource.Attributes)
 	}
 }
 
-func TestAlarmNameFallbacks(t *testing.T) {
-	cases := []struct {
-		name  string
-		alarm Alarm
-		want  string
-	}{
-		{
-			name:  "cause only",
-			alarm: Alarm{ID: "alarm-1", Cause: "high temperature"},
-			want:  "high temperature",
-		},
-		{
-			name:  "measurement only",
-			alarm: Alarm{ID: "alarm-1", Measurement: "temperature"},
-			want:  "temperature alarm",
-		},
-		{
-			name:  "id fallback",
-			alarm: Alarm{ID: "alarm-1"},
-			want:  "alarm-1",
-		},
-	}
+type alarmService struct {
+	create Alarm
+}
 
-	for _, tc := range cases {
-		t.Run(tc.name, func(t *testing.T) {
-			if got := alarmName(tc.alarm); got != tc.want {
-				t.Fatalf("unexpected alarm name: got %q want %q", got, tc.want)
-			}
-		})
-	}
+func (svc alarmService) CreateAlarm(context.Context, Alarm) (Alarm, error) {
+	return svc.create, nil
+}
+
+func (svc alarmService) UpdateAlarm(context.Context, authn.Session, Alarm) (Alarm, error) {
+	return Alarm{}, nil
+}
+
+func (svc alarmService) ViewAlarm(context.Context, authn.Session, string) (Alarm, error) {
+	return Alarm{}, nil
+}
+
+func (svc alarmService) ListAlarms(context.Context, authn.Session, PageMetadata) (AlarmsPage, error) {
+	return AlarmsPage{}, nil
+}
+
+func (svc alarmService) DeleteAlarm(context.Context, authn.Session, string) error {
+	return nil
+}
+
+type alarmProjector struct {
+	atom.Projector
+	resource atom.Resource
+}
+
+func (p *alarmProjector) UpsertResource(_ context.Context, resource atom.Resource) error {
+	p.resource = resource
+	return nil
 }

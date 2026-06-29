@@ -6,6 +6,7 @@ package alarms
 import (
 	"context"
 	"math"
+	"reflect"
 	"testing"
 	"time"
 
@@ -30,6 +31,16 @@ func TestAtomRepositoryCreateAlarmSuppressesDuplicateActiveSeverity(t *testing.T
 	if store.created.ID != "" {
 		t.Fatalf("duplicate alarm should not be created: %#v", store.created)
 	}
+	if len(store.queries) != 1 {
+		t.Fatalf("expected one duplicate lookup query, got %d", len(store.queries))
+	}
+	assertAttributesContain(t, store.queries[0].AttributesContains, atom.Attributes{
+		"rule_id":     existing.RuleID,
+		"channel_id":  existing.ChannelID,
+		"client_id":   existing.ClientID,
+		"subtopic":    existing.Subtopic,
+		"measurement": existing.Measurement,
+	})
 }
 
 func TestAtomRepositoryCreateAlarmCreatesOnSeverityChange(t *testing.T) {
@@ -49,7 +60,7 @@ func TestAtomRepositoryCreateAlarmCreatesOnSeverityChange(t *testing.T) {
 	if created.ID != next.ID || created.Severity != next.Severity {
 		t.Fatalf("unexpected created alarm: %#v", created)
 	}
-	if store.created.ID != next.ID || store.created.Kind != atom.KindAlarm || store.created.Name != next.ID {
+	if store.created.ID != next.ID || store.created.Kind != atom.KindAlarm || store.created.Name != alarmName(next) {
 		t.Fatalf("unexpected created resource: %#v", store.created)
 	}
 }
@@ -122,6 +133,18 @@ func TestAtomRepositoryListAlarmsFiltersAndSorts(t *testing.T) {
 	if page.Alarms[0].ID != second.ID || page.Alarms[1].ID != first.ID {
 		t.Fatalf("unexpected order: %#v", page.Alarms)
 	}
+	if len(store.queries) != 1 {
+		t.Fatalf("expected one list query, got %d", len(store.queries))
+	}
+	assertAttributesContain(t, store.queries[0].AttributesContains, atom.Attributes{
+		"channel_id": "channel-1",
+	})
+	if _, ok := store.queries[0].AttributesContains["status"]; ok {
+		t.Fatalf("status should not be pushed for all-status query: %#v", store.queries[0].AttributesContains)
+	}
+	if _, ok := store.queries[0].AttributesContains["severity"]; ok {
+		t.Fatalf("severity should not be pushed for sentinel query: %#v", store.queries[0].AttributesContains)
+	}
 }
 
 func testAlarm(id string, createdAt time.Time) Alarm {
@@ -148,6 +171,7 @@ type alarmAtomStore struct {
 	created   atom.Resource
 	updated   atom.Resource
 	deleted   string
+	queries   []atom.Query
 }
 
 func (s *alarmAtomStore) CreateResource(_ context.Context, resource atom.Resource) (atom.Resource, error) {
@@ -177,12 +201,16 @@ func (s *alarmAtomStore) GetResource(_ context.Context, id string) (atom.Resourc
 }
 
 func (s *alarmAtomStore) ListResources(_ context.Context, q atom.Query) (atom.ResourceList, error) {
+	s.queries = append(s.queries, q)
 	var items []atom.Resource
 	for _, res := range s.resources {
 		if q.Kind != "" && res.Kind != q.Kind {
 			continue
 		}
 		if q.TenantID != "" && res.TenantID != q.TenantID {
+			continue
+		}
+		if !resourceAttributesContain(res.Attributes, q.AttributesContains) {
 			continue
 		}
 		items = append(items, res)
@@ -197,6 +225,24 @@ func (s *alarmAtomStore) ListResources(_ context.Context, q atom.Query) (atom.Re
 		end = start + q.Limit
 	}
 	return atom.ResourceList{Items: items[start:end], Total: total}, nil
+}
+
+func resourceAttributesContain(attrs, contains atom.Attributes) bool {
+	for key, want := range contains {
+		if !reflect.DeepEqual(attrs[key], want) {
+			return false
+		}
+	}
+	return true
+}
+
+func assertAttributesContain(t *testing.T, got, want atom.Attributes) {
+	t.Helper()
+	for key, wantValue := range want {
+		if !reflect.DeepEqual(got[key], wantValue) {
+			t.Fatalf("attribute %q mismatch: got %#v want %#v in %#v", key, got[key], wantValue, got)
+		}
+	}
 }
 
 func (s *alarmAtomStore) DeleteResource(_ context.Context, id string) error {

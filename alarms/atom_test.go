@@ -25,7 +25,7 @@ func TestAlarmProjectionBuildsAtomResource(t *testing.T) {
 		Status:      ActiveStatus,
 	})
 
-	if resource.ID != "alarm-1" || resource.Kind != atom.KindAlarm || resource.Name != "alarm-1" {
+	if resource.ID != "alarm-1" || resource.Kind != atom.KindAlarm || resource.Name != "temperature: high temperature" {
 		t.Fatalf("unexpected projection: %#v", resource)
 	}
 	if resource.Attributes["rule_id"] != "rule-1" {
@@ -33,5 +33,37 @@ func TestAlarmProjectionBuildsAtomResource(t *testing.T) {
 	}
 	if resource.Attributes["value"] != "92.4" || resource.Attributes["threshold"] != "80" {
 		t.Fatalf("missing alarm value projection: %#v", resource.Attributes)
+	}
+}
+
+func TestAlarmNameFallbacks(t *testing.T) {
+	cases := []struct {
+		name  string
+		alarm Alarm
+		want  string
+	}{
+		{
+			name:  "cause only",
+			alarm: Alarm{ID: "alarm-1", Cause: "high temperature"},
+			want:  "high temperature",
+		},
+		{
+			name:  "measurement only",
+			alarm: Alarm{ID: "alarm-1", Measurement: "temperature"},
+			want:  "temperature alarm",
+		},
+		{
+			name:  "id fallback",
+			alarm: Alarm{ID: "alarm-1"},
+			want:  "alarm-1",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := alarmName(tc.alarm); got != tc.want {
+				t.Fatalf("unexpected alarm name: got %q want %q", got, tc.want)
+			}
+		})
 	}
 }

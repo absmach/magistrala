@@ -4,20 +4,17 @@
 package alarms
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/absmach/magistrala/internal/atom"
 )
 
 func alarmProjection(a Alarm) atom.Resource {
-	name := a.ID
-	if name == "" {
-		name = a.Cause
-	}
 	res := atom.ResourceFromFields(atom.ObjectFields{
 		ID:        a.ID,
 		Kind:      atom.KindAlarm,
-		Name:      name,
+		Name:      alarmName(a),
 		TenantID:  a.DomainID,
 		OwnerID:   a.AssigneeID,
 		Status:    a.Status.String(),
@@ -45,6 +42,19 @@ func alarmProjection(a Alarm) atom.Resource {
 	res.Attributes["resolved_at"] = alarmTimeString(a.ResolvedAt)
 	res.Attributes["resolved_by"] = a.ResolvedBy
 	return res
+}
+
+func alarmName(a Alarm) string {
+	if a.Cause != "" && a.Measurement != "" {
+		return fmt.Sprintf("%s: %s", a.Measurement, a.Cause)
+	}
+	if a.Cause != "" {
+		return a.Cause
+	}
+	if a.Measurement != "" {
+		return fmt.Sprintf("%s alarm", a.Measurement)
+	}
+	return a.ID
 }
 
 func alarmTimeString(ts time.Time) string {

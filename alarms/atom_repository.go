@@ -104,7 +104,7 @@ func (repo *atomRepository) loadAlarm(ctx context.Context, alarmID, domainID str
 }
 
 func (repo *atomRepository) ListAllAlarms(ctx context.Context, pm PageMetadata) (AlarmsPage, error) {
-	items, err := repo.listAlarms(ctx, pm.DomainID)
+	items, err := repo.listAlarms(ctx, pm.DomainID, alarmPageAttributesContains(pm))
 	if err != nil {
 		return AlarmsPage{}, errors.Wrap(repoerr.ErrViewEntity, err)
 	}
@@ -147,7 +147,7 @@ func (repo *atomRepository) DeleteAlarm(ctx context.Context, id string) error {
 }
 
 func (repo *atomRepository) shouldCreateAlarm(ctx context.Context, alarm Alarm) (bool, error) {
-	items, err := repo.listAlarms(ctx, alarm.DomainID)
+	items, err := repo.listAlarms(ctx, alarm.DomainID, alarmIdentityAttributes(alarm))
 	if err != nil {
 		return false, err
 	}
@@ -175,15 +175,16 @@ func (repo *atomRepository) shouldCreateAlarm(ctx context.Context, alarm Alarm) 
 	return alarm.Status == ActiveStatus && latest.Severity != alarm.Severity, nil
 }
 
-func (repo *atomRepository) listAlarms(ctx context.Context, domainID string) ([]Alarm, error) {
+func (repo *atomRepository) listAlarms(ctx context.Context, domainID string, attributes atom.Attributes) ([]Alarm, error) {
 	var out []Alarm
 	var offset uint64
 	for {
 		page, err := repo.store.ListResources(ctx, atom.Query{
-			Kind:     atom.KindAlarm,
-			TenantID: domainID,
-			Limit:    atomAlarmListLimit,
-			Offset:   offset,
+			Kind:               atom.KindAlarm,
+			TenantID:           domainID,
+			AttributesContains: attributes,
+			Limit:              atomAlarmListLimit,
+			Offset:             offset,
 		})
 		if err != nil {
 			return nil, err
@@ -207,6 +208,43 @@ func (repo *atomRepository) listAlarms(ctx context.Context, domainID string) ([]
 	}
 
 	return out, nil
+}
+
+func alarmIdentityAttributes(alarm Alarm) atom.Attributes {
+	attrs := atom.Attributes{}
+	setAttrIfNotEmpty(attrs, "rule_id", alarm.RuleID)
+	setAttrIfNotEmpty(attrs, "channel_id", alarm.ChannelID)
+	setAttrIfNotEmpty(attrs, "client_id", alarm.ClientID)
+	setAttrIfNotEmpty(attrs, "subtopic", alarm.Subtopic)
+	setAttrIfNotEmpty(attrs, "measurement", alarm.Measurement)
+	return attrs
+}
+
+func alarmPageAttributesContains(pm PageMetadata) atom.Attributes {
+	attrs := atom.Attributes{}
+	setAttrIfNotEmpty(attrs, "rule_id", pm.RuleID)
+	setAttrIfNotEmpty(attrs, "channel_id", pm.ChannelID)
+	setAttrIfNotEmpty(attrs, "client_id", pm.ClientID)
+	setAttrIfNotEmpty(attrs, "subtopic", pm.Subtopic)
+	setAttrIfNotEmpty(attrs, "measurement", pm.Measurement)
+	if pm.Status != AllStatus {
+		attrs["status"] = pm.Status.String()
+	}
+	if pm.Severity != math.MaxUint8 {
+		attrs["severity"] = pm.Severity
+	}
+	setAttrIfNotEmpty(attrs, "assignee_id", pm.AssigneeID)
+	setAttrIfNotEmpty(attrs, "updated_by", pm.UpdatedBy)
+	setAttrIfNotEmpty(attrs, "assigned_by", pm.AssignedBy)
+	setAttrIfNotEmpty(attrs, "acknowledged_by", pm.AcknowledgedBy)
+	setAttrIfNotEmpty(attrs, "resolved_by", pm.ResolvedBy)
+	return attrs
+}
+
+func setAttrIfNotEmpty(attrs atom.Attributes, key, value string) {
+	if value != "" {
+		attrs[key] = value
+	}
 }
 
 func mergeAlarmUpdate(current, update Alarm) Alarm {

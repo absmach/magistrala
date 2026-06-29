@@ -165,34 +165,6 @@ type srcReport struct {
 	ReportTemplate  sql.NullString  `db:"report_template"`
 }
 
-// srcAlarm is an alarm (alarms.alarms) -> Atom resource kind=alarm.
-type srcAlarm struct {
-	ID             string         `db:"id"`
-	RuleID         string         `db:"rule_id"`
-	DomainID       string         `db:"domain_id"`
-	ChannelID      string         `db:"channel_id"`
-	Subtopic       string         `db:"subtopic"`
-	ClientID       string         `db:"client_id"`
-	Measurement    string         `db:"measurement"`
-	Value          string         `db:"value"`
-	Unit           string         `db:"unit"`
-	Threshold      string         `db:"threshold"`
-	Cause          string         `db:"cause"`
-	Status         int16          `db:"status"`
-	Severity       int16          `db:"severity"`
-	AssigneeID     sql.NullString `db:"assignee_id"`
-	CreatedAt      sql.NullTime   `db:"created_at"`
-	UpdatedAt      sql.NullTime   `db:"updated_at"`
-	UpdatedBy      sql.NullString `db:"updated_by"`
-	AssignedAt     sql.NullTime   `db:"assigned_at"`
-	AssignedBy     sql.NullString `db:"assigned_by"`
-	AcknowledgedAt sql.NullTime   `db:"acknowledged_at"`
-	AcknowledgedBy sql.NullString `db:"acknowledged_by"`
-	ResolvedAt     sql.NullTime   `db:"resolved_at"`
-	ResolvedBy     sql.NullString `db:"resolved_by"`
-	Metadata       []byte         `db:"metadata"`
-}
-
 // --- readers ---
 
 func readDomains(ctx context.Context, db *sqlx.DB) ([]srcDomain, error) {
@@ -253,16 +225,6 @@ func readReports(ctx context.Context, db *sqlx.DB) ([]srcReport, error) {
 	             updated_by, due, recurring, recurring_period, start_datetime,
 	             config, email, metrics, report_template
 	      FROM report_config`
-	return out, db.SelectContext(ctx, &out, q)
-}
-
-func readAlarms(ctx context.Context, db *sqlx.DB) ([]srcAlarm, error) {
-	var out []srcAlarm
-	q := `SELECT id, rule_id, domain_id, channel_id, subtopic, client_id, measurement, value,
-	             unit, threshold, cause, status, severity, assignee_id, created_at, updated_at,
-	             updated_by, assigned_at, assigned_by, acknowledged_at, acknowledged_by,
-	             resolved_at, resolved_by, metadata
-	      FROM alarms`
 	return out, db.SelectContext(ctx, &out, q)
 }
 

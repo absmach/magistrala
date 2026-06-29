@@ -39,7 +39,6 @@ type config struct {
 	Auth     dbConn
 	RE       dbConn // rules engine
 	Reports  dbConn
-	Alarms   dbConn
 
 	AtomDSN        string
 	UnmappedAction string
@@ -78,7 +77,6 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 		Auth:     mk("MG_AUTH"),
 		RE:       mk("MG_RE"),
 		Reports:  mk("MG_REPORTS"),
-		Alarms:   mk("MG_ALARMS"),
 		AtomDSN:  atomDSN,
 	}
 
@@ -88,7 +86,6 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 		&cfg.Clients.Name: "clients", &cfg.Channels.Name: "channels",
 		&cfg.Groups.Name: "groups", &cfg.Auth.Name: "auth",
 		&cfg.RE.Name: "rules_engine", &cfg.Reports.Name: "reports",
-		&cfg.Alarms.Name: "alarms",
 	}
 	for p, n := range defName {
 		if *p == "" {

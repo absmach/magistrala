@@ -74,7 +74,7 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 		return chans[i].ID, domSet[chans[i].DomainID]
 	}), atomResources)
 
-	// 4b. resources: rules, reports, alarms
+	// 4b. resources: rules, reports
 	rules, err := readRules(ctx, m.reDB)
 	if err != nil {
 		return err
@@ -88,13 +88,6 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	}
 	m.reconcile(rep, "resources.reports", idsOf(len(reports), func(i int) (string, bool) {
 		return reports[i].ID, domSet[reports[i].DomainID]
-	}), atomResources)
-	alarms, err := readAlarms(ctx, m.alarmsDB)
-	if err != nil {
-		return err
-	}
-	m.reconcile(rep, "resources.alarms", idsOf(len(alarms), func(i int) (string, bool) {
-		return alarms[i].ID, domSet[alarms[i].DomainID]
 	}), atomResources)
 
 	// 5. object_groups

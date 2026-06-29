@@ -117,7 +117,6 @@ func main() {
 	idp := uuid.New()
 
 	svc := alarms.NewService(idp, repo)
-	svc = alarms.WithAtom(svc, atom.NewClient(atomCfg))
 
 	permConfig, err := permissions.ParsePermissionsFile(cfg.PermissionsFile)
 	if err != nil {

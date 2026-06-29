@@ -10,7 +10,6 @@ import (
 	"github.com/absmach/magistrala/alarms"
 	"github.com/absmach/magistrala/alarms/mocks"
 	"github.com/absmach/magistrala/alarms/operations"
-	"github.com/absmach/magistrala/auth"
 	"github.com/absmach/magistrala/internal/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	pkgerrors "github.com/absmach/magistrala/pkg/errors"
@@ -49,12 +48,12 @@ func TestListAlarmsAuthorizesRegularUser(t *testing.T) {
 	assert.Equal(t, atom.AuthzRequest{
 		SubjectID:  "user-1",
 		Action:     "list",
-		ResourceID: auth.AnyIDs,
-		ObjectKind: "resource",
-		ObjectID:   auth.AnyIDs,
+		ResourceID: "",
+		ObjectKind: "tenant",
+		ObjectID:   "domain-1",
 		Context: map[string]any{
 			"domain_id":          "domain-1",
-			"legacy_object_type": operations.EntityType,
+			"legacy_object_type": "domain",
 		},
 	}, authz.reqs[0])
 }

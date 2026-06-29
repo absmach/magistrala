@@ -28,8 +28,9 @@ The service is configured using the following environment variables (values show
 | `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
 | `ATOM_URL` | Atom HTTP endpoint | `http://atom:8080` |
 | `ATOM_JWKS_URL` | Atom JWKS endpoint for JWT verification | `http://atom:8080/.well-known/jwks.json` |
-| `ATOM_ADMIN_USERNAME` | Atom admin login for service projections | `atom-admin` |
-| `ATOM_ADMIN_SECRET` | Atom admin secret for service projections | `change-me` |
+| `ATOM_SERVICE_TOKEN` | Atom service token for authorization checks | "" |
+| `ATOM_ADMIN_USERNAME` | Atom admin login fallback when no service token is configured | `atom-admin` |
+| `ATOM_ADMIN_SECRET` | Atom admin secret fallback when no service token is configured | `change-me` |
 | `ATOM_TIMEOUT` | Atom request timeout | `5s` |
 | `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
 
@@ -39,7 +40,7 @@ The service is configured using the following environment variables (values show
 - **Stateful updates**: Updates assignee, acknowledgment, resolution, and metadata fields.
 - **Filtering and paging**: Lists alarms by domain, rule, channel, client, subtopic, status, severity, and time range.
 - **Observability**: `/metrics` Prometheus endpoint and Jaeger tracing support.
-- **Auth and authorization**: Authn/authz enforced through Atom JWT verification and PDP checks.
+- **Auth and authorization**: Authn/authz enforced through Atom JWT verification and PDP checks while alarm records stay in PostgreSQL.
 
 ## Architecture
 

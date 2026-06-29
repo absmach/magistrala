@@ -11,7 +11,7 @@ database. Implemented as Go scripts.
 | Topic | Decision |
 |-------|----------|
 | Passwords | **Force reset.** Users migrate with no `password` credential; they reset via Atom's email flow on first login. (bcrypt → argon2 is not convertible without plaintext.) |
-| Scope | Core IAM + roles & policies + connections + PATs + rules/reports/alarms as Atom resources. |
+| Scope | Core IAM + roles & policies + connections + PATs + rules/report configs as Atom resources. Alarm events remain in the alarms service database and are not migrated into Atom resources. |
 | Execution | **Offline one-shot.** Stop Magistrala app services, snapshot, transform, load, start Atom. |
 | IDs | **Preserve Magistrala UUIDs** as Atom UUIDs (PKs and FKs). Magistrala IDs are 36-char UUID strings — directly usable as Atom `UUID` PKs. Keeps audit trails, message payloads, external references, and SpiceDB-derived links intact. |
 
@@ -33,7 +33,6 @@ All `magistrala/magistrala`, port 5432, on network `magistrala-base-net`:
 | `auth-db` | `auth` | `pats`, `pat_scopes` (skip `keys` — short-lived JWTs; skip legacy `policies`/`domains` mirror) |
 | `re-db` | `rules_engine` | `rules`, `rules_roles*` |
 | `reports-db` | `reports` | `report_config`, `reports_roles*` |
-| `alarms-db` | `alarms` | `alarms` |
 
 > Note: `groups` migrations are embedded into clients **and** channels **and** the
 > standalone groups service. The authoritative groups data for default compose is
@@ -105,27 +104,25 @@ principal group, matching Atom's normal `create_entity` side effect.
 | `created_by` | `owner_id` (if the user migrated) |
 | `parent_group_id` | `object_group_resources` membership |
 
-### 3.4b rules / reports / alarms → resources
+### 3.4b rules / report configs → resources
 
-Rules-engine rules, report configs, and alarms are domain-scoped objects with no
-Atom-native table, so they become **resources** alongside channels, distinguished
-by `kind`. Service-specific columns Atom resources lack are folded into
-`attributes` (JSONB). `tenant_id=domain_id`; rows whose domain has no surviving
-tenant are skipped (§6.4). `owner_id`=`created_by` when that user migrated
-(alarms have no `created_by` → NULL). Names are deduped per tenant (§6.3) since
-these tables carry no `(domain_id, name)` constraint; alarms (no name) use
-`measurement` with an `id` fallback.
+Rules-engine rules and report configs are domain-scoped configuration objects
+with no Atom-native table, so they become **resources** alongside channels,
+distinguished by `kind`. Service-specific columns Atom resources lack are folded
+into `attributes` (JSONB). `tenant_id=domain_id`; rows whose domain has no
+surviving tenant are skipped (§6.4). `owner_id`=`created_by` when that user
+migrated. Names are deduped per tenant (§6.3) since these tables carry no
+`(domain_id, name)` constraint.
 
 | Source | Atom `resources` |
 |---|---|
 | `rules_engine.rules` (id) | `kind='rule'`; `input_channel/topic, outputs, logic_type/value, recurring*, time, start_datetime, tags, status` → `attributes` |
 | `reports.report_config` (id) | `kind='report'`; `description, config, email, metrics, report_template, due, recurring*, start_datetime, status` → `attributes` |
-| `alarms.alarms` (id) | `kind='alarm'`; `rule_id, channel_id, client_id, subtopic, measurement, value, unit, threshold, cause, severity, alarm_status, assignee/assigned/acknowledged/resolved*` → `attributes` |
 
-> Atom `resources.kind` must permit `rule`, `report`, `alarm` (in addition to
-> `channel`). Rules and reports have object-specific role families and those are
-> migrated as resource-scoped roles. Alarms have no role family or
-> `parent_group_id`, so only the resource rows are migrated for alarms.
+> Atom `resources.kind` must permit `rule` and `report` (in addition to
+> `channel`). Rules and report configs have object-specific role families and
+> those are migrated as resource-scoped roles. Alarm events can be high-volume
+> operational data, so they stay in `alarms-db` and are not Atom resources.
 
 ### 3.5 groups → object_groups
 Magistrala groups organize clients/channels within a domain (hierarchical,
@@ -274,7 +271,7 @@ Checks below; the email check matters mainly for dumps merged across instances
 3. …then backfill tenants.created_by/updated_by and resources.owner_id
 4. entity_emails
 5. credentials (device api_key; PAT metadata)
-6. resources (channels, rules, reports, alarms)
+6. resources (channels, rules, reports)
 7. object_groups → object_group_hierarchy → object_group_entities/resources
 8. roles → permission_blocks → permission_block_actions → role_permission_blocks
 9. role_assignments, direct_policies

@@ -295,17 +295,6 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 		}
 		return out
 	}, "reports")
-	alarms, err := readAlarms(ctx, m.alarmsDB)
-	if err != nil {
-		return err
-	}
-	count(func() []string {
-		out := make([]string, len(alarms))
-		for i, a := range alarms {
-			out[i] = a.DomainID
-		}
-		return out
-	}, "alarms")
 	return nil
 }
 

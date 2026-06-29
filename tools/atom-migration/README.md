@@ -21,14 +21,14 @@ docker build -f tools/atom-migration/Dockerfile -t magistrala/atom-migration:dev
 ## Start only the source databases
 
 The migrator reads Postgres directly — it does **not** need the Magistrala app
-services running. To migrate from restored volumes, start just the nine source DB
+services running. To migrate from restored volumes, start just the eight source DB
 containers (`--no-deps` keeps compose from pulling in the app services they
 depend on):
 
 ```bash
 docker compose -f docker/docker-compose.yaml up -d --no-deps \
   auth-db users-db domains-db clients-db channels-db groups-db \
-  re-db reports-db alarms-db
+  re-db reports-db
 ```
 
 They mount the `magistrala_magistrala-<svc>-db-volume` volumes and attach to

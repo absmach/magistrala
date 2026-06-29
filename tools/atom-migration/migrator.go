@@ -29,7 +29,6 @@ type migrator struct {
 	authDB     *sqlx.DB
 	reDB       *sqlx.DB
 	reportsDB  *sqlx.DB
-	alarmsDB   *sqlx.DB
 	atom       *sqlx.DB
 
 	profileID        map[string]string // profile key (e.g. "user","client") -> uuid
@@ -97,7 +96,6 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 	m.authDB = open("auth", cfg.Auth.DSN())
 	m.reDB = open("rules_engine", cfg.RE.DSN())
 	m.reportsDB = open("reports", cfg.Reports.DSN())
-	m.alarmsDB = open("alarms", cfg.Alarms.DSN())
 	m.atom = open("atom", cfg.AtomDSN)
 	if err != nil {
 		return nil, err
@@ -108,7 +106,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 const authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
 
 func (m *migrator) Close() {
-	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.alarmsDB, m.atom} {
+	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
 		if db != nil {
 			_ = db.Close()
 		}
@@ -140,7 +138,6 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 		{"resources.channels", m.phaseChannels},
 		{"resources.rules", m.phaseRules},
 		{"resources.reports", m.phaseReports},
-		{"resources.alarms", m.phaseAlarms},
 		{"object_groups", m.phaseGroups},
 		{"group_membership", m.phaseGroupMembership},
 		{"roles", m.phaseRoles},
@@ -427,9 +424,9 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 	return nil
 }
 
-// insertResource writes one row into Atom resources (kind = channel/rule/report/
-// alarm). Entity-specific columns Magistrala has but Atom resources lack are
-// folded into the attributes JSONB. ON CONFLICT (id) keeps it idempotent.
+// insertResource writes one row into Atom resources. Entity-specific columns
+// Magistrala has but Atom resources lack are folded into the attributes JSONB.
+// ON CONFLICT (id) keeps it idempotent.
 func (m *migrator) insertResource(ctx context.Context, id, kind, name, tenant string, owner sql.NullString, attributes string, createdAt time.Time, updatedAt any) error {
 	return m.exec(ctx,
 		`INSERT INTO resources (id, kind, name, tenant_id, owner_id, attributes, created_at, updated_at)
@@ -447,7 +444,7 @@ func (m *migrator) ownerOf(createdBy sql.NullString) sql.NullString {
 }
 
 // uniqueResName makes a resource name unique within a tenant (Atom enforces
-// resources(name, tenant_id); rules/reports/alarms carry no such Magistrala
+// resources(name, tenant_id); rules/reports carry no such Magistrala
 // constraint, so same-tenant dups are possible). Suffixes -2, -3, … on collision.
 func uniqueResName(seen map[string]int, tenant, name string) string {
 	key := tenant + "|" + strings.ToLower(name)
@@ -553,58 +550,6 @@ func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
 			return err
 		}
 		rep.count("resources.reports", 1)
-	}
-	return nil
-}
-
-// phaseAlarms: alarms.alarms -> resources (kind=alarm). Alarms have no name in
-// Magistrala; the measurement is used (id fallback), deduped per tenant.
-func (m *migrator) phaseAlarms(ctx context.Context, rep *report) error {
-	rows, err := readAlarms(ctx, m.alarmsDB)
-	if err != nil {
-		return err
-	}
-	seen := map[string]int{}
-	for _, a := range rows {
-		if !m.tenants[a.DomainID] {
-			rep.skip("alarm_orphan_domain")
-			continue
-		}
-		m.resourceDomain[a.ID] = a.DomainID
-		name := uniqueResName(seen, a.DomainID, firstNonEmpty(a.Measurement, a.ID))
-		extra := map[string]any{
-			"rule_id":      a.RuleID,
-			"channel_id":   a.ChannelID,
-			"client_id":    a.ClientID,
-			"subtopic":     a.Subtopic,
-			"measurement":  a.Measurement,
-			"value":        a.Value,
-			"unit":         a.Unit,
-			"threshold":    a.Threshold,
-			"cause":        a.Cause,
-			"alarm_status": a.Status,
-			"severity":     a.Severity,
-		}
-		putStr(extra, "assignee_id", a.AssigneeID)
-		putStr(extra, "updated_by", a.UpdatedBy)
-		putStr(extra, "assigned_by", a.AssignedBy)
-		putStr(extra, "acknowledged_by", a.AcknowledgedBy)
-		putStr(extra, "resolved_by", a.ResolvedBy)
-		if a.AssignedAt.Valid {
-			extra["assigned_at"] = a.AssignedAt.Time
-		}
-		if a.AcknowledgedAt.Valid {
-			extra["acknowledged_at"] = a.AcknowledgedAt.Time
-		}
-		if a.ResolvedAt.Valid {
-			extra["resolved_at"] = a.ResolvedAt.Time
-		}
-		// Alarms carry no created_by; owner_id stays NULL.
-		if err := m.insertResource(ctx, a.ID, "alarm", name, a.DomainID, sql.NullString{},
-			attrs(a.Metadata, extra), ntToTime(a.CreatedAt), ntPtr(a.UpdatedAt)); err != nil {
-			return err
-		}
-		rep.count("resources.alarms", 1)
 	}
 	return nil
 }

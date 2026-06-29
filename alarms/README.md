@@ -1,6 +1,6 @@
 # Alarms
 
-The Alarms service stores, manages and exposes alarms raised by rules and device activity. It consumes alarm events from the message broker, persists them to PostgreSQL, and provides an HTTP API for listing, viewing, updating, and deleting alarms with full authn/authz, metrics, and tracing support.
+The Alarms service stores, manages and exposes alarms raised by rules and device activity. It consumes alarm events from the message broker, stores alarms as Atom resources, and provides an HTTP API for listing, viewing, updating, and deleting alarms with full authn/authz, metrics, and tracing support.
 
 ## Configuration
 
@@ -13,29 +13,19 @@ The service is configured using the following environment variables (values show
 | `MG_ALARMS_HTTP_PORT` | HTTP port to bind | `8050` |
 | `MG_ALARMS_HTTP_SERVER_CERT` | Path to PEM-encoded HTTPS server certificate | "" |
 | `MG_ALARMS_HTTP_SERVER_KEY` | Path to PEM-encoded HTTPS server key | "" |
-| `MG_ALARMS_DB_HOST` | PostgreSQL host | `alarms-db` |
-| `MG_ALARMS_DB_PORT` | PostgreSQL port | `5432` |
-| `MG_ALARMS_DB_USER` | PostgreSQL user | `magistrala` |
-| `MG_ALARMS_DB_PASS` | PostgreSQL password | `magistrala` |
-| `MG_ALARMS_DB_NAME` | PostgreSQL database name | `alarms` |
-| `MG_ALARMS_DB_SSL_MODE` | PostgreSQL SSL mode | `disable` |
-| `MG_ALARMS_DB_SSL_CERT` | PostgreSQL SSL client cert | "" |
-| `MG_ALARMS_DB_SSL_KEY` | PostgreSQL SSL client key | "" |
-| `MG_ALARMS_DB_SSL_ROOT_CERT` | PostgreSQL SSL root cert | "" |
 | `MG_ALARMS_INSTANCE_ID` | Instance ID for tracing/health | "" |
 | `MG_MESSAGE_BROKER_URL` | Message broker URL for alarm ingestion | `nats://nats:4222` |
 | `MG_JAEGER_URL` | Jaeger collector endpoint | `http://jaeger:4318/v1/traces` |
 | `MG_JAEGER_TRACE_RATIO` | Trace sampling ratio | `1.0` |
 | `ATOM_URL` | Atom HTTP endpoint | `http://atom:8080` |
+| `ATOM_SERVICE_TOKEN` | Atom service token used by the alarms service. In Docker Compose this is populated from `MG_ATOM_TOKEN_ALARMS`. | "" |
 | `ATOM_JWKS_URL` | Atom JWKS endpoint for JWT verification | `http://atom:8080/.well-known/jwks.json` |
-| `ATOM_ADMIN_USERNAME` | Atom admin login for service projections | `atom-admin` |
-| `ATOM_ADMIN_SECRET` | Atom admin secret for service projections | `change-me` |
 | `ATOM_TIMEOUT` | Atom request timeout | `5s` |
 | `MG_ALLOW_UNVERIFIED_USER` | Allow unverified users to access | `true` |
 
 ## Features
 
-- **Alarm ingestion**: Consumes alarms from the message broker and persists them to PostgreSQL.
+- **Alarm ingestion**: Consumes alarms from the message broker and persists them as Atom resources with `kind=alarm`.
 - **Stateful updates**: Updates assignee, acknowledgment, resolution, and metadata fields.
 - **Filtering and paging**: Lists alarms by domain, rule, channel, client, subtopic, status, severity, and time range.
 - **Observability**: `/metrics` Prometheus endpoint and Jaeger tracing support.
@@ -47,50 +37,30 @@ The service is configured using the following environment variables (values show
 
 1. The message broker publishes alarm events under the `alarms.>` subject.
 2. The Alarms consumer decodes the event payload, enriches it with message metadata, validates it, and calls `CreateAlarm`.
-3. The repository writes to PostgreSQL while deduplicating repeated active alarms with the same severity.
+3. The repository writes to Atom resources while deduplicating repeated active alarms with the same severity.
 4. The HTTP API exposes list/view/update/delete operations with authn/authz, metrics, and tracing middleware.
 
 ### Components
 
 - **HTTP API**: `alarms/api` exposes REST endpoints and health/metrics handlers.
 - **Service layer**: `alarms/service.go` validates requests and coordinates repository operations.
-- **Repository**: `alarms/postgres/alarms.go` implements persistence and filtering.
+- **Repository**: `alarms/atom_repository.go` stores alarms as Atom resources and applies alarm filtering.
 - **Consumer**: `alarms/consumer` processes broker messages and creates alarms.
 - **Message broker**: `alarms/brokers` uses NATS JetStream with stream `alarms` and subject `alarms.>`.
-- **Migrations**: `alarms/postgres/init.go` defines the alarms schema and indexes.
+- **Atom**: stores alarms as `resources` rows with `kind=alarm`.
 
-### Alarms table
+### Atom Resource Mapping
 
-Defined in `alarms/postgres/init.go`:
+The service stores each alarm as an Atom resource:
 
-| Column | Type | Description |
-| --- | --- | --- |
-| `id` | `VARCHAR(36)` | Alarm UUID (primary key) |
-| `rule_id` | `VARCHAR(36)` | Rule ID that triggered the alarm |
-| `domain_id` | `VARCHAR(36)` | Domain ID |
-| `channel_id` | `VARCHAR(36)` | Channel ID |
-| `subtopic` | `TEXT` | Subtopic associated with the alarm |
-| `client_id` | `VARCHAR(36)` | Client ID |
-| `measurement` | `TEXT` | Measurement name |
-| `value` | `TEXT` | Measured value |
-| `unit` | `TEXT` | Measurement unit |
-| `threshold` | `TEXT` | Threshold value |
-| `cause` | `TEXT` | Cause/description |
-| `status` | `SMALLINT` | 0 = active, 1 = cleared |
-| `severity` | `SMALLINT` | Severity (0-100) |
-| `assignee_id` | `VARCHAR(36)` | Assignee ID |
-| `created_at` | `TIMESTAMPTZ` | Creation timestamp |
-| `updated_at` | `TIMESTAMPTZ` | Last update timestamp |
-| `updated_by` | `VARCHAR(36)` | User who updated |
-| `assigned_at` | `TIMESTAMPTZ` | When assigned |
-| `assigned_by` | `VARCHAR(36)` | Who assigned |
-| `acknowledged_at` | `TIMESTAMPTZ` | When acknowledged |
-| `acknowledged_by` | `VARCHAR(36)` | Who acknowledged |
-| `resolved_at` | `TIMESTAMPTZ` | When resolved |
-| `resolved_by` | `VARCHAR(36)` | Who resolved |
-| `metadata` | `JSONB` | Custom metadata |
-
-Index: `idx_alarms_state (domain_id, rule_id, channel_id, subtopic, client_id, measurement, created_at DESC)`
+| Alarm field | Atom resource |
+| --- | --- |
+| `id` | `resources.id` and `resources.name` |
+| `domain_id` | `resources.tenant_id` |
+| `assignee_id` | `resources.owner_id` on create and `attributes.assignee_id` |
+| `status` | `attributes.status` and `attributes.alarm_status` |
+| `metadata` | `attributes.metadata` |
+| alarm-specific fields | `attributes.rule_id`, `attributes.channel_id`, `attributes.client_id`, `attributes.subtopic`, `attributes.measurement`, `attributes.value`, `attributes.unit`, `attributes.threshold`, `attributes.cause`, `attributes.severity`, and lifecycle fields |
 
 ## Deployment
 
@@ -101,25 +71,18 @@ make alarms
 
 MG_ALARMS_LOG_LEVEL=debug \
 MG_ALARMS_HTTP_PORT=8050 \
-MG_ALARMS_DB_HOST=localhost \
-MG_ALARMS_DB_PORT=5432 \
-MG_ALARMS_DB_USER=magistrala \
-MG_ALARMS_DB_PASS=magistrala \
-MG_ALARMS_DB_NAME=alarms \
 MG_MESSAGE_BROKER_URL=nats://localhost:4222 \
-MG_AUTH_GRPC_URL=localhost:7001 \
-MG_AUTH_GRPC_TIMEOUT=300s \
-MG_DOMAINS_GRPC_URL=localhost:7003 \
-MG_DOMAINS_GRPC_TIMEOUT=300s \
+ATOM_URL=http://localhost:8080 \
+ATOM_SERVICE_TOKEN=<alarms-service-token> \
 ./build/alarms
 ```
 
 ### Docker Compose
 
-The service is available as a Docker container. Refer to [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) for the `alarms` and `alarms-db` services and their environment variables. For a full local stack, make sure the auth, domains, and message broker services are also running.
+The service is available as a Docker container. Refer to [docker/docker-compose.yaml](https://github.com/absmach/magistrala/blob/main/docker/docker-compose.yaml) for the `alarms` service and its environment variables. For a full local stack, make sure Atom, `atom-bootstrap`, NATS, and nginx are also running.
 
 ```bash
-docker compose -f docker/docker-compose.yaml up alarms alarms-db
+docker compose -f docker/docker-compose.yaml up alarms
 ```
 
 ### Health check
@@ -132,7 +95,7 @@ curl -X GET http://localhost:8050/health \
 ## Testing
 
 ```bash
-go test ./alarms/...
+go test ./alarms ./cmd/alarms
 ```
 
 ## Usage

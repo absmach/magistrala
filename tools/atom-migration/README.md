@@ -3,6 +3,110 @@
 Offline, idempotent migrator: Magistrala v0.30.0 (per-service Postgres) → Atom IAM
 (single Postgres). See [PLAN.md](./PLAN.md) for the full mapping and runbook.
 
+## One-command migration (recommended)
+
+If you just want to migrate an old deployment and bring it up with
+`make run_latest`, use the orchestrator — it handles all the port / volume /
+container-name collisions for you:
+
+```bash
+make migrate_atom                 # dry-run: reads + validates, writes nothing
+make migrate_atom args="--apply"  # perform the migration
+make migrate_atom args="--verify" # reconcile source vs Atom afterwards
+```
+
+Then:
+
+```bash
+# stop the old stack, then:
+make run_latest
+```
+
+…and the new deployment serves the migrated data.
+
+How it stays collision-free: [`migrate.sh`](./migrate.sh) +
+[`docker-compose.migrate.yaml`](./docker-compose.migrate.yaml) run everything in
+their own Compose project (`atommig`) on a private network, binding **no host
+ports** and using **no fixed container names**, so they never clash with a
+running Magistrala (old or `run_latest`) stack. It:
+
+1. mounts the eight old per-service DB volumes
+   (`magistrala_magistrala-<svc>-db-volume`) into throwaway Postgres containers
+   (Postgres major version + data-dir layout auto-detected from the volume);
+2. brings up an Atom + Postgres on the **same** volume `make run_latest` mounts
+   (`<DOCKER_PROJECT>_magistrala-atom-db-volume`), so Atom seeds its schema there
+   and the migrated rows persist for the next `run_latest`;
+3. runs the migrator on that private network (reaching every DB by service name);
+4. tears the stack down, leaving every volume intact.
+
+All migration volumes are declared `external`, so `down` can never destroy data.
+
+Prerequisites: run this on the machine that hosted the old Magistrala compose
+stack. Stop that stack (`docker compose ... down`, **without** `-v`) so the
+per-service DB volumes are free but still present locally — the migrator mounts
+them directly. On `--apply`, the device-key CSV described below lands in
+`tools/atom-migration/report/`.
+
+Env overrides: `SRC_VOL_PREFIX` (old volume prefix, default
+`magistrala_magistrala-`), `SRC_DB_USER` / `SRC_DB_PASS` (old Postgres creds,
+default `magistrala`), `DOCKER_PROJECT` (run_latest project; default derived like
+the Makefile), `MIGRATE_PROJECT` (isolated project name, default `atommig`).
+Pass `--keep` to leave the stack up for debugging.
+
+### How volume names are resolved
+
+Names are **derived by convention, not auto-discovered**. There are two sets.
+
+**Source volumes (old deployment, read-only inputs).** Built from a prefix plus
+a fixed per-service suffix:
+
+```
+<SRC_VOL_PREFIX><svc>-db-volume     # svc ∈ domains users clients channels groups auth re reports
+```
+
+`SRC_VOL_PREFIX` defaults to `magistrala_magistrala-`, i.e. old Compose project
+`magistrala` + Docker Compose's own `magistrala-` volume key. So
+`auth` → `magistrala_magistrala-auth-db-volume`. `migrate.sh` `docker volume
+inspect`s all eight up front and aborts loudly if any is missing. The same
+`${SRC_VOL_PREFIX}` feeds the `external` volume names in
+`docker-compose.migrate.yaml`, so the script and Compose always agree. If your
+old deployment used a different Compose project name, set `SRC_VOL_PREFIX`
+(e.g. `SRC_VOL_PREFIX=myproj_magistrala-`).
+
+**Atom target volume (where migrated data is written).** Must equal exactly the
+volume `make run_latest` mounts, or the new stack would come up on a different,
+empty volume. `make run_latest` mounts `magistrala-atom-db-volume`, which Docker
+Compose prefixes with the project name `DOCKER_PROJECT`:
+
+```
+<DOCKER_PROJECT>_magistrala-atom-db-volume
+```
+
+`DOCKER_PROJECT` is itself derived from the git remote, replicating the Makefile
+formula:
+
+```sh
+repo=$(git remote get-url origin | sed -E 's@.*/([^/]+)/([^/.]+)(\.git)?@\1_\2@')   # owner_repo
+DOCKER_PROJECT=$(echo "$repo" | sed -E 's/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
+ATOM_TARGET_VOLUME="${DOCKER_PROJECT}_magistrala-atom-db-volume"
+```
+
+`make migrate_atom` also passes `DOCKER_PROJECT="$(DOCKER_PROJECT)"` straight from
+the Makefile, so the two stay in lockstep even if the git derivation would differ.
+The target volume is created if it does not yet exist (so the schema-seed step can
+write to it); `make run_latest` then reuses the same name. With no usable git
+remote, or a remote that does not match the run_latest project, pass
+`DOCKER_PROJECT=` explicitly.
+
+**Source Postgres layout** (mount point + `PGDATA` + image major version) is the
+one thing actually probed, not assumed: `migrate.sh` mounts the `users` source
+volume in a throwaway `alpine` container, locates `PG_VERSION`, and derives the
+mount path / `PGDATA` / `postgres:<major>-alpine` image from it (e.g. Postgres 18
+keeps data under `/var/lib/postgresql/<major>/docker`). This makes the tool work
+regardless of which Postgres version the old deployment ran.
+
+The manual, lower-level steps below are still available if you need finer control.
+
 ## Build
 
 Plain binary:

@@ -1,0 +1,219 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# Isolated, collision-free migration stack driven by migrate.sh.
+#
+# Everything here lives in its own Compose project (default: atommig) on its own
+# private network, binds NO host ports and uses NO fixed container_names, so it
+# can never collide with a running Magistrala (old or `make run_latest`) stack.
+#
+#   * source DBs  - eight Postgres containers that mount the OLD per-service
+#                   Magistrala volumes (external, read by the migrator).
+#   * atom-db     - Postgres mounting the NEW run_latest Atom volume, so data
+#                   written here is exactly what `make run_latest` later serves.
+#   * atom        - seeds/upgrades the Atom schema in that volume on boot.
+#   * migrator    - the atom-migration binary; run on demand by migrate.sh.
+#
+# Variables are supplied by migrate.sh (and docker/.env for the ATOM_* / atom
+# runtime settings). Source volume layout (mount point + PGDATA) is detected by
+# migrate.sh and injected, so this file works regardless of the Postgres major
+# version the old deployment used.
+
+x-src-db: &src-db
+  image: ${SRC_PG_IMAGE:-postgres:18-alpine}
+  restart: "no"
+  environment:
+    POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+    POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+    PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U ${SRC_DB_USER:-magistrala}"]
+    interval: 3s
+    timeout: 5s
+    retries: 20
+  networks:
+    - migrate-net
+
+services:
+  domains-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: domains
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - domains-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  users-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: users
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - users-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  clients-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: clients
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - clients-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  channels-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: channels
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - channels-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  groups-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: groups
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - groups-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  auth-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: auth
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - auth-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  re-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: rules_engine
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - re-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  reports-db:
+    <<: *src-db
+    environment:
+      POSTGRES_USER: ${SRC_DB_USER:-magistrala}
+      POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
+      POSTGRES_DB: reports
+      PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
+    volumes:
+      - reports-src:${SRC_MOUNT:-/var/lib/postgresql}
+
+  # Target: the SAME volume `make run_latest` mounts, so migrated data persists.
+  atom-db:
+    image: postgres:16-alpine
+    restart: "no"
+    environment:
+      POSTGRES_USER: ${ATOM_DB_USER:-atom}
+      POSTGRES_PASSWORD: ${ATOM_DB_PASSWORD:-atom}
+      POSTGRES_DB: ${ATOM_DB_NAME:-atom}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ATOM_DB_USER:-atom} -d ${ATOM_DB_NAME:-atom}"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - atom-target:/var/lib/postgresql/data
+    networks:
+      - migrate-net
+
+  # Seeds / upgrades the Atom schema in the target volume on boot (migrations run
+  # at startup). Certs disabled so it needs no mounted CA. No host ports.
+  atom:
+    image: ghcr.io/absmach/atom:${MG_RELEASE_TAG:-latest}
+    restart: "no"
+    depends_on:
+      atom-db:
+        condition: service_healthy
+    env_file:
+      - ../../docker/.env
+    environment:
+      DATABASE_URL: postgres://${ATOM_DB_USER:-atom}:${ATOM_DB_PASSWORD:-atom}@atom-db:5432/${ATOM_DB_NAME:-atom}
+      LISTEN_ADDR: 0.0.0.0:8080
+      ATOM_CERTS_ENABLED: "false"
+    networks:
+      - migrate-net
+
+  # The migration binary. Run on demand: `compose run --rm migrator <flags>`.
+  migrator:
+    image: magistrala/atom-migration:dev
+    depends_on:
+      atom-db:
+        condition: service_healthy
+      domains-db:
+        condition: service_healthy
+      users-db:
+        condition: service_healthy
+      clients-db:
+        condition: service_healthy
+      channels-db:
+        condition: service_healthy
+      groups-db:
+        condition: service_healthy
+      auth-db:
+        condition: service_healthy
+      re-db:
+        condition: service_healthy
+      reports-db:
+        condition: service_healthy
+    environment:
+      ATOM_DATABASE_URL: host=atom-db port=5432 user=${ATOM_DB_USER:-atom} password=${ATOM_DB_PASSWORD:-atom} dbname=${ATOM_DB_NAME:-atom} sslmode=disable
+    user: "${HOST_UID:-0}:${HOST_GID:-0}"
+    working_dir: /work
+    volumes:
+      - ../../:/work
+    networks:
+      - migrate-net
+    # Args (e.g. --apply / --verify) are supplied by migrate.sh via `compose run`.
+    entrypoint: ["atom-migration", "--env", "tools/atom-migration/migrate.db.env"]
+
+networks:
+  migrate-net:
+    driver: bridge
+
+# All source volumes and the Atom target are pre-existing (external): Compose
+# never creates or deletes them, so `down` can never destroy migration data.
+volumes:
+  domains-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}domains-db-volume
+  users-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}users-db-volume
+  clients-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}clients-db-volume
+  channels-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}channels-db-volume
+  groups-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}groups-db-volume
+  auth-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}auth-db-volume
+  re-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}re-db-volume
+  reports-src:
+    external: true
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}reports-db-volume
+  atom-target:
+    external: true
+    name: ${ATOM_TARGET_VOLUME}

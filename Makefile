@@ -197,7 +197,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -323,6 +323,15 @@ provision_atom_tokens:
 
 provision-atom-tokens:
 	@:
+
+# Migrate an old Magistrala (v0.30.0 / pre-Atom) deployment into Atom. Runs an
+# isolated, collision-free stack, seeds the Atom schema into the run_latest Atom
+# volume and loads the data. Default is a dry-run; pass args="--apply" to load,
+# args="--verify" to reconcile afterwards.
+#   make migrate_atom                 # dry-run
+#   make migrate_atom args="--apply"  # perform the migration
+migrate_atom:
+	DOCKER_PROJECT="$(DOCKER_PROJECT)" tools/atom-migration/migrate.sh $(args)
 
 check_tls:
 ifeq ($(GRPC_TLS),true)

@@ -9,7 +9,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,40 +51,6 @@ type config struct {
 	JaegerURL  url.URL `env:"MG_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
 	InstanceID string  `env:"MG_FLUXMQ_INSTANCE_ID"   envDefault:""`
-}
-
-type fanoutPublisher struct {
-	publishers []messaging.Publisher
-}
-
-func (fp fanoutPublisher) Publish(ctx context.Context, topic string, msg *messaging.Message) error {
-	for _, publisher := range fp.publishers {
-		if err := publisher.Publish(ctx, topic, msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (fp fanoutPublisher) Close() error {
-	errs := make([]error, 0, len(fp.publishers))
-	for _, publisher := range fp.publishers {
-		errs = append(errs, publisher.Close())
-	}
-	return errors.Join(errs...)
-}
-
-type writerBridgeHandler struct {
-	ctx       context.Context
-	publisher messaging.Publisher
-}
-
-func (h writerBridgeHandler) Handle(msg *messaging.Message) error {
-	return h.publisher.Publish(h.ctx, messaging.EncodeMessageTopic(msg), msg)
-}
-
-func (h writerBridgeHandler) Cancel() error {
-	return nil
 }
 
 func main() {
@@ -200,45 +165,6 @@ func main() {
 	}
 	defer messagePublisher.Close()
 
-	writerPublisher, err := fluxmqbroker.NewUndeclaredPublisher(
-		ctx,
-		cfg.BrokerURL,
-		fluxmqbroker.Prefix("writers"),
-		fluxmqbroker.ConnectionName("fluxmq-ui-publish-proxy"),
-	)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create publish proxy writer publisher: %s", err))
-		exitCode = 1
-		return
-	}
-	defer writerPublisher.Close()
-	publisher := fanoutPublisher{publishers: []messaging.Publisher{messagePublisher, writerPublisher}}
-
-	writerBridge, err := fluxmqbroker.NewPubSub(
-		ctx,
-		cfg.BrokerURL,
-		logger,
-		fluxmqbroker.DirectTopicOnly(),
-		fluxmqbroker.ConnectionName("fluxmq-mqtt-writer-bridge"),
-	)
-	if err != nil {
-		logger.Error(fmt.Sprintf("failed to create MQTT writer bridge subscriber: %s", err))
-		exitCode = 1
-		return
-	}
-	defer writerBridge.Close()
-	if err := writerBridge.Subscribe(ctx, messaging.SubscriberConfig{
-		ID:             cfg.InstanceID + "-mqtt-writer-bridge",
-		Topic:          "m/#",
-		Handler:        writerBridgeHandler{ctx: ctx, publisher: writerPublisher},
-		DeliveryPolicy: messaging.DeliverNewPolicy,
-	}); err != nil {
-		logger.Error(fmt.Sprintf("failed to subscribe MQTT writer bridge: %s", err))
-		exitCode = 1
-		return
-	}
-	logger.Info("FluxMQ MQTT writer bridge subscribed", "topic", "m/#")
-
 	httpServerConfig := server.Config{Port: "9026"}
 	if err := env.ParseWithOptions(&httpServerConfig, env.Options{Prefix: envPrefixHTTP}); err != nil {
 		logger.Error(fmt.Sprintf("failed to load publish proxy HTTP server configuration: %s", err))
@@ -250,7 +176,7 @@ func main() {
 		cancel,
 		"fluxmq-publish",
 		httpServerConfig,
-		fluxmqhttp.MakePublishHandler(authn, atomAuthz, publisher),
+		fluxmqhttp.MakePublishHandler(authn, atomAuthz, messagePublisher),
 		logger,
 	)
 

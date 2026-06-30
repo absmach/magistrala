@@ -238,6 +238,27 @@ type APIKeyResponse struct {
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 }
 
+type SharedKeyResponse struct {
+	CredentialID string     `json:"credentialId"`
+	Key          string     `json:"key"`
+	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
+}
+
+type Credential struct {
+	ID         string     `json:"id"`
+	EntityID   string     `json:"entity_id,omitempty"`
+	Kind       string     `json:"kind"`
+	Identifier string     `json:"identifier,omitempty"`
+	Status     string     `json:"status"`
+	ExpiresAt  *time.Time `json:"expires_at,omitempty"`
+	CreatedAt  time.Time  `json:"created_at,omitempty"`
+}
+
+type CredentialList struct {
+	Items []Credential `json:"items"`
+	Total uint64       `json:"total"`
+}
+
 type ResourceList struct {
 	Items []Resource `json:"items"`
 	Total uint64     `json:"total"`

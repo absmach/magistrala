@@ -193,6 +193,8 @@ jobs:
           base-url: ${{ env.USERS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --exclude-operation-id=requestPasswordReset --phases=examples'
+          coverage-artifact-name: schema-coverage-users
+          coverage-pr-comment: false
 
       - name: Run Groups API tests
         if: (steps.changes.outputs.groups == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('groups/api/http/**') != ''
@@ -202,6 +204,8 @@ jobs:
           base-url: ${{ env.GROUPS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-groups
+          coverage-pr-comment: false
 
       - name: Run Clients API tests
         if: (steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('clients/api/http/**') != ''
@@ -211,6 +215,8 @@ jobs:
           base-url: ${{ env.CLIENTS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-clients
+          coverage-pr-comment: false
 
       - name: Run Channels API tests
         if: (steps.changes.outputs.channels == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('channels/api/http/**') != ''
@@ -220,6 +226,8 @@ jobs:
           base-url: ${{ env.CHANNELS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-channels
+          coverage-pr-comment: false
 
       - name: Run Domains API tests
         if: (steps.changes.outputs.domains == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('domains/api/http/**') != ''
@@ -229,6 +237,8 @@ jobs:
           base-url: ${{ env.DOMAIN_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-domains
+          coverage-pr-comment: false
 
       - name: Run Journal API tests
         if: steps.changes.outputs.journal == 'true' || steps.changes.outputs.workflow == 'true'
@@ -238,6 +248,8 @@ jobs:
           base-url: ${{ env.JOURNAL_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-journal
+          coverage-pr-comment: false
 
       - name: Run Bootstrap API tests
         if: (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('bootstrap/api/**') != ''
@@ -247,6 +259,8 @@ jobs:
           base-url: ${{ env.BOOTSTRAP_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-bootstrap
+          coverage-pr-comment: false
 
       - name: Run Certs API tests
         if: (steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('docker/addons/certs/docker-compose.yaml') != ''
@@ -256,6 +270,8 @@ jobs:
           base-url: ${{ env.CERTS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-certs
+          coverage-pr-comment: false
 
       - name: Run Readers API tests
         if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
@@ -265,6 +281,8 @@ jobs:
           base-url: ${{ env.READERS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-readers
+          coverage-pr-comment: false
 
       - name: Run Rules Engine API tests
         if: steps.changes.outputs.re == 'true' || steps.changes.outputs.workflow == 'true'
@@ -274,6 +292,8 @@ jobs:
           base-url: ${{ env.RE_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-rules
+          coverage-pr-comment: false
 
       - name: Run Alarms API tests
         if: steps.changes.outputs.alarms == 'true' || steps.changes.outputs.workflow == 'true'
@@ -283,6 +303,8 @@ jobs:
           base-url: ${{ env.ALARMS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-alarms
+          coverage-pr-comment: false
 
       - name: Run Reports API tests
         if: steps.changes.outputs.reports == 'true' || steps.changes.outputs.workflow == 'true'
@@ -292,6 +314,8 @@ jobs:
           base-url: ${{ env.REPORTS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
+          coverage-artifact-name: schema-coverage-reports
+          coverage-pr-comment: false
 
       - name: Stop containers
         if: always()

@@ -122,7 +122,7 @@ func TestCreateTenantMapsRouteToAlias(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"createTenant": map[string]any{
-					"id":     "tenant-1",
+					"id":     testTenantID,
 					"name":   "D1",
 					"route":  "d1",
 					"status": "active",
@@ -137,7 +137,7 @@ func TestCreateTenantMapsRouteToAlias(t *testing.T) {
 	if err != nil {
 		t.Fatalf("create tenant failed: %v", err)
 	}
-	if got.ID != "tenant-1" || got.Route != "d1" {
+	if got.ID != testTenantID || got.Route != "d1" {
 		t.Fatalf("unexpected tenant: %+v", got)
 	}
 }
@@ -157,7 +157,7 @@ func TestUpdateTenantMapsRouteToAlias(t *testing.T) {
 		if !strings.Contains(payload.Query, "updateTenant") || !strings.Contains(payload.Query, "route: alias") {
 			t.Fatalf("query does not map tenant alias to route: %s", payload.Query)
 		}
-		if payload.Variables["id"] != "tenant-1" {
+		if payload.Variables["id"] != testTenantID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
 		}
 		input, ok := payload.Variables["input"].(map[string]any)
@@ -173,7 +173,7 @@ func TestUpdateTenantMapsRouteToAlias(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"updateTenant": map[string]any{
-					"id":     "tenant-1",
+					"id":     testTenantID,
 					"name":   "D1",
 					"route":  "d1",
 					"status": "active",
@@ -184,11 +184,11 @@ func TestUpdateTenantMapsRouteToAlias(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.UpdateTenant(context.Background(), "tenant-1", Tenant{Name: "D1", Route: "d1"})
+	got, err := client.UpdateTenant(context.Background(), testTenantID, Tenant{Name: "D1", Route: "d1"})
 	if err != nil {
 		t.Fatalf("update tenant failed: %v", err)
 	}
-	if got.ID != "tenant-1" || got.Route != "d1" {
+	if got.ID != testTenantID || got.Route != "d1" {
 		t.Fatalf("unexpected tenant: %+v", got)
 	}
 }
@@ -222,7 +222,7 @@ func TestListTenantsMapsRouteToAlias(t *testing.T) {
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"tenants": map[string]any{
-					"items": []Tenant{{ID: "tenant-1", Name: "D1", Route: "d1", Status: "active"}},
+					"items": []Tenant{{ID: testTenantID, Name: "D1", Route: "d1", Status: "active"}},
 					"total": 1,
 				},
 			},
@@ -255,21 +255,21 @@ func TestCreateSharedKey(t *testing.T) {
 		if !strings.Contains(payload.Query, "createSharedKey") {
 			t.Fatalf("query does not create shared key: %s", payload.Query)
 		}
-		if payload.Variables["entityId"] != "device-1" {
+		if payload.Variables["entityId"] != testDeviceID {
 			t.Fatalf("unexpected entity id: %+v", payload.Variables)
 		}
 		input, ok := payload.Variables["input"].(map[string]any)
 		if !ok {
 			t.Fatalf("unexpected input: %+v", payload.Variables["input"])
 		}
-		if input["key"] != "client-key" || input["description"] != "provisioned from mg" {
+		if input["key"] != testClientKey || input["description"] != "provisioned from mg" {
 			t.Fatalf("unexpected input: %+v", input)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"createSharedKey": map[string]any{
-					"credentialId": "cred-1",
-					"key":          "client-key",
+					"credentialId": testCredentialID,
+					"key":          testClientKey,
 				},
 			},
 		})
@@ -277,11 +277,11 @@ func TestCreateSharedKey(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.CreateSharedKey(context.Background(), "device-1", "client-key", "provisioned from mg")
+	got, err := client.CreateSharedKey(context.Background(), testDeviceID, testClientKey, "provisioned from mg")
 	if err != nil {
 		t.Fatalf("create shared key failed: %v", err)
 	}
-	if got.CredentialID != "cred-1" || got.Key != "client-key" {
+	if got.CredentialID != testCredentialID || got.Key != testClientKey {
 		t.Fatalf("unexpected shared key response: %+v", got)
 	}
 }
@@ -301,14 +301,14 @@ func TestRevealSharedKey(t *testing.T) {
 		if !strings.Contains(payload.Query, "revealSharedKey") {
 			t.Fatalf("query does not reveal shared key: %s", payload.Query)
 		}
-		if payload.Variables["entityId"] != "device-1" || payload.Variables["credentialId"] != "cred-1" {
+		if payload.Variables["entityId"] != testDeviceID || payload.Variables["credentialId"] != testCredentialID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
 				"revealSharedKey": map[string]any{
-					"credentialId": "cred-1",
-					"key":          "client-key",
+					"credentialId": testCredentialID,
+					"key":          testClientKey,
 				},
 			},
 		})
@@ -316,11 +316,11 @@ func TestRevealSharedKey(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.RevealSharedKey(context.Background(), "device-1", "cred-1")
+	got, err := client.RevealSharedKey(context.Background(), testDeviceID, testCredentialID)
 	if err != nil {
 		t.Fatalf("reveal shared key failed: %v", err)
 	}
-	if got.CredentialID != "cred-1" || got.Key != "client-key" {
+	if got.CredentialID != testCredentialID || got.Key != testClientKey {
 		t.Fatalf("unexpected shared key response: %+v", got)
 	}
 }
@@ -341,7 +341,7 @@ func TestListCredentials(t *testing.T) {
 		if !strings.Contains(payload.Query, "credentials") {
 			t.Fatalf("query does not list credentials: %s", payload.Query)
 		}
-		if payload.Variables["entityId"] != "device-1" {
+		if payload.Variables["entityId"] != testDeviceID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -349,8 +349,8 @@ func TestListCredentials(t *testing.T) {
 				"credentials": map[string]any{
 					"total": 1,
 					"items": []map[string]any{{
-						"id":         "cred-1",
-						"entity_id":  "device-1",
+						"id":         testCredentialID,
+						"entity_id":  testDeviceID,
 						"kind":       "shared_key",
 						"identifier": "",
 						"status":     "active",
@@ -363,7 +363,7 @@ func TestListCredentials(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.ListCredentials(context.Background(), "device-1")
+	got, err := client.ListCredentials(context.Background(), testDeviceID)
 	if err != nil {
 		t.Fatalf("list credentials failed: %v", err)
 	}
@@ -371,7 +371,7 @@ func TestListCredentials(t *testing.T) {
 		t.Fatalf("unexpected credentials response: %+v", got)
 	}
 	item := got.Items[0]
-	if item.ID != "cred-1" || item.EntityID != "device-1" || item.Kind != "shared_key" || item.Status != "active" {
+	if item.ID != testCredentialID || item.EntityID != testDeviceID || item.Kind != "shared_key" || item.Status != "active" {
 		t.Fatalf("unexpected credential item: %+v", item)
 	}
 	if item.CreatedAt.Format(time.RFC3339) != createdAt {

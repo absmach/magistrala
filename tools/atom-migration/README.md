@@ -50,8 +50,36 @@ them directly. On `--apply`, the device-key CSV described below lands in
 Env overrides: `SRC_VOL_PREFIX` (old volume prefix, default
 `magistrala_magistrala-`), `SRC_DB_USER` / `SRC_DB_PASS` (old Postgres creds,
 default `magistrala`), `DOCKER_PROJECT` (run_latest project; default derived like
-the Makefile), `MIGRATE_PROJECT` (isolated project name, default `atommig`).
-Pass `--keep` to leave the stack up for debugging.
+the Makefile), `MIGRATE_PROJECT` (isolated project name, default `atommig`),
+`ATOM_IMAGE_TAG` (Atom image tag to seed with, default `latest`). Pass `--keep`
+to leave the stack up for debugging.
+
+### Atom schema freshness (`column "alias" does not exist`)
+
+The migrator writes the **current** Atom schema. The schema is created by the
+Atom image (`ghcr.io/absmach/atom:latest`, force-pulled each run) the first time
+its target volume is seeded. Two things follow:
+
+- A target volume that was **already seeded by an older Atom** (e.g. a previous
+  `make run_latest`) keeps that old schema — Atom does not re-run an
+  already-applied baseline, so newer columns like `tenants.alias` never appear.
+  The migrator then fails with `column "alias" of relation "tenants" does not
+  exist`.
+- The orchestrator guards against this: it waits for `tenants.alias` to exist
+  before running the migrator and aborts with guidance if it never does (instead
+  of failing mid-apply).
+
+Fix: rebuild the schema from scratch with
+
+```bash
+make migrate_atom args="--apply --fresh-atom"
+```
+
+`--fresh-atom` removes the existing Atom target volume so the current image lays
+down the current schema. **Destructive** for that volume only — it discards any
+data already in the Atom DB (the old per-service source volumes are never
+touched). Equivalent manual reset: `docker volume rm
+<DOCKER_PROJECT>_magistrala-atom-db-volume`.
 
 ### How volume names are resolved
 

@@ -330,6 +330,7 @@ provision-atom-tokens:
 # args="--verify" to reconcile afterwards.
 #   make migrate_atom                 # dry-run
 #   make migrate_atom args="--apply"  # perform the migration
+#   make migrate_atom args="--apply --fresh-atom"  # rebuild Atom schema first
 migrate_atom:
 	DOCKER_PROJECT="$(DOCKER_PROJECT)" tools/atom-migration/migrate.sh $(args)
 

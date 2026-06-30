@@ -6,6 +6,7 @@ set -eu
 
 ROOT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 ENV_FILE="$ROOT_DIR/docker/.env"
+TOKENS_ENV_FILE="$ROOT_DIR/docker/.env.tokens"
 COMPOSE_FILE="$ROOT_DIR/docker/docker-compose.yaml"
 
 HOST=${MG_PUBLIC_HOST:-}
@@ -124,7 +125,11 @@ comment_env_any() {
 }
 
 compose() {
-	docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" -p "$PROJECT" "$@"
+	if [ -f "$TOKENS_ENV_FILE" ]; then
+		docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" --env-file "$TOKENS_ENV_FILE" -p "$PROJECT" "$@"
+	else
+		docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" -p "$PROJECT" "$@"
+	fi
 }
 
 write_ui_proxy() {

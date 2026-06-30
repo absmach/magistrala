@@ -17,7 +17,12 @@
 #   tools/atom-migration/migrate.sh            # dry-run (reads + validates, writes nothing)
 #   tools/atom-migration/migrate.sh --apply    # perform the migration
 #   tools/atom-migration/migrate.sh --verify   # reconcile source vs Atom after apply
+#   tools/atom-migration/migrate.sh --apply --fresh-atom  # rebuild Atom schema from scratch
 #   tools/atom-migration/migrate.sh --apply --keep   # leave the stack running for debugging
+#
+# --fresh-atom discards any existing Atom target volume first, so the current Atom
+# image lays down the current schema. Use it when a previous run/`make run_latest`
+# left an older Atom schema in the volume (symptom: "column alias does not exist").
 #
 # Env overrides:
 #   DOCKER_PROJECT     run_latest Compose project (default: derived like the Makefile)
@@ -36,9 +41,11 @@ SRC_VOL_PREFIX="${SRC_VOL_PREFIX:-magistrala_magistrala-}"
 
 MIGRATOR_ARGS=()
 KEEP=false
+FRESH_ATOM=false
 for arg in "$@"; do
 	case "$arg" in
 		--keep) KEEP=true ;;
+		--fresh-atom) FRESH_ATOM=true ;;
 		--apply|--verify|--dry-run) MIGRATOR_ARGS+=("$arg") ;;
 		--unmapped-action=*|--report-dir=*) MIGRATOR_ARGS+=("$arg") ;;
 		-h|--help) grep '^#' "$0" | sed 's/^# \{0,1\}//' | head -40; exit 0 ;;
@@ -62,6 +69,14 @@ fi
 [[ -n "$DOCKER_PROJECT" ]] || die "could not determine DOCKER_PROJECT (set it explicitly)"
 ATOM_TARGET_VOLUME="${DOCKER_PROJECT}_magistrala-atom-db-volume"
 
+# Atom DB connection settings come from docker/.env (Compose interpolates them
+# from --env-file). Read the same values here so our readiness poll connects with
+# the right user/db -- defaulting to "atom" would loop forever if .env overrides
+# them.
+envget() { sed -nE "s/^[[:space:]]*$1=//p" "$ENV_FILE" | tail -1 | tr -d '"'"'"; }
+ATOM_DB_USER="$(envget ATOM_DB_USER)";     ATOM_DB_USER="${ATOM_DB_USER:-atom}"
+ATOM_DB_NAME="$(envget ATOM_DB_NAME)";     ATOM_DB_NAME="${ATOM_DB_NAME:-atom}"
+
 log "Isolated project : $MIGRATE_PROJECT"
 log "Source volumes   : ${SRC_VOL_PREFIX}<svc>-db-volume"
 log "Atom target vol  : $ATOM_TARGET_VOLUME"
@@ -75,6 +90,20 @@ done
 ((${#missing[@]} == 0)) || die "missing source volume(s): ${missing[*]}
 Run this on the machine whose stopped old Magistrala stack still has these
 volumes, or set SRC_VOL_PREFIX if the old Compose project used another name."
+
+# --fresh-atom: rebuild the target schema from scratch. A pre-existing Atom volume
+# (e.g. from an earlier `make run_latest`) keeps whatever schema it was seeded
+# with -- Atom's migrations won't re-run an already-applied baseline, so an old
+# schema (missing newer columns like tenants.alias) would survive and break the
+# load. Removing the volume forces the current Atom image to lay down the current
+# schema. Destructive: any data already in that Atom volume is discarded.
+if [[ "$FRESH_ATOM" == true ]]; then
+	if docker volume inspect "$ATOM_TARGET_VOLUME" >/dev/null 2>&1; then
+		log "Resetting Atom target volume $ATOM_TARGET_VOLUME (--fresh-atom)"
+		docker compose --env-file "$ENV_FILE" -p "$MIGRATE_PROJECT" -f "$COMPOSE_FILE" down >/dev/null 2>&1 || true
+		docker volume rm -f "$ATOM_TARGET_VOLUME" >/dev/null
+	fi
+fi
 
 # Atom target volume: created here if absent so the seed step can write to it;
 # `make run_latest` reuses the same name.
@@ -111,9 +140,12 @@ log "Building migrator image"
 docker build -q -f "$SCRIPT_DIR/Dockerfile" -t magistrala/atom-migration:dev "$REPO_ROOT" >/dev/null
 
 # Variables consumed by the compose file. docker/.env is passed via --env-file so
-# ATOM_DB_* / MG_RELEASE_TAG interpolate; these exports take precedence.
+# ATOM_DB_* interpolate; these exports take precedence. The Atom image is tagged
+# independently of MG_RELEASE_TAG (the real compose pins :latest), so default to
+# latest here too; override with ATOM_IMAGE_TAG if you need a specific build.
 export SRC_VOL_PREFIX SRC_PG_IMAGE SRC_MOUNT SRC_PGDATA ATOM_TARGET_VOLUME
 export SRC_DB_USER="${SRC_DB_USER:-magistrala}" SRC_DB_PASS="${SRC_DB_PASS:-magistrala}"
+export ATOM_IMAGE_TAG="${ATOM_IMAGE_TAG:-latest}"
 export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
 
 dc() { docker compose --env-file "$ENV_FILE" -p "$MIGRATE_PROJECT" -f "$COMPOSE_FILE" "$@"; }
@@ -135,14 +167,34 @@ dc up -d --wait domains-db users-db clients-db channels-db groups-db auth-db re-
 dc up -d atom
 
 log "Waiting for Atom to apply its schema into the target volume"
+# Require a column from a late migration (tenants.alias), not just table
+# existence: Atom adds tables early and columns later, so checking only for the
+# tables can race ahead of a not-yet-complete migration and hit the same
+# "column alias does not exist" error mid-apply. A timeout here with alias still
+# absent means the volume holds an old/incompatible Atom schema -> --fresh-atom.
+schema_ready_q="SELECT (to_regclass('public.entities') IS NOT NULL)
+	AND EXISTS (SELECT 1 FROM information_schema.columns
+		WHERE table_name='tenants' AND column_name='alias');"
+atom_cid="$(dc ps -q atom)"
 for i in $(seq 1 60); do
-	if dc exec -T atom-db psql -U "${ATOM_DB_USER:-atom}" -d "${ATOM_DB_NAME:-atom}" -tAc \
-		"SELECT to_regclass('public.tenants') IS NOT NULL AND to_regclass('public.entities') IS NOT NULL;" 2>/dev/null \
-		| grep -qx t; then
+	if dc exec -T atom-db psql -U "$ATOM_DB_USER" -d "$ATOM_DB_NAME" -tAc \
+		"$schema_ready_q" 2>/dev/null | grep -qx t; then
 		log "Atom schema ready"
 		break
 	fi
-	[[ $i -eq 60 ]] && die "Atom did not initialise its schema in time (check: dc logs atom)"
+	# If the Atom container has stopped it will never create the schema -- fail
+	# fast with its logs instead of waiting out the whole timeout.
+	if [[ -n "$atom_cid" ]] && [[ "$(docker inspect -f '{{.State.Running}}' "$atom_cid" 2>/dev/null)" != "true" ]]; then
+		echo "----- atom logs -----" >&2; dc logs --no-color --tail 50 atom >&2 || true
+		die "Atom container exited before applying its schema (see logs above).
+Common causes: missing/invalid ATOM_* settings in docker/.env (JWT_SECRET,
+ATOM_KEY_ENCRYPTION_KEY, ATOM_SERVICE_SECRET, ATOM_ADMIN_SECRET) or it could not
+reach atom-db."
+	fi
+	[[ $i -eq 60 ]] && { echo "----- atom logs -----" >&2; dc logs --no-color --tail 50 atom >&2 || true; die "Atom schema in $ATOM_TARGET_VOLUME never reached the expected version
+(tenants.alias missing) within the timeout. If Atom is still migrating, retry; if
+the volume holds an older Atom schema, re-run with --fresh-atom (discards that
+volume's Atom data) or 'docker volume rm $ATOM_TARGET_VOLUME'."; }
 	sleep 2
 done
 

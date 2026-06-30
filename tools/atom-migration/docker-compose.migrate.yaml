@@ -136,7 +136,8 @@ services:
   # Seeds / upgrades the Atom schema in the target volume on boot (migrations run
   # at startup). Certs disabled so it needs no mounted CA. No host ports.
   atom:
-    image: ghcr.io/absmach/atom:${MG_RELEASE_TAG:-latest}
+    image: ghcr.io/absmach/atom:${ATOM_IMAGE_TAG:-latest}
+    pull_policy: always
     restart: "no"
     depends_on:
       atom-db:

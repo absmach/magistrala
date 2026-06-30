@@ -56,7 +56,7 @@ func (c *Client) CreateTenant(ctx context.Context, tenant Tenant) (Tenant, error
 		CreateTenant Tenant `json:"createTenant"`
 	}
 	err := c.graphQL(ctx, `mutation CreateTenant($input: CreateTenantInput!) {
-		createTenant(input: $input) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+		createTenant(input: $input) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"input": tenantCreateInput(tenant)}, &out)
 	return out.CreateTenant, err
 }
@@ -66,7 +66,7 @@ func (c *Client) GetTenant(ctx context.Context, id string) (Tenant, error) {
 		Tenant Tenant `json:"tenant"`
 	}
 	err := c.graphQL(ctx, `query Tenant($id: ID!) {
-		tenant(id: $id) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+		tenant(id: $id) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"id": id}, &out)
 	return out.Tenant, err
 }
@@ -76,7 +76,7 @@ func (c *Client) UpdateTenant(ctx context.Context, id string, tenant Tenant) (Te
 		UpdateTenant Tenant `json:"updateTenant"`
 	}
 	err := c.graphQL(ctx, `mutation UpdateTenant($id: ID!, $input: UpdateTenantInput!) {
-		updateTenant(id: $id, input: $input) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+		updateTenant(id: $id, input: $input) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"id": id, "input": tenantUpdateInput(tenant)}, &out)
 	return out.UpdateTenant, err
 }
@@ -92,7 +92,7 @@ func (c *Client) ChangeTenantStatus(ctx context.Context, id, action string) (Ten
 	}
 	var out map[string]Tenant
 	err := c.graphQL(ctx, fmt.Sprintf(`mutation ChangeTenantStatus($id: ID!) {
-		%s(id: $id) { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+		%s(id: $id) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 	}`, field), map[string]any{"id": id}, &out)
 	if err != nil {
 		return Tenant{}, err
@@ -234,10 +234,10 @@ func (c *Client) ListTenants(ctx context.Context, q Query) (TenantList, error) {
 	var out struct {
 		Tenants TenantList `json:"tenants"`
 	}
-	err := c.graphQL(ctx, `query Tenants($q: String, $name: String, $route: String, $status: TenantStatus, $limit: Int, $offset: Int) {
-		tenants(q: $q, name: $name, route: $route, status: $status, limit: $limit, offset: $offset) {
+	err := c.graphQL(ctx, `query Tenants($q: String, $name: String, $alias: String, $status: TenantStatus, $limit: Int, $offset: Int) {
+		tenants(q: $q, name: $name, alias: $alias, status: $status, limit: $limit, offset: $offset) {
 			total
-			items { id name route status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
+			items { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 		}
 	}`, queryVariables(q), &out)
 	return out.Tenants, err
@@ -506,6 +506,64 @@ func (c *Client) CreateAPIKey(ctx context.Context, entityID, description string)
 	return out.CreateAPIKey, err
 }
 
+func (c *Client) CreateSharedKey(ctx context.Context, entityID, key, description string) (SharedKeyResponse, error) {
+	var out struct {
+		CreateSharedKey SharedKeyResponse `json:"createSharedKey"`
+	}
+	input := map[string]any{}
+	setIfNotEmpty(input, "key", key)
+	setIfNotEmpty(input, "description", description)
+	err := c.graphQL(ctx, `mutation CreateSharedKey($entityId: ID!, $input: CreateSharedKeyInput!) {
+		createSharedKey(entityId: $entityId, input: $input) {
+			credentialId
+			key
+			expiresAt
+		}
+	}`, map[string]any{
+		"entityId": entityID,
+		"input":    input,
+	}, &out)
+	return out.CreateSharedKey, err
+}
+
+func (c *Client) RevealSharedKey(ctx context.Context, entityID, credentialID string) (SharedKeyResponse, error) {
+	var out struct {
+		RevealSharedKey SharedKeyResponse `json:"revealSharedKey"`
+	}
+	err := c.graphQL(ctx, `mutation RevealSharedKey($entityId: ID!, $credentialId: ID!) {
+		revealSharedKey(entityId: $entityId, credentialId: $credentialId) {
+			credentialId
+			key
+			expiresAt
+		}
+	}`, map[string]any{
+		"entityId":     entityID,
+		"credentialId": credentialID,
+	}, &out)
+	return out.RevealSharedKey, err
+}
+
+func (c *Client) ListCredentials(ctx context.Context, entityID string) (CredentialList, error) {
+	var out struct {
+		Credentials CredentialList `json:"credentials"`
+	}
+	err := c.graphQL(ctx, `query Credentials($entityId: ID!) {
+		credentials(entityId: $entityId) {
+			total
+			items {
+				id
+				entity_id: entityId
+				kind
+				identifier
+				status
+				expires_at: expiresAt
+				created_at: createdAt
+			}
+		}
+	}`, map[string]any{"entityId": entityID}, &out)
+	return out.Credentials, err
+}
+
 func (c *Client) RevokeCredential(ctx context.Context, entityID, credentialID string) error {
 	return c.graphQL(ctx, `mutation RevokeCredential($entityId: ID!, $credentialId: ID!) {
 		revokeCredential(entityId: $entityId, credentialId: $credentialId)
@@ -632,7 +690,7 @@ func graphQLErr(errors []graphQLErrorItem) error {
 func tenantCreateInput(tenant Tenant) map[string]any {
 	input := map[string]any{"name": tenant.Name}
 	setIfNotEmpty(input, "id", tenant.ID)
-	setIfNotEmpty(input, "route", tenant.Route)
+	setIfNotEmpty(input, "alias", tenant.Route)
 	if tenant.Tags != nil {
 		input["tags"] = tenant.Tags
 	}
@@ -645,7 +703,7 @@ func tenantCreateInput(tenant Tenant) map[string]any {
 func tenantUpdateInput(tenant Tenant) map[string]any {
 	input := map[string]any{}
 	setIfNotEmpty(input, "name", tenant.Name)
-	setIfNotEmpty(input, "route", tenant.Route)
+	setIfNotEmpty(input, "alias", tenant.Route)
 	if tenant.Tags != nil {
 		input["tags"] = tenant.Tags
 	}
@@ -798,7 +856,7 @@ func queryVariables(q Query) map[string]any {
 	vars := map[string]any{}
 	setIfNotEmpty(vars, "q", q.Q)
 	setIfNotEmpty(vars, "name", q.Name)
-	setIfNotEmpty(vars, "route", q.Route)
+	setIfNotEmpty(vars, "alias", q.Route)
 	setIfNotEmpty(vars, "kind", q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, "status", q.Status)

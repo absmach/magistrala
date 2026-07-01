@@ -40,7 +40,7 @@ func DefaultServiceTokenSpecs() []ServiceTokenSpec {
 		{Name: "fluxmq-node1", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE1", Description: "Magistrala Docker Compose token for fluxmq-node1"},
 		{Name: "fluxmq-node2", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE2", Description: "Magistrala Docker Compose token for fluxmq-node2"},
 		{Name: "fluxmq-node3", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE3", Description: "Magistrala Docker Compose token for fluxmq-node3"},
-		{Name: "journal", Env: "MG_ATOM_TOKEN_JOURNAL", Description: "Magistrala Docker Compose token for journal"},
+		{Name: atomServiceTokenJournal, Env: "MG_ATOM_TOKEN_JOURNAL", Description: "Magistrala Docker Compose token for journal"},
 		{Name: "notifications", Env: "MG_ATOM_TOKEN_NOTIFICATIONS", Description: "Magistrala Docker Compose token for notifications"},
 		{Name: "timescale-reader", Env: "MG_ATOM_TOKEN_TIMESCALE_READER", Description: "Magistrala Docker Compose token for timescale-reader"},
 		{Name: "re", Env: "MG_ATOM_TOKEN_RE", Description: "Magistrala Docker Compose token for rule engine"},

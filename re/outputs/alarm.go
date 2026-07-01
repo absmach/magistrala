@@ -13,6 +13,8 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
+const outputTypeKey = "type"
+
 type Alarm struct {
 	AlarmsPub messaging.Publisher `json:"-"`
 	RuleID    string              `json:"rule_id"`
@@ -74,6 +76,6 @@ func (a *Alarm) processAlarm(ctx context.Context, msg *messaging.Message, alarm 
 
 func (a *Alarm) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"type": AlarmsType.String(),
+		outputTypeKey: AlarmsType.String(),
 	})
 }

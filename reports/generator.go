@@ -24,7 +24,11 @@ import (
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 )
 
-const nanosecondThreshold = float64(10 * time.Second / time.Nanosecond)
+const (
+	nanosecondThreshold = float64(10 * time.Second / time.Nanosecond)
+	templateFormatTime  = "formatTime"
+	templateFormatValue = "formatValue"
+)
 
 type ReportData struct {
 	Title         string
@@ -76,14 +80,14 @@ func (r *report) generatePDFReport(ctx context.Context, title string, reports []
 
 func (r *report) generate(ctx context.Context, templateContent string, data ReportData) ([]byte, error) {
 	tmpl := template.New("report").Funcs(template.FuncMap{
-		"formatTime":  func(t float64) string { return r.formatTimeWithTimezone(t, data.Timezone) },
-		"formatValue": formatValue,
-		"add":         func(a, b int) int { return a + b },
-		"sub":         func(a, b int) int { return a - b },
-		"iterate":     func(count int) []int { return makeRange(count) },
-		"ge":          func(a, b int) bool { return a >= b },
-		"lt":          func(a, b int) bool { return a < b },
-		"eq":          func(a, b int) bool { return a == b },
+		templateFormatTime:  func(t float64) string { return r.formatTimeWithTimezone(t, data.Timezone) },
+		templateFormatValue: formatValue,
+		"add":               func(a, b int) int { return a + b },
+		"sub":               func(a, b int) int { return a - b },
+		"iterate":           func(count int) []int { return makeRange(count) },
+		"ge":                func(a, b int) bool { return a >= b },
+		"lt":                func(a, b int) bool { return a < b },
+		"eq":                func(a, b int) bool { return a == b },
 		"div": func(a, b int) int {
 			if b == 0 {
 				return 0

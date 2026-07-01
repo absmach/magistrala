@@ -100,6 +100,9 @@ linters:
       - linters:
           - godot
         path: cli/commands_test.go
+      - linters:
+          - goconst
+        path: (.+)_test\.go$
       - path: (.+)\.go$
         text: |-
           string `Usage:

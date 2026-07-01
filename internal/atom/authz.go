@@ -23,8 +23,8 @@ func Authorize(ctx context.Context, client Authorizer, session authn.Session, ac
 		ObjectKind: ObjectKind(legacyObjectType, resourceKind),
 		ObjectID:   objectID,
 		Context: map[string]any{
-			"domain_id":          session.DomainID,
-			"legacy_object_type": legacyObjectType,
+			atomContextDomainID:         session.DomainID,
+			atomContextLegacyObjectType: legacyObjectType,
 		},
 	}
 	res, err := client.CheckAuthz(ctx, req)

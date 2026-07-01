@@ -56,7 +56,7 @@ func TestTokenVerifierRejectsExpiredToken(t *testing.T) {
 
 func TestTokenVerifierIntrospectsAtomAccessToken(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/introspect" || r.Header.Get("Authorization") != "Bearer atom_test" {
+		if r.URL.Path != atomAuthIntrospectPath || r.Header.Get("Authorization") != "Bearer atom_test" {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		_ = json.NewEncoder(w).Encode(IntrospectionResponse{

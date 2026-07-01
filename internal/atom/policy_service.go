@@ -50,7 +50,7 @@ func (ps PolicyService) AddPolicy(ctx context.Context, pr policies.Policy) error
 		ObjectKind: policyGrantObjectKind(pr),
 		ObjectType: policyGrantObjectType(pr),
 		ObjectID:   policyGrantObjectID(pr),
-		Effect:     "allow",
+		Effect:     atomDecisionAllow,
 		Conditions: map[string]any{},
 		ActionIDs:  []string{capID},
 	})
@@ -241,7 +241,7 @@ func policyGrantObjectType(pr policies.Policy) string {
 }
 
 func policyGrantObjectID(pr policies.Policy) string {
-	if policyGrantScopeMode(pr) != "object" {
+	if policyGrantScopeMode(pr) != atomScopeModeObject {
 		return ""
 	}
 	return policyResourceID(pr)

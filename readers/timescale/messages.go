@@ -26,6 +26,15 @@ const (
 
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
+const (
+	messageFieldChannel   = "channel"
+	messageFieldName      = "name"
+	messageFieldProtocol  = "protocol"
+	messageFieldPublisher = "publisher"
+	messageFieldSubtopic  = "subtopic"
+	messageFieldValue     = "value"
+)
+
 type timescaleRepository struct {
 	db *sqlx.DB
 }
@@ -103,19 +112,19 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	}
 
 	params := map[string]any{
-		"channel":      chanID,
-		"limit":        rpm.Limit,
-		"offset":       rpm.Offset,
-		"subtopic":     rpm.Subtopic,
-		"publisher":    rpm.Publisher,
-		"name":         rpm.Name,
-		"protocol":     rpm.Protocol,
-		"value":        rpm.Value,
-		"bool_value":   rpm.BoolValue,
-		"string_value": rpm.StringValue,
-		"data_value":   rpm.DataValue,
-		"from":         rpm.From,
-		"to":           rpm.To,
+		messageFieldChannel:   chanID,
+		"limit":               rpm.Limit,
+		"offset":              rpm.Offset,
+		messageFieldSubtopic:  rpm.Subtopic,
+		messageFieldPublisher: rpm.Publisher,
+		messageFieldName:      rpm.Name,
+		messageFieldProtocol:  rpm.Protocol,
+		messageFieldValue:     rpm.Value,
+		"bool_value":          rpm.BoolValue,
+		"string_value":        rpm.StringValue,
+		"data_value":          rpm.DataValue,
+		"from":                rpm.From,
+		"to":                  rpm.To,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -193,15 +202,15 @@ func fmtCondition(rpm readers.PageMetadata) string {
 
 	conditions := []string{chCondition}
 
-	if _, ok := query["subtopic"]; ok {
+	if _, ok := query[messageFieldSubtopic]; ok {
 		conditions = append(conditions, " subtopic = :subtopic ")
 	}
 
-	if _, ok := query["publisher"]; ok {
+	if _, ok := query[messageFieldPublisher]; ok {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
-	if _, ok := query["name"]; ok {
+	if _, ok := query[messageFieldName]; ok {
 		conditions = append(conditions, " name = :name ")
 	}
 
@@ -214,7 +223,7 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	}
 
 	// Non Indexed columns conditions added after indexed columns conditions order.
-	if _, ok := query["protocol"]; ok {
+	if _, ok := query[messageFieldProtocol]; ok {
 		conditions = append(conditions, " protocol = :protocol ")
 	}
 
@@ -264,12 +273,12 @@ type jsonMessage struct {
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
 	ret := map[string]any{
-		"channel":   msg.Channel,
-		"created":   msg.Created,
-		"subtopic":  msg.Subtopic,
-		"publisher": msg.Publisher,
-		"protocol":  msg.Protocol,
-		"payload":   map[string]any{},
+		messageFieldChannel:   msg.Channel,
+		"created":             msg.Created,
+		messageFieldSubtopic:  msg.Subtopic,
+		messageFieldPublisher: msg.Publisher,
+		messageFieldProtocol:  msg.Protocol,
+		"payload":             map[string]any{},
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {
@@ -291,33 +300,33 @@ func applyOrdering(pm readers.PageMetadata, isAggregated bool, isSenml bool) str
 	}
 
 	aggCols := map[string]bool{
-		orderByTime: true,
-		"value":     true,
-		"sum":       true,
-		"publisher": true,
-		"protocol":  true,
-		"subtopic":  true,
-		"name":      true,
-		"unit":      true,
+		orderByTime:           true,
+		messageFieldValue:     true,
+		"sum":                 true,
+		messageFieldPublisher: true,
+		messageFieldProtocol:  true,
+		messageFieldSubtopic:  true,
+		messageFieldName:      true,
+		"unit":                true,
 	}
 
 	senmlCols := map[string]bool{
-		orderByTime:    true,
-		"value":        true,
-		"bool_value":   true,
-		"string_value": true,
-		"data_value":   true,
-		"publisher":    true,
-		"name":         true,
-		"protocol":     true,
-		"channel":      true,
-		"subtopic":     true,
-		"unit":         true,
+		orderByTime:           true,
+		messageFieldValue:     true,
+		"bool_value":          true,
+		"string_value":        true,
+		"data_value":          true,
+		messageFieldPublisher: true,
+		messageFieldName:      true,
+		messageFieldProtocol:  true,
+		messageFieldChannel:   true,
+		messageFieldSubtopic:  true,
+		"unit":                true,
 	}
 
 	jsonCols := map[string]bool{
-		orderByCreated: true, "publisher": true, "protocol": true,
-		"channel": true, "subtopic": true,
+		orderByCreated: true, messageFieldPublisher: true, messageFieldProtocol: true,
+		messageFieldChannel: true, messageFieldSubtopic: true,
 	}
 
 	if isAggregated {

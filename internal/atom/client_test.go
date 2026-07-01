@@ -173,7 +173,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 			default:
 				t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 			}
-		case "/auth/introspect":
+		case atomAuthIntrospectPath:
 			seen["introspect"] = true
 			if r.Method != http.MethodGet {
 				t.Fatalf("unexpected introspection method: %s", r.Method)

@@ -31,6 +31,7 @@ const (
 	clientsPort  = "9006"
 	channelsPort = "9005"
 	domainsPort  = "9003"
+	updateKey    = "Update"
 )
 
 var (
@@ -380,7 +381,7 @@ func read(ctx context.Context, s sdk.SDK, conf Config, domainID, token string, u
 func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.User, groups []sdk.Group, clients []sdk.Client, channels []sdk.Channel) error {
 	for _, user := range users {
 		user.FirstName = namesgenerator.Generate()
-		user.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
+		user.Metadata = sdk.Metadata{updateKey: namesgenerator.Generate()}
 		rUser, err := s.UpdateUser(ctx, user, token)
 		if err != nil {
 			return fmt.Errorf("failed to update user %w", err)
@@ -388,8 +389,8 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 		if rUser.FirstName != user.FirstName {
 			return fmt.Errorf("failed to update user name before %s after %s", user.FirstName, rUser.FirstName)
 		}
-		if rUser.Metadata["Update"] != user.Metadata["Update"] {
-			return fmt.Errorf("failed to update user metadata before %s after %s", user.Metadata["Update"], rUser.Metadata["Update"])
+		if rUser.Metadata[updateKey] != user.Metadata[updateKey] {
+			return fmt.Errorf("failed to update user metadata before %s after %s", user.Metadata[updateKey], rUser.Metadata[updateKey])
 		}
 		user = rUser
 		user.Credentials.Username = namesgenerator.Generate()
@@ -436,7 +437,7 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 	}
 	for _, group := range groups {
 		group.Name = namesgenerator.Generate()
-		group.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
+		group.Metadata = sdk.Metadata{updateKey: namesgenerator.Generate()}
 		rGroup, err := s.UpdateGroup(ctx, group, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to update group %w", err)
@@ -444,8 +445,8 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 		if rGroup.Name != group.Name {
 			return fmt.Errorf("failed to update group name before %s after %s", group.Name, rGroup.Name)
 		}
-		if rGroup.Metadata["Update"] != group.Metadata["Update"] {
-			return fmt.Errorf("failed to update group metadata before %s after %s", group.Metadata["Update"], rGroup.Metadata["Update"])
+		if rGroup.Metadata[updateKey] != group.Metadata[updateKey] {
+			return fmt.Errorf("failed to update group metadata before %s after %s", group.Metadata[updateKey], rGroup.Metadata[updateKey])
 		}
 		group = rGroup
 		rGroup, err = s.DisableGroup(ctx, group.ID, domainID, token)
@@ -466,7 +467,7 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 	}
 	for _, t := range clients {
 		t.Name = namesgenerator.Generate()
-		t.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
+		t.Metadata = sdk.Metadata{updateKey: namesgenerator.Generate()}
 		rClient, err := s.UpdateClient(ctx, t, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to update client %w", err)
@@ -474,8 +475,8 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 		if rClient.Name != t.Name {
 			return fmt.Errorf("failed to update client name before %s after %s", t.Name, rClient.Name)
 		}
-		if rClient.Metadata["Update"] != t.Metadata["Update"] {
-			return fmt.Errorf("failed to update client metadata before %s after %s", t.Metadata["Update"], rClient.Metadata["Update"])
+		if rClient.Metadata[updateKey] != t.Metadata[updateKey] {
+			return fmt.Errorf("failed to update client metadata before %s after %s", t.Metadata[updateKey], rClient.Metadata[updateKey])
 		}
 		t = rClient
 		rClient, err = s.UpdateClientSecret(ctx, t.ID, t.Credentials.Secret, domainID, token)
@@ -510,7 +511,7 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 	}
 	for _, channel := range channels {
 		channel.Name = namesgenerator.Generate()
-		channel.Metadata = sdk.Metadata{"Update": namesgenerator.Generate()}
+		channel.Metadata = sdk.Metadata{updateKey: namesgenerator.Generate()}
 		rChannel, err := s.UpdateChannel(ctx, channel, domainID, token)
 		if err != nil {
 			return fmt.Errorf("failed to update channel %w", err)
@@ -518,8 +519,8 @@ func update(ctx context.Context, s sdk.SDK, domainID, token string, users []sdk.
 		if rChannel.Name != channel.Name {
 			return fmt.Errorf("failed to update channel name before %s after %s", channel.Name, rChannel.Name)
 		}
-		if rChannel.Metadata["Update"] != channel.Metadata["Update"] {
-			return fmt.Errorf("failed to update channel metadata before %s after %s", channel.Metadata["Update"], rChannel.Metadata["Update"])
+		if rChannel.Metadata[updateKey] != channel.Metadata[updateKey] {
+			return fmt.Errorf("failed to update channel metadata before %s after %s", channel.Metadata[updateKey], rChannel.Metadata[updateKey])
 		}
 		channel = rChannel
 		rChannel, err = s.DisableChannel(ctx, channel.ID, domainID, token)

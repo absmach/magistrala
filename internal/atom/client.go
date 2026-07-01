@@ -57,7 +57,7 @@ func (c *Client) CreateTenant(ctx context.Context, tenant Tenant) (Tenant, error
 	}
 	err := c.graphQL(ctx, `mutation CreateTenant($input: CreateTenantInput!) {
 		createTenant(input: $input) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"input": tenantCreateInput(tenant)}, &out)
+	}`, map[string]any{atomInputKeyInput: tenantCreateInput(tenant)}, &out)
 	return out.CreateTenant, err
 }
 
@@ -77,7 +77,7 @@ func (c *Client) UpdateTenant(ctx context.Context, id string, tenant Tenant) (Te
 	}
 	err := c.graphQL(ctx, `mutation UpdateTenant($id: ID!, $input: UpdateTenantInput!) {
 		updateTenant(id: $id, input: $input) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"id": id, "input": tenantUpdateInput(tenant)}, &out)
+	}`, map[string]any{"id": id, atomInputKeyInput: tenantUpdateInput(tenant)}, &out)
 	return out.UpdateTenant, err
 }
 
@@ -118,7 +118,7 @@ func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error
 	}
 	err := c.graphQL(ctx, `mutation CreateEntity($input: CreateEntityInput!) {
 		createEntity(input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"input": entityCreateInput(entity)}, &out)
+	}`, map[string]any{atomInputKeyInput: entityCreateInput(entity)}, &out)
 	return out.CreateEntity, err
 }
 
@@ -138,7 +138,7 @@ func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (En
 	}
 	err := c.graphQL(ctx, `mutation UpdateEntity($id: ID!, $input: UpdateEntityInput!) {
 		updateEntity(id: $id, input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"id": id, "input": entityUpdateInput(entity)}, &out)
+	}`, map[string]any{"id": id, atomInputKeyInput: entityUpdateInput(entity)}, &out)
 	return out.UpdateEntity, err
 }
 
@@ -160,7 +160,7 @@ func (c *Client) CreateGroup(ctx context.Context, group Group) (Group, error) {
 	}
 	err := c.graphQL(ctx, `mutation CreateGroup($input: CreateGroupInput!) {
 		createGroup(input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"input": groupCreateInput(group)}, &out)
+	}`, map[string]any{atomInputKeyInput: groupCreateInput(group)}, &out)
 	return out.CreateGroup, err
 }
 
@@ -180,7 +180,7 @@ func (c *Client) UpdateGroup(ctx context.Context, id string, group Group) (Group
 	}
 	err := c.graphQL(ctx, `mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
 		updateGroup(id: $id, input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"id": id, "input": groupUpdateInput(group)}, &out)
+	}`, map[string]any{"id": id, atomInputKeyInput: groupUpdateInput(group)}, &out)
 	return out.UpdateGroup, err
 }
 
@@ -202,7 +202,7 @@ func (c *Client) CreateResource(ctx context.Context, resource Resource) (Resourc
 	}
 	err := c.graphQL(ctx, `mutation CreateResource($input: CreateResourceInput!) {
 		createResource(input: $input) { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"input": resourceCreateInput(resource)}, &out)
+	}`, map[string]any{atomInputKeyInput: resourceCreateInput(resource)}, &out)
 	return out.CreateResource, err
 }
 
@@ -222,7 +222,7 @@ func (c *Client) UpdateResource(ctx context.Context, id string, resource Resourc
 	}
 	err := c.graphQL(ctx, `mutation UpdateResource($id: ID!, $input: UpdateResourceInput!) {
 		updateResource(id: $id, input: $input) { id kind name tenant_id: tenantId owner_id: ownerId attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"id": id, "input": resourceUpdateInput(resource)}, &out)
+	}`, map[string]any{"id": id, atomInputKeyInput: resourceUpdateInput(resource)}, &out)
 	return out.UpdateResource, err
 }
 
@@ -249,7 +249,7 @@ func (c *Client) CheckAuthz(ctx context.Context, req AuthzRequest) (AuthzRespons
 	}
 	err := c.graphQL(ctx, `mutation AuthzCheck($input: AuthzCheckInput!) {
 		authzCheck(input: $input) { allowed reason }
-	}`, map[string]any{"input": authzInput(req)}, &out)
+	}`, map[string]any{atomInputKeyInput: authzInput(req)}, &out)
 	return out.AuthzCheck, err
 }
 
@@ -259,7 +259,7 @@ func (c *Client) CheckAuthzWithToken(ctx context.Context, token string, req Auth
 	}
 	err := c.graphQLWithToken(ctx, `mutation AuthzCheck($input: AuthzCheckInput!) {
 		authzCheck(input: $input) { allowed reason }
-	}`, map[string]any{"input": authzInput(req)}, &out, token)
+	}`, map[string]any{atomInputKeyInput: authzInput(req)}, &out, token)
 	return out.AuthzCheck, err
 }
 
@@ -290,11 +290,11 @@ func (c *Client) CreateCapability(ctx context.Context, name, description string)
 	var out struct {
 		CreateAction Capability `json:"createAction"`
 	}
-	input := map[string]any{"name": name}
+	input := map[string]any{atomInputKeyName: name}
 	setIfNotEmpty(input, "description", description)
 	err := c.graphQL(ctx, `mutation CreateAction($input: CreateActionInput!) {
 		createAction(input: $input) { id name description }
-	}`, map[string]any{"input": input}, &out)
+	}`, map[string]any{atomInputKeyInput: input}, &out)
 	return out.CreateAction, err
 }
 
@@ -303,8 +303,8 @@ func (c *Client) AddCapabilityApplicability(ctx context.Context, actionID, objec
 		AddActionApplicability CapabilityApplicability `json:"addActionApplicability"`
 	}
 	input := map[string]any{
-		"actionId":   actionID,
-		"objectKind": objectKind,
+		"actionId":             actionID,
+		atomInputKeyObjectKind: objectKind,
 	}
 	setIfNotEmpty(input, "objectType", objectType)
 	err := c.graphQL(ctx, `mutation AddActionApplicability($input: AddActionApplicabilityInput!) {
@@ -315,7 +315,7 @@ func (c *Client) AddCapabilityApplicability(ctx context.Context, actionID, objec
 			object_kind: objectKind
 			object_type: objectType
 		}
-	}`, map[string]any{"input": input}, &out)
+	}`, map[string]any{atomInputKeyInput: input}, &out)
 	return out.AddActionApplicability, err
 }
 
@@ -327,7 +327,7 @@ func (c *Client) ListActionAssignmentRules(ctx context.Context, spec ActionAssig
 	setIfNotEmpty(vars, "tenantId", spec.TenantID)
 	setIfNotEmpty(vars, "entityKind", spec.EntityKind)
 	setIfNotEmpty(vars, "actionName", spec.ActionName)
-	setIfNotEmpty(vars, "objectKind", spec.ObjectKind)
+	setIfNotEmpty(vars, atomInputKeyObjectKind, spec.ObjectKind)
 	setIfNotEmpty(vars, "objectType", spec.ObjectType)
 	setIfNotEmpty(vars, "decision", spec.Decision)
 	err := c.graphQL(ctx, `query ActionAssignmentRules(
@@ -372,11 +372,11 @@ func (c *Client) CreateActionAssignmentRule(ctx context.Context, spec ActionAssi
 		CreateActionAssignmentRule ActionAssignmentRule `json:"createActionAssignmentRule"`
 	}
 	input := map[string]any{
-		"entityKind": spec.EntityKind,
-		"actionName": spec.ActionName,
-		"objectKind": spec.ObjectKind,
-		"decision":   spec.Decision,
-		"isAbsolute": spec.IsAbsolute,
+		"entityKind":           spec.EntityKind,
+		"actionName":           spec.ActionName,
+		atomInputKeyObjectKind: spec.ObjectKind,
+		"decision":             spec.Decision,
+		"isAbsolute":           spec.IsAbsolute,
 	}
 	setIfNotEmpty(input, "tenantId", spec.TenantID)
 	setIfNotEmpty(input, "objectType", spec.ObjectType)
@@ -392,7 +392,7 @@ func (c *Client) CreateActionAssignmentRule(ctx context.Context, spec ActionAssi
 			is_absolute: isAbsolute
 			created_at: createdAt
 		}
-	}`, map[string]any{"input": input}, &out)
+	}`, map[string]any{atomInputKeyInput: input}, &out)
 	return out.CreateActionAssignmentRule, err
 }
 
@@ -405,7 +405,7 @@ func (c *Client) CreatePermissionBlock(ctx context.Context, block CreatePermissi
 			id tenant_id: tenantId scope_mode: scopeMode object_kind: objectKind object_type: objectType object_id: objectId group_id: groupId effect conditions
 			actions { id name description }
 		}
-	}`, map[string]any{"input": permissionBlockInput(block)}, &out)
+	}`, map[string]any{atomInputKeyInput: permissionBlockInput(block)}, &out)
 	return out.CreatePermissionBlock, err
 }
 
@@ -421,7 +421,7 @@ func (c *Client) CreateDirectPolicy(ctx context.Context, policy CreateDirectPoli
 				actions { id name description }
 			}
 		}
-	}`, map[string]any{"input": directPolicyInput(policy)}, &out)
+	}`, map[string]any{atomInputKeyInput: directPolicyInput(policy)}, &out)
 	return out.CreateDirectPolicy, err
 }
 
@@ -481,7 +481,7 @@ func (c *Client) LoginCredential(ctx context.Context, identifier, secret, kind s
 
 func (c *Client) Introspect(ctx context.Context, token string) (IntrospectionResponse, error) {
 	var out IntrospectionResponse
-	err := c.doWithToken(ctx, http.MethodGet, "/auth/introspect", nil, &out, token)
+	err := c.doWithToken(ctx, http.MethodGet, atomAuthIntrospectPath, nil, &out, token)
 	return out, err
 }
 
@@ -492,7 +492,7 @@ func (c *Client) DeleteEntity(ctx context.Context, id string) error {
 func (c *Client) CreatePassword(ctx context.Context, entityID, password string) error {
 	return c.graphQL(ctx, `mutation CreatePassword($entityId: ID!, $password: String!) {
 		createPassword(entityId: $entityId, password: $password)
-	}`, map[string]any{"entityId": entityID, "password": password}, nil)
+	}`, map[string]any{atomInputKeyEntityID: entityID, "password": password}, nil)
 }
 
 func (c *Client) CreateUnscopedAccessToken(ctx context.Context, entityID, name, description string) (AccessTokenResponse, error) {
@@ -507,12 +507,12 @@ func (c *Client) CreateUnscopedAccessToken(ctx context.Context, entityID, name, 
 			expiresAt
 		}
 	}`, map[string]any{
-		"input": map[string]any{
-			"name":        name,
-			"description": description,
-			"subjectId":   entityID,
-			"scoped":      false,
-			"permissions": []any{},
+		atomInputKeyInput: map[string]any{
+			atomInputKeyName:      name,
+			"description":         description,
+			atomInputKeySubjectID: entityID,
+			"scoped":              false,
+			"permissions":         []any{},
 		},
 	}, &out)
 	return out.CreateAccessToken, err
@@ -532,8 +532,8 @@ func (c *Client) CreateSharedKey(ctx context.Context, entityID, key, description
 			expiresAt
 		}
 	}`, map[string]any{
-		"entityId": entityID,
-		"input":    input,
+		atomInputKeyEntityID: entityID,
+		atomInputKeyInput:    input,
 	}, &out)
 	return out.CreateSharedKey, err
 }
@@ -549,8 +549,8 @@ func (c *Client) RevealSharedKey(ctx context.Context, entityID, credentialID str
 			expiresAt
 		}
 	}`, map[string]any{
-		"entityId":     entityID,
-		"credentialId": credentialID,
+		atomInputKeyEntityID:     entityID,
+		atomInputKeyCredentialID: credentialID,
 	}, &out)
 	return out.RevealSharedKey, err
 }
@@ -572,14 +572,14 @@ func (c *Client) ListCredentials(ctx context.Context, entityID string) (Credenti
 				created_at: createdAt
 			}
 		}
-	}`, map[string]any{"entityId": entityID}, &out)
+	}`, map[string]any{atomInputKeyEntityID: entityID}, &out)
 	return out.Credentials, err
 }
 
 func (c *Client) RevokeCredential(ctx context.Context, entityID, credentialID string) error {
 	return c.graphQL(ctx, `mutation RevokeCredential($entityId: ID!, $credentialId: ID!) {
 		revokeCredential(entityId: $entityId, credentialId: $credentialId)
-	}`, map[string]any{"entityId": entityID, "credentialId": credentialID}, nil)
+	}`, map[string]any{atomInputKeyEntityID: entityID, atomInputKeyCredentialID: credentialID}, nil)
 }
 
 func (c *Client) ListEntities(ctx context.Context, q Query) (EntityList, error) {
@@ -700,11 +700,11 @@ func graphQLErr(errors []graphQLErrorItem) error {
 }
 
 func tenantCreateInput(tenant Tenant) map[string]any {
-	input := map[string]any{"name": tenant.Name}
+	input := map[string]any{atomInputKeyName: tenant.Name}
 	setIfNotEmpty(input, "id", tenant.ID)
 	setIfNotEmpty(input, "alias", tenant.Route)
 	if tenant.Tags != nil {
-		input["tags"] = tenant.Tags
+		input[atomAttributeTags] = tenant.Tags
 	}
 	if tenant.Attributes != nil {
 		input["attributes"] = tenant.Attributes
@@ -714,10 +714,10 @@ func tenantCreateInput(tenant Tenant) map[string]any {
 
 func tenantUpdateInput(tenant Tenant) map[string]any {
 	input := map[string]any{}
-	setIfNotEmpty(input, "name", tenant.Name)
+	setIfNotEmpty(input, atomInputKeyName, tenant.Name)
 	setIfNotEmpty(input, "alias", tenant.Route)
 	if tenant.Tags != nil {
-		input["tags"] = tenant.Tags
+		input[atomAttributeTags] = tenant.Tags
 	}
 	if tenant.Attributes != nil {
 		input["attributes"] = tenant.Attributes
@@ -726,9 +726,9 @@ func tenantUpdateInput(tenant Tenant) map[string]any {
 }
 
 func entityCreateInput(entity Entity) map[string]any {
-	input := map[string]any{"name": entity.Name}
+	input := map[string]any{atomInputKeyName: entity.Name}
 	setIfNotEmpty(input, "id", entity.ID)
-	setIfNotEmpty(input, "kind", entity.Kind)
+	setIfNotEmpty(input, atomInputKeyKind, entity.Kind)
 	setIfNotEmpty(input, "tenantId", entity.TenantID)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes
@@ -740,8 +740,8 @@ func entityCreateInput(entity Entity) map[string]any {
 
 func entityUpdateInput(entity Entity) map[string]any {
 	input := map[string]any{}
-	setIfNotEmpty(input, "name", entity.Name)
-	setIfNotEmpty(input, "status", entity.Status)
+	setIfNotEmpty(input, atomInputKeyName, entity.Name)
+	setIfNotEmpty(input, atomAttributeStatus, entity.Status)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes
 	}
@@ -749,7 +749,7 @@ func entityUpdateInput(entity Entity) map[string]any {
 }
 
 func groupCreateInput(group Group) map[string]any {
-	input := map[string]any{"name": group.Name}
+	input := map[string]any{atomInputKeyName: group.Name}
 	setIfNotEmpty(input, "id", group.ID)
 	setIfNotEmpty(input, "tenantId", group.TenantID)
 	setIfNotEmpty(input, "description", group.Description)
@@ -761,9 +761,9 @@ func groupCreateInput(group Group) map[string]any {
 
 func groupUpdateInput(group Group) map[string]any {
 	input := map[string]any{}
-	setIfNotEmpty(input, "name", group.Name)
+	setIfNotEmpty(input, atomInputKeyName, group.Name)
 	setIfNotEmpty(input, "description", group.Description)
-	setIfNotEmpty(input, "status", group.Status)
+	setIfNotEmpty(input, atomAttributeStatus, group.Status)
 	if group.Attributes != nil {
 		input["attributes"] = group.Attributes
 	}
@@ -771,9 +771,9 @@ func groupUpdateInput(group Group) map[string]any {
 }
 
 func resourceCreateInput(resource Resource) map[string]any {
-	input := map[string]any{"kind": resource.Kind}
+	input := map[string]any{atomInputKeyKind: resource.Kind}
 	setIfNotEmpty(input, "id", resource.ID)
-	setIfNotEmpty(input, "name", resource.Name)
+	setIfNotEmpty(input, atomInputKeyName, resource.Name)
 	setIfNotEmpty(input, "tenantId", resource.TenantID)
 	setIfNotEmpty(input, "ownerId", resource.OwnerID)
 	if resource.Attributes != nil {
@@ -784,7 +784,7 @@ func resourceCreateInput(resource Resource) map[string]any {
 
 func resourceUpdateInput(resource Resource) map[string]any {
 	input := map[string]any{}
-	setIfNotEmpty(input, "name", resource.Name)
+	setIfNotEmpty(input, atomInputKeyName, resource.Name)
 	if resource.Attributes != nil {
 		input["attributes"] = resource.Attributes
 	}
@@ -793,11 +793,11 @@ func resourceUpdateInput(resource Resource) map[string]any {
 
 func authzInput(req AuthzRequest) map[string]any {
 	input := map[string]any{
-		"subjectId": req.SubjectID,
-		"action":    req.Action,
+		atomInputKeySubjectID: req.SubjectID,
+		atomInputKeyAction:    req.Action,
 	}
 	setIfNotEmpty(input, "resourceId", req.ResourceID)
-	setIfNotEmpty(input, "objectKind", req.ObjectKind)
+	setIfNotEmpty(input, atomInputKeyObjectKind, req.ObjectKind)
 	setIfNotEmpty(input, "objectId", req.ObjectID)
 	if req.Context != nil {
 		input["context"] = req.Context
@@ -811,7 +811,7 @@ func permissionBlockInput(block CreatePermissionBlock) map[string]any {
 		"actionIds": block.ActionIDs,
 	}
 	setIfNotEmpty(input, "tenantId", block.TenantID)
-	setIfNotEmpty(input, "objectKind", block.ObjectKind)
+	setIfNotEmpty(input, atomInputKeyObjectKind, block.ObjectKind)
 	setIfNotEmpty(input, "objectType", block.ObjectType)
 	setIfNotEmpty(input, "objectId", block.ObjectID)
 	setIfNotEmpty(input, "groupId", block.GroupID)
@@ -824,9 +824,9 @@ func permissionBlockInput(block CreatePermissionBlock) map[string]any {
 
 func directPolicyInput(policy CreateDirectPolicy) map[string]any {
 	input := map[string]any{
-		"subjectKind":       policy.SubjectKind,
-		"subjectId":         policy.SubjectID,
-		"permissionBlockId": policy.PermissionBlockID,
+		"subjectKind":         policy.SubjectKind,
+		atomInputKeySubjectID: policy.SubjectID,
+		"permissionBlockId":   policy.PermissionBlockID,
 	}
 	setIfNotEmpty(input, "tenantId", policy.TenantID)
 	return input
@@ -836,7 +836,7 @@ func directPolicyQueryVariables(q DirectPolicyQuery) map[string]any {
 	vars := map[string]any{}
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, "subjectKind", q.SubjectKind)
-	setIfNotEmpty(vars, "subjectId", q.SubjectID)
+	setIfNotEmpty(vars, atomInputKeySubjectID, q.SubjectID)
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)
 	}
@@ -848,9 +848,9 @@ func directPolicyQueryVariables(q DirectPolicyQuery) map[string]any {
 
 func authorizedObjectIDVariables(q AuthorizedObjectIDsQuery) map[string]any {
 	input := map[string]any{
-		"subjectId":  q.SubjectID,
-		"action":     q.Action,
-		"objectKind": q.ObjectKind,
+		atomInputKeySubjectID:  q.SubjectID,
+		atomInputKeyAction:     q.Action,
+		atomInputKeyObjectKind: q.ObjectKind,
 	}
 	setIfNotEmpty(input, "objectType", q.ObjectType)
 	setIfNotEmpty(input, "tenantId", q.TenantID)
@@ -861,17 +861,17 @@ func authorizedObjectIDVariables(q AuthorizedObjectIDsQuery) map[string]any {
 	if q.Offset > 0 {
 		input["offset"] = int(q.Offset)
 	}
-	return map[string]any{"input": input}
+	return map[string]any{atomInputKeyInput: input}
 }
 
 func queryVariables(q Query) map[string]any {
 	vars := map[string]any{}
 	setIfNotEmpty(vars, "q", q.Q)
-	setIfNotEmpty(vars, "name", q.Name)
+	setIfNotEmpty(vars, atomInputKeyName, q.Name)
 	setIfNotEmpty(vars, "alias", q.Route)
-	setIfNotEmpty(vars, "kind", q.Kind)
+	setIfNotEmpty(vars, atomInputKeyKind, q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
-	setIfNotEmpty(vars, "status", q.Status)
+	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)
 	}
@@ -884,9 +884,9 @@ func queryVariables(q Query) map[string]any {
 func objectQueryVariables(q Query) map[string]any {
 	vars := map[string]any{}
 	setIfNotEmpty(vars, "q", q.Q)
-	setIfNotEmpty(vars, "kind", q.Kind)
+	setIfNotEmpty(vars, atomInputKeyKind, q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
-	setIfNotEmpty(vars, "status", q.Status)
+	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)
 	}

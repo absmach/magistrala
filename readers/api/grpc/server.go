@@ -139,15 +139,15 @@ func stringifyAggregation(agg grpcReadersV1.Aggregation) string {
 	case grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED:
 		return ""
 	case grpcReadersV1.Aggregation_AGGREGATION_MAX:
-		return "MAX"
+		return aggregationMax
 	case grpcReadersV1.Aggregation_AGGREGATION_MIN:
-		return "MIN"
+		return aggregationMin
 	case grpcReadersV1.Aggregation_AGGREGATION_AVG:
-		return "AVG"
+		return aggregationAvg
 	case grpcReadersV1.Aggregation_AGGREGATION_SUM:
-		return "SUM"
+		return aggregationSum
 	case grpcReadersV1.Aggregation_AGGREGATION_COUNT:
-		return "COUNT"
+		return aggregationCount
 	default:
 		return ""
 	}

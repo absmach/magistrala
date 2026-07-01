@@ -17,6 +17,15 @@ import (
 
 var _ readers.MessageRepository = (*postgresRepository)(nil)
 
+const (
+	messageFieldChannel   = "channel"
+	messageFieldName      = "name"
+	messageFieldProtocol  = "protocol"
+	messageFieldPublisher = "publisher"
+	messageFieldSubtopic  = "subtopic"
+	messageFieldValue     = "value"
+)
+
 type postgresRepository struct {
 	db *sqlx.DB
 }
@@ -43,19 +52,19 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	LIMIT :limit OFFSET :offset;`, format, cond, order)
 
 	params := map[string]any{
-		"channel":      chanID,
-		"limit":        rpm.Limit,
-		"offset":       rpm.Offset,
-		"subtopic":     rpm.Subtopic,
-		"publisher":    rpm.Publisher,
-		"name":         rpm.Name,
-		"protocol":     rpm.Protocol,
-		"value":        rpm.Value,
-		"bool_value":   rpm.BoolValue,
-		"string_value": rpm.StringValue,
-		"data_value":   rpm.DataValue,
-		"from":         rpm.From,
-		"to":           rpm.To,
+		messageFieldChannel:   chanID,
+		"limit":               rpm.Limit,
+		"offset":              rpm.Offset,
+		messageFieldSubtopic:  rpm.Subtopic,
+		messageFieldPublisher: rpm.Publisher,
+		messageFieldName:      rpm.Name,
+		messageFieldProtocol:  rpm.Protocol,
+		messageFieldValue:     rpm.Value,
+		"bool_value":          rpm.BoolValue,
+		"string_value":        rpm.StringValue,
+		"data_value":          rpm.DataValue,
+		"from":                rpm.From,
+		"to":                  rpm.To,
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
@@ -132,10 +141,10 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 	for name := range query {
 		switch name {
 		case
-			"subtopic",
-			"publisher",
-			"name",
-			"protocol":
+			messageFieldSubtopic,
+			messageFieldPublisher,
+			messageFieldName,
+			messageFieldProtocol:
 			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
 		case "v":
 			comparator := readers.ParseValueComparator(query)
@@ -185,13 +194,13 @@ type jsonMessage struct {
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
 	ret := map[string]any{
-		"id":        msg.ID,
-		"channel":   msg.Channel,
-		"created":   msg.Created,
-		"subtopic":  msg.Subtopic,
-		"publisher": msg.Publisher,
-		"protocol":  msg.Protocol,
-		"payload":   map[string]any{},
+		"id":                  msg.ID,
+		messageFieldChannel:   msg.Channel,
+		"created":             msg.Created,
+		messageFieldSubtopic:  msg.Subtopic,
+		messageFieldPublisher: msg.Publisher,
+		messageFieldProtocol:  msg.Protocol,
+		"payload":             map[string]any{},
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

@@ -23,7 +23,11 @@ const (
 	withTLS
 	withmTLS
 )
-const buffSize = 10 * 1024 * 1024
+
+const (
+	buffSize        = 10 * 1024 * 1024
+	withoutTLSLabel = "without TLS"
+)
 
 var (
 	errGrpcConnect   = errors.New("failed to connect to grpc server")
@@ -95,7 +99,7 @@ func (c *client) Secure() string {
 	case withoutTLS:
 		fallthrough
 	default:
-		return "without TLS"
+		return withoutTLSLabel
 	}
 }
 

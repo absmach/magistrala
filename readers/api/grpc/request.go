@@ -12,9 +12,17 @@ import (
 	"github.com/absmach/magistrala/readers"
 )
 
-const maxLimitSize = 1000
+const (
+	maxLimitSize = 1000
 
-var validAggregations = []string{"MAX", "MIN", "AVG", "SUM", "COUNT"}
+	aggregationMax   = "MAX"
+	aggregationMin   = "MIN"
+	aggregationAvg   = "AVG"
+	aggregationSum   = "SUM"
+	aggregationCount = "COUNT"
+)
+
+var validAggregations = []string{aggregationMax, aggregationMin, aggregationAvg, aggregationSum, aggregationCount}
 
 type readMessagesReq struct {
 	chanID   string

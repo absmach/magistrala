@@ -33,13 +33,13 @@ func (a AuthorizationCompat) Authorize(ctx context.Context, pr smqauthz.PolicyRe
 		ObjectKind: objectKind,
 		ObjectID:   pr.Object,
 		Context: map[string]any{
-			"domain_id":           pr.Domain,
-			"legacy_object_kind":  pr.ObjectKind,
-			"legacy_object_type":  pr.ObjectType,
-			"legacy_permission":   pr.Permission,
-			"legacy_relation":     pr.Relation,
-			"legacy_subject_kind": pr.SubjectKind,
-			"legacy_subject_type": pr.SubjectType,
+			atomContextDomainID:         pr.Domain,
+			"legacy_object_kind":        pr.ObjectKind,
+			atomContextLegacyObjectType: pr.ObjectType,
+			"legacy_permission":         pr.Permission,
+			"legacy_relation":           pr.Relation,
+			"legacy_subject_kind":       pr.SubjectKind,
+			"legacy_subject_type":       pr.SubjectType,
 		},
 	})
 	if err != nil {

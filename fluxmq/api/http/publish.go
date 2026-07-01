@@ -19,8 +19,9 @@ import (
 )
 
 const (
-	contentType = "application/json"
-	httpProto   = "http"
+	contentType        = "application/json"
+	httpProto          = "http"
+	domainIDContextKey = "domain_id"
 )
 
 type publishRequest struct {
@@ -150,7 +151,7 @@ func (h publishHandler) ensureUserPublish(
 		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
-			"domain_id":           domainID,
+			domainIDContextKey:    domainID,
 			"publisher_client_id": clientID,
 		},
 	})
@@ -187,7 +188,7 @@ func (h publishHandler) ensureClientPublisher(
 		ObjectKind: "entity",
 		ObjectID:   clientID,
 		Context: map[string]any{
-			"domain_id": domainID,
+			domainIDContextKey: domainID,
 		},
 	})
 	if err != nil {
@@ -203,7 +204,7 @@ func (h publishHandler) ensureClientPublisher(
 		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
-			"domain_id": domainID,
+			domainIDContextKey: domainID,
 		},
 	})
 	if err != nil {

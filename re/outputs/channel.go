@@ -43,8 +43,8 @@ func (p *ChannelPublisher) Run(ctx context.Context, msg *messaging.Message, val 
 
 func (cp *ChannelPublisher) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{
-		"type":    ChannelsType.String(),
-		"channel": cp.Channel,
-		"topic":   cp.Topic,
+		outputTypeKey: ChannelsType.String(),
+		"channel":     cp.Channel,
+		"topic":       cp.Topic,
 	})
 }

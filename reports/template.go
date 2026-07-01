@@ -49,14 +49,14 @@ func (temp ReportTemplate) Validate() error {
 			}
 			return a % b
 		},
-		"eq":          func(a, b int) bool { return a == b },
-		"ge":          func(a, b int) bool { return a >= b },
-		"lt":          func(a, b int) bool { return a < b },
-		"iterate":     func(count int) []int { return make([]int, count) },
-		"getStartRow": func(pageNum, firstPageRows, continuationPageRows int) int { return 0 },
-		"getEndRow":   func(pageNum, firstPageRows, continuationPageRows, totalMessages int) int { return 0 },
-		"formatTime":  func(t any) string { return "" },
-		"formatValue": func(v any) string { return "" },
+		"eq":                func(a, b int) bool { return a == b },
+		"ge":                func(a, b int) bool { return a >= b },
+		"lt":                func(a, b int) bool { return a < b },
+		"iterate":           func(count int) []int { return make([]int, count) },
+		"getStartRow":       func(pageNum, firstPageRows, continuationPageRows int) int { return 0 },
+		"getEndRow":         func(pageNum, firstPageRows, continuationPageRows, totalMessages int) int { return 0 },
+		templateFormatTime:  func(t any) string { return "" },
+		templateFormatValue: func(v any) string { return "" },
 	})
 
 	parsed, err := tmpl.Parse(templateStr)

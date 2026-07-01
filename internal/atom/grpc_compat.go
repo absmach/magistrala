@@ -200,7 +200,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 		ObjectKind: atomObjectKindResource,
 		ObjectID:   in.GetChannelId(),
 		Context: map[string]any{
-			"domain_id": in.GetDomainId(),
+			atomContextDomainID: in.GetDomainId(),
 		},
 	})
 	if err != nil {
@@ -235,11 +235,11 @@ func (c AtomChannelsCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.
 		return nil, err
 	}
 	for _, resource := range resources.Items {
-		if resource.Name == in.GetRoute() || attrString(resource.Attributes, "route") == in.GetRoute() {
+		if resource.Name == in.GetRoute() || attrString(resource.Attributes, atomAttributeRoute) == in.GetRoute() {
 			return &commonv1.RetrieveEntityRes{Entity: &commonv1.EntityBasic{
 				Id:       resource.ID,
 				DomainId: resource.TenantID,
-				Status:   atomStatusCode(attrString(resource.Attributes, "status")),
+				Status:   atomStatusCode(attrString(resource.Attributes, atomAttributeStatus)),
 			}}, nil
 		}
 	}

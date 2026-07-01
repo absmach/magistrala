@@ -97,9 +97,9 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 
 	// Default names if .env omitted them.
 	defName := map[*string]string{
-		&cfg.Domains.Name: "domains", &cfg.Users.Name: "users",
+		&cfg.Domains.Name: collectionDomains, &cfg.Users.Name: "users",
 		&cfg.Clients.Name: "clients", &cfg.Channels.Name: "channels",
-		&cfg.Groups.Name: "groups", &cfg.Auth.Name: "auth",
+		&cfg.Groups.Name: collectionGroups, &cfg.Auth.Name: "auth",
 		&cfg.RE.Name: "rules_engine", &cfg.Reports.Name: "reports",
 	}
 	for p, n := range defName {

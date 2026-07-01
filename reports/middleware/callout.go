@@ -23,7 +23,10 @@ type calloutMiddleware struct {
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
 }
 
-const entityType = "report"
+const (
+	entityIDKey = "entity_id"
+	entityType  = "report"
+)
 
 func NewCallout(svc reports.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (reports.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
@@ -52,7 +55,7 @@ func (cm *calloutMiddleware) AddReportConfig(ctx context.Context, session authn.
 
 func (cm *calloutMiddleware) ViewReportConfig(ctx context.Context, session authn.Session, id string, withRoles bool) (reports.ReportConfig, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpViewReportConfig, params); err != nil {
@@ -64,7 +67,7 @@ func (cm *calloutMiddleware) ViewReportConfig(ctx context.Context, session authn
 
 func (cm *calloutMiddleware) UpdateReportConfig(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	params := map[string]any{
-		"entity_id": cfg.ID,
+		entityIDKey: cfg.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateReportConfig, params); err != nil {
@@ -76,7 +79,7 @@ func (cm *calloutMiddleware) UpdateReportConfig(ctx context.Context, session aut
 
 func (cm *calloutMiddleware) UpdateReportSchedule(ctx context.Context, session authn.Session, cfg reports.ReportConfig) (reports.ReportConfig, error) {
 	params := map[string]any{
-		"entity_id": cfg.ID,
+		entityIDKey: cfg.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateReportSchedule, params); err != nil {
@@ -88,7 +91,7 @@ func (cm *calloutMiddleware) UpdateReportSchedule(ctx context.Context, session a
 
 func (cm *calloutMiddleware) RemoveReportConfig(ctx context.Context, session authn.Session, id string) error {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpRemoveReportConfig, params); err != nil {
@@ -112,7 +115,7 @@ func (cm *calloutMiddleware) ListReportsConfig(ctx context.Context, session auth
 
 func (cm *calloutMiddleware) EnableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpEnableReportConfig, params); err != nil {
@@ -124,7 +127,7 @@ func (cm *calloutMiddleware) EnableReportConfig(ctx context.Context, session aut
 
 func (cm *calloutMiddleware) DisableReportConfig(ctx context.Context, session authn.Session, id string) (reports.ReportConfig, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpDisableReportConfig, params); err != nil {
@@ -136,7 +139,7 @@ func (cm *calloutMiddleware) DisableReportConfig(ctx context.Context, session au
 
 func (cm *calloutMiddleware) GenerateReport(ctx context.Context, session authn.Session, config reports.ReportConfig, action reports.ReportAction) (reports.ReportPage, error) {
 	params := map[string]any{
-		"entity_id": config.ID,
+		entityIDKey: config.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpGenerateReport, params); err != nil {
@@ -148,7 +151,7 @@ func (cm *calloutMiddleware) GenerateReport(ctx context.Context, session authn.S
 
 func (cm *calloutMiddleware) UpdateReportTemplate(ctx context.Context, session authn.Session, cfg reports.ReportConfig) error {
 	params := map[string]any{
-		"entity_id": cfg.ID,
+		entityIDKey: cfg.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateReportTemplate, params); err != nil {
@@ -160,7 +163,7 @@ func (cm *calloutMiddleware) UpdateReportTemplate(ctx context.Context, session a
 
 func (cm *calloutMiddleware) ViewReportTemplate(ctx context.Context, session authn.Session, id string) (reports.ReportTemplate, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpViewReportTemplate, params); err != nil {
@@ -172,7 +175,7 @@ func (cm *calloutMiddleware) ViewReportTemplate(ctx context.Context, session aut
 
 func (cm *calloutMiddleware) DeleteReportTemplate(ctx context.Context, session authn.Session, id string) error {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpDeleteReportTemplate, params); err != nil {
@@ -188,7 +191,7 @@ func (cm *calloutMiddleware) StartScheduler(ctx context.Context) error {
 
 func (cm *calloutMiddleware) callOut(ctx context.Context, session authn.Session, op permissions.Operation, pld map[string]any) error {
 	var entityID string
-	if id, ok := pld["entity_id"].(string); ok {
+	if id, ok := pld[entityIDKey].(string); ok {
 		entityID = id
 	}
 

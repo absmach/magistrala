@@ -174,15 +174,15 @@ func fromResponseMessages(protoMessages []*grpcReadersV1.Message) []readers.Mess
 
 func parseAggregation(agg string) grpcReadersV1.Aggregation {
 	switch strings.ToUpper(agg) {
-	case "MAX":
+	case aggregationMax:
 		return grpcReadersV1.Aggregation_AGGREGATION_MAX
-	case "MIN":
+	case aggregationMin:
 		return grpcReadersV1.Aggregation_AGGREGATION_MIN
-	case "SUM":
+	case aggregationSum:
 		return grpcReadersV1.Aggregation_AGGREGATION_SUM
-	case "COUNT":
+	case aggregationCount:
 		return grpcReadersV1.Aggregation_AGGREGATION_COUNT
-	case "AVG":
+	case aggregationAvg:
 		return grpcReadersV1.Aggregation_AGGREGATION_AVG
 	default:
 		return grpcReadersV1.Aggregation_AGGREGATION_UNSPECIFIED

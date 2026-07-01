@@ -82,11 +82,11 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		db, err = openDB(ctx, name, dsn)
 		return db
 	}
-	m.domainsDB = open("domains", cfg.Domains.DSN())
+	m.domainsDB = open(collectionDomains, cfg.Domains.DSN())
 	m.usersDB = open("users", cfg.Users.DSN())
 	m.clientsDB = open("clients", cfg.Clients.DSN())
 	m.channelsDB = open("channels", cfg.Channels.DSN())
-	m.groupsDB = open("groups", cfg.Groups.DSN())
+	m.groupsDB = open(collectionGroups, cfg.Groups.DSN())
 	m.authDB = open("auth", cfg.Auth.DSN())
 	m.reDB = open("rules_engine", cfg.RE.DSN())
 	m.reportsDB = open("reports", cfg.Reports.DSN())
@@ -97,7 +97,23 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 	return m, nil
 }
 
-const authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
+const (
+	authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
+
+	collectionDomains = "domains"
+	collectionGroups  = "groups"
+
+	attributeStatus = "status"
+
+	permissionScopeTenant                 = "tenant"
+	permissionScopeObject                 = "object"
+	permissionScopeGroup                  = "group"
+	permissionScopeGroupDirectObjects     = "group_direct_objects"
+	permissionScopeGroupDescendantObjects = "group_descendant_objects"
+
+	objectKindEntity   = "entity"
+	objectKindResource = "resource"
+)
 
 func (m *migrator) Close() {
 	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
@@ -380,7 +396,7 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 		if ch.CreatedBy.Valid && m.migratedUsers[ch.CreatedBy.String] {
 			owner = ch.CreatedBy
 		}
-		extra := map[string]any{"status": entityStatus(ch.Status)}
+		extra := map[string]any{attributeStatus: entityStatus(ch.Status)}
 		putTags(extra, ch.Tags)
 		if err := m.exec(ctx,
 			`INSERT INTO resources (id, kind, name, tenant_id, owner_id, attributes, alias, created_at, updated_at)
@@ -441,8 +457,8 @@ func (m *migrator) phaseRules(ctx context.Context, rep *report) error {
 		m.resourceDomain[r.ID] = r.DomainID
 		name := uniqueResName(seen, r.DomainID, firstNonEmpty(nsToStr(r.Name), r.ID))
 		extra := map[string]any{
-			"status":     entityStatus(r.Status),
-			"logic_type": r.LogicType,
+			attributeStatus: entityStatus(r.Status),
+			"logic_type":    r.LogicType,
 		}
 		putStr(extra, "input_channel", r.InputChannel)
 		putStr(extra, "input_topic", r.InputTopic)
@@ -491,7 +507,7 @@ func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
 		}
 		m.resourceDomain[rp.ID] = rp.DomainID
 		name := uniqueResName(seen, rp.DomainID, firstNonEmpty(nsToStr(rp.Name), rp.ID))
-		extra := map[string]any{"status": entityStatus(rp.Status)}
+		extra := map[string]any{attributeStatus: entityStatus(rp.Status)}
 		putStr(extra, "description", rp.Description)
 		putStr(extra, "report_template", rp.ReportTemplate)
 		putStr(extra, "updated_by", rp.UpdatedBy)
@@ -621,12 +637,12 @@ type roleScope struct {
 
 func (m *migrator) phaseRoles(ctx context.Context, rep *report) error {
 	families := []roleScope{
-		{"domains", m.domainsDB, func(id string) (string, bool) { return id, m.tenants[id] }, "tenant", ""},
-		{"clients", m.clientsDB, func(id string) (string, bool) { d, ok := m.clientDomain[id]; return d, ok }, "object", "entity"},
-		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelDomain[id]; return d, ok }, "object", "resource"},
-		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, "object", "resource"},
-		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, "object", "resource"},
-		{"groups", m.groupsDB, func(id string) (string, bool) { d, ok := m.groupDomain[id]; return d, ok }, "group", ""},
+		{collectionDomains, m.domainsDB, func(id string) (string, bool) { return id, m.tenants[id] }, permissionScopeTenant, ""},
+		{"clients", m.clientsDB, func(id string) (string, bool) { d, ok := m.clientDomain[id]; return d, ok }, permissionScopeObject, objectKindEntity},
+		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{collectionGroups, m.groupsDB, func(id string) (string, bool) { d, ok := m.groupDomain[id]; return d, ok }, permissionScopeGroup, ""},
 	}
 	for _, f := range families {
 		if err := m.migrateRoleFamily(ctx, rep, f); err != nil {
@@ -658,7 +674,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 		// (e.g. every client has an "admin" role). Embed the object id to keep the
 		// Atom role name unique within the tenant.
 		roleName := f.prefix + ":" + r.EntityID + ":" + r.Name
-		if f.scopeMode == "tenant" {
+		if f.scopeMode == permissionScopeTenant {
 			roleName = f.prefix + ":" + r.Name // domain roles: one set per tenant
 		}
 		if err := m.exec(ctx,
@@ -734,7 +750,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 				return err
 			}
 			rep.count("role_assignments", 1)
-			if f.prefix == "domains" {
+			if f.prefix == collectionDomains {
 				if err := m.exec(ctx,
 					`INSERT INTO tenant_memberships (tenant_id, entity_id, status)
 					 VALUES ($1,$2,'active') ON CONFLICT DO NOTHING`,
@@ -759,16 +775,16 @@ type permissionBlockPlan struct {
 }
 
 func (f roleScope) blockPlans(roleID, objectID, tenant, rawAction string) []permissionBlockPlan {
-	if f.scopeMode != "group" {
+	if f.scopeMode != permissionScopeGroup {
 		blockID := derivedUUID("block", f.prefix, roleID)
 		switch f.scopeMode {
-		case "tenant":
+		case permissionScopeTenant:
 			return []permissionBlockPlan{{
-				ID: blockID, TenantID: tenant, ScopeMode: "tenant",
+				ID: blockID, TenantID: tenant, ScopeMode: permissionScopeTenant,
 			}}
 		default:
 			return []permissionBlockPlan{{
-				ID: blockID, TenantID: tenant, ScopeMode: "object",
+				ID: blockID, TenantID: tenant, ScopeMode: permissionScopeObject,
 				ObjectKind: f.objKind, ObjectID: objectID,
 			}}
 		}
@@ -777,30 +793,30 @@ func (f roleScope) blockPlans(roleID, objectID, tenant, rawAction string) []perm
 	action := strings.ToLower(strings.TrimSpace(rawAction))
 	switch {
 	case strings.HasPrefix(action, "subgroup_client"):
-		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", "entity", "entity:device")}
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", objectKindEntity, "entity:device")}
 	case strings.HasPrefix(action, "client"):
-		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", "entity", "entity:device")}
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", objectKindEntity, "entity:device")}
 	case strings.HasPrefix(action, "subgroup_channel"):
-		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", "resource", "resource:channel")}
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "descendant", objectKindResource, "resource:channel")}
 	case strings.HasPrefix(action, "channel"):
-		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", "resource", "resource:channel")}
+		return []permissionBlockPlan{groupObjectBlock(roleID, tenant, objectID, "direct", objectKindResource, "resource:channel")}
 	case strings.HasPrefix(action, "subgroup"):
 		return []permissionBlockPlan{groupKindBlock(roleID, tenant, objectID, "descendant")}
 	default:
 		return []permissionBlockPlan{{
-			ID:       derivedUUID("block", "groups", roleID, "self"),
-			TenantID: tenant, ScopeMode: "object", ObjectKind: "group", ObjectID: objectID,
+			ID:       derivedUUID("block", collectionGroups, roleID, "self"),
+			TenantID: tenant, ScopeMode: permissionScopeObject, ObjectKind: permissionScopeGroup, ObjectID: objectID,
 		}}
 	}
 }
 
 func groupObjectBlock(roleID, tenant, groupID, depth, objectKind, objectType string) permissionBlockPlan {
-	scopeMode := "group_direct_objects"
+	scopeMode := permissionScopeGroupDirectObjects
 	if depth == "descendant" {
-		scopeMode = "group_descendant_objects"
+		scopeMode = permissionScopeGroupDescendantObjects
 	}
 	return permissionBlockPlan{
-		ID:         derivedUUID("block", "groups", roleID, depth, objectType),
+		ID:         derivedUUID("block", collectionGroups, roleID, depth, objectType),
 		TenantID:   tenant,
 		ScopeMode:  scopeMode,
 		ObjectKind: objectKind,
@@ -815,7 +831,7 @@ func groupKindBlock(roleID, tenant, groupID, depth string) permissionBlockPlan {
 		scopeMode = "group_descendant_groups"
 	}
 	return permissionBlockPlan{
-		ID:        derivedUUID("block", "groups", roleID, depth, "group"),
+		ID:        derivedUUID("block", collectionGroups, roleID, depth, permissionScopeGroup),
 		TenantID:  tenant,
 		ScopeMode: scopeMode,
 		GroupID:   groupID,
@@ -965,7 +981,7 @@ func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
 		if m.migratedUsers[iv.InviteeID] {
 			invitee = sql.NullString{String: iv.InviteeID, Valid: true}
 		}
-		roleID := derivedUUID("role", "domains", iv.RoleID)
+		roleID := derivedUUID("role", collectionDomains, iv.RoleID)
 		roleArg := any(roleID)
 		if !m.migratedRoles[roleID] {
 			roleArg = nil

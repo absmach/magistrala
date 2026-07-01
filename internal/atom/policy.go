@@ -27,9 +27,9 @@ func (pe PolicyEvaluator) CheckPolicy(ctx context.Context, pr policies.Policy) e
 		ObjectKind: policyObjectKind(pr),
 		ObjectID:   pr.Object,
 		Context: map[string]any{
-			"domain_id":          pr.Domain,
-			"legacy_object_type": pr.ObjectType,
-			"legacy_relation":    pr.Relation,
+			atomContextDomainID:         pr.Domain,
+			atomContextLegacyObjectType: pr.ObjectType,
+			"legacy_relation":           pr.Relation,
 		},
 	})
 	if err != nil {

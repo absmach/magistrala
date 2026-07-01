@@ -164,7 +164,7 @@ func (f *fakeAtomTokenServer) Client() *Client {
 
 func (f *fakeAtomTokenServer) handle(w http.ResponseWriter, r *http.Request) {
 	switch r.URL.Path {
-	case "/auth/introspect":
+	case atomAuthIntrospectPath:
 		token := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 		if err := json.NewEncoder(w).Encode(IntrospectionResponse{Active: f.active[token], EntityID: "entity-1"}); err != nil {
 			f.t.Fatalf("encode introspection response: %v", err)

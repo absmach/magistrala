@@ -156,6 +156,8 @@ Atom is the source of truth for:
 
 Magistrala services such as rules, alarms, and reports remain Magistrala services, but they use Atom for identity and authorization.
 
+Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `docker/.env`. For compatibility with the current Magistrala integration, the generated `MG_ATOM_TOKEN_*` service credentials are unscoped Atom API-key credentials. Scoped Atom access tokens should not be used for these service env vars until Magistrala stops using owner-wide Atom listing APIs such as `authorizedObjectIds` in service policy paths.
+
 ### Core Entity Mapping
 
 | Magistrala concept | Atom concept | Meaning |

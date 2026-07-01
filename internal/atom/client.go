@@ -462,11 +462,19 @@ func (c *Client) AuthorizedObjectIDs(ctx context.Context, q AuthorizedObjectIDsQ
 }
 
 func (c *Client) LoginPassword(ctx context.Context, identifier, secret string) (LoginResponse, error) {
+	return c.LoginCredential(ctx, identifier, secret, "password")
+}
+
+func (c *Client) LoginSharedKey(ctx context.Context, identifier, secret string) (LoginResponse, error) {
+	return c.LoginCredential(ctx, identifier, secret, "shared_key")
+}
+
+func (c *Client) LoginCredential(ctx context.Context, identifier, secret, kind string) (LoginResponse, error) {
 	var out LoginResponse
 	err := c.doWithToken(ctx, http.MethodPost, "/auth/login", LoginRequest{
 		Identifier: identifier,
 		Secret:     secret,
-		Kind:       "password",
+		Kind:       kind,
 	}, &out, "")
 	return out, err
 }

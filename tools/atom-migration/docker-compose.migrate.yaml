@@ -136,8 +136,8 @@ services:
   # Seeds / upgrades the Atom schema in the target volume on boot (migrations run
   # at startup). Certs disabled so it needs no mounted CA. No host ports.
   atom:
-    image: ghcr.io/absmach/atom:${ATOM_IMAGE_TAG:-latest}
-    pull_policy: always
+    image: ${ATOM_IMAGE}
+    pull_policy: ${ATOM_PULL_POLICY:-always}
     restart: "no"
     depends_on:
       atom-db:
@@ -175,6 +175,8 @@ services:
         condition: service_healthy
     environment:
       ATOM_DATABASE_URL: host=atom-db port=5432 user=${ATOM_DB_USER:-atom} password=${ATOM_DB_PASSWORD:-atom} dbname=${ATOM_DB_NAME:-atom} sslmode=disable
+      ATOM_KEY_ENCRYPTION_KEY: ${ATOM_KEY_ENCRYPTION_KEY}
+      ATOM_KEY_ENCRYPTION_KEY_ID: ${ATOM_KEY_ENCRYPTION_KEY_ID:-local:v1}
     user: "${HOST_UID:-0}:${HOST_GID:-0}"
     working_dir: /work
     volumes:

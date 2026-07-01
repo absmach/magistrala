@@ -6,11 +6,8 @@ package main
 import (
 	"context"
 	"database/sql"
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -52,9 +49,6 @@ type migrator struct {
 	tenantAlias  map[string]string
 	clientAlias  map[string]string
 	channelAlias map[string]string
-
-	reportDir  string
-	deviceKeys [][]string // client_id, domain_id, identity, plaintext key (apply only)
 }
 
 func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error) {
@@ -134,7 +128,7 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 		{"tenants", m.phaseTenants},
 		{"entities.users", m.phaseUsers},
 		{"entities.clients", m.phaseClients},
-		{"credentials.devices", m.phaseDeviceCreds},
+		{"credentials.device_shared_keys", m.phaseDeviceCreds},
 		{"resources.channels", m.phaseChannels},
 		{"resources.rules", m.phaseRules},
 		{"resources.reports", m.phaseReports},
@@ -151,32 +145,7 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 			return fmt.Errorf("phase %s: %w", p.name, err)
 		}
 	}
-	if m.apply && len(m.deviceKeys) > 0 {
-		if err := m.writeDeviceKeys(); err != nil {
-			return fmt.Errorf("write device keys: %w", err)
-		}
-	}
 	return nil
-}
-
-// writeDeviceKeys exports the re-issued device API keys (secret shown once) for
-// re-provisioning. Treat the file as a secret and delete after use.
-func (m *migrator) writeDeviceKeys() error {
-	if err := os.MkdirAll(m.reportDir, 0o755); err != nil {
-		return err
-	}
-	path := filepath.Join(m.reportDir, "device-keys-"+time.Now().UTC().Format("20060102-150405")+".csv")
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	w := csv.NewWriter(f)
-	defer w.Flush()
-	if err := w.Write([]string{"client_id", "domain_id", "identity", "api_key"}); err != nil {
-		return err
-	}
-	return w.WriteAll(m.deviceKeys)
 }
 
 func (m *migrator) loadLookups(ctx context.Context) error {
@@ -366,28 +335,30 @@ func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
 		if _, ok := m.clientDomain[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
 			continue
 		}
-		// Atom cannot reuse the Magistrala secret (format + lookup differ); the
-		// device key is re-issued in atom_<credId>_<secret> form and exported for
-		// re-provisioning. See newAtomAPIKey / PLAN §5.
-		credID, plaintext, hash, err := newAtomAPIKey(c.ID)
+		// Atom shared keys can preserve the existing Magistrala client secret.
+		// Store the same recoverable/lookup material Atom writes for new shared
+		// keys so migrated credentials authenticate through the indexed path and
+		// can still be revealed by operators.
+		credentialID := clientSharedKeyCredentialID(c.ID)
+		material, err := newSharedKeyMaterial(credentialID, c.Secret.String, m.cfg)
 		if err != nil {
 			return err
 		}
 		if err := m.exec(ctx,
-			`INSERT INTO credentials (id, entity_id, kind, identifier, secret_hash, metadata, status)
-			 VALUES ($1,$2,'api_key',$3,$4,'{"source":"magistrala-client-reissued"}',$5)
+			`INSERT INTO credentials (
+				 id, entity_id, kind, identifier, secret_hash,
+				 secret_ciphertext, secret_nonce, secret_key_id, secret_enc_alg,
+				 secret_lookup_hash, metadata, status
+			 )
+			 VALUES ($1,$2,'shared_key',$3,$4,$5,$6,$7,$8,$9,'{"source":"magistrala-client-secret","revealable":true}',$10)
 			 ON CONFLICT (id) DO NOTHING`,
-			credID, c.ID, c.ID, hash, statusCred(c.Status),
+			credentialID, c.ID, nullStr(c.Identity.String), material.Hash,
+			material.Ciphertext, material.Nonce, material.KeyID, material.EncAlg,
+			material.LookupHash, statusCred(c.Status),
 		); err != nil {
 			return err
 		}
-		if m.apply {
-			m.deviceKeys = append(m.deviceKeys, []string{c.ID, c.DomainID, c.Identity.String, plaintext})
-		}
-		rep.count("credentials.devices", 1)
-	}
-	if len(m.deviceKeys) > 0 {
-		rep.todo("device_reprovision", fmt.Sprintf("%d device keys re-issued -> see device-keys CSV in report dir", len(m.deviceKeys)))
+		rep.count("credentials.device_shared_keys", 1)
 	}
 	return nil
 }
@@ -964,7 +935,7 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 		// secret_hash NULL: Magistrala PAT secret is not convertible (see PLAN §5).
 		if err := m.exec(ctx,
 			`INSERT INTO credentials (id, entity_id, kind, identifier, metadata, status, expires_at)
-			 VALUES ($1,$2,'api_key',$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
+			 VALUES ($1,$2,'access_token',$3,$4,$5,$6) ON CONFLICT (id) DO NOTHING`,
 			p.ID, p.UserID.String, p.ID, string(meta), status, ntPtr(p.ExpiresAt),
 		); err != nil {
 			return err
@@ -1124,6 +1095,10 @@ func statusCred(s int16) string {
 		return "active"
 	}
 	return "revoked"
+}
+
+func clientSharedKeyCredentialID(clientID string) string {
+	return derivedUUID("shared-key", clientID)
 }
 
 // attrs merges Magistrala metadata jsonb with extra keys into an Atom attributes

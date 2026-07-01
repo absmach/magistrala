@@ -94,6 +94,153 @@ func TestListResources(t *testing.T) {
 	}
 }
 
+func TestCurrentAtomCompatibilitySurface(t *testing.T) {
+	const (
+		serviceToken = "service-token"
+		runtimeToken = "runtime-token"
+	)
+
+	seen := map[string]bool{}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case atomGraphQLPath:
+			if r.Method != http.MethodPost {
+				t.Fatalf("unexpected GraphQL method: %s", r.Method)
+			}
+			if got := r.Header.Get("Authorization"); got != "Bearer "+serviceToken {
+				t.Fatalf("unexpected GraphQL authorization header: %q", got)
+			}
+			var payload struct {
+				Query     string         `json:"query"`
+				Variables map[string]any `json:"variables"`
+			}
+			if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+				t.Fatalf("decode request: %v", err)
+			}
+			switch {
+			case strings.Contains(payload.Query, "authzCheck"):
+				seen["authzCheck"] = true
+				input, ok := payload.Variables["input"].(map[string]any)
+				if !ok {
+					t.Fatalf("unexpected authz input: %+v", payload.Variables["input"])
+				}
+				if input["subjectId"] != testEntityID || input["action"] != atomActionPublish || input["resourceId"] != "channel-1" {
+					t.Fatalf("unexpected authz input: %+v", input)
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"data": map[string]any{
+						"authzCheck": map[string]any{"allowed": true, "reason": "allowed"},
+					},
+				})
+			case strings.Contains(payload.Query, "authorizedObjectIds"):
+				seen["authorizedObjectIds"] = true
+				input, ok := payload.Variables["input"].(map[string]any)
+				if !ok {
+					t.Fatalf("unexpected authorized objects input: %+v", payload.Variables["input"])
+				}
+				if input["subjectId"] != testEntityID ||
+					input["action"] != atomActionRead ||
+					input["objectKind"] != atomObjectKindEntity ||
+					input["objectType"] != atomKindDevice ||
+					input["tenantId"] != testDomainID {
+					t.Fatalf("unexpected authorized objects input: %+v", input)
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"data": map[string]any{
+						"authorizedObjectIds": map[string]any{"ids": []string{testDeviceID}, "total": 1},
+					},
+				})
+			case strings.Contains(payload.Query, "createApiKey"):
+				seen["createApiKey"] = true
+				if payload.Variables["entityId"] != testEntityID {
+					t.Fatalf("unexpected createApiKey entity: %+v", payload.Variables)
+				}
+				input, ok := payload.Variables["input"].(map[string]any)
+				if !ok || input["description"] != "Magistrala service token" {
+					t.Fatalf("unexpected createApiKey input: %+v", payload.Variables["input"])
+				}
+				_ = json.NewEncoder(w).Encode(map[string]any{
+					"data": map[string]any{
+						"createApiKey": map[string]any{
+							"credentialId": testCredentialID,
+							"key":          "atom_00000000000000000000000000000000_0000000000000000000000000000000000000000000000000000000000000000",
+						},
+					},
+				})
+			default:
+				t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
+			}
+		case "/auth/introspect":
+			seen["introspect"] = true
+			if r.Method != http.MethodGet {
+				t.Fatalf("unexpected introspection method: %s", r.Method)
+			}
+			if got := r.Header.Get("Authorization"); got != "Bearer "+runtimeToken {
+				t.Fatalf("unexpected introspection authorization header: %q", got)
+			}
+			_ = json.NewEncoder(w).Encode(IntrospectionResponse{
+				Active:    true,
+				EntityID:  testEntityID,
+				TenantID:  testDomainID,
+				SessionID: "session-1",
+			})
+		default:
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Token: serviceToken, Timeout: time.Second})
+	authz, err := client.CheckAuthz(context.Background(), AuthzRequest{
+		SubjectID:  testEntityID,
+		Action:     atomActionPublish,
+		ResourceID: "channel-1",
+	})
+	if err != nil {
+		t.Fatalf("authz check failed: %v", err)
+	}
+	if !authz.Allowed {
+		t.Fatalf("unexpected authz response: %+v", authz)
+	}
+
+	objects, err := client.AuthorizedObjectIDs(context.Background(), AuthorizedObjectIDsQuery{
+		SubjectID:  testEntityID,
+		Action:     atomActionRead,
+		ObjectKind: atomObjectKindEntity,
+		ObjectType: atomKindDevice,
+		TenantID:   testDomainID,
+		Limit:      10,
+	})
+	if err != nil {
+		t.Fatalf("authorized object listing failed: %v", err)
+	}
+	if objects.Total != 1 || len(objects.IDs) != 1 || objects.IDs[0] != testDeviceID {
+		t.Fatalf("unexpected authorized object listing: %+v", objects)
+	}
+
+	created, err := client.CreateAPIKey(context.Background(), testEntityID, "Magistrala service token")
+	if err != nil {
+		t.Fatalf("create API key failed: %v", err)
+	}
+	if created.CredentialID != testCredentialID || created.Key == "" {
+		t.Fatalf("unexpected API key response: %+v", created)
+	}
+
+	introspection, err := client.Introspect(context.Background(), runtimeToken)
+	if err != nil {
+		t.Fatalf("introspection failed: %v", err)
+	}
+	if !introspection.Active || introspection.EntityID != testEntityID || introspection.TenantID != testDomainID {
+		t.Fatalf("unexpected introspection response: %+v", introspection)
+	}
+
+	for _, operation := range []string{"authzCheck", "authorizedObjectIds", "createApiKey", "introspect"} {
+		if !seen[operation] {
+			t.Fatalf("operation %q was not exercised", operation)
+		}
+	}
+}
+
 func TestCreateTenantMapsRouteToAlias(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {

@@ -60,7 +60,6 @@ func runMain() int {
 		log.Printf("init: %v", err)
 		return 1
 	}
-	m.reportDir = *reportDir
 	defer m.Close()
 
 	rep := newReport(mode)

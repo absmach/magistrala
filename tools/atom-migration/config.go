@@ -5,6 +5,7 @@ package main
 
 import (
 	"bufio"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"strings"
@@ -42,6 +43,9 @@ type config struct {
 
 	AtomDSN        string
 	UnmappedAction string
+
+	AtomKeyEncryptionKey   []byte
+	AtomKeyEncryptionKeyID string
 }
 
 // loadConfig reads docker/.env for MG_*_DB_* keys. When fromHost is true the
@@ -79,6 +83,17 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 		Reports:  mk("MG_REPORTS"),
 		AtomDSN:  atomDSN,
 	}
+	if key := strings.TrimSpace(firstNonEmpty(env["ATOM_KEY_ENCRYPTION_KEY"], os.Getenv("ATOM_KEY_ENCRYPTION_KEY"))); key != "" {
+		decoded, err := base64.StdEncoding.DecodeString(key)
+		if err != nil {
+			return config{}, fmt.Errorf("ATOM_KEY_ENCRYPTION_KEY must be base64 encoded: %w", err)
+		}
+		if len(decoded) != 32 {
+			return config{}, fmt.Errorf("ATOM_KEY_ENCRYPTION_KEY must decode to exactly 32 bytes")
+		}
+		cfg.AtomKeyEncryptionKey = decoded
+	}
+	cfg.AtomKeyEncryptionKeyID = orDef(strings.TrimSpace(firstNonEmpty(env["ATOM_KEY_ENCRYPTION_KEY_ID"], os.Getenv("ATOM_KEY_ENCRYPTION_KEY_ID"))), "local:v1")
 
 	// Default names if .env omitted them.
 	defName := map[*string]string{

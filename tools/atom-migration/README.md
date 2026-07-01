@@ -44,21 +44,23 @@ All migration volumes are declared `external`, so `down` can never destroy data.
 Prerequisites: run this on the machine that hosted the old Magistrala compose
 stack. Stop that stack (`docker compose ... down`, **without** `-v`) so the
 per-service DB volumes are free but still present locally — the migrator mounts
-them directly. On `--apply`, the device-key CSV described below lands in
-`tools/atom-migration/report/`.
+them directly. Reports are written under `tools/atom-migration/report/`.
 
 Env overrides: `SRC_VOL_PREFIX` (old volume prefix, default
 `magistrala_magistrala-`), `SRC_DB_USER` / `SRC_DB_PASS` (old Postgres creds,
 default `magistrala`), `DOCKER_PROJECT` (run_latest project; default derived like
 the Makefile), `MIGRATE_PROJECT` (isolated project name, default `atommig`),
-`ATOM_IMAGE_TAG` (Atom image tag to seed with, default `latest`). Pass `--keep`
-to leave the stack up for debugging.
+`ATOM_IMAGE` (full Atom image reference; default from `docker/.env` or
+`ghcr.io/absmach/atom:latest`), `ATOM_IMAGE_TAG` (shorthand for
+`ghcr.io/absmach/atom:<tag>` when `ATOM_IMAGE` is unset), and
+`ATOM_PULL_POLICY` (default `always` for the default Atom image, `missing` for
+custom images). Pass `--keep` to leave the stack up for debugging.
 
 ### Atom schema freshness (`column "alias" does not exist`)
 
 The migrator writes the **current** Atom schema. The schema is created by the
-Atom image (`ghcr.io/absmach/atom:latest`, force-pulled each run) the first time
-its target volume is seeded. Two things follow:
+configured Atom image (`ATOM_IMAGE`, or `ghcr.io/absmach/atom:<ATOM_IMAGE_TAG>`)
+the first time its target volume is seeded. Two things follow:
 
 - A target volume that was **already seeded by an older Atom** (e.g. a previous
   `make run_latest`) keeps that old schema — Atom does not re-run an
@@ -249,20 +251,23 @@ connection must have a matching authz edge. Missing rows are reported as blockin
 | `--report-dir`      | `tools/atom-migration/report` | JSON+markdown report output                          |
 | `--unmapped-action` | `manage`                      | fallback for unmapped MG actions: `manage` or `skip` |
 
-## Credentials are re-issued, not carried
+## Credential handling
 
-Atom authenticates API keys by a credential UUID embedded in the key
-(`atom_<32hex>_<64hex>`, argon2 over the raw 32-byte secret — see Atom
-`src/auth.rs`). Magistrala secrets fit neither the format nor the lookup, so:
+Atom has two machine credential paths that matter for the migration:
+`access_token` bearer credentials (`atom_<32hex>_<64hex>`) and `shared_key`
+credentials used by machine basic-auth style login.
 
-- **Device keys** are re-issued. On `--apply` the migrator writes
-  `report/device-keys-<stamp>.csv` (`client_id,domain_id,identity,api_key`, mode
-  0600). Re-provision devices/bootstrap configs from it, then delete it — the
-  plaintext secret is shown only once.
+- **Device/client keys** (`clients.secret`) are preserved as Atom `shared_key`
+  credentials. The migrator stores an argon2 verifier for the existing plaintext
+  secret plus Atom-compatible encrypted reveal material and lookup digest using
+  `ATOM_KEY_ENCRYPTION_KEY`. That keeps authentication compatible without writing
+  client secrets to a report file, and Atom can reveal the migrated shared key to
+  authorized operators later.
 - **User passwords** (bcrypt → argon2 unconvertible): users land with no password
   credential. Report's `password_reset` TODO lists every user for the email reset.
 - **PAT secrets** (hashed + format): metadata migrates, secret must be re-issued.
-  Report's `pat_reissue` TODO.
+  Migrated PAT rows use Atom `access_token` kind with `secret_hash = NULL` and
+  `metadata.needs_reissue = true`; Report's `pat_reissue` TODO lists them.
 - Transient data not migrated: OTP verifications, short-lived auth `keys`, login
   attempts.
 

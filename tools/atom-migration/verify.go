@@ -39,6 +39,14 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	if err != nil {
 		return err
 	}
+	atomSharedKeys, err := idSet(ctx, m.atom, `SELECT id::text FROM credentials WHERE kind = 'shared_key'`)
+	if err != nil {
+		return err
+	}
+	atomAccessTokens, err := idSet(ctx, m.atom, `SELECT id::text FROM credentials WHERE kind = 'access_token'`)
+	if err != nil {
+		return err
+	}
 
 	// 1. tenants
 	doms, err := readDomains(ctx, m.domainsDB)
@@ -64,6 +72,21 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	m.reconcile(rep, "entities.clients", idsOf(len(clients), func(i int) (string, bool) {
 		return clients[i].ID, domSet[clients[i].DomainID]
 	}), atomEntities)
+	m.reconcile(rep, "credentials.device_shared_keys", idsOf(len(clients), func(i int) (string, bool) {
+		return clientSharedKeyCredentialID(clients[i].ID), domSet[clients[i].DomainID] && clients[i].Secret.Valid && clients[i].Secret.String != ""
+	}), atomSharedKeys)
+
+	pats, err := readPATs(ctx, m.authDB)
+	if err != nil {
+		return err
+	}
+	userSet := map[string]bool{}
+	for _, u := range users {
+		userSet[u.ID] = true
+	}
+	m.reconcile(rep, "credentials.pats", idsOf(len(pats), func(i int) (string, bool) {
+		return pats[i].ID, pats[i].UserID.Valid && userSet[pats[i].UserID.String]
+	}), atomAccessTokens)
 
 	// 4. resources
 	chans, err := readChannels(ctx, m.channelsDB)

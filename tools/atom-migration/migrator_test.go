@@ -3,7 +3,13 @@
 
 package main
 
-import "testing"
+import (
+	"crypto/aes"
+	"crypto/cipher"
+	"testing"
+
+	"github.com/google/uuid"
+)
 
 func TestGroupRoleBlockPlansUseAtomSupportedScopes(t *testing.T) {
 	scope := roleScope{prefix: "groups", scopeMode: "group"}
@@ -81,5 +87,59 @@ func TestMapActionPreservesChannelPublishSubscribeVariants(t *testing.T) {
 		if got != want {
 			t.Fatalf("mapAction(%q) = %q, want %q", raw, got, want)
 		}
+	}
+}
+
+func TestClientSharedKeyCredentialIDIsStable(t *testing.T) {
+	clientID := "11111111-1111-1111-1111-111111111111"
+	got := clientSharedKeyCredentialID(clientID)
+	if got == "" {
+		t.Fatal("expected credential id")
+	}
+	if again := clientSharedKeyCredentialID(clientID); again != got {
+		t.Fatalf("credential id is not stable: got %q then %q", got, again)
+	}
+	if oldAPIKeyID := derivedUUID("devcred", clientID); oldAPIKeyID == got {
+		t.Fatalf("shared-key credential id must not collide with legacy API-key id %q", oldAPIKeyID)
+	}
+}
+
+func TestNewSharedKeyMaterialEncryptsRecoverableSecret(t *testing.T) {
+	secret := "client-secret"
+	credentialID := clientSharedKeyCredentialID("11111111-1111-1111-1111-111111111111")
+	cfg := config{
+		AtomKeyEncryptionKey:   []byte("0123456789abcdef0123456789abcdef"),
+		AtomKeyEncryptionKeyID: "local:test",
+	}
+
+	material, err := newSharedKeyMaterial(credentialID, secret, cfg)
+	if err != nil {
+		t.Fatalf("new shared-key material: %v", err)
+	}
+	if material.Hash == "" || len(material.Ciphertext) == 0 || len(material.Nonce) != aeadNonceLen || len(material.LookupHash) != 32 {
+		t.Fatalf("unexpected material: %+v", material)
+	}
+	if material.KeyID != cfg.AtomKeyEncryptionKeyID || material.EncAlg != sharedKeyAEADAlg {
+		t.Fatalf("unexpected encryption metadata: %+v", material)
+	}
+
+	block, err := aes.NewCipher(cfg.AtomKeyEncryptionKey)
+	if err != nil {
+		t.Fatalf("cipher: %v", err)
+	}
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		t.Fatalf("gcm: %v", err)
+	}
+	credUUID, err := uuid.Parse(credentialID)
+	if err != nil {
+		t.Fatalf("credential id: %v", err)
+	}
+	plaintext, err := aead.Open(nil, material.Nonce, material.Ciphertext, credUUID[:])
+	if err != nil {
+		t.Fatalf("decrypt: %v", err)
+	}
+	if string(plaintext) != secret {
+		t.Fatalf("plaintext = %q, want %q", plaintext, secret)
 	}
 }

@@ -90,7 +90,7 @@ principal group, matching Atom's normal `create_entity` side effect.
 | `name` | `entities.name` (per-tenant unique — handle collisions, §6) |
 | `tags,metadata,private_metadata` | `attributes` |
 | `identity` | `attributes.identity` (and/or `entities.alias` if slug-valid) |
-| `secret` (plaintext) | `credentials` row: `kind='api_key'`, `entity_id=client.id`, `secret_hash`=argon2(secret), `identifier`=client.id, `status` per client status. **See §5 — key-format caveat.** |
+| `secret` (plaintext) | `credentials` row: `kind='shared_key'`, `entity_id=client.id`, `secret_hash`=argon2(secret), `identifier`=identity if present, `status` per client status. **See §5.** |
 | `status` 0/1 | `entities.status` |
 | `parent_group_id` | `object_group_entities` membership (§3.5) |
 
@@ -203,35 +203,33 @@ avoid a foreign-key failure while preserving the invitation record.
 
 ## 5. Credentials (PATs + device secrets)
 
-### Device secrets (clients.secret) — RESOLVED: re-issue keys
+### Device secrets (clients.secret) — RESOLVED: preserve as shared keys
 
 Magistrala stores the device secret in plaintext (looked up `WHERE secret = ...`).
-Atom **cannot reuse it.** Verified against Atom source (`src/auth.rs`):
-- `auth_from_api_key` calls `parse_api_key` then looks up `WHERE c.id = <embedded
-  cred id>` — lookup is by the credential UUID **embedded in the key**, not by an
-  identifier.
-- `parse_api_key` requires exactly `atom_<32 hex cred-id>_<64 hex secret>` (secret
-  must be 32 raw bytes); anything else is rejected as malformed.
+Atom's access-token/API-key path cannot reuse it because `auth_from_api_key`
+requires an `atom_<32 hex cred-id>_<64 hex secret>` bearer value. Atom's newer
+`shared_key` credential path can reuse operator-provided machine secrets.
 
-So a raw Magistrala secret neither fits the format nor is reachable by lookup.
-**Resolution: re-issue.** `phaseDeviceCreds` (`newAtomAPIKey`) mints a fresh
-`atom_<credId>_<secret>` per device, stores `argon2(raw 32-byte secret)` with
-`credentials.id = credId`, and exports `device-keys-<stamp>.csv`
-(`client_id, domain_id, identity, api_key`, mode 0600) for re-provisioning
-(bootstrap configs / device reflash). Credential id is derived (uuidv5 of client
-id) so re-runs are idempotent; the plaintext key is only emitted by the apply run
-that generated it. Validated: emitted key parses and argon2-verifies exactly as
-Atom's auth path does.
+**Resolution: preserve.** `phaseDeviceCreds` creates a deterministic
+`credentials(kind='shared_key')` row per client and stores an argon2 verifier for
+the existing plaintext secret. Using `ATOM_KEY_ENCRYPTION_KEY`, it also stores
+the same encrypted reveal material and HMAC lookup digest Atom writes for newly
+created shared keys:
+- authentication uses the indexed `secret_lookup_hash` path;
+- Atom can reveal migrated shared keys later to authorized operators;
+- no plaintext secrets are written to a migration report file;
+- re-runs are idempotent because the credential id is uuidv5-derived from the
+  client id.
 
 ### PATs (auth.pats + pat_scopes) — RESOLVED: re-issue
 
 `pats.secret` is hashed (Magistrala PAT format), so plaintext isn't recoverable;
-even if it were, it would not fit Atom's `atom_<credId>_<secret>` format (same
-constraint as device keys above). So PATs are **re-issue, no exception.**
+even if it were, it would not fit Atom's `atom_<credId>_<secret>` access-token
+format. So PATs are **re-issue, no exception.**
 `pat_scopes` are preserved in the credential `metadata.scopes` array
 (`domain_id, entity_type, operation, entity_id`) for reference / future policy
 reconstruction.
-- Migrate metadata as `credentials(kind='api_key', entity_id=user_id,
+- Migrate metadata as `credentials(kind='access_token', entity_id=user_id,
   identifier=pat.id, metadata={name,description,scopes,expires_at,...},
   status=revoked?‘revoked’:‘active’, expires_at)`.
 - Because the secret can't be verified by Atom argon2, **mark migrated PATs as
@@ -270,7 +268,7 @@ Checks below; the email check matters mainly for dumps merged across instances
 2. entities (human, device) — without created_by/updated_by FKs first…
 3. …then backfill tenants.created_by/updated_by and resources.owner_id
 4. entity_emails
-5. credentials (device api_key; PAT metadata)
+5. credentials (device shared_key; PAT access_token metadata)
 6. resources (channels, rules, reports)
 7. object_groups → object_group_hierarchy → object_group_entities/resources
 8. roles → permission_blocks → permission_block_actions → role_permission_blocks
@@ -337,18 +335,19 @@ Still recommended manually post-cutover:
 - Spot `POST /authz/check` for a sample of (user, domain, action) and
   (device, channel, publish) allowed pre-migration.
 - Admin login (seeded atom-admin) works; a migrated user completes password reset.
-- A re-issued device key authenticates (§5).
+- A migrated client shared key authenticates (§5).
 
 ---
 
 ## 11. Open items — status
 
-1. **Device key format** (§5) — RESOLVED. Atom looks up by embedded cred UUID and
-   requires `atom_<32hex>_<64hex>`; MG secrets can't be carried → re-issue + CSV
-   export. Implemented + validated.
+1. **Device key format** (§5) — RESOLVED. Atom access tokens still require
+   `atom_<32hex>_<64hex>`, but client secrets now migrate through Atom
+   `shared_key` credentials instead of access tokens. Existing client keys are
+   preserved and no CSV export is needed.
 2. **argon2 params** — RESOLVED. Atom uses `Argon2::default()` (argon2id, v=19,
    m=19456, t=2, p=1, 32-byte tag); migrator emits the matching PHC string and
-   re-issued keys verify against Atom's path.
+   migrated client shared keys verify against Atom's path.
 3. **Groups semantics** (§3.5) — RESOLVED. Magistrala groups have no user-member
    table; only `parent_group_id` (clients/channels) + group-scoped roles. They are
    object groupings → `object_groups`. No principal-group case.

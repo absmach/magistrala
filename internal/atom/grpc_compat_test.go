@@ -28,7 +28,7 @@ func (r *recordingAuthn) Authenticate(_ context.Context, token string) (smqauthn
 	return r.session, r.err
 }
 
-func TestAtomClientsCompatAuthenticatesBasicPasswordWithAtomLogin(t *testing.T) {
+func TestAtomClientsCompatAuthenticatesBasicSharedKeyWithAtomLogin(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/auth/login" {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
@@ -37,7 +37,7 @@ func TestAtomClientsCompatAuthenticatesBasicPasswordWithAtomLogin(t *testing.T) 
 		if err := json.NewDecoder(r.Body).Decode(&got); err != nil {
 			t.Fatalf("decode login request: %v", err)
 		}
-		if got.Identifier != testEntityID || got.Secret != testDeviceSecret || got.Kind != "password" {
+		if got.Identifier != testEntityID || got.Secret != testDeviceSecret || got.Kind != "shared_key" {
 			t.Fatalf("unexpected login request: %+v", got)
 		}
 		_ = json.NewEncoder(w).Encode(LoginResponse{
@@ -55,17 +55,17 @@ func TestAtomClientsCompatAuthenticatesBasicPasswordWithAtomLogin(t *testing.T) 
 
 	res, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
 	if err != nil {
-		t.Fatalf("authenticate basic password: %v", err)
+		t.Fatalf("authenticate basic shared key: %v", err)
 	}
 	if !res.GetAuthenticated() || res.GetId() != testEntityID {
 		t.Fatalf("unexpected response: %+v", res)
 	}
 	if fallback.called {
-		t.Fatal("token fallback should not be called after successful Atom password login")
+		t.Fatal("token fallback should not be called after successful Atom shared-key login")
 	}
 }
 
-func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicPasswordRejected(t *testing.T) {
+func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicSharedKeyRejected(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	}))
@@ -87,7 +87,7 @@ func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicPasswordRejected(t *tes
 	}
 }
 
-func TestAtomClientsCompatDoesNotHideAtomPasswordLoginFailures(t *testing.T) {
+func TestAtomClientsCompatDoesNotHideAtomSharedKeyLoginFailures(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "atom unavailable", http.StatusInternalServerError)
 	}))

@@ -4,11 +4,13 @@
 package main
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
-	"encoding/hex"
 	"fmt"
-	"strings"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/argon2"
@@ -23,7 +25,19 @@ const (
 	argonThreads = 1
 	argonKeyLen  = 32
 	argonSaltLen = 16
+	aeadNonceLen = 12
 )
+
+const sharedKeyAEADAlg = "AES-256-GCM"
+
+type sharedKeyMaterial struct {
+	Hash       string
+	Ciphertext []byte
+	Nonce      []byte
+	KeyID      string
+	EncAlg     string
+	LookupHash []byte
+}
 
 // hashArgon2id produces a PHC-encoded argon2id hash compatible with Atom.
 func hashArgon2id(secret []byte) (string, error) {
@@ -41,27 +55,43 @@ func hashArgon2id(secret []byte) (string, error) {
 	), nil
 }
 
-// newAtomAPIKey mints a fresh Atom-format API key for a device. Atom expects
-// `atom_<32hex-credId>_<64hex-secret>` and verifies argon2 over the raw 32 secret
-// bytes (see atom src/auth.rs parse_api_key / auth_from_api_key). Magistrala's
-// own device secret cannot be reused (arbitrary format, looked up differently),
-// so the key is re-issued and must be re-provisioned to the device.
-//
-// credID is derived deterministically from the client id so re-runs are
-// idempotent (same credential row id), but the returned plaintext key is only
-// usable from the run that generated it.
-func newAtomAPIKey(clientID string) (credID, plaintextKey, secretHash string, err error) {
-	cu := uuid.NewSHA1(uuidNS, []byte("devcred|"+clientID))
-	credIDHex := strings.ReplaceAll(cu.String(), "-", "")
-
-	secret := make([]byte, 32)
-	if _, err = rand.Read(secret); err != nil {
-		return "", "", "", err
+func newSharedKeyMaterial(credentialID, secret string, cfg config) (sharedKeyMaterial, error) {
+	if len(cfg.AtomKeyEncryptionKey) != 32 {
+		return sharedKeyMaterial{}, fmt.Errorf("ATOM_KEY_ENCRYPTION_KEY is required to migrate client shared keys")
 	}
-	hash, err := hashArgon2id(secret)
+	hash, err := hashArgon2id([]byte(secret))
 	if err != nil {
-		return "", "", "", err
+		return sharedKeyMaterial{}, err
 	}
-	key := "atom_" + credIDHex + "_" + hex.EncodeToString(secret)
-	return cu.String(), key, hash, nil
+	credUUID, err := uuid.Parse(credentialID)
+	if err != nil {
+		return sharedKeyMaterial{}, err
+	}
+	block, err := aes.NewCipher(cfg.AtomKeyEncryptionKey)
+	if err != nil {
+		return sharedKeyMaterial{}, err
+	}
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		return sharedKeyMaterial{}, err
+	}
+	nonce := make([]byte, aeadNonceLen)
+	if _, err := rand.Read(nonce); err != nil {
+		return sharedKeyMaterial{}, err
+	}
+	ciphertext := aead.Seal(nil, nonce, []byte(secret), credUUID[:])
+
+	mac := hmac.New(sha256.New, cfg.AtomKeyEncryptionKey)
+	if _, err := mac.Write([]byte(secret)); err != nil {
+		return sharedKeyMaterial{}, err
+	}
+
+	return sharedKeyMaterial{
+		Hash:       hash,
+		Ciphertext: ciphertext,
+		Nonce:      nonce,
+		KeyID:      cfg.AtomKeyEncryptionKeyID,
+		EncAlg:     sharedKeyAEADAlg,
+		LookupHash: mac.Sum(nil),
+	}, nil
 }

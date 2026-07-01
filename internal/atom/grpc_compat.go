@@ -37,7 +37,7 @@ func (c AtomClientsCompat) Authenticate(ctx context.Context, in *clientsv1.Authn
 	if prefix, id, key, err := smqauthn.AuthUnpack(token); err == nil {
 		switch prefix {
 		case smqauthn.BasicAuth:
-			res, loginErr := c.Client.LoginPassword(ctx, id, key)
+			res, loginErr := c.Client.LoginSharedKey(ctx, id, key)
 			if loginErr == nil {
 				return &clientsv1.AuthnRes{Authenticated: true, Id: res.EntityID}, nil
 			}

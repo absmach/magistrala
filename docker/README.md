@@ -17,7 +17,7 @@ make provision_atom_tokens
 make run_latest
 ```
 
-`make provision_atom_tokens` starts Atom, creates per-service Atom API keys, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+`make provision_atom_tokens` starts Atom, creates per-service unscoped Atom access tokens, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
 
 The Atom runtime image is selected with `ATOM_IMAGE` in `docker/.env`. To test Magistrala against a local Atom checkout, build that checkout with a local tag and set `ATOM_IMAGE` to that tag before running Compose.
 

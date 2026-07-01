@@ -150,20 +150,23 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 						"authorizedObjectIds": map[string]any{"ids": []string{testDeviceID}, "total": 1},
 					},
 				})
-			case strings.Contains(payload.Query, "createApiKey"):
-				seen["createApiKey"] = true
-				if payload.Variables["entityId"] != testEntityID {
-					t.Fatalf("unexpected createApiKey entity: %+v", payload.Variables)
-				}
+			case strings.Contains(payload.Query, "createAccessToken"):
+				seen["createAccessToken"] = true
 				input, ok := payload.Variables["input"].(map[string]any)
-				if !ok || input["description"] != "Magistrala service token" {
-					t.Fatalf("unexpected createApiKey input: %+v", payload.Variables["input"])
+				if !ok ||
+					input["name"] != "magistrala-service" ||
+					input["description"] != "Magistrala service token" ||
+					input["subjectId"] != testEntityID ||
+					input["scoped"] != false ||
+					len(input["permissions"].([]any)) != 0 {
+					t.Fatalf("unexpected createAccessToken input: %+v", payload.Variables["input"])
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{
 					"data": map[string]any{
-						"createApiKey": map[string]any{
+						"createAccessToken": map[string]any{
 							"credentialId": testCredentialID,
-							"key":          "atom_00000000000000000000000000000000_0000000000000000000000000000000000000000000000000000000000000000",
+							"token":        "atom_00000000000000000000000000000000_0000000000000000000000000000000000000000000000000000000000000000",
+							"name":         "magistrala-service",
 						},
 					},
 				})
@@ -218,12 +221,12 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 		t.Fatalf("unexpected authorized object listing: %+v", objects)
 	}
 
-	created, err := client.CreateAPIKey(context.Background(), testEntityID, "Magistrala service token")
+	created, err := client.CreateUnscopedAccessToken(context.Background(), testEntityID, "magistrala-service", "Magistrala service token")
 	if err != nil {
-		t.Fatalf("create API key failed: %v", err)
+		t.Fatalf("create access token failed: %v", err)
 	}
-	if created.CredentialID != testCredentialID || created.Key == "" {
-		t.Fatalf("unexpected API key response: %+v", created)
+	if created.CredentialID != testCredentialID || created.Token == "" {
+		t.Fatalf("unexpected access token response: %+v", created)
 	}
 
 	introspection, err := client.Introspect(context.Background(), runtimeToken)
@@ -234,7 +237,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 		t.Fatalf("unexpected introspection response: %+v", introspection)
 	}
 
-	for _, operation := range []string{"authzCheck", "authorizedObjectIds", "createApiKey", "introspect"} {
+	for _, operation := range []string{"authzCheck", "authorizedObjectIds", "createAccessToken", "introspect"} {
 		if !seen[operation] {
 			t.Fatalf("operation %q was not exercised", operation)
 		}

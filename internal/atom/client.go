@@ -495,23 +495,27 @@ func (c *Client) CreatePassword(ctx context.Context, entityID, password string) 
 	}`, map[string]any{"entityId": entityID, "password": password}, nil)
 }
 
-func (c *Client) CreateAPIKey(ctx context.Context, entityID, description string) (APIKeyResponse, error) {
+func (c *Client) CreateUnscopedAccessToken(ctx context.Context, entityID, name, description string) (AccessTokenResponse, error) {
 	var out struct {
-		CreateAPIKey APIKeyResponse `json:"createApiKey"`
+		CreateAccessToken AccessTokenResponse `json:"createAccessToken"`
 	}
-	err := c.graphQL(ctx, `mutation CreateAPIKey($entityId: ID!, $input: CreateApiKeyInput!) {
-		createApiKey(entityId: $entityId, input: $input) {
+	err := c.graphQL(ctx, `mutation CreateAccessToken($input: CreateAccessTokenInput!) {
+		createAccessToken(input: $input) {
 			credentialId
-			key
+			token
+			name
 			expiresAt
 		}
 	}`, map[string]any{
-		"entityId": entityID,
 		"input": map[string]any{
+			"name":        name,
 			"description": description,
+			"subjectId":   entityID,
+			"scoped":      false,
+			"permissions": []any{},
 		},
 	}, &out)
-	return out.CreateAPIKey, err
+	return out.CreateAccessToken, err
 }
 
 func (c *Client) CreateSharedKey(ctx context.Context, entityID, key, description string) (SharedKeyResponse, error) {

@@ -75,7 +75,7 @@ func runProvisionTokens(client *atom.Client, args []string) {
 	fs := flag.NewFlagSet("provision-tokens", flag.ExitOnError)
 	output := fs.String("output", envString("MG_ATOM_TOKENS_OUTPUT", "docker/.env.tokens"), "path to write generated token env file")
 	rotate := fs.String("rotate", "", "rotate one token by name/env var, or all")
-	entityID := fs.String("entity-id", envString("ATOM_SERVICE_ENTITY_ID", atom.DefaultServiceEntityID), "Atom service entity ID to receive API keys")
+	entityID := fs.String("entity-id", envString("ATOM_SERVICE_ENTITY_ID", atom.DefaultServiceEntityID), "Atom service entity ID to receive access tokens")
 	if err := fs.Parse(args); err != nil {
 		log.Fatal(err)
 	}

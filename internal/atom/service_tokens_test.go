@@ -52,7 +52,7 @@ func TestProvisionServiceTokensCreatesMissingToken(t *testing.T) {
 }
 
 func TestProvisionServiceTokensPreservesExistingActiveToken(t *testing.T) {
-	token := apiKeyForCredentialID("11111111-1111-1111-1111-111111111111")
+	token := accessTokenForCredentialID("11111111-1111-1111-1111-111111111111")
 	fake := newFakeAtomTokenServer(t, map[string]bool{token: true})
 	defer fake.Close()
 
@@ -72,7 +72,7 @@ func TestProvisionServiceTokensPreservesExistingActiveToken(t *testing.T) {
 		t.Fatalf("expected token to be preserved, got result %+v", result)
 	}
 	if len(fake.created) != 0 {
-		t.Fatalf("expected no new API key, got %d", len(fake.created))
+		t.Fatalf("expected no new access token, got %d", len(fake.created))
 	}
 	values, err := readTokenEnvFile(output)
 	if err != nil {
@@ -85,7 +85,7 @@ func TestProvisionServiceTokensPreservesExistingActiveToken(t *testing.T) {
 
 func TestProvisionServiceTokensRotatesToken(t *testing.T) {
 	oldCredentialID := "11111111-1111-1111-1111-111111111111"
-	token := apiKeyForCredentialID(oldCredentialID)
+	token := accessTokenForCredentialID(oldCredentialID)
 	fake := newFakeAtomTokenServer(t, map[string]bool{token: true})
 	defer fake.Close()
 
@@ -117,16 +117,16 @@ func TestProvisionServiceTokensRotatesToken(t *testing.T) {
 	}
 }
 
-func TestCredentialIDFromAPIKey(t *testing.T) {
+func TestCredentialIDFromAccessToken(t *testing.T) {
 	want := "11111111-2222-3333-4444-555555555555"
-	got, ok := CredentialIDFromAPIKey(apiKeyForCredentialID(want))
+	got, ok := CredentialIDFromAccessToken(accessTokenForCredentialID(want))
 	if !ok {
 		t.Fatalf("expected credential id to parse")
 	}
 	if got != want {
 		t.Fatalf("unexpected credential id: got %s want %s", got, want)
 	}
-	if _, ok := CredentialIDFromAPIKey("not-an-api-key"); ok {
+	if _, ok := CredentialIDFromAccessToken("not-an-access-token"); ok {
 		t.Fatalf("expected invalid token to be rejected")
 	}
 }
@@ -189,22 +189,35 @@ func (f *fakeAtomTokenServer) handleGraphQL(w http.ResponseWriter, r *http.Reque
 	}
 
 	switch {
-	case strings.Contains(payload.Query, "createApiKey"):
+	case strings.Contains(payload.Query, "createAccessToken"):
 		input := payload.Variables["input"].(map[string]any)
 		f.created = append(f.created, input)
+		if input["name"] != testTokenSpec().Name || input["description"] != testTokenSpec().Description {
+			f.t.Fatalf("unexpected createAccessToken input: %+v", input)
+		}
+		if input["subjectId"] != DefaultServiceEntityID {
+			f.t.Fatalf("unexpected createAccessToken subject: %+v", input)
+		}
+		if scoped, ok := input["scoped"].(bool); !ok || scoped {
+			f.t.Fatalf("expected unscoped access token input, got %+v", input)
+		}
+		if permissions, ok := input["permissions"].([]any); !ok || len(permissions) != 0 {
+			f.t.Fatalf("expected empty permissions for unscoped access token, got %+v", input)
+		}
 		f.nextID++
 		credentialID := credentialIDForIndex(f.nextID)
-		key := apiKeyForCredentialID(credentialID)
-		f.active[key] = true
+		token := accessTokenForCredentialID(credentialID)
+		f.active[token] = true
 		if err := json.NewEncoder(w).Encode(map[string]any{
 			"data": map[string]any{
-				"createApiKey": APIKeyResponse{
+				"createAccessToken": AccessTokenResponse{
 					CredentialID: credentialID,
-					Key:          key,
+					Token:        token,
+					Name:         testTokenSpec().Name,
 				},
 			},
 		}); err != nil {
-			f.t.Fatalf("encode create API key response: %v", err)
+			f.t.Fatalf("encode create access token response: %v", err)
 		}
 	case strings.Contains(payload.Query, "revokeCredential"):
 		credentialID := payload.Variables["credentialId"].(string)
@@ -223,7 +236,7 @@ func testTokenSpec() ServiceTokenSpec {
 	return ServiceTokenSpec{Name: "journal", Env: "MG_ATOM_TOKEN_JOURNAL", Description: "test journal token"}
 }
 
-func apiKeyForCredentialID(id string) string {
+func accessTokenForCredentialID(id string) string {
 	return "atom_" + strings.ReplaceAll(id, "-", "") + "_" + strings.Repeat("a", 64)
 }
 

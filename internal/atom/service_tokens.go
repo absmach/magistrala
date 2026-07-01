@@ -89,21 +89,21 @@ func ProvisionServiceTokens(ctx context.Context, client *Client, opts TokenProvi
 			}
 		}
 		if token != "" && shouldRotate {
-			credentialID, ok := CredentialIDFromAPIKey(token)
+			credentialID, ok := CredentialIDFromAccessToken(token)
 			if ok {
 				if err := client.RevokeCredential(ctx, entityID, credentialID); err != nil && !IsNotFound(err) {
 					return TokenProvisionResult{}, fmt.Errorf("revoke %s credential %s: %w", spec.Env, credentialID, err)
 				}
 			}
 		}
-		created, err := client.CreateAPIKey(ctx, entityID, spec.Description)
+		created, err := client.CreateUnscopedAccessToken(ctx, entityID, spec.Name, spec.Description)
 		if err != nil {
 			return TokenProvisionResult{}, fmt.Errorf("create %s token: %w", spec.Env, err)
 		}
-		if strings.TrimSpace(created.Key) == "" {
-			return TokenProvisionResult{}, fmt.Errorf("create %s token: atom returned an empty key", spec.Env)
+		if strings.TrimSpace(created.Token) == "" {
+			return TokenProvisionResult{}, fmt.Errorf("create %s token: atom returned an empty token", spec.Env)
 		}
-		values[spec.Env] = created.Key
+		values[spec.Env] = created.Token
 		if shouldRotate {
 			result.Rotated = append(result.Rotated, spec.Env)
 		} else {
@@ -125,7 +125,7 @@ func (c *Client) TokenActive(ctx context.Context, token string) (bool, error) {
 	return res.Active, nil
 }
 
-func CredentialIDFromAPIKey(token string) (string, bool) {
+func CredentialIDFromAccessToken(token string) (string, bool) {
 	rest, ok := strings.CutPrefix(strings.TrimSpace(token), "atom_")
 	if !ok {
 		return "", false

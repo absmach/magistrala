@@ -17,7 +17,11 @@ make provision_atom_tokens
 make run_latest
 ```
 
-`make provision_atom_tokens` starts Atom, creates per-service Atom API keys, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+`make provision_atom_tokens` starts Atom, creates per-service unscoped Atom access tokens, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+
+The Atom runtime image is selected with `ATOM_IMAGE` in `docker/.env`. To test Magistrala against a local Atom checkout, build that checkout with a local tag and set `ATOM_IMAGE` to that tag before running Compose.
+
+The generated `MG_ATOM_TOKEN_*` values are intentionally unscoped service credentials for the current integration. Do not replace them with scoped Atom access tokens yet: Atom rejects scoped tokens on owner-wide listing APIs such as `authorizedObjectIds`, and some Magistrala policy-listing paths still use that API.
 
 If you use `docker compose` directly instead of the Makefile, pass both env files:
 

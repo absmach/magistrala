@@ -39,4 +39,47 @@ const (
 
 const atomScopeModeObject = "object"
 
-const atomGraphQLPath = "/graphql"
+const (
+	atomObjectTypeResourceChannel = "resource:channel"
+	atomObjectTypeResourceRule    = "resource:rule"
+	atomObjectTypeResourceReport  = "resource:report"
+	atomObjectTypeResourceAlarm   = "resource:alarm"
+)
+
+const atomDecisionAllow = "allow"
+
+const (
+	atomInputKeyAction       = "action"
+	atomInputKeyCredentialID = "credentialId"
+	atomInputKeyEntityID     = "entityId"
+	atomInputKeyInput        = "input"
+	atomInputKeyKind         = "kind"
+	atomInputKeyName         = "name"
+	atomInputKeyObjectKind   = "objectKind"
+	atomInputKeySubjectID    = "subjectId"
+)
+
+const (
+	atomContextDomainID         = "domain_id"
+	atomContextLegacyObjectType = "legacy_object_type"
+)
+
+const (
+	atomAttributeCreatedAt = "created_at"
+	atomAttributeMetadata  = "metadata"
+	atomAttributeRoute     = "route"
+	atomAttributeSource    = "source"
+	atomAttributeStatus    = "status"
+	atomAttributeTags      = "tags"
+	atomAttributeUpdatedAt = "updated_at"
+	atomAttributeUpdatedBy = "updated_by"
+)
+
+const atomAttributeSourceMagistrala = "magistrala"
+
+const atomServiceTokenJournal = "journal"
+
+const (
+	atomGraphQLPath        = "/graphql"
+	atomAuthIntrospectPath = "/auth/introspect"
+)

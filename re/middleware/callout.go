@@ -24,7 +24,10 @@ type calloutMiddleware struct {
 	entitiesOps permissions.EntitiesOperations[permissions.Operation]
 }
 
-const entityType = "rule"
+const (
+	entityIDKey = "entity_id"
+	entityType  = "rule"
+)
 
 func NewCallout(svc re.Service, callout callout.Callout, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (re.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
@@ -53,7 +56,7 @@ func (cm *calloutMiddleware) AddRule(ctx context.Context, session authn.Session,
 
 func (cm *calloutMiddleware) ViewRule(ctx context.Context, session authn.Session, id string, withRoles bool) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpViewRule, params); err != nil {
@@ -65,7 +68,7 @@ func (cm *calloutMiddleware) ViewRule(ctx context.Context, session authn.Session
 
 func (cm *calloutMiddleware) UpdateRule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": r.ID,
+		entityIDKey: r.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateRule, params); err != nil {
@@ -77,7 +80,7 @@ func (cm *calloutMiddleware) UpdateRule(ctx context.Context, session authn.Sessi
 
 func (cm *calloutMiddleware) UpdateRuleTags(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": r.ID,
+		entityIDKey: r.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateRuleTags, params); err != nil {
@@ -89,7 +92,7 @@ func (cm *calloutMiddleware) UpdateRuleTags(ctx context.Context, session authn.S
 
 func (cm *calloutMiddleware) UpdateRuleSchedule(ctx context.Context, session authn.Session, r re.Rule) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": r.ID,
+		entityIDKey: r.ID,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpUpdateRuleSchedule, params); err != nil {
@@ -113,7 +116,7 @@ func (cm *calloutMiddleware) ListRules(ctx context.Context, session authn.Sessio
 
 func (cm *calloutMiddleware) RemoveRule(ctx context.Context, session authn.Session, id string) error {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpRemoveRule, params); err != nil {
@@ -125,7 +128,7 @@ func (cm *calloutMiddleware) RemoveRule(ctx context.Context, session authn.Sessi
 
 func (cm *calloutMiddleware) EnableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpEnableRule, params); err != nil {
@@ -137,7 +140,7 @@ func (cm *calloutMiddleware) EnableRule(ctx context.Context, session authn.Sessi
 
 func (cm *calloutMiddleware) DisableRule(ctx context.Context, session authn.Session, id string) (re.Rule, error) {
 	params := map[string]any{
-		"entity_id": id,
+		entityIDKey: id,
 	}
 
 	if err := cm.callOut(ctx, session, operations.OpDisableRule, params); err != nil {
@@ -161,7 +164,7 @@ func (cm *calloutMiddleware) Cancel() error {
 
 func (cm *calloutMiddleware) callOut(ctx context.Context, session authn.Session, op permissions.Operation, pld map[string]any) error {
 	var entityID string
-	if id, ok := pld["entity_id"].(string); ok {
+	if id, ok := pld[entityIDKey].(string); ok {
 		entityID = id
 	}
 

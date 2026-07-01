@@ -232,9 +232,10 @@ type LoginResponse struct {
 	ExpiresAt time.Time `json:"expires_at"`
 }
 
-type APIKeyResponse struct {
+type AccessTokenResponse struct {
 	CredentialID string     `json:"credentialId"`
-	Key          string     `json:"key"`
+	Token        string     `json:"token"`
+	Name         string     `json:"name,omitempty"`
 	ExpiresAt    *time.Time `json:"expiresAt,omitempty"`
 }
 

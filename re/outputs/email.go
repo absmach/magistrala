@@ -46,9 +46,9 @@ func (e *Email) Run(ctx context.Context, msg *messaging.Message, val any) error 
 
 func (e *Email) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"type":    EmailType.String(),
-		"to":      e.To,
-		"subject": e.Subject,
-		"content": e.Content,
+		outputTypeKey: EmailType.String(),
+		"to":          e.To,
+		"subject":     e.Subject,
+		"content":     e.Content,
 	})
 }

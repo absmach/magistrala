@@ -225,11 +225,11 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 	}
 
 	clientID := stringHeader(headers, "client_id")
-	publisher := stringHeader(headers, "external_id")
+	publisher := stringHeader(headers, headerExternalID)
 
-	protocol := stringHeader(headers, "protocol")
+	protocol := stringHeader(headers, headerProtocol)
 	if protocol == "" {
-		protocol = "mqtt"
+		protocol = protocolMQTT
 	}
 
 	created := time.Now().UnixNano()

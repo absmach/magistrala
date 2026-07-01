@@ -15,6 +15,12 @@ import (
 
 var _ messaging.Publisher = (*publisher)(nil)
 
+const (
+	headerExternalID = "external_id"
+	headerProtocol   = "protocol"
+	protocolMQTT     = "mqtt"
+)
+
 type publisher struct {
 	client *fluxamqp.Client
 	options
@@ -80,8 +86,8 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 	}
 
 	props := map[string]string{
-		"external_id": msg.GetPublisher(),
-		"protocol":    msg.GetProtocol(),
+		headerExternalID: msg.GetPublisher(),
+		headerProtocol:   msg.GetProtocol(),
 	}
 	if clientID := msg.ClientIdentity(); clientID != "" {
 		props["client_id"] = clientID

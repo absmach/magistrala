@@ -48,6 +48,6 @@ func (s *SenML) Run(ctx context.Context, msg *messaging.Message, val any) error 
 
 func (senml *SenML) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]string{
-		"type": SaveSenMLType.String(),
+		outputTypeKey: SaveSenMLType.String(),
 	})
 }

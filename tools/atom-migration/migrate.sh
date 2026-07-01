@@ -28,6 +28,9 @@
 #   DOCKER_PROJECT     run_latest Compose project (default: derived like the Makefile)
 #   SRC_VOL_PREFIX     old DB volume name prefix   (default: magistrala_magistrala-)
 #   SRC_DB_USER/PASS   old Postgres credentials     (default: magistrala/magistrala)
+#   ATOM_IMAGE         Atom image used to seed schema (default: docker/.env or ghcr.io/absmach/atom:latest)
+#   ATOM_IMAGE_TAG     shorthand for ghcr.io/absmach/atom:<tag> when ATOM_IMAGE is unset
+#   ATOM_PULL_POLICY   Compose pull policy for Atom image (default: always for ghcr.io/absmach/atom, missing otherwise)
 #   MIGRATE_PROJECT    isolated Compose project name (default: atommig)
 
 set -Eeuo pipefail
@@ -77,9 +80,29 @@ envget() { sed -nE "s/^[[:space:]]*$1=//p" "$ENV_FILE" | tail -1 | tr -d '"'"'";
 ATOM_DB_USER="$(envget ATOM_DB_USER)";     ATOM_DB_USER="${ATOM_DB_USER:-atom}"
 ATOM_DB_NAME="$(envget ATOM_DB_NAME)";     ATOM_DB_NAME="${ATOM_DB_NAME:-atom}"
 
+atom_image_from_env_file="$(envget ATOM_IMAGE)"
+if [[ -n "${ATOM_IMAGE:-}" ]]; then
+	:
+elif [[ -n "${ATOM_IMAGE_TAG:-}" ]]; then
+	ATOM_IMAGE="ghcr.io/absmach/atom:$ATOM_IMAGE_TAG"
+elif [[ -n "$atom_image_from_env_file" ]]; then
+	ATOM_IMAGE="$atom_image_from_env_file"
+else
+	ATOM_IMAGE="ghcr.io/absmach/atom:latest"
+fi
+if [[ -z "${ATOM_PULL_POLICY:-}" ]]; then
+	if [[ "$ATOM_IMAGE" == ghcr.io/absmach/atom:* ]]; then
+		ATOM_PULL_POLICY=always
+	else
+		ATOM_PULL_POLICY=missing
+	fi
+fi
+export ATOM_IMAGE ATOM_PULL_POLICY
+
 log "Isolated project : $MIGRATE_PROJECT"
 log "Source volumes   : ${SRC_VOL_PREFIX}<svc>-db-volume"
 log "Atom target vol  : $ATOM_TARGET_VOLUME"
+log "Atom image       : $ATOM_IMAGE (pull_policy=$ATOM_PULL_POLICY)"
 
 # --- preflight: every source volume must exist ---
 missing=()
@@ -140,12 +163,9 @@ log "Building migrator image"
 docker build -q -f "$SCRIPT_DIR/Dockerfile" -t magistrala/atom-migration:dev "$REPO_ROOT" >/dev/null
 
 # Variables consumed by the compose file. docker/.env is passed via --env-file so
-# ATOM_DB_* interpolate; these exports take precedence. The Atom image is tagged
-# independently of MG_RELEASE_TAG (the real compose pins :latest), so default to
-# latest here too; override with ATOM_IMAGE_TAG if you need a specific build.
-export SRC_VOL_PREFIX SRC_PG_IMAGE SRC_MOUNT SRC_PGDATA ATOM_TARGET_VOLUME
+# ATOM_DB_* interpolate; these exports take precedence.
+export SRC_VOL_PREFIX SRC_PG_IMAGE SRC_MOUNT SRC_PGDATA ATOM_TARGET_VOLUME ATOM_IMAGE ATOM_PULL_POLICY
 export SRC_DB_USER="${SRC_DB_USER:-magistrala}" SRC_DB_PASS="${SRC_DB_PASS:-magistrala}"
-export ATOM_IMAGE_TAG="${ATOM_IMAGE_TAG:-latest}"
 export HOST_UID="$(id -u)" HOST_GID="$(id -g)"
 
 dc() { docker compose --env-file "$ENV_FILE" -p "$MIGRATE_PROJECT" -f "$COMPOSE_FILE" "$@"; }

@@ -11,13 +11,15 @@ import (
 )
 
 type fakePolicyClient struct {
-	authorized AuthorizedObjectIDs
-	queries    []AuthorizedObjectIDsQuery
-	capID      string
-	blocks     []CreatePermissionBlock
-	created    []CreateDirectPolicy
-	policies   []DirectPolicy
-	deleted    []string
+	authorized          AuthorizedObjectIDs
+	queries             []AuthorizedObjectIDsQuery
+	directPolicyQueries []DirectPolicyQuery
+	capID               string
+	capIDs              map[string]string
+	blocks              []CreatePermissionBlock
+	created             []CreateDirectPolicy
+	policies            []DirectPolicy
+	deleted             []string
 }
 
 func (f *fakePolicyClient) AuthorizedObjectIDs(_ context.Context, q AuthorizedObjectIDsQuery) (AuthorizedObjectIDs, error) {
@@ -29,7 +31,10 @@ func (f *fakePolicyClient) CheckAuthz(context.Context, AuthzRequest) (AuthzRespo
 	return AuthzResponse{Allowed: true}, nil
 }
 
-func (f *fakePolicyClient) CapabilityID(context.Context, string) (string, error) {
+func (f *fakePolicyClient) CapabilityID(_ context.Context, name string) (string, error) {
+	if f.capIDs != nil && f.capIDs[name] != "" {
+		return f.capIDs[name], nil
+	}
 	if f.capID == "" {
 		return "cap-publish", nil
 	}
@@ -56,7 +61,8 @@ func (f *fakePolicyClient) CreateDirectPolicy(_ context.Context, policy CreateDi
 	return DirectPolicy{ID: "policy-1", PermissionBlockID: policy.PermissionBlockID}, nil
 }
 
-func (f *fakePolicyClient) ListDirectPolicies(context.Context, DirectPolicyQuery) (DirectPolicyList, error) {
+func (f *fakePolicyClient) ListDirectPolicies(_ context.Context, q DirectPolicyQuery) (DirectPolicyList, error) {
+	f.directPolicyQueries = append(f.directPolicyQueries, q)
 	return DirectPolicyList{Items: f.policies, Total: uint64(len(f.policies))}, nil
 }
 

@@ -54,9 +54,9 @@ func TestTokenVerifierRejectsExpiredToken(t *testing.T) {
 	}
 }
 
-func TestTokenVerifierIntrospectsAtomAPIKey(t *testing.T) {
+func TestTokenVerifierIntrospectsAtomAccessToken(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/auth/introspect" || r.Header.Get("Authorization") != "Bearer atom_test" {
+		if r.URL.Path != atomAuthIntrospectPath || r.Header.Get("Authorization") != "Bearer atom_test" {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		_ = json.NewEncoder(w).Encode(IntrospectionResponse{
@@ -69,7 +69,7 @@ func TestTokenVerifierIntrospectsAtomAPIKey(t *testing.T) {
 
 	claims, err := NewTokenVerifier(Config{URL: srv.URL, JWKSURL: srv.URL + "/jwks", Timeout: time.Second}).VerifyTokenClaims(context.Background(), "atom_test")
 	if err != nil {
-		t.Fatalf("verify api key: %v", err)
+		t.Fatalf("verify access token: %v", err)
 	}
 	if claims.SubjectID != "entity-2" || claims.TenantID != "tenant-2" {
 		t.Fatalf("unexpected claims: %+v", claims)

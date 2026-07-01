@@ -64,9 +64,9 @@ func (s *Slack) Run(ctx context.Context, msg *messaging.Message, val any) error 
 
 func (s *Slack) MarshalJSON() ([]byte, error) {
 	return json.Marshal(map[string]any{
-		"type":       SlackType.String(),
-		"token":      s.Token,
-		"channel_id": s.ChannelID,
-		"message":    s.Message,
+		outputTypeKey: SlackType.String(),
+		"token":       s.Token,
+		"channel_id":  s.ChannelID,
+		"message":     s.Message,
 	})
 }

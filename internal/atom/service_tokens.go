@@ -40,7 +40,7 @@ func DefaultServiceTokenSpecs() []ServiceTokenSpec {
 		{Name: "fluxmq-node1", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE1", Description: "Magistrala Docker Compose token for fluxmq-node1"},
 		{Name: "fluxmq-node2", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE2", Description: "Magistrala Docker Compose token for fluxmq-node2"},
 		{Name: "fluxmq-node3", Env: "MG_ATOM_TOKEN_FLUXMQ_NODE3", Description: "Magistrala Docker Compose token for fluxmq-node3"},
-		{Name: "journal", Env: "MG_ATOM_TOKEN_JOURNAL", Description: "Magistrala Docker Compose token for journal"},
+		{Name: atomServiceTokenJournal, Env: "MG_ATOM_TOKEN_JOURNAL", Description: "Magistrala Docker Compose token for journal"},
 		{Name: "notifications", Env: "MG_ATOM_TOKEN_NOTIFICATIONS", Description: "Magistrala Docker Compose token for notifications"},
 		{Name: "timescale-reader", Env: "MG_ATOM_TOKEN_TIMESCALE_READER", Description: "Magistrala Docker Compose token for timescale-reader"},
 		{Name: "re", Env: "MG_ATOM_TOKEN_RE", Description: "Magistrala Docker Compose token for rule engine"},
@@ -89,21 +89,21 @@ func ProvisionServiceTokens(ctx context.Context, client *Client, opts TokenProvi
 			}
 		}
 		if token != "" && shouldRotate {
-			credentialID, ok := CredentialIDFromAPIKey(token)
+			credentialID, ok := CredentialIDFromAccessToken(token)
 			if ok {
 				if err := client.RevokeCredential(ctx, entityID, credentialID); err != nil && !IsNotFound(err) {
 					return TokenProvisionResult{}, fmt.Errorf("revoke %s credential %s: %w", spec.Env, credentialID, err)
 				}
 			}
 		}
-		created, err := client.CreateAPIKey(ctx, entityID, spec.Description)
+		created, err := client.CreateUnscopedAccessToken(ctx, entityID, spec.Name, spec.Description)
 		if err != nil {
 			return TokenProvisionResult{}, fmt.Errorf("create %s token: %w", spec.Env, err)
 		}
-		if strings.TrimSpace(created.Key) == "" {
-			return TokenProvisionResult{}, fmt.Errorf("create %s token: atom returned an empty key", spec.Env)
+		if strings.TrimSpace(created.Token) == "" {
+			return TokenProvisionResult{}, fmt.Errorf("create %s token: atom returned an empty token", spec.Env)
 		}
-		values[spec.Env] = created.Key
+		values[spec.Env] = created.Token
 		if shouldRotate {
 			result.Rotated = append(result.Rotated, spec.Env)
 		} else {
@@ -125,7 +125,7 @@ func (c *Client) TokenActive(ctx context.Context, token string) (bool, error) {
 	return res.Active, nil
 }
 
-func CredentialIDFromAPIKey(token string) (string, bool) {
+func CredentialIDFromAccessToken(token string) (string, bool) {
 	rest, ok := strings.CutPrefix(strings.TrimSpace(token), "atom_")
 	if !ok {
 		return "", false

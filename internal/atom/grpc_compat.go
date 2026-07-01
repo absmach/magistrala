@@ -5,6 +5,7 @@ package atom
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -14,14 +15,21 @@ import (
 	domainsv1 "github.com/absmach/magistrala/api/grpc/domains/v1"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
+	"github.com/absmach/magistrala/pkg/policies"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+type clientsCompatAtomClient interface {
+	policyClient
+	policyWriter
+	LoginSharedKey(ctx context.Context, identifier, secret string) (LoginResponse, error)
+}
+
 type AtomClientsCompat struct {
 	Authn  smqauthn.Authentication
-	Client *Client
+	Client clientsCompatAtomClient
 }
 
 func NewClientsCompat(authn smqauthn.Authentication, client ...*Client) clientsv1.ClientsServiceClient {
@@ -71,12 +79,26 @@ func (c AtomClientsCompat) RetrieveEntities(context.Context, *commonv1.RetrieveE
 	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
 }
 
-func (c AtomClientsCompat) AddConnections(context.Context, *commonv1.AddConnectionsReq, ...grpc.CallOption) (*commonv1.AddConnectionsRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+func (c AtomClientsCompat) AddConnections(ctx context.Context, in *commonv1.AddConnectionsReq, _ ...grpc.CallOption) (*commonv1.AddConnectionsRes, error) {
+	prs, err := connectionPolicies(in.GetConnections())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := NewPolicyService(c.Client).AddPolicies(ctx, prs); err != nil {
+		return nil, err
+	}
+	return &commonv1.AddConnectionsRes{Ok: true}, nil
 }
 
-func (c AtomClientsCompat) RemoveConnections(context.Context, *commonv1.RemoveConnectionsReq, ...grpc.CallOption) (*commonv1.RemoveConnectionsRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+func (c AtomClientsCompat) RemoveConnections(ctx context.Context, in *commonv1.RemoveConnectionsReq, _ ...grpc.CallOption) (*commonv1.RemoveConnectionsRes, error) {
+	prs, err := connectionPolicies(in.GetConnections())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+	if err := NewPolicyService(c.Client).DeletePolicies(ctx, prs); err != nil {
+		return nil, err
+	}
+	return &commonv1.RemoveConnectionsRes{Ok: true}, nil
 }
 
 func (c AtomClientsCompat) RemoveChannelConnections(context.Context, *clientsv1.RemoveChannelConnectionsReq, ...grpc.CallOption) (*clientsv1.RemoveChannelConnectionsRes, error) {
@@ -85,6 +107,36 @@ func (c AtomClientsCompat) RemoveChannelConnections(context.Context, *clientsv1.
 
 func (c AtomClientsCompat) UnsetParentGroupFromClient(context.Context, *clientsv1.UnsetParentGroupFromClientReq, ...grpc.CallOption) (*clientsv1.UnsetParentGroupFromClientRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+}
+
+func connectionPolicies(conns []*commonv1.Connection) ([]policies.Policy, error) {
+	prs := make([]policies.Policy, 0, len(conns))
+	for _, conn := range conns {
+		permission, err := connectionPermission(connections.ConnType(conn.GetType()))
+		if err != nil {
+			return nil, err
+		}
+		prs = append(prs, policies.Policy{
+			Domain:      conn.GetDomainId(),
+			Subject:     conn.GetClientId(),
+			SubjectType: policies.ClientType,
+			Object:      conn.GetChannelId(),
+			ObjectType:  policies.ChannelType,
+			Permission:  permission,
+		})
+	}
+	return prs, nil
+}
+
+func connectionPermission(connType connections.ConnType) (string, error) {
+	switch connType {
+	case connections.Publish:
+		return policies.PublishPermission, nil
+	case connections.Subscribe:
+		return policies.SubscribePermission, nil
+	default:
+		return "", fmt.Errorf("unknown connection type %d", connType)
+	}
 }
 
 type AtomDomainsCompat struct {

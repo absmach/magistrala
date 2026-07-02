@@ -137,6 +137,7 @@ func main() {
 		connect.WithInterceptors(otelInterceptor),
 	)
 	mux.Handle(path, handler)
+	mux.Handle("/hooks", fluxmqhttp.MakeHooksHandler(parser))
 	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte(`{"status":"ok"}`)) //nolint:errcheck // HTTP response write; client disconnect is non-fatal.

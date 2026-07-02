@@ -133,3 +133,19 @@ auth:
     coap: true
     amqp: true
     amqp091: false
+
+hooks:
+  url: "http://fluxmq-auth:7016"
+  transport: "http"
+  timeout: 500ms
+  fail_mode: "deny"
+  protocols:
+    mqtt: true
+    http: true
+    coap: true
+    amqp: true
+    amqp091: true
+  events:
+    auth_on_publish: true
+    auth_on_subscribe: true
+    auth_on_unsubscribe: true

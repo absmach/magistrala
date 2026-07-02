@@ -145,9 +145,7 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 		return nil, encodeError(err)
 	}
 
-	return connect.NewResponse(&authv1.AuthzRes{
-		Authorized: res.GetAuthorized(),
-	}), nil
+	return connect.NewResponse(&authv1.AuthzRes{Authorized: res.GetAuthorized()}), nil
 }
 
 func shouldTryDomainAuth(msg *authv1.AuthnReq, username, password string) bool {

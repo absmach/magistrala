@@ -84,6 +84,52 @@ func TestHooksHandlerUsesSubscribeParserForSubscribeAndUnsubscribe(t *testing.T)
 	}
 }
 
+func TestHooksHandlerAllowsAMQP091MessageStreamWildcard(t *testing.T) {
+	cases := []struct {
+		desc     string
+		protocol string
+		topic    string
+	}{
+		{desc: "plain topic", protocol: "amqp091", topic: "m/#"},
+		{desc: "leading slash topic", protocol: "amqp091", topic: "/m/#"},
+		{desc: "uppercase protocol", protocol: "AMQP091", topic: "m/#"},
+	}
+	for _, tc := range cases {
+		for _, hook := range []string{hookAuthOnSubscribe, hookAuthOnUnsubscribe} {
+			parser := &fakeHookParser{err: errors.New("must not parse stream queue wildcard")}
+			req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{"hook":"`+hook+`","protocol":"`+tc.protocol+`","topic":"`+tc.topic+`"}`))
+			w := httptest.NewRecorder()
+
+			MakeHooksHandler(parser).ServeHTTP(w, req)
+
+			require.Equal(t, 200, w.Code, tc.desc)
+			require.False(t, parser.publishCalled, tc.desc)
+			require.False(t, parser.subscribeCalled, tc.desc)
+
+			var res hookResponse
+			require.NoError(t, json.NewDecoder(w.Body).Decode(&res), tc.desc)
+			require.Equal(t, hookResultOK, res.Result, tc.desc)
+			require.Equal(t, "m/#", res.Topic, tc.desc)
+		}
+	}
+}
+
+func TestHooksHandlerStillParsesMQTTMessageWildcard(t *testing.T) {
+	parser := &fakeHookParser{err: errors.New("malformed topic")}
+	req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{"hook":"auth_on_subscribe","protocol":"mqtt","topic":"m/#"}`))
+	w := httptest.NewRecorder()
+
+	MakeHooksHandler(parser).ServeHTTP(w, req)
+
+	require.Equal(t, 200, w.Code)
+	require.False(t, parser.publishCalled)
+	require.True(t, parser.subscribeCalled)
+
+	var res hookResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&res))
+	require.Equal(t, hookResultDeny, res.Result)
+}
+
 func TestHooksHandlerReturnsOKForNonMGTopic(t *testing.T) {
 	req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{"hook":"auth_on_publish","topic":"$SYS/broker/uptime"}`))
 	w := httptest.NewRecorder()

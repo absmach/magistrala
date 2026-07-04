@@ -83,6 +83,11 @@ func handleHook(ctx context.Context, parser messaging.TopicParser, req hookReque
 }
 
 func resolveHookTopic(ctx context.Context, parser messaging.TopicParser, req hookRequest) (string, error) {
+	hook := strings.ToLower(strings.TrimSpace(req.Hook))
+	if isAMQP091MessageStreamConsume(req, hook) {
+		return strings.TrimPrefix(strings.TrimSpace(req.Topic), "/"), nil
+	}
+
 	if !isMessageTopic(req.Topic) {
 		return "", nil
 	}
@@ -94,7 +99,7 @@ func resolveHookTopic(ctx context.Context, parser messaging.TopicParser, req hoo
 	var topicType messaging.TopicType
 	var err error
 
-	switch strings.ToLower(strings.TrimSpace(req.Hook)) {
+	switch hook {
 	case hookAuthOnPublish:
 		domainID, channelID, subtopic, topicType, err = parser.ParsePublishTopic(ctx, req.Topic, true)
 	case hookAuthOnSubscribe, hookAuthOnUnsubscribe:
@@ -116,4 +121,25 @@ func isMessageTopic(topic string) bool {
 	topic = strings.TrimSpace(topic)
 	topic = strings.TrimPrefix(topic, "/")
 	return strings.HasPrefix(topic, string(messaging.MsgTopicPrefix)+"/")
+}
+
+// isAMQP091MessageStreamConsume reports whether the request is an AMQP 0-9-1
+// stream-queue consume of the full message firehose (m/#), which is passed
+// through without parsing because the topic parser cannot resolve a
+// channel-level wildcard.
+//
+// SECURITY: in the default deployment the auth callout is disabled for
+// amqp091 (docker/fluxmq/node*.yaml), so this allow is the only gate for
+// stream consume. The amqp091 listener must remain network-restricted until
+// identity-gated authorization for m/# lands in the gRPC Authorize path.
+func isAMQP091MessageStreamConsume(req hookRequest, hook string) bool {
+	if hook != hookAuthOnSubscribe && hook != hookAuthOnUnsubscribe {
+		return false
+	}
+	if strings.ToLower(strings.TrimSpace(req.Protocol)) != "amqp091" {
+		return false
+	}
+
+	topic := strings.TrimPrefix(strings.TrimSpace(req.Topic), "/")
+	return topic == string(messaging.MsgTopicPrefix)+"/#"
 }

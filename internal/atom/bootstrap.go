@@ -72,6 +72,12 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
 	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmAssign, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmAcknowledge, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
+	{ActionName: atomActionAlarmResolve, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
 }
 
 var magistralaActionAssignmentRules = []ActionAssignmentRuleSpec{

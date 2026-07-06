@@ -140,6 +140,9 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
 		if err := am.authorizeTenantAlarm(ctx, operations.OpViewAlarm, session); err != nil {
+			if alarmErr := am.authorizeAlarmType(ctx, operations.OpViewAlarm, session, ""); alarmErr == nil {
+				break
+			}
 			if pm.RuleID != "" {
 				if ruleErr := am.authorizeRuleRead(ctx, session, pm.RuleID); ruleErr != nil {
 					return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
@@ -183,6 +186,9 @@ func (am *authorizationMiddleware) authorizeAlarmOrRule(ctx context.Context, op 
 	if tenantErr == nil {
 		return nil
 	}
+	if err := am.authorizeAlarmType(ctx, op, session, alarm.ID); err == nil {
+		return nil
+	}
 	if alarm.RuleID == "" {
 		return tenantErr
 	}
@@ -197,6 +203,9 @@ func (am *authorizationMiddleware) authorizeViewAlarm(ctx context.Context, sessi
 	if tenantErr == nil {
 		return nil
 	}
+	if err := am.authorizeAlarmType(ctx, operations.OpViewAlarm, session, alarm.ID); err == nil {
+		return nil
+	}
 	if alarm.RuleID == "" {
 		return tenantErr
 	}
@@ -208,6 +217,10 @@ func (am *authorizationMiddleware) authorizeViewAlarm(ctx context.Context, sessi
 
 func (am *authorizationMiddleware) authorizeTenantAlarm(ctx context.Context, op permissions.Operation, session authn.Session) error {
 	return am.authorize(ctx, op, session, policies.DomainType, session.DomainID, atom.KindAlarm)
+}
+
+func (am *authorizationMiddleware) authorizeAlarmType(ctx context.Context, op permissions.Operation, session authn.Session, alarmID string) error {
+	return am.authorize(ctx, op, session, policies.AlarmsType, alarmID, atom.KindAlarm)
 }
 
 func (am *authorizationMiddleware) authorizeRuleRead(ctx context.Context, session authn.Session, ruleID string) error {

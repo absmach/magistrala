@@ -85,7 +85,12 @@ func TestListAlarmsFiltersToReadableRulesWhenTenantAlarmReadDenied(t *testing.T)
 	_, err = wrapped.ListAlarms(context.Background(), authn.Session{UserID: "user-1", DomainID: "domain-1"}, pm)
 
 	require.NoError(t, err)
-	require.Len(t, authz.reqs, 1)
+	require.Len(t, authz.reqs, 2)
+	assert.Equal(t, "alarm_read", authz.reqs[0].Action)
+	assert.Equal(t, "tenant", authz.reqs[0].ObjectKind)
+	assert.Equal(t, "alarm_read", authz.reqs[1].Action)
+	assert.Equal(t, "resource", authz.reqs[1].ObjectKind)
+	assert.Equal(t, "alarms", authz.reqs[1].Context["legacy_object_type"])
 	require.Len(t, authz.queries, 1)
 	assert.Equal(t, atom.AuthorizedObjectIDsQuery{
 		SubjectID:  "user-1",
@@ -115,9 +120,38 @@ func TestListAlarmsWithRuleFilterAuthorizesRuleRead(t *testing.T) {
 	_, err = wrapped.ListAlarms(context.Background(), session, pm)
 
 	require.NoError(t, err)
-	require.Len(t, authz.reqs, 2)
+	require.Len(t, authz.reqs, 3)
 	assert.Equal(t, "alarm_read", authz.reqs[0].Action)
-	assert.Equal(t, "read", authz.reqs[1].Action)
+	assert.Equal(t, "alarm_read", authz.reqs[1].Action)
+	assert.Equal(t, "resource", authz.reqs[1].ObjectKind)
+	assert.Equal(t, "alarms", authz.reqs[1].Context["legacy_object_type"])
+	assert.Equal(t, "read", authz.reqs[2].Action)
+}
+
+func TestListAlarmsAuthorizesAlarmTypeWhenTenantDenied(t *testing.T) {
+	svc := mocks.NewService(t)
+	pm := alarms.PageMetadata{Limit: 10}
+	expectedPM := pm
+	expectedPM.DomainID = "domain-1"
+	session := authn.Session{UserID: "user-1", DomainID: "domain-1"}
+	authz := &recordingAtomAuthorizer{
+		allow: func(req atom.AuthzRequest) bool {
+			return req.Action == "alarm_read" &&
+				req.ObjectKind == "resource" &&
+				req.Context["legacy_object_type"] == "alarms"
+		},
+	}
+	wrapped, err := NewAtomAuthorizationMiddleware(svc, authz, testEntitiesOps(t))
+	require.NoError(t, err)
+
+	svc.On("ListAlarms", mock.Anything, session, expectedPM).Return(alarms.AlarmsPage{Limit: 10}, nil).Once()
+	_, err = wrapped.ListAlarms(context.Background(), session, pm)
+
+	require.NoError(t, err)
+	require.Len(t, authz.reqs, 2)
+	assert.Equal(t, "tenant", authz.reqs[0].ObjectKind)
+	assert.Equal(t, "resource", authz.reqs[1].ObjectKind)
+	require.Empty(t, authz.queries)
 }
 
 func TestListAlarmsSuperAdminSkipsListAuthorization(t *testing.T) {
@@ -158,7 +192,7 @@ func TestAcknowledgeAlarmAuthorizesRuleAlarmActionWhenTenantDenied(t *testing.T)
 	_, err = wrapped.UpdateAlarm(context.Background(), session, update)
 
 	require.NoError(t, err)
-	require.Len(t, authz.reqs, 2)
+	require.Len(t, authz.reqs, 3)
 	assert.Equal(t, atom.AuthzRequest{
 		SubjectID:  "user-1",
 		Action:     "alarm_acknowledge",
@@ -173,6 +207,17 @@ func TestAcknowledgeAlarmAuthorizesRuleAlarmActionWhenTenantDenied(t *testing.T)
 	assert.Equal(t, atom.AuthzRequest{
 		SubjectID:  "user-1",
 		Action:     "alarm_acknowledge",
+		ResourceID: "alarm-1",
+		ObjectKind: "resource",
+		ObjectID:   "alarm-1",
+		Context: map[string]any{
+			"domain_id":          "domain-1",
+			"legacy_object_type": "alarms",
+		},
+	}, authz.reqs[1])
+	assert.Equal(t, atom.AuthzRequest{
+		SubjectID:  "user-1",
+		Action:     "alarm_acknowledge",
 		ResourceID: "rule-1",
 		ObjectKind: "resource",
 		ObjectID:   "rule-1",
@@ -180,7 +225,34 @@ func TestAcknowledgeAlarmAuthorizesRuleAlarmActionWhenTenantDenied(t *testing.T)
 			"domain_id":          "domain-1",
 			"legacy_object_type": "rules",
 		},
-	}, authz.reqs[1])
+	}, authz.reqs[2])
+}
+
+func TestAcknowledgeAlarmAuthorizesAlarmTypeWhenTenantDenied(t *testing.T) {
+	svc := mocks.NewService(t)
+	session := authn.Session{UserID: "user-1", DomainID: "domain-1"}
+	current := alarms.Alarm{ID: "alarm-1", RuleID: "rule-1", DomainID: "domain-1"}
+	update := alarms.Alarm{ID: "alarm-1", AcknowledgedBy: "user-1"}
+	authz := &recordingAtomAuthorizer{
+		allow: func(req atom.AuthzRequest) bool {
+			return req.Action == "alarm_acknowledge" &&
+				req.ObjectKind == "resource" &&
+				req.ObjectID == "alarm-1" &&
+				req.Context["legacy_object_type"] == "alarms"
+		},
+	}
+	wrapped, err := NewAtomAuthorizationMiddleware(svc, authz, testEntitiesOps(t))
+	require.NoError(t, err)
+
+	svc.On("ViewAlarm", mock.Anything, session, "alarm-1").Return(current, nil).Once()
+	svc.On("UpdateAlarm", mock.Anything, session, update).Return(update, nil).Once()
+	_, err = wrapped.UpdateAlarm(context.Background(), session, update)
+
+	require.NoError(t, err)
+	require.Len(t, authz.reqs, 2)
+	assert.Equal(t, "tenant", authz.reqs[0].ObjectKind)
+	assert.Equal(t, "resource", authz.reqs[1].ObjectKind)
+	assert.Equal(t, "alarms", authz.reqs[1].Context["legacy_object_type"])
 }
 
 func testEntitiesOps(t *testing.T) permissions.EntitiesOperations[permissions.Operation] {

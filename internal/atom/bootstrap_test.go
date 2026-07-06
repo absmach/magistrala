@@ -103,7 +103,7 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 		t.Fatalf("bootstrap failed: %v", err)
 	}
 
-	for _, name := range []string{atomActionRead, atomActionWrite, atomActionDelete, atomActionManage, atomActionPublish, atomActionSubscribe, atomActionExecute, atomActionList} {
+	for _, name := range []string{atomActionRead, atomActionWrite, atomActionDelete, atomActionManage, atomActionPublish, atomActionSubscribe, atomActionExecute, atomActionList, atomActionAlarmRead, atomActionAlarmUpdate, atomActionAlarmDelete, atomActionAlarmAssign, atomActionAlarmAcknowledge, atomActionAlarmResolve} {
 		if _, ok := actions[name]; !ok {
 			t.Fatalf("action %q was not ensured", name)
 		}
@@ -112,6 +112,12 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 		t.Fatalf("unexpected applicability count: got %d want %d", len(applicability), len(magistralaActionApplicability))
 	}
 	assertApplicability(t, applicability, "write-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_read-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_update-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_delete-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_assign-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_acknowledge-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "alarm_resolve-id", atomObjectKindTenant, "")
 	assertApplicability(t, applicability, "read-id", atomObjectKindGroup, "")
 	assertApplicability(t, applicability, "write-id", atomObjectKindGroup, "")
 	assertApplicability(t, applicability, "delete-id", atomObjectKindGroup, "")
@@ -120,6 +126,11 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	assertApplicability(t, applicability, "publish-id", atomObjectKindResource, "resource:channel")
 	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_update-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_delete-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_assign-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_acknowledge-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_resolve-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:report")
 	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:report")
 	assertApplicability(t, applicability, "manage-id", atomObjectKindResource, "resource:alarm")

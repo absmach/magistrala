@@ -57,6 +57,7 @@ type PageMetadata struct {
 	Limit          uint64    `json:"limit"           db:"limit"`
 	DomainID       string    `json:"domain_id"       db:"domain_id"`
 	RuleID         string    `json:"rule_id"         db:"rule_id"`
+	RuleIDs        []string  `json:"rule_ids"        db:"rule_ids"`
 	ChannelID      string    `json:"channel_id"      db:"channel_id"`
 	ClientID       string    `json:"client_id"       db:"client_id"`
 	Subtopic       string    `json:"subtopic"        db:"subtopic"`

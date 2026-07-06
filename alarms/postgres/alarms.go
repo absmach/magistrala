@@ -464,6 +464,9 @@ func pageQueryConditions(pm alarms.PageMetadata) []string {
 	if pm.RuleID != "" {
 		query = append(query, "alarms.rule_id = :rule_id")
 	}
+	if len(pm.RuleIDs) > 0 {
+		query = append(query, "alarms.rule_id = ANY(:rule_ids)")
+	}
 	if pm.ChannelID != "" {
 		query = append(query, "alarms.channel_id = :channel_id")
 	}

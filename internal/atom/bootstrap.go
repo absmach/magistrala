@@ -17,10 +17,23 @@ var magistralaActionDescriptions = map[string]string{
 	atomActionSubscribe: "Subscribe to channel messages",
 	atomActionExecute:   "Execute a command or action",
 	atomActionList:      "List objects",
+
+	atomActionAlarmRead:        "Read alarms in a tenant or rule scope",
+	atomActionAlarmUpdate:      "Update alarms in a tenant or rule scope",
+	atomActionAlarmDelete:      "Delete alarms in a tenant or rule scope",
+	atomActionAlarmAssign:      "Assign alarms in a tenant or rule scope",
+	atomActionAlarmAcknowledge: "Acknowledge alarms in a tenant or rule scope",
+	atomActionAlarmResolve:     "Resolve alarms in a tenant or rule scope",
 }
 
 var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmRead, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmAssign, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmAcknowledge, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionAlarmResolve, ObjectKind: atomObjectKindTenant},
 
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindGroup},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindGroup},
@@ -41,6 +54,11 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmAssign, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmAcknowledge, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmResolve, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},

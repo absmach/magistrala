@@ -33,6 +33,16 @@ type authorizationMiddleware struct {
 
 var _ alarms.Service = (*authorizationMiddleware)(nil)
 
+const (
+	atomObjectKindResource      = "resource"
+	atomObjectTypeResourceRule  = "resource:" + atom.KindRule
+	atomAuthorizedRulePageLimit = 100
+)
+
+type atomAuthorizedObjectLister interface {
+	AuthorizedObjectIDs(ctx context.Context, q atom.AuthorizedObjectIDsQuery) (atom.AuthorizedObjectIDs, error)
+}
+
 func NewAuthorizationMiddleware(svc alarms.Service, authz smqauthz.Authorization, entitiesOps permissions.EntitiesOperations[permissions.Operation]) (alarms.Service, error) {
 	if err := entitiesOps.Validate(); err != nil {
 		return nil, err
@@ -62,14 +72,19 @@ func (am *authorizationMiddleware) CreateAlarm(ctx context.Context, alarm alarms
 }
 
 func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) (alarms.Alarm, error) {
+	current, err := am.svc.ViewAlarm(ctx, session, alarm.ID)
+	if err != nil {
+		return alarms.Alarm{}, err
+	}
+
 	if len(alarm.Metadata) > 0 {
-		if err := am.authorize(ctx, operations.OpUpdateAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorizeAlarmOrRule(ctx, operations.OpUpdateAlarm, session, current); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	}
 
 	if alarm.AssigneeID != "" {
-		if err := am.authorize(ctx, operations.OpAssignAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorizeAlarmOrRule(ctx, operations.OpAssignAlarm, session, current); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 		if am.atomAuthz == nil {
@@ -89,13 +104,13 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 	}
 
 	if alarm.AcknowledgedBy != "" {
-		if err := am.authorize(ctx, operations.OpAcknowledgeAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorizeAlarmOrRule(ctx, operations.OpAcknowledgeAlarm, session, current); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	}
 
 	if alarm.ResolvedBy != "" {
-		if err := am.authorize(ctx, operations.OpResolveAlarm, session, policies.DomainType, session.DomainID); err != nil {
+		if err := am.authorizeAlarmOrRule(ctx, operations.OpResolveAlarm, session, current); err != nil {
 			return alarms.Alarm{}, errors.Wrap(errDomainUpdateAlarms, err)
 		}
 	}
@@ -104,7 +119,11 @@ func (am *authorizationMiddleware) UpdateAlarm(ctx context.Context, session auth
 }
 
 func (am *authorizationMiddleware) DeleteAlarm(ctx context.Context, session authn.Session, id string) error {
-	if err := am.authorize(ctx, operations.OpDeleteAlarm, session, policies.DomainType, session.DomainID); err != nil {
+	alarm, err := am.svc.ViewAlarm(ctx, session, id)
+	if err != nil {
+		return err
+	}
+	if err := am.authorizeAlarmOrRule(ctx, operations.OpDeleteAlarm, session, alarm); err != nil {
 		return errors.Wrap(errDomainDeleteAlarms, err)
 	}
 
@@ -120,8 +139,25 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 	case err == nil:
 		session.SuperAdmin = true
 	case errors.Contains(err, svcerr.ErrSuperAdminAction):
-		if err := am.authorize(ctx, operations.OpListAlarms, session, policies.DomainType, session.DomainID); err != nil {
-			return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+		if err := am.authorizeTenantAlarm(ctx, operations.OpViewAlarm, session); err != nil {
+			if pm.RuleID != "" {
+				if ruleErr := am.authorizeRuleRead(ctx, session, pm.RuleID); ruleErr != nil {
+					return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+				}
+				break
+			}
+			ruleIDs, ruleErr := am.authorizedReadableRuleIDs(ctx, session)
+			if ruleErr != nil {
+				return alarms.AlarmsPage{}, errors.Wrap(errDomainViewAlarms, err)
+			}
+			if len(ruleIDs) == 0 {
+				return alarms.AlarmsPage{
+					Offset: pm.Offset,
+					Limit:  pm.Limit,
+					Alarms: []alarms.Alarm{},
+				}, nil
+			}
+			pm.RuleIDs = ruleIDs
 		}
 	default:
 		return alarms.AlarmsPage{}, err
@@ -131,20 +167,101 @@ func (am *authorizationMiddleware) ListAlarms(ctx context.Context, session authn
 }
 
 func (am *authorizationMiddleware) ViewAlarm(ctx context.Context, session authn.Session, id string) (alarms.Alarm, error) {
-	if err := am.authorize(ctx, operations.OpViewAlarm, session, policies.DomainType, session.DomainID); err != nil {
+	alarm, err := am.svc.ViewAlarm(ctx, session, id)
+	if err != nil {
+		return alarms.Alarm{}, err
+	}
+	if err := am.authorizeViewAlarm(ctx, session, alarm); err != nil {
 		return alarms.Alarm{}, errors.Wrap(errDomainViewAlarms, err)
 	}
 
-	return am.svc.ViewAlarm(ctx, session, id)
+	return alarm, nil
 }
 
-func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj string) error {
+func (am *authorizationMiddleware) authorizeAlarmOrRule(ctx context.Context, op permissions.Operation, session authn.Session, alarm alarms.Alarm) error {
+	tenantErr := am.authorizeTenantAlarm(ctx, op, session)
+	if tenantErr == nil {
+		return nil
+	}
+	if alarm.RuleID == "" {
+		return tenantErr
+	}
+	if err := am.authorize(ctx, op, session, policies.RulesType, alarm.RuleID, atom.KindRule); err != nil {
+		return tenantErr
+	}
+	return nil
+}
+
+func (am *authorizationMiddleware) authorizeViewAlarm(ctx context.Context, session authn.Session, alarm alarms.Alarm) error {
+	tenantErr := am.authorizeTenantAlarm(ctx, operations.OpViewAlarm, session)
+	if tenantErr == nil {
+		return nil
+	}
+	if alarm.RuleID == "" {
+		return tenantErr
+	}
+	if err := am.authorizeRuleRead(ctx, session, alarm.RuleID); err != nil {
+		return tenantErr
+	}
+	return nil
+}
+
+func (am *authorizationMiddleware) authorizeTenantAlarm(ctx context.Context, op permissions.Operation, session authn.Session) error {
+	return am.authorize(ctx, op, session, policies.DomainType, session.DomainID, atom.KindAlarm)
+}
+
+func (am *authorizationMiddleware) authorizeRuleRead(ctx context.Context, session authn.Session, ruleID string) error {
+	if am.atomAuthz != nil {
+		return atom.Authorize(ctx, am.atomAuthz, session, policies.ViewPermission, policies.RulesType, ruleID, atom.KindRule)
+	}
+	pr := smqauthz.PolicyReq{
+		Domain:      session.DomainID,
+		SubjectType: policies.UserType,
+		SubjectKind: policies.UsersKind,
+		Subject:     session.DomainUserID,
+		Object:      ruleID,
+		ObjectType:  policies.RulesType,
+		Permission:  policies.ViewPermission,
+	}
+	return am.authz.Authorize(ctx, pr, nil)
+}
+
+func (am *authorizationMiddleware) authorizedReadableRuleIDs(ctx context.Context, session authn.Session) ([]string, error) {
+	lister, ok := am.atomAuthz.(atomAuthorizedObjectLister)
+	if !ok {
+		return nil, errors.ErrAuthorization
+	}
+
+	var ids []string
+	for offset := uint64(0); ; offset += atomAuthorizedRulePageLimit {
+		page, err := lister.AuthorizedObjectIDs(ctx, atom.AuthorizedObjectIDsQuery{
+			SubjectID:  atom.SubjectID(session),
+			Action:     atom.CapabilityName(policies.ViewPermission),
+			ObjectKind: atomObjectKindResource,
+			ObjectType: atomObjectTypeResourceRule,
+			TenantID:   session.DomainID,
+			Limit:      atomAuthorizedRulePageLimit,
+			Offset:     offset,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, page.IDs...)
+		if uint64(len(page.IDs)) < atomAuthorizedRulePageLimit || offset+uint64(len(page.IDs)) >= page.Total {
+			break
+		}
+	}
+	return ids, nil
+}
+
+func (am *authorizationMiddleware) authorize(ctx context.Context, op permissions.Operation, session authn.Session, objType, obj, resourceKind string) error {
 	perm, err := am.entitiesOps.GetPermission(operations.EntityType, op)
 	if err != nil {
 		return err
 	}
 	if am.atomAuthz != nil {
-		return atom.Authorize(ctx, am.atomAuthz, session, perm.String(), objType, obj, atom.KindAlarm)
+		return atom.Authorize(ctx, am.atomAuthz, session, perm.String(), objType, obj, resourceKind)
 	}
 
 	pr := smqauthz.PolicyReq{

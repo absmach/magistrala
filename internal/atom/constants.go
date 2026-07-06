@@ -12,6 +12,13 @@ const (
 	atomActionSubscribe = "subscribe"
 	atomActionExecute   = "execute"
 	atomActionList      = "list"
+
+	atomActionAlarmRead        = "alarm_read"
+	atomActionAlarmUpdate      = "alarm_update"
+	atomActionAlarmDelete      = "alarm_delete"
+	atomActionAlarmAssign      = "alarm_assign"
+	atomActionAlarmAcknowledge = "alarm_acknowledge"
+	atomActionAlarmResolve     = "alarm_resolve"
 )
 
 const (

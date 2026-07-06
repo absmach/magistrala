@@ -58,6 +58,18 @@ func CapabilityName(action string) string {
 		normalized == "admin_permission",
 		strings.Contains(normalized, "manage_role"):
 		return atomActionManage
+	case strings.Contains(normalized, atomActionAlarmRead):
+		return atomActionAlarmRead
+	case strings.Contains(normalized, atomActionAlarmUpdate):
+		return atomActionAlarmUpdate
+	case strings.Contains(normalized, atomActionAlarmDelete):
+		return atomActionAlarmDelete
+	case strings.Contains(normalized, atomActionAlarmAssign):
+		return atomActionAlarmAssign
+	case strings.Contains(normalized, atomActionAlarmAcknowledge):
+		return atomActionAlarmAcknowledge
+	case strings.Contains(normalized, atomActionAlarmResolve):
+		return atomActionAlarmResolve
 	case normalized == policies.ViewPermission,
 		normalized == atomActionRead,
 		strings.Contains(normalized, "read"),

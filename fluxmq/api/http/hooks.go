@@ -20,6 +20,8 @@ const (
 	hookAuthOnPublish     = "auth_on_publish"
 	hookAuthOnSubscribe   = "auth_on_subscribe"
 	hookAuthOnUnsubscribe = "auth_on_unsubscribe"
+
+	hookProtocolAMQP091 = "amqp091"
 )
 
 type hookRequest struct {
@@ -83,6 +85,9 @@ func handleHook(ctx context.Context, parser messaging.TopicParser, req hookReque
 }
 
 func resolveHookTopic(ctx context.Context, parser messaging.TopicParser, req hookRequest) (string, error) {
+	if isInternalMessageConsumer(req) {
+		return "", nil
+	}
 	if !isMessageTopic(req.Topic) {
 		return "", nil
 	}
@@ -116,4 +121,16 @@ func isMessageTopic(topic string) bool {
 	topic = strings.TrimSpace(topic)
 	topic = strings.TrimPrefix(topic, "/")
 	return strings.HasPrefix(topic, string(messaging.MsgTopicPrefix)+"/")
+}
+
+func isInternalMessageConsumer(req hookRequest) bool {
+	hook := strings.ToLower(strings.TrimSpace(req.Hook))
+	if hook != hookAuthOnSubscribe && hook != hookAuthOnUnsubscribe {
+		return false
+	}
+	if strings.ToLower(strings.TrimSpace(req.Protocol)) != hookProtocolAMQP091 {
+		return false
+	}
+	topic := strings.TrimPrefix(strings.TrimSpace(req.Topic), "/")
+	return topic == string(messaging.MsgTopicPrefix)+"/#"
 }

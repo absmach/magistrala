@@ -97,6 +97,27 @@ func TestHooksHandlerReturnsOKForNonMGTopic(t *testing.T) {
 	require.Empty(t, res.Topic)
 }
 
+func TestHooksHandlerAllowsInternalAMQPMessageConsumer(t *testing.T) {
+	parser := &fakeHookParser{err: errors.New("should not parse internal consumer")}
+	req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{
+		"hook":"auth_on_subscribe",
+		"protocol":"amqp091",
+		"topic":"m/#"
+	}`))
+	w := httptest.NewRecorder()
+
+	MakeHooksHandler(parser).ServeHTTP(w, req)
+
+	require.Equal(t, 200, w.Code)
+	require.False(t, parser.publishCalled)
+	require.False(t, parser.subscribeCalled)
+
+	var res hookResponse
+	require.NoError(t, json.NewDecoder(w.Body).Decode(&res))
+	require.Equal(t, hookResultOK, res.Result)
+	require.Empty(t, res.Topic)
+}
+
 func TestHooksHandlerDeniesUnresolvedMGTopic(t *testing.T) {
 	parser := &fakeHookParser{err: errors.New("failed to resolve channel route")}
 	req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{"hook":"auth_on_publish","topic":"m/d1/c/ch1/messages"}`))

@@ -1029,7 +1029,7 @@ services:
       - ./templates/${MG_REPORTS_EMAIL_TEMPLATE}:/email.tmpl
 
   pdf-generator:
-    image: gotenberg/gotenberg:8.25.1
+    image: gotenberg/gotenberg:8.34.0
     container_name: magistrala-pdf
     restart: on-failure
     # Gotenberg leaks memory over time (upstream issues #987, #1169); the cap

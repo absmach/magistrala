@@ -1031,6 +1031,10 @@ services:
   pdf-generator:
     image: gotenberg/gotenberg:8.25.1
     container_name: magistrala-pdf
+    restart: on-failure
+    # Gotenberg leaks memory over time (upstream issues #987, #1169); the cap
+    # keeps the OOM kill inside this container instead of stalling the host.
+    mem_limit: 512m
     ports:
       - "4000:3000"
     networks:

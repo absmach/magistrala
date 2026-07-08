@@ -50,7 +50,6 @@ const (
 	atomObjectTypeResourceChannel = "resource:channel"
 	atomObjectTypeResourceRule    = "resource:rule"
 	atomObjectTypeResourceReport  = "resource:report"
-	atomObjectTypeResourceAlarm   = "resource:alarm"
 )
 
 const atomDecisionAllow = "allow"

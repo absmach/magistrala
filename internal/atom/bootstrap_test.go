@@ -126,6 +126,7 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	assertApplicability(t, applicability, "publish-id", atomObjectKindResource, "resource:channel")
 	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:rule")
+	assertApplicability(t, applicability, "alarm_read-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "alarm_update-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "alarm_delete-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "alarm_assign-id", atomObjectKindResource, "resource:rule")
@@ -133,14 +134,6 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 	assertApplicability(t, applicability, "alarm_resolve-id", atomObjectKindResource, "resource:rule")
 	assertApplicability(t, applicability, "execute-id", atomObjectKindResource, "resource:report")
 	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:report")
-	assertApplicability(t, applicability, "manage-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "list-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_read-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_update-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_delete-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_assign-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_acknowledge-id", atomObjectKindResource, "resource:alarm")
-	assertApplicability(t, applicability, "alarm_resolve-id", atomObjectKindResource, "resource:alarm")
 	if len(assignmentRules) != len(magistralaActionAssignmentRules) {
 		t.Fatalf("unexpected assignment guardrail count: got %d want %d", len(assignmentRules), len(magistralaActionAssignmentRules))
 	}

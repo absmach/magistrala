@@ -54,6 +54,7 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
+	{ActionName: atomActionAlarmRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
 	{ActionName: atomActionAlarmAssign, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceRule},
@@ -66,18 +67,6 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
 	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
-
-	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmAssign, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmAcknowledge, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
-	{ActionName: atomActionAlarmResolve, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceAlarm},
 }
 
 var magistralaActionAssignmentRules = []ActionAssignmentRuleSpec{

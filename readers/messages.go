@@ -41,24 +41,25 @@ type MessagesPage struct {
 
 // PageMetadata represents the parameters used to create database queries.
 type PageMetadata struct {
-	Offset      uint64  `json:"offset"`
-	Limit       uint64  `json:"limit"`
-	Order       string  `json:"order,omitempty"`
-	Dir         string  `json:"dir,omitempty"`
-	Subtopic    string  `json:"subtopic,omitempty"`
-	Publisher   string  `json:"publisher,omitempty"`
-	Protocol    string  `json:"protocol,omitempty"`
-	Name        string  `json:"name,omitempty"`
-	Value       float64 `json:"v,omitempty"`
-	Comparator  string  `json:"comparator,omitempty"`
-	BoolValue   bool    `json:"vb,omitempty"`
-	StringValue string  `json:"vs,omitempty"`
-	DataValue   string  `json:"vd,omitempty"`
-	From        float64 `json:"from,omitempty"`
-	To          float64 `json:"to,omitempty"`
-	Format      string  `json:"format,omitempty"`
-	Aggregation string  `json:"aggregation,omitempty"`
-	Interval    string  `json:"interval,omitempty"`
+	Offset      uint64   `json:"offset"`
+	Limit       uint64   `json:"limit"`
+	Order       string   `json:"order,omitempty"`
+	Dir         string   `json:"dir,omitempty"`
+	Subtopic    string   `json:"subtopic,omitempty"`
+	Publisher   string   `json:"publisher,omitempty"`
+	Publishers  []string `json:"publishers,omitempty"`
+	Protocol    string   `json:"protocol,omitempty"`
+	Name        string   `json:"name,omitempty"`
+	Value       float64  `json:"v,omitempty"`
+	Comparator  string   `json:"comparator,omitempty"`
+	BoolValue   bool     `json:"vb,omitempty"`
+	StringValue string   `json:"vs,omitempty"`
+	DataValue   string   `json:"vd,omitempty"`
+	From        float64  `json:"from,omitempty"`
+	To          float64  `json:"to,omitempty"`
+	Format      string   `json:"format,omitempty"`
+	Aggregation string   `json:"aggregation,omitempty"`
+	Interval    string   `json:"interval,omitempty"`
 }
 
 // ParseValueComparator convert comparison operator keys into mathematic anotation.

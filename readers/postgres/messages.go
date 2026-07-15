@@ -18,12 +18,13 @@ import (
 var _ readers.MessageRepository = (*postgresRepository)(nil)
 
 const (
-	messageFieldChannel   = "channel"
-	messageFieldName      = "name"
-	messageFieldProtocol  = "protocol"
-	messageFieldPublisher = "publisher"
-	messageFieldSubtopic  = "subtopic"
-	messageFieldValue     = "value"
+	messageFieldChannel    = "channel"
+	messageFieldName       = "name"
+	messageFieldProtocol   = "protocol"
+	messageFieldPublisher  = "publisher"
+	messageFieldPublishers = "publishers"
+	messageFieldSubtopic   = "subtopic"
+	messageFieldValue      = "value"
 )
 
 type postgresRepository struct {
@@ -52,19 +53,20 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	LIMIT :limit OFFSET :offset;`, format, cond, order)
 
 	params := map[string]any{
-		messageFieldChannel:   chanID,
-		"limit":               rpm.Limit,
-		"offset":              rpm.Offset,
-		messageFieldSubtopic:  rpm.Subtopic,
-		messageFieldPublisher: rpm.Publisher,
-		messageFieldName:      rpm.Name,
-		messageFieldProtocol:  rpm.Protocol,
-		messageFieldValue:     rpm.Value,
-		"bool_value":          rpm.BoolValue,
-		"string_value":        rpm.StringValue,
-		"data_value":          rpm.DataValue,
-		"from":                rpm.From,
-		"to":                  rpm.To,
+		messageFieldChannel:    chanID,
+		"limit":                rpm.Limit,
+		"offset":               rpm.Offset,
+		messageFieldSubtopic:   rpm.Subtopic,
+		messageFieldPublisher:  rpm.Publisher,
+		messageFieldPublishers: rpm.Publishers,
+		messageFieldName:       rpm.Name,
+		messageFieldProtocol:   rpm.Protocol,
+		messageFieldValue:      rpm.Value,
+		"bool_value":           rpm.BoolValue,
+		"string_value":         rpm.StringValue,
+		"data_value":           rpm.DataValue,
+		"from":                 rpm.From,
+		"to":                   rpm.To,
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
@@ -138,11 +140,19 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 		return condition
 	}
 
+	_, hasPublishers := query[messageFieldPublishers]
+
 	for name := range query {
 		switch name {
+		case messageFieldPublisher:
+			if hasPublishers {
+				continue
+			}
+			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
+		case messageFieldPublishers:
+			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldPublisher, messageFieldPublishers)
 		case
 			messageFieldSubtopic,
-			messageFieldPublisher,
 			messageFieldName,
 			messageFieldProtocol:
 			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)

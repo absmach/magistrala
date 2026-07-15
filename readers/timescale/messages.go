@@ -27,12 +27,13 @@ const (
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
-	messageFieldChannel   = "channel"
-	messageFieldName      = "name"
-	messageFieldProtocol  = "protocol"
-	messageFieldPublisher = "publisher"
-	messageFieldSubtopic  = "subtopic"
-	messageFieldValue     = "value"
+	messageFieldChannel    = "channel"
+	messageFieldName       = "name"
+	messageFieldProtocol   = "protocol"
+	messageFieldPublisher  = "publisher"
+	messageFieldPublishers = "publishers"
+	messageFieldSubtopic   = "subtopic"
+	messageFieldValue      = "value"
 )
 
 type timescaleRepository struct {
@@ -112,19 +113,20 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	}
 
 	params := map[string]any{
-		messageFieldChannel:   chanID,
-		"limit":               rpm.Limit,
-		"offset":              rpm.Offset,
-		messageFieldSubtopic:  rpm.Subtopic,
-		messageFieldPublisher: rpm.Publisher,
-		messageFieldName:      rpm.Name,
-		messageFieldProtocol:  rpm.Protocol,
-		messageFieldValue:     rpm.Value,
-		"bool_value":          rpm.BoolValue,
-		"string_value":        rpm.StringValue,
-		"data_value":          rpm.DataValue,
-		"from":                rpm.From,
-		"to":                  rpm.To,
+		messageFieldChannel:    chanID,
+		"limit":                rpm.Limit,
+		"offset":               rpm.Offset,
+		messageFieldSubtopic:   rpm.Subtopic,
+		messageFieldPublisher:  rpm.Publisher,
+		messageFieldPublishers: rpm.Publishers,
+		messageFieldName:       rpm.Name,
+		messageFieldProtocol:   rpm.Protocol,
+		messageFieldValue:      rpm.Value,
+		"bool_value":           rpm.BoolValue,
+		"string_value":         rpm.StringValue,
+		"data_value":           rpm.DataValue,
+		"from":                 rpm.From,
+		"to":                   rpm.To,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -206,7 +208,9 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " subtopic = :subtopic ")
 	}
 
-	if _, ok := query[messageFieldPublisher]; ok {
+	if _, ok := query[messageFieldPublishers]; ok {
+		conditions = append(conditions, " publisher = ANY(:publishers) ")
+	} else if _, ok := query[messageFieldPublisher]; ok {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 

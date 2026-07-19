@@ -213,7 +213,6 @@ set_env MG_LETSENCRYPT_FORCE_RENEWAL "$FORCE_RENEWAL"
 set_env MG_NGINX_SERVER_NAME "$HOST"
 comment_env_any MG_NGINX_SERVER_CERT
 comment_env_any MG_NGINX_SERVER_KEY
-set_env MG_UI_DOCKER_ACCEPT_EULA yes
 
 set_env MG_OAUTH_UI_REDIRECT_URL "https://$HOST/api/auth/token"
 set_env MG_OAUTH_UI_ERROR_URL "https://$HOST/login"
@@ -234,19 +233,19 @@ write_ui_proxy
 
 if [ "$LETSENCRYPT_ENABLED" = "false" ]; then
 	echo "Starting Magistrala with the fallback Nginx certificate"
-	MG_UI_DOCKER_ACCEPT_EULA=yes compose up -d
-	MG_UI_DOCKER_ACCEPT_EULA=yes COMPOSE_PROFILES=letsencrypt compose stop certbot >/dev/null 2>&1 || true
+	compose up -d
+	COMPOSE_PROFILES=letsencrypt compose stop certbot >/dev/null 2>&1 || true
 	echo "Let's Encrypt disabled. Nginx cert/key paths are commented in docker/.env."
 	echo "Fallback TLS setup complete: https://$HOST/"
 	exit 0
 fi
 
 echo "Starting Magistrala with the fallback Nginx certificate"
-MG_UI_DOCKER_ACCEPT_EULA=yes compose up -d
+compose up -d
 wait_for_nginx_http
 
 echo "Requesting Let's Encrypt certificate for $HOST"
-MG_UI_DOCKER_ACCEPT_EULA=yes COMPOSE_PROFILES=letsencrypt compose up -d --force-recreate certbot
+COMPOSE_PROFILES=letsencrypt compose up -d --force-recreate certbot
 
 cert_ready() {
 	compose logs certbot 2>&1 | \
@@ -271,6 +270,6 @@ set_env MG_NGINX_SERVER_CERT "$cert_path"
 set_env MG_NGINX_SERVER_KEY "$key_path"
 set_env MG_LETSENCRYPT_FORCE_RENEWAL false
 
-MG_UI_DOCKER_ACCEPT_EULA=yes compose up -d --force-recreate nginx
+compose up -d --force-recreate nginx
 
 echo "TLS setup complete: https://$HOST/"

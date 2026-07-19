@@ -25,7 +25,6 @@ const (
 	defChannelsURL     string = defURL + ":9005"
 	defGroupsURL       string = defURL + ":9004"
 	defHTTPURL         string = defURL + ":8008"
-	defJournalURL      string = defURL + ":9021"
 	defTLSVerification bool   = false
 	defOffset          string = "0"
 	defLimit           string = "10"
@@ -41,7 +40,6 @@ type remotes struct {
 	GroupsURL       string `toml:"groups_url"`
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
 	CertsURL        string `toml:"certs_url"`
-	JournalURL      string `toml:"journal_url"`
 	HostURL         string `toml:"host_url"`
 	TLSVerification bool   `toml:"tls_verification"`
 }
@@ -110,7 +108,6 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 				ChannelsURL:     defChannelsURL,
 				GroupsURL:       defGroupsURL,
 				HTTPAdapterURL:  defHTTPURL,
-				JournalURL:      defJournalURL,
 				HostURL:         defURL,
 				TLSVerification: defTLSVerification,
 			},
@@ -192,10 +189,6 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 
 	if sdkConf.CertsURL == "" && config.Remotes.CertsURL != "" {
 		sdkConf.CertsURL = config.Remotes.CertsURL
-	}
-
-	if sdkConf.JournalURL == "" && config.Remotes.JournalURL != "" {
-		sdkConf.JournalURL = config.Remotes.JournalURL
 	}
 
 	if sdkConf.HostURL == "" && config.Remotes.HostURL != "" {

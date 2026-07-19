@@ -63,10 +63,6 @@ packages:
     interfaces:
       Service:
       SubscriptionsRepository:
-  github.com/absmach/magistrala/journal:
-    interfaces:
-      Repository:
-      Service:
   github.com/absmach/magistrala/pkg/authn:
     interfaces:
       Authentication:
@@ -97,18 +93,3 @@ packages:
   github.com/absmach/magistrala/readers:
     interfaces:
       MessageRepository:
-  github.com/absmach/magistrala/re:
-    interfaces:
-      Repository:
-      Service:
-  github.com/absmach/magistrala/alarms:
-    interfaces:
-      Service:
-      Repository:
-  github.com/absmach/magistrala/reports:
-    interfaces:
-      Service:
-      Repository:
-  github.com/absmach/magistrala/notifications:
-    interfaces:
-      Notifier:

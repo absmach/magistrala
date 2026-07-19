@@ -83,8 +83,6 @@ const (
 
 const atomAttributeSourceMagistrala = "magistrala"
 
-const atomServiceTokenJournal = "journal"
-
 const (
 	atomGraphQLPath        = "/graphql"
 	atomAuthIntrospectPath = "/auth/introspect"

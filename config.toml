@@ -17,6 +17,5 @@ user_token = ""
   groups_url = "http://localhost:9004"
   host_url = "http://localhost"
   http_adapter_url = "http://localhost:8008"
-  journal_url = "http://localhost:9021"
   tls_verification = false
   users_url = "http://localhost:9002"

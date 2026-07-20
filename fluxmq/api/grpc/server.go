@@ -56,6 +56,13 @@ func (s *connectServer) Authenticate(ctx context.Context, req *connect.Request[a
 	username := req.Msg.GetUsername()
 	password := req.Msg.GetPassword()
 
+	// Reject empty-username clients early to avoid hitting Atom's rate limiter
+	// for an empty identifier, which would trigger the FluxMQ circuit breaker
+	// and block all subsequent MQTT connections.
+	if username == "" || password == "" {
+		return connect.NewResponse(&authv1.AuthnRes{Authenticated: false}), nil
+	}
+
 	token := authn.AuthPack(authn.BasicAuth, username, password)
 	res, err := s.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{Token: token})
 	if err != nil {

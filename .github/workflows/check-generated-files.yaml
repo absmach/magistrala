@@ -12,9 +12,9 @@ jobs:
   check-generated-files:
     runs-on: ubuntu-latest
     env:
-      PROTOC_VERSION: "33.0"
+      PROTOC_VERSION: "35.1"
       PROTOC_GEN_GO_VERSION: "v1.36.11"
-      PROTOC_GEN_GO_GRPC_VERSION: "v1.6.0"
+      PROTOC_GEN_GO_GRPC_VERSION: "v1.6.2"
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

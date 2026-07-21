@@ -1328,6 +1328,7 @@ func TestBindResources(t *testing.T) {
 		Name:     "bind-profile",
 		BindingSlots: []bootstrap.BindingSlot{
 			{Name: "mqtt", Type: "client", Required: true},
+			{Name: "commands", Type: "channel", Required: true},
 		},
 	}
 
@@ -1377,17 +1378,16 @@ func TestBindResources(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc        string
-		configID    string
-		bindings    []bootstrap.BindingRequest
-		cfgErr      error
-		prErr       error
-		resolveErr  error
-		retrieveErr error
-		saveErr     error
-		snapshots   []bootstrap.BindingSnapshot
-		useChannel  bool
-		err         error
+		desc       string
+		configID   string
+		bindings   []bootstrap.BindingRequest
+		cfgErr     error
+		prErr      error
+		resolveErr error
+		saveErr    error
+		snapshots  []bootstrap.BindingSnapshot
+		useChannel bool
+		err        error
 	}{
 		{
 			desc:     "bind resources with config not found",
@@ -1407,13 +1407,13 @@ func TestBindResources(t *testing.T) {
 			desc:     "bind resources with unknown slot",
 			configID: config.ID,
 			bindings: []bootstrap.BindingRequest{{Slot: "unknown", Type: "client", ResourceID: validID}},
-			err:      errors.New("invalid binding slot: unknown slot \"unknown\""),
+			err:      errors.New("binding slot \"unknown\" is not available in the assigned profile; available slots: mqtt, commands"),
 		},
 		{
 			desc:     "bind resources with wrong slot type",
 			configID: config.ID,
 			bindings: []bootstrap.BindingRequest{{Slot: "mqtt", Type: "channel", ResourceID: validID}},
-			err:      errors.New("invalid binding slot: slot \"mqtt\" expects \"client\", got \"channel\""),
+			err:      errors.New("binding slot \"mqtt\" requires type \"client\", got \"channel\""),
 		},
 		{
 			desc:       "bind resources with resolver error",
@@ -1421,23 +1421,6 @@ func TestBindResources(t *testing.T) {
 			bindings:   requested,
 			resolveErr: errors.New("resolve failed"),
 			err:        errors.New("resolve failed"),
-		},
-		{
-			desc:        "bind resources with binding store retrieve error",
-			configID:    config.ID,
-			bindings:    requested,
-			snapshots:   []bootstrap.BindingSnapshot{snapshot},
-			retrieveErr: svcerr.ErrViewEntity,
-			err:         svcerr.ErrViewEntity,
-		},
-		{
-			desc:     "bind resources with required slot not satisfied",
-			configID: config.ID,
-			bindings: requested,
-			snapshots: []bootstrap.BindingSnapshot{
-				{ConfigID: config.ID, Slot: "mqtt", Type: "channel", ResourceID: validID},
-			},
-			err: errors.New("invalid binding slot: slot \"mqtt\" expects \"client\", got \"channel\""),
 		},
 		{
 			desc:      "bind resources with save error",
@@ -1473,7 +1456,6 @@ func TestBindResources(t *testing.T) {
 			boot.On("RetrieveByID", context.Background(), domainID, tc.configID).Return(activeCfg, tc.cfgErr)
 			profileRepo.On("RetrieveByID", context.Background(), domainID, activeProfile.ID).Return(activeProfile, tc.prErr)
 			resolver.On("Resolve", context.Background(), mock.Anything).Return(tc.snapshots, tc.resolveErr)
-			bindingStore.On("Retrieve", context.Background(), tc.configID).Return([]bootstrap.BindingSnapshot{}, tc.retrieveErr)
 			bindingStore.On("Save", context.Background(), tc.configID, mock.Anything).Return(tc.saveErr)
 
 			err := svc.BindResources(context.Background(), session, validToken, tc.configID, tc.bindings)

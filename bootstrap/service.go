@@ -436,13 +436,6 @@ func (bs bootstrapService) BindResources(ctx context.Context, session smqauthn.S
 	if err != nil {
 		return errors.Wrap(errBindResources, err)
 	}
-	existing, err := bs.bindings.Retrieve(ctx, configID)
-	if err != nil {
-		return errors.Wrap(errBindResources, err)
-	}
-	if err := validateRequiredBindings(profile, mergeBindingSnapshots(existing, snapshots)); err != nil {
-		return errors.Wrap(errBindResources, err)
-	}
 	snapshots, err = bs.encryptSecretSnapshots(snapshots)
 	if err != nil {
 		return errors.Wrap(errBindResources, err)

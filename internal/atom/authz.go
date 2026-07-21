@@ -62,7 +62,7 @@ func ObjectKind(legacyObjectType, resourceKind string) string {
 		return atomObjectKindEntity
 	case atomKindGroup:
 		return atomObjectKindGroup
-	case KindChannel, KindRule, KindReport, KindAlarm:
+	case KindChannel, KindRule, KindReport, KindAlarm, KindBootstrapConfig, KindBootstrapProfile:
 		return atomObjectKindResource
 	default:
 		return resourceKind

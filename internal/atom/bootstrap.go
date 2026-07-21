@@ -28,6 +28,7 @@ var magistralaActionDescriptions = map[string]string{
 
 var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindTenant},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindTenant},
 	{ActionName: atomActionAlarmRead, ObjectKind: atomObjectKindTenant},
 	{ActionName: atomActionAlarmUpdate, ObjectKind: atomObjectKindTenant},
 	{ActionName: atomActionAlarmDelete, ObjectKind: atomObjectKindTenant},
@@ -67,6 +68,18 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
 	{ActionName: atomActionExecute, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
 	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceReport},
+
+	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapConfig},
+	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapConfig},
+	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapConfig},
+	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapConfig},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapConfig},
+
+	{ActionName: atomActionRead, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapProfile},
+	{ActionName: atomActionWrite, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapProfile},
+	{ActionName: atomActionDelete, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapProfile},
+	{ActionName: atomActionManage, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapProfile},
+	{ActionName: atomActionList, ObjectKind: atomObjectKindResource, ObjectType: atomObjectTypeResourceBootstrapProfile},
 }
 
 var magistralaActionAssignmentRules = []ActionAssignmentRuleSpec{

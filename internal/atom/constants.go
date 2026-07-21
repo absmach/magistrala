@@ -47,9 +47,11 @@ const (
 const atomScopeModeObject = "object"
 
 const (
-	atomObjectTypeResourceChannel = "resource:channel"
-	atomObjectTypeResourceRule    = "resource:rule"
-	atomObjectTypeResourceReport  = "resource:report"
+	atomObjectTypeResourceChannel          = "resource:channel"
+	atomObjectTypeResourceRule             = "resource:rule"
+	atomObjectTypeResourceReport           = "resource:report"
+	atomObjectTypeResourceBootstrapConfig  = "resource:bootstrap-config"
+	atomObjectTypeResourceBootstrapProfile = "resource:bootstrap-profile"
 )
 
 const atomDecisionAllow = "allow"

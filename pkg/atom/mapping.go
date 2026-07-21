@@ -4,12 +4,14 @@
 package atom
 
 const (
-	KindUser    = "user"
-	KindDevice  = "device"
-	KindChannel = "channel"
-	KindRule    = "rule"
-	KindAlarm   = "alarm"
-	KindReport  = "report"
+	KindUser             = "user"
+	KindDevice           = "device"
+	KindChannel          = "channel"
+	KindRule             = "rule"
+	KindAlarm            = "alarm"
+	KindReport           = "report"
+	KindBootstrapConfig  = "bootstrap_config"
+	KindBootstrapProfile = "bootstrap_profile"
 )
 
 func TenantFromFields(f ObjectFields) Tenant {

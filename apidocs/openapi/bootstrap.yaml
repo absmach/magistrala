@@ -14,7 +14,7 @@ info:
   license:
     name: Apache 2.0
     url: https://github.com/absmach/magistrala/blob/main/LICENSE
-  version: 0.19.0
+  version: 0.40.0
 
 servers:
   - url: http://localhost:9013
@@ -30,6 +30,8 @@ tags:
     description: Device configuration profiles and templates
   - name: enrollments
     description: Enrollment profile assignment and resource bindings
+  - name: health
+    description: Service health and observability
 
 paths:
   # ── Enrollment configs ────────────────────────────────────────────────────
@@ -75,6 +77,8 @@ paths:
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Status"
         - $ref: "#/components/parameters/Name"
+        - $ref: "#/components/parameters/ExternalIDQuery"
+        - $ref: "#/components/parameters/ConfigIDQuery"
       responses:
         "200":
           $ref: "#/components/responses/ConfigListRes"
@@ -230,6 +234,23 @@ paths:
 
   # ── Device bootstrap ──────────────────────────────────────────────────────
 
+  /clients/bootstrap:
+    get:
+      operationId: getBootstrapConfigFromHeader
+      summary: Retrieves a bootstrap configuration without a path identifier
+      description: |
+        Compatibility route. The current implementation still requires an
+        external ID and returns a validation error when it is not supplied in
+        the path. Prefer `/clients/bootstrap/{externalID}`.
+      deprecated: true
+      tags:
+        - configs
+      security:
+        - bootstrapAuth: []
+      responses:
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
   /clients/bootstrap/{externalID}:
     get:
       operationId: getBootstrapConfig
@@ -262,8 +283,9 @@ paths:
       operationId: getSecureBootstrapConfig
       summary: Retrieves an encrypted bootstrap configuration
       description: |
-        Returns the rendered bootstrap configuration encrypted with the device's
-        AES key. The external key must be hex-encoded and AES-encrypted.
+        Accepts a hex-encoded AES-CFB encrypted external key and returns the
+        rendered bootstrap configuration as AES-CFB encrypted binary. The
+        service-wide `MG_BOOTSTRAP_ENCRYPT_KEY` is used in both directions.
       tags:
         - configs
       security:
@@ -325,6 +347,7 @@ paths:
         - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/Name"
       responses:
         "200":
           $ref: "#/components/responses/ProfileListRes"
@@ -353,6 +376,9 @@ paths:
             schema:
               $ref: "#/components/schemas/Profile"
           application/yaml:
+            schema:
+              $ref: "#/components/schemas/Profile"
+          text/yaml:
             schema:
               $ref: "#/components/schemas/Profile"
           application/toml:
@@ -446,7 +472,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  slots:
+                  binding_slots:
                     type: array
                     items:
                       $ref: "#/components/schemas/BindingSlot"
@@ -475,18 +501,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                config:
-                  $ref: "#/components/schemas/Config"
-                render_context:
-                  type: object
-                  additionalProperties: true
-                  description: Per-device variable overrides.
-                bindings:
-                  type: array
-                  items:
-                    $ref: "#/components/schemas/BindingSnapshot"
+              $ref: "#/components/schemas/RenderPreviewRequest"
       responses:
         "200":
           description: Rendered template output.
@@ -495,7 +510,7 @@ paths:
               schema:
                 type: object
                 properties:
-                  rendered:
+                  content:
                     type: string
         "400":
           description: Template rendering failed.
@@ -530,8 +545,8 @@ paths:
               required:
                 - profile_id
       responses:
-        "200":
-          description: Profile assigned.
+        "204":
+          description: Profile assigned. The response has no body.
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -571,8 +586,8 @@ paths:
               required:
                 - bindings
       responses:
-        "200":
-          description: Bindings stored.
+        "204":
+          description: Bindings stored. The response has no body.
         "400":
           description: Failed due to malformed JSON or invalid binding request.
         "401":
@@ -614,8 +629,8 @@ paths:
         - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
-        "200":
-          description: Bindings refreshed.
+        "204":
+          description: Bindings refreshed. The response has no body.
         "401":
           description: Missing or invalid access token provided.
         "404":
@@ -627,6 +642,7 @@ paths:
 
   /health:
     get:
+      operationId: getHealth
       summary: Retrieves service health check info.
       tags:
         - health
@@ -637,6 +653,21 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
+  /metrics:
+    get:
+      operationId: getMetrics
+      summary: Retrieves Prometheus metrics.
+      tags:
+        - health
+      security: []
+      responses:
+        "200":
+          description: Prometheus text exposition format.
+          content:
+            text/plain:
+              schema:
+                type: string
+
 components:
   schemas:
     Status:
@@ -644,8 +675,17 @@ components:
       enum: [enabled, disabled]
       description: Enrollment status.
 
+    StatusFilter:
+      type: string
+      enum: [enabled, disabled, all]
+      default: enabled
+      description: |
+        Enrollment status filter. For backward compatibility, the API also
+        accepts `0` for enabled and `1` for disabled.
+
     Config:
       type: object
+      description: Bootstrap enrollment representation. Fields omitted by the service are not emitted in JSON.
       properties:
         id:
           type: string
@@ -660,7 +700,7 @@ components:
           description: External device identifier (e.g. MAC address).
         external_key:
           type: string
-          description: External authentication key (write-only; not returned after creation).
+          description: External authentication key. Accepted during creation; management responses normally omit it.
         name:
           type: string
           description: Human-readable name.
@@ -686,9 +726,6 @@ components:
         ca_cert:
           type: string
           description: CA certificate (PEM).
-      required:
-        - external_id
-        - external_key
 
     ConfigList:
       type: object
@@ -763,10 +800,10 @@ components:
           type: string
         description:
           type: string
-        template_format:
+        content_format:
           type: string
-          enum: [go-template, raw]
-          default: go-template
+          enum: [go-template, raw, json, yaml, toml]
+          description: Format of the profile content and template.
         content_template:
           type: string
           description: Template text rendered at bootstrap time.
@@ -792,7 +829,6 @@ components:
           readOnly: true
       required:
         - name
-        - template_format
 
     ProfileList:
       type: object
@@ -820,8 +856,8 @@ components:
           description: Slot name referenced in the template (e.g. "mqtt_client").
         type:
           type: string
-          enum: [client, channel, cert]
-          description: Expected resource type.
+          enum: [client, channel]
+          description: Expected ATOM resource type.
         required:
           type: boolean
           default: true
@@ -844,7 +880,7 @@ components:
           description: Profile slot name to fill.
         type:
           type: string
-          enum: [client, channel, cert]
+          enum: [client, channel]
         resource_id:
           type: string
           format: uuid
@@ -875,6 +911,26 @@ components:
         updated_at:
           type: string
           format: date-time
+
+    RenderPreviewRequest:
+      type: object
+      description: |
+        Preview input. When `config_id` is supplied, the stored enrollment and
+        bindings are loaded and take precedence over `config` and `bindings`.
+      properties:
+        config_id:
+          type: string
+          format: uuid
+        config:
+          $ref: "#/components/schemas/Config"
+        render_context:
+          type: object
+          additionalProperties: true
+          description: Used when config.render_context is absent.
+        bindings:
+          type: array
+          items:
+            $ref: "#/components/schemas/BindingSnapshot"
 
   parameters:
     ConfigID:
@@ -939,7 +995,7 @@ components:
       description: Filter by enrollment status.
       in: query
       schema:
-        $ref: "#/components/schemas/Status"
+        $ref: "#/components/schemas/StatusFilter"
       required: false
 
     Name:
@@ -948,6 +1004,23 @@ components:
       in: query
       schema:
         type: string
+      required: false
+
+    ExternalIDQuery:
+      name: external_id
+      description: Filter configs by exact external device identifier.
+      in: query
+      schema:
+        type: string
+      required: false
+
+    ConfigIDQuery:
+      name: id
+      description: Filter configs by exact enrollment identifier.
+      in: query
+      schema:
+        type: string
+        format: uuid
       required: false
 
   requestBodies:
@@ -995,6 +1068,9 @@ components:
                 type: string
               content:
                 type: string
+              render_context:
+                type: object
+                additionalProperties: true
 
     ConfigCertUpdateReq:
       description: Replacement certificate fields.
@@ -1031,9 +1107,9 @@ components:
                 type: string
               description:
                 type: string
-              template_format:
+              content_format:
                 type: string
-                enum: [go-template, raw]
+                enum: [go-template, raw, json, yaml, toml]
               content_template:
                 type: string
               defaults:
@@ -1116,6 +1192,9 @@ components:
     ServiceError:
       description: Unexpected server-side error occurred.
 
+    BadRequest:
+      description: The request failed validation.
+
     HealthRes:
       description: Service health check.
       content:
@@ -1132,20 +1211,20 @@ components:
         User access token: "Authorization: Bearer <user_token>"
 
     bootstrapAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: string
+      type: apiKey
+      in: header
+      name: Authorization
       description: |
         Device access: "Authorization: Client <external_key>"
 
     bootstrapEncAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: aes-uuid
+      type: apiKey
+      in: header
+      name: Authorization
       description: |
         Device access with AES-encrypted key: "Authorization: Client <external_enc_key>"
-        The external key must be hex-encoded and encrypted with AES using the
-        SHA256 of the external key itself as the encryption key.
+        The header value is hex encoded after AES-CFB encryption with
+        `MG_BOOTSTRAP_ENCRYPT_KEY`.
 
 security:
   - bearerAuth: []

@@ -1034,6 +1034,15 @@ func TestBootstrap(t *testing.T) {
 			err:         apiutil.ErrBearerKey,
 		},
 		{
+			desc:        "bootstrap with missing required bindings",
+			externalID:  c.ExternalID,
+			externalKey: c.ExternalKey,
+			status:      http.StatusUnprocessableEntity,
+			res:         `{"message":"required binding slots are not bound: temperature-sensor, telemetry-channel"}`,
+			secure:      false,
+			err:         errors.NewServiceError("required binding slots are not bound: temperature-sensor, telemetry-channel"),
+		},
+		{
 			desc:        "bootstrap known Client",
 			externalID:  c.ExternalID,
 			externalKey: c.ExternalKey,

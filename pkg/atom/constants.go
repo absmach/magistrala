@@ -52,10 +52,12 @@ const (
 )
 
 const (
-	atomObjectTypeResourceChannel = "resource:channel"
-	atomObjectTypeResourceRule    = "resource:rule"
-	atomObjectTypeResourceReport  = "resource:report"
-	atomObjectTypeEntityDevice    = atomObjectKindEntity + ":" + atomKindDevice
+	atomObjectTypeResourceChannel          = "resource:channel"
+	atomObjectTypeResourceRule             = "resource:rule"
+	atomObjectTypeResourceReport           = "resource:report"
+	atomObjectTypeResourceBootstrapConfig  = "resource:bootstrap-config"
+	atomObjectTypeResourceBootstrapProfile = "resource:bootstrap-profile"
+	atomObjectTypeEntityDevice             = atomObjectKindEntity + ":" + atomKindDevice
 )
 
 const atomDecisionAllow = "allow"

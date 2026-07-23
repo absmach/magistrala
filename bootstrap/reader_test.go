@@ -13,7 +13,6 @@ import (
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -25,28 +24,32 @@ type readResp struct {
 	CACert     string `json:"ca_cert,omitempty"`
 }
 
-func dec(in []byte) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
+func dec(in []byte, cfg bootstrap.Config) ([]byte, error) {
+	block, err := aes.NewCipher(cfg.SecureTransportKey)
 	if err != nil {
 		return nil, err
 	}
-	if len(in) < aes.BlockSize {
-		return nil, errors.ErrMalformedEntity
+	aead, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
 	}
-	iv := in[:aes.BlockSize]
-	in = in[aes.BlockSize:]
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(in, in)
-	return in, nil
+	nonce, ciphertext := in[:aead.NonceSize()], in[aead.NonceSize():]
+	aad := fmt.Sprintf("bootstrap-response:%s:%s:%s:%s", cfg.DomainID, cfg.ExternalID, cfg.SecureTransportKeyID, cfg.SecureRequestID)
+	return aead.Open(nil, nonce, ciphertext, []byte(aad))
 }
 
 func TestReadConfig(t *testing.T) {
 	cfg := bootstrap.Config{
-		ID:         "smq_id",
-		ClientCert: "client_cert",
-		ClientKey:  "client_key",
-		CACert:     "ca_cert",
-		Content:    "content",
+		ID:                   "smq_id",
+		DomainID:             "domain-id",
+		ExternalID:           "external-id",
+		ClientCert:           "client_cert",
+		ClientKey:            "client_key",
+		CACert:               "ca_cert",
+		Content:              "content",
+		SecureTransportKey:   encKey,
+		SecureTransportKeyID: "key-id",
+		SecureRequestID:      "request-id",
 	}
 	ret := readResp{
 		ID:         "smq_id",
@@ -86,7 +89,8 @@ func TestReadConfig(t *testing.T) {
 		assert.Nil(t, err, fmt.Sprintf("Reading config to succeed: %s.\n", err))
 
 		if tc.secret {
-			d, err := dec(res.([]byte))
+			encrypted := res.(bootstrap.SecureConfigPayload)
+			d, err := dec(encrypted.Payload, tc.config)
 			assert.Nil(t, err, fmt.Sprintf("Decrypting expected to succeed: %s.\n", err))
 			assert.Equal(t, tc.enc, d, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, d))
 			continue

@@ -4,11 +4,7 @@
 package bootstrap
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
 	"encoding/json"
-	"io"
 	"net/http"
 )
 
@@ -35,14 +31,20 @@ func (res bootstrapRes) Empty() bool {
 	return false
 }
 
-type reader struct {
-	encKey []byte
+type reader struct{}
+
+// SecureConfigPayload carries the encrypted response and non-secret envelope
+// metadata to the HTTP transport.
+type SecureConfigPayload struct {
+	Payload   []byte
+	KeyID     string
+	RequestID string
 }
 
 // NewConfigReader return new reader which is used to generate response
 // from the config.
-func NewConfigReader(encKey []byte) ConfigReader {
-	return reader{encKey: encKey}
+func NewConfigReader(_ []byte) ConfigReader {
+	return reader{}
 }
 
 func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
@@ -58,23 +60,12 @@ func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		return r.encrypt(b)
+		payload, err := encryptSecureResponse(cfg, b)
+		if err != nil {
+			return nil, err
+		}
+		return SecureConfigPayload{Payload: payload, KeyID: cfg.SecureTransportKeyID, RequestID: cfg.SecureRequestID}, nil
 	}
 
 	return res, nil
-}
-
-func (r reader) encrypt(in []byte) ([]byte, error) {
-	block, err := aes.NewCipher(r.encKey)
-	if err != nil {
-		return nil, err
-	}
-	ciphertext := make([]byte, aes.BlockSize+len(in))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], in)
-	return ciphertext, nil
 }

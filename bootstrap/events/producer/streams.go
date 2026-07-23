@@ -282,3 +282,23 @@ func (es *eventStore) RefreshBindings(ctx context.Context, session smqauthn.Sess
 	ev := refreshBindingsEvent{configID: configID}
 	return es.Publish(ctx, refreshBindingsStream, ev)
 }
+
+func (es *eventStore) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return es.svc.CreateDomainTransportKey(ctx, session)
+}
+
+func (es *eventStore) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return es.svc.ViewDomainTransportKey(ctx, session)
+}
+
+func (es *eventStore) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	return es.svc.RevealDomainTransportKey(ctx, session, keyID)
+}
+
+func (es *eventStore) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return es.svc.RotateDomainTransportKey(ctx, session)
+}
+
+func (es *eventStore) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	return es.svc.GenerateSecureCredential(ctx, session, configID)
+}

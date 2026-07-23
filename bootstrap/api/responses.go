@@ -50,6 +50,7 @@ func (res updateRes) Empty() bool {
 type configRes struct {
 	ID            string           `json:"id"`
 	ExternalID    string           `json:"external_id"`
+	ExternalKey   string           `json:"external_key"`
 	Name          string           `json:"name,omitempty"`
 	Content       string           `json:"content,omitempty"`
 	Status        bootstrap.Status `json:"status"`
@@ -70,13 +71,11 @@ func (res configRes) Code() int {
 }
 
 func (res configRes) Headers() map[string]string {
+	headers := map[string]string{"Cache-Control": "no-store"}
 	if res.created {
-		return map[string]string{
-			"Location": fmt.Sprintf("/clients/configs/%s", res.ID),
-		}
+		headers["Location"] = fmt.Sprintf("/clients/configs/%s", res.ID)
 	}
-
-	return map[string]string{}
+	return headers
 }
 
 func (res configRes) Empty() bool {
@@ -86,6 +85,7 @@ func (res configRes) Empty() bool {
 type viewRes struct {
 	ID            string           `json:"id,omitempty"`
 	ExternalID    string           `json:"external_id"`
+	ExternalKey   string           `json:"external_key"`
 	Content       string           `json:"content,omitempty"`
 	Name          string           `json:"name,omitempty"`
 	Status        bootstrap.Status `json:"status"`
@@ -101,7 +101,7 @@ func (res viewRes) Code() int {
 }
 
 func (res viewRes) Headers() map[string]string {
-	return map[string]string{}
+	return map[string]string{"Cache-Control": "no-store"}
 }
 
 func (res viewRes) Empty() bool {
@@ -120,7 +120,7 @@ func (res listRes) Code() int {
 }
 
 func (res listRes) Headers() map[string]string {
-	return map[string]string{}
+	return map[string]string{"Cache-Control": "no-store"}
 }
 
 func (res listRes) Empty() bool {
@@ -136,7 +136,7 @@ func (res changeConfigStatusRes) Code() int {
 }
 
 func (res changeConfigStatusRes) Headers() map[string]string {
-	return map[string]string{}
+	return map[string]string{"Cache-Control": "no-store"}
 }
 
 func (res changeConfigStatusRes) Empty() bool {
@@ -221,3 +221,33 @@ type bindingsRes struct {
 func (res bindingsRes) Code() int                  { return http.StatusOK }
 func (res bindingsRes) Headers() map[string]string { return map[string]string{} }
 func (res bindingsRes) Empty() bool                { return false }
+
+type transportKeyRes struct {
+	bootstrap.DomainTransportKey
+	created bool
+}
+
+func (res transportKeyRes) Code() int {
+	if res.created {
+		return http.StatusCreated
+	}
+	return http.StatusOK
+}
+
+func (res transportKeyRes) Headers() map[string]string {
+	return map[string]string{"Cache-Control": "no-store"}
+}
+
+func (res transportKeyRes) Empty() bool { return false }
+
+type secureCredentialRes struct {
+	bootstrap.SecureBootstrapCredential
+}
+
+func (res secureCredentialRes) Code() int { return http.StatusOK }
+
+func (res secureCredentialRes) Headers() map[string]string {
+	return map[string]string{"Cache-Control": "no-store"}
+}
+
+func (res secureCredentialRes) Empty() bool { return false }

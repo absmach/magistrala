@@ -196,3 +196,27 @@ func (tm *tracingMiddleware) RefreshBindings(ctx context.Context, session smqaut
 	defer span.End()
 	return tm.svc.RefreshBindings(ctx, session, token, configID)
 }
+
+func (tm *tracingMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return tm.svc.CreateDomainTransportKey(ctx, session)
+}
+
+func (tm *tracingMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return tm.svc.ViewDomainTransportKey(ctx, session)
+}
+
+func (tm *tracingMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	return tm.svc.RevealDomainTransportKey(ctx, session, keyID)
+}
+
+func (tm *tracingMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return tm.svc.RotateDomainTransportKey(ctx, session)
+}
+
+func (tm *tracingMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_generate_secure_credential", trace.WithAttributes(
+		attribute.String("config_id", configID),
+	))
+	defer span.End()
+	return tm.svc.GenerateSecureCredential(ctx, session, configID)
+}

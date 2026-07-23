@@ -7,8 +7,6 @@ import (
 	"context"
 	"crypto/aes"
 	"crypto/cipher"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -17,6 +15,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/bootstrap"
@@ -30,6 +29,7 @@ import (
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	encKey         = []byte("1234567891011121")
+	encKey         = []byte("12345678910111213141516171819202")
 	addExternalID  = testsutil.GenerateUUID(&testing.T{})
 	addExternalKey = testsutil.GenerateUUID(&testing.T{})
 	addID          = testsutil.GenerateUUID(&testing.T{})
@@ -66,12 +66,14 @@ var (
 
 	updateReq = struct {
 		Content       string           `json:"content,omitempty"`
+		ExternalKey   string           `json:"external_key,omitempty"`
 		Status        bootstrap.Status `json:"status,omitempty"`
 		ClientCert    string           `json:"client_cert,omitempty"`
 		CACert        string           `json:"ca_cert,omitempty"`
 		RenderContext map[string]any   `json:"render_context,omitempty"`
 	}{
 		Content:       "config update",
+		ExternalKey:   "updated-external-key",
 		Status:        bootstrap.EnabledStatus,
 		ClientCert:    "newcert",
 		CACert:        "newca",
@@ -128,34 +130,18 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func enc(in []byte) ([]byte, error) {
+func dec(in []byte, cfg bootstrap.Config) ([]byte, error) {
 	block, err := aes.NewCipher(encKey)
 	if err != nil {
 		return nil, err
 	}
-	ciphertext := make([]byte, aes.BlockSize+len(in))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], in)
-	return ciphertext, nil
-}
-
-func dec(in []byte) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
+	aead, err := cipher.NewGCM(block)
 	if err != nil {
 		return nil, err
 	}
-	if len(in) < aes.BlockSize {
-		return nil, errors.ErrMalformedEntity
-	}
-	iv := in[:aes.BlockSize]
-	in = in[aes.BlockSize:]
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(in, in)
-	return in, nil
+	nonce, ciphertext := in[:aead.NonceSize()], in[aead.NonceSize():]
+	aad := fmt.Sprintf("bootstrap-response:%s:%s:%s:%s", cfg.DomainID, cfg.ExternalID, cfg.SecureTransportKeyID, cfg.SecureRequestID)
+	return aead.Open(nil, nonce, ciphertext, []byte(aad))
 }
 
 func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
@@ -968,9 +954,10 @@ func TestBootstrap(t *testing.T) {
 	bs, svc, _ := newBootstrapServer()
 	defer bs.Close()
 	c := newConfig()
-
-	encExternKey, err := enc([]byte(c.ExternalKey))
-	assert.Nil(t, err, fmt.Sprintf("Encrypting config expected to succeed: %s.\n", err))
+	c.DomainID = domainID
+	c.SecureTransportKey = encKey
+	c.SecureTransportKeyID = "key-id"
+	c.SecureRequestID = "request-id"
 
 	s := struct {
 		ID         string `json:"id"`
@@ -1054,7 +1041,7 @@ func TestBootstrap(t *testing.T) {
 		{
 			desc:        "bootstrap secure",
 			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
-			externalKey: hex.EncodeToString(encExternKey),
+			externalKey: "v2.key-id.encrypted-request",
 			status:      http.StatusOK,
 			res:         data,
 			secure:      true,
@@ -1087,7 +1074,7 @@ func TestBootstrap(t *testing.T) {
 			body, err := io.ReadAll(res.Body)
 			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
 			if tc.secure && tc.status == http.StatusOK {
-				body, err = dec(body)
+				body, err = dec(body, c)
 				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
 			}
 			data := strings.Trim(string(body), "\n")
@@ -1095,6 +1082,112 @@ func TestBootstrap(t *testing.T) {
 			svcCall.Unset()
 		})
 	}
+}
+
+func TestDomainTransportKeys(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	key := bootstrap.DomainTransportKey{
+		DomainID: domainID, KeyID: validID, Status: bootstrap.TransportKeyActive,
+		Secret: "domain-secret", CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
+	}
+
+	cases := []struct {
+		desc       string
+		method     string
+		path       string
+		operation  string
+		status     int
+		response   bootstrap.DomainTransportKey
+		wantSecret bool
+	}{
+		{
+			desc: "create domain transport key", method: http.MethodPost,
+			path: "/transport-keys/", operation: "CreateDomainTransportKey",
+			status: http.StatusCreated, response: key, wantSecret: true,
+		},
+		{
+			desc: "view current domain transport key", method: http.MethodGet,
+			path: "/transport-keys/current", operation: "ViewDomainTransportKey",
+			status: http.StatusOK, response: func() bootstrap.DomainTransportKey {
+				withoutSecret := key
+				withoutSecret.Secret = ""
+				return withoutSecret
+			}(),
+		},
+		{
+			desc: "reveal domain transport key", method: http.MethodPost,
+			path: "/transport-keys/" + validID + "/reveal", operation: "RevealDomainTransportKey",
+			status: http.StatusOK, response: key, wantSecret: true,
+		},
+		{
+			desc: "rotate domain transport key", method: http.MethodPost,
+			path: "/transport-keys/rotate", operation: "RotateDomainTransportKey",
+			status: http.StatusCreated, response: key, wantSecret: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+			args := []any{mock.Anything, mock.Anything}
+			if tc.operation == "RevealDomainTransportKey" {
+				args = append(args, validID)
+			}
+			svcCall := svc.On(tc.operation, args...).Return(tc.response, nil)
+			res, err := (testRequest{
+				client: bs.Client(), method: tc.method,
+				url:   bs.URL + "/" + domainID + "/clients/bootstrap" + tc.path,
+				token: validToken,
+			}).make()
+			require.NoError(t, err)
+			require.Equal(t, tc.status, res.StatusCode)
+			require.Equal(t, "no-store", res.Header.Get("Cache-Control"))
+			var got bootstrap.DomainTransportKey
+			require.NoError(t, json.NewDecoder(res.Body).Decode(&got))
+			require.Equal(t, tc.response.KeyID, got.KeyID)
+			if tc.wantSecret {
+				require.Equal(t, key.Secret, got.Secret)
+			} else {
+				require.Empty(t, got.Secret)
+			}
+			require.NoError(t, res.Body.Close())
+			svcCall.Unset()
+			authCall.Unset()
+		})
+	}
+}
+
+func TestGenerateSecureCredential(t *testing.T) {
+	bs, svc, auth := newBootstrapServer()
+	defer bs.Close()
+	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
+	expiresAt := time.Now().UTC().Add(5 * time.Minute).Truncate(time.Second)
+	want := bootstrap.SecureBootstrapCredential{
+		ExternalID: addExternalID, KeyID: validID,
+		EncryptedExternalKey: "v2." + validID + ".payload",
+		Authorization:        "Client v2." + validID + ".payload",
+		RequestID:            "request-id", ExpiresAt: expiresAt,
+		BootstrapURL: "/clients/bootstrap/secure/" + addExternalID,
+	}
+	authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
+	svcCall := svc.On("GenerateSecureCredential", mock.Anything, mock.Anything, validID).Return(want, nil)
+
+	res, err := (testRequest{
+		client: bs.Client(), method: http.MethodPost,
+		url:   bs.URL + "/" + domainID + "/clients/configs/" + validID + "/secure-credential",
+		token: validToken,
+	}).make()
+	require.NoError(t, err)
+	require.Equal(t, http.StatusOK, res.StatusCode)
+	require.Equal(t, "no-store", res.Header.Get("Cache-Control"))
+	var got bootstrap.SecureBootstrapCredential
+	require.NoError(t, json.NewDecoder(res.Body).Decode(&got))
+	require.NoError(t, res.Body.Close())
+	require.Equal(t, want, got)
+	svcCall.Unset()
+	authCall.Unset()
 }
 
 func TestChangeStatus(t *testing.T) {

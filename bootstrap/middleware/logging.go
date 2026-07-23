@@ -353,3 +353,23 @@ func (lm *loggingMiddleware) RefreshBindings(ctx context.Context, session smqaut
 
 	return lm.svc.RefreshBindings(ctx, session, token, configID)
 }
+
+func (lm *loggingMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return lm.svc.CreateDomainTransportKey(ctx, session)
+}
+
+func (lm *loggingMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return lm.svc.ViewDomainTransportKey(ctx, session)
+}
+
+func (lm *loggingMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	return lm.svc.RevealDomainTransportKey(ctx, session, keyID)
+}
+
+func (lm *loggingMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return lm.svc.RotateDomainTransportKey(ctx, session)
+}
+
+func (lm *loggingMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	return lm.svc.GenerateSecureCredential(ctx, session, configID)
+}

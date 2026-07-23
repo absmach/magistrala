@@ -17,8 +17,8 @@ info:
   version: 0.40.0
 
 servers:
-  - url: http://localhost:9013
-  - url: https://localhost:9013
+  - url: http://localhost:9010
+  - url: https://localhost:9010
 
 tags:
   - name: configs
@@ -30,6 +30,8 @@ tags:
     description: Device configuration profiles and templates
   - name: enrollments
     description: Enrollment profile assignment and resource bindings
+  - name: transport-keys
+    description: Per-domain encryption keys for secure device bootstrap traffic
   - name: health
     description: Service health and observability
 
@@ -232,24 +234,44 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  # ── Device bootstrap ──────────────────────────────────────────────────────
-
-  /clients/bootstrap:
-    get:
-      operationId: getBootstrapConfigFromHeader
-      summary: Retrieves a bootstrap configuration without a path identifier
+  /{domainID}/clients/configs/{configID}/secure-credential:
+    post:
+      operationId: generateBootstrapSecureCredential
+      summary: Generates a secure Bootstrap credential
       description: |
-        Compatibility route. The current implementation still requires an
-        external ID and returns a validation error when it is not supplied in
-        the path. Prefer `/clients/bootstrap/{externalID}`.
-      deprecated: true
+        Generates a short-lived, single-use encrypted external-key credential
+        for `GET /clients/bootstrap/secure/{externalID}`. The credential uses
+        the active domain transport key and expires after five minutes. It is
+        generated on demand and is not persisted.
       tags:
         - configs
-      security:
-        - bootstrapAuth: []
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ConfigID"
       responses:
+        "200":
+          description: Secure credential generated. Do not cache this response.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SecureBootstrapCredential"
         "400":
-          $ref: "#/components/responses/BadRequest"
+          description: The enrollment is disabled or its external key is not available.
+        "401":
+          description: Missing or invalid access token.
+        "403":
+          description: Config read and domain manage permissions are required.
+        "404":
+          description: The config or active domain transport key does not exist.
+        "500":
+          $ref: "#/components/responses/ServiceError"
+
+  # ── Device bootstrap ──────────────────────────────────────────────────────
 
   /clients/bootstrap/{externalID}:
     get:
@@ -283,9 +305,22 @@ paths:
       operationId: getSecureBootstrapConfig
       summary: Retrieves an encrypted bootstrap configuration
       description: |
-        Accepts a hex-encoded AES-CFB encrypted external key and returns the
-        rendered bootstrap configuration as AES-CFB encrypted binary. The
-        service-wide `MG_BOOTSTRAP_ENCRYPT_KEY` is used in both directions.
+        Accepts an AES-256-GCM encrypted request and returns the complete
+        rendered bootstrap response as AES-256-GCM encrypted binary. Both
+        directions use the selected domain transport key; database encryption
+        uses a different service master key.
+
+        The authorization value is `Client v2.<key_id>.<payload>`, where
+        `payload` is unpadded base64url of `nonce || ciphertext || tag`.
+        The decrypted JSON is `{external_id, external_key, issued_at,
+        request_id}`. `issued_at` is a Unix timestamp and requests expire after
+        five minutes. A request ID can be consumed only once. Request AES-GCM
+        additional authenticated data is
+        `bootstrap-request:<domainID>:<externalID>:<keyID>`.
+
+        The response body is raw `nonce || ciphertext || tag`. Its AES-GCM
+        additional authenticated data is
+        `bootstrap-response:<domainID>:<externalID>:<keyID>:<requestID>`.
       tags:
         - configs
       security:
@@ -295,6 +330,18 @@ paths:
       responses:
         "200":
           description: Encrypted bootstrap payload (binary).
+          headers:
+            X-Bootstrap-Encryption:
+              schema:
+                type: string
+                example: aes-256-gcm-v2
+            X-Bootstrap-Key-ID:
+              schema:
+                type: string
+                format: uuid
+            X-Bootstrap-Request-ID:
+              schema:
+                type: string
           content:
             application/octet-stream:
               schema:
@@ -310,6 +357,100 @@ paths:
           description: No config found for the given external ID.
         "500":
           $ref: "#/components/responses/ServiceError"
+
+  /{domainID}/clients/bootstrap/transport-keys:
+    post:
+      operationId: createBootstrapTransportKey
+      summary: Creates the first transport key for a domain
+      description: |
+        Creates a random 256-bit domain transport key. The returned `secret`
+        is base64url and can be revealed later by an authorized domain manager.
+        The key is encrypted before it is stored in PostgreSQL.
+      tags:
+        - transport-keys
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      responses:
+        "201":
+          description: Transport key created. Do not cache this response.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainTransportKey"
+        "401":
+          description: Missing or invalid access token.
+        "403":
+          description: Domain manage permission is required.
+        "409":
+          description: The domain already has an active transport key.
+
+  /{domainID}/clients/bootstrap/transport-keys/current:
+    get:
+      operationId: getCurrentBootstrapTransportKey
+      summary: Gets active transport-key metadata
+      tags:
+        - transport-keys
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      responses:
+        "200":
+          description: Active transport-key metadata. The secret is omitted.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainTransportKey"
+        "404":
+          description: The domain has no active transport key.
+
+  /{domainID}/clients/bootstrap/transport-keys/{keyID}/reveal:
+    post:
+      operationId: revealBootstrapTransportKey
+      summary: Reveals a domain transport key
+      tags:
+        - transport-keys
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+        - name: keyID
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        "200":
+          description: Decrypted transport key. Do not cache this response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainTransportKey"
+        "404":
+          description: The key does not exist in this domain.
+
+  /{domainID}/clients/bootstrap/transport-keys/rotate:
+    post:
+      operationId: rotateBootstrapTransportKey
+      summary: Rotates the active domain transport key
+      description: |
+        Creates and returns a new active transport key. The previous key enters
+        a 24-hour retiring period so devices can complete a staged rollout.
+      tags:
+        - transport-keys
+      parameters:
+        - $ref: "#/components/parameters/DomainID"
+      responses:
+        "201":
+          description: New active transport key, including its secret.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DomainTransportKey"
+        "404":
+          description: The domain has no active key to rotate.
 
   # ── Device profiles ───────────────────────────────────────────────────────
 
@@ -700,7 +841,10 @@ components:
           description: External device identifier (e.g. MAC address).
         external_key:
           type: string
-          description: External authentication key. Accepted during creation; management responses normally omit it.
+          description: |
+            External authentication key. It is encrypted at rest and decrypted
+            in authorized config create, list and get responses. Responses use
+            `Cache-Control: no-store`.
         name:
           type: string
           description: Human-readable name.
@@ -768,6 +912,67 @@ components:
         ca_cert:
           type: string
           description: CA certificate (PEM).
+
+    DomainTransportKey:
+      type: object
+      properties:
+        domain_id:
+          type: string
+          format: uuid
+        key_id:
+          type: string
+          format: uuid
+        wrapping_key_id:
+          type: string
+          description: Identifier of the database master key used to wrap this secret.
+        status:
+          type: string
+          enum: [active, retiring, revoked]
+        secret:
+          type: string
+          description: Unpadded base64url encoded 256-bit secret. Present only on create, rotate and reveal.
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        retire_at:
+          type: string
+          format: date-time
+      required: [key_id, status, created_at, updated_at]
+
+    SecureBootstrapCredential:
+      type: object
+      properties:
+        external_id:
+          type: string
+        key_id:
+          type: string
+          format: uuid
+        encrypted_external_key:
+          type: string
+          description: The `v2.<key_id>.<payload>` value without the authorization scheme.
+        authorization:
+          type: string
+          description: Complete value for the HTTP Authorization header.
+          example: Client v2.2e236248-b6ec-4b82-a42f-9ad9a11a1789.eyJ...
+        request_id:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        bootstrap_url:
+          type: string
+          description: Relative secure Bootstrap endpoint for this enrollment.
+      required:
+        - external_id
+        - key_id
+        - encrypted_external_key
+        - authorization
+        - request_id
+        - expires_at
+        - bootstrap_url
 
     ConfigUpdateCerts:
       type: object
@@ -1066,6 +1271,9 @@ components:
             properties:
               name:
                 type: string
+              external_key:
+                type: string
+                description: New external authentication key. When omitted or empty, the current key is preserved. A supplied value is encrypted before storage.
               content:
                 type: string
               render_context:
@@ -1222,9 +1430,8 @@ components:
       in: header
       name: Authorization
       description: |
-        Device access with AES-encrypted key: "Authorization: Client <external_enc_key>"
-        The header value is hex encoded after AES-CFB encryption with
-        `MG_BOOTSTRAP_ENCRYPT_KEY`.
+        Domain-key encrypted device access:
+        `Authorization: Client v2.<key_id>.<base64url_nonce_ciphertext_tag>`.
 
 security:
   - bearerAuth: []

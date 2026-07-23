@@ -5,12 +5,7 @@ package bootstrap_test
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"testing"
 
 	"github.com/absmach/magistrala/bootstrap"
@@ -34,7 +29,7 @@ const (
 )
 
 var (
-	encKey   = []byte("1234567891011121")
+	encKey   = []byte("12345678910111213141516171819202")
 	domainID = testsutil.GenerateUUID(&testing.T{})
 
 	config = bootstrap.Config{
@@ -63,21 +58,6 @@ func newService() bootstrap.Service {
 	renderer = new(mocks.Renderer)
 	idp := uuid.NewMock()
 	return bootstrap.New(boot, profileRepo, bindingStore, resolver, renderer, sdk, bootstraphasher.New(), encKey, idp)
-}
-
-func enc(in []byte) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
-	if err != nil {
-		return nil, err
-	}
-	ciphertext := make([]byte, aes.BlockSize+len(in))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
-	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], in)
-	return ciphertext, nil
 }
 
 func TestAdd(t *testing.T) {
@@ -194,6 +174,7 @@ func TestUpdate(t *testing.T) {
 	svc := newService()
 
 	c := config
+	c.ExternalKey = ""
 
 	modifiedCreated := c
 	modifiedCreated.Content = "new-config"
@@ -664,8 +645,6 @@ func TestBootstrap(t *testing.T) {
 
 	c := config
 	c.Status = bootstrap.Active
-	e, err := enc([]byte(c.ExternalKey))
-	assert.Nil(t, err, fmt.Sprintf("Encrypting external key expected to succeed: %s.\n", err))
 
 	cases := []struct {
 		desc        string
@@ -706,16 +685,6 @@ func TestBootstrap(t *testing.T) {
 			domainID:    domainID,
 			err:         nil,
 			encrypted:   false,
-		},
-		{
-			desc:        "bootstrap encrypted",
-			config:      c,
-			externalID:  c.ExternalID,
-			externalKey: hex.EncodeToString(e),
-			userID:      validID,
-			domainID:    domainID,
-			err:         nil,
-			encrypted:   true,
 		},
 	}
 

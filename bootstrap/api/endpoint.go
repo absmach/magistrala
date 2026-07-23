@@ -46,6 +46,7 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		res := configRes{
 			ID:            saved.ID,
 			ExternalID:    saved.ExternalID,
+			ExternalKey:   saved.ExternalKey,
 			Name:          saved.Name,
 			Content:       saved.Content,
 			Status:        saved.Status,
@@ -109,11 +110,15 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		res := viewRes{
 			ID:            config.ID,
 			ExternalID:    config.ExternalID,
+			ExternalKey:   config.ExternalKey,
 			Name:          config.Name,
 			Content:       config.Content,
 			Status:        config.Status,
 			ProfileID:     config.ProfileID,
 			RenderContext: config.RenderContext,
+			ClientCert:    config.ClientCert,
+			CACert:        config.CACert,
+			ClientKey:     config.ClientKey,
 		}
 
 		return res, nil
@@ -135,6 +140,7 @@ func updateEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		config := bootstrap.Config{
 			ID:            req.id,
 			Name:          req.Name,
+			ExternalKey:   req.ExternalKey,
 			Content:       req.Content,
 			RenderContext: req.RenderContext,
 		}
@@ -174,6 +180,7 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			view := viewRes{
 				ID:            cfg.ID,
 				ExternalID:    cfg.ExternalID,
+				ExternalKey:   cfg.ExternalKey,
 				Name:          cfg.Name,
 				Content:       cfg.Content,
 				Status:        cfg.Status,
@@ -184,6 +191,84 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		return res, nil
+	}
+}
+
+func createDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		key, err := svc.CreateDomainTransportKey(ctx, session)
+		if err != nil {
+			return nil, err
+		}
+		return transportKeyRes{DomainTransportKey: key, created: true}, nil
+	}
+}
+
+func viewDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		key, err := svc.ViewDomainTransportKey(ctx, session)
+		if err != nil {
+			return nil, err
+		}
+		return transportKeyRes{DomainTransportKey: key}, nil
+	}
+}
+
+func revealDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(transportKeyReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		key, err := svc.RevealDomainTransportKey(ctx, session, req.keyID)
+		if err != nil {
+			return nil, err
+		}
+		return transportKeyRes{DomainTransportKey: key}, nil
+	}
+}
+
+func rotateDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		key, err := svc.RotateDomainTransportKey(ctx, session)
+		if err != nil {
+			return nil, err
+		}
+		return transportKeyRes{DomainTransportKey: key, created: true}, nil
+	}
+}
+
+func generateSecureCredentialEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(entityReq)
+		if err := req.validate(); err != nil {
+			return nil, errors.Wrap(apiutil.ErrValidation, err)
+		}
+		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
+		if !ok {
+			return nil, svcerr.ErrAuthorization
+		}
+		credential, err := svc.GenerateSecureCredential(ctx, session, req.id)
+		if err != nil {
+			return nil, err
+		}
+		return secureCredentialRes{SecureBootstrapCredential: credential}, nil
 	}
 }
 

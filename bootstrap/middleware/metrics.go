@@ -190,3 +190,23 @@ func (mm *metricsMiddleware) RefreshBindings(ctx context.Context, session smqaut
 	}(time.Now())
 	return mm.svc.RefreshBindings(ctx, session, token, configID)
 }
+
+func (mm *metricsMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return mm.svc.CreateDomainTransportKey(ctx, session)
+}
+
+func (mm *metricsMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return mm.svc.ViewDomainTransportKey(ctx, session)
+}
+
+func (mm *metricsMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	return mm.svc.RevealDomainTransportKey(ctx, session, keyID)
+}
+
+func (mm *metricsMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
+	return mm.svc.RotateDomainTransportKey(ctx, session)
+}
+
+func (mm *metricsMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	return mm.svc.GenerateSecureCredential(ctx, session, configID)
+}

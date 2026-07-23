@@ -17,7 +17,6 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	httpapi "github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
-	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
@@ -47,14 +46,15 @@ const (
 )
 
 type config struct {
-	LogLevel       string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
-	EncKey         string  `env:"MG_BOOTSTRAP_ENCRYPT_KEY"      envDefault:"12345678910111213141516171819202"`
-	ESConsumerName string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
-	JaegerURL      url.URL `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry  bool    `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
-	InstanceID     string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
-	ESURL          string  `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
-	TraceRatio     float64 `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
+	LogLevel          string  `env:"MG_BOOTSTRAP_LOG_LEVEL"        envDefault:"info"`
+	DBEncryptionKey   string  `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY"    envDefault:"12345678910111213141516171819202"`
+	DBEncryptionKeyID string  `env:"MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID" envDefault:"primary"`
+	ESConsumerName    string  `env:"MG_BOOTSTRAP_EVENT_CONSUMER"   envDefault:"bootstrap"`
+	JaegerURL         url.URL `env:"MG_JAEGER_URL"                envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry     bool    `env:"MG_SEND_TELEMETRY"            envDefault:"true"`
+	InstanceID        string  `env:"MG_BOOTSTRAP_INSTANCE_ID"      envDefault:""`
+	ESURL             string  `env:"MG_ES_URL"                    envDefault:"nats://localhost:4222"`
+	TraceRatio        float64 `env:"MG_JAEGER_TRACE_RATIO"        envDefault:"1.0"`
 }
 
 func main() {
@@ -135,7 +135,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader([]byte(cfg.EncKey)), logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader(nil), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -159,21 +159,26 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 	repoProfile := bootstrappg.NewProfileRepository(database, logger)
 	repoBindings := bootstrappg.NewBindingRepository(database, logger)
+	repoTransportKeys := bootstrappg.NewDomainTransportKeyRepository(database)
+	if _, err := bootstrap.NewSecretCipher([]byte(cfg.DBEncryptionKey), cfg.DBEncryptionKeyID); err != nil {
+		return nil, err
+	}
 
 	sdk := mgsdk.NewSDK(mgsdk.Config{})
 	idp := uuid.New()
 	resolver := bootstrap.NewAtomResolver(atomClient)
 	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.New(
+	svc := bootstrap.NewWithTransportKeys(
 		repoConfig,
 		repoProfile,
 		repoBindings,
+		repoTransportKeys,
 		resolver,
 		renderer,
 		sdk,
-		bootstraphasher.New(),
-		[]byte(cfg.EncKey),
+		[]byte(cfg.DBEncryptionKey),
+		cfg.DBEncryptionKeyID,
 		idp,
 	)
 

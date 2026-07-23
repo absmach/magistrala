@@ -48,7 +48,7 @@ const (
 )
 
 var (
-	encKey = []byte("1234567891011121")
+	encKey = []byte("12345678910111213141516171819202")
 
 	domainID = testsutil.GenerateUUID(&testing.T{})
 	validID  = testsutil.GenerateUUID(&testing.T{})
@@ -237,10 +237,11 @@ func TestUpdate(t *testing.T) {
 	tv := newTestVariable(t, redisURL)
 
 	modified := config
+	modified.ExternalKey = ""
 	modified.Content = "new-config"
 	modified.Name = "new name"
 
-	nonExisting := config
+	nonExisting := modified
 	nonExisting.ID = unknownID
 
 	cases := []struct {
@@ -288,6 +289,7 @@ func TestUpdate(t *testing.T) {
 	lastID := "0"
 	for _, tc := range cases {
 		tc.session = smqauthn.Session{UserID: validID, DomainID: tc.domainID, DomainUserID: validID}
+		retrieveCall := tv.boot.On("RetrieveByID", context.Background(), tc.domainID, tc.config.ID).Return(tc.config, nil)
 		repoCall := tv.boot.On("Update", context.Background(), mock.Anything).Return(tc.updateErr)
 		err := tv.svc.Update(context.Background(), tc.session, tc.config)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
@@ -307,6 +309,7 @@ func TestUpdate(t *testing.T) {
 		}
 
 		test(t, tc.event, event, tc.desc)
+		retrieveCall.Unset()
 		repoCall.Unset()
 	}
 }

@@ -35,6 +35,14 @@ Client configuration also contains the so-called `external ID` and `external key
 
 The service is configured using the environment variables presented in the following table. Note that any unset variables will be replaced with their default values.
 
+Bootstrap uses two independent encryption layers:
+
+- `MG_BOOTSTRAP_DB_ENCRYPTION_KEY` is a service-owned 32-byte master key. HKDF-derived AES-256-GCM keys encrypt enrollment external keys, domain transport keys and secret binding snapshots before PostgreSQL storage.
+- Each domain has a random 256-bit transport key managed through `/{domainID}/clients/bootstrap/transport-keys`. That key encrypts only secure device requests and responses and is itself encrypted by the database master key at rest. Creating or rotating a key returns its base64url secret; authorized domain managers can reveal it later.
+- An authorized manager can generate a five-minute, single-use device credential with `POST /{domainID}/clients/configs/{configID}/secure-credential`. The returned `Authorization: Client v2...` value is generated on demand and is never stored.
+
+Changing a domain transport key does not change the database master key. Rotation keeps the old domain key valid for 24 hours while devices move to the new key.
+
 | Variable                       | Description                                                                      | Default                           |
 | ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------- |
 | MG_BOOTSTRAP_LOG_LEVEL        | Log level for Bootstrap (debug, info, warn, error)                               | info                              |
@@ -47,7 +55,8 @@ The service is configured using the environment variables presented in the follo
 | MG_BOOTSTRAP_DB_SSL_CERT      | Path to the PEM encoded certificate file                                         | ""                                |
 | MG_BOOTSTRAP_DB_SSL_KEY       | Path to the PEM encoded key file                                                 | ""                                |
 | MG_BOOTSTRAP_DB_SSL_ROOT_CERT | Path to the PEM encoded root certificate file                                    | ""                                |
-| MG_BOOTSTRAP_ENCRYPT_KEY      | Secret key for secure bootstrapping encryption                                   | 12345678910111213141516171819202  |
+| MG_BOOTSTRAP_DB_ENCRYPTION_KEY | 32-byte master key used only to encrypt Bootstrap secrets stored in PostgreSQL  | 12345678910111213141516171819202  |
+| MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID | Identifier written into database encryption envelopes                       | primary                           |
 | MG_BOOTSTRAP_HTTP_HOST        | Bootstrap service HTTP host                                                      | ""                                |
 | MG_BOOTSTRAP_HTTP_PORT        | Bootstrap service HTTP port                                                      | 9013                              |
 | MG_BOOTSTRAP_HTTP_SERVER_CERT | Path to server certificate in pem format                                         | ""                                |
@@ -95,7 +104,7 @@ MG_BOOTSTRAP_DB_SSL_CERT="" \
 MG_BOOTSTRAP_DB_SSL_KEY="" \
 MG_BOOTSTRAP_DB_SSL_ROOT_CERT="" \
 MG_BOOTSTRAP_HTTP_HOST=localhost \
-MG_BOOTSTRAP_HTTP_PORT=9013 \
+MG_BOOTSTRAP_HTTP_PORT=9010 \
 MG_BOOTSTRAP_HTTP_SERVER_CERT="" \
 MG_BOOTSTRAP_HTTP_SERVER_KEY="" \
 MG_BOOTSTRAP_EVENT_CONSUMER=bootstrap \
@@ -115,7 +124,7 @@ $GOBIN/magistrala-bootstrap
 
 Setting `MG_BOOTSTRAP_HTTP_SERVER_CERT` and `MG_BOOTSTRAP_HTTP_SERVER_KEY` will enable TLS against the service. The service expects a file in PEM format for both the certificate and the key.
 
-Bootstrap PostgreSQL is authoritative for enrollments, profiles, templates, certificates, external-key hashes and encrypted binding snapshots. ATOM is authoritative for identity and authorization and receives only non-secret bootstrap resource projections.
+Bootstrap PostgreSQL is authoritative for enrollments, profiles, templates, certificates, encrypted external keys and encrypted binding snapshots. ATOM is authoritative for identity and authorization and receives only non-secret bootstrap resource projections.
 
 ## Usage
 

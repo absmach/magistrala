@@ -4,10 +4,6 @@
 package bootstrap
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"encoding/hex"
 	"encoding/json"
 )
 
@@ -24,7 +20,10 @@ func (bs bootstrapService) encryptSecretSnapshots(bindings []BindingSnapshot) ([
 		if err != nil {
 			return nil, err
 		}
-		ciphertext, err := bs.encrypt(secret)
+		if bs.dbCipher == nil {
+			return nil, ErrExternalKeySecure
+		}
+		ciphertext, err := bs.dbCipher.seal("binding-snapshot", secret, snapshotSecretAAD(binding.ConfigID, binding.Slot))
 		if err != nil {
 			return nil, err
 		}
@@ -43,7 +42,10 @@ func (bs bootstrapService) decryptSecretSnapshots(bindings []BindingSnapshot) ([
 		if !ok {
 			continue
 		}
-		plain, err := bs.decrypt(ciphertext)
+		if bs.dbCipher == nil {
+			return nil, ErrExternalKeySecure
+		}
+		plain, err := bs.dbCipher.open("binding-snapshot", ciphertext, snapshotSecretAAD(binding.ConfigID, binding.Slot))
 		if err != nil {
 			return nil, err
 		}
@@ -63,38 +65,4 @@ func hideSecretSnapshots(bindings []BindingSnapshot) []BindingSnapshot {
 		hidden[i].SecretSnapshot = nil
 	}
 	return hidden
-}
-
-func (bs bootstrapService) encrypt(plain []byte) (string, error) {
-	block, err := aes.NewCipher(bs.encKey)
-	if err != nil {
-		return "", err
-	}
-	ciphertext := make([]byte, aes.BlockSize+len(plain))
-	iv := ciphertext[:aes.BlockSize]
-	if _, err := rand.Read(iv); err != nil {
-		return "", err
-	}
-	stream := cipher.NewCFBEncrypter(block, iv)
-	stream.XORKeyStream(ciphertext[aes.BlockSize:], plain)
-	return hex.EncodeToString(ciphertext), nil
-}
-
-func (bs bootstrapService) decrypt(in string) ([]byte, error) {
-	ciphertext, err := hex.DecodeString(in)
-	if err != nil {
-		return nil, err
-	}
-	block, err := aes.NewCipher(bs.encKey)
-	if err != nil {
-		return nil, err
-	}
-	if len(ciphertext) < aes.BlockSize {
-		return nil, ErrExternalKeySecure
-	}
-	iv := ciphertext[:aes.BlockSize]
-	ciphertext = ciphertext[aes.BlockSize:]
-	stream := cipher.NewCFBDecrypter(block, iv)
-	stream.XORKeyStream(ciphertext, ciphertext)
-	return ciphertext, nil
 }

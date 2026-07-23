@@ -54,6 +54,7 @@ func (req entityReq) validate() error {
 type updateReq struct {
 	id            string
 	Name          string         `json:"name"`
+	ExternalKey   string         `json:"external_key"`
 	Content       string         `json:"content"`
 	RenderContext map[string]any `json:"render_context"`
 }
@@ -115,6 +116,17 @@ func (req bootstrapReq) validate() error {
 type changeConfigStatusReq struct {
 	token string
 	id    string
+}
+
+type transportKeyReq struct {
+	keyID string
+}
+
+func (req transportKeyReq) validate() error {
+	if req.keyID == "" {
+		return apiutil.ErrMissingID
+	}
+	return nil
 }
 
 func (req changeConfigStatusReq) validate() error {

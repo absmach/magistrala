@@ -17,12 +17,37 @@ import (
 )
 
 type atomAuthorizer struct {
-	req atom.AuthzRequest
+	req  atom.AuthzRequest
+	reqs []atom.AuthzRequest
 }
 
 func (a *atomAuthorizer) CheckAuthz(_ context.Context, req atom.AuthzRequest) (atom.AuthzResponse, error) {
 	a.req = req
+	a.reqs = append(a.reqs, req)
 	return atom.AuthzResponse{Allowed: true}, nil
+}
+
+func TestAtomAuthorizationGenerateSecureCredentialRequiresConfigReadAndTenantManage(t *testing.T) {
+	svc := mocks.NewService(t)
+	session := authn.Session{UserID: "user-1", DomainID: "domain-1"}
+	want := bootstrap.SecureBootstrapCredential{ExternalID: "device-1"}
+	svc.On("GenerateSecureCredential", mock.Anything, session, "config-1").Return(want, nil).Once()
+	authorizer := &atomAuthorizer{}
+
+	got, err := AtomAuthorizationMiddleware(svc, authorizer).GenerateSecureCredential(
+		context.Background(), session, "config-1",
+	)
+
+	require.NoError(t, err)
+	assert.Equal(t, want, got)
+	require.Len(t, authorizer.reqs, 2)
+	assert.Equal(t, "read", authorizer.reqs[0].Action)
+	assert.Equal(t, "resource", authorizer.reqs[0].ObjectKind)
+	assert.Equal(t, atom.KindBootstrapConfig, authorizer.reqs[0].Context["legacy_object_type"])
+	assert.Equal(t, "config-1", authorizer.reqs[0].ObjectID)
+	assert.Equal(t, "manage", authorizer.reqs[1].Action)
+	assert.Equal(t, "tenant", authorizer.reqs[1].ObjectKind)
+	assert.Equal(t, session.DomainID, authorizer.reqs[1].ObjectID)
 }
 
 func TestAtomAuthorizationListUsesExistingTenantWriteGrant(t *testing.T) {

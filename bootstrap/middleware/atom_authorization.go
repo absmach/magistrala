@@ -153,3 +153,41 @@ func (am *atomAuthorizationMiddleware) RefreshBindings(ctx context.Context, sess
 	}
 	return am.Service.RefreshBindings(ctx, session, token, configID)
 }
+
+func (am *atomAuthorizationMiddleware) CreateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	if err := am.tenant(ctx, session, "manage"); err != nil {
+		return bootstrap.DomainTransportKey{}, err
+	}
+	return am.Service.CreateDomainTransportKey(ctx, session)
+}
+
+func (am *atomAuthorizationMiddleware) ViewDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	if err := am.tenant(ctx, session, "manage"); err != nil {
+		return bootstrap.DomainTransportKey{}, err
+	}
+	return am.Service.ViewDomainTransportKey(ctx, session)
+}
+
+func (am *atomAuthorizationMiddleware) RevealDomainTransportKey(ctx context.Context, session authn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	if err := am.tenant(ctx, session, "manage"); err != nil {
+		return bootstrap.DomainTransportKey{}, err
+	}
+	return am.Service.RevealDomainTransportKey(ctx, session, keyID)
+}
+
+func (am *atomAuthorizationMiddleware) RotateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	if err := am.tenant(ctx, session, "manage"); err != nil {
+		return bootstrap.DomainTransportKey{}, err
+	}
+	return am.Service.RotateDomainTransportKey(ctx, session)
+}
+
+func (am *atomAuthorizationMiddleware) GenerateSecureCredential(ctx context.Context, session authn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	if err := am.resource(ctx, session, "read", configID, atom.KindBootstrapConfig); err != nil {
+		return bootstrap.SecureBootstrapCredential{}, err
+	}
+	if err := am.tenant(ctx, session, "manage"); err != nil {
+		return bootstrap.SecureBootstrapCredential{}, err
+	}
+	return am.Service.GenerateSecureCredential(ctx, session, configID)
+}

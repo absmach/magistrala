@@ -324,6 +324,38 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE IF EXISTS profiles RENAME COLUMN content_format TO template_format`,
 				},
 			},
+			{
+				Id: "configs_17",
+				Up: []string{
+					`CREATE TABLE IF NOT EXISTS domain_transport_keys (
+						domain_id        VARCHAR(36) NOT NULL,
+						key_id           VARCHAR(36) NOT NULL,
+						encrypted_secret TEXT NOT NULL,
+						wrapping_key_id  VARCHAR(128) NOT NULL,
+						status           VARCHAR(16) NOT NULL CHECK (status IN ('active', 'retiring', 'revoked')),
+						created_at       TIMESTAMPTZ NOT NULL,
+						updated_at       TIMESTAMPTZ NOT NULL,
+						retire_at        TIMESTAMPTZ,
+						PRIMARY KEY (domain_id, key_id)
+					)`,
+					`CREATE UNIQUE INDEX IF NOT EXISTS idx_domain_transport_keys_active
+						ON domain_transport_keys (domain_id) WHERE status = 'active'`,
+					`CREATE TABLE IF NOT EXISTS secure_bootstrap_requests (
+						domain_id VARCHAR(36) NOT NULL,
+						key_id VARCHAR(36) NOT NULL,
+						request_id VARCHAR(128) NOT NULL,
+						expires_at TIMESTAMPTZ NOT NULL,
+						PRIMARY KEY (domain_id, key_id, request_id),
+						FOREIGN KEY (domain_id, key_id) REFERENCES domain_transport_keys (domain_id, key_id) ON DELETE CASCADE
+					)`,
+					`CREATE INDEX IF NOT EXISTS idx_secure_bootstrap_requests_expires_at
+						ON secure_bootstrap_requests (expires_at)`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS secure_bootstrap_requests`,
+					`DROP TABLE IF EXISTS domain_transport_keys`,
+				},
+			},
 		},
 	}
 }

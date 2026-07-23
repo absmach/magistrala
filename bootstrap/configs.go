@@ -19,6 +19,10 @@ type Config struct {
 	Status        Status         `json:"status"`
 	ProfileID     string         `json:"profile_id,omitempty"`
 	RenderContext map[string]any `json:"render_context,omitempty"`
+
+	SecureTransportKey   []byte `json:"-"`
+	SecureTransportKeyID string `json:"-"`
+	SecureRequestID      string `json:"-"`
 }
 
 // Filter is used for the search filters.

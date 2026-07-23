@@ -56,7 +56,7 @@ func (cr configRepository) Save(ctx context.Context, cfg bootstrap.Config) (stri
 }
 
 func (cr configRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Config, error) {
-	q := `SELECT id, external_id, name, content, status, client_cert, client_key, ca_cert, profile_id, render_context
+	q := `SELECT id, domain_id, external_id, external_key, name, content, status, client_cert, client_key, ca_cert, profile_id, render_context
 		  FROM configs
 		  WHERE id = :id AND domain_id = :domain_id`
 
@@ -88,7 +88,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, fil
 	search, params := buildRetrieveQueryParams(domainID, filter)
 	n := len(params)
 
-	q := `SELECT id, external_id, name, content, status, profile_id, render_context
+	q := `SELECT id, external_id, external_key, name, content, status, profile_id, render_context
 		  FROM configs %s ORDER BY id LIMIT $%d OFFSET $%d`
 	q = fmt.Sprintf(q, search, n+1, n+2)
 
@@ -105,7 +105,7 @@ func (cr configRepository) RetrieveAll(ctx context.Context, domainID string, fil
 
 	for rows.Next() {
 		c := bootstrap.Config{DomainID: domainID}
-		if err := rows.Scan(&c.ID, &c.ExternalID, &name, &content, &c.Status, &profileID, &renderContext); err != nil {
+		if err := rows.Scan(&c.ID, &c.ExternalID, &c.ExternalKey, &name, &content, &c.Status, &profileID, &renderContext); err != nil {
 			cr.log.Error(fmt.Sprintf("Failed to read retrieved config due to %s", err))
 			return bootstrap.ConfigsPage{}
 		}
@@ -169,7 +169,9 @@ func (cr configRepository) RetrieveByExternalID(ctx context.Context, externalID 
 }
 
 func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) error {
-	q := `UPDATE configs SET name = :name, content = :content, render_context = :render_context WHERE id = :id AND domain_id = :domain_id `
+	q := `UPDATE configs SET name = :name, content = :content, render_context = :render_context,
+		external_key = CASE WHEN :external_key = '' THEN external_key ELSE :external_key END
+		WHERE id = :id AND domain_id = :domain_id`
 
 	renderContext, err := json.Marshal(cfg.RenderContext)
 	if err != nil {
@@ -178,6 +180,7 @@ func (cr configRepository) Update(ctx context.Context, cfg bootstrap.Config) err
 
 	dbcfg := dbConfig{
 		Name:          nullString(cfg.Name),
+		ExternalKey:   cfg.ExternalKey,
 		Content:       nullString(cfg.Content),
 		RenderContext: renderContext,
 		ID:            cfg.ID,

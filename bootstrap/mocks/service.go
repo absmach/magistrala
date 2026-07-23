@@ -39,6 +39,68 @@ type Service_Expecter struct {
 	mock *mock.Mock
 }
 
+func (_mock *Service) CreateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	ret := _mock.Called(ctx, session)
+	if len(ret) == 0 {
+		panic("no return value specified for CreateDomainTransportKey")
+	}
+	var key bootstrap.DomainTransportKey
+	if fn, ok := ret.Get(0).(func(context.Context, authn.Session) bootstrap.DomainTransportKey); ok {
+		key = fn(ctx, session)
+	} else if ret.Get(0) != nil {
+		key = ret.Get(0).(bootstrap.DomainTransportKey)
+	}
+	return key, ret.Error(1)
+}
+
+func (_mock *Service) ViewDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	ret := _mock.Called(ctx, session)
+	if len(ret) == 0 {
+		panic("no return value specified for ViewDomainTransportKey")
+	}
+	var key bootstrap.DomainTransportKey
+	if ret.Get(0) != nil {
+		key = ret.Get(0).(bootstrap.DomainTransportKey)
+	}
+	return key, ret.Error(1)
+}
+
+func (_mock *Service) RevealDomainTransportKey(ctx context.Context, session authn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
+	ret := _mock.Called(ctx, session, keyID)
+	if len(ret) == 0 {
+		panic("no return value specified for RevealDomainTransportKey")
+	}
+	var key bootstrap.DomainTransportKey
+	if ret.Get(0) != nil {
+		key = ret.Get(0).(bootstrap.DomainTransportKey)
+	}
+	return key, ret.Error(1)
+}
+
+func (_mock *Service) RotateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
+	ret := _mock.Called(ctx, session)
+	if len(ret) == 0 {
+		panic("no return value specified for RotateDomainTransportKey")
+	}
+	var key bootstrap.DomainTransportKey
+	if ret.Get(0) != nil {
+		key = ret.Get(0).(bootstrap.DomainTransportKey)
+	}
+	return key, ret.Error(1)
+}
+
+func (_mock *Service) GenerateSecureCredential(ctx context.Context, session authn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
+	ret := _mock.Called(ctx, session, configID)
+	if len(ret) == 0 {
+		panic("no return value specified for GenerateSecureCredential")
+	}
+	var credential bootstrap.SecureBootstrapCredential
+	if ret.Get(0) != nil {
+		credential = ret.Get(0).(bootstrap.SecureBootstrapCredential)
+	}
+	return credential, ret.Error(1)
+}
+
 func (_m *Service) EXPECT() *Service_Expecter {
 	return &Service_Expecter{mock: &_m.Mock}
 }

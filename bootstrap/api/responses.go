@@ -48,18 +48,19 @@ func (res updateRes) Empty() bool {
 }
 
 type configRes struct {
-	ID            string           `json:"id"`
-	ExternalID    string           `json:"external_id"`
-	ExternalKey   string           `json:"external_key"`
-	Name          string           `json:"name,omitempty"`
-	Content       string           `json:"content,omitempty"`
-	Status        bootstrap.Status `json:"status"`
-	ProfileID     string           `json:"profile_id,omitempty"`
-	RenderContext map[string]any   `json:"render_context,omitempty"`
-	ClientCert    string           `json:"client_cert,omitempty"`
-	CACert        string           `json:"ca_cert,omitempty"`
-	ClientKey     string           `json:"client_key,omitempty"`
-	created       bool
+	ID                  string           `json:"id"`
+	ExternalID          string           `json:"external_id"`
+	ExternalKey         string           `json:"external_key"`
+	BootstrapKeyVersion uint64           `json:"bootstrap_key_version"`
+	Name                string           `json:"name,omitempty"`
+	Content             string           `json:"content,omitempty"`
+	Status              bootstrap.Status `json:"status"`
+	ProfileID           string           `json:"profile_id,omitempty"`
+	RenderContext       map[string]any   `json:"render_context,omitempty"`
+	ClientCert          string           `json:"client_cert,omitempty"`
+	CACert              string           `json:"ca_cert,omitempty"`
+	ClientKey           string           `json:"client_key,omitempty"`
+	created             bool
 }
 
 func (res configRes) Code() int {
@@ -83,17 +84,18 @@ func (res configRes) Empty() bool {
 }
 
 type viewRes struct {
-	ID            string           `json:"id,omitempty"`
-	ExternalID    string           `json:"external_id"`
-	ExternalKey   string           `json:"external_key"`
-	Content       string           `json:"content,omitempty"`
-	Name          string           `json:"name,omitempty"`
-	Status        bootstrap.Status `json:"status"`
-	ProfileID     string           `json:"profile_id,omitempty"`
-	RenderContext map[string]any   `json:"render_context,omitempty"`
-	ClientCert    string           `json:"client_cert,omitempty"`
-	CACert        string           `json:"ca_cert,omitempty"`
-	ClientKey     string           `json:"client_key,omitempty"`
+	ID                  string           `json:"id,omitempty"`
+	ExternalID          string           `json:"external_id"`
+	ExternalKey         string           `json:"external_key"`
+	BootstrapKeyVersion uint64           `json:"bootstrap_key_version"`
+	Content             string           `json:"content,omitempty"`
+	Name                string           `json:"name,omitempty"`
+	Status              bootstrap.Status `json:"status"`
+	ProfileID           string           `json:"profile_id,omitempty"`
+	RenderContext       map[string]any   `json:"render_context,omitempty"`
+	ClientCert          string           `json:"client_cert,omitempty"`
+	CACert              string           `json:"ca_cert,omitempty"`
+	ClientKey           string           `json:"client_key,omitempty"`
 }
 
 func (res viewRes) Code() int {
@@ -206,7 +208,8 @@ func (res profileSlotsRes) Empty() bool                { return false }
 
 // renderPreviewRes is returned by profile render-preview endpoint.
 type renderPreviewRes struct {
-	Content string `json:"content"`
+	ContentType bootstrap.ContentType `json:"content_type"`
+	Content     string                `json:"content"`
 }
 
 func (res renderPreviewRes) Code() int                  { return http.StatusOK }
@@ -222,32 +225,14 @@ func (res bindingsRes) Code() int                  { return http.StatusOK }
 func (res bindingsRes) Headers() map[string]string { return map[string]string{} }
 func (res bindingsRes) Empty() bool                { return false }
 
-type transportKeyRes struct {
-	bootstrap.DomainTransportKey
-	created bool
+type bootstrapChallengeRes struct {
+	bootstrap.BootstrapChallengeResponse
 }
 
-func (res transportKeyRes) Code() int {
-	if res.created {
-		return http.StatusCreated
-	}
-	return http.StatusOK
-}
+func (res bootstrapChallengeRes) Code() int { return http.StatusOK }
 
-func (res transportKeyRes) Headers() map[string]string {
+func (res bootstrapChallengeRes) Headers() map[string]string {
 	return map[string]string{"Cache-Control": "no-store"}
 }
 
-func (res transportKeyRes) Empty() bool { return false }
-
-type secureCredentialRes struct {
-	bootstrap.SecureBootstrapCredential
-}
-
-func (res secureCredentialRes) Code() int { return http.StatusOK }
-
-func (res secureCredentialRes) Headers() map[string]string {
-	return map[string]string{"Cache-Control": "no-store"}
-}
-
-func (res secureCredentialRes) Empty() bool { return false }
+func (res bootstrapChallengeRes) Empty() bool { return false }

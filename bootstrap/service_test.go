@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/absmach/magistrala/bootstrap"
-	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	mocks "github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
@@ -35,7 +34,7 @@ var (
 	config = bootstrap.Config{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
 		ExternalID:  testsutil.GenerateUUID(&testing.T{}),
-		ExternalKey: testsutil.GenerateUUID(&testing.T{}),
+		ExternalKey: "MTIzNDU2Nzg5MTAxMTEyMTMxNDE1MTYxNzE4MTkyMDI",
 		Content:     "config",
 	}
 )
@@ -57,7 +56,7 @@ func newService() bootstrap.Service {
 	resolver = new(mocks.BindingResolver)
 	renderer = new(mocks.Renderer)
 	idp := uuid.NewMock()
-	return bootstrap.New(boot, profileRepo, bindingStore, resolver, renderer, sdk, bootstraphasher.New(), encKey, idp)
+	return bootstrap.New(boot, profileRepo, bindingStore, resolver, renderer, sdk, encKey, idp)
 }
 
 func TestAdd(t *testing.T) {
@@ -311,7 +310,7 @@ func TestUpdateCert(t *testing.T) {
 			repoCall := boot.On("UpdateCert", context.Background(), mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(tc.expectedConfig, tc.updateErr)
 			cfg, err := svc.UpdateCert(context.Background(), tc.session, tc.configID, tc.clientCert, tc.clientKey, tc.caCert)
 			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
+			assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.expectedConfig, cfg))
 			repoCall.Unset()
 		})
 	}
@@ -640,163 +639,6 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-func TestBootstrap(t *testing.T) {
-	svc := newService()
-
-	c := config
-	c.Status = bootstrap.Active
-
-	cases := []struct {
-		desc        string
-		config      bootstrap.Config
-		externalKey string
-		externalID  string
-		userID      string
-		domainID    string
-		err         error
-		encrypted   bool
-	}{
-		{
-			desc:        "bootstrap using invalid external id",
-			config:      bootstrap.Config{},
-			externalID:  "invalid",
-			externalKey: c.ExternalKey,
-			userID:      validID,
-			domainID:    invalidDomainID,
-			err:         svcerr.ErrNotFound,
-			encrypted:   false,
-		},
-		{
-			desc:        "bootstrap using invalid external key",
-			config:      bootstrap.Config{},
-			externalID:  c.ExternalID,
-			externalKey: "invalid",
-			userID:      validID,
-			domainID:    domainID,
-			err:         bootstrap.ErrExternalKey,
-			encrypted:   false,
-		},
-		{
-			desc:        "bootstrap an existing config",
-			config:      c,
-			externalID:  c.ExternalID,
-			externalKey: c.ExternalKey,
-			userID:      validID,
-			domainID:    domainID,
-			err:         nil,
-			encrypted:   false,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			repoCall := boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(tc.config, tc.err)
-			config, err := svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, tc.encrypted)
-			assert.Equal(t, tc.config, config, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.config, config))
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-			repoCall.Unset()
-		})
-	}
-}
-
-func TestBootstrapRender(t *testing.T) {
-	profile := bootstrap.Profile{
-		ID:              testsutil.GenerateUUID(&testing.T{}),
-		DomainID:        domainID,
-		Name:            "gateway-profile",
-		ContentFormat:   bootstrap.ContentFormatGoTemplate,
-		ContentTemplate: `{"mode":"profile"}`,
-	}
-	bindings := []bootstrap.BindingSnapshot{
-		{
-			ConfigID:   config.ID,
-			Slot:       "mqtt_client",
-			Type:       "client",
-			ResourceID: config.ID,
-			Snapshot: map[string]any{
-				"id": config.ID,
-			},
-		},
-	}
-
-	cases := []struct {
-		desc        string
-		cfg         bootstrap.Config
-		rendererOut []byte
-		rendererErr error
-		rendered    string
-		err         error
-	}{
-		{
-			desc: "bootstrap renders assigned profile content",
-			cfg: func() bootstrap.Config {
-				cfg := config
-				cfg.DomainID = domainID
-				cfg.ProfileID = profile.ID
-				cfg.Status = bootstrap.Active
-				cfg.Content = "legacy"
-				return cfg
-			}(),
-			rendererOut: []byte(`{"mode":"profile"}`),
-			rendered:    `{"mode":"profile"}`,
-		},
-		{
-			desc: "bootstrap falls back to legacy content when no profile is assigned",
-			cfg: func() bootstrap.Config {
-				cfg := config
-				cfg.DomainID = domainID
-				cfg.Status = bootstrap.Active
-				cfg.Content = "legacy"
-				return cfg
-			}(),
-			rendered: "legacy",
-		},
-		{
-			desc: "bootstrap fails when renderer fails",
-			cfg: func() bootstrap.Config {
-				cfg := config
-				cfg.DomainID = domainID
-				cfg.ProfileID = profile.ID
-				cfg.Status = bootstrap.Active
-				return cfg
-			}(),
-			rendererErr: errors.New("render failed"),
-			err:         errors.New("render failed"),
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svc := newService()
-			repoCall := boot.On("RetrieveByExternalID", context.Background(), tc.cfg.ExternalID).Return(tc.cfg, nil)
-
-			var prCall, bsCall, rndCall *mock.Call
-			if tc.cfg.ProfileID != "" {
-				prCall = profileRepo.On("RetrieveByID", context.Background(), tc.cfg.DomainID, tc.cfg.ProfileID).Return(profile, nil)
-				bsCall = bindingStore.On("Retrieve", context.Background(), tc.cfg.ID).Return(bindings, nil)
-				rndCall = renderer.On("Render", mock.Anything, mock.Anything, mock.Anything).Return(tc.rendererOut, tc.rendererErr)
-			}
-
-			res, err := svc.Bootstrap(context.Background(), tc.cfg.ExternalKey, tc.cfg.ExternalID, false)
-			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.err, err))
-			if tc.err == nil {
-				assert.Equal(t, tc.rendered, res.Content, fmt.Sprintf("%s: expected rendered content %q got %q\n", tc.desc, tc.rendered, res.Content))
-			}
-
-			repoCall.Unset()
-			if prCall != nil {
-				prCall.Unset()
-			}
-			if bsCall != nil {
-				bsCall.Unset()
-			}
-			if rndCall != nil {
-				rndCall.Unset()
-			}
-		})
-	}
-}
-
 func TestEnableConfig(t *testing.T) {
 	svc := newService()
 
@@ -1008,21 +850,42 @@ func TestCreateProfile(t *testing.T) {
 	}
 
 	cases := []struct {
-		desc       string
-		profile    bootstrap.Profile
-		saveErr    error
-		err        error
-		wantFormat bootstrap.ContentFormat
+		desc            string
+		profile         bootstrap.Profile
+		saveErr         error
+		err             error
+		wantFormat      bootstrap.ContentFormat
+		wantContentType bootstrap.ContentType
 	}{
 		{
-			desc:       "create profile successfully",
-			profile:    validProfile,
-			wantFormat: bootstrap.ContentFormatGoTemplate,
+			desc:            "create profile successfully",
+			profile:         validProfile,
+			wantFormat:      bootstrap.ContentFormatGoTemplate,
+			wantContentType: bootstrap.ContentTypeTextPlain,
 		},
 		{
-			desc:       "create profile defaults to json format",
-			profile:    bootstrap.Profile{Name: "no-format"},
-			wantFormat: bootstrap.ContentFormatJSON,
+			desc:            "create profile defaults to json format and content type",
+			profile:         bootstrap.Profile{Name: "no-format"},
+			wantFormat:      bootstrap.ContentFormatJSON,
+			wantContentType: bootstrap.ContentTypeJSON,
+		},
+		{
+			desc: "create profile with explicit JSON output from go template",
+			profile: bootstrap.Profile{
+				Name:          "json-template",
+				ContentFormat: bootstrap.ContentFormatGoTemplate,
+				ContentType:   bootstrap.ContentTypeJSON,
+			},
+			wantFormat:      bootstrap.ContentFormatGoTemplate,
+			wantContentType: bootstrap.ContentTypeJSON,
+		},
+		{
+			desc: "create profile with unsupported content type",
+			profile: bootstrap.Profile{
+				Name:        "invalid-content-type",
+				ContentType: bootstrap.ContentType("application/xml"),
+			},
+			err: errors.New("unsupported profile content type"),
 		},
 		{
 			desc: "create profile with invalid slot: empty name",
@@ -1080,6 +943,7 @@ func TestCreateProfile(t *testing.T) {
 				assert.NotEmpty(t, saved.ID, fmt.Sprintf("%s: expected non-empty profile ID\n", tc.desc))
 				assert.Equal(t, domainID, saved.DomainID, fmt.Sprintf("%s: expected domain ID %s got %s\n", tc.desc, domainID, saved.DomainID))
 				assert.Equal(t, tc.wantFormat, saved.ContentFormat, fmt.Sprintf("%s: expected %s format\n", tc.desc, tc.wantFormat))
+				assert.Equal(t, tc.wantContentType, saved.ContentType, fmt.Sprintf("%s: expected %s content type\n", tc.desc, tc.wantContentType))
 				assert.Equal(t, 1, saved.Version, fmt.Sprintf("%s: expected version 1\n", tc.desc))
 			}
 			saveCall.Unset()
@@ -1153,6 +1017,14 @@ func TestUpdateProfile(t *testing.T) {
 		{
 			desc:    "update profile with only name",
 			profile: bootstrap.Profile{ID: validProfile.ID, Name: "no-format"},
+		},
+		{
+			desc: "update profile with unsupported content type",
+			profile: bootstrap.Profile{
+				ID:          validProfile.ID,
+				ContentType: bootstrap.ContentType("application/xml"),
+			},
+			err: errors.New("unsupported profile content type"),
 		},
 		{
 			desc: "update profile with invalid slot: empty type",

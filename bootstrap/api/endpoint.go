@@ -44,18 +44,19 @@ func addEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := configRes{
-			ID:            saved.ID,
-			ExternalID:    saved.ExternalID,
-			ExternalKey:   saved.ExternalKey,
-			Name:          saved.Name,
-			Content:       saved.Content,
-			Status:        saved.Status,
-			ProfileID:     saved.ProfileID,
-			RenderContext: saved.RenderContext,
-			ClientCert:    saved.ClientCert,
-			CACert:        saved.CACert,
-			ClientKey:     saved.ClientKey,
-			created:       true,
+			ID:                  saved.ID,
+			ExternalID:          saved.ExternalID,
+			ExternalKey:         saved.ExternalKey,
+			BootstrapKeyVersion: saved.BootstrapKeyVersion,
+			Name:                saved.Name,
+			Content:             saved.Content,
+			Status:              saved.Status,
+			ProfileID:           saved.ProfileID,
+			RenderContext:       saved.RenderContext,
+			ClientCert:          saved.ClientCert,
+			CACert:              saved.CACert,
+			ClientKey:           saved.ClientKey,
+			created:             true,
 		}
 
 		return res, nil
@@ -108,17 +109,18 @@ func viewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 		}
 
 		res := viewRes{
-			ID:            config.ID,
-			ExternalID:    config.ExternalID,
-			ExternalKey:   config.ExternalKey,
-			Name:          config.Name,
-			Content:       config.Content,
-			Status:        config.Status,
-			ProfileID:     config.ProfileID,
-			RenderContext: config.RenderContext,
-			ClientCert:    config.ClientCert,
-			CACert:        config.CACert,
-			ClientKey:     config.ClientKey,
+			ID:                  config.ID,
+			ExternalID:          config.ExternalID,
+			ExternalKey:         config.ExternalKey,
+			BootstrapKeyVersion: config.BootstrapKeyVersion,
+			Name:                config.Name,
+			Content:             config.Content,
+			Status:              config.Status,
+			ProfileID:           config.ProfileID,
+			RenderContext:       config.RenderContext,
+			ClientCert:          config.ClientCert,
+			CACert:              config.CACert,
+			ClientKey:           config.ClientKey,
 		}
 
 		return res, nil
@@ -178,14 +180,15 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 
 		for _, cfg := range page.Configs {
 			view := viewRes{
-				ID:            cfg.ID,
-				ExternalID:    cfg.ExternalID,
-				ExternalKey:   cfg.ExternalKey,
-				Name:          cfg.Name,
-				Content:       cfg.Content,
-				Status:        cfg.Status,
-				ProfileID:     cfg.ProfileID,
-				RenderContext: cfg.RenderContext,
+				ID:                  cfg.ID,
+				ExternalID:          cfg.ExternalID,
+				ExternalKey:         cfg.ExternalKey,
+				BootstrapKeyVersion: cfg.BootstrapKeyVersion,
+				Name:                cfg.Name,
+				Content:             cfg.Content,
+				Status:              cfg.Status,
+				ProfileID:           cfg.ProfileID,
+				RenderContext:       cfg.RenderContext,
 			}
 			res.Configs = append(res.Configs, view)
 		}
@@ -194,81 +197,17 @@ func listEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	}
 }
 
-func createDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
+func issueBootstrapChallengeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-		key, err := svc.CreateDomainTransportKey(ctx, session)
-		if err != nil {
-			return nil, err
-		}
-		return transportKeyRes{DomainTransportKey: key, created: true}, nil
-	}
-}
-
-func viewDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-		key, err := svc.ViewDomainTransportKey(ctx, session)
-		if err != nil {
-			return nil, err
-		}
-		return transportKeyRes{DomainTransportKey: key}, nil
-	}
-}
-
-func revealDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request any) (any, error) {
-		req := request.(transportKeyReq)
+		req := request.(bootstrapChallengeReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-		key, err := svc.RevealDomainTransportKey(ctx, session, req.keyID)
+		challenge, err := svc.IssueBootstrapChallenge(ctx, req.externalID)
 		if err != nil {
 			return nil, err
 		}
-		return transportKeyRes{DomainTransportKey: key}, nil
-	}
-}
-
-func rotateDomainTransportKeyEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request any) (any, error) {
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-		key, err := svc.RotateDomainTransportKey(ctx, session)
-		if err != nil {
-			return nil, err
-		}
-		return transportKeyRes{DomainTransportKey: key, created: true}, nil
-	}
-}
-
-func generateSecureCredentialEndpoint(svc bootstrap.Service) endpoint.Endpoint {
-	return func(ctx context.Context, request any) (any, error) {
-		req := request.(entityReq)
-		if err := req.validate(); err != nil {
-			return nil, errors.Wrap(apiutil.ErrValidation, err)
-		}
-		session, ok := ctx.Value(authn.SessionKey).(authn.Session)
-		if !ok {
-			return nil, svcerr.ErrAuthorization
-		}
-		credential, err := svc.GenerateSecureCredential(ctx, session, req.id)
-		if err != nil {
-			return nil, err
-		}
-		return secureCredentialRes{SecureBootstrapCredential: credential}, nil
+		return bootstrapChallengeRes{BootstrapChallengeResponse: challenge}, nil
 	}
 }
 
@@ -292,19 +231,19 @@ func removeEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 	}
 }
 
-func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader, secure bool) endpoint.Endpoint {
+func bootstrapEndpoint(svc bootstrap.Service, reader bootstrap.ConfigReader) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
-		req := request.(bootstrapReq)
+		req := request.(deviceBootstrapReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		cfg, err := svc.Bootstrap(ctx, req.key, req.id, secure)
+		cfg, err := svc.Bootstrap(ctx, req.externalID, req.DeviceBootstrapProof)
 		if err != nil {
 			return nil, err
 		}
 
-		return reader.ReadConfig(cfg, secure)
+		return reader.ReadConfig(cfg)
 	}
 }
 
@@ -463,7 +402,10 @@ func renderPreviewEndpoint(svc bootstrap.Service) endpoint.Endpoint {
 			return nil, err
 		}
 
-		return renderPreviewRes{Content: string(rendered)}, nil
+		return renderPreviewRes{
+			ContentType: p.ContentType,
+			Content:     string(rendered),
+		}, nil
 	}
 }
 

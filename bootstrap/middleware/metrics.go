@@ -91,14 +91,23 @@ func (mm *metricsMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 	return mm.svc.Remove(ctx, session, id)
 }
 
+func (mm *metricsMiddleware) IssueBootstrapChallenge(ctx context.Context, externalID string) (challenge bootstrap.BootstrapChallengeResponse, err error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "issue_bootstrap_challenge").Add(1)
+		mm.latency.With("method", "issue_bootstrap_challenge").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.IssueBootstrapChallenge(ctx, externalID)
+}
+
 // Bootstrap instruments Bootstrap method with metrics.
-func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (cfg bootstrap.Config, err error) {
+func (mm *metricsMiddleware) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		mm.counter.With("method", "bootstrap").Add(1)
 		mm.latency.With("method", "bootstrap").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 
-	return mm.svc.Bootstrap(ctx, externalKey, externalID, secure)
+	return mm.svc.Bootstrap(ctx, externalID, proof)
 }
 
 func (mm *metricsMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
@@ -189,24 +198,4 @@ func (mm *metricsMiddleware) RefreshBindings(ctx context.Context, session smqaut
 		mm.latency.With("method", "refresh_bindings").Observe(time.Since(begin).Seconds())
 	}(time.Now())
 	return mm.svc.RefreshBindings(ctx, session, token, configID)
-}
-
-func (mm *metricsMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return mm.svc.CreateDomainTransportKey(ctx, session)
-}
-
-func (mm *metricsMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return mm.svc.ViewDomainTransportKey(ctx, session)
-}
-
-func (mm *metricsMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	return mm.svc.RevealDomainTransportKey(ctx, session, keyID)
-}
-
-func (mm *metricsMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return mm.svc.RotateDomainTransportKey(ctx, session)
-}
-
-func (mm *metricsMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	return mm.svc.GenerateSecureCredential(ctx, session, configID)
 }

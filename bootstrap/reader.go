@@ -12,11 +12,12 @@ import (
 // This is used as a response from ConfigReader and can easily be
 // replaced with any other response format.
 type bootstrapRes struct {
-	ID         string `json:"id,omitempty"`
-	Content    string `json:"content,omitempty"`
-	ClientCert string `json:"client_cert,omitempty"`
-	ClientKey  string `json:"client_key,omitempty"`
-	CACert     string `json:"ca_cert,omitempty"`
+	ID          string      `json:"id,omitempty"`
+	ContentType ContentType `json:"content_type"`
+	Content     string      `json:"content"`
+	ClientCert  string      `json:"client_cert,omitempty"`
+	ClientKey   string      `json:"client_key,omitempty"`
+	CACert      string      `json:"ca_cert,omitempty"`
 }
 
 func (res bootstrapRes) Code() int {
@@ -33,39 +34,40 @@ func (res bootstrapRes) Empty() bool {
 
 type reader struct{}
 
-// SecureConfigPayload carries the encrypted response and non-secret envelope
-// metadata to the HTTP transport.
-type SecureConfigPayload struct {
-	Payload   []byte
-	KeyID     string
-	RequestID string
+func (res EncryptedBootstrapConfig) Code() int {
+	return http.StatusOK
+}
+
+func (res EncryptedBootstrapConfig) Headers() map[string]string {
+	return map[string]string{"Cache-Control": "no-store"}
+}
+
+func (res EncryptedBootstrapConfig) Empty() bool {
+	return false
 }
 
 // NewConfigReader return new reader which is used to generate response
 // from the config.
-func NewConfigReader(_ []byte) ConfigReader {
+func NewConfigReader() ConfigReader {
 	return reader{}
 }
 
-func (r reader) ReadConfig(cfg Config, secure bool) (any, error) {
+func (r reader) ReadConfig(cfg Config) (any, error) {
+	contentType := cfg.ContentType
+	if contentType == "" {
+		contentType = ContentTypeTextPlain
+	}
 	res := bootstrapRes{
-		ID:         cfg.ID,
-		Content:    cfg.Content,
-		ClientCert: cfg.ClientCert,
-		ClientKey:  cfg.ClientKey,
-		CACert:     cfg.CACert,
+		ID:          cfg.ID,
+		ContentType: contentType,
+		Content:     cfg.Content,
+		ClientCert:  cfg.ClientCert,
+		ClientKey:   cfg.ClientKey,
+		CACert:      cfg.CACert,
 	}
-	if secure {
-		b, err := json.Marshal(res)
-		if err != nil {
-			return nil, err
-		}
-		payload, err := encryptSecureResponse(cfg, b)
-		if err != nil {
-			return nil, err
-		}
-		return SecureConfigPayload{Payload: payload, KeyID: cfg.SecureTransportKeyID, RequestID: cfg.SecureRequestID}, nil
+	b, err := json.Marshal(res)
+	if err != nil {
+		return nil, err
 	}
-
-	return res, nil
+	return encryptDeviceBootstrapResponse(cfg, b)
 }

@@ -135,7 +135,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader(nil), logger, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(svc, am, bootstrap.NewConfigReader(), logger, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)
@@ -159,7 +159,7 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	repoConfig := bootstrappg.NewConfigRepository(database, logger)
 	repoProfile := bootstrappg.NewProfileRepository(database, logger)
 	repoBindings := bootstrappg.NewBindingRepository(database, logger)
-	repoTransportKeys := bootstrappg.NewDomainTransportKeyRepository(database)
+	repoChallenges := bootstrappg.NewBootstrapChallengeRepository(database)
 	if _, err := bootstrap.NewSecretCipher([]byte(cfg.DBEncryptionKey), cfg.DBEncryptionKeyID); err != nil {
 		return nil, err
 	}
@@ -169,11 +169,11 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	resolver := bootstrap.NewAtomResolver(atomClient)
 	renderer := bootstrap.NewRenderer()
 
-	svc := bootstrap.NewWithTransportKeys(
+	svc := bootstrap.NewWithChallenges(
 		repoConfig,
 		repoProfile,
 		repoBindings,
-		repoTransportKeys,
+		repoChallenges,
 		resolver,
 		renderer,
 		sdk,

@@ -16,10 +16,11 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 	renderer := bootstrap.NewRenderer()
 
 	cases := []struct {
-		desc     string
-		format   bootstrap.ContentFormat
-		template string
-		err      error
+		desc        string
+		format      bootstrap.ContentFormat
+		contentType bootstrap.ContentType
+		template    string
+		err         error
 	}{
 		{
 			desc:     "valid JSON output",
@@ -70,6 +71,19 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			format:   bootstrap.ContentFormatTOML,
 			template: "device_id: {{ .Device.ID }}",
 		},
+		{
+			desc:        "go template with declared JSON output",
+			format:      bootstrap.ContentFormatGoTemplate,
+			contentType: bootstrap.ContentTypeJSON,
+			template:    `{"device_id":"{{ .Device.ID }}"}`,
+		},
+		{
+			desc:        "go template rejects invalid declared JSON output",
+			format:      bootstrap.ContentFormatGoTemplate,
+			contentType: bootstrap.ContentTypeJSON,
+			template:    `device={{ .Device.ID }}`,
+			err:         bootstrap.ErrRenderFailed,
+		},
 	}
 
 	for _, tc := range cases {
@@ -77,6 +91,7 @@ func TestRendererStructuredOutputValidation(t *testing.T) {
 			_, err := renderer.Render(
 				bootstrap.Profile{
 					ContentFormat:   tc.format,
+					ContentType:     tc.contentType,
 					ContentTemplate: tc.template,
 				},
 				bootstrap.Config{ID: "config-id"},

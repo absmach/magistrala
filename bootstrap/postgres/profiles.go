@@ -31,8 +31,8 @@ func NewProfileRepository(db postgres.Database, log *slog.Logger) bootstrap.Prof
 }
 
 func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (bootstrap.Profile, error) {
-	q := `INSERT INTO profiles (id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at)
-		  VALUES (:id, :domain_id, :name, :description, :content_format, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
+	q := `INSERT INTO profiles (id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at)
+		  VALUES (:id, :domain_id, :name, :description, :content_format, :content_type, :content_template, :defaults, :binding_slots, :version, :created_at, :updated_at)`
 
 	now := time.Now().UTC()
 	p.CreatedAt = now
@@ -51,7 +51,7 @@ func (pr profileRepository) Save(ctx context.Context, p bootstrap.Profile) (boot
 }
 
 func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id string) (bootstrap.Profile, error) {
-	q := `SELECT id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at
+	q := `SELECT id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
 		  FROM profiles WHERE id = :id AND domain_id = :domain_id`
 
 	rows, err := pr.db.NamedQueryContext(ctx, q, dbProfile{ID: id, DomainID: domainID})
@@ -74,7 +74,7 @@ func (pr profileRepository) RetrieveByID(ctx context.Context, domainID, id strin
 func (pr profileRepository) RetrieveAll(ctx context.Context, domainID string, offset, limit uint64, name string) (bootstrap.ProfilesPage, error) {
 	dbPage := dbProfilesPage{DomainID: domainID, Offset: offset, Limit: limit, Name: name}
 	pageQuery := profilesPageQuery(dbPage)
-	q := fmt.Sprintf(`SELECT id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at
+	q := fmt.Sprintf(`SELECT id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at
 		  FROM profiles %s`, pageQuery)
 	q = applyProfilesOrdering(q)
 	q = fmt.Sprintf(`%s LIMIT :limit OFFSET :offset`, q)
@@ -145,6 +145,9 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bo
 	if p.ContentFormat != "" {
 		query = append(query, "content_format = :content_format,")
 	}
+	if p.ContentType != "" {
+		query = append(query, "content_type = :content_type,")
+	}
 	if p.ContentTemplate != "" {
 		query = append(query, "content_template = :content_template,")
 	}
@@ -160,7 +163,7 @@ func (pr profileRepository) Update(ctx context.Context, p bootstrap.Profile) (bo
 
 	q := fmt.Sprintf(`UPDATE profiles SET %s version = version + 1, updated_at = :updated_at
 		  WHERE id = :id AND domain_id = :domain_id
-		  RETURNING id, domain_id, name, description, content_format, content_template, defaults, binding_slots, version, created_at, updated_at`,
+		  RETURNING id, domain_id, name, description, content_format, content_type, content_template, defaults, binding_slots, version, created_at, updated_at`,
 		upq)
 
 	p.UpdatedAt = time.Now().UTC()
@@ -201,6 +204,7 @@ type dbProfile struct {
 	Name            string         `db:"name"`
 	Description     sql.NullString `db:"description"`
 	ContentFormat   string         `db:"content_format"`
+	ContentType     string         `db:"content_type"`
 	ContentTemplate sql.NullString `db:"content_template"`
 	Defaults        []byte         `db:"defaults"`
 	BindingSlots    []byte         `db:"binding_slots"`
@@ -224,6 +228,7 @@ func toDBProfile(p bootstrap.Profile) (dbProfile, error) {
 		Name:            p.Name,
 		Description:     nullString(p.Description),
 		ContentFormat:   string(p.ContentFormat),
+		ContentType:     string(p.ContentType),
 		ContentTemplate: nullString(p.ContentTemplate),
 		Defaults:        defaults,
 		BindingSlots:    bindingSlots,
@@ -239,6 +244,7 @@ func toProfile(dbp dbProfile) (bootstrap.Profile, error) {
 		DomainID:      dbp.DomainID,
 		Name:          dbp.Name,
 		ContentFormat: bootstrap.ContentFormat(dbp.ContentFormat),
+		ContentType:   bootstrap.ContentType(dbp.ContentType),
 		Version:       dbp.Version,
 		CreatedAt:     dbp.CreatedAt,
 		UpdatedAt:     dbp.UpdatedAt,

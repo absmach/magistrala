@@ -19,8 +19,8 @@ import (
 const databaseEnvelopeVersion = "dbv1"
 
 // SecretCipher encrypts Bootstrap secrets at rest. A purpose-specific AES key
-// is derived from the database master key so config keys, transport keys and
-// binding snapshots do not share the same encryption key.
+// is derived from the database master key so config keys and binding snapshots
+// do not share the same encryption key.
 type SecretCipher struct {
 	masterKey []byte
 	keyID     string
@@ -101,21 +101,6 @@ func configSecretAAD(cfg Config) string {
 	return strings.Join([]string{"bootstrap-config", cfg.DomainID, cfg.ID, cfg.ExternalID}, ":")
 }
 
-func transportSecretAAD(domainID, keyID string) string {
-	return strings.Join([]string{"bootstrap-domain-transport", domainID, keyID}, ":")
-}
-
 func snapshotSecretAAD(configID, slot string) string {
 	return strings.Join([]string{"bootstrap-binding-snapshot", configID, slot}, ":")
-}
-
-func newTransportAEAD(key []byte) (cipher.AEAD, error) {
-	if len(key) != 32 {
-		return nil, fmt.Errorf("domain transport key must contain exactly 32 bytes")
-	}
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	return cipher.NewGCM(block)
 }

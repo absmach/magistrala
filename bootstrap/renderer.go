@@ -34,14 +34,28 @@ func NewRenderer() Renderer {
 func (r renderer) Render(profile Profile, enrollment Config, bindings []BindingSnapshot) ([]byte, error) {
 	rctx := buildRenderContext(profile, enrollment, bindings)
 
+	var rendered []byte
+	var err error
 	switch profile.ContentFormat {
 	case ContentFormatRaw:
-		return []byte(profile.ContentTemplate), nil
+		rendered = []byte(profile.ContentTemplate)
 	case ContentFormatGoTemplate, ContentFormatJSON, ContentFormatYAML, ContentFormatTOML, "":
-		return r.renderTemplate(profile, rctx)
+		rendered, err = r.renderTemplate(profile, rctx)
 	default:
 		return nil, fmt.Errorf("%w: unsupported template format %q", ErrRenderFailed, profile.ContentFormat)
 	}
+	if err != nil {
+		return nil, err
+	}
+
+	contentType := profile.ContentType
+	if contentType == "" {
+		contentType = defaultContentType(profile.ContentFormat)
+	}
+	if err := validateRenderedContent(rendered, contentType); err != nil {
+		return nil, fmt.Errorf("%w: %w", ErrRenderFailed, err)
+	}
+	return rendered, nil
 }
 
 func (r renderer) renderTemplate(profile Profile, rctx RenderContext) ([]byte, error) {
@@ -113,6 +127,29 @@ func marshalAs(v any, format ContentFormat) ([]byte, error) {
 	default:
 		return nil, fmt.Errorf("unsupported format %q", format)
 	}
+}
+
+func validateRenderedContent(content []byte, contentType ContentType) error {
+	var value any
+	switch contentType {
+	case ContentTypeJSON:
+		if err := json.Unmarshal(content, &value); err != nil {
+			return fmt.Errorf("rendered content is not valid JSON: %w", err)
+		}
+	case ContentTypeYAML:
+		if err := yaml.Unmarshal(content, &value); err != nil {
+			return fmt.Errorf("rendered content is not valid YAML: %w", err)
+		}
+	case ContentTypeTOML:
+		if err := toml.Unmarshal(content, &value); err != nil {
+			return fmt.Errorf("rendered content is not valid TOML: %w", err)
+		}
+	case ContentTypeTextPlain:
+		return nil
+	default:
+		return fmt.Errorf("unsupported content type %q", contentType)
+	}
+	return nil
 }
 
 // buildRenderContext constructs the typed RenderContext from stored data.

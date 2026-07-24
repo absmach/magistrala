@@ -90,8 +90,12 @@ func (am *authorizationMiddleware) Remove(ctx context.Context, session smqauthn.
 	return am.svc.Remove(ctx, session, id)
 }
 
-func (am *authorizationMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
-	return am.svc.Bootstrap(ctx, externalKey, externalID, secure)
+func (am *authorizationMiddleware) IssueBootstrapChallenge(ctx context.Context, externalID string) (bootstrap.BootstrapChallengeResponse, error) {
+	return am.svc.IssueBootstrapChallenge(ctx, externalID)
+}
+
+func (am *authorizationMiddleware) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (bootstrap.Config, error) {
+	return am.svc.Bootstrap(ctx, externalID, proof)
 }
 
 func (am *authorizationMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
@@ -171,48 +175,6 @@ func (am *authorizationMiddleware) RefreshBindings(ctx context.Context, session 
 		return err
 	}
 	return am.svc.RefreshBindings(ctx, session, token, configID)
-}
-
-func (am *authorizationMiddleware) authorizeTransportKey(ctx context.Context, session smqauthn.Session) error {
-	return am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.AdminPermission, policies.DomainType, session.DomainID, updateOperation, auth.AnyIDs)
-}
-
-func (am *authorizationMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	if err := am.authorizeTransportKey(ctx, session); err != nil {
-		return bootstrap.DomainTransportKey{}, err
-	}
-	return am.svc.CreateDomainTransportKey(ctx, session)
-}
-
-func (am *authorizationMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	if err := am.authorizeTransportKey(ctx, session); err != nil {
-		return bootstrap.DomainTransportKey{}, err
-	}
-	return am.svc.ViewDomainTransportKey(ctx, session)
-}
-
-func (am *authorizationMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	if err := am.authorizeTransportKey(ctx, session); err != nil {
-		return bootstrap.DomainTransportKey{}, err
-	}
-	return am.svc.RevealDomainTransportKey(ctx, session, keyID)
-}
-
-func (am *authorizationMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	if err := am.authorizeTransportKey(ctx, session); err != nil {
-		return bootstrap.DomainTransportKey{}, err
-	}
-	return am.svc.RotateDomainTransportKey(ctx, session)
-}
-
-func (am *authorizationMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	if err := am.authorize(ctx, session, "", policies.UserType, policies.UsersKind, session.DomainUserID, policies.MembershipPermission, policies.DomainType, session.DomainID, viewOperation, configID); err != nil {
-		return bootstrap.SecureBootstrapCredential{}, err
-	}
-	if err := am.authorizeTransportKey(ctx, session); err != nil {
-		return bootstrap.SecureBootstrapCredential{}, err
-	}
-	return am.svc.GenerateSecureCredential(ctx, session, configID)
 }
 
 func (am *authorizationMiddleware) checkSuperAdmin(ctx context.Context, session smqauthn.Session) error {

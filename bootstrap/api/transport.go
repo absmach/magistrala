@@ -30,7 +30,6 @@ const (
 	contentType     = "application/json"
 	yamlContentType = "yaml"
 	tomlContentType = "toml"
-	byteContentType = "application/octet-stream"
 	offsetKey       = "offset"
 	limitKey        = "limit"
 	defOffset       = 0
@@ -104,43 +103,12 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 					api.EncodeResponse,
 					opts...), "disable_config").ServeHTTP)
 
-				r.Post("/{configID}/secure-credential", otelhttp.NewHandler(kithttp.NewServer(
-					generateSecureCredentialEndpoint(svc),
-					decodeEntityRequest,
-					api.EncodeResponse,
-					opts...), "generate_secure_credential").ServeHTTP)
 			})
 		})
 
 		// Profile and enrollment binding endpoints.
 		r.Route("/bootstrap", func(r chi.Router) {
 			r.Use(authn.WithOptions(smqauthn.WithDomainCheck(true)).Middleware())
-
-			r.Route("/transport-keys", func(r chi.Router) {
-				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
-					createDomainTransportKeyEndpoint(svc),
-					decodeEmptyRequest,
-					api.EncodeResponse,
-					opts...), "create_domain_transport_key").ServeHTTP)
-
-				r.Get("/current", otelhttp.NewHandler(kithttp.NewServer(
-					viewDomainTransportKeyEndpoint(svc),
-					decodeEmptyRequest,
-					api.EncodeResponse,
-					opts...), "view_domain_transport_key").ServeHTTP)
-
-				r.Post("/{keyID}/reveal", otelhttp.NewHandler(kithttp.NewServer(
-					revealDomainTransportKeyEndpoint(svc),
-					decodeTransportKeyRequest,
-					api.EncodeResponse,
-					opts...), "reveal_domain_transport_key").ServeHTTP)
-
-				r.Post("/rotate", otelhttp.NewHandler(kithttp.NewServer(
-					rotateDomainTransportKeyEndpoint(svc),
-					decodeEmptyRequest,
-					api.EncodeResponse,
-					opts...), "rotate_domain_transport_key").ServeHTTP)
-			})
 
 			r.Route("/profiles", func(r chi.Router) {
 				r.Post("/", otelhttp.NewHandler(kithttp.NewServer(
@@ -221,21 +189,16 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 	})
 
 	r.Route("/clients/bootstrap", func(r chi.Router) {
-		r.Get("/", otelhttp.NewHandler(kithttp.NewServer(
-			bootstrapEndpoint(svc, reader, false),
-			decodeBootstrapRequest,
+		r.Post("/challenges/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			issueBootstrapChallengeEndpoint(svc),
+			decodeBootstrapChallengeRequest,
 			api.EncodeResponse,
-			opts...), "bootstrap").ServeHTTP)
-		r.Get("/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-			bootstrapEndpoint(svc, reader, false),
-			decodeBootstrapRequest,
+			opts...), "issue_bootstrap_challenge").ServeHTTP)
+		r.Post("/configurations/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
+			bootstrapEndpoint(svc, reader),
+			decodeDeviceBootstrapRequest,
 			api.EncodeResponse,
-			opts...), "bootstrap").ServeHTTP)
-		r.Get("/secure/{externalID}", otelhttp.NewHandler(kithttp.NewServer(
-			bootstrapEndpoint(svc, reader, true),
-			decodeBootstrapRequest,
-			encodeSecureRes,
-			opts...), "bootstrap_secure").ServeHTTP)
+			opts...), "bootstrap_configuration").ServeHTTP)
 	})
 
 	r.Get("/health", magistrala.Health("bootstrap", instanceID))
@@ -325,12 +288,18 @@ func decodeListRequest(_ context.Context, r *http.Request) (any, error) {
 	return req, nil
 }
 
-func decodeBootstrapRequest(_ context.Context, r *http.Request) (any, error) {
-	req := bootstrapReq{
-		id:  chi.URLParam(r, "externalID"),
-		key: apiutil.ExtractClientSecret(r),
-	}
+func decodeBootstrapChallengeRequest(_ context.Context, r *http.Request) (any, error) {
+	return bootstrapChallengeReq{externalID: chi.URLParam(r, "externalID")}, nil
+}
 
+func decodeDeviceBootstrapRequest(_ context.Context, r *http.Request) (any, error) {
+	if !strings.Contains(r.Header.Get("Content-Type"), contentType) {
+		return nil, apiutil.ErrUnsupportedContentType
+	}
+	req := deviceBootstrapReq{externalID: chi.URLParam(r, "externalID")}
+	if err := json.NewDecoder(r.Body).Decode(&req.DeviceBootstrapProof); err != nil {
+		return nil, errors.Wrap(apiutil.ErrMalformedRequestBody, err)
+	}
 	return req, nil
 }
 
@@ -347,34 +316,6 @@ func decodeEntityRequest(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	return req, nil
-}
-
-func decodeEmptyRequest(_ context.Context, _ *http.Request) (any, error) {
-	return struct{}{}, nil
-}
-
-func decodeTransportKeyRequest(_ context.Context, r *http.Request) (any, error) {
-	return transportKeyReq{keyID: chi.URLParam(r, "keyID")}, nil
-}
-
-func encodeSecureRes(_ context.Context, w http.ResponseWriter, response any) error {
-	w.Header().Set("Content-Type", byteContentType)
-	w.Header().Set("Cache-Control", "no-store")
-	w.Header().Set("X-Bootstrap-Encryption", "aes-256-gcm-v2")
-	if encrypted, ok := response.(bootstrap.SecureConfigPayload); ok {
-		w.Header().Set("X-Bootstrap-Key-ID", encrypted.KeyID)
-		w.Header().Set("X-Bootstrap-Request-ID", encrypted.RequestID)
-		w.WriteHeader(http.StatusOK)
-		_, err := w.Write(encrypted.Payload)
-		return err
-	}
-	w.WriteHeader(http.StatusOK)
-	if b, ok := response.([]byte); ok {
-		if _, err := w.Write(b); err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 func parseFilter(values url.Values) bootstrap.Filter {

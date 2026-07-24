@@ -6,101 +6,88 @@ package bootstrap_test
 import (
 	"crypto/aes"
 	"crypto/cipher"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/absmach/magistrala"
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/hkdf"
 )
 
 type readResp struct {
-	ID         string `json:"id"`
-	Content    string `json:"content,omitempty"`
-	ClientCert string `json:"client_cert,omitempty"`
-	ClientKey  string `json:"client_key,omitempty"`
-	CACert     string `json:"ca_cert,omitempty"`
+	ID          string                `json:"id"`
+	ContentType bootstrap.ContentType `json:"content_type"`
+	Content     string                `json:"content,omitempty"`
+	ClientCert  string                `json:"client_cert,omitempty"`
+	ClientKey   string                `json:"client_key,omitempty"`
+	CACert      string                `json:"ca_cert,omitempty"`
 }
 
-func dec(in []byte, cfg bootstrap.Config) ([]byte, error) {
-	block, err := aes.NewCipher(cfg.SecureTransportKey)
-	if err != nil {
-		return nil, err
-	}
-	aead, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce, ciphertext := in[:aead.NonceSize()], in[aead.NonceSize():]
-	aad := fmt.Sprintf("bootstrap-response:%s:%s:%s:%s", cfg.DomainID, cfg.ExternalID, cfg.SecureTransportKeyID, cfg.SecureRequestID)
-	return aead.Open(nil, nonce, ciphertext, []byte(aad))
-}
-
-func TestReadConfig(t *testing.T) {
+func TestReadConfigEncryptsDeviceResponse(t *testing.T) {
+	rootKey := []byte("12345678910111213141516171819202")
 	cfg := bootstrap.Config{
 		ID:                   "smq_id",
-		DomainID:             "domain-id",
 		ExternalID:           "external-id",
 		ClientCert:           "client_cert",
 		ClientKey:            "client_key",
 		CACert:               "ca_cert",
 		Content:              "content",
-		SecureTransportKey:   encKey,
-		SecureTransportKeyID: "key-id",
-		SecureRequestID:      "request-id",
-	}
-	ret := readResp{
-		ID:         "smq_id",
-		Content:    "content",
-		ClientCert: "client_cert",
-		ClientKey:  "client_key",
-		CACert:     "ca_cert",
+		ContentType:          bootstrap.ContentTypeTextPlain,
+		BootstrapKeyVersion:  3,
+		BootstrapRootKey:     rootKey,
+		BootstrapChallengeID: "challenge-id",
+		BootstrapServerNonce: base64.RawURLEncoding.EncodeToString(make([]byte, bootstrap.BootstrapNonceSize)),
+		BootstrapDeviceNonce: base64.RawURLEncoding.EncodeToString([]byte("12345678910111213141516171819202")),
 	}
 
-	bin, err := json.Marshal(ret)
-	assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
+	result, err := bootstrap.NewConfigReader().ReadConfig(cfg)
+	require.NoError(t, err)
+	envelope, ok := result.(bootstrap.EncryptedBootstrapConfig)
+	require.True(t, ok)
+	require.Equal(t, bootstrap.DeviceBootstrapVersion, envelope.Version)
+	require.Equal(t, cfg.BootstrapKeyVersion, envelope.KeyVersion)
+	require.Equal(t, cfg.BootstrapChallengeID, envelope.ChallengeID)
 
-	reader := bootstrap.NewConfigReader(encKey)
-	cases := []struct {
-		desc   string
-		config bootstrap.Config
-		enc    []byte
-		secret bool
-		err    error
-	}{
-		{
-			desc:   "read a config",
-			config: cfg,
-			enc:    bin,
-			secret: false,
-		},
-		{
-			desc:   "read encrypted config",
-			config: cfg,
-			enc:    bin,
-			secret: true,
-		},
-	}
+	key := make([]byte, bootstrap.BootstrapKeySize)
+	_, err = io.ReadFull(
+		hkdf.New(sha256.New, rootKey, []byte(cfg.ExternalID), []byte("magistrala-bootstrap-response-v1")),
+		key,
+	)
+	require.NoError(t, err)
+	block, err := aes.NewCipher(key)
+	require.NoError(t, err)
+	aead, err := cipher.NewGCM(block)
+	require.NoError(t, err)
+	nonce, err := base64.RawURLEncoding.DecodeString(envelope.Nonce)
+	require.NoError(t, err)
+	ciphertext, err := base64.RawURLEncoding.DecodeString(envelope.Ciphertext)
+	require.NoError(t, err)
+	aad := strings.Join([]string{
+		"bootstrap-response-v1",
+		cfg.ExternalID,
+		cfg.BootstrapChallengeID,
+		cfg.BootstrapServerNonce,
+		cfg.BootstrapDeviceNonce,
+		fmt.Sprintf("%d", cfg.BootstrapKeyVersion),
+	}, "\n")
+	plain, err := aead.Open(nil, nonce, ciphertext, []byte(aad))
+	require.NoError(t, err)
 
-	for _, tc := range cases {
-		res, err := reader.ReadConfig(tc.config, tc.secret)
-		assert.Nil(t, err, fmt.Sprintf("Reading config to succeed: %s.\n", err))
+	var got readResp
+	require.NoError(t, json.Unmarshal(plain, &got))
+	require.Equal(t, readResp{
+		ID: "smq_id", ContentType: bootstrap.ContentTypeTextPlain,
+		Content: "content", ClientCert: "client_cert",
+		ClientKey: "client_key", CACert: "ca_cert",
+	}, got)
 
-		if tc.secret {
-			encrypted := res.(bootstrap.SecureConfigPayload)
-			d, err := dec(encrypted.Payload, tc.config)
-			assert.Nil(t, err, fmt.Sprintf("Decrypting expected to succeed: %s.\n", err))
-			assert.Equal(t, tc.enc, d, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, d))
-			continue
-		}
-		b, err := json.Marshal(res)
-		assert.Nil(t, err, fmt.Sprintf("Marshalling expected to succeed: %s.\n", err))
-		assert.Equal(t, tc.enc, b, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.enc, b))
-		resp, ok := res.(magistrala.Response)
-		assert.True(t, ok, "If not encrypted, reader should return response.")
-		assert.False(t, resp.Empty(), fmt.Sprintf("Response should not be empty %s.", err))
-		assert.Equal(t, http.StatusOK, resp.Code(), "Default config response code should be 200.")
-	}
+	response, ok := result.(magistrala.Response)
+	require.True(t, ok)
+	require.Equal(t, "no-store", response.Headers()["Cache-Control"])
 }

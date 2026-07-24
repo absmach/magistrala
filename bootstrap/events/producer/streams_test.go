@@ -13,7 +13,6 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
-	bootstraphasher "github.com/absmach/magistrala/bootstrap/hasher"
 	"github.com/absmach/magistrala/bootstrap/mocks"
 	"github.com/absmach/magistrala/internal/testsutil"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
@@ -56,7 +55,7 @@ var (
 	config = bootstrap.Config{
 		ID:          testsutil.GenerateUUID(&testing.T{}),
 		ExternalID:  testsutil.GenerateUUID(&testing.T{}),
-		ExternalKey: testsutil.GenerateUUID(&testing.T{}),
+		ExternalKey: "MTIzNDU2Nzg5MTAxMTEyMTMxNDE1MTYxNzE4MTkyMDI",
 		Content:     "config",
 		Status:      bootstrap.EnabledStatus,
 	}
@@ -72,7 +71,7 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
 	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc := bootstrap.New(boot, nil, nil, nil, nil, sdk, bootstraphasher.New(), encKey, idp)
+	svc := bootstrap.New(boot, nil, nil, nil, nil, sdk, encKey, idp)
 	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	svc = producer.NewEventStoreMiddleware(svc, publisher)
@@ -676,14 +675,16 @@ func TestBootstrap(t *testing.T) {
 	err := redisClient.FlushAll(context.Background()).Err()
 	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	tv := newTestVariable(t, redisURL)
+	base := new(mocks.Service)
+	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
+	require.NoError(t, err)
+	svc := producer.NewEventStoreMiddleware(base, publisher)
 
 	cases := []struct {
 		desc        string
 		externalID  string
 		externalKey string
 		err         error
-		retrieveErr error
 		event       map[string]any
 	}{
 		{
@@ -702,10 +703,9 @@ func TestBootstrap(t *testing.T) {
 			desc:        "bootstrap with an error",
 			externalID:  "external_id1",
 			externalKey: "external_id",
-			retrieveErr: bootstrap.ErrBootstrap,
 			err:         bootstrap.ErrBootstrap,
 			event: map[string]any{
-				"external_id": "external_id",
+				"external_id": "external_id1",
 				"success":     "0",
 				"timestamp":   time.Now().Unix(),
 				"operation":   clientBootstrap,
@@ -715,8 +715,8 @@ func TestBootstrap(t *testing.T) {
 
 	lastID := "0"
 	for _, tc := range cases {
-		repoCall := tv.boot.On("RetrieveByExternalID", context.Background(), mock.Anything).Return(config, tc.retrieveErr)
-		_, err = tv.svc.Bootstrap(context.Background(), tc.externalKey, tc.externalID, false)
+		svcCall := base.On("Bootstrap", context.Background(), tc.externalID, bootstrap.DeviceBootstrapProof{}).Return(config, tc.err)
+		_, err = svc.Bootstrap(context.Background(), tc.externalID, bootstrap.DeviceBootstrapProof{})
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 
 		streams := redisClient.XRead(context.Background(), &redis.XReadArgs{
@@ -731,7 +731,7 @@ func TestBootstrap(t *testing.T) {
 			lastID = event[0].ID
 		}
 		test(t, tc.event, event, tc.desc)
-		repoCall.Unset()
+		svcCall.Unset()
 	}
 }
 

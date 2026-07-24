@@ -356,6 +356,72 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP TABLE IF EXISTS domain_transport_keys`,
 				},
 			},
+			{
+				Id: "configs_18",
+				Up: []string{
+					`ALTER TABLE IF EXISTS configs
+						ADD COLUMN IF NOT EXISTS bootstrap_key_version BIGINT NOT NULL DEFAULT 1`,
+					`DROP TABLE IF EXISTS secure_bootstrap_requests`,
+					`DROP TABLE IF EXISTS domain_transport_keys`,
+					`CREATE TABLE IF NOT EXISTS bootstrap_challenges (
+						challenge_id VARCHAR(36) PRIMARY KEY,
+						config_id VARCHAR(36) NOT NULL,
+						key_version BIGINT NOT NULL,
+						server_nonce BYTEA NOT NULL,
+						created_at TIMESTAMPTZ NOT NULL,
+						expires_at TIMESTAMPTZ NOT NULL,
+						consumed_at TIMESTAMPTZ
+					)`,
+					`CREATE INDEX IF NOT EXISTS idx_bootstrap_challenges_config_id
+						ON bootstrap_challenges (config_id)`,
+					`CREATE INDEX IF NOT EXISTS idx_bootstrap_challenges_expires_at
+						ON bootstrap_challenges (expires_at)`,
+				},
+				Down: []string{
+					`DROP TABLE IF EXISTS bootstrap_challenges`,
+					`ALTER TABLE IF EXISTS configs DROP COLUMN IF EXISTS bootstrap_key_version`,
+				},
+			},
+			{
+				Id: "configs_19",
+				Up: []string{
+					`ALTER TABLE IF EXISTS profiles
+						ADD COLUMN IF NOT EXISTS content_type VARCHAR(128) NOT NULL DEFAULT 'text/plain'`,
+					`UPDATE profiles SET content_type = CASE content_format
+						WHEN 'json' THEN 'application/json'
+						WHEN 'yaml' THEN 'application/yaml'
+						WHEN 'toml' THEN 'application/toml'
+						ELSE 'text/plain'
+					END`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS profiles DROP COLUMN IF EXISTS content_type`,
+				},
+			},
+			{
+				// Migration IDs in this legacy sequence are sorted
+				// lexicographically by sql-migrate. configs_9 therefore runs
+				// after configs_8 has renamed client_id to id, while also
+				// applying safely to databases that already ran configs_18.
+				Id: "configs_9",
+				Up: []string{
+					`DO $$
+					BEGIN
+						IF NOT EXISTS (
+							SELECT 1 FROM pg_constraint
+							WHERE conname = 'bootstrap_challenges_config_id_fkey'
+						) THEN
+							ALTER TABLE bootstrap_challenges
+								ADD CONSTRAINT bootstrap_challenges_config_id_fkey
+								FOREIGN KEY (config_id) REFERENCES configs (id) ON DELETE CASCADE;
+						END IF;
+					END $$`,
+				},
+				Down: []string{
+					`ALTER TABLE IF EXISTS bootstrap_challenges
+						DROP CONSTRAINT IF EXISTS bootstrap_challenges_config_id_fkey`,
+				},
+			},
 		},
 	}
 }

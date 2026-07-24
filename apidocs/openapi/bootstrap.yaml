@@ -30,8 +30,8 @@ tags:
     description: Device configuration profiles and templates
   - name: enrollments
     description: Enrollment profile assignment and resource bindings
-  - name: transport-keys
-    description: Per-domain encryption keys for secure device bootstrap traffic
+  - name: device-bootstrap
+    description: Per-device challenge-response and encrypted configuration retrieval
   - name: health
     description: Service health and observability
 
@@ -44,7 +44,12 @@ paths:
       summary: Adds a new enrollment config
       description: |
         Adds a new bootstrap enrollment config owned by the user identified by
-        the provided access token.
+        the provided access token. When `external_key` is omitted, the service
+        generates a random per-device key and returns its unpadded base64url
+        text in the response. User-supplied keys may be any UTF-8 string with
+        at least 10 characters. Provision the external ID, external key, key
+        version, and Bootstrap URL into the device separately from its
+        downloaded config.
       tags:
         - configs
       parameters:
@@ -234,145 +239,24 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/{configID}/secure-credential:
-    post:
-      operationId: generateBootstrapSecureCredential
-      summary: Generates a secure Bootstrap credential
-      description: |
-        Generates a short-lived, single-use encrypted external-key credential
-        for `GET /clients/bootstrap/secure/{externalID}`. The credential uses
-        the active domain transport key and expires after five minutes. It is
-        generated on demand and is not persisted.
-      tags:
-        - configs
-      parameters:
-        - $ref: "#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/ConfigID"
-      responses:
-        "200":
-          description: Secure credential generated. Do not cache this response.
-          headers:
-            Cache-Control:
-              schema:
-                type: string
-                example: no-store
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/SecureBootstrapCredential"
-        "400":
-          description: The enrollment is disabled or its external key is not available.
-        "401":
-          description: Missing or invalid access token.
-        "403":
-          description: Config read and domain manage permissions are required.
-        "404":
-          description: The config or active domain transport key does not exist.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
   # ── Device bootstrap ──────────────────────────────────────────────────────
 
-  /clients/bootstrap/{externalID}:
-    get:
-      operationId: getBootstrapConfig
-      summary: Retrieves a bootstrap configuration
-      description: |
-        Returns the rendered bootstrap configuration for a device identified by
-        its external ID and external key.
-      tags:
-        - configs
-      security:
-        - bootstrapAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ExternalID"
-      responses:
-        "200":
-          $ref: "#/components/responses/BootstrapConfigRes"
-        "400":
-          description: Missing or invalid external ID.
-        "401":
-          description: Missing or invalid external key.
-        "403":
-          description: Config is disabled.
-        "404":
-          description: No config found for the given external ID.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /clients/bootstrap/secure/{externalID}:
-    get:
-      operationId: getSecureBootstrapConfig
-      summary: Retrieves an encrypted bootstrap configuration
-      description: |
-        Accepts an AES-256-GCM encrypted request and returns the complete
-        rendered bootstrap response as AES-256-GCM encrypted binary. Both
-        directions use the selected domain transport key; database encryption
-        uses a different service master key.
-
-        The authorization value is `Client v2.<key_id>.<payload>`, where
-        `payload` is unpadded base64url of `nonce || ciphertext || tag`.
-        The decrypted JSON is `{external_id, external_key, issued_at,
-        request_id}`. `issued_at` is a Unix timestamp and requests expire after
-        five minutes. A request ID can be consumed only once. Request AES-GCM
-        additional authenticated data is
-        `bootstrap-request:<domainID>:<externalID>:<keyID>`.
-
-        The response body is raw `nonce || ciphertext || tag`. Its AES-GCM
-        additional authenticated data is
-        `bootstrap-response:<domainID>:<externalID>:<keyID>:<requestID>`.
-      tags:
-        - configs
-      security:
-        - bootstrapEncAuth: []
-      parameters:
-        - $ref: "#/components/parameters/ExternalID"
-      responses:
-        "200":
-          description: Encrypted bootstrap payload (binary).
-          headers:
-            X-Bootstrap-Encryption:
-              schema:
-                type: string
-                example: aes-256-gcm-v2
-            X-Bootstrap-Key-ID:
-              schema:
-                type: string
-                format: uuid
-            X-Bootstrap-Request-ID:
-              schema:
-                type: string
-          content:
-            application/octet-stream:
-              schema:
-                type: string
-                format: binary
-        "400":
-          description: Missing or invalid external ID.
-        "401":
-          description: Missing or invalid encrypted external key.
-        "403":
-          description: Config is disabled.
-        "404":
-          description: No config found for the given external ID.
-        "500":
-          $ref: "#/components/responses/ServiceError"
-
-  /{domainID}/clients/bootstrap/transport-keys:
+  /clients/bootstrap/challenges/{externalID}:
     post:
-      operationId: createBootstrapTransportKey
-      summary: Creates the first transport key for a domain
+      operationId: issueBootstrapChallenge
+      summary: Issues a device Bootstrap challenge
       description: |
-        Creates a random 256-bit domain transport key. The returned `secret`
-        is base64url and can be revealed later by an authorized domain manager.
-        The key is encrypted before it is stored in PostgreSQL.
+        Creates a one-minute, single-use server challenge. The device does not
+        send its Bootstrap key. Unknown and disabled external IDs receive the
+        same response shape.
       tags:
-        - transport-keys
+        - device-bootstrap
+      security: []
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ExternalID"
       responses:
-        "201":
-          description: Transport key created. Do not cache this response.
+        "200":
+          description: Challenge issued. Do not cache this response.
           headers:
             Cache-Control:
               schema:
@@ -381,76 +265,77 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DomainTransportKey"
-        "401":
-          description: Missing or invalid access token.
-        "403":
-          description: Domain manage permission is required.
-        "409":
-          description: The domain already has an active transport key.
+                $ref: "#/components/schemas/BootstrapChallenge"
+        "400":
+          description: Missing or invalid external ID.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/transport-keys/current:
-    get:
-      operationId: getCurrentBootstrapTransportKey
-      summary: Gets active transport-key metadata
-      tags:
-        - transport-keys
-      parameters:
-        - $ref: "#/components/parameters/DomainID"
-      responses:
-        "200":
-          description: Active transport-key metadata. The secret is omitted.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DomainTransportKey"
-        "404":
-          description: The domain has no active transport key.
-
-  /{domainID}/clients/bootstrap/transport-keys/{keyID}/reveal:
+  /clients/bootstrap/configurations/{externalID}:
     post:
-      operationId: revealBootstrapTransportKey
-      summary: Reveals a domain transport key
-      tags:
-        - transport-keys
-      parameters:
-        - $ref: "#/components/parameters/DomainID"
-        - name: keyID
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        "200":
-          description: Decrypted transport key. Do not cache this response.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DomainTransportKey"
-        "404":
-          description: The key does not exist in this domain.
-
-  /{domainID}/clients/bootstrap/transport-keys/rotate:
-    post:
-      operationId: rotateBootstrapTransportKey
-      summary: Rotates the active domain transport key
+      operationId: retrieveEncryptedBootstrapConfig
+      summary: Authenticates a device and returns its encrypted configuration
       description: |
-        Creates and returns a new active transport key. The previous key enters
-        a 24-hour retiring period so devices can complete a staged rollout.
+        The device generates a random 32-byte `device_nonce` and proves
+        possession of its enrollment-specific Bootstrap key. Treat the exact
+        external-key UTF-8 bytes as `root_key`; do not base64-decode the key.
+
+        First derive the authentication key with HKDF-SHA256:
+        `HKDF(root_key, salt=external_id,
+        info="magistrala-bootstrap-auth-v1", length=32)`.
+
+        Calculate `proof` as HMAC-SHA256 over the UTF-8 string formed by
+        joining these values with newline (`\n`) characters:
+        `v1`, `external_id`, `challenge_id`, `server_nonce`,
+        `device_nonce`, and decimal `key_version`. The nonce and proof fields
+        use unpadded base64url.
+
+        On success the response is an AES-256-GCM envelope. Derive its key with
+        HKDF-SHA256 using the same root key and external-ID salt but
+        `info="magistrala-bootstrap-response-v1"`. AES-GCM additional
+        authenticated data is the newline-joined UTF-8 string
+        `bootstrap-response-v1`, `external_id`, `challenge_id`,
+        `server_nonce`, `device_nonce`, and decimal `key_version`.
+        Decrypting `ciphertext` returns the Bootstrap response object. Its
+        `content` field is a string and `content_type` tells the device how to
+        parse that string.
+
+        This protocol does not require a device clock. A challenge can be
+        consumed only once and expires one minute after issue.
       tags:
-        - transport-keys
+        - device-bootstrap
+      security: []
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/ExternalID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeviceBootstrapProof"
       responses:
-        "201":
-          description: New active transport key, including its secret.
+        "200":
+          description: Encrypted rendered Bootstrap configuration.
+          headers:
+            Cache-Control:
+              schema:
+                type: string
+                example: no-store
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/DomainTransportKey"
-        "404":
-          description: The domain has no active key to rotate.
+                $ref: "#/components/schemas/EncryptedBootstrapConfig"
+        "400":
+          description: Malformed proof request.
+        "403":
+          description: |
+            Device authentication failed. The response intentionally does not
+            reveal whether the external ID, challenge, key version, or proof
+            was incorrect.
+        "415":
+          description: Content-Type must be application/json.
+        "500":
+          $ref: "#/components/responses/ServiceError"
 
   # ── Device profiles ───────────────────────────────────────────────────────
 
@@ -651,8 +536,16 @@ paths:
               schema:
                 type: object
                 properties:
+                  content_type:
+                    type: string
+                    enum:
+                      - application/json
+                      - application/yaml
+                      - application/toml
+                      - text/plain
                   content:
                     type: string
+                required: [content_type, content]
         "400":
           description: Template rendering failed.
         "401":
@@ -842,9 +735,18 @@ components:
         external_key:
           type: string
           description: |
-            External authentication key. It is encrypted at rest and decrypted
-            in authorized config create, list and get responses. Responses use
-            `Cache-Control: no-store`.
+            Per-device Bootstrap root key containing at least 10 characters.
+            Its exact UTF-8 bytes are used as HKDF input. It is encrypted at
+            rest and decrypted only in authorized config create, list and get
+            responses. Responses use `Cache-Control: no-store`.
+          minLength: 10
+        bootstrap_key_version:
+          type: integer
+          format: int64
+          minimum: 1
+          description: |
+            Version of the per-device Bootstrap key. It starts at 1 and is
+            incremented whenever the external key is replaced.
         name:
           type: string
           description: Human-readable name.
@@ -903,6 +805,14 @@ components:
         content:
           type: string
           description: Rendered configuration payload.
+        content_type:
+          type: string
+          enum:
+            - application/json
+            - application/yaml
+            - application/toml
+            - text/plain
+          description: Media type used to parse the content string.
         client_cert:
           type: string
           description: Client TLS certificate (PEM).
@@ -912,67 +822,69 @@ components:
         ca_cert:
           type: string
           description: CA certificate (PEM).
+      required: [id, content_type, content]
 
-    DomainTransportKey:
+    BootstrapChallenge:
       type: object
       properties:
-        domain_id:
+        challenge_id:
           type: string
           format: uuid
-        key_id:
+        server_nonce:
           type: string
-          format: uuid
-        wrapping_key_id:
-          type: string
-          description: Identifier of the database master key used to wrap this secret.
-        status:
-          type: string
-          enum: [active, retiring, revoked]
-        secret:
-          type: string
-          description: Unpadded base64url encoded 256-bit secret. Present only on create, rotate and reveal.
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-        retire_at:
-          type: string
-          format: date-time
-      required: [key_id, status, created_at, updated_at]
-
-    SecureBootstrapCredential:
-      type: object
-      properties:
-        external_id:
-          type: string
-        key_id:
-          type: string
-          format: uuid
-        encrypted_external_key:
-          type: string
-          description: The `v2.<key_id>.<payload>` value without the authorization scheme.
-        authorization:
-          type: string
-          description: Complete value for the HTTP Authorization header.
-          example: Client v2.2e236248-b6ec-4b82-a42f-9ad9a11a1789.eyJ...
-        request_id:
-          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of a random 32-byte server nonce.
         expires_at:
           type: string
           format: date-time
-        bootstrap_url:
+        key_version:
+          type: integer
+          format: int64
+          minimum: 1
+      required: [challenge_id, server_nonce, expires_at, key_version]
+
+    DeviceBootstrapProof:
+      type: object
+      properties:
+        challenge_id:
           type: string
-          description: Relative secure Bootstrap endpoint for this enrollment.
-      required:
-        - external_id
-        - key_id
-        - encrypted_external_key
-        - authorization
-        - request_id
-        - expires_at
-        - bootstrap_url
+          format: uuid
+        device_nonce:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of a fresh random 32-byte device nonce.
+        proof:
+          type: string
+          minLength: 43
+          maxLength: 43
+          pattern: "^[A-Za-z0-9_-]{43}$"
+          description: Unpadded base64url encoding of the 32-byte HMAC-SHA256 proof.
+      required: [challenge_id, device_nonce, proof]
+
+    EncryptedBootstrapConfig:
+      type: object
+      properties:
+        version:
+          type: string
+          enum: [v1]
+        key_version:
+          type: integer
+          format: int64
+          minimum: 1
+        challenge_id:
+          type: string
+          format: uuid
+        nonce:
+          type: string
+          description: Unpadded base64url encoding of the 12-byte AES-GCM nonce.
+        ciphertext:
+          type: string
+          description: Unpadded base64url encoding of AES-GCM ciphertext followed by its 16-byte tag.
+      required: [version, key_version, challenge_id, nonce, ciphertext]
 
     ConfigUpdateCerts:
       type: object
@@ -1005,7 +917,18 @@ components:
         content_format:
           type: string
           enum: [go-template, raw, json, yaml, toml]
-          description: Format of the profile content and template.
+          description: Rendering and template format.
+        content_type:
+          type: string
+          enum:
+            - application/json
+            - application/yaml
+            - application/toml
+            - text/plain
+          description: |
+            Media type of the rendered content delivered to devices. This is
+            independent of content_format; for example, a go-template can
+            produce application/json.
         content_template:
           type: string
           description: Template text rendered at bootstrap time.
@@ -1238,6 +1161,13 @@ components:
                 type: string
               external_key:
                 type: string
+                oneOf:
+                  - minLength: 10
+                  - maxLength: 0
+                description: |
+                  Optional UTF-8 string containing at least 10 characters.
+                  When omitted or empty, the service generates a strong random
+                  key.
               name:
                 type: string
               content:
@@ -1256,7 +1186,6 @@ components:
                 type: string
             required:
               - external_id
-              - external_key
 
     ConfigUpdateReq:
       description: Fields to update on an enrollment config.
@@ -1270,7 +1199,15 @@ components:
                 type: string
               external_key:
                 type: string
-                description: New external authentication key. When omitted or empty, the current key is preserved. A supplied value is encrypted before storage.
+                oneOf:
+                  - minLength: 10
+                  - maxLength: 0
+                description: |
+                  New per-device Bootstrap root key containing at least 10
+                  characters. Its exact UTF-8 bytes are used as HKDF input.
+                  When omitted or empty, the current key is preserved.
+                  Replacing it increments `bootstrap_key_version` and
+                  invalidates outstanding challenges.
               content:
                 type: string
               render_context:
@@ -1315,6 +1252,13 @@ components:
               content_format:
                 type: string
                 enum: [go-template, raw, json, yaml, toml]
+              content_type:
+                type: string
+                enum:
+                  - application/json
+                  - application/yaml
+                  - application/toml
+                  - text/plain
               content_template:
                 type: string
               defaults:
@@ -1360,9 +1304,7 @@ components:
             $ref: "#/components/schemas/ConfigUpdateCerts"
 
     BootstrapConfigRes:
-      description: |
-        Rendered bootstrap configuration. For the secure endpoint the response
-        body is AES-encrypted binary rather than JSON.
+      description: Rendered bootstrap configuration before device-response encryption.
       content:
         application/json:
           schema:
@@ -1414,21 +1356,6 @@ components:
       bearerFormat: JWT
       description: |
         User access token: "Authorization: Bearer <user_token>"
-
-    bootstrapAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: |
-        Device access: "Authorization: Client <external_key>"
-
-    bootstrapEncAuth:
-      type: apiKey
-      in: header
-      name: Authorization
-      description: |
-        Domain-key encrypted device access:
-        `Authorization: Client v2.<key_id>.<base64url_nonce_ciphertext_tag>`.
 
 security:
   - bearerAuth: []

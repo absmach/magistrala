@@ -5,8 +5,8 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/hmac"
 	"crypto/rand"
-	"crypto/subtle"
 	"strings"
 	"time"
 
@@ -19,11 +19,8 @@ import (
 )
 
 var (
-	// ErrExternalKey indicates a non-existent bootstrap configuration for given external key.
-	ErrExternalKey = errors.NewAuthZError("failed to get bootstrap configuration for given external key")
-
-	// ErrExternalKeySecure indicates error in getting bootstrap configuration for given encrypted external key.
-	ErrExternalKeySecure = errors.NewAuthZError("failed to get bootstrap configuration for given encrypted external key")
+	// ErrDeviceBootstrapAuth hides which part of device authentication failed.
+	ErrDeviceBootstrapAuth = errors.NewAuthZError("failed to authenticate bootstrap device")
 
 	// ErrBootstrap indicates error in getting bootstrap configuration.
 	ErrBootstrap = errors.New("failed to read bootstrap configuration")
@@ -34,32 +31,28 @@ var (
 	// ErrBootstrapStatus indicates an invalid bootstrap status.
 	ErrBootstrapStatus = errors.NewRequestError("invalid bootstrap status")
 
-	// ErrExternalKeyUnavailable indicates that an enrollment has no recoverable external key.
-	ErrExternalKeyUnavailable = errors.NewRequestError("external key is not available")
+	// ErrBootstrapKey indicates an invalid per-device Bootstrap key.
+	ErrBootstrapKey = errors.NewRequestError("invalid bootstrap key")
 
-	// ErrBootstrapDisabled indicates that secure credentials cannot be generated for a disabled enrollment.
-	ErrBootstrapDisabled = errors.NewRequestError("bootstrap configuration is disabled")
+	// ErrSecretEncryption indicates that encrypted secret storage is unavailable.
+	ErrSecretEncryption = errors.NewServiceError("secret encryption is not configured")
 
 	errRemoveBootstrap = errors.New("failed to remove bootstrap configuration")
 	errEnableConfig    = errors.New("failed to enable bootstrap configuration")
 	errDisableConfig   = errors.New("failed to disable bootstrap configuration")
 	errUpdateCert      = errors.New("failed to update cert")
 
-	errCreateProfile            = errors.New("failed to create profile")
-	errViewProfile              = errors.New("failed to view profile")
-	errUpdateProfile            = errors.New("failed to update profile")
-	errDeleteProfile            = errors.New("failed to delete profile")
-	errListProfiles             = errors.New("failed to list profiles")
-	errAssignProfile            = errors.New("failed to assign profile to enrollment")
-	errBindResources            = errors.New("failed to bind resources")
-	errListBindings             = errors.New("failed to list bindings")
-	errRefreshBinding           = errors.New("failed to refresh bindings")
-	errRenderBootstrap          = errors.New("failed to render bootstrap configuration")
-	errCreateTransportKey       = errors.New("failed to create domain bootstrap transport key")
-	errViewTransportKey         = errors.New("failed to view domain bootstrap transport key")
-	errRevealTransportKey       = errors.New("failed to reveal domain bootstrap transport key")
-	errRotateTransportKey       = errors.New("failed to rotate domain bootstrap transport key")
-	errGenerateSecureCredential = errors.New("failed to generate secure bootstrap credential")
+	errCreateProfile           = errors.New("failed to create profile")
+	errViewProfile             = errors.New("failed to view profile")
+	errUpdateProfile           = errors.New("failed to update profile")
+	errDeleteProfile           = errors.New("failed to delete profile")
+	errListProfiles            = errors.New("failed to list profiles")
+	errAssignProfile           = errors.New("failed to assign profile to enrollment")
+	errBindResources           = errors.New("failed to bind resources")
+	errListBindings            = errors.New("failed to list bindings")
+	errRefreshBinding          = errors.New("failed to refresh bindings")
+	errRenderBootstrap         = errors.New("failed to render bootstrap configuration")
+	errIssueBootstrapChallenge = errors.New("failed to issue bootstrap challenge")
 )
 
 var _ Service = (*bootstrapService)(nil)
@@ -87,8 +80,11 @@ type Service interface {
 	// Remove removes Config with specified token that belongs to the user identified by the given token.
 	Remove(ctx context.Context, session smqauthn.Session, id string) error
 
-	// Bootstrap returns Config to the Client with provided external ID using external key.
-	Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error)
+	// IssueBootstrapChallenge creates a short-lived challenge for an enrollment.
+	IssueBootstrapChallenge(ctx context.Context, externalID string) (BootstrapChallengeResponse, error)
+
+	// Bootstrap authenticates a device proof and returns its rendered Config.
+	Bootstrap(ctx context.Context, externalID string, proof DeviceBootstrapProof) (Config, error)
 
 	// EnableConfig enables the Config so its device can successfully bootstrap.
 	EnableConfig(ctx context.Context, session smqauthn.Session, id string) (Config, error)
@@ -125,12 +121,6 @@ type Service interface {
 	// RefreshBindings re-resolves all existing bindings for an enrollment and
 	// updates the stored snapshots.
 	RefreshBindings(ctx context.Context, session smqauthn.Session, token, configID string) error
-
-	CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error)
-	ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error)
-	RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (DomainTransportKey, error)
-	RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error)
-	GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (SecureBootstrapCredential, error)
 }
 
 // ConfigReader is used to parse Config into format which will be encoded
@@ -138,20 +128,20 @@ type Service interface {
 // is to provide convenient way to generate custom configuration response
 // based on the specific Config which will be consumed by the client.
 type ConfigReader interface {
-	ReadConfig(Config, bool) (any, error)
+	ReadConfig(Config) (any, error)
 }
 
 type bootstrapService struct {
-	configs       ConfigRepository
-	profiles      ProfileRepository
-	bindings      BindingStore
-	transportKeys DomainTransportKeyRepository
-	resolver      BindingResolver
-	renderer      Renderer
-	sdk           mgsdk.SDK
-	dbCipher      *SecretCipher
-	idProvider    magistrala.IDProvider
-	now           func() time.Time
+	configs    ConfigRepository
+	profiles   ProfileRepository
+	bindings   BindingStore
+	challenges BootstrapChallengeRepository
+	resolver   BindingResolver
+	renderer   Renderer
+	sdk        mgsdk.SDK
+	dbCipher   *SecretCipher
+	idProvider magistrala.IDProvider
+	now        func() time.Time
 }
 
 // New returns new Bootstrap service.
@@ -162,20 +152,19 @@ func New(
 	resolver BindingResolver,
 	renderer Renderer,
 	sdk mgsdk.SDK,
-	hasher Hasher,
 	encKey []byte,
 	idp magistrala.IDProvider,
 ) Service {
-	return NewWithTransportKeys(configs, profiles, bindings, nil, resolver, renderer, sdk, encKey, "primary", idp)
+	return NewWithChallenges(configs, profiles, bindings, nil, resolver, renderer, sdk, encKey, "primary", idp)
 }
 
-// NewWithTransportKeys returns a Bootstrap service with per-domain encrypted
-// device transport key support.
-func NewWithTransportKeys(
+// NewWithChallenges returns a Bootstrap service with per-device challenge
+// authentication support.
+func NewWithChallenges(
 	configs ConfigRepository,
 	profiles ProfileRepository,
 	bindings BindingStore,
-	transportKeys DomainTransportKeyRepository,
+	challenges BootstrapChallengeRepository,
 	resolver BindingResolver,
 	renderer Renderer,
 	sdk mgsdk.SDK,
@@ -185,16 +174,16 @@ func NewWithTransportKeys(
 ) Service {
 	dbCipher, _ := NewSecretCipher(encKey, encKeyID)
 	return &bootstrapService{
-		configs:       configs,
-		profiles:      profiles,
-		bindings:      bindings,
-		transportKeys: transportKeys,
-		resolver:      resolver,
-		renderer:      renderer,
-		sdk:           sdk,
-		dbCipher:      dbCipher,
-		idProvider:    idp,
-		now:           time.Now,
+		configs:    configs,
+		profiles:   profiles,
+		bindings:   bindings,
+		challenges: challenges,
+		resolver:   resolver,
+		renderer:   renderer,
+		sdk:        sdk,
+		dbCipher:   dbCipher,
+		idProvider: idp,
+		now:        time.Now,
 	}
 }
 
@@ -207,6 +196,16 @@ func (bs bootstrapService) Add(ctx context.Context, session smqauthn.Session, to
 	cfg.ID = id
 	cfg.DomainID = session.DomainID
 	cfg.Status = Active
+	cfg.BootstrapKeyVersion = 1
+	if cfg.ExternalKey == "" {
+		cfg.ExternalKey, err = generateBootstrapKey()
+		if err != nil {
+			return Config{}, errors.Wrap(ErrAddBootstrap, err)
+		}
+	}
+	if _, err := bootstrapKeyMaterial(cfg.ExternalKey); err != nil {
+		return Config{}, errors.Wrap(ErrBootstrapKey, err)
+	}
 	if bs.dbCipher == nil {
 		return Config{}, errors.Wrap(ErrAddBootstrap, errors.New("database encryption key is invalid"))
 	}
@@ -240,6 +239,9 @@ func (bs bootstrapService) View(ctx context.Context, session smqauthn.Session, i
 func (bs bootstrapService) Update(ctx context.Context, session smqauthn.Session, cfg Config) error {
 	cfg.DomainID = session.DomainID
 	if cfg.ExternalKey != "" {
+		if _, err := bootstrapKeyMaterial(cfg.ExternalKey); err != nil {
+			return errors.Wrap(ErrBootstrapKey, err)
+		}
 		stored, err := bs.configs.RetrieveByID(ctx, session.DomainID, cfg.ID)
 		if err != nil {
 			return errors.Wrap(svcerr.ErrUpdateEntity, err)
@@ -287,36 +289,106 @@ func (bs bootstrapService) Remove(ctx context.Context, session smqauthn.Session,
 	return nil
 }
 
-func (bs bootstrapService) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (Config, error) {
+func (bs bootstrapService) IssueBootstrapChallenge(ctx context.Context, externalID string) (BootstrapChallengeResponse, error) {
+	challengeID, err := bs.idProvider.ID()
+	if err != nil {
+		return BootstrapChallengeResponse{}, errors.Wrap(errIssueBootstrapChallenge, err)
+	}
+	serverNonce := make([]byte, BootstrapNonceSize)
+	if _, err := rand.Read(serverNonce); err != nil {
+		return BootstrapChallengeResponse{}, errors.Wrap(errIssueBootstrapChallenge, err)
+	}
+	now := bs.now().UTC()
+	response := BootstrapChallengeResponse{
+		ChallengeID: challengeID,
+		ServerNonce: encodeBootstrapBytes(serverNonce),
+		ExpiresAt:   now.Add(DefaultChallengeTTL),
+		KeyVersion:  1,
+	}
+
 	cfg, err := bs.configs.RetrieveByExternalID(ctx, externalID)
 	if err != nil {
-		return cfg, errors.Wrap(ErrBootstrap, err)
-	}
-	if secure {
-		dec, err := bs.decryptSecureRequest(ctx, &cfg, externalKey)
-		if err != nil {
-			return Config{}, errors.Wrap(ErrExternalKeySecure, err)
+		if !errors.Contains(err, repoerr.ErrNotFound) {
+			return BootstrapChallengeResponse{}, errors.Wrap(errIssueBootstrapChallenge, err)
 		}
-		externalKey = dec
+		return response, nil
 	}
+	if cfg.Status == DisabledStatus || bs.challenges == nil {
+		// Unknown and disabled enrollments receive the same fake challenge
+		// response shape.
+		return response, nil
+	}
+	if cfg.BootstrapKeyVersion == 0 {
+		cfg.BootstrapKeyVersion = 1
+	}
+	response.KeyVersion = cfg.BootstrapKeyVersion
+	challenge := BootstrapChallenge{
+		ID: challengeID, ConfigID: cfg.ID, KeyVersion: cfg.BootstrapKeyVersion,
+		ServerNonce: serverNonce, CreatedAt: now, ExpiresAt: response.ExpiresAt,
+	}
+	if err := bs.challenges.Create(ctx, challenge); err != nil {
+		return BootstrapChallengeResponse{}, errors.Wrap(errIssueBootstrapChallenge, err)
+	}
+	return response, nil
+}
 
-	decrypted, err := bs.decryptConfigExternalKey(cfg, ErrExternalKey)
+func (bs bootstrapService) Bootstrap(ctx context.Context, externalID string, proof DeviceBootstrapProof) (Config, error) {
+	cfg, err := bs.configs.RetrieveByExternalID(ctx, externalID)
 	if err != nil {
-		return Config{}, err
+		if errors.Contains(err, repoerr.ErrNotFound) {
+			return Config{}, ErrDeviceBootstrapAuth
+		}
+		return Config{}, errors.Wrap(ErrBootstrap, err)
 	}
-	if subtle.ConstantTimeCompare([]byte(externalKey), []byte(decrypted.ExternalKey)) != 1 {
-		return Config{}, ErrExternalKey
+	if cfg.Status == DisabledStatus || bs.challenges == nil {
+		return Config{}, ErrDeviceBootstrapAuth
 	}
-	cfg = decrypted
-	if cfg.Status == DisabledStatus {
-		return Config{}, ErrBootstrap
+	if cfg.BootstrapKeyVersion == 0 {
+		cfg.BootstrapKeyVersion = 1
+	}
+	challenge, err := bs.challenges.Retrieve(ctx, proof.ChallengeID, cfg.ID)
+	if err != nil || challenge.ConsumedAt != nil || challenge.KeyVersion != cfg.BootstrapKeyVersion || !bs.now().UTC().Before(challenge.ExpiresAt) {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+	deviceNonce, err := decodeBootstrapField("device nonce", proof.DeviceNonce, BootstrapNonceSize)
+	if err != nil {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+	providedProof, err := decodeBootstrapField("proof", proof.Proof, BootstrapProofSize)
+	if err != nil {
+		return Config{}, ErrDeviceBootstrapAuth
 	}
 
+	decrypted, err := bs.decryptConfigExternalKey(cfg, ErrDeviceBootstrapAuth)
+	if err != nil {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+	rootKey, err := bootstrapKeyMaterial(decrypted.ExternalKey)
+	if err != nil {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+	serverNonce := encodeBootstrapBytes(challenge.ServerNonce)
+	expectedProof, err := calculateBootstrapProof(
+		rootKey, cfg.ExternalID, challenge.ID, serverNonce, proof.DeviceNonce, challenge.KeyVersion,
+	)
+	if err != nil || !hmac.Equal(providedProof, expectedProof) {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+	now := bs.now().UTC()
+	if err := bs.challenges.Consume(ctx, challenge.ID, cfg.ID, now); err != nil {
+		return Config{}, ErrDeviceBootstrapAuth
+	}
+
+	cfg = decrypted
 	cfg, err = bs.renderBootstrapConfig(ctx, cfg)
 	if err != nil {
 		return Config{}, errors.Wrap(ErrBootstrap, err)
 	}
-
+	cfg.ExternalKey = ""
+	cfg.BootstrapRootKey = rootKey
+	cfg.BootstrapChallengeID = challenge.ID
+	cfg.BootstrapServerNonce = serverNonce
+	cfg.BootstrapDeviceNonce = encodeBootstrapBytes(deviceNonce)
 	return cfg, nil
 }
 
@@ -355,6 +427,7 @@ func (bs bootstrapService) decryptConfigExternalKeyForManagement(cfg Config, out
 
 func (bs bootstrapService) renderBootstrapConfig(ctx context.Context, cfg Config) (Config, error) {
 	if cfg.ProfileID == "" {
+		cfg.ContentType = ContentTypeTextPlain
 		return cfg, nil
 	}
 	if bs.profiles == nil || bs.bindings == nil || bs.renderer == nil {
@@ -384,6 +457,10 @@ func (bs bootstrapService) renderBootstrapConfig(ctx context.Context, cfg Config
 	}
 
 	cfg.Content = string(rendered)
+	cfg.ContentType = profile.ContentType
+	if cfg.ContentType == "" {
+		cfg.ContentType = defaultContentType(profile.ContentFormat)
+	}
 	return cfg, nil
 }
 
@@ -437,6 +514,12 @@ func (bs bootstrapService) CreateProfile(ctx context.Context, session smqauthn.S
 	if p.ContentFormat == "" {
 		p.ContentFormat = ContentFormatJSON
 	}
+	if p.ContentType == "" {
+		p.ContentType = defaultContentType(p.ContentFormat)
+	}
+	if !validContentType(p.ContentType) {
+		return Profile{}, errors.Wrap(errCreateProfile, errors.NewRequestError("unsupported profile content type"))
+	}
 	p.Version = 1
 	if err := validateProfileBindingSlots(p); err != nil {
 		return Profile{}, errors.Wrap(errCreateProfile, err)
@@ -467,6 +550,9 @@ func (bs bootstrapService) UpdateProfile(ctx context.Context, session smqauthn.S
 		return Profile{}, errors.Wrap(errUpdateProfile, errors.New("profile repository not configured"))
 	}
 	p.DomainID = session.DomainID
+	if p.ContentType != "" && !validContentType(p.ContentType) {
+		return Profile{}, errors.Wrap(errUpdateProfile, errors.NewRequestError("unsupported profile content type"))
+	}
 	if err := validateProfileBindingSlots(p); err != nil {
 		return Profile{}, errors.Wrap(errUpdateProfile, err)
 	}
@@ -615,102 +701,4 @@ func (bs bootstrapService) RefreshBindings(ctx context.Context, session smqauthn
 		return errors.Wrap(errRefreshBinding, err)
 	}
 	return bs.bindings.Save(ctx, configID, refreshed)
-}
-
-func (bs bootstrapService) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error) {
-	if bs.transportKeys == nil || bs.dbCipher == nil {
-		return DomainTransportKey{}, errors.Wrap(errCreateTransportKey, errors.New("domain transport key support not configured"))
-	}
-	key, err := bs.newDomainTransportKey(session.DomainID)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errCreateTransportKey, err)
-	}
-	if err := bs.transportKeys.Create(ctx, key); err != nil {
-		if errors.Contains(err, repoerr.ErrConflict) {
-			return DomainTransportKey{}, errors.Wrap(svcerr.ErrConflict, err)
-		}
-		return DomainTransportKey{}, errors.Wrap(errCreateTransportKey, err)
-	}
-	return bs.revealTransportKey(key)
-}
-
-func (bs bootstrapService) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error) {
-	if bs.transportKeys == nil {
-		return DomainTransportKey{}, errors.Wrap(errViewTransportKey, errors.New("domain transport key support not configured"))
-	}
-	key, err := bs.transportKeys.RetrieveCurrent(ctx, session.DomainID)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errViewTransportKey, err)
-	}
-	key.EncryptedSecret = ""
-	return key, nil
-}
-
-func (bs bootstrapService) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (DomainTransportKey, error) {
-	if bs.transportKeys == nil || bs.dbCipher == nil {
-		return DomainTransportKey{}, errors.Wrap(errRevealTransportKey, errors.New("domain transport key support not configured"))
-	}
-	key, err := bs.transportKeys.Retrieve(ctx, session.DomainID, keyID)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRevealTransportKey, err)
-	}
-	revealed, err := bs.revealTransportKey(key)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRevealTransportKey, err)
-	}
-	return revealed, nil
-}
-
-func (bs bootstrapService) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (DomainTransportKey, error) {
-	if bs.transportKeys == nil || bs.dbCipher == nil {
-		return DomainTransportKey{}, errors.Wrap(errRotateTransportKey, errors.New("domain transport key support not configured"))
-	}
-	current, err := bs.transportKeys.RetrieveCurrent(ctx, session.DomainID)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRotateTransportKey, err)
-	}
-	next, err := bs.newDomainTransportKey(session.DomainID)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRotateTransportKey, err)
-	}
-	retireAt := bs.now().UTC().Add(24 * time.Hour)
-	if err := bs.transportKeys.Rotate(ctx, current.KeyID, next, retireAt); err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRotateTransportKey, err)
-	}
-	revealed, err := bs.revealTransportKey(next)
-	if err != nil {
-		return DomainTransportKey{}, errors.Wrap(errRotateTransportKey, err)
-	}
-	return revealed, nil
-}
-
-func (bs bootstrapService) newDomainTransportKey(domainID string) (DomainTransportKey, error) {
-	keyID, err := bs.idProvider.ID()
-	if err != nil {
-		return DomainTransportKey{}, err
-	}
-	secret := make([]byte, 32)
-	if _, err := rand.Read(secret); err != nil {
-		return DomainTransportKey{}, err
-	}
-	encrypted, err := bs.dbCipher.seal("domain-transport-key", secret, transportSecretAAD(domainID, keyID))
-	if err != nil {
-		return DomainTransportKey{}, err
-	}
-	now := bs.now().UTC()
-	return DomainTransportKey{
-		DomainID: domainID, KeyID: keyID, EncryptedSecret: encrypted,
-		WrappingKeyID: bs.dbCipher.KeyID(), Status: TransportKeyActive,
-		Secret: encodeTransportSecret(secret), CreatedAt: now, UpdatedAt: now,
-	}, nil
-}
-
-func (bs bootstrapService) revealTransportKey(key DomainTransportKey) (DomainTransportKey, error) {
-	secret, err := bs.dbCipher.open("domain-transport-key", key.EncryptedSecret, transportSecretAAD(key.DomainID, key.KeyID))
-	if err != nil {
-		return DomainTransportKey{}, err
-	}
-	key.Secret = encodeTransportSecret(secret)
-	key.EncryptedSecret = ""
-	return key, nil
 }

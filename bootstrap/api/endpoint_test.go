@@ -5,8 +5,6 @@ package api_test
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/bootstrap"
@@ -25,11 +22,9 @@ import (
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
-	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -80,11 +75,7 @@ var (
 		RenderContext: map[string]any{"site": "warehouse-2", "region": "mombasa"},
 	}
 
-	missingIDRes              = toJSON(apiutil.ErrMissingID)
-	missingKeyRes             = toJSON(apiutil.ErrBearerKey)
-	unknownExternalIDErrorRes = toJSON(svcerr.ErrNotFound)
-	extKeyRes                 = toJSON(bootstrap.ErrExternalKey)
-	extSecKeyRes              = toJSON(bootstrap.ErrExternalKeySecure)
+	missingIDRes = toJSON(apiutil.ErrMissingID)
 )
 
 type testRequest struct {
@@ -130,26 +121,12 @@ func (tr testRequest) make() (*http.Response, error) {
 	return tr.client.Do(req)
 }
 
-func dec(in []byte, cfg bootstrap.Config) ([]byte, error) {
-	block, err := aes.NewCipher(encKey)
-	if err != nil {
-		return nil, err
-	}
-	aead, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce, ciphertext := in[:aead.NonceSize()], in[aead.NonceSize():]
-	aad := fmt.Sprintf("bootstrap-response:%s:%s:%s:%s", cfg.DomainID, cfg.ExternalID, cfg.SecureTransportKeyID, cfg.SecureRequestID)
-	return aead.Open(nil, nonce, ciphertext, []byte(aad))
-}
-
 func newBootstrapServer() (*httptest.Server, *mocks.Service, *authnmocks.Authentication) {
 	logger := mglog.NewMock()
 	svc := new(mocks.Service)
 	authn := new(authnmocks.Authentication)
 	am := smqauthn.NewAuthNMiddleware(authn, smqauthn.WithAllowUnverifiedUser(true))
-	mux := bsapi.MakeHandler(svc, am, bootstrap.NewConfigReader(encKey), logger, instanceID)
+	mux := bsapi.MakeHandler(svc, am, bootstrap.NewConfigReader(), logger, instanceID)
 	return httptest.NewServer(mux), svc, authn
 }
 
@@ -950,246 +927,6 @@ func TestRemove(t *testing.T) {
 	}
 }
 
-func TestBootstrap(t *testing.T) {
-	bs, svc, _ := newBootstrapServer()
-	defer bs.Close()
-	c := newConfig()
-	c.DomainID = domainID
-	c.SecureTransportKey = encKey
-	c.SecureTransportKeyID = "key-id"
-	c.SecureRequestID = "request-id"
-
-	s := struct {
-		ID         string `json:"id"`
-		Content    string `json:"content"`
-		ClientCert string `json:"client_cert"`
-		ClientKey  string `json:"client_key"`
-		CACert     string `json:"ca_cert"`
-	}{
-		ID:         c.ID,
-		Content:    c.Content,
-		ClientCert: c.ClientCert,
-		ClientKey:  c.ClientKey,
-		CACert:     c.CACert,
-	}
-
-	data := toJSON(s)
-
-	cases := []struct {
-		desc        string
-		externalID  string
-		externalKey string
-		status      int
-		res         string
-		secure      bool
-		err         error
-	}{
-		{
-			desc:        "bootstrap a Client with unknown ID",
-			externalID:  unknown,
-			externalKey: c.ExternalKey,
-			status:      http.StatusNotFound,
-			res:         unknownExternalIDErrorRes,
-			secure:      false,
-			err:         svcerr.ErrNotFound,
-		},
-		{
-			desc:        "bootstrap a Client with an empty ID",
-			externalID:  "",
-			externalKey: c.ExternalKey,
-			status:      http.StatusBadRequest,
-			res:         missingIDRes,
-			secure:      false,
-			err:         apiutil.ErrMissingID,
-		},
-		{
-			desc:        "bootstrap a Client with unknown key",
-			externalID:  c.ExternalID,
-			externalKey: unknown,
-			status:      http.StatusForbidden,
-			res:         extKeyRes,
-			secure:      false,
-			err:         bootstrap.ErrExternalKey,
-		},
-		{
-			desc:        "bootstrap a Client with an empty key",
-			externalID:  c.ExternalID,
-			externalKey: "",
-			status:      http.StatusUnauthorized,
-			res:         missingKeyRes,
-			secure:      false,
-			err:         apiutil.ErrBearerKey,
-		},
-		{
-			desc:        "bootstrap with missing required bindings",
-			externalID:  c.ExternalID,
-			externalKey: c.ExternalKey,
-			status:      http.StatusUnprocessableEntity,
-			res:         `{"message":"required binding slots are not bound: temperature-sensor, telemetry-channel"}`,
-			secure:      false,
-			err:         errors.NewServiceError("required binding slots are not bound: temperature-sensor, telemetry-channel"),
-		},
-		{
-			desc:        "bootstrap known Client",
-			externalID:  c.ExternalID,
-			externalKey: c.ExternalKey,
-			status:      http.StatusOK,
-			res:         data,
-			secure:      false,
-			err:         nil,
-		},
-		{
-			desc:        "bootstrap secure",
-			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
-			externalKey: "v2.key-id.encrypted-request",
-			status:      http.StatusOK,
-			res:         data,
-			secure:      true,
-			err:         nil,
-		},
-		{
-			desc:        "bootstrap secure with unencrypted key",
-			externalID:  fmt.Sprintf("secure/%s", c.ExternalID),
-			externalKey: c.ExternalKey,
-			status:      http.StatusForbidden,
-			res:         extSecKeyRes,
-			secure:      true,
-			err:         bootstrap.ErrExternalKeySecure,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			svcCall := svc.On("Bootstrap", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(c, tc.err)
-			req := testRequest{
-				client: bs.Client(),
-				method: http.MethodGet,
-				url:    fmt.Sprintf("%s/clients/bootstrap/%s", bs.URL, tc.externalID),
-				key:    tc.externalKey,
-			}
-			res, err := req.make()
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-
-			assert.Equal(t, tc.status, res.StatusCode, fmt.Sprintf("%s: expected status code %d got %d", tc.desc, tc.status, res.StatusCode))
-			body, err := io.ReadAll(res.Body)
-			assert.Nil(t, err, fmt.Sprintf("%s: unexpected error %s", tc.desc, err))
-			if tc.secure && tc.status == http.StatusOK {
-				body, err = dec(body, c)
-				assert.Nil(t, err, fmt.Sprintf("%s: unexpected error while decoding body: %s", tc.desc, err))
-			}
-			data := strings.Trim(string(body), "\n")
-			assert.Equal(t, tc.res, data, fmt.Sprintf("%s: expected response '%s' got '%s'", tc.desc, tc.res, data))
-			svcCall.Unset()
-		})
-	}
-}
-
-func TestDomainTransportKeys(t *testing.T) {
-	bs, svc, auth := newBootstrapServer()
-	defer bs.Close()
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
-	key := bootstrap.DomainTransportKey{
-		DomainID: domainID, KeyID: validID, Status: bootstrap.TransportKeyActive,
-		Secret: "domain-secret", CreatedAt: time.Now().UTC(), UpdatedAt: time.Now().UTC(),
-	}
-
-	cases := []struct {
-		desc       string
-		method     string
-		path       string
-		operation  string
-		status     int
-		response   bootstrap.DomainTransportKey
-		wantSecret bool
-	}{
-		{
-			desc: "create domain transport key", method: http.MethodPost,
-			path: "/transport-keys/", operation: "CreateDomainTransportKey",
-			status: http.StatusCreated, response: key, wantSecret: true,
-		},
-		{
-			desc: "view current domain transport key", method: http.MethodGet,
-			path: "/transport-keys/current", operation: "ViewDomainTransportKey",
-			status: http.StatusOK, response: func() bootstrap.DomainTransportKey {
-				withoutSecret := key
-				withoutSecret.Secret = ""
-				return withoutSecret
-			}(),
-		},
-		{
-			desc: "reveal domain transport key", method: http.MethodPost,
-			path: "/transport-keys/" + validID + "/reveal", operation: "RevealDomainTransportKey",
-			status: http.StatusOK, response: key, wantSecret: true,
-		},
-		{
-			desc: "rotate domain transport key", method: http.MethodPost,
-			path: "/transport-keys/rotate", operation: "RotateDomainTransportKey",
-			status: http.StatusCreated, response: key, wantSecret: true,
-		},
-	}
-
-	for _, tc := range cases {
-		t.Run(tc.desc, func(t *testing.T) {
-			authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
-			args := []any{mock.Anything, mock.Anything}
-			if tc.operation == "RevealDomainTransportKey" {
-				args = append(args, validID)
-			}
-			svcCall := svc.On(tc.operation, args...).Return(tc.response, nil)
-			res, err := (testRequest{
-				client: bs.Client(), method: tc.method,
-				url:   bs.URL + "/" + domainID + "/clients/bootstrap" + tc.path,
-				token: validToken,
-			}).make()
-			require.NoError(t, err)
-			require.Equal(t, tc.status, res.StatusCode)
-			require.Equal(t, "no-store", res.Header.Get("Cache-Control"))
-			var got bootstrap.DomainTransportKey
-			require.NoError(t, json.NewDecoder(res.Body).Decode(&got))
-			require.Equal(t, tc.response.KeyID, got.KeyID)
-			if tc.wantSecret {
-				require.Equal(t, key.Secret, got.Secret)
-			} else {
-				require.Empty(t, got.Secret)
-			}
-			require.NoError(t, res.Body.Close())
-			svcCall.Unset()
-			authCall.Unset()
-		})
-	}
-}
-
-func TestGenerateSecureCredential(t *testing.T) {
-	bs, svc, auth := newBootstrapServer()
-	defer bs.Close()
-	session := smqauthn.Session{UserID: validID, DomainID: domainID, DomainUserID: validID}
-	expiresAt := time.Now().UTC().Add(5 * time.Minute).Truncate(time.Second)
-	want := bootstrap.SecureBootstrapCredential{
-		ExternalID: addExternalID, KeyID: validID,
-		EncryptedExternalKey: "v2." + validID + ".payload",
-		Authorization:        "Client v2." + validID + ".payload",
-		RequestID:            "request-id", ExpiresAt: expiresAt,
-		BootstrapURL: "/clients/bootstrap/secure/" + addExternalID,
-	}
-	authCall := auth.On("Authenticate", mock.Anything, validToken).Return(session, nil)
-	svcCall := svc.On("GenerateSecureCredential", mock.Anything, mock.Anything, validID).Return(want, nil)
-
-	res, err := (testRequest{
-		client: bs.Client(), method: http.MethodPost,
-		url:   bs.URL + "/" + domainID + "/clients/configs/" + validID + "/secure-credential",
-		token: validToken,
-	}).make()
-	require.NoError(t, err)
-	require.Equal(t, http.StatusOK, res.StatusCode)
-	require.Equal(t, "no-store", res.Header.Get("Cache-Control"))
-	var got bootstrap.SecureBootstrapCredential
-	require.NoError(t, json.NewDecoder(res.Body).Decode(&got))
-	require.NoError(t, res.Body.Close())
-	require.Equal(t, want, got)
-	svcCall.Unset()
-	authCall.Unset()
-}
-
 func TestChangeStatus(t *testing.T) {
 	bs, svc, auth := newBootstrapServer()
 	defer bs.Close()
@@ -1505,6 +1242,7 @@ func TestRenderPreview(t *testing.T) {
 		ID:              profileID,
 		Name:            "gateway",
 		ContentFormat:   bootstrap.ContentFormatGoTemplate,
+		ContentType:     bootstrap.ContentTypeTextPlain,
 		ContentTemplate: `device={{ .Device.ID }} site={{ .Vars.site }} topic={{ index (index .Bindings "telemetry").Snapshot "topic" }}`,
 	}
 
@@ -1604,10 +1342,12 @@ func TestRenderPreview(t *testing.T) {
 
 			if tc.status == http.StatusOK {
 				var got struct {
-					Content string `json:"content"`
+					ContentType bootstrap.ContentType `json:"content_type"`
+					Content     string                `json:"content"`
 				}
 				err = json.NewDecoder(res.Body).Decode(&got)
 				assert.Nil(t, err, fmt.Sprintf("%s: decoding expected to succeed: %s", tc.desc, err))
+				assert.Equal(t, bootstrap.ContentTypeTextPlain, got.ContentType, fmt.Sprintf("%s: expected content type %q got %q", tc.desc, bootstrap.ContentTypeTextPlain, got.ContentType))
 				assert.Equal(t, expectedContent, got.Content, fmt.Sprintf("%s: expected content %q got %q", tc.desc, expectedContent, got.Content))
 			}
 

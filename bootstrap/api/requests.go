@@ -32,10 +32,6 @@ func (req addReq) validate() error {
 		return apiutil.ErrMissingID
 	}
 
-	if req.ExternalKey == "" {
-		return apiutil.ErrBearerKey
-	}
-
 	return nil
 }
 
@@ -96,37 +92,35 @@ func (req listReq) validate() error {
 	return nil
 }
 
-type bootstrapReq struct {
-	key string
-	id  string
+type bootstrapChallengeReq struct {
+	externalID string
 }
 
-func (req bootstrapReq) validate() error {
-	if req.key == "" {
-		return apiutil.ErrBearerKey
-	}
-
-	if req.id == "" {
+func (req bootstrapChallengeReq) validate() error {
+	if req.externalID == "" {
 		return apiutil.ErrMissingID
 	}
+	return nil
+}
 
+type deviceBootstrapReq struct {
+	externalID string
+	bootstrap.DeviceBootstrapProof
+}
+
+func (req deviceBootstrapReq) validate() error {
+	if req.externalID == "" || req.ChallengeID == "" {
+		return apiutil.ErrMissingID
+	}
+	if req.DeviceNonce == "" || req.Proof == "" {
+		return apiutil.ErrMalformedRequestBody
+	}
 	return nil
 }
 
 type changeConfigStatusReq struct {
 	token string
 	id    string
-}
-
-type transportKeyReq struct {
-	keyID string
-}
-
-func (req transportKeyReq) validate() error {
-	if req.keyID == "" {
-		return apiutil.ErrMissingID
-	}
-	return nil
 }
 
 func (req changeConfigStatusReq) validate() error {

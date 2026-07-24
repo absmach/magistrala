@@ -148,7 +148,24 @@ func (lm *loggingMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 	return lm.svc.Remove(ctx, session, id)
 }
 
-func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (cfg bootstrap.Config, err error) {
+func (lm *loggingMiddleware) IssueBootstrapChallenge(ctx context.Context, externalID string) (challenge bootstrap.BootstrapChallengeResponse, err error) {
+	defer func(begin time.Time) {
+		args := []any{
+			slog.String("duration", time.Since(begin).String()),
+			slog.String("external_id", externalID),
+		}
+		if err != nil {
+			args = append(args, slog.String("error", err.Error()))
+			lm.logger.Warn("Issue bootstrap challenge failed", args...)
+			return
+		}
+		lm.logger.Info("Issue bootstrap challenge completed successfully", args...)
+	}(time.Now())
+
+	return lm.svc.IssueBootstrapChallenge(ctx, externalID)
+}
+
+func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (cfg bootstrap.Config, err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
@@ -162,7 +179,7 @@ func (lm *loggingMiddleware) Bootstrap(ctx context.Context, externalKey, externa
 		lm.logger.Info("View bootstrap completed successfully", args...)
 	}(time.Now())
 
-	return lm.svc.Bootstrap(ctx, externalKey, externalID, secure)
+	return lm.svc.Bootstrap(ctx, externalID, proof)
 }
 
 func (lm *loggingMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (cfg bootstrap.Config, err error) {
@@ -352,24 +369,4 @@ func (lm *loggingMiddleware) RefreshBindings(ctx context.Context, session smqaut
 	}(time.Now())
 
 	return lm.svc.RefreshBindings(ctx, session, token, configID)
-}
-
-func (lm *loggingMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return lm.svc.CreateDomainTransportKey(ctx, session)
-}
-
-func (lm *loggingMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return lm.svc.ViewDomainTransportKey(ctx, session)
-}
-
-func (lm *loggingMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	return lm.svc.RevealDomainTransportKey(ctx, session, keyID)
-}
-
-func (lm *loggingMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return lm.svc.RotateDomainTransportKey(ctx, session)
-}
-
-func (lm *loggingMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	return lm.svc.GenerateSecureCredential(ctx, session, configID)
 }

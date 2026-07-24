@@ -37,11 +37,35 @@ The service is configured using the environment variables presented in the follo
 
 Bootstrap uses two independent encryption layers:
 
-- `MG_BOOTSTRAP_DB_ENCRYPTION_KEY` is a service-owned 32-byte master key. HKDF-derived AES-256-GCM keys encrypt enrollment external keys, domain transport keys and secret binding snapshots before PostgreSQL storage.
-- Each domain has a random 256-bit transport key managed through `/{domainID}/clients/bootstrap/transport-keys`. That key encrypts only secure device requests and responses and is itself encrypted by the database master key at rest. Creating or rotating a key returns its base64url secret; authorized domain managers can reveal it later.
-- An authorized manager can generate a five-minute, single-use device credential with `POST /{domainID}/clients/configs/{configID}/secure-credential`. The returned `Authorization: Client v2...` value is generated on demand and is never stored.
+- `MG_BOOTSTRAP_DB_ENCRYPTION_KEY` is a service-owned 32-byte master key. HKDF-derived AES-256-GCM keys encrypt enrollment external keys and secret binding snapshots before PostgreSQL storage.
+- Every enrollment has a Bootstrap root key containing at least 10 characters. Its exact UTF-8 bytes are used as HKDF input. The service generates a strong random base64url string when `external_key` is omitted during enrollment creation. The device stores its Bootstrap URL, external ID, root key, and key version separately from the configuration it downloads.
+- The device never sends that root key. It requests a one-minute server challenge, returns an HMAC-SHA256 proof made with an HKDF-derived authentication key, and receives an AES-256-GCM encrypted configuration made with a different HKDF-derived response key. Each challenge is single-use, and the protocol does not require a device clock.
 
-Changing a domain transport key does not change the database master key. Rotation keeps the old domain key valid for 24 hours while devices move to the new key.
+Replacing an enrollment's external key increments its key version and invalidates outstanding challenges. It does not change the database master key or any other device's Bootstrap key.
+
+## Device Bootstrap flow
+
+1. Request a challenge:
+   `POST /clients/bootstrap/challenges/{externalID}`.
+2. Generate a random 32-byte device nonce.
+3. Encode the external key as UTF-8 and use those exact bytes as the root key.
+   Derive a 32-byte authentication key with HKDF-SHA256 using the external ID
+   as salt and `magistrala-bootstrap-auth-v1` as info.
+4. HMAC the newline-separated values `v1`, external ID, challenge ID, server
+   nonce, device nonce, and decimal key version.
+5. Send the unpadded-base64url device nonce and proof to
+   `POST /clients/bootstrap/configurations/{externalID}`.
+6. Derive the response key with the same root key and salt but
+   `magistrala-bootstrap-response-v1` as info, then AES-GCM decrypt the returned
+   JSON envelope as described in the OpenAPI document.
+7. Read `content_type` from the decrypted response and parse the `content`
+   string accordingly (`application/json`, `application/yaml`,
+   `application/toml`, or `text/plain`).
+
+This application-layer encryption protects device authentication and Bootstrap
+content even when a constrained deployment uses plain HTTP. Plain HTTP still
+reveals network metadata and permits traffic blocking, replay attempts, and
+denial of service, so HTTPS should be used whenever the device supports it.
 
 | Variable                       | Description                                                                      | Default                           |
 | ------------------------------ | -------------------------------------------------------------------------------- | --------------------------------- |

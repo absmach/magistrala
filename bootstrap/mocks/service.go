@@ -39,68 +39,6 @@ type Service_Expecter struct {
 	mock *mock.Mock
 }
 
-func (_mock *Service) CreateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
-	ret := _mock.Called(ctx, session)
-	if len(ret) == 0 {
-		panic("no return value specified for CreateDomainTransportKey")
-	}
-	var key bootstrap.DomainTransportKey
-	if fn, ok := ret.Get(0).(func(context.Context, authn.Session) bootstrap.DomainTransportKey); ok {
-		key = fn(ctx, session)
-	} else if ret.Get(0) != nil {
-		key = ret.Get(0).(bootstrap.DomainTransportKey)
-	}
-	return key, ret.Error(1)
-}
-
-func (_mock *Service) ViewDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
-	ret := _mock.Called(ctx, session)
-	if len(ret) == 0 {
-		panic("no return value specified for ViewDomainTransportKey")
-	}
-	var key bootstrap.DomainTransportKey
-	if ret.Get(0) != nil {
-		key = ret.Get(0).(bootstrap.DomainTransportKey)
-	}
-	return key, ret.Error(1)
-}
-
-func (_mock *Service) RevealDomainTransportKey(ctx context.Context, session authn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	ret := _mock.Called(ctx, session, keyID)
-	if len(ret) == 0 {
-		panic("no return value specified for RevealDomainTransportKey")
-	}
-	var key bootstrap.DomainTransportKey
-	if ret.Get(0) != nil {
-		key = ret.Get(0).(bootstrap.DomainTransportKey)
-	}
-	return key, ret.Error(1)
-}
-
-func (_mock *Service) RotateDomainTransportKey(ctx context.Context, session authn.Session) (bootstrap.DomainTransportKey, error) {
-	ret := _mock.Called(ctx, session)
-	if len(ret) == 0 {
-		panic("no return value specified for RotateDomainTransportKey")
-	}
-	var key bootstrap.DomainTransportKey
-	if ret.Get(0) != nil {
-		key = ret.Get(0).(bootstrap.DomainTransportKey)
-	}
-	return key, ret.Error(1)
-}
-
-func (_mock *Service) GenerateSecureCredential(ctx context.Context, session authn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	ret := _mock.Called(ctx, session, configID)
-	if len(ret) == 0 {
-		panic("no return value specified for GenerateSecureCredential")
-	}
-	var credential bootstrap.SecureBootstrapCredential
-	if ret.Get(0) != nil {
-		credential = ret.Get(0).(bootstrap.SecureBootstrapCredential)
-	}
-	return credential, ret.Error(1)
-}
-
 func (_m *Service) EXPECT() *Service_Expecter {
 	return &Service_Expecter{mock: &_m.Mock}
 }
@@ -328,8 +266,8 @@ func (_c *Service_BindResources_Call) RunAndReturn(run func(ctx context.Context,
 }
 
 // Bootstrap provides a mock function for the type Service
-func (_mock *Service) Bootstrap(ctx context.Context, externalKey string, externalID string, secure bool) (bootstrap.Config, error) {
-	ret := _mock.Called(ctx, externalKey, externalID, secure)
+func (_mock *Service) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (bootstrap.Config, error) {
+	ret := _mock.Called(ctx, externalID, proof)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Bootstrap")
@@ -337,16 +275,16 @@ func (_mock *Service) Bootstrap(ctx context.Context, externalKey string, externa
 
 	var r0 bootstrap.Config
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bool) (bootstrap.Config, error)); ok {
-		return returnFunc(ctx, externalKey, externalID, secure)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bootstrap.DeviceBootstrapProof) (bootstrap.Config, error)); ok {
+		return returnFunc(ctx, externalID, proof)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, bool) bootstrap.Config); ok {
-		r0 = returnFunc(ctx, externalKey, externalID, secure)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, bootstrap.DeviceBootstrapProof) bootstrap.Config); ok {
+		r0 = returnFunc(ctx, externalID, proof)
 	} else {
 		r0 = ret.Get(0).(bootstrap.Config)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, bool) error); ok {
-		r1 = returnFunc(ctx, externalKey, externalID, secure)
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, bootstrap.DeviceBootstrapProof) error); ok {
+		r1 = returnFunc(ctx, externalID, proof)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -360,14 +298,13 @@ type Service_Bootstrap_Call struct {
 
 // Bootstrap is a helper method to define mock.On call
 //   - ctx context.Context
-//   - externalKey string
 //   - externalID string
-//   - secure bool
-func (_e *Service_Expecter) Bootstrap(ctx interface{}, externalKey interface{}, externalID interface{}, secure interface{}) *Service_Bootstrap_Call {
-	return &Service_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalKey, externalID, secure)}
+//   - proof bootstrap.DeviceBootstrapProof
+func (_e *Service_Expecter) Bootstrap(ctx interface{}, externalID interface{}, proof interface{}) *Service_Bootstrap_Call {
+	return &Service_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalID, proof)}
 }
 
-func (_c *Service_Bootstrap_Call) Run(run func(ctx context.Context, externalKey string, externalID string, secure bool)) *Service_Bootstrap_Call {
+func (_c *Service_Bootstrap_Call) Run(run func(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof)) *Service_Bootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -377,19 +314,14 @@ func (_c *Service_Bootstrap_Call) Run(run func(ctx context.Context, externalKey 
 		if args[1] != nil {
 			arg1 = args[1].(string)
 		}
-		var arg2 string
+		var arg2 bootstrap.DeviceBootstrapProof
 		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 bool
-		if args[3] != nil {
-			arg3 = args[3].(bool)
+			arg2 = args[2].(bootstrap.DeviceBootstrapProof)
 		}
 		run(
 			arg0,
 			arg1,
 			arg2,
-			arg3,
 		)
 	})
 	return _c
@@ -400,9 +332,25 @@ func (_c *Service_Bootstrap_Call) Return(config bootstrap.Config, err error) *Se
 	return _c
 }
 
-func (_c *Service_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, externalKey string, externalID string, secure bool) (bootstrap.Config, error)) *Service_Bootstrap_Call {
+func (_c *Service_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (bootstrap.Config, error)) *Service_Bootstrap_Call {
 	_c.Call.Return(run)
 	return _c
+}
+
+// IssueBootstrapChallenge provides a mock function for the type Service.
+func (_mock *Service) IssueBootstrapChallenge(ctx context.Context, externalID string) (bootstrap.BootstrapChallengeResponse, error) {
+	ret := _mock.Called(ctx, externalID)
+	if len(ret) == 0 {
+		panic("no return value specified for IssueBootstrapChallenge")
+	}
+	var challenge bootstrap.BootstrapChallengeResponse
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (bootstrap.BootstrapChallengeResponse, error)); ok {
+		return returnFunc(ctx, externalID)
+	}
+	if ret.Get(0) != nil {
+		challenge = ret.Get(0).(bootstrap.BootstrapChallengeResponse)
+	}
+	return challenge, ret.Error(1)
 }
 
 // CreateProfile provides a mock function for the type Service

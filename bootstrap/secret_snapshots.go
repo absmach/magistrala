@@ -21,7 +21,7 @@ func (bs bootstrapService) encryptSecretSnapshots(bindings []BindingSnapshot) ([
 			return nil, err
 		}
 		if bs.dbCipher == nil {
-			return nil, ErrExternalKeySecure
+			return nil, ErrSecretEncryption
 		}
 		ciphertext, err := bs.dbCipher.seal("binding-snapshot", secret, snapshotSecretAAD(binding.ConfigID, binding.Slot))
 		if err != nil {
@@ -43,7 +43,7 @@ func (bs bootstrapService) decryptSecretSnapshots(bindings []BindingSnapshot) ([
 			continue
 		}
 		if bs.dbCipher == nil {
-			return nil, ErrExternalKeySecure
+			return nil, ErrSecretEncryption
 		}
 		plain, err := bs.dbCipher.open("binding-snapshot", ciphertext, snapshotSecretAAD(binding.ConfigID, binding.Slot))
 		if err != nil {

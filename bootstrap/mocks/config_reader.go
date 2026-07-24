@@ -41,8 +41,8 @@ func (_m *ConfigReader) EXPECT() *ConfigReader_Expecter {
 }
 
 // ReadConfig provides a mock function for the type ConfigReader
-func (_mock *ConfigReader) ReadConfig(config bootstrap.Config, b bool) (any, error) {
-	ret := _mock.Called(config, b)
+func (_mock *ConfigReader) ReadConfig(config bootstrap.Config) (any, error) {
+	ret := _mock.Called(config)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadConfig")
@@ -50,18 +50,18 @@ func (_mock *ConfigReader) ReadConfig(config bootstrap.Config, b bool) (any, err
 
 	var r0 any
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) (any, error)); ok {
-		return returnFunc(config, b)
+	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config) (any, error)); ok {
+		return returnFunc(config)
 	}
-	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config, bool) any); ok {
-		r0 = returnFunc(config, b)
+	if returnFunc, ok := ret.Get(0).(func(bootstrap.Config) any); ok {
+		r0 = returnFunc(config)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(any)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(bootstrap.Config, bool) error); ok {
-		r1 = returnFunc(config, b)
+	if returnFunc, ok := ret.Get(1).(func(bootstrap.Config) error); ok {
+		r1 = returnFunc(config)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -75,25 +75,17 @@ type ConfigReader_ReadConfig_Call struct {
 
 // ReadConfig is a helper method to define mock.On call
 //   - config bootstrap.Config
-//   - b bool
-func (_e *ConfigReader_Expecter) ReadConfig(config interface{}, b interface{}) *ConfigReader_ReadConfig_Call {
-	return &ConfigReader_ReadConfig_Call{Call: _e.mock.On("ReadConfig", config, b)}
+func (_e *ConfigReader_Expecter) ReadConfig(config interface{}) *ConfigReader_ReadConfig_Call {
+	return &ConfigReader_ReadConfig_Call{Call: _e.mock.On("ReadConfig", config)}
 }
 
-func (_c *ConfigReader_ReadConfig_Call) Run(run func(config bootstrap.Config, b bool)) *ConfigReader_ReadConfig_Call {
+func (_c *ConfigReader_ReadConfig_Call) Run(run func(config bootstrap.Config)) *ConfigReader_ReadConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 bootstrap.Config
 		if args[0] != nil {
 			arg0 = args[0].(bootstrap.Config)
 		}
-		var arg1 bool
-		if args[1] != nil {
-			arg1 = args[1].(bool)
-		}
-		run(
-			arg0,
-			arg1,
-		)
+		run(arg0)
 	})
 	return _c
 }
@@ -103,7 +95,7 @@ func (_c *ConfigReader_ReadConfig_Call) Return(v any, err error) *ConfigReader_R
 	return _c
 }
 
-func (_c *ConfigReader_ReadConfig_Call) RunAndReturn(run func(config bootstrap.Config, b bool) (any, error)) *ConfigReader_ReadConfig_Call {
+func (_c *ConfigReader_ReadConfig_Call) RunAndReturn(run func(config bootstrap.Config) (any, error)) *ConfigReader_ReadConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

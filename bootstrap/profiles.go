@@ -19,6 +19,38 @@ const (
 	ContentFormatTOML       ContentFormat = "toml"
 )
 
+// ContentType identifies how a device should parse rendered profile content.
+type ContentType string
+
+const (
+	ContentTypeJSON      ContentType = "application/json"
+	ContentTypeYAML      ContentType = "application/yaml"
+	ContentTypeTOML      ContentType = "application/toml"
+	ContentTypeTextPlain ContentType = "text/plain"
+)
+
+func defaultContentType(format ContentFormat) ContentType {
+	switch format {
+	case ContentFormatJSON:
+		return ContentTypeJSON
+	case ContentFormatYAML:
+		return ContentTypeYAML
+	case ContentFormatTOML:
+		return ContentTypeTOML
+	default:
+		return ContentTypeTextPlain
+	}
+}
+
+func validContentType(contentType ContentType) bool {
+	switch contentType {
+	case ContentTypeJSON, ContentTypeYAML, ContentTypeTOML, ContentTypeTextPlain:
+		return true
+	default:
+		return false
+	}
+}
+
 // Profile is a user-managed device configuration template.
 type Profile struct {
 	ID              string         `json:"id"`
@@ -26,6 +58,7 @@ type Profile struct {
 	Name            string         `json:"name"`
 	Description     string         `json:"description,omitempty"`
 	ContentFormat   ContentFormat  `json:"content_format"`
+	ContentType     ContentType    `json:"content_type"`
 	ContentTemplate string         `json:"content_template,omitempty"`
 	Defaults        map[string]any `json:"defaults,omitempty"`
 	BindingSlots    []BindingSlot  `json:"binding_slots,omitempty"`

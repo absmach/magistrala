@@ -128,6 +128,10 @@ func profileProjection(p Profile) atom.Resource {
 		ID: p.ID, Kind: atom.KindBootstrapProfile, Name: p.Name,
 		TenantID: p.DomainID, Description: p.Description,
 		CreatedAt: p.CreatedAt, UpdatedAt: p.UpdatedAt,
-		Metadata: map[string]any{"content_format": p.ContentFormat, "version": p.Version},
+		Metadata: map[string]any{
+			"content_format": p.ContentFormat,
+			"content_type":   p.ContentType,
+			"version":        p.Version,
+		},
 	})
 }

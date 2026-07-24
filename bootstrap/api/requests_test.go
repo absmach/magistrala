@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	apiutil "github.com/absmach/magistrala/api/http/util"
+	"github.com/absmach/magistrala/bootstrap"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -45,7 +46,7 @@ func TestAddReqValidation(t *testing.T) {
 			token:       "token",
 			externalID:  "external-id",
 			externalKey: "",
-			err:         apiutil.ErrBearerKey,
+			err:         nil,
 		},
 		{
 			desc:        "empty external key and external ID",
@@ -174,34 +175,49 @@ func TestListReqValidation(t *testing.T) {
 	}
 }
 
-func TestBootstrapReqValidation(t *testing.T) {
+func TestDeviceBootstrapReqValidation(t *testing.T) {
 	cases := []struct {
-		desc      string
-		externKey string
-		externID  string
-		err       error
+		desc string
+		req  deviceBootstrapReq
+		err  error
 	}{
 		{
-			desc:      "empty external key",
-			externKey: "",
-			externID:  "id",
-			err:       apiutil.ErrBearerKey,
+			desc: "valid proof request",
+			req: deviceBootstrapReq{
+				externalID: "external-id",
+				DeviceBootstrapProof: bootstrap.DeviceBootstrapProof{
+					ChallengeID: "challenge-id",
+					DeviceNonce: "device-nonce",
+					Proof:       "proof",
+				},
+			},
 		},
 		{
-			desc:      "empty external id",
-			externKey: "key",
-			externID:  "",
-			err:       apiutil.ErrMissingID,
+			desc: "empty external id",
+			req: deviceBootstrapReq{
+				DeviceBootstrapProof: bootstrap.DeviceBootstrapProof{
+					ChallengeID: "challenge-id",
+					DeviceNonce: "device-nonce",
+					Proof:       "proof",
+				},
+			},
+			err: apiutil.ErrMissingID,
+		},
+		{
+			desc: "empty proof",
+			req: deviceBootstrapReq{
+				externalID: "external-id",
+				DeviceBootstrapProof: bootstrap.DeviceBootstrapProof{
+					ChallengeID: "challenge-id",
+					DeviceNonce: "device-nonce",
+				},
+			},
+			err: apiutil.ErrMalformedRequestBody,
 		},
 	}
 
 	for _, tc := range cases {
-		req := bootstrapReq{
-			id:  tc.externID,
-			key: tc.externKey,
-		}
-
-		err := req.validate()
+		err := tc.req.validate()
 		assert.Equal(t, tc.err, err, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
 	}
 }

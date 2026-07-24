@@ -358,7 +358,7 @@ func TestUpdateCert(t *testing.T) {
 	for _, tc := range cases {
 		cfg, err := repo.UpdateCert(context.Background(), tc.domainID, tc.configID, tc.cert, tc.certKey, tc.ca)
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
-		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.expectedConfig, cfg))
+		assert.Equal(t, tc.expectedConfig, cfg, fmt.Sprintf("%s: expected %v got %v\n", tc.desc, tc.expectedConfig, cfg))
 	}
 }
 

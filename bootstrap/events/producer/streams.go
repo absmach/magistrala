@@ -144,8 +144,12 @@ func (es *eventStore) Remove(ctx context.Context, session smqauthn.Session, id s
 	return es.Publish(ctx, removeStream, ev)
 }
 
-func (es *eventStore) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
-	cfg, err := es.svc.Bootstrap(ctx, externalKey, externalID, secure)
+func (es *eventStore) IssueBootstrapChallenge(ctx context.Context, externalID string) (bootstrap.BootstrapChallengeResponse, error) {
+	return es.svc.IssueBootstrapChallenge(ctx, externalID)
+}
+
+func (es *eventStore) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (bootstrap.Config, error) {
+	cfg, err := es.svc.Bootstrap(ctx, externalID, proof)
 
 	ev := bootstrapEvent{
 		cfg,
@@ -281,24 +285,4 @@ func (es *eventStore) RefreshBindings(ctx context.Context, session smqauthn.Sess
 	}
 	ev := refreshBindingsEvent{configID: configID}
 	return es.Publish(ctx, refreshBindingsStream, ev)
-}
-
-func (es *eventStore) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return es.svc.CreateDomainTransportKey(ctx, session)
-}
-
-func (es *eventStore) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return es.svc.ViewDomainTransportKey(ctx, session)
-}
-
-func (es *eventStore) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	return es.svc.RevealDomainTransportKey(ctx, session, keyID)
-}
-
-func (es *eventStore) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return es.svc.RotateDomainTransportKey(ctx, session)
-}
-
-func (es *eventStore) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	return es.svc.GenerateSecureCredential(ctx, session, configID)
 }

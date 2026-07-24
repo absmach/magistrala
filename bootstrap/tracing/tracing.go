@@ -93,15 +93,23 @@ func (tm *tracingMiddleware) Remove(ctx context.Context, session smqauthn.Sessio
 	return tm.svc.Remove(ctx, session, id)
 }
 
-// Bootstrap traces the "Bootstrap" operation of the wrapped bootstrap.Service.
-func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalKey, externalID string, secure bool) (bootstrap.Config, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_bootstrap_user", trace.WithAttributes(
+func (tm *tracingMiddleware) IssueBootstrapChallenge(ctx context.Context, externalID string) (bootstrap.BootstrapChallengeResponse, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_issue_bootstrap_challenge", trace.WithAttributes(
 		attribute.String("external_id", externalID),
-		attribute.Bool("secure", secure),
 	))
 	defer span.End()
 
-	return tm.svc.Bootstrap(ctx, externalKey, externalID, secure)
+	return tm.svc.IssueBootstrapChallenge(ctx, externalID)
+}
+
+// Bootstrap traces the "Bootstrap" operation of the wrapped bootstrap.Service.
+func (tm *tracingMiddleware) Bootstrap(ctx context.Context, externalID string, proof bootstrap.DeviceBootstrapProof) (bootstrap.Config, error) {
+	ctx, span := tm.tracer.Start(ctx, "svc_bootstrap_user", trace.WithAttributes(
+		attribute.String("external_id", externalID),
+	))
+	defer span.End()
+
+	return tm.svc.Bootstrap(ctx, externalID, proof)
 }
 
 func (tm *tracingMiddleware) EnableConfig(ctx context.Context, session smqauthn.Session, id string) (bootstrap.Config, error) {
@@ -195,28 +203,4 @@ func (tm *tracingMiddleware) RefreshBindings(ctx context.Context, session smqaut
 	))
 	defer span.End()
 	return tm.svc.RefreshBindings(ctx, session, token, configID)
-}
-
-func (tm *tracingMiddleware) CreateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return tm.svc.CreateDomainTransportKey(ctx, session)
-}
-
-func (tm *tracingMiddleware) ViewDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return tm.svc.ViewDomainTransportKey(ctx, session)
-}
-
-func (tm *tracingMiddleware) RevealDomainTransportKey(ctx context.Context, session smqauthn.Session, keyID string) (bootstrap.DomainTransportKey, error) {
-	return tm.svc.RevealDomainTransportKey(ctx, session, keyID)
-}
-
-func (tm *tracingMiddleware) RotateDomainTransportKey(ctx context.Context, session smqauthn.Session) (bootstrap.DomainTransportKey, error) {
-	return tm.svc.RotateDomainTransportKey(ctx, session)
-}
-
-func (tm *tracingMiddleware) GenerateSecureCredential(ctx context.Context, session smqauthn.Session, configID string) (bootstrap.SecureBootstrapCredential, error) {
-	ctx, span := tm.tracer.Start(ctx, "svc_generate_secure_credential", trace.WithAttributes(
-		attribute.String("config_id", configID),
-	))
-	defer span.End()
-	return tm.svc.GenerateSecureCredential(ctx, session, configID)
 }

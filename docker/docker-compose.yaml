@@ -128,7 +128,7 @@ services:
       - magistrala-base-net
 
   nginx:
-    image: docker.io/nginx:1.29.2-alpine3.22
+    image: docker.io/nginx:1.31.3-alpine3.24
     container_name: magistrala-nginx
     restart: on-failure
     volumes:
@@ -170,7 +170,7 @@ services:
         hard: 65536
 
   certbot:
-    image: docker.io/certbot/certbot:v2.11.0
+    image: docker.io/certbot/certbot:v5.7.0
     container_name: magistrala-certbot
     profiles:
       - letsencrypt
@@ -265,7 +265,7 @@ services:
       - ./templates/${MG_EMAIL_REJECTION_TEMPLATE}:/${MG_EMAIL_REJECTION_TEMPLATE}
 
   jaeger:
-    image: docker.io/jaegertracing/all-in-one:1.74.0
+    image: docker.io/jaegertracing/all-in-one:1.76.0
     container_name: magistrala-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}
@@ -540,7 +540,7 @@ services:
           create_host_path: true
 
   ui-backend-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-ui-backend-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -562,7 +562,7 @@ services:
       retries: 60
 
   seaweedfs-s3:
-    image: chrislusf/seaweedfs:4.16
+    image: chrislusf/seaweedfs:4.40
     container_name: magistrala-seaweedfs-s3
     command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
     ports:
@@ -607,7 +607,7 @@ services:
       AWS_EC2_METADATA_DISABLED: "true"
 
   timescale:
-    image: timescale/timescaledb:2.19.3-pg16-oss
+    image: timescale/timescaledb:2.29.0-pg16-oss
     container_name: magistrala-timescale
     restart: on-failure
     environment:
@@ -735,7 +735,7 @@ services:
     volumes:
       - ./addons/timescale-writer/config.toml:${MG_TIMESCALE_WRITER_CONFIG_PATH}
   re-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-re-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -819,7 +819,7 @@ services:
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
 
   alarms-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-alarms-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
@@ -882,7 +882,7 @@ services:
       - ./permission.yaml:${MG_PERMISSIONS_FILE}
 
   reports-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-reports-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"

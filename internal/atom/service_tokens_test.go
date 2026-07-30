@@ -96,7 +96,7 @@ func TestProvisionServiceTokensRotatesToken(t *testing.T) {
 
 	result, err := ProvisionServiceTokens(context.Background(), fake.Client(), TokenProvisionOptions{
 		OutputPath: output,
-		Rotate:     "journal",
+		Rotate:     "test-service",
 		Specs:      []ServiceTokenSpec{testTokenSpec()},
 	})
 	if err != nil {
@@ -233,7 +233,7 @@ func (f *fakeAtomTokenServer) handleGraphQL(w http.ResponseWriter, r *http.Reque
 }
 
 func testTokenSpec() ServiceTokenSpec {
-	return ServiceTokenSpec{Name: "journal", Env: "MG_ATOM_TOKEN_JOURNAL", Description: "test journal token"}
+	return ServiceTokenSpec{Name: "test-service", Env: "MG_ATOM_TOKEN_TEST_SERVICE", Description: "test service token"}
 }
 
 func accessTokenForCredentialID(id string) string {

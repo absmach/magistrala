@@ -226,44 +226,6 @@ services:
           sleep 12h & wait $$!
         done
 
-  notifications:
-    image: ghcr.io/absmach/magistrala/notifications:${MG_RELEASE_TAG}
-    container_name: magistrala-notifications
-    depends_on:
-      atom-bootstrap:
-        condition: service_completed_successfully
-      nginx:
-        condition: service_started
-    restart: on-failure
-    environment:
-      MG_NOTIFICATIONS_LOG_LEVEL: ${MG_NOTIFICATIONS_LOG_LEVEL}
-      MG_NOTIFICATIONS_INSTANCE_ID: ${MG_NOTIFICATIONS_INSTANCE_ID}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
-      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
-      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
-      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
-      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
-      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
-      MG_EMAIL_INVITATION_TEMPLATE: ${MG_EMAIL_INVITATION_TEMPLATE}
-      MG_EMAIL_ACCEPTANCE_TEMPLATE: ${MG_EMAIL_ACCEPTANCE_TEMPLATE}
-      MG_EMAIL_REJECTION_TEMPLATE: ${MG_EMAIL_REJECTION_TEMPLATE}
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_NOTIFICATIONS}
-      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
-      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
-      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-    networks:
-      - magistrala-base-net
-    volumes:
-      - ./templates/${MG_EMAIL_INVITATION_TEMPLATE}:/${MG_EMAIL_INVITATION_TEMPLATE}
-      - ./templates/${MG_EMAIL_ACCEPTANCE_TEMPLATE}:/${MG_EMAIL_ACCEPTANCE_TEMPLATE}
-      - ./templates/${MG_EMAIL_REJECTION_TEMPLATE}:/${MG_EMAIL_REJECTION_TEMPLATE}
-
   jaeger:
     image: docker.io/jaegertracing/all-in-one:1.76.0
     container_name: magistrala-jaeger
@@ -545,6 +507,7 @@ services:
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_UI_BACKEND_DB_USER}
       POSTGRES_PASSWORD: ${MG_UI_BACKEND_DB_PASS}
       POSTGRES_DB: ${MG_UI_BACKEND_DB_NAME}
@@ -740,6 +703,7 @@ services:
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_RE_DB_USER}
       POSTGRES_PASSWORD: ${MG_RE_DB_PASS}
       POSTGRES_DB: ${MG_RE_DB_NAME}
@@ -824,6 +788,7 @@ services:
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_ALARMS_DB_USER}
       POSTGRES_PASSWORD: ${MG_ALARMS_DB_PASS}
       POSTGRES_DB: ${MG_ALARMS_DB_NAME}
@@ -887,6 +852,7 @@ services:
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_REPORTS_DB_USER}
       POSTGRES_PASSWORD: ${MG_REPORTS_DB_PASS}
       POSTGRES_DB: ${MG_REPORTS_DB_NAME}

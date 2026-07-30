@@ -1,4 +1,7 @@
 #!/usr/bin/env bash
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
 # Set an Atom password credential for migrated humans (who land with none, since
 # migration drops bcrypt passwords that argon2 can't verify). Inserts an argon2id
 # credential with identifier=NULL so login works with either email OR username.
@@ -52,8 +55,6 @@ if [ -n "$TARGET_USER" ]; then
 		echo "Multiple entities named '$TARGET_USER'; refusing. Ids:"; echo "$ids"
 		exit 1
 	fi
-	# Replace any existing password credential for a clean, predictable login.
-	psql -c "DELETE FROM credentials WHERE entity_id = '$(sqlq "$ids")' AND kind='password'" >/dev/null
 else
 	# All migrated users that have no password credential yet.
 	ids=$(psql -tAc \
@@ -76,12 +77,21 @@ n=0
 for id in "${id_list[@]}"; do
 	[ -n "$id" ] || continue
 	hash=$(hash_pw)
-	# printf (not a double-quoted string) so the argon2 hash's '$' chars stay
-	# literal. SQL is piped via stdin because this psql does not interpolate
-	# :'var' inside -c. id is a UUID and hash is a PHC string: neither contains
-	# a single quote, so direct quoting is safe.
-	printf "INSERT INTO credentials (entity_id, kind, identifier, secret_hash, status) VALUES ('%s','password',NULL,'%s','active');\n" \
-		"$id" "$hash" | psql >/dev/null
+	# Hashing happens before the transaction so an image pull or hashing failure
+	# cannot revoke the current password. Revoke the prior credential, insert its
+	# replacement, and invalidate active sessions atomically, matching Atom's
+	# password-reset semantics. SQL is piped via stdin so psql expands variables.
+	{
+		printf '%s\n' 'BEGIN;'
+		printf "SELECT id FROM entities WHERE id = '%s' FOR UPDATE;\n" "$id"
+		if [ -n "$TARGET_USER" ]; then
+			printf "UPDATE credentials SET status = 'revoked' WHERE entity_id = '%s' AND kind = 'password' AND status = 'active';\n" "$id"
+		fi
+		printf "INSERT INTO credentials (entity_id, kind, identifier, secret_hash, status) VALUES ('%s','password',NULL,'%s','active');\n" \
+			"$id" "$hash"
+		printf "UPDATE sessions SET revoked_at = now() WHERE entity_id = '%s' AND revoked_at IS NULL;\n" "$id"
+		printf '%s\n' 'COMMIT;'
+	} | psql >/dev/null
 	echo "  set password for $id"
 	n=$((n+1))
 done

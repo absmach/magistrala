@@ -48,11 +48,11 @@ host=$1
 ssh_key=$2
 output_dir=${3:-./magistrala-db-backups}
 
-ssh_user=${SSH_USER:-root}
+ssh_user=${SSH_USER:-ubuntu}
 ssh_port=${SSH_PORT:-22}
 compose_project=${COMPOSE_PROJECT:-magistrala}
 volume_prefix=${VOLUME_PREFIX:-}
-stop_containers=${STOP_CONTAINERS:-false}
+stop_containers=${STOP_CONTAINERS:-true}
 backup_image=${BACKUP_IMAGE:-alpine:3.22}
 
 if [[ ! -r $ssh_key ]]; then

@@ -69,8 +69,6 @@ setup_mg() {
             exit 1
         fi
     done
-    echo "Compile check for nats message broker..."
-    MG_MESSAGE_BROKER_TYPE=msg_nats make re
     echo "Compile check for redis event store..."
     MG_ES_TYPE=es_redis make bootstrap
     make -j$NPROC

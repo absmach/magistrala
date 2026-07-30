@@ -13,9 +13,9 @@ import (
 	"github.com/absmach/magistrala"
 	api "github.com/absmach/magistrala/api/http"
 	apiutil "github.com/absmach/magistrala/api/http/util"
-	"github.com/absmach/magistrala/internal/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/stretchr/testify/assert"
 )
 

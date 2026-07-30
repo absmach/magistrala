@@ -4,8 +4,8 @@
 override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = atom-bootstrap notifications certs re postgres-writer postgres-reader timescale-writer timescale-reader alarms reports journal fluxmq
-TEST_API_SERVICES = journal certs clients users channels groups domains
+SERVICES = atom-bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
+TEST_API_SERVICES = certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -24,7 +24,7 @@ DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-z
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config restart
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
 ATOM_TOKENS_ENV ?= docker/.env.tokens
-REQUIRED_ATOM_TOKEN_ENVS := MG_ATOM_TOKEN_FLUXMQ_AUTH MG_ATOM_TOKEN_FLUXMQ_NODE1 MG_ATOM_TOKEN_FLUXMQ_NODE2 MG_ATOM_TOKEN_FLUXMQ_NODE3 MG_ATOM_TOKEN_JOURNAL MG_ATOM_TOKEN_NOTIFICATIONS MG_ATOM_TOKEN_TIMESCALE_READER MG_ATOM_TOKEN_RE MG_ATOM_TOKEN_ALARMS MG_ATOM_TOKEN_REPORTS MG_ATOM_TOKEN_POSTGRES_READER
+REQUIRED_ATOM_TOKEN_ENVS := MG_ATOM_TOKEN_FLUXMQ_AUTH MG_ATOM_TOKEN_FLUXMQ_NODE1 MG_ATOM_TOKEN_FLUXMQ_NODE2 MG_ATOM_TOKEN_FLUXMQ_NODE3 MG_ATOM_TOKEN_TIMESCALE_READER MG_ATOM_TOKEN_RE MG_ATOM_TOKEN_ALARMS MG_ATOM_TOKEN_REPORTS MG_ATOM_TOKEN_POSTGRES_READER
 PROVISION_ATOM_TOKENS ?= false
 PROVISION_ATOM_TOKEN_GOALS := provision-atom-tokens
 DOCKER_BASE_ENV_FILES := --env-file docker/.env
@@ -258,7 +258,6 @@ test_api_domains: TEST_API_URL := http://localhost:9000
 test_api_channels: TEST_API_URL := http://localhost:9000
 test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
-test_api_journal: TEST_API_URL := http://localhost:9021
 
 $(TEST_API):
 	$(call test_api_service,$(@),$(TEST_API_URL))

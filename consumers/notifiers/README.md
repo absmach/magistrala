@@ -8,7 +8,7 @@ The service is configured using environment variables. Values shown are from [do
 
 ### SMTP notifier (email)
 
-Used by `consumers/notifiers/smtp` via `internal/email`.
+Used by `consumers/notifiers/smtp` via `pkg/email`.
 
 | Variable                | Description                                    | Default            |
 | ----------------------- | ---------------------------------------------- | ------------------ |
@@ -93,7 +93,7 @@ Defined in `consumers/notifiers/smpp/README.md`.
 - **Service layer**: `consumers/notifiers/service.go` handles authn, ID creation, and notification dispatch.
 - **Repository**: `consumers/notifiers/postgres` persists subscriptions and supports filtering.
 - **Notifier implementations**: `consumers/notifiers/smtp` (email) and `consumers/notifiers/smpp` (SMS).
-- **Email agent**: `internal/email` manages SMTP connectivity and template rendering.
+- **Email agent**: `pkg/email` manages SMTP connectivity and template rendering.
 
 ### Subscriptions table
 

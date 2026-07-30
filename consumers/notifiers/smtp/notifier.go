@@ -7,7 +7,7 @@ import (
 	"fmt"
 
 	"github.com/absmach/magistrala/consumers"
-	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/pkg/email"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 

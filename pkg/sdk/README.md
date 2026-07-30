@@ -2,7 +2,7 @@
 
 Go SDK, a Go driver for Magistrala HTTP API.
 
-Provides comprehensive functionality for system administration (provisioning), messaging, user management, domain management, groups, channels, clients, certificates, invitations, and journal operations.
+Provides comprehensive functionality for system administration (provisioning), messaging, user management, domain management, groups, channels, clients, certificates and invitations.
 
 ## Installation
 
@@ -31,7 +31,6 @@ func main() {
         DomainsURL:     "http://localhost:8189",
         HTTPAdapterURL: "http://localhost:8008",
         CertsURL:       "http://localhost:9019",
-        JournalURL:     "http://localhost:9021",
         HostURL:        "http://localhost",
     }
 
@@ -84,7 +83,6 @@ type Config struct {
     GroupsURL       string
     ChannelsURL     string
     DomainsURL      string
-    JournalURL      string
     HostURL         string
     MsgContentType  ContentType
     TLSVerification bool
@@ -346,13 +344,6 @@ DomainInvitations(ctx context.Context, pm PageMetadata, token, domainID string) 
 AcceptInvitation(ctx context.Context, domainID, token string) error
 RejectInvitation(ctx context.Context, domainID, token string) error
 DeleteInvitation(ctx context.Context, userID, domainID, token string) error
-```
-
-### Journal Management
-
-```go
-// Get journal logs
-Journal(ctx context.Context, entityType, entityID, domainID string, pm PageMetadata, token string) (JournalsPage, error)
 ```
 
 ### Messaging

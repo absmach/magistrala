@@ -104,7 +104,7 @@ time_fields = [
 ]
 ```
 
-The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `consumers/writers/brokers`:
+The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config file for both backends. Writers do not expose broker mode, delivery policy, or consumer-group settings in this file. They always consume through the stream-backed broker adapter in `pkg/messaging/writers`:
 
 - NATS builds use JetStream streams with durable consumers.
 - FluxMQ builds publish to and consume from the `writers` stream queue while preserving the same `writers/#` config syntax.
@@ -129,7 +129,7 @@ The topic filter uses slash-delimited MQTT-style syntax (`+`, `#`) in the config
 
 ### Components
 
-- **Message broker adapter**: `consumers/writers/brokers` (NATS JetStream or FluxMQ stream queues).
+- **Message broker adapter**: `pkg/messaging/writers` (NATS JetStream or FluxMQ stream queues).
 - **Writer services**: `consumers/writers/postgres` and `consumers/writers/timescale`.
 - **HTTP API**: `consumers/writers/api` exposes `/health` and `/metrics`.
 - **Migrations**: `consumers/writers/*/init.go` defines the schema and indexes.

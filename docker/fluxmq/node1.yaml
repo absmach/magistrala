@@ -127,15 +127,16 @@ queues:
       max_length_bytes: 1073741824
 
 auth:
-  url: "http://fluxmq-auth:7016"
-  transport: "grpc"
-  timeout: 15s
-  protocols:
-    mqtt: true
-    http: true
-    coap: true
-    amqp: true
-    amqp091: false
+  external:
+    url: "http://fluxmq-auth:7016"
+    transport: "grpc"
+    timeout: 15s
+    protocols:
+      mqtt: true
+      http: true
+      coap: true
+      amqp: true
+      amqp091: false
 
 hooks:
   url: "http://fluxmq-auth:7016"

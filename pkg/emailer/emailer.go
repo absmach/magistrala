@@ -4,7 +4,7 @@
 package emailer
 
 import (
-	"github.com/absmach/magistrala/internal/email"
+	"github.com/absmach/magistrala/pkg/email"
 )
 
 var _ Emailer = (*emailer)(nil)

@@ -68,7 +68,6 @@ jobs:
               - "pkg/groups/groups.go"
               - "users/emailer.go"
               - "users/hasher.go"
-              - "journal/journal.go"
               - "consumers/notifier.go"
 
       - name: Install Protoc

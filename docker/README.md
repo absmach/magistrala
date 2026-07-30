@@ -180,7 +180,7 @@ For a trusted production certificate, set `staging=false`:
 make run_tls host=example.com email=admin@example.com staging=false
 ```
 
-The target updates `docker/.env`, starts the Compose stack with the fallback certificate, runs certbot, switches Nginx to the issued certificate, and recreates Nginx. It also sets `MG_UI_DOCKER_ACCEPT_EULA=yes` for the UI container and configures public UI URLs to `https://${MG_PUBLIC_HOST}`.
+The target updates `docker/.env`, starts the Compose stack with the fallback certificate, runs certbot, switches Nginx to the issued certificate, and recreates Nginx. It also configures public UI URLs to `https://${MG_PUBLIC_HOST}`.
 
 To configure the same instance without Let's Encrypt, use:
 

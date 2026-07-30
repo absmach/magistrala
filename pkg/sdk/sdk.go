@@ -1597,14 +1597,6 @@ type SDK interface {
 	//  fmt.Println(err)
 	DeleteInvitation(ctx context.Context, userID, domainID, token string) (err error)
 
-	// Journal returns a list of journal logs.
-	//
-	// For example:
-	//  ctx := context.Background()
-	//  journals, _ := sdk.Journal(ctx, "client", "clientID","domainID", PageMetadata{Offset: 0, Limit: 10, Operation: "client.create"}, "token")
-	//  fmt.Println(journals)
-	Journal(ctx context.Context, entityType, entityID, domainID string, pm PageMetadata, token string) (journal JournalsPage, err error)
-
 	// DomainInvitations returns a list of invitations for a specific domain.
 	// For example:
 	//  ctx := context.Background()
@@ -1862,7 +1854,6 @@ type mgSDK struct {
 	groupsURL      string
 	channelsURL    string
 	domainsURL     string
-	journalURL     string
 	HostURL        string
 	bootstrapURL   string
 	readersURL     string
@@ -1885,7 +1876,6 @@ type Config struct {
 	GroupsURL      string
 	ChannelsURL    string
 	DomainsURL     string
-	JournalURL     string
 	HostURL        string
 	BootstrapURL   string
 	ReaderURL      string
@@ -1909,7 +1899,6 @@ func NewSDK(conf Config) SDK {
 		groupsURL:      conf.GroupsURL,
 		channelsURL:    conf.ChannelsURL,
 		domainsURL:     conf.DomainsURL,
-		journalURL:     conf.JournalURL,
 		HostURL:        conf.HostURL,
 		bootstrapURL:   conf.BootstrapURL,
 		readersURL:     conf.ReaderURL,

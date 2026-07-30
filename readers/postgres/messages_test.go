@@ -10,7 +10,7 @@ import (
 	"time"
 
 	pwriter "github.com/absmach/magistrala/consumers/writers/postgres"
-	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/absmach/magistrala/readers"

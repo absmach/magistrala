@@ -14,7 +14,6 @@ networks:
 volumes:
   magistrala-pat-db-volume:
   magistrala-ui-backend-db-volume:
-  magistrala-journal-volume:
   magistrala-re-db-volume:
   magistrala-alarms-db-volume:
   magistrala-reports-db-volume:
@@ -128,65 +127,8 @@ services:
     networks:
       - magistrala-base-net
 
-  journal-db:
-    image: postgres:16.2-alpine
-    container_name: magistrala-journal-db
-    restart: on-failure
-    command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
-    environment:
-      POSTGRES_USER: ${MG_JOURNAL_DB_USER}
-      POSTGRES_PASSWORD: ${MG_JOURNAL_DB_PASS}
-      POSTGRES_DB: ${MG_JOURNAL_DB_NAME}
-      MG_POSTGRES_MAX_CONNECTIONS: ${MG_POSTGRES_MAX_CONNECTIONS}
-    networks:
-      - magistrala-base-net
-    volumes:
-      - magistrala-journal-volume:/var/lib/postgresql/data
-
-  journal:
-    image: ghcr.io/absmach/magistrala/journal:${MG_RELEASE_TAG}
-    container_name: magistrala-journal
-    depends_on:
-      journal-db:
-        condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
-      nginx:
-        condition: service_started
-    restart: on-failure
-    environment:
-      MG_JOURNAL_LOG_LEVEL: ${MG_JOURNAL_LOG_LEVEL}
-      MG_JOURNAL_HTTP_HOST: ${MG_JOURNAL_HTTP_HOST}
-      MG_JOURNAL_HTTP_PORT: ${MG_JOURNAL_HTTP_PORT}
-      MG_JOURNAL_HTTP_SERVER_CERT: ${MG_JOURNAL_HTTP_SERVER_CERT}
-      MG_JOURNAL_HTTP_SERVER_KEY: ${MG_JOURNAL_HTTP_SERVER_KEY}
-      MG_JOURNAL_DB_HOST: ${MG_JOURNAL_DB_HOST}
-      MG_JOURNAL_DB_PORT: ${MG_JOURNAL_DB_PORT}
-      MG_JOURNAL_DB_USER: ${MG_JOURNAL_DB_USER}
-      MG_JOURNAL_DB_PASS: ${MG_JOURNAL_DB_PASS}
-      MG_JOURNAL_DB_NAME: ${MG_JOURNAL_DB_NAME}
-      MG_JOURNAL_DB_SSL_MODE: ${MG_JOURNAL_DB_SSL_MODE}
-      MG_JOURNAL_DB_SSL_CERT: ${MG_JOURNAL_DB_SSL_CERT}
-      MG_JOURNAL_DB_SSL_KEY: ${MG_JOURNAL_DB_SSL_KEY}
-      MG_JOURNAL_DB_SSL_ROOT_CERT: ${MG_JOURNAL_DB_SSL_ROOT_CERT}
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_JOURNAL}
-      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
-      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
-      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_JOURNAL_INSTANCE_ID: ${MG_JOURNAL_INSTANCE_ID}
-      MG_ALLOW_UNVERIFIED_USER: ${MG_ALLOW_UNVERIFIED_USER}
-    ports:
-      - ${MG_JOURNAL_HTTP_PORT}:${MG_JOURNAL_HTTP_PORT}
-    networks:
-      - magistrala-base-net
   nginx:
-    image: docker.io/nginx:1.29.2-alpine3.22
+    image: docker.io/nginx:1.31.3-alpine3.24
     container_name: magistrala-nginx
     restart: on-failure
     volumes:
@@ -228,7 +170,7 @@ services:
         hard: 65536
 
   certbot:
-    image: docker.io/certbot/certbot:v2.11.0
+    image: docker.io/certbot/certbot:v5.7.0
     container_name: magistrala-certbot
     profiles:
       - letsencrypt
@@ -284,46 +226,8 @@ services:
           sleep 12h & wait $$!
         done
 
-  notifications:
-    image: ghcr.io/absmach/magistrala/notifications:${MG_RELEASE_TAG}
-    container_name: magistrala-notifications
-    depends_on:
-      atom-bootstrap:
-        condition: service_completed_successfully
-      nginx:
-        condition: service_started
-    restart: on-failure
-    environment:
-      MG_NOTIFICATIONS_LOG_LEVEL: ${MG_NOTIFICATIONS_LOG_LEVEL}
-      MG_NOTIFICATIONS_INSTANCE_ID: ${MG_NOTIFICATIONS_INSTANCE_ID}
-      MG_ES_URL: ${MG_ES_URL}
-      MG_JAEGER_URL: ${MG_JAEGER_URL}
-      MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
-      MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_EMAIL_HOST: ${MG_EMAIL_HOST}
-      MG_EMAIL_PORT: ${MG_EMAIL_PORT}
-      MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
-      MG_EMAIL_PASSWORD: ${MG_EMAIL_PASSWORD}
-      MG_EMAIL_FROM_ADDRESS: ${MG_EMAIL_FROM_ADDRESS}
-      MG_EMAIL_FROM_NAME: ${MG_EMAIL_FROM_NAME}
-      MG_EMAIL_INVITATION_TEMPLATE: ${MG_EMAIL_INVITATION_TEMPLATE}
-      MG_EMAIL_ACCEPTANCE_TEMPLATE: ${MG_EMAIL_ACCEPTANCE_TEMPLATE}
-      MG_EMAIL_REJECTION_TEMPLATE: ${MG_EMAIL_REJECTION_TEMPLATE}
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_NOTIFICATIONS}
-      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
-      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
-      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-    networks:
-      - magistrala-base-net
-    volumes:
-      - ./templates/${MG_EMAIL_INVITATION_TEMPLATE}:/${MG_EMAIL_INVITATION_TEMPLATE}
-      - ./templates/${MG_EMAIL_ACCEPTANCE_TEMPLATE}:/${MG_EMAIL_ACCEPTANCE_TEMPLATE}
-      - ./templates/${MG_EMAIL_REJECTION_TEMPLATE}:/${MG_EMAIL_REJECTION_TEMPLATE}
-
   jaeger:
-    image: docker.io/jaegertracing/all-in-one:1.74.0
+    image: docker.io/jaegertracing/all-in-one:1.76.0
     container_name: magistrala-jaeger
     environment:
       COLLECTOR_OTLP_ENABLED: ${MG_JAEGER_COLLECTOR_OTLP_ENABLED}
@@ -449,7 +353,6 @@ services:
       MG_PUBLISH_PROXY_URL: ${MG_PUBLISH_PROXY_URL}
       MG_READER_URL: ${MG_READER_URL}
       MG_BACKEND_URL: ${MG_UI_BACKEND_URL}
-      MG_JOURNAL_URL: ${MG_JOURNAL_URL}
       MG_ALARMS_URL: ${MG_ALARMS_URL}
       MG_RE_URL: ${MG_RE_URL}
       MG_REPORTS_URL: ${MG_REPORTS_URL}
@@ -467,7 +370,6 @@ services:
       NEXT_LOG_LEVEL: "debug"
       MG_HOST_URL: ${MG_HOST_URL}
       MG_UI_IMAGE_URL: ${MG_UI_IMAGE_URL}
-      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
       MG_SUPPORT_EMAIL: ${MG_SUPPORT_EMAIL}
       MG_SUPPORT_EMAIL_PASS: ${MG_SUPPORT_EMAIL_PASS}
       MG_UI_CLI_MQTT_HOST: ${MG_UI_CLI_MQTT_HOST}
@@ -521,7 +423,6 @@ services:
       MG_UI_VERIFICATION_TLS: ${MG_UI_VERIFICATION_TLS}
       MG_UI_CONTENT_TYPE: ${MG_UI_CONTENT_TYPE}
       MG_READER_URL: ${MG_READER_URL}
-      MG_UI_DOCKER_ACCEPT_EULA: ${MG_UI_DOCKER_ACCEPT_EULA}
       MG_CHANNELS_GRPC_URL: ${MG_CHANNELS_GRPC_URL}
       MG_CHANNELS_GRPC_TIMEOUT: ${MG_CHANNELS_GRPC_TIMEOUT}
       MG_CHANNELS_GRPC_CLIENT_CERT: ${MG_CHANNELS_GRPC_CLIENT_CERT:+/channels-grpc-client.crt}
@@ -601,11 +502,12 @@ services:
           create_host_path: true
 
   ui-backend-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-ui-backend-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_UI_BACKEND_DB_USER}
       POSTGRES_PASSWORD: ${MG_UI_BACKEND_DB_PASS}
       POSTGRES_DB: ${MG_UI_BACKEND_DB_NAME}
@@ -623,7 +525,7 @@ services:
       retries: 60
 
   seaweedfs-s3:
-    image: chrislusf/seaweedfs:4.16
+    image: chrislusf/seaweedfs:4.40
     container_name: magistrala-seaweedfs-s3
     command: server -s3 -s3.config=/etc/seaweedfs/s3.json -dir=/data
     ports:
@@ -668,7 +570,7 @@ services:
       AWS_EC2_METADATA_DISABLED: "true"
 
   timescale:
-    image: timescale/timescaledb:2.19.3-pg16-oss
+    image: timescale/timescaledb:2.29.0-pg16-oss
     container_name: magistrala-timescale
     restart: on-failure
     environment:
@@ -796,11 +698,12 @@ services:
     volumes:
       - ./addons/timescale-writer/config.toml:${MG_TIMESCALE_WRITER_CONFIG_PATH}
   re-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-re-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_RE_DB_USER}
       POSTGRES_PASSWORD: ${MG_RE_DB_PASS}
       POSTGRES_DB: ${MG_RE_DB_NAME}
@@ -880,11 +783,12 @@ services:
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
 
   alarms-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-alarms-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_ALARMS_DB_USER}
       POSTGRES_PASSWORD: ${MG_ALARMS_DB_PASS}
       POSTGRES_DB: ${MG_ALARMS_DB_NAME}
@@ -943,11 +847,12 @@ services:
       - ./permission.yaml:${MG_PERMISSIONS_FILE}
 
   reports-db:
-    image: docker.io/postgres:18.0-alpine3.22
+    image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-reports-db
     restart: on-failure
     command: postgres -c "max_connections=${MG_POSTGRES_MAX_CONNECTIONS}"
     environment:
+      PGDATA: /var/lib/postgresql/data
       POSTGRES_USER: ${MG_REPORTS_DB_USER}
       POSTGRES_PASSWORD: ${MG_REPORTS_DB_PASS}
       POSTGRES_DB: ${MG_REPORTS_DB_NAME}

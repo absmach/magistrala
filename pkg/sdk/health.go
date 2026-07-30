@@ -44,8 +44,6 @@ func (sdk mgSDK) Health(service string) (HealthInfo, errors.SDKError) {
 		url = fmt.Sprintf("%s/health", sdk.channelsURL)
 	case "domains":
 		url = fmt.Sprintf("%s/health", sdk.domainsURL)
-	case "journal":
-		url = fmt.Sprintf("%s/health", sdk.journalURL)
 	case "fluxmq":
 		url = fmt.Sprintf("%s/health", sdk.httpAdapterURL)
 	}

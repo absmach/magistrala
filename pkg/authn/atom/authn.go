@@ -6,7 +6,7 @@ package atom
 import (
 	"context"
 
-	atomcore "github.com/absmach/magistrala/internal/atom"
+	atomcore "github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"

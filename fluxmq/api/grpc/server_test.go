@@ -9,7 +9,7 @@ import (
 
 	"connectrpc.com/connect"
 	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/stretchr/testify/require"
 )

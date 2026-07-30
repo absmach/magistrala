@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/go-chi/chi/v5"

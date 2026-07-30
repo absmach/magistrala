@@ -7,7 +7,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/stretchr/testify/assert"

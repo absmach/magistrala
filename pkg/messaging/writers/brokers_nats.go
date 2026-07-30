@@ -4,7 +4,7 @@
 //go:build !msg_fluxmq && !msg_rabbitmq && !rabbitmq
 // +build !msg_fluxmq,!msg_rabbitmq,!rabbitmq
 
-package brokers
+package writers
 
 import (
 	"context"

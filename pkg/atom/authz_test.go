@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	channelsv1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"

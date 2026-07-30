@@ -4,7 +4,7 @@
 //go:build msg_fluxmq
 // +build msg_fluxmq
 
-package brokers
+package writers
 
 import (
 	"context"

@@ -14,7 +14,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 )
 
 const (

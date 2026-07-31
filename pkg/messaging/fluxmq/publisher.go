@@ -16,9 +16,14 @@ import (
 var _ messaging.Publisher = (*publisher)(nil)
 
 const (
-	headerExternalID     = "external_id"
-	headerProtocol       = "protocol"
-	headerMetadataPrefix = "message_metadata."
+	headerExternalID = "external_id"
+	headerProtocol   = "protocol"
+	// headerMetadataPrefix sits inside FluxMQ's reserved "_flux." namespace, so
+	// the broker treats message metadata as internal state passed between
+	// first-party services: it is dropped when an untrusted connection sets it
+	// and omitted when one subscribes. A service therefore cannot be fed forged
+	// metadata by a device, and a device cannot read metadata a service set.
+	headerMetadataPrefix = "_flux.mg."
 	protocolMQTT         = "mqtt"
 )
 

@@ -240,13 +240,22 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		created = v
 	}
 
-	metadata := make(map[string]string)
+	// Allocated lazily: this runs for every delivered message, and carrying
+	// metadata is the exception rather than the rule.
+	var metadata map[string]string
 	for key, value := range headers {
-		if metadataKey, ok := strings.CutPrefix(key, headerMetadataPrefix); ok && metadataKey != "" {
-			if metadataValue, ok := value.(string); ok {
-				metadata[metadataKey] = metadataValue
-			}
+		metadataKey, ok := strings.CutPrefix(key, headerMetadataPrefix)
+		if !ok || metadataKey == "" {
+			continue
 		}
+		metadataValue, ok := value.(string)
+		if !ok {
+			continue
+		}
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[metadataKey] = metadataValue
 	}
 
 	return &messaging.Message{

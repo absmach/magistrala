@@ -66,6 +66,9 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 		SetOnConnect(func() {
 			ps.logInfo("FluxMQ message pub/sub connected", url, ps.prefix)
 		})
+	if ps.tlsConfig != nil {
+		amqpOpts = amqpOpts.SetTLSConfig(ps.tlsConfig)
+	}
 
 	client, err := fluxamqp.New(amqpOpts)
 	if err != nil {

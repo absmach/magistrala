@@ -28,6 +28,14 @@ func ConnectionName(_ string) messaging.Option {
 	return func(_ any) error { return nil }
 }
 
+// MTLS is a no-op for the NATS backend. It exists for API compatibility with
+// the FluxMQ variant, which needs a client certificate to be admitted on the
+// listener that carries internal message metadata. NATS carries that metadata
+// on every connection because it is a field of the protobuf message.
+func MTLS(_, _, _ string) messaging.Option {
+	return func(_ any) error { return nil }
+}
+
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
 	pb, err := nats.NewPublisher(ctx, url, opts...)
 	if err != nil {

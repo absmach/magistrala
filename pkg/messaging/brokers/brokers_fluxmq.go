@@ -28,6 +28,14 @@ func ConnectionName(name string) messaging.Option {
 	return fluxmq.ConnectionName(name)
 }
 
+// MTLS returns an option that connects to FluxMQ with a client certificate.
+// FluxMQ identifies a first-party service by a URI SAN in that certificate and
+// admits it on a listener that carries internal message metadata, which a plain
+// connection does not.
+func MTLS(certFile, keyFile, caFile string) messaging.Option {
+	return fluxmq.MTLS(certFile, keyFile, caFile)
+}
+
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
 	pb, err := fluxmq.NewPublisher(ctx, url, opts...)
 	if err != nil {

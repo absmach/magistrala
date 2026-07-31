@@ -66,6 +66,9 @@ func newPublisher(_ context.Context, url string, declare bool, opts ...messaging
 		SetOnConnect(func() {
 			logger.Info("FluxMQ message publisher connected")
 		})
+	if pub.tlsConfig != nil {
+		amqpOpts = amqpOpts.SetTLSConfig(pub.tlsConfig)
+	}
 
 	client, err := fluxamqp.New(amqpOpts)
 	if err != nil {

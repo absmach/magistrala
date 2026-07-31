@@ -26,16 +26,17 @@ const (
 
 // Message represents a message emitted by the Magistrala adapters layer.
 type Message struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Channel       string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
-	Domain        string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
-	Subtopic      string                 `protobuf:"bytes,3,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
-	Publisher     string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
-	Protocol      string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
-	Payload       []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
-	Created       int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                                                                            // Unix timestamp in nanoseconds
-	ClientId      string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`                                                           // Transport-level client identifier
-	Metadata      map[string]string      `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Internal metadata propagated between services
+	state     protoimpl.MessageState `protogen:"open.v1"`
+	Channel   string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
+	Domain    string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
+	Subtopic  string                 `protobuf:"bytes,3,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
+	Publisher string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
+	Protocol  string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	Payload   []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
+	Created   int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                  // Unix timestamp in nanoseconds
+	ClientId  string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"` // Transport-level client identifier
+	// Internal metadata propagated between services
+	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

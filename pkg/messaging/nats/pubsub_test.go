@@ -31,6 +31,7 @@ var (
 		Protocol:  "mqtt",
 		Payload:   []byte("payload"),
 		Created:   time.Now().UnixNano(),
+		Metadata:  map[string]string{"magistrala.re.trace": `["rule-1"]`},
 	}
 )
 
@@ -100,6 +101,7 @@ func TestPublisher(t *testing.T) {
 			assert.Equal(t, tc.message.Publisher, receivedMsg.Publisher, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, &tc.message, receivedMsg))
 			assert.Equal(t, tc.message.Subtopic, receivedMsg.Subtopic, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, &tc.message, receivedMsg))
 			assert.Equal(t, tc.message.Payload, receivedMsg.Payload, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, &tc.message, receivedMsg))
+			assert.Equal(t, tc.message.Metadata, receivedMsg.Metadata, fmt.Sprintf("%s: expected %+v got %+v\n", tc.desc, &tc.message, receivedMsg))
 		}
 	}
 }

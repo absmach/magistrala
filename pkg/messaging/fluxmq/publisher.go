@@ -16,9 +16,10 @@ import (
 var _ messaging.Publisher = (*publisher)(nil)
 
 const (
-	headerExternalID = "external_id"
-	headerProtocol   = "protocol"
-	protocolMQTT     = "mqtt"
+	headerExternalID     = "external_id"
+	headerProtocol       = "protocol"
+	headerMetadataPrefix = "message_metadata."
+	protocolMQTT         = "mqtt"
 )
 
 type publisher struct {
@@ -85,16 +86,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		return ErrEmptyTopic
 	}
 
-	props := map[string]string{
-		headerExternalID: msg.GetPublisher(),
-		headerProtocol:   msg.GetProtocol(),
-	}
-	if clientID := msg.ClientIdentity(); clientID != "" {
-		props["client_id"] = clientID
-	}
-	if msg.GetCreated() != 0 {
-		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
-	}
+	props := messageProperties(msg)
 
 	cleanTopic := strings.TrimPrefix(strings.TrimSpace(topic), "/")
 	if cleanTopic == "" {
@@ -129,6 +121,24 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		Payload:    msg.GetPayload(),
 		Properties: props,
 	})
+}
+
+func messageProperties(msg *messaging.Message) map[string]string {
+	props := map[string]string{
+		headerExternalID: msg.GetPublisher(),
+		headerProtocol:   msg.GetProtocol(),
+	}
+	if clientID := msg.ClientIdentity(); clientID != "" {
+		props["client_id"] = clientID
+	}
+	if msg.GetCreated() != 0 {
+		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
+	}
+	for key, value := range msg.GetMetadata() {
+		props[headerMetadataPrefix+key] = value
+	}
+
+	return props
 }
 
 func (pub *publisher) Close() error {

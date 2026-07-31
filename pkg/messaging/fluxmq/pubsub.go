@@ -240,6 +240,15 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		created = v
 	}
 
+	metadata := make(map[string]string)
+	for key, value := range headers {
+		if metadataKey, ok := strings.CutPrefix(key, headerMetadataPrefix); ok && metadataKey != "" {
+			if metadataValue, ok := value.(string); ok {
+				metadata[metadataKey] = metadataValue
+			}
+		}
+	}
+
 	return &messaging.Message{
 		Domain:    domain,
 		Channel:   channel,
@@ -249,6 +258,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		ClientId:  clientID,
 		Protocol:  protocol,
 		Created:   created,
+		Metadata:  metadata,
 	}, nil
 }
 

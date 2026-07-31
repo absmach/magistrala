@@ -33,8 +33,9 @@ type Message struct {
 	Publisher     string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	Protocol      string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
 	Payload       []byte                 `protobuf:"bytes,6,opt,name=payload,proto3" json:"payload,omitempty"`
-	Created       int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                  // Unix timestamp in nanoseconds
-	ClientId      string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"` // Transport-level client identifier
+	Created       int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                                                                            // Unix timestamp in nanoseconds
+	ClientId      string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"`                                                           // Transport-level client identifier
+	Metadata      map[string]string      `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Internal metadata propagated between services
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -125,11 +126,18 @@ func (x *Message) GetClientId() string {
 	return ""
 }
 
+func (x *Message) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
 var File_pkg_messaging_message_proto protoreflect.FileDescriptor
 
 const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xe2\x01\n" +
+	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xdd\x02\n" +
 	"\aMessage\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x1a\n" +
@@ -138,7 +146,11 @@ const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\bprotocol\x18\x05 \x01(\tR\bprotocol\x12\x18\n" +
 	"\apayload\x18\x06 \x01(\fR\apayload\x12\x18\n" +
 	"\acreated\x18\a \x01(\x03R\acreated\x12\x1b\n" +
-	"\tclient_id\x18\b \x01(\tR\bclientIdB\rZ\v./messagingb\x06proto3"
+	"\tclient_id\x18\b \x01(\tR\bclientId\x12<\n" +
+	"\bmetadata\x18\t \x03(\v2 .messaging.Message.MetadataEntryR\bmetadata\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\rZ\v./messagingb\x06proto3"
 
 var (
 	file_pkg_messaging_message_proto_rawDescOnce sync.Once
@@ -152,16 +164,18 @@ func file_pkg_messaging_message_proto_rawDescGZIP() []byte {
 	return file_pkg_messaging_message_proto_rawDescData
 }
 
-var file_pkg_messaging_message_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_pkg_messaging_message_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_pkg_messaging_message_proto_goTypes = []any{
 	(*Message)(nil), // 0: messaging.Message
+	nil,             // 1: messaging.Message.MetadataEntry
 }
 var file_pkg_messaging_message_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	1, // 0: messaging.Message.metadata:type_name -> messaging.Message.MetadataEntry
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_pkg_messaging_message_proto_init() }
@@ -175,7 +189,7 @@ func file_pkg_messaging_message_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_pkg_messaging_message_proto_rawDesc), len(file_pkg_messaging_message_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   1,
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

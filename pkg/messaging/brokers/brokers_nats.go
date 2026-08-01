@@ -28,11 +28,9 @@ func ConnectionName(_ string) messaging.Option {
 	return func(_ any) error { return nil }
 }
 
-// MTLS is a no-op for the NATS backend. It exists for API compatibility with
-// the FluxMQ variant, which needs a client certificate to be admitted on the
-// listener that carries internal message metadata. NATS carries that metadata
-// on every connection because it is a field of the protobuf message.
-func MTLS(_, _, _ string) messaging.Option {
+// InternalMetadata is a no-op for the NATS backend. It exists for compile-time
+// compatibility with FluxMQ; NATS carries metadata in the protobuf message.
+func InternalMetadata(_, _, _ string) messaging.Option {
 	return func(_ any) error { return nil }
 }
 

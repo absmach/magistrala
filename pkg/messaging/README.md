@@ -26,16 +26,17 @@ The `$queue/` prefix lets any publisher force delivery into the durable stream q
 
 ### Stream queues
 
-On startup, every publisher and pubsub client declares a durable stream queue named after its prefix. Stream subscribers use consumer groups, so each group receives every message exactly once. The default stream queue is named `m`.
+On startup, publishers and pubsub clients normally declare a durable stream queue named after their prefix. Stream subscribers use consumer groups, so each group receives every message exactly once. The default stream queue is named `m`. `InternalMetadata` instead requires that stream to be pre-provisioned by the broker and never attempts to create or modify it.
 
 ### Subscription
 
-`Subscribe` attaches to the durable stream queue via a consumer group filtered by topic. Optionally (when `DirectTopicIngress` is enabled), it also subscribes to the raw MQTT topic so that messages published directly by MQTT clients — bypassing the queue — are also received.
+`Subscribe` attaches to the durable stream queue via a consumer group filtered by topic. Optionally (when `DirectTopicIngress` is enabled), it also subscribes to the raw MQTT topic so that messages published directly by MQTT clients — bypassing the queue — are also received. A deployment using `InternalMetadata` must authorize the requested subscriptions explicitly; the Rules Engine local principal authorizes only pre-provisioned stream `m`.
 
 ### Options
 
-| Option                 | Description                                            |
-| ---------------------- | ------------------------------------------------------ |
-| `Prefix(p)`            | Set topic prefix (default: `m`)                        |
-| `ConnectionName(n)`    | Human-readable broker connection name                  |
-| `DirectTopicIngress()` | Also consume raw MQTT topic messages (subscriber only) |
+| Option                                 | Description                                                                                       |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `Prefix(p)`                            | Set topic prefix (default: `m`)                                                                   |
+| `ConnectionName(n)`                    | Human-readable broker connection name                                                             |
+| `DirectTopicIngress()`                 | Also consume raw MQTT topic messages (subscriber only)                                            |
+| `InternalMetadata(cert, key, ca)`      | Require mTLS, carry reserved internal metadata, and use a broker-provisioned stream                 |

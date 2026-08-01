@@ -4,6 +4,7 @@
 package fluxmq
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -254,6 +255,34 @@ func TestMessagePropertiesIncludesMetadata(t *testing.T) {
 	}
 	if len(got) != len(want) {
 		t.Errorf("unexpected properties: %#v", got)
+	}
+}
+
+func TestMetadataPropertyRoundTrip(t *testing.T) {
+	want := &messaging.Message{
+		Publisher: "rules-engine",
+		Protocol:  "internal",
+		ClientId:  "origin-client",
+		Created:   1710000000000000123,
+		Payload:   []byte("payload"),
+		Metadata: map[string]string{
+			"magistrala.re.trace": "signed-trace",
+			"other":               "preserved",
+		},
+	}
+
+	properties := messageProperties(want)
+	headers := make(map[string]any, len(properties))
+	for key, value := range properties {
+		headers[key] = value
+	}
+
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	if err != nil {
+		t.Fatalf("reconstruct message: %v", err)
+	}
+	if !reflect.DeepEqual(got.Metadata, want.Metadata) {
+		t.Fatalf("metadata mismatch: got %#v, want %#v", got.Metadata, want.Metadata)
 	}
 }
 

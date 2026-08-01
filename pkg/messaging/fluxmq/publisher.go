@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
+	fluxtopics "github.com/absmach/fluxmq/topics"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
@@ -77,7 +78,7 @@ func newPublisher(_ context.Context, url string, declare bool, opts ...messaging
 	if err := client.Connect(); err != nil {
 		return nil, err
 	}
-	if declare {
+	if declare && !pub.preprovisioned {
 		if err := declareStream(client, pub.prefix); err != nil {
 			_ = client.Close()
 			return nil, err
@@ -123,12 +124,23 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 			Properties: props,
 		})
 	}
+	if pub.preprovisioned {
+		publishTopic = mqttTopicToWireTopic(publishTopic)
+	}
 
 	return pub.client.PublishWithOptionsContext(ctx, &fluxamqp.PublishOptions{
 		Topic:      publishTopic,
 		Payload:    msg.GetPayload(),
 		Properties: props,
 	})
+}
+
+func mqttTopicToWireTopic(topic string) string {
+	// AMQP uses dots as segment separators, while MQTT permits dots as ordinary
+	// topic characters. Escape literal dots before translating slashes so the
+	// subscriber can URL-decode them back instead of treating them as slashes.
+	topic = strings.ReplaceAll(topic, ".", "%2E")
+	return fluxtopics.MQTTTopicToAMQP(topic)
 }
 
 func messageProperties(msg *messaging.Message) map[string]string {

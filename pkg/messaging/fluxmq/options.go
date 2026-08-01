@@ -25,6 +25,7 @@ type options struct {
 	connectionName     string
 	directTopicIngress bool
 	directTopicOnly    bool
+	preprovisioned     bool
 	tlsConfig          *tls.Config
 }
 
@@ -56,15 +57,14 @@ func Prefix(prefix string) messaging.Option {
 	}
 }
 
-// MTLS presents a client certificate to FluxMQ and verifies the broker against
-// caFile. FluxMQ admits a first-party service only on a listener that requires
-// mTLS, and identifies the principal by a URI SAN in the presented certificate,
-// so a service that has to exchange broker-internal message metadata connects
-// with this rather than over a plain listener.
+// InternalMetadata configures a trusted FluxMQ service connection that can
+// exchange broker-internal message metadata. It presents a client certificate,
+// verifies the broker against caFile, and uses the broker-provisioned stream
+// instead of trying to declare it with the service principal's restricted ACL.
 //
 // All three paths are required: a half-configured client would silently connect
 // without the identity the broker authorizes against.
-func MTLS(certFile, keyFile, caFile string) messaging.Option {
+func InternalMetadata(certFile, keyFile, caFile string) messaging.Option {
 	return func(val any) error {
 		cfg, err := mtlsConfig(certFile, keyFile, caFile)
 		if err != nil {
@@ -73,8 +73,10 @@ func MTLS(certFile, keyFile, caFile string) messaging.Option {
 		switch v := val.(type) {
 		case *publisher:
 			v.tlsConfig = cfg
+			v.preprovisioned = true
 		case *pubsub:
 			v.tlsConfig = cfg
+			v.preprovisioned = true
 		default:
 			return ErrInvalidType
 		}

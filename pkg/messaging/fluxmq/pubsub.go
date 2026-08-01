@@ -64,7 +64,7 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 			ps.logInfo("FluxMQ message pub/sub reconnecting", "attempt", attempt)
 		}).
 		SetOnConnect(func() {
-			ps.logInfo("FluxMQ message pub/sub connected", url, ps.prefix)
+			ps.logInfo("FluxMQ message pub/sub connected", "prefix", ps.prefix)
 		})
 	if ps.tlsConfig != nil {
 		amqpOpts = amqpOpts.SetTLSConfig(ps.tlsConfig)
@@ -77,9 +77,11 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 	if err := client.Connect(); err != nil {
 		return nil, err
 	}
-	if err := declareStream(client, ps.prefix); err != nil {
-		_ = client.Close()
-		return nil, err
+	if !ps.preprovisioned {
+		if err := declareStream(client, ps.prefix); err != nil {
+			_ = client.Close()
+			return nil, err
+		}
 	}
 
 	ps.client = client

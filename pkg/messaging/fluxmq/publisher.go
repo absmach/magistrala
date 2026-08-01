@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
+	fluxtopics "github.com/absmach/fluxmq/topics"
 	"github.com/absmach/magistrala/pkg/messaging"
 )
 
@@ -18,7 +19,13 @@ var _ messaging.Publisher = (*publisher)(nil)
 const (
 	headerExternalID = "external_id"
 	headerProtocol   = "protocol"
-	protocolMQTT     = "mqtt"
+	// headerMetadataPrefix sits inside FluxMQ's reserved "_flux." namespace, so
+	// the broker treats message metadata as internal state passed between
+	// first-party services: it is dropped when an untrusted connection sets it
+	// and omitted when one subscribes. A service therefore cannot be fed forged
+	// metadata by a device, and a device cannot read metadata a service set.
+	headerMetadataPrefix = "_flux.mg."
+	protocolMQTT         = "mqtt"
 )
 
 type publisher struct {
@@ -60,6 +67,9 @@ func newPublisher(_ context.Context, url string, declare bool, opts ...messaging
 		SetOnConnect(func() {
 			logger.Info("FluxMQ message publisher connected")
 		})
+	if pub.tlsConfig != nil {
+		amqpOpts = amqpOpts.SetTLSConfig(pub.tlsConfig)
+	}
 
 	client, err := fluxamqp.New(amqpOpts)
 	if err != nil {
@@ -68,7 +78,7 @@ func newPublisher(_ context.Context, url string, declare bool, opts ...messaging
 	if err := client.Connect(); err != nil {
 		return nil, err
 	}
-	if declare {
+	if declare && !pub.preprovisioned {
 		if err := declareStream(client, pub.prefix); err != nil {
 			_ = client.Close()
 			return nil, err
@@ -85,16 +95,7 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 		return ErrEmptyTopic
 	}
 
-	props := map[string]string{
-		headerExternalID: msg.GetPublisher(),
-		headerProtocol:   msg.GetProtocol(),
-	}
-	if clientID := msg.ClientIdentity(); clientID != "" {
-		props["client_id"] = clientID
-	}
-	if msg.GetCreated() != 0 {
-		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
-	}
+	props := messageProperties(msg)
 
 	cleanTopic := strings.TrimPrefix(strings.TrimSpace(topic), "/")
 	if cleanTopic == "" {
@@ -123,12 +124,41 @@ func (pub *publisher) Publish(ctx context.Context, topic string, msg *messaging.
 			Properties: props,
 		})
 	}
+	if pub.preprovisioned {
+		publishTopic = mqttTopicToWireTopic(publishTopic)
+	}
 
 	return pub.client.PublishWithOptionsContext(ctx, &fluxamqp.PublishOptions{
 		Topic:      publishTopic,
 		Payload:    msg.GetPayload(),
 		Properties: props,
 	})
+}
+
+func mqttTopicToWireTopic(topic string) string {
+	// AMQP uses dots as segment separators, while MQTT permits dots as ordinary
+	// topic characters. Escape literal dots before translating slashes so the
+	// subscriber can URL-decode them back instead of treating them as slashes.
+	topic = strings.ReplaceAll(topic, ".", "%2E")
+	return fluxtopics.MQTTTopicToAMQP(topic)
+}
+
+func messageProperties(msg *messaging.Message) map[string]string {
+	props := map[string]string{
+		headerExternalID: msg.GetPublisher(),
+		headerProtocol:   msg.GetProtocol(),
+	}
+	if clientID := msg.ClientIdentity(); clientID != "" {
+		props["client_id"] = clientID
+	}
+	if msg.GetCreated() != 0 {
+		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)
+	}
+	for key, value := range msg.GetMetadata() {
+		props[headerMetadataPrefix+key] = value
+	}
+
+	return props
 }
 
 func (pub *publisher) Close() error {

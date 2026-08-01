@@ -28,6 +28,13 @@ func ConnectionName(name string) messaging.Option {
 	return fluxmq.ConnectionName(name)
 }
 
+// InternalMetadata returns an option for a trusted local-service connection
+// that carries internal metadata over mTLS and consumes the broker-provisioned
+// message stream.
+func InternalMetadata(certFile, keyFile, caFile string) messaging.Option {
+	return fluxmq.InternalMetadata(certFile, keyFile, caFile)
+}
+
 func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
 	pb, err := fluxmq.NewPublisher(ctx, url, opts...)
 	if err != nil {

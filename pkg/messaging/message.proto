@@ -16,4 +16,6 @@ message Message {
   bytes payload = 6;
   int64 created = 7; // Unix timestamp in nanoseconds
   string client_id = 8; // Transport-level client identifier
+  // Internal metadata propagated between services
+  map<string, string> metadata = 9;
 }

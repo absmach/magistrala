@@ -64,8 +64,11 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 			ps.logInfo("FluxMQ message pub/sub reconnecting", "attempt", attempt)
 		}).
 		SetOnConnect(func() {
-			ps.logInfo("FluxMQ message pub/sub connected", url, ps.prefix)
+			ps.logInfo("FluxMQ message pub/sub connected", "prefix", ps.prefix)
 		})
+	if ps.tlsConfig != nil {
+		amqpOpts = amqpOpts.SetTLSConfig(ps.tlsConfig)
+	}
 
 	client, err := fluxamqp.New(amqpOpts)
 	if err != nil {
@@ -74,9 +77,11 @@ func NewPubSub(_ context.Context, url string, logger *slog.Logger, opts ...messa
 	if err := client.Connect(); err != nil {
 		return nil, err
 	}
-	if err := declareStream(client, ps.prefix); err != nil {
-		_ = client.Close()
-		return nil, err
+	if !ps.preprovisioned {
+		if err := declareStream(client, ps.prefix); err != nil {
+			_ = client.Close()
+			return nil, err
+		}
 	}
 
 	ps.client = client
@@ -240,6 +245,24 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		created = v
 	}
 
+	// Allocated lazily: this runs for every delivered message, and carrying
+	// metadata is the exception rather than the rule.
+	var metadata map[string]string
+	for key, value := range headers {
+		metadataKey, ok := strings.CutPrefix(key, headerMetadataPrefix)
+		if !ok || metadataKey == "" {
+			continue
+		}
+		metadataValue, ok := value.(string)
+		if !ok {
+			continue
+		}
+		if metadata == nil {
+			metadata = make(map[string]string)
+		}
+		metadata[metadataKey] = metadataValue
+	}
+
 	return &messaging.Message{
 		Domain:    domain,
 		Channel:   channel,
@@ -249,6 +272,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		ClientId:  clientID,
 		Protocol:  protocol,
 		Created:   created,
+		Metadata:  metadata,
 	}, nil
 }
 

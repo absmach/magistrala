@@ -4,6 +4,7 @@
 package fluxmq
 
 import (
+	"reflect"
 	"testing"
 	"time"
 
@@ -119,13 +120,22 @@ func TestMessageFromDelivery(t *testing.T) {
 		wantErr   bool
 	}{
 		{
-			name:      "use explicit publisher and client_id headers",
-			body:      []byte(`{"temperature":22.5}`),
-			headers:   map[string]any{"external_id": "ext-1", "client_id": "client-1", "protocol": "mqtt", "created": "1710000000000000123"},
+			name: "use explicit publisher and client_id headers",
+			body: []byte(`{"temperature":22.5}`),
+			headers: map[string]any{
+				"external_id": "ext-1",
+				"client_id":   "client-1",
+				"protocol":    "mqtt",
+				"created":     "1710000000000000123",
+				headerMetadataPrefix + "magistrala.re.trace": `["rule-1"]`,
+				headerMetadataPrefix + "invalid":             int64(1),
+				"ordinary_header":                            "ignored",
+			},
 			ts:        time.Unix(1710000000, 0),
 			prefix:    "writers",
 			mqttTopic: "writers/domain/c/channel/temp",
 			want: &messaging.Message{
+				Metadata:  map[string]string{"magistrala.re.trace": `["rule-1"]`},
 				Domain:    "domain",
 				Channel:   "channel",
 				Subtopic:  "temp",
@@ -211,7 +221,68 @@ func TestMessageFromDelivery(t *testing.T) {
 			if got.Created != tc.want.Created {
 				t.Fatalf("created mismatch: got %d, want %d", got.Created, tc.want.Created)
 			}
+			if len(got.GetMetadata()) != len(tc.want.GetMetadata()) || got.GetMetadata()["magistrala.re.trace"] != tc.want.GetMetadata()["magistrala.re.trace"] {
+				t.Fatalf("metadata mismatch: got %#v, want %#v", got.GetMetadata(), tc.want.GetMetadata())
+			}
 		})
+	}
+}
+
+func TestMessagePropertiesIncludesMetadata(t *testing.T) {
+	msg := &messaging.Message{
+		Publisher: "publisher",
+		Protocol:  "mqtt",
+		ClientId:  "client",
+		Created:   1710000000000000123,
+		Metadata: map[string]string{
+			"magistrala.re.trace": `["rule-1"]`,
+		},
+	}
+
+	got := messageProperties(msg)
+
+	want := map[string]string{
+		headerExternalID: "publisher",
+		headerProtocol:   "mqtt",
+		"client_id":      "publisher",
+		"created":        "1710000000000000123",
+		headerMetadataPrefix + "magistrala.re.trace": `["rule-1"]`,
+	}
+	for key, value := range want {
+		if got[key] != value {
+			t.Errorf("property %q mismatch: got %q, want %q", key, got[key], value)
+		}
+	}
+	if len(got) != len(want) {
+		t.Errorf("unexpected properties: %#v", got)
+	}
+}
+
+func TestMetadataPropertyRoundTrip(t *testing.T) {
+	want := &messaging.Message{
+		Publisher: "rules-engine",
+		Protocol:  "internal",
+		ClientId:  "origin-client",
+		Created:   1710000000000000123,
+		Payload:   []byte("payload"),
+		Metadata: map[string]string{
+			"magistrala.re.trace": "signed-trace",
+			"other":               "preserved",
+		},
+	}
+
+	properties := messageProperties(want)
+	headers := make(map[string]any, len(properties))
+	for key, value := range properties {
+		headers[key] = value
+	}
+
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	if err != nil {
+		t.Fatalf("reconstruct message: %v", err)
+	}
+	if !reflect.DeepEqual(got.Metadata, want.Metadata) {
+		t.Fatalf("metadata mismatch: got %#v, want %#v", got.Metadata, want.Metadata)
 	}
 }
 

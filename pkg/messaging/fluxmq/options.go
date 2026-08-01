@@ -4,7 +4,11 @@
 package fluxmq
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
+	"fmt"
+	"os"
 	"strings"
 
 	"github.com/absmach/magistrala/pkg/messaging"
@@ -21,6 +25,8 @@ type options struct {
 	connectionName     string
 	directTopicIngress bool
 	directTopicOnly    bool
+	preprovisioned     bool
+	tlsConfig          *tls.Config
 }
 
 func defaultOptions() options {
@@ -49,6 +55,58 @@ func Prefix(prefix string) messaging.Option {
 
 		return nil
 	}
+}
+
+// InternalMetadata configures a trusted FluxMQ service connection that can
+// exchange broker-internal message metadata. It presents a client certificate,
+// verifies the broker against caFile, and uses the broker-provisioned stream
+// instead of trying to declare it with the service principal's restricted ACL.
+//
+// All three paths are required: a half-configured client would silently connect
+// without the identity the broker authorizes against.
+func InternalMetadata(certFile, keyFile, caFile string) messaging.Option {
+	return func(val any) error {
+		cfg, err := mtlsConfig(certFile, keyFile, caFile)
+		if err != nil {
+			return err
+		}
+		switch v := val.(type) {
+		case *publisher:
+			v.tlsConfig = cfg
+			v.preprovisioned = true
+		case *pubsub:
+			v.tlsConfig = cfg
+			v.preprovisioned = true
+		default:
+			return ErrInvalidType
+		}
+
+		return nil
+	}
+}
+
+func mtlsConfig(certFile, keyFile, caFile string) (*tls.Config, error) {
+	if certFile == "" || keyFile == "" || caFile == "" {
+		return nil, fmt.Errorf("%w: mTLS needs a certificate, a key, and a CA", ErrInvalidType)
+	}
+	certificate, err := tls.LoadX509KeyPair(certFile, keyFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load FluxMQ client certificate: %w", err)
+	}
+	ca, err := os.ReadFile(caFile)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read FluxMQ CA certificate: %w", err)
+	}
+	pool := x509.NewCertPool()
+	if !pool.AppendCertsFromPEM(ca) {
+		return nil, fmt.Errorf("failed to parse FluxMQ CA certificate %q", caFile)
+	}
+
+	return &tls.Config{
+		Certificates: []tls.Certificate{certificate},
+		RootCAs:      pool,
+		MinVersion:   tls.VersionTLS12,
+	}, nil
 }
 
 // ConnectionName sets a human-readable connection name sent to FluxMQ

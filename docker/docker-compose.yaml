@@ -95,6 +95,7 @@ services:
       ATOM_RATE_LIMIT_ENABLED: ${ATOM_RATE_LIMIT_ENABLED:-true}
       ATOM_TRUSTED_PROXY_CIDRS: ${ATOM_TRUSTED_PROXY_CIDRS:-}
       ATOM_MIN_PASSWORD_CHARS: ${ATOM_MIN_PASSWORD_CHARS}
+      ATOM_BOOTSTRAP_FILE: /etc/atom/bootstrap.yaml
       RUST_LOG: ${ATOM_RUST_LOG}
       ATOM_EVENTS_AMQP_URL: ${ATOM_EVENTS_AMQP_URL}
       ATOM_EVENTS_AMQP_EXCHANGE: ${ATOM_EVENTS_AMQP_EXCHANGE}
@@ -103,6 +104,7 @@ services:
       - ${ATOM_HTTP_PORT}:8080
     volumes:
       - ${ATOM_CERTS_CA_DIR:-./ssl/certs}:/certs:ro
+      - ./atom-bootstrap.yaml:/etc/atom/bootstrap.yaml:ro
     networks:
       - magistrala-base-net
 
@@ -122,7 +124,7 @@ services:
   atom-bootstrap:
     image: ghcr.io/absmach/magistrala/atom-bootstrap:${MG_RELEASE_TAG}
     container_name: magistrala-atom-bootstrap
-    restart: on-failure
+    profiles: [tokens]
     depends_on:
       - atom
     environment:
@@ -168,8 +170,8 @@ services:
     depends_on:
       bootstrap-db:
         condition: service_healthy
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
       nginx:
         condition: service_started
     ports:
@@ -408,8 +410,8 @@ services:
     image: ghcr.io/absmach/magistrala/fluxmq:${MG_RELEASE_TAG}
     container_name: magistrala-fluxmq-auth
     depends_on:
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
     restart: on-failure
     environment:
       MG_FLUXMQ_LOG_LEVEL: ${MG_FLUXMQ_LOG_LEVEL}
@@ -564,8 +566,8 @@ services:
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
     depends_on:
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
       ui-backend-db:
         condition: service_healthy
       seaweedfs-s3:
@@ -738,8 +740,8 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
     restart: on-failure
     environment:
       MG_TIMESCALE_READER_LOG_LEVEL: ${MG_TIMESCALE_READER_LOG_LEVEL}
@@ -882,8 +884,8 @@ services:
     depends_on:
       re-db:
         condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
       nginx:
         condition: service_started
     restart: on-failure
@@ -982,8 +984,8 @@ services:
     depends_on:
       alarms-db:
         condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
       nginx:
         condition: service_started
     restart: on-failure
@@ -1046,8 +1048,8 @@ services:
     depends_on:
       reports-db:
         condition: service_started
-      atom-bootstrap:
-        condition: service_completed_successfully
+      atom:
+        condition: service_started
       nginx:
         condition: service_started
     restart: on-failure

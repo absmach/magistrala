@@ -55,9 +55,9 @@ services:
       # Atom connects to ATOM_EVENTS_AMQP_URL once, at startup, and fails to
       # start at all if that connection fails (see absmach/atom src/main.rs).
       # It cannot wait on nginx (the AMQP proxy in front of FluxMQ) here: the
-      # FluxMQ/nginx chain depends on fluxmq-auth, which depends on
-      # atom-bootstrap, which depends on atom -- any depends_on edge from
-      # atom into that chain is a cycle. restart: on-failure absorbs the
+      # FluxMQ/nginx chain depends on fluxmq-auth, which depends on atom --
+      # any depends_on edge from atom into that chain is a cycle.
+      # restart: on-failure absorbs the
       # transient connect failure on cold boot instead; atom comes back up
       # once the rest of the chain (and nginx behind it) is ready.
     environment:
@@ -118,26 +118,6 @@ services:
       ATOM_GRAPHQL_URL: http://atom:8080/graphql
     ports:
       - ${ATOM_UI_HTTP_PORT:-3005}:3000
-    networks:
-      - magistrala-base-net
-
-  atom-bootstrap:
-    image: ghcr.io/absmach/magistrala/atom-bootstrap:${MG_RELEASE_TAG}
-    container_name: magistrala-atom-bootstrap
-    profiles: [tokens]
-    depends_on:
-      - atom
-    environment:
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
-      ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
-      ATOM_ADMIN_TOKEN: ${ATOM_ADMIN_TOKEN}
-      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME}
-      ATOM_ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-      MG_ATOM_BOOTSTRAP_RETRIES: ${MG_ATOM_BOOTSTRAP_RETRIES:-30}
-      MG_ATOM_BOOTSTRAP_RETRY_INTERVAL: ${MG_ATOM_BOOTSTRAP_RETRY_INTERVAL:-2s}
-      MG_ATOM_BOOTSTRAP_TIMEOUT: ${MG_ATOM_BOOTSTRAP_TIMEOUT:-30s}
     networks:
       - magistrala-base-net
 

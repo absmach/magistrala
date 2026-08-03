@@ -34,9 +34,6 @@ func main() {
 	client := atom.NewClient(cfg)
 	if len(os.Args) > 1 {
 		switch os.Args[1] {
-		case "bootstrap-actions":
-			runBootstrapActions(client)
-			return
 		case "provision-tokens":
 			runProvisionTokens(client, os.Args[2:])
 			return
@@ -44,31 +41,7 @@ func main() {
 			log.Fatalf("unknown command %q", os.Args[1])
 		}
 	}
-	runBootstrapActions(client)
-}
-
-func runBootstrapActions(client *atom.Client) {
-	retries := envInt("MG_ATOM_BOOTSTRAP_RETRIES", defaultRetries)
-	retryInterval := envDuration("MG_ATOM_BOOTSTRAP_RETRY_INTERVAL", defaultRetryInterval)
-	timeout := envDuration("MG_ATOM_BOOTSTRAP_TIMEOUT", defaultTimeout)
-
-	var lastErr error
-	for attempt := 1; attempt <= retries; attempt++ {
-		ctx, cancel := context.WithTimeout(context.Background(), timeout)
-		err := atom.BootstrapMagistralaActions(ctx, client)
-		cancel()
-		if err == nil {
-			log.Printf("Magistrala Atom action bootstrap completed")
-			return
-		}
-		lastErr = err
-		if attempt < retries {
-			log.Printf("Magistrala Atom action bootstrap attempt %d/%d failed: %v; retrying in %s", attempt, retries, err, retryInterval)
-			time.Sleep(retryInterval)
-		}
-	}
-
-	log.Fatalf("Magistrala Atom action bootstrap failed after %d attempts: %v", retries, lastErr)
+	log.Fatal("a subcommand is required: provision-tokens")
 }
 
 func runProvisionTokens(client *atom.Client, args []string) {

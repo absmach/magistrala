@@ -625,13 +625,18 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-timescale-writer-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
 
   timescale-reader:
     image: ghcr.io/absmach/magistrala/timescale-reader:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-reader
     depends_on:
       timescale:
-        condition: service_started
+        condition: service_healthy
       atom-bootstrap:
         condition: service_completed_successfully
     restart: on-failure
@@ -710,7 +715,8 @@ services:
     image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-writer
     depends_on:
-      - timescale
+      timescale:
+        condition: service_healthy
     restart: on-failure
     environment:
       MG_TIMESCALE_WRITER_LOG_LEVEL: ${MG_TIMESCALE_WRITER_LOG_LEVEL}

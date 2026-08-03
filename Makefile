@@ -197,7 +197,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs test_api mocks
+.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -349,7 +349,23 @@ else
 	$(eval GRPC_MTLS :=)
 endif
 
-check_certs: check_mtls check_tls
+# The Rules Engine reaches FluxMQ on the mTLS local listener, and compose mounts
+# both sides of that connection. The certificates and the principal secret are
+# generated rather than committed, so make them before anything binds them.
+check_fluxmq_service_certs:
+ifeq ("$(wildcard docker/ssl/certs/re-fluxmq-client.crt)","")
+	$(MAKE) -C docker/ssl fluxmq_service_certs
+endif
+ifeq ("$(wildcard docker/fluxmq/secrets/re-current)","")
+	$(MAKE) -C docker/ssl fluxmq_service_secret
+endif
+
+check_re_trace_key:
+ifeq ("$(wildcard docker/re/secrets/trace.key)","")
+	$(MAKE) -C docker/ssl re_trace_key
+endif
+
+check_certs: check_mtls check_tls check_fluxmq_service_certs check_re_trace_key
 ifeq ($(GRPC_MTLS_CERT_FILES_EXISTS),0)
 ifeq ($(filter true,$(GRPC_MTLS) $(GRPC_TLS)),true)
 ifeq ($(filter $(DEFAULT_DOCKER_COMPOSE_COMMAND),$(DOCKER_COMPOSE_COMMAND)),$(DEFAULT_DOCKER_COMPOSE_COMMAND))

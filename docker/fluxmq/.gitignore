@@ -1,0 +1,5 @@
+# Copyright (c) Abstract Machines
+# SPDX-License-Identifier: Apache-2.0
+
+# Derived from MG_RE_BROKER_SECRET by "make fluxmq_service_secret" in docker/ssl.
+secrets/

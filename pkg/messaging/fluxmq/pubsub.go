@@ -124,7 +124,13 @@ func (ps *pubsub) Subscribe(_ context.Context, cfg messaging.SubscriberConfig) e
 
 		sub.streamTopic = queueFilter(ps.prefix, cfg.Topic)
 	}
-	if ps.directTopicIngress {
+	// A preprovisioned connection is a local principal on the mTLS service
+	// listener, and that listener only serves queue addresses: FluxMQ resolves
+	// a bare topic filter to a pub/sub route and refuses it, because no
+	// subscribe ACL entry can name one. The direct subscription is also
+	// redundant there -- the broker-provisioned stream binds the same topic
+	// patterns, so a direct publish reaches the stream consumer anyway.
+	if ps.directTopicIngress && !ps.preprovisioned {
 		// Subscribe to regular MQTT topics so that messages published directly
 		// by MQTT clients (not through the stream queue) are also received.
 		sub.mqttTopic = topicFilter(ps.prefix, cfg.Topic)

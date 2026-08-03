@@ -34,6 +34,20 @@ server:
   amqp091:
     plain:
       addr: "0.0.0.0:5682"
+    # The local listener is how a first-party service reaches the broker. It
+    # requires mTLS: FluxMQ matches the URI SAN of the presented certificate
+    # against a principal under auth.local_principals, and only a connection
+    # admitted here may exchange "_flux." message metadata. The Rules Engine
+    # needs that metadata to carry its rule execution trace, so it connects
+    # here rather than on the plain listener.
+    local:
+      addr: "0.0.0.0:5685"
+      max_connections: 32
+      cert_file: "/etc/fluxmq/certs/fluxmq-service-server.crt"
+      key_file: "/etc/fluxmq/certs/fluxmq-service-server.key"
+      ca_file: "/etc/fluxmq/certs/ca.crt"
+      client_auth: "require"
+      min_version: "TLS1.2"
   health_addr: "0.0.0.0:8081"
   health_enabled: true
   shutdown_timeout: 30s
@@ -124,6 +138,29 @@ queues:
       max_length_bytes: 1073741824
 
 auth:
+  # Principals admitted on the service listener. The certificate_uri_san must
+  # match the URI SAN issued by docker/ssl/Makefile (fluxmq_service_certs), and
+  # the secret file must hold the same value as MG_RE_BROKER_SECRET.
+  local_principals:
+    - name: "rules-engine"
+      certificate_uri_san: "spiffe://absmach/magistrala/rules-engine"
+      # A service may consume and may relay the origin of messages it did not
+      # author, both of which the Rules Engine needs when it republishes a
+      # device message. The capability is the principal's, not the listener's.
+      role: "service"
+      current_secret_file: "/etc/fluxmq/secrets/re-current"
+      permissions:
+        # Rule outputs are republished to m.<domain>.c.<channel>.<subtopic>,
+        # whose tenant and channel identifiers cannot be enumerated here, so the
+        # grant is the topic namespace rather than a list of exact keys. Being a
+        # prefix it is also an ordinary topic publish, which the cluster
+        # forwards; an exact target would be durable on one node and could not
+        # run alongside cluster.enabled.
+        publish:
+          - routing_key_prefix: "m."
+        # The message stream the Rules Engine consumes.
+        subscribe:
+          - "m"
   external:
     url: "http://fluxmq-auth:7016"
     transport: "grpc"

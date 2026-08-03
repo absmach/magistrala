@@ -43,6 +43,14 @@ CHANNELS_GRPC_CLIENT_CRT_FILE_NAME=channels-grpc-client
 COAP_DTLS_SERVER_CONF_FILE_NAME=coap-server.conf
 COAP_DTLS_SERVER_CN=coap
 COAP_DTLS_SERVER_CRT_FILE_NAME=coap-server
+# FluxMQ service listener. The broker identifies a first-party service by the
+# URI SAN of the certificate it presents, matching it against a principal
+# declared in the broker's own configuration, so the SAN below must stay in
+# step with docker/fluxmq/node*.yaml.
+FLUXMQ_SERVICE_SERVER_CRT_FILE_NAME=fluxmq-service-server
+RE_FLUXMQ_CLIENT_CN=rules-engine
+RE_FLUXMQ_CLIENT_CRT_FILE_NAME=re-fluxmq-client
+RE_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/rules-engine
 
 define GRPC_CERT_CONFIG
 [req]
@@ -65,6 +73,57 @@ subjectAltName = @alt_names
 DNS.1 = <<SERVICE_NAME>>
 endef
 
+define FLUXMQ_SERVICE_SERVER_CERT_CONFIG
+[req]
+req_extensions = v3_req
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = mg.svc
+C  = RS
+ST = RS
+L  = BELGRADE
+O  = SUPERMQ
+OU = SUPERMQ
+
+[v3_req]
+extendedKeyUsage = serverAuth
+subjectAltName = @alt_names
+
+# The Rules Engine verifies this certificate against the host in
+# MG_RE_BROKER_URL, so every name a deployment may dial the service listener by
+# has to appear here: the per-node names this Compose stack uses, and the plain
+# "fluxmq" of a single-node deployment.
+[alt_names]
+DNS.1 = fluxmq
+DNS.2 = fluxmq-node1
+DNS.3 = fluxmq-node2
+DNS.4 = fluxmq-node3
+endef
+
+define URI_SAN_CERT_CONFIG
+[req]
+req_extensions = v3_req
+distinguished_name = dn
+prompt = no
+
+[dn]
+CN = <<SERVICE_NAME>>
+C  = RS
+ST = RS
+L  = BELGRADE
+O  = SUPERMQ
+OU = SUPERMQ
+
+[v3_req]
+extendedKeyUsage = clientAuth
+subjectAltName = @alt_names
+
+[alt_names]
+URI.1 = <<URI_SAN>>
+endef
+
 define ANNOUNCE_BODY
 Version $(VERSION) of $(PACKAGE_NAME) has been released.
 
@@ -72,7 +131,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs
+all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -138,6 +197,91 @@ define gen_grpc_cert_pair
 	# Client certificate
 	$(call gen_grpc_cert,$(3),$(4))
 endef
+
+# Usage: $(call gen_fluxmq_server_cert,cert_file_name)
+define gen_fluxmq_server_cert
+	$(file > $(CRT_LOCATION)/$(1).conf,$(FLUXMQ_SERVICE_SERVER_CERT_CONFIG))
+
+	openssl req -new -sha256 -newkey rsa:4096 -nodes \
+		-keyout $(CRT_LOCATION)/$(1).key \
+		-out $(CRT_LOCATION)/$(1).csr \
+		-config $(CRT_LOCATION)/$(1).conf \
+		-extensions v3_req
+
+	openssl x509 -req -sha256 \
+		-in $(CRT_LOCATION)/$(1).csr \
+		-CA $(CRT_LOCATION)/ca.crt \
+		-CAkey $(CRT_LOCATION)/ca.key \
+		-CAcreateserial \
+		-out $(CRT_LOCATION)/$(1).crt \
+		-days 365 \
+		-extfile $(CRT_LOCATION)/$(1).conf \
+		-extensions v3_req
+
+	rm -rf $(CRT_LOCATION)/$(1).csr $(CRT_LOCATION)/$(1).conf
+endef
+
+# Usage: $(call gen_uri_san_cert,cert_file_name,common_name,uri_san)
+define gen_uri_san_cert
+	$(file > $(CRT_LOCATION)/$(1).conf,$(subst <<URI_SAN>>,$(3),$(subst <<SERVICE_NAME>>,$(2),$(URI_SAN_CERT_CONFIG))))
+
+	openssl req -new -sha256 -newkey rsa:4096 -nodes \
+		-keyout $(CRT_LOCATION)/$(1).key \
+		-out $(CRT_LOCATION)/$(1).csr \
+		-config $(CRT_LOCATION)/$(1).conf \
+		-extensions v3_req
+
+	openssl x509 -req -sha256 \
+		-in $(CRT_LOCATION)/$(1).csr \
+		-CA $(CRT_LOCATION)/ca.crt \
+		-CAkey $(CRT_LOCATION)/ca.key \
+		-CAcreateserial \
+		-out $(CRT_LOCATION)/$(1).crt \
+		-days 365 \
+		-extfile $(CRT_LOCATION)/$(1).conf \
+		-extensions v3_req
+
+	rm -rf $(CRT_LOCATION)/$(1).csr $(CRT_LOCATION)/$(1).conf
+endef
+
+# Certificates for the FluxMQ service listener: a server certificate for the
+# broker and a client certificate carrying the Rules Engine's URI SAN. The
+# listener requires mTLS, so both sides are issued by the same CA.
+fluxmq_service_certs:
+	$(call gen_fluxmq_server_cert,$(FLUXMQ_SERVICE_SERVER_CRT_FILE_NAME))
+	$(call gen_uri_san_cert,$(RE_FLUXMQ_CLIENT_CRT_FILE_NAME),$(RE_FLUXMQ_CLIENT_CN),$(RE_FLUXMQ_CLIENT_URI_SAN))
+
+# The SASL secret the Rules Engine presents alongside its certificate. FluxMQ
+# reads it from a file and the Rules Engine sends it in its broker URL, so both
+# sides must see the same value: .env is the single source and this target
+# derives the file from it. FluxMQ requires at least 32 bytes.
+fluxmq_service_secret:
+	@mkdir -p ../fluxmq/secrets
+	@secret="$${MG_RE_BROKER_SECRET}"; \
+	if [ -z "$$secret" ]; then \
+		secret=$$(grep -E "^MG_RE_BROKER_SECRET=" ../.env | cut -d= -f2-); \
+	fi; \
+	if [ -z "$$secret" ]; then \
+		echo "MG_RE_BROKER_SECRET is not set in docker/.env"; exit 1; \
+	fi; \
+	if [ $${#secret} -lt 32 ]; then \
+		echo "MG_RE_BROKER_SECRET must be at least 32 characters"; exit 1; \
+	fi; \
+	printf '%s' "$$secret" > ../fluxmq/secrets/re-current; \
+	chmod 600 ../fluxmq/secrets/re-current; \
+	echo "wrote docker/fluxmq/secrets/re-current"
+
+# Persistent HMAC key shared by Rules Engine replicas. Do not replace an
+# existing key: doing so while old messages are in flight would invalidate
+# their loop traces. The containing directory is excluded from git.
+re_trace_key:
+	@mkdir -p ../re/secrets
+	@if [ ! -s ../re/secrets/trace.key ]; then \
+		umask 077; openssl rand -hex 32 > ../re/secrets/trace.key; \
+		echo "wrote docker/re/secrets/trace.key"; \
+	else \
+		echo "preserving docker/re/secrets/trace.key"; \
+	fi
 
 auth_grpc_certs:
 	$(call gen_grpc_cert_pair,$(AUTH_GRPC_SERVER_CRT_FILE_NAME),$(AUTH_GRPC_SERVER_CN),$(AUTH_GRPC_CLIENT_CRT_FILE_NAME),$(AUTH_GRPC_CLIENT_CN))

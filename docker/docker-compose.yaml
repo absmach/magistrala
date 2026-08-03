@@ -255,6 +255,12 @@ services:
         ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
+      # Server certificate and CA for the mTLS service listener, plus the
+      # local-principal secret it authenticates the Rules Engine against.
+      - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
+      - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
+      - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
+      - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -275,6 +281,12 @@ services:
         ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
+      # Server certificate and CA for the mTLS service listener, plus the
+      # local-principal secret it authenticates the Rules Engine against.
+      - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
+      - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
+      - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
+      - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -295,6 +307,12 @@ services:
         ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
+      # Server certificate and CA for the mTLS service listener, plus the
+      # local-principal secret it authenticates the Rules Engine against.
+      - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
+      - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
+      - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
+      - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
@@ -761,6 +779,13 @@ services:
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
       MG_PERMISSIONS_FILE: ${MG_PERMISSIONS_FILE}
       MG_RE_INSTANCE_ID: ${MG_RE_INSTANCE_ID}
+      MG_RE_MAX_RULE_HOPS: ${MG_RE_MAX_RULE_HOPS}
+      MG_RE_TRACE_KEY: ${MG_RE_TRACE_KEY}
+      MG_RE_TRACE_KEY_FILE: ${MG_RE_TRACE_KEY_FILE}
+      MG_RE_BROKER_URL: ${MG_RE_BROKER_URL}
+      MG_RE_BROKER_CLIENT_CERT: ${MG_RE_BROKER_CLIENT_CERT}
+      MG_RE_BROKER_CLIENT_KEY: ${MG_RE_BROKER_CLIENT_KEY}
+      MG_RE_BROKER_CA_CERTS: ${MG_RE_BROKER_CA_CERTS}
       MG_EMAIL_HOST: ${MG_EMAIL_HOST}
       MG_EMAIL_PORT: ${MG_EMAIL_PORT}
       MG_EMAIL_USERNAME: ${MG_EMAIL_USERNAME}
@@ -781,6 +806,12 @@ services:
     volumes:
       - ./permission.yaml:${MG_PERMISSIONS_FILE}
       - ./templates/${MG_RE_EMAIL_TEMPLATE}:/email.tmpl
+      # Client certificate for the FluxMQ service listener. Its URI SAN is what
+      # the broker matches against the rules-engine local principal.
+      - ./ssl/certs/re-fluxmq-client.crt:${MG_RE_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/re-fluxmq-client.key:${MG_RE_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_RE_BROKER_CA_CERTS}:ro
+      - ./re/secrets/trace.key:/run/secrets/magistrala-re-trace-key:ro
 
   alarms-db:
     image: docker.io/postgres:18.4-alpine3.24

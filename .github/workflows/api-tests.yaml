@@ -118,9 +118,6 @@ jobs:
       - name: Build images
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
-      - name: Provision Atom service tokens
-        run: make provision_atom_tokens
-
       - name: Start containers
         run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 
@@ -140,10 +137,9 @@ jobs:
           done
 
           echo "Services failed to become ready" >&2
-          docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml --env-file docker/.env --env-file docker/.env.tokens -p "${USER_REPO:-absmach_magistrala}" ps || true
+          docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml --env-file docker/.env -p "${USER_REPO:-absmach_magistrala}" ps || true
           docker logs --tail 100 magistrala-nginx || true
           docker logs --tail 100 magistrala-atom || true
-          docker logs --tail 100 magistrala-atom-bootstrap || true
           exit 1
 
       - name: Set access token

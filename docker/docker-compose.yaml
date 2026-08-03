@@ -109,26 +109,6 @@ services:
     networks:
       - magistrala-base-net
 
-  atom-bootstrap:
-    image: ghcr.io/absmach/magistrala/atom-bootstrap:${MG_RELEASE_TAG}
-    container_name: magistrala-atom-bootstrap
-    profiles: [tokens]
-    depends_on:
-      - atom
-    environment:
-      ATOM_URL: ${ATOM_URL}
-      ATOM_SERVICE_USERNAME: ${ATOM_SERVICE_USERNAME}
-      ATOM_SERVICE_SECRET: ${ATOM_SERVICE_SECRET}
-      ATOM_ADMIN_TOKEN: ${ATOM_ADMIN_TOKEN}
-      ATOM_ADMIN_USERNAME: ${ATOM_ADMIN_USERNAME}
-      ATOM_ADMIN_SECRET: ${ATOM_ADMIN_SECRET}
-      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
-      MG_ATOM_BOOTSTRAP_RETRIES: ${MG_ATOM_BOOTSTRAP_RETRIES:-30}
-      MG_ATOM_BOOTSTRAP_RETRY_INTERVAL: ${MG_ATOM_BOOTSTRAP_RETRY_INTERVAL:-2s}
-      MG_ATOM_BOOTSTRAP_TIMEOUT: ${MG_ATOM_BOOTSTRAP_TIMEOUT:-30s}
-    networks:
-      - magistrala-base-net
-
   nginx:
     image: docker.io/nginx:1.31.3-alpine3.24
     container_name: magistrala-nginx

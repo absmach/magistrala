@@ -316,13 +316,28 @@ endif
 endif
 endif
 
-run_latest: check_certs
-	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+atom-secrets:
+	@scripts/generate-atom-secrets.sh $(args)
 
-run_latest_ci: check_certs
+# Regenerate and restart the Atom container so it re-reads the bootstrap file.
+atom-secrets-rotate:
+	@scripts/generate-atom-secrets.sh --force
+	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) restart atom
+	@echo "Atom restarted with rotated tokens; restart downstream services to pick up new ATOM_SERVICE_TOKEN values."
+
+# `run_latest` refuses to start until service tokens exist — the compose file
+# bind-mounts docker/atom-bootstrap.yaml into the Atom container and the
+# downstream services read MG_ATOM_TOKEN_* values from docker/.env.tokens.
+run_latest: check_certs docker/.env.tokens
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) --env-file docker/.env.tokens -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+run_latest_ci: check_certs docker/.env.tokens
+	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) --env-file docker/.env.tokens -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+docker/.env.tokens: scripts/generate-atom-secrets.sh docker/atom-bootstrap.template.yaml
+	@scripts/generate-atom-secrets.sh
 
 run_tls:
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)

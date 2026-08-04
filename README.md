@@ -300,34 +300,54 @@ make check_certs
 
 This creates whatever is missing and leaves anything already present alone:
 
-| Path                                               | What it is                                                                    |
-| -------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `docker/ssl/certs/fluxmq-service-server.{crt,key}` | Server certificate for FluxMQ's mTLS service listener                         |
-| `docker/ssl/certs/re-fluxmq-client.{crt,key}`      | Client certificate whose URI SAN identifies the Rules Engine to that listener |
-| `docker/fluxmq/secrets/re-current`                 | The principal secret, derived from `MG_RE_BROKER_SECRET` in `docker/.env`     |
-| `docker/re/secrets/trace.key`                      | HMAC key the Rules Engine signs its loop-detection traces with                |
+| Path                                                        | What it is                                                                |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `docker/ssl/certs/fluxmq-service-server.{crt,key}`          | Server certificate for FluxMQ's mTLS service listener                     |
+| `docker/ssl/certs/re-fluxmq-client.{crt,key}`               | Client certificate whose URI SAN identifies the Rules Engine              |
+| `docker/ssl/certs/timescale-writer-fluxmq-client.{crt,key}` | Client certificate whose URI SAN identifies the Timescale writer          |
+| `docker/ssl/certs/postgres-writer-fluxmq-client.{crt,key}`  | Client certificate whose URI SAN identifies the Postgres writer           |
+| `docker/fluxmq/secrets/re-current`                          | Rules Engine principal secret, from `MG_RE_BROKER_SECRET`                 |
+| `docker/fluxmq/secrets/timescale-writer-current`            | Timescale writer secret, from `MG_TIMESCALE_WRITER_BROKER_SECRET`         |
+| `docker/fluxmq/secrets/postgres-writer-current`             | Postgres writer secret, from `MG_POSTGRES_WRITER_BROKER_SECRET`           |
+| `docker/re/secrets/trace.key`                               | HMAC key the Rules Engine signs its loop-detection traces with            |
 
-Both certificates are issued by the development CA committed at
+Internal services reach the broker as *local principals* rather than as ordinary
+clients: each presents a client certificate whose URI SAN names it, plus a SASL
+secret, and the broker grants it only what it needs — the Rules Engine consumes
+`m` and republishes under it, the writers only subscribe to `writers`. The
+principals are declared in `docker/fluxmq/node{1,2,3}.yaml`, and adding a service
+means adding an entry there alongside its certificate and secret.
+
+The certificates are issued by the development CA committed at
 `docker/ssl/certs/ca.crt`, so no extra setup is needed for a local run. The
 generated material is gitignored.
 
 The server certificate is issued for `fluxmq` and `fluxmq-node{1,2,3}`, which
-covers both this Compose stack and a single-node deployment. Point
-`MG_RE_BROKER_URL` at a host outside that set and the Rules Engine fails its
-TLS verification with `certificate is valid for ...`; add the name to
+covers both this Compose stack and a single-node deployment. Point any
+`MG_*_BROKER_URL` at a host outside that set and the service fails its TLS
+verification with `certificate is valid for ...`; add the name to
 `FLUXMQ_SERVICE_SERVER_CERT_CONFIG` in `docker/ssl/Makefile` and reissue:
 
 ```bash
-rm -f docker/ssl/certs/fluxmq-service-server.* docker/ssl/certs/re-fluxmq-client.*
+rm -f docker/ssl/certs/fluxmq-service-server.* \
+  docker/ssl/certs/re-fluxmq-client.* \
+  docker/ssl/certs/timescale-writer-fluxmq-client.* \
+  docker/ssl/certs/postgres-writer-fluxmq-client.*
 make -C docker/ssl fluxmq_service_certs
 ```
 
-`make check_certs` skips this pair when it already exists, so a stale
-certificate has to be removed rather than merely re-run.
+`make check_certs` skips certificates that already exist, so stale certificates
+have to be removed rather than merely re-running the target.
 
-Two of these are stateful, not merely derived. `re-current` must stay equal to
-`MG_RE_BROKER_SECRET`: change the variable and re-run `make -C docker/ssl
-fluxmq_service_secret`, or the Rules Engine fails to authenticate.
+Each local-principal secret must stay equal to the corresponding value in
+`docker/.env`; a mismatch fails that service's broker authentication. After
+changing one, re-run its target:
+
+| Variable                            | Target                                    |
+| ----------------------------------- | ----------------------------------------- |
+| `MG_RE_BROKER_SECRET`               | `fluxmq_service_secret`                   |
+| `MG_TIMESCALE_WRITER_BROKER_SECRET` | `timescale_writer_fluxmq_service_secret`  |
+| `MG_POSTGRES_WRITER_BROKER_SECRET`  | `postgres_writer_fluxmq_service_secret`   |
 `trace.key` is created once and preserved on later runs — replacing it while
 messages are in flight would invalidate the rule traces they already carry, so
 delete it only deliberately. Every Rules Engine replica must read the same key.

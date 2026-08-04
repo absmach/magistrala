@@ -20,8 +20,9 @@ import (
 	writerpg "github.com/absmach/magistrala/consumers/writers/postgres"
 	mglog "github.com/absmach/magistrala/logger"
 	jaegerclient "github.com/absmach/magistrala/pkg/jaeger"
+	"github.com/absmach/magistrala/pkg/messaging"
 	brokerstracing "github.com/absmach/magistrala/pkg/messaging/brokers/tracing"
-	brokers "github.com/absmach/magistrala/pkg/messaging/writers"
+	"github.com/absmach/magistrala/pkg/messaging/writers"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
 	"github.com/absmach/magistrala/pkg/server"
@@ -41,13 +42,16 @@ const (
 )
 
 type config struct {
-	LogLevel      string  `env:"MG_POSTGRES_WRITER_LOG_LEVEL"     envDefault:"info"`
-	ConfigPath    string  `env:"MG_POSTGRES_WRITER_CONFIG_PATH"   envDefault:"/config.toml"`
-	BrokerURL     string  `env:"MG_MESSAGE_BROKER_URL"            envDefault:"nats://localhost:4222"`
-	JaegerURL     url.URL `env:"MG_JAEGER_URL"                    envDefault:"http://localhost:4318/v1/traces"`
-	SendTelemetry bool    `env:"MG_SEND_TELEMETRY"                envDefault:"true"`
-	InstanceID    string  `env:"MG_POSTGRES_WRITER_INSTANCE_ID"   envDefault:""`
-	TraceRatio    float64 `env:"MG_JAEGER_TRACE_RATIO"            envDefault:"1.0"`
+	LogLevel         string  `env:"MG_POSTGRES_WRITER_LOG_LEVEL"          envDefault:"info"`
+	ConfigPath       string  `env:"MG_POSTGRES_WRITER_CONFIG_PATH"        envDefault:"/config.toml"`
+	BrokerURL        string  `env:"MG_MESSAGE_BROKER_URL"                 envDefault:"nats://localhost:4222"`
+	BrokerClientCert string  `env:"MG_POSTGRES_WRITER_BROKER_CLIENT_CERT" envDefault:""`
+	BrokerClientKey  string  `env:"MG_POSTGRES_WRITER_BROKER_CLIENT_KEY"  envDefault:""`
+	BrokerCACerts    string  `env:"MG_POSTGRES_WRITER_BROKER_CA_CERTS"    envDefault:""`
+	JaegerURL        url.URL `env:"MG_JAEGER_URL"                         envDefault:"http://localhost:4318/v1/traces"`
+	SendTelemetry    bool    `env:"MG_SEND_TELEMETRY"                     envDefault:"true"`
+	InstanceID       string  `env:"MG_POSTGRES_WRITER_INSTANCE_ID"        envDefault:""`
+	TraceRatio       float64 `env:"MG_JAEGER_TRACE_RATIO"                 envDefault:"1.0"`
 }
 
 func main() {
@@ -107,7 +111,16 @@ func main() {
 	}()
 	tracer := tp.Tracer(svcName)
 
-	pubSub, err := brokers.NewPubSub(ctx, cfg.BrokerURL, logger)
+	// The mTLS client identity is optional: brokers that expose an unauthenticated
+	// listener need none. Passing the option with empty paths would fail the
+	// connection outright, so only ask for it once one of them is configured. A
+	// partial configuration still fails, since half an identity is not a usable one.
+	var brokerOpts []messaging.Option
+	if cfg.BrokerClientCert != "" || cfg.BrokerClientKey != "" || cfg.BrokerCACerts != "" {
+		brokerOpts = append(brokerOpts, writers.InternalMetadata(cfg.BrokerClientCert, cfg.BrokerClientKey, cfg.BrokerCACerts))
+	}
+
+	pubSub, err := writers.NewPubSub(ctx, cfg.BrokerURL, logger, brokerOpts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to connect to message broker: %s", err))
 		exitCode = 1
@@ -119,7 +132,7 @@ func main() {
 	repo := newService(db, logger)
 	repo = consumertracing.NewBlocking(tracer, repo, httpServerConfig)
 
-	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, brokers.AllTopic, logger); err != nil {
+	if err = consumers.Start(ctx, svcName, pubSub, repo, cfg.ConfigPath, writers.AllTopic, logger); err != nil {
 		logger.Error(fmt.Sprintf("failed to create Postgres writer: %s", err))
 		exitCode = 1
 		return

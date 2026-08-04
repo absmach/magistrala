@@ -34,8 +34,23 @@ var cfg = jetstream.StreamConfig{
 	Storage:           jetstream.FileStorage,
 }
 
-func NewPubSub(ctx context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(ctx, url, logger, broker.Prefix(prefix), broker.JSStreamConfig(cfg), broker.ConnectionName("writers-msg-pubsub"))
+// InternalMetadata returns an option for a trusted local-service connection
+// that carries internal metadata over mTLS and consumes the broker-provisioned
+// writers stream. It lives here rather than being taken from
+// pkg/messaging/brokers because that package selects its backend on a different
+// build tag: an untagged build would pair a FluxMQ option with a NATS PubSub.
+func InternalMetadata(certFile, keyFile, caFile string) messaging.Option {
+	return broker.InternalMetadata(certFile, keyFile, caFile)
+}
+
+func NewPubSub(ctx context.Context, url string, logger *slog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+	brokerOpts := []messaging.Option{
+		broker.Prefix(prefix),
+		broker.JSStreamConfig(cfg),
+		broker.ConnectionName("writers-msg-pubsub"),
+	}
+	brokerOpts = append(brokerOpts, opts...)
+	pb, err := broker.NewPubSub(ctx, url, logger, brokerOpts...)
 	if err != nil {
 		return nil, err
 	}

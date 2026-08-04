@@ -51,6 +51,12 @@ FLUXMQ_SERVICE_SERVER_CRT_FILE_NAME=fluxmq-service-server
 RE_FLUXMQ_CLIENT_CN=rules-engine
 RE_FLUXMQ_CLIENT_CRT_FILE_NAME=re-fluxmq-client
 RE_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/rules-engine
+TIMESCALE_WRITER_FLUXMQ_CLIENT_CN=timescale-writer
+TIMESCALE_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME=timescale-writer-fluxmq-client
+TIMESCALE_WRITER_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/timescale-writer
+POSTGRES_WRITER_FLUXMQ_CLIENT_CN=postgres-writer
+POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME=postgres-writer-fluxmq-client
+POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/postgres-writer
 
 define GRPC_CERT_CONFIG
 [req]
@@ -131,7 +137,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret re_trace_key
+all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -245,31 +251,53 @@ define gen_uri_san_cert
 endef
 
 # Certificates for the FluxMQ service listener: a server certificate for the
-# broker and a client certificate carrying the Rules Engine's URI SAN. The
+# broker and a client certificate carrying each local principal's URI SAN. The
 # listener requires mTLS, so both sides are issued by the same CA.
 fluxmq_service_certs:
 	$(call gen_fluxmq_server_cert,$(FLUXMQ_SERVICE_SERVER_CRT_FILE_NAME))
 	$(call gen_uri_san_cert,$(RE_FLUXMQ_CLIENT_CRT_FILE_NAME),$(RE_FLUXMQ_CLIENT_CN),$(RE_FLUXMQ_CLIENT_URI_SAN))
+	$(call gen_uri_san_cert,$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CN),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_URI_SAN))
+	$(call gen_uri_san_cert,$(POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(POSTGRES_WRITER_FLUXMQ_CLIENT_CN),$(POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN))
 
-# The SASL secret the Rules Engine presents alongside its certificate. FluxMQ
-# reads it from a file and the Rules Engine sends it in its broker URL, so both
-# sides must see the same value: .env is the single source and this target
-# derives the file from it. FluxMQ requires at least 32 bytes.
-fluxmq_service_secret:
+# Generate a single principal's certificate when adding it to an existing
+# deployment, without rotating the broker certificate or the other principals.
+timescale_writer_fluxmq_client_cert:
+	$(call gen_uri_san_cert,$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CN),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_URI_SAN))
+
+postgres_writer_fluxmq_client_cert:
+	$(call gen_uri_san_cert,$(POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(POSTGRES_WRITER_FLUXMQ_CLIENT_CN),$(POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN))
+
+# The SASL secret a local principal presents alongside its certificate. FluxMQ
+# reads it from a file and the service sends it in its broker URL, so both sides
+# must see the same value: .env is the single source and these targets derive
+# the file from it. FluxMQ requires at least 32 bytes.
+#
+# Usage: $(call gen_fluxmq_service_secret,env_variable_name,secret_file_name)
+define gen_fluxmq_service_secret
 	@mkdir -p ../fluxmq/secrets
-	@secret="$${MG_RE_BROKER_SECRET}"; \
+	@secret="$${$(1)}"; \
 	if [ -z "$$secret" ]; then \
-		secret=$$(grep -E "^MG_RE_BROKER_SECRET=" ../.env | cut -d= -f2-); \
+		secret=$$(grep -E "^$(1)=" ../.env | cut -d= -f2-); \
 	fi; \
 	if [ -z "$$secret" ]; then \
-		echo "MG_RE_BROKER_SECRET is not set in docker/.env"; exit 1; \
+		echo "$(1) is not set in docker/.env"; exit 1; \
 	fi; \
 	if [ $${#secret} -lt 32 ]; then \
-		echo "MG_RE_BROKER_SECRET must be at least 32 characters"; exit 1; \
+		echo "$(1) must be at least 32 characters"; exit 1; \
 	fi; \
-	printf '%s' "$$secret" > ../fluxmq/secrets/re-current; \
-	chmod 600 ../fluxmq/secrets/re-current; \
-	echo "wrote docker/fluxmq/secrets/re-current"
+	printf '%s' "$$secret" > ../fluxmq/secrets/$(2); \
+	chmod 600 ../fluxmq/secrets/$(2); \
+	echo "wrote docker/fluxmq/secrets/$(2)"
+endef
+
+fluxmq_service_secret:
+	$(call gen_fluxmq_service_secret,MG_RE_BROKER_SECRET,re-current)
+
+timescale_writer_fluxmq_service_secret:
+	$(call gen_fluxmq_service_secret,MG_TIMESCALE_WRITER_BROKER_SECRET,timescale-writer-current)
+
+postgres_writer_fluxmq_service_secret:
+	$(call gen_fluxmq_service_secret,MG_POSTGRES_WRITER_BROKER_SECRET,postgres-writer-current)
 
 # Persistent HMAC key shared by Rules Engine replicas. Do not replace an
 # existing key: doing so while old messages are in flight would invalidate

@@ -255,12 +255,14 @@ services:
         ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -281,12 +283,14 @@ services:
         ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -307,12 +311,14 @@ services:
         ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
@@ -557,8 +563,12 @@ services:
     networks:
       - magistrala-base-net
 
+  # Creates the image bucket with the broker's own image rather than pulling a
+  # second one. An aws-cli here cost a 130 MB image for a single call, and it
+  # was the only untagged reference in this file, so what it resolved to
+  # depended on the day it was pulled.
   seaweedfs-init:
-    image: amazon/aws-cli
+    image: chrislusf/seaweedfs:4.40
     container_name: magistrala-seaweedfs-init
     entrypoint: /bin/sh
     depends_on:
@@ -566,26 +576,46 @@ services:
     command:
       - -c
       - |
-        echo "[INIT] Waiting 20s for SeaweedFS S3 to be ready...";
-        sleep 20;
-        OUT=$(aws --endpoint-url http://seaweedfs-s3:8333 s3api create-bucket --bucket $${BUCKET} 2>&1);
-        EXIT=$$?;
-        if [ $$EXIT -eq 0 ]; then
-          echo "[INIT] Bucket $${BUCKET} created successfully.";
-        elif echo "$$OUT" | grep -q 'BucketAlreadyOwnedByYou\|BucketAlreadyExists'; then
-          echo "[INIT] Bucket $${BUCKET} already exists, skipping.";
-        else
-          echo "[INIT] Failed to create bucket $${BUCKET}: $$OUT" >&2;
-          exit 1;
-        fi
+        set -eu
+        # weed shell blocks indefinitely against an unreachable master, so the
+        # wait is a port check and every weed call is bounded; left to itself it
+        # would hang this container rather than fail it.
+        #
+        # 60 ticks is ~2 minutes while the store is merely slow to boot, and
+        # ~3 minutes to give up when it never appears, since a failing lookup
+        # costs about a second on top of the sleep.
+        tick=0;
+        while ! nc -z seaweedfs-s3 9333 2>/dev/null; do
+          tick=$$((tick + 1));
+          if [ $$tick -ge 60 ]; then
+            echo "[INIT] SeaweedFS master did not come up" >&2;
+            exit 1;
+          fi;
+          sleep 2;
+        done;
+        printf 's3.bucket.create -name %s\n' "$${BUCKET}" > /tmp/create.cmd;
+        printf 's3.bucket.list\n' > /tmp/list.cmd;
+        try=0;
+        while [ $$try -lt 3 ]; do
+          try=$$((try + 1));
+          timeout 20 weed shell -master seaweedfs-s3:9333 < /tmp/create.cmd > /tmp/create.out 2>&1 || true;
+          timeout 20 weed shell -master seaweedfs-s3:9333 < /tmp/list.cmd > /tmp/list.out 2>/dev/null || true;
+          # s3.bucket.create reports success even for an existing bucket, and
+          # weed shell exits 0 whatever the command did, so the listing is the
+          # only trustworthy signal that the bucket is really there.
+          if awk -v b="$${BUCKET}" '{sub(/^[ \t]+/,""); split($$0,f,/[ \t]/); if (f[1]==b) found=1} END{exit !found}' /tmp/list.out; then
+            echo "[INIT] Bucket $${BUCKET} present.";
+            exit 0;
+          fi;
+          sleep 3;
+        done;
+        echo "[INIT] Bucket $${BUCKET} was not created after $$try attempts" >&2;
+        cat /tmp/create.out >&2;
+        exit 1
     networks:
       - magistrala-base-net
     environment:
       BUCKET: ${MG_BACKEND_OBJECT_STORAGE_BUCKET}
-      AWS_ACCESS_KEY_ID: ${MG_BACKEND_OBJECT_STORAGE_ACCESS_KEY}
-      AWS_SECRET_ACCESS_KEY: ${MG_BACKEND_OBJECT_STORAGE_SECRET_KEY}
-      AWS_DEFAULT_REGION: ${MG_BACKEND_OBJECT_STORAGE_REGION}
-      AWS_EC2_METADATA_DISABLED: "true"
 
   timescale:
     image: timescale/timescaledb:2.29.0-pg16-oss
@@ -601,13 +631,18 @@ services:
       - magistrala-base-net
     volumes:
       - magistrala-timescale-writer-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 60
 
   timescale-reader:
     image: ghcr.io/absmach/magistrala/timescale-reader:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-reader
     depends_on:
       timescale:
-        condition: service_started
+        condition: service_healthy
       atom-bootstrap:
         condition: service_completed_successfully
     restart: on-failure
@@ -686,7 +721,10 @@ services:
     image: ghcr.io/absmach/magistrala/timescale-writer:${MG_RELEASE_TAG}
     container_name: magistrala-timescale-writer
     depends_on:
-      - timescale
+      timescale:
+        condition: service_healthy
+      fluxmq-node1:
+        condition: service_healthy
     restart: on-failure
     environment:
       MG_TIMESCALE_WRITER_LOG_LEVEL: ${MG_TIMESCALE_WRITER_LOG_LEVEL}
@@ -704,7 +742,10 @@ services:
       MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
       MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
       MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_TIMESCALE_WRITER_BROKER_URL}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}
+      MG_TIMESCALE_WRITER_BROKER_CA_CERTS: ${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -715,6 +756,11 @@ services:
       - magistrala-base-net
     volumes:
       - ./addons/timescale-writer/config.toml:${MG_TIMESCALE_WRITER_CONFIG_PATH}
+      # The URI SAN in this client certificate identifies the Timescale writer
+      # to the FluxMQ local listener; the broker ACL only permits `writers`.
+      - ./ssl/certs/timescale-writer-fluxmq-client.crt:${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/timescale-writer-fluxmq-client.key:${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}:ro
   re-db:
     image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-re-db

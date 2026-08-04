@@ -140,7 +140,7 @@ queues:
 auth:
   # Principals admitted on the service listener. The certificate_uri_san must
   # match the URI SAN issued by docker/ssl/Makefile (fluxmq_service_certs), and
-  # the secret file must hold the same value as MG_RE_BROKER_SECRET.
+  # each secret file must hold the value configured by its service.
   local_principals:
     - name: "rules-engine"
       certificate_uri_san: "spiffe://absmach/magistrala/rules-engine"
@@ -161,6 +161,24 @@ auth:
         # The message stream the Rules Engine consumes.
         subscribe:
           - "m"
+    - name: "timescale-writer"
+      certificate_uri_san: "spiffe://absmach/magistrala/timescale-writer"
+      role: "service"
+      current_secret_file: "/etc/fluxmq/secrets/timescale-writer-current"
+      permissions:
+        # The writer is a passive consumer of the broker-provisioned stream. It
+        # neither publishes messages nor manages queues.
+        subscribe:
+          - "writers"
+    - name: "postgres-writer"
+      certificate_uri_san: "spiffe://absmach/magistrala/postgres-writer"
+      role: "service"
+      current_secret_file: "/etc/fluxmq/secrets/postgres-writer-current"
+      permissions:
+        # The writer is a passive consumer of the broker-provisioned stream. It
+        # neither publishes messages nor manages queues.
+        subscribe:
+          - "writers"
   external:
     url: "http://fluxmq-auth:7016"
     transport: "grpc"

@@ -116,14 +116,14 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 
 ### ⚙️ Processing & Automation
 
-- Rules engine for message processing and routing
-- Alarms and triggers for reacting to events
+- Rules engine for message processing and routing (Enterprise Edition)
+- Alarms and triggers for reacting to events (Enterprise Edition)
 - Scheduled actions for time-based workflows
 - Event-driven architecture as the foundation
 
 ### 📊 Observability
 
-- Audit logs for tracking system activity
+- Audit logs for tracking system activity (Enterprise Edition)
 - Metrics and tracing via Prometheus and OpenTelemetry
 - Built-in visibility into system behavior and data flows
 

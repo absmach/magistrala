@@ -35,7 +35,10 @@ services:
     image: ghcr.io/absmach/magistrala/postgres-writer:${MG_RELEASE_TAG}
     container_name: magistrala-postgres-writer
     depends_on:
-      - postgres
+      postgres:
+        condition: service_started
+      fluxmq-node1:
+        condition: service_healthy
     restart: on-failure
     environment:
       MG_POSTGRES_WRITER_LOG_LEVEL: ${MG_POSTGRES_WRITER_LOG_LEVEL}
@@ -53,7 +56,10 @@ services:
       MG_POSTGRES_SSL_CERT: ${MG_POSTGRES_SSL_CERT}
       MG_POSTGRES_SSL_KEY: ${MG_POSTGRES_SSL_KEY}
       MG_POSTGRES_SSL_ROOT_CERT: ${MG_POSTGRES_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_POSTGRES_WRITER_BROKER_URL}
+      MG_POSTGRES_WRITER_BROKER_CLIENT_CERT: ${MG_POSTGRES_WRITER_BROKER_CLIENT_CERT}
+      MG_POSTGRES_WRITER_BROKER_CLIENT_KEY: ${MG_POSTGRES_WRITER_BROKER_CLIENT_KEY}
+      MG_POSTGRES_WRITER_BROKER_CA_CERTS: ${MG_POSTGRES_WRITER_BROKER_CA_CERTS}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -63,4 +69,11 @@ services:
     networks:
       - magistrala-base-net
     volumes:
-      - ./config.toml:/config.toml
+      # Relative paths in an addon file resolve against the project directory,
+      # which is the base compose file's directory rather than this one.
+      - ./addons/postgres-writer/config.toml:${MG_POSTGRES_WRITER_CONFIG_PATH}
+      # The URI SAN in this client certificate identifies the Postgres writer
+      # to the FluxMQ local listener; the broker ACL only permits `writers`.
+      - ./ssl/certs/postgres-writer-fluxmq-client.crt:${MG_POSTGRES_WRITER_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/postgres-writer-fluxmq-client.key:${MG_POSTGRES_WRITER_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_POSTGRES_WRITER_BROKER_CA_CERTS}:ro

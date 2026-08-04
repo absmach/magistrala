@@ -262,6 +262,7 @@ services:
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -289,6 +290,7 @@ services:
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -316,6 +318,7 @@ services:
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
+      - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:

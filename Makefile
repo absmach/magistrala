@@ -366,11 +366,17 @@ endif
 ifeq ("$(wildcard docker/ssl/certs/timescale-writer-fluxmq-client.crt)","")
 	$(MAKE) -C docker/ssl timescale_writer_fluxmq_client_cert
 endif
+ifeq ("$(wildcard docker/ssl/certs/postgres-writer-fluxmq-client.crt)","")
+	$(MAKE) -C docker/ssl postgres_writer_fluxmq_client_cert
+endif
 ifeq ("$(wildcard docker/fluxmq/secrets/re-current)","")
 	$(MAKE) -C docker/ssl fluxmq_service_secret
 endif
 ifeq ("$(wildcard docker/fluxmq/secrets/timescale-writer-current)","")
 	$(MAKE) -C docker/ssl timescale_writer_fluxmq_service_secret
+endif
+ifeq ("$(wildcard docker/fluxmq/secrets/postgres-writer-current)","")
+	$(MAKE) -C docker/ssl postgres_writer_fluxmq_service_secret
 endif
 
 check_re_trace_key:

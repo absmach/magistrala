@@ -17,7 +17,7 @@ require (
 	github.com/fiorix/go-smpp v0.0.0-20210403173735-2894b96e70ba
 	github.com/go-chi/chi/v5 v5.3.1
 	github.com/go-kit/kit v0.13.0
-	github.com/gofrs/uuid/v5 v5.4.0
+	github.com/gofrs/uuid/v5 v5.5.0
 	github.com/google/uuid v1.6.0
 	github.com/gookit/color v1.6.1
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674
@@ -54,7 +54,7 @@ require (
 	golang.org/x/net v0.57.0
 	golang.org/x/sync v0.22.0
 	gonum.org/v1/gonum v0.17.0
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v3 v3.0.1

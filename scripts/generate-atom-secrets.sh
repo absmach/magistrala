@@ -66,10 +66,12 @@ if [[ ! -f "${template_file}" ]]; then
 fi
 
 if { [[ -e "${out_yaml}" ]] || [[ -e "${out_env}" ]]; } && [[ ${force} -eq 0 ]]; then
-    echo "atom secrets already exist — pass --force to regenerate:" >&2
-    [[ -e "${out_yaml}" ]] && echo "  ${out_yaml}" >&2
-    [[ -e "${out_env}" ]] && echo "  ${out_env}" >&2
-    exit 1
+    # No-op: the desired-state files exist. Exit 0 so `make` prereq targets
+    # do not treat "already generated" as a failure. Pass --force to rotate.
+    echo "atom secrets already exist — pass --force to regenerate:"
+    [[ -e "${out_yaml}" ]] && echo "  ${out_yaml}"
+    [[ -e "${out_env}" ]] && echo "  ${out_env}"
+    exit 0
 fi
 
 if ! command -v openssl >/dev/null 2>&1; then
@@ -123,7 +125,16 @@ mv "${tmp_yaml}" "${out_yaml}"
 mv "${tmp_env}" "${out_env}"
 trap - EXIT
 
-chmod 0600 "${out_env}" "${out_yaml}"
+# The env file is read by docker compose on the host and never touched by any
+# container, so lock it down to owner rw.
+chmod 0600 "${out_env}"
+
+# The YAML is bind-mounted read-only into the Atom container, which runs as a
+# non-root `atom` user. Bind mounts preserve host ownership numerically, so
+# host-user rw plus world-readable is the pragmatic middle ground for dev.
+# In prod, chown the file to the container's atom uid (see Dockerfile) and
+# tighten to 0640.
+chmod 0644 "${out_yaml}"
 
 cat <<EOF
 generated ${#services[@]} service tokens:

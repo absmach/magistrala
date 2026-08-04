@@ -300,34 +300,41 @@ make check_certs
 
 This creates whatever is missing and leaves anything already present alone:
 
-| Path                                               | What it is                                                                    |
-| -------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `docker/ssl/certs/fluxmq-service-server.{crt,key}` | Server certificate for FluxMQ's mTLS service listener                         |
-| `docker/ssl/certs/re-fluxmq-client.{crt,key}`      | Client certificate whose URI SAN identifies the Rules Engine to that listener |
-| `docker/fluxmq/secrets/re-current`                 | The principal secret, derived from `MG_RE_BROKER_SECRET` in `docker/.env`     |
-| `docker/re/secrets/trace.key`                      | HMAC key the Rules Engine signs its loop-detection traces with                |
+| Path                                                             | What it is                                                                         |
+| ---------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| `docker/ssl/certs/fluxmq-service-server.{crt,key}`               | Server certificate for FluxMQ's mTLS service listener                              |
+| `docker/ssl/certs/re-fluxmq-client.{crt,key}`                    | Client certificate whose URI SAN identifies the Rules Engine                       |
+| `docker/ssl/certs/timescale-writer-fluxmq-client.{crt,key}`      | Client certificate whose URI SAN identifies the Timescale writer                   |
+| `docker/fluxmq/secrets/re-current`                               | Rules Engine principal secret, derived from `MG_RE_BROKER_SECRET`                   |
+| `docker/fluxmq/secrets/timescale-writer-current`                 | Writer principal secret, derived from `MG_TIMESCALE_WRITER_BROKER_SECRET`           |
+| `docker/re/secrets/trace.key`                                    | HMAC key the Rules Engine signs its loop-detection traces with                     |
 
-Both certificates are issued by the development CA committed at
+The certificates are issued by the development CA committed at
 `docker/ssl/certs/ca.crt`, so no extra setup is needed for a local run. The
 generated material is gitignored.
 
 The server certificate is issued for `fluxmq` and `fluxmq-node{1,2,3}`, which
 covers both this Compose stack and a single-node deployment. Point
-`MG_RE_BROKER_URL` at a host outside that set and the Rules Engine fails its
-TLS verification with `certificate is valid for ...`; add the name to
+`MG_RE_BROKER_URL` or `MG_TIMESCALE_WRITER_BROKER_URL` at a host outside that
+set and the service fails its TLS verification with `certificate is valid for
+...`; add the name to
 `FLUXMQ_SERVICE_SERVER_CERT_CONFIG` in `docker/ssl/Makefile` and reissue:
 
 ```bash
-rm -f docker/ssl/certs/fluxmq-service-server.* docker/ssl/certs/re-fluxmq-client.*
+rm -f docker/ssl/certs/fluxmq-service-server.* \
+  docker/ssl/certs/re-fluxmq-client.* \
+  docker/ssl/certs/timescale-writer-fluxmq-client.*
 make -C docker/ssl fluxmq_service_certs
 ```
 
-`make check_certs` skips this pair when it already exists, so a stale
-certificate has to be removed rather than merely re-run.
+`make check_certs` skips certificates that already exist, so stale certificates
+have to be removed rather than merely re-running the target.
 
-Two of these are stateful, not merely derived. `re-current` must stay equal to
-`MG_RE_BROKER_SECRET`: change the variable and re-run `make -C docker/ssl
-fluxmq_service_secret`, or the Rules Engine fails to authenticate.
+The local-principal secrets must stay equal to the corresponding values in
+`docker/.env`. After changing `MG_RE_BROKER_SECRET`, re-run `make -C docker/ssl
+fluxmq_service_secret`. After changing `MG_TIMESCALE_WRITER_BROKER_SECRET`,
+re-run `make -C docker/ssl timescale_writer_fluxmq_service_secret`. A mismatch
+causes that service to fail broker authentication.
 `trace.key` is created once and preserved on later runs — replacing it while
 messages are in flight would invalidate the rule traces they already carry, so
 delete it only deliberately. Every Rules Engine replica must read the same key.

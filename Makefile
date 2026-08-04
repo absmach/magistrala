@@ -197,7 +197,14 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
+.PHONY: all help $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
+
+help:
+	@printf 'Usage:\n  make <target> [VARIABLE=value ...]\n\nAvailable targets:\n'
+	@$(MAKE) -qpRr : 2>/dev/null | \
+		awk -F: '/^[[:alnum:]_][^$$#\/\t=]*:([^=]|$$)/ { split($$1, targets, /[[:space:]]+/); for (i in targets) if (targets[i] != "") print targets[i] }' | \
+		LC_ALL=C sort -u | \
+		awk '$$0 != "Makefile" { printf "  make %s\n", $$0 }'
 
 clean:
 	rm -rf ${BUILD_DIR}
@@ -349,15 +356,21 @@ else
 	$(eval GRPC_MTLS :=)
 endif
 
-# The Rules Engine reaches FluxMQ on the mTLS local listener, and compose mounts
-# both sides of that connection. The certificates and the principal secret are
+# Internal services reach FluxMQ on the mTLS local listener, and Compose mounts
+# both sides of those connections. Certificates and principal secrets are
 # generated rather than committed, so make them before anything binds them.
 check_fluxmq_service_certs:
 ifeq ("$(wildcard docker/ssl/certs/re-fluxmq-client.crt)","")
 	$(MAKE) -C docker/ssl fluxmq_service_certs
 endif
+ifeq ("$(wildcard docker/ssl/certs/timescale-writer-fluxmq-client.crt)","")
+	$(MAKE) -C docker/ssl timescale_writer_fluxmq_client_cert
+endif
 ifeq ("$(wildcard docker/fluxmq/secrets/re-current)","")
 	$(MAKE) -C docker/ssl fluxmq_service_secret
+endif
+ifeq ("$(wildcard docker/fluxmq/secrets/timescale-writer-current)","")
+	$(MAKE) -C docker/ssl timescale_writer_fluxmq_service_secret
 endif
 
 check_re_trace_key:

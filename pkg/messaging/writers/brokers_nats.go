@@ -34,8 +34,20 @@ var cfg = jetstream.StreamConfig{
 	Storage:           jetstream.FileStorage,
 }
 
-func NewPubSub(ctx context.Context, url string, logger *slog.Logger) (messaging.PubSub, error) {
-	pb, err := broker.NewPubSub(ctx, url, logger, broker.Prefix(prefix), broker.JSStreamConfig(cfg))
+// InternalMetadata is a no-op for the NATS backend. It exists for compile-time
+// compatibility with the FluxMQ variant; NATS carries metadata in the protobuf
+// message.
+func InternalMetadata(_, _, _ string) messaging.Option {
+	return func(_ any) error { return nil }
+}
+
+func NewPubSub(ctx context.Context, url string, logger *slog.Logger, opts ...messaging.Option) (messaging.PubSub, error) {
+	brokerOpts := []messaging.Option{
+		broker.Prefix(prefix),
+		broker.JSStreamConfig(cfg),
+	}
+	brokerOpts = append(brokerOpts, opts...)
+	pb, err := broker.NewPubSub(ctx, url, logger, brokerOpts...)
 	if err != nil {
 		return nil, err
 	}

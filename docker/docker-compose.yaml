@@ -255,12 +255,13 @@ services:
         ipv4_address: 172.30.0.201
     volumes:
       - ./fluxmq/node1.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -281,12 +282,13 @@ services:
         ipv4_address: 172.30.0.202
     volumes:
       - ./fluxmq/node2.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -307,12 +309,13 @@ services:
         ipv4_address: 172.30.0.203
     volumes:
       - ./fluxmq/node3.yaml:/etc/fluxmq/config.yaml:ro
-      # Server certificate and CA for the mTLS service listener, plus the
-      # local-principal secret it authenticates the Rules Engine against.
+      # Server certificate and CA for the mTLS service listener, plus each
+      # local principal's SASL secret.
       - ./ssl/certs/fluxmq-service-server.crt:/etc/fluxmq/certs/fluxmq-service-server.crt:ro
       - ./ssl/certs/fluxmq-service-server.key:/etc/fluxmq/certs/fluxmq-service-server.key:ro
       - ./ssl/certs/ca.crt:/etc/fluxmq/certs/ca.crt:ro
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
+      - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
@@ -717,6 +720,8 @@ services:
     depends_on:
       timescale:
         condition: service_healthy
+      fluxmq-node1:
+        condition: service_healthy
     restart: on-failure
     environment:
       MG_TIMESCALE_WRITER_LOG_LEVEL: ${MG_TIMESCALE_WRITER_LOG_LEVEL}
@@ -734,7 +739,10 @@ services:
       MG_TIMESCALE_SSL_CERT: ${MG_TIMESCALE_SSL_CERT}
       MG_TIMESCALE_SSL_KEY: ${MG_TIMESCALE_SSL_KEY}
       MG_TIMESCALE_SSL_ROOT_CERT: ${MG_TIMESCALE_SSL_ROOT_CERT}
-      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_MESSAGE_BROKER_URL: ${MG_TIMESCALE_WRITER_BROKER_URL}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}
+      MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY: ${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}
+      MG_TIMESCALE_WRITER_BROKER_CA_CERTS: ${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
@@ -745,6 +753,11 @@ services:
       - magistrala-base-net
     volumes:
       - ./addons/timescale-writer/config.toml:${MG_TIMESCALE_WRITER_CONFIG_PATH}
+      # The URI SAN in this client certificate identifies the Timescale writer
+      # to the FluxMQ local listener; the broker ACL only permits `writers`.
+      - ./ssl/certs/timescale-writer-fluxmq-client.crt:${MG_TIMESCALE_WRITER_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/timescale-writer-fluxmq-client.key:${MG_TIMESCALE_WRITER_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_TIMESCALE_WRITER_BROKER_CA_CERTS}:ro
   re-db:
     image: docker.io/postgres:18.4-alpine3.24
     container_name: magistrala-re-db

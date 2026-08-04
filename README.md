@@ -26,7 +26,6 @@ Get Magistrala running locally in a few commands:
 ```bash
 git clone https://github.com/absmach/magistrala.git
 cd magistrala
-make provision_atom_tokens
 make run_latest
 ```
 
@@ -226,28 +225,28 @@ containers failing against a directory where they expect a key.
 
 ### Atom service tokens
 
-Not generated automatically, because provisioning them starts Atom and runs a
-bootstrap job against it:
+Generated on demand: `make run_latest` runs `scripts/generate-atom-secrets.sh`
+through the `docker/.env.tokens` prerequisite, so the first run mints them for
+you. To do it explicitly:
 
 ```bash
-make provision_atom_tokens
+make atom-secrets
 ```
 
-This brings up Atom, runs `atom-bootstrap`, and writes the gitignored
-`docker/.env.tokens` with one service token per consumer —
-`MG_ATOM_TOKEN_FLUXMQ_AUTH`, `MG_ATOM_TOKEN_FLUXMQ_NODE{1,2,3}`,
-`MG_ATOM_TOKEN_RE`, `MG_ATOM_TOKEN_ALARMS`, `MG_ATOM_TOKEN_REPORTS`,
-`MG_ATOM_TOKEN_TIMESCALE_READER`, and `MG_ATOM_TOKEN_POSTGRES_READER`.
+The script writes two gitignored files from the same random material:
+`docker/atom-bootstrap.yaml`, bind-mounted into the Atom container so Atom
+hashes the credentials at first boot, and `docker/.env.tokens`, which supplies
+one `MG_ATOM_TOKEN_*` per consumer — `MG_ATOM_TOKEN_FLUXMQ_AUTH`,
+`MG_ATOM_TOKEN_FLUXMQ_NODE{1,2,3}`, `MG_ATOM_TOKEN_JOURNAL`,
+`MG_ATOM_TOKEN_NOTIFICATIONS`, `MG_ATOM_TOKEN_RE`, `MG_ATOM_TOKEN_ALARMS`,
+`MG_ATOM_TOKEN_REPORTS`, `MG_ATOM_TOKEN_TIMESCALE_READER`,
+`MG_ATOM_TOKEN_POSTGRES_READER`, and `MG_ATOM_TOKEN_BOOTSTRAP`. No init
+container is involved: services come up already holding credentials Atom has
+accepted.
 
-`make run_latest` refuses to start when that file is absent or short of any of
-those variables, and names what is missing. To fold the step into the run:
-
-```bash
-make run_latest PROVISION_ATOM_TOKENS=true
-```
-
-Re-run `provision_atom_tokens` after anything that resets Atom's database; the
-old tokens do not survive it.
+Rotate with `make atom-secrets-rotate`, which regenerates both files, restarts
+Atom, and reminds you to restart the downstream services. Anything that resets
+Atom's database also needs a rotation — the old tokens do not survive it.
 
 ---
 

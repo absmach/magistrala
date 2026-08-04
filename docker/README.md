@@ -16,12 +16,33 @@ Run the following commands from the project root directory.
 make run_latest
 ```
 
-The Atom runtime image is selected with `ATOM_IMAGE` in `docker/.env`. To test Magistrala against a local Atom checkout, build that checkout with a local tag and set `ATOM_IMAGE` to that tag before running Compose.
+`run_latest` depends on `docker/.env.tokens`, so on first run it invokes
+`scripts/generate-atom-secrets.sh` to mint one unscoped Atom access token per
+Magistrala service. The script writes two files from the same random material:
 
-If you use `docker compose` directly instead of the Makefile, pass the env file:
+- `docker/atom-bootstrap.yaml` — mounted into the Atom container. Atom hashes
+  each token secret at first boot and stamps the credential row
+  `managed_by='config'`, so the API can never leak or revoke them.
+- `docker/.env.tokens` — loaded by docker compose so downstream services see
+  their `ATOM_SERVICE_TOKEN` values.
+
+Both files are gitignored. Rotate all service tokens with:
 
 ```bash
-docker compose -f docker/docker-compose.yaml --env-file docker/.env up
+make atom-secrets-rotate
+```
+
+which regenerates the pair, restarts the Atom container, and prints a
+reminder to restart downstream services so they pick up the new tokens.
+
+The Atom runtime image is selected with `ATOM_IMAGE` in `docker/.env`. To test Magistrala against a local Atom checkout, build that checkout with a local tag and set `ATOM_IMAGE` to that tag before running Compose.
+
+If you use `docker compose` directly instead of the Makefile, pass both env files:
+
+```bash
+scripts/generate-atom-secrets.sh   # first time only
+docker compose -f docker/docker-compose.yaml \
+  --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To start additional addon services:

@@ -24,7 +24,8 @@ space:= $(empty) $(empty)
 DOCKER_PROJECT ?= $(shell echo $(subst $(space),,$(USER_REPO)) | sed -E 's/[^a-zA-Z0-9]/_/g' | tr '[:upper:]' '[:lower:]')
 DOCKER_COMPOSE_COMMANDS_SUPPORTED := up down config restart
 DEFAULT_DOCKER_COMPOSE_COMMAND  := up
-DOCKER_ENV_FILES := --env-file docker/.env
+DOCKER_BASE_ENV_FILES := --env-file docker/.env
+DOCKER_ENV_FILES = $(if $(filter down,$(DOCKER_COMPOSE_COMMAND)),$(DOCKER_BASE_ENV_FILES),$(DOCKER_BASE_ENV_FILES) --env-file docker/.env.tokens)
 HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
 GRPC_MTLS_CERT_FILES_EXISTS = 0
@@ -367,15 +368,30 @@ endif
 endif
 endif
 
-run_latest: check_certs
+atom-secrets:
+	@scripts/generate-atom-secrets.sh $(args)
+
+# Regenerate and restart the Atom container so it re-reads the bootstrap file.
+atom-secrets-rotate:
+	@scripts/generate-atom-secrets.sh --force
+	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) restart atom
+	@echo "Atom restarted with rotated tokens; restart downstream services to pick up new ATOM_SERVICE_TOKEN values."
+
+# `run_latest` refuses to start until service tokens exist — the compose file
+# bind-mounts docker/atom-bootstrap.yaml into the Atom container and the
+# downstream services read MG_ATOM_TOKEN_* values from docker/.env.tokens.
+run_latest: check_certs docker/.env.tokens
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
-run_latest_ci: check_certs
+run_latest_ci: check_certs docker/.env.tokens
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
+
+docker/.env.tokens: scripts/generate-atom-secrets.sh docker/atom-bootstrap.template.yaml
+	@scripts/generate-atom-secrets.sh
 
 run_tls: check_certs
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)
@@ -388,13 +404,13 @@ run_tls: check_certs
 	DOCKER_PROJECT="$(DOCKER_PROJECT)" \
 	./docker/setup-tls.sh
 
-run_stable: check_certs
+run_stable: check_certs docker/.env.tokens
 	$(eval version = $(shell git describe --abbrev=0 --tags))
 	git checkout $(version)
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=$(version)/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
-run_addons: check_certs
+run_addons: check_certs docker/.env.tokens
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
 	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
 		$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d atom jaeger; \
@@ -403,5 +419,5 @@ run_addons: check_certs
 		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) $(DOCKER_ENV_FILES) $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done
 
-run_live: check_certs
+run_live: check_certs docker/.env.tokens
 	GOPATH=$(go env GOPATH) $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-live.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)

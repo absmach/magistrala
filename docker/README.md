@@ -13,26 +13,42 @@ Follow the [official Docker Compose installation guide](https://docs.docker.com/
 Run the following commands from the project root directory.
 
 ```bash
-make provision_atom_tokens
 make run_latest
 ```
 
-`make provision_atom_tokens` starts Atom, creates per-service unscoped Atom access tokens, and writes them to the generated `docker/.env.tokens` file. That file is local-only and must not be committed.
+`run_latest` depends on `docker/.env.tokens`, so on first run it invokes
+`scripts/generate-atom-secrets.sh` to mint one unscoped Atom access token per
+Magistrala service. The script writes two files from the same random material:
+
+- `docker/atom-bootstrap.yaml` — mounted into the Atom container. Atom hashes
+  each token secret at first boot and stamps the credential row
+  `managed_by='config'`, so the API can never leak or revoke them.
+- `docker/.env.tokens` — loaded by docker compose so downstream services see
+  their `ATOM_SERVICE_TOKEN` values.
+
+Both files are gitignored. Rotate all service tokens with:
+
+```bash
+make atom-secrets-rotate
+```
+
+which regenerates the pair, restarts the Atom container, and prints a
+reminder to restart downstream services so they pick up the new tokens.
 
 The Atom runtime image is selected with `ATOM_IMAGE` in `docker/.env`. To test Magistrala against a local Atom checkout, build that checkout with a local tag and set `ATOM_IMAGE` to that tag before running Compose.
-
-The generated `MG_ATOM_TOKEN_*` values are intentionally unscoped service credentials for the current integration. Do not replace them with scoped Atom access tokens yet: Atom rejects scoped tokens on owner-wide listing APIs such as `authorizedObjectIds`, and some Magistrala policy-listing paths still use that API.
 
 If you use `docker compose` directly instead of the Makefile, pass both env files:
 
 ```bash
-docker compose -f docker/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
+scripts/generate-atom-secrets.sh   # first time only
+docker compose -f docker/docker-compose.yaml \
+  --env-file docker/.env --env-file docker/.env.tokens up
 ```
 
 To start additional addon services:
 
 ```bash
-docker compose -f docker/addons/<path>/docker-compose.yaml --env-file docker/.env --env-file docker/.env.tokens up
+docker compose -f docker/addons/<path>/docker-compose.yaml --env-file docker/.env up
 ```
 
 To pull images from a specific release in `ghcr.io/absmach/magistrala`, change `MG_RELEASE_TAG` in `.env` before running these commands.
@@ -228,7 +244,6 @@ make dockers    # builds all Docker images
 Start services with Docker compose:
 
 ```bash
-make provision_atom_tokens
 make run_latest
 ```
 

@@ -28,6 +28,17 @@ func TestQueueBindingsDoNotOverlap(t *testing.T) {
 		{topic: "$queue/events/domain/client", want: []string{"events"}},
 		{topic: "$queue/writers/domain/channel", want: []string{"writers"}},
 		{topic: "$queue/alarms/domain/channel", want: []string{"alarms"}},
+		// A queue addressed with no trailing path still has to land in its own
+		// stream: pkg/events/fluxmq addresses exactly "$queue/events" when the
+		// stream name resolves to an empty path, and a binding that stopped
+		// matching its own parent level would drop those publications with no
+		// error, since an unmatched topic capture is not a failure.
+		{topic: "$queue/events", want: []string{"events"}},
+		// Channel messages reach stream "m" through its own "m/#" binding, so
+		// nothing addresses the queue directly. Were that to change, the
+		// publication would match no queue at all rather than fall through to
+		// the reserved one.
+		{topic: "$queue/m/domain/channel", want: nil},
 	}
 
 	for _, configFile := range []string{"node1.yaml", "node2.yaml", "node3.yaml"} {

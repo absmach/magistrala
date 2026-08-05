@@ -24,6 +24,8 @@ Publish routing depends on the topic and the publisher prefix.
 
 The `$queue/` prefix lets any publisher force delivery into the durable stream queue regardless of its own prefix. This is used internally (e.g. by `writers`, `alarms`) to guarantee at-least-once delivery through the broker's stream.
 
+Addressing a queue is not the same as one existing. Each stream is captured by its own `$queue/<name>/#` binding in the broker configuration, and a publication matching no binding is dropped without an error — a failed or absent capture never fails the publish. A new `$queue/<name>` namespace therefore needs its queue declared in `docker/fluxmq/node{1,2,3}.yaml` before anything is published to it. The bindings are deliberately disjoint, so that a message lands in exactly one stream rather than also accumulating in the reserved `mqtt` queue; `docker/fluxmq/config_test.go` holds that invariant.
+
 ### Stream queues
 
 On startup, publishers and pubsub clients normally declare a durable stream queue named after their prefix. Stream subscribers use consumer groups, so each group receives every message exactly once. The default stream queue is named `m`. `InternalMetadata` instead requires that stream to be pre-provisioned by the broker and never attempts to create or modify it.

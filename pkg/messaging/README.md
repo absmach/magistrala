@@ -32,6 +32,12 @@ On startup, publishers and pubsub clients normally declare a durable stream queu
 
 `Subscribe` attaches to the durable stream queue via a consumer group filtered by topic. Optionally (when `DirectTopicIngress` is enabled), it also subscribes to the raw MQTT topic so that messages published directly by MQTT clients — bypassing the queue — are also received. A deployment using `InternalMetadata` must authorize the requested subscriptions explicitly; the Rules Engine local principal authorizes only pre-provisioned stream `m`.
 
+### Message origin
+
+A message carries the protocol it was published with (`mqtt`, `http`, `coap`, …) and the identity of its publisher. Both are broker-controlled: on a publication from an untrusted connection the broker overwrites them with the transport and identity of that connection, so a service that consumes a device message and republishes it — into the `writers` stream, for instance — turns every one of them into `protocol: amqp` published by that service.
+
+`InternalMetadata` is what avoids this. A connection authenticated as a `service`-role local principal on the mTLS listener may relay the origin protocol, publisher, `created` timestamp and metadata it received rather than having its own stamped on. Any service that republishes messages someone else authored has to use it, and its principal needs a `permissions.publish` entry for the destination.
+
 ### Options
 
 | Option                                 | Description                                                                                       |

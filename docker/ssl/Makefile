@@ -57,6 +57,9 @@ TIMESCALE_WRITER_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/timescale-wri
 POSTGRES_WRITER_FLUXMQ_CLIENT_CN=postgres-writer
 POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME=postgres-writer-fluxmq-client
 POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/postgres-writer
+FLUXMQ_AUTH_FLUXMQ_CLIENT_CN=fluxmq-auth
+FLUXMQ_AUTH_FLUXMQ_CLIENT_CRT_FILE_NAME=fluxmq-auth-fluxmq-client
+FLUXMQ_AUTH_FLUXMQ_CLIENT_URI_SAN=spiffe://absmach/magistrala/fluxmq-auth
 
 define GRPC_CERT_CONFIG
 [req]
@@ -137,7 +140,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret re_trace_key
+all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -258,6 +261,7 @@ fluxmq_service_certs:
 	$(call gen_uri_san_cert,$(RE_FLUXMQ_CLIENT_CRT_FILE_NAME),$(RE_FLUXMQ_CLIENT_CN),$(RE_FLUXMQ_CLIENT_URI_SAN))
 	$(call gen_uri_san_cert,$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_CN),$(TIMESCALE_WRITER_FLUXMQ_CLIENT_URI_SAN))
 	$(call gen_uri_san_cert,$(POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(POSTGRES_WRITER_FLUXMQ_CLIENT_CN),$(POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN))
+	$(call gen_uri_san_cert,$(FLUXMQ_AUTH_FLUXMQ_CLIENT_CRT_FILE_NAME),$(FLUXMQ_AUTH_FLUXMQ_CLIENT_CN),$(FLUXMQ_AUTH_FLUXMQ_CLIENT_URI_SAN))
 
 # Generate a single principal's certificate when adding it to an existing
 # deployment, without rotating the broker certificate or the other principals.
@@ -266,6 +270,9 @@ timescale_writer_fluxmq_client_cert:
 
 postgres_writer_fluxmq_client_cert:
 	$(call gen_uri_san_cert,$(POSTGRES_WRITER_FLUXMQ_CLIENT_CRT_FILE_NAME),$(POSTGRES_WRITER_FLUXMQ_CLIENT_CN),$(POSTGRES_WRITER_FLUXMQ_CLIENT_URI_SAN))
+
+fluxmq_auth_fluxmq_client_cert:
+	$(call gen_uri_san_cert,$(FLUXMQ_AUTH_FLUXMQ_CLIENT_CRT_FILE_NAME),$(FLUXMQ_AUTH_FLUXMQ_CLIENT_CN),$(FLUXMQ_AUTH_FLUXMQ_CLIENT_URI_SAN))
 
 # The SASL secret a local principal presents alongside its certificate. FluxMQ
 # reads it from a file and the service sends it in its broker URL, so both sides
@@ -298,6 +305,9 @@ timescale_writer_fluxmq_service_secret:
 
 postgres_writer_fluxmq_service_secret:
 	$(call gen_fluxmq_service_secret,MG_POSTGRES_WRITER_BROKER_SECRET,postgres-writer-current)
+
+fluxmq_auth_fluxmq_service_secret:
+	$(call gen_fluxmq_service_secret,MG_FLUXMQ_BROKER_SECRET,fluxmq-auth-current)
 
 # Persistent HMAC key shared by Rules Engine replicas. Do not replace an
 # existing key: doing so while old messages are in flight would invalidate

@@ -360,6 +360,8 @@ changing one, re-run its target:
 | `MG_RE_BROKER_SECRET`               | `fluxmq_service_secret`                   |
 | `MG_TIMESCALE_WRITER_BROKER_SECRET` | `timescale_writer_fluxmq_service_secret`  |
 | `MG_POSTGRES_WRITER_BROKER_SECRET`  | `postgres_writer_fluxmq_service_secret`   |
+| `MG_FLUXMQ_BROKER_SECRET`           | `fluxmq_auth_fluxmq_service_secret`       |
+
 `trace.key` is created once and preserved on later runs — replacing it while
 messages are in flight would invalidate the rule traces they already carry, so
 delete it only deliberately. Every Rules Engine replica must read the same key.

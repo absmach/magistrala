@@ -108,8 +108,13 @@ queue_manager:
 
 queues:
   - name: "mqtt"
+    # "mqtt" is this reserved queue's name, not an MQTT-only transport filter;
+    # every protocol adapter uses the same topic-based queue routing. A local-
+    # principal prefix grant is captured by every matching queue, so keep this
+    # binding inside the mqtt namespace rather than also persisting service
+    # streams such as writers and alarms here.
     topics:
-      - "$queue/#"
+      - "$queue/mqtt/#"
     reserved: true
   - name: "events"
     topics:

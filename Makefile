@@ -409,7 +409,7 @@ run_latest_ci: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
-run_tls:
+run_tls: check_certs
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)
 	@if [ "$(or $(letsencrypt),true)" != "false" ] && [ -z "$(email)" ]; then echo "Usage: make run_tls host=example.com email=admin@example.com [letsencrypt=false] [staging=true] [force=true]"; exit 2; fi
 	MG_PUBLIC_HOST="$(host)" \

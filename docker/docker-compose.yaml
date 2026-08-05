@@ -263,6 +263,7 @@ services:
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
+      - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
       - magistrala-fluxmq-node1-volume:/tmp/fluxmq
 
   fluxmq-node2:
@@ -291,6 +292,7 @@ services:
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
+      - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
       - magistrala-fluxmq-node2-volume:/tmp/fluxmq
 
   fluxmq-node3:
@@ -319,6 +321,7 @@ services:
       - ./fluxmq/secrets/re-current:/etc/fluxmq/secrets/re-current:ro
       - ./fluxmq/secrets/timescale-writer-current:/etc/fluxmq/secrets/timescale-writer-current:ro
       - ./fluxmq/secrets/postgres-writer-current:/etc/fluxmq/secrets/postgres-writer-current:ro
+      - ./fluxmq/secrets/fluxmq-auth-current:/etc/fluxmq/secrets/fluxmq-auth-current:ro
       - magistrala-fluxmq-node3-volume:/tmp/fluxmq
 
   fluxmq-auth:
@@ -352,6 +355,17 @@ services:
       ATOM_TIMEOUT: ${ATOM_TIMEOUT}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
+      MG_FLUXMQ_BROKER_URL: ${MG_FLUXMQ_BROKER_URL}
+      MG_FLUXMQ_BROKER_CLIENT_CERT: ${MG_FLUXMQ_BROKER_CLIENT_CERT}
+      MG_FLUXMQ_BROKER_CLIENT_KEY: ${MG_FLUXMQ_BROKER_CLIENT_KEY}
+      MG_FLUXMQ_BROKER_CA_CERTS: ${MG_FLUXMQ_BROKER_CA_CERTS}
+    volumes:
+      # The URI SAN in this client certificate identifies the publish proxy to
+      # the FluxMQ local listener; the broker ACL only permits publishing to the
+      # message topic namespace.
+      - ./ssl/certs/fluxmq-auth-fluxmq-client.crt:${MG_FLUXMQ_BROKER_CLIENT_CERT}:ro
+      - ./ssl/certs/fluxmq-auth-fluxmq-client.key:${MG_FLUXMQ_BROKER_CLIENT_KEY}:ro
+      - ./ssl/certs/ca.crt:${MG_FLUXMQ_BROKER_CA_CERTS}:ro
     networks:
       - magistrala-base-net
 

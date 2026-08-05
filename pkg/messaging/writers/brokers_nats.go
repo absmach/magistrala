@@ -55,8 +55,13 @@ func NewPubSub(ctx context.Context, url string, logger *slog.Logger, opts ...mes
 	return pb, nil
 }
 
-func NewPublisher(ctx context.Context, url string) (messaging.Publisher, error) {
-	pb, err := broker.NewPublisher(ctx, url, broker.Prefix(prefix), broker.JSStreamConfig(cfg))
+func NewPublisher(ctx context.Context, url string, opts ...messaging.Option) (messaging.Publisher, error) {
+	brokerOpts := []messaging.Option{
+		broker.Prefix(prefix),
+		broker.JSStreamConfig(cfg),
+	}
+	brokerOpts = append(brokerOpts, opts...)
+	pb, err := broker.NewPublisher(ctx, url, brokerOpts...)
 	if err != nil {
 		return nil, err
 	}

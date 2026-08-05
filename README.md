@@ -306,17 +306,29 @@ This creates whatever is missing and leaves anything already present alone:
 | `docker/ssl/certs/re-fluxmq-client.{crt,key}`               | Client certificate whose URI SAN identifies the Rules Engine              |
 | `docker/ssl/certs/timescale-writer-fluxmq-client.{crt,key}` | Client certificate whose URI SAN identifies the Timescale writer          |
 | `docker/ssl/certs/postgres-writer-fluxmq-client.{crt,key}`  | Client certificate whose URI SAN identifies the Postgres writer           |
+| `docker/ssl/certs/fluxmq-auth-fluxmq-client.{crt,key}`      | Client certificate whose URI SAN identifies the publish proxy            |
 | `docker/fluxmq/secrets/re-current`                          | Rules Engine principal secret, from `MG_RE_BROKER_SECRET`                 |
 | `docker/fluxmq/secrets/timescale-writer-current`            | Timescale writer secret, from `MG_TIMESCALE_WRITER_BROKER_SECRET`         |
 | `docker/fluxmq/secrets/postgres-writer-current`             | Postgres writer secret, from `MG_POSTGRES_WRITER_BROKER_SECRET`           |
+| `docker/fluxmq/secrets/fluxmq-auth-current`                 | Publish proxy secret, from `MG_FLUXMQ_BROKER_SECRET`                     |
 | `docker/re/secrets/trace.key`                               | HMAC key the Rules Engine signs its loop-detection traces with            |
 
 Internal services reach the broker as *local principals* rather than as ordinary
 clients: each presents a client certificate whose URI SAN names it, plus a SASL
 secret, and the broker grants it only what it needs — the Rules Engine consumes
-`m` and republishes under it, the writers only subscribe to `writers`. The
-principals are declared in `docker/fluxmq/node{1,2,3}.yaml`, and adding a service
-means adding an entry there alongside its certificate and secret.
+`m`, republishes under it, and feeds the `writers` and `alarms` streams; the
+writers only subscribe to `writers`; the publish proxy that serves the UI's
+HTTP publish endpoint only publishes under `m.`. The principals are declared in
+`docker/fluxmq/node{1,2,3}.yaml`, and adding a service means adding an entry
+there alongside its certificate and secret.
+
+Being a local principal is also what preserves a message's origin. The broker
+stamps its own transport protocol and identity on anything published over a
+connection it does not trust, so a message relayed to the writers over the plain
+AMQP listener would be stored as `protocol: amqp` with the relaying service as
+its publisher. A `service`-role principal on the mTLS listener may state the
+origin instead, and the protocol the device actually published with survives to
+the database.
 
 The certificates are issued by the development CA committed at
 `docker/ssl/certs/ca.crt`, so no extra setup is needed for a local run. The
@@ -348,6 +360,8 @@ changing one, re-run its target:
 | `MG_RE_BROKER_SECRET`               | `fluxmq_service_secret`                   |
 | `MG_TIMESCALE_WRITER_BROKER_SECRET` | `timescale_writer_fluxmq_service_secret`  |
 | `MG_POSTGRES_WRITER_BROKER_SECRET`  | `postgres_writer_fluxmq_service_secret`   |
+| `MG_FLUXMQ_BROKER_SECRET`           | `fluxmq_auth_fluxmq_service_secret`       |
+
 `trace.key` is created once and preserved on later runs — replacing it while
 messages are in flight would invalidate the rule traces they already carry, so
 delete it only deliberately. Every Rules Engine replica must read the same key.

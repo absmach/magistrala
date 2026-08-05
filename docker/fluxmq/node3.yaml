@@ -105,8 +105,13 @@ queue_manager:
 
 queues:
   - name: "mqtt"
+    # "mqtt" is this reserved queue's name, not an MQTT-only transport filter;
+    # every protocol adapter uses the same topic-based queue routing. A local-
+    # principal prefix grant is captured by every matching queue, so keep this
+    # binding inside the mqtt namespace rather than also persisting service
+    # streams such as writers and alarms here.
     topics:
-      - "$queue/#"
+      - "$queue/mqtt/#"
     reserved: true
   - name: "events"
     topics:
@@ -158,6 +163,15 @@ auth:
         # run alongside cluster.enabled.
         publish:
           - routing_key_prefix: "m."
+          # The rule output streams. These grants have to live here: a
+          # publication from a connection the broker does not trust has the
+          # broker's own transport protocol and identity stamped on it, so a
+          # saved message would read as "amqp" rather than the protocol the
+          # device published with, and an alarm would name the engine's broker
+          # connection rather than the client. Same prefix reasoning as above --
+          # each queue's own "$queue/<name>/#" binding is what captures it.
+          - routing_key_prefix: "$queue/writers/"
+          - routing_key_prefix: "$queue/alarms/"
         # The message stream the Rules Engine consumes.
         subscribe:
           - "m"
@@ -179,6 +193,20 @@ auth:
         # neither publishes messages nor manages queues.
         subscribe:
           - "writers"
+    - name: "fluxmq-auth"
+      certificate_uri_san: "spiffe://absmach/magistrala/fluxmq-auth"
+      # The publish proxy relays messages a user published over HTTP. Stating
+      # their origin protocol and publisher is what the "service" role grants;
+      # on an untrusted connection the broker would stamp its own instead and
+      # every such message would be stored as having arrived over AMQP.
+      role: "service"
+      current_secret_file: "/etc/fluxmq/secrets/fluxmq-auth-current"
+      permissions:
+        # Messages are published to m.<domain>.c.<channel>.<subtopic>, whose
+        # tenant and channel identifiers cannot be enumerated here. It runs no
+        # consumer, so it is granted no subscribe.
+        publish:
+          - routing_key_prefix: "m."
   external:
     url: "http://fluxmq-auth:7016"
     transport: "grpc"

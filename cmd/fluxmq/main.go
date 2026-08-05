@@ -51,6 +51,16 @@ type config struct {
 	JaegerURL  url.URL `env:"MG_JAEGER_URL"           envDefault:"http://localhost:4318/v1/traces"`
 	TraceRatio float64 `env:"MG_JAEGER_TRACE_RATIO"   envDefault:"1.0"`
 	InstanceID string  `env:"MG_FLUXMQ_INSTANCE_ID"   envDefault:""`
+	// The publish proxy states the origin of the message it relays: the
+	// protocol the user published with and the client it was published as.
+	// A broker stamps its own transport and identity on a publication from a
+	// connection it does not trust, which would store every message from this
+	// service as having arrived over AMQP. These point the publisher at the
+	// listener that accepts a relayed origin instead.
+	MsgBrokerURL     string `env:"MG_FLUXMQ_BROKER_URL"         envDefault:""`
+	BrokerClientCert string `env:"MG_FLUXMQ_BROKER_CLIENT_CERT" envDefault:""`
+	BrokerClientKey  string `env:"MG_FLUXMQ_BROKER_CLIENT_KEY"  envDefault:""`
+	BrokerCACerts    string `env:"MG_FLUXMQ_BROKER_CA_CERTS"    envDefault:""`
 }
 
 func main() {
@@ -154,11 +164,21 @@ func main() {
 		MaxHeaderBytes:    grpcServerConfig.MaxHeaderBytes,
 	}
 
-	messagePublisher, err := fluxmqbroker.NewUndeclaredPublisher(
-		ctx,
-		cfg.BrokerURL,
+	// The mTLS client identity is optional: brokers that expose an
+	// unauthenticated listener need none. A partial configuration still fails,
+	// since half an identity is not a usable one.
+	publisherOpts := []messaging.Option{
 		fluxmqbroker.ConnectionName("fluxmq-ui-message-publish-proxy"),
-	)
+	}
+	msgBrokerURL := cfg.BrokerURL
+	if cfg.MsgBrokerURL != "" {
+		msgBrokerURL = cfg.MsgBrokerURL
+	}
+	if cfg.BrokerClientCert != "" || cfg.BrokerClientKey != "" || cfg.BrokerCACerts != "" {
+		publisherOpts = append(publisherOpts, fluxmqbroker.InternalMetadata(cfg.BrokerClientCert, cfg.BrokerClientKey, cfg.BrokerCACerts))
+	}
+
+	messagePublisher, err := fluxmqbroker.NewUndeclaredPublisher(ctx, msgBrokerURL, publisherOpts...)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create publish proxy message publisher: %s", err))
 		exitCode = 1

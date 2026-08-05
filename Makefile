@@ -369,6 +369,9 @@ endif
 ifeq ("$(wildcard docker/ssl/certs/postgres-writer-fluxmq-client.crt)","")
 	$(MAKE) -C docker/ssl postgres_writer_fluxmq_client_cert
 endif
+ifeq ("$(wildcard docker/ssl/certs/fluxmq-auth-fluxmq-client.crt)","")
+	$(MAKE) -C docker/ssl fluxmq_auth_fluxmq_client_cert
+endif
 ifeq ("$(wildcard docker/fluxmq/secrets/re-current)","")
 	$(MAKE) -C docker/ssl fluxmq_service_secret
 endif
@@ -377,6 +380,9 @@ ifeq ("$(wildcard docker/fluxmq/secrets/timescale-writer-current)","")
 endif
 ifeq ("$(wildcard docker/fluxmq/secrets/postgres-writer-current)","")
 	$(MAKE) -C docker/ssl postgres_writer_fluxmq_service_secret
+endif
+ifeq ("$(wildcard docker/fluxmq/secrets/fluxmq-auth-current)","")
+	$(MAKE) -C docker/ssl fluxmq_auth_fluxmq_service_secret
 endif
 
 check_re_trace_key:
@@ -403,7 +409,7 @@ run_latest_ci: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
-run_tls:
+run_tls: check_certs
 	@test -n "$(host)" || (echo "Usage: make run_tls host=example.com [email=admin@example.com] [letsencrypt=false] [staging=true] [force=true]" && exit 2)
 	@if [ "$(or $(letsencrypt),true)" != "false" ] && [ -z "$(email)" ]; then echo "Usage: make run_tls host=example.com email=admin@example.com [letsencrypt=false] [staging=true] [force=true]"; exit 2; fi
 	MG_PUBLIC_HOST="$(host)" \

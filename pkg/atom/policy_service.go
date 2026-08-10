@@ -84,20 +84,33 @@ func (ps PolicyService) DeletePolicyFilter(ctx context.Context, pr policies.Poli
 	if err != nil {
 		return err
 	}
-	page, err := writer.ListDirectPolicies(ctx, DirectPolicyQuery{
-		TenantID:    pr.Domain,
-		SubjectKind: policyGrantSubjectKind(pr),
-		SubjectID:   policySubjectID(pr),
-		Limit:       policyPageLimit,
-	})
-	if err != nil {
-		return err
-	}
-	for _, policy := range page.Items {
-		if !directPolicyMatches(policy, capID, pr) {
-			continue
+
+	// Collect matching IDs across all pages before deleting: deleting while
+	// paginating would shift later pages under us and skip matches.
+	var ids []string
+	for offset := uint64(0); ; offset += policyPageLimit {
+		page, err := writer.ListDirectPolicies(ctx, DirectPolicyQuery{
+			TenantID:    pr.Domain,
+			SubjectKind: policyGrantSubjectKind(pr),
+			SubjectID:   policySubjectID(pr),
+			Limit:       policyPageLimit,
+			Offset:      offset,
+		})
+		if err != nil {
+			return err
 		}
-		if err := writer.DeleteDirectPolicy(ctx, policy.ID); err != nil {
+		for _, policy := range page.Items {
+			if directPolicyMatches(policy, capID, pr) {
+				ids = append(ids, policy.ID)
+			}
+		}
+		if uint64(len(page.Items)) < policyPageLimit || offset+uint64(len(page.Items)) >= page.Total {
+			break
+		}
+	}
+
+	for _, id := range ids {
+		if err := writer.DeleteDirectPolicy(ctx, id); err != nil {
 			return err
 		}
 	}
@@ -136,7 +149,7 @@ func (ps PolicyService) ListAllObjects(ctx context.Context, pr policies.Policy) 
 			SubjectID:  policySubjectID(pr),
 			Action:     CapabilityName(pr.Permission),
 			ObjectKind: policyObjectKind(pr),
-			ObjectType: entityKind(KindClient),
+			ObjectType: atomPolicyObjectType(pr.ObjectType),
 			TenantID:   pr.Domain,
 			Limit:      policyPageLimit,
 			Offset:     offset,
@@ -180,10 +193,10 @@ func (ps PolicyService) ListPermissions(context.Context, policies.Policy, []stri
 }
 
 func isSupportedObjectList(pr policies.Policy) bool {
-	return pr.SubjectType == policies.UserType &&
-		pr.Subject != "" &&
-		pr.ObjectType == policies.ClientType &&
-		pr.Permission == policies.ViewPermission
+	if pr.SubjectType != policies.UserType || pr.Subject == "" || pr.ObjectType != policies.ClientType {
+		return false
+	}
+	return pr.Permission == policies.ViewPermission || pr.Permission == atomActionRead
 }
 
 func policyGrantSubjectKind(pr policies.Policy) string {
@@ -221,20 +234,22 @@ func policyGrantObjectType(pr policies.Policy) string {
 	if policyGrantScopeMode(pr) != atomScopeModeObject {
 		return ""
 	}
-	if pr.ObjectType == policies.ClientType {
-		return atomObjectKindEntity + ":" + entityKind(KindClient)
-	}
-	switch pr.ObjectType {
+	return atomPolicyObjectType(pr.ObjectType)
+}
+
+// atomPolicyObjectType is shared by the write and read paths so their object types cannot drift apart.
+func atomPolicyObjectType(objectType string) string {
+	switch objectType {
+	case policies.ClientType:
+		return atomObjectType(atomObjectKindEntity, entityKind(KindClient))
 	case policies.ChannelType:
-		return "resource:" + KindChannel
+		return atomObjectType(atomObjectKindResource, KindChannel)
 	case policies.RulesType:
-		return "resource:" + KindRule
+		return atomObjectType(atomObjectKindResource, KindRule)
 	case policies.ReportsType:
-		return "resource:" + KindReport
+		return atomObjectType(atomObjectKindResource, KindReport)
 	case policies.AlarmsType:
-		return "resource:" + KindAlarm
-	case policies.GroupType:
-		return ""
+		return atomObjectType(atomObjectKindResource, KindAlarm)
 	default:
 		return ""
 	}

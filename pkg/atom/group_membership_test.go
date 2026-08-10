@@ -528,6 +528,47 @@ func TestObjectAndPrincipalGroupsNamespacesDoNotCrossContaminate(t *testing.T) {
 	}
 }
 
+func TestObjectGroupsCanRequestDescendants(t *testing.T) {
+	const parentID = "customer-1"
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		payload := decodePayload(t, r)
+		if !strings.Contains(payload.Query, "$includeDescendants: Boolean") {
+			t.Fatalf("objectGroups query does not declare includeDescendants: %s", payload.Query)
+		}
+		if !strings.Contains(payload.Query, "includeDescendants: $includeDescendants") {
+			t.Fatalf("objectGroups query does not pass includeDescendants: %s", payload.Query)
+		}
+		if payload.Variables["parentId"] != parentID {
+			t.Fatalf("parentId variable = %v, want %s", payload.Variables["parentId"], parentID)
+		}
+		if payload.Variables["includeDescendants"] != true {
+			t.Fatalf("includeDescendants variable = %v, want true", payload.Variables["includeDescendants"])
+		}
+
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{"objectGroups": map[string]any{
+				"total": 1,
+				"items": []map[string]any{groupJSON("site-1", "Site 1", testTenantID, parentID)},
+			}},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	groups, err := client.ObjectGroups(context.Background(), Query{
+		TenantID:           testTenantID,
+		ParentID:           parentID,
+		IncludeDescendants: true,
+	})
+	if err != nil {
+		t.Fatalf("list object groups failed: %v", err)
+	}
+	if len(groups.Items) != 1 || groups.Items[0].ID != "site-1" {
+		t.Fatalf("unexpected object groups: %+v", groups)
+	}
+}
+
 // TestAddGroupMemberRejectsCrossTenant covers acceptance criterion 8: Atom
 // rejects adding a member from a different tenant, and the client must
 // surface that failure rather than swallow it.

@@ -55,16 +55,17 @@ type Resource struct {
 }
 
 type Query struct {
-	IDs      []string
-	Q        string
-	Kind     string
-	TenantID string
-	Name     string
-	Route    string
-	ParentID string
-	Status   string
-	Limit    uint64
-	Offset   uint64
+	IDs                []string
+	Q                  string
+	Kind               string
+	TenantID           string
+	Name               string
+	Route              string
+	ParentID           string
+	IncludeDescendants bool
+	Status             string
+	Limit              uint64
+	Offset             uint64
 }
 
 type AuthzRequest struct {

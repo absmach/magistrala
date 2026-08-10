@@ -142,26 +142,35 @@ func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (En
 	return out.UpdateEntity, err
 }
 
-func (c *Client) UpsertGroup(ctx context.Context, group Group) error {
-	if group.ID == "" {
-		_, err := c.CreateGroup(ctx, group)
-		return err
-	}
-	if _, err := c.CreateGroup(ctx, group); err == nil || !IsConflict(err) {
-		return err
-	}
-	_, err := c.UpdateGroup(ctx, group.ID, group)
-	return err
+// CreateObjectGroup creates a group of devices/channels. Atom keeps object
+// groups and principal groups in separate tables; this always lands in the
+// object table.
+func (c *Client) CreateObjectGroup(ctx context.Context, group Group) (Group, error) {
+	return c.createGroup(ctx, "createObjectGroup", group)
 }
 
-func (c *Client) CreateGroup(ctx context.Context, group Group) (Group, error) {
-	var out struct {
-		CreateGroup Group `json:"createGroup"`
+// CreatePrincipalGroup creates a group of users, for use as a policy
+// subject. Atom keeps object groups and principal groups in separate tables;
+// this always lands in the principal table.
+func (c *Client) CreatePrincipalGroup(ctx context.Context, group Group) (Group, error) {
+	return c.createGroup(ctx, "createPrincipalGroup", group)
+}
+
+// createGroup does not accept parentId, so when group.ParentID is set the
+// created group is reparented with a follow-up call.
+func (c *Client) createGroup(ctx context.Context, field string, group Group) (Group, error) {
+	var out map[string]Group
+	err := c.graphQL(ctx, fmt.Sprintf(`mutation CreateGroup($input: CreateGroupInput!) {
+		%s(input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, field), map[string]any{atomInputKeyInput: groupCreateInput(group)}, &out)
+	if err != nil {
+		return Group{}, err
 	}
-	err := c.graphQL(ctx, `mutation CreateGroup($input: CreateGroupInput!) {
-		createGroup(input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{atomInputKeyInput: groupCreateInput(group)}, &out)
-	return out.CreateGroup, err
+	created := out[field]
+	if group.ParentID == "" {
+		return created, nil
+	}
+	return c.SetGroupParent(ctx, created.ID, group.ParentID)
 }
 
 func (c *Client) GetGroup(ctx context.Context, id string) (Group, error) {
@@ -182,6 +191,115 @@ func (c *Client) UpdateGroup(ctx context.Context, id string, group Group) (Group
 		updateGroup(id: $id, input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"id": id, atomInputKeyInput: groupUpdateInput(group)}, &out)
 	return out.UpdateGroup, err
+}
+
+// AddGroupMember adds an entity to a group. Membership is many-to-many and
+// additive: an entity already in other groups keeps those memberships, and
+// adding it to a group it already belongs to is a no-op.
+func (c *Client) AddGroupMember(ctx context.Context, groupID, entityID string) error {
+	return c.graphQL(ctx, `mutation AddGroupMember($groupId: ID!, $entityId: ID!) {
+		addGroupMember(groupId: $groupId, entityId: $entityId)
+	}`, map[string]any{atomInputKeyGroupID: groupID, atomInputKeyEntityID: entityID}, nil)
+}
+
+// RemoveGroupMember removes membership in this group only; the entity may
+// still be reachable through other group memberships it holds.
+func (c *Client) RemoveGroupMember(ctx context.Context, groupID, entityID string) error {
+	return c.graphQL(ctx, `mutation RemoveGroupMember($groupId: ID!, $entityId: ID!) {
+		removeGroupMember(groupId: $groupId, entityId: $entityId)
+	}`, map[string]any{atomInputKeyGroupID: groupID, atomInputKeyEntityID: entityID}, nil)
+}
+
+// GroupMembers lists the entities currently in a group.
+func (c *Client) GroupMembers(ctx context.Context, groupID string) ([]Entity, error) {
+	var out struct {
+		GroupMembers []Entity `json:"groupMembers"`
+	}
+	err := c.graphQL(ctx, `query GroupMembers($groupId: ID!) {
+		groupMembers(groupId: $groupId) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{atomInputKeyGroupID: groupID}, &out)
+	return out.GroupMembers, err
+}
+
+// EntityGroups returns every group the entity belongs to. Membership is
+// many-to-many, so an entity can appear in more than one group at once.
+func (c *Client) EntityGroups(ctx context.Context, entityID string) ([]string, error) {
+	var out struct {
+		EntityGroups []string `json:"entityGroups"`
+	}
+	err := c.graphQL(ctx, `query EntityGroups($entityId: ID!) {
+		entityGroups(entityId: $entityId)
+	}`, map[string]any{atomInputKeyEntityID: entityID}, &out)
+	return out.EntityGroups, err
+}
+
+// SetGroupParent nests a group under a parent, replacing any existing parent.
+func (c *Client) SetGroupParent(ctx context.Context, id, parentID string) (Group, error) {
+	var out struct {
+		SetGroupParent Group `json:"setGroupParent"`
+	}
+	err := c.graphQL(ctx, `mutation SetGroupParent($id: ID!, $parentId: ID!) {
+		setGroupParent(id: $id, parentId: $parentId) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"id": id, atomInputKeyParentID: parentID}, &out)
+	return out.SetGroupParent, err
+}
+
+// RemoveGroupParent detaches a group from its parent, making it top-level.
+func (c *Client) RemoveGroupParent(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation RemoveGroupParent($id: ID!) {
+		removeGroupParent(id: $id)
+	}`, map[string]any{"id": id}, nil)
+}
+
+// ChildGroups lists the immediate children of a group.
+func (c *Client) ChildGroups(ctx context.Context, parentID string, limit, offset uint64) (GroupList, error) {
+	var out struct {
+		ChildGroups GroupList `json:"childGroups"`
+	}
+	vars := map[string]any{atomInputKeyParentID: parentID}
+	if limit > 0 {
+		vars["limit"] = int(limit)
+	}
+	if offset > 0 {
+		vars["offset"] = int(offset)
+	}
+	err := c.graphQL(ctx, `query ChildGroups($parentId: ID!, $limit: Int, $offset: Int) {
+		childGroups(parentId: $parentId, limit: $limit, offset: $offset) {
+			total
+			items { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, vars, &out)
+	return out.ChildGroups, err
+}
+
+// ObjectGroups lists groups in the object namespace (devices/channels), as
+// opposed to principal groups (users).
+func (c *Client) ObjectGroups(ctx context.Context, q Query) (GroupList, error) {
+	var out struct {
+		ObjectGroups GroupList `json:"objectGroups"`
+	}
+	err := c.graphQL(ctx, `query ObjectGroups($q: String, $tenantId: ID, $parentId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
+		objectGroups(q: $q, tenantId: $tenantId, parentId: $parentId, status: $status, limit: $limit, offset: $offset) {
+			total
+			items { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, groupListVariables(q), &out)
+	return out.ObjectGroups, err
+}
+
+// PrincipalGroups lists groups in the principal namespace (users), as
+// opposed to object groups (devices/channels).
+func (c *Client) PrincipalGroups(ctx context.Context, q Query) (GroupList, error) {
+	var out struct {
+		PrincipalGroups GroupList `json:"principalGroups"`
+	}
+	err := c.graphQL(ctx, `query PrincipalGroups($q: String, $tenantId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
+		principalGroups(q: $q, tenantId: $tenantId, status: $status, limit: $limit, offset: $offset) {
+			total
+			items { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+		}
+	}`, groupListVariables(q), &out)
+	return out.PrincipalGroups, err
 }
 
 func (c *Client) UpsertResource(ctx context.Context, resource Resource) error {
@@ -748,6 +866,8 @@ func entityUpdateInput(entity Entity) map[string]any {
 	return input
 }
 
+// groupCreateInput deliberately omits parentId: CreateGroupInput has no such
+// field, so createGroup reparents via a follow-up SetGroupParent call instead.
 func groupCreateInput(group Group) map[string]any {
 	input := map[string]any{atomInputKeyName: group.Name}
 	setIfNotEmpty(input, "id", group.ID)
@@ -886,6 +1006,24 @@ func objectQueryVariables(q Query) map[string]any {
 	setIfNotEmpty(vars, "q", q.Q)
 	setIfNotEmpty(vars, atomInputKeyKind, q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
+	if q.Limit > 0 {
+		vars["limit"] = int(q.Limit)
+	}
+	if q.Offset > 0 {
+		vars["offset"] = int(q.Offset)
+	}
+	return vars
+}
+
+// groupListVariables backs both ObjectGroups and PrincipalGroups; the extra
+// parentId entry is harmless for principalGroups since that query never
+// declares the $parentId variable, so the server just ignores it.
+func groupListVariables(q Query) map[string]any {
+	vars := map[string]any{}
+	setIfNotEmpty(vars, "q", q.Q)
+	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, atomInputKeyParentID, q.ParentID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)

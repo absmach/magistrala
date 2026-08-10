@@ -344,12 +344,12 @@ func TestCreateNestedGroupAndChildGroups(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"createObjectGroup": groupJSON(id, name, testTenantID, "")},
 			})
-		case strings.Contains(payload.Query, "setGroupParent"):
+		case strings.Contains(payload.Query, "setObjectGroupParent"):
 			id := payload.Variables["id"].(string)
 			parent := payload.Variables["parentId"].(string)
 			parents[id] = parent
 			_ = json.NewEncoder(w).Encode(map[string]any{
-				"data": map[string]any{"setGroupParent": groupJSON(id, "child", testTenantID, parent)},
+				"data": map[string]any{"setObjectGroupParent": groupJSON(id, "child", testTenantID, parent)},
 			})
 		case strings.Contains(payload.Query, "childGroups"):
 			if payload.Variables["parentId"] != parentID {
@@ -416,9 +416,9 @@ func TestCreateNestedGroupDeletesCreatedGroupWhenReparentFails(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"createObjectGroup": groupJSON(childID, input["name"].(string), testTenantID, "")},
 			})
-		case strings.Contains(payload.Query, "setGroupParent"):
+		case strings.Contains(payload.Query, "setObjectGroupParent"):
 			if payload.Variables["id"] != childID || payload.Variables["parentId"] != invalidParentID {
-				t.Fatalf("unexpected setGroupParent variables: %+v", payload.Variables)
+				t.Fatalf("unexpected setObjectGroupParent variables: %+v", payload.Variables)
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"errors": []map[string]string{{"message": "parent group not found"}},

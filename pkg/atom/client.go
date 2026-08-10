@@ -147,19 +147,19 @@ func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (En
 // groups and principal groups in separate tables; this always lands in the
 // object table.
 func (c *Client) CreateObjectGroup(ctx context.Context, group Group) (Group, error) {
-	return c.createGroup(ctx, "createObjectGroup", group)
+	return c.createGroup(ctx, "createObjectGroup", c.SetObjectGroupParent, group)
 }
 
 // CreatePrincipalGroup creates a group of users, for use as a policy
 // subject. Atom keeps object groups and principal groups in separate tables;
 // this always lands in the principal table.
 func (c *Client) CreatePrincipalGroup(ctx context.Context, group Group) (Group, error) {
-	return c.createGroup(ctx, "createPrincipalGroup", group)
+	return c.createGroup(ctx, "createPrincipalGroup", c.SetGroupParent, group)
 }
 
 // createGroup does not accept parentId, so when group.ParentID is set the
 // created group is reparented with a follow-up call.
-func (c *Client) createGroup(ctx context.Context, field string, group Group) (Group, error) {
+func (c *Client) createGroup(ctx context.Context, field string, setParent func(context.Context, string, string) (Group, error), group Group) (Group, error) {
 	var out map[string]Group
 	err := c.graphQL(ctx, fmt.Sprintf(`mutation CreateGroup($input: CreateGroupInput!) {
 		%s(input: $input) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
@@ -171,7 +171,7 @@ func (c *Client) createGroup(ctx context.Context, field string, group Group) (Gr
 	if group.ParentID == "" {
 		return created, nil
 	}
-	reparented, err := c.SetGroupParent(ctx, created.ID, group.ParentID)
+	reparented, err := setParent(ctx, created.ID, group.ParentID)
 	if err == nil {
 		return reparented, nil
 	}
@@ -246,13 +246,7 @@ func (c *Client) EntityGroups(ctx context.Context, entityID string) ([]string, e
 
 // SetGroupParent nests a group under a parent, replacing any existing parent.
 func (c *Client) SetGroupParent(ctx context.Context, id, parentID string) (Group, error) {
-	var out struct {
-		SetGroupParent Group `json:"setGroupParent"`
-	}
-	err := c.graphQL(ctx, `mutation SetGroupParent($id: ID!, $parentId: ID!) {
-		setGroupParent(id: $id, parentId: $parentId) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
-	}`, map[string]any{"id": id, atomInputKeyParentID: parentID}, &out)
-	return out.SetGroupParent, err
+	return c.setGroupParent(ctx, "SetGroupParent", "setGroupParent", id, parentID)
 }
 
 // RemoveGroupParent detaches a group from its parent, making it top-level.
@@ -260,6 +254,26 @@ func (c *Client) RemoveGroupParent(ctx context.Context, id string) error {
 	return c.graphQL(ctx, `mutation RemoveGroupParent($id: ID!) {
 		removeGroupParent(id: $id)
 	}`, map[string]any{"id": id}, nil)
+}
+
+// SetObjectGroupParent nests an object group under an object-group parent.
+func (c *Client) SetObjectGroupParent(ctx context.Context, id, parentID string) (Group, error) {
+	return c.setGroupParent(ctx, "SetObjectGroupParent", "setObjectGroupParent", id, parentID)
+}
+
+// RemoveObjectGroupParent detaches an object group from its parent.
+func (c *Client) RemoveObjectGroupParent(ctx context.Context, id string) error {
+	return c.graphQL(ctx, `mutation RemoveObjectGroupParent($id: ID!) {
+		removeObjectGroupParent(id: $id)
+	}`, map[string]any{"id": id}, nil)
+}
+
+func (c *Client) setGroupParent(ctx context.Context, operation, field, id, parentID string) (Group, error) {
+	var out map[string]Group
+	err := c.graphQL(ctx, fmt.Sprintf(`mutation %s($id: ID!, $parentId: ID!) {
+		%s(id: $id, parentId: $parentId) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, operation, field), map[string]any{"id": id, atomInputKeyParentID: parentID}, &out)
+	return out[field], err
 }
 
 // ChildGroups lists the immediate children of a group.

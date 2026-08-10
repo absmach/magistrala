@@ -303,8 +303,8 @@ func (c *Client) ObjectGroups(ctx context.Context, q Query) (GroupList, error) {
 	var out struct {
 		ObjectGroups GroupList `json:"objectGroups"`
 	}
-	err := c.graphQL(ctx, `query ObjectGroups($q: String, $tenantId: ID, $parentId: ID, $includeDescendants: Boolean, $status: EntityStatus, $limit: Int, $offset: Int) {
-		objectGroups(q: $q, tenantId: $tenantId, parentId: $parentId, includeDescendants: $includeDescendants, status: $status, limit: $limit, offset: $offset) {
+	err := c.graphQL(ctx, `query ObjectGroups($q: String, $tenantId: ID, $parentId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
+		objectGroups(q: $q, tenantId: $tenantId, parentId: $parentId, status: $status, limit: $limit, offset: $offset) {
 			total
 			items { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
 		}
@@ -1042,16 +1042,13 @@ func objectQueryVariables(q Query) map[string]any {
 }
 
 // groupListVariables backs both ObjectGroups and PrincipalGroups; the extra
-// hierarchy entries are harmless for principalGroups since that query never
-// declares those variables, so the server just ignores them.
+// parentId entry is harmless for principalGroups since that query never
+// declares the $parentId variable, so the server just ignores it.
 func groupListVariables(q Query) map[string]any {
 	vars := map[string]any{}
 	setIfNotEmpty(vars, "q", q.Q)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, atomInputKeyParentID, q.ParentID)
-	if q.IncludeDescendants {
-		vars["includeDescendants"] = true
-	}
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)

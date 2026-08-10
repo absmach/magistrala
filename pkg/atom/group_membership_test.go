@@ -586,22 +586,19 @@ func TestObjectAndPrincipalGroupsNamespacesDoNotCrossContaminate(t *testing.T) {
 	}
 }
 
-func TestObjectGroupsCanRequestDescendants(t *testing.T) {
+func TestObjectGroupsUsesCurrentAtomSchemaArguments(t *testing.T) {
 	const parentID = "customer-1"
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload := decodePayload(t, r)
-		if !strings.Contains(payload.Query, "$includeDescendants: Boolean") {
-			t.Fatalf("objectGroups query does not declare includeDescendants: %s", payload.Query)
+		if strings.Contains(payload.Query, "includeDescendants") {
+			t.Fatalf("objectGroups query includes unsupported includeDescendants argument: %s", payload.Query)
 		}
-		if !strings.Contains(payload.Query, "includeDescendants: $includeDescendants") {
-			t.Fatalf("objectGroups query does not pass includeDescendants: %s", payload.Query)
+		if _, ok := payload.Variables["includeDescendants"]; ok {
+			t.Fatalf("objectGroups variables include unsupported includeDescendants: %+v", payload.Variables)
 		}
 		if payload.Variables["parentId"] != parentID {
 			t.Fatalf("parentId variable = %v, want %s", payload.Variables["parentId"], parentID)
-		}
-		if payload.Variables["includeDescendants"] != true {
-			t.Fatalf("includeDescendants variable = %v, want true", payload.Variables["includeDescendants"])
 		}
 
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -615,9 +612,8 @@ func TestObjectGroupsCanRequestDescendants(t *testing.T) {
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	groups, err := client.ObjectGroups(context.Background(), Query{
-		TenantID:           testTenantID,
-		ParentID:           parentID,
-		IncludeDescendants: true,
+		TenantID: testTenantID,
+		ParentID: parentID,
 	})
 	if err != nil {
 		t.Fatalf("list object groups failed: %v", err)

@@ -6,6 +6,7 @@ package atom
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -526,6 +527,70 @@ func TestListCredentials(t *testing.T) {
 	}
 	if item.CreatedAt.Format(time.RFC3339) != createdAt {
 		t.Fatalf("unexpected created_at: %s", item.CreatedAt.Format(time.RFC3339))
+	}
+}
+
+func TestCapabilityIDPaginatesBeyondFirstPageAndCaches(t *testing.T) {
+	const total = 150
+	requests := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		var payload struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		limit := int(payload.Variables["limit"].(float64))
+		offset := int(payload.Variables["offset"].(float64))
+		items := make([]Capability, 0, limit)
+		for i := offset; i < offset+limit && i < total; i++ {
+			items = append(items, Capability{ID: fmt.Sprintf("cap-%d", i), Name: fmt.Sprintf("action-%d", i)})
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"actions": map[string]any{"items": items, "total": total},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+
+	id, err := client.CapabilityID(context.Background(), "action-120")
+	if err != nil {
+		t.Fatalf("capability id lookup failed: %v", err)
+	}
+	if id != "cap-120" {
+		t.Fatalf("unexpected capability id: %s", id)
+	}
+	if requests < 2 {
+		t.Fatalf("expected the scan to paginate past the first page, got %d requests", requests)
+	}
+
+	requestsBeforeCachedLookup := requests
+	if _, err := client.CapabilityID(context.Background(), "action-120"); err != nil {
+		t.Fatalf("second capability id lookup failed: %v", err)
+	}
+	if requests != requestsBeforeCachedLookup {
+		t.Fatalf("expected cached lookup to avoid further requests, got %d new requests", requests-requestsBeforeCachedLookup)
+	}
+}
+
+func TestCapabilityIDNotFound(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"actions": map[string]any{"items": []Capability{}, "total": 0},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if _, err := client.CapabilityID(context.Background(), "missing"); !IsNotFound(err) {
+		t.Fatalf("expected not found error, got %v", err)
 	}
 }
 

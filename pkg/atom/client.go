@@ -258,14 +258,20 @@ func (c *Client) RemoveGroupParent(ctx context.Context, id string) error {
 
 // SetObjectGroupParent nests an object group under an object-group parent.
 func (c *Client) SetObjectGroupParent(ctx context.Context, id, parentID string) (Group, error) {
-	return c.setGroupParent(ctx, "SetObjectGroupParent", "setObjectGroupParent", id, parentID)
+	var out struct {
+		SetObjectGroupParent Group `json:"setObjectGroupParent"`
+	}
+	err := c.graphQL(ctx, `mutation SetObjectGroupParent($objectGroupId: ID!, $parentGroupId: ID!) {
+		setObjectGroupParent(objectGroupId: $objectGroupId, parentGroupId: $parentGroupId) { id name tenant_id: tenantId description parent_id: parentId status attributes created_at: createdAt updated_at: updatedAt }
+	}`, map[string]any{"objectGroupId": id, "parentGroupId": parentID}, &out)
+	return out.SetObjectGroupParent, err
 }
 
 // RemoveObjectGroupParent detaches an object group from its parent.
 func (c *Client) RemoveObjectGroupParent(ctx context.Context, id string) error {
-	return c.graphQL(ctx, `mutation RemoveObjectGroupParent($id: ID!) {
-		removeObjectGroupParent(id: $id)
-	}`, map[string]any{"id": id}, nil)
+	return c.graphQL(ctx, `mutation RemoveObjectGroupParent($objectGroupId: ID!) {
+		removeObjectGroupParent(objectGroupId: $objectGroupId)
+	}`, map[string]any{"objectGroupId": id}, nil)
 }
 
 func (c *Client) setGroupParent(ctx context.Context, operation, field, id, parentID string) (Group, error) {

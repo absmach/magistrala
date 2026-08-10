@@ -345,8 +345,11 @@ func TestCreateNestedGroupAndChildGroups(t *testing.T) {
 				"data": map[string]any{"createObjectGroup": groupJSON(id, name, testTenantID, "")},
 			})
 		case strings.Contains(payload.Query, "setObjectGroupParent"):
-			id := payload.Variables["id"].(string)
-			parent := payload.Variables["parentId"].(string)
+			if strings.Contains(payload.Query, "id: $id") || strings.Contains(payload.Query, "parentId: $parentId") {
+				t.Fatalf("setObjectGroupParent query used generic argument names: %s", payload.Query)
+			}
+			id := payload.Variables["objectGroupId"].(string)
+			parent := payload.Variables["parentGroupId"].(string)
 			parents[id] = parent
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"setObjectGroupParent": groupJSON(id, "child", testTenantID, parent)},
@@ -417,7 +420,10 @@ func TestCreateNestedGroupDeletesCreatedGroupWhenReparentFails(t *testing.T) {
 				"data": map[string]any{"createObjectGroup": groupJSON(childID, input["name"].(string), testTenantID, "")},
 			})
 		case strings.Contains(payload.Query, "setObjectGroupParent"):
-			if payload.Variables["id"] != childID || payload.Variables["parentId"] != invalidParentID {
+			if strings.Contains(payload.Query, "id: $id") || strings.Contains(payload.Query, "parentId: $parentId") {
+				t.Fatalf("setObjectGroupParent query used generic argument names: %s", payload.Query)
+			}
+			if payload.Variables["objectGroupId"] != childID || payload.Variables["parentGroupId"] != invalidParentID {
 				t.Fatalf("unexpected setObjectGroupParent variables: %+v", payload.Variables)
 			}
 			_ = json.NewEncoder(w).Encode(map[string]any{
@@ -505,6 +511,62 @@ func TestSetAndRemoveGroupParent(t *testing.T) {
 	}
 	if parent != "" {
 		t.Fatalf("expected parent cleared, got %q", parent)
+	}
+}
+
+func TestSetAndRemoveObjectGroupParentUseObjectArguments(t *testing.T) {
+	const parentID = "object-group-a"
+	const childID = "object-group-b"
+	parent := ""
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		payload := decodePayload(t, r)
+		switch {
+		case strings.Contains(payload.Query, "setObjectGroupParent"):
+			if strings.Contains(payload.Query, "id: $id") || strings.Contains(payload.Query, "parentId: $parentId") {
+				t.Fatalf("setObjectGroupParent query used generic argument names: %s", payload.Query)
+			}
+			if payload.Variables["objectGroupId"] != childID || payload.Variables["parentGroupId"] != parentID {
+				t.Fatalf("unexpected setObjectGroupParent variables: %+v", payload.Variables)
+			}
+			parent = parentID
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"setObjectGroupParent": groupJSON(childID, "b", testTenantID, parent)},
+			})
+		case strings.Contains(payload.Query, "removeObjectGroupParent"):
+			if strings.Contains(payload.Query, "id: $id") {
+				t.Fatalf("removeObjectGroupParent query used generic argument names: %s", payload.Query)
+			}
+			if payload.Variables["objectGroupId"] != childID {
+				t.Fatalf("unexpected removeObjectGroupParent variables: %+v", payload.Variables)
+			}
+			parent = ""
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"removeObjectGroupParent": true}})
+		default:
+			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
+		}
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	ctx := context.Background()
+
+	reparented, err := client.SetObjectGroupParent(ctx, childID, parentID)
+	if err != nil {
+		t.Fatalf("set object group parent failed: %v", err)
+	}
+	if reparented.ParentID != parentID {
+		t.Fatalf("unexpected parent after set: %+v", reparented)
+	}
+	if parent != parentID {
+		t.Fatalf("server-side object parent state not updated: %q", parent)
+	}
+
+	if err := client.RemoveObjectGroupParent(ctx, childID); err != nil {
+		t.Fatalf("remove object group parent failed: %v", err)
+	}
+	if parent != "" {
+		t.Fatalf("expected object parent cleared, got %q", parent)
 	}
 }
 

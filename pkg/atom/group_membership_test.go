@@ -398,6 +398,64 @@ func TestCreateNestedGroupAndChildGroups(t *testing.T) {
 	}
 }
 
+func TestCreateNestedGroupDeletesCreatedGroupWhenReparentFails(t *testing.T) {
+	const childID = "group-child"
+	const invalidParentID = "missing-parent"
+	created := map[string]bool{}
+	deleted := map[string]bool{}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		payload := decodePayload(t, r)
+		switch {
+		case strings.Contains(payload.Query, "createObjectGroup"):
+			input := payload.Variables["input"].(map[string]any)
+			if _, ok := input["parentId"]; ok {
+				t.Fatalf("createObjectGroup input must not carry parentId: %+v", input)
+			}
+			created[childID] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"createObjectGroup": groupJSON(childID, input["name"].(string), testTenantID, "")},
+			})
+		case strings.Contains(payload.Query, "setGroupParent"):
+			if payload.Variables["id"] != childID || payload.Variables["parentId"] != invalidParentID {
+				t.Fatalf("unexpected setGroupParent variables: %+v", payload.Variables)
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"errors": []map[string]string{{"message": "parent group not found"}},
+			})
+		case strings.Contains(payload.Query, "deleteGroup"):
+			if payload.Variables["id"] != childID {
+				t.Fatalf("unexpected deleteGroup variables: %+v", payload.Variables)
+			}
+			deleted[childID] = true
+			delete(created, childID)
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"deleteGroup": true}})
+		default:
+			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
+		}
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	_, err := client.CreateObjectGroup(context.Background(), Group{
+		Name:     "child",
+		TenantID: testTenantID,
+		ParentID: invalidParentID,
+	})
+	if err == nil {
+		t.Fatal("expected create nested group to fail")
+	}
+	if !strings.Contains(err.Error(), "set parent for created group") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if !deleted[childID] {
+		t.Fatal("created group was not deleted after reparent failure")
+	}
+	if created[childID] {
+		t.Fatal("created group was left behind after reparent failure")
+	}
+}
+
 // TestSetAndRemoveGroupParent covers acceptance criterion 6: reparenting an
 // already-existing group and then detaching it.
 func TestSetAndRemoveGroupParent(t *testing.T) {

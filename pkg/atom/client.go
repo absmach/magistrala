@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -170,7 +171,17 @@ func (c *Client) createGroup(ctx context.Context, field string, group Group) (Gr
 	if group.ParentID == "" {
 		return created, nil
 	}
-	return c.SetGroupParent(ctx, created.ID, group.ParentID)
+	reparented, err := c.SetGroupParent(ctx, created.ID, group.ParentID)
+	if err == nil {
+		return reparented, nil
+	}
+	if deleteErr := c.DeleteGroup(ctx, created.ID); deleteErr != nil {
+		return Group{}, errors.Join(
+			fmt.Errorf("set parent for created group %q: %w", created.ID, err),
+			fmt.Errorf("delete created group %q after parent failure: %w", created.ID, deleteErr),
+		)
+	}
+	return Group{}, fmt.Errorf("set parent for created group %q: %w", created.ID, err)
 }
 
 func (c *Client) GetGroup(ctx context.Context, id string) (Group, error) {

@@ -187,6 +187,15 @@ func (ps PolicyService) RevokeGroupAccess(ctx context.Context, grant GroupGrant)
 		return errUnsupportedPolicyOperation
 	}
 
+	actionIDs := make([]string, 0, len(grant.Actions))
+	for _, action := range grant.Actions {
+		capID, err := writer.CapabilityID(ctx, CapabilityName(action))
+		if err != nil {
+			return err
+		}
+		actionIDs = append(actionIDs, capID)
+	}
+
 	match := groupGrantBlockMatch(grant)
 	var ids []string
 	for offset := uint64(0); ; offset += policyPageLimit {
@@ -201,7 +210,7 @@ func (ps PolicyService) RevokeGroupAccess(ctx context.Context, grant GroupGrant)
 			return err
 		}
 		for _, policy := range page.Items {
-			if directPolicyMatches(policy, match) {
+			if directPolicyMatches(policy, match) && blockActionSetMatches(policy.PermissionBlock, actionIDs) {
 				ids = append(ids, policy.ID)
 			}
 		}
@@ -436,6 +445,18 @@ func blockHasAction(block PermissionBlock, actionID string) bool {
 	return false
 }
 
+func blockActionSetMatches(block PermissionBlock, actionIDs []string) bool {
+	if len(block.Actions) != len(actionIDs) {
+		return false
+	}
+	for _, actionID := range actionIDs {
+		if !blockHasAction(block, actionID) {
+			return false
+		}
+	}
+	return true
+}
+
 func groupGrantScopeMode(g GroupGrant) string {
 	if g.IncludeDescendants {
 		return atomScopeModeGroupDescendantObjects
@@ -447,6 +468,23 @@ func groupGrantScopeMode(g GroupGrant) string {
 // object-scoped write and read paths share, so this cannot drift from them.
 func groupGrantObjectType(g GroupGrant) string {
 	return atomPolicyObjectType(g.ObjectType)
+}
+
+func groupGrantPolicyObjectType(objectType string) string {
+	switch objectType {
+	case atomPolicyObjectType(policies.ClientType):
+		return policies.ClientType
+	case atomPolicyObjectType(policies.ChannelType):
+		return policies.ChannelType
+	case atomPolicyObjectType(policies.RulesType):
+		return policies.RulesType
+	case atomPolicyObjectType(policies.ReportsType):
+		return policies.ReportsType
+	case atomPolicyObjectType(policies.AlarmsType):
+		return policies.AlarmsType
+	default:
+		return ""
+	}
 }
 
 func validateGroupGrant(g GroupGrant) error {
@@ -486,7 +524,7 @@ func groupGrantFromDirectPolicy(policy DirectPolicy, groupID string) (GroupGrant
 		SubjectKind:        policy.SubjectKind,
 		SubjectID:          policy.SubjectID,
 		ObjectKind:         block.ObjectKind,
-		ObjectType:         block.ObjectType,
+		ObjectType:         groupGrantPolicyObjectType(block.ObjectType),
 		Actions:            actions,
 		IncludeDescendants: includeDescendants,
 	}, true

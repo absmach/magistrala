@@ -658,10 +658,62 @@ func TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock(t *testing.T) {
 	}
 }
 
+func TestRevokeGroupAccessOnlyRemovesMatchingActionSet(t *testing.T) {
+	client := &fakePolicyClient{
+		capIDs: map[string]string{"read": "cap-read", "write": "cap-write"},
+		policies: []DirectPolicy{
+			{
+				ID:          "policy-read",
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-read",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-a",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+			{
+				ID:          "policy-write",
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-write",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-a",
+					Actions:    []Capability{{ID: "cap-write", Name: "write"}},
+				},
+			},
+		},
+	}
+	svc := NewPolicyService(client)
+
+	err := svc.RevokeGroupAccess(context.Background(), GroupGrant{
+		TenantID:    testDomainID,
+		GroupID:     "group-a",
+		SubjectKind: atomObjectKindEntity,
+		SubjectID:   "user-1",
+		ObjectKind:  atomObjectKindEntity,
+		ObjectType:  policies.ClientType,
+		Actions:     []string{"read"},
+	})
+	if err != nil {
+		t.Fatalf("revoke group access failed: %v", err)
+	}
+	if len(client.deleted) != 1 || client.deleted[0] != "policy-read" {
+		t.Fatalf("expected only policy-read to be deleted, got %+v", client.deleted)
+	}
+}
+
 // TestListGroupGrantsFiltersByGroupID covers the read side of the group
 // grant API: only grants recorded against the requested group come back.
 func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
 	client := &fakePolicyClient{
+		capIDs: map[string]string{"read": "cap-read"},
 		policies: []DirectPolicy{
 			{
 				ID:          "policy-a",
@@ -706,8 +758,17 @@ func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
 	if got.GroupID != "group-a" || got.SubjectID != "user-1" || got.IncludeDescendants {
 		t.Fatalf("unexpected grant: %+v", got)
 	}
+	if got.ObjectType != policies.ClientType {
+		t.Fatalf("expected revocable object type %q, got %q", policies.ClientType, got.ObjectType)
+	}
 	if len(got.Actions) != 1 || got.Actions[0] != "read" {
 		t.Fatalf("unexpected grant actions: %+v", got.Actions)
+	}
+	if err := svc.RevokeGroupAccess(context.Background(), got); err != nil {
+		t.Fatalf("revoke listed grant failed: %v", err)
+	}
+	if len(client.deleted) != 1 || client.deleted[0] != "policy-a" {
+		t.Fatalf("expected listed grant to revoke policy-a, got %+v", client.deleted)
 	}
 }
 

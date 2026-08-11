@@ -27,9 +27,9 @@ func TestEntityTypeString(t *testing.T) {
 			expected: "channels",
 		},
 		{
-			desc:     "Clients entity type",
-			et:       auth.ClientsType,
-			expected: "clients",
+			desc:     "Devices entity type",
+			et:       auth.DevicesType,
+			expected: "devices",
 		},
 		{
 			desc:     "Bootstrap entity type",
@@ -91,9 +91,9 @@ func TestParseEntityType(t *testing.T) {
 			err:      false,
 		},
 		{
-			desc:     "Parse clients",
-			et:       "clients",
-			expected: auth.ClientsType,
+			desc:     "Parse devices",
+			et:       "devices",
+			expected: auth.DevicesType,
 			err:      false,
 		},
 		{
@@ -161,9 +161,9 @@ func TestEntityTypeMarshalJSON(t *testing.T) {
 			err:      nil,
 		},
 		{
-			desc:     "Marshal clients",
-			et:       auth.ClientsType,
-			expected: []byte(`"clients"`),
+			desc:     "Marshal devices",
+			et:       auth.DevicesType,
+			expected: []byte(`"devices"`),
 			err:      nil,
 		},
 		{

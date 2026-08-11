@@ -28,6 +28,32 @@ func decodePayload(t *testing.T, r *http.Request) gqlPayload {
 	return payload
 }
 
+// legacyGroupMembershipFields are Atom's principal-group membership GraphQL
+// fields. addGroupMember/removeGroupMember/groupMembers/entityGroups operate
+// on principal_groups/principal_group_members (user/team membership), not
+// the object_group_entities table that device/channel sharing-group
+// membership needs. AddGroupMember, RemoveGroupMember, GroupMembers, and
+// EntityGroups must never send these.
+var legacyGroupMembershipFields = []string{"addGroupMember", "removeGroupMember", "groupMembers", "entityGroups"}
+
+// assertNoLegacyGroupMembershipQuery fails the test immediately if the
+// client sent one of Atom's principal-group membership fields instead of the
+// object-group equivalents (addEntityToObjectGroup,
+// removeEntityFromObjectGroup, entities(parentGroupId: ...), objectGroupIds)
+// that this package's object-group-membership methods must use. This is the
+// regression guard for the bug this file's tests were fixed to catch: the
+// fake server previously accepted the wrong, principal-group mutations as if
+// they were correct, so every test passed even though the client was calling
+// the wrong part of the schema.
+func assertNoLegacyGroupMembershipQuery(t *testing.T, query string) {
+	t.Helper()
+	for _, legacy := range legacyGroupMembershipFields {
+		if strings.Contains(query, legacy) {
+			t.Fatalf("client sent legacy principal-group field %q; object-group membership methods must use the object-group equivalents instead: %s", legacy, query)
+		}
+	}
+}
+
 func groupJSON(id, name, tenantID, parentID string) map[string]any {
 	return map[string]any{
 		"id":         id,
@@ -80,26 +106,37 @@ func TestObjectGroupMembersAddAndRemove(t *testing.T) {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		payload := decodePayload(t, r)
+		assertNoLegacyGroupMembershipQuery(t, payload.Query)
 		switch {
 		case strings.Contains(payload.Query, "createObjectGroup"):
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"createObjectGroup": groupJSON(groupID, "devices", testTenantID, "")},
 			})
-		case strings.Contains(payload.Query, "addGroupMember"):
-			if payload.Variables["groupId"] != groupID {
+		case strings.Contains(payload.Query, "addEntityToObjectGroup"):
+			if payload.Variables["objectGroupId"] != groupID {
 				t.Fatalf("unexpected group id: %+v", payload.Variables)
 			}
-			members[payload.Variables["entityId"].(string)] = true
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addGroupMember": true}})
-		case strings.Contains(payload.Query, "removeGroupMember"):
-			delete(members, payload.Variables["entityId"].(string))
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"removeGroupMember": true}})
-		case strings.Contains(payload.Query, "groupMembers"):
+			entityID := payload.Variables["entityId"].(string)
+			members[entityID] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addEntityToObjectGroup": map[string]any{"id": entityID}}})
+		case strings.Contains(payload.Query, "removeEntityFromObjectGroup"):
+			if payload.Variables["objectGroupId"] != groupID {
+				t.Fatalf("unexpected group id: %+v", payload.Variables)
+			}
+			entityID := payload.Variables["entityId"].(string)
+			delete(members, entityID)
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"removeEntityFromObjectGroup": map[string]any{"id": entityID}}})
+		case strings.Contains(payload.Query, "entities(parentGroupId"):
+			if payload.Variables["parentGroupId"] != groupID {
+				t.Fatalf("unexpected group id: %+v", payload.Variables)
+			}
 			items := []map[string]any{}
 			for id := range members {
 				items = append(items, entityJSON(id, testTenantID))
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"groupMembers": items}})
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"entities": map[string]any{"total": len(items), "items": items}},
+			})
 		default:
 			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 		}
@@ -160,24 +197,29 @@ func TestEntityGroupsReturnsAllMemberships(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload := decodePayload(t, r)
+		assertNoLegacyGroupMembershipQuery(t, payload.Query)
 		switch {
 		case strings.Contains(payload.Query, "createObjectGroup"):
 			id := payload.Variables["input"].(map[string]any)["name"].(string)
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"createObjectGroup": groupJSON(id, id, testTenantID, "")},
 			})
-		case strings.Contains(payload.Query, "addGroupMember"):
-			membership[payload.Variables["groupId"].(string)] = true
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addGroupMember": true}})
-		case strings.Contains(payload.Query, "entityGroups"):
-			if payload.Variables["entityId"] != entityID {
+		case strings.Contains(payload.Query, "addEntityToObjectGroup"):
+			groupID := payload.Variables["objectGroupId"].(string)
+			entityIDVar := payload.Variables["entityId"].(string)
+			membership[groupID] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addEntityToObjectGroup": map[string]any{"id": entityIDVar}}})
+		case strings.Contains(payload.Query, "objectGroupIds"):
+			if payload.Variables["id"] != entityID {
 				t.Fatalf("unexpected entity id: %+v", payload.Variables)
 			}
 			var ids []string
 			for id := range membership {
 				ids = append(ids, id)
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"entityGroups": ids}})
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"entity": map[string]any{"objectGroupIds": ids}},
+			})
 		default:
 			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 		}
@@ -226,27 +268,32 @@ func TestGroupMembershipIsAdditiveNotMove(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload := decodePayload(t, r)
+		assertNoLegacyGroupMembershipQuery(t, payload.Query)
 		switch {
 		case strings.Contains(payload.Query, "createObjectGroup"):
 			id := payload.Variables["input"].(map[string]any)["name"].(string)
 			_ = json.NewEncoder(w).Encode(map[string]any{
 				"data": map[string]any{"createObjectGroup": groupJSON("group-"+id, id, testTenantID, "")},
 			})
-		case strings.Contains(payload.Query, "addGroupMember"):
-			groupID := payload.Variables["groupId"].(string)
-			members[groupID][payload.Variables["entityId"].(string)] = true
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addGroupMember": true}})
-		case strings.Contains(payload.Query, "removeGroupMember"):
-			groupID := payload.Variables["groupId"].(string)
-			delete(members[groupID], payload.Variables["entityId"].(string))
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"removeGroupMember": true}})
-		case strings.Contains(payload.Query, "groupMembers"):
-			groupID := payload.Variables["groupId"].(string)
+		case strings.Contains(payload.Query, "addEntityToObjectGroup"):
+			groupID := payload.Variables["objectGroupId"].(string)
+			entityIDVar := payload.Variables["entityId"].(string)
+			members[groupID][entityIDVar] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addEntityToObjectGroup": map[string]any{"id": entityIDVar}}})
+		case strings.Contains(payload.Query, "removeEntityFromObjectGroup"):
+			groupID := payload.Variables["objectGroupId"].(string)
+			entityIDVar := payload.Variables["entityId"].(string)
+			delete(members[groupID], entityIDVar)
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"removeEntityFromObjectGroup": map[string]any{"id": entityIDVar}}})
+		case strings.Contains(payload.Query, "entities(parentGroupId"):
+			groupID := payload.Variables["parentGroupId"].(string)
 			items := []map[string]any{}
 			for id := range members[groupID] {
 				items = append(items, entityJSON(id, testTenantID))
 			}
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"groupMembers": items}})
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"entities": map[string]any{"total": len(items), "items": items}},
+			})
 		default:
 			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 		}
@@ -694,8 +741,9 @@ func TestAddGroupMemberRejectsCrossTenant(t *testing.T) {
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		payload := decodePayload(t, r)
+		assertNoLegacyGroupMembershipQuery(t, payload.Query)
 		switch {
-		case strings.Contains(payload.Query, "addGroupMember"):
+		case strings.Contains(payload.Query, "addEntityToObjectGroup"):
 			entityID := payload.Variables["entityId"].(string)
 			if entityID == "foreign-device" {
 				_ = json.NewEncoder(w).Encode(map[string]any{
@@ -704,7 +752,7 @@ func TestAddGroupMemberRejectsCrossTenant(t *testing.T) {
 				return
 			}
 			members[entityID] = true
-			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addGroupMember": true}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"data": map[string]any{"addEntityToObjectGroup": map[string]any{"id": entityID}}})
 		default:
 			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
 		}

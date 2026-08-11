@@ -70,6 +70,7 @@ func (a *groupGrantAtom) server(t *testing.T) *httptest.Server {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
 		}
 		payload := decodePayload(t, r)
+		assertNoLegacyGroupMembershipQuery(t, payload.Query)
 
 		a.mu.Lock()
 		defer a.mu.Unlock()
@@ -81,11 +82,11 @@ func (a *groupGrantAtom) server(t *testing.T) *httptest.Server {
 		case strings.Contains(payload.Query, "setObjectGroupParent"):
 			a.mutations["setObjectGroupParent"]++
 			a.handleSetObjectGroupParent(t, w, payload)
-		case strings.Contains(payload.Query, "addGroupMember"):
-			a.mutations["addGroupMember"]++
+		case strings.Contains(payload.Query, "addEntityToObjectGroup"):
+			a.mutations["addEntityToObjectGroup"]++
 			a.handleAddGroupMember(t, w, payload)
-		case strings.Contains(payload.Query, "removeGroupMember"):
-			a.mutations["removeGroupMember"]++
+		case strings.Contains(payload.Query, "removeEntityFromObjectGroup"):
+			a.mutations["removeEntityFromObjectGroup"]++
 			a.handleRemoveGroupMember(t, w, payload)
 		case strings.Contains(payload.Query, "query Actions"):
 			a.handleActions(w)
@@ -148,21 +149,21 @@ func (a *groupGrantAtom) handleSetObjectGroupParent(t *testing.T, w http.Respons
 
 func (a *groupGrantAtom) handleAddGroupMember(t *testing.T, w http.ResponseWriter, payload gqlPayload) {
 	t.Helper()
-	groupID, _ := payload.Variables[atomInputKeyGroupID].(string)
+	groupID, _ := payload.Variables[atomInputKeyObjectGroupID].(string)
 	entityID, _ := payload.Variables[atomInputKeyEntityID].(string)
 	if a.members[groupID] == nil {
 		a.members[groupID] = map[string]bool{}
 	}
 	a.members[groupID][entityID] = true
-	writeGraphQLData(t, w, "addGroupMember", true)
+	writeGraphQLData(t, w, "addEntityToObjectGroup", map[string]any{"id": entityID})
 }
 
 func (a *groupGrantAtom) handleRemoveGroupMember(t *testing.T, w http.ResponseWriter, payload gqlPayload) {
 	t.Helper()
-	groupID, _ := payload.Variables[atomInputKeyGroupID].(string)
+	groupID, _ := payload.Variables[atomInputKeyObjectGroupID].(string)
 	entityID, _ := payload.Variables[atomInputKeyEntityID].(string)
 	delete(a.members[groupID], entityID)
-	writeGraphQLData(t, w, "removeGroupMember", true)
+	writeGraphQLData(t, w, "removeEntityFromObjectGroup", map[string]any{"id": entityID})
 }
 
 func (a *groupGrantAtom) handleActions(w http.ResponseWriter) {
@@ -642,8 +643,8 @@ func TestGrantGroupAccessWriteCountIsConstantRegardlessOfMemberCount(t *testing.
 		}
 	}
 
-	if fake.mutations["addGroupMember"] != memberCount {
-		t.Fatalf("expected %d addGroupMember mutations, got %d", memberCount, fake.mutations["addGroupMember"])
+	if fake.mutations["addEntityToObjectGroup"] != memberCount {
+		t.Fatalf("expected %d addEntityToObjectGroup mutations, got %d", memberCount, fake.mutations["addEntityToObjectGroup"])
 	}
 	// The write count from the grant itself must not have grown with member count.
 	if fake.mutations["createPermissionBlock"] != 1 || fake.mutations["createDirectPolicy"] != 1 {

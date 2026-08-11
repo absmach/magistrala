@@ -88,6 +88,12 @@ func entityKind(kind string) string {
 	}
 }
 
+// atomObjectType returns the namespaced object type Atom requires,
+// e.g. "entity:device", "resource:channel".
+func atomObjectType(objectKind, kind string) string {
+	return objectKind + ":" + kind
+}
+
 func GroupFromFields(f ObjectFields) Group {
 	return Group{
 		ID:          f.ID,

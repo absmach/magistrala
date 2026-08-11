@@ -61,16 +61,17 @@ const (
 const atomDecisionAllow = "allow"
 
 const (
-	atomInputKeyAction       = "action"
-	atomInputKeyCredentialID = "credentialId"
-	atomInputKeyEntityID     = "entityId"
-	atomInputKeyGroupID      = "groupId"
-	atomInputKeyInput        = "input"
-	atomInputKeyKind         = "kind"
-	atomInputKeyName         = "name"
-	atomInputKeyObjectKind   = "objectKind"
-	atomInputKeyParentID     = "parentId"
-	atomInputKeySubjectID    = "subjectId"
+	atomInputKeyAction        = "action"
+	atomInputKeyCredentialID  = "credentialId"
+	atomInputKeyEntityID      = "entityId"
+	atomInputKeyInput         = "input"
+	atomInputKeyKind          = "kind"
+	atomInputKeyName          = "name"
+	atomInputKeyObjectGroupID = "objectGroupId"
+	atomInputKeyObjectKind    = "objectKind"
+	atomInputKeyParentGroupID = "parentGroupId"
+	atomInputKeyParentID      = "parentId"
+	atomInputKeySubjectID     = "subjectId"
 )
 
 const (

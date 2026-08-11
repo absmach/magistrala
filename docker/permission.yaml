@@ -1,7 +1,7 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
-clients:
+devices:
   operations:
     - view: read_permission
     - update: update_permission
@@ -14,6 +14,7 @@ clients:
     - remove_parent_group: set_parent_group_permission
     - connect_to_channel: connect_to_channel_permission
     - disconnect_from_channel: connect_to_channel_permission
+    - set_gateways: set_gateways_permission
   roles_operations:
     - add: manage_role_permission
     - remove: manage_role_permission

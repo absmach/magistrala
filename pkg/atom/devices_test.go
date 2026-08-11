@@ -61,8 +61,12 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 		if !hasFilter {
 			fa.t.Fatalf("entities query ran without an attributesContains filter: %+v", payload.Variables)
 		}
+		kind, _ := payload.Variables["kind"].(string)
 		var items []map[string]any
 		for _, e := range fa.entities {
+			if kind != "" && e.Kind != kind {
+				continue
+			}
 			if entityMatchesContains(e, contains) {
 				items = append(items, deviceEntityJSON(e))
 			}
@@ -243,6 +247,7 @@ func TestGatewayDevicesFiltersByAttributesContains(t *testing.T) {
 		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-1"}}},
 		Entity{ID: "device-2", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-2"}}},
 		Entity{ID: "device-3", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}}},
+		Entity{ID: "human-1", Kind: atomKindHuman, Attributes: Attributes{"gateways": []string{"gw-1"}}},
 	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})

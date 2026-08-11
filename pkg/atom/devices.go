@@ -77,6 +77,7 @@ func (c *Client) GatewayDevices(ctx context.Context, gatewayID string, q Query) 
 		filter[k] = v
 	}
 	filter[atomAttributeGateways] = []string{gatewayID}
+	q.Kind = atomKindDevice
 	q.AttributesContains = filter
 
 	return c.ListEntities(ctx, q)

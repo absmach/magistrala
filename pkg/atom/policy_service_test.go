@@ -612,6 +612,47 @@ func TestDirectPolicyMatchesComparesGroupID(t *testing.T) {
 	}
 }
 
+func TestRevokeGroupAccessRejectsInvalidGrantBeforeListing(t *testing.T) {
+	client := &fakePolicyClient{
+		capIDs: map[string]string{"read": "cap-read"},
+		policies: []DirectPolicy{
+			{
+				ID:          "policy-a",
+				TenantID:    testDomainID,
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-a",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-a",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+		},
+	}
+	svc := NewPolicyService(client)
+
+	err := svc.RevokeGroupAccess(context.Background(), GroupGrant{
+		GroupID:     "group-a",
+		SubjectKind: atomObjectKindEntity,
+		SubjectID:   "user-1",
+		ObjectKind:  atomObjectKindEntity,
+		ObjectType:  policies.ClientType,
+		Actions:     []string{"read"},
+	})
+	if err == nil {
+		t.Fatal("expected invalid group grant to be rejected")
+	}
+	if len(client.directPolicyQueries) != 0 {
+		t.Fatalf("expected no direct policies to be listed, got %+v", client.directPolicyQueries)
+	}
+	if len(client.deleted) != 0 {
+		t.Fatalf("expected no direct policies to be deleted, got %+v", client.deleted)
+	}
+}
+
 // TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock exercises the same
 // risk at the PolicyService level: two grants share every field except
 // GroupID, and revoking one must not touch the other.

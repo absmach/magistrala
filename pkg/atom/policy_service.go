@@ -186,6 +186,9 @@ func (ps PolicyService) RevokeGroupAccess(ctx context.Context, grant GroupGrant)
 	if !ok {
 		return errUnsupportedPolicyOperation
 	}
+	if err := validateGroupGrant(grant); err != nil {
+		return err
+	}
 
 	actionIDs := make([]string, 0, len(grant.Actions))
 	for _, action := range grant.Actions {

@@ -88,6 +88,15 @@ func expectUser(authn *authnmocks.Authentication) {
 	}, nil)
 }
 
+func expectSuperAdmin(authn *authnmocks.Authentication) {
+	authn.EXPECT().Authenticate(mock.Anything, "token").Return(smqauthn.Session{
+		UserID:   e2eUserID,
+		DomainID: e2eDomain,
+		Role:     smqauthn.SuperAdminRole,
+		Verified: true,
+	}, nil)
+}
+
 func expectGrants(evaluator *policymocks.Evaluator, lister *policymocks.Service, granted []string) {
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("not admin"))
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
@@ -137,6 +146,25 @@ func TestListMessagesReturnsExactlyRequestedGrantedPublishers(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, uint64(1), page.Total)
 	assert.Equal(t, []readers.Message{"msg-from-pub-a"}, page.Messages)
+}
+
+// TestListMessagesSuperAdminBypassesPublisherGrants checks that a super-admin token keeps
+// unrestricted access after the channel-level authorization succeeds.
+func TestListMessagesSuperAdminBypassesPublisherGrants(t *testing.T) {
+	deps := newTestDeps(t)
+	expectSuperAdmin(deps.authn)
+	// No evaluator or lister expectations: super-admin status is carried from authentication.
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return pm.Publisher == "pub-anything" && len(pm.Publishers) == 0
+	})).Return(readers.MessagesPage{Total: 3, Messages: []readers.Message{"m1", "m2", "m3"}}, nil)
+
+	res, err := deps.endpoint(context.Background(), tokenReq("pub-anything", nil))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, uint64(3), page.Total)
 }
 
 // TestListMessagesAdminSeesEverythingRegardlessOfFilter checks that the admin bypass is

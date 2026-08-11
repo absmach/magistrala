@@ -215,12 +215,16 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 // request's publisher filter to what the caller is authorized to read. noAccess means the caller may
 // read no publisher on this channel, so the response must be empty rather than unfiltered.
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, publisherAuthz *publisherAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
-	clientID, clientType, err := authenticate(ctx, req, authn, clients)
+	clientID, clientType, superAdmin, err := authenticate(ctx, req, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
 	if err := authorize(ctx, clientID, clientType, req.chanID, req.domain, channels); err != nil {
 		return readers.PageMetadata{}, false, err
+	}
+
+	if superAdmin {
+		return req.pageMeta, false, nil
 	}
 
 	// Per-publisher grants only exist for domain users, not for clients authenticating with a secret key.
@@ -242,31 +246,31 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, err error) {
+func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
 	switch {
 	case req.token != "":
 		session, err := authn.Authenticate(ctx, req.token)
 		if err != nil {
-			return "", "", err
+			return "", "", false, err
 		}
 		if session.Role == smqauthn.SuperAdminRole {
-			return session.UserID, policies.UserType, nil
+			return session.UserID, policies.UserType, true, nil
 		}
 
-		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, nil
+		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, false, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
 			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.domain, req.key),
 		})
 		if err != nil {
-			return "", "", err
+			return "", "", false, err
 		}
 		if !res.GetAuthenticated() {
-			return "", "", svcerr.ErrAuthentication
+			return "", "", false, svcerr.ErrAuthentication
 		}
-		return res.GetId(), policies.ClientType, nil
+		return res.GetId(), policies.ClientType, false, nil
 	default:
-		return "", "", svcerr.ErrAuthentication
+		return "", "", false, svcerr.ErrAuthentication
 	}
 }
 

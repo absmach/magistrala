@@ -473,6 +473,17 @@ func groupGrantObjectType(g GroupGrant) string {
 	return atomPolicyObjectType(g.ObjectType)
 }
 
+func groupGrantObjectKind(g GroupGrant) string {
+	switch g.ObjectType {
+	case policies.ClientType:
+		return atomObjectKindEntity
+	case policies.ChannelType, policies.RulesType, policies.ReportsType, policies.AlarmsType:
+		return atomObjectKindResource
+	default:
+		return ""
+	}
+}
+
 func groupGrantPolicyObjectType(objectType string) string {
 	switch objectType {
 	case atomPolicyObjectType(policies.ClientType):
@@ -501,6 +512,9 @@ func validateGroupGrant(g GroupGrant) error {
 		return errInvalidGroupGrant
 	}
 	if groupGrantObjectType(g) == "" {
+		return errInvalidGroupGrant
+	}
+	if g.ObjectKind != groupGrantObjectKind(g) {
 		return errInvalidGroupGrant
 	}
 	return nil

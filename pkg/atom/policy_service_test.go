@@ -561,6 +561,14 @@ func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
 			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
+			name:  "client object type with resource object kind",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "resource object type with entity object kind",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ChannelType, Actions: []string{"read"}},
+		},
+		{
 			name:  "unmappable object type",
 			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
 		},

@@ -47,6 +47,11 @@ const (
 const atomScopeModeObject = "object"
 
 const (
+	atomScopeModeGroupDirectObjects     = "group_direct_objects"
+	atomScopeModeGroupDescendantObjects = "group_descendant_objects"
+)
+
+const (
 	atomObjectTypeResourceChannel = "resource:channel"
 	atomObjectTypeResourceRule    = "resource:rule"
 	atomObjectTypeResourceReport  = "resource:report"

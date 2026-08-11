@@ -35,7 +35,7 @@ func TestTenantFromFields(t *testing.T) {
 func TestEntityFromFields(t *testing.T) {
 	got := EntityFromFields(ObjectFields{
 		ID:       "client-1",
-		Kind:     KindClient,
+		Kind:     KindDevice,
 		Name:     "pump",
 		TenantID: "domain-1",
 		Status:   "enabled",
@@ -46,11 +46,17 @@ func TestEntityFromFields(t *testing.T) {
 	if got.Kind != "device" || got.TenantID != "domain-1" {
 		t.Fatalf("unexpected entity: %+v", got)
 	}
-	if got.Attributes["magistrala_kind"] != KindClient {
+	if got.Attributes["magistrala_kind"] != KindDevice {
 		t.Fatalf("missing magistrala kind: %+v", got.Attributes)
 	}
 	if got.Attributes["parent_group_id"] != "group-1" {
 		t.Fatalf("missing parent group: %+v", got.Attributes)
+	}
+}
+
+func TestKindDeviceMapsToAtomDeviceKind(t *testing.T) {
+	if got := entityKind(KindDevice); got != atomKindDevice {
+		t.Fatalf("KindDevice must map to the atom kind %q, got %q", atomKindDevice, got)
 	}
 }
 

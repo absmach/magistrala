@@ -175,7 +175,7 @@ func (h publishHandler) ensureClientPublisher(
 	if err != nil {
 		return fmt.Errorf("publisher client not found")
 	}
-	if client.Kind != "device" && attrString(client.Attributes, "magistrala_kind") != atom.KindClient {
+	if client.Kind != "device" && attrString(client.Attributes, "magistrala_kind") != atom.KindDevice {
 		return fmt.Errorf("publisher identity is not a client")
 	}
 	if client.TenantID == "" || client.TenantID != domainID {

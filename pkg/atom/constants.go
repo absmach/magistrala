@@ -80,6 +80,7 @@ const (
 
 const (
 	atomAttributeCreatedAt = "created_at"
+	atomAttributeGateways  = "gateways"
 	atomAttributeMetadata  = "metadata"
 	atomAttributeRoute     = "route"
 	atomAttributeSource    = "source"

@@ -773,8 +773,8 @@ func (c *Client) ListEntities(ctx context.Context, q Query) (EntityList, error) 
 	var out struct {
 		Entities EntityList `json:"entities"`
 	}
-	err := c.graphQL(ctx, `query Entities($q: String, $kind: EntityKind, $tenantId: ID, $status: EntityStatus, $limit: Int, $offset: Int) {
-		entities(q: $q, kind: $kind, tenantId: $tenantId, status: $status, limit: $limit, offset: $offset) {
+	err := c.graphQL(ctx, `query Entities($q: String, $kind: EntityKind, $tenantId: ID, $status: EntityStatus, $attributesContains: JSON, $limit: Int, $offset: Int) {
+		entities(q: $q, kind: $kind, tenantId: $tenantId, status: $status, attributesContains: $attributesContains, limit: $limit, offset: $offset) {
 			total
 			items { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
 		}
@@ -1076,6 +1076,9 @@ func objectQueryVariables(q Query) map[string]any {
 	setIfNotEmpty(vars, atomInputKeyKind, q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
+	if q.AttributesContains != nil {
+		vars["attributesContains"] = q.AttributesContains
+	}
 	if q.Limit > 0 {
 		vars["limit"] = int(q.Limit)
 	}

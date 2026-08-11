@@ -66,9 +66,8 @@ type Query struct {
 	Limit    uint64
 	Offset   uint64
 
-	// AttributesContains filters by JSONB containment: an entity matches only
-	// if its attributes contain every key/value given here (arrays match if
-	// they contain the given elements, not only if they equal them exactly).
+	// AttributesContains filters by JSONB containment — an entity must contain
+	// every key/value given here (array values match by containment, not equality).
 	AttributesContains map[string]any
 }
 

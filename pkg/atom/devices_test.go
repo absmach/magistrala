@@ -13,12 +13,8 @@ import (
 	"time"
 )
 
-// fakeAtomDevices is a minimal in-memory Atom stand-in backing entity,
-// updateEntity and entities - enough surface to exercise
-// SetDeviceGateways / DeviceGateways / GatewayDevices without a real server.
-//
-// It also mirrors a real behaviour these tests depend on: updateEntity
-// replaces the whole attributes column rather than merging individual keys.
+// fakeAtomDevices is a minimal in-memory Atom stand-in. Like the real Atom,
+// its updateEntity replaces the whole attributes column rather than merging keys.
 type fakeAtomDevices struct {
 	t           *testing.T
 	entities    map[string]Entity
@@ -106,11 +102,8 @@ func deviceEntityJSON(e Entity) map[string]any {
 	}
 }
 
-// entityMatchesContains reimplements, for the fake server only, the JSONB
-// containment semantics the real Atom applies: every key in contains must be
-// present in the entity's attributes, and for list-valued attributes every
-// element of the wanted list must appear in the entity's list (order
-// irrelevant, extra elements on the entity side allowed).
+// entityMatchesContains reimplements Atom's JSONB containment for the fake
+// server: every key must be present, list values match by element containment.
 func entityMatchesContains(e Entity, contains map[string]any) bool {
 	for key, want := range contains {
 		got, ok := e.Attributes[key]

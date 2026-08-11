@@ -116,10 +116,7 @@ func TestListEntitiesAttributesContains(t *testing.T) {
 		}
 		gateways, _ := contains["gateways"].([]any)
 
-		// Only entities whose gateways attribute actually satisfies the
-		// requested containment are returned - proving the fake server (and
-		// therefore the argument sent) drives the result, not an unfiltered
-		// listing.
+		// Only entities matching the requested containment are returned.
 		items := []Entity{}
 		if len(gateways) == 1 && gateways[0] == "gw-1" {
 			items = append(items, Entity{ID: "device-1", Kind: atomKindDevice})

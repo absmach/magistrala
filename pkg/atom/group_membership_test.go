@@ -28,23 +28,12 @@ func decodePayload(t *testing.T, r *http.Request) gqlPayload {
 	return payload
 }
 
-// legacyGroupMembershipFields are Atom's principal-group membership GraphQL
-// fields. addGroupMember/removeGroupMember/groupMembers/entityGroups operate
-// on principal_groups/principal_group_members (user/team membership), not
-// the object_group_entities table that device/channel sharing-group
-// membership needs. AddGroupMember, RemoveGroupMember, GroupMembers, and
-// EntityGroups must never send these.
+// legacyGroupMembershipFields are Atom's principal-group mutations — the
+// object-group methods in this package must never send these.
 var legacyGroupMembershipFields = []string{"addGroupMember", "removeGroupMember", "groupMembers", "entityGroups"}
 
-// assertNoLegacyGroupMembershipQuery fails the test immediately if the
-// client sent one of Atom's principal-group membership fields instead of the
-// object-group equivalents (addEntityToObjectGroup,
-// removeEntityFromObjectGroup, entities(parentGroupId: ...), objectGroupIds)
-// that this package's object-group-membership methods must use. This is the
-// regression guard for the bug this file's tests were fixed to catch: the
-// fake server previously accepted the wrong, principal-group mutations as if
-// they were correct, so every test passed even though the client was calling
-// the wrong part of the schema.
+// assertNoLegacyGroupMembershipQuery is the regression guard for the bug
+// where these methods sent principal-group fields instead of object-group ones.
 func assertNoLegacyGroupMembershipQuery(t *testing.T, query string) {
 	t.Helper()
 	for _, legacy := range legacyGroupMembershipFields {

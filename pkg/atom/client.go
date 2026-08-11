@@ -208,58 +208,30 @@ func (c *Client) UpdateGroup(ctx context.Context, id string, group Group) (Group
 	return out.UpdateGroup, err
 }
 
-// AddGroupMember adds an entity to an object group (a group of
-// devices/channels). Membership is many-to-many and additive: an entity
-// already in other groups keeps those memberships, and adding it to a group
-// it already belongs to is a no-op.
-//
-// This method's name matches Atom's older, pre-existing addGroupMember
-// GraphQL mutation in spelling only. That mutation, along with
-// removeGroupMember/groupMembers/entityGroups, operates on
-// principal_groups/principal_group_members — Atom's tables for user/team
-// group membership — and is not what AddGroupMember calls. AddGroupMember
-// instead sends addEntityToObjectGroup, the mutation Atom purpose-built for
-// many-to-many object-group membership (backed by the object_group_entities
-// table), introduced alongside many-to-many object group support. That
-// mutation returns the updated Entity rather than a Boolean, but this method
-// only needs to know whether the call succeeded, so the response body is
-// discarded.
+// AddGroupMember adds an entity to an object group (device/channel sharing).
+// Despite the name, this sends addEntityToObjectGroup, not Atom's
+// principal-group addGroupMember mutation — same spelling, different table.
 func (c *Client) AddGroupMember(ctx context.Context, groupID, entityID string) error {
 	return c.graphQL(ctx, `mutation AddEntityToObjectGroup($entityId: ID!, $objectGroupId: ID!) {
 		addEntityToObjectGroup(entityId: $entityId, objectGroupId: $objectGroupId) { id }
 	}`, map[string]any{atomInputKeyEntityID: entityID, atomInputKeyObjectGroupID: groupID}, nil)
 }
 
-// RemoveGroupMember removes membership in this object group only; the entity
-// may still be reachable through other group memberships it holds.
-//
-// Like AddGroupMember, this method's name matches Atom's older
-// removeGroupMember GraphQL mutation in spelling only; that mutation targets
-// principal_groups membership, not object groups. RemoveGroupMember sends
-// removeEntityFromObjectGroup, the object-group counterpart.
+// RemoveGroupMember removes membership in this object group only — the
+// entity may still be reachable through other groups. Like AddGroupMember,
+// it sends the object-group mutation despite matching a principal-group name.
 func (c *Client) RemoveGroupMember(ctx context.Context, groupID, entityID string) error {
 	return c.graphQL(ctx, `mutation RemoveEntityFromObjectGroup($entityId: ID!, $objectGroupId: ID!) {
 		removeEntityFromObjectGroup(entityId: $entityId, objectGroupId: $objectGroupId) { id }
 	}`, map[string]any{atomInputKeyEntityID: entityID, atomInputKeyObjectGroupID: groupID}, nil)
 }
 
-// groupMembersPageLimit caps each page GroupMembers requests from the
-// entities query. It matches the maximum page size Atom's entities query
-// enforces server-side, so a single page already covers the common case;
-// GroupMembers pages through offsets internally so a group with more members
-// than that still comes back complete in one call.
+// groupMembersPageLimit matches Atom's server-side max page size for the entities query.
 const groupMembersPageLimit = 100
 
-// GroupMembers lists the entities currently in an object group.
-//
-// Unlike AddGroupMember/RemoveGroupMember, there is no purpose-built
-// "groupMembers" query on the object-group side, and the old groupMembers
-// query this method used to call is the principal-group one and returns the
-// wrong entities entirely. The correct way to list an object group's members
-// is the existing entities(parentGroupId: ...) query: despite its name,
-// parentGroupId filters by many-to-many object-group membership (via the
-// object_group_entities table), not a single-parent relationship, so it
-// already returns exactly what this method needs.
+// GroupMembers lists an object group's entities via entities(parentGroupId:
+// ...) — despite the name, that filters by many-to-many object-group
+// membership, not a single parent. There is no dedicated "groupMembers" query.
 func (c *Client) GroupMembers(ctx context.Context, groupID string) ([]Entity, error) {
 	var members []Entity
 	for offset := 0; ; offset += groupMembersPageLimit {
@@ -287,15 +259,8 @@ func (c *Client) GroupMembers(ctx context.Context, groupID string) ([]Entity, er
 	return members, nil
 }
 
-// EntityGroups returns every object group the entity belongs to. Membership
-// is many-to-many, so an entity can appear in more than one group at once.
-//
-// Like GroupMembers, there is no purpose-built "entityGroups" query on the
-// object-group side, and the old entityGroups query this method used to call
-// is the principal-group one. An entity's object-group memberships are
-// instead exposed as the objectGroupIds field on the entity itself, so this
-// method queries entity(id: ...) { objectGroupIds } rather than a top-level
-// query.
+// EntityGroups returns every object group the entity belongs to, via
+// entity(id: ...) { objectGroupIds } — there is no top-level "entityGroups" query.
 func (c *Client) EntityGroups(ctx context.Context, entityID string) ([]string, error) {
 	var out struct {
 		Entity struct {

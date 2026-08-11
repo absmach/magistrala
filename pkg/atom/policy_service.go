@@ -488,7 +488,10 @@ func groupGrantPolicyObjectType(objectType string) string {
 }
 
 func validateGroupGrant(g GroupGrant) error {
-	if g.TenantID == "" || g.GroupID == "" || g.SubjectID == "" || len(g.Actions) == 0 {
+	if g.TenantID == "" || g.GroupID == "" || g.SubjectKind == "" || g.SubjectID == "" || len(g.Actions) == 0 {
+		return errInvalidGroupGrant
+	}
+	if g.SubjectKind != atomObjectKindEntity && g.SubjectKind != atomObjectKindGroup {
 		return errInvalidGroupGrant
 	}
 	if g.ObjectKind != atomObjectKindEntity && g.ObjectKind != atomObjectKindResource {

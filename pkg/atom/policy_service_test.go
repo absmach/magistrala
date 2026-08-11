@@ -534,27 +534,35 @@ func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
 	}{
 		{
 			name:  "missing tenant",
-			grant: GroupGrant{GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing group",
-			grant: GroupGrant{TenantID: testDomainID, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testDomainID, SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing subject",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "missing subject kind",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "unsupported subject kind",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindResource, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "no actions",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
 		},
 		{
 			name:  "object kind is a group, not entity/resource",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "unmappable object type",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
 		},
 	}
 	for _, tc := range cases {

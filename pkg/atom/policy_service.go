@@ -374,7 +374,7 @@ func policyGrantObjectType(pr policies.Policy) string {
 func atomPolicyObjectType(objectType string) string {
 	switch objectType {
 	case policies.ClientType:
-		return atomObjectType(atomObjectKindEntity, entityKind(KindClient))
+		return atomObjectType(atomObjectKindEntity, entityKind(KindDevice))
 	case policies.ChannelType:
 		return atomObjectType(atomObjectKindResource, KindChannel)
 	case policies.RulesType:

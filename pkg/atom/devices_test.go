@@ -267,6 +267,25 @@ func TestGatewayDevicesFiltersByAttributesContains(t *testing.T) {
 	}
 }
 
+func TestGatewayDevicesPreservesExistingGatewaysContainsFilter(t *testing.T) {
+	_, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-1"}}},
+		Entity{ID: "device-2", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-2"}}},
+		Entity{ID: "device-3", Kind: atomKindDevice, Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.GatewayDevices(context.Background(), "gw-1", Query{
+		AttributesContains: map[string]any{atomAttributeGateways: []string{"gw-2"}},
+	})
+	if err != nil {
+		t.Fatalf("gateway devices failed: %v", err)
+	}
+	if got.Total != 1 || len(got.Items) != 1 || got.Items[0].ID != "device-3" {
+		t.Fatalf("expected only the device containing both gateways, got: %+v", got)
+	}
+}
+
 func TestDeviceGatewaysRoundTripsZeroOneAndManyGateways(t *testing.T) {
 	fa, srv := newFakeAtomDevices(t,
 		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},

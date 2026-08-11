@@ -76,11 +76,41 @@ func (c *Client) GatewayDevices(ctx context.Context, gatewayID string, q Query) 
 	for k, v := range q.AttributesContains {
 		filter[k] = v
 	}
-	filter[atomAttributeGateways] = []string{gatewayID}
+	filter[atomAttributeGateways] = mergeContainsString(filter[atomAttributeGateways], gatewayID)
 	q.Kind = atomKindDevice
 	q.AttributesContains = filter
 
 	return c.ListEntities(ctx, q)
+}
+
+func mergeContainsString(existing any, value string) any {
+	switch v := existing.(type) {
+	case nil:
+		return []string{value}
+	case string:
+		if v == value {
+			return []string{value}
+		}
+		return []string{v, value}
+	case []string:
+		out := append([]string(nil), v...)
+		for _, item := range out {
+			if item == value {
+				return out
+			}
+		}
+		return append(out, value)
+	case []any:
+		out := append([]any(nil), v...)
+		for _, item := range out {
+			if item, ok := item.(string); ok && item == value {
+				return out
+			}
+		}
+		return append(out, value)
+	default:
+		return []any{v, value}
+	}
 }
 
 // attrStrings reads a []string-valued attribute. Values come back from the

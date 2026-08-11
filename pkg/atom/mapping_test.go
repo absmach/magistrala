@@ -54,9 +54,11 @@ func TestEntityFromFields(t *testing.T) {
 	}
 }
 
-func TestKindDeviceMapsToAtomDeviceKind(t *testing.T) {
-	if got := entityKind(KindDevice); got != atomKindDevice {
-		t.Fatalf("KindDevice must map to the atom kind %q, got %q", atomKindDevice, got)
+func TestDeviceKindNamesMapToAtomDeviceKind(t *testing.T) {
+	for _, kind := range []string{KindDevice, KindClient} {
+		if got := entityKind(kind); got != atomKindDevice {
+			t.Fatalf("%q must map to the atom kind %q, got %q", kind, atomKindDevice, got)
+		}
 	}
 }
 

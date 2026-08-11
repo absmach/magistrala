@@ -58,10 +58,12 @@ const (
 	atomInputKeyAction       = "action"
 	atomInputKeyCredentialID = "credentialId"
 	atomInputKeyEntityID     = "entityId"
+	atomInputKeyGroupID      = "groupId"
 	atomInputKeyInput        = "input"
 	atomInputKeyKind         = "kind"
 	atomInputKeyName         = "name"
 	atomInputKeyObjectKind   = "objectKind"
+	atomInputKeyParentID     = "parentId"
 	atomInputKeySubjectID    = "subjectId"
 )
 

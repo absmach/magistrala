@@ -61,6 +61,7 @@ type Query struct {
 	TenantID string
 	Name     string
 	Route    string
+	ParentID string
 	Status   string
 	Limit    uint64
 	Offset   uint64

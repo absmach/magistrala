@@ -9,24 +9,14 @@ import (
 	"sort"
 )
 
-// ErrGatewaysConflict is returned by SetDeviceGateways when the device's
-// current gateways attribute no longer matches expectedCurrent, so the
-// caller's view of it is stale and the write was not performed.
+// ErrGatewaysConflict means the device's gateways attribute no longer
+// matches expectedCurrent — the caller's view was stale, so nothing was written.
 var ErrGatewaysConflict = errors.New("atom: device gateways changed since last read")
 
-// SetDeviceGateways replaces a device's entire gateway list.
-//
-// Atom's update_entity overwrites the whole attributes column rather than
-// merging individual keys, so this reads the device's current attributes
-// first and writes them back with only the gateways key changed - every
-// other attribute on the device is preserved unmodified.
-//
-// expectedCurrent must match the gateway list last read for this device
-// (order-independent), or the call fails with ErrGatewaysConflict instead of
-// writing. Atom offers no compare-and-swap primitive, so there remains a
-// window between the read below and the write; this check narrows it from
-// "however long the caller took to decide" to one GraphQL round trip. It is
-// not a substitute for real distributed locking, and does not attempt to be.
+// SetDeviceGateways replaces a device's entire gateway list, preserving its
+// other attributes. expectedCurrent must match what was last read (order
+// independent) or it fails with ErrGatewaysConflict — Atom has no
+// compare-and-swap, so this only narrows the race window, not closes it.
 func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gatewayIDs, expectedCurrent []string) error {
 	device, err := c.GetEntity(ctx, deviceID)
 	if err != nil {
@@ -44,10 +34,8 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	return err
 }
 
-// DeviceGateways returns the gateway IDs a device declares, resolving away
-// any stale IDs pointing at gateways that no longer exist (or were deleted).
-// Deleting a gateway leaves it referenced in the devices that named it -
-// nothing sweeps those references - so this is where they get dropped.
+// DeviceGateways returns the gateway IDs a device declares, dropping any
+// that point at a since-deleted gateway (nothing else sweeps those).
 func (c *Client) DeviceGateways(ctx context.Context, deviceID string) ([]string, error) {
 	device, err := c.GetEntity(ctx, deviceID)
 	if err != nil {
@@ -68,9 +56,8 @@ func (c *Client) DeviceGateways(ctx context.Context, deviceID string) ([]string,
 	return live, nil
 }
 
-// GatewayDevices lists devices whose gateways attribute contains gatewayID,
-// via attributesContains JSONB array containment. Any AttributesContains
-// already set on q is preserved alongside the gateways filter.
+// GatewayDevices lists devices whose gateways attribute contains gatewayID.
+// Any AttributesContains already set on q is preserved alongside it.
 func (c *Client) GatewayDevices(ctx context.Context, gatewayID string, q Query) (EntityList, error) {
 	filter := make(map[string]any, len(q.AttributesContains)+1)
 	for k, v := range q.AttributesContains {
@@ -113,10 +100,8 @@ func mergeContainsString(existing any, value string) any {
 	}
 }
 
-// attrStrings reads a []string-valued attribute. Values come back from the
-// GraphQL client as []any (each element a string), since Attributes decodes
-// from JSON, but a []string is accepted too so callers can build one without
-// a round trip.
+// attrStrings reads a []string-valued attribute, accepting both []string and
+// the []any that JSON decoding actually produces.
 func attrStrings(attrs Attributes, key string) []string {
 	if attrs == nil {
 		return nil
@@ -137,9 +122,7 @@ func attrStrings(attrs Attributes, key string) []string {
 	}
 }
 
-// cloneAttributes returns a shallow, mutable copy of attrs, never nil, so
-// callers can add or overwrite a key without affecting the source map or
-// panicking on a nil map.
+// cloneAttributes returns a shallow, mutable, never-nil copy of attrs.
 func cloneAttributes(attrs Attributes) Attributes {
 	out := make(Attributes, len(attrs)+1)
 	for k, v := range attrs {

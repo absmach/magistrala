@@ -24,8 +24,8 @@ const (
 	OpCreate = "create"
 	OpList   = "list"
 
-	OpCreateClients  = "create_clients"
-	OpListClients    = "list_clients"
+	OpCreateDevices  = "create_devices"
+	OpListDevices    = "list_devices"
 	OpCreateChannels = "create_channels"
 	OpListChannels   = "list_channels"
 	OpCreateGroups   = "create_groups"
@@ -72,23 +72,27 @@ const (
 
 type EntityType uint32
 
+// Pinned explicitly rather than left as iota: EntityType is never persisted
+// or transmitted as a number (spec §8 C2), but pinning means this block can
+// never become load-bearing by accident later. 2 (former ClientsType) is
+// retired, not reused, so no future constant silently inherits old meaning.
 const (
-	GroupsType EntityType = iota
-	ChannelsType
-	ClientsType
-	BootstrapType
-	DashboardType
-	MessagesType
-	DomainsType
-	UsersType
-	RulesType
-	ReportsType
+	GroupsType    EntityType = 0
+	ChannelsType  EntityType = 1
+	BootstrapType EntityType = 3
+	DashboardType EntityType = 4
+	MessagesType  EntityType = 5
+	DomainsType   EntityType = 6
+	UsersType     EntityType = 7
+	RulesType     EntityType = 8
+	ReportsType   EntityType = 9
+	DevicesType   EntityType = 10
 )
 
 const (
 	GroupsScopeStr   = "groups"
 	ChannelsScopeStr = "channels"
-	ClientsScopeStr  = "clients"
+	DevicesScopeStr  = "devices"
 	BootstrapStr     = "bootstrap"
 	DashboardsStr    = "dashboards"
 	MessagesStr      = "messages"
@@ -104,8 +108,8 @@ func (et EntityType) String() string {
 		return GroupsScopeStr
 	case ChannelsType:
 		return ChannelsScopeStr
-	case ClientsType:
-		return ClientsScopeStr
+	case DevicesType:
+		return DevicesScopeStr
 	case BootstrapType:
 		return BootstrapStr
 	case DashboardType:
@@ -131,8 +135,8 @@ func ParseEntityType(et string) (EntityType, error) {
 		return GroupsType, nil
 	case ChannelsScopeStr:
 		return ChannelsType, nil
-	case ClientsScopeStr:
-		return ClientsType, nil
+	case DevicesScopeStr:
+		return DevicesType, nil
 	case BootstrapStr:
 		return BootstrapType, nil
 	case DashboardsStr:
@@ -175,7 +179,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case ClientsType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
+	case DevicesType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare
@@ -203,7 +207,7 @@ func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 //     },
 //     {
 //         "domain_id": "domain_1",
-//         "entity_type": "clients",
+//         "entity_type": "devices",
 //         "operation": "update",
 //         "entity_id": "*"
 //     }
@@ -227,12 +231,12 @@ func (s *Scope) UnmarshalJSON(data []byte) error {
 	}
 
 	switch s.EntityType {
-	case ClientsType:
+	case DevicesType:
 		switch s.Operation {
 		case OpCreate:
-			s.Operation = OpCreateClients
+			s.Operation = OpCreateDevices
 		case OpList:
-			s.Operation = OpListClients
+			s.Operation = OpListDevices
 		}
 	case ChannelsType:
 		switch s.Operation {

@@ -398,6 +398,319 @@ func TestPolicyServiceDeletePolicyFilterPaginatesAcrossAllMatches(t *testing.T) 
 	}
 }
 
+// TestPolicyServiceAddPolicyCreatesTenantScopedPolicy is a regression test
+// for acceptance criterion 9: the "tenant" scope mode, used for domain-level
+// grants, must be unaffected by adding group-scoped support alongside it.
+func TestPolicyServiceAddPolicyCreatesTenantScopedPolicy(t *testing.T) {
+	client := &fakePolicyClient{capID: "cap-manage"}
+	svc := NewPolicyService(client)
+
+	err := svc.AddPolicy(context.Background(), policies.Policy{
+		Domain:      testDomainID,
+		Subject:     testDomainID + "_user-1",
+		SubjectType: policies.UserType,
+		Object:      testDomainID,
+		ObjectType:  policies.DomainType,
+		Permission:  policies.AdminPermission,
+	})
+	if err != nil {
+		t.Fatalf("add policy failed: %v", err)
+	}
+	if len(client.blocks) != 1 || len(client.created) != 1 {
+		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
+	}
+	block := client.blocks[0]
+	if block.ScopeMode != atomObjectKindTenant ||
+		block.ObjectKind != "" ||
+		block.ObjectType != "" ||
+		block.ObjectID != "" ||
+		block.GroupID != "" {
+		t.Fatalf("unexpected tenant-scoped permission block: %+v", block)
+	}
+}
+
+// TestGrantGroupAccessCreatesOneBlockAndOnePolicy is acceptance criterion 1:
+// a group grant is a single permission block and a single direct policy.
+func TestGrantGroupAccessCreatesOneBlockAndOnePolicy(t *testing.T) {
+	client := &fakePolicyClient{capIDs: map[string]string{"read": "cap-read"}}
+	svc := NewPolicyService(client)
+
+	grant := GroupGrant{
+		TenantID:    testDomainID,
+		GroupID:     "group-1",
+		SubjectKind: atomObjectKindEntity,
+		SubjectID:   "user-1",
+		ObjectKind:  atomObjectKindEntity,
+		ObjectType:  policies.ClientType,
+		Actions:     []string{"read"},
+	}
+	if err := svc.GrantGroupAccess(context.Background(), grant); err != nil {
+		t.Fatalf("grant group access failed: %v", err)
+	}
+	if len(client.blocks) != 1 || len(client.created) != 1 {
+		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
+	}
+
+	block := client.blocks[0]
+	if block.TenantID != testDomainID ||
+		block.ScopeMode != atomScopeModeGroupDirectObjects ||
+		block.ObjectKind != atomObjectKindEntity ||
+		block.ObjectType != "entity:device" ||
+		block.ObjectID != "" ||
+		block.GroupID != "group-1" ||
+		block.Effect != atomDecisionAllow ||
+		len(block.ActionIDs) != 1 ||
+		block.ActionIDs[0] != "cap-read" {
+		t.Fatalf("unexpected permission block: %+v", block)
+	}
+
+	created := client.created[0]
+	if created.TenantID != testDomainID ||
+		created.SubjectKind != atomObjectKindEntity ||
+		created.SubjectID != "user-1" ||
+		created.PermissionBlockID != "block-1" {
+		t.Fatalf("unexpected direct policy: %+v", created)
+	}
+}
+
+// TestGrantGroupAccessIncludeDescendantsUsesDescendantScopeMode is the write
+// side of acceptance criterion 6.
+func TestGrantGroupAccessIncludeDescendantsUsesDescendantScopeMode(t *testing.T) {
+	client := &fakePolicyClient{capIDs: map[string]string{"read": "cap-read"}}
+	svc := NewPolicyService(client)
+
+	grant := GroupGrant{
+		TenantID:           testDomainID,
+		GroupID:            "group-1",
+		SubjectKind:        atomObjectKindEntity,
+		SubjectID:          "user-1",
+		ObjectKind:         atomObjectKindEntity,
+		ObjectType:         policies.ClientType,
+		Actions:            []string{"read"},
+		IncludeDescendants: true,
+	}
+	if err := svc.GrantGroupAccess(context.Background(), grant); err != nil {
+		t.Fatalf("grant group access failed: %v", err)
+	}
+	if len(client.blocks) != 1 {
+		t.Fatalf("expected one permission block, got %d", len(client.blocks))
+	}
+	if client.blocks[0].ScopeMode != atomScopeModeGroupDescendantObjects {
+		t.Fatalf("expected descendant scope mode, got %q", client.blocks[0].ScopeMode)
+	}
+}
+
+// TestGrantGroupAccessResolvesMultipleActions covers a grant naming more
+// than one action: still one block, carrying every resolved capability ID.
+func TestGrantGroupAccessResolvesMultipleActions(t *testing.T) {
+	client := &fakePolicyClient{capIDs: map[string]string{"read": "cap-read", "write": "cap-write"}}
+	svc := NewPolicyService(client)
+
+	grant := GroupGrant{
+		TenantID:    testDomainID,
+		GroupID:     "group-1",
+		SubjectKind: atomObjectKindEntity,
+		SubjectID:   "user-1",
+		ObjectKind:  atomObjectKindEntity,
+		ObjectType:  policies.ClientType,
+		Actions:     []string{"read", "write"},
+	}
+	if err := svc.GrantGroupAccess(context.Background(), grant); err != nil {
+		t.Fatalf("grant group access failed: %v", err)
+	}
+	if len(client.blocks) != 1 || len(client.created) != 1 {
+		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
+	}
+	ids := client.blocks[0].ActionIDs
+	if len(ids) != 2 || ids[0] != "cap-read" || ids[1] != "cap-write" {
+		t.Fatalf("unexpected action ids: %+v", ids)
+	}
+}
+
+func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
+	cases := []struct {
+		name  string
+		grant GroupGrant
+	}{
+		{
+			name:  "missing tenant",
+			grant: GroupGrant{GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "missing group",
+			grant: GroupGrant{TenantID: testDomainID, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "missing subject",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "no actions",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
+		},
+		{
+			name:  "object kind is a group, not entity/resource",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
+		},
+		{
+			name:  "unmappable object type",
+			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			client := &fakePolicyClient{capIDs: map[string]string{"read": "cap-read"}}
+			svc := NewPolicyService(client)
+			if err := svc.GrantGroupAccess(context.Background(), tc.grant); err == nil {
+				t.Fatal("expected invalid group grant to be rejected")
+			}
+			if len(client.blocks) != 0 {
+				t.Fatalf("expected no permission block to be written, got %+v", client.blocks)
+			}
+		})
+	}
+}
+
+// TestDirectPolicyMatchesComparesGroupID is a dedicated regression test for
+// the highest-risk change in this file: two permission blocks can be
+// identical in every other respect (tenant, object kind/type, scope mode)
+// and differ only by which group they grant access through. Without
+// comparing GroupID, directPolicyMatches cannot tell them apart.
+func TestDirectPolicyMatchesComparesGroupID(t *testing.T) {
+	policy := DirectPolicy{
+		PermissionBlock: PermissionBlock{
+			ID:         "block-a",
+			ScopeMode:  atomScopeModeGroupDirectObjects,
+			ObjectKind: atomObjectKindEntity,
+			ObjectType: "entity:device",
+			GroupID:    "group-a",
+		},
+	}
+
+	matchSameGroup := blockMatch{
+		ScopeMode:  atomScopeModeGroupDirectObjects,
+		ObjectKind: atomObjectKindEntity,
+		ObjectType: "entity:device",
+		GroupID:    "group-a",
+	}
+	if !directPolicyMatches(policy, matchSameGroup) {
+		t.Fatal("expected match against the same group")
+	}
+
+	matchDifferentGroup := matchSameGroup
+	matchDifferentGroup.GroupID = "group-b"
+	if directPolicyMatches(policy, matchDifferentGroup) {
+		t.Fatal("block for group-a must not match a query for group-b")
+	}
+}
+
+// TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock exercises the same
+// risk at the PolicyService level: two grants share every field except
+// GroupID, and revoking one must not touch the other.
+func TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock(t *testing.T) {
+	client := &fakePolicyClient{
+		capIDs: map[string]string{"read": "cap-read"},
+		policies: []DirectPolicy{
+			{
+				ID:          "policy-a",
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-a",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-a",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+			{
+				ID:          "policy-b",
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-b",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-b",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+		},
+	}
+	svc := NewPolicyService(client)
+
+	err := svc.RevokeGroupAccess(context.Background(), GroupGrant{
+		TenantID:    testDomainID,
+		GroupID:     "group-a",
+		SubjectKind: atomObjectKindEntity,
+		SubjectID:   "user-1",
+		ObjectKind:  atomObjectKindEntity,
+		ObjectType:  policies.ClientType,
+		Actions:     []string{"read"},
+	})
+	if err != nil {
+		t.Fatalf("revoke group access failed: %v", err)
+	}
+	if len(client.deleted) != 1 || client.deleted[0] != "policy-a" {
+		t.Fatalf("expected only policy-a to be deleted, got %+v", client.deleted)
+	}
+}
+
+// TestListGroupGrantsFiltersByGroupID covers the read side of the group
+// grant API: only grants recorded against the requested group come back.
+func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
+	client := &fakePolicyClient{
+		policies: []DirectPolicy{
+			{
+				ID:          "policy-a",
+				TenantID:    testDomainID,
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-1",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-a",
+					ScopeMode:  atomScopeModeGroupDirectObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-a",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+			{
+				ID:          "policy-b",
+				TenantID:    testDomainID,
+				SubjectKind: atomObjectKindEntity,
+				SubjectID:   "user-2",
+				PermissionBlock: PermissionBlock{
+					ID:         "block-b",
+					ScopeMode:  atomScopeModeGroupDescendantObjects,
+					ObjectKind: atomObjectKindEntity,
+					ObjectType: "entity:device",
+					GroupID:    "group-b",
+					Actions:    []Capability{{ID: "cap-read", Name: "read"}},
+				},
+			},
+		},
+	}
+	svc := NewPolicyService(client)
+
+	grants, err := svc.ListGroupGrants(context.Background(), "group-a")
+	if err != nil {
+		t.Fatalf("list group grants failed: %v", err)
+	}
+	if len(grants) != 1 {
+		t.Fatalf("expected one grant for group-a, got %+v", grants)
+	}
+	got := grants[0]
+	if got.GroupID != "group-a" || got.SubjectID != "user-1" || got.IncludeDescendants {
+		t.Fatalf("unexpected grant: %+v", got)
+	}
+	if len(got.Actions) != 1 || got.Actions[0] != "read" {
+		t.Fatalf("unexpected grant actions: %+v", got.Actions)
+	}
+}
+
 func TestIsSupportedObjectList(t *testing.T) {
 	cases := []struct {
 		name string

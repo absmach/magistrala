@@ -95,6 +95,66 @@ func TestListResources(t *testing.T) {
 	}
 }
 
+func TestListEntitiesAttributesContains(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
+			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
+		}
+		var payload struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+		if !strings.Contains(payload.Query, "$attributesContains: JSON") || !strings.Contains(payload.Query, "attributesContains: $attributesContains") {
+			t.Fatalf("query does not declare/pass attributesContains: %s", payload.Query)
+		}
+		contains, ok := payload.Variables["attributesContains"].(map[string]any)
+		if !ok {
+			t.Fatalf("attributesContains was not sent on the wire: %+v", payload.Variables)
+		}
+		gateways, _ := contains["gateways"].([]any)
+
+		// Only entities whose gateways attribute actually satisfies the
+		// requested containment are returned - proving the fake server (and
+		// therefore the argument sent) drives the result, not an unfiltered
+		// listing.
+		items := []Entity{}
+		if len(gateways) == 1 && gateways[0] == "gw-1" {
+			items = append(items, Entity{ID: "device-1", Kind: atomKindDevice})
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"data": map[string]any{
+				"entities": map[string]any{"items": items, "total": len(items)},
+			},
+		})
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+
+	got, err := client.ListEntities(context.Background(), Query{
+		AttributesContains: map[string]any{"gateways": []string{"gw-1"}},
+	})
+	if err != nil {
+		t.Fatalf("list entities failed: %v", err)
+	}
+	if got.Total != 1 || len(got.Items) != 1 || got.Items[0].ID != "device-1" {
+		t.Fatalf("unexpected filtered list: %+v", got)
+	}
+
+	miss, err := client.ListEntities(context.Background(), Query{
+		AttributesContains: map[string]any{"gateways": []string{"gw-2"}},
+	})
+	if err != nil {
+		t.Fatalf("list entities failed: %v", err)
+	}
+	if miss.Total != 0 || len(miss.Items) != 0 {
+		t.Fatalf("expected no matches for a non-satisfying containment, got: %+v", miss)
+	}
+}
+
 func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 	const (
 		serviceToken = "service-token"

@@ -6,6 +6,7 @@ package http
 import (
 	"context"
 	"errors"
+	"net/http/httptest"
 	"testing"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
@@ -64,6 +65,19 @@ func newTestDeps(t *testing.T) *testDeps {
 	ep := listMessagesEndpoint(repo, authn, fakeClientsClient{}, fakeChannelsClient{authorized: true}, authz)
 
 	return &testDeps{repo: repo, authn: authn, evaluator: evaluator, lister: lister, endpoint: ep}
+}
+
+func TestDecodeListReadsPluralPublisherFilters(t *testing.T) {
+	r := httptest.NewRequest("GET", "/?publishers=pub-a&publishers=pub-b&publisher=pub-c", nil)
+	r.Header.Set("Authorization", "Bearer token")
+
+	decoded, err := decodeList(context.Background(), r)
+	require.NoError(t, err)
+
+	req, ok := decoded.(listMessagesReq)
+	require.True(t, ok)
+	assert.Equal(t, "pub-c", req.pageMeta.Publisher)
+	assert.Equal(t, []string{"pub-a", "pub-b"}, req.pageMeta.Publishers)
 }
 
 func tokenReq(publisher string, publishers []string) listMessagesReq {

@@ -31,6 +31,7 @@ const (
 	formatKey      = "format"
 	subtopicKey    = "subtopic"
 	publisherKey   = "publisher"
+	publishersKey  = "publishers"
 	protocolKey    = "protocol"
 	nameKey        = "name"
 	valueKey       = "v"
@@ -95,6 +96,8 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	publishers := r.URL.Query()[publishersKey]
 
 	protocol, err := apiutil.ReadStringQuery(r, protocolKey, "")
 	if err != nil {
@@ -175,6 +178,7 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 			Format:      format,
 			Subtopic:    subtopic,
 			Publisher:   publisher,
+			Publishers:  publishers,
 			Protocol:    protocol,
 			Name:        name,
 			Value:       v,

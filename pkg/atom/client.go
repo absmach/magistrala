@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type Client struct {
@@ -21,6 +22,9 @@ type Client struct {
 	adminSecret   string
 	userAgent     string
 	httpClient    *http.Client
+
+	capMu    sync.RWMutex
+	capCache map[string]string
 }
 
 func NewClient(cfg Config) *Client {
@@ -412,27 +416,61 @@ func (c *Client) CheckAuthzWithToken(ctx context.Context, token string, req Auth
 	return out.AuthzCheck, err
 }
 
+const capabilityPageLimit = 100
+
 func (c *Client) ListCapabilities(ctx context.Context) (CapabilityList, error) {
+	return c.listCapabilitiesPage(ctx, capabilityPageLimit, 0)
+}
+
+func (c *Client) listCapabilitiesPage(ctx context.Context, limit, offset int) (CapabilityList, error) {
 	var out struct {
 		Actions CapabilityList `json:"actions"`
 	}
-	err := c.graphQL(ctx, `query Actions($limit: Int!) {
-		actions(limit: $limit) { total items { id name description } }
-	}`, map[string]any{"limit": 100}, &out)
+	err := c.graphQL(ctx, `query Actions($limit: Int!, $offset: Int!) {
+		actions(limit: $limit, offset: $offset) { total items { id name description } }
+	}`, map[string]any{"limit": limit, "offset": offset}, &out)
 	return out.Actions, err
 }
 
+// CapabilityID resolves a capability name to its ID, paginating past the
+// first page if needed. Results are cached since a capability's ID never
+// changes once created.
 func (c *Client) CapabilityID(ctx context.Context, name string) (string, error) {
-	list, err := c.ListCapabilities(ctx)
-	if err != nil {
-		return "", err
+	if id, ok := c.cachedCapabilityID(name); ok {
+		return id, nil
 	}
-	for _, capability := range list.Items {
-		if capability.Name == name {
-			return capability.ID, nil
+	for offset := 0; ; offset += capabilityPageLimit {
+		page, err := c.listCapabilitiesPage(ctx, capabilityPageLimit, offset)
+		if err != nil {
+			return "", err
+		}
+		for _, capability := range page.Items {
+			c.cacheCapability(capability)
+		}
+		if id, ok := c.cachedCapabilityID(name); ok {
+			return id, nil
+		}
+		if len(page.Items) < capabilityPageLimit || int64(offset+len(page.Items)) >= page.Total {
+			break
 		}
 	}
 	return "", Error{StatusCode: http.StatusNotFound, Message: "capability " + name + " not found"}
+}
+
+func (c *Client) cachedCapabilityID(name string) (string, bool) {
+	c.capMu.RLock()
+	defer c.capMu.RUnlock()
+	id, ok := c.capCache[name]
+	return id, ok
+}
+
+func (c *Client) cacheCapability(capability Capability) {
+	c.capMu.Lock()
+	defer c.capMu.Unlock()
+	if c.capCache == nil {
+		c.capCache = map[string]string{}
+	}
+	c.capCache[capability.Name] = capability.ID
 }
 
 func (c *Client) CreateCapability(ctx context.Context, name, description string) (Capability, error) {

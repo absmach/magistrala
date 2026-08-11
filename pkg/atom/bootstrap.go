@@ -35,6 +35,11 @@ var magistralaActionApplicability = []CapabilityApplicabilitySpec{
 	{ActionName: atomActionAlarmAcknowledge, ObjectKind: atomObjectKindTenant},
 	{ActionName: atomActionAlarmResolve, ObjectKind: atomObjectKindTenant},
 
+	{ActionName: atomActionRead, ObjectKind: atomObjectKindEntity, ObjectType: atomObjectTypeEntityDevice},
+	{ActionName: atomActionWrite, ObjectKind: atomObjectKindEntity, ObjectType: atomObjectTypeEntityDevice},
+	{ActionName: atomActionDelete, ObjectKind: atomObjectKindEntity, ObjectType: atomObjectTypeEntityDevice},
+	{ActionName: atomActionManage, ObjectKind: atomObjectKindEntity, ObjectType: atomObjectTypeEntityDevice},
+
 	{ActionName: atomActionRead, ObjectKind: atomObjectKindGroup},
 	{ActionName: atomActionWrite, ObjectKind: atomObjectKindGroup},
 	{ActionName: atomActionDelete, ObjectKind: atomObjectKindGroup},

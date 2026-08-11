@@ -189,6 +189,22 @@ type DirectPolicyList struct {
 	Total uint64         `json:"total"`
 }
 
+// GroupGrant grants a subject one or more actions over a group's members:
+// its direct members, or the members of its descendant groups if
+// IncludeDescendants is set. A grant maps to exactly one PermissionBlock and
+// one DirectPolicy, so it costs the same to write whether the group has one
+// member or thousands, and it automatically covers members added later.
+type GroupGrant struct {
+	TenantID           string
+	GroupID            string
+	SubjectKind        string
+	SubjectID          string
+	ObjectKind         string
+	ObjectType         string
+	Actions            []string
+	IncludeDescendants bool
+}
+
 type AuthorizedObjectIDsQuery struct {
 	SubjectID  string
 	Action     string

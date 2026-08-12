@@ -4,9 +4,8 @@
 override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
-SERVICES = atom-bootstrap bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
-CLI = cli
-TEST_API_SERVICES = certs clients users channels groups workspaces
+SERVICES = atom-bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
+TEST_API_SERVICES = certs
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -35,7 +34,7 @@ HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY = $(GOBIN)/mockery
-MOCKERY_VERSION=3.7.4
+MOCKERY_VERSION=3.6.4
 PKG_PROTO_GEN_OUT_DIR=api/grpc
 INTERNAL_PROTO_DIR=internal/proto
 INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
@@ -129,36 +128,6 @@ define ensure_atom_tokens_env
 	fi
 endef
 
-# Atom hard-requires a working connection to ATOM_EVENTS_AMQP_URL at every
-# boot once that variable is set (see absmach/atom src/main.rs) -- but nginx
-# (the AMQP proxy in front of FluxMQ, MG_NGINX_AMQP_PORT) and the FluxMQ
-# auth/broker chain behind it depend on atom-bootstrap completing, which
-# depends on atom itself being reachable. A single `docker compose up` for
-# the whole stack deadlocks: atom can never reach nginx, because nginx can
-# never start, because the chain behind it can never finish bootstrapping
-# against an atom that keeps failing to connect to nginx.
-#
-# Break the deadlock by bringing the bootstrap chain all the way up to nginx
-# first, with event publishing disabled for this one invocation -- an empty
-# ATOM_EVENTS_AMQP_URL override takes precedence over docker/.env's value --
-# so atom boots cleanly and atom-bootstrap, fluxmq-auth and the FluxMQ nodes
-# behind it can all finish starting. Targeting nginx (not just fluxmq-auth)
-# matters: the regular `up` that follows recreates atom with the real value,
-# and separately -- since docker compose's `up` restarts *any* non-running
-# service it manages, including atom-bootstrap after its clean exit(0) --
-# re-runs atom-bootstrap too. Both need the AMQP proxy nginx fronts to
-# already be genuinely functional at that point, not merely "started", or
-# the same deadlock reopens inside the second invocation. Targeting nginx
-# pulls in the full chain (atom-db -> atom -> atom-bootstrap -> fluxmq-auth
-# -> fluxmq-node1/2/3 -> nginx) via the compose file's own depends_on
-# conditions, which is the correct place to express "wait for this to
-# actually finish", not a guessed sleep.
-define bootstrap_atom_events_amqp
-	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
-		ATOM_EVENTS_AMQP_URL= $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d nginx; \
-	fi
-endef
-
 define run_with_arch_detection
 	$(call require_atom_tokens_env)
 	@echo "Detecting architecture..."
@@ -226,9 +195,9 @@ endif
 
 FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
-all: $(SERVICES) $(CLI)
+all: $(SERVICES)
 
-.PHONY: all help $(SERVICES) $(CLI) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
+.PHONY: all help $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
 
 help:
 	@printf 'Usage:\n  make <target> [VARIABLE=value ...]\n\nAvailable targets:\n'
@@ -290,11 +259,6 @@ define test_api_service
 	--phases=examples,stateful
 endef
 
-test_api_users: TEST_API_URL := http://localhost:9000
-test_api_clients: TEST_API_URL := http://localhost:9000
-test_api_workspaces: TEST_API_URL := http://localhost:9000
-test_api_channels: TEST_API_URL := http://localhost:9000
-test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
 
 $(TEST_API):
@@ -306,9 +270,6 @@ proto:
 	protoc -I $(INTERNAL_PROTO_DIR) --go_out=$(PKG_PROTO_GEN_OUT_DIR) --go_opt=paths=source_relative --go-grpc_out=$(PKG_PROTO_GEN_OUT_DIR) --go-grpc_opt=paths=source_relative $(INTERNAL_PROTO_FILES)
 
 $(FILTERED_SERVICES):
-	$(call compile_service,$(@))
-
-$(CLI):
 	$(call compile_service,$(@))
 
 $(DOCKERS):
@@ -357,13 +318,7 @@ grpc_mtls_certs:
 	$(MAKE) -C docker/ssl clients_grpc_certs
 
 provision_atom_tokens:
-	# This target brings up only atom-db and atom -- nginx and the FluxMQ
-	# chain are out of scope here entirely, so atom must not be made to wait
-	# on its AMQP proxy this early; see bootstrap_atom_events_amqp's comment
-	# for why. Without this override, atom never becomes healthy within the
-	# wait timeout and this step fails outright on every run, since
-	# docker/.env always carries the real ATOM_EVENTS_AMQP_URL.
-	ATOM_EVENTS_AMQP_URL= $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
+	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
 	$(MAKE) docker_atom-bootstrap
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) run --rm --no-deps --user "$(HOST_UID):$(HOST_GID)" -v "$(PWD)/docker:/host/docker" atom-bootstrap provision-tokens --output /host/docker/.env.tokens
 
@@ -442,13 +397,11 @@ endif
 run_latest: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(call ensure_atom_tokens_env)
-	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_latest_ci: check_certs
 	$(call require_atom_tokens_env)
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
-	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_tls: check_certs

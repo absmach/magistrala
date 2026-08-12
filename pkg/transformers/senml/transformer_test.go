@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	mgsenml "github.com/absmach/senml"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransformJSON(t *testing.T) {
@@ -48,6 +49,7 @@ func TestTransformJSON(t *testing.T) {
 			UpdateTime: 150,
 			Value:      &val,
 			Sum:        &sum,
+			DeviceId:   "base-name",
 		},
 	}
 
@@ -120,6 +122,7 @@ func TestTransformCBOR(t *testing.T) {
 			UpdateTime: 150,
 			Value:      &val,
 			Sum:        &sum,
+			DeviceId:   "base-name",
 		},
 	}
 
@@ -148,4 +151,106 @@ func TestTransformCBOR(t *testing.T) {
 		assert.Equal(t, tc.msgs, msgs, fmt.Sprintf("%s expected %v, got %v", tc.desc, tc.msgs, msgs))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
+}
+
+// TestTransformDeviceIDAccumulation covers MG-05: device_id resolved per
+// record from the pack's accumulated bn (RFC 8428 §4.6), not per message.
+func TestTransformDeviceIDAccumulation(t *testing.T) {
+	tr := senml.New(senml.JSON)
+
+	t.Run("no bn anywhere leaves DeviceId empty", func(t *testing.T) {
+		payload := []byte(`[
+			{"n":"temp","t":1,"v":21.5},
+			{"n":"humidity","t":2,"v":55}
+		]`)
+		msg := &messaging.Message{Channel: "c", Publisher: "p", Payload: payload}
+
+		got, err := tr.Transform(msg)
+		require.NoError(t, err)
+		msgs, ok := got.([]senml.Message)
+		require.True(t, ok)
+		require.Len(t, msgs, 2)
+		for _, m := range msgs {
+			assert.Empty(t, m.DeviceId)
+		}
+	})
+
+	t.Run("bn set once is inherited across every following record", func(t *testing.T) {
+		payload := []byte(`[
+			{"bn":"dev-1","n":"temp","t":1,"v":21.5},
+			{"n":"humidity","t":2,"v":55},
+			{"n":"pressure","t":3,"v":1013}
+		]`)
+		msg := &messaging.Message{Channel: "c", Publisher: "p", Payload: payload}
+
+		got, err := tr.Transform(msg)
+		require.NoError(t, err)
+		msgs, ok := got.([]senml.Message)
+		require.True(t, ok)
+		require.Len(t, msgs, 3)
+		for _, m := range msgs {
+			assert.Equal(t, "dev-1", m.DeviceId)
+		}
+	})
+
+	t.Run("bn changing mid-pack attributes each group to its own device", func(t *testing.T) {
+		// A concentrating gateway's single flush spanning two meters — the
+		// primary scenario this PRD exists for.
+		payload := []byte(`[
+			{"bn":"dev-1","n":"temp","t":1,"v":21.5},
+			{"n":"humidity","t":2,"v":55},
+			{"bn":"dev-2","n":"temp","t":3,"v":19.0},
+			{"n":"humidity","t":4,"v":60}
+		]`)
+		msg := &messaging.Message{Channel: "c", Publisher: "p", Payload: payload}
+
+		got, err := tr.Transform(msg)
+		require.NoError(t, err)
+		msgs, ok := got.([]senml.Message)
+		require.True(t, ok)
+		require.Len(t, msgs, 4)
+
+		// Keyed by Name (unique per record here) rather than slice position:
+		// Normalize sorts by Time, and ties are not guaranteed stable.
+		byName := make(map[string]string, len(msgs))
+		for _, m := range msgs {
+			byName[m.Name] = m.DeviceId
+		}
+		assert.Equal(t, map[string]string{
+			"dev-1temp":     "dev-1",
+			"dev-1humidity": "dev-1",
+			"dev-2temp":     "dev-2",
+			"dev-2humidity": "dev-2",
+		}, byName)
+	})
+
+	t.Run("an explicit empty bn does not reset accumulation", func(t *testing.T) {
+		payload := []byte(`[
+			{"bn":"dev-1","n":"temp","t":1,"v":21.5},
+			{"bn":"","n":"humidity","t":2,"v":55},
+			{"n":"pressure","t":3,"v":1013}
+		]`)
+		msg := &messaging.Message{Channel: "c", Publisher: "p", Payload: payload}
+
+		got, err := tr.Transform(msg)
+		require.NoError(t, err)
+		msgs, ok := got.([]senml.Message)
+		require.True(t, ok)
+		require.Len(t, msgs, 3)
+		for _, m := range msgs {
+			assert.Equal(t, "dev-1", m.DeviceId)
+		}
+	})
+
+	t.Run("device id is carried verbatim", func(t *testing.T) {
+		payload := []byte(`[{"bn":"DEV.7-A:07_x","n":"temp","t":1,"v":21.5}]`)
+		msg := &messaging.Message{Channel: "c", Publisher: "p", Payload: payload}
+
+		got, err := tr.Transform(msg)
+		require.NoError(t, err)
+		msgs, ok := got.([]senml.Message)
+		require.True(t, ok)
+		require.Len(t, msgs, 1)
+		assert.Equal(t, "DEV.7-A:07_x", msgs[0].DeviceId)
+	})
 }

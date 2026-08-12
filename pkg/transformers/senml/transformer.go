@@ -51,6 +51,21 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 		return nil, errors.Wrap(errDecode, err)
 	}
 
+	// Accumulate bn forward across the raw pack (RFC 8428 §4.6), before
+	// Normalize folds it into Name and discards it. Stashed in the otherwise
+	// unused Link field so it survives Normalize's internal sort — Swap moves
+	// whole records, so the accumulated value travels with the record it
+	// belongs to regardless of how Time ties are broken. Link is never
+	// mapped to the output Message, so this does not change any existing
+	// behaviour.
+	var deviceID string
+	for i := range raw.Records {
+		if raw.Records[i].BaseName != "" {
+			deviceID = raw.Records[i].BaseName
+		}
+		raw.Records[i].Link = deviceID
+	}
+
 	normalized, err := senml.Normalize(raw)
 	if err != nil {
 		return nil, errors.Wrap(errNormalize, err)
@@ -87,6 +102,7 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 			DataValue:   v.DataValue,
 			StringValue: v.StringValue,
 			Sum:         v.Sum,
+			DeviceId:    v.Link,
 		}
 	}
 

@@ -286,6 +286,39 @@ func TestMetadataPropertyRoundTrip(t *testing.T) {
 	}
 }
 
+func TestDeviceIDPropertyRoundTrip(t *testing.T) {
+	want := &messaging.Message{
+		Publisher: "gateway-1",
+		Protocol:  "mqtt",
+		Payload:   []byte("payload"),
+		DeviceId:  "dev-1",
+	}
+
+	properties := messageProperties(want)
+	headers := make(map[string]any, len(properties))
+	for key, value := range properties {
+		headers[key] = value
+	}
+
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	if err != nil {
+		t.Fatalf("reconstruct message: %v", err)
+	}
+	if got.GetDeviceId() != want.GetDeviceId() {
+		t.Fatalf("device ID mismatch: got %q, want %q", got.GetDeviceId(), want.GetDeviceId())
+	}
+}
+
+func TestMessagePropertiesOmitsDeviceIDWhenUnset(t *testing.T) {
+	msg := &messaging.Message{Publisher: "gateway-1", Protocol: "mqtt"}
+
+	got := messageProperties(msg)
+
+	if _, ok := got[headerDeviceID]; ok {
+		t.Fatalf("expected no %q property when DeviceId is unset, got %#v", headerDeviceID, got)
+	}
+}
+
 func TestMessageFromDeliveryZeroTimestampFallsBackToNow(t *testing.T) {
 	before := time.Now().UnixNano()
 	got, err := messageFromDelivery([]byte("raw"), nil, time.Time{}, "m", "m/dom/c/ch")

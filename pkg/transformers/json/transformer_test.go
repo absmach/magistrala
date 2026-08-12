@@ -12,6 +12,7 @@ import (
 	"github.com/absmach/magistrala/pkg/messaging"
 	"github.com/absmach/magistrala/pkg/transformers/json"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -253,4 +254,95 @@ func TestTransformJSON(t *testing.T) {
 		assert.Equal(t, tc.json, m, fmt.Sprintf("%s got incorrect json response from Transform()", tc.desc))
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
+}
+
+// TestTransformDeviceID covers MG-05: device_id popped from the reserved
+// "device_id" key, accumulating forward across a batch the same way SenML's
+// bn does (RFC 8428 §4.6).
+func TestTransformDeviceID(t *testing.T) {
+	tr := json.New(nil)
+	newMsg := func(payload string) *messaging.Message {
+		return &messaging.Message{
+			Channel:   "channel-1",
+			Subtopic:  "subtopic-1",
+			Publisher: "publisher-1",
+			Protocol:  "protocol",
+			Payload:   []byte(payload),
+		}
+	}
+
+	t.Run("single object: device_id is popped from Payload and set on the message", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`{"device_id":"dev-1","temp":21.5}`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 1)
+		assert.Equal(t, "dev-1", msgs.Data[0].DeviceId)
+		assert.NotContains(t, msgs.Data[0].Payload, "device_id")
+		assert.Equal(t, map[string]any{"temp": 21.5}, map[string]any(msgs.Data[0].Payload))
+	})
+
+	t.Run("single object: no device_id leaves DeviceId empty and Payload untouched", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`{"temp":21.5}`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 1)
+		assert.Empty(t, msgs.Data[0].DeviceId)
+		assert.Equal(t, map[string]any{"temp": 21.5}, map[string]any(msgs.Data[0].Payload))
+	})
+
+	t.Run("array: device_id set once is inherited across every following element", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`[{"device_id":"dev-1","temp":21.5},{"humidity":55},{"pressure":1013}]`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 3)
+		for _, m := range msgs.Data {
+			assert.Equal(t, "dev-1", m.DeviceId)
+		}
+	})
+
+	t.Run("array: device_id changing mid-array attributes each element to its own device", func(t *testing.T) {
+		// A concentrating gateway's single flush spanning two meters — the
+		// primary scenario this PRD exists for.
+		got, err := tr.Transform(newMsg(`[
+			{"device_id":"dev-1","temp":21.5},
+			{"humidity":55},
+			{"device_id":"dev-2","temp":19.0},
+			{"humidity":60}
+		]`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 4)
+		want := []string{"dev-1", "dev-1", "dev-2", "dev-2"}
+		for i, m := range msgs.Data {
+			assert.Equal(t, want[i], m.DeviceId, "element %d", i)
+		}
+	})
+
+	t.Run("array: an explicit empty device_id does not reset accumulation", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`[
+			{"device_id":"dev-1","temp":21.5},
+			{"device_id":"","humidity":55},
+			{"pressure":1013}
+		]`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 3)
+		for _, m := range msgs.Data {
+			assert.Equal(t, "dev-1", m.DeviceId)
+		}
+	})
+
+	t.Run("device id is carried verbatim, including unicode", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`{"device_id":"dév-测试_1","temp":21.5}`))
+		require.NoError(t, err)
+		msgs, ok := got.(json.Messages)
+		require.True(t, ok)
+		require.Len(t, msgs.Data, 1)
+		assert.Equal(t, "dév-测试_1", msgs.Data[0].DeviceId)
+	})
 }

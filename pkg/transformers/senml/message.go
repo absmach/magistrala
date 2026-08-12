@@ -18,4 +18,7 @@ type Message struct {
 	DataValue   *string  `json:"data_value,omitempty" db:"data_value" bson:"data_value,omitempty"`
 	BoolValue   *bool    `json:"bool_value,omitempty" db:"bool_value" bson:"bool_value,omitempty"`
 	Sum         *float64 `json:"sum,omitempty" db:"sum" bson:"sum,omitempty"`
+	// The device's serial, verbatim, resolved per record from the pack's
+	// accumulated bn (RFC 8428 §4.6) — not a platform UUID, never looked up.
+	DeviceId string `json:"device_id,omitempty" db:"device_id" bson:"device_id,omitempty"`
 }

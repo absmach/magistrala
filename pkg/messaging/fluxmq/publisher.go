@@ -19,6 +19,7 @@ var _ messaging.Publisher = (*publisher)(nil)
 const (
 	headerExternalID = "external_id"
 	headerProtocol   = "protocol"
+	headerDeviceID   = "device_id"
 	// headerMetadataPrefix sits inside FluxMQ's reserved "_flux." namespace, so
 	// the broker treats message metadata as internal state passed between
 	// first-party services: it is dropped when an untrusted connection sets it
@@ -150,6 +151,11 @@ func messageProperties(msg *messaging.Message) map[string]string {
 	}
 	if clientID := msg.ClientIdentity(); clientID != "" {
 		props["client_id"] = clientID
+	}
+	// Broker-level, single-device only. Never set from payload accumulation —
+	// see pkg/transformers/senml and pkg/transformers/json for that mechanism.
+	if msg.GetDeviceId() != "" {
+		props[headerDeviceID] = msg.GetDeviceId()
 	}
 	if msg.GetCreated() != 0 {
 		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)

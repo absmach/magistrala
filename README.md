@@ -402,8 +402,11 @@ old tokens do not survive it.
 
 ```bash
 make cli
-./build/cli health <service>
+./build/cli --graphql-url http://localhost:8080/graphql login admin 12345678
+./build/cli --token "$MG_ATOM_TOKEN" domains list
 ```
+
+See [cli/README.md](cli/README.md) for the Atom GraphQL-backed command reference.
 
 ---
 

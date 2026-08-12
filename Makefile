@@ -5,6 +5,7 @@ override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
 SERVICES = atom-bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
+CLI = cli
 TEST_API_SERVICES = certs clients users channels groups domains
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
@@ -227,7 +228,7 @@ FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
 all: $(SERVICES)
 
-.PHONY: all help $(SERVICES) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
+.PHONY: all help $(SERVICES) $(CLI) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
 
 help:
 	@printf 'Usage:\n  make <target> [VARIABLE=value ...]\n\nAvailable targets:\n'
@@ -305,6 +306,9 @@ proto:
 	protoc -I $(INTERNAL_PROTO_DIR) --go_out=$(PKG_PROTO_GEN_OUT_DIR) --go_opt=paths=source_relative --go-grpc_out=$(PKG_PROTO_GEN_OUT_DIR) --go-grpc_opt=paths=source_relative $(INTERNAL_PROTO_FILES)
 
 $(FILTERED_SERVICES):
+	$(call compile_service,$(@))
+
+$(CLI):
 	$(call compile_service,$(@))
 
 $(DOCKERS):

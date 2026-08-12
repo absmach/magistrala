@@ -49,8 +49,8 @@ func TestEntityFromFields(t *testing.T) {
 	if got.Attributes["magistrala_kind"] != KindDevice {
 		t.Fatalf("missing magistrala kind: %+v", got.Attributes)
 	}
-	if got.Attributes["parent_group_id"] != "group-1" {
-		t.Fatalf("missing parent group: %+v", got.Attributes)
+	if _, ok := got.Attributes["parent_group_id"]; ok {
+		t.Fatalf("parent_group_id is a rejected Atom attribute and must not be set: %+v", got.Attributes)
 	}
 }
 
@@ -75,5 +75,19 @@ func TestResourceFromFieldsOmitsEmptyValues(t *testing.T) {
 	}
 	if got.Attributes["source"] != "magistrala" {
 		t.Fatalf("missing source attribute: %+v", got.Attributes)
+	}
+}
+
+func TestResourceFromFieldsExcludesParentGroupID(t *testing.T) {
+	got := ResourceFromFields(ObjectFields{
+		ID:       "channel-1",
+		Kind:     KindChannel,
+		Name:     "telemetry",
+		TenantID: "domain-1",
+		ParentID: "group-1",
+	})
+
+	if _, ok := got.Attributes["parent_group_id"]; ok {
+		t.Fatalf("parent_group_id is a rejected Atom attribute and must not be set: %+v", got.Attributes)
 	}
 }

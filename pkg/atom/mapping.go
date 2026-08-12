@@ -31,6 +31,8 @@ func TenantFromFields(f ObjectFields) Tenant {
 	}
 }
 
+// Object-group membership is many-to-many; Atom rejects parent_group_id as
+// an entity attribute, so it isn't set here — use AddGroupMember instead.
 func EntityFromFields(f ObjectFields) Entity {
 	return Entity{
 		ID:       f.ID,
@@ -44,7 +46,6 @@ func EntityFromFields(f ObjectFields) Entity {
 			atomAttributeTags:      cloneStrings(f.Tags),
 			atomAttributeMetadata:  cloneMap(f.Metadata),
 			"private_metadata":     cloneMap(f.Private),
-			"parent_group_id":      f.ParentID,
 			atomAttributeCreatedAt: timeString(f.CreatedAt),
 			atomAttributeUpdatedAt: timeString(f.UpdatedAt),
 			atomAttributeUpdatedBy: f.UpdatedBy,
@@ -116,6 +117,8 @@ func GroupFromFields(f ObjectFields) Group {
 	}
 }
 
+// Object-group membership is many-to-many; Atom rejects parent_group_id as
+// a resource attribute, so it isn't set here — use AddGroupMember instead.
 func ResourceFromFields(f ObjectFields) Resource {
 	return Resource{
 		ID:       f.ID,
@@ -127,7 +130,6 @@ func ResourceFromFields(f ObjectFields) Resource {
 			atomAttributeSource:    atomAttributeSourceMagistrala,
 			atomAttributeStatus:    f.Status,
 			atomAttributeRoute:     f.Route,
-			"parent_group_id":      f.ParentID,
 			atomAttributeTags:      cloneStrings(f.Tags),
 			atomAttributeMetadata:  cloneMap(f.Metadata),
 			atomAttributeCreatedAt: timeString(f.CreatedAt),

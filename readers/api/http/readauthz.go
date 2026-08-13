@@ -247,7 +247,11 @@ func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (read
 
 	devices := make([]authorizedDevice, 0, len(page.Policies))
 	for _, id := range page.Policies {
-		devices = append(devices, authorizedDevice{publisherID: id, serial: external[id]})
+		serial, ok := external[id]
+		if !ok {
+			continue
+		}
+		devices = append(devices, authorizedDevice{publisherID: id, serial: serial})
 	}
 	return newReadGrant(devices), nil
 }

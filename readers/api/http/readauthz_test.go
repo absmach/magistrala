@@ -65,6 +65,9 @@ func allMeters() *fakeResolver {
 		meter1UUID: meter1Serial,
 		meter2UUID: meter2Serial,
 		meter3UUID: meter3Serial,
+		"pub-a":    "serial-pub-a",
+		"pub-b":    "serial-pub-b",
+		"pub-c":    "serial-pub-c",
 	}}
 }
 
@@ -251,16 +254,17 @@ func TestResolveTranslatesUUIDsToSerials(t *testing.T) {
 }
 
 // Criterion 11, the orphan case seen from the grant side: a granted device that
-// carries no external id contributes only its publisher identity. An empty
-// serial in the scope would match every device-less row on the channel.
-func TestResolveSkipsDevicesWithNoExternalID(t *testing.T) {
+// Atom no longer resolves contributes neither its publisher identity nor an
+// empty serial. Keeping the publisher projection would leave stale direct rows
+// readable after the device became unreadable or was deleted.
+func TestResolveDropsUnresolvedEntityIDs(t *testing.T) {
 	authz := customerAuthorizer(t, &fakeResolver{serials: map[string]string{meter1UUID: meter1Serial}}, meter1UUID, meter3UUID)
 
 	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
-	assert.Equal(t, []string{meter1UUID, meter3UUID}, got.scope.PublisherIDs)
+	assert.Equal(t, []string{meter1UUID}, got.scope.PublisherIDs)
 	assert.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
 	assert.NotContains(t, got.scope.DeviceIDs, "")
 }

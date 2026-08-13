@@ -5,6 +5,7 @@ package http
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http/httptest"
 	"testing"
@@ -453,6 +454,35 @@ func TestListMessagesGrantedCustomerReachesGatewayRelayedRows(t *testing.T) {
 	page, ok := res.(pageRes)
 	require.True(t, ok)
 	assert.Equal(t, []readers.Message{"relayed-by-gateway"}, page.Messages)
+}
+
+func TestListMessagesDoesNotExposeDeviceScope(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID, meter3UUID})
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(
+		scopeMatches([]string{meter1UUID, meter3UUID}, []string{meter1Serial, meter3Serial}),
+	)).Return(readers.MessagesPage{
+		PageMetadata: readers.PageMetadata{
+			Limit: 10,
+			DeviceScope: &readers.DeviceScope{
+				PublisherIDs: []string{meter1UUID, meter3UUID},
+				DeviceIDs:    []string{meter1Serial, meter3Serial},
+			},
+		},
+		Total:    1,
+		Messages: []readers.Message{"m1"},
+	}, nil)
+
+	res, err := deps.endpoint(context.Background(), deviceReq([]string{meter1Serial}))
+	require.NoError(t, err)
+
+	raw, err := json.Marshal(res)
+	require.NoError(t, err)
+	assert.NotContains(t, string(raw), "device_scope")
+	assert.NotContains(t, string(raw), meter3UUID)
+	assert.NotContains(t, string(raw), meter3Serial)
 }
 
 // A client authenticating with a secret key holds no per-device grants, so it

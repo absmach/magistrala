@@ -42,6 +42,28 @@ func TestDevicesEntityReplacesClients(t *testing.T) {
 	}
 }
 
+func TestDeviceTypesEntityBlock(t *testing.T) {
+	cfg, err := permissions.ParsePermissionsFile(permissionsFilePath)
+	require.NoError(t, err)
+
+	ops, _, err := cfg.GetEntityPermissions("device_types")
+	require.NoError(t, err)
+
+	for _, op := range []string{"create", "view", "list", "update", "list_versions"} {
+		_, ok := ops[op]
+		require.True(t, ok, "device_types block must declare %s", op)
+	}
+
+	// Publishing a version is separately grantable from renaming the type.
+	perm, ok := ops["create_version"]
+	require.True(t, ok, "device_types block must declare create_version")
+	require.Equal(t, permissions.Permission("create_version_permission"), perm)
+
+	// Atom has no deleteProfile mutation — a type is retired, never deleted.
+	_, ok = ops["delete"]
+	require.False(t, ok, "device_types must not declare delete")
+}
+
 func TestNoGatewaysEntityBlock(t *testing.T) {
 	cfg, err := permissions.ParsePermissionsFile(permissionsFilePath)
 	require.NoError(t, err)

@@ -14,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -109,4 +110,49 @@ func TestSaveJSON(t *testing.T) {
 
 	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+}
+
+// JSON tables are created on demand and so sit outside the migration set: one
+// created before device_id existed is missing the column, and the writer has to
+// catch it up rather than fail every insert from then on.
+func TestSaveJSONCatchesUpLegacyTable(t *testing.T) {
+	repo := postgres.New(db)
+
+	const format = "legacy_json"
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS ` + format + ` (
+            id            UUID,
+            created       BIGINT,
+            channel       VARCHAR(254),
+            subtopic      VARCHAR(254),
+            publisher     VARCHAR(254),
+            protocol      TEXT,
+            payload       JSONB,
+            PRIMARY KEY (id)
+        )`)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	chid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	msgs := json.Messages{
+		Format: format,
+		Data: []json.Message{{
+			Channel:   chid.String(),
+			Publisher: pubid.String(),
+			Created:   time.Now().UnixNano(),
+			Protocol:  "mqtt",
+			DeviceId:  "Meter.A-01:X",
+			Payload:   map[string]any{"field": 1},
+		}},
+	}
+
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	var stored string
+	err = db.Get(&stored, `SELECT device_id FROM `+format+` WHERE channel = $1`, chid.String())
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	assert.Equal(t, "Meter.A-01:X", stored)
 }

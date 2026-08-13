@@ -65,6 +65,7 @@ func migrateDB(db *sqlx.DB) error {
             			sum           FLOAT,
             			time          FlOAT,
             			update_time   FLOAT,
+            			device_id     TEXT NOT NULL DEFAULT '',
             			PRIMARY KEY (id)
 					)`,
 				},

@@ -23,6 +23,7 @@ var (
 	errSaveMessage    = errors.New("failed to save message to postgres database")
 	errTransRollback  = errors.New("failed to rollback transaction")
 	errNoTable        = errors.New("relation does not exist")
+	errNoColumn       = errors.New("column does not exist")
 )
 
 var _ consumers.BlockingConsumer = (*postgresRepo)(nil)
@@ -52,10 +53,10 @@ func (pr postgresRepo) saveSenml(ctx context.Context, messages any) (err error) 
 	}
 	q := `INSERT INTO messages (id, channel, subtopic, publisher, protocol,
           name, unit, value, string_value, bool_value, data_value, sum,
-          time, update_time)
+          time, update_time, device_id)
           VALUES (:id, :channel, :subtopic, :publisher, :protocol, :name, :unit,
           :value, :string_value, :bool_value, :data_value, :sum,
-          :time, :update_time);`
+          :time, :update_time, :device_id);`
 
 	tx, err := pr.db.BeginTxx(ctx, nil)
 	if err != nil {
@@ -94,10 +95,15 @@ func (pr postgresRepo) saveSenml(ctx context.Context, messages any) (err error) 
 	return err
 }
 
+// saveJSON writes a batch, creating or catching up the format's table on demand.
+// JSON tables are created lazily and so are outside the migration set: a table
+// created before device_id existed is missing the column, which surfaces as an
+// undefined-column error on the first insert and is repaired the same way a
+// missing table is.
 func (pr postgresRepo) saveJSON(ctx context.Context, msgs smqjson.Messages) error {
 	if err := pr.insertJSON(ctx, msgs); err != nil {
-		if err == errNoTable {
-			if err := pr.createTable(msgs.Format); err != nil {
+		if err == errNoTable || err == errNoColumn {
+			if err := pr.ensureTable(msgs.Format); err != nil {
 				return err
 			}
 			return pr.insertJSON(ctx, msgs)
@@ -125,8 +131,8 @@ func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) er
 		}
 	}()
 
-	q := `INSERT INTO %s (id, channel, created, subtopic, publisher, protocol, payload)
-          VALUES (:id, :channel, :created, :subtopic, :publisher, :protocol, :payload);`
+	q := `INSERT INTO %s (id, channel, created, subtopic, publisher, protocol, payload, device_id)
+          VALUES (:id, :channel, :created, :subtopic, :publisher, :protocol, :payload, :device_id);`
 	q = fmt.Sprintf(q, msgs.Format)
 
 	for _, m := range msgs.Data {
@@ -147,6 +153,8 @@ func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) er
 					return errors.Wrap(errSaveMessage, errInvalidMessage)
 				case pgerrcode.UndefinedTable:
 					return errNoTable
+				case pgerrcode.UndefinedColumn:
+					return errNoColumn
 				}
 			}
 			return err
@@ -155,7 +163,7 @@ func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) er
 	return nil
 }
 
-func (pr postgresRepo) createTable(name string) error {
+func (pr postgresRepo) ensureTable(name string) error {
 	q := `CREATE TABLE IF NOT EXISTS %s (
             id            UUID,
             created       BIGINT,
@@ -164,11 +172,15 @@ func (pr postgresRepo) createTable(name string) error {
             publisher     VARCHAR(254),
             protocol      TEXT,
             payload       JSONB,
+            device_id     TEXT NOT NULL DEFAULT '',
             PRIMARY KEY (id)
         )`
-	q = fmt.Sprintf(q, name)
+	if _, err := pr.db.Exec(fmt.Sprintf(q, name)); err != nil {
+		return err
+	}
 
-	_, err := pr.db.Exec(q)
+	// Catches up a table created before device_id existed.
+	_, err := pr.db.Exec(fmt.Sprintf(`ALTER TABLE %s ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT ''`, name))
 	return err
 }
 
@@ -185,6 +197,7 @@ type jsonMessage struct {
 	Publisher string `db:"publisher"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func toJSONMessage(msg smqjson.Message) (jsonMessage, error) {
@@ -210,6 +223,7 @@ func toJSONMessage(msg smqjson.Message) (jsonMessage, error) {
 		Publisher: msg.Publisher,
 		Protocol:  msg.Protocol,
 		Payload:   data,
+		DeviceID:  msg.DeviceId,
 	}
 
 	return m, nil

@@ -79,18 +79,22 @@ var (
 
 type MessagePageMetadata struct {
 	PageMetadata
-	Subtopic    string  `json:"subtopic,omitempty"`
-	Publisher   string  `json:"publisher,omitempty"`
-	Comparator  string  `json:"comparator,omitempty"`
-	BoolValue   *bool   `json:"vb,omitempty"`
-	StringValue string  `json:"vs,omitempty"`
-	DataValue   string  `json:"vd,omitempty"`
-	From        float64 `json:"from,omitempty"`
-	To          float64 `json:"to,omitempty"`
-	Aggregation string  `json:"aggregation,omitempty"`
-	Interval    string  `json:"interval,omitempty"`
-	Value       float64 `json:"value,omitempty"`
-	Protocol    string  `json:"protocol,omitempty"`
+	Subtopic  string `json:"subtopic,omitempty"`
+	Publisher string `json:"publisher,omitempty"`
+	// Publishers and DeviceIDs are sent as repeated query parameters, one per
+	// value, so entries are transmitted verbatim and never split on a separator.
+	Publishers  []string `json:"publishers,omitempty"`
+	DeviceIDs   []string `json:"device_ids,omitempty"`
+	Comparator  string   `json:"comparator,omitempty"`
+	BoolValue   *bool    `json:"vb,omitempty"`
+	StringValue string   `json:"vs,omitempty"`
+	DataValue   string   `json:"vd,omitempty"`
+	From        float64  `json:"from,omitempty"`
+	To          float64  `json:"to,omitempty"`
+	Aggregation string   `json:"aggregation,omitempty"`
+	Interval    string   `json:"interval,omitempty"`
+	Value       float64  `json:"value,omitempty"`
+	Protocol    string   `json:"protocol,omitempty"`
 }
 
 type Operator uint8

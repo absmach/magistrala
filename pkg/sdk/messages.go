@@ -68,6 +68,14 @@ func (sdk mgSDK) withMessageQueryParams(baseURL, endpoint string, mpm MessagePag
 			ret.Add(k, t.String())
 		case bool:
 			ret.Add(k, strconv.FormatBool(t))
+		case []any:
+			// List-valued filters (publishers, device_ids) go out as repeated
+			// query parameters so each value survives verbatim.
+			for _, e := range t {
+				if s, ok := e.(string); ok {
+					ret.Add(k, s)
+				}
+			}
 		}
 	}
 	qs := ret.Encode()

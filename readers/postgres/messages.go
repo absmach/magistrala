@@ -19,6 +19,8 @@ var _ readers.MessageRepository = (*postgresRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceID   = "device_id"
+	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -59,6 +61,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		messageFieldSubtopic:   rpm.Subtopic,
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
+		messageFieldDeviceIDs:  rpm.DeviceIDs,
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -151,6 +154,8 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
 		case messageFieldPublishers:
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldPublisher, messageFieldPublishers)
+		case messageFieldDeviceIDs:
+			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldDeviceID, messageFieldDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,
@@ -200,6 +205,7 @@ type jsonMessage struct {
 	Publisher string `db:"publisher"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
@@ -211,6 +217,12 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldPublisher: msg.Publisher,
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
+	}
+	// Mirrors the `omitempty` on senml.Message.DeviceId: rows with no device —
+	// direct publishers, or anything written before this column existed — are
+	// reported exactly as they were before.
+	if msg.DeviceID != "" {
+		ret[messageFieldDeviceID] = msg.DeviceID
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

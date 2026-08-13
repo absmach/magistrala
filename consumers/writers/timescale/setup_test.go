@@ -18,7 +18,10 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-var db *sqlx.DB
+var (
+	db     *sqlx.DB
+	dbPort string
+)
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
@@ -44,6 +47,7 @@ func TestMain(m *testing.M) {
 	}
 
 	port := container.GetPort("5432/tcp")
+	dbPort = port
 
 	if err := pool.Retry(func() error {
 		url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)

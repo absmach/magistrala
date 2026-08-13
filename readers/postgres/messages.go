@@ -21,6 +21,9 @@ const (
 	messageFieldChannel    = "channel"
 	messageFieldDeviceID   = "device_id"
 	messageFieldDeviceIDs  = "device_ids"
+	messageFieldScope      = "device_scope"
+	scopeParamPublishers   = "scope_publishers"
+	scopeParamDeviceIDs    = "scope_device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -62,6 +65,8 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
 		messageFieldDeviceIDs:  rpm.DeviceIDs,
+		scopeParamPublishers:   rpm.DeviceScope.Publishers(),
+		scopeParamDeviceIDs:    rpm.DeviceScope.Devices(),
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -156,6 +161,12 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldPublisher, messageFieldPublishers)
 		case messageFieldDeviceIDs:
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldDeviceID, messageFieldDeviceIDs)
+		case messageFieldScope:
+			// OR, not AND: a device is named by publisher when it publishes for
+			// itself and by device_id when a gateway relays for it, and one row
+			// carries only one of the two.
+			condition = fmt.Sprintf(`%s AND (%s = ANY(:%s) OR %s = ANY(:%s))`,
+				condition, messageFieldPublisher, scopeParamPublishers, messageFieldDeviceID, scopeParamDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,

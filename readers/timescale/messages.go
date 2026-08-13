@@ -30,6 +30,9 @@ const (
 	messageFieldChannel    = "channel"
 	messageFieldDeviceID   = "device_id"
 	messageFieldDeviceIDs  = "device_ids"
+	messageFieldScope      = "device_scope"
+	scopeParamPublishers   = "scope_publishers"
+	scopeParamDeviceIDs    = "scope_device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -123,6 +126,8 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
 		messageFieldDeviceIDs:  rpm.DeviceIDs,
+		scopeParamPublishers:   rpm.DeviceScope.Publishers(),
+		scopeParamDeviceIDs:    rpm.DeviceScope.Devices(),
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -216,6 +221,13 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = ANY(:publishers) ")
 	} else if _, ok := query[messageFieldPublisher]; ok {
 		conditions = append(conditions, " publisher = :publisher ")
+	}
+
+	// The authorization scope is OR, not AND: a device is named by publisher when
+	// it publishes for itself and by device_id when a gateway relays for it, and
+	// one row carries only one of the two.
+	if _, ok := query[messageFieldScope]; ok {
+		conditions = append(conditions, " ( publisher = ANY(:scope_publishers) OR device_id = ANY(:scope_device_ids) ) ")
 	}
 
 	// Ordered to match idx_channel_device_id_name_time, which sits between the

@@ -122,7 +122,7 @@ func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error
 		CreateEntity Entity `json:"createEntity"`
 	}
 	err := c.graphQL(ctx, `mutation CreateEntity($input: CreateEntityInput!) {
-		createEntity(input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		createEntity(input: $input) { id kind name external_id: externalId tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{atomInputKeyInput: entityCreateInput(entity)}, &out)
 	return out.CreateEntity, err
 }
@@ -132,7 +132,7 @@ func (c *Client) GetEntity(ctx context.Context, id string) (Entity, error) {
 		Entity Entity `json:"entity"`
 	}
 	err := c.graphQL(ctx, `query Entity($id: ID!) {
-		entity(id: $id) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		entity(id: $id) { id kind name external_id: externalId tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"id": id}, &out)
 	return out.Entity, err
 }
@@ -142,7 +142,7 @@ func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (En
 		UpdateEntity Entity `json:"updateEntity"`
 	}
 	err := c.graphQL(ctx, `mutation UpdateEntity($id: ID!, $input: UpdateEntityInput!) {
-		updateEntity(id: $id, input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		updateEntity(id: $id, input: $input) { id kind name external_id: externalId tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{"id": id, atomInputKeyInput: entityUpdateInput(entity)}, &out)
 	return out.UpdateEntity, err
 }
@@ -941,6 +941,7 @@ func entityCreateInput(entity Entity) map[string]any {
 	input := map[string]any{atomInputKeyName: entity.Name}
 	setIfNotEmpty(input, "id", entity.ID)
 	setIfNotEmpty(input, atomInputKeyKind, entity.Kind)
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, "tenantId", entity.TenantID)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes
@@ -953,6 +954,10 @@ func entityCreateInput(entity Entity) map[string]any {
 func entityUpdateInput(entity Entity) map[string]any {
 	input := map[string]any{}
 	setIfNotEmpty(input, atomInputKeyName, entity.Name)
+	// externalId is MaybeUndefined on Atom's side: omitted leaves it unchanged,
+	// explicit null clears it. Omitting on empty keeps this an update of what
+	// was set, never a silent clear.
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, atomAttributeStatus, entity.Status)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes

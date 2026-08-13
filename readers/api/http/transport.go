@@ -51,16 +51,16 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices externalIDResolver, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 	}
 
-	publisherAuthz := newPublisherAuthorizer(policyEvaluator, policyLister)
+	readAuthz := newReadAuthorizer(policyEvaluator, policyLister, devices)
 
 	mux := chi.NewRouter()
 	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, authn, clients, channels, publisherAuthz),
+		listMessagesEndpoint(svc, authn, clients, channels, readAuthz),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -241,10 +241,11 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 	return json.NewEncoder(w).Encode(response)
 }
 
-// authnAuthz authenticates the caller, applies the channel-level subscribe check, then narrows the
-// request's publisher filter to what the caller is authorized to read. noAccess means the caller may
-// read no publisher on this channel, so the response must be empty rather than unfiltered.
-func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, publisherAuthz *publisherAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
+// authnAuthz authenticates the caller, applies the channel-level subscribe check, then bounds the
+// query to the devices the caller is authorized to read and narrows their own filters to the same
+// set. noAccess means the caller may read nothing on this channel, so the response must be empty
+// rather than unfiltered.
+func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
 	clientID, clientType, superAdmin, err := authenticate(ctx, req, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
@@ -257,22 +258,24 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 		return req.pageMeta, false, nil
 	}
 
-	// Per-publisher grants only exist for domain users, not for clients authenticating with a secret key.
+	// Per-device grants only exist for domain users, not for clients authenticating with a secret key.
 	if clientType != policies.UserType {
 		return req.pageMeta, false, nil
 	}
 
-	authorized, noAccess, err := publisherAuthz.filter(ctx, req.domain, clientID, requestedPublishers(req.pageMeta))
+	scope, err := readAuthz.resolve(ctx, req.domain, clientID, requestedPublishers(req.pageMeta), requestedDeviceIDs(req.pageMeta))
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
-	if noAccess {
+	if scope.noAccess {
 		return req.pageMeta, true, nil
 	}
 
 	pm = req.pageMeta
 	pm.Publisher = ""
-	pm.Publishers = authorized
+	pm.Publishers = scope.publishers
+	pm.DeviceIDs = scope.deviceIDs
+	pm.DeviceScope = scope.scope
 	return pm, false, nil
 }
 

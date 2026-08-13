@@ -40,6 +40,8 @@ A message carries the protocol it was published with (`mqtt`, `http`, `coap`, �
 
 `InternalMetadata` is what avoids this. A connection authenticated as a `service`-role local principal on the mTLS listener may relay the origin protocol, publisher, `created` timestamp and metadata it received rather than having its own stamped on. Any service that republishes messages someone else authored has to use it, and its principal needs a `permissions.publish` entry for the destination.
 
+`Message.DeviceId` is a separate, opt-in identity: "whose data this is" rather than "who sent it". It is set only when a publish is already known to be about exactly one device — a directly-connected device, or a service republishing a value it computed for one specific meter — and is relayed the same way as publisher/protocol. It is never set from a raw gateway batch, which is never provably single-device; a batch's per-record attribution is resolved downstream, from the payload, by `pkg/transformers/senml` and `pkg/transformers/json`.
+
 ### Options
 
 | Option                                 | Description                                                                                       |

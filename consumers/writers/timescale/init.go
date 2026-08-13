@@ -67,6 +67,33 @@ func Migration() *migrate.MemoryMigrationSource {
 					"DROP INDEX IF EXISTS idx_channel_subtopic_publisher_name_time ;",
 				},
 			},
+			{
+				// device_id is the device's external serial as it appeared in the
+				// payload, denormalised onto the row. It is deliberately kept out of
+				// the primary key: changing the key of a populated hypertable is the
+				// expensive, rewrite-prone operation, and it buys nothing here since
+				// SenML normalisation folds the base name into name, so rows from
+				// different devices already differ in the existing key. publisher
+				// remains the audit identity. NOT NULL DEFAULT '' rather than
+				// nullable so "no device" scans into senml.Message.DeviceId (a plain
+				// string) without NULL handling; a constant default makes the ALTER
+				// metadata-only on PostgreSQL 11+, so existing chunks are not
+				// rewritten. The index follows the convention of the ones above:
+				// leading channel, trailing name, time DESC.
+				Id: "messages_3",
+				Up: []string{
+					"ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT '';",
+
+					// Index on channel, device_id, name, time
+					"CREATE INDEX IF NOT EXISTS idx_channel_device_id_name_time  ON messages (channel, device_id, name, time DESC) WITH (timescaledb.transaction_per_chunk);",
+				},
+				DisableTransactionUp: true,
+				Down: []string{
+					"DROP INDEX IF EXISTS idx_channel_device_id_name_time ;",
+
+					"ALTER TABLE messages DROP COLUMN IF EXISTS device_id;",
+				},
+			},
 		},
 	}
 }

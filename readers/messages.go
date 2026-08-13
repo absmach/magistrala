@@ -41,13 +41,30 @@ type MessagesPage struct {
 
 // PageMetadata represents the parameters used to create database queries.
 type PageMetadata struct {
-	Offset      uint64   `json:"offset"`
-	Limit       uint64   `json:"limit"`
-	Order       string   `json:"order,omitempty"`
-	Dir         string   `json:"dir,omitempty"`
-	Subtopic    string   `json:"subtopic,omitempty"`
-	Publisher   string   `json:"publisher,omitempty"`
-	Publishers  []string `json:"publishers,omitempty"`
+	Offset     uint64   `json:"offset"`
+	Limit      uint64   `json:"limit"`
+	Order      string   `json:"order,omitempty"`
+	Dir        string   `json:"dir,omitempty"`
+	Subtopic   string   `json:"subtopic,omitempty"`
+	Publisher  string   `json:"publisher,omitempty"`
+	Publishers []string `json:"publishers,omitempty"`
+	// DeviceIDs filters on the device serial denormalised onto every row by the
+	// writers. Values are matched byte-for-byte; they are external serials, not
+	// platform UUIDs, so a caller holding Atom entity IDs must translate them to
+	// external_id first (MG-08).
+	//
+	// An EMPTY OR NIL SLICE MEANS "NO DEVICE FILTER", NOT "MATCH NOTHING".
+	// The WHERE builders marshal this struct to JSON and iterate the resulting
+	// map, so `omitempty` erases an empty slice exactly as it erases a nil one
+	// and no condition is emitted. The distinction cannot be restored with a
+	// pointer either: proto3 `repeated` has no field presence, so an empty and
+	// an absent list arrive identically over gRPC.
+	//
+	// Authorization must therefore never express "authorized for zero devices"
+	// by assigning an empty slice here. It must short-circuit before calling
+	// ReadAll and return an empty page — the pattern publisherAuthorizer already
+	// uses for publishers via its noAccess result.
+	DeviceIDs   []string `json:"device_ids,omitempty"`
 	Protocol    string   `json:"protocol,omitempty"`
 	Name        string   `json:"name,omitempty"`
 	Value       float64  `json:"v,omitempty"`

@@ -28,6 +28,8 @@ var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceID   = "device_id"
+	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -93,6 +95,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time,
 				%s(value) AS value,
 				FIRST(publisher, time) AS publisher,
+				FIRST(device_id, time) AS device_id,
 				FIRST(protocol, time) AS protocol,
 				FIRST(subtopic, time) AS subtopic,
 				FIRST(name,time) AS name,
@@ -119,6 +122,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		messageFieldSubtopic:   rpm.Subtopic,
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
+		messageFieldDeviceIDs:  rpm.DeviceIDs,
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -214,6 +218,12 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
+	// Ordered to match idx_channel_device_id_name_time, which sits between the
+	// publisher and name indexes.
+	if _, ok := query[messageFieldDeviceIDs]; ok {
+		conditions = append(conditions, " device_id = ANY(:device_ids) ")
+	}
+
 	if _, ok := query[messageFieldName]; ok {
 		conditions = append(conditions, " name = :name ")
 	}
@@ -273,6 +283,7 @@ type jsonMessage struct {
 	Publisher string `db:"publisher"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
@@ -283,6 +294,12 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldPublisher: msg.Publisher,
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
+	}
+	// Mirrors the `omitempty` on senml.Message.DeviceId: rows with no device —
+	// direct publishers, or anything written before this column existed — are
+	// reported exactly as they were before.
+	if msg.DeviceID != "" {
+		ret[messageFieldDeviceID] = msg.DeviceID
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

@@ -41,6 +41,23 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE messages ADD PRIMARY KEY (time, publisher, subtopic, name)`,
 				},
 			},
+			{
+				// device_id is the device's external serial as it appeared in the
+				// payload, denormalised onto the row. It is deliberately not part of
+				// the primary key: SenML normalisation folds the base name into name,
+				// so rows from different devices already differ there, and publisher
+				// stays the audit identity. NOT NULL DEFAULT '' rather than nullable
+				// so that "no device" scans into senml.Message.DeviceId (a plain
+				// string) without NULL handling, and so existing rows migrate without
+				// a table rewrite.
+				Id: "messages_3",
+				Up: []string{
+					`ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT ''`,
+				},
+				Down: []string{
+					`ALTER TABLE messages DROP COLUMN IF EXISTS device_id`,
+				},
+			},
 		},
 	}
 }

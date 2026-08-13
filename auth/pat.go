@@ -77,29 +77,31 @@ type EntityType uint32
 // never become load-bearing by accident later. 2 (former ClientsType) is
 // retired, not reused, so no future constant silently inherits old meaning.
 const (
-	GroupsType    EntityType = 0
-	ChannelsType  EntityType = 1
-	BootstrapType EntityType = 3
-	DashboardType EntityType = 4
-	MessagesType  EntityType = 5
-	DomainsType   EntityType = 6
-	UsersType     EntityType = 7
-	RulesType     EntityType = 8
-	ReportsType   EntityType = 9
-	DevicesType   EntityType = 10
+	GroupsType      EntityType = 0
+	ChannelsType    EntityType = 1
+	BootstrapType   EntityType = 3
+	DashboardType   EntityType = 4
+	MessagesType    EntityType = 5
+	DomainsType     EntityType = 6
+	UsersType       EntityType = 7
+	RulesType       EntityType = 8
+	ReportsType     EntityType = 9
+	DevicesType     EntityType = 10
+	DeviceTypesType EntityType = 11
 )
 
 const (
-	GroupsScopeStr   = "groups"
-	ChannelsScopeStr = "channels"
-	DevicesScopeStr  = "devices"
-	BootstrapStr     = "bootstrap"
-	DashboardsStr    = "dashboards"
-	MessagesStr      = "messages"
-	DomainsStr       = "domains"
-	UsersStr         = "users"
-	RulesScopeStr    = "rules"
-	ReportsScopeStr  = "reports"
+	GroupsScopeStr      = "groups"
+	ChannelsScopeStr    = "channels"
+	DevicesScopeStr     = "devices"
+	DeviceTypesScopeStr = "device_types"
+	BootstrapStr        = "bootstrap"
+	DashboardsStr       = "dashboards"
+	MessagesStr         = "messages"
+	DomainsStr          = "domains"
+	UsersStr            = "users"
+	RulesScopeStr       = "rules"
+	ReportsScopeStr     = "reports"
 )
 
 func (et EntityType) String() string {
@@ -110,6 +112,8 @@ func (et EntityType) String() string {
 		return ChannelsScopeStr
 	case DevicesType:
 		return DevicesScopeStr
+	case DeviceTypesType:
+		return DeviceTypesScopeStr
 	case BootstrapType:
 		return BootstrapStr
 	case DashboardType:
@@ -137,6 +141,8 @@ func ParseEntityType(et string) (EntityType, error) {
 		return ChannelsType, nil
 	case DevicesScopeStr:
 		return DevicesType, nil
+	case DeviceTypesScopeStr:
+		return DeviceTypesType, nil
 	case BootstrapStr:
 		return BootstrapType, nil
 	case DashboardsStr:
@@ -179,7 +185,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case DevicesType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
+	case DevicesType, DeviceTypesType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare

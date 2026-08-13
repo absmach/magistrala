@@ -64,6 +64,7 @@ const (
 	atomInputKeyAction           = "action"
 	atomInputKeyCredentialID     = "credentialId"
 	atomInputKeyEntityID         = "entityId"
+	atomInputKeyExternalID       = "externalId"
 	atomInputKeyInput            = "input"
 	atomInputKeyKind             = "kind"
 	atomInputKeyName             = "name"

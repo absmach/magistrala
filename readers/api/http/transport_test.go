@@ -36,6 +36,10 @@ type fakeClientsClient struct {
 	grpcClientsV1.ClientsServiceClient
 }
 
+func (fakeClientsClient) Authenticate(context.Context, *grpcClientsV1.AuthnReq, ...grpc.CallOption) (*grpcClientsV1.AuthnRes, error) {
+	return &grpcClientsV1.AuthnRes{Authenticated: true, Id: "client-1"}, nil
+}
+
 // fakeChannelsClient stubs the channel-level subscribe check that this change does not alter.
 type fakeChannelsClient struct {
 	grpcChannelsV1.ChannelsServiceClient
@@ -51,6 +55,7 @@ type testDeps struct {
 	authn     *authnmocks.Authentication
 	evaluator *policymocks.Evaluator
 	lister    *policymocks.Service
+	resolver  *fakeResolver
 	endpoint  func(ctx context.Context, req any) (any, error)
 }
 
@@ -60,11 +65,12 @@ func newTestDeps(t *testing.T) *testDeps {
 	authn := authnmocks.NewAuthentication(t)
 	evaluator := policymocks.NewEvaluator(t)
 	lister := policymocks.NewService(t)
+	resolver := allMeters()
 
-	authz := newPublisherAuthorizer(evaluator, lister)
+	authz := newReadAuthorizer(evaluator, lister, resolver)
 	ep := listMessagesEndpoint(repo, authn, fakeClientsClient{}, fakeChannelsClient{authorized: true}, authz)
 
-	return &testDeps{repo: repo, authn: authn, evaluator: evaluator, lister: lister, endpoint: ep}
+	return &testDeps{repo: repo, authn: authn, evaluator: evaluator, lister: lister, resolver: resolver, endpoint: ep}
 }
 
 func TestDecodeListReadsPluralFilters(t *testing.T) {
@@ -109,24 +115,6 @@ func TestDecodeListWithoutDeviceIDFilterLeavesItUnset(t *testing.T) {
 	assert.Nil(t, req.pageMeta.Publishers)
 }
 
-// device_ids is a convenience filter here, not a boundary — MG-08 part B makes it
-// one. Until then it must reach the repository exactly as asked for.
-func TestListMessagesPassesDeviceIDFilterThrough(t *testing.T) {
-	d := newTestDeps(t)
-	expectUser(d.authn)
-	d.evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("not admin"))
-	d.lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).Return(policies.PolicyPage{Policies: []string{"pub-a"}}, nil)
-	d.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
-		return assert.ObjectsAreEqual([]string{"meter-1", "meter-3"}, pm.DeviceIDs)
-	})).Return(readers.MessagesPage{}, nil)
-
-	req := tokenReq("", []string{"pub-a"})
-	req.pageMeta.DeviceIDs = []string{"meter-1", "meter-3"}
-
-	_, err := d.endpoint(context.Background(), req)
-	require.NoError(t, err)
-}
-
 func tokenReq(publisher string, publishers []string) listMessagesReq {
 	return listMessagesReq{
 		chanID: e2eChanID,
@@ -138,6 +126,12 @@ func tokenReq(publisher string, publishers []string) listMessagesReq {
 			Publishers: publishers,
 		},
 	}
+}
+
+func deviceReq(deviceIDs []string) listMessagesReq {
+	req := tokenReq("", nil)
+	req.pageMeta.DeviceIDs = deviceIDs
+	return req
 }
 
 func expectUser(authn *authnmocks.Authentication) {
@@ -285,4 +279,200 @@ func TestListMessagesNonAdminWithLargeGrantSetIsStillBounded(t *testing.T) {
 	page, ok := res.(pageRes)
 	require.True(t, ok)
 	assert.Empty(t, page.Messages)
+}
+
+// scopeMatches asserts the query is bounded to exactly the given devices, under
+// both identities they can be known by on a row.
+func scopeMatches(publisherIDs, deviceIDs []string) func(readers.PageMetadata) bool {
+	return func(pm readers.PageMetadata) bool {
+		if pm.DeviceScope == nil {
+			return false
+		}
+		return assert.ObjectsAreEqual(publisherIDs, pm.DeviceScope.PublisherIDs) &&
+			assert.ObjectsAreEqual(deviceIDs, pm.DeviceScope.DeviceIDs)
+	}
+}
+
+// Criterion 1: a user granted read on meters 1 and 3, querying a channel
+// carrying all three, receives data for 1 and 3 only.
+//
+// This is the part-B regression: before this change the endpoint bounded the
+// query by publisher alone, so meter 1's and meter 3's readings relayed by a
+// gateway — which carry the gateway's publisher id and the meter's serial —
+// were unreachable, while every other device's gateway-relayed row on the
+// channel was returned unfiltered.
+func TestListMessagesBoundsQueryToGrantedDevices(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID, meter3UUID})
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(
+		scopeMatches([]string{meter1UUID, meter3UUID}, []string{meter1Serial, meter3Serial}),
+	)).Return(readers.MessagesPage{Total: 2, Messages: []readers.Message{"m1", "m3"}}, nil)
+
+	res, err := deps.endpoint(context.Background(), tokenReq("", nil))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, uint64(2), page.Total)
+}
+
+// Criterion 2: the same user requesting meter 2 receives empty, not meter 2's data.
+func TestListMessagesDeniesUnauthorizedDevice(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID, meter3UUID})
+	// No ReadAll expectation: reaching the repository at all would be the bug.
+
+	res, err := deps.endpoint(context.Background(), deviceReq([]string{meter2Serial}))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Empty(t, page.Messages)
+	assert.Zero(t, page.Total)
+}
+
+// Criteria 3 and 7: requesting meters 1 and 2 returns meter 1 only, and nothing
+// in the response distinguishes "meter 2 does not exist" from "you may not read it".
+func TestListMessagesDropsUnauthorizedDeviceSilently(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID, meter3UUID})
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return assert.ObjectsAreEqual([]string{meter1Serial}, pm.DeviceIDs)
+	})).Return(readers.MessagesPage{Total: 1, Messages: []readers.Message{"m1"}}, nil)
+
+	res, err := deps.endpoint(context.Background(), deviceReq([]string{meter1Serial, meter2Serial}))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, uint64(1), page.Total)
+
+	// A non-existent serial is refused exactly like an existing but unauthorized
+	// one: empty, no error, no hint either way.
+	unknown := newTestDeps(t)
+	expectUser(unknown.authn)
+	expectGrants(unknown.evaluator, unknown.lister, []string{meter1UUID, meter3UUID})
+
+	res, err = unknown.endpoint(context.Background(), deviceReq([]string{"no-such-serial"}))
+	require.NoError(t, err)
+	unknownPage, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, page.Messages[:0], unknownPage.Messages)
+	assert.Zero(t, unknownPage.Total)
+}
+
+// Criterion 4: a user with no device grants receives empty, not everything.
+func TestListMessagesNoDeviceGrantsIsEmptyNotEverything(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, nil)
+	// No ReadAll expectation: an unfiltered read here is the full-disclosure bug.
+
+	res, err := deps.endpoint(context.Background(), deviceReq(nil))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Empty(t, page.Messages)
+	assert.Zero(t, page.Total)
+}
+
+// Criteria 5 and 11: a domain admin reads all three meters, and the query is not
+// bounded at all — which is also what keeps orphan rows, whose device_id matches
+// no entity, readable through channel-level access.
+func TestListMessagesAdminQueryIsUnbounded(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectAdmin(deps.evaluator)
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return pm.DeviceScope == nil
+	})).Return(readers.MessagesPage{Total: 4, Messages: []readers.Message{"m1", "m2", "m3", "orphan"}}, nil)
+
+	res, err := deps.endpoint(context.Background(), deviceReq(nil))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, uint64(4), page.Total)
+}
+
+// Criterion 11 from the customer's side: an orphan serial is not in any grant,
+// so a device-scoped caller cannot name it either.
+func TestListMessagesOrphanDeviceIsInvisibleToCustomer(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID})
+	// No ReadAll expectation.
+
+	res, err := deps.endpoint(context.Background(), deviceReq([]string{"orphan-serial-with-no-entity"}))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Empty(t, page.Messages)
+}
+
+// Criterion 9: the channel-level check still rejects a caller without subscribe,
+// before any device scoping happens.
+func TestListMessagesChannelCheckStillRejects(t *testing.T) {
+	repo := readermocks.NewMessageRepository(t)
+	authn := authnmocks.NewAuthentication(t)
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+	expectUser(authn)
+
+	authz := newReadAuthorizer(evaluator, lister, allMeters())
+	ep := listMessagesEndpoint(repo, authn, fakeClientsClient{}, fakeChannelsClient{authorized: false}, authz)
+
+	_, err := ep(context.Background(), tokenReq("", nil))
+	assert.Error(t, err, "device scoping narrows within the channel check, it does not replace it")
+}
+
+// Criterion 10 end to end: a customer granted one device reads that device's
+// data, including the rows a gateway relayed for it. Those rows only carry the
+// serial, so this is the assertion that fails if the UUID → external_id
+// translation is skipped — the symptom otherwise looks like an authorization
+// failure rather than a missing conversion.
+func TestListMessagesGrantedCustomerReachesGatewayRelayedRows(t *testing.T) {
+	deps := newTestDeps(t)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID})
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return pm.DeviceScope != nil && assert.ObjectsAreEqual([]string{meter1Serial}, pm.DeviceScope.DeviceIDs)
+	})).Return(readers.MessagesPage{Total: 1, Messages: []readers.Message{"relayed-by-gateway"}}, nil)
+
+	res, err := deps.endpoint(context.Background(), deviceReq(nil))
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, []readers.Message{"relayed-by-gateway"}, page.Messages)
+}
+
+// A client authenticating with a secret key holds no per-device grants, so it
+// keeps the channel-level access it had — unchanged from part A.
+func TestListMessagesSecretKeyClientIsNotDeviceScoped(t *testing.T) {
+	deps := newTestDeps(t)
+
+	deps.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return pm.DeviceScope == nil
+	})).Return(readers.MessagesPage{Total: 1, Messages: []readers.Message{"m1"}}, nil)
+
+	req := tokenReq("", nil)
+	req.token = ""
+	req.key = "client-secret"
+
+	res, err := deps.endpoint(context.Background(), req)
+	require.NoError(t, err)
+
+	page, ok := res.(pageRes)
+	require.True(t, ok)
+	assert.Equal(t, uint64(1), page.Total)
 }

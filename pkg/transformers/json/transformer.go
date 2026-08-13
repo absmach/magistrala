@@ -92,6 +92,10 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 		return Messages{[]Message{ret}, format}, nil
 	case []any:
 		res := []Message{}
+		// device_id accumulates forward across the batch exactly like SenML's
+		// bn (RFC 8428 §4.6) — set on one element, it applies to every
+		// following element until the next one sets a new value.
+		var deviceID string
 		// Make an array of messages from the root array.
 		for _, val := range p {
 			v, ok := val.(map[string]any)
@@ -100,8 +104,9 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 			}
 			newMsg := ret
 			if id := popDeviceID(v); id != "" {
-				newMsg.DeviceId = id
+				deviceID = id
 			}
+			newMsg.DeviceId = deviceID
 
 			// Apply timestamp transformation rules depending on key/unit pairs
 			ts, err := ts.transformTimeField(v)
@@ -121,6 +126,11 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 	}
 }
 
+// popDeviceID extracts the reserved "device_id" key from a decoded record,
+// if present, so it is not also duplicated in the stored Payload. A present
+// but non-string or empty value is still popped but does not count as a
+// device id — this mirrors bn's own "empty does not update the accumulator"
+// rule (see pkg/transformers/senml).
 func popDeviceID(m map[string]any) string {
 	v, ok := m["device_id"]
 	if !ok {

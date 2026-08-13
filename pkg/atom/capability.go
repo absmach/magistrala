@@ -226,6 +226,9 @@ func normalizeCapabilityDocument(doc CapabilityDocument) (CapabilityDocument, er
 		if measurement.Min != nil && measurement.Max != nil && *measurement.Min > *measurement.Max {
 			return CapabilityDocument{}, fmt.Errorf("atom: measurement %q has min above max", name)
 		}
+		if len(measurement.Enum) > 0 && valueType != ValueTypeString {
+			return CapabilityDocument{}, fmt.Errorf("atom: measurement %q has enum but type %q, want %q", name, valueType, ValueTypeString)
+		}
 
 		out.Measurements = append(out.Measurements, Measurement{
 			Name:     name,

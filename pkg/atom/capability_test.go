@@ -279,6 +279,7 @@ func TestBuildCapabilitySchemaRejectsUnusableDeclarations(t *testing.T) {
 		{"unsupported measurement type", CapabilityDocument{Measurements: []Measurement{{Name: "volume", Type: "geometry"}}}},
 		{"unsupported access", CapabilityDocument{Measurements: []Measurement{{Name: "volume", Access: "w"}}}},
 		{"min above max", CapabilityDocument{Measurements: []Measurement{{Name: "volume", Min: floatPtr(10), Max: floatPtr(1)}}}},
+		{"non-string enum", CapabilityDocument{Measurements: []Measurement{{Name: "volume", Type: ValueTypeInteger, Enum: []string{"1", "2"}}}}},
 		{"command without a name", CapabilityDocument{Commands: []Command{{Description: "no name"}}}},
 		{"duplicate commands", CapabilityDocument{Commands: []Command{{Name: "reboot"}, {Name: "reboot"}}}},
 		{"parameter without a type", CapabilityDocument{Commands: []Command{{Name: "set", Params: map[string]string{"seconds": ""}}}}},

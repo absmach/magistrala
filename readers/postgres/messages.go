@@ -6,6 +6,7 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
@@ -73,22 +74,21 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == pgerrcode.UndefinedTable {
+		if pgErr, ok := pgError(err); ok {
+			switch pgErr.Code {
+			case pgerrcode.UndefinedTable:
 				return readers.MessagesPage{}, nil
+			case pgerrcode.UndefinedColumn:
+				if isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+					return emptyPage(rpm), nil
+				}
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 
-	page := readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
+	page := emptyPage(rpm)
 	switch format {
 	case defTable:
 		for rows.Next() {
@@ -116,6 +116,11 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
+		if pgErr, ok := pgError(err); ok {
+			if pgErr.Code == pgerrcode.UndefinedColumn && isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+				return emptyPage(rpm), nil
+			}
+		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
@@ -129,6 +134,27 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	page.Total = total
 
 	return page, nil
+}
+
+func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
+	return readers.MessagesPage{
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
+	}
+}
+
+func pgError(err error) (*pgconn.PgError, bool) {
+	if preErr, ok := err.(*pgconn.PrepareError); ok {
+		err = preErr.Unwrap()
+	}
+	pgErr, ok := err.(*pgconn.PgError)
+	return pgErr, ok
+}
+
+func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
+	return format != defTable &&
+		len(rpm.DeviceIDs) > 0 &&
+		strings.Contains(pgErr.Message, messageFieldDeviceID)
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {

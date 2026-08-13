@@ -17,7 +17,6 @@ func Migration() *migrate.MemoryMigrationSource {
                         channel       UUID,
                         subtopic      VARCHAR(254),
                         publisher     VARCHAR(254),
-                        device_id     TEXT NOT NULL DEFAULT '',
                         protocol      TEXT,
                         name          VARCHAR(254),
                         unit          TEXT,
@@ -27,7 +26,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         data_value    BYTEA,
                         sum           FLOAT,
                         update_time   FLOAT,
-                        PRIMARY KEY (time, channel, subtopic, protocol, publisher, name, device_id)
+                        PRIMARY KEY (time, channel, subtopic, protocol, publisher, name)
                     );`,
 
 					// Creating HyperTable with chunks interval of 1 day = 86400000000000 Nanoseconds
@@ -69,14 +68,21 @@ func Migration() *migrate.MemoryMigrationSource {
 				},
 			},
 			{
+				// device_id is the device's external serial as it appeared in the
+				// payload, denormalised onto the row. It is deliberately kept out of
+				// the primary key: changing the key of a populated hypertable is the
+				// expensive, rewrite-prone operation, and it buys nothing here since
+				// SenML normalisation folds the base name into name, so rows from
+				// different devices already differ in the existing key. publisher
+				// remains the audit identity. NOT NULL DEFAULT '' rather than
+				// nullable so "no device" scans into senml.Message.DeviceId (a plain
+				// string) without NULL handling; a constant default makes the ALTER
+				// metadata-only on PostgreSQL 11+, so existing chunks are not
+				// rewritten. The index follows the convention of the ones above:
+				// leading channel, trailing name, time DESC.
 				Id: "messages_3",
 				Up: []string{
-					"ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT;",
-					"UPDATE messages SET device_id = '' WHERE device_id IS NULL;",
-					"ALTER TABLE messages ALTER COLUMN device_id SET DEFAULT '';",
-					"ALTER TABLE messages ALTER COLUMN device_id SET NOT NULL;",
-					"ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_pkey;",
-					"ALTER TABLE messages ADD PRIMARY KEY (time, channel, subtopic, protocol, publisher, name, device_id);",
+					"ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT '';",
 
 					// Index on channel, device_id, name, time
 					"CREATE INDEX IF NOT EXISTS idx_channel_device_id_name_time  ON messages (channel, device_id, name, time DESC) WITH (timescaledb.transaction_per_chunk);",
@@ -85,10 +91,6 @@ func Migration() *migrate.MemoryMigrationSource {
 				Down: []string{
 					"DROP INDEX IF EXISTS idx_channel_device_id_name_time ;",
 
-					"ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_pkey;",
-					"ALTER TABLE messages ALTER COLUMN device_id DROP NOT NULL;",
-					"ALTER TABLE messages ALTER COLUMN device_id DROP DEFAULT;",
-					"ALTER TABLE messages ADD PRIMARY KEY (time, channel, subtopic, protocol, publisher, name);",
 					"ALTER TABLE messages DROP COLUMN IF EXISTS device_id;",
 				},
 			},

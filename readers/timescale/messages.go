@@ -135,25 +135,21 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == pgerrcode.UndefinedTable {
+		if pgErr, ok := pgError(err); ok {
+			switch pgErr.Code {
+			case pgerrcode.UndefinedTable:
 				return readers.MessagesPage{}, nil
-			}
-			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-				return emptyPage(rpm), nil
+			case pgerrcode.UndefinedColumn:
+				if isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+					return emptyPage(rpm), nil
+				}
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 
-	page := readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
+	page := emptyPage(rpm)
 
 	switch format {
 	case defTable:
@@ -181,11 +177,10 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	rows, err = tr.db.NamedQuery(totalQuery, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-			return emptyPage(rpm), nil
+		if pgErr, ok := pgError(err); ok {
+			if pgErr.Code == pgerrcode.UndefinedColumn && isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+				return emptyPage(rpm), nil
+			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
@@ -207,6 +202,20 @@ func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
 		PageMetadata: rpm,
 		Messages:     []readers.Message{},
 	}
+}
+
+func pgError(err error) (*pgconn.PgError, bool) {
+	if preErr, ok := err.(*pgconn.PrepareError); ok {
+		err = preErr.Unwrap()
+	}
+	pgErr, ok := err.(*pgconn.PgError)
+	return pgErr, ok
+}
+
+func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
+	return format != defTable &&
+		len(rpm.DeviceIDs) > 0 &&
+		strings.Contains(pgErr.Message, messageFieldDeviceID)
 }
 
 func fmtCondition(rpm readers.PageMetadata) string {
@@ -234,6 +243,8 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
+	// Ordered to match idx_channel_device_id_name_time, which sits between the
+	// publisher and name indexes.
 	if _, ok := query[messageFieldDeviceIDs]; ok {
 		conditions = append(conditions, " device_id = ANY(:device_ids) ")
 	}
@@ -302,9 +313,9 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
-	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
@@ -316,8 +327,11 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
 	}
-	if msg.DeviceId != "" {
-		ret[messageFieldDeviceID] = msg.DeviceId
+	// Mirrors the `omitempty` on senml.Message.DeviceId: rows with no device —
+	// direct publishers, or anything written before this column existed — are
+	// reported exactly as they were before.
+	if msg.DeviceID != "" {
+		ret[messageFieldDeviceID] = msg.DeviceID
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

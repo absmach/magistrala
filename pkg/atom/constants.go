@@ -61,17 +61,35 @@ const (
 const atomDecisionAllow = "allow"
 
 const (
-	atomInputKeyAction        = "action"
-	atomInputKeyCredentialID  = "credentialId"
-	atomInputKeyEntityID      = "entityId"
-	atomInputKeyInput         = "input"
-	atomInputKeyKind          = "kind"
-	atomInputKeyName          = "name"
-	atomInputKeyObjectGroupID = "objectGroupId"
-	atomInputKeyObjectKind    = "objectKind"
-	atomInputKeyParentGroupID = "parentGroupId"
-	atomInputKeyParentID      = "parentId"
-	atomInputKeySubjectID     = "subjectId"
+	atomInputKeyAction           = "action"
+	atomInputKeyCredentialID     = "credentialId"
+	atomInputKeyEntityID         = "entityId"
+	atomInputKeyInput            = "input"
+	atomInputKeyKind             = "kind"
+	atomInputKeyName             = "name"
+	atomInputKeyObjectGroupID    = "objectGroupId"
+	atomInputKeyObjectKind       = "objectKind"
+	atomInputKeyParentGroupID    = "parentGroupId"
+	atomInputKeyParentID         = "parentId"
+	atomInputKeySubjectID        = "subjectId"
+	atomInputKeyProfileID        = "profileId"
+	atomInputKeyProfileVersionID = "profileVersionId"
+)
+
+// Device type status. A deprecated or disabled device type accepts no new
+// bindings; devices already bound to it are unaffected.
+const (
+	DeviceTypeStatusActive     = "active"
+	DeviceTypeStatusDeprecated = "deprecated"
+	DeviceTypeStatusDisabled   = "disabled"
+)
+
+// Device type version status. Only an active version can be bound to.
+const (
+	DeviceTypeVersionStatusDraft      = "draft"
+	DeviceTypeVersionStatusActive     = "active"
+	DeviceTypeVersionStatusDeprecated = "deprecated"
+	DeviceTypeVersionStatusDisabled   = "disabled"
 )
 
 const (

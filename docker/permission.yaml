@@ -32,6 +32,22 @@ devices:
     - remove_members: remove_role_users_permission
     - remove_all_members: remove_role_users_permission
 
+# Device types carry no delete: Atom has no deleteProfile mutation, so a type
+# is retired by setting its status through update, never removed. Versions are
+# immutable once created, so creating one is the only version write — and it
+# gets its own permission because publishing a version changes what every
+# future device of the type validates against, which is a larger act than
+# renaming the type. No roles_operations: device types have no role surface,
+# matching the alarm block.
+device_types:
+  operations:
+    - create: create_permission
+    - view: read_permission
+    - list: read_permission
+    - update: update_permission
+    - create_version: create_version_permission
+    - list_versions: read_permission
+
 channels:
   operations:
     - view: read_permission

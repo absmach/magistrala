@@ -98,8 +98,8 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
 
-	publishers := r.URL.Query()[publishersKey]
-	deviceIDs := r.URL.Query()[deviceIDsKey]
+	publishers := readRepeatedQuery(r, publishersKey)
+	deviceIDs := readRepeatedQuery(r, deviceIDsKey)
 
 	protocol, err := apiutil.ReadStringQuery(r, protocolKey, "")
 	if err != nil {
@@ -198,6 +198,28 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 		},
 	}
 	return req, nil
+}
+
+// readRepeatedQuery collects a list-valued filter from repeated query parameters
+// — ?device_ids=A&device_ids=B — and drops empty entries.
+//
+// Values are taken verbatim, never split on a separator. Device serials carry no
+// format constraint at all (MG-09; Atom's external_id accepts `/`, spaces and
+// unicode), so any separator we chose could occur inside a legitimate serial and
+// splitting on it would silently query for something the caller never asked for.
+func readRepeatedQuery(r *http.Request, key string) []string {
+	raw := r.URL.Query()[key]
+	out := make([]string, 0, len(raw))
+	for _, v := range raw {
+		if v == "" {
+			continue
+		}
+		out = append(out, v)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 func encodeResponse(_ context.Context, w http.ResponseWriter, response any) error {

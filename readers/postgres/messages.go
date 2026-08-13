@@ -6,6 +6,7 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
@@ -19,6 +20,7 @@ var _ readers.MessageRepository = (*postgresRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceID   = "device_id"
 	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
@@ -72,25 +74,21 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == pgerrcode.UndefinedTable {
+		if pgErr, ok := pgError(err); ok {
+			switch pgErr.Code {
+			case pgerrcode.UndefinedTable:
 				return readers.MessagesPage{}, nil
-			}
-			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-				return emptyPage(rpm), nil
+			case pgerrcode.UndefinedColumn:
+				if isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+					return emptyPage(rpm), nil
+				}
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 
-	page := readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
+	page := emptyPage(rpm)
 	switch format {
 	case defTable:
 		for rows.Next() {
@@ -118,11 +116,10 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-			return emptyPage(rpm), nil
+		if pgErr, ok := pgError(err); ok {
+			if pgErr.Code == pgerrcode.UndefinedColumn && isLegacyJSONDeviceFilter(format, rpm, pgErr) {
+				return emptyPage(rpm), nil
+			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
@@ -144,6 +141,20 @@ func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
 		PageMetadata: rpm,
 		Messages:     []readers.Message{},
 	}
+}
+
+func pgError(err error) (*pgconn.PgError, bool) {
+	if preErr, ok := err.(*pgconn.PrepareError); ok {
+		err = preErr.Unwrap()
+	}
+	pgErr, ok := err.(*pgconn.PgError)
+	return pgErr, ok
+}
+
+func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
+	return format != defTable &&
+		len(rpm.DeviceIDs) > 0 &&
+		strings.Contains(pgErr.Message, messageFieldDeviceID)
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {
@@ -170,7 +181,7 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 		case messageFieldPublishers:
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldPublisher, messageFieldPublishers)
 		case messageFieldDeviceIDs:
-			condition = fmt.Sprintf(`%s AND device_id = ANY(:%s)`, condition, messageFieldDeviceIDs)
+			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldDeviceID, messageFieldDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,
@@ -218,9 +229,9 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
-	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
@@ -233,8 +244,11 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
 	}
-	if msg.DeviceId != "" {
-		ret["device_id"] = msg.DeviceId
+	// Mirrors the `omitempty` on senml.Message.DeviceId: rows with no device —
+	// direct publishers, or anything written before this column existed — are
+	// reported exactly as they were before.
+	if msg.DeviceID != "" {
+		ret[messageFieldDeviceID] = msg.DeviceID
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

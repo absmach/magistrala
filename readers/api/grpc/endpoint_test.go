@@ -232,3 +232,63 @@ func stringPtr(v string) *string {
 func boolPtr(v bool) *bool {
 	return &v
 }
+
+// The list-valued filters have to survive the gRPC boundary intact; proto3
+// `repeated` carries no field presence, so an absent list arrives as nil and
+// there is no empty-versus-unset distinction to preserve on this path.
+func TestReadMessagesCarriesListFilters(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
+	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
+
+	cases := []struct {
+		desc              string
+		deviceIDs         []string
+		publishers        []string
+		expectedDeviceIDs []string
+	}{
+		{
+			desc:              "device ids and publishers travel together",
+			deviceIDs:         []string{"Meter.A-01:X", "meter/b,02"},
+			publishers:        []string{"pub-a"},
+			expectedDeviceIDs: []string{"Meter.A-01:X", "meter/b,02"},
+		},
+		{
+			desc:              "unset device ids arrive as nil",
+			deviceIDs:         nil,
+			publishers:        nil,
+			expectedDeviceIDs: nil,
+		},
+		{
+			desc:              "empty device ids are indistinguishable from unset over the wire",
+			deviceIDs:         []string{},
+			publishers:        []string{},
+			expectedDeviceIDs: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			var got readers.PageMetadata
+			repoCall := svc.On("ReadAll", mock.Anything, mock.Anything).
+				Run(func(args mock.Arguments) {
+					got = args.Get(1).(readers.PageMetadata)
+				}).
+				Return(readers.MessagesPage{}, nil)
+			defer repoCall.Unset()
+
+			_, err := grpcClient.ReadMessages(context.Background(), &grpcReadersV1.ReadMessagesReq{
+				ChannelId: channelID,
+				DomainId:  domain,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset:     testOffset,
+					Limit:      testLimit,
+					DeviceIds:  tc.deviceIDs,
+					Publishers: tc.publishers,
+				},
+			})
+			require.Nil(t, err, fmt.Sprintf("unexpected error %s", err))
+			assert.Equal(t, tc.expectedDeviceIDs, got.DeviceIDs)
+		})
+	}
+}

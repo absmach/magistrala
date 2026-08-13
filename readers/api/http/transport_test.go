@@ -81,6 +81,52 @@ func TestDecodeListReadsPluralFilters(t *testing.T) {
 	assert.Equal(t, []string{"meter-a", "meter-b"}, req.pageMeta.DeviceIDs)
 }
 
+func TestDecodeListReadsDeviceIDFilter(t *testing.T) {
+	r := httptest.NewRequest("GET", "/?device_ids=Meter.A-01%3AX&device_ids=meter%2Fb%2C02&device_ids=", nil)
+	r.Header.Set("Authorization", "Bearer token")
+
+	decoded, err := decodeList(context.Background(), r)
+	require.NoError(t, err)
+
+	req, ok := decoded.(listMessagesReq)
+	require.True(t, ok)
+	// Serials carry no format constraint (MG-09), so values are taken verbatim:
+	// no splitting on a separator that a real serial may contain, and empty
+	// entries dropped rather than turned into a filter for "".
+	assert.Equal(t, []string{"Meter.A-01:X", "meter/b,02"}, req.pageMeta.DeviceIDs)
+}
+
+func TestDecodeListWithoutDeviceIDFilterLeavesItUnset(t *testing.T) {
+	r := httptest.NewRequest("GET", "/", nil)
+	r.Header.Set("Authorization", "Bearer token")
+
+	decoded, err := decodeList(context.Background(), r)
+	require.NoError(t, err)
+
+	req, ok := decoded.(listMessagesReq)
+	require.True(t, ok)
+	assert.Nil(t, req.pageMeta.DeviceIDs)
+	assert.Nil(t, req.pageMeta.Publishers)
+}
+
+// device_ids is a convenience filter here, not a boundary — MG-08 part B makes it
+// one. Until then it must reach the repository exactly as asked for.
+func TestListMessagesPassesDeviceIDFilterThrough(t *testing.T) {
+	d := newTestDeps(t)
+	expectUser(d.authn)
+	d.evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("not admin"))
+	d.lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).Return(policies.PolicyPage{Policies: []string{"pub-a"}}, nil)
+	d.repo.EXPECT().ReadAll(e2eChanID, mock.MatchedBy(func(pm readers.PageMetadata) bool {
+		return assert.ObjectsAreEqual([]string{"meter-1", "meter-3"}, pm.DeviceIDs)
+	})).Return(readers.MessagesPage{}, nil)
+
+	req := tokenReq("", []string{"pub-a"})
+	req.pageMeta.DeviceIDs = []string{"meter-1", "meter-3"}
+
+	_, err := d.endpoint(context.Background(), req)
+	require.NoError(t, err)
+}
+
 func tokenReq(publisher string, publishers []string) listMessagesReq {
 	return listMessagesReq{
 		chanID: e2eChanID,

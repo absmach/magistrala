@@ -707,32 +707,41 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
-func TestReadLegacyJSONTableWithDeviceIDsReturnsEmptyPage(t *testing.T) {
+func TestReadLegacyJSONByDeviceID(t *testing.T) {
 	reader := preader.New(db)
+
 	format := fmt.Sprintf("legacy_json_%d", time.Now().UnixNano())
 	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	created := time.Now().Unix()
 
 	_, err := db.Exec(fmt.Sprintf(`CREATE TABLE %s (
-		id UUID,
-		created BIGINT,
-		channel VARCHAR(254),
-		subtopic VARCHAR(254),
+		id        UUID,
+		created   BIGINT,
+		channel   VARCHAR(254),
+		subtopic  VARCHAR(254),
 		publisher VARCHAR(254),
-		protocol TEXT,
-		payload JSONB,
+		protocol  TEXT,
+		payload   JSONB,
 		PRIMARY KEY (id)
 	)`, format))
-	require.NoError(t, err)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
 
-	result, err := reader.ReadAll(chanID, readers.PageMetadata{
-		Format:    format,
-		Offset:    0,
-		Limit:     10,
-		DeviceIDs: []string{"meter-a"},
-	})
-	require.NoError(t, err)
-	assert.Empty(t, result.Messages)
-	assert.Equal(t, uint64(0), result.Total)
+	_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s (id, created, channel, subtopic, publisher, protocol, payload)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`, format), testsutil.GenerateUUID(t), created, chanID, subtopic, pubID, mqttProt, `{"field":1}`)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	require.Len(t, page.Messages, 1)
+	msg := page.Messages[0].(map[string]any)
+	assert.NotContains(t, msg, "device_id")
+	assert.Equal(t, uint64(1), page.Total)
+
+	page, err = reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format, DeviceIDs: []string{"missing-device"}})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	assert.Empty(t, page.Messages)
+	assert.Equal(t, uint64(0), page.Total)
 }
 
 func fromSenml(msg []senml.Message) []readers.Message {

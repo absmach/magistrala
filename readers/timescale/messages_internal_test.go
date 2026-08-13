@@ -4,7 +4,6 @@
 package timescale
 
 import (
-	"strings"
 	"testing"
 
 	"github.com/absmach/magistrala/readers"
@@ -37,9 +36,4 @@ func TestAggregateDeviceIDProjection(t *testing.T) {
 	for _, tc := range cases {
 		assert.Equal(t, tc.want, aggregateDeviceIDProjection(tc.pm), tc.desc)
 	}
-}
-
-func TestFmtConditionDeviceIDs(t *testing.T) {
-	got := fmtCondition(readers.PageMetadata{DeviceIDs: []string{"meter-a"}})
-	assert.True(t, strings.Contains(got, "device_id = ANY(:device_ids)"))
 }

@@ -281,7 +281,6 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		Protocol:  protocol,
 		Created:   created,
 		Metadata:  metadata,
-		DeviceId:  deviceID,
 	}, nil
 }
 

@@ -111,6 +111,10 @@ func (tr timescaleRepo) saveJSON(ctx context.Context, msgs smqjson.Messages) err
 }
 
 func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) error {
+	if err := tr.ensureJSONTableDeviceID(ctx, msgs.Format); err != nil {
+		return err
+	}
+
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
@@ -153,6 +157,20 @@ func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) e
 			}
 			return err
 		}
+	}
+	return nil
+}
+
+func (tr timescaleRepo) ensureJSONTableDeviceID(ctx context.Context, format string) error {
+	q := fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS device_id TEXT;", format)
+	if _, err := tr.db.ExecContext(ctx, q); err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedTable {
+			return errNoTable
+		}
+		return err
 	}
 	return nil
 }

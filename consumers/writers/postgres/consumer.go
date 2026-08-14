@@ -108,6 +108,10 @@ func (pr postgresRepo) saveJSON(ctx context.Context, msgs smqjson.Messages) erro
 }
 
 func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) error {
+	if err := pr.ensureJSONTableDeviceID(ctx, msgs.Format); err != nil {
+		return err
+	}
+
 	tx, err := pr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
@@ -151,6 +155,20 @@ func (pr postgresRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) er
 			}
 			return err
 		}
+	}
+	return nil
+}
+
+func (pr postgresRepo) ensureJSONTableDeviceID(ctx context.Context, format string) error {
+	q := fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS device_id TEXT;", format)
+	if _, err := pr.db.ExecContext(ctx, q); err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedTable {
+			return errNoTable
+		}
+		return err
 	}
 	return nil
 }

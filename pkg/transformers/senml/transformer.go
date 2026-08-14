@@ -53,9 +53,6 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 
 	deviceID := msg.GetDeviceId()
 	for i := range raw.Records {
-		if raw.Records[i].BaseName != "" {
-			deviceID = raw.Records[i].BaseName
-		}
 		raw.Records[i].Link = deviceID
 	}
 

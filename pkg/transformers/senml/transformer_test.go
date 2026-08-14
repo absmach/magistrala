@@ -48,7 +48,6 @@ func TestTransformJSON(t *testing.T) {
 			UpdateTime: 150,
 			Value:      &val,
 			Sum:        &sum,
-			DeviceId:   "base-name",
 		},
 	}
 
@@ -121,7 +120,6 @@ func TestTransformCBOR(t *testing.T) {
 			UpdateTime: 150,
 			Value:      &val,
 			Sum:        &sum,
-			DeviceId:   "base-name",
 		},
 	}
 
@@ -170,7 +168,7 @@ func TestTransformDeviceID(t *testing.T) {
 		assert.Equal(t, "broker-device", msgs[0].DeviceId)
 	})
 
-	t.Run("bn overrides broker device id per record", func(t *testing.T) {
+	t.Run("bn preserves broker device id", func(t *testing.T) {
 		msg := &messaging.Message{
 			Channel:  "channel",
 			Subtopic: "subtopic",
@@ -187,7 +185,7 @@ func TestTransformDeviceID(t *testing.T) {
 			byName[msg.Name] = msg.DeviceId
 		}
 		assert.Equal(t, "broker-device", byName["temperature"])
-		assert.Equal(t, "payload-device", byName["payload-devicehumidity"])
-		assert.Equal(t, "payload-device", byName["payload-devicepressure"])
+		assert.Equal(t, "broker-device", byName["payload-devicehumidity"])
+		assert.Equal(t, "broker-device", byName["payload-devicepressure"])
 	})
 }

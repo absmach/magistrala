@@ -6,6 +6,7 @@ package postgres_test
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -109,4 +110,45 @@ func TestSaveJSON(t *testing.T) {
 
 	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+}
+
+func TestSaveJSONAddsDeviceIDToExistingFormatTable(t *testing.T) {
+	repo := postgres.New(db)
+
+	id, err := uuid.NewV4()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	format := "legacy_json_" + strings.ReplaceAll(id.String(), "-", "_")
+
+	_, err = db.Exec(fmt.Sprintf(`CREATE TABLE %s (
+		id UUID,
+		created BIGINT,
+		channel VARCHAR(254),
+		subtopic VARCHAR(254),
+		publisher VARCHAR(254),
+		protocol TEXT,
+		payload JSONB,
+		PRIMARY KEY (id)
+	)`, format))
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	msgs := json.Messages{
+		Format: format,
+		Data: []json.Message{{
+			Channel:   id.String(),
+			Publisher: id.String(),
+			Created:   time.Now().Unix(),
+			Subtopic:  "subtopic/format/legacy_json",
+			Protocol:  "mqtt",
+			DeviceId:  "meter-a",
+			Payload:   map[string]any{"field": "value"},
+		}},
+	}
+
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+
+	var deviceID string
+	err = db.QueryRow(fmt.Sprintf(`SELECT device_id FROM %s`, format)).Scan(&deviceID)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	assert.Equal(t, "meter-a", deviceID)
 }

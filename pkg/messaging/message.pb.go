@@ -37,6 +37,7 @@ type Message struct {
 	ClientId  string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"` // Transport-level client identifier
 	// Internal metadata propagated between services
 	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	DeviceId      string            `protobuf:"bytes,10,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -134,11 +135,18 @@ func (x *Message) GetMetadata() map[string]string {
 	return nil
 }
 
+func (x *Message) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
 var File_pkg_messaging_message_proto protoreflect.FileDescriptor
 
 const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xdd\x02\n" +
+	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xfa\x02\n" +
 	"\aMessage\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x16\n" +
 	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x1a\n" +
@@ -148,7 +156,9 @@ const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\apayload\x18\x06 \x01(\fR\apayload\x12\x18\n" +
 	"\acreated\x18\a \x01(\x03R\acreated\x12\x1b\n" +
 	"\tclient_id\x18\b \x01(\tR\bclientId\x12<\n" +
-	"\bmetadata\x18\t \x03(\v2 .messaging.Message.MetadataEntryR\bmetadata\x1a;\n" +
+	"\bmetadata\x18\t \x03(\v2 .messaging.Message.MetadataEntryR\bmetadata\x12\x1b\n" +
+	"\tdevice_id\x18\n" +
+	" \x01(\tR\bdeviceId\x1a;\n" +
 	"\rMetadataEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\rZ\v./messagingb\x06proto3"

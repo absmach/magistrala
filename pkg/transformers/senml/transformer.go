@@ -51,6 +51,14 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 		return nil, errors.Wrap(errDecode, err)
 	}
 
+	deviceID := msg.GetDeviceId()
+	for i := range raw.Records {
+		if raw.Records[i].BaseName != "" {
+			deviceID = raw.Records[i].BaseName
+		}
+		raw.Records[i].Link = deviceID
+	}
+
 	normalized, err := senml.Normalize(raw)
 	if err != nil {
 		return nil, errors.Wrap(errNormalize, err)
@@ -87,6 +95,7 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 			DataValue:   v.DataValue,
 			StringValue: v.StringValue,
 			Sum:         v.Sum,
+			DeviceId:    v.Link,
 		}
 	}
 

@@ -254,3 +254,48 @@ func TestTransformJSON(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
 }
+
+func TestTransformDeviceID(t *testing.T) {
+	tr := json.New(nil)
+	now := time.Now().Unix()
+
+	newMsg := func(payload string) *messaging.Message {
+		return &messaging.Message{
+			Channel:   "channel-1",
+			Subtopic:  "subtopic-1",
+			Publisher: "publisher-1",
+			Protocol:  "protocol",
+			Payload:   []byte(payload),
+			Created:   now,
+			DeviceId:  "broker-device",
+		}
+	}
+
+	t.Run("single object uses broker device id", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`{"temp":21.5}`))
+		assert.NoError(t, err)
+
+		msgs := got.(json.Messages)
+		assert.Equal(t, "broker-device", msgs.Data[0].DeviceId)
+	})
+
+	t.Run("single object payload device id overrides broker device id", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`{"device_id":"payload-device","temp":21.5}`))
+		assert.NoError(t, err)
+
+		msgs := got.(json.Messages)
+		assert.Equal(t, "payload-device", msgs.Data[0].DeviceId)
+		assert.NotContains(t, msgs.Data[0].Payload, "device_id")
+	})
+
+	t.Run("array starts with broker device id and payload values override forward", func(t *testing.T) {
+		got, err := tr.Transform(newMsg(`[{"temp":21.5},{"device_id":"payload-device","temp":19.0},{"humidity":55}]`))
+		assert.NoError(t, err)
+
+		msgs := got.(json.Messages)
+		assert.Equal(t, "broker-device", msgs.Data[0].DeviceId)
+		assert.Equal(t, "payload-device", msgs.Data[1].DeviceId)
+		assert.Equal(t, "payload-device", msgs.Data[2].DeviceId)
+		assert.NotContains(t, msgs.Data[1].Payload, "device_id")
+	})
+}

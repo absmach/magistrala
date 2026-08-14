@@ -427,6 +427,7 @@ type BaseMessage struct {
 	Subtopic      string                 `protobuf:"bytes,2,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
 	Publisher     string                 `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	Protocol      string                 `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,5,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -485,6 +486,13 @@ func (x *BaseMessage) GetPublisher() string {
 func (x *BaseMessage) GetProtocol() string {
 	if x != nil {
 		return x.Protocol
+	}
+	return ""
+}
+
+func (x *BaseMessage) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
 	}
 	return ""
 }
@@ -766,12 +774,13 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\aMessage\x120\n" +
 	"\x05senml\x18\x01 \x01(\v2\x18.readers.v1.SenMLMessageH\x00R\x05senml\x12-\n" +
 	"\x04json\x18\x02 \x01(\v2\x17.readers.v1.JsonMessageH\x00R\x04jsonB\t\n" +
-	"\apayload\"}\n" +
+	"\apayload\"\x9a\x01\n" +
 	"\vBaseMessage\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
 	"\bsubtopic\x18\x02 \x01(\tR\bsubtopic\x12\x1c\n" +
 	"\tpublisher\x18\x03 \x01(\tR\tpublisher\x12\x1a\n" +
-	"\bprotocol\x18\x04 \x01(\tR\bprotocol\"\xfb\x02\n" +
+	"\bprotocol\x18\x04 \x01(\tR\bprotocol\x12\x1b\n" +
+	"\tdevice_id\x18\x05 \x01(\tR\bdeviceId\"\xfb\x02\n" +
 	"\fSenMLMessage\x12+\n" +
 	"\x04base\x18\x01 \x01(\v2\x17.readers.v1.BaseMessageR\x04base\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +

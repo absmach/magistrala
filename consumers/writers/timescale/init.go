@@ -17,6 +17,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         channel       UUID,
                         subtopic      VARCHAR(254),
                         publisher     VARCHAR(254),
+                        device_id     TEXT,
                         protocol      TEXT,
                         name          VARCHAR(254),
                         unit          TEXT,
@@ -65,6 +66,21 @@ func Migration() *migrate.MemoryMigrationSource {
 					"DROP INDEX IF EXISTS idx_channel_publisher_name_time ;",
 
 					"DROP INDEX IF EXISTS idx_channel_subtopic_publisher_name_time ;",
+				},
+			},
+			{
+				Id: "messages_3",
+				Up: []string{
+					"ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT;",
+
+					// Index on channel, device_id, name, time
+					"CREATE INDEX IF NOT EXISTS idx_channel_device_id_name_time  ON messages (channel, device_id, name, time DESC) WITH (timescaledb.transaction_per_chunk);",
+				},
+				DisableTransactionUp: true,
+				Down: []string{
+					"DROP INDEX IF EXISTS idx_channel_device_id_name_time ;",
+
+					"ALTER TABLE messages DROP COLUMN IF EXISTS device_id;",
 				},
 			},
 		},

@@ -17,6 +17,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         channel       UUID,
                         subtopic      VARCHAR(254),
                         publisher     UUID,
+                        device_id     TEXT,
                         protocol      TEXT,
                         name          TEXT,
                         unit          TEXT,
@@ -39,6 +40,15 @@ func Migration() *migrate.MemoryMigrationSource {
 				Up: []string{
 					`ALTER TABLE messages DROP CONSTRAINT messages_pkey`,
 					`ALTER TABLE messages ADD PRIMARY KEY (time, publisher, subtopic, name)`,
+				},
+			},
+			{
+				Id: "messages_3",
+				Up: []string{
+					`ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT`,
+				},
+				Down: []string{
+					`ALTER TABLE messages DROP COLUMN IF EXISTS device_id`,
 				},
 			},
 		},

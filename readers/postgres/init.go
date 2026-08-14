@@ -55,6 +55,7 @@ func migrateDB(db *sqlx.DB) error {
             			channel       UUID,
             			subtopic      VARCHAR(254),
             			publisher     UUID,
+            			device_id     TEXT,
             			protocol      TEXT,
             			name          TEXT,
             			unit          TEXT,
@@ -70,6 +71,15 @@ func migrateDB(db *sqlx.DB) error {
 				},
 				Down: []string{
 					"DROP TABLE messages",
+				},
+			},
+			{
+				Id: "messages_2",
+				Up: []string{
+					`ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT`,
+				},
+				Down: []string{
+					`ALTER TABLE messages DROP COLUMN IF EXISTS device_id`,
 				},
 			},
 		},

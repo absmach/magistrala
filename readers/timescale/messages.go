@@ -286,6 +286,7 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
+	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
 }
@@ -298,6 +299,9 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldPublisher: msg.Publisher,
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
+	}
+	if msg.DeviceId != "" {
+		ret[messageFieldDeviceID] = msg.DeviceId
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

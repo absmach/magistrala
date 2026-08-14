@@ -288,14 +288,14 @@ func TestTransformDeviceID(t *testing.T) {
 		assert.NotContains(t, msgs.Data[0].Payload, "device_id")
 	})
 
-	t.Run("array starts with broker device id and payload values override forward", func(t *testing.T) {
+	t.Run("array resets missing payload device ids to broker device id", func(t *testing.T) {
 		got, err := tr.Transform(newMsg(`[{"temp":21.5},{"device_id":"payload-device","temp":19.0},{"humidity":55}]`))
 		assert.NoError(t, err)
 
 		msgs := got.(json.Messages)
 		assert.Equal(t, "broker-device", msgs.Data[0].DeviceId)
 		assert.Equal(t, "payload-device", msgs.Data[1].DeviceId)
-		assert.Equal(t, "payload-device", msgs.Data[2].DeviceId)
+		assert.Equal(t, "broker-device", msgs.Data[2].DeviceId)
 		assert.NotContains(t, msgs.Data[1].Payload, "device_id")
 	})
 }

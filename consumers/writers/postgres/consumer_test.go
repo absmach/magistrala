@@ -72,6 +72,42 @@ func TestSaveSenml(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }
 
+func TestSaveSenmlAllowsSameReadingForDifferentDevices(t *testing.T) {
+	repo := postgres.New(db)
+
+	chid, err := uuid.NewV4()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubid, err := uuid.NewV4()
+	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+
+	now := float64(time.Now().UnixNano())
+	msgs := []senml.Message{
+		{
+			Channel:   chid.String(),
+			Publisher: pubid.String(),
+			Subtopic:  subtopic,
+			Protocol:  "mqtt",
+			Name:      "temperature",
+			Time:      now,
+			Value:     &v,
+			DeviceId:  "meter-a",
+		},
+		{
+			Channel:   chid.String(),
+			Publisher: pubid.String(),
+			Subtopic:  subtopic,
+			Protocol:  "mqtt",
+			Name:      "temperature",
+			Time:      now,
+			Value:     &v,
+			DeviceId:  "meter-b",
+		},
+	}
+
+	err = repo.ConsumeBlocking(context.TODO(), msgs)
+	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+}
+
 func TestSaveJSON(t *testing.T) {
 	repo := postgres.New(db)
 

@@ -92,7 +92,6 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 		return Messages{[]Message{ret}, format}, nil
 	case []any:
 		res := []Message{}
-		deviceID := ret.DeviceId
 		// Make an array of messages from the root array.
 		for _, val := range p {
 			v, ok := val.(map[string]any)
@@ -101,9 +100,8 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 			}
 			newMsg := ret
 			if id := popDeviceID(v); id != "" {
-				deviceID = id
+				newMsg.DeviceId = id
 			}
-			newMsg.DeviceId = deviceID
 
 			// Apply timestamp transformation rules depending on key/unit pairs
 			ts, err := ts.transformTimeField(v)

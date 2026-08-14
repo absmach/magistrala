@@ -17,7 +17,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         channel       UUID,
                         subtopic      VARCHAR(254),
                         publisher     VARCHAR(254),
-                        device_id     TEXT,
+                        device_id     TEXT NOT NULL DEFAULT '',
                         protocol      TEXT,
                         name          VARCHAR(254),
                         unit          TEXT,
@@ -27,7 +27,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         data_value    BYTEA,
                         sum           FLOAT,
                         update_time   FLOAT,
-                        PRIMARY KEY (time, channel, subtopic, protocol, publisher, name)
+                        PRIMARY KEY (time, channel, subtopic, protocol, publisher, name, device_id)
                     );`,
 
 					// Creating HyperTable with chunks interval of 1 day = 86400000000000 Nanoseconds
@@ -72,6 +72,11 @@ func Migration() *migrate.MemoryMigrationSource {
 				Id: "messages_3",
 				Up: []string{
 					"ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT;",
+					"UPDATE messages SET device_id = '' WHERE device_id IS NULL;",
+					"ALTER TABLE messages ALTER COLUMN device_id SET DEFAULT '';",
+					"ALTER TABLE messages ALTER COLUMN device_id SET NOT NULL;",
+					"ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_pkey;",
+					"ALTER TABLE messages ADD PRIMARY KEY (time, channel, subtopic, protocol, publisher, name, device_id);",
 
 					// Index on channel, device_id, name, time
 					"CREATE INDEX IF NOT EXISTS idx_channel_device_id_name_time  ON messages (channel, device_id, name, time DESC) WITH (timescaledb.transaction_per_chunk);",
@@ -80,6 +85,10 @@ func Migration() *migrate.MemoryMigrationSource {
 				Down: []string{
 					"DROP INDEX IF EXISTS idx_channel_device_id_name_time ;",
 
+					"ALTER TABLE messages DROP CONSTRAINT IF EXISTS messages_pkey;",
+					"ALTER TABLE messages ALTER COLUMN device_id DROP NOT NULL;",
+					"ALTER TABLE messages ALTER COLUMN device_id DROP DEFAULT;",
+					"ALTER TABLE messages ADD PRIMARY KEY (time, channel, subtopic, protocol, publisher, name);",
 					"ALTER TABLE messages DROP COLUMN IF EXISTS device_id;",
 				},
 			},

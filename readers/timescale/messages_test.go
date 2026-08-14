@@ -830,6 +830,33 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
+func TestReadLegacyJSONTableWithDeviceIDsReturnsEmptyPage(t *testing.T) {
+	reader := treader.New(db)
+	format := fmt.Sprintf("legacy_json_%d", time.Now().UnixNano())
+	chanID := testsutil.GenerateUUID(t)
+
+	_, err := db.Exec(fmt.Sprintf(`CREATE TABLE %s (
+		created BIGINT NOT NULL,
+		channel VARCHAR(254),
+		subtopic VARCHAR(254),
+		publisher VARCHAR(254),
+		protocol TEXT,
+		payload JSONB,
+		PRIMARY KEY (created, publisher, subtopic)
+	)`, format))
+	require.NoError(t, err)
+
+	result, err := reader.ReadAll(chanID, readers.PageMetadata{
+		Format:    format,
+		Offset:    0,
+		Limit:     10,
+		DeviceIDs: []string{"meter-a"},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, result.Messages)
+	assert.Equal(t, uint64(0), result.Total)
+}
+
 func fromSenml(msg []senml.Message) []readers.Message {
 	var ret []readers.Message
 	for _, m := range msg {

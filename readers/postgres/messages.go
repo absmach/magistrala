@@ -79,6 +79,9 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 			if pgErr.Code == pgerrcode.UndefinedTable {
 				return readers.MessagesPage{}, nil
 			}
+			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+				return emptyPage(rpm), nil
+			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
@@ -115,6 +118,12 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+			return emptyPage(rpm), nil
+		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
@@ -128,6 +137,13 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	page.Total = total
 
 	return page, nil
+}
+
+func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
+	return readers.MessagesPage{
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
+	}
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {

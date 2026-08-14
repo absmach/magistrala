@@ -28,6 +28,8 @@ var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceID   = "device_id"
+	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -93,6 +95,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time,
 				%s(value) AS value,
 				FIRST(publisher, time) AS publisher,
+				%s,
 				FIRST(protocol, time) AS protocol,
 				FIRST(subtopic, time) AS subtopic,
 				FIRST(name,time) AS name,
@@ -105,7 +108,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			%s
 			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, where, orderClause, pgData)
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), format, where, orderClause, pgData)
 
 		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, where)
 	} else {
@@ -119,6 +122,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		messageFieldSubtopic:   rpm.Subtopic,
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
+		messageFieldDeviceIDs:  rpm.DeviceIDs,
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -214,6 +218,10 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
+	if _, ok := query[messageFieldDeviceIDs]; ok {
+		conditions = append(conditions, " device_id = ANY(:device_ids) ")
+	}
+
 	if _, ok := query[messageFieldName]; ok {
 		conditions = append(conditions, " name = :name ")
 	}
@@ -259,6 +267,13 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	}
 
 	return strings.Join(conditions, " AND ")
+}
+
+func aggregateDeviceIDProjection(rpm readers.PageMetadata) string {
+	if len(rpm.DeviceIDs) == 1 {
+		return "FIRST(device_id, time) AS device_id"
+	}
+	return "'' AS device_id"
 }
 
 type senmlMessage struct {

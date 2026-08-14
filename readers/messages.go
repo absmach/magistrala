@@ -48,6 +48,7 @@ type PageMetadata struct {
 	Subtopic    string   `json:"subtopic,omitempty"`
 	Publisher   string   `json:"publisher,omitempty"`
 	Publishers  []string `json:"publishers,omitempty"`
+	DeviceIDs   []string `json:"device_ids,omitempty"`
 	Protocol    string   `json:"protocol,omitempty"`
 	Name        string   `json:"name,omitempty"`
 	Value       float64  `json:"v,omitempty"`

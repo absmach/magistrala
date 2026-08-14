@@ -32,6 +32,7 @@ const (
 	subtopicKey    = "subtopic"
 	publisherKey   = "publisher"
 	publishersKey  = "publishers"
+	deviceIDsKey   = "device_ids"
 	protocolKey    = "protocol"
 	nameKey        = "name"
 	valueKey       = "v"
@@ -98,6 +99,7 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	publishers := r.URL.Query()[publishersKey]
+	deviceIDs := r.URL.Query()[deviceIDsKey]
 
 	protocol, err := apiutil.ReadStringQuery(r, protocolKey, "")
 	if err != nil {
@@ -179,6 +181,7 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 			Subtopic:    subtopic,
 			Publisher:   publisher,
 			Publishers:  publishers,
+			DeviceIDs:   deviceIDs,
 			Protocol:    protocol,
 			Name:        name,
 			Value:       v,

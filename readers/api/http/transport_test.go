@@ -67,8 +67,8 @@ func newTestDeps(t *testing.T) *testDeps {
 	return &testDeps{repo: repo, authn: authn, evaluator: evaluator, lister: lister, endpoint: ep}
 }
 
-func TestDecodeListReadsPluralPublisherFilters(t *testing.T) {
-	r := httptest.NewRequest("GET", "/?publishers=pub-a&publishers=pub-b&publisher=pub-c", nil)
+func TestDecodeListReadsPluralFilters(t *testing.T) {
+	r := httptest.NewRequest("GET", "/?publishers=pub-a&publishers=pub-b&publisher=pub-c&device_ids=meter-a&device_ids=meter-b", nil)
 	r.Header.Set("Authorization", "Bearer token")
 
 	decoded, err := decodeList(context.Background(), r)
@@ -78,6 +78,7 @@ func TestDecodeListReadsPluralPublisherFilters(t *testing.T) {
 	require.True(t, ok)
 	assert.Equal(t, "pub-c", req.pageMeta.Publisher)
 	assert.Equal(t, []string{"pub-a", "pub-b"}, req.pageMeta.Publishers)
+	assert.Equal(t, []string{"meter-a", "meter-b"}, req.pageMeta.DeviceIDs)
 }
 
 func tokenReq(publisher string, publishers []string) listMessagesReq {

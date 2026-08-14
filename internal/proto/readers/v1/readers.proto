@@ -35,6 +35,7 @@ message PageMetadata {
   string order               = 18;
   string dir                 = 19;
   repeated string publishers = 20;
+  repeated string device_ids = 21;
 }
 
 message ReadMessagesRes {

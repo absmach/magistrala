@@ -47,6 +47,7 @@ func decodeReadMessagesRequest(_ context.Context, grpcReq any) (any, error) {
 			Subtopic:    req.GetPageMetadata().GetSubtopic(),
 			Publisher:   req.GetPageMetadata().GetPublisher(),
 			Publishers:  req.GetPageMetadata().GetPublishers(),
+			DeviceIDs:   req.GetPageMetadata().GetDeviceIds(),
 			Protocol:    req.GetPageMetadata().GetProtocol(),
 			Name:        req.GetPageMetadata().GetName(),
 			Value:       req.GetPageMetadata().GetValue(),

@@ -105,6 +105,7 @@ type PageMetadata struct {
 	Order         string                 `protobuf:"bytes,18,opt,name=order,proto3" json:"order,omitempty"`
 	Dir           string                 `protobuf:"bytes,19,opt,name=dir,proto3" json:"dir,omitempty"`
 	Publishers    []string               `protobuf:"bytes,20,rep,name=publishers,proto3" json:"publishers,omitempty"`
+	DeviceIds     []string               `protobuf:"bytes,21,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -275,6 +276,13 @@ func (x *PageMetadata) GetDir() string {
 func (x *PageMetadata) GetPublishers() []string {
 	if x != nil {
 		return x.Publishers
+	}
+	return nil
+}
+
+func (x *PageMetadata) GetDeviceIds() []string {
+	if x != nil {
+		return x.DeviceIds
 	}
 	return nil
 }
@@ -738,7 +746,7 @@ var File_readers_v1_readers_proto protoreflect.FileDescriptor
 const file_readers_v1_readers_proto_rawDesc = "" +
 	"\n" +
 	"\x18readers/v1/readers.proto\x12\n" +
-	"readers.v1\"\xac\x04\n" +
+	"readers.v1\"\xcb\x04\n" +
 	"\fPageMetadata\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x04R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x1a\n" +
@@ -766,7 +774,9 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\x03dir\x18\x13 \x01(\tR\x03dir\x12\x1e\n" +
 	"\n" +
 	"publishers\x18\x14 \x03(\tR\n" +
-	"publishers\"\x97\x01\n" +
+	"publishers\x12\x1d\n" +
+	"\n" +
+	"device_ids\x18\x15 \x03(\tR\tdeviceIds\"\x97\x01\n" +
 	"\x0fReadMessagesRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x04R\x05total\x12=\n" +
 	"\rpage_metadata\x18\x02 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\x12/\n" +

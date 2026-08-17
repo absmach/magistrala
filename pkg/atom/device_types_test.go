@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -117,7 +118,7 @@ func (fa *fakeAtomDeviceTypes) handle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (fa *fakeAtomDeviceTypes) fail(w http.ResponseWriter, format string, args ...any) {
+func (fa *fakeAtomDeviceTypes) failf(w http.ResponseWriter, format string, args ...any) {
 	_ = writeJSON(w, map[string]any{
 		"errors": []map[string]string{{"message": fmt.Sprintf(format, args...)}},
 	})
@@ -140,7 +141,7 @@ func (fa *fakeAtomDeviceTypes) createDeviceType(w http.ResponseWriter, payload g
 	}
 	for _, existing := range fa.deviceTypes {
 		if existing.TenantID == deviceType.TenantID && existing.Key == deviceType.Key {
-			fa.fail(w, "already exists")
+			fa.failf(w, "already exists")
 			return
 		}
 	}
@@ -152,7 +153,7 @@ func (fa *fakeAtomDeviceTypes) getDeviceType(w http.ResponseWriter, payload gqlP
 	id, _ := payload.Variables["id"].(string)
 	deviceType, ok := fa.deviceTypes[id]
 	if !ok {
-		fa.fail(w, "profile %s not found", id)
+		fa.failf(w, "profile %s not found", id)
 		return
 	}
 	_ = writeJSON(w, map[string]any{"data": map[string]any{"profile": deviceTypeJSON(deviceType)}})
@@ -195,7 +196,7 @@ func (fa *fakeAtomDeviceTypes) updateDeviceType(w http.ResponseWriter, payload g
 	id, _ := payload.Variables["id"].(string)
 	deviceType, ok := fa.deviceTypes[id]
 	if !ok {
-		fa.fail(w, "profile %s not found", id)
+		fa.failf(w, "profile %s not found", id)
 		return
 	}
 	input, _ := payload.Variables["input"].(map[string]any)
@@ -214,7 +215,7 @@ func (fa *fakeAtomDeviceTypes) updateDeviceType(w http.ResponseWriter, payload g
 func (fa *fakeAtomDeviceTypes) createVersion(w http.ResponseWriter, payload gqlPayload) {
 	deviceTypeID, _ := payload.Variables["profileId"].(string)
 	if _, ok := fa.deviceTypes[deviceTypeID]; !ok {
-		fa.fail(w, "profile %s not found", deviceTypeID)
+		fa.failf(w, "profile %s not found", deviceTypeID)
 		return
 	}
 	input, _ := payload.Variables["input"].(map[string]any)
@@ -224,7 +225,7 @@ func (fa *fakeAtomDeviceTypes) createVersion(w http.ResponseWriter, payload gqlP
 	}
 	for _, existing := range fa.versions {
 		if existing.DeviceTypeID == deviceTypeID && existing.Version == number {
-			fa.fail(w, "already exists")
+			fa.failf(w, "already exists")
 			return
 		}
 	}
@@ -316,11 +317,11 @@ func (fa *fakeAtomDeviceTypes) createEntity(w http.ResponseWriter, payload gqlPa
 	if deviceTypeID := stringField(input, "profileId"); deviceTypeID != "" {
 		version, err := fa.resolveBinding(deviceTypeID, stringField(input, "profileVersionId"))
 		if err != nil {
-			fa.fail(w, "%s", err.Error())
+			fa.failf(w, "%s", err.Error())
 			return
 		}
 		if messages := validateAgainstSchema(version.JSONSchema, entity.Attributes); len(messages) > 0 {
-			fa.fail(w, "%s%s", atomSchemaValidationPrefix, strings.Join(messages, "; "))
+			fa.failf(w, "%s%s", atomSchemaValidationPrefix, strings.Join(messages, "; "))
 			return
 		}
 		entity.DeviceTypeID = deviceTypeID
@@ -336,7 +337,7 @@ func (fa *fakeAtomDeviceTypes) updateEntity(w http.ResponseWriter, payload gqlPa
 	id, _ := payload.Variables["id"].(string)
 	entity, ok := fa.entities[id]
 	if !ok {
-		fa.fail(w, "entity %s not found", id)
+		fa.failf(w, "entity %s not found", id)
 		return
 	}
 	input, _ := payload.Variables["input"].(map[string]any)
@@ -347,7 +348,7 @@ func (fa *fakeAtomDeviceTypes) updateEntity(w http.ResponseWriter, payload gqlPa
 	if attributes, ok := input["attributes"].(map[string]any); ok {
 		if version, bound := fa.versions[entity.DeviceTypeVersionID]; bound {
 			if messages := validateAgainstSchema(version.JSONSchema, attributes); len(messages) > 0 {
-				fa.fail(w, "%s%s", atomSchemaValidationPrefix, strings.Join(messages, "; "))
+				fa.failf(w, "%s%s", atomSchemaValidationPrefix, strings.Join(messages, "; "))
 				return
 			}
 		}
@@ -363,7 +364,7 @@ func (fa *fakeAtomDeviceTypes) updateEntity(w http.ResponseWriter, payload gqlPa
 	if deviceTypeID := stringField(input, "profileId"); deviceTypeID != "" {
 		version, err := fa.resolveBinding(deviceTypeID, stringField(input, "profileVersionId"))
 		if err != nil {
-			fa.fail(w, "%s", err.Error())
+			fa.failf(w, "%s", err.Error())
 			return
 		}
 		entity.DeviceTypeID = deviceTypeID
@@ -377,7 +378,7 @@ func (fa *fakeAtomDeviceTypes) getEntity(w http.ResponseWriter, payload gqlPaylo
 	id, _ := payload.Variables["id"].(string)
 	entity, ok := fa.entities[id]
 	if !ok {
-		fa.fail(w, "entity %s not found", id)
+		fa.failf(w, "entity %s not found", id)
 		return
 	}
 	_ = writeJSON(w, map[string]any{"data": map[string]any{"entity": deviceTypeEntityJSON(entity)}})
@@ -505,8 +506,9 @@ func validateAgainstSchema(schema, attributes map[string]any) []string {
 				}
 			}
 			if !allowed {
-				encodedOptions, _ := json.Marshal(options)
-				messages = append(messages, fmt.Sprintf("%s is not one of %s", instance, encodedOptions))
+				if encodedOptions, err := json.Marshal(options); err == nil {
+					messages = append(messages, fmt.Sprintf("%s is not one of %s", instance, encodedOptions))
+				}
 			}
 		}
 	}
@@ -534,7 +536,10 @@ func matchesType(declared string, value any) bool {
 }
 
 func formatLimit(v float64) string {
-	encoded, _ := json.Marshal(v)
+	encoded, err := json.Marshal(v)
+	if err != nil {
+		return strconv.FormatFloat(v, 'g', -1, 64)
+	}
 	return string(encoded)
 }
 

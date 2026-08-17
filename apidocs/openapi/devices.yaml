@@ -3,9 +3,9 @@
 
 openapi: 3.0.3
 info:
-  title: Magistrala Clients Service
+  title: Magistrala Devices Service
   description: |
-    This is the Clients Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform clients. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
+    This is the Devices Server based on the OpenAPI 3.0 specification.  It is the HTTP API for managing platform devices. You can now help us improve the API whether it's by making changes to the definition itself or to the code.
     Some useful links:
     - [The Magistrala repository](https://github.com/absmach/magistrala)
   contact:
@@ -20,13 +20,13 @@ servers:
   - url: https://localhost:9006
 
 tags:
-  - name: Clients
-    description: CRUD operations for your clients
+  - name: Devices
+    description: CRUD operations for your devices
     externalDocs:
-      description: Find out more about clients
+      description: Find out more about devices
       url: https://magistrala.absmach.eu/docs/
   - name: Roles
-    description: All operations involving roles for clients
+    description: All operations involving roles for devices
     externalDocs:
       description: Find out more about roles
       url: https://magistrala.absmach.eu/docs/
@@ -37,22 +37,22 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/clients:
+  /{domainID}/devices:
     post:
-      operationId: createClient
+      operationId: createDevice
       tags:
-        - Clients
-      summary: Adds new client
+        - Devices
+      summary: Adds new device
       description: |
-        Adds new client to the list of clients owned by user identified using
+        Adds new device to the list of devices owned by user identified using
         the provided access token.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientCreateReq"
+        $ref: "#/components/requestBodies/DeviceCreateReq"
       responses:
         "201":
-          $ref: "#/components/responses/ClientCreateRes"
+          $ref: "#/components/responses/DeviceCreateRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -71,13 +71,13 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
-      operationId: listClients
+      operationId: listDevices
       tags:
-        - Clients
-      summary: Retrieves clients
+        - Devices
+      summary: Retrieves devices
       description: |
-        Retrieves a list of clients. Due to performance concerns, data
-        is retrieved in subsets. The API clients must ensure that the entire
+        Retrieves a list of devices. Due to performance concerns, data
+        is retrieved in subsets. The API caller must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
@@ -88,7 +88,7 @@ paths:
         - $ref: "#/components/parameters/Direction"
         - $ref: "#/components/parameters/Metadata"
         - $ref: "#/components/parameters/Status"
-        - $ref: "#/components/parameters/ClientName"
+        - $ref: "#/components/parameters/DeviceName"
         - $ref: "#/components/parameters/Tags"
         - $ref: "#/components/parameters/ID"
         - $ref: "./schemas/roles.yaml#/components/parameters/ActionsQuery"
@@ -106,7 +106,7 @@ paths:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientPageRes"
+          $ref: "#/components/responses/DevicePageRes"
         "400":
           description: Failed due to malformed query parameters.
         "401":
@@ -121,22 +121,22 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bulk:
+  /{domainID}/devices/bulk:
     post:
-      operationId: bulkCreateClients
-      summary: Bulk provisions new clients
+      operationId: bulkCreateDevices
+      summary: Bulk provisions new devices
       description: |
-        Adds a list of new clients to the list of clients owned by user identified using
+        Adds a list of new devices to the list of devices owned by user identified using
         the provided access token.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
       tags:
-        - Clients
+        - Devices
       requestBody:
-        $ref: "#/components/requestBodies/ClientsCreateReq"
+        $ref: "#/components/requestBodies/DevicesCreateReq"
       responses:
         "200":
-          $ref: "#/components/responses/ClientPageRes"
+          $ref: "#/components/responses/DevicePageRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -152,22 +152,22 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}:
+  /{domainID}/devices/{deviceID}:
     get:
-      operationId: getClient
-      summary: Retrieves client info
+      operationId: getDevice
+      summary: Retrieves device info
       description: |
-        Retrieves a specific client that is identified by the client ID.
+        Retrieves a specific device that is identified by the device ID.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientRes"
+          $ref: "#/components/responses/DeviceRes"
         "400":
           description: Failed due to malformed domain ID.
         "401":
@@ -182,24 +182,24 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     patch:
-      operationId: updateClient
-      summary: Updates name, metadata, and private metadata of the client.
+      operationId: updateDevice
+      summary: Updates name, metadata, and private metadata of the device.
       description: |
         Update is performed by replacing the current resource data with values
-        provided in a request payload. Note that the client's type and ID
+        provided in a request payload. Note that the device's type and ID
         cannot be changed.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientUpdateReq"
+        $ref: "#/components/requestBodies/DeviceUpdateReq"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientRes"
+          $ref: "#/components/responses/DeviceRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -207,7 +207,7 @@ paths:
         "403":
           description: Failed to perform authorization over the entity.
         "404":
-          description: Failed due to non existing client.
+          description: Failed due to non existing device.
         "409":
           description: Failed due to using an existing identity.
         "415":
@@ -217,56 +217,56 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
     delete:
-      summary: Delete client for a client with the given id.
+      summary: Delete device for a device with the given id.
       description: |
-        Delete client removes a client with the given id from repo
-        and removes all the policies related to this client.
+        Delete device removes a device with the given id from repo
+        and removes all the policies related to this device.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
       responses:
         "204":
-          description: Client deleted.
+          description: Device deleted.
         "400":
           description: Failed due to malformed domain ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
-          description: Unauthorized access to client id.
+          description: Unauthorized access to device id.
         "404":
-          description: Missing client.
+          description: Missing device.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/tags:
+  /{domainID}/devices/{deviceID}/tags:
     patch:
-      operationId: updateClientTags
-      summary: Updates tags the client.
+      operationId: updateDeviceTags
+      summary: Updates tags the device.
       description: |
-        Updates tags of the client with provided ID. Tags is updated using
+        Updates tags of the device with provided ID. Tags is updated using
         authorization token and the new tags received in request.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientUpdateTagsReq"
+        $ref: "#/components/requestBodies/DeviceUpdateTagsReq"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientRes"
+          $ref: "#/components/responses/DeviceRes"
         "400":
           description: Failed due to malformed JSON.
         "403":
           description: Failed to perform authorization over the entity.
         "404":
-          description: Failed due to non existing client.
+          description: Failed due to non existing device.
         "401":
           description: Missing or invalid access token provided.
         "422":
@@ -274,25 +274,25 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/secret:
+  /{domainID}/devices/{deviceID}/secret:
     patch:
-      operationId: updateClientSecret
-      summary: Updates Secret of the identified client.
+      operationId: updateDeviceSecret
+      summary: Updates Secret of the identified device.
       description: |
-        Updates secret of the identified in client. Secret is updated using
+        Updates secret of the identified in device. Secret is updated using
         authorization token and the new received info. Update is performed by replacing current key with a new one.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientUpdateSecretReq"
+        $ref: "#/components/requestBodies/DeviceUpdateSecretReq"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientRes"
+          $ref: "#/components/responses/DeviceRes"
         "400":
           description: Failed due to malformed JSON.
         "401":
@@ -300,7 +300,7 @@ paths:
         "403":
           description: Failed to perform authorization over the entity.
         "404":
-          description: Failed due to non existing client.
+          description: Failed due to non existing device.
         "409":
           description: Specified key already exists.
         "415":
@@ -310,24 +310,24 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/disable:
+  /{domainID}/devices/{deviceID}/disable:
     post:
-      operationId: disableClient
-      summary: Disables a client
+      operationId: disableDevice
+      summary: Disables a device
       description: |
-        Disables a specific client that is identified by the client ID.
+        Disables a specific device that is identified by the device ID.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/DisabledClientRes"
+          $ref: "#/components/responses/DisabledDeviceRes"
         "400":
-          description: Failed due to malformed client's ID.
+          description: Failed due to malformed device's ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -335,30 +335,30 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already disabled client.
+          description: Failed due to already disabled device.
         "422":
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/enable:
+  /{domainID}/devices/{deviceID}/enable:
     post:
-      operationId: enableClient
-      summary: Enables a client
+      operationId: enableDevice
+      summary: Enables a device
       description: |
-        Enables a specific client that is identified by the client ID.
+        Enables a specific device that is identified by the device ID.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
       responses:
         "200":
-          $ref: "#/components/responses/ClientRes"
+          $ref: "#/components/responses/DeviceRes"
         "400":
-          description: Failed due to malformed client's ID.
+          description: Failed due to malformed device's ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -366,32 +366,32 @@ paths:
         "404":
           description: A non-existent entity request.
         "409":
-          description: Failed due to already enabled client.
+          description: Failed due to already enabled device.
         "422":
           description: Database can't process request.
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/parent:
+  /{domainID}/devices/{deviceID}/parent:
     post:
-      operationId: setClientParentGroup
-      summary: Sets a parent group for a client
+      operationId: setDeviceParentGroup
+      summary: Sets a parent group for a device
       description: |
-        Sets a parent group for a specific client that is identified by the client ID.
+        Sets a parent group for a specific device that is identified by the device ID.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientParentGroupReq"
+        $ref: "#/components/requestBodies/DeviceParentGroupReq"
       security:
         - bearerAuth: []
       responses:
         "200":
           description: Parent group set.
         "400":
-          description: Failed due to malformed client's ID.
+          description: Failed due to malformed device's ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -404,24 +404,24 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     delete:
-      operationId: removeClientParentGroup
-      summary: Removes a parent group from a client.
+      operationId: removeDeviceParentGroup
+      summary: Removes a parent group from a device.
       description: |
-        Removes a parent group from a specific client that is identified by the client ID.
+        Removes a parent group from a specific device that is identified by the device ID.
       tags:
-        - Clients
+        - Devices
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
-        $ref: "#/components/requestBodies/ClientParentGroupReq"
+        $ref: "#/components/requestBodies/DeviceParentGroupReq"
       security:
         - bearerAuth: []
       responses:
         "200":
           description: Parent group removed.
         "400":
-          description: Failed due to malformed client's ID.
+          description: Failed due to malformed device's ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -433,17 +433,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles:
+  /{domainID}/devices/{deviceID}/roles:
     post:
-      operationId: createClientRole
-      summary: Creates a role for a client
+      operationId: createDeviceRole
+      summary: Creates a role for a device
       description: |
-        Creates a role for a specific client that is identified by the client ID.
+        Creates a role for a specific device that is identified by the device ID.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/CreateRoleReq"
       security:
@@ -452,7 +452,7 @@ paths:
         "201":
           $ref: "./schemas/roles.yaml#/components/responses/CreateRoleRes"
         "400":
-          description: Failed due to malformed client's ID.
+          description: Failed due to malformed device's ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -465,18 +465,18 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
-      operationId: listClientRoles
+      operationId: listDeviceRoles
       tags:
         - Roles
-      summary: Retrieves clients roles.
+      summary: Retrieves devices roles.
       description: |
-        Retrieves a list of client roles. Due to performance concerns, data
-        is retrieved in subsets. The API clients must ensure that the entire
+        Retrieves a list of device roles. Due to performance concerns, data
+        is retrieved in subsets. The API caller must ensure that the entire
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       security:
@@ -498,17 +498,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/members:
+  /{domainID}/devices/{deviceID}/roles/members:
     get:
-      operationId: getClientMembers
+      operationId: getDeviceMembers
       tags:
         - Roles
-      summary: Retrieves client members from all roles.
+      summary: Retrieves device members from all roles.
       description: |
-        Retrieves members from role for the specific client.
+        Retrieves members from role for the specific device.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
       responses:
@@ -528,17 +528,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}:
+  /{domainID}/devices/{deviceID}/roles/{roleID}:
     get:
-      operationId: getClientRole
+      operationId: getDeviceRole
       tags:
         - Roles
-      summary: Retrieves client role.
+      summary: Retrieves device role.
       description: |
-        Retrieves a specific client role that is identified by the role name.
+        Retrieves a specific device role that is identified by the role name.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -560,15 +560,15 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     put:
-      operationId: updateClientRole
-      summary: Updates client role.
+      operationId: updateDeviceRole
+      summary: Updates device role.
       description: |
-        Updates a specific client role that is identified by the role name.
+        Updates a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/UpdateRoleReq"
@@ -592,15 +592,15 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     delete:
-      operationId: deleteClientRole
-      summary: Deletes client role.
+      operationId: deleteDeviceRole
+      summary: Deletes device role.
       description: |
-        Deletes a specific client role that is identified by the role name.
+        Deletes a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -621,17 +621,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/actions:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/actions:
     post:
-      operationId: addClientRoleAction
-      summary: Adds a role action for a client role.
+      operationId: addDeviceRoleAction
+      summary: Adds a role action for a device role.
       description: |
-        Adds a role action for a specific client role that is identified by the role name.
+        Adds a role action for a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/AddRoleActionsReq"
@@ -655,15 +655,15 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
-      operationId: listClientRoleActions
+      operationId: listDeviceRoleActions
       tags:
         - Roles
-      summary: Lists client role actions.
+      summary: Lists device role actions.
       description: |
-        Retrieves a list of client role actions.
+        Retrieves a list of device role actions.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -684,17 +684,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/actions/delete:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/actions/delete:
     post:
-      operationId: deleteClientRoleAction
-      summary: Deletes role actions for a client role.
+      operationId: deleteDeviceRoleAction
+      summary: Deletes role actions for a device role.
       description: |
-        Deletes a role action for a specific client role that is identified by the role name.
+        Deletes a role action for a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/AddRoleActionsReq"
@@ -717,17 +717,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/actions/delete-all:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/actions/delete-all:
     post:
-      operationId: deleteAllClientRoleActions
-      summary: Deletes all role actions for a client role.
+      operationId: deleteAllDeviceRoleActions
+      summary: Deletes all role actions for a device role.
       description: |
-        Deletes all role actions for a specific client role that is identified by the role name.
+        Deletes all role actions for a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -748,17 +748,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/members:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/members:
     post:
-      operationId: addClientRoleMember
-      summary: Adds a member to a client role.
+      operationId: addDeviceRoleMember
+      summary: Adds a member to a device role.
       description: |
-        Adds a member to a specific client role that is identified by the role name.
+        Adds a member to a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/AddRoleMembersReq"
@@ -782,15 +782,15 @@ paths:
           $ref: "#/components/responses/ServiceError"
 
     get:
-      operationId: listClientRoleMembers
+      operationId: listDeviceRoleMembers
       tags:
         - Roles
-      summary: Lists client role members.
+      summary: Lists device role members.
       description: |
-        Retrieves a list of client role members.
+        Retrieves a list of device role members.
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -811,17 +811,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/members/delete:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/members/delete:
     post:
-      operationId: deleteClientRoleMembers
-      summary: Deletes members from a client role.
+      operationId: deleteDeviceRoleMembers
+      summary: Deletes members from a device role.
       description: |
-        Deletes a member from a specific client role that is identified by the role name.
+        Deletes a member from a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/AddRoleMembersReq"
@@ -844,17 +844,17 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/{clientID}/roles/{roleID}/members/delete-all:
+  /{domainID}/devices/{deviceID}/roles/{roleID}/members/delete-all:
     post:
-      operationId: deleteAllClientRoleMembers
-      summary: Deletes all members from a client role.
+      operationId: deleteAllDeviceRoleMembers
+      summary: Deletes all members from a device role.
       description: |
-        Deletes all members from a specific client role that is identified by the role name.
+        Deletes all members from a specific device role that is identified by the role name.
       tags:
         - Roles
       parameters:
         - $ref: "auth.yaml#/components/parameters/DomainID"
-        - $ref: "#/components/parameters/clientID"
+        - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
         - bearerAuth: []
@@ -875,7 +875,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/roles/available-actions:
+  /{domainID}/devices/roles/available-actions:
     get:
       operationId: listAvailableActions
       tags:
@@ -918,27 +918,27 @@ paths:
 
 components:
   schemas:
-    ClientReqObj:
+    DeviceReqObj:
       type: object
       properties:
         name:
           type: string
-          example: clientName
-          description: Client name.
+          example: deviceName
+          description: Device name.
         tags:
           type: array
           minItems: 0
           items:
             type: string
           example: ["tag1", "tag2"]
-          description: Client tags.
+          description: Device tags.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: "clientIDentity"
-              description: Client's identity will be used as its unique identifier
+              example: "deviceIDentity"
+              description: Device's identity will be used as its unique identifier
             secret:
               type: string
               format: password
@@ -948,14 +948,14 @@ components:
         private_metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data private to the client.
+          description: Arbitrary, object-encoded device's data private to the device.
         metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data visible to other clients.
+          description: Arbitrary, object-encoded device's data visible to other devices.
         status:
           type: string
-          description: Client Status
+          description: Device Status
           format: string
           example: enabled
       required:
@@ -972,52 +972,52 @@ components:
       required:
         - parent_group_id
 
-    Client:
+    Device:
       type: object
       properties:
         id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Client unique identifier.
+          description: Device unique identifier.
         name:
           type: string
-          example: clientName
-          description: Client name.
+          example: deviceName
+          description: Device name.
         tags:
           type: array
           minItems: 0
           items:
             type: string
           example: ["tag1", "tag2"]
-          description: Client tags.
+          description: Device tags.
         domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which client belongs.
+          description: ID of the domain to which device belongs.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: clientIDentity
-              description: Client Identity for example email address.
+              example: deviceIDentity
+              description: Device Identity for example email address.
             secret:
               type: string
               example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-              description: Client secret password.
+              description: Device secret password.
         private_metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data private to the client.
+          description: Arbitrary, object-encoded device's data private to the device.
         metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data visible to other clients.
+          description: Arbitrary, object-encoded device's data visible to other devices.
         status:
           type: string
-          description: Client Status
+          description: Device Status
           format: string
           example: enabled
         created_at:
@@ -1031,54 +1031,54 @@ components:
           example: "2019-11-26 13:31:52"
           description: Time when the channel was created.
       xml:
-        name: client
+        name: device
 
-    ClientWithEmptySecret:
+    DeviceWithEmptySecret:
       type: object
       properties:
         id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Client unique identifier.
+          description: Device unique identifier.
         name:
           type: string
-          example: clientName
-          description: Client name.
+          example: deviceName
+          description: Device name.
         tags:
           type: array
           minItems: 0
           items:
             type: string
           example: ["tag1", "tag2"]
-          description: Client tags.
+          description: Device tags.
         domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which client belongs.
+          description: ID of the domain to which device belongs.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: clientIDentity
-              description: Client Identity for example email address.
+              example: deviceIDentity
+              description: Device Identity for example email address.
             secret:
               type: string
               example: ""
-              description: Client secret password.
+              description: Device secret password.
         private_metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data private to the client.
+          description: Arbitrary, object-encoded device's data private to the device.
         metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data visible to other clients.
+          description: Arbitrary, object-encoded device's data visible to other devices.
         status:
           type: string
-          description: Client Status
+          description: Device Status
           format: string
           example: enabled
         created_at:
@@ -1092,17 +1092,17 @@ components:
           example: "2019-11-26 13:31:52"
           description: Time when the channel was created.
       xml:
-        name: client
+        name: device
 
-    ClientsPage:
+    DevicesPage:
       type: object
       properties:
-        clients:
+        devices:
           type: array
           minItems: 0
           uniqueItems: true
           items:
-            $ref: "#/components/schemas/ClientWithEmptySecret"
+            $ref: "#/components/schemas/DeviceWithEmptySecret"
         total:
           type: integer
           example: 1
@@ -1117,80 +1117,80 @@ components:
       required:
         - total
 
-    ClientUpdate:
+    DeviceUpdate:
       type: object
       properties:
         name:
           type: string
-          example: clientName
-          description: Client name.
+          example: deviceName
+          description: Device name.
         metadata:
           type: object
           example: { "role": "general" }
-          description: Arbitrary, object-encoded client's data visible to other clients.
+          description: Arbitrary, object-encoded device's data visible to other devices.
         private_metadata:
           type: object
           example: { "role": "general" }
-          description: Arbitrary, object-encoded client's data private to the client.
+          description: Arbitrary, object-encoded device's data private to the device.
       required:
         - name
         - private_metadata
         - metadata
 
-    ClientTags:
+    DeviceTags:
       type: object
       properties:
         tags:
           type: array
           example: ["tag1", "tag2"]
-          description: Client tags.
+          description: Device tags.
           minItems: 0
           uniqueItems: true
           items:
             type: string
 
-    DisabledClient:
+    DisabledDevice:
       type: object
       properties:
         id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: Client unique identifier.
+          description: Device unique identifier.
         name:
           type: string
-          example: clientName
-          description: Client name.
+          example: deviceName
+          description: Device name.
         tags:
           type: array
           minItems: 0
           items:
             type: string
           example: ["tag1", "tag2"]
-          description: Client tags.
+          description: Device tags.
         domain_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which client belongs.
+          description: ID of the domain to which device belongs.
         credentials:
           type: object
           properties:
             identity:
               type: string
-              example: clientIDentity
-              description: Client Identity for example email address.
+              example: deviceIDentity
+              description: Device Identity for example email address.
             secret:
               type: string
               example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-              description: Client secret password.
+              description: Device secret password.
         metadata:
           type: object
           example: { "model": "example" }
-          description: Arbitrary, object-encoded client's data visible to other clients.
+          description: Arbitrary, object-encoded device's data visible to other devices.
         status:
           type: string
-          description: Client Status
+          description: Device Status
           format: string
           example: disabled
         created_at:
@@ -1204,15 +1204,15 @@ components:
           example: "2019-11-26 13:31:52"
           description: Time when the channel was created.
       xml:
-        name: client
+        name: device
 
-    ClientSecret:
+    DeviceSecret:
       type: object
       properties:
         secret:
           type: string
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: New client secret.
+          description: New device secret.
       required:
         - secret
 
@@ -1243,16 +1243,16 @@ components:
         description:
           type: string
           description: Service description.
-          example: clients service
+          example: devices service
         build_time:
           type: string
           description: Service build time.
           example: 1970-01-01_00:00:00
 
   parameters:
-    clientID:
-      name: clientID
-      description: Unique client identifier.
+    deviceID:
+      name: deviceID
+      description: Unique device identifier.
       in: path
       schema:
         type: string
@@ -1263,18 +1263,18 @@ components:
       required: true
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
 
-    ClientName:
+    DeviceName:
       name: name
-      description: Client's name.
+      description: Device's name.
       in: query
       schema:
         type: string
       required: false
-      example: "clientName"
+      example: "deviceName"
 
     Status:
       name: status
-      description: Client account status.
+      description: Device account status.
       in: query
       schema:
         type: string
@@ -1284,7 +1284,7 @@ components:
 
     Tags:
       name: tags
-      description: Clients tags. Multiple tags can be specified separated by comma for OR condition and plus for AND condition.
+      description: Devices tags. Multiple tags can be specified separated by comma for OR condition and plus for AND condition.
       in: query
       schema:
         type: string
@@ -1345,7 +1345,7 @@ components:
 
     ID:
       name: id
-      description: List clients with the given ID.
+      description: List devices with the given ID.
       in: query
       schema:
         type: string
@@ -1355,7 +1355,7 @@ components:
 
     AccessType:
       name: access_type
-      description: Type of access the user has on the client.
+      description: Type of access the user has on the device.
       in: query
       schema:
         type: string
@@ -1369,7 +1369,7 @@ components:
 
     OnlyTotal:
       name: only_total
-      description: If true, the response will contain only the total number of clients that match the query parameters.
+      description: If true, the response will contain only the total number of devices that match the query parameters.
       in: query
       schema:
         type: boolean
@@ -1378,7 +1378,7 @@ components:
 
     Channel:
       name: channel
-      description: If provided lists clients connected to a channel with the provided ID.
+      description: If provided lists devices connected to a channel with the provided ID.
       in: query
       schema:
         type: string
@@ -1389,7 +1389,7 @@ components:
 
     ConnectionType:
       name: connection_type
-      description: If provided with channel parameter lists clients connected to the channel with the provided connection type.
+      description: If provided with channel parameter lists devices connected to the channel with the provided connection type.
       in: query
       schema:
         type: string
@@ -1401,7 +1401,7 @@ components:
 
     Group:
       name: group
-      description: If provided lists clients belonging to a group with the provided ID.
+      description: If provided lists devices belonging to a group with the provided ID.
       in: query
       schema:
         type: string
@@ -1412,7 +1412,7 @@ components:
 
     User:
       name: user
-      description: If provided lists clients associated with a user with the provided ID. Only available for admin users.
+      description: If provided lists devices associated with a user with the provided ID. Only available for admin users.
       in: query
       schema:
         type: string
@@ -1423,7 +1423,7 @@ components:
     
     CreatedFrom:
       name: created_from
-      description: Filter clients created from this date (inclusive).
+      description: Filter devices created from this date (inclusive).
       in: query
       schema:
         type: string
@@ -1433,7 +1433,7 @@ components:
 
     CreatedTo:
       name: created_to
-      description: Filter clients created up to this date (inclusive).
+      description: Filter devices created up to this date (inclusive).
       in: query
       schema:
         type: string
@@ -1442,50 +1442,50 @@ components:
       example: "2023-12-31T23:59:59Z"
 
   requestBodies:
-    ClientCreateReq:
-      description: JSON-formatted document describing the new client to be registered
+    DeviceCreateReq:
+      description: JSON-formatted document describing the new device to be registered
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientReqObj"
+            $ref: "#/components/schemas/DeviceReqObj"
 
-    ClientsCreateReq:
-      description: JSON-formatted document describing the new clients.
+    DevicesCreateReq:
+      description: JSON-formatted document describing the new devices.
       required: true
       content:
         application/json:
           schema:
             type: array
             items:
-              $ref: "#/components/schemas/ClientReqObj"
+              $ref: "#/components/schemas/DeviceReqObj"
 
-    ClientUpdateReq:
-      description: JSON-formated document describing the metadata, private metadata and name of client to be update
+    DeviceUpdateReq:
+      description: JSON-formated document describing the metadata, private metadata and name of device to be update
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientUpdate"
+            $ref: "#/components/schemas/DeviceUpdate"
 
-    ClientUpdateTagsReq:
-      description: JSON-formated document describing the tags of client to be update
+    DeviceUpdateTagsReq:
+      description: JSON-formated document describing the tags of device to be update
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientTags"
+            $ref: "#/components/schemas/DeviceTags"
 
-    ClientUpdateSecretReq:
-      description: Secret change data. Client can change its secret.
+    DeviceUpdateSecretReq:
+      description: Secret change data. Device can change its secret.
       required: true
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientSecret"
+            $ref: "#/components/schemas/DeviceSecret"
 
-    ClientParentGroupReq:
-      description: JSON-formated document describing the parent group to be set to or removed from a client.
+    DeviceParentGroupReq:
+      description: JSON-formated document describing the parent group to be set to or removed from a device.
       required: true
       content:
         application/json:
@@ -1493,71 +1493,71 @@ components:
             $ref: "#/components/schemas/ParentGroupReqObj"
 
   responses:
-    ClientCreateRes:
-      description: Registered new client.
+    DeviceCreateRes:
+      description: Registered new device.
       headers:
         Location:
           schema:
             type: string
             format: url
-          description: Registered client relative URL in the format `clients/<client_id>`
+          description: Registered device relative URL in the format `devices/<device_id>`
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Client"
+            $ref: "#/components/schemas/Device"
       links:
         get:
-          operationId: getClient
+          operationId: getDevice
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
         update:
-          operationId: updateClient
+          operationId: updateDevice
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
         update_tags:
-          operationId: updateClientTags
+          operationId: updateDeviceTags
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
         update_secret:
-          operationId: updateClientSecret
+          operationId: updateDeviceSecret
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
         disable:
-          operationId: disableClient
+          operationId: disableDevice
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
         enable:
-          operationId: enableClient
+          operationId: enableDevice
           parameters:
-            clientID: $response.body#/id
+            deviceID: $response.body#/id
 
-    ClientRes:
+    DeviceRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/Client"
+            $ref: "#/components/schemas/Device"
 
-    DisabledClientRes:
+    DisabledDeviceRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/DisabledClient"
+            $ref: "#/components/schemas/DisabledDevice"
 
-    ClientPageRes:
+    DevicePageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientsPage"
+            $ref: "#/components/schemas/DevicesPage"
 
-    ClientsPageRes:
+    DevicesPageRes:
       description: Data retrieved.
       content:
         application/json:
           schema:
-            $ref: "#/components/schemas/ClientsPage"
+            $ref: "#/components/schemas/DevicesPage"
 
     HealthRes:
       description: Service Health Check.
@@ -1579,7 +1579,7 @@ components:
       scheme: bearer
       bearerFormat: JWT
       description: |
-        * Client access: "Authorization: Bearer <user_access_token>"
+        * Device access: "Authorization: Bearer <user_access_token>"
 
 security:
   - bearerAuth: []

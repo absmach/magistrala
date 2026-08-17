@@ -84,7 +84,7 @@ jobs:
               - "domains/api/http/**"
 
             clients:
-              - "apidocs/openapi/clients.yaml"
+              - "apidocs/openapi/devices.yaml"
               - "internal/atom/**"
               - "clients/api/http/**"
 
@@ -177,7 +177,7 @@ jobs:
         if: (steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('clients/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
-          schema: apidocs/openapi/clients.yaml
+          schema: apidocs/openapi/devices.yaml
           base-url: ${{ env.CLIENTS_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'

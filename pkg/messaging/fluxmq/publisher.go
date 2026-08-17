@@ -148,6 +148,9 @@ func messageProperties(msg *messaging.Message) map[string]string {
 		headerExternalID: msg.GetPublisher(),
 		headerProtocol:   msg.GetProtocol(),
 	}
+	if deviceID := msg.GetDeviceId(); deviceID != "" {
+		props["device_id"] = deviceID
+	}
 	if clientID := msg.ClientIdentity(); clientID != "" {
 		props["client_id"] = clientID
 	}

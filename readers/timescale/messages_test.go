@@ -47,6 +47,8 @@ func TestReadSenml(t *testing.T) {
 	pubID := testsutil.GenerateUUID(t)
 	pubID2 := testsutil.GenerateUUID(t)
 	wrongID := testsutil.GenerateUUID(t)
+	deviceID := "meter-a"
+	deviceID2 := "meter-b"
 
 	m := senml.Message{
 		Channel:   chanID,
@@ -59,6 +61,7 @@ func TestReadSenml(t *testing.T) {
 	boolMsgs := []senml.Message{}
 	stringMsgs := []senml.Message{}
 	dataMsgs := []senml.Message{}
+	deviceMsgs := []senml.Message{}
 	queryMsgs := []senml.Message{}
 
 	now := float64(time.Now().Unix())
@@ -66,6 +69,11 @@ func TestReadSenml(t *testing.T) {
 		// Mix possible values as well as value sum.
 		msg := m
 		msg.Time = now - float64(i)
+		if i%2 == 0 {
+			msg.DeviceId = deviceID
+		} else {
+			msg.DeviceId = deviceID2
+		}
 
 		count := i % valueFields
 		switch count {
@@ -90,6 +98,9 @@ func TestReadSenml(t *testing.T) {
 			queryMsgs = append(queryMsgs, msg)
 		}
 
+		if i%2 == 0 {
+			deviceMsgs = append(deviceMsgs, msg)
+		}
 		messages = append(messages, msg)
 	}
 
@@ -178,6 +189,19 @@ func TestReadSenml(t *testing.T) {
 			page: readers.MessagesPage{
 				Total:    uint64(len(queryMsgs)),
 				Messages: fromSenml(queryMsgs),
+			},
+		},
+		{
+			desc:   "read message with device ids",
+			chanID: chanID,
+			pageMeta: readers.PageMetadata{
+				Offset:    0,
+				Limit:     uint64(len(deviceMsgs)),
+				DeviceIDs: []string{deviceID},
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(deviceMsgs)),
+				Messages: fromSenml(deviceMsgs),
 			},
 		},
 		{
@@ -648,6 +672,8 @@ func TestReadJSON(t *testing.T) {
 	writer := twriter.New(db)
 
 	id1 := testsutil.GenerateUUID(t)
+	deviceID := "meter-a"
+	deviceID2 := "meter-b"
 	messages1 := json.Messages{
 		Format: format1,
 	}
@@ -673,6 +699,11 @@ func TestReadJSON(t *testing.T) {
 		}
 
 		msg := m
+		if i%2 == 0 {
+			msg.DeviceId = deviceID
+		} else {
+			msg.DeviceId = deviceID2
+		}
 		messages1.Data = append(messages1.Data, msg)
 		mapped := toMap(msg)
 		msgs1 = append(msgs1, mapped)
@@ -715,6 +746,10 @@ func TestReadJSON(t *testing.T) {
 	httpMsgs := []map[string]any{}
 	for i := 0; i < msgsNum; i += 2 {
 		httpMsgs = append(httpMsgs, msgs2[i])
+	}
+	deviceMsgsJSON := []map[string]any{}
+	for i := 0; i < msgsNum; i += 2 {
+		deviceMsgsJSON = append(deviceMsgsJSON, msgs1[i])
 	}
 
 	reader := treader.New(db)
@@ -772,6 +807,19 @@ func TestReadJSON(t *testing.T) {
 				Messages: fromJSON(httpMsgs),
 			},
 		},
+		"read message with device ids": {
+			chanID: id1,
+			pageMeta: readers.PageMetadata{
+				Format:    messages1.Format,
+				Offset:    0,
+				Limit:     uint64(len(deviceMsgsJSON)),
+				DeviceIDs: []string{deviceID},
+			},
+			page: readers.MessagesPage{
+				Total:    uint64(len(deviceMsgsJSON)),
+				Messages: fromJSON(deviceMsgsJSON),
+			},
+		},
 	}
 
 	for desc, tc := range cases {
@@ -780,6 +828,33 @@ func TestReadJSON(t *testing.T) {
 		assert.ElementsMatch(t, tc.page.Messages, result.Messages, fmt.Sprintf("%s: got incorrect list of json Messages from ReadAll()", desc))
 		assert.Equal(t, tc.page.Total, result.Total, fmt.Sprintf("%s: expected %v got %v", desc, tc.page.Total, result.Total))
 	}
+}
+
+func TestReadLegacyJSONTableWithDeviceIDsReturnsEmptyPage(t *testing.T) {
+	reader := treader.New(db)
+	format := fmt.Sprintf("legacy_json_%d", time.Now().UnixNano())
+	chanID := testsutil.GenerateUUID(t)
+
+	_, err := db.Exec(fmt.Sprintf(`CREATE TABLE %s (
+		created BIGINT NOT NULL,
+		channel VARCHAR(254),
+		subtopic VARCHAR(254),
+		publisher VARCHAR(254),
+		protocol TEXT,
+		payload JSONB,
+		PRIMARY KEY (created, publisher, subtopic)
+	)`, format))
+	require.NoError(t, err)
+
+	result, err := reader.ReadAll(chanID, readers.PageMetadata{
+		Format:    format,
+		Offset:    0,
+		Limit:     10,
+		DeviceIDs: []string{"meter-a"},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, result.Messages)
+	assert.Equal(t, uint64(0), result.Total)
 }
 
 func fromSenml(msg []senml.Message) []readers.Message {
@@ -799,7 +874,7 @@ func fromJSON(msg []map[string]any) []readers.Message {
 }
 
 func toMap(msg json.Message) map[string]any {
-	return map[string]any{
+	ret := map[string]any{
 		"channel":   msg.Channel,
 		"created":   msg.Created,
 		"subtopic":  msg.Subtopic,
@@ -807,4 +882,8 @@ func toMap(msg json.Message) map[string]any {
 		"protocol":  msg.Protocol,
 		"payload":   map[string]any(msg.Payload),
 	}
+	if msg.DeviceId != "" {
+		ret["device_id"] = msg.DeviceId
+	}
+	return ret
 }

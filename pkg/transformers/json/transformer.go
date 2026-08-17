@@ -15,7 +15,7 @@ import (
 const sep = "/"
 
 var (
-	keys = [...]string{"publisher", "protocol", "channel", "subtopic"}
+	keys = [...]string{"publisher", "protocol", "channel", "subtopic", "device_id"}
 
 	// ErrTransform represents an error during parsing message.
 	ErrTransform = errors.New("unable to parse JSON object")
@@ -55,6 +55,7 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 		Protocol:  msg.GetProtocol(),
 		Channel:   msg.GetChannel(),
 		Subtopic:  msg.GetSubtopic(),
+		DeviceId:  msg.GetDeviceId(),
 	}
 
 	if ret.Subtopic == "" {
@@ -74,6 +75,9 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 
 	switch p := payload.(type) {
 	case map[string]any:
+		if id := popDeviceID(p); id != "" {
+			ret.DeviceId = id
+		}
 		ret.Payload = p
 
 		// Apply timestamp transformation rules depending on key/unit pairs
@@ -95,6 +99,9 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 				return nil, errors.Wrap(ErrTransform, errInvalidNestedJSON)
 			}
 			newMsg := ret
+			if id := popDeviceID(v); id != "" {
+				newMsg.DeviceId = id
+			}
 
 			// Apply timestamp transformation rules depending on key/unit pairs
 			ts, err := ts.transformTimeField(v)
@@ -112,6 +119,16 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 	default:
 		return nil, errors.Wrap(ErrTransform, errInvalidFormat)
 	}
+}
+
+func popDeviceID(m map[string]any) string {
+	v, ok := m["device_id"]
+	if !ok {
+		return ""
+	}
+	delete(m, "device_id")
+	s, _ := v.(string)
+	return s
 }
 
 // ParseFlat receives flat map that represents complex JSON objects and returns

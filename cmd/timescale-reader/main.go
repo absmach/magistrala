@@ -106,7 +106,10 @@ func main() {
 	atomCfg := atom.LoadConfig()
 	authn := atomauthn.NewAuthentication()
 	clientsClient := atom.NewClientsCompat(authn)
-	channelsClient := atom.NewChannelsCompat(atom.NewClient(atomCfg))
+	atomClient := atom.NewClient(atomCfg)
+	channelsClient := atom.NewChannelsCompat(atomClient)
+	policyEvaluator := atom.NewPolicyEvaluator(atomClient)
+	policyService := atom.NewPolicyService(atomClient)
 	logger.Info("AuthN/AuthZ configured to use Atom")
 
 	httpServerConfig := server.Config{Port: defSvcHTTPPort}
@@ -115,7 +118,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(repo, authn, clientsClient, channelsClient, svcName, cfg.InstanceID), logger)
+	hs := httpserver.NewServer(ctx, cancel, svcName, httpServerConfig, httpapi.MakeHandler(repo, authn, clientsClient, channelsClient, policyEvaluator, policyService, svcName, cfg.InstanceID), logger)
 
 	if cfg.SendTelemetry {
 		chc := chclient.New(svcName, magistrala.Version, logger, cancel)

@@ -112,6 +112,10 @@ func TestBootstrapMagistralaActionsCreatesMissingActionsAndApplicability(t *test
 		t.Fatalf("unexpected applicability count: got %d want %d", len(applicability), len(magistralaActionApplicability))
 	}
 	assertApplicability(t, applicability, "write-id", atomObjectKindTenant, "")
+	assertApplicability(t, applicability, "read-id", atomObjectKindEntity, atomObjectTypeEntityDevice)
+	assertApplicability(t, applicability, "write-id", atomObjectKindEntity, atomObjectTypeEntityDevice)
+	assertApplicability(t, applicability, "delete-id", atomObjectKindEntity, atomObjectTypeEntityDevice)
+	assertApplicability(t, applicability, "manage-id", atomObjectKindEntity, atomObjectTypeEntityDevice)
 	assertApplicability(t, applicability, "alarm_read-id", atomObjectKindTenant, "")
 	assertApplicability(t, applicability, "alarm_update-id", atomObjectKindTenant, "")
 	assertApplicability(t, applicability, "alarm_delete-id", atomObjectKindTenant, "")
@@ -165,4 +169,121 @@ func assertAssignmentRule(t *testing.T, entries []map[string]any, entityKind, ac
 		}
 	}
 	t.Fatalf("missing assignment guardrail entity=%s action=%s object=%s:%s decision=%s", entityKind, actionName, objectKind, objectType, decision)
+}
+
+func TestBootstrapMagistralaActionsIsIdempotent(t *testing.T) {
+	actions := map[string]Capability{
+		atomActionRead:   {ID: "read-id", Name: atomActionRead},
+		atomActionWrite:  {ID: "write-id", Name: atomActionWrite},
+		atomActionDelete: {ID: "delete-id", Name: atomActionDelete},
+		atomActionManage: {ID: "manage-id", Name: atomActionManage},
+	}
+	applicabilityCalls := 0
+	// seen simulates Atom's ON CONFLICT DO NOTHING dedup on action_applicability.
+	seen := map[string]bool{}
+	assignmentRuleCalls := 0
+	existingAssignmentRules := map[string]map[string]any{}
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var payload struct {
+			Query     string         `json:"query"`
+			Variables map[string]any `json:"variables"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+
+		switch {
+		case strings.Contains(payload.Query, "query Actions"):
+			items := make([]Capability, 0, len(actions))
+			for _, action := range actions {
+				items = append(items, action)
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"actions": map[string]any{"items": items, "total": len(items)},
+				},
+			})
+		case strings.Contains(payload.Query, "query ActionAssignmentRules"):
+			items := make([]map[string]any, 0, len(existingAssignmentRules))
+			for _, rule := range existingAssignmentRules {
+				items = append(items, rule)
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"actionAssignmentRules": map[string]any{"items": items, "total": len(items)},
+				},
+			})
+		case strings.Contains(payload.Query, "createActionAssignmentRule"):
+			assignmentRuleCalls++
+			input := payload.Variables["input"].(map[string]any)
+			rule := map[string]any{
+				"id":          input["actionName"].(string) + "-rule-id",
+				"tenant_id":   "",
+				"entity_kind": input["entityKind"],
+				"action_name": input["actionName"],
+				"object_kind": input["objectKind"],
+				"object_type": input["objectType"],
+				"decision":    input["decision"],
+				"is_absolute": input["isAbsolute"],
+				"created_at":  "2026-06-18T00:00:00Z",
+			}
+			existingAssignmentRules[input["actionName"].(string)] = rule
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"createActionAssignmentRule": rule},
+			})
+		case strings.Contains(payload.Query, "createAction"):
+			input := payload.Variables["input"].(map[string]any)
+			name := input["name"].(string)
+			action := Capability{ID: name + "-id", Name: name}
+			actions[name] = action
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"createAction": action},
+			})
+		case strings.Contains(payload.Query, "addActionApplicability"):
+			applicabilityCalls++
+			input := payload.Variables["input"].(map[string]any)
+			objectType, _ := input["objectType"].(string)
+			key := input["actionId"].(string) + "|" + input["objectKind"].(string) + "|" + objectType
+			seen[key] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"addActionApplicability": map[string]any{
+						"action_id":   input["actionId"],
+						"action_name": "action",
+						"object_kind": input["objectKind"],
+						"object_type": objectType,
+						"description": "",
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
+		}
+	}))
+	defer srv.Close()
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := BootstrapMagistralaActions(context.Background(), client); err != nil {
+		t.Fatalf("first bootstrap run failed: %v", err)
+	}
+	if err := BootstrapMagistralaActions(context.Background(), client); err != nil {
+		t.Fatalf("second bootstrap run failed: %v", err)
+	}
+
+	if applicabilityCalls != 2*len(magistralaActionApplicability) {
+		t.Fatalf("unexpected applicability call count: got %d want %d", applicabilityCalls, 2*len(magistralaActionApplicability))
+	}
+	if len(seen) != len(magistralaActionApplicability) {
+		t.Fatalf("bootstrap created duplicate applicability entries: got %d unique want %d", len(seen), len(magistralaActionApplicability))
+	}
+	for _, actionID := range []string{"read-id", "write-id", "delete-id", "manage-id"} {
+		key := actionID + "|" + atomObjectKindEntity + "|" + atomObjectTypeEntityDevice
+		if !seen[key] {
+			t.Fatalf("missing entity applicability for %s", key)
+		}
+	}
+	if assignmentRuleCalls != len(magistralaActionAssignmentRules) {
+		t.Fatalf("expected assignment guardrails to be created once, got %d calls", assignmentRuleCalls)
+	}
 }

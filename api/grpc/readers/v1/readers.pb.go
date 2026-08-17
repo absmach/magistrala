@@ -105,6 +105,7 @@ type PageMetadata struct {
 	Order         string                 `protobuf:"bytes,18,opt,name=order,proto3" json:"order,omitempty"`
 	Dir           string                 `protobuf:"bytes,19,opt,name=dir,proto3" json:"dir,omitempty"`
 	Publishers    []string               `protobuf:"bytes,20,rep,name=publishers,proto3" json:"publishers,omitempty"`
+	DeviceIds     []string               `protobuf:"bytes,21,rep,name=device_ids,json=deviceIds,proto3" json:"device_ids,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -279,6 +280,13 @@ func (x *PageMetadata) GetPublishers() []string {
 	return nil
 }
 
+func (x *PageMetadata) GetDeviceIds() []string {
+	if x != nil {
+		return x.DeviceIds
+	}
+	return nil
+}
+
 type ReadMessagesRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Total         uint64                 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
@@ -427,6 +435,7 @@ type BaseMessage struct {
 	Subtopic      string                 `protobuf:"bytes,2,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
 	Publisher     string                 `protobuf:"bytes,3,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	Protocol      string                 `protobuf:"bytes,4,opt,name=protocol,proto3" json:"protocol,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,5,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -485,6 +494,13 @@ func (x *BaseMessage) GetPublisher() string {
 func (x *BaseMessage) GetProtocol() string {
 	if x != nil {
 		return x.Protocol
+	}
+	return ""
+}
+
+func (x *BaseMessage) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
 	}
 	return ""
 }
@@ -730,7 +746,7 @@ var File_readers_v1_readers_proto protoreflect.FileDescriptor
 const file_readers_v1_readers_proto_rawDesc = "" +
 	"\n" +
 	"\x18readers/v1/readers.proto\x12\n" +
-	"readers.v1\"\xac\x04\n" +
+	"readers.v1\"\xcb\x04\n" +
 	"\fPageMetadata\x12\x14\n" +
 	"\x05limit\x18\x01 \x01(\x04R\x05limit\x12\x16\n" +
 	"\x06offset\x18\x02 \x01(\x04R\x06offset\x12\x1a\n" +
@@ -758,7 +774,9 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\x03dir\x18\x13 \x01(\tR\x03dir\x12\x1e\n" +
 	"\n" +
 	"publishers\x18\x14 \x03(\tR\n" +
-	"publishers\"\x97\x01\n" +
+	"publishers\x12\x1d\n" +
+	"\n" +
+	"device_ids\x18\x15 \x03(\tR\tdeviceIds\"\x97\x01\n" +
 	"\x0fReadMessagesRes\x12\x14\n" +
 	"\x05total\x18\x01 \x01(\x04R\x05total\x12=\n" +
 	"\rpage_metadata\x18\x02 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\x12/\n" +
@@ -766,12 +784,13 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\aMessage\x120\n" +
 	"\x05senml\x18\x01 \x01(\v2\x18.readers.v1.SenMLMessageH\x00R\x05senml\x12-\n" +
 	"\x04json\x18\x02 \x01(\v2\x17.readers.v1.JsonMessageH\x00R\x04jsonB\t\n" +
-	"\apayload\"}\n" +
+	"\apayload\"\x9a\x01\n" +
 	"\vBaseMessage\x12\x18\n" +
 	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1a\n" +
 	"\bsubtopic\x18\x02 \x01(\tR\bsubtopic\x12\x1c\n" +
 	"\tpublisher\x18\x03 \x01(\tR\tpublisher\x12\x1a\n" +
-	"\bprotocol\x18\x04 \x01(\tR\bprotocol\"\xfb\x02\n" +
+	"\bprotocol\x18\x04 \x01(\tR\bprotocol\x12\x1b\n" +
+	"\tdevice_id\x18\x05 \x01(\tR\bdeviceId\"\xfb\x02\n" +
 	"\fSenMLMessage\x12+\n" +
 	"\x04base\x18\x01 \x01(\v2\x17.readers.v1.BaseMessageR\x04base\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x12\n" +

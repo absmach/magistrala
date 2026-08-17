@@ -143,6 +143,21 @@ func Migration() *migrate.MemoryMigrationSource {
 					`DROP INDEX IF EXISTS idx_pats_user_id;`,
 				},
 			},
+			{
+				// ClientsType was removed; rows keep working under the new name
+				// rather than failing ParseEntityType (edge/architecture.md §8 C2).
+				Id: "auth_9",
+				Up: []string{
+					`UPDATE pat_scopes SET operation = 'create_devices' WHERE entity_type = 'clients' AND operation = 'create_clients';`,
+					`UPDATE pat_scopes SET operation = 'list_devices' WHERE entity_type = 'clients' AND operation = 'list_clients';`,
+					`UPDATE pat_scopes SET entity_type = 'devices' WHERE entity_type = 'clients';`,
+				},
+				Down: []string{
+					`UPDATE pat_scopes SET operation = 'create_clients' WHERE entity_type = 'devices' AND operation = 'create_devices';`,
+					`UPDATE pat_scopes SET operation = 'list_clients' WHERE entity_type = 'devices' AND operation = 'list_devices';`,
+					`UPDATE pat_scopes SET entity_type = 'clients' WHERE entity_type = 'devices';`,
+				},
+			},
 		},
 	}
 }

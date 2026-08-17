@@ -56,10 +56,10 @@ func (tr timescaleRepo) saveSenml(ctx context.Context, messages any) (err error)
 	if !ok {
 		return errSaveMessage
 	}
-	q := `INSERT INTO messages (channel, subtopic, publisher, protocol,
+	q := `INSERT INTO messages (channel, subtopic, publisher, device_id, protocol,
           name, unit, value, string_value, bool_value, data_value, sum,
           time, update_time)
-          VALUES (:channel, :subtopic, :publisher, :protocol, :name, :unit,
+          VALUES (:channel, :subtopic, :publisher, :device_id, :protocol, :name, :unit,
           :value, :string_value, :bool_value, :data_value, :sum,
           :time, :update_time);`
 
@@ -111,6 +111,10 @@ func (tr timescaleRepo) saveJSON(ctx context.Context, msgs smqjson.Messages) err
 }
 
 func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) error {
+	if err := tr.ensureJSONTableDeviceID(ctx, msgs.Format); err != nil {
+		return err
+	}
+
 	tx, err := tr.db.BeginTxx(ctx, nil)
 	if err != nil {
 		return errors.Wrap(errSaveMessage, err)
@@ -128,8 +132,8 @@ func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) e
 		}
 	}()
 
-	q := `INSERT INTO %s (channel, created, subtopic, publisher, protocol, payload)
-          VALUES (:channel, :created, :subtopic, :publisher, :protocol, :payload);`
+	q := `INSERT INTO %s (channel, created, subtopic, publisher, device_id, protocol, payload)
+          VALUES (:channel, :created, :subtopic, :publisher, :device_id, :protocol, :payload);`
 	q = fmt.Sprintf(q, msgs.Format)
 
 	for _, m := range msgs.Data {
@@ -157,12 +161,27 @@ func (tr timescaleRepo) insertJSON(ctx context.Context, msgs smqjson.Messages) e
 	return nil
 }
 
+func (tr timescaleRepo) ensureJSONTableDeviceID(ctx context.Context, format string) error {
+	q := fmt.Sprintf("ALTER TABLE %s ADD COLUMN IF NOT EXISTS device_id TEXT;", format)
+	if _, err := tr.db.ExecContext(ctx, q); err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedTable {
+			return errNoTable
+		}
+		return err
+	}
+	return nil
+}
+
 func (tr timescaleRepo) createTable(name string) error {
 	q := `CREATE TABLE IF NOT EXISTS %s (
             created       BIGINT NOT NULL,
             channel       VARCHAR(254),
             subtopic      VARCHAR(254),
             publisher     VARCHAR(254),
+            device_id     TEXT,
             protocol      TEXT,
             payload       JSONB,
             PRIMARY KEY (created, publisher, subtopic)
@@ -182,6 +201,7 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
+	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
 }
@@ -201,6 +221,7 @@ func toJSONMessage(msg smqjson.Message) (jsonMessage, error) {
 		Created:   msg.Created,
 		Subtopic:  msg.Subtopic,
 		Publisher: msg.Publisher,
+		DeviceId:  msg.DeviceId,
 		Protocol:  msg.Protocol,
 		Payload:   data,
 	}

@@ -47,22 +47,31 @@ const (
 const atomScopeModeObject = "object"
 
 const (
+	atomScopeModeGroupDirectObjects     = "group_direct_objects"
+	atomScopeModeGroupDescendantObjects = "group_descendant_objects"
+)
+
+const (
 	atomObjectTypeResourceChannel = "resource:channel"
 	atomObjectTypeResourceRule    = "resource:rule"
 	atomObjectTypeResourceReport  = "resource:report"
+	atomObjectTypeEntityDevice    = atomObjectKindEntity + ":" + atomKindDevice
 )
 
 const atomDecisionAllow = "allow"
 
 const (
-	atomInputKeyAction       = "action"
-	atomInputKeyCredentialID = "credentialId"
-	atomInputKeyEntityID     = "entityId"
-	atomInputKeyInput        = "input"
-	atomInputKeyKind         = "kind"
-	atomInputKeyName         = "name"
-	atomInputKeyObjectKind   = "objectKind"
-	atomInputKeySubjectID    = "subjectId"
+	atomInputKeyAction        = "action"
+	atomInputKeyCredentialID  = "credentialId"
+	atomInputKeyEntityID      = "entityId"
+	atomInputKeyInput         = "input"
+	atomInputKeyKind          = "kind"
+	atomInputKeyName          = "name"
+	atomInputKeyObjectGroupID = "objectGroupId"
+	atomInputKeyObjectKind    = "objectKind"
+	atomInputKeyParentGroupID = "parentGroupId"
+	atomInputKeyParentID      = "parentId"
+	atomInputKeySubjectID     = "subjectId"
 )
 
 const (
@@ -72,6 +81,7 @@ const (
 
 const (
 	atomAttributeCreatedAt = "created_at"
+	atomAttributeGateways  = "gateways"
 	atomAttributeMetadata  = "metadata"
 	atomAttributeRoute     = "route"
 	atomAttributeSource    = "source"

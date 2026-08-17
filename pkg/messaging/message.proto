@@ -18,4 +18,5 @@ message Message {
   string client_id = 8; // Transport-level client identifier
   // Internal metadata propagated between services
   map<string, string> metadata = 9;
+  string device_id = 10;
 }

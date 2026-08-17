@@ -233,6 +233,7 @@ func TestMessagePropertiesIncludesMetadata(t *testing.T) {
 		Publisher: "publisher",
 		Protocol:  "mqtt",
 		ClientId:  "client",
+		DeviceId:  "device",
 		Created:   1710000000000000123,
 		Metadata: map[string]string{
 			"magistrala.re.trace": `["rule-1"]`,
@@ -245,6 +246,7 @@ func TestMessagePropertiesIncludesMetadata(t *testing.T) {
 		headerExternalID: "publisher",
 		headerProtocol:   "mqtt",
 		"client_id":      "publisher",
+		"device_id":      "device",
 		"created":        "1710000000000000123",
 		headerMetadataPrefix + "magistrala.re.trace": `["rule-1"]`,
 	}
@@ -263,6 +265,7 @@ func TestMetadataPropertyRoundTrip(t *testing.T) {
 		Publisher: "rules-engine",
 		Protocol:  "internal",
 		ClientId:  "origin-client",
+		DeviceId:  "origin-device",
 		Created:   1710000000000000123,
 		Payload:   []byte("payload"),
 		Metadata: map[string]string{
@@ -283,6 +286,9 @@ func TestMetadataPropertyRoundTrip(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got.Metadata, want.Metadata) {
 		t.Fatalf("metadata mismatch: got %#v, want %#v", got.Metadata, want.Metadata)
+	}
+	if got.DeviceId != want.DeviceId {
+		t.Fatalf("device_id mismatch: got %q, want %q", got.DeviceId, want.DeviceId)
 	}
 }
 

@@ -36,15 +36,18 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 		{"entity create", "entity.create", FamilyTranslation},
 		{"entity update", "entity.update", FamilyTranslation},
 		{"entity delete", "entity.delete", FamilyTranslation},
+		{"entity restore", "entity.restore", FamilyTranslation},
+		{"entity purge", "entity.purge", FamilyTranslation},
 		{"group member add", "group_member.add", FamilyAuthorizedSet},
 		{"group member remove", "group_member.remove", FamilyAuthorizedSet},
 		{"direct policy create", "direct_policy.create", FamilyAuthorizedSet},
 		{"direct policy delete", "direct_policy.delete", FamilyAuthorizedSet},
-		{"parent group set (PRD spelling)", "entity.parent_group.set", FamilyAuthorizedSet},
-		{"parent group clear (PRD spelling)", "entity.parent_group.clear", FamilyAuthorizedSet},
-		{"object group add (Atom's actual spelling)", "entity.object_group.add", FamilyAuthorizedSet},
-		{"object group remove (Atom's actual spelling)", "entity.object_group.remove", FamilyAuthorizedSet},
-		{"object groups clear (Atom's actual spelling)", "entity.object_groups.clear", FamilyAuthorizedSet},
+		{"group parent set", "group.parent.set", FamilyAuthorizedSet},
+		{"group parent remove", "group.parent.remove", FamilyAuthorizedSet},
+		{"group delete", "group.delete", FamilyAuthorizedSet},
+		{"object group add", "entity.object_group.add", FamilyAuthorizedSet},
+		{"object group remove", "entity.object_group.remove", FamilyAuthorizedSet},
+		{"object groups clear", "entity.object_groups.clear", FamilyAuthorizedSet},
 	}
 
 	for _, tc := range cases {
@@ -59,6 +62,81 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 			require.NoError(t, h.Handle(context.Background(), ev))
 			assert.Equal(t, []string{"domain-1"}, inv.keys)
 		})
+	}
+}
+
+// TestHandlerRestoreAndPurgeInvalidateBothFamilies pins the dual-family
+// mapping: entity.restore and entity.purge change both the translation map
+// and the authorized set, so a subject re-reading after either event must
+// recompute both halves of the grant.
+func TestHandlerRestoreAndPurgeInvalidateBothFamilies(t *testing.T) {
+	for _, event := range []string{"entity.restore", "entity.purge"} {
+		t.Run(event, func(t *testing.T) {
+			translation := &fakeInvalidator{}
+			authorized := &fakeInvalidator{}
+			registry := NewRegistry()
+			registry.Register(FamilyTranslation, translation)
+			registry.Register(FamilyAuthorizedSet, authorized)
+
+			h := NewHandler(registry, nil)
+			ev := rawEvent{data: map[string]any{"event": event, "tenant_id": "domain-1"}}
+
+			require.NoError(t, h.Handle(context.Background(), ev))
+			assert.Equal(t, []string{"domain-1"}, translation.keys)
+			assert.Equal(t, []string{"domain-1"}, authorized.keys)
+		})
+	}
+}
+
+// atomEventVocabulary is the set of event names absmach/atom currently emits
+// (src/identity/repo.rs, src/graphql/entities.rs, src/graphql/groups.rs,
+// src/authz/repo.rs). It is a wire contract: this consumer must only map
+// names that exist in it, so a typo or a PRD-only name -- the historical
+// entity.parent_group.{set,clear} mistake -- fails the test below instead of
+// silently never invalidating.
+var atomEventVocabulary = map[string]struct{}{
+	"entity.create": {}, "entity.update": {}, "entity.delete": {},
+	"entity.restore": {}, "entity.purge": {},
+	"entity.enable": {}, "entity.disable": {}, "entity.suspend": {},
+	"entity.object_group.add": {}, "entity.object_group.remove": {},
+	"entity.object_groups.clear": {},
+	"group.create":               {}, "group.update": {}, "group.delete": {},
+	"group.restore": {}, "group.purge": {},
+	"group.enable": {}, "group.disable": {}, "group.suspend": {},
+	"group.parent.set": {}, "group.parent.remove": {},
+	"group_member.add": {}, "group_member.remove": {},
+	"direct_policy.create": {}, "direct_policy.delete": {},
+}
+
+// TestEventFamiliesKeysAreRealAtomEvents guards the "dead name" failure mode:
+// every event name this consumer maps must be emitted by Atom.
+func TestEventFamiliesKeysAreRealAtomEvents(t *testing.T) {
+	for name := range eventFamilies {
+		_, ok := atomEventVocabulary[name]
+		require.Truef(t, ok, "eventFamilies key %q is not an event Atom emits", name)
+	}
+}
+
+// TestAuthorizationAffectingEventsAreMapped guards the "missing name" failure
+// mode: every Atom event that changes a UUID's external_id or a subject's
+// authorized device set must be mapped, so a gap such as group.parent.set
+// being absent is caught rather than silently degrading to TTL-only
+// invalidation.
+func TestAuthorizationAffectingEventsAreMapped(t *testing.T) {
+	needed := []string{
+		"entity.create", "entity.update", "entity.delete",
+		"entity.restore", "entity.purge",
+		"entity.object_group.add", "entity.object_group.remove",
+		"entity.object_groups.clear",
+		"group.delete",
+		"group.parent.set", "group.parent.remove",
+		"group_member.add", "group_member.remove",
+		"direct_policy.create", "direct_policy.delete",
+	}
+
+	for _, name := range needed {
+		_, ok := eventFamilies[name]
+		require.Truef(t, ok, "authorization-affecting Atom event %q is not mapped", name)
 	}
 }
 

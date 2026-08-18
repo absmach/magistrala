@@ -9,10 +9,20 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"time"
 
 	fluxamqp "github.com/absmach/fluxmq/client/amqp"
 	"github.com/absmach/magistrala/pkg/events"
 )
+
+// atomEventsDialTimeout bounds how long NewQueueSubscriber's Connect may spend
+// dialing a broker that accepts neither a connection nor a refusal (a
+// blackholed host). The constructor runs synchronously at service startup
+// (cmd/postgres-reader, cmd/timescale-reader), whose degradation contract
+// says an unreachable broker must not hold up startup: the 10s client default
+// is replaced with this shorter budget, after which the caller falls back to
+// TTL-only invalidation.
+const atomEventsDialTimeout = 2 * time.Second
 
 var _ events.Subscriber = (*subQueueStore)(nil)
 
@@ -68,6 +78,7 @@ func NewQueueSubscriber(_ context.Context, url, connectionName string, topology 
 
 	opts := fluxamqp.NewOptions().SetURL(url).
 		SetConnectionName(connectionName).
+		SetDialTimeout(atomEventsDialTimeout).
 		SetOnConnectionLost(func(err error) {
 			logger.Warn("Atom events AMQP subscriber connection lost", "error", err)
 		}).
@@ -154,6 +165,20 @@ func (es *subQueueStore) handle(ctx context.Context, handler events.EventHandler
 	}
 
 	if err := handler.Handle(ctx, ev); err != nil {
+		// A handler failure is Nacked once -- requeued for a single retry --
+		// and a second failure on the redelivery is Rejected outright.
+		// Without this bound, a handler error that persists (e.g. an
+		// Invalidator that keeps failing) would Nack the same message forever,
+		// wedging this queue and head-of-line-blocking every event behind it.
+		// Dropping the event degrades to the documented TTL-only invalidation
+		// for that one change, which is the intended fallback.
+		if msg.Redelivered {
+			if rejectErr := msg.Reject(); rejectErr != nil {
+				return errors.Join(fmt.Errorf("failed to handle Atom event: %w", err), rejectErr)
+			}
+			return fmt.Errorf("failed to handle Atom event: %w", err)
+		}
+
 		if nackErr := msg.Nack(); nackErr != nil {
 			return errors.Join(fmt.Errorf("failed to handle Atom event: %w", err), nackErr)
 		}

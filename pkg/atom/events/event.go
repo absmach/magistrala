@@ -31,14 +31,27 @@ const (
 // only cares about the handful that change a UUID's external_id or a
 // subject's authorized device set.
 //
-// entity.object_group.{add,remove} and entity.object_groups.clear are
-// Atom's current event names (absmach/atom src/identity/repo.rs) for what
-// MG-14's PRD calls entity.parent_group.{set,clear}; both spellings are
-// mapped so this keeps working across that naming.
+// Names follow absmach/atom's current vocabulary (src/identity/repo.rs,
+// src/graphql/entities.rs, src/graphql/groups.rs, src/authz/repo.rs). Two
+// historical pitfalls to keep in mind when adding names:
+//   - a group's place in the hierarchy changes via group.parent.set and
+//     group.parent.remove (target_kind "group"). Atom emits no
+//     "entity.parent_group.*" event -- the spelling MG-14's PRD used -- so
+//     mapping that name would silently never invalidate anything.
+//   - entity.object_group.{add,remove} and entity.object_groups.clear are
+//     entity-to-group membership changes, a different operation from parent
+//     assignment. Both change which devices a subject can read and so map to
+//     FamilyAuthorizedSet.
 var eventFamilies = map[string][]string{
 	"entity.create": {FamilyTranslation},
 	"entity.update": {FamilyTranslation},
 	"entity.delete": {FamilyTranslation},
+	// restore and purge bookend entity.delete but also change the authorized
+	// set: restore reactivates a soft-deleted device inside its groups, and
+	// purge hard-deletes it and removes its authz references outright
+	// (purge_authz_references_for_ids), so both invalidate both families.
+	"entity.restore": {FamilyTranslation, FamilyAuthorizedSet},
+	"entity.purge":   {FamilyTranslation, FamilyAuthorizedSet},
 
 	"group_member.add":    {FamilyAuthorizedSet},
 	"group_member.remove": {FamilyAuthorizedSet},
@@ -46,8 +59,12 @@ var eventFamilies = map[string][]string{
 	"direct_policy.create": {FamilyAuthorizedSet},
 	"direct_policy.delete": {FamilyAuthorizedSet},
 
-	"entity.parent_group.set":   {FamilyAuthorizedSet},
-	"entity.parent_group.clear": {FamilyAuthorizedSet},
+	"group.parent.set":    {FamilyAuthorizedSet},
+	"group.parent.remove": {FamilyAuthorizedSet},
+	// group.delete drops a whole group and every grant that flowed through it
+	// (object and principal), which group_member.remove -- single-member only
+	// -- does not cover.
+	"group.delete": {FamilyAuthorizedSet},
 
 	"entity.object_group.add":    {FamilyAuthorizedSet},
 	"entity.object_group.remove": {FamilyAuthorizedSet},

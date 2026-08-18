@@ -7,11 +7,13 @@ import (
 	"context"
 	"errors"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	atomevents "github.com/absmach/magistrala/pkg/atom/events"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/readers"
@@ -79,6 +81,40 @@ func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, re
 		now:       time.Now,
 		cache:     make(map[string]readGrant),
 	}
+}
+
+var _ atomevents.Invalidator = (*readAuthorizer)(nil)
+
+// Invalidate drops every cached grant for domain (an Atom tenant id, see
+// pkg/atom/events.Handler), so the next read for any subject in it
+// recomputes both halves of the grant -- the policy lookup and the
+// UUID-to-external_id translation -- from Atom instead of serving a stale
+// cache entry for up to readAuthzCacheTTL.
+//
+// It clears every subject in the domain rather than one specific subject on
+// purpose: some of the Atom events that trigger this (direct_policy events
+// in particular) carry no subject in their payload, only the changed
+// policy's own row id, and MG-14's invalidate-only design forbids inferring
+// one by inspecting payload content further. Domain-wide is the coarsest
+// granularity this cache supports and the only one that stays correct
+// regardless of which event triggered it. It is also idempotent: deleting
+// keys that are already absent -- an empty domain, a duplicate event -- is
+// a no-op, which is what makes at-least-once delivery safe to wire in
+// directly.
+func (a *readAuthorizer) Invalidate(_ context.Context, domain string) error {
+	if domain == "" {
+		return nil
+	}
+
+	prefix := domain + "\x00"
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	for key := range a.cache {
+		if strings.HasPrefix(key, prefix) {
+			delete(a.cache, key)
+		}
+	}
+	return nil
 }
 
 // authzScope is what the caller's request is allowed to become.

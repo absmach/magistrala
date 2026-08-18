@@ -363,6 +363,80 @@ func TestReadAuthorizerCacheIsKeyedPerSubjectAndDomain(t *testing.T) {
 	assert.Equal(t, []string{meter3Serial}, second.scope.DeviceIDs, "one subject's grant must not be served to another")
 }
 
+// Criterion 4: an Atom event invalidating this domain must take effect well
+// within the TTL, not wait for it — that is the whole point of MG-14.
+func TestReadAuthorizerInvalidateForcesRecompute(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).
+		Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).
+		Return(policies.PolicyPage{Policies: nil}, nil).Once()
+
+	authz := newReadAuthorizer(evaluator, lister, allMeters())
+	authz.ttl = time.Hour // long enough that only Invalidate, never the TTL, can explain the second result
+
+	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
+
+	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+
+	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	assert.True(t, got.noAccess, "a revoked grant must not survive an Invalidate for its domain")
+}
+
+// Criterion 8: an event for one tenant must not disturb another's cache.
+func TestReadAuthorizerInvalidateIsScopedToItsDomain(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+
+	otherDomain := "domain-2"
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Domain == testDomain
+	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Domain == otherDomain
+	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
+
+	authz := newReadAuthorizer(evaluator, lister, allMeters())
+	authz.ttl = time.Hour
+
+	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	_, err = authz.resolve(context.Background(), otherDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+
+	// otherDomain's entry must still be cached: a third ListAllObjects call
+	// here would fail the mock's expectations (each is set up Once()).
+	got, err := authz.resolve(context.Background(), otherDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, []string{meter3Serial}, got.scope.DeviceIDs)
+}
+
+// Criterion 6: at-least-once delivery means the same invalidation can arrive
+// twice; a cache delete is naturally idempotent, so this must never error.
+func TestReadAuthorizerInvalidateIsIdempotent(t *testing.T) {
+	authz := customerAuthorizer(t, allMeters(), meter1UUID)
+
+	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+
+	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+	require.NoError(t, authz.Invalidate(context.Background(), testDomain), "invalidating an already-empty domain must not error")
+}
+
+func TestReadAuthorizerInvalidateEmptyDomainIsNoop(t *testing.T) {
+	authz := newReadAuthorizer(policymocks.NewEvaluator(t), policymocks.NewService(t), allMeters())
+	assert.NoError(t, authz.Invalidate(context.Background(), ""))
+}
+
 func TestIntersect(t *testing.T) {
 	cases := []struct {
 		desc       string

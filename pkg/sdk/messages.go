@@ -44,6 +44,84 @@ func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanN
 	return mp, nil
 }
 
+// ListGatewayDevices lists the devices observed publishing through a gateway
+// on a channel (MG-15).
+func (sdk mgSDK) ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, domainID, token string) (GatewayDevicesPage, errors.SDKError) {
+	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/devices", domainID, chanID), "publisher", publisherID, pm)
+	if err != nil {
+		return GatewayDevicesPage{}, errors.NewSDKError(err)
+	}
+
+	header := make(map[string]string)
+	header["Content-Type"] = string(sdk.msgContentType)
+
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, msgURL, token, nil, header, http.StatusOK)
+	if sdkerr != nil {
+		return GatewayDevicesPage{}, sdkerr
+	}
+
+	var page GatewayDevicesPage
+	if err := json.Unmarshal(body, &page); err != nil {
+		return GatewayDevicesPage{}, errors.NewSDKError(err)
+	}
+
+	return page, nil
+}
+
+// ListDeviceGateways lists the gateways observed relaying for a device on a
+// channel (MG-15).
+func (sdk mgSDK) ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, domainID, token string) (DeviceGatewaysPage, errors.SDKError) {
+	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/publishers", domainID, chanID), "device_id", deviceID, pm)
+	if err != nil {
+		return DeviceGatewaysPage{}, errors.NewSDKError(err)
+	}
+
+	header := make(map[string]string)
+	header["Content-Type"] = string(sdk.msgContentType)
+
+	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, msgURL, token, nil, header, http.StatusOK)
+	if sdkerr != nil {
+		return DeviceGatewaysPage{}, sdkerr
+	}
+
+	var page DeviceGatewaysPage
+	if err := json.Unmarshal(body, &page); err != nil {
+		return DeviceGatewaysPage{}, errors.NewSDKError(err)
+	}
+
+	return page, nil
+}
+
+// withDeviceViewQueryParams builds the query string for one of the MG-15
+// observed-device endpoints: idKey/idVal is the anchoring gateway publisher
+// id or device serial, sent as a query parameter rather than a URL path
+// segment because a device serial is format-unconstrained (MG-09) and may
+// contain characters, such as `/`, that a path segment cannot carry
+// verbatim.
+func (sdk mgSDK) withDeviceViewQueryParams(baseURL, endpoint, idKey, idVal string, pm DeviceViewPageMetadata) (string, error) {
+	b, err := json.Marshal(pm)
+	if err != nil {
+		return "", err
+	}
+	q := map[string]any{}
+	if err := json.Unmarshal(b, &q); err != nil {
+		return "", err
+	}
+	ret := url.Values{}
+	ret.Add(idKey, idVal)
+	for k, v := range q {
+		switch t := v.(type) {
+		case string:
+			ret.Add(k, t)
+		case float64:
+			ret.Add(k, strconv.FormatFloat(t, 'f', -1, 64))
+		}
+	}
+	qs := ret.Encode()
+
+	return fmt.Sprintf("%s/%s?%s", baseURL, endpoint, qs), nil
+}
+
 func (sdk mgSDK) withMessageQueryParams(baseURL, endpoint string, mpm MessagePageMetadata) (string, error) {
 	b, err := json.Marshal(mpm)
 	if err != nil {

@@ -741,6 +741,268 @@ func (x *ReadMessagesReq) GetPageMetadata() *PageMetadata {
 	return nil
 }
 
+// DeviceStat is one row of the MG-15 observed-device aggregation: a distinct
+// identity (a device serial or a gateway's publisher id, depending on
+// direction) observed on a channel within a time range. last_seen carries
+// the same raw numeric time representation as the rest of this package
+// (see readers.DeviceStat in the Go package this mirrors), not a converted
+// timestamp.
+type DeviceStat struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	LastSeen      float64                `protobuf:"fixed64,2,opt,name=last_seen,json=lastSeen,proto3" json:"last_seen,omitempty"`
+	MessageCount  uint64                 `protobuf:"varint,3,opt,name=message_count,json=messageCount,proto3" json:"message_count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceStat) Reset() {
+	*x = DeviceStat{}
+	mi := &file_readers_v1_readers_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceStat) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceStat) ProtoMessage() {}
+
+func (x *DeviceStat) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceStat.ProtoReflect.Descriptor instead.
+func (*DeviceStat) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DeviceStat) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *DeviceStat) GetLastSeen() float64 {
+	if x != nil {
+		return x.LastSeen
+	}
+	return 0
+}
+
+func (x *DeviceStat) GetMessageCount() uint64 {
+	if x != nil {
+		return x.MessageCount
+	}
+	return 0
+}
+
+type DeviceStatsRes struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Total         uint64                 `protobuf:"varint,1,opt,name=total,proto3" json:"total,omitempty"`
+	PageMetadata  *PageMetadata          `protobuf:"bytes,2,opt,name=page_metadata,json=pageMetadata,proto3" json:"page_metadata,omitempty"`
+	Stats         []*DeviceStat          `protobuf:"bytes,3,rep,name=stats,proto3" json:"stats,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeviceStatsRes) Reset() {
+	*x = DeviceStatsRes{}
+	mi := &file_readers_v1_readers_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeviceStatsRes) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeviceStatsRes) ProtoMessage() {}
+
+func (x *DeviceStatsRes) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeviceStatsRes.ProtoReflect.Descriptor instead.
+func (*DeviceStatsRes) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *DeviceStatsRes) GetTotal() uint64 {
+	if x != nil {
+		return x.Total
+	}
+	return 0
+}
+
+func (x *DeviceStatsRes) GetPageMetadata() *PageMetadata {
+	if x != nil {
+		return x.PageMetadata
+	}
+	return nil
+}
+
+func (x *DeviceStatsRes) GetStats() []*DeviceStat {
+	if x != nil {
+		return x.Stats
+	}
+	return nil
+}
+
+type ListGatewayDevicesReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DomainId      string                 `protobuf:"bytes,1,opt,name=domain_id,json=domainId,proto3" json:"domain_id,omitempty"`
+	ChannelId     string                 `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	PublisherId   string                 `protobuf:"bytes,3,opt,name=publisher_id,json=publisherId,proto3" json:"publisher_id,omitempty"`
+	PageMetadata  *PageMetadata          `protobuf:"bytes,4,opt,name=page_metadata,json=pageMetadata,proto3" json:"page_metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListGatewayDevicesReq) Reset() {
+	*x = ListGatewayDevicesReq{}
+	mi := &file_readers_v1_readers_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListGatewayDevicesReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListGatewayDevicesReq) ProtoMessage() {}
+
+func (x *ListGatewayDevicesReq) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListGatewayDevicesReq.ProtoReflect.Descriptor instead.
+func (*ListGatewayDevicesReq) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListGatewayDevicesReq) GetDomainId() string {
+	if x != nil {
+		return x.DomainId
+	}
+	return ""
+}
+
+func (x *ListGatewayDevicesReq) GetChannelId() string {
+	if x != nil {
+		return x.ChannelId
+	}
+	return ""
+}
+
+func (x *ListGatewayDevicesReq) GetPublisherId() string {
+	if x != nil {
+		return x.PublisherId
+	}
+	return ""
+}
+
+func (x *ListGatewayDevicesReq) GetPageMetadata() *PageMetadata {
+	if x != nil {
+		return x.PageMetadata
+	}
+	return nil
+}
+
+type ListDeviceGatewaysReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	DomainId      string                 `protobuf:"bytes,1,opt,name=domain_id,json=domainId,proto3" json:"domain_id,omitempty"`
+	ChannelId     string                 `protobuf:"bytes,2,opt,name=channel_id,json=channelId,proto3" json:"channel_id,omitempty"`
+	DeviceId      string                 `protobuf:"bytes,3,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	PageMetadata  *PageMetadata          `protobuf:"bytes,4,opt,name=page_metadata,json=pageMetadata,proto3" json:"page_metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ListDeviceGatewaysReq) Reset() {
+	*x = ListDeviceGatewaysReq{}
+	mi := &file_readers_v1_readers_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ListDeviceGatewaysReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ListDeviceGatewaysReq) ProtoMessage() {}
+
+func (x *ListDeviceGatewaysReq) ProtoReflect() protoreflect.Message {
+	mi := &file_readers_v1_readers_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ListDeviceGatewaysReq.ProtoReflect.Descriptor instead.
+func (*ListDeviceGatewaysReq) Descriptor() ([]byte, []int) {
+	return file_readers_v1_readers_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ListDeviceGatewaysReq) GetDomainId() string {
+	if x != nil {
+		return x.DomainId
+	}
+	return ""
+}
+
+func (x *ListDeviceGatewaysReq) GetChannelId() string {
+	if x != nil {
+		return x.ChannelId
+	}
+	return ""
+}
+
+func (x *ListDeviceGatewaysReq) GetDeviceId() string {
+	if x != nil {
+		return x.DeviceId
+	}
+	return ""
+}
+
+func (x *ListDeviceGatewaysReq) GetPageMetadata() *PageMetadata {
+	if x != nil {
+		return x.PageMetadata
+	}
+	return nil
+}
+
 var File_readers_v1_readers_proto protoreflect.FileDescriptor
 
 const file_readers_v1_readers_proto_rawDesc = "" +
@@ -819,16 +1081,39 @@ const file_readers_v1_readers_proto_rawDesc = "" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\x12\x1b\n" +
 	"\tdomain_id\x18\x02 \x01(\tR\bdomainId\x12=\n" +
-	"\rpage_metadata\x18\x03 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*\x95\x01\n" +
+	"\rpage_metadata\x18\x03 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\"^\n" +
+	"\n" +
+	"DeviceStat\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
+	"\tlast_seen\x18\x02 \x01(\x01R\blastSeen\x12#\n" +
+	"\rmessage_count\x18\x03 \x01(\x04R\fmessageCount\"\x93\x01\n" +
+	"\x0eDeviceStatsRes\x12\x14\n" +
+	"\x05total\x18\x01 \x01(\x04R\x05total\x12=\n" +
+	"\rpage_metadata\x18\x02 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\x12,\n" +
+	"\x05stats\x18\x03 \x03(\v2\x16.readers.v1.DeviceStatR\x05stats\"\xb5\x01\n" +
+	"\x15ListGatewayDevicesReq\x12\x1b\n" +
+	"\tdomain_id\x18\x01 \x01(\tR\bdomainId\x12\x1d\n" +
+	"\n" +
+	"channel_id\x18\x02 \x01(\tR\tchannelId\x12!\n" +
+	"\fpublisher_id\x18\x03 \x01(\tR\vpublisherId\x12=\n" +
+	"\rpage_metadata\x18\x04 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata\"\xaf\x01\n" +
+	"\x15ListDeviceGatewaysReq\x12\x1b\n" +
+	"\tdomain_id\x18\x01 \x01(\tR\bdomainId\x12\x1d\n" +
+	"\n" +
+	"channel_id\x18\x02 \x01(\tR\tchannelId\x12\x1b\n" +
+	"\tdevice_id\x18\x03 \x01(\tR\bdeviceId\x12=\n" +
+	"\rpage_metadata\x18\x04 \x01(\v2\x18.readers.v1.PageMetadataR\fpageMetadata*\x95\x01\n" +
 	"\vAggregation\x12\x1b\n" +
 	"\x17AGGREGATION_UNSPECIFIED\x10\x00\x12\x13\n" +
 	"\x0fAGGREGATION_MAX\x10\x01\x12\x13\n" +
 	"\x0fAGGREGATION_MIN\x10\x02\x12\x13\n" +
 	"\x0fAGGREGATION_SUM\x10\x03\x12\x15\n" +
 	"\x11AGGREGATION_COUNT\x10\x04\x12\x13\n" +
-	"\x0fAGGREGATION_AVG\x10\x052\\\n" +
+	"\x0fAGGREGATION_AVG\x10\x052\x8a\x02\n" +
 	"\x0eReadersService\x12J\n" +
-	"\fReadMessages\x12\x1b.readers.v1.ReadMessagesReq\x1a\x1b.readers.v1.ReadMessagesRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/readers/v1b\x06proto3"
+	"\fReadMessages\x12\x1b.readers.v1.ReadMessagesReq\x1a\x1b.readers.v1.ReadMessagesRes\"\x00\x12U\n" +
+	"\x12ListGatewayDevices\x12!.readers.v1.ListGatewayDevicesReq\x1a\x1a.readers.v1.DeviceStatsRes\"\x00\x12U\n" +
+	"\x12ListDeviceGateways\x12!.readers.v1.ListDeviceGatewaysReq\x1a\x1a.readers.v1.DeviceStatsRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/readers/v1b\x06proto3"
 
 var (
 	file_readers_v1_readers_proto_rawDescOnce sync.Once
@@ -843,33 +1128,45 @@ func file_readers_v1_readers_proto_rawDescGZIP() []byte {
 }
 
 var file_readers_v1_readers_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_readers_v1_readers_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_readers_v1_readers_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_readers_v1_readers_proto_goTypes = []any{
-	(Aggregation)(0),        // 0: readers.v1.Aggregation
-	(*PageMetadata)(nil),    // 1: readers.v1.PageMetadata
-	(*ReadMessagesRes)(nil), // 2: readers.v1.ReadMessagesRes
-	(*Message)(nil),         // 3: readers.v1.Message
-	(*BaseMessage)(nil),     // 4: readers.v1.BaseMessage
-	(*SenMLMessage)(nil),    // 5: readers.v1.SenMLMessage
-	(*JsonMessage)(nil),     // 6: readers.v1.JsonMessage
-	(*ReadMessagesReq)(nil), // 7: readers.v1.ReadMessagesReq
+	(Aggregation)(0),              // 0: readers.v1.Aggregation
+	(*PageMetadata)(nil),          // 1: readers.v1.PageMetadata
+	(*ReadMessagesRes)(nil),       // 2: readers.v1.ReadMessagesRes
+	(*Message)(nil),               // 3: readers.v1.Message
+	(*BaseMessage)(nil),           // 4: readers.v1.BaseMessage
+	(*SenMLMessage)(nil),          // 5: readers.v1.SenMLMessage
+	(*JsonMessage)(nil),           // 6: readers.v1.JsonMessage
+	(*ReadMessagesReq)(nil),       // 7: readers.v1.ReadMessagesReq
+	(*DeviceStat)(nil),            // 8: readers.v1.DeviceStat
+	(*DeviceStatsRes)(nil),        // 9: readers.v1.DeviceStatsRes
+	(*ListGatewayDevicesReq)(nil), // 10: readers.v1.ListGatewayDevicesReq
+	(*ListDeviceGatewaysReq)(nil), // 11: readers.v1.ListDeviceGatewaysReq
 }
 var file_readers_v1_readers_proto_depIdxs = []int32{
-	0, // 0: readers.v1.PageMetadata.aggregation:type_name -> readers.v1.Aggregation
-	1, // 1: readers.v1.ReadMessagesRes.page_metadata:type_name -> readers.v1.PageMetadata
-	3, // 2: readers.v1.ReadMessagesRes.messages:type_name -> readers.v1.Message
-	5, // 3: readers.v1.Message.senml:type_name -> readers.v1.SenMLMessage
-	6, // 4: readers.v1.Message.json:type_name -> readers.v1.JsonMessage
-	4, // 5: readers.v1.SenMLMessage.base:type_name -> readers.v1.BaseMessage
-	4, // 6: readers.v1.JsonMessage.base:type_name -> readers.v1.BaseMessage
-	1, // 7: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
-	7, // 8: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
-	2, // 9: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
-	9, // [9:10] is the sub-list for method output_type
-	8, // [8:9] is the sub-list for method input_type
-	8, // [8:8] is the sub-list for extension type_name
-	8, // [8:8] is the sub-list for extension extendee
-	0, // [0:8] is the sub-list for field type_name
+	0,  // 0: readers.v1.PageMetadata.aggregation:type_name -> readers.v1.Aggregation
+	1,  // 1: readers.v1.ReadMessagesRes.page_metadata:type_name -> readers.v1.PageMetadata
+	3,  // 2: readers.v1.ReadMessagesRes.messages:type_name -> readers.v1.Message
+	5,  // 3: readers.v1.Message.senml:type_name -> readers.v1.SenMLMessage
+	6,  // 4: readers.v1.Message.json:type_name -> readers.v1.JsonMessage
+	4,  // 5: readers.v1.SenMLMessage.base:type_name -> readers.v1.BaseMessage
+	4,  // 6: readers.v1.JsonMessage.base:type_name -> readers.v1.BaseMessage
+	1,  // 7: readers.v1.ReadMessagesReq.page_metadata:type_name -> readers.v1.PageMetadata
+	1,  // 8: readers.v1.DeviceStatsRes.page_metadata:type_name -> readers.v1.PageMetadata
+	8,  // 9: readers.v1.DeviceStatsRes.stats:type_name -> readers.v1.DeviceStat
+	1,  // 10: readers.v1.ListGatewayDevicesReq.page_metadata:type_name -> readers.v1.PageMetadata
+	1,  // 11: readers.v1.ListDeviceGatewaysReq.page_metadata:type_name -> readers.v1.PageMetadata
+	7,  // 12: readers.v1.ReadersService.ReadMessages:input_type -> readers.v1.ReadMessagesReq
+	10, // 13: readers.v1.ReadersService.ListGatewayDevices:input_type -> readers.v1.ListGatewayDevicesReq
+	11, // 14: readers.v1.ReadersService.ListDeviceGateways:input_type -> readers.v1.ListDeviceGatewaysReq
+	2,  // 15: readers.v1.ReadersService.ReadMessages:output_type -> readers.v1.ReadMessagesRes
+	9,  // 16: readers.v1.ReadersService.ListGatewayDevices:output_type -> readers.v1.DeviceStatsRes
+	9,  // 17: readers.v1.ReadersService.ListDeviceGateways:output_type -> readers.v1.DeviceStatsRes
+	15, // [15:18] is the sub-list for method output_type
+	12, // [12:15] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_readers_v1_readers_proto_init() }
@@ -888,7 +1185,7 @@ func file_readers_v1_readers_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_readers_v1_readers_proto_rawDesc), len(file_readers_v1_readers_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   7,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

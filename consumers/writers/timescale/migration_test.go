@@ -51,7 +51,7 @@ func TestDeviceIDMigrationOnPopulatedTable(t *testing.T) {
 
 	applied, err := migrate.Exec(legacy.DB, "postgres", timescale.Migration(), migrate.Up)
 	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
-	assert.Equal(t, 1, applied, "expected only the device_id migration to be outstanding")
+	assert.Equal(t, 2, applied, "expected the device_id migration and its index migration to be outstanding")
 
 	var total int
 	require.Nil(t, legacy.Get(&total, `SELECT COUNT(*) FROM messages`))
@@ -79,7 +79,9 @@ func TestDeviceIDMigrationOnPopulatedTable(t *testing.T) {
 
 // migrationsBeforeDeviceID is the migration set as it stood before device_id, so
 // the device_id migration afterwards runs against a populated table rather than
-// an empty one.
+// an empty one. Anything at-or-after messages_3 belongs to the device_id era:
+// messages_4's indexes reference the column messages_3 adds, so it cannot run
+// before it.
 func migrationsBeforeDeviceID(t *testing.T) migrate.MemoryMigrationSource {
 	t.Helper()
 
@@ -88,6 +90,9 @@ func migrationsBeforeDeviceID(t *testing.T) migrate.MemoryMigrationSource {
 	for _, m := range timescale.Migration().Migrations {
 		if m.Id == deviceIDMigrationID {
 			found = true
+			continue
+		}
+		if m.Id > deviceIDMigrationID {
 			continue
 		}
 		before.Migrations = append(before.Migrations, m)

@@ -293,14 +293,16 @@ func (a *readAuthorizer) isDomainAdmin(ctx context.Context, domain, subject stri
 //
 // It mirrors authnAuthz: authenticate, then a channel-level subscribe check,
 // then — for a non-admin domain user — per-device scope resolution. The
-// difference is the shape of what gets checked: a message read carries the
-// caller's own, possibly-absent filters, while this always has exactly one
-// fixed identity (the gateway or device the URL names), so it is passed as a
-// one-element requestedPublishers or requestedDeviceIDs and must survive the
-// same intersection a filter would. noAccess means that identity is outside
-// the caller's grant, or the caller holds no grant at all — the response
-// must be an empty page, never an error, matching how a filtered-out
-// publisher or device_id behaves on a message read.
+// requestedPublishers/requestedDeviceIDs passed here differ by direction: the
+// device->gateways endpoint names the device the caller must be authorized
+// for, so it is passed as a one-element requestedDeviceIDs and must survive
+// the same intersection a filter would. The gateway->devices endpoint names
+// the gateway only as the source of the roster — a single gateway can relay
+// for devices belonging to more than one customer — so it passes neither
+// identity and relies on the resolved scope alone to bound the query: the
+// caller must hold at least one device grant (otherwise noAccess, reported as
+// an empty page, never an error), but never needs to hold a grant on the
+// gateway client itself.
 func authzDeviceView(ctx context.Context, chanID, domain, token, key string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
 	clientID, clientType, superAdmin, err := authenticate(ctx, token, key, domain, authn, clients)
 	if err != nil {

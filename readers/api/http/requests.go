@@ -86,9 +86,12 @@ func defaultTimeWindow(from, to float64) (float64, float64) {
 // deviceViewReq is the shared request shape of both MG-15 observed-device
 // endpoints: list the distinct devices seen through a gateway, or the
 // distinct gateways seen relaying a device. filterVal is that gateway's
-// publisher id or that device's serial, taken from the URL, and is checked
-// against the caller's grant exactly as an explicit publisher/device_id
-// filter would be on a message read.
+// publisher id or that device's serial, taken from the URL. The device's
+// serial is checked against the caller's grant exactly as an explicit
+// device_id filter would be on a message read; the gateway's publisher id is
+// the source of the roster rather than a filter the caller must hold, and
+// the caller's DeviceScope does the narrowing instead (see ListGatewayDevices
+// in readers/messages.go).
 type deviceViewReq struct {
 	chanID    string
 	token     string

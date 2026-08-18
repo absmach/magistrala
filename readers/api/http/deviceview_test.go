@@ -71,16 +71,44 @@ func deviceGatewaysReq(deviceID string) deviceViewReq {
 	}
 }
 
-// Criterion 5 (gateway->devices side): a non-admin caller not granted the
-// requested gateway's publisher id gets an empty roster, and the repository
-// is never reached.
-func TestListGatewayDevicesDeniesUnauthorizedPublisher(t *testing.T) {
+// Criterion 5 (gateway->devices side): a caller need NOT hold a grant on the
+// gateway client itself. A shared gateway relays for devices belonging to
+// more than one customer, so the gateway named in the URL is the source of
+// the roster and the caller's own DeviceScope bounds which rows come back —
+// the repository is reached with that scope, never with the gateway identity
+// required to be part of the grant.
+func TestListGatewayDevicesSharedGatewayNarrowsToCallerScope(t *testing.T) {
 	deps := newDeviceViewDeps(t, true)
 	expectUser(deps.authn)
-	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID, meter3UUID})
+	expectGrants(deps.evaluator, deps.lister, []string{meter1UUID})
+
+	deps.repo.EXPECT().ListGatewayDevices(e2eChanID, "shared-gateway", mock.MatchedBy(
+		scopeMatches([]string{meter1UUID}, []string{meter1Serial}),
+	)).Return(readers.DeviceStatsPage{
+		Total: 1,
+		Stats: []readers.DeviceStat{{ID: meter1Serial, LastSeen: 100, MessageCount: 5}},
+	}, nil)
+
+	res, err := deps.gatewayDevicesEP(context.Background(), gatewayDevicesReq("shared-gateway"))
+	require.NoError(t, err)
+
+	page, ok := res.(gatewayDevicesRes)
+	require.True(t, ok)
+	require.Len(t, page.Devices, 1)
+	assert.Equal(t, meter1Serial, page.Devices[0].DeviceID)
+	assert.Equal(t, float64(100), page.Devices[0].LastSeen)
+	assert.Equal(t, uint64(5), page.Devices[0].MessageCount)
+}
+
+// A non-admin caller holding no per-device grant at all gets an empty roster,
+// and the repository is never reached.
+func TestListGatewayDevicesNoGrantIsEmptyPage(t *testing.T) {
+	deps := newDeviceViewDeps(t, true)
+	expectUser(deps.authn)
+	expectGrants(deps.evaluator, deps.lister, nil)
 	// No ListGatewayDevices expectation: reaching the repository would be the bug.
 
-	res, err := deps.gatewayDevicesEP(context.Background(), gatewayDevicesReq("gateway-not-granted"))
+	res, err := deps.gatewayDevicesEP(context.Background(), gatewayDevicesReq("any-gateway"))
 	require.NoError(t, err)
 
 	page, ok := res.(gatewayDevicesRes)

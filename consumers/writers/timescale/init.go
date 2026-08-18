@@ -107,10 +107,11 @@ func Migration() *migrate.MemoryMigrationSource {
 				// for a channel+device_id — reuses idx_channel_device_id_name_time
 				// from messages_3 above: its leading (channel, device_id)
 				// pair already gives that query an index scan instead of a
-				// scan, so it does not need a dedicated index of its own.
+				// full partition scan, so it does not need a dedicated
+				// index of its own.
 				Id: "messages_4",
 				Up: []string{
-					"CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id_time  ON messages (channel, publisher, device_id, time DESC) WITH (timescaledb.transaction_per_chunk);",
+					"CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id_time ON messages (channel, publisher, device_id, time DESC) WITH (timescaledb.transaction_per_chunk);",
 				},
 				DisableTransactionUp: true,
 				Down: []string{

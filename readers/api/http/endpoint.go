@@ -48,10 +48,13 @@ func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authenti
 }
 
 // listGatewayDevicesEndpoint lists the devices observed publishing through a
-// gateway (MG-15). noAccess — the requested publisher is outside the
-// caller's grant, or the caller holds no grant at all — is reported as an
-// empty page, matching how a filtered-out publisher behaves on a message
-// read, not as an error.
+// gateway (MG-15). The gateway's publisher id named in the URL is the source
+// of the roster, not a filter the caller must hold: a gateway can relay for
+// devices belonging to more than one customer, so the caller's own DeviceScope
+// narrows the returned rows to their devices (see ListGatewayDevices in
+// readers/messages.go). noAccess — the caller holds no per-device grant at all
+// — is reported as an empty page, matching how a filtered-out publisher or
+// device_id behaves on a message read, not as an error.
 func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(deviceViewReq)
@@ -59,7 +62,7 @@ func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Au
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		scope, noAccess, err := authzDeviceView(ctx, req.chanID, req.domain, req.token, req.key, authn, clients, channels, readAuthz, []string{req.filterVal}, nil)
+		scope, noAccess, err := authzDeviceView(ctx, req.chanID, req.domain, req.token, req.key, authn, clients, channels, readAuthz, nil, nil)
 		if err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}

@@ -15,12 +15,28 @@ import (
 const (
 	maxLimitSize = 1000
 
+	// deviceViewDefaultWindow bounds an MG-15 observed-device query to the
+	// last 24h when the caller supplies neither from nor to, mirroring the
+	// HTTP layer's defaultTimeWindow. GROUP BY device_id (or publisher) with
+	// no time bound at all is a full, unbounded partition scan on a busy
+	// channel, and the gRPC path can trigger it just as easily as the HTTP
+	// path — the caller must opt out of the bound by naming one explicitly.
+	deviceViewDefaultWindow = 24 * time.Hour
+
 	aggregationMax   = "MAX"
 	aggregationMin   = "MIN"
 	aggregationAvg   = "AVG"
 	aggregationSum   = "SUM"
 	aggregationCount = "COUNT"
 )
+
+func defaultTimeWindow(from, to float64) (float64, float64) {
+	if from != 0 || to != 0 {
+		return from, to
+	}
+	now := time.Now()
+	return float64(now.Add(-deviceViewDefaultWindow).Unix()), float64(now.Unix())
+}
 
 var validAggregations = []string{aggregationMax, aggregationMin, aggregationAvg, aggregationSum, aggregationCount}
 

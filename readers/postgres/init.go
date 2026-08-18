@@ -74,13 +74,19 @@ func migrateDB(db *sqlx.DB) error {
 				},
 			},
 			{
-				// Mirrors consumers/writers/postgres's own messages_4: in a
-				// deployment where the reader connects before the writer
-				// ever does, this is what actually creates the index this
-				// package's MG-15 aggregation queries need — the writer's
-				// own migration of the same name is a same-ID no-op by the
-				// time it runs against a database this one already touched.
-				Id: "messages_2",
+				// Creates the indexes the MG-15 observed-device aggregation
+				// queries need. The Id must not collide with any Id in
+				// consumers/writers/postgres's migration set: both packages
+				// record into the same gorp_migrations table, so a
+				// reader-applied Id would shadow the writer's same-Id
+				// migration and the writer would silently skip it. Ids live
+				// outside the writer's [messages_1..4] range so the reader
+				// can connect before the writer without suppressing the
+				// writer's PRIMARY KEY change (messages_2). The indexes are
+				// the same pair the writer's messages_4 creates, so
+				// whichever side applies first, the other's CREATE INDEX IF
+				// NOT EXISTS is a no-op.
+				Id: "messages_5",
 				Up: []string{
 					`CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id ON messages (channel, publisher, device_id)`,
 					`CREATE INDEX IF NOT EXISTS idx_channel_device_id_publisher ON messages (channel, device_id, publisher)`,

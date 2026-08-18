@@ -6,6 +6,7 @@ package grpc
 import (
 	"context"
 	"testing"
+	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
 	"github.com/stretchr/testify/assert"
@@ -68,4 +69,41 @@ func TestDecodeListDeviceGatewaysRequest(t *testing.T) {
 	req, ok := got.(deviceViewReq)
 	require.True(t, ok)
 	assert.Equal(t, "Meter.A-01:X", req.filterVal)
+}
+
+// TestDecodeDeviceViewAppliesDefaultWindow asserts the gRPC device-view
+// decoders bound a windowless query to the last 24h, mirroring the HTTP
+// transport, so an unbounded GROUP BY is never the easy default.
+func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
+	now := time.Now()
+
+	gotGateway, err := decodeListGatewayDevicesRequest(context.Background(), &grpcReadersV1.ListGatewayDevicesReq{
+		ChannelId:   "channel",
+		DomainId:    "domain",
+		PublisherId: "gateway-1",
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: 0,
+			Limit:  10,
+		},
+	})
+	require.NoError(t, err)
+	gatewayReq, ok := gotGateway.(deviceViewReq)
+	require.True(t, ok)
+	assert.InDelta(t, float64(now.Unix()), gatewayReq.pageMeta.To, 2)
+	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), gatewayReq.pageMeta.To-gatewayReq.pageMeta.From, 2)
+
+	gotDevice, err := decodeListDeviceGatewaysRequest(context.Background(), &grpcReadersV1.ListDeviceGatewaysReq{
+		ChannelId: "channel",
+		DomainId:  "domain",
+		DeviceId:  "Meter.A-01:X",
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: 0,
+			Limit:  10,
+		},
+	})
+	require.NoError(t, err)
+	deviceReq, ok := gotDevice.(deviceViewReq)
+	require.True(t, ok)
+	assert.InDelta(t, float64(now.Unix()), deviceReq.pageMeta.To, 2)
+	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), deviceReq.pageMeta.To-deviceReq.pageMeta.From, 2)
 }

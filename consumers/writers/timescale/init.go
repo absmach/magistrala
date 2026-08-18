@@ -94,6 +94,29 @@ func Migration() *migrate.MemoryMigrationSource {
 					"ALTER TABLE messages DROP COLUMN IF EXISTS device_id;",
 				},
 			},
+			{
+				// Supports the MG-15 observed-device aggregation: distinct
+				// device_id values grouped for a channel+publisher (a
+				// gateway's roster). Without a (channel, publisher, ...)
+				// index this GROUP BY falls back to a full partition scan,
+				// which is exactly the cost this index exists to avoid.
+				// Trailing time DESC follows the convention of the indexes
+				// above, letting MAX(time) come from the index too.
+				//
+				// The mirror direction — distinct publisher values grouped
+				// for a channel+device_id — reuses idx_channel_device_id_name_time
+				// from messages_3 above: its leading (channel, device_id)
+				// pair already gives that query an index scan instead of a
+				// scan, so it does not need a dedicated index of its own.
+				Id: "messages_4",
+				Up: []string{
+					"CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id_time  ON messages (channel, publisher, device_id, time DESC) WITH (timescaledb.transaction_per_chunk);",
+				},
+				DisableTransactionUp: true,
+				Down: []string{
+					"DROP INDEX IF EXISTS idx_channel_publisher_device_id_time ;",
+				},
+			},
 		},
 	}
 }

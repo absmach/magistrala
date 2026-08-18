@@ -66,3 +66,50 @@ func (req listMessagesReq) validate() error {
 
 	return nil
 }
+
+// deviceViewDefaultWindow bounds an MG-15 observed-device query to the last
+// 24h when the caller supplies neither from nor to. `GROUP BY device_id`
+// (or publisher) with no time bound at all is a full, unbounded partition
+// scan on a busy channel — this keeps that form from being the easy one to
+// call by accident. A caller who supplies either bound is assumed to mean
+// it and gets exactly what they asked for, unmodified.
+const deviceViewDefaultWindow = 24 * time.Hour
+
+func defaultTimeWindow(from, to float64) (float64, float64) {
+	if from != 0 || to != 0 {
+		return from, to
+	}
+	now := time.Now()
+	return float64(now.Add(-deviceViewDefaultWindow).Unix()), float64(now.Unix())
+}
+
+// deviceViewReq is the shared request shape of both MG-15 observed-device
+// endpoints: list the distinct devices seen through a gateway, or the
+// distinct gateways seen relaying a device. filterVal is that gateway's
+// publisher id or that device's serial, taken from the URL, and is checked
+// against the caller's grant exactly as an explicit publisher/device_id
+// filter would be on a message read.
+type deviceViewReq struct {
+	chanID    string
+	token     string
+	domain    string
+	key       string
+	filterVal string
+	pageMeta  readers.PageMetadata
+}
+
+func (req deviceViewReq) validate() error {
+	if req.token == "" && req.key == "" {
+		return apiutil.ErrBearerToken
+	}
+
+	if req.chanID == "" || req.filterVal == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+
+	return nil
+}

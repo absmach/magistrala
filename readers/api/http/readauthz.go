@@ -10,6 +10,9 @@ import (
 	"sync"
 	"time"
 
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/readers"
 )
@@ -283,6 +286,49 @@ func (a *readAuthorizer) isDomainAdmin(ctx context.Context, domain, subject stri
 		Permission:  policies.AdminPermission,
 	})
 	return err == nil
+}
+
+// authzDeviceView resolves whether the caller may run one of the MG-15
+// observed-device aggregation queries, and what to narrow it with.
+//
+// It mirrors authnAuthz: authenticate, then a channel-level subscribe check,
+// then — for a non-admin domain user — per-device scope resolution. The
+// difference is the shape of what gets checked: a message read carries the
+// caller's own, possibly-absent filters, while this always has exactly one
+// fixed identity (the gateway or device the URL names), so it is passed as a
+// one-element requestedPublishers or requestedDeviceIDs and must survive the
+// same intersection a filter would. noAccess means that identity is outside
+// the caller's grant, or the caller holds no grant at all — the response
+// must be an empty page, never an error, matching how a filtered-out
+// publisher or device_id behaves on a message read.
+func authzDeviceView(ctx context.Context, chanID, domain, token, key string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
+	clientID, clientType, superAdmin, err := authenticate(ctx, token, key, domain, authn, clients)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := authorize(ctx, clientID, clientType, chanID, domain, channels); err != nil {
+		return nil, false, err
+	}
+
+	if superAdmin {
+		return nil, false, nil
+	}
+
+	// Per-device grants only exist for domain users, not for clients
+	// authenticating with a secret key.
+	if clientType != policies.UserType {
+		return nil, false, nil
+	}
+
+	resolved, err := readAuthz.resolve(ctx, domain, clientID, requestedPublishers, requestedDeviceIDs)
+	if err != nil {
+		return nil, false, err
+	}
+	if resolved.noAccess {
+		return nil, true, nil
+	}
+
+	return resolved.scope, false, nil
 }
 
 // requestedPublishers collects the publisher IDs the caller asked to filter

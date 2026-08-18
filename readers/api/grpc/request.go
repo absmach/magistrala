@@ -75,3 +75,29 @@ func (req readMessagesReq) validate() error {
 
 	return nil
 }
+
+// deviceViewReq is the shared request shape of both MG-15 gRPC
+// observed-device methods. filterVal is the gateway's publisher id or the
+// device's serial, depending on direction. As with ReadMessages over gRPC,
+// there is no per-caller authorization here — pageMeta.DeviceScope has no
+// wire representation (see PageMetadata in readers.proto), so a gRPC caller
+// always gets the unrestricted query, exactly as ReadMessages does today;
+// scoping to a caller's grant is HTTP-only (MG-08).
+type deviceViewReq struct {
+	chanID    string
+	domain    string
+	filterVal string
+	pageMeta  readers.PageMetadata
+}
+
+func (req deviceViewReq) validate() error {
+	if req.chanID == "" || req.domain == "" || req.filterVal == "" {
+		return apiutil.ErrMissingID
+	}
+
+	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
+		return apiutil.ErrLimitSize
+	}
+
+	return nil
+}

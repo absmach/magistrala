@@ -29,3 +29,43 @@ func readMessagesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
 		}, nil
 	}
 }
+
+func listGatewayDevicesEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deviceViewReq)
+		if err := req.validate(); err != nil {
+			return deviceStatsRes{}, err
+		}
+
+		page, err := svc.ListGatewayDevices(req.chanID, req.filterVal, req.pageMeta)
+		if err != nil {
+			return deviceStatsRes{}, err
+		}
+
+		return deviceStatsRes{
+			PageMetadata: page.PageMetadata,
+			Total:        page.Total,
+			Stats:        page.Stats,
+		}, nil
+	}
+}
+
+func listDeviceGatewaysEndpoint(svc readers.MessageRepository) endpoint.Endpoint {
+	return func(ctx context.Context, request any) (any, error) {
+		req := request.(deviceViewReq)
+		if err := req.validate(); err != nil {
+			return deviceStatsRes{}, err
+		}
+
+		page, err := svc.ListDeviceGateways(req.chanID, req.filterVal, req.pageMeta)
+		if err != nil {
+			return deviceStatsRes{}, err
+		}
+
+		return deviceStatsRes{
+			PageMetadata: page.PageMetadata,
+			Total:        page.Total,
+			Stats:        page.Stats,
+		}, nil
+	}
+}

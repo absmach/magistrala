@@ -32,6 +32,7 @@ const (
 	subtopicKey    = "subtopic"
 	publisherKey   = "publisher"
 	publishersKey  = "publishers"
+	deviceIDKey    = "device_id"
 	deviceIDsKey   = "device_ids"
 	protocolKey    = "protocol"
 	nameKey        = "name"
@@ -62,6 +63,38 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, authn, clients, channels, readAuthz),
 		decodeList,
+		encodeResponse,
+		opts...,
+	).ServeHTTP)
+
+	// MG-15 observed-device aggregation. Both directions are nested under
+	// the channel, not under new top-level /gateways or /devices resources:
+	// every read here is channel-scoped (readers hold no notion of a
+	// gateway or device outside a channel's messages, and the only
+	// authorization check available is the channel-level subscribe check
+	// authorize() already performs), and a gateway's publisher id is only
+	// meaningful within one channel's rows in this store. Nesting under
+	// /channels/{chanID} keeps that scoping explicit in the URL, mirroring
+	// the existing messages route.
+	//
+	// The anchoring identity (the gateway's publisher id, or the device's
+	// serial) is a query parameter, not a URL path segment, on both routes.
+	// A device serial is format-unconstrained (MG-09: Atom's external_id
+	// accepts `/`, spaces and unicode — see readRepeatedQuery below, which
+	// exists for the same reason), so putting one in a path segment risks
+	// chi splitting it as extra path segments or requiring escaping a caller
+	// has to know to apply. Keeping both directions consistent rather than
+	// only routing device_id this way avoids that asymmetry looking
+	// accidental.
+	mux.Get("/{domainID}/channels/{chanID}/devices", kithttp.NewServer(
+		listGatewayDevicesEndpoint(svc, authn, clients, channels, readAuthz),
+		decodeGatewayDevices,
+		encodeResponse,
+		opts...,
+	).ServeHTTP)
+	mux.Get("/{domainID}/channels/{chanID}/publishers", kithttp.NewServer(
+		listDeviceGatewaysEndpoint(svc, authn, clients, channels, readAuthz),
+		decodeDeviceGateways,
 		encodeResponse,
 		opts...,
 	).ServeHTTP)
@@ -200,6 +233,60 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 	return req, nil
 }
 
+func decodeGatewayDevices(_ context.Context, r *http.Request) (any, error) {
+	return decodeDeviceView(r, publisherKey)
+}
+
+func decodeDeviceGateways(_ context.Context, r *http.Request) (any, error) {
+	return decodeDeviceView(r, deviceIDKey)
+}
+
+// decodeDeviceView decodes the shared request shape of both MG-15
+// observed-device endpoints. idKey names the query parameter holding the
+// fixed gateway publisher id or device serial for the given direction.
+func decodeDeviceView(r *http.Request, idKey string) (any, error) {
+	offset, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	limit, err := apiutil.ReadNumQuery[uint64](r, limitKey, defLimit)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	filterVal, err := apiutil.ReadStringQuery(r, idKey, "")
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	from, err := apiutil.ReadNumQuery[float64](r, fromKey, 0)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+
+	to, err := apiutil.ReadNumQuery[float64](r, toKey, 0)
+	if err != nil {
+		return nil, errors.Wrap(apiutil.ErrValidation, err)
+	}
+	from, to = defaultTimeWindow(from, to)
+
+	req := deviceViewReq{
+		chanID:    chi.URLParam(r, "chanID"),
+		token:     apiutil.ExtractBearerToken(r),
+		domain:    chi.URLParam(r, "domainID"),
+		key:       apiutil.ExtractClientSecret(r),
+		filterVal: filterVal,
+		pageMeta: readers.PageMetadata{
+			Offset: offset,
+			Limit:  limit,
+			From:   from,
+			To:     to,
+		},
+	}
+	return req, nil
+}
+
 // readRepeatedQuery collects a list-valued filter from repeated query parameters
 // — ?device_ids=A&device_ids=B — and drops empty entries.
 //
@@ -245,7 +332,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 // set. noAccess means the caller may read nothing on this channel, so the response must be empty
 // rather than unfiltered.
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
-	clientID, clientType, superAdmin, err := authenticate(ctx, req, authn, clients)
+	clientID, clientType, superAdmin, err := authenticate(ctx, req.token, req.key, req.domain, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
@@ -278,10 +365,10 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
+func authenticate(ctx context.Context, token, key, domain string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
 	switch {
-	case req.token != "":
-		session, err := authn.Authenticate(ctx, req.token)
+	case token != "":
+		session, err := authn.Authenticate(ctx, token)
 		if err != nil {
 			return "", "", false, err
 		}
@@ -289,10 +376,10 @@ func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authe
 			return session.UserID, policies.UserType, true, nil
 		}
 
-		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, false, nil
-	case req.key != "":
+		return policies.EncodeDomainUserID(domain, session.UserID), policies.UserType, false, nil
+	case key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
-			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.domain, req.key),
+			Token: smqauthn.AuthPack(smqauthn.DomainAuth, domain, key),
 		})
 		if err != nil {
 			return "", "", false, err

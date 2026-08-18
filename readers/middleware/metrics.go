@@ -37,3 +37,21 @@ func (mm *metricsMiddleware) ReadAll(chanID string, rpm readers.PageMetadata) (r
 
 	return mm.svc.ReadAll(chanID, rpm)
 }
+
+func (mm *metricsMiddleware) ListGatewayDevices(chanID, publisherID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "list_gateway_devices").Add(1)
+		mm.latency.With("method", "list_gateway_devices").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.ListGatewayDevices(chanID, publisherID, rpm)
+}
+
+func (mm *metricsMiddleware) ListDeviceGateways(chanID, deviceID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	defer func(begin time.Time) {
+		mm.counter.With("method", "list_device_gateways").Add(1)
+		mm.latency.With("method", "list_device_gateways").Observe(time.Since(begin).Seconds())
+	}(time.Now())
+
+	return mm.svc.ListDeviceGateways(chanID, deviceID, rpm)
+}

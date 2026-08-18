@@ -221,6 +221,145 @@ func TestReadMessages(t *testing.T) {
 	}
 }
 
+// TestListGatewayDevices exercises the MG-15 gateway->devices RPC end to end:
+// client, over the wire, to the server, to the (mocked) repository and back.
+// Unlike the HTTP transport, there is no per-caller authorization here — see
+// the comment on deviceViewReq — so this only has to show the aggregation
+// itself round-trips correctly.
+func TestListGatewayDevices(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
+
+	cases := []struct {
+		desc   string
+		req    *grpcReadersV1.ListGatewayDevicesReq
+		svcRes readers.DeviceStatsPage
+		want   *grpcReadersV1.DeviceStatsRes
+		err    error
+	}{
+		{
+			desc: "valid request",
+			req: &grpcReadersV1.ListGatewayDevicesReq{
+				ChannelId:   channelID,
+				DomainId:    domain,
+				PublisherId: "gateway-1",
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			svcRes: readers.DeviceStatsPage{
+				Total: 1,
+				Stats: []readers.DeviceStat{{ID: "meter-a", LastSeen: 100, MessageCount: 5}},
+			},
+			want: &grpcReadersV1.DeviceStatsRes{
+				Total: 1,
+				Stats: []*grpcReadersV1.DeviceStat{{Id: "meter-a", LastSeen: 100, MessageCount: 5}},
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+		},
+		{
+			desc: "missing publisher id",
+			req: &grpcReadersV1.ListGatewayDevicesReq{
+				ChannelId: channelID,
+				DomainId:  domain,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			want: &grpcReadersV1.DeviceStatsRes{},
+			err:  apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := svc.On("ListGatewayDevices", mock.Anything, mock.Anything, mock.Anything).Return(tc.svcRes, tc.err)
+			defer repoCall.Unset()
+
+			got, err := grpcClient.ListGatewayDevices(context.Background(), tc.req)
+			assert.Equal(t, tc.want.Stats, got.Stats)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
+// TestListDeviceGateways mirrors TestListGatewayDevices for the inverse
+// direction.
+func TestListDeviceGateways(t *testing.T) {
+	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	require.NoError(t, err)
+	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
+
+	cases := []struct {
+		desc   string
+		req    *grpcReadersV1.ListDeviceGatewaysReq
+		svcRes readers.DeviceStatsPage
+		want   *grpcReadersV1.DeviceStatsRes
+		err    error
+	}{
+		{
+			desc: "valid request",
+			req: &grpcReadersV1.ListDeviceGatewaysReq{
+				ChannelId: channelID,
+				DomainId:  domain,
+				DeviceId:  "Meter.A-01:X",
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			svcRes: readers.DeviceStatsPage{
+				Total: 2,
+				Stats: []readers.DeviceStat{
+					{ID: "gateway-1", LastSeen: 100, MessageCount: 3},
+					{ID: "gateway-2", LastSeen: 200, MessageCount: 7},
+				},
+			},
+			want: &grpcReadersV1.DeviceStatsRes{
+				Total: 2,
+				Stats: []*grpcReadersV1.DeviceStat{
+					{Id: "gateway-1", LastSeen: 100, MessageCount: 3},
+					{Id: "gateway-2", LastSeen: 200, MessageCount: 7},
+				},
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+		},
+		{
+			desc: "missing device id",
+			req: &grpcReadersV1.ListDeviceGatewaysReq{
+				ChannelId: channelID,
+				DomainId:  domain,
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			want: &grpcReadersV1.DeviceStatsRes{},
+			err:  apiutil.ErrMissingID,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			repoCall := svc.On("ListDeviceGateways", mock.Anything, mock.Anything, mock.Anything).Return(tc.svcRes, tc.err)
+			defer repoCall.Unset()
+
+			got, err := grpcClient.ListDeviceGateways(context.Background(), tc.req)
+			assert.Equal(t, tc.want.Stats, got.Stats)
+			assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s: expected %s got %s\n", tc.desc, tc.err, err))
+		})
+	}
+}
+
 func float64Ptr(v float64) *float64 {
 	return &v
 }

@@ -73,6 +73,23 @@ func migrateDB(db *sqlx.DB) error {
 					"DROP TABLE messages",
 				},
 			},
+			{
+				// Mirrors consumers/writers/postgres's own messages_4: in a
+				// deployment where the reader connects before the writer
+				// ever does, this is what actually creates the index this
+				// package's MG-15 aggregation queries need — the writer's
+				// own migration of the same name is a same-ID no-op by the
+				// time it runs against a database this one already touched.
+				Id: "messages_2",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id ON messages (channel, publisher, device_id)`,
+					`CREATE INDEX IF NOT EXISTS idx_channel_device_id_publisher ON messages (channel, device_id, publisher)`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_channel_publisher_device_id`,
+					`DROP INDEX IF EXISTS idx_channel_device_id_publisher`,
+				},
+			},
 		},
 	}
 

@@ -209,6 +209,112 @@ func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
 	}
 }
 
+// ListGatewayDevices implements readers.MessageRepository.
+func (tr timescaleRepository) ListGatewayDevices(chanID, publisherID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	return tr.deviceStats(chanID, messageFieldPublisher, publisherID, messageFieldDeviceID, true, rpm)
+}
+
+// ListDeviceGateways implements readers.MessageRepository.
+func (tr timescaleRepository) ListDeviceGateways(chanID, deviceID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	return tr.deviceStats(chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
+}
+
+// deviceStats implements both directions of the MG-15 observed-device
+// aggregation: distinct values of groupCol, for rows on channel chanID with
+// filterCol = filterVal, each with its last-seen time and message count.
+//
+// scoped applies DeviceScope to narrow groupCol itself. It is only ever true
+// for the gateway->devices direction — see the DeviceScope comment on
+// ListDeviceGateways in readers/messages.go for why the inverse direction
+// does not narrow by scope at all.
+//
+// The WHERE clause leads with channel then filterCol, matching
+// idx_channel_publisher_device_id_time (gateway->devices) and the leading
+// columns of MG-06's idx_channel_device_id_name_time (device->gateways), so
+// neither direction falls back to a full partition scan.
+func (tr timescaleRepository) deviceStats(chanID, filterCol, filterVal, groupCol string, scoped bool, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	conditions := []string{
+		fmt.Sprintf("%s = :channel", messageFieldChannel),
+		fmt.Sprintf("%s = :filter_val", filterCol),
+	}
+	if groupCol == messageFieldDeviceID {
+		// A publisher's direct (non-relayed) messages carry no device_id at
+		// all; grouping without this would surface a spurious "" roster
+		// entry for them. publisher, by contrast, is a required column that
+		// is never empty, so this guard only applies on this side.
+		conditions = append(conditions, fmt.Sprintf("%s <> ''", groupCol))
+	}
+	if rpm.From != 0 {
+		conditions = append(conditions, "time >= :from")
+	}
+	if rpm.To != 0 {
+		conditions = append(conditions, "time < :to")
+	}
+	if scoped && rpm.DeviceScope != nil {
+		conditions = append(conditions, fmt.Sprintf("%s = ANY(:scope_ids)", groupCol))
+	}
+	where := strings.Join(conditions, " AND ")
+
+	q := fmt.Sprintf(`SELECT %s AS id, MAX(time) AS last_seen, COUNT(*) AS message_count
+		FROM %s WHERE %s GROUP BY %s
+		ORDER BY last_seen DESC, id ASC
+		LIMIT :limit OFFSET :offset;`, groupCol, defTable, where, groupCol)
+
+	totalQ := fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT %s FROM %s WHERE %s GROUP BY %s) AS sub;`, groupCol, defTable, where, groupCol)
+
+	params := map[string]any{
+		messageFieldChannel: chanID,
+		"filter_val":        filterVal,
+		"from":              rpm.From,
+		"to":                rpm.To,
+		"scope_ids":         rpm.DeviceScope.Devices(),
+		"limit":             rpm.Limit,
+		"offset":            rpm.Offset,
+	}
+
+	page := readers.DeviceStatsPage{PageMetadata: rpm, Stats: []readers.DeviceStat{}}
+
+	rows, err := tr.db.NamedQuery(q, params)
+	if err != nil {
+		if pgErr, ok := pgError(err); ok && pgErr.Code == pgerrcode.UndefinedTable {
+			return page, nil
+		}
+		return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var stat deviceStatRow
+		if err := rows.StructScan(&stat); err != nil {
+			return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
+		}
+		page.Stats = append(page.Stats, readers.DeviceStat{ID: stat.ID, LastSeen: stat.LastSeen, MessageCount: stat.MessageCount})
+	}
+
+	totalRows, err := tr.db.NamedQuery(totalQ, params)
+	if err != nil {
+		if pgErr, ok := pgError(err); ok && pgErr.Code == pgerrcode.UndefinedTable {
+			return page, nil
+		}
+		return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
+	}
+	defer totalRows.Close()
+
+	if totalRows.Next() {
+		if err := totalRows.Scan(&page.Total); err != nil {
+			return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
+		}
+	}
+
+	return page, nil
+}
+
+type deviceStatRow struct {
+	ID           string  `db:"id"`
+	LastSeen     float64 `db:"last_seen"`
+	MessageCount uint64  `db:"message_count"`
+}
+
 func pgError(err error) (*pgconn.PgError, bool) {
 	if preErr, ok := err.(*pgconn.PrepareError); ok {
 		err = preErr.Unwrap()

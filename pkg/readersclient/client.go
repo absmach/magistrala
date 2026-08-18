@@ -44,6 +44,28 @@ func (c *client) ReadMessages(ctx context.Context, req *grpcReadersV1.ReadMessag
 	return res, nil
 }
 
+func (c *client) ListGatewayDevices(ctx context.Context, req *grpcReadersV1.ListGatewayDevicesReq, opts ...grpc.CallOption) (*grpcReadersV1.DeviceStatsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	res, err := c.readers.ListGatewayDevices(ctx, req, opts...)
+	if err != nil {
+		return &grpcReadersV1.DeviceStatsRes{}, decodeError(err)
+	}
+	return res, nil
+}
+
+func (c *client) ListDeviceGateways(ctx context.Context, req *grpcReadersV1.ListDeviceGatewaysReq, opts ...grpc.CallOption) (*grpcReadersV1.DeviceStatsRes, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.timeout)
+	defer cancel()
+
+	res, err := c.readers.ListDeviceGateways(ctx, req, opts...)
+	if err != nil {
+		return &grpcReadersV1.DeviceStatsRes{}, decodeError(err)
+	}
+	return res, nil
+}
+
 func decodeError(err error) error {
 	if st, ok := status.FromError(err); ok {
 		switch st.Code() {

@@ -52,11 +52,13 @@ services:
       atom-db:
         condition: service_healthy
       # Atom connects to ATOM_EVENTS_AMQP_URL once, at startup, and fails to
-      # start at all if that connection fails (see absmach/atom src/main.rs) --
-      # nginx (the AMQP proxy in front of FluxMQ, MG_NGINX_AMQP_PORT) has to
-      # be up first.
-      nginx:
-        condition: service_started
+      # start at all if that connection fails (see absmach/atom src/main.rs).
+      # It cannot wait on nginx (the AMQP proxy in front of FluxMQ) here: the
+      # FluxMQ/nginx chain depends on fluxmq-auth, which depends on
+      # atom-bootstrap, which depends on atom -- any depends_on edge from
+      # atom into that chain is a cycle. restart: on-failure absorbs the
+      # transient connect failure on cold boot instead; atom comes back up
+      # once the rest of the chain (and nginx behind it) is ready.
     environment:
       DATABASE_URL: postgres://${ATOM_DB_USER}:${ATOM_DB_PASSWORD}@atom-db:5432/${ATOM_DB_NAME}
       LISTEN_ADDR: 0.0.0.0:8080

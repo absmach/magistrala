@@ -128,6 +128,36 @@ define ensure_atom_tokens_env
 	fi
 endef
 
+# Atom hard-requires a working connection to ATOM_EVENTS_AMQP_URL at every
+# boot once that variable is set (see absmach/atom src/main.rs) -- but nginx
+# (the AMQP proxy in front of FluxMQ, MG_NGINX_AMQP_PORT) and the FluxMQ
+# auth/broker chain behind it depend on atom-bootstrap completing, which
+# depends on atom itself being reachable. A single `docker compose up` for
+# the whole stack deadlocks: atom can never reach nginx, because nginx can
+# never start, because the chain behind it can never finish bootstrapping
+# against an atom that keeps failing to connect to nginx.
+#
+# Break the deadlock by bringing the bootstrap chain all the way up to nginx
+# first, with event publishing disabled for this one invocation -- an empty
+# ATOM_EVENTS_AMQP_URL override takes precedence over docker/.env's value --
+# so atom boots cleanly and atom-bootstrap, fluxmq-auth and the FluxMQ nodes
+# behind it can all finish starting. Targeting nginx (not just fluxmq-auth)
+# matters: the regular `up` that follows recreates atom with the real value,
+# and separately -- since docker compose's `up` restarts *any* non-running
+# service it manages, including atom-bootstrap after its clean exit(0) --
+# re-runs atom-bootstrap too. Both need the AMQP proxy nginx fronts to
+# already be genuinely functional at that point, not merely "started", or
+# the same deadlock reopens inside the second invocation. Targeting nginx
+# pulls in the full chain (atom-db -> atom -> atom-bootstrap -> fluxmq-auth
+# -> fluxmq-node1/2/3 -> nginx) via the compose file's own depends_on
+# conditions, which is the correct place to express "wait for this to
+# actually finish", not a guessed sleep.
+define bootstrap_atom_events_amqp
+	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		ATOM_EVENTS_AMQP_URL= $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d nginx; \
+	fi
+endef
+
 define run_with_arch_detection
 	$(call require_atom_tokens_env)
 	@echo "Detecting architecture..."
@@ -402,11 +432,13 @@ endif
 run_latest: check_certs
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
 	$(call ensure_atom_tokens_env)
+	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_latest_ci: check_certs
 	$(call require_atom_tokens_env)
 	$(SED_INPLACE) 's/^MG_RELEASE_TAG=.*/MG_RELEASE_TAG=latest/' docker/.env
+	$(call bootstrap_atom_events_amqp)
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/docker-compose-ci.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) $(DOCKER_COMPOSE_COMMAND) $(args)
 
 run_tls: check_certs

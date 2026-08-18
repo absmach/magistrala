@@ -35,9 +35,6 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 	}{
 		{"entity create", "entity.create", FamilyTranslation},
 		{"entity update", "entity.update", FamilyTranslation},
-		{"entity delete", "entity.delete", FamilyTranslation},
-		{"entity restore", "entity.restore", FamilyTranslation},
-		{"entity purge", "entity.purge", FamilyTranslation},
 		{"group member add", "group_member.add", FamilyAuthorizedSet},
 		{"group member remove", "group_member.remove", FamilyAuthorizedSet},
 		{"direct policy create", "direct_policy.create", FamilyAuthorizedSet},
@@ -71,12 +68,14 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 	}
 }
 
-// TestHandlerRestoreAndPurgeInvalidateBothFamilies pins the dual-family
-// mapping: entity.restore and entity.purge change both the translation map
-// and the authorized set, so a subject re-reading after either event must
-// recompute both halves of the grant.
-func TestHandlerRestoreAndPurgeInvalidateBothFamilies(t *testing.T) {
-	for _, event := range []string{"entity.restore", "entity.purge"} {
+// TestHandlerEntityLifecycleInvalidatesBothFamilies pins the dual-family
+// mapping: entity.delete, entity.restore and entity.purge each change both
+// the translation map and the authorized set (a soft delete drops the device
+// from authorized_object_ids, restore brings it back, purge removes it for
+// good), so a subject re-reading after any of them must recompute both halves
+// of the grant.
+func TestHandlerEntityLifecycleInvalidatesBothFamilies(t *testing.T) {
+	for _, event := range []string{"entity.delete", "entity.restore", "entity.purge"} {
 		t.Run(event, func(t *testing.T) {
 			translation := &fakeInvalidator{}
 			authorized := &fakeInvalidator{}

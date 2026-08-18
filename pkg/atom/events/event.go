@@ -45,11 +45,13 @@ const (
 var eventFamilies = map[string][]string{
 	"entity.create": {FamilyTranslation},
 	"entity.update": {FamilyTranslation},
-	"entity.delete": {FamilyTranslation},
-	// restore and purge bookend entity.delete but also change the authorized
-	// set: restore reactivates a soft-deleted device inside its groups, and
-	// purge hard-deletes it and removes its authz references outright
-	// (purge_authz_references_for_ids), so both invalidate both families.
+	// delete, restore and purge all change the authorized set as well as the
+	// translation: delete soft-deletes the device, dropping it from
+	// authorized_object_ids (its candidates CTE filters deleted_at IS NULL);
+	// restore reactivates a soft-deleted device inside its groups; and purge
+	// hard-deletes it and removes its authz references outright
+	// (purge_authz_references_for_ids). So all three invalidate both families.
+	"entity.delete":  {FamilyTranslation, FamilyAuthorizedSet},
 	"entity.restore": {FamilyTranslation, FamilyAuthorizedSet},
 	"entity.purge":   {FamilyTranslation, FamilyAuthorizedSet},
 

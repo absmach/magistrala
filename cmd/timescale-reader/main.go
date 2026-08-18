@@ -135,9 +135,12 @@ func main() {
 	}
 	// Event-driven cache invalidation (MG-14) is an optimization layered on
 	// top of readAuthorizer's own TTL, never a substitute for it: a broker
-	// that is unreachable at startup, or one that drops out later, must
-	// leave the service running on TTL-only invalidation exactly as it did
-	// before this existed -- never block or crash the reader.
+	// that refuses or blackholes the connection at startup, or one that drops
+	// out later, must leave the service running on TTL-only invalidation
+	// exactly as it did before this existed -- never block or crash the
+	// reader. (The one path that can still hold up startup is a broker that
+	// accepts TCP and then stalls the AMQP handshake; see atomEventsDialTimeout
+	// in pkg/events/fluxmq/queue_subscriber.go.)
 	if sub, err := fluxmq.NewQueueSubscriber(ctx, atomEvents.BrokerURL, svcName, fluxmq.QueueSubscriberConfig{
 		Exchange:   atomEvents.Exchange,
 		RoutingKey: atomEvents.RoutingKey,

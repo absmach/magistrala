@@ -81,6 +81,12 @@ func NewQueueSubscriber(_ context.Context, url, connectionName string, topology 
 	if topology.RoutingKey == "" {
 		return nil, ErrEmptyRoutingKey
 	}
+	// The callbacks below fire on a background goroutine long after this
+	// constructor returns; guard against a nil logger the same way logWarn
+	// does for the message-processing path.
+	if logger == nil {
+		logger = slog.Default()
+	}
 
 	opts := fluxamqp.NewOptions().SetURL(url).
 		SetConnectionName(connectionName).
@@ -151,7 +157,7 @@ func (es *subQueueStore) Subscribe(ctx context.Context, cfg events.SubscriberCon
 		AutoAck:     false,
 		ConsumerTag: cfg.Consumer,
 	}, func(msg *fluxamqp.Message) {
-		if err := es.handle(ctx, cfg.Handler, msg); err != nil {
+		if err := es.handle(ctx, cfg.Handler, msg.Body, msg.Redelivered, msg); err != nil {
 			es.logWarn("failed to process Atom event", "error", err)
 		}
 	})
@@ -161,12 +167,22 @@ func (es *subQueueStore) Close() error {
 	return es.client.Close()
 }
 
-func (es *subQueueStore) handle(ctx context.Context, handler events.EventHandler, msg *fluxamqp.Message) error {
+// delivery is the acknowledgment surface handle needs from a received AMQP
+// message, narrowed from *fluxamqp.Message so the retry bound can be unit
+// tested without a broker. Body and Redelivered are passed as arguments
+// because both are fields of the embedded amqp091.Delivery, not methods.
+type delivery interface {
+	Ack() error
+	Nack() error
+	Reject() error
+}
+
+func (es *subQueueStore) handle(ctx context.Context, handler events.EventHandler, body []byte, redelivered bool, msg delivery) error {
 	ev := event{
 		Data: make(map[string]any),
 	}
 
-	if err := json.Unmarshal(msg.Body, &ev.Data); err != nil {
+	if err := json.Unmarshal(body, &ev.Data); err != nil {
 		if rejectErr := msg.Reject(); rejectErr != nil {
 			return errors.Join(err, rejectErr)
 		}
@@ -181,7 +197,7 @@ func (es *subQueueStore) handle(ctx context.Context, handler events.EventHandler
 		// wedging this queue and head-of-line-blocking every event behind it.
 		// Dropping the event degrades to the documented TTL-only invalidation
 		// for that one change, which is the intended fallback.
-		if msg.Redelivered {
+		if redelivered {
 			if rejectErr := msg.Reject(); rejectErr != nil {
 				return errors.Join(fmt.Errorf("failed to handle Atom event: %w", err), rejectErr)
 			}

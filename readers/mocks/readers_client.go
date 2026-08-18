@@ -43,6 +43,172 @@ func (_m *ReadersServiceClient) EXPECT() *ReadersServiceClient_Expecter {
 	return &ReadersServiceClient_Expecter{mock: &_m.Mock}
 }
 
+// ListDeviceGateways provides a mock function for the type ReadersServiceClient
+func (_mock *ReadersServiceClient) ListDeviceGateways(ctx context.Context, in *v1.ListDeviceGatewaysReq, opts ...grpc.CallOption) (*v1.DeviceStatsRes, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, in, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, in)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDeviceGateways")
+	}
+
+	var r0 *v1.DeviceStatsRes
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v1.ListDeviceGatewaysReq, ...grpc.CallOption) (*v1.DeviceStatsRes, error)); ok {
+		return returnFunc(ctx, in, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v1.ListDeviceGatewaysReq, ...grpc.CallOption) *v1.DeviceStatsRes); ok {
+		r0 = returnFunc(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.DeviceStatsRes)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *v1.ListDeviceGatewaysReq, ...grpc.CallOption) error); ok {
+		r1 = returnFunc(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// ReadersServiceClient_ListDeviceGateways_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDeviceGateways'
+type ReadersServiceClient_ListDeviceGateways_Call struct {
+	*mock.Call
+}
+
+// ListDeviceGateways is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *v1.ListDeviceGatewaysReq
+//   - opts ...grpc.CallOption
+func (_e *ReadersServiceClient_Expecter) ListDeviceGateways(ctx interface{}, in interface{}, opts ...interface{}) *ReadersServiceClient_ListDeviceGateways_Call {
+	return &ReadersServiceClient_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *ReadersServiceClient_ListDeviceGateways_Call) Run(run func(ctx context.Context, in *v1.ListDeviceGatewaysReq, opts ...grpc.CallOption)) *ReadersServiceClient_ListDeviceGateways_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *v1.ListDeviceGatewaysReq
+		if args[1] != nil {
+			arg1 = args[1].(*v1.ListDeviceGatewaysReq)
+		}
+		var arg2 []grpc.CallOption
+		var variadicArgs []grpc.CallOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]grpc.CallOption)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *ReadersServiceClient_ListDeviceGateways_Call) Return(deviceStatsRes *v1.DeviceStatsRes, err error) *ReadersServiceClient_ListDeviceGateways_Call {
+	_c.Call.Return(deviceStatsRes, err)
+	return _c
+}
+
+func (_c *ReadersServiceClient_ListDeviceGateways_Call) RunAndReturn(run func(ctx context.Context, in *v1.ListDeviceGatewaysReq, opts ...grpc.CallOption) (*v1.DeviceStatsRes, error)) *ReadersServiceClient_ListDeviceGateways_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListGatewayDevices provides a mock function for the type ReadersServiceClient
+func (_mock *ReadersServiceClient) ListGatewayDevices(ctx context.Context, in *v1.ListGatewayDevicesReq, opts ...grpc.CallOption) (*v1.DeviceStatsRes, error) {
+	var tmpRet mock.Arguments
+	if len(opts) > 0 {
+		tmpRet = _mock.Called(ctx, in, opts)
+	} else {
+		tmpRet = _mock.Called(ctx, in)
+	}
+	ret := tmpRet
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListGatewayDevices")
+	}
+
+	var r0 *v1.DeviceStatsRes
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v1.ListGatewayDevicesReq, ...grpc.CallOption) (*v1.DeviceStatsRes, error)); ok {
+		return returnFunc(ctx, in, opts...)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *v1.ListGatewayDevicesReq, ...grpc.CallOption) *v1.DeviceStatsRes); ok {
+		r0 = returnFunc(ctx, in, opts...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*v1.DeviceStatsRes)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *v1.ListGatewayDevicesReq, ...grpc.CallOption) error); ok {
+		r1 = returnFunc(ctx, in, opts...)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// ReadersServiceClient_ListGatewayDevices_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListGatewayDevices'
+type ReadersServiceClient_ListGatewayDevices_Call struct {
+	*mock.Call
+}
+
+// ListGatewayDevices is a helper method to define mock.On call
+//   - ctx context.Context
+//   - in *v1.ListGatewayDevicesReq
+//   - opts ...grpc.CallOption
+func (_e *ReadersServiceClient_Expecter) ListGatewayDevices(ctx interface{}, in interface{}, opts ...interface{}) *ReadersServiceClient_ListGatewayDevices_Call {
+	return &ReadersServiceClient_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices",
+		append([]interface{}{ctx, in}, opts...)...)}
+}
+
+func (_c *ReadersServiceClient_ListGatewayDevices_Call) Run(run func(ctx context.Context, in *v1.ListGatewayDevicesReq, opts ...grpc.CallOption)) *ReadersServiceClient_ListGatewayDevices_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *v1.ListGatewayDevicesReq
+		if args[1] != nil {
+			arg1 = args[1].(*v1.ListGatewayDevicesReq)
+		}
+		var arg2 []grpc.CallOption
+		var variadicArgs []grpc.CallOption
+		if len(args) > 2 {
+			variadicArgs = args[2].([]grpc.CallOption)
+		}
+		arg2 = variadicArgs
+		run(
+			arg0,
+			arg1,
+			arg2...,
+		)
+	})
+	return _c
+}
+
+func (_c *ReadersServiceClient_ListGatewayDevices_Call) Return(deviceStatsRes *v1.DeviceStatsRes, err error) *ReadersServiceClient_ListGatewayDevices_Call {
+	_c.Call.Return(deviceStatsRes, err)
+	return _c
+}
+
+func (_c *ReadersServiceClient_ListGatewayDevices_Call) RunAndReturn(run func(ctx context.Context, in *v1.ListGatewayDevicesReq, opts ...grpc.CallOption) (*v1.DeviceStatsRes, error)) *ReadersServiceClient_ListGatewayDevices_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadMessages provides a mock function for the type ReadersServiceClient
 func (_mock *ReadersServiceClient) ReadMessages(ctx context.Context, in *v1.ReadMessagesReq, opts ...grpc.CallOption) (*v1.ReadMessagesRes, error) {
 	var tmpRet mock.Arguments

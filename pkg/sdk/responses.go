@@ -37,6 +37,35 @@ type MessagesPage struct {
 	PageRes
 }
 
+// GatewayDeviceStat is one device observed publishing through a gateway
+// (MG-15). DeviceID is the raw stored serial, verbatim.
+type GatewayDeviceStat struct {
+	DeviceID     string  `json:"device_id"`
+	LastSeen     float64 `json:"last_seen"`
+	MessageCount uint64  `json:"message_count"`
+}
+
+// GatewayDevicesPage contains a page of the devices observed publishing
+// through a gateway (MG-15).
+type GatewayDevicesPage struct {
+	Devices []GatewayDeviceStat `json:"devices,omitempty"`
+	PageRes
+}
+
+// DeviceGatewayStat is one gateway observed relaying for a device (MG-15).
+type DeviceGatewayStat struct {
+	Publisher    string  `json:"publisher"`
+	LastSeen     float64 `json:"last_seen"`
+	MessageCount uint64  `json:"message_count"`
+}
+
+// DeviceGatewaysPage contains a page of the gateways observed relaying for a
+// device (MG-15).
+type DeviceGatewaysPage struct {
+	Publishers []DeviceGatewayStat `json:"publishers,omitempty"`
+	PageRes
+}
+
 type GroupsPage struct {
 	Groups []Group `json:"groups"`
 	PageRes

@@ -18,7 +18,9 @@ var _ grpcReadersV1.ReadersServiceServer = (*readersGrpcServer)(nil)
 
 type readersGrpcServer struct {
 	grpcReadersV1.UnimplementedReadersServiceServer
-	readMessages kitgrpc.Handler
+	readMessages       kitgrpc.Handler
+	listGatewayDevices kitgrpc.Handler
+	listDeviceGateways kitgrpc.Handler
 }
 
 func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServiceServer {
@@ -27,6 +29,16 @@ func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServic
 			(readMessagesEndpoint(svc)),
 			decodeReadMessagesRequest,
 			encodeReadMessagesResponse,
+		),
+		listGatewayDevices: kitgrpc.NewServer(
+			listGatewayDevicesEndpoint(svc),
+			decodeListGatewayDevicesRequest,
+			encodeDeviceStatsResponse,
+		),
+		listDeviceGateways: kitgrpc.NewServer(
+			listDeviceGatewaysEndpoint(svc),
+			decodeListDeviceGatewaysRequest,
+			encodeDeviceStatsResponse,
 		),
 	}
 }
@@ -83,6 +95,80 @@ func (s *readersGrpcServer) ReadMessages(ctx context.Context, req *grpcReadersV1
 		return nil, grpcapi.EncodeError(err)
 	}
 	return res.(*grpcReadersV1.ReadMessagesRes), nil
+}
+
+func decodeListGatewayDevicesRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(*grpcReadersV1.ListGatewayDevicesReq)
+	from, to := defaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
+	return deviceViewReq{
+		chanID:            req.GetChannelId(),
+		domain:            req.GetDomainId(),
+		filterVal:         req.GetPublisherId(),
+		filterIsPublisher: true,
+		pageMeta: readers.PageMetadata{
+			Offset: req.GetPageMetadata().GetOffset(),
+			Limit:  req.GetPageMetadata().GetLimit(),
+			From:   from,
+			To:     to,
+		},
+	}, nil
+}
+
+func decodeListDeviceGatewaysRequest(_ context.Context, grpcReq any) (any, error) {
+	req := grpcReq.(*grpcReadersV1.ListDeviceGatewaysReq)
+	from, to := defaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
+	return deviceViewReq{
+		chanID:    req.GetChannelId(),
+		domain:    req.GetDomainId(),
+		filterVal: req.GetDeviceId(),
+		pageMeta: readers.PageMetadata{
+			Offset: req.GetPageMetadata().GetOffset(),
+			Limit:  req.GetPageMetadata().GetLimit(),
+			From:   from,
+			To:     to,
+		},
+	}, nil
+}
+
+func encodeDeviceStatsResponse(_ context.Context, grpcRes any) (any, error) {
+	res := grpcRes.(deviceStatsRes)
+
+	return &grpcReadersV1.DeviceStatsRes{
+		Total: res.Total,
+		Stats: toResponseDeviceStats(res.Stats),
+		PageMetadata: &grpcReadersV1.PageMetadata{
+			Offset: res.PageMetadata.Offset,
+			Limit:  res.PageMetadata.Limit,
+		},
+	}, nil
+}
+
+func toResponseDeviceStats(stats []readers.DeviceStat) []*grpcReadersV1.DeviceStat {
+	res := make([]*grpcReadersV1.DeviceStat, 0, len(stats))
+	for _, s := range stats {
+		res = append(res, &grpcReadersV1.DeviceStat{
+			Id:           s.ID,
+			LastSeen:     s.LastSeen,
+			MessageCount: s.MessageCount,
+		})
+	}
+	return res
+}
+
+func (s *readersGrpcServer) ListGatewayDevices(ctx context.Context, req *grpcReadersV1.ListGatewayDevicesReq) (*grpcReadersV1.DeviceStatsRes, error) {
+	_, res, err := s.listGatewayDevices.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, grpcapi.EncodeError(err)
+	}
+	return res.(*grpcReadersV1.DeviceStatsRes), nil
+}
+
+func (s *readersGrpcServer) ListDeviceGateways(ctx context.Context, req *grpcReadersV1.ListDeviceGatewaysReq) (*grpcReadersV1.DeviceStatsRes, error) {
+	_, res, err := s.listDeviceGateways.ServeGRPC(ctx, req)
+	if err != nil {
+		return nil, grpcapi.EncodeError(err)
+	}
+	return res.(*grpcReadersV1.DeviceStatsRes), nil
 }
 
 func toResponseMessages(messages []readers.Message) []*grpcReadersV1.Message {

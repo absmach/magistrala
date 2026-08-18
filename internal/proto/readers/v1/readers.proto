@@ -12,6 +12,19 @@ option go_package = "github.com/absmach/magistrala/api/grpc/readers/v1";
 service ReadersService {
   rpc ReadMessages(ReadMessagesReq)
     returns (ReadMessagesRes) {}
+
+  // ListGatewayDevices returns the devices observed publishing through a
+  // gateway (MG-15): distinct device_id values for messages on channel_id
+  // published by publisher_id, each with its last-seen time and message
+  // count.
+  rpc ListGatewayDevices(ListGatewayDevicesReq)
+    returns (DeviceStatsRes) {}
+
+  // ListDeviceGateways returns the gateways observed relaying for a device
+  // (MG-15): distinct publisher values for messages on channel_id carrying
+  // device_id, each with its last-seen time and message count.
+  rpc ListDeviceGateways(ListDeviceGatewaysReq)
+    returns (DeviceStatsRes) {}
 }
 
 message PageMetadata {
@@ -82,6 +95,38 @@ message ReadMessagesReq {
   string channel_id                   = 1;
   string domain_id                    = 2;
   PageMetadata page_metadata          = 3;
+}
+
+// DeviceStat is one row of the MG-15 observed-device aggregation: a distinct
+// identity (a device serial or a gateway's publisher id, depending on
+// direction) observed on a channel within a time range. last_seen carries
+// the same raw numeric time representation as the rest of this package
+// (see readers.DeviceStat in the Go package this mirrors), not a converted
+// timestamp.
+message DeviceStat {
+  string id                = 1;
+  double last_seen         = 2;
+  uint64 message_count     = 3;
+}
+
+message DeviceStatsRes {
+  uint64 total                     = 1;
+  PageMetadata page_metadata       = 2;
+  repeated DeviceStat stats        = 3;
+}
+
+message ListGatewayDevicesReq {
+  string domain_id            = 1;
+  string channel_id           = 2;
+  string publisher_id         = 3;
+  PageMetadata page_metadata  = 4;
+}
+
+message ListDeviceGatewaysReq {
+  string domain_id            = 1;
+  string channel_id           = 2;
+  string device_id            = 3;
+  PageMetadata page_metadata  = 4;
 }
 
 // Aggregation defines supported data aggregations.

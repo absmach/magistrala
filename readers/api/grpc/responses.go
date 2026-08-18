@@ -14,3 +14,9 @@ type readMessagesRes struct {
 }
 
 type Message any
+
+type deviceStatsRes struct {
+	Total uint64
+	Stats []readers.DeviceStat
+	readers.PageMetadata
+}

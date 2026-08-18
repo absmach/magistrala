@@ -10,6 +10,9 @@ import (
 	"sync"
 	"time"
 
+	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
+	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/readers"
 )
@@ -283,6 +286,59 @@ func (a *readAuthorizer) isDomainAdmin(ctx context.Context, domain, subject stri
 		Permission:  policies.AdminPermission,
 	})
 	return err == nil
+}
+
+// authzDeviceView resolves whether the caller may run one of the MG-15
+// observed-device aggregation queries, and what to narrow it with.
+//
+// It mirrors authnAuthz: authenticate, then a channel-level subscribe check,
+// then — for a non-admin domain user — per-device scope resolution. The
+// requestedPublishers/requestedDeviceIDs passed here differ by direction: the
+// device->gateways endpoint names the device the caller must be authorized
+// for, so it is passed as a one-element requestedDeviceIDs and must survive
+// the same intersection a filter would. The gateway->devices endpoint names
+// the gateway only as the source of the roster — a single gateway can relay
+// for devices belonging to more than one customer — so it passes neither
+// identity and relies on the resolved scope alone to bound the query: the
+// caller must hold at least one device grant (otherwise noAccess, reported as
+// an empty page, never an error), but never needs to hold a grant on the
+// gateway client itself.
+func authzDeviceView(ctx context.Context, chanID, domain, token, key string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
+	clientID, clientType, superAdmin, err := authenticate(ctx, token, key, domain, authn, clients)
+	if err != nil {
+		return nil, false, err
+	}
+	if err := authorize(ctx, clientID, clientType, chanID, domain, channels); err != nil {
+		return nil, false, err
+	}
+
+	if superAdmin {
+		return nil, false, nil
+	}
+
+	// Per-device grants only exist for domain users, not for clients
+	// authenticating with a secret key, so a client cannot be narrowed by
+	// DeviceScope. The roster is therefore returned unscoped: the client is
+	// still bound by the channel grant just checked, and so sees the full set
+	// of distinct devices (or gateways) on that channel — the same
+	// channel-level visibility its ReadMessages calls already have. This is
+	// deliberate: secret-key clients predate per-device grants, and narrowing
+	// them to a scope they cannot meaningfully be granted is not possible, so
+	// the honest behaviour is channel-scoped and full, mirroring ReadMessages
+	// (MG-08).
+	if clientType != policies.UserType {
+		return nil, false, nil
+	}
+
+	resolved, err := readAuthz.resolve(ctx, domain, clientID, requestedPublishers, requestedDeviceIDs)
+	if err != nil {
+		return nil, false, err
+	}
+	if resolved.noAccess {
+		return nil, true, nil
+	}
+
+	return resolved.scope, false, nil
 }
 
 // requestedPublishers collects the publisher IDs the caller asked to filter

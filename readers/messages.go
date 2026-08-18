@@ -26,6 +26,67 @@ type MessageRepository interface {
 	// ReadAll skips given number of messages for given channel and returns next
 	// limited number of messages.
 	ReadAll(chanID string, pm PageMetadata) (MessagesPage, error)
+
+	// ListGatewayDevices returns the distinct device_id values observed on
+	// channel chanID among messages published by publisherID — a gateway's
+	// client id — each with the last time it was seen and how many messages
+	// it produced (MG-15). This is "devices seen coming through this
+	// gateway"; it says nothing about what was commissioned onto the
+	// gateway, only what has actually published.
+	//
+	// Only pm's Offset, Limit, From, To and DeviceScope fields are honoured;
+	// the rest of PageMetadata's filters do not apply to this aggregation.
+	// DeviceScope, when set, narrows the returned device_id values to the
+	// caller's authorized device set — a single gateway can relay for
+	// devices belonging to more than one authorized caller, so the roster
+	// has to be narrowed row by row, not just gated at the request level.
+	ListGatewayDevices(chanID, publisherID string, pm PageMetadata) (DeviceStatsPage, error)
+
+	// ListDeviceGateways returns the distinct publisher values observed on
+	// channel chanID among messages carrying device_id deviceID — the
+	// gateways that have relayed for this device — each with the last time
+	// it was seen and how many messages it produced (MG-15). A device can be
+	// relayed by more than one gateway, so this is a roster, not a lookup.
+	//
+	// Only pm's Offset, Limit, From and To fields are honoured. DeviceScope
+	// narrowing does not apply on this side: deviceID is itself the
+	// authorization boundary (checked before this is ever called), so every
+	// row this can return already belongs to that one authorized device,
+	// whichever gateway relayed it. Narrowing the publisher column against
+	// the caller's own publisher grant would additionally require the
+	// caller to be separately authorized for the relaying gateway's
+	// identity, which is not how device authorization works here and would
+	// wrongly empty out exactly the gateway-relayed case this exists to
+	// serve.
+	ListDeviceGateways(chanID, deviceID string, pm PageMetadata) (DeviceStatsPage, error)
+}
+
+// DeviceStat is one row of the observed-device aggregation (MG-15): a
+// distinct identity — a device serial for the gateway-to-devices direction, a
+// gateway's publisher id for the inverse — observed on a channel within a
+// time range.
+//
+// LastSeen carries the raw numeric value of MAX(time) over the matching
+// rows, the same representation senml.Message.Time and PageMetadata.From/To
+// already use throughout this package, rather than a converted wall-clock
+// timestamp. Postgres and Timescale do not agree end to end on the unit
+// "time" is stored in (compare this package's own From/To handling with
+// timescale's time_bucket arithmetic), so a conversion here would have to
+// commit to a unit per backend and risks silently picking the wrong one.
+// Passing the column value straight through keeps this consistent with
+// every other time value the package already exposes.
+type DeviceStat struct {
+	ID           string
+	LastSeen     float64
+	MessageCount uint64
+}
+
+// DeviceStatsPage is a page of DeviceStat rows plus paging metadata,
+// mirroring MessagesPage.
+type DeviceStatsPage struct {
+	PageMetadata
+	Total uint64
+	Stats []DeviceStat
 }
 
 // Message represents any message format.

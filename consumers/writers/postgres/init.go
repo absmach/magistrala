@@ -58,6 +58,26 @@ func Migration() *migrate.MemoryMigrationSource {
 					`ALTER TABLE messages DROP COLUMN IF EXISTS device_id`,
 				},
 			},
+			{
+				// Supports the MG-15 observed-device aggregation: distinct
+				// device_id values grouped for a channel+publisher (a
+				// gateway's roster), and the mirror grouped by publisher for
+				// a channel+device_id (a device's gateways). Plain Postgres
+				// has had no secondary index on this table until now — every
+				// other filter here already relies on a full scan, since
+				// even `channel` alone isn't indexed — so both directions
+				// get one rather than leaving the inverse to a scan a new
+				// index elsewhere would have made easy to overlook.
+				Id: "messages_4",
+				Up: []string{
+					`CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id ON messages (channel, publisher, device_id)`,
+					`CREATE INDEX IF NOT EXISTS idx_channel_device_id_publisher ON messages (channel, device_id, publisher)`,
+				},
+				Down: []string{
+					`DROP INDEX IF EXISTS idx_channel_publisher_device_id`,
+					`DROP INDEX IF EXISTS idx_channel_device_id_publisher`,
+				},
+			},
 		},
 	}
 }

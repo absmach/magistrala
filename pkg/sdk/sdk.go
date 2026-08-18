@@ -103,9 +103,10 @@ type MessagePageMetadata struct {
 // MessagePageMetadata: left unset (zero), the server applies its own
 // default bound rather than running an unbounded aggregation.
 //
-// From/To are Unix epoch seconds, matching MessagePageMetadata and the
-// LastSeen field on the returned stats. A deployment storing
-// millisecond-precision timestamps will get an empty page for a defaulted
+// From/To are Unix epoch nanoseconds, matching MessagePageMetadata and the
+// LastSeen field on the returned stats — the unit the built-in senml/json
+// transformers store message time in (see transformers.ToUnixNano). A
+// deployment storing a different unit will get an empty page for a defaulted
 // window; supply from/to in your own unit explicitly when needed.
 type DeviceViewPageMetadata struct {
 	Offset uint64  `json:"offset,omitempty"`

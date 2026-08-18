@@ -323,7 +323,7 @@ func TestDecodeGatewayDevicesAppliesDefaultWindow(t *testing.T) {
 	assert.True(t, req.filterIsPublisher, "the gateway->devices transport must mark filterVal as a publisher id")
 	assert.NotZero(t, req.pageMeta.From)
 	assert.NotZero(t, req.pageMeta.To)
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), req.pageMeta.To-req.pageMeta.From, 2)
+	assert.InDelta(t, float64(deviceViewDefaultWindow.Nanoseconds()), req.pageMeta.To-req.pageMeta.From, 2)
 }
 
 // A caller who supplies either bound gets exactly what they asked for,
@@ -358,12 +358,13 @@ func TestDecodeDeviceGatewaysReadsDeviceIDQueryParam(t *testing.T) {
 // close a 24h window around the one supplied, so the query can never turn
 // into an unbounded scan.
 func TestDefaultTimeWindowCompletesPartialBounds(t *testing.T) {
+	window := float64(deviceViewDefaultWindow.Nanoseconds())
 	from, to := defaultTimeWindow(50, 0)
 	assert.Equal(t, float64(50), from)
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), to-from, 2)
+	assert.InDelta(t, window, to-from, 2)
 
 	from, to = defaultTimeWindow(0, 50)
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), to-from, 2)
+	assert.InDelta(t, window, to-from, 2)
 	assert.Equal(t, float64(50), to)
 }
 
@@ -372,7 +373,7 @@ func TestDefaultTimeWindowFillsInLast24hWhenBothAbsent(t *testing.T) {
 	from, to := defaultTimeWindow(0, 0)
 	after := time.Now()
 
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), to-from, 2)
-	assert.GreaterOrEqual(t, to, float64(before.Unix()))
-	assert.LessOrEqual(t, to, float64(after.Unix())+1)
+	assert.InDelta(t, float64(deviceViewDefaultWindow.Nanoseconds()), to-from, 2)
+	assert.GreaterOrEqual(t, to, float64(before.UnixNano()))
+	assert.LessOrEqual(t, to, float64(after.UnixNano()))
 }

@@ -22,11 +22,14 @@ const (
 	// unbounded partition scan on a busy channel, and the gRPC path can
 	// trigger it just as easily as the HTTP path.
 	//
-	// The window is expressed in seconds (Unix epoch), matching the
-	// From/To/LastSeen convention used across the readers API, so on a
-	// deployment storing millisecond-precision timestamps a caller relying on
-	// the default gets an empty roster for the last 24h; supply from/to
-	// explicitly in your own unit.
+	// The window is expressed in the readers package's stored-time unit,
+	// which for the built-in senml/json transformers is Unix nanoseconds:
+	// they run every absolute time through transformers.ToUnixNano before
+	// the writers persist it, and PageMetadata.From/To and the returned
+	// LastSeen values use that same representation (see DeviceStat). On a
+	// deployment storing any other unit a caller relying on the default
+	// would get an empty roster for the last 24h; supply from/to explicitly
+	// in your own unit.
 	deviceViewDefaultWindow = 24 * time.Hour
 
 	aggregationMax   = "MAX"
@@ -42,13 +45,14 @@ const (
 //   - only to supplied:        [to-24h, to]
 //   - only from supplied:      [from, from+24h]
 //
-// A caller who supplies both bounds gets exactly what they asked for,
-// unmodified.
+// The bounds are Unix nanoseconds, matching the unit the senml/json
+// transformers store time in (see deviceViewDefaultWindow). A caller who
+// supplies both bounds gets exactly what they asked for, unmodified.
 func defaultTimeWindow(from, to float64) (float64, float64) {
-	window := float64(int64(deviceViewDefaultWindow / time.Second))
+	window := float64(deviceViewDefaultWindow.Nanoseconds())
 	switch {
 	case from == 0 && to == 0:
-		now := float64(time.Now().Unix())
+		now := float64(time.Now().UnixNano())
 		return now - window, now
 	case from == 0:
 		return to - window, to

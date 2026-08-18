@@ -74,14 +74,17 @@ func TestDecodeListDeviceGatewaysRequest(t *testing.T) {
 
 // TestDecodeDeviceViewAppliesDefaultWindow asserts the gRPC device-view
 // decoders bound a windowless query to the last 24h, mirroring the HTTP
-// transport, so an unbounded GROUP BY is never the easy default.
+// transport, so an unbounded GROUP BY is never the easy default. The default
+// bounds are Unix nanoseconds, the unit the senml/json transformers store
+// time in.
 func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
-	now := time.Now()
+	window := float64(deviceViewDefaultWindow.Nanoseconds())
+	before := time.Now()
 
 	gotGateway, err := decodeListGatewayDevicesRequest(context.Background(), &grpcReadersV1.ListGatewayDevicesReq{
 		ChannelId:   "channel",
 		DomainId:    "domain",
-		PublisherId: "gateway-1",
+		PublisherId: "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Offset: 0,
 			Limit:  10,
@@ -90,8 +93,8 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 	require.NoError(t, err)
 	gatewayReq, ok := gotGateway.(deviceViewReq)
 	require.True(t, ok)
-	assert.InDelta(t, float64(now.Unix()), gatewayReq.pageMeta.To, 2)
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), gatewayReq.pageMeta.To-gatewayReq.pageMeta.From, 2)
+	assert.GreaterOrEqual(t, gatewayReq.pageMeta.To, float64(before.UnixNano()))
+	assert.InDelta(t, window, gatewayReq.pageMeta.To-gatewayReq.pageMeta.From, 2)
 
 	gotDevice, err := decodeListDeviceGatewaysRequest(context.Background(), &grpcReadersV1.ListDeviceGatewaysReq{
 		ChannelId: "channel",
@@ -105,8 +108,8 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 	require.NoError(t, err)
 	deviceReq, ok := gotDevice.(deviceViewReq)
 	require.True(t, ok)
-	assert.InDelta(t, float64(now.Unix()), deviceReq.pageMeta.To, 2)
-	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), deviceReq.pageMeta.To-deviceReq.pageMeta.From, 2)
+	assert.GreaterOrEqual(t, deviceReq.pageMeta.To, float64(before.UnixNano()))
+	assert.InDelta(t, window, deviceReq.pageMeta.To-deviceReq.pageMeta.From, 2)
 }
 
 // TestDeviceViewReqValidateRejectsMalformedPublisherID asserts the gRPC

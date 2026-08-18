@@ -102,6 +102,11 @@ type MessagePageMetadata struct {
 // ListDeviceGateways. From and To follow the same convention as
 // MessagePageMetadata: left unset (zero), the server applies its own
 // default bound rather than running an unbounded aggregation.
+//
+// From/To are Unix epoch seconds, matching MessagePageMetadata and the
+// LastSeen field on the returned stats. A deployment storing
+// millisecond-precision timestamps will get an empty page for a defaulted
+// window; supply from/to in your own unit explicitly when needed.
 type DeviceViewPageMetadata struct {
 	Offset uint64  `json:"offset,omitempty"`
 	Limit  uint64  `json:"limit,omitempty"`

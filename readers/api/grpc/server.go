@@ -101,9 +101,10 @@ func decodeListGatewayDevicesRequest(_ context.Context, grpcReq any) (any, error
 	req := grpcReq.(*grpcReadersV1.ListGatewayDevicesReq)
 	from, to := defaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
 	return deviceViewReq{
-		chanID:    req.GetChannelId(),
-		domain:    req.GetDomainId(),
-		filterVal: req.GetPublisherId(),
+		chanID:            req.GetChannelId(),
+		domain:            req.GetDomainId(),
+		filterVal:         req.GetPublisherId(),
+		filterIsPublisher: true,
 		pageMeta: readers.PageMetadata{
 			Offset: req.GetPageMetadata().GetOffset(),
 			Limit:  req.GetPageMetadata().GetLimit(),

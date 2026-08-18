@@ -9,6 +9,7 @@ import (
 	"time"
 
 	grpcReadersV1 "github.com/absmach/magistrala/api/grpc/readers/v1"
+	"github.com/absmach/magistrala/readers"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -106,4 +107,32 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 	require.True(t, ok)
 	assert.InDelta(t, float64(now.Unix()), deviceReq.pageMeta.To, 2)
 	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), deviceReq.pageMeta.To-deviceReq.pageMeta.From, 2)
+}
+
+// TestDeviceViewReqValidateRejectsMalformedPublisherID asserts the gRPC
+// device-view request rejects a publisher id that is not a UUID — the
+// publishers column is a UUID column, so a malformed value must surface as a
+// request error, not a database error — while leaving device serials (which
+// have no format constraint, MG-09) untouched.
+func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
+	valid := deviceViewReq{
+		chanID:            "channel",
+		domain:            "domain",
+		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
+		filterIsPublisher: true,
+		pageMeta:          readers.PageMetadata{Limit: 10},
+	}
+	require.NoError(t, valid.validate())
+
+	malformed := valid
+	malformed.filterVal = "not-a-uuid"
+	require.Error(t, malformed.validate())
+
+	serial := deviceViewReq{
+		chanID:    "channel",
+		domain:    "domain",
+		filterVal: "Meter.A-01:X",
+		pageMeta:  readers.PageMetadata{Limit: 10},
+	}
+	require.NoError(t, serial.validate())
 }

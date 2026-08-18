@@ -279,6 +279,35 @@ func TestDeviceViewReqValidateRequiresCredentials(t *testing.T) {
 	assert.Error(t, err)
 }
 
+// The gateway->devices direction keys on a publisher id, which lives in a
+// UUID column; a malformed value must surface as a request error, not a
+// database error. The device->gateways direction keys on a device serial,
+// which has no format constraint (MG-09), so it is left alone.
+func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
+	valid := deviceViewReq{
+		chanID:            e2eChanID,
+		token:             "token",
+		domain:            e2eDomain,
+		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
+		filterIsPublisher: true,
+		pageMeta:          readers.PageMetadata{Limit: 10},
+	}
+	require.NoError(t, valid.validate())
+
+	malformed := valid
+	malformed.filterVal = "not-a-uuid"
+	require.Error(t, malformed.validate())
+
+	serial := deviceViewReq{
+		chanID:    e2eChanID,
+		token:     "token",
+		domain:    e2eDomain,
+		filterVal: "Meter.A-01:X",
+		pageMeta:  readers.PageMetadata{Limit: 10},
+	}
+	require.NoError(t, serial.validate())
+}
+
 // The unbounded form must not be the easy one to call: omitting both from
 // and to bounds the query to the last 24h rather than the whole table.
 func TestDecodeGatewayDevicesAppliesDefaultWindow(t *testing.T) {
@@ -291,6 +320,7 @@ func TestDecodeGatewayDevicesAppliesDefaultWindow(t *testing.T) {
 	req, ok := decoded.(deviceViewReq)
 	require.True(t, ok)
 	assert.Equal(t, "gw-1", req.filterVal)
+	assert.True(t, req.filterIsPublisher, "the gateway->devices transport must mark filterVal as a publisher id")
 	assert.NotZero(t, req.pageMeta.From)
 	assert.NotZero(t, req.pageMeta.To)
 	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), req.pageMeta.To-req.pageMeta.From, 2)
@@ -321,15 +351,19 @@ func TestDecodeDeviceGatewaysReadsDeviceIDQueryParam(t *testing.T) {
 	req, ok := decoded.(deviceViewReq)
 	require.True(t, ok)
 	assert.Equal(t, "Meter.A-01:X", req.filterVal)
+	assert.False(t, req.filterIsPublisher, "the device->gateways transport must not treat a serial as a publisher id")
 }
 
-func TestDefaultTimeWindowLeavesPartialBoundsAlone(t *testing.T) {
+// A partial bound is not left dangling: the missing bound is defaulted to
+// close a 24h window around the one supplied, so the query can never turn
+// into an unbounded scan.
+func TestDefaultTimeWindowCompletesPartialBounds(t *testing.T) {
 	from, to := defaultTimeWindow(50, 0)
 	assert.Equal(t, float64(50), from)
-	assert.Zero(t, to)
+	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), to-from, 2)
 
 	from, to = defaultTimeWindow(0, 50)
-	assert.Zero(t, from)
+	assert.InDelta(t, deviceViewDefaultWindow.Seconds(), to-from, 2)
 	assert.Equal(t, float64(50), to)
 }
 

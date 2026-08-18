@@ -234,17 +234,19 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 }
 
 func decodeGatewayDevices(_ context.Context, r *http.Request) (any, error) {
-	return decodeDeviceView(r, publisherKey)
+	return decodeDeviceView(r, publisherKey, true)
 }
 
 func decodeDeviceGateways(_ context.Context, r *http.Request) (any, error) {
-	return decodeDeviceView(r, deviceIDKey)
+	return decodeDeviceView(r, deviceIDKey, false)
 }
 
 // decodeDeviceView decodes the shared request shape of both MG-15
 // observed-device endpoints. idKey names the query parameter holding the
-// fixed gateway publisher id or device serial for the given direction.
-func decodeDeviceView(r *http.Request, idKey string) (any, error) {
+// fixed gateway publisher id or device serial for the given direction;
+// filterIsPublisher records which one it is, so that validate() can check a
+// publisher id for UUID well-formedness while leaving serials unconstrained.
+func decodeDeviceView(r *http.Request, idKey string, filterIsPublisher bool) (any, error) {
 	offset, err := apiutil.ReadNumQuery[uint64](r, offsetKey, defOffset)
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
@@ -272,11 +274,12 @@ func decodeDeviceView(r *http.Request, idKey string) (any, error) {
 	from, to = defaultTimeWindow(from, to)
 
 	req := deviceViewReq{
-		chanID:    chi.URLParam(r, "chanID"),
-		token:     apiutil.ExtractBearerToken(r),
-		domain:    chi.URLParam(r, "domainID"),
-		key:       apiutil.ExtractClientSecret(r),
-		filterVal: filterVal,
+		chanID:            chi.URLParam(r, "chanID"),
+		token:             apiutil.ExtractBearerToken(r),
+		domain:            chi.URLParam(r, "domainID"),
+		key:               apiutil.ExtractClientSecret(r),
+		filterVal:         filterVal,
+		filterIsPublisher: filterIsPublisher,
 		pageMeta: readers.PageMetadata{
 			Offset: offset,
 			Limit:  limit,

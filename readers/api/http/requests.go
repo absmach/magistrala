@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	api "github.com/absmach/magistrala/api/http"
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/readers"
 )
@@ -67,20 +68,38 @@ func (req listMessagesReq) validate() error {
 	return nil
 }
 
-// deviceViewDefaultWindow bounds an MG-15 observed-device query to the last
-// 24h when the caller supplies neither from nor to. `GROUP BY device_id`
-// (or publisher) with no time bound at all is a full, unbounded partition
-// scan on a busy channel — this keeps that form from being the easy one to
-// call by accident. A caller who supplies either bound is assumed to mean
-// it and gets exactly what they asked for, unmodified.
+// deviceViewDefaultWindow bounds an MG-15 observed-device query. `GROUP BY
+// device_id` (or publisher) with no time bound at all is a full, unbounded
+// partition scan on a busy channel — this keeps that form from being the easy
+// one to call by accident.
+//
+// The window is expressed in seconds (Unix epoch), matching the From/To/LastSeen
+// convention used across the readers API, so on a deployment storing
+// millisecond-precision timestamps a caller relying on the default gets an
+// empty roster for the last 24h; supply from/to explicitly in your own unit.
 const deviceViewDefaultWindow = 24 * time.Hour
 
+// defaultTimeWindow fills in whichever of the two bounds the caller left at
+// zero so the resulting query is always bounded to a 24h window:
+//   - neither bound supplied: last 24h, [now-24h, now]
+//   - only to supplied:        [to-24h, to]
+//   - only from supplied:      [from, from+24h]
+//
+// A caller who supplies both bounds gets exactly what they asked for,
+// unmodified.
 func defaultTimeWindow(from, to float64) (float64, float64) {
-	if from != 0 || to != 0 {
+	window := float64(int64(deviceViewDefaultWindow / time.Second))
+	switch {
+	case from == 0 && to == 0:
+		now := float64(time.Now().Unix())
+		return now - window, now
+	case from == 0:
+		return to - window, to
+	case to == 0:
+		return from, from + window
+	default:
 		return from, to
 	}
-	now := time.Now()
-	return float64(now.Add(-deviceViewDefaultWindow).Unix()), float64(now.Unix())
 }
 
 // deviceViewReq is the shared request shape of both MG-15 observed-device
@@ -92,13 +111,22 @@ func defaultTimeWindow(from, to float64) (float64, float64) {
 // the source of the roster rather than a filter the caller must hold, and
 // the caller's DeviceScope does the narrowing instead (see ListGatewayDevices
 // in readers/messages.go).
+//
+// filterIsPublisher marks the gateway->devices direction, where filterVal is
+// a publisher client id and must therefore parse as a UUID: the publishers
+// column is a UUID column, so a malformed value would otherwise surface as a
+// database error rather than a request error. The device->gateways direction
+// carries a device serial, which has no format constraint at all (MG-09;
+// Atom's external_id accepts `/`, spaces and unicode), so it is left
+// unvalidated.
 type deviceViewReq struct {
-	chanID    string
-	token     string
-	domain    string
-	key       string
-	filterVal string
-	pageMeta  readers.PageMetadata
+	chanID            string
+	token             string
+	domain            string
+	key               string
+	filterVal         string
+	filterIsPublisher bool
+	pageMeta          readers.PageMetadata
 }
 
 func (req deviceViewReq) validate() error {
@@ -108,6 +136,12 @@ func (req deviceViewReq) validate() error {
 
 	if req.chanID == "" || req.filterVal == "" {
 		return apiutil.ErrMissingID
+	}
+
+	if req.filterIsPublisher {
+		if err := api.ValidateUUID(req.filterVal); err != nil {
+			return err
+		}
 	}
 
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {

@@ -243,7 +243,7 @@ func TestListGatewayDevices(t *testing.T) {
 			req: &grpcReadersV1.ListGatewayDevicesReq{
 				ChannelId:   channelID,
 				DomainId:    domain,
-				PublisherId: "gateway-1",
+				PublisherId: "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -261,6 +261,20 @@ func TestListGatewayDevices(t *testing.T) {
 					Limit:  testLimit,
 				},
 			},
+		},
+		{
+			desc: "malformed publisher id",
+			req: &grpcReadersV1.ListGatewayDevicesReq{
+				ChannelId:   channelID,
+				DomainId:    domain,
+				PublisherId: "gateway-1",
+				PageMetadata: &grpcReadersV1.PageMetadata{
+					Offset: testOffset,
+					Limit:  testLimit,
+				},
+			},
+			want: &grpcReadersV1.DeviceStatsRes{},
+			err:  apiutil.ErrInvalidIDFormat,
 		},
 		{
 			desc: "missing publisher id",

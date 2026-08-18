@@ -317,7 +317,15 @@ func authzDeviceView(ctx context.Context, chanID, domain, token, key string, aut
 	}
 
 	// Per-device grants only exist for domain users, not for clients
-	// authenticating with a secret key.
+	// authenticating with a secret key, so a client cannot be narrowed by
+	// DeviceScope. The roster is therefore returned unscoped: the client is
+	// still bound by the channel grant just checked, and so sees the full set
+	// of distinct devices (or gateways) on that channel — the same
+	// channel-level visibility its ReadMessages calls already have. This is
+	// deliberate: secret-key clients predate per-device grants, and narrowing
+	// them to a scope they cannot meaningfully be granted is not possible, so
+	// the honest behaviour is channel-scoped and full, mirroring ReadMessages
+	// (MG-08).
 	if clientType != policies.UserType {
 		return nil, false, nil
 	}

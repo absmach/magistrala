@@ -353,7 +353,13 @@ grpc_mtls_certs:
 	$(MAKE) -C docker/ssl clients_grpc_certs
 
 provision_atom_tokens:
-	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
+	# This target brings up only atom-db and atom -- nginx and the FluxMQ
+	# chain are out of scope here entirely, so atom must not be made to wait
+	# on its AMQP proxy this early; see bootstrap_atom_events_amqp's comment
+	# for why. Without this override, atom never becomes healthy within the
+	# wait timeout and this step fails outright on every run, since
+	# docker/.env always carries the real ATOM_EVENTS_AMQP_URL.
+	ATOM_EVENTS_AMQP_URL= $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) up -d --wait --wait-timeout 120 atom
 	$(MAKE) docker_atom-bootstrap
 	$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_PROVISION_ENV_FILES) -p $(DOCKER_PROJECT) run --rm --no-deps --user "$(HOST_UID):$(HOST_GID)" -v "$(PWD)/docker:/host/docker" atom-bootstrap provision-tokens --output /host/docker/.env.tokens
 

@@ -119,7 +119,7 @@ func (c *Client) UpsertEntity(ctx context.Context, entity Entity) error {
 
 // entityFields is the entity selection every entity query shares, so a new
 // field cannot reach one caller and not another.
-const entityFields = `id kind name tenant_id: tenantId device_type_id: profileId device_type_version_id: profileVersionId status attributes created_at: createdAt updated_at: updatedAt`
+const entityFields = `id kind name external_id: externalId tenant_id: tenantId device_type_id: profileId device_type_version_id: profileVersionId status attributes created_at: createdAt updated_at: updatedAt`
 
 func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error) {
 	var out struct {
@@ -951,6 +951,7 @@ func entityCreateInput(entity Entity) map[string]any {
 	input := map[string]any{atomInputKeyName: entity.Name}
 	setIfNotEmpty(input, "id", entity.ID)
 	setIfNotEmpty(input, atomInputKeyKind, entity.Kind)
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, "tenantId", entity.TenantID)
 	setIfNotEmpty(input, atomInputKeyProfileID, entity.DeviceTypeID)
 	setIfNotEmpty(input, atomInputKeyProfileVersionID, entity.DeviceTypeVersionID)
@@ -968,6 +969,10 @@ func entityCreateInput(entity Entity) map[string]any {
 func entityUpdateInput(entity Entity) map[string]any {
 	input := map[string]any{}
 	setIfNotEmpty(input, atomInputKeyName, entity.Name)
+	// externalId is MaybeUndefined on Atom's side: omitted leaves it unchanged,
+	// explicit null clears it. Omitting on empty keeps this an update of what
+	// was set, never a silent clear.
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, atomAttributeStatus, entity.Status)
 	setIfNotEmpty(input, atomInputKeyProfileID, entity.DeviceTypeID)
 	setIfNotEmpty(input, atomInputKeyProfileVersionID, entity.DeviceTypeVersionID)

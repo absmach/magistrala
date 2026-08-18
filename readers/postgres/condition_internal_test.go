@@ -95,3 +95,71 @@ func TestFmtConditionDeviceIDsWithSingularPublisher(t *testing.T) {
 	assert.True(t, strings.Contains(cond, `publisher = :publisher`), "condition was %q", cond)
 	assert.False(t, strings.Contains(cond, `publisher = ANY(:publishers)`), "condition was %q", cond)
 }
+
+const scopeClause = `publisher = ANY(:scope_publishers) OR device_id = ANY(:scope_device_ids)`
+
+// DeviceScope is the authorization boundary, so unlike the convenience filters
+// an empty one must survive into the query and exclude every row. Being a
+// pointer is what makes that work: `omitempty` drops nil, not a non-nil empty.
+func TestFmtConditionDeviceScope(t *testing.T) {
+	cases := []struct {
+		desc     string
+		pageMeta readers.PageMetadata
+		contains bool
+	}{
+		{
+			desc:     "no scope leaves the query unbounded",
+			pageMeta: readers.PageMetadata{},
+			contains: false,
+		},
+		{
+			desc:     "a nil scope leaves the query unbounded",
+			pageMeta: readers.PageMetadata{DeviceScope: nil},
+			contains: false,
+		},
+		{
+			desc:     "an empty scope still bounds the query, so it matches nothing",
+			pageMeta: readers.PageMetadata{DeviceScope: &readers.DeviceScope{}},
+			contains: true,
+		},
+		{
+			desc: "a populated scope bounds the query",
+			pageMeta: readers.PageMetadata{DeviceScope: &readers.DeviceScope{
+				PublisherIDs: []string{"uuid-1"},
+				DeviceIDs:    []string{"Meter.1-01:X"},
+			}},
+			contains: true,
+		},
+		{
+			desc: "a scope with only one projection populated still bounds the query",
+			pageMeta: readers.PageMetadata{DeviceScope: &readers.DeviceScope{
+				PublisherIDs: []string{"uuid-1"},
+			}},
+			contains: true,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			cond := fmtCondition("chan-1", tc.pageMeta)
+			assert.Equal(t, tc.contains, strings.Contains(cond, scopeClause), "condition was %q", cond)
+		})
+	}
+}
+
+// The two projections are OR'd: a device is named by publisher when it publishes
+// for itself and by device_id when a gateway relays for it, and one row carries
+// only one of the two. AND would make gateway-relayed data unreachable.
+func TestFmtConditionDeviceScopeComposesConjunctively(t *testing.T) {
+	cond := fmtCondition("chan-1", readers.PageMetadata{
+		DeviceScope: &readers.DeviceScope{PublisherIDs: []string{"uuid-1"}, DeviceIDs: []string{"serial-1"}},
+		DeviceIDs:   []string{"serial-1"},
+		Subtopic:    "sub",
+		From:        1,
+	})
+
+	assert.True(t, strings.Contains(cond, scopeClause), "condition was %q", cond)
+	assert.True(t, strings.Contains(cond, deviceIDsClause), "condition was %q", cond)
+	assert.True(t, strings.Contains(cond, "subtopic = :subtopic"), "condition was %q", cond)
+	assert.True(t, strings.Contains(cond, "time >= :from"), "condition was %q", cond)
+}

@@ -21,10 +21,15 @@ type Tenant struct {
 }
 
 type Entity struct {
-	ID       string `json:"id,omitempty"`
-	Kind     string `json:"kind"`
-	Name     string `json:"name"`
-	TenantID string `json:"tenant_id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+	// ExternalID is the identifier assigned outside Atom — a device's serial,
+	// MAC or SKU (ATOM-06). Opaque and unvalidated, case-sensitive, trimmed,
+	// unique per tenant among live entities, and returned byte-identical to
+	// what was stored.
+	ExternalID string `json:"external_id,omitempty"`
+	TenantID   string `json:"tenant_id,omitempty"`
 
 	// DeviceTypeID and DeviceTypeVersionID bind the entity to a device type.
 	// With a device type bound, Atom validates Attributes against that

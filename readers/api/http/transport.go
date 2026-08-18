@@ -13,6 +13,7 @@ import (
 	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
 	api "github.com/absmach/magistrala/api/http"
 	apiutil "github.com/absmach/magistrala/api/http/util"
+	atomevents "github.com/absmach/magistrala/pkg/atom/events"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -51,13 +52,22 @@ const (
 	defFormat      = "messages"
 )
 
-// MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices externalIDResolver, svcName, instanceID string) http.Handler {
+// MakeHandler returns a HTTP handler for API endpoints. invalidation may be
+// nil -- e.g. when the Atom events broker is unreachable or unconfigured, see
+// cmd/postgres-reader and cmd/timescale-reader -- in which case readAuthz
+// falls back to pure TTL-based expiry exactly as it did before MG-14; event-
+// driven invalidation is an optimization layered on top of that TTL, never a
+// substitute for it.
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices externalIDResolver, invalidation *atomevents.Registry, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 	}
 
 	readAuthz := newReadAuthorizer(policyEvaluator, policyLister, devices)
+	if invalidation != nil {
+		invalidation.Register(atomevents.FamilyTranslation, readAuthz)
+		invalidation.Register(atomevents.FamilyAuthorizedSet, readAuthz)
+	}
 
 	mux := chi.NewRouter()
 	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(

@@ -48,6 +48,12 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 		{"object group add", "entity.object_group.add", FamilyAuthorizedSet},
 		{"object group remove", "entity.object_group.remove", FamilyAuthorizedSet},
 		{"object groups clear", "entity.object_groups.clear", FamilyAuthorizedSet},
+		{"role assignment create", "role_assignment.create", FamilyAuthorizedSet},
+		{"role assignment delete", "role_assignment.delete", FamilyAuthorizedSet},
+		{"role permission blocks replace", "role.permission_blocks.replace", FamilyAuthorizedSet},
+		{"role delete", "role.delete", FamilyAuthorizedSet},
+		{"role restore", "role.restore", FamilyAuthorizedSet},
+		{"role purge", "role.purge", FamilyAuthorizedSet},
 	}
 
 	for _, tc := range cases {
@@ -106,6 +112,14 @@ var atomEventVocabulary = map[string]struct{}{
 	"group.parent.set": {}, "group.parent.remove": {},
 	"group_member.add": {}, "group_member.remove": {},
 	"direct_policy.create": {}, "direct_policy.delete": {},
+	"role.create":                    {},
+	"role.update":                    {},
+	"role.delete":                    {},
+	"role.restore":                   {},
+	"role.purge":                     {},
+	"role.permission_blocks.replace": {},
+	"role_assignment.create":         {},
+	"role_assignment.delete":         {},
 }
 
 // TestEventFamiliesKeysAreRealAtomEvents guards the "dead name" failure mode:
@@ -132,6 +146,9 @@ func TestAuthorizationAffectingEventsAreMapped(t *testing.T) {
 		"group.parent.set", "group.parent.remove",
 		"group_member.add", "group_member.remove",
 		"direct_policy.create", "direct_policy.delete",
+		"role_assignment.create", "role_assignment.delete",
+		"role.permission_blocks.replace",
+		"role.delete", "role.restore", "role.purge",
 	}
 
 	for _, name := range needed {

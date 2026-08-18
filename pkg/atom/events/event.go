@@ -69,6 +69,20 @@ var eventFamilies = map[string][]string{
 	"entity.object_group.add":    {FamilyAuthorizedSet},
 	"entity.object_group.remove": {FamilyAuthorizedSet},
 	"entity.object_groups.clear": {FamilyAuthorizedSet},
+
+	// Role-based grants resolve through the same subject_effective_grants
+	// union as direct policies (absmach/atom migrations/001_initial.sql), so
+	// granting or revoking a role -- or editing the permission blocks of one
+	// that is already granted -- changes a subject's authorized device set
+	// exactly like direct_policy.* does. role.create and role.update are
+	// deliberately absent: a role grants nothing by itself until it has both a
+	// permission block and an assignment, which the mapped events cover.
+	"role_assignment.create":         {FamilyAuthorizedSet},
+	"role_assignment.delete":         {FamilyAuthorizedSet},
+	"role.permission_blocks.replace": {FamilyAuthorizedSet},
+	"role.delete":                    {FamilyAuthorizedSet},
+	"role.restore":                   {FamilyAuthorizedSet},
+	"role.purge":                     {FamilyAuthorizedSet},
 }
 
 // Handler adapts Atom's domain-event wire format (DomainEventPayload in

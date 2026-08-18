@@ -15,13 +15,19 @@ import (
 	"github.com/absmach/magistrala/pkg/events"
 )
 
-// atomEventsDialTimeout bounds how long NewQueueSubscriber's Connect may spend
-// dialing a broker that accepts neither a connection nor a refusal (a
-// blackholed host). The constructor runs synchronously at service startup
-// (cmd/postgres-reader, cmd/timescale-reader), whose degradation contract
-// says an unreachable broker must not hold up startup: the 10s client default
-// is replaced with this shorter budget, after which the caller falls back to
-// TTL-only invalidation.
+// atomEventsDialTimeout bounds how long NewQueueSubscriber's Connect may
+// spend on the TCP dial itself when the broker accepts neither a connection
+// nor a refusal (a blackholed host). The constructor runs synchronously at
+// service startup (cmd/postgres-reader, cmd/timescale-reader), whose
+// degradation contract says an unreachable broker must not hold up startup:
+// the 10s client default is replaced with this shorter budget, after which
+// the caller falls back to TTL-only invalidation.
+//
+// The bound covers the TCP dial only, not the AMQP handshake: a broker that
+// refuses the connection (ECONNREFUSED) fails immediately regardless, while
+// one that accepts TCP but then stalls the handshake is not bounded here --
+// the FluxMQ client exposes no separate handshake timeout -- so that one
+// atypical failure mode can still hold up startup.
 const atomEventsDialTimeout = 2 * time.Second
 
 var _ events.Subscriber = (*subQueueStore)(nil)
@@ -122,6 +128,9 @@ func NewQueueSubscriber(_ context.Context, url, connectionName string, topology 
 func (es *subQueueStore) Subscribe(ctx context.Context, cfg events.SubscriberConfig) error {
 	if cfg.Stream == "" {
 		return ErrEmptyStream
+	}
+	if cfg.Consumer == "" {
+		return ErrEmptyConsumer
 	}
 	if cfg.Handler == nil {
 		return ErrNilHandler

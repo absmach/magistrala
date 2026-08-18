@@ -145,6 +145,10 @@ func main() {
 		logger.Warn(fmt.Sprintf("Atom events broker unavailable, caches will rely on TTL expiry only: %s", err))
 	} else {
 		defer sub.Close()
+		// See cmd/postgres-reader/main.go: the queue is per service and
+		// shared across replicas, so an event invalidates one replica's cache
+		// and the rest rely on TTL expiry; per-replica queues are a
+		// deployment choice for multi-replica setups.
 		queue := "atom.events." + svcName
 		if err := sub.Subscribe(ctx, events.SubscriberConfig{
 			Consumer: svcName,

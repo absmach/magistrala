@@ -145,6 +145,16 @@ func main() {
 		logger.Warn(fmt.Sprintf("Atom events broker unavailable, caches will rely on TTL expiry only: %s", err))
 	} else {
 		defer sub.Close()
+		// The queue is per service, so postgres-reader receives every event.
+		// Replicas of the same service share this queue name and AMQP
+		// round-robins deliveries between them (competing consumers), so a
+		// given event invalidates only one replica's in-memory cache; the
+		// others fall back to TTL expiry -- the same "slower, not wrong"
+		// degradation as a broker outage. A multi-replica deployment that
+		// wants per-replica invalidation must give each replica its own queue
+		// name (e.g. suffixed with the instance ID); NewQueueSubscriber
+		// documents that a distinct queue name yields a full independent
+		// copy.
 		queue := "atom.events." + svcName
 		if err := sub.Subscribe(ctx, events.SubscriberConfig{
 			Consumer: svcName,

@@ -39,10 +39,59 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 		return ErrGatewaysConflict
 	}
 
+	if err := c.markGateways(ctx, gatewayIDs); err != nil {
+		return err
+	}
+
 	attrs := cloneAttributes(device.Attributes)
 	attrs[atomAttributeGateways] = gatewayIDs
 	_, err = c.UpdateEntity(ctx, deviceID, Entity{Attributes: attrs})
 	return err
+}
+
+// markGateways sets attributes.is_gateway on every id in gatewayIDs that
+// does not already have it. is_gateway is otherwise entirely manual —
+// operators set it themselves when creating or updating a device (see
+// cli/devices.go) — so without this, the two facts that identify a gateway
+// can drift apart: a device can be named in another device's gateways list,
+// making it a real relay, while its own is_gateway attribute stays unset
+// because whoever created it never flagged it. readAuthorizer's R1 scope
+// leg trusts a held device's publisher identity unconditionally whenever
+// is_gateway is false, so that drift reopened finding 02's cross-tenant
+// leak for any gateway an operator forgot to flag (Q1).
+//
+// This only ever sets the flag, never clears it: SetDeviceGateways is the
+// only place in this repo that establishes the relationship, so it is the
+// only place that can reliably keep it in sync, and always setting rather
+// than reconciling both directions means a device dropped from every
+// gateways list simply keeps a flag it no longer strictly needs — the safe
+// direction to be wrong in, unlike the leak this closes.
+func (c *Client) markGateways(ctx context.Context, gatewayIDs []string) error {
+	for _, id := range gatewayIDs {
+		gateway, err := c.GetEntity(ctx, id)
+		if err != nil {
+			if IsNotFound(err) {
+				// Not yet resolvable -- e.g. a forward-declared id, or one
+				// concurrently deleted. SetDeviceGateways has always let a
+				// device's own gateways attribute name an id that does not
+				// (yet, or any longer) resolve, since liveGateways drops it
+				// on the next read regardless; best-effort marking must not
+				// turn that into a hard failure it never was before.
+				continue
+			}
+			return err
+		}
+		if isGateway, _ := gateway.Attributes[atomAttributeIsGateway].(bool); isGateway {
+			continue
+		}
+
+		attrs := cloneAttributes(gateway.Attributes)
+		attrs[atomAttributeIsGateway] = true
+		if _, err := c.UpdateEntity(ctx, id, Entity{Attributes: attrs}); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // DeviceGateways returns the gateway IDs a device declares, dropping any

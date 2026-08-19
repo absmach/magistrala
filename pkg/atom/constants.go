@@ -103,6 +103,11 @@ const (
 	atomAttributeGateways  = "gateways"
 	// atomAttributeIsGateway marks a device as a gateway (spec §8 A12) — a
 	// gateway is not a separate entity kind, just a device with this set.
+	// Operators set it directly when creating or updating a device (see
+	// cli/devices.go), and SetDeviceGateways also sets it on every gateway
+	// it links a device to, so the two ways Magistrala identifies a gateway
+	// — the flag itself, and being named in another device's gateways list
+	// — cannot drift out of sync through this repo's own write path.
 	atomAttributeIsGateway = "is_gateway"
 	atomAttributeMetadata  = "metadata"
 	atomAttributeRoute     = "route"

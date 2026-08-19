@@ -240,6 +240,63 @@ func TestSetDeviceGatewaysConflictWhenExpectedCurrentMismatches(t *testing.T) {
 	}
 }
 
+// A regression test for Q1: is_gateway is otherwise entirely manual, so a
+// device newly linked as a gateway can have no is_gateway attribute at all
+// -- exactly the case that let readAuthorizer's R1 scope leg trust it as an
+// unconditional self-publisher, reopening finding 02's cross-tenant leak.
+// SetDeviceGateways must flag it itself rather than depend on the operator
+// having remembered to.
+func TestSetDeviceGatewaysFlagsNewlyLinkedGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-new", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-new"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	gw := fa.entities["gw-new"]
+	isGateway, _ := gw.Attributes[atomAttributeIsGateway].(bool)
+	if !isGateway {
+		t.Fatalf("expected gw-new to be flagged is_gateway after being linked, got: %+v", gw.Attributes)
+	}
+	if gw.Attributes["source"] != "magistrala" {
+		t.Fatalf("flagging is_gateway must preserve the gateway's other attributes, got: %+v", gw.Attributes)
+	}
+}
+
+// A device already flagged is_gateway must not be rewritten -- only the
+// device's own gateways attribute write should count.
+func TestSetDeviceGatewaysSkipsAlreadyFlaggedGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-already", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-already"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+	if fa.updateCalls != 1 {
+		t.Fatalf("expected exactly one write (device-1's own gateways list), got %d", fa.updateCalls)
+	}
+}
+
+// A gateway id that does not yet resolve must not block the write --
+// SetDeviceGateways has always let a device's own gateways attribute name
+// an id that does not (yet, or any longer) exist; best-effort flagging must
+// not turn that into a new hard failure.
+func TestSetDeviceGatewaysToleratesAnUnresolvableNewGateway(t *testing.T) {
+	_, srv := newFakeAtomDevices(t, Entity{ID: "device-1", Kind: atomKindDevice})
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-not-yet-created"}, nil); err != nil {
+		t.Fatalf("an unresolvable new gateway must not fail the write, got: %v", err)
+	}
+}
+
 func TestSetDeviceGatewaysExpectedCurrentIsOrderIndependent(t *testing.T) {
 	_, srv := newFakeAtomDevices(t,
 		Entity{

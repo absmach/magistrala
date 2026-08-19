@@ -13,6 +13,7 @@ import (
 	"github.com/absmach/magistrala/readers/pgutil"
 	"github.com/jackc/pgerrcode"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 var _ readers.MessageRepository = (*postgresRepository)(nil)
@@ -54,9 +55,16 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	cond := fmtCondition(chanID, rpm)
 
+	// format is a request-supplied table name (readers/api/http/requests.go
+	// restricts it to a bare identifier, but that check lives in a different
+	// package and this call site must not rely on a caller having applied
+	// it). Quoting it here is what actually stops it from being interpreted
+	// as anything other than one identifier -- an unquoted %s would let it
+	// close the FROM clause and append arbitrary SQL that every WHERE
+	// predicate MG-08's authorization relies on sits downstream of.
 	q := fmt.Sprintf(`SELECT * FROM %s
     WHERE %s ORDER BY %s DESC
-	LIMIT :limit OFFSET :offset;`, format, cond, order)
+	LIMIT :limit OFFSET :offset;`, pq.QuoteIdentifier(format), cond, order)
 
 	params := map[string]any{
 		messageFieldChannel:      chanID,
@@ -119,7 +127,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		}
 	}
 
-	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
+	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, pq.QuoteIdentifier(format), cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
 		if pgErr, ok := pgutil.PgError(err); ok {

@@ -4,6 +4,7 @@
 package http
 
 import (
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -16,6 +17,17 @@ import (
 const maxLimitSize = 1000
 
 var validAggregations = []string{"MAX", "MIN", "AVG", "SUM", "COUNT"}
+
+// validFormat matches a bare, unquoted Postgres identifier -- the only shape
+// format may safely take. format ultimately gets interpolated into a FROM
+// clause (readers/postgres and readers/timescale's messages.go) rather than
+// bound as a query parameter, because it names a table, not a value; per-
+// device authorization there is enforced entirely as WHERE predicates against
+// whatever table format names (MG-08), so anything that lets a caller inject
+// SQL through it — a comment sequence, a UNION, even just whitespace —
+// bypasses that authorization wholesale rather than merely misnaming a table.
+// 63 bytes matches Postgres's own NAMEDATALEN identifier limit.
+var validFormat = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,62}$`)
 
 type listMessagesReq struct {
 	chanID   string
@@ -36,6 +48,10 @@ func (req listMessagesReq) validate() error {
 
 	if req.pageMeta.Limit < 1 || req.pageMeta.Limit > maxLimitSize {
 		return apiutil.ErrLimitSize
+	}
+
+	if req.pageMeta.Format != "" && !validFormat.MatchString(req.pageMeta.Format) {
+		return apiutil.ErrInvalidFormat
 	}
 
 	if req.pageMeta.Comparator != "" &&

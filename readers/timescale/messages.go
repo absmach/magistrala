@@ -15,6 +15,7 @@ import (
 	"github.com/absmach/magistrala/readers/pgutil"
 	"github.com/jackc/pgerrcode"
 	"github.com/jmoiron/sqlx" // required for DB access
+	"github.com/lib/pq"
 )
 
 // Table for SenML messages.
@@ -90,8 +91,17 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	where := fmtCondition(rpm)
 
+	// format is a request-supplied table name (readers/api/http/requests.go
+	// restricts it to a bare identifier, but that check lives in a different
+	// package and this call site must not rely on a caller having applied
+	// it). Quoting it is what actually stops it from being interpreted as
+	// anything other than one identifier -- an unquoted %s would let it close
+	// the FROM clause and append arbitrary SQL that every WHERE predicate
+	// MG-08's authorization relies on sits downstream of.
+	quotedFormat := pq.QuoteIdentifier(format)
+
 	var q string
-	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, where)
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, quotedFormat, where)
 
 	if isAggregated {
 		q = fmt.Sprintf(`
@@ -112,11 +122,11 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			%s
 			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), format, where, orderClause, pgData)
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), quotedFormat, where, orderClause, pgData)
 
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, where)
+		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, quotedFormat, where)
 	} else {
-		q = fmt.Sprintf(`SELECT * FROM %s WHERE %s %s %s;`, format, where, orderClause, pgData)
+		q = fmt.Sprintf(`SELECT * FROM %s WHERE %s %s %s;`, quotedFormat, where, orderClause, pgData)
 	}
 
 	params := map[string]any{

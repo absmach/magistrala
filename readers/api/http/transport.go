@@ -58,7 +58,7 @@ const (
 // falls back to pure TTL-based expiry exactly as it did before MG-14; event-
 // driven invalidation is an optimization layered on top of that TTL, never a
 // substitute for it.
-func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices externalIDResolver, invalidation *atomevents.Registry, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices deviceInfoResolver, invalidation *atomevents.Registry, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 	}

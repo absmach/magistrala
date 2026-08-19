@@ -146,3 +146,86 @@ func TestReadWithDeviceScope(t *testing.T) {
 		assert.Equal(t, uint64(len(direct)+len(relayed3)), page.Total)
 	})
 }
+
+// TestReadWithDeviceScopeSelfPublishedBaseName is a regression test for R1: a
+// device publishing for itself in ordinary SenML style — a bn on its own
+// records — populates device_id with whatever base name it chose, which need
+// not relate to its registered serial at all. Before the fix that row matched
+// neither the publisher leg (device_id was no longer "") nor the device_id
+// leg (the base name is not a registered serial), so the row vanished from
+// its own owner's read even though nothing was actually relayed.
+func TestReadWithDeviceScopeSelfPublishedBaseName(t *testing.T) {
+	writer := pwriter.New(db)
+	reader := preader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	deviceUUID := testsutil.GenerateUUID(t)
+	gatewayUUID := testsutil.GenerateUUID(t)
+
+	const (
+		deviceSerial  = "SN-12345"
+		gatewaySerial = "SN-GW-1"
+		baseName      = "urn:dev:ow:10e2073a01080063:"
+	)
+
+	now := float64(time.Now().Unix())
+	// The device publishes for itself, but its own SenML pack carries a bn —
+	// the ordinary way to write SenML — which the transformer accumulates
+	// into device_id (MG-06) even though no gateway is involved.
+	selfPublished := []senml.Message{{
+		Channel:   chanID,
+		Publisher: deviceUUID,
+		Protocol:  mqttProt,
+		Name:      "temp",
+		Time:      now,
+		Value:     &v,
+		DeviceId:  baseName,
+	}}
+	// The gateway relays for a different device — this must stay unreachable
+	// to a caller who does not also hold that device, exactly as before.
+	relayedForOther := []senml.Message{{
+		Channel:   chanID,
+		Publisher: gatewayUUID,
+		Protocol:  mqttProt,
+		Name:      "temp",
+		Time:      now + 1,
+		Value:     &v,
+		DeviceId:  "SOME-OTHER-DEVICE-SERIAL",
+	}}
+
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), append(append([]senml.Message{}, selfPublished...), relayedForOther...)))
+
+	cases := []struct {
+		desc     string
+		scope    *readers.DeviceScope
+		expected []senml.Message
+	}{
+		{
+			desc: "the device's own bn does not hide its self-published rows from its owner",
+			scope: &readers.DeviceScope{
+				PublisherIDs:     []string{deviceUUID},
+				SelfPublisherIDs: []string{deviceUUID},
+				DeviceIDs:        []string{deviceSerial},
+			},
+			expected: selfPublished,
+		},
+		{
+			desc: "a gateway-flagged publisher does not get unconditional trust, even if held",
+			scope: &readers.DeviceScope{
+				PublisherIDs: []string{gatewayUUID},
+				// SelfPublisherIDs deliberately omits gatewayUUID: it is flagged
+				// is_gateway, so readauthz.go never places it here.
+				DeviceIDs: []string{gatewaySerial},
+			},
+			expected: nil,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.desc, func(t *testing.T) {
+			page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, DeviceScope: tc.scope})
+			assert.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+			assert.ElementsMatch(t, fromSenml(tc.expected), page.Messages)
+		})
+	}
+}

@@ -49,6 +49,48 @@ func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[strin
 	return out, nil
 }
 
+// DeviceInfo is what EntityDeviceInfo resolves an id to.
+type DeviceInfo struct {
+	// ExternalID is the identifier the entity was registered under (ATOM-06),
+	// or "" if it has none.
+	ExternalID string
+	// IsGateway reports attributes.is_gateway (spec §8 A12) — a gateway is
+	// not a separate entity kind, just a device with this attribute set.
+	IsGateway bool
+}
+
+// EntityDeviceInfo resolves entity UUIDs to the external identifier and
+// gateway flag they were registered with, in the same round trip. Only
+// entities that exist and are readable appear in the result, so the map is a
+// subset of ids and callers must treat a missing key as "could not resolve"
+// rather than "confirmed not a gateway with no external id" — the zero value
+// of DeviceInfo would otherwise read as both.
+//
+// This is the UUID → attributes direction readAuthorizer needs both halves
+// of: the external id to translate a policy grant into the identity message
+// rows carry (MG-05, MG-06), and the gateway flag to decide whether a row
+// naming this id as publisher can be trusted on that basis alone or must
+// additionally be confirmed by device_id (R1: a device's own bn can populate
+// device_id on its self-published rows, which must not be mistaken for a
+// gateway relaying on someone else's behalf).
+func (c *Client) EntityDeviceInfo(ctx context.Context, ids []string) (map[string]DeviceInfo, error) {
+	raw, _, err := c.batchEntities(ctx, ids, "EntityDeviceInfo", "id external_id: externalId attributes")
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]DeviceInfo, len(raw))
+	for id, data := range raw {
+		var entity Entity
+		if err := json.Unmarshal(data, &entity); err != nil {
+			return nil, err
+		}
+		isGateway, _ := entity.Attributes[atomAttributeIsGateway].(bool)
+		out[id] = DeviceInfo{ExternalID: entity.ExternalID, IsGateway: isGateway}
+	}
+	return out, nil
+}
+
 // entitiesExist reports which of the given entity ids currently resolve —
 // exist and are readable by this client — without fetching anything beyond
 // their id. Used to narrow a declared set (e.g. a device's `gateways`

@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/policies"
 	policymocks "github.com/absmach/magistrala/pkg/policies/mocks"
 	"github.com/absmach/magistrala/readers"
@@ -35,27 +36,38 @@ const (
 	meter1Serial = "Meter.1-01:X"
 	meter2Serial = "Meter.2-02:Y"
 	meter3Serial = "Meter.3-03:Z"
+
+	gatewayUUID   = "uuid-gateway-1"
+	gatewaySerial = "Gateway.1-01:X"
 )
 
-// fakeResolver stands in for Atom's UUID → external_id lookup.
+// fakeResolver stands in for Atom's UUID → device info lookup.
 type fakeResolver struct {
 	serials map[string]string
-	err     error
-	calls   int
-	lastIDs []string
+	// gateways marks ids flagged attributes.is_gateway (spec §8 A12).
+	gateways map[string]struct{}
+	// unresolvable ids are omitted from the result entirely, as a deleted or
+	// unreadable entity would be — distinct from an id merely absent from
+	// serials, which still resolves with an empty external id.
+	unresolvable map[string]struct{}
+	err          error
+	calls        int
+	lastIDs      []string
 }
 
-func (f *fakeResolver) EntityExternalIDs(_ context.Context, ids []string) (map[string]string, error) {
+func (f *fakeResolver) EntityDeviceInfo(_ context.Context, ids []string) (map[string]atom.DeviceInfo, error) {
 	f.calls++
 	f.lastIDs = append([]string{}, ids...)
 	if f.err != nil {
 		return nil, f.err
 	}
-	out := make(map[string]string, len(ids))
+	out := make(map[string]atom.DeviceInfo, len(ids))
 	for _, id := range ids {
-		if serial, ok := f.serials[id]; ok {
-			out[id] = serial
+		if _, unresolvable := f.unresolvable[id]; unresolvable {
+			continue
 		}
+		_, isGateway := f.gateways[id]
+		out[id] = atom.DeviceInfo{ExternalID: f.serials[id], IsGateway: isGateway}
 	}
 	return out, nil
 }
@@ -72,7 +84,7 @@ func allMeters() *fakeResolver {
 }
 
 // customerAuthorizer is a non-admin granted exactly the given devices.
-func customerAuthorizer(t *testing.T, resolver externalIDResolver, granted ...string) *readAuthorizer {
+func customerAuthorizer(t *testing.T, resolver deviceInfoResolver, granted ...string) *readAuthorizer {
 	t.Helper()
 
 	evaluator := policymocks.NewEvaluator(t)
@@ -99,10 +111,56 @@ func TestResolveBoundsScopeToGrantedDevices(t *testing.T) {
 	assert.NotContains(t, got.scope.PublisherIDs, meter2UUID)
 	assert.NotContains(t, got.scope.DeviceIDs, meter2Serial)
 
+	// Neither granted device is flagged is_gateway, so both get R1's
+	// unconditional self-publish trust.
+	assert.Equal(t, []string{meter1UUID, meter3UUID}, got.scope.SelfPublisherIDs)
+
 	// Asking for nothing leaves the caller's own filters unset, so the scope
 	// alone bounds the query.
 	assert.Nil(t, got.publishers)
 	assert.Nil(t, got.deviceIDs)
+}
+
+// A regression test for R1: a held device flagged attributes.is_gateway
+// (spec §8 A12) must still land in PublisherIDs and DeviceIDs — it can be
+// relayed for and read like any device — but must not land in
+// SelfPublisherIDs, since it is capable of relaying for someone else and
+// publisher-only matching would readmit every device it has ever relayed for
+// (finding 02). A non-gateway device in the same grant is unaffected.
+func TestResolveExcludesGatewaysFromSelfPublisherIDs(t *testing.T) {
+	resolver := &fakeResolver{
+		serials:  map[string]string{meter1UUID: meter1Serial, gatewayUUID: gatewaySerial},
+		gateways: map[string]struct{}{gatewayUUID: {}},
+	}
+	authz := customerAuthorizer(t, resolver, meter1UUID, gatewayUUID)
+
+	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, got.scope)
+
+	assert.ElementsMatch(t, []string{meter1UUID, gatewayUUID}, got.scope.PublisherIDs)
+	assert.ElementsMatch(t, []string{meter1Serial, gatewaySerial}, got.scope.DeviceIDs)
+	assert.Equal(t, []string{meter1UUID}, got.scope.SelfPublisherIDs, "the gateway-flagged device must not get unconditional publisher trust")
+}
+
+// A regression test for R1: an id the resolver could not confirm either way
+// — a permission failure, a transient error on that one entity — must be
+// excluded from SelfPublisherIDs, the safe direction (see the load() doc
+// comment). It must still land in PublisherIDs, so the existing device_id =
+// '' leg keeps working for it.
+func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
+	resolver := &fakeResolver{
+		serials:      map[string]string{meter1UUID: meter1Serial},
+		unresolvable: map[string]struct{}{meter3UUID: {}},
+	}
+	authz := customerAuthorizer(t, resolver, meter1UUID, meter3UUID)
+
+	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, got.scope)
+
+	assert.ElementsMatch(t, []string{meter1UUID, meter3UUID}, got.scope.PublisherIDs)
+	assert.Equal(t, []string{meter1UUID}, got.scope.SelfPublisherIDs, "an unresolved device must not get unconditional publisher trust")
 }
 
 // Criterion 2: the same user requesting meter 2 receives empty, not meter 2's
@@ -285,7 +343,7 @@ func TestResolveWithoutResolverIsAnError(t *testing.T) {
 	authz := newReadAuthorizer(evaluator, lister, nil)
 
 	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
-	assert.ErrorIs(t, err, errNoExternalIDResolver)
+	assert.ErrorIs(t, err, errNoDeviceInfoResolver)
 }
 
 func TestResolvePropagatesResolverError(t *testing.T) {
@@ -435,6 +493,57 @@ func TestReadAuthorizerInvalidateIsIdempotent(t *testing.T) {
 
 	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
 	require.NoError(t, authz.Invalidate(context.Background(), testDomain), "invalidating an already-empty domain must not error")
+}
+
+// A regression test for R5's first residual: an invalidation landing while a
+// load is in flight must not be served to the caller that triggered it, only
+// left out of the cache. Before the fix, doLoad's tolerant epoch check
+// stopped the stale grant from being cached but grant() still returned it
+// directly from singleflight.Do.
+func TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+
+	var authz *readAuthorizer
+	first := true
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).
+		RunAndReturn(func(_ context.Context, _ policies.Policy) (policies.PolicyPage, error) {
+			if first {
+				first = false
+				// Simulate a revocation landing while this very load is in
+				// flight, before it returns the pre-revocation grant.
+				require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+				return policies.PolicyPage{Policies: []string{meter1UUID}}, nil
+			}
+			// The retry this must trigger sees the post-revocation state.
+			return policies.PolicyPage{Policies: nil}, nil
+		})
+
+	authz = newReadAuthorizer(evaluator, lister, allMeters())
+	authz.ttl = time.Hour
+
+	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	assert.True(t, got.noAccess, "a grant that went stale mid-load must not be served, only retried")
+	assert.False(t, first, "the retry must have run")
+}
+
+// A regression test for R5's second residual: a domain's epoch entry must not
+// accumulate forever once nothing depends on it. Safe to prune only once no
+// load for the domain is in flight — TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad
+// covers the case where one is.
+func TestReadAuthorizerInvalidatePrunesEpochOnceNoLoadIsInFlight(t *testing.T) {
+	authz := customerAuthorizer(t, allMeters(), meter1UUID)
+
+	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+
+	authz.mu.Lock()
+	_, tracked := authz.epoch[testDomain]
+	authz.mu.Unlock()
+	assert.False(t, tracked, "a domain's epoch entry must be forgotten once its cache is clear and nothing is loading")
 }
 
 func TestReadAuthorizerInvalidateEmptyDomainIsNoop(t *testing.T) {

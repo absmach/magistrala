@@ -18,18 +18,19 @@ import (
 var _ readers.MessageRepository = (*postgresRepository)(nil)
 
 const (
-	messageFieldChannel    = "channel"
-	messageFieldDeviceID   = "device_id"
-	messageFieldDeviceIDs  = "device_ids"
-	messageFieldScope      = "device_scope"
-	scopeParamPublishers   = "scope_publishers"
-	scopeParamDeviceIDs    = "scope_device_ids"
-	messageFieldName       = "name"
-	messageFieldProtocol   = "protocol"
-	messageFieldPublisher  = "publisher"
-	messageFieldPublishers = "publishers"
-	messageFieldSubtopic   = "subtopic"
-	messageFieldValue      = "value"
+	messageFieldChannel      = "channel"
+	messageFieldDeviceID     = "device_id"
+	messageFieldDeviceIDs    = "device_ids"
+	messageFieldScope        = "device_scope"
+	scopeParamPublishers     = "scope_publishers"
+	scopeParamSelfPublishers = "scope_self_publishers"
+	scopeParamDeviceIDs      = "scope_device_ids"
+	messageFieldName         = "name"
+	messageFieldProtocol     = "protocol"
+	messageFieldPublisher    = "publisher"
+	messageFieldPublishers   = "publishers"
+	messageFieldSubtopic     = "subtopic"
+	messageFieldValue        = "value"
 )
 
 type postgresRepository struct {
@@ -58,23 +59,24 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	LIMIT :limit OFFSET :offset;`, format, cond, order)
 
 	params := map[string]any{
-		messageFieldChannel:    chanID,
-		"limit":                rpm.Limit,
-		"offset":               rpm.Offset,
-		messageFieldSubtopic:   rpm.Subtopic,
-		messageFieldPublisher:  rpm.Publisher,
-		messageFieldPublishers: rpm.Publishers,
-		messageFieldDeviceIDs:  rpm.DeviceIDs,
-		scopeParamPublishers:   rpm.DeviceScope.Publishers(),
-		scopeParamDeviceIDs:    rpm.DeviceScope.Devices(),
-		messageFieldName:       rpm.Name,
-		messageFieldProtocol:   rpm.Protocol,
-		messageFieldValue:      rpm.Value,
-		"bool_value":           rpm.BoolValue,
-		"string_value":         rpm.StringValue,
-		"data_value":           rpm.DataValue,
-		"from":                 rpm.From,
-		"to":                   rpm.To,
+		messageFieldChannel:      chanID,
+		"limit":                  rpm.Limit,
+		"offset":                 rpm.Offset,
+		messageFieldSubtopic:     rpm.Subtopic,
+		messageFieldPublisher:    rpm.Publisher,
+		messageFieldPublishers:   rpm.Publishers,
+		messageFieldDeviceIDs:    rpm.DeviceIDs,
+		scopeParamPublishers:     rpm.DeviceScope.Publishers(),
+		scopeParamSelfPublishers: rpm.DeviceScope.SelfPublishers(),
+		scopeParamDeviceIDs:      rpm.DeviceScope.Devices(),
+		messageFieldName:         rpm.Name,
+		messageFieldProtocol:     rpm.Protocol,
+		messageFieldValue:        rpm.Value,
+		"bool_value":             rpm.BoolValue,
+		"string_value":           rpm.StringValue,
+		"data_value":             rpm.DataValue,
+		"from":                   rpm.From,
+		"to":                     rpm.To,
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
@@ -176,16 +178,33 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 		case messageFieldDeviceIDs:
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldDeviceID, messageFieldDeviceIDs)
 		case messageFieldScope:
-			// OR, not AND: a device is named by publisher when it publishes for
-			// itself and by device_id when a gateway relays for it, and one row
-			// carries only one of the two. The publisher leg is additionally
-			// guarded to self-published rows (device_id = '') so that a grant on
-			// a gateway client does not also admit every device that gateway
-			// has ever relayed for — those rows are named by device_id, not by
-			// this gateway's own publisher identity, and must be authorized
-			// through the device_id leg instead.
-			condition = fmt.Sprintf(`%s AND ((%s = '' AND %s = ANY(:%s)) OR %s = ANY(:%s))`,
-				condition, messageFieldDeviceID, messageFieldPublisher, scopeParamPublishers, messageFieldDeviceID, scopeParamDeviceIDs)
+			// OR of three legs, not AND: a device is named by publisher when it
+			// publishes for itself and by device_id when a gateway relays for
+			// it, and one row carries only one of the two identities meaningfully
+			// — but which one device_id holds is not always knowable from its
+			// value alone (R1: a device's own SenML base name can populate
+			// device_id on its self-published rows exactly like a relay would).
+			//
+			//  1. publisher = ANY(self-published, non-gateway devices): trusted
+			//     unconditionally. These devices are never anyone's relay, so any
+			//     row they publish is their own, whatever device_id holds.
+			//  2. device_id = '' AND publisher = ANY(all held devices, gateways
+			//     included): the previous guard, kept for a held device flagged
+			//     as a gateway (spec §8 A12) publishing its own telemetry with no
+			//     device_id set at all.
+			//  3. device_id = ANY(held devices' serials): gateway-relayed rows,
+			//     named by the relayed device's serial rather than the relaying
+			//     gateway's publisher identity.
+			//
+			// Leg 2 exists so a gateway-flagged publisher does NOT get leg 1's
+			// unconditional trust: its relayed rows carry a real device_id for a
+			// different device, and matching on publisher alone would readmit
+			// every device it has ever relayed for — the leak device_id = ''
+			// was introduced to close in the first place.
+			condition = fmt.Sprintf(`%s AND (%s = ANY(:%s) OR (%s = '' AND %s = ANY(:%s)) OR %s = ANY(:%s))`,
+				condition, messageFieldPublisher, scopeParamSelfPublishers,
+				messageFieldDeviceID, messageFieldPublisher, scopeParamPublishers,
+				messageFieldDeviceID, scopeParamDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,

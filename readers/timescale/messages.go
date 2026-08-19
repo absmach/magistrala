@@ -27,18 +27,19 @@ const (
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
-	messageFieldChannel    = "channel"
-	messageFieldDeviceID   = "device_id"
-	messageFieldDeviceIDs  = "device_ids"
-	messageFieldScope      = "device_scope"
-	scopeParamPublishers   = "scope_publishers"
-	scopeParamDeviceIDs    = "scope_device_ids"
-	messageFieldName       = "name"
-	messageFieldProtocol   = "protocol"
-	messageFieldPublisher  = "publisher"
-	messageFieldPublishers = "publishers"
-	messageFieldSubtopic   = "subtopic"
-	messageFieldValue      = "value"
+	messageFieldChannel      = "channel"
+	messageFieldDeviceID     = "device_id"
+	messageFieldDeviceIDs    = "device_ids"
+	messageFieldScope        = "device_scope"
+	scopeParamPublishers     = "scope_publishers"
+	scopeParamSelfPublishers = "scope_self_publishers"
+	scopeParamDeviceIDs      = "scope_device_ids"
+	messageFieldName         = "name"
+	messageFieldProtocol     = "protocol"
+	messageFieldPublisher    = "publisher"
+	messageFieldPublishers   = "publishers"
+	messageFieldSubtopic     = "subtopic"
+	messageFieldValue        = "value"
 )
 
 type timescaleRepository struct {
@@ -119,23 +120,24 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	}
 
 	params := map[string]any{
-		messageFieldChannel:    chanID,
-		"limit":                rpm.Limit,
-		"offset":               rpm.Offset,
-		messageFieldSubtopic:   rpm.Subtopic,
-		messageFieldPublisher:  rpm.Publisher,
-		messageFieldPublishers: rpm.Publishers,
-		messageFieldDeviceIDs:  rpm.DeviceIDs,
-		scopeParamPublishers:   rpm.DeviceScope.Publishers(),
-		scopeParamDeviceIDs:    rpm.DeviceScope.Devices(),
-		messageFieldName:       rpm.Name,
-		messageFieldProtocol:   rpm.Protocol,
-		messageFieldValue:      rpm.Value,
-		"bool_value":           rpm.BoolValue,
-		"string_value":         rpm.StringValue,
-		"data_value":           rpm.DataValue,
-		"from":                 rpm.From,
-		"to":                   rpm.To,
+		messageFieldChannel:      chanID,
+		"limit":                  rpm.Limit,
+		"offset":                 rpm.Offset,
+		messageFieldSubtopic:     rpm.Subtopic,
+		messageFieldPublisher:    rpm.Publisher,
+		messageFieldPublishers:   rpm.Publishers,
+		messageFieldDeviceIDs:    rpm.DeviceIDs,
+		scopeParamPublishers:     rpm.DeviceScope.Publishers(),
+		scopeParamSelfPublishers: rpm.DeviceScope.SelfPublishers(),
+		scopeParamDeviceIDs:      rpm.DeviceScope.Devices(),
+		messageFieldName:         rpm.Name,
+		messageFieldProtocol:     rpm.Protocol,
+		messageFieldValue:        rpm.Value,
+		"bool_value":             rpm.BoolValue,
+		"string_value":           rpm.StringValue,
+		"data_value":             rpm.DataValue,
+		"from":                   rpm.From,
+		"to":                     rpm.To,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
@@ -243,16 +245,15 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
-	// The authorization scope is OR, not AND: a device is named by publisher when
-	// it publishes for itself and by device_id when a gateway relays for it, and
-	// one row carries only one of the two. The publisher leg is additionally
-	// guarded to self-published rows (device_id = '') so that a grant on a
-	// gateway client does not also admit every device that gateway has ever
-	// relayed for — those rows are named by device_id, not by this gateway's
-	// own publisher identity, and must be authorized through the device_id leg
-	// instead.
+	// The authorization scope is an OR of three legs, not AND — see the
+	// matching comment in readers/postgres/messages.go's fmtCondition for the
+	// full reasoning behind each. In short: leg 1 trusts a non-gateway held
+	// device's publisher identity unconditionally, since it is never anyone's
+	// relay (R1); leg 2 is the previous device_id = '' guard, kept for a
+	// held device flagged as a gateway (spec §8 A12) publishing its own
+	// telemetry; leg 3 is the unchanged device_id-based relay match.
 	if _, ok := query[messageFieldScope]; ok {
-		conditions = append(conditions, " ( (device_id = '' AND publisher = ANY(:scope_publishers)) OR device_id = ANY(:scope_device_ids) ) ")
+		conditions = append(conditions, " ( publisher = ANY(:scope_self_publishers) OR (device_id = '' AND publisher = ANY(:scope_publishers)) OR device_id = ANY(:scope_device_ids) ) ")
 	}
 
 	// Ordered to match idx_channel_device_id_name_time, which sits between the

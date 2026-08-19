@@ -13,6 +13,7 @@ import (
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	"github.com/absmach/magistrala/pkg/atom"
 	atomevents "github.com/absmach/magistrala/pkg/atom/events"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
@@ -25,24 +26,27 @@ import (
 // invalidation event-driven, a revoked grant keeps working for at most this long.
 const readAuthzCacheTTL = 30 * time.Second
 
-// errNoExternalIDResolver is returned rather than silently skipping the
+// errNoDeviceInfoResolver is returned rather than silently skipping the
 // translation. A grant set that never reaches its serials produces a filter
 // matching no gateway-relayed rows, which reads as a permissions bug instead of
 // a wiring one.
-var errNoExternalIDResolver = errors.New("device external id resolver is not configured")
+var errNoDeviceInfoResolver = errors.New("device info resolver is not configured")
 
-// externalIDResolver maps Atom entity UUIDs to the external identifiers the
-// entities were registered with.
-type externalIDResolver interface {
-	EntityExternalIDs(ctx context.Context, ids []string) (map[string]string, error)
+// deviceInfoResolver maps Atom entity UUIDs to the external identifier and
+// gateway flag the entities were registered with.
+type deviceInfoResolver interface {
+	EntityDeviceInfo(ctx context.Context, ids []string) (map[string]atom.DeviceInfo, error)
 }
 
 // authorizedDevice is one device under both identities it can be known by on a
 // message row: its platform UUID when it publishes for itself, and its external
-// serial when a gateway relays for it.
+// serial when a gateway relays for it. isGateway is spec §8 A12's
+// attributes.is_gateway — see the DeviceScope.SelfPublisherIDs doc comment in
+// readers/messages.go for why it gates the R1 fix.
 type authorizedDevice struct {
 	publisherID string
 	serial      string
+	isGateway   bool
 }
 
 // readGrant is what a (domain, subject) pair may read: either everything, or a
@@ -65,7 +69,7 @@ type readGrant struct {
 type readAuthorizer struct {
 	evaluator policies.Evaluator
 	lister    policies.Service
-	resolver  externalIDResolver
+	resolver  deviceInfoResolver
 	ttl       time.Duration
 	now       func() time.Time
 
@@ -74,23 +78,33 @@ type readAuthorizer struct {
 	// epoch counts invalidations per domain. grant() captures it before
 	// starting a load and re-checks it before caching the result, so a
 	// revocation that lands while the load is in flight is not overwritten
-	// by that load's now-stale answer.
+	// by that load's now-stale answer. It is also re-checked after the load
+	// returns, so the stale answer is not served for this request either —
+	// only retried once against the epoch the invalidation left behind.
 	epoch map[string]uint64
+	// domainLoads counts grant() calls currently loading for each domain, so
+	// Invalidate can tell whether forgetting a domain's epoch entry is safe.
+	// A load in flight holds a snapshot of epoch from before some
+	// invalidations; deleting the entry resets the next lookup to the map's
+	// zero value, which that stale snapshot could then coincidentally match
+	// and pass as fresh. Pruning only when this is zero rules that out.
+	domainLoads map[string]int
 	// group collapses concurrent cache misses for the same (domain, subject)
 	// into a single load, rather than one Atom round trip per waiting
 	// request.
 	group singleflight.Group
 }
 
-func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, resolver externalIDResolver) *readAuthorizer {
+func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, resolver deviceInfoResolver) *readAuthorizer {
 	return &readAuthorizer{
-		evaluator: evaluator,
-		lister:    lister,
-		resolver:  resolver,
-		ttl:       readAuthzCacheTTL,
-		now:       time.Now,
-		cache:     make(map[string]readGrant),
-		epoch:     make(map[string]uint64),
+		evaluator:   evaluator,
+		lister:      lister,
+		resolver:    resolver,
+		ttl:         readAuthzCacheTTL,
+		now:         time.Now,
+		cache:       make(map[string]readGrant),
+		epoch:       make(map[string]uint64),
+		domainLoads: make(map[string]int),
 	}
 }
 
@@ -132,6 +146,15 @@ func (a *readAuthorizer) Invalidate(_ context.Context, domain string) error {
 	// revoked grant could keep serving for another full TTL despite the
 	// cache having just been cleared.
 	a.epoch[domain]++
+	// Safe to forget the counter only when no load for this domain is
+	// currently in flight (see the domainLoads doc comment) — every cache
+	// entry for it was just cleared above, so at that point nothing depends
+	// on this domain's epoch value any more. Otherwise every domain ever
+	// invalidated keeps one entry forever, unlike the cache entries beside it
+	// which at least expire.
+	if a.domainLoads[domain] == 0 {
+		delete(a.epoch, domain)
+	}
 	return nil
 }
 
@@ -224,6 +247,18 @@ func publisherIDs(devices []authorizedDevice) map[string]struct{} {
 	return out
 }
 
+// selfPublisherIDs is the subset of publisherIDs not flagged as a gateway —
+// see the DeviceScope.SelfPublisherIDs doc comment in readers/messages.go.
+func selfPublisherIDs(devices []authorizedDevice) map[string]struct{} {
+	out := make(map[string]struct{}, len(devices))
+	for _, d := range devices {
+		if d.publisherID != "" && !d.isGateway {
+			out[d.publisherID] = struct{}{}
+		}
+	}
+	return out
+}
+
 // serials skips devices with no external id. Such a device is only ever
 // reachable through its publisher identity, and an empty serial in the scope
 // would match every device-less row on the channel.
@@ -253,18 +288,48 @@ func (a *readAuthorizer) grant(ctx context.Context, domain, subject string) (rea
 
 	a.mu.Lock()
 	grant, ok := a.cache[key]
-	epoch := a.epoch[domain]
-	a.mu.Unlock()
 	if ok && a.now().Before(grant.expiresAt) {
+		a.mu.Unlock()
+		return grant, nil
+	}
+	a.domainLoads[domain]++
+	a.mu.Unlock()
+	defer a.releaseDomainLoad(domain)
+
+	epoch := a.currentEpoch(domain)
+	grant, moved, err := a.doLoad(ctx, domain, subject, key, epoch)
+	if err != nil {
+		return readGrant{}, err
+	}
+	if !moved {
 		return grant, nil
 	}
 
+	// An invalidation landed for this domain while the load above was in
+	// flight. It was correctly left out of the cache (see doLoad), but
+	// singleflight still hands its now-stale result back to every caller who
+	// joined it regardless — serving it here would leak one stale read per
+	// revocation despite the cache itself being clean. Retry once against
+	// the epoch the invalidation left behind rather than serve it.
+	epoch = a.currentEpoch(domain)
+	grant, _, err = a.doLoad(ctx, domain, subject, key, epoch)
+	if err != nil {
+		return readGrant{}, err
+	}
+	return grant, nil
+}
+
+// doLoad runs (or joins) a singleflight load for key and caches the result,
+// unless domain's epoch has moved past epoch by the time it finishes — which
+// means an invalidation landed while it was in flight, so the result reflects
+// pre-invalidation state and moved is reported true.
+func (a *readAuthorizer) doLoad(ctx context.Context, domain, subject, key string, epoch uint64) (grant readGrant, moved bool, err error) {
 	v, err, _ := a.group.Do(key, func() (any, error) {
-		grant, err := a.load(ctx, domain, subject)
+		g, err := a.load(ctx, domain, subject)
 		if err != nil {
 			return readGrant{}, err
 		}
-		grant.expiresAt = a.now().Add(a.ttl)
+		g.expiresAt = a.now().Add(a.ttl)
 
 		a.mu.Lock()
 		defer a.mu.Unlock()
@@ -274,14 +339,29 @@ func (a *readAuthorizer) grant(ctx context.Context, domain, subject string) (rea
 		// Atom but before it finished, resetting the revoked grant's TTL
 		// instead of leaving it cleared.
 		if a.epoch[domain] == epoch {
-			a.cache[key] = grant
+			a.cache[key] = g
 		}
-		return grant, nil
+		return g, nil
 	})
 	if err != nil {
-		return readGrant{}, err
+		return readGrant{}, false, err
 	}
-	return v.(readGrant), nil
+	return v.(readGrant), a.currentEpoch(domain) != epoch, nil
+}
+
+func (a *readAuthorizer) currentEpoch(domain string) uint64 {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.epoch[domain]
+}
+
+func (a *readAuthorizer) releaseDomainLoad(domain string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.domainLoads[domain]--
+	if a.domainLoads[domain] <= 0 {
+		delete(a.domainLoads, domain)
+	}
 }
 
 func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (readGrant, error) {
@@ -308,29 +388,38 @@ func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (read
 	// verbatim, because the publish path performs no lookup. Without this step
 	// the device half of the scope matches nothing at all.
 	if a.resolver == nil {
-		return readGrant{}, errNoExternalIDResolver
+		return readGrant{}, errNoDeviceInfoResolver
 	}
-	external, err := a.resolver.EntityExternalIDs(ctx, page.Policies)
+	info, err := a.resolver.EntityDeviceInfo(ctx, page.Policies)
 	if err != nil {
 		return readGrant{}, err
 	}
 
 	devices := make([]authorizedDevice, 0, len(page.Policies))
 	for _, id := range page.Policies {
-		devices = append(devices, authorizedDevice{publisherID: id, serial: external[id]})
+		d, resolved := info[id]
+		// An id the resolver did not return at all — as opposed to one it
+		// returned with IsGateway false — could not be confirmed either way.
+		// Treated as a gateway here, the safe direction: it only costs this
+		// device the R1 self-publish trust for this cache window, whereas
+		// trusting it wrongly would let publisher-only matching readmit
+		// whatever it relays for someone else (see DeviceScope.SelfPublisherIDs).
+		devices = append(devices, authorizedDevice{publisherID: id, serial: d.ExternalID, isGateway: !resolved || d.IsGateway})
 	}
 	return newReadGrant(devices), nil
 }
 
 func newReadGrant(devices []authorizedDevice) readGrant {
 	publishers := publisherIDs(devices)
+	selfPublishers := selfPublisherIDs(devices)
 	serialSet := serials(devices)
 	return readGrant{
 		publisherIDs: publishers,
 		serials:      serialSet,
 		scope: &readers.DeviceScope{
-			PublisherIDs: sortedKeys(publishers),
-			DeviceIDs:    sortedKeys(serialSet),
+			PublisherIDs:     sortedKeys(publishers),
+			SelfPublisherIDs: sortedKeys(selfPublishers),
+			DeviceIDs:        sortedKeys(serialSet),
 		},
 	}
 }

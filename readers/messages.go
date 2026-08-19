@@ -154,9 +154,20 @@ type PageMetadata struct {
 // in-scope device. Combining them with AND would make gateway-relayed data
 // unreachable, which is the case this exists to serve.
 //
-// Both slices project the same set of devices — PublisherIDs holds their
-// platform UUIDs, DeviceIDs the external serials denormalised onto message rows
-// — so narrowing the device set must narrow both together, never one alone.
+// All three slices project the same held-device set. PublisherIDs and DeviceIDs
+// hold their platform UUIDs and external serials respectively, so narrowing the
+// device set must narrow both together, never one alone. SelfPublisherIDs is the
+// subset of PublisherIDs not flagged as a gateway (attributes.is_gateway, spec
+// §8 A12): for those devices, a row naming one as publisher is trusted as its
+// own self-published data regardless of what device_id holds, since an ordinary
+// device's own SenML base name (or an equivalent JSON key) can legitimately
+// populate device_id without the row being relayed for anyone else (R1) — a row
+// carrying only one of the two identities, not both meaningfully at once, is an
+// assumption device_id alone cannot be trusted to signal. A gateway-flagged
+// publisher does not get this: its relayed rows carry a real device_id for a
+// different device, and matching it on publisher alone would readmit every
+// device it has ever relayed for, which is exactly the leak device_id = ”
+// exists to close (see readers/postgres and readers/timescale's fmtCondition).
 //
 // Unlike the convenience filters, EMPTY MEANS "MATCH NOTHING" HERE. The field is
 // a pointer so `omitempty` keeps a non-nil empty scope in the query, where it
@@ -164,8 +175,9 @@ type PageMetadata struct {
 // must still end up with zero rows if it ever reaches the query, whatever the
 // API layer does before that.
 type DeviceScope struct {
-	PublisherIDs []string `json:"publisher_ids"`
-	DeviceIDs    []string `json:"device_ids"`
+	PublisherIDs     []string `json:"publisher_ids"`
+	SelfPublisherIDs []string `json:"self_publisher_ids"`
+	DeviceIDs        []string `json:"device_ids"`
 }
 
 // Publishers returns the in-scope publisher UUIDs, never nil, so a scope that
@@ -175,6 +187,16 @@ func (s *DeviceScope) Publishers() []string {
 		return []string{}
 	}
 	return s.PublisherIDs
+}
+
+// SelfPublishers returns the in-scope publisher UUIDs not flagged as a
+// gateway, never nil, so a scope that authorizes nothing binds an empty array
+// rather than NULL.
+func (s *DeviceScope) SelfPublishers() []string {
+	if s == nil || s.SelfPublisherIDs == nil {
+		return []string{}
+	}
+	return s.SelfPublisherIDs
 }
 
 // Devices returns the in-scope device serials, never nil, so a scope that

@@ -119,6 +119,8 @@ func handleDeviceCreate(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	markDeclaredGateways(cmd, created)
+
 	logJSONCmd(*cmd, created)
 }
 
@@ -181,7 +183,37 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 		return
 	}
 
+	markDeclaredGateways(cmd, updated)
+
 	logJSONCmd(*cmd, updated)
+}
+
+// markDeclaredGateways flags is_gateway on every id the just-written
+// entity's gateways attribute names, the same way "gateways set" does via
+// SetDeviceGateways -- but this command bypasses SetDeviceGateways
+// entirely, unmarshaling arbitrary Entity JSON and writing it straight
+// through. Left unpatched, devices <id> update '{"attributes":
+// {"gateways":["gw-1"]}}' creates a real relay with gw-1 unflagged: the
+// help text above points operators at exactly this command for gateways,
+// so it is a reachable path back to Q1's cross-tenant leak, not a
+// theoretical one (P3).
+//
+// Runs after the entity write, against the entity the API just returned --
+// not the caller-unmarshaled one -- rather than before it: a device that
+// names itself as one of its own gateways then has its own just-written
+// attributes marked directly, instead of a snapshot taken before this
+// write landed racing it the way SetDeviceGateways's own pre-P2 bug did.
+// A marking failure is reported but does not undo the entity write that
+// already succeeded -- there is nothing to roll back to, and the operator
+// needs to know marking is what failed, not the write.
+func markDeclaredGateways(cmd *cobra.Command, entity atom.Entity) {
+	gatewayIDs := atom.GatewaysDeclared(entity)
+	if len(gatewayIDs) == 0 {
+		return
+	}
+	if err := atomClient.MarkGateways(cmd.Context(), gatewayIDs); err != nil {
+		logErrorCmd(*cmd, fmt.Errorf("device saved, but marking its declared gateways failed: %w", err))
+	}
 }
 
 func handleDeviceDelete(cmd *cobra.Command, deviceID string, args []string) {

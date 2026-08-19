@@ -41,12 +41,12 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 		return ErrGatewaysConflict
 	}
 
-	if err := c.markGateways(ctx, gatewayIDs); err != nil {
+	if err := c.MarkGateways(ctx, gatewayIDs); err != nil {
 		return err
 	}
 
 	// Re-read rather than reuse the snapshot taken above (P2): a device can
-	// name itself as one of its own gateways, in which case markGateways
+	// name itself as one of its own gateways, in which case MarkGateways
 	// just wrote deviceID's own is_gateway through a separate call. Writing
 	// back the pre-mark snapshot here would silently discard that -- the
 	// same instant, no unrelated write in between required to trigger it.
@@ -66,7 +66,7 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	return err
 }
 
-// markGateways sets attributes.is_gateway on every id in gatewayIDs that
+// MarkGateways sets attributes.is_gateway on every id in gatewayIDs that
 // does not already have it. is_gateway is otherwise entirely manual —
 // operators set it themselves when creating or updating a device (see
 // cli/devices.go) — so without this, the two facts that identify a gateway
@@ -77,12 +77,16 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 // is_gateway is false, so that drift reopened finding 02's cross-tenant
 // leak for any gateway an operator forgot to flag (Q1).
 //
-// This only ever sets the flag, never clears it: SetDeviceGateways is the
-// only place in this repo that establishes the relationship, so it is the
-// only place that can reliably keep it in sync, and always setting rather
-// than reconciling both directions means a device dropped from every
-// gateways list simply keeps a flag it no longer strictly needs — the safe
-// direction to be wrong in, unlike the leak this closes.
+// This only ever sets the flag, never clears it: always setting rather than
+// reconciling both directions means a device dropped from every gateways
+// list simply keeps a flag it no longer strictly needs — the safe direction
+// to be wrong in, unlike the leak this closes.
+//
+// Exported (P3) because SetDeviceGateways is not the only place in this
+// repo that can establish the relationship: the CLI's device create/update
+// commands unmarshal arbitrary Entity JSON and write it straight through,
+// bypassing SetDeviceGateways entirely, and need to call this themselves
+// for whatever GatewaysDeclared finds in what they just wrote.
 //
 // Reads gatewayIDs in one batched round trip via batchEntities rather than
 // one GetEntity per id (P1) — the exact per-id shape round 2's finding 15
@@ -92,7 +96,7 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 // exist, but a hard error if it merely could not be read this time — "could
 // not tell" must not be read as "nothing to mark", the same distinction
 // entitiesExist exists to preserve.
-func (c *Client) markGateways(ctx context.Context, gatewayIDs []string) error {
+func (c *Client) MarkGateways(ctx context.Context, gatewayIDs []string) error {
 	raw, unreadable, err := c.batchEntities(ctx, gatewayIDs, "EntityDeviceInfo", "id external_id: externalId attributes")
 	if err != nil {
 		return err
@@ -201,6 +205,16 @@ func mergeContainsString(existing any, value string) any {
 	default:
 		return []any{v, value}
 	}
+}
+
+// GatewaysDeclared returns the gateway ids e's gateways attribute names, in
+// whatever form JSON decoding produced them. Exported (P3) for callers that
+// construct or receive an Entity directly instead of going through
+// SetDeviceGateways -- the CLI's device create/update commands, which
+// unmarshal arbitrary Entity JSON -- so they can find out which ids need
+// MarkGateways after writing it.
+func GatewaysDeclared(e Entity) []string {
+	return attrStrings(e.Attributes, atomAttributeGateways)
 }
 
 // attrStrings reads a []string-valued attribute, accepting both []string and

@@ -11,10 +11,10 @@ import (
 	"strings"
 )
 
-// externalIDBatchSize bounds how many entities one GraphQL document asks for.
+// entityBatchSize bounds how many entities one GraphQL document asks for.
 // Atom exposes no list-of-ids filter on `entities`, so a batch is a document of
 // aliased `entity(id:)` selections — one round trip, one indexed lookup per id.
-const externalIDBatchSize = 100
+const entityBatchSize = 100
 
 // EntityExternalIDs resolves entity UUIDs to the external identifiers they were
 // registered with (ATOM-06). Only entities that exist and carry an external id
@@ -27,20 +27,61 @@ const externalIDBatchSize = 100
 // results matches no rows at all, which reads as a permissions bug rather than
 // a missing conversion.
 func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[string]string, error) {
-	out := make(map[string]string, len(ids))
+	raw, err := c.batchEntities(ctx, ids, "EntityExternalIDs", "id external_id: externalId")
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]string, len(raw))
+	for id, data := range raw {
+		var entity Entity
+		if err := json.Unmarshal(data, &entity); err != nil {
+			return nil, err
+		}
+		if entity.ExternalID != "" {
+			out[id] = entity.ExternalID
+		}
+	}
+	return out, nil
+}
+
+// entitiesExist reports which of the given entity ids currently resolve —
+// exist and are readable by this client — without fetching anything beyond
+// their id. Used to narrow a declared set (e.g. a device's `gateways`
+// attribute) down to the ones that still exist, in batches of at most
+// entityBatchSize round trips instead of one GetEntity call per id.
+func (c *Client) entitiesExist(ctx context.Context, ids []string) (map[string]struct{}, error) {
+	raw, err := c.batchEntities(ctx, ids, "EntityExistence", "id")
+	if err != nil {
+		return nil, err
+	}
+
+	out := make(map[string]struct{}, len(raw))
+	for id := range raw {
+		out[id] = struct{}{}
+	}
+	return out, nil
+}
+
+// batchEntities resolves ids to whatever fields the caller selects, deduping
+// and chunking them into batches of at most entityBatchSize before handing
+// each batch to entityBatch. The result only ever contains ids that were
+// actually asked for and actually resolved.
+func (c *Client) batchEntities(ctx context.Context, ids []string, opName, fields string) (map[string]json.RawMessage, error) {
+	out := make(map[string]json.RawMessage, len(ids))
 	seen := make(map[string]struct{}, len(ids))
 
-	batch := make([]string, 0, externalIDBatchSize)
+	batch := make([]string, 0, entityBatchSize)
 	flush := func() error {
 		if len(batch) == 0 {
 			return nil
 		}
-		resolved, err := c.entityExternalIDBatch(ctx, batch)
+		resolved, err := c.entityBatch(ctx, batch, opName, fields)
 		if err != nil {
 			return err
 		}
-		for id, externalID := range resolved {
-			out[id] = externalID
+		for id, data := range resolved {
+			out[id] = data
 		}
 		batch = batch[:0]
 		return nil
@@ -56,7 +97,7 @@ func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[strin
 		seen[id] = struct{}{}
 
 		batch = append(batch, id)
-		if len(batch) == externalIDBatchSize {
+		if len(batch) == entityBatchSize {
 			if err := flush(); err != nil {
 				return nil, err
 			}
@@ -69,15 +110,17 @@ func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[strin
 	return out, nil
 }
 
-// entityExternalIDBatch asks for one aliased selection per id. Per-entity
-// failures — a deleted entity, one the caller may not read — come back as a null
-// alias alongside an errors array; those ids are simply absent from the result.
-// Failing the whole batch instead would let a single stale id deny a caller
-// every device they hold, so the tolerant decode is the safer direction: an
-// unresolved id contributes nothing to the filter it feeds.
-func (c *Client) entityExternalIDBatch(ctx context.Context, ids []string) (map[string]string, error) {
+// entityBatch asks for one aliased `fields` selection per id, in a single
+// GraphQL request named opName. Per-entity failures — a deleted entity, one
+// the caller may not read — come back as a null alias alongside an errors
+// array; those ids are simply absent from the result. Failing the whole
+// batch instead would let a single stale id deny a caller every device they
+// hold (or every gateway they declared), so the tolerant decode is the
+// safer direction: an unresolved id contributes nothing to whatever it
+// feeds.
+func (c *Client) entityBatch(ctx context.Context, ids []string, opName, fields string) (map[string]json.RawMessage, error) {
 	var (
-		fields    strings.Builder
+		selection strings.Builder
 		params    = make([]string, 0, len(ids))
 		variables = make(map[string]any, len(ids))
 		aliases   = make(map[string]string, len(ids))
@@ -88,10 +131,10 @@ func (c *Client) entityExternalIDBatch(ctx context.Context, ids []string) (map[s
 		aliases[alias] = id
 		params = append(params, "$"+variable+": ID!")
 		variables[variable] = id
-		fmt.Fprintf(&fields, "\n\t\t%s: entity(id: $%s) { id external_id: externalId }", alias, variable)
+		fmt.Fprintf(&selection, "\n\t\t%s: entity(id: $%s) { %s }", alias, variable, fields)
 	}
 
-	query := fmt.Sprintf("query EntityExternalIDs(%s) {%s\n\t}", strings.Join(params, ", "), fields.String())
+	query := fmt.Sprintf("query %s(%s) {%s\n\t}", opName, strings.Join(params, ", "), selection.String())
 
 	var response graphQLResponse
 	if err := c.do(ctx, http.MethodPost, "/graphql", graphQLRequest{Query: query, Variables: variables}, &response); err != nil {
@@ -115,18 +158,18 @@ func (c *Client) entityExternalIDBatch(ctx context.Context, ids []string) (map[s
 		return nil, Error{StatusCode: http.StatusInternalServerError, Message: "atom GraphQL response did not include data"}
 	}
 
-	var decoded map[string]*Entity
+	var decoded map[string]json.RawMessage
 	if err := json.Unmarshal(response.Data, &decoded); err != nil {
 		return nil, err
 	}
 
-	out := make(map[string]string, len(decoded))
-	for alias, entity := range decoded {
+	out := make(map[string]json.RawMessage, len(decoded))
+	for alias, raw := range decoded {
 		id, ok := aliases[alias]
-		if !ok || entity == nil || entity.ExternalID == "" {
+		if !ok || raw == nil || string(raw) == "null" {
 			continue
 		}
-		out[id] = entity.ExternalID
+		out[id] = raw
 	}
 	return out, nil
 }

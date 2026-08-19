@@ -6,6 +6,7 @@ package atom
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,7 @@ type fakeAtomDevices struct {
 	t           *testing.T
 	entities    map[string]Entity
 	updateCalls int
+	requests    int
 }
 
 func newFakeAtomDevices(t *testing.T, seed ...Entity) (*fakeAtomDevices, *httptest.Server) {
@@ -33,6 +35,7 @@ func newFakeAtomDevices(t *testing.T, seed ...Entity) (*fakeAtomDevices, *httpte
 }
 
 func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
+	fa.requests++
 	payload := decodePayload(fa.t, r)
 	switch {
 	case strings.Contains(payload.Query, "mutation UpdateEntity"):
@@ -81,6 +84,23 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = writeJSON(w, map[string]any{"data": map[string]any{"entity": deviceEntityJSON(e)}})
+
+	case strings.Contains(payload.Query, "query EntityExistence("):
+		data := map[string]any{}
+		for i := 0; ; i++ {
+			raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
+			if !ok {
+				break
+			}
+			id, _ := raw.(string)
+			alias := fmt.Sprintf("e%d", i)
+			if _, exists := fa.entities[id]; exists {
+				data[alias] = map[string]any{"id": id}
+			} else {
+				data[alias] = nil
+			}
+		}
+		_ = writeJSON(w, map[string]any{"data": data})
 
 	default:
 		fa.t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
@@ -267,6 +287,38 @@ func TestSetDeviceGatewaysSucceedsAfterDeclaredGatewayDeleted(t *testing.T) {
 
 	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-live", "gw-new"}, current); err != nil {
 		t.Fatalf("set device gateways failed using DeviceGateways' own view as expectedCurrent: %v", err)
+	}
+}
+
+// DeviceGateways used to cost one GetEntity round trip per declared gateway
+// purely to test existence. liveGateways now resolves them all in one
+// batched EntityExistence request instead, so a device declaring many
+// gateways costs a constant two round trips (the device itself, then the
+// batch) rather than growing with the gateway count.
+func TestDeviceGatewaysBatchesExistenceChecksInOneRoundTrip(t *testing.T) {
+	seed := []Entity{
+		{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-1", "gw-2", "gw-3", "gw-4", "gw-5"}},
+		},
+	}
+	for _, gw := range []string{"gw-1", "gw-2", "gw-3", "gw-4"} {
+		seed = append(seed, Entity{ID: gw, Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}})
+	}
+	// gw-5 intentionally not seeded: it no longer resolves.
+	fa, srv := newFakeAtomDevices(t, seed...)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.DeviceGateways(context.Background(), "device-1")
+	if err != nil {
+		t.Fatalf("device gateways failed: %v", err)
+	}
+	if !sameStringSet(got, []string{"gw-1", "gw-2", "gw-3", "gw-4"}) {
+		t.Fatalf("expected the four live gateways, got: %+v", got)
+	}
+	if fa.requests != 2 {
+		t.Fatalf("expected 2 round trips (device + one batched existence check), got %d", fa.requests)
 	}
 }
 

@@ -178,11 +178,11 @@ func TestEntityExternalIDsBatchesLargeSets(t *testing.T) {
 		t.Fatalf("expected 250 resolved ids, got %d", len(got))
 	}
 	if fake.requests != 3 {
-		t.Fatalf("expected 250 ids to travel as 3 batches of at most %d, got %d requests", externalIDBatchSize, fake.requests)
+		t.Fatalf("expected 250 ids to travel as 3 batches of at most %d, got %d requests", entityBatchSize, fake.requests)
 	}
 	for _, batch := range fake.batches {
-		if len(batch) > externalIDBatchSize {
-			t.Fatalf("batch of %d exceeds the bound of %d", len(batch), externalIDBatchSize)
+		if len(batch) > entityBatchSize {
+			t.Fatalf("batch of %d exceeds the bound of %d", len(batch), entityBatchSize)
 		}
 	}
 }

@@ -57,17 +57,19 @@ func (c *Client) DeviceGateways(ctx context.Context, deviceID string) ([]string,
 }
 
 // liveGateways narrows a device's declared gateway ids down to the ones
-// that still exist.
+// that still exist, in one batch of round trips via entitiesExist rather
+// than one GetEntity call per declared gateway.
 func (c *Client) liveGateways(ctx context.Context, declared []string) ([]string, error) {
+	existing, err := c.entitiesExist(ctx, declared)
+	if err != nil {
+		return nil, err
+	}
+
 	live := make([]string, 0, len(declared))
 	for _, gatewayID := range declared {
-		if _, err := c.GetEntity(ctx, gatewayID); err != nil {
-			if IsNotFound(err) {
-				continue
-			}
-			return nil, err
+		if _, ok := existing[gatewayID]; ok {
+			live = append(live, gatewayID)
 		}
-		live = append(live, gatewayID)
 	}
 	return live, nil
 }

@@ -110,6 +110,8 @@ func (fa *fakeAtom) handle(w http.ResponseWriter, r *http.Request) {
 		fa.handleDelete(w, req)
 	case strings.Contains(req.Query, "query Entity("):
 		fa.handleGet(w, req)
+	case strings.Contains(req.Query, "query EntityExistence("):
+		fa.handleEntityExistence(w, req)
 	case strings.Contains(req.Query, "query Entities("):
 		fa.handleList(w, req)
 	case strings.Contains(req.Query, "mutation CreateDeviceTypeVersion"):
@@ -335,6 +337,27 @@ func (fa *fakeAtom) handleGet(w http.ResponseWriter, req gqlRequest) {
 		return
 	}
 	writeGQLData(fa.t, w, map[string]any{"entity": entityJSON(e)})
+}
+
+// handleEntityExistence answers the batched aliased-entity existence check
+// pkg/atom's liveGateways uses (see entitiesExist/entityBatch), one round
+// trip for however many ids it was asked about rather than one per id.
+func (fa *fakeAtom) handleEntityExistence(w http.ResponseWriter, req gqlRequest) {
+	data := map[string]any{}
+	for i := 0; ; i++ {
+		raw, ok := req.Variables[fmt.Sprintf("id%d", i)]
+		if !ok {
+			break
+		}
+		id, _ := raw.(string)
+		alias := fmt.Sprintf("e%d", i)
+		if _, exists := fa.entities[id]; exists {
+			data[alias] = map[string]any{"id": id}
+		} else {
+			data[alias] = nil
+		}
+	}
+	writeGQLData(fa.t, w, data)
 }
 
 func (fa *fakeAtom) handleList(w http.ResponseWriter, req gqlRequest) {

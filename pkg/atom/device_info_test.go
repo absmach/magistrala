@@ -32,7 +32,7 @@ func (f *fakeDeviceInfoAtom) handle(w http.ResponseWriter, r *http.Request) {
 	f.requests++
 
 	data := map[string]any{}
-	errs := []map[string]string{}
+	errs := []map[string]any{}
 	for i := 0; ; i++ {
 		raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
 		if !ok {
@@ -42,7 +42,7 @@ func (f *fakeDeviceInfoAtom) handle(w http.ResponseWriter, r *http.Request) {
 		alias := fmt.Sprintf("e%d", i)
 		if _, blocked := f.unreadable[id]; blocked {
 			data[alias] = nil
-			errs = append(errs, map[string]string{"message": "forbidden"})
+			errs = append(errs, map[string]any{"message": "forbidden", "path": []any{alias}})
 			continue
 		}
 		entity := map[string]any{"id": id}
@@ -77,9 +77,12 @@ func TestEntityDeviceInfoResolvesExternalIDAndGatewayFlag(t *testing.T) {
 	}
 	client := newDeviceInfoClient(t, fake)
 
-	got, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1", "uuid-2"})
+	got, unreadable, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1", "uuid-2"})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
+	}
+	if len(unreadable) != 0 {
+		t.Fatalf("expected no unreadable ids, got %v", unreadable)
 	}
 	if got["uuid-1"] != (DeviceInfo{ExternalID: "serial-1", IsGateway: true}) {
 		t.Fatalf("uuid-1: got %+v", got["uuid-1"])
@@ -95,7 +98,7 @@ func TestEntityDeviceInfoTreatsAbsentAttributeAsNotAGateway(t *testing.T) {
 	fake := &fakeDeviceInfoAtom{external: map[string]string{"uuid-1": "serial-1"}}
 	client := newDeviceInfoClient(t, fake)
 
-	got, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1"})
+	got, _, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1"})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -114,7 +117,7 @@ func TestEntityDeviceInfoResolvesDeviceWithNoExternalID(t *testing.T) {
 	fake := &fakeDeviceInfoAtom{isGateway: map[string]bool{"uuid-1": false}}
 	client := newDeviceInfoClient(t, fake)
 
-	got, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1"})
+	got, _, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1"})
 	if err != nil {
 		t.Fatalf("unexpected error: %s", err)
 	}
@@ -127,6 +130,12 @@ func TestEntityDeviceInfoResolvesDeviceWithNoExternalID(t *testing.T) {
 	}
 }
 
+// A regression test for Q4: a per-entity failure must be surfaced in the
+// second return value, not just silently absent from the first -- callers
+// that need to tell "could not read this time" apart from "confirmed no
+// info" (readAuthorizer's resolveDeviceInfo, to avoid caching a transient
+// failure as a stable negative) depend on this distinction actually leaving
+// the client.
 func TestEntityDeviceInfoToleratesPerEntityFailures(t *testing.T) {
 	fake := &fakeDeviceInfoAtom{
 		external:   map[string]string{"uuid-1": "serial-1"},
@@ -134,12 +143,15 @@ func TestEntityDeviceInfoToleratesPerEntityFailures(t *testing.T) {
 	}
 	client := newDeviceInfoClient(t, fake)
 
-	got, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1", "uuid-2"})
+	got, unreadable, err := client.EntityDeviceInfo(context.Background(), []string{"uuid-1", "uuid-2"})
 	if err != nil {
 		t.Fatalf("one unreadable entity must not fail the batch: %s", err)
 	}
 	if _, ok := got["uuid-2"]; ok {
-		t.Fatalf("an unreadable entity must not appear: %v", got)
+		t.Fatalf("an unreadable entity must not appear in the resolved map: %v", got)
+	}
+	if _, ok := unreadable["uuid-2"]; !ok {
+		t.Fatalf("expected uuid-2 to be reported as unreadable, got %v", unreadable)
 	}
 	if got["uuid-1"].ExternalID != "serial-1" {
 		t.Fatalf("expected the readable id to survive, got %v", got)

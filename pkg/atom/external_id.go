@@ -61,10 +61,18 @@ type DeviceInfo struct {
 
 // EntityDeviceInfo resolves entity UUIDs to the external identifier and
 // gateway flag they were registered with, in the same round trip. Only
-// entities that exist and are readable appear in the result, so the map is a
-// subset of ids and callers must treat a missing key as "could not resolve"
-// rather than "confirmed not a gateway with no external id" — the zero value
-// of DeviceInfo would otherwise read as both.
+// entities that exist and are readable appear in the resolved map, so it is
+// a subset of ids and callers must treat a missing key as "could not
+// resolve" rather than "confirmed not a gateway with no external id" — the
+// zero value of DeviceInfo would otherwise read as both.
+//
+// The second return value distinguishes why an id is missing from the first,
+// the same way batchEntities does for entitiesExist: an id with an entry
+// here failed to read (a permission failure, a transient Atom error), while
+// an id absent from both simply does not exist. Callers that only need the
+// safe, tolerant behaviour (folding either case into "no info") can ignore
+// it; readAuthorizer's resolveDeviceInfo uses it to avoid caching a
+// transient failure as though it were a confirmed, stable fact (Q4).
 //
 // This is the UUID → attributes direction readAuthorizer needs both halves
 // of: the external id to translate a policy grant into the identity message
@@ -73,22 +81,22 @@ type DeviceInfo struct {
 // additionally be confirmed by device_id (R1: a device's own bn can populate
 // device_id on its self-published rows, which must not be mistaken for a
 // gateway relaying on someone else's behalf).
-func (c *Client) EntityDeviceInfo(ctx context.Context, ids []string) (map[string]DeviceInfo, error) {
-	raw, _, err := c.batchEntities(ctx, ids, "EntityDeviceInfo", "id external_id: externalId attributes")
+func (c *Client) EntityDeviceInfo(ctx context.Context, ids []string) (map[string]DeviceInfo, map[string]string, error) {
+	raw, unreadable, err := c.batchEntities(ctx, ids, "EntityDeviceInfo", "id external_id: externalId attributes")
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	out := make(map[string]DeviceInfo, len(raw))
 	for id, data := range raw {
 		var entity Entity
 		if err := json.Unmarshal(data, &entity); err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 		isGateway, _ := entity.Attributes[atomAttributeIsGateway].(bool)
 		out[id] = DeviceInfo{ExternalID: entity.ExternalID, IsGateway: isGateway}
 	}
-	return out, nil
+	return out, unreadable, nil
 }
 
 // entitiesExist reports which of the given entity ids currently resolve —

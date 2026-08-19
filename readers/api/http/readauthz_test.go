@@ -46,30 +46,41 @@ type fakeResolver struct {
 	serials map[string]string
 	// gateways marks ids flagged attributes.is_gateway (spec §8 A12).
 	gateways map[string]struct{}
-	// unresolvable ids are omitted from the result entirely, as a deleted or
-	// unreadable entity would be — distinct from an id merely absent from
-	// serials, which still resolves with an empty external id.
+	// unresolvable ids are omitted from the result with no error, as a
+	// deleted entity would be — a stable, cacheable "does not exist",
+	// distinct from an id merely absent from serials, which still resolves
+	// with an empty external id.
 	unresolvable map[string]struct{}
-	err          error
-	calls        int
-	lastIDs      []string
+	// unreadable ids come back with a per-entity error attached, as a
+	// permission failure or transient Atom error would — distinct from
+	// unresolvable because resolveDeviceInfo must not cache this as a
+	// confirmed negative (Q4).
+	unreadable map[string]struct{}
+	err        error
+	calls      int
+	lastIDs    []string
 }
 
-func (f *fakeResolver) EntityDeviceInfo(_ context.Context, ids []string) (map[string]atom.DeviceInfo, error) {
+func (f *fakeResolver) EntityDeviceInfo(_ context.Context, ids []string) (map[string]atom.DeviceInfo, map[string]string, error) {
 	f.calls++
 	f.lastIDs = append([]string{}, ids...)
 	if f.err != nil {
-		return nil, f.err
+		return nil, nil, f.err
 	}
 	out := make(map[string]atom.DeviceInfo, len(ids))
+	unreadable := make(map[string]string, len(f.unreadable))
 	for _, id := range ids {
+		if _, blocked := f.unreadable[id]; blocked {
+			unreadable[id] = "transient failure"
+			continue
+		}
 		if _, unresolvable := f.unresolvable[id]; unresolvable {
 			continue
 		}
 		_, isGateway := f.gateways[id]
 		out[id] = atom.DeviceInfo{ExternalID: f.serials[id], IsGateway: isGateway}
 	}
-	return out, nil
+	return out, unreadable, nil
 }
 
 func allMeters() *fakeResolver {
@@ -150,8 +161,8 @@ func TestResolveExcludesGatewaysFromSelfPublisherIDs(t *testing.T) {
 // ” leg keeps working for it.
 func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
 	resolver := &fakeResolver{
-		serials:      map[string]string{meter1UUID: meter1Serial},
-		unresolvable: map[string]struct{}{meter3UUID: {}},
+		serials:    map[string]string{meter1UUID: meter1Serial},
+		unreadable: map[string]struct{}{meter3UUID: {}},
 	}
 	authz := customerAuthorizer(t, resolver, meter1UUID, meter3UUID)
 
@@ -161,6 +172,47 @@ func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
 
 	assert.ElementsMatch(t, []string{meter1UUID, meter3UUID}, got.scope.PublisherIDs)
 	assert.Equal(t, []string{meter1UUID}, got.scope.SelfPublisherIDs, "an unresolved device must not get unconditional publisher trust")
+}
+
+// TestResolveDoesNotCacheATransientDeviceInfoFailure is a regression test
+// for Q4: a transiently-unreadable id must not be cached as though it were a
+// confirmed, stable "no info" -- doing so locked a device out of R1's
+// self-publish trust for a full TTL after a single blip, since
+// resolveDeviceInfo used to have no way to tell "could not read this time"
+// apart from "genuinely has no info" once EntityDeviceInfo's own return
+// discarded that distinction. Two subjects share meter3UUID; the resolver
+// blocks it only for the first subject's load, so the second subject's load
+// -- served from the same per-domain translation cache -- must resolve it
+// cleanly rather than inherit the first load's transient failure.
+func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Subject == testSubject
+	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Subject == "domain-1_user-2"
+	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
+
+	resolver := &fakeResolver{
+		serials:    map[string]string{meter3UUID: meter3Serial},
+		unreadable: map[string]struct{}{meter3UUID: {}},
+	}
+	authz := newReadAuthorizer(evaluator, lister, resolver)
+
+	first, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, first.scope)
+	assert.Empty(t, first.scope.SelfPublisherIDs, "the transiently-unreadable device must not get unconditional publisher trust on the load that hit the failure")
+
+	// The blip clears.
+	resolver.unreadable = nil
+
+	second, err := authz.resolve(context.Background(), testDomain, "domain-1_user-2", nil, nil)
+	require.NoError(t, err)
+	require.NotNil(t, second.scope)
+	assert.Equal(t, []string{meter3UUID}, second.scope.SelfPublisherIDs, "a later load must not inherit the earlier transient failure from the translation cache")
 }
 
 // Criterion 2: the same user requesting meter 2 receives empty, not meter 2's

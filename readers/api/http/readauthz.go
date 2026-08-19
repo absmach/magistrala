@@ -33,9 +33,12 @@ const readAuthzCacheTTL = 30 * time.Second
 var errNoDeviceInfoResolver = errors.New("device info resolver is not configured")
 
 // deviceInfoResolver maps Atom entity UUIDs to the external identifier and
-// gateway flag the entities were registered with.
+// gateway flag the entities were registered with. The second return value
+// names ids that failed to read rather than simply not existing -- see
+// atom.Client.EntityDeviceInfo's doc comment -- which resolveDeviceInfo uses
+// to avoid caching a transient failure as a confirmed negative (Q4).
 type deviceInfoResolver interface {
-	EntityDeviceInfo(ctx context.Context, ids []string) (map[string]atom.DeviceInfo, error)
+	EntityDeviceInfo(ctx context.Context, ids []string) (info map[string]atom.DeviceInfo, unreadable map[string]string, err error)
 }
 
 // authorizedDevice is one device under both identities it can be known by on a
@@ -251,7 +254,7 @@ func (a *readAuthorizer) resolveDeviceInfo(ctx context.Context, domain string, i
 		return out, nil
 	}
 
-	resolved, err := a.resolver.EntityDeviceInfo(ctx, missing)
+	resolved, unreadable, err := a.resolver.EntityDeviceInfo(ctx, missing)
 	if err != nil {
 		return nil, err
 	}
@@ -259,6 +262,18 @@ func (a *readAuthorizer) resolveDeviceInfo(ctx context.Context, domain string, i
 	expiresAt := a.now().Add(a.ttl)
 	a.deviceInfoMu.Lock()
 	for _, id := range missing {
+		if _, transient := unreadable[id]; transient {
+			// Do not cache a transient per-entity failure as though it were
+			// a confirmed, stable "no info" -- that is exactly the
+			// conflation entitiesExist was fixed to refuse (R2), and caching
+			// it here would lock this device out of R1's self-publish trust
+			// for a full TTL after a single blip (Q4). Leave it uncached so
+			// the next load retries it instead of trusting a stale
+			// "could not tell". This load still treats it as unresolved --
+			// the safe default -- for this one request; only the caching is
+			// skipped.
+			continue
+		}
 		info, ok := resolved[id]
 		a.deviceInfo[domain+"\x00"+id] = deviceInfoEntry{info: info, resolved: ok, expiresAt: expiresAt}
 		if ok {

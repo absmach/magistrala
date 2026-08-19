@@ -24,6 +24,8 @@ http://localhost:8080/graphql
 
 Authenticated requests use the same bearer token returned by Atom login:
 
+The IDs in the examples are placeholders; replace them with IDs from your tenant before running the operations.
+
 ```bash
 TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
   -H 'Content-Type: application/json' \

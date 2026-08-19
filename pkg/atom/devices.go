@@ -32,13 +32,8 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	if err != nil {
 		return err
 	}
-
-	current, err := c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
-	if err != nil {
+	if err := c.checkGatewaysCurrent(ctx, device, expectedCurrent); err != nil {
 		return err
-	}
-	if !sameStringSet(current, expectedCurrent) {
-		return ErrGatewaysConflict
 	}
 
 	if err := c.MarkGateways(ctx, gatewayIDs); err != nil {
@@ -50,13 +45,23 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	// just wrote deviceID's own is_gateway through a separate call. Writing
 	// back the pre-mark snapshot here would silently discard that -- the
 	// same instant, no unrelated write in between required to trigger it.
-	// This still cannot close the race against a genuinely concurrent
-	// edit — Atom has no compare-and-swap, which is exactly why this
-	// function's own expectedCurrent check only narrows that window rather
-	// than closing it — but it removes the self-inflicted case where this
-	// call clobbers its own prior write.
 	device, err = c.GetEntity(ctx, deviceID)
 	if err != nil {
+		return err
+	}
+	// Re-check against this re-read too (S1): MarkGateways can take a
+	// while -- a batched read plus up to one UpdateEntity per unflagged
+	// gateway -- the widest gap this function has ever had between
+	// checking and writing. The check above only covers the read at the
+	// top; without checking again here, a concurrent SetDeviceGateways
+	// landing in that window is visible in this re-read but gets silently
+	// overwritten by the write below regardless -- exactly the outcome
+	// ErrGatewaysConflict exists to report. This still cannot close the
+	// race against a genuinely concurrent edit landing after this second
+	// check — Atom has no compare-and-swap — but it shrinks the
+	// uncovered window back down to the same check-to-write gap that
+	// existed before MarkGateways was introduced.
+	if err := c.checkGatewaysCurrent(ctx, device, expectedCurrent); err != nil {
 		return err
 	}
 
@@ -64,6 +69,22 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	attrs[atomAttributeGateways] = gatewayIDs
 	_, err = c.UpdateEntity(ctx, deviceID, Entity{Attributes: attrs})
 	return err
+}
+
+// checkGatewaysCurrent reports ErrGatewaysConflict if device's live gateway
+// set no longer matches expectedCurrent -- the guard SetDeviceGateways runs
+// both before starting its work and again immediately before it writes, so
+// the check actually covers the data being written rather than a snapshot
+// superseded by the time in between (S1).
+func (c *Client) checkGatewaysCurrent(ctx context.Context, device Entity, expectedCurrent []string) error {
+	current, err := c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
+	if err != nil {
+		return err
+	}
+	if !sameStringSet(current, expectedCurrent) {
+		return ErrGatewaysConflict
+	}
+	return nil
 }
 
 // MarkGateways sets attributes.is_gateway on every id in gatewayIDs that

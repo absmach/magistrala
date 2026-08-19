@@ -355,8 +355,10 @@ func TestSetDeviceGatewaysMarksGatewaysInOneBatchedRoundTrip(t *testing.T) {
 	// device-1's own GetEntity, its (empty) liveGateways check (0 requests,
 	// nothing declared yet), one batched EntityDeviceInfo for all 5
 	// gateways, 5 UpdateEntity writes (one per newly-flagged gateway),
-	// device-1's re-read (P2), and device-1's own final write: 9 requests.
-	// A per-id GetEntity loop would cost 5 more (14).
+	// device-1's re-read (P2), the S1 re-check's liveGateways (0 requests,
+	// device-1 still declares nothing at this point -- the write that would
+	// change that happens after), and device-1's own final write: 9
+	// requests. A per-id GetEntity loop would cost 5 more (14).
 	if fa.requests != 9 {
 		t.Fatalf("expected 9 requests (one batched lookup, not one per gateway), got %d", fa.requests)
 	}

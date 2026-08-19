@@ -67,6 +67,41 @@ func TestGatewaysSetCmdConflict(t *testing.T) {
 	assert.Equal(t, []string{"gw-changed"}, gws)
 }
 
+// TestGatewaysSetCmdConflictLandingDuringMarking is a regression test for
+// S1: the conflict check only ever validated the read at the top of
+// SetDeviceGateways, not the re-read P2 introduced after MarkGateways runs.
+// A concurrent write landing in that gap -- after the check passes but
+// before the write -- used to be silently overwritten by this call's own
+// write instead of surfacing as ErrGatewaysConflict, the exact outcome the
+// check exists to report.
+func TestGatewaysSetCmdConflictLandingDuringMarking(t *testing.T) {
+	fa := newFakeAtom(t,
+		atom.Entity{ID: "device-1", Kind: "device", Attributes: atom.Attributes{"gateways": []string{"gw-old"}}},
+		atom.Entity{ID: "gw-old", Kind: "device", Attributes: atom.Attributes{"is_gateway": true}},
+		atom.Entity{ID: "gw-changed", Kind: "device", Attributes: atom.Attributes{"is_gateway": true}},
+		atom.Entity{ID: "gw-1", Kind: "device"},
+		atom.Entity{ID: "gw-2", Kind: "device"},
+	)
+	// GetEntity("device-1") is called three times: #1 the CLI's own
+	// DeviceGateways read (used to build expectedCurrent), #2
+	// SetDeviceGateways' initial read/check, #3 the P2 re-read that runs
+	// after MarkGateways. Landing the mutation on #3 puts it exactly in
+	// the gap S1 closes -- MarkGateways itself never touches device-1
+	// (gw-1 and gw-2 are the ones it marks), so nothing before #3 could
+	// have caught this.
+	fa.mutateOnNthGet("device-1", 3, atom.Attributes{"gateways": []string{"gw-changed"}})
+
+	rootCmd := setFlags(cli.NewGatewaysCmd())
+	out := executeCommand(t, rootCmd, "set", "device-1", "gw-1,gw-2")
+
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "gateways changed")
+
+	// The write must not have happened.
+	gws := toStringSlice(fa.entities["device-1"].Attributes["gateways"])
+	assert.Equal(t, []string{"gw-changed"}, gws)
+}
+
 func TestGatewaysDevicesCmd(t *testing.T) {
 	newFakeAtom(t,
 		atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1", Attributes: atom.Attributes{"gateways": []string{"gw-1"}}},

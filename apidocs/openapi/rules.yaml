@@ -285,9 +285,18 @@ components:
           type: object
           description: Rule processing logic script
           properties:
-            script:
+            type:
+              type: integer
+              enum: [0, 1]
+              description: Script runtime (0 = Lua, 1 = Go)
+            value:
               type: string
               description: Script content
+            mode:
+              type: string
+              enum: [sandboxed, legacy]
+              description: Execution security mode
+          required: [type, value, mode]
         output_channel:
           type: string
           description: Output channel for processed messages
@@ -429,9 +438,19 @@ components:
                 type: object
                 description: Rule processing logic script
                 properties:
-                  script:
+                  type:
+                    type: integer
+                    enum: [0, 1]
+                    description: Script runtime (0 = Lua, 1 = Go)
+                  value:
                     type: string
                     description: Script content
+                  mode:
+                    type: string
+                    enum: [sandboxed, legacy]
+                    default: legacy
+                    description: Per-rule execution security mode; omission preserves backwards-compatible unrestricted execution
+                required: [type, value]
               output_channel:
                 type: string
                 description: Output channel for processed messages
@@ -495,9 +514,17 @@ components:
                 type: object
                 description: Rule processing logic script
                 properties:
-                  script:
+                  type:
+                    type: integer
+                    enum: [0, 1]
+                    description: Script runtime (0 = Lua, 1 = Go)
+                  value:
                     type: string
                     description: Script content
+                  mode:
+                    type: string
+                    enum: [sandboxed, legacy]
+                    description: Per-rule execution security mode; omission preserves the stored mode
               output_channel:
                 type: string
                 description: Output channel for processed messages

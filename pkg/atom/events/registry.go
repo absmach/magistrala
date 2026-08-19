@@ -23,10 +23,11 @@ type Invalidator interface {
 // Registry fans an invalidation out to every Invalidator registered for a
 // family. A family is just a name -- FamilyTranslation, FamilyAuthorizedSet,
 // or anything a future consumer defines -- so unrelated caches can register
-// against the same family without knowing about each other, and one cache
-// can register against more than one family if it backs several concerns at
-// once (MG-08's readAuthorizer does exactly that today: one cache, two
-// families).
+// against the same family without knowing about each other, and a consumer
+// backing several concerns can register a different Invalidator value
+// against each one, so a family fan-out only ever touches the cache it
+// actually concerns (MG-08's readAuthorizer does exactly that: two caches,
+// two families, one Invalidator value each).
 type Registry struct {
 	mu           sync.RWMutex
 	invalidators map[string][]Invalidator

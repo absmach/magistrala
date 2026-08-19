@@ -147,7 +147,7 @@ func TestResolveExcludesGatewaysFromSelfPublisherIDs(t *testing.T) {
 // — a permission failure, a transient error on that one entity — must be
 // excluded from SelfPublisherIDs, the safe direction (see the load() doc
 // comment). It must still land in PublisherIDs, so the existing device_id =
-// '' leg keeps working for it.
+// ” leg keeps working for it.
 func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
 	resolver := &fakeResolver{
 		serials:      map[string]string{meter1UUID: meter1Serial},
@@ -424,6 +424,67 @@ func TestReadAuthorizerCacheIsKeyedPerSubjectAndDomain(t *testing.T) {
 
 	assert.Equal(t, []string{meter1Serial}, first.scope.DeviceIDs)
 	assert.Equal(t, []string{meter3Serial}, second.scope.DeviceIDs, "one subject's grant must not be served to another")
+}
+
+// TestInvalidateDeviceInfoDoesNotForceAuthorizedSetRecompute is a regression
+// test for N3: entity.create/entity.update map only to
+// atomevents.FamilyTranslation, so they must invalidate the device-info
+// cache without touching the authorized-set cache — otherwise a burst of
+// such events during a bulk import forces every concurrent reader in the
+// domain back through ListAllObjects for no reason a translation-only event
+// actually requires. ListAllObjects is mocked .Once(): a second call here
+// would fail the mock's own expectations, not just an assertion.
+func TestInvalidateDeviceInfoDoesNotForceAuthorizedSetRecompute(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).
+		Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
+
+	authz := newReadAuthorizer(evaluator, lister, allMeters())
+	authz.ttl = time.Hour
+
+	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
+
+	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testDomain))
+
+	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs, "authorized set must still be served from its own cache, untouched by a translation-only invalidation")
+}
+
+// TestInvalidateDeviceInfoForcesRetranslationOnNextLoad proves the
+// translation cache is actually cleared, not merely left unconsulted: two
+// subjects share a device, so the second subject's load reuses whatever
+// invalidateDeviceInfo left behind in the shared per-domain translation
+// cache.
+func TestInvalidateDeviceInfoForcesRetranslationOnNextLoad(t *testing.T) {
+	evaluator := policymocks.NewEvaluator(t)
+	lister := policymocks.NewService(t)
+
+	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Subject == testSubject
+	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
+	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
+		return pr.Subject == "domain-1_user-2"
+	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
+
+	resolver := allMeters()
+	authz := newReadAuthorizer(evaluator, lister, resolver)
+
+	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	require.NoError(t, err)
+	require.Equal(t, 1, resolver.calls)
+
+	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testDomain))
+
+	_, err = authz.resolve(context.Background(), testDomain, "domain-1_user-2", nil, nil)
+	require.NoError(t, err)
+	assert.Equal(t, 2, resolver.calls, "invalidateDeviceInfo must clear the shared translation cache, not just go unused")
 }
 
 // Criterion 4: an Atom event invalidating this domain must take effect well

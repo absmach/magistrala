@@ -65,7 +65,14 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 
 	readAuthz := newReadAuthorizer(policyEvaluator, policyLister, devices)
 	if invalidation != nil {
-		invalidation.Register(atomevents.FamilyTranslation, readAuthz)
+		// Registered as two independent Invalidators, not the same value
+		// against both families: readAuthz's authorized-set cache
+		// (Invalidate) and its device-info translation cache
+		// (invalidateDeviceInfo) are now separate, so an entity.create /
+		// entity.update event only has to refresh the lightweight
+		// translation cache rather than recompute every subject's
+		// authorized set in the domain (N3).
+		invalidation.Register(atomevents.FamilyTranslation, invalidatorFunc(readAuthz.invalidateDeviceInfo))
 		invalidation.Register(atomevents.FamilyAuthorizedSet, readAuthz)
 	}
 

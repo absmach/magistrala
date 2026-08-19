@@ -11,10 +11,14 @@ import (
 	"github.com/absmach/magistrala/pkg/events"
 )
 
-// Cache families an Atom event can invalidate. MG-08's caches
-// (readers/api/http/readauthz.go) register against both today, since they
-// currently share one combined cache entry per (domain, subject); a future
-// consumer with genuinely separate caches can register against just one.
+// Cache families an Atom event can invalidate. MG-08's readAuthorizer
+// (readers/api/http/readauthz.go) registers two independent Invalidator
+// values, one per family: its authorized-set cache against
+// FamilyAuthorizedSet, and its separate device-info translation cache
+// against FamilyTranslation. Keeping them apart is what lets a
+// translation-only event (entity.create, entity.update) refresh just the
+// lightweight translation cache instead of forcing every subject's
+// authorized set in the domain to be recomputed.
 const (
 	// FamilyTranslation covers Atom's UUID -> external_id (device serial)
 	// resolution -- ATOM-06, pkg/atom.Client.EntityExternalIDs.

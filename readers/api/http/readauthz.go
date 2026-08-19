@@ -49,6 +49,21 @@ type authorizedDevice struct {
 	isGateway   bool
 }
 
+// deviceInfoEntry caches one entity's Atom device-info translation
+// (external_id, is_gateway) independently of the authorized-set cache below.
+// Keeping it separate is what lets a translation-only event (entity.create,
+// entity.update -- atomevents.FamilyTranslation) be handled by dropping just
+// this, instead of every subject's authorized-set grant in the domain: a
+// provisioning burst of entity.create events would otherwise force every
+// concurrent reader in the domain back through ListAllObjects -- the more
+// expensive of the two Atom calls a grant load makes -- for no reason a
+// translation-only event actually requires (N3).
+type deviceInfoEntry struct {
+	info      atom.DeviceInfo
+	resolved  bool
+	expiresAt time.Time
+}
+
 // readGrant is what a (domain, subject) pair may read: either everything, or a
 // bounded set of devices.
 //
@@ -93,6 +108,16 @@ type readAuthorizer struct {
 	// into a single load, rather than one Atom round trip per waiting
 	// request.
 	group singleflight.Group
+
+	// deviceInfoMu guards deviceInfo, kept separate from mu above so a
+	// translation-only invalidation (see invalidateDeviceInfo) never
+	// contends with the authorized-set cache's epoch/singleflight
+	// bookkeeping, which does not need to know this cache exists at all.
+	deviceInfoMu sync.Mutex
+	// deviceInfo caches per-entity translation, keyed by domain + "\x00" +
+	// entity id -- see the deviceInfoEntry doc comment for why this is a
+	// separate cache from the one below rather than folded into readGrant.
+	deviceInfo map[string]deviceInfoEntry
 }
 
 func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, resolver deviceInfoResolver) *readAuthorizer {
@@ -105,16 +130,33 @@ func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, re
 		cache:       make(map[string]readGrant),
 		epoch:       make(map[string]uint64),
 		domainLoads: make(map[string]int),
+		deviceInfo:  make(map[string]deviceInfoEntry),
 	}
 }
 
 var _ atomevents.Invalidator = (*readAuthorizer)(nil)
 
+// invalidatorFunc adapts a plain function to atomevents.Invalidator, the way
+// http.HandlerFunc adapts a function to http.Handler. readAuthorizer needs
+// two independent Invalidator values -- one per cache -- registered against
+// two different families; a bare method value cannot satisfy an interface on
+// its own, so this wraps invalidateDeviceInfo for its registration in
+// MakeHandler without needing a second named type.
+type invalidatorFunc func(ctx context.Context, key string) error
+
+func (f invalidatorFunc) Invalidate(ctx context.Context, key string) error {
+	return f(ctx, key)
+}
+
 // Invalidate drops every cached grant for domain (an Atom tenant id, see
 // pkg/atom/events.Handler), so the next read for any subject in it
-// recomputes both halves of the grant -- the policy lookup and the
-// UUID-to-external_id translation -- from Atom instead of serving a stale
-// cache entry for up to readAuthzCacheTTL.
+// recomputes the policy lookup half of the grant from Atom instead of
+// serving a stale cache entry for up to readAuthzCacheTTL. It is registered
+// against atomevents.FamilyAuthorizedSet only -- the UUID-to-external_id
+// translation half lives in the separate deviceInfo cache below, dropped by
+// invalidateDeviceInfo against FamilyTranslation instead, so that an
+// entity.create/entity.update event does not have to pay for recomputing
+// every subject's authorized set just to refresh a translation (N3).
 //
 // It clears every subject in the domain rather than one specific subject on
 // purpose: some of the Atom events that trigger this (direct_policy events
@@ -156,6 +198,76 @@ func (a *readAuthorizer) Invalidate(_ context.Context, domain string) error {
 		delete(a.epoch, domain)
 	}
 	return nil
+}
+
+// invalidateDeviceInfo drops every cached translation entry for domain,
+// registered against atomevents.FamilyTranslation. Deliberately simpler than
+// Invalidate above: this cache carries no epoch -- it is repopulated lazily,
+// entry by entry, by resolveDeviceInfo on the next lookup that misses, so
+// there is no in-flight-load race to guard against -- a load that started
+// before this runs simply overwrites its own now-stale entries once it
+// finishes, same as any ordinary TTL expiry would.
+func (a *readAuthorizer) invalidateDeviceInfo(_ context.Context, domain string) error {
+	if domain == "" {
+		return nil
+	}
+
+	prefix := domain + "\x00"
+	a.deviceInfoMu.Lock()
+	defer a.deviceInfoMu.Unlock()
+	for key := range a.deviceInfo {
+		if strings.HasPrefix(key, prefix) {
+			delete(a.deviceInfo, key)
+		}
+	}
+	return nil
+}
+
+// resolveDeviceInfo translates ids to their Atom device info, serving
+// whatever is already cached for domain and batching only the misses
+// through the resolver -- the same shape as EntityDeviceInfo itself, one
+// level up. A miss is cached too (resolved: false, see deviceInfoEntry), so
+// an id repeatedly requested but never resolvable does not re-hit Atom on
+// every load within the TTL.
+func (a *readAuthorizer) resolveDeviceInfo(ctx context.Context, domain string, ids []string) (map[string]atom.DeviceInfo, error) {
+	out := make(map[string]atom.DeviceInfo, len(ids))
+	missing := make([]string, 0, len(ids))
+
+	now := a.now()
+	a.deviceInfoMu.Lock()
+	for _, id := range ids {
+		entry, ok := a.deviceInfo[domain+"\x00"+id]
+		if !ok || !now.Before(entry.expiresAt) {
+			missing = append(missing, id)
+			continue
+		}
+		if entry.resolved {
+			out[id] = entry.info
+		}
+	}
+	a.deviceInfoMu.Unlock()
+
+	if len(missing) == 0 {
+		return out, nil
+	}
+
+	resolved, err := a.resolver.EntityDeviceInfo(ctx, missing)
+	if err != nil {
+		return nil, err
+	}
+
+	expiresAt := a.now().Add(a.ttl)
+	a.deviceInfoMu.Lock()
+	for _, id := range missing {
+		info, ok := resolved[id]
+		a.deviceInfo[domain+"\x00"+id] = deviceInfoEntry{info: info, resolved: ok, expiresAt: expiresAt}
+		if ok {
+			out[id] = info
+		}
+	}
+	a.deviceInfoMu.Unlock()
+
+	return out, nil
 }
 
 // authzScope is what the caller's request is allowed to become.
@@ -390,7 +502,7 @@ func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (read
 	if a.resolver == nil {
 		return readGrant{}, errNoDeviceInfoResolver
 	}
-	info, err := a.resolver.EntityDeviceInfo(ctx, page.Policies)
+	info, err := a.resolveDeviceInfo(ctx, domain, page.Policies)
 	if err != nil {
 		return readGrant{}, err
 	}

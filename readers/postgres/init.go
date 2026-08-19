@@ -86,8 +86,22 @@ func migrateDB(db *sqlx.DB) error {
 				// the same pair the writer's messages_4 creates, so
 				// whichever side applies first, the other's CREATE INDEX IF
 				// NOT EXISTS is a no-op.
+				//
+				// The ALTER TABLE is what makes this self-sufficient on an
+				// existing deployment: messages_1 above already declares
+				// device_id, but on any stack upgraded from before this PR
+				// that Id is already recorded in gorp_migrations from when
+				// messages_1 ran without it, so the edit above is dead code
+				// there -- migrate.Up never re-runs an applied Id's body, it
+				// only records new ones. Without this statement, a reader
+				// started before the writer has upgraded hits "column
+				// device_id does not exist" on its own CREATE INDEX and
+				// fails to boot (N1). IF NOT EXISTS makes this a no-op
+				// wherever messages_3 (the writer's own migration adding
+				// this column) has already run, in either order.
 				Id: "messages_5",
 				Up: []string{
+					`ALTER TABLE messages ADD COLUMN IF NOT EXISTS device_id TEXT NOT NULL DEFAULT ''`,
 					`CREATE INDEX IF NOT EXISTS idx_channel_publisher_device_id ON messages (channel, publisher, device_id)`,
 					`CREATE INDEX IF NOT EXISTS idx_channel_device_id_publisher ON messages (channel, device_id, publisher)`,
 				},

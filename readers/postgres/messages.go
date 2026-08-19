@@ -50,16 +50,22 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	order := "time"
 	format := defTable
 
-	if rpm.Format != "" && rpm.Format != defTable {
-		order = "created"
-		// Postgres folds an unquoted identifier to lower case, and that is
-		// exactly how the writer creates a JSON format's table (saveJSON's
-		// CREATE TABLE IF NOT EXISTS %s is unquoted too). Quoting format
-		// below makes it match-exact rather than fold, so it has to be
-		// lower-cased first to land on the same table name the writer
-		// actually created -- otherwise a mixed-case format silently reads
-		// as an empty page instead of the rows the writer put there (Q2).
-		format = strings.ToLower(rpm.Format)
+	// Postgres folds an unquoted identifier to lower case, and that is
+	// exactly how the writer creates a JSON format's table (saveJSON's
+	// CREATE TABLE IF NOT EXISTS %s is unquoted too). Quoting format below
+	// makes it match-exact rather than fold, so it has to be lower-cased
+	// before anything compares it against defTable, not after (P4) --
+	// otherwise a request for the default table spelled in another case
+	// (e.g. MESSAGES) is judged "not the default", picks the JSON order-by
+	// column that table does not have, and only then normalizes down to
+	// defTable, so the ensuing UndefinedColumn no longer looks like the
+	// legacy-JSON case IsLegacyJSONDeviceFilter exists to swallow.
+	if rpm.Format != "" {
+		normalized := strings.ToLower(rpm.Format)
+		if normalized != defTable {
+			order = "created"
+			format = normalized
+		}
 	}
 	cond := fmtCondition(chanID, rpm)
 

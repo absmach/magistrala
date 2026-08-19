@@ -747,6 +747,37 @@ func TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable(t *testing.T) {
 	assert.Len(t, page.Messages, 1, "a mixed-case format must read back what the writer wrote under Postgres's own lower-case folding")
 }
 
+// TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison is a
+// regression test for P4: the branch deciding "is format the default senml
+// table" ran on the raw, case-sensitive rpm.Format, so a request for the
+// default table spelled in another case (?format=MESSAGES) was judged "not
+// the default", picked the JSON code path this table does not fit, and
+// only normalized to defTable afterward -- by which point
+// IsLegacyJSONDeviceFilter no longer recognized it as the legacy-JSON case
+// it exists to swallow, so the caller got a 500 instead of ordinary senml
+// rows.
+func TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison(t *testing.T) {
+	writer := twriter.New(db)
+	reader := treader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+
+	now := float64(time.Now().Unix())
+	msg := senml.Message{
+		Channel:   chanID,
+		Publisher: pubID,
+		Protocol:  mqttProt,
+		Time:      now,
+		Value:     &v,
+	}
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), []senml.Message{msg}))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: "MESSAGES"})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1)
+}
+
 func TestReadJSON(t *testing.T) {
 	writer := twriter.New(db)
 

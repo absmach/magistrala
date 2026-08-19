@@ -1,6 +1,20 @@
 # Copyright (c) Abstract Machines
 # SPDX-License-Identifier: Apache-2.0
 
+# `clients` was renamed to `devices` as part of this PR's wider clients ->
+# devices rename (spec §8 C2), with no `clients:` alias kept alongside it.
+# GetEntityPermissions keys on this top-level YAML name verbatim, so the
+# absence is intentional and enforced: pkg/permissions/config_test.go's
+# TestDevicesEntityReplacesClients is an acceptance criterion asserting
+# GetEntityPermissions("clients") errors against this exact file, and a
+# `clients: *devices` alias was tried and reverted specifically because it
+# made that test pass again for the wrong reason.
+#
+# This file is also mounted into three services whose Go code lives outside
+# this repo (magistrala-ee's re, alarms and reports) -- each was audited and
+# confirmed to call GetEntityPermissions with its own entity type ("rule",
+# "alarm", "report" respectively), never "clients" or "devices", so none of
+# them are affected by this rename.
 devices:
   operations:
     - view: read_permission

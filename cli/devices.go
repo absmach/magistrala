@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/spf13/cobra"
@@ -119,7 +120,10 @@ func handleDeviceCreate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	markDeclaredGateways(cmd, created)
+	if err := markDeclaredGateways(cmd, created); err != nil {
+		logErrorCmd(*cmd, err)
+		return
+	}
 
 	logJSONCmd(*cmd, created)
 }
@@ -183,7 +187,10 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 		return
 	}
 
-	markDeclaredGateways(cmd, updated)
+	if err := markDeclaredGateways(cmd, updated); err != nil {
+		logErrorCmd(*cmd, err)
+		return
+	}
 
 	logJSONCmd(*cmd, updated)
 }
@@ -203,17 +210,23 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 // names itself as one of its own gateways then has its own just-written
 // attributes marked directly, instead of a snapshot taken before this
 // write landed racing it the way SetDeviceGateways's own pre-P2 bug did.
-// A marking failure is reported but does not undo the entity write that
-// already succeeded -- there is nothing to roll back to, and the operator
-// needs to know marking is what failed, not the write.
-func markDeclaredGateways(cmd *cobra.Command, entity atom.Entity) {
+//
+// A marking failure is returned rather than merely logged (S2): the entity
+// write it follows has already succeeded and cannot be rolled back -- Atom
+// has no cross-entity transactions -- but silently continuing to print a
+// clean success result would leave an operator believing a gateway is
+// trusted when it is not. Callers must treat this the same as any other
+// command failure: report it and stop, not report it and proceed anyway.
+func markDeclaredGateways(cmd *cobra.Command, entity atom.Entity) error {
 	gatewayIDs := atom.GatewaysDeclared(entity)
 	if len(gatewayIDs) == 0 {
-		return
+		return nil
 	}
 	if err := atomClient.MarkGateways(cmd.Context(), gatewayIDs); err != nil {
-		logErrorCmd(*cmd, fmt.Errorf("device saved, but marking its declared gateways failed: %w", err))
+		return fmt.Errorf("%s was saved, but flagging its declared gateways (%s) failed -- run \"gateways set %s %s\" to retry: %w",
+			entity.ID, strings.Join(gatewayIDs, ","), entity.ID, strings.Join(gatewayIDs, ","), err)
 	}
+	return nil
 }
 
 func handleDeviceDelete(cmd *cobra.Command, deviceID string, args []string) {

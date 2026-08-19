@@ -121,6 +121,12 @@ func (c *Client) UpsertEntity(ctx context.Context, entity Entity) error {
 // field cannot reach one caller and not another.
 const entityFields = `id kind name external_id: externalId tenant_id: tenantId device_type_id: profileId device_type_version_id: profileVersionId status attributes created_at: createdAt updated_at: updatedAt`
 
+// CreateEntity writes entity as-is: if entity.Attributes declares
+// atomAttributeGateways ("gateways"), the caller is responsible for calling
+// MarkGateways with those ids afterward (see GatewaysDeclared) -- this
+// method has no way to know it is a device create, let alone flag the
+// gateways it names. See atomAttributeGateways's doc comment for the
+// invariant this maintains and who currently maintains it.
 func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error) {
 	var out struct {
 		CreateEntity Entity `json:"createEntity"`
@@ -144,6 +150,10 @@ func (c *Client) GetEntity(ctx context.Context, id string) (Entity, error) {
 	return out.Entity, err
 }
 
+// UpdateEntity replaces entity's whole attributes column with entity as
+// given -- see CreateEntity's doc comment: the same MarkGateways
+// responsibility falls on any caller whose entity.Attributes declares
+// atomAttributeGateways.
 func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (Entity, error) {
 	var out struct {
 		UpdateEntity Entity `json:"updateEntity"`

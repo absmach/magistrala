@@ -143,6 +143,32 @@ func TestDevicesCreateCmdFlagsDeclaredGateways(t *testing.T) {
 	assert.Equal(t, true, gw.Attributes["is_gateway"], "expected gw-1 to be flagged is_gateway after being declared, got: %+v", gw.Attributes)
 }
 
+// A regression test for S2: markDeclaredGateways used to only log a
+// marking failure and then print the device's success JSON anyway, leaving
+// an operator believing a gateway is trusted when it is not. A marking
+// failure must now fail the whole command the same way any other error
+// does -- reported, with no misleading success output following it.
+func TestDevicesCreateCmdFailsWhenMarkingDeclaredGatewaysFails(t *testing.T) {
+	fa := newFakeAtom(t, atom.Entity{ID: "gw-1", Kind: "device"})
+	// The device create itself is a mutation CreateEntity, so this only
+	// intercepts the mutation UpdateEntity MarkGateways issues afterward
+	// to flag gw-1 -- the device write must still succeed.
+	fa.failEntityUpdate("boom")
+	rootCmd := setFlags(cli.NewDevicesCmd())
+
+	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"gateways":["gw-1"]}}`, "domain-1")
+
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "boom")
+	// tenant_id only ever appears in the device's own success JSON, never
+	// in an error message -- its absence proves logJSONCmd never ran.
+	assert.NotContains(t, out, "tenant_id")
+
+	gw := fa.entities["gw-1"]
+	_, flagged := gw.Attributes["is_gateway"]
+	assert.False(t, flagged, "gateway must not appear flagged when the flagging write itself failed")
+}
+
 // A device naming itself as one of its own gateways must end up with the
 // flag set: markDeclaredGateways runs against the entity the API just
 // returned, after the write, so there is no pre-write snapshot for the

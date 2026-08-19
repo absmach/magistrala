@@ -100,14 +100,25 @@ const (
 
 const (
 	atomAttributeCreatedAt = "created_at"
-	atomAttributeGateways  = "gateways"
+	// atomAttributeGateways is a device's own list of the gateways it
+	// relays through (spec §8 A12). INVARIANT: every id named here must
+	// have atomAttributeIsGateway set on its own entity -- readAuthorizer's
+	// R1 scope leg trusts a held device's publisher identity
+	// unconditionally whenever is_gateway is false, so an id named here
+	// without it reopens finding 02's cross-tenant leak (Q1). Nothing
+	// enforces this at the type level: every current writer of this
+	// attribute must call Client.MarkGateways with the ids it names
+	// immediately after writing, or use Entity.GatewaysDeclared to find
+	// them. As of this writing the writers are SetDeviceGateways
+	// (pkg/atom/devices.go) and the CLI's device create/update commands
+	// (cli/devices.go) -- a new one (another service, the SDK, a future
+	// API handler) must do the same or this invariant silently breaks for
+	// it.
+	atomAttributeGateways = "gateways"
 	// atomAttributeIsGateway marks a device as a gateway (spec §8 A12) — a
 	// gateway is not a separate entity kind, just a device with this set.
-	// Operators set it directly when creating or updating a device (see
-	// cli/devices.go), and SetDeviceGateways also sets it on every gateway
-	// it links a device to, so the two ways Magistrala identifies a gateway
-	// — the flag itself, and being named in another device's gateways list
-	// — cannot drift out of sync through this repo's own write path.
+	// See atomAttributeGateways above for the invariant this must be kept
+	// in step with, and by whom.
 	atomAttributeIsGateway = "is_gateway"
 	atomAttributeMetadata  = "metadata"
 	atomAttributeRoute     = "route"

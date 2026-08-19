@@ -7,7 +7,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net"
 	"testing"
 	"time"
 
@@ -25,7 +24,6 @@ import (
 )
 
 const (
-	port         = 7071
 	channelID    = "testChannelID"
 	domain       = "testDomain"
 	validID      = "validID"
@@ -35,22 +33,9 @@ const (
 	testLimit    = 10
 )
 
-var authAddr = fmt.Sprintf("localhost:%d", port)
-
-func startGRPCServer(svc readers.MessageRepository, port int) *grpc.Server {
-	listener, _ := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	server := grpc.NewServer()
-	grpcReadersV1.RegisterReadersServiceServer(server, grpcapi.NewReadersServer(svc))
-	go func() {
-		err := server.Serve(listener)
-		assert.Nil(&testing.T{}, err, fmt.Sprintf(`"Unexpected error creating reader server %s"`, err))
-	}()
-
-	return server
-}
-
 func TestReadMessages(t *testing.T) {
-	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	svc, addr := newTestServer(t)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	assert.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 
@@ -227,7 +212,8 @@ func TestReadMessages(t *testing.T) {
 // the comment on deviceViewReq — so this only has to show the aggregation
 // itself round-trips correctly.
 func TestListGatewayDevices(t *testing.T) {
-	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	svc, addr := newTestServer(t)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 
@@ -306,7 +292,8 @@ func TestListGatewayDevices(t *testing.T) {
 // TestListDeviceGateways mirrors TestListGatewayDevices for the inverse
 // direction.
 func TestListDeviceGateways(t *testing.T) {
-	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	svc, addr := newTestServer(t)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.NoError(t, err)
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 
@@ -390,7 +377,8 @@ func boolPtr(v bool) *bool {
 // `repeated` carries no field presence, so an absent list arrives as nil and
 // there is no empty-versus-unset distinction to preserve on this path.
 func TestReadMessagesCarriesListFilters(t *testing.T) {
-	conn, err := grpc.NewClient(authAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	svc, addr := newTestServer(t)
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	require.Nil(t, err, fmt.Sprintf("Unexpected error creating client connection %s", err))
 	grpcClient := grpcapi.NewReadersClient(conn, time.Second)
 

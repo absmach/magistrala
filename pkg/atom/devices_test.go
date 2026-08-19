@@ -90,6 +90,34 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 		}
 		_ = writeJSON(w, map[string]any{"data": map[string]any{"entity": deviceEntityJSON(e)}})
 
+	case strings.Contains(payload.Query, "query EntityDeviceInfo("):
+		data := map[string]any{}
+		var errs []map[string]any
+		for i := 0; ; i++ {
+			raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
+			if !ok {
+				break
+			}
+			id, _ := raw.(string)
+			alias := fmt.Sprintf("e%d", i)
+			if _, blocked := fa.unreadable[id]; blocked {
+				data[alias] = nil
+				errs = append(errs, map[string]any{"message": "forbidden", "path": []any{alias}})
+				continue
+			}
+			e, ok := fa.entities[id]
+			if !ok {
+				data[alias] = nil
+				continue
+			}
+			data[alias] = deviceEntityJSON(e)
+		}
+		body := map[string]any{"data": data}
+		if len(errs) > 0 {
+			body["errors"] = errs
+		}
+		_ = writeJSON(w, body)
+
 	case strings.Contains(payload.Query, "query EntityExistence("):
 		data := map[string]any{}
 		var errs []map[string]any
@@ -294,6 +322,43 @@ func TestSetDeviceGatewaysToleratesAnUnresolvableNewGateway(t *testing.T) {
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-not-yet-created"}, nil); err != nil {
 		t.Fatalf("an unresolvable new gateway must not fail the write, got: %v", err)
+	}
+}
+
+// A regression test for P1: markGateways must resolve gatewayIDs in one
+// batched round trip via batchEntities, not one GetEntity per id -- the
+// same N+1 shape round 2's finding 15 already retired from DeviceGateways
+// below, reappearing here.
+func TestSetDeviceGatewaysMarksGatewaysInOneBatchedRoundTrip(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-1", Kind: atomKindDevice},
+		Entity{ID: "gw-2", Kind: atomKindDevice},
+		Entity{ID: "gw-3", Kind: atomKindDevice},
+		Entity{ID: "gw-4", Kind: atomKindDevice},
+		Entity{ID: "gw-5", Kind: atomKindDevice},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	gatewayIDs := []string{"gw-1", "gw-2", "gw-3", "gw-4", "gw-5"}
+	if err := client.SetDeviceGateways(context.Background(), "device-1", gatewayIDs, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	for _, id := range gatewayIDs {
+		isGateway, _ := fa.entities[id].Attributes[atomAttributeIsGateway].(bool)
+		if !isGateway {
+			t.Fatalf("expected %s to be flagged is_gateway, got: %+v", id, fa.entities[id].Attributes)
+		}
+	}
+
+	// device-1's own GetEntity, its (empty) liveGateways check (0 requests,
+	// nothing declared yet), one batched EntityDeviceInfo for all 5
+	// gateways, 5 UpdateEntity writes (one per newly-flagged gateway),
+	// device-1's re-read (P2), and device-1's own final write: 9 requests.
+	// A per-id GetEntity loop would cost 5 more (14).
+	if fa.requests != 9 {
+		t.Fatalf("expected 9 requests (one batched lookup, not one per gateway), got %d", fa.requests)
 	}
 }
 

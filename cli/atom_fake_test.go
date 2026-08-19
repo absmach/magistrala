@@ -112,6 +112,8 @@ func (fa *fakeAtom) handle(w http.ResponseWriter, r *http.Request) {
 		fa.handleGet(w, req)
 	case strings.Contains(req.Query, "query EntityExistence("):
 		fa.handleEntityExistence(w, req)
+	case strings.Contains(req.Query, "query EntityDeviceInfo("):
+		fa.handleEntityDeviceInfo(w, req)
 	case strings.Contains(req.Query, "query Entities("):
 		fa.handleList(w, req)
 	case strings.Contains(req.Query, "mutation CreateDeviceTypeVersion"):
@@ -356,6 +358,29 @@ func (fa *fakeAtom) handleEntityExistence(w http.ResponseWriter, req gqlRequest)
 		} else {
 			data[alias] = nil
 		}
+	}
+	writeGQLData(fa.t, w, data)
+}
+
+// handleEntityDeviceInfo answers the batched aliased-entity lookup
+// pkg/atom's markGateways uses (see batchEntities/EntityDeviceInfo), one
+// round trip for however many gateway ids it was asked about rather than
+// one GetEntity per id.
+func (fa *fakeAtom) handleEntityDeviceInfo(w http.ResponseWriter, req gqlRequest) {
+	data := map[string]any{}
+	for i := 0; ; i++ {
+		raw, ok := req.Variables[fmt.Sprintf("id%d", i)]
+		if !ok {
+			break
+		}
+		id, _ := raw.(string)
+		alias := fmt.Sprintf("e%d", i)
+		e, ok := fa.entities[id]
+		if !ok {
+			data[alias] = nil
+			continue
+		}
+		data[alias] = entityJSON(e)
 	}
 	writeGQLData(fa.t, w, data)
 }

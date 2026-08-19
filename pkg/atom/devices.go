@@ -5,7 +5,9 @@ package atom
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"sort"
 )
 
@@ -81,19 +83,38 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 // than reconciling both directions means a device dropped from every
 // gateways list simply keeps a flag it no longer strictly needs — the safe
 // direction to be wrong in, unlike the leak this closes.
+//
+// Reads gatewayIDs in one batched round trip via batchEntities rather than
+// one GetEntity per id (P1) — the exact per-id shape round 2's finding 15
+// retired from DeviceGateways below, reappearing here. An id neither
+// resolved nor readable is treated the same as liveGateways treats it
+// elsewhere: silently skipped if it simply does not (yet, or any longer)
+// exist, but a hard error if it merely could not be read this time — "could
+// not tell" must not be read as "nothing to mark", the same distinction
+// entitiesExist exists to preserve.
 func (c *Client) markGateways(ctx context.Context, gatewayIDs []string) error {
+	raw, unreadable, err := c.batchEntities(ctx, gatewayIDs, "EntityDeviceInfo", "id external_id: externalId attributes")
+	if err != nil {
+		return err
+	}
+	if len(unreadable) > 0 {
+		return fmt.Errorf("atom: could not determine gateway status of %d of %d gateways (e.g. %s): %w",
+			len(unreadable), len(gatewayIDs), firstUnreadable(gatewayIDs, unreadable), errEntitiesUnreadable)
+	}
+
 	for _, id := range gatewayIDs {
-		gateway, err := c.GetEntity(ctx, id)
-		if err != nil {
-			if IsNotFound(err) {
-				// Not yet resolvable -- e.g. a forward-declared id, or one
-				// concurrently deleted. SetDeviceGateways has always let a
-				// device's own gateways attribute name an id that does not
-				// (yet, or any longer) resolve, since liveGateways drops it
-				// on the next read regardless; best-effort marking must not
-				// turn that into a hard failure it never was before.
-				continue
-			}
+		data, ok := raw[id]
+		if !ok {
+			// Not yet resolvable -- e.g. a forward-declared id, or one
+			// concurrently deleted. SetDeviceGateways has always let a
+			// device's own gateways attribute name an id that does not
+			// (yet, or any longer) resolve, since liveGateways drops it on
+			// the next read regardless; best-effort marking must not turn
+			// that into a hard failure it never was before.
+			continue
+		}
+		var gateway Entity
+		if err := json.Unmarshal(data, &gateway); err != nil {
 			return err
 		}
 		if isGateway, _ := gateway.Attributes[atomAttributeIsGateway].(bool); isGateway {

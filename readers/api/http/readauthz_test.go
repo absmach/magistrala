@@ -569,12 +569,12 @@ func TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad(t *testing.T) {
 	var authz *readAuthorizer
 	first := true
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.Anything).
-		RunAndReturn(func(_ context.Context, _ policies.Policy) (policies.PolicyPage, error) {
+		RunAndReturn(func(ctx context.Context, _ policies.Policy) (policies.PolicyPage, error) {
 			if first {
 				first = false
 				// Simulate a revocation landing while this very load is in
 				// flight, before it returns the pre-revocation grant.
-				require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+				require.NoError(t, authz.Invalidate(ctx, testDomain))
 				return policies.PolicyPage{Policies: []string{meter1UUID}}, nil
 			}
 			// The retry this must trigger sees the post-revocation state.

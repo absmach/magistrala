@@ -14,16 +14,27 @@ import (
 var ErrGatewaysConflict = errors.New("atom: device gateways changed since last read")
 
 // SetDeviceGateways replaces a device's entire gateway list, preserving its
-// other attributes. expectedCurrent must match what was last read (order
-// independent) or it fails with ErrGatewaysConflict — Atom has no
-// compare-and-swap, so this only narrows the race window, not closes it.
+// other attributes. expectedCurrent must match what DeviceGateways would
+// return right now (order independent) or it fails with ErrGatewaysConflict
+// — Atom has no compare-and-swap, so this only narrows the race window, not
+// closes it.
+//
+// The comparison is against the same live, since-deleted-gateways-dropped
+// view DeviceGateways returns, not the raw stored attribute: every caller
+// reads expectedCurrent from DeviceGateways, so once a declared gateway is
+// deleted the raw attribute and that live view disagree permanently, and
+// comparing against the raw one would fail this call forever with no way to
+// retry into success.
 func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gatewayIDs, expectedCurrent []string) error {
 	device, err := c.GetEntity(ctx, deviceID)
 	if err != nil {
 		return err
 	}
 
-	current := attrStrings(device.Attributes, atomAttributeGateways)
+	current, err := c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
+	if err != nil {
+		return err
+	}
 	if !sameStringSet(current, expectedCurrent) {
 		return ErrGatewaysConflict
 	}
@@ -42,7 +53,12 @@ func (c *Client) DeviceGateways(ctx context.Context, deviceID string) ([]string,
 		return nil, err
 	}
 
-	declared := attrStrings(device.Attributes, atomAttributeGateways)
+	return c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
+}
+
+// liveGateways narrows a device's declared gateway ids down to the ones
+// that still exist.
+func (c *Client) liveGateways(ctx context.Context, declared []string) ([]string, error) {
 	live := make([]string, 0, len(declared))
 	for _, gatewayID := range declared {
 		if _, err := c.GetEntity(ctx, gatewayID); err != nil {

@@ -117,6 +117,29 @@ func TestEntityExternalIDsOmitsEntitiesWithoutOne(t *testing.T) {
 // One unreadable entity must not deny the caller every device they hold, so the
 // batch keeps the ids it did resolve. An unresolved id contributes nothing to
 // the filter it feeds, which is the safe direction.
+// A top-level GraphQL failure — an expired token, a domain-wide denial — is
+// commonly spelled `"data": null` on the wire, not an absent/empty "data"
+// key. That must surface as an error, not decode as a clean empty batch:
+// readAuthorizer.load would otherwise cache a zero-device grant for the full
+// TTL and every message read in the domain would come back an empty page
+// with HTTP 200 instead of the underlying Atom failure.
+func TestEntityExternalIDsSurfacesTopLevelDataNullFailure(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"data": null, "errors": [{"message": "unauthorized"}]}`))
+	}))
+	t.Cleanup(srv.Close)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.EntityExternalIDs(context.Background(), []string{"uuid-1"})
+	if err == nil {
+		t.Fatalf("expected a top-level `data: null` response to surface as an error, got a clean result: %v", got)
+	}
+	if !strings.Contains(err.Error(), "unauthorized") {
+		t.Fatalf("expected the underlying GraphQL error to propagate, got: %v", err)
+	}
+}
+
 func TestEntityExternalIDsToleratesPerEntityFailures(t *testing.T) {
 	fake := &fakeExternalIDAtom{
 		external:  map[string]string{"uuid-1": "serial-1", "uuid-3": "serial-3"},

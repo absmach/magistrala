@@ -98,7 +98,17 @@ func (c *Client) entityExternalIDBatch(ctx context.Context, ids []string) (map[s
 		return nil, err
 	}
 
-	if len(response.Data) == 0 {
+	// A per-entity failure (see the doc comment above) leaves response.Data a
+	// real object with just that alias null, accompanied by an errors entry
+	// for it — that case must fall through to the tolerant decode below, not
+	// bail out here. Only the absence of a data document at all — a genuine
+	// top-level failure — is fatal, and it has to be checked for both the
+	// way encoding/json actually represents that ("data" omitted, so
+	// response.Data is empty) and the way a GraphQL server commonly spells it
+	// on the wire (`"data": null`, which is 4 bytes, not zero, and would
+	// otherwise unmarshal into a nil map and silently return an empty batch
+	// instead of surfacing the failure).
+	if len(response.Data) == 0 || string(response.Data) == "null" {
 		if len(response.Errors) > 0 {
 			return nil, graphQLErr(response.Errors)
 		}

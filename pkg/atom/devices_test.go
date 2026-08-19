@@ -150,14 +150,18 @@ func toAnySlice(v any) []any {
 }
 
 func TestSetDeviceGatewaysWritesWhenExpectedCurrentMatches(t *testing.T) {
-	fa, srv := newFakeAtomDevices(t, Entity{
-		ID:   "device-1",
-		Kind: atomKindDevice,
-		Attributes: Attributes{
-			"source":   "magistrala",
-			"gateways": []string{"gw-1", "gw-2"},
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:   "device-1",
+			Kind: atomKindDevice,
+			Attributes: Attributes{
+				"source":   "magistrala",
+				"gateways": []string{"gw-1", "gw-2"},
+			},
 		},
-	})
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-2", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-3"}, []string{"gw-2", "gw-1"})
@@ -201,11 +205,15 @@ func TestSetDeviceGatewaysConflictWhenExpectedCurrentMismatches(t *testing.T) {
 }
 
 func TestSetDeviceGatewaysExpectedCurrentIsOrderIndependent(t *testing.T) {
-	_, srv := newFakeAtomDevices(t, Entity{
-		ID:         "device-1",
-		Kind:       atomKindDevice,
-		Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}},
-	})
+	_, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}},
+		},
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-2", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	// expectedCurrent is given in the opposite order to how it is stored.
@@ -232,6 +240,33 @@ func TestDeviceGatewaysDropsStaleGateway(t *testing.T) {
 	}
 	if !sameStringSet(got, []string{"gw-live"}) {
 		t.Fatalf("expected stale gateway to be dropped, got: %+v", got)
+	}
+}
+
+// A regression test for the case the CLI's "gateways set changed since last
+// read" retry loop could never actually retry into success: expectedCurrent,
+// as read from DeviceGateways, drops a since-deleted declared gateway — so
+// SetDeviceGateways comparing against the raw stored attribute instead of the
+// same live view would report a conflict forever, on every retry.
+func TestSetDeviceGatewaysSucceedsAfterDeclaredGatewayDeleted(t *testing.T) {
+	_, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-live", "gw-deleted"}},
+		},
+		Entity{ID: "gw-live", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		// gw-deleted intentionally not seeded: it no longer resolves.
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	current, err := client.DeviceGateways(context.Background(), "device-1")
+	if err != nil {
+		t.Fatalf("device gateways failed: %v", err)
+	}
+
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-live", "gw-new"}, current); err != nil {
+		t.Fatalf("set device gateways failed using DeviceGateways' own view as expectedCurrent: %v", err)
 	}
 }
 

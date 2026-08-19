@@ -161,8 +161,31 @@ func (c *Client) CreateDeviceTypeVersion(ctx context.Context, deviceTypeID strin
 	return withCapabilities(out.CreateProfileVersion)
 }
 
-// ListDeviceTypeVersions returns every version of a device type, oldest first.
+// ListDeviceTypeVersions returns every version of a device type, oldest
+// first, each with its stored capability document parsed back out.
 func (c *Client) ListDeviceTypeVersions(ctx context.Context, deviceTypeID string) ([]DeviceTypeVersion, error) {
+	versions, err := c.listDeviceTypeVersionsRaw(ctx, deviceTypeID)
+	if err != nil {
+		return nil, err
+	}
+	for i, version := range versions {
+		parsed, err := withCapabilities(version)
+		if err != nil {
+			return nil, err
+		}
+		versions[i] = parsed
+	}
+	return versions, nil
+}
+
+// listDeviceTypeVersionsRaw returns every version of a device type, oldest
+// first, without parsing any stored capability document. Callers that only
+// need a version's identity and status — picking the active one, checking
+// whether a named one is bindable, computing the next version number — must
+// use this instead of ListDeviceTypeVersions: parsing is not free, and an
+// unrelated version's malformed capability document must not fail an
+// operation that never reads it.
+func (c *Client) listDeviceTypeVersionsRaw(ctx context.Context, deviceTypeID string) ([]DeviceTypeVersion, error) {
 	var out struct {
 		ProfileVersions []DeviceTypeVersion `json:"profileVersions"`
 	}
@@ -175,13 +198,6 @@ func (c *Client) ListDeviceTypeVersions(ctx context.Context, deviceTypeID string
 
 	versions := out.ProfileVersions
 	sort.Slice(versions, func(i, j int) bool { return versions[i].Version < versions[j].Version })
-	for i, version := range versions {
-		parsed, err := withCapabilities(version)
-		if err != nil {
-			return nil, err
-		}
-		versions[i] = parsed
-	}
 	return versions, nil
 }
 
@@ -189,13 +205,15 @@ func (c *Client) ListDeviceTypeVersions(ctx context.Context, deviceTypeID string
 // is named: the highest-numbered active one. It returns a not-found error when
 // the type has no active version, which is also what Atom does on bind.
 func (c *Client) ActiveDeviceTypeVersion(ctx context.Context, deviceTypeID string) (DeviceTypeVersion, error) {
-	versions, err := c.ListDeviceTypeVersions(ctx, deviceTypeID)
+	versions, err := c.listDeviceTypeVersionsRaw(ctx, deviceTypeID)
 	if err != nil {
 		return DeviceTypeVersion{}, err
 	}
 	for i := len(versions) - 1; i >= 0; i-- {
 		if versions[i].Status == DeviceTypeVersionStatusActive {
-			return versions[i], nil
+			// Parsed only for the one version actually being returned, not
+			// for every version scanned to find it.
+			return withCapabilities(versions[i])
 		}
 	}
 	return DeviceTypeVersion{}, Error{
@@ -229,8 +247,23 @@ func (c *Client) BindDeviceType(ctx context.Context, deviceID, deviceTypeID, ver
 		return Entity{}, ErrDeviceTypeNotBindable
 	}
 
-	if versionID != "" {
-		versions, err := c.ListDeviceTypeVersions(ctx, deviceTypeID)
+	if versionID == "" {
+		// Atom's "leaves the choice to Atom" default only applies to a first
+		// bind, with no previous version to fall back to. On an update it
+		// instead coalesces a missing profileVersionId to the entity's
+		// *currently* bound version (see entityUpdateInput) — so leaving
+		// versionID empty here would silently keep whatever version the
+		// device was already on, including one belonging to a different
+		// device type, instead of picking this type's highest-numbered
+		// active version the way the doc comment above promises. Resolving
+		// it explicitly keeps both paths consistent.
+		active, err := c.ActiveDeviceTypeVersion(ctx, deviceTypeID)
+		if err != nil {
+			return Entity{}, err
+		}
+		versionID = active.ID
+	} else {
+		versions, err := c.listDeviceTypeVersionsRaw(ctx, deviceTypeID)
 		if err != nil {
 			return Entity{}, err
 		}
@@ -255,7 +288,7 @@ func (c *Client) BindDeviceType(ctx context.Context, deviceID, deviceTypeID, ver
 
 // nextDeviceTypeVersion is one past the highest existing version number.
 func (c *Client) nextDeviceTypeVersion(ctx context.Context, deviceTypeID string) (int, error) {
-	versions, err := c.ListDeviceTypeVersions(ctx, deviceTypeID)
+	versions, err := c.listDeviceTypeVersionsRaw(ctx, deviceTypeID)
 	if err != nil {
 		return 0, err
 	}

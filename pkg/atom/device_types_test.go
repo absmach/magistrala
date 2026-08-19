@@ -921,6 +921,56 @@ func TestBindDeviceTypeRefusesNonActiveVersion(t *testing.T) {
 	}
 }
 
+// A regression test: Atom's "leaves the choice to Atom" default for an
+// empty versionID only applies on a first bind, with no previous version to
+// coalesce to. Rebinding a device already bound to one device type's
+// version, to a *different* device type with no version named, must
+// resolve the new type's own active version rather than silently keeping
+// the previous type's version — which is what entityUpdateInput's
+// omit-when-empty behaviour would otherwise produce, leaving the device
+// with a cross-type binding.
+func TestBindDeviceTypeToNewTypeResolvesNewTypesActiveVersion(t *testing.T) {
+	_, client := newFakeAtomDeviceTypes(t)
+	ctx := context.Background()
+
+	typeA, versionA := createWatermeterType(t, client)
+
+	typeB, err := client.CreateDeviceType(ctx, DeviceType{
+		TenantID: testTenantID, Key: "thermostat", Name: "Thermostat",
+	})
+	if err != nil {
+		t.Fatalf("create second device type: %v", err)
+	}
+	versionB, err := client.CreateDeviceTypeVersion(ctx, typeB.ID, DeviceTypeVersion{
+		Capabilities: CapabilityDocument{
+			Measurements: []Measurement{{Name: "setpoint", Unit: "Cel", Access: MeasurementAccessRead}},
+		},
+	})
+	if err != nil {
+		t.Fatalf("create second device type version: %v", err)
+	}
+
+	device, err := client.CreateEntity(ctx, Entity{Kind: atomKindDevice, Name: "device-1", TenantID: testTenantID})
+	if err != nil {
+		t.Fatalf("create device: %v", err)
+	}
+
+	if _, err := client.BindDeviceType(ctx, device.ID, typeA.ID, versionA.ID); err != nil {
+		t.Fatalf("bind to type A: %v", err)
+	}
+
+	bound, err := client.BindDeviceType(ctx, device.ID, typeB.ID, "")
+	if err != nil {
+		t.Fatalf("bind to type B with no version named: %v", err)
+	}
+	if bound.DeviceTypeID != typeB.ID {
+		t.Fatalf("expected device bound to type B, got %s", bound.DeviceTypeID)
+	}
+	if bound.DeviceTypeVersionID != versionB.ID {
+		t.Fatalf("expected type B's own active version %s, got %s — a cross-type binding, meaning the rebind silently kept type A's version", versionB.ID, bound.DeviceTypeVersionID)
+	}
+}
+
 func TestBindDeviceTypeRefusesNonActiveDeviceType(t *testing.T) {
 	_, client := newFakeAtomDeviceTypes(t)
 	ctx := context.Background()

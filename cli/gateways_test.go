@@ -49,7 +49,11 @@ func TestGatewaysSetCmdClearsList(t *testing.T) {
 // the CLI's read and write, and asserts it surfaces as a clear error rather
 // than silently clobbering (pkg/atom/devices.go's concurrency contract).
 func TestGatewaysSetCmdConflict(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Attributes: atom.Attributes{"gateways": []string{"gw-old"}}})
+	fa := newFakeAtom(t,
+		atom.Entity{ID: "device-1", Kind: "device", Attributes: atom.Attributes{"gateways": []string{"gw-old"}}},
+		atom.Entity{ID: "gw-old", Kind: "device", Attributes: atom.Attributes{"is_gateway": true}},
+		atom.Entity{ID: "gw-changed", Kind: "device", Attributes: atom.Attributes{"is_gateway": true}},
+	)
 	fa.mutateOnNthGet("device-1", 2, atom.Attributes{"gateways": []string{"gw-changed"}})
 
 	rootCmd := setFlags(cli.NewGatewaysCmd())

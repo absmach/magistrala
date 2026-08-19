@@ -73,6 +73,9 @@ Examples:
   devicetypes <device_type_id> bind <device_id> <version_id>`,
 
 		Run: func(cmd *cobra.Command, args []string) {
+			if !requireAtomClient(cmd) {
+				return
+			}
 			if len(args) == 0 {
 				logUsageCmd(*cmd, cmd.Use)
 				return

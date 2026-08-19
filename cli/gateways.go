@@ -33,6 +33,9 @@ Examples:
   gateways gw-1 devices domain-1`,
 
 		Run: func(cmd *cobra.Command, args []string) {
+			if !requireAtomClient(cmd) {
+				return
+			}
 			if len(args) == 0 {
 				logUsageCmd(*cmd, cmd.Use)
 				return

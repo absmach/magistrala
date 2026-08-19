@@ -230,6 +230,7 @@ func TestDeviceTypesBindRejectsDeprecatedType(t *testing.T) {
 func TestDeviceTypesBindSurfacesSchemaViolations(t *testing.T) {
 	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
 	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceTypeVersion(atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "active"})
 	fa.failEntityUpdate("attributes failed profile schema validation: 'temperature' is a required property; Additional properties are not allowed ('colour' was unexpected)")
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 

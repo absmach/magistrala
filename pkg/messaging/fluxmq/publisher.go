@@ -19,14 +19,20 @@ var _ messaging.Publisher = (*publisher)(nil)
 const (
 	headerExternalID = "external_id"
 	headerProtocol   = "protocol"
-	headerDeviceID   = "device_id"
 	// headerMetadataPrefix sits inside FluxMQ's reserved "_flux." namespace, so
 	// the broker treats message metadata as internal state passed between
 	// first-party services: it is dropped when an untrusted connection sets it
 	// and omitted when one subscribes. A service therefore cannot be fed forged
 	// metadata by a device, and a device cannot read metadata a service set.
 	headerMetadataPrefix = "_flux.mg."
-	protocolMQTT         = "mqtt"
+	// headerDeviceID lives inside headerMetadataPrefix for the same reason:
+	// device_id is authorization-relevant (it feeds a reader grant's device
+	// scope, see readers/api/http/readauthz.go), and Magistrala never sets it
+	// except from its own resolved messaging.Message.DeviceId — a plain,
+	// unnamespaced property would let an untrusted device forge another
+	// device's identity and read back into that device's authorized rows.
+	headerDeviceID = headerMetadataPrefix + "device_id"
+	protocolMQTT   = "mqtt"
 )
 
 type publisher struct {

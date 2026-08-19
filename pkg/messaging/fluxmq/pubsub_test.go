@@ -246,7 +246,7 @@ func TestMessagePropertiesIncludesMetadata(t *testing.T) {
 		headerExternalID: "publisher",
 		headerProtocol:   "mqtt",
 		"client_id":      "publisher",
-		"device_id":      "device",
+		headerDeviceID:   "device",
 		"created":        "1710000000000000123",
 		headerMetadataPrefix + "magistrala.re.trace": `["rule-1"]`,
 	}

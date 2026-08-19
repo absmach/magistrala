@@ -971,6 +971,33 @@ func TestBindDeviceTypeToNewTypeResolvesNewTypesActiveVersion(t *testing.T) {
 	}
 }
 
+// A regression test for R4: BindDeviceType's empty-versionID path resolves
+// the active version only to read its id, so a malformed capability document
+// stored on that version — corrupted by hand or by a bad migration — must not
+// block the bind.
+func TestBindDeviceTypeWithNoVersionNamedIgnoresMalformedActiveVersionCapabilities(t *testing.T) {
+	fa, client := newFakeAtomDeviceTypes(t)
+	ctx := context.Background()
+
+	deviceType, version := createWatermeterType(t, client)
+	fa.versions[version.ID].UISchema = map[string]any{
+		capabilityDeclarationKey: "not-an-object",
+	}
+
+	device, err := client.CreateEntity(ctx, Entity{Kind: atomKindDevice, Name: "device-1", TenantID: testTenantID})
+	if err != nil {
+		t.Fatalf("create device: %v", err)
+	}
+
+	bound, err := client.BindDeviceType(ctx, device.ID, deviceType.ID, "")
+	if err != nil {
+		t.Fatalf("bind with no version named must not fail on a capability document it never reads: %v", err)
+	}
+	if bound.DeviceTypeVersionID != version.ID {
+		t.Fatalf("expected bound to %s, got %s", version.ID, bound.DeviceTypeVersionID)
+	}
+}
+
 func TestBindDeviceTypeRefusesNonActiveDeviceType(t *testing.T) {
 	_, client := newFakeAtomDeviceTypes(t)
 	ctx := context.Background()

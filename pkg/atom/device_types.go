@@ -201,25 +201,40 @@ func (c *Client) listDeviceTypeVersionsRaw(ctx context.Context, deviceTypeID str
 	return versions, nil
 }
 
-// ActiveDeviceTypeVersion returns the version Atom binds a device to when none
-// is named: the highest-numbered active one. It returns a not-found error when
-// the type has no active version, which is also what Atom does on bind.
-func (c *Client) ActiveDeviceTypeVersion(ctx context.Context, deviceTypeID string) (DeviceTypeVersion, error) {
+// activeDeviceTypeVersionRaw finds the version Atom binds a device to when
+// none is named — the highest-numbered active one — without parsing its
+// capability document. Callers that only need the version's id or status
+// (BindDeviceType's empty-versionID path) must use this instead of
+// ActiveDeviceTypeVersion, for the same reason listDeviceTypeVersionsRaw
+// exists: a malformed stored declaration on the active version must not fail
+// an operation that never reads it.
+func (c *Client) activeDeviceTypeVersionRaw(ctx context.Context, deviceTypeID string) (DeviceTypeVersion, error) {
 	versions, err := c.listDeviceTypeVersionsRaw(ctx, deviceTypeID)
 	if err != nil {
 		return DeviceTypeVersion{}, err
 	}
 	for i := len(versions) - 1; i >= 0; i-- {
 		if versions[i].Status == DeviceTypeVersionStatusActive {
-			// Parsed only for the one version actually being returned, not
-			// for every version scanned to find it.
-			return withCapabilities(versions[i])
+			return versions[i], nil
 		}
 	}
 	return DeviceTypeVersion{}, Error{
 		StatusCode: http.StatusNotFound,
 		Message:    "device type " + deviceTypeID + " has no active version",
 	}
+}
+
+// ActiveDeviceTypeVersion returns the version Atom binds a device to when none
+// is named: the highest-numbered active one. It returns a not-found error when
+// the type has no active version, which is also what Atom does on bind.
+func (c *Client) ActiveDeviceTypeVersion(ctx context.Context, deviceTypeID string) (DeviceTypeVersion, error) {
+	active, err := c.activeDeviceTypeVersionRaw(ctx, deviceTypeID)
+	if err != nil {
+		return DeviceTypeVersion{}, err
+	}
+	// Parsed only for the one version actually being returned, not for every
+	// version scanned to find it.
+	return withCapabilities(active)
 }
 
 // BindDeviceType binds an existing device to a device type, optionally to a
@@ -257,7 +272,7 @@ func (c *Client) BindDeviceType(ctx context.Context, deviceID, deviceTypeID, ver
 		// device type, instead of picking this type's highest-numbered
 		// active version the way the doc comment above promises. Resolving
 		// it explicitly keeps both paths consistent.
-		active, err := c.ActiveDeviceTypeVersion(ctx, deviceTypeID)
+		active, err := c.activeDeviceTypeVersionRaw(ctx, deviceTypeID)
 		if err != nil {
 			return Entity{}, err
 		}

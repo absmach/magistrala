@@ -297,6 +297,36 @@ func TestSetDeviceGatewaysToleratesAnUnresolvableNewGateway(t *testing.T) {
 	}
 }
 
+// A regression test for P2: a device naming itself as one of its own
+// gateways must end up with both its gateways list and its own is_gateway
+// flag set. markGateways sets is_gateway on device-1 through a separate
+// call than the one that writes device-1's gateways list; reusing the
+// snapshot read before markGateways ran -- rather than re-reading -- would
+// silently discard that flag when the gateways list is written back.
+func TestSetDeviceGatewaysPreservesSelfReferencedIsGatewayFlag(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"device-1"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	updated := fa.entities["device-1"]
+	isGateway, _ := updated.Attributes[atomAttributeIsGateway].(bool)
+	if !isGateway {
+		t.Fatalf("expected device-1's own is_gateway to survive naming itself as a gateway, got: %+v", updated.Attributes)
+	}
+	got := attrStrings(updated.Attributes, atomAttributeGateways)
+	if !sameStringSet(got, []string{"device-1"}) {
+		t.Fatalf("expected device-1's gateways list to be written, got: %+v", got)
+	}
+	if updated.Attributes["source"] != "magistrala" {
+		t.Fatalf("write must preserve unrelated attributes, got: %+v", updated.Attributes)
+	}
+}
+
 func TestSetDeviceGatewaysExpectedCurrentIsOrderIndependent(t *testing.T) {
 	_, srv := newFakeAtomDevices(t,
 		Entity{

@@ -43,6 +43,21 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 		return err
 	}
 
+	// Re-read rather than reuse the snapshot taken above (P2): a device can
+	// name itself as one of its own gateways, in which case markGateways
+	// just wrote deviceID's own is_gateway through a separate call. Writing
+	// back the pre-mark snapshot here would silently discard that -- the
+	// same instant, no unrelated write in between required to trigger it.
+	// This still cannot close the race against a genuinely concurrent
+	// edit — Atom has no compare-and-swap, which is exactly why this
+	// function's own expectedCurrent check only narrows that window rather
+	// than closing it — but it removes the self-inflicted case where this
+	// call clobbers its own prior write.
+	device, err = c.GetEntity(ctx, deviceID)
+	if err != nil {
+		return err
+	}
+
 	attrs := cloneAttributes(device.Attributes)
 	attrs[atomAttributeGateways] = gatewayIDs
 	_, err = c.UpdateEntity(ctx, deviceID, Entity{Attributes: attrs})

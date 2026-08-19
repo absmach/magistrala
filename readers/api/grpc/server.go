@@ -99,7 +99,7 @@ func (s *readersGrpcServer) ReadMessages(ctx context.Context, req *grpcReadersV1
 
 func decodeListGatewayDevicesRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(*grpcReadersV1.ListGatewayDevicesReq)
-	from, to := defaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
+	from, to := readers.DefaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
 	return deviceViewReq{
 		chanID:            req.GetChannelId(),
 		domain:            req.GetDomainId(),
@@ -116,7 +116,7 @@ func decodeListGatewayDevicesRequest(_ context.Context, grpcReq any) (any, error
 
 func decodeListDeviceGatewaysRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(*grpcReadersV1.ListDeviceGatewaysReq)
-	from, to := defaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
+	from, to := readers.DefaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
 	return deviceViewReq{
 		chanID:    req.GetChannelId(),
 		domain:    req.GetDomainId(),

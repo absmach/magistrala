@@ -281,7 +281,7 @@ func decodeDeviceView(r *http.Request, idKey string, filterIsPublisher bool) (an
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
-	from, to = defaultTimeWindow(from, to)
+	from, to = readers.DefaultTimeWindow(from, to)
 
 	req := deviceViewReq{
 		chanID:            chi.URLParam(r, "chanID"),

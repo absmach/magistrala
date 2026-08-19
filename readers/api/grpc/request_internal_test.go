@@ -78,7 +78,7 @@ func TestDecodeListDeviceGatewaysRequest(t *testing.T) {
 // bounds are Unix nanoseconds, the unit the senml/json transformers store
 // time in.
 func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
-	window := float64(deviceViewDefaultWindow.Nanoseconds())
+	window := float64(readers.DeviceViewDefaultWindow.Nanoseconds())
 	before := time.Now()
 
 	gotGateway, err := decodeListGatewayDevicesRequest(context.Background(), &grpcReadersV1.ListGatewayDevicesReq{

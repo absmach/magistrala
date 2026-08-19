@@ -68,44 +68,6 @@ func (req listMessagesReq) validate() error {
 	return nil
 }
 
-// deviceViewDefaultWindow bounds an MG-15 observed-device query. `GROUP BY
-// device_id` (or publisher) with no time bound at all is a full, unbounded
-// partition scan on a busy channel — this keeps that form from being the easy
-// one to call by accident.
-//
-// The window is expressed in the readers package's stored-time unit, which
-// for the built-in senml/json transformers is Unix nanoseconds: they run
-// every absolute time through transformers.ToUnixNano before the writers
-// persist it, and PageMetadata.From/To and the returned LastSeen values use
-// that same representation (see DeviceStat). On a deployment storing any
-// other unit a caller relying on the default would get an empty roster for
-// the last 24h; supply from/to explicitly in your own unit.
-const deviceViewDefaultWindow = 24 * time.Hour
-
-// defaultTimeWindow fills in whichever of the two bounds the caller left at
-// zero so the resulting query is always bounded to a 24h window:
-//   - neither bound supplied: last 24h, [now-24h, now]
-//   - only to supplied:        [to-24h, to]
-//   - only from supplied:      [from, from+24h]
-//
-// The bounds are Unix nanoseconds, matching the unit the senml/json
-// transformers store time in (see deviceViewDefaultWindow). A caller who
-// supplies both bounds gets exactly what they asked for, unmodified.
-func defaultTimeWindow(from, to float64) (float64, float64) {
-	window := float64(deviceViewDefaultWindow.Nanoseconds())
-	switch {
-	case from == 0 && to == 0:
-		now := float64(time.Now().UnixNano())
-		return now - window, now
-	case from == 0:
-		return to - window, to
-	case to == 0:
-		return from, from + window
-	default:
-		return from, to
-	}
-}
-
 // deviceViewReq is the shared request shape of both MG-15 observed-device
 // endpoints: list the distinct devices seen through a gateway, or the
 // distinct gateways seen relaying a device. filterVal is that gateway's

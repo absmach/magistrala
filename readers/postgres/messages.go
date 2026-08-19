@@ -6,13 +6,12 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/magistrala/readers/pgutil"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -79,13 +78,13 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if pgErr, ok := pgError(err); ok {
+		if pgErr, ok := pgutil.PgError(err); ok {
 			switch pgErr.Code {
 			case pgerrcode.UndefinedTable:
 				return readers.MessagesPage{}, nil
 			case pgerrcode.UndefinedColumn:
-				if isLegacyJSONDeviceFilter(format, rpm, pgErr) {
-					return emptyPage(rpm), nil
+				if pgutil.IsLegacyJSONDeviceFilter(format, defTable, rpm, pgErr) {
+					return pgutil.EmptyPage(rpm), nil
 				}
 			}
 		}
@@ -93,7 +92,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	}
 	defer rows.Close()
 
-	page := emptyPage(rpm)
+	page := pgutil.EmptyPage(rpm)
 	switch format {
 	case defTable:
 		for rows.Next() {
@@ -121,9 +120,9 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
-		if pgErr, ok := pgError(err); ok {
-			if pgErr.Code == pgerrcode.UndefinedColumn && isLegacyJSONDeviceFilter(format, rpm, pgErr) {
-				return emptyPage(rpm), nil
+		if pgErr, ok := pgutil.PgError(err); ok {
+			if pgErr.Code == pgerrcode.UndefinedColumn && pgutil.IsLegacyJSONDeviceFilter(format, defTable, rpm, pgErr) {
+				return pgutil.EmptyPage(rpm), nil
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
@@ -141,136 +140,14 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	return page, nil
 }
 
-func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
-	return readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
-}
-
 // ListGatewayDevices implements readers.MessageRepository.
 func (tr postgresRepository) ListGatewayDevices(chanID, publisherID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
-	return tr.deviceStats(chanID, messageFieldPublisher, publisherID, messageFieldDeviceID, true, rpm)
+	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldPublisher, publisherID, messageFieldDeviceID, true, rpm)
 }
 
 // ListDeviceGateways implements readers.MessageRepository.
 func (tr postgresRepository) ListDeviceGateways(chanID, deviceID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
-	return tr.deviceStats(chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
-}
-
-// deviceStats implements both directions of the MG-15 observed-device
-// aggregation: distinct values of groupCol, for rows on channel chanID with
-// filterCol = filterVal, each with its last-seen time and message count.
-//
-// scoped applies DeviceScope to narrow groupCol itself. It is only ever true
-// for the gateway->devices direction — see the DeviceScope comment on
-// ListDeviceGateways in readers/messages.go for why the inverse direction
-// does not narrow by scope at all.
-func (tr postgresRepository) deviceStats(chanID, filterCol, filterVal, groupCol string, scoped bool, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
-	conditions := []string{
-		fmt.Sprintf("%s = :channel", messageFieldChannel),
-		fmt.Sprintf("%s = :filter_val", filterCol),
-	}
-	if groupCol == messageFieldDeviceID {
-		// A publisher's direct (non-relayed) messages carry no device_id at
-		// all; grouping without this would surface a spurious "" roster
-		// entry for them. publisher, by contrast, is a required UUID column
-		// that is never empty, so this guard only applies on this side —
-		// comparing it against '' would also fail to parse as a UUID.
-		conditions = append(conditions, fmt.Sprintf("%s <> ''", groupCol))
-	}
-	if rpm.From != 0 {
-		conditions = append(conditions, "time >= :from")
-	}
-	if rpm.To != 0 {
-		conditions = append(conditions, "time < :to")
-	}
-	if scoped && rpm.DeviceScope != nil {
-		conditions = append(conditions, fmt.Sprintf("%s = ANY(:scope_ids)", groupCol))
-	}
-	where := strings.Join(conditions, " AND ")
-
-	q := fmt.Sprintf(`SELECT %s AS id, MAX(time) AS last_seen, COUNT(*) AS message_count
-		FROM %s WHERE %s GROUP BY %s
-		ORDER BY last_seen DESC, id ASC
-		LIMIT :limit OFFSET :offset;`, groupCol, defTable, where, groupCol)
-
-	totalQ := fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT %s FROM %s WHERE %s GROUP BY %s) AS sub;`, groupCol, defTable, where, groupCol)
-
-	params := map[string]any{
-		messageFieldChannel: chanID,
-		"filter_val":        filterVal,
-		"from":              rpm.From,
-		"to":                rpm.To,
-		"scope_ids":         rpm.DeviceScope.Devices(),
-		"limit":             rpm.Limit,
-		"offset":            rpm.Offset,
-	}
-
-	page := readers.DeviceStatsPage{PageMetadata: rpm, Stats: []readers.DeviceStat{}}
-
-	rows, err := tr.db.NamedQuery(q, params)
-	if err != nil {
-		if pgErr, ok := pgError(err); ok && pgErr.Code == pgerrcode.UndefinedTable {
-			return page, nil
-		}
-		return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var stat deviceStatRow
-		if err := rows.StructScan(&stat); err != nil {
-			return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
-		}
-		page.Stats = append(page.Stats, readers.DeviceStat{ID: stat.ID, LastSeen: stat.LastSeen, MessageCount: stat.MessageCount})
-	}
-
-	totalRows, err := tr.db.NamedQuery(totalQ, params)
-	if err != nil {
-		if pgErr, ok := pgError(err); ok && pgErr.Code == pgerrcode.UndefinedTable {
-			return page, nil
-		}
-		return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
-	}
-	defer totalRows.Close()
-
-	if totalRows.Next() {
-		if err := totalRows.Scan(&page.Total); err != nil {
-			return readers.DeviceStatsPage{}, errors.Wrap(readers.ErrReadMessages, err)
-		}
-	}
-
-	return page, nil
-}
-
-type deviceStatRow struct {
-	ID           string  `db:"id"`
-	LastSeen     float64 `db:"last_seen"`
-	MessageCount uint64  `db:"message_count"`
-}
-
-func pgError(err error) (*pgconn.PgError, bool) {
-	if preErr, ok := err.(*pgconn.PrepareError); ok {
-		err = preErr.Unwrap()
-	}
-	pgErr, ok := err.(*pgconn.PgError)
-	return pgErr, ok
-}
-
-// isLegacyJSONDeviceFilter recognises a query against a pre-MG-06 JSON table
-// that has no device_id column yet. It has to catch the column both when the
-// caller filtered on it explicitly (DeviceIDs) and when an authorization
-// scope referenced it implicitly (DeviceScope, set whenever the caller is a
-// non-admin domain user regardless of whether they also passed a filter) —
-// otherwise a scoped, filter-less request against such a table surfaces as a
-// 500 instead of an empty page. The message is matched quoted, the way
-// Postgres reports an undefined column, so an unrelated column whose name
-// merely contains "device_id" as a substring is not mistaken for this case.
-func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
-	return format != defTable &&
-		(len(rpm.DeviceIDs) > 0 || rpm.DeviceScope != nil) &&
-		strings.Contains(pgErr.Message, `"`+messageFieldDeviceID+`"`)
+	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {

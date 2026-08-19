@@ -16,18 +16,25 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, publisherAuthz *publisherAuthorizer) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		if err := authnAuthz(ctx, req, authn, clients, channels); err != nil {
+		pageMeta, noAccess, err := authnAuthz(ctx, req, authn, clients, channels, publisherAuthz)
+		if err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
+		if noAccess {
+			return pageRes{
+				PageMetadata: pageMeta,
+				Messages:     []readers.Message{},
+			}, nil
+		}
 
-		page, err := svc.ReadAll(req.chanID, req.pageMeta)
+		page, err := svc.ReadAll(req.chanID, pageMeta)
 		if err != nil {
 			return nil, err
 		}

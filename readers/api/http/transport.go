@@ -31,6 +31,8 @@ const (
 	formatKey      = "format"
 	subtopicKey    = "subtopic"
 	publisherKey   = "publisher"
+	publishersKey  = "publishers"
+	deviceIDsKey   = "device_ids"
 	protocolKey    = "protocol"
 	nameKey        = "name"
 	valueKey       = "v"
@@ -49,14 +51,16 @@ const (
 )
 
 // MakeHandler returns a HTTP handler for API endpoints.
-func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 	}
 
+	publisherAuthz := newPublisherAuthorizer(policyEvaluator, policyLister)
+
 	mux := chi.NewRouter()
 	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
-		listMessagesEndpoint(svc, authn, clients, channels),
+		listMessagesEndpoint(svc, authn, clients, channels, publisherAuthz),
 		decodeList,
 		encodeResponse,
 		opts...,
@@ -93,6 +97,9 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 	if err != nil {
 		return nil, errors.Wrap(apiutil.ErrValidation, err)
 	}
+
+	publishers := r.URL.Query()[publishersKey]
+	deviceIDs := r.URL.Query()[deviceIDsKey]
 
 	protocol, err := apiutil.ReadStringQuery(r, protocolKey, "")
 	if err != nil {
@@ -173,6 +180,8 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 			Format:      format,
 			Subtopic:    subtopic,
 			Publisher:   publisher,
+			Publishers:  publishers,
+			DeviceIDs:   deviceIDs,
 			Protocol:    protocol,
 			Name:        name,
 			Value:       v,
@@ -209,42 +218,66 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 	return json.NewEncoder(w).Encode(response)
 }
 
-func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient) error {
-	clientID, clientType, err := authenticate(ctx, req, authn, clients)
+// authnAuthz authenticates the caller, applies the channel-level subscribe check, then narrows the
+// request's publisher filter to what the caller is authorized to read. noAccess means the caller may
+// read no publisher on this channel, so the response must be empty rather than unfiltered.
+func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, publisherAuthz *publisherAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
+	clientID, clientType, superAdmin, err := authenticate(ctx, req, authn, clients)
 	if err != nil {
-		return err
+		return readers.PageMetadata{}, false, err
 	}
 	if err := authorize(ctx, clientID, clientType, req.chanID, req.domain, channels); err != nil {
-		return err
+		return readers.PageMetadata{}, false, err
 	}
-	return nil
+
+	if superAdmin {
+		return req.pageMeta, false, nil
+	}
+
+	// Per-publisher grants only exist for domain users, not for clients authenticating with a secret key.
+	if clientType != policies.UserType {
+		return req.pageMeta, false, nil
+	}
+
+	authorized, noAccess, err := publisherAuthz.filter(ctx, req.domain, clientID, requestedPublishers(req.pageMeta))
+	if err != nil {
+		return readers.PageMetadata{}, false, err
+	}
+	if noAccess {
+		return req.pageMeta, true, nil
+	}
+
+	pm = req.pageMeta
+	pm.Publisher = ""
+	pm.Publishers = authorized
+	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, err error) {
+func authenticate(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
 	switch {
 	case req.token != "":
 		session, err := authn.Authenticate(ctx, req.token)
 		if err != nil {
-			return "", "", err
+			return "", "", false, err
 		}
 		if session.Role == smqauthn.SuperAdminRole {
-			return session.UserID, policies.UserType, nil
+			return session.UserID, policies.UserType, true, nil
 		}
 
-		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, nil
+		return policies.EncodeDomainUserID(req.domain, session.UserID), policies.UserType, false, nil
 	case req.key != "":
 		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
 			Token: smqauthn.AuthPack(smqauthn.DomainAuth, req.domain, req.key),
 		})
 		if err != nil {
-			return "", "", err
+			return "", "", false, err
 		}
 		if !res.GetAuthenticated() {
-			return "", "", svcerr.ErrAuthentication
+			return "", "", false, svcerr.ErrAuthentication
 		}
-		return res.GetId(), policies.ClientType, nil
+		return res.GetId(), policies.ClientType, false, nil
 	default:
-		return "", "", svcerr.ErrAuthentication
+		return "", "", false, svcerr.ErrAuthentication
 	}
 }
 

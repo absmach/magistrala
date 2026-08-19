@@ -28,6 +28,8 @@ var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceID   = "device_id"
+	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -93,6 +95,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 				EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) *%d AS time,
 				%s(value) AS value,
 				FIRST(publisher, time) AS publisher,
+				%s,
 				FIRST(protocol, time) AS protocol,
 				FIRST(subtopic, time) AS subtopic,
 				FIRST(name,time) AS name,
@@ -105,7 +108,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			%s
 			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, format, where, orderClause, pgData)
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), format, where, orderClause, pgData)
 
 		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, where)
 	} else {
@@ -119,6 +122,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		messageFieldSubtopic:   rpm.Subtopic,
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
+		messageFieldDeviceIDs:  rpm.DeviceIDs,
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -137,6 +141,9 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == pgerrcode.UndefinedTable {
 				return readers.MessagesPage{}, nil
+			}
+			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+				return emptyPage(rpm), nil
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
@@ -174,6 +181,12 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	rows, err = tr.db.NamedQuery(totalQuery, params)
 	if err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+			return emptyPage(rpm), nil
+		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
@@ -187,6 +200,13 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	page.Total = total
 
 	return page, nil
+}
+
+func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
+	return readers.MessagesPage{
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
+	}
 }
 
 func fmtCondition(rpm readers.PageMetadata) string {
@@ -212,6 +232,10 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = ANY(:publishers) ")
 	} else if _, ok := query[messageFieldPublisher]; ok {
 		conditions = append(conditions, " publisher = :publisher ")
+	}
+
+	if _, ok := query[messageFieldDeviceIDs]; ok {
+		conditions = append(conditions, " device_id = ANY(:device_ids) ")
 	}
 
 	if _, ok := query[messageFieldName]; ok {
@@ -261,6 +285,13 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	return strings.Join(conditions, " AND ")
 }
 
+func aggregateDeviceIDProjection(rpm readers.PageMetadata) string {
+	if len(rpm.DeviceIDs) == 1 {
+		return "FIRST(device_id, time) AS device_id"
+	}
+	return "'' AS device_id"
+}
+
 type senmlMessage struct {
 	ID string `db:"id"`
 	senml.Message
@@ -271,6 +302,7 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
+	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
 }
@@ -283,6 +315,9 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldPublisher: msg.Publisher,
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
+	}
+	if msg.DeviceId != "" {
+		ret[messageFieldDeviceID] = msg.DeviceId
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

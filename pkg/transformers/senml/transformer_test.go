@@ -149,3 +149,43 @@ func TestTransformCBOR(t *testing.T) {
 		assert.True(t, errors.Contains(err, tc.err), fmt.Sprintf("%s expected %s, got %s", tc.desc, tc.err, err))
 	}
 }
+
+func TestTransformDeviceID(t *testing.T) {
+	tr := senml.New(senml.JSON)
+
+	t.Run("uses broker device id when payload has no bn", func(t *testing.T) {
+		msg := &messaging.Message{
+			Channel:  "channel",
+			Subtopic: "subtopic",
+			Payload:  []byte(`[{"n":"temperature","v":21.5}]`),
+			DeviceId: "broker-device",
+		}
+
+		got, err := tr.Transform(msg)
+		assert.NoError(t, err)
+
+		msgs := got.([]senml.Message)
+		assert.Equal(t, "broker-device", msgs[0].DeviceId)
+	})
+
+	t.Run("bn preserves broker device id", func(t *testing.T) {
+		msg := &messaging.Message{
+			Channel:  "channel",
+			Subtopic: "subtopic",
+			Payload:  []byte(`[{"n":"temperature","v":21.5},{"bn":"payload-device","n":"humidity","v":55},{"n":"pressure","v":1013}]`),
+			DeviceId: "broker-device",
+		}
+
+		got, err := tr.Transform(msg)
+		assert.NoError(t, err)
+
+		msgs := got.([]senml.Message)
+		byName := map[string]string{}
+		for _, msg := range msgs {
+			byName[msg.Name] = msg.DeviceId
+		}
+		assert.Equal(t, "broker-device", byName["temperature"])
+		assert.Equal(t, "broker-device", byName["payload-devicehumidity"])
+		assert.Equal(t, "broker-device", byName["payload-devicepressure"])
+	})
+}

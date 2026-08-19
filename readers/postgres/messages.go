@@ -19,6 +19,7 @@ var _ readers.MessageRepository = (*postgresRepository)(nil)
 
 const (
 	messageFieldChannel    = "channel"
+	messageFieldDeviceIDs  = "device_ids"
 	messageFieldName       = "name"
 	messageFieldProtocol   = "protocol"
 	messageFieldPublisher  = "publisher"
@@ -59,6 +60,7 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		messageFieldSubtopic:   rpm.Subtopic,
 		messageFieldPublisher:  rpm.Publisher,
 		messageFieldPublishers: rpm.Publishers,
+		messageFieldDeviceIDs:  rpm.DeviceIDs,
 		messageFieldName:       rpm.Name,
 		messageFieldProtocol:   rpm.Protocol,
 		messageFieldValue:      rpm.Value,
@@ -76,6 +78,9 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 		if pgErr, ok := err.(*pgconn.PgError); ok {
 			if pgErr.Code == pgerrcode.UndefinedTable {
 				return readers.MessagesPage{}, nil
+			}
+			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+				return emptyPage(rpm), nil
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
@@ -113,6 +118,12 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	q = fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, cond)
 	rows, err = tr.db.NamedQuery(q, params)
 	if err != nil {
+		if preErr, ok := err.(*pgconn.PrepareError); ok {
+			err = preErr.Unwrap()
+		}
+		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
+			return emptyPage(rpm), nil
+		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
@@ -126,6 +137,13 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 	page.Total = total
 
 	return page, nil
+}
+
+func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
+	return readers.MessagesPage{
+		PageMetadata: rpm,
+		Messages:     []readers.Message{},
+	}
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {
@@ -151,6 +169,8 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 			condition = fmt.Sprintf(`%s AND %s = :%s`, condition, name, name)
 		case messageFieldPublishers:
 			condition = fmt.Sprintf(`%s AND %s = ANY(:%s)`, condition, messageFieldPublisher, messageFieldPublishers)
+		case messageFieldDeviceIDs:
+			condition = fmt.Sprintf(`%s AND device_id = ANY(:%s)`, condition, messageFieldDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,
@@ -198,6 +218,7 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
+	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
 }
@@ -211,6 +232,9 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldPublisher: msg.Publisher,
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
+	}
+	if msg.DeviceId != "" {
+		ret["device_id"] = msg.DeviceId
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

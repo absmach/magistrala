@@ -35,7 +35,7 @@ func TestTenantFromFields(t *testing.T) {
 func TestEntityFromFields(t *testing.T) {
 	got := EntityFromFields(ObjectFields{
 		ID:       "client-1",
-		Kind:     KindClient,
+		Kind:     KindDevice,
 		Name:     "pump",
 		TenantID: "domain-1",
 		Status:   "enabled",
@@ -46,11 +46,19 @@ func TestEntityFromFields(t *testing.T) {
 	if got.Kind != "device" || got.TenantID != "domain-1" {
 		t.Fatalf("unexpected entity: %+v", got)
 	}
-	if got.Attributes["magistrala_kind"] != KindClient {
+	if got.Attributes["magistrala_kind"] != KindDevice {
 		t.Fatalf("missing magistrala kind: %+v", got.Attributes)
 	}
-	if got.Attributes["parent_group_id"] != "group-1" {
-		t.Fatalf("missing parent group: %+v", got.Attributes)
+	if _, ok := got.Attributes["parent_group_id"]; ok {
+		t.Fatalf("parent_group_id is a rejected Atom attribute and must not be set: %+v", got.Attributes)
+	}
+}
+
+func TestDeviceKindNamesMapToAtomDeviceKind(t *testing.T) {
+	for _, kind := range []string{KindDevice, KindClient} {
+		if got := entityKind(kind); got != atomKindDevice {
+			t.Fatalf("%q must map to the atom kind %q, got %q", kind, atomKindDevice, got)
+		}
 	}
 }
 
@@ -67,5 +75,19 @@ func TestResourceFromFieldsOmitsEmptyValues(t *testing.T) {
 	}
 	if got.Attributes["source"] != "magistrala" {
 		t.Fatalf("missing source attribute: %+v", got.Attributes)
+	}
+}
+
+func TestResourceFromFieldsExcludesParentGroupID(t *testing.T) {
+	got := ResourceFromFields(ObjectFields{
+		ID:       "channel-1",
+		Kind:     KindChannel,
+		Name:     "telemetry",
+		TenantID: "domain-1",
+		ParentID: "group-1",
+	})
+
+	if _, ok := got.Attributes["parent_group_id"]; ok {
+		t.Fatalf("parent_group_id is a rejected Atom attribute and must not be set: %+v", got.Attributes)
 	}
 }

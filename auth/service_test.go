@@ -938,7 +938,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "read",
 				Domain:     domainID,
@@ -1029,7 +1029,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "read",
 				Domain:     domainID,
@@ -1052,7 +1052,7 @@ func TestAuthorize(t *testing.T) {
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
 				UserID:     userID,
-				EntityType: auth.ClientsType,
+				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "write",
 				Domain:     domainID,

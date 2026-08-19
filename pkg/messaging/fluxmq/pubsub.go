@@ -237,6 +237,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 
 	clientID := stringHeader(headers, "client_id")
 	publisher := stringHeader(headers, headerExternalID)
+	deviceID := stringHeader(headers, "device_id")
 
 	protocol := stringHeader(headers, headerProtocol)
 	if protocol == "" {
@@ -276,6 +277,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 		Payload:   body,
 		Publisher: publisher,
 		ClientId:  clientID,
+		DeviceId:  deviceID,
 		Protocol:  protocol,
 		Created:   created,
 		Metadata:  metadata,

@@ -61,9 +61,14 @@ type Query struct {
 	TenantID string
 	Name     string
 	Route    string
+	ParentID string
 	Status   string
 	Limit    uint64
 	Offset   uint64
+
+	// AttributesContains filters by JSONB containment — an entity must contain
+	// every key/value given here (array values match by containment, not equality).
+	AttributesContains map[string]any
 }
 
 type AuthzRequest struct {
@@ -186,6 +191,22 @@ type DirectPolicyQuery struct {
 type DirectPolicyList struct {
 	Items []DirectPolicy `json:"items"`
 	Total uint64         `json:"total"`
+}
+
+// GroupGrant grants a subject one or more actions over a group's members:
+// its direct members, or the members of its descendant groups if
+// IncludeDescendants is set. A grant maps to exactly one PermissionBlock and
+// one DirectPolicy, so it costs the same to write whether the group has one
+// member or thousands, and it automatically covers members added later.
+type GroupGrant struct {
+	TenantID           string
+	GroupID            string
+	SubjectKind        string
+	SubjectID          string
+	ObjectKind         string
+	ObjectType         string
+	Actions            []string
+	IncludeDescendants bool
 }
 
 type AuthorizedObjectIDsQuery struct {

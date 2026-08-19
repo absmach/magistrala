@@ -255,7 +255,6 @@ define test_api_service
 	--header "Authorization: Bearer $(USER_TOKEN)" \
 	--suppress-health-check=filter_too_much \
 	--exclude-checks=positive_data_acceptance \
-	--exclude-operation-id=requestPasswordReset \
 	--phases=examples,stateful
 endef
 

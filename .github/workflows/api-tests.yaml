@@ -15,7 +15,6 @@ on:
       - "certs/api/http/**"
       - "readers/api/http/**"
       - "apidocs/openapi/**"
-      - "apidocs/graphql/**"
   pull_request:
     branches:
       - main
@@ -27,7 +26,6 @@ on:
       - "certs/api/http/**"
       - "readers/api/http/**"
       - "apidocs/openapi/**"
-      - "apidocs/graphql/**"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

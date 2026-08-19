@@ -110,7 +110,7 @@ query {
 ```graphql
 mutation {
   createEntity(input: {
-    kind: human
+    profileId: "human-profile-id"
     name: "Alice"
     alias: "alice"
     tenantId: "domain-tenant-id"
@@ -120,6 +120,7 @@ mutation {
   }) {
     id
     kind
+    profileId
     name
     alias
     tenantId
@@ -132,13 +133,14 @@ mutation {
 ```graphql
 mutation {
   createEntity(input: {
-    kind: device
+    profileId: "client-profile-id"
     name: "meter-001"
     alias: "meter-001"
     tenantId: "domain-tenant-id"
   }) {
     id
     kind
+    profileId
     name
     alias
     tenantId
@@ -186,12 +188,12 @@ mutation {
 
 ```graphql
 mutation {
-  setEntityParentGroup(
+  addEntityToObjectGroup(
     entityId: "client-entity-id"
-    groupId: "group-id"
+    objectGroupId: "group-id"
   ) {
     id
-    parentGroupId
+    objectGroupIds
   }
 }
 ```
@@ -200,12 +202,12 @@ mutation {
 
 ```graphql
 mutation {
-  setResourceParentGroup(
+  addResourceToObjectGroup(
     resourceId: "channel-resource-id"
-    groupId: "group-id"
+    objectGroupId: "group-id"
   ) {
     id
-    parentGroupId
+    objectGroupIds
   }
 }
 ```
@@ -230,6 +232,6 @@ mutation {
 The Atom repository owns the GraphQL schema and generated introspection surface.
 For details, see:
 
-- Atom documentation: `docs/content/docs/`
-- Magistrala mapping: `docs/content/docs/magistrala-on-atom.mdx`
-- GraphQL implementation: `src/graphql/`
+- Atom documentation: https://github.com/absmach/atom/tree/main/docs/content/docs/
+- Magistrala mapping: https://github.com/absmach/atom/blob/main/docs/content/docs/magistrala-on-atom.mdx
+- GraphQL implementation: https://github.com/absmach/atom/tree/main/src/graphql/

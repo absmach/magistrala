@@ -118,7 +118,7 @@ func (c *Client) entitiesExist(ctx context.Context, ids []string) (map[string]st
 	}
 	if len(unreadable) > 0 {
 		return nil, fmt.Errorf("atom: could not determine existence of %d of %d entities (e.g. %s): %w",
-			len(unreadable), len(ids), firstKey(unreadable), errEntitiesUnreadable)
+			len(unreadable), len(ids), firstUnreadable(ids, unreadable), errEntitiesUnreadable)
 	}
 
 	out := make(map[string]struct{}, len(raw))
@@ -128,9 +128,15 @@ func (c *Client) entitiesExist(ctx context.Context, ids []string) (map[string]st
 	return out, nil
 }
 
-func firstKey(m map[string]string) string {
-	for k := range m {
-		return k
+// firstUnreadable returns the first id from ids -- the caller's own input
+// order -- that appears in unreadable, so the error above names a
+// deterministic example instead of whatever Go's map iteration order
+// happens to yield on that run (Q5).
+func firstUnreadable(ids []string, unreadable map[string]string) string {
+	for _, id := range ids {
+		if _, ok := unreadable[id]; ok {
+			return id
+		}
 	}
 	return ""
 }

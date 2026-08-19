@@ -305,6 +305,33 @@ func TestDeviceGatewaysFailsWhenAGatewayIsUnreadable(t *testing.T) {
 	}
 }
 
+// A regression test for Q5: with more than one unreadable id, the error must
+// name a specific, deterministic one -- the first in the caller's own
+// declared order -- rather than whichever Go's map iteration happens to
+// yield, which used to vary run to run and made the message impossible to
+// correlate across logs or assert in a test.
+func TestDeviceGatewaysUnreadableErrorNamesFirstDeclaredGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-unreadable-a", "gw-unreadable-b"}},
+		},
+		Entity{ID: "gw-unreadable-a", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-unreadable-b", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable-a": {}, "gw-unreadable-b": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	_, err := client.DeviceGateways(context.Background(), "device-1")
+	if err == nil {
+		t.Fatalf("expected an error")
+	}
+	if !strings.Contains(err.Error(), "gw-unreadable-a") {
+		t.Fatalf("expected the error to name gw-unreadable-a, the first declared gateway, got: %v", err)
+	}
+}
+
 // A read-modify-write caller (the CLI's gateway-set retry loop) must not be
 // able to write back a truncated roster when DeviceGateways itself failed to
 // resolve one of the declared gateways.

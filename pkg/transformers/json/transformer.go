@@ -94,8 +94,10 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 		res := []Message{}
 		// device_id accumulates forward across the batch exactly like SenML's
 		// bn (RFC 8428 §4.6) — set on one element, it applies to every
-		// following element until the next one sets a new value.
-		var deviceID string
+		// following element until the next one sets a new value. Seeded from
+		// the broker-level field so a batch with no per-record key still
+		// carries it, matching the object branch above.
+		deviceID := ret.DeviceId
 		// Make an array of messages from the root array.
 		for _, val := range p {
 			v, ok := val.(map[string]any)
@@ -114,7 +116,7 @@ func (ts *transformerService) Transform(msg *messaging.Message) (any, error) {
 				return nil, errors.Wrap(ErrInvalidTimeField, err)
 			}
 			if ts != 0 {
-				ret.Created = ts
+				newMsg.Created = ts
 			}
 
 			newMsg.Payload = v

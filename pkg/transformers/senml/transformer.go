@@ -58,7 +58,11 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 	// belongs to regardless of how Time ties are broken. Link is never
 	// mapped to the output Message, so this does not change any existing
 	// behaviour.
-	var deviceID string
+	//
+	// Seeded from the broker-level device_id so a pack with no bn in any
+	// record still carries it, matching the JSON transformer's handling of
+	// the same field.
+	deviceID := msg.GetDeviceId()
 	for i := range raw.Records {
 		if raw.Records[i].BaseName != "" {
 			deviceID = raw.Records[i].BaseName

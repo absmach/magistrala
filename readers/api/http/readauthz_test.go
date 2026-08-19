@@ -253,18 +253,23 @@ func TestResolveTranslatesUUIDsToSerials(t *testing.T) {
 	assert.NotEqual(t, got.scope.PublisherIDs, got.scope.DeviceIDs, "serials are not UUIDs")
 }
 
-// Criterion 11, the orphan case seen from the grant side: a granted device that
-// Atom no longer resolves contributes neither its publisher identity nor an
-// empty serial. Keeping the publisher projection would leave stale direct rows
-// readable after the device became unreadable or was deleted.
-func TestResolveDropsUnresolvedEntityIDs(t *testing.T) {
+// A granted device that the resolver has no external id for still
+// contributes its publisher identity — EntityExternalIDs documents a
+// missing key as "no external identity", not "does not exist", so this is
+// the ordinary case of a device that was never given a serial, not evidence
+// it was deleted. Dropping the device entirely, as an earlier version of
+// this code did, made every self-published row from such a device
+// unreadable by its own authorized owner: the device is only absent from
+// the serial (device_id) projection, the leg gateway-relayed rows are
+// matched against.
+func TestResolveKeepsPublisherIdentityForUnresolvedEntityIDs(t *testing.T) {
 	authz := customerAuthorizer(t, &fakeResolver{serials: map[string]string{meter1UUID: meter1Serial}}, meter1UUID, meter3UUID)
 
 	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
-	assert.Equal(t, []string{meter1UUID}, got.scope.PublisherIDs)
+	assert.Equal(t, []string{meter1UUID, meter3UUID}, got.scope.PublisherIDs)
 	assert.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
 	assert.NotContains(t, got.scope.DeviceIDs, "")
 }

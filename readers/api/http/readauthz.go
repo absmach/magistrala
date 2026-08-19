@@ -17,6 +17,7 @@ import (
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 	"github.com/absmach/magistrala/readers"
+	"golang.org/x/sync/singleflight"
 )
 
 // readAuthzCacheTTL is kept short since it backs a security control, not just a
@@ -70,6 +71,15 @@ type readAuthorizer struct {
 
 	mu    sync.Mutex
 	cache map[string]readGrant
+	// epoch counts invalidations per domain. grant() captures it before
+	// starting a load and re-checks it before caching the result, so a
+	// revocation that lands while the load is in flight is not overwritten
+	// by that load's now-stale answer.
+	epoch map[string]uint64
+	// group collapses concurrent cache misses for the same (domain, subject)
+	// into a single load, rather than one Atom round trip per waiting
+	// request.
+	group singleflight.Group
 }
 
 func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, resolver externalIDResolver) *readAuthorizer {
@@ -80,6 +90,7 @@ func newReadAuthorizer(evaluator policies.Evaluator, lister policies.Service, re
 		ttl:       readAuthzCacheTTL,
 		now:       time.Now,
 		cache:     make(map[string]readGrant),
+		epoch:     make(map[string]uint64),
 	}
 }
 
@@ -114,6 +125,13 @@ func (a *readAuthorizer) Invalidate(_ context.Context, domain string) error {
 			delete(a.cache, key)
 		}
 	}
+	// Bumped even when nothing was cached to delete: this is what stops a
+	// load already in flight for this domain (started before the
+	// invalidation, finishing after it) from writing its now-stale result
+	// back into the cache once grant() re-checks it — without this, a
+	// revoked grant could keep serving for another full TTL despite the
+	// cache having just been cleared.
+	a.epoch[domain]++
 	return nil
 }
 
@@ -235,22 +253,35 @@ func (a *readAuthorizer) grant(ctx context.Context, domain, subject string) (rea
 
 	a.mu.Lock()
 	grant, ok := a.cache[key]
+	epoch := a.epoch[domain]
 	a.mu.Unlock()
 	if ok && a.now().Before(grant.expiresAt) {
 		return grant, nil
 	}
 
-	grant, err := a.load(ctx, domain, subject)
+	v, err, _ := a.group.Do(key, func() (any, error) {
+		grant, err := a.load(ctx, domain, subject)
+		if err != nil {
+			return readGrant{}, err
+		}
+		grant.expiresAt = a.now().Add(a.ttl)
+
+		a.mu.Lock()
+		defer a.mu.Unlock()
+		// Only cache the result if no invalidation landed for this domain
+		// while the load was in flight — caching it unconditionally could
+		// overwrite a revocation that arrived after the load read from
+		// Atom but before it finished, resetting the revoked grant's TTL
+		// instead of leaving it cleared.
+		if a.epoch[domain] == epoch {
+			a.cache[key] = grant
+		}
+		return grant, nil
+	})
 	if err != nil {
 		return readGrant{}, err
 	}
-	grant.expiresAt = a.now().Add(a.ttl)
-
-	a.mu.Lock()
-	a.cache[key] = grant
-	a.mu.Unlock()
-
-	return grant, nil
+	return v.(readGrant), nil
 }
 
 func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (readGrant, error) {
@@ -286,11 +317,7 @@ func (a *readAuthorizer) load(ctx context.Context, domain, subject string) (read
 
 	devices := make([]authorizedDevice, 0, len(page.Policies))
 	for _, id := range page.Policies {
-		serial, ok := external[id]
-		if !ok {
-			continue
-		}
-		devices = append(devices, authorizedDevice{publisherID: id, serial: serial})
+		devices = append(devices, authorizedDevice{publisherID: id, serial: external[id]})
 	}
 	return newReadGrant(devices), nil
 }

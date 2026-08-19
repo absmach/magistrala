@@ -96,7 +96,7 @@ func TestFmtConditionDeviceIDsWithSingularPublisher(t *testing.T) {
 	assert.False(t, strings.Contains(cond, `publisher = ANY(:publishers)`), "condition was %q", cond)
 }
 
-const scopeClause = `publisher = ANY(:scope_publishers) OR device_id = ANY(:scope_device_ids)`
+const scopeClause = `(device_id = '' AND publisher = ANY(:scope_publishers)) OR device_id = ANY(:scope_device_ids)`
 
 // DeviceScope is the authorization boundary, so unlike the convenience filters
 // an empty one must survive into the query and exclude every row. Being a

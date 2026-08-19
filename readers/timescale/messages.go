@@ -323,10 +323,19 @@ func pgError(err error) (*pgconn.PgError, bool) {
 	return pgErr, ok
 }
 
+// isLegacyJSONDeviceFilter recognises a query against a pre-MG-06 JSON table
+// that has no device_id column yet. It has to catch the column both when the
+// caller filtered on it explicitly (DeviceIDs) and when an authorization
+// scope referenced it implicitly (DeviceScope, set whenever the caller is a
+// non-admin domain user regardless of whether they also passed a filter) —
+// otherwise a scoped, filter-less request against such a table surfaces as a
+// 500 instead of an empty page. The message is matched quoted, the way
+// Postgres reports an undefined column, so an unrelated column whose name
+// merely contains "device_id" as a substring is not mistaken for this case.
 func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
 	return format != defTable &&
-		len(rpm.DeviceIDs) > 0 &&
-		strings.Contains(pgErr.Message, messageFieldDeviceID)
+		(len(rpm.DeviceIDs) > 0 || rpm.DeviceScope != nil) &&
+		strings.Contains(pgErr.Message, `"`+messageFieldDeviceID+`"`)
 }
 
 func fmtCondition(rpm readers.PageMetadata) string {
@@ -356,9 +365,14 @@ func fmtCondition(rpm readers.PageMetadata) string {
 
 	// The authorization scope is OR, not AND: a device is named by publisher when
 	// it publishes for itself and by device_id when a gateway relays for it, and
-	// one row carries only one of the two.
+	// one row carries only one of the two. The publisher leg is additionally
+	// guarded to self-published rows (device_id = '') so that a grant on a
+	// gateway client does not also admit every device that gateway has ever
+	// relayed for — those rows are named by device_id, not by this gateway's
+	// own publisher identity, and must be authorized through the device_id leg
+	// instead.
 	if _, ok := query[messageFieldScope]; ok {
-		conditions = append(conditions, " ( publisher = ANY(:scope_publishers) OR device_id = ANY(:scope_device_ids) ) ")
+		conditions = append(conditions, " ( (device_id = '' AND publisher = ANY(:scope_publishers)) OR device_id = ANY(:scope_device_ids) ) ")
 	}
 
 	// Ordered to match idx_channel_device_id_name_time, which sits between the

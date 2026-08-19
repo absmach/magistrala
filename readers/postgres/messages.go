@@ -258,10 +258,19 @@ func pgError(err error) (*pgconn.PgError, bool) {
 	return pgErr, ok
 }
 
+// isLegacyJSONDeviceFilter recognises a query against a pre-MG-06 JSON table
+// that has no device_id column yet. It has to catch the column both when the
+// caller filtered on it explicitly (DeviceIDs) and when an authorization
+// scope referenced it implicitly (DeviceScope, set whenever the caller is a
+// non-admin domain user regardless of whether they also passed a filter) —
+// otherwise a scoped, filter-less request against such a table surfaces as a
+// 500 instead of an empty page. The message is matched quoted, the way
+// Postgres reports an undefined column, so an unrelated column whose name
+// merely contains "device_id" as a substring is not mistaken for this case.
 func isLegacyJSONDeviceFilter(format string, rpm readers.PageMetadata, pgErr *pgconn.PgError) bool {
 	return format != defTable &&
-		len(rpm.DeviceIDs) > 0 &&
-		strings.Contains(pgErr.Message, messageFieldDeviceID)
+		(len(rpm.DeviceIDs) > 0 || rpm.DeviceScope != nil) &&
+		strings.Contains(pgErr.Message, `"`+messageFieldDeviceID+`"`)
 }
 
 func fmtCondition(chanID string, rpm readers.PageMetadata) string {
@@ -292,9 +301,14 @@ func fmtCondition(chanID string, rpm readers.PageMetadata) string {
 		case messageFieldScope:
 			// OR, not AND: a device is named by publisher when it publishes for
 			// itself and by device_id when a gateway relays for it, and one row
-			// carries only one of the two.
-			condition = fmt.Sprintf(`%s AND (%s = ANY(:%s) OR %s = ANY(:%s))`,
-				condition, messageFieldPublisher, scopeParamPublishers, messageFieldDeviceID, scopeParamDeviceIDs)
+			// carries only one of the two. The publisher leg is additionally
+			// guarded to self-published rows (device_id = '') so that a grant on
+			// a gateway client does not also admit every device that gateway
+			// has ever relayed for — those rows are named by device_id, not by
+			// this gateway's own publisher identity, and must be authorized
+			// through the device_id leg instead.
+			condition = fmt.Sprintf(`%s AND ((%s = '' AND %s = ANY(:%s)) OR %s = ANY(:%s))`,
+				condition, messageFieldDeviceID, messageFieldPublisher, scopeParamPublishers, messageFieldDeviceID, scopeParamDeviceIDs)
 		case
 			messageFieldSubtopic,
 			messageFieldName,

@@ -1,7 +1,8 @@
 # Magistrala OpenAPI Specifications
 
-This folder contains OpenAPI specifications for HTTP APIs that Magistrala still
-serves directly.
+This folder contains OpenAPI specifications for HTTP APIs that remain part of
+Magistrala's open-source services. Specifications for services moved to
+Magistrala Enterprise Edition are maintained separately.
 
 View specification in Swagger UI at [docs.api.magistrala.absmach.eu](https://docs.api.magistrala.absmach.eu)
 

@@ -6,6 +6,7 @@ package postgres
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
@@ -51,7 +52,14 @@ func (tr postgresRepository) ReadAll(chanID string, rpm readers.PageMetadata) (r
 
 	if rpm.Format != "" && rpm.Format != defTable {
 		order = "created"
-		format = rpm.Format
+		// Postgres folds an unquoted identifier to lower case, and that is
+		// exactly how the writer creates a JSON format's table (saveJSON's
+		// CREATE TABLE IF NOT EXISTS %s is unquoted too). Quoting format
+		// below makes it match-exact rather than fold, so it has to be
+		// lower-cased first to land on the same table name the writer
+		// actually created -- otherwise a mixed-case format silently reads
+		// as an empty page instead of the rows the writer put there (Q2).
+		format = strings.ToLower(rpm.Format)
 	}
 	cond := fmtCondition(chanID, rpm)
 

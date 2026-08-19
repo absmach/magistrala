@@ -744,6 +744,39 @@ func TestReadLegacyJSONByDeviceID(t *testing.T) {
 	assert.Equal(t, uint64(0), page.Total)
 }
 
+// TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable is a regression test
+// for Q2: quoting format (N2's fix for the SQL injection through it) makes
+// it match-exact, but the writer still creates a JSON format's table with
+// an unquoted CREATE TABLE IF NOT EXISTS %s, which Postgres folds to lower
+// case. A reader asking for the same mixed-case format it was written under
+// must still find it -- format needs the identical folding applied before
+// it is quoted, or the read silently comes back empty instead of erroring.
+func TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable(t *testing.T) {
+	writer := pwriter.New(db)
+	reader := preader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	const mixedCaseFormat = "MyFormat"
+
+	err := writer.ConsumeBlocking(context.TODO(), json.Messages{
+		Format: mixedCaseFormat,
+		Data: []json.Message{{
+			Channel:   chanID,
+			Publisher: pubID,
+			Created:   time.Now().UnixMilli(),
+			Subtopic:  "subtopic/mixed/case",
+			Protocol:  "coap",
+			Payload:   json.Payload{"field": 1.0},
+		}},
+	})
+	require.Nil(t, err, "expected no error got %s", err)
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: mixedCaseFormat})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1, "a mixed-case format must read back what the writer wrote under Postgres's own lower-case folding")
+}
+
 func fromSenml(msg []senml.Message) []readers.Message {
 	var ret []readers.Message
 	for _, m := range msg {

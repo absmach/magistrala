@@ -24,12 +24,14 @@ const (
 	OpCreate = "create"
 	OpList   = "list"
 
-	OpCreateDevices  = "create_devices"
-	OpListDevices    = "list_devices"
-	OpCreateChannels = "create_channels"
-	OpListChannels   = "list_channels"
-	OpCreateGroups   = "create_groups"
-	OpListGroups     = "list_groups"
+	OpCreateDevices     = "create_devices"
+	OpListDevices       = "list_devices"
+	OpCreateDeviceTypes = "create_device_types"
+	OpListDeviceTypes   = "list_device_types"
+	OpCreateChannels    = "create_channels"
+	OpListChannels      = "list_channels"
+	OpCreateGroups      = "create_groups"
+	OpListGroups        = "list_groups"
 
 	OpShare   = "share"
 	OpUnshare = "unshare"
@@ -243,6 +245,13 @@ func (s *Scope) UnmarshalJSON(data []byte) error {
 			s.Operation = OpCreateDevices
 		case OpList:
 			s.Operation = OpListDevices
+		}
+	case DeviceTypesType:
+		switch s.Operation {
+		case OpCreate:
+			s.Operation = OpCreateDeviceTypes
+		case OpList:
+			s.Operation = OpListDeviceTypes
 		}
 	case ChannelsType:
 		switch s.Operation {

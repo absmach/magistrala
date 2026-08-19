@@ -410,3 +410,29 @@ func TestDeviceTypesOperationsAreValid(t *testing.T) {
 		assert.True(t, auth.IsValidOperationForEntity(auth.DeviceTypesType, op), "operation %s must be valid for device_types", op)
 	}
 }
+
+// TestScopeUnmarshalJSONNormalizesDeviceTypesOperations is a regression test
+// for N5: Scope.UnmarshalJSON rewrites the generic create/list operations
+// into entity-specific ones for devices, channels and groups, but had no
+// case for DeviceTypesType -- added by this PR -- so a scope of
+// {"entity_type":"device_types","operation":"create"} stayed as bare
+// "create" while the identical scope on devices normalized to
+// "create_devices". Mirrors TestDeviceTypesOperationsAreValid's devices
+// comparison above.
+func TestScopeUnmarshalJSONNormalizesDeviceTypesOperations(t *testing.T) {
+	cases := []struct {
+		op       string
+		expected string
+	}{
+		{op: auth.OpCreate, expected: auth.OpCreateDeviceTypes},
+		{op: auth.OpList, expected: auth.OpListDeviceTypes},
+		{op: "view", expected: "view"},
+	}
+
+	for _, tc := range cases {
+		data := []byte(`{"entity_type":"device_types","operation":"` + tc.op + `"}`)
+		var s auth.Scope
+		assert.NoError(t, s.UnmarshalJSON(data))
+		assert.Equal(t, tc.expected, s.Operation, "operation %s on device_types", tc.op)
+	}
+}

@@ -27,7 +27,7 @@ Authenticated requests use the same bearer token returned by Atom login.
 The IDs in the examples are placeholders; replace them with IDs from your tenant before running the operations.
 
 ```bash
-TOKEN=$(curl -s -X POST http://localhost:8080/auth/login \
+TOKEN=$(curl -fsS -X POST http://localhost:8080/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"identifier": "admin", "secret": "12345678", "kind": "password"}' \
   | jq -r .token)
@@ -127,6 +127,19 @@ mutation {
     alias
     tenantId
   }
+}
+```
+
+### Create A Password Credential
+
+After creating the user, attach a password credential so the entity can log in:
+
+```graphql
+mutation {
+  createPassword(
+    entityId: "user-entity-id"
+    password: "s3cur3-p@ssw0rd"
+  )
 }
 ```
 

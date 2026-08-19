@@ -668,6 +668,52 @@ func TestReadMessagesWithAggregation(t *testing.T) {
 	}
 }
 
+// TestReadMessagesWithAggregationReportsDeviceIDRegardlessOfFilter is a
+// regression test for N4: the aggregated query used to decide whether to
+// project device_id from the caller's filter -- FIRST(device_id, time) only
+// when DeviceIDs held exactly one entry, ” otherwise -- rather than from
+// what the aggregated rows actually carry. A channel that only ever carried
+// one device therefore reported no device_id on an aggregated read unless
+// the caller redundantly restated it as a filter, and a scoped non-admin
+// (whose narrowing lives in DeviceScope, not DeviceIDs) never got
+// attribution on an aggregated read at all. This asserts attribution
+// survives with no DeviceIDs filter at all.
+func TestReadMessagesWithAggregationReportsDeviceIDRegardlessOfFilter(t *testing.T) {
+	writer := twriter.New(db)
+	reader := treader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	gatewayUUID := testsutil.GenerateUUID(t)
+	const deviceSerial = "AGG-DEVICE-1"
+
+	now := float64(time.Now().Unix())
+	value := 42.0
+	messages := []senml.Message{{
+		Channel:   chanID,
+		Publisher: gatewayUUID,
+		Protocol:  mqttProt,
+		Time:      now,
+		Value:     &value,
+		DeviceId:  deviceSerial,
+	}}
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), messages))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{
+		Limit:       100,
+		Offset:      0,
+		Aggregation: "AVG",
+		Interval:    "1 hour",
+		From:        now - 3600,
+		To:          now + 1,
+	})
+	require.Nil(t, err, "expected no error got %s", err)
+	require.NotEmpty(t, page.Messages, "expected a non-empty aggregated result")
+
+	msg, ok := page.Messages[0].(senml.Message)
+	require.True(t, ok, "expected an aggregated row to decode as senml.Message")
+	assert.Equal(t, deviceSerial, msg.DeviceId, "aggregated read must attribute device_id without a redundant DeviceIDs filter")
+}
+
 func TestReadJSON(t *testing.T) {
 	writer := twriter.New(db)
 

@@ -122,7 +122,7 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			%s
 			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), quotedFormat, where, orderClause, pgData)
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, "FIRST(device_id, time) AS device_id", quotedFormat, where, orderClause, pgData)
 
 		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, quotedFormat, where)
 	} else {
@@ -317,13 +317,6 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	}
 
 	return strings.Join(conditions, " AND ")
-}
-
-func aggregateDeviceIDProjection(rpm readers.PageMetadata) string {
-	if len(rpm.DeviceIDs) == 1 {
-		return "FIRST(device_id, time) AS device_id"
-	}
-	return "'' AS device_id"
 }
 
 type senmlMessage struct {

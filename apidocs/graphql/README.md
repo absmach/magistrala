@@ -22,7 +22,7 @@ In the default local stack this is available through the Atom service:
 http://localhost:8080/graphql
 ```
 
-Authenticated requests use the same bearer token returned by Atom login:
+Authenticated requests use the same bearer token returned by Atom login.
 
 The IDs in the examples are placeholders; replace them with IDs from your tenant before running the operations.
 
@@ -44,17 +44,17 @@ curl -s http://localhost:8080/graphql \
 
 ## Concept Mapping
 
-| Magistrala concept | Atom GraphQL object |
+| Magistrala concept | Atom primitive |
 | --- | --- |
 | Domain | Tenant |
 | User | Entity with `kind = human` |
 | Client | Entity with `kind = device` or `service` |
 | Channel | Resource with `kind = "channel"` |
 | Group | Group |
-| Client key | Credential |
+| Client key | Password credential or API key credential |
 | Client certificate | Certificate credential |
-| Role member set | Role assignment or principal group |
-| Client-channel permission | Permission block, role assignment, or direct policy |
+| Role member set | Principal group or role assignment |
+| Client-channel connection | Role assignment or direct policy |
 
 ## Common Operations
 

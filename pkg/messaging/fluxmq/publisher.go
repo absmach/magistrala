@@ -31,7 +31,12 @@ const (
 	// except from its own resolved messaging.Message.DeviceId — a plain,
 	// unnamespaced property would let an untrusted device forge another
 	// device's identity and read back into that device's authorized rows.
-	headerDeviceID = headerMetadataPrefix + "device_id"
+	//
+	// Namespaced under "sys." rather than directly under headerMetadataPrefix
+	// so a first-party service that puts a "device_id" key in its own
+	// Message.Metadata cannot collide with the resolved attribution: the
+	// metadata loop below would otherwise land it at the exact same property.
+	headerDeviceID = headerMetadataPrefix + "sys.device_id"
 	protocolMQTT   = "mqtt"
 )
 

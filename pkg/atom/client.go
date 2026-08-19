@@ -862,6 +862,12 @@ type graphQLRequest struct {
 
 type graphQLErrorItem struct {
 	Message string `json:"message"`
+	// Path names the response field the error is attributed to — for a
+	// batched, aliased entity lookup this is the alias (e.g. "e3") a
+	// per-entity failure occurred on, letting entityBatch tell "could not
+	// read" apart from a plain absent/null alias. Absent for a genuine
+	// top-level failure, which has no single field to blame.
+	Path []any `json:"path,omitempty"`
 }
 
 type graphQLResponse struct {

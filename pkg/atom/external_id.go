@@ -6,6 +6,7 @@ package atom
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -27,7 +28,10 @@ const entityBatchSize = 100
 // results matches no rows at all, which reads as a permissions bug rather than
 // a missing conversion.
 func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[string]string, error) {
-	raw, err := c.batchEntities(ctx, ids, "EntityExternalIDs", "id external_id: externalId")
+	// A per-entity failure is deliberately tolerated here: an id that could
+	// not be read simply contributes nothing to the resulting filter, which
+	// is the safe direction for this caller (see batchEntities).
+	raw, _, err := c.batchEntities(ctx, ids, "EntityExternalIDs", "id external_id: externalId")
 	if err != nil {
 		return nil, err
 	}
@@ -50,10 +54,21 @@ func (c *Client) EntityExternalIDs(ctx context.Context, ids []string) (map[strin
 // their id. Used to narrow a declared set (e.g. a device's `gateways`
 // attribute) down to the ones that still exist, in batches of at most
 // entityBatchSize round trips instead of one GetEntity call per id.
+//
+// Unlike EntityExternalIDs, absence here is load-bearing: DeviceGateways and
+// SetDeviceGateways treat a dropped id as "this gateway link was deleted" and
+// write that conclusion back. An id batchEntities could not read — a
+// permission failure, a transient Atom error — must not be folded into that
+// same "does not exist" bucket, or a caller doing read-modify-write can
+// permanently erase a link that was never actually gone.
 func (c *Client) entitiesExist(ctx context.Context, ids []string) (map[string]struct{}, error) {
-	raw, err := c.batchEntities(ctx, ids, "EntityExistence", "id")
+	raw, unreadable, err := c.batchEntities(ctx, ids, "EntityExistence", "id")
 	if err != nil {
 		return nil, err
+	}
+	if len(unreadable) > 0 {
+		return nil, fmt.Errorf("atom: could not determine existence of %d of %d entities (e.g. %s): %w",
+			len(unreadable), len(ids), firstKey(unreadable), errEntitiesUnreadable)
 	}
 
 	out := make(map[string]struct{}, len(raw))
@@ -63,12 +78,26 @@ func (c *Client) entitiesExist(ctx context.Context, ids []string) (map[string]st
 	return out, nil
 }
 
+func firstKey(m map[string]string) string {
+	for k := range m {
+		return k
+	}
+	return ""
+}
+
+// errEntitiesUnreadable marks the entitiesExist error above so callers can
+// tell it apart from an ordinary transport failure if they ever need to.
+var errEntitiesUnreadable = errors.New("one or more entities could not be read")
+
 // batchEntities resolves ids to whatever fields the caller selects, deduping
 // and chunking them into batches of at most entityBatchSize before handing
-// each batch to entityBatch. The result only ever contains ids that were
-// actually asked for and actually resolved.
-func (c *Client) batchEntities(ctx context.Context, ids []string, opName, fields string) (map[string]json.RawMessage, error) {
+// each batch to entityBatch. The resolved map only ever contains ids that
+// were actually asked for and actually resolved; the second map holds ids
+// that came back with a per-entity error attached, distinct from ids simply
+// absent because they do not exist (see entityBatch).
+func (c *Client) batchEntities(ctx context.Context, ids []string, opName, fields string) (map[string]json.RawMessage, map[string]string, error) {
 	out := make(map[string]json.RawMessage, len(ids))
+	unreadable := make(map[string]string)
 	seen := make(map[string]struct{}, len(ids))
 
 	batch := make([]string, 0, entityBatchSize)
@@ -76,12 +105,15 @@ func (c *Client) batchEntities(ctx context.Context, ids []string, opName, fields
 		if len(batch) == 0 {
 			return nil
 		}
-		resolved, err := c.entityBatch(ctx, batch, opName, fields)
+		resolved, failed, err := c.entityBatch(ctx, batch, opName, fields)
 		if err != nil {
 			return err
 		}
 		for id, data := range resolved {
 			out[id] = data
+		}
+		for id, msg := range failed {
+			unreadable[id] = msg
 		}
 		batch = batch[:0]
 		return nil
@@ -99,26 +131,32 @@ func (c *Client) batchEntities(ctx context.Context, ids []string, opName, fields
 		batch = append(batch, id)
 		if len(batch) == entityBatchSize {
 			if err := flush(); err != nil {
-				return nil, err
+				return nil, nil, err
 			}
 		}
 	}
 	if err := flush(); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return out, nil
+	return out, unreadable, nil
 }
 
 // entityBatch asks for one aliased `fields` selection per id, in a single
 // GraphQL request named opName. Per-entity failures — a deleted entity, one
-// the caller may not read — come back as a null alias alongside an errors
-// array; those ids are simply absent from the result. Failing the whole
-// batch instead would let a single stale id deny a caller every device they
-// hold (or every gateway they declared), so the tolerant decode is the
-// safer direction: an unresolved id contributes nothing to whatever it
-// feeds.
-func (c *Client) entityBatch(ctx context.Context, ids []string, opName, fields string) (map[string]json.RawMessage, error) {
+// the caller may not read — come back as a null alias, sometimes alongside an
+// errors array entry naming that alias in its path. Failing the whole batch
+// instead would let a single stale id deny a caller every device they hold
+// (or every gateway they declared), so entityBatch never bails out on a
+// per-entity failure.
+//
+// It does, however, tell the two cases apart in its return: a null alias
+// with no error attached is a genuine "does not exist" and lands only in the
+// absent set (dropped silently, same as before); a null alias with an error
+// attached — permission denied, a transient failure on that one field — lands
+// in the second map instead, so a caller for whom absence is load-bearing
+// (entitiesExist) can refuse to treat "could not tell" as "does not exist".
+func (c *Client) entityBatch(ctx context.Context, ids []string, opName, fields string) (resolved map[string]json.RawMessage, unreadable map[string]string, err error) {
 	var (
 		selection strings.Builder
 		params    = make([]string, 0, len(ids))
@@ -138,7 +176,7 @@ func (c *Client) entityBatch(ctx context.Context, ids []string, opName, fields s
 
 	var response graphQLResponse
 	if err := c.do(ctx, http.MethodPost, "/graphql", graphQLRequest{Query: query, Variables: variables}, &response); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	// A per-entity failure (see the doc comment above) leaves response.Data a
@@ -153,23 +191,44 @@ func (c *Client) entityBatch(ctx context.Context, ids []string, opName, fields s
 	// instead of surfacing the failure).
 	if len(response.Data) == 0 || string(response.Data) == "null" {
 		if len(response.Errors) > 0 {
-			return nil, graphQLErr(response.Errors)
+			return nil, nil, graphQLErr(response.Errors)
 		}
-		return nil, Error{StatusCode: http.StatusInternalServerError, Message: "atom GraphQL response did not include data"}
+		return nil, nil, Error{StatusCode: http.StatusInternalServerError, Message: "atom GraphQL response did not include data"}
 	}
 
 	var decoded map[string]json.RawMessage
 	if err := json.Unmarshal(response.Data, &decoded); err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	out := make(map[string]json.RawMessage, len(decoded))
-	for alias, raw := range decoded {
-		id, ok := aliases[alias]
-		if !ok || raw == nil || string(raw) == "null" {
+	// Map each per-entity error back to the alias it was reported against, so
+	// a null caused by "could not read" can be told apart below from a null
+	// caused by "does not exist".
+	erroredAliases := make(map[string]string, len(response.Errors))
+	for _, item := range response.Errors {
+		if len(item.Path) == 0 {
 			continue
 		}
-		out[id] = raw
+		if alias, ok := item.Path[0].(string); ok {
+			erroredAliases[alias] = item.Message
+		}
 	}
-	return out, nil
+
+	resolved = make(map[string]json.RawMessage, len(decoded))
+	unreadable = make(map[string]string, len(erroredAliases))
+	for alias, raw := range decoded {
+		id, ok := aliases[alias]
+		if !ok {
+			continue
+		}
+		if msg, failed := erroredAliases[alias]; failed {
+			unreadable[id] = msg
+			continue
+		}
+		if raw == nil || string(raw) == "null" {
+			continue
+		}
+		resolved[id] = raw
+	}
+	return resolved, unreadable, nil
 }

@@ -21,6 +21,11 @@ type fakeAtomDevices struct {
 	entities    map[string]Entity
 	updateCalls int
 	requests    int
+	// unreadable ids come back null from EntityExistence with a path-attributed
+	// error entry, as a permission failure or transient per-entity error would,
+	// rather than a clean null — which is reserved for ids that genuinely do
+	// not exist.
+	unreadable map[string]struct{}
 }
 
 func newFakeAtomDevices(t *testing.T, seed ...Entity) (*fakeAtomDevices, *httptest.Server) {
@@ -87,6 +92,7 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 
 	case strings.Contains(payload.Query, "query EntityExistence("):
 		data := map[string]any{}
+		var errs []map[string]any
 		for i := 0; ; i++ {
 			raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
 			if !ok {
@@ -94,13 +100,23 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 			}
 			id, _ := raw.(string)
 			alias := fmt.Sprintf("e%d", i)
-			if _, exists := fa.entities[id]; exists {
+			_, blocked := fa.unreadable[id]
+			_, exists := fa.entities[id]
+			switch {
+			case blocked:
+				data[alias] = nil
+				errs = append(errs, map[string]any{"message": "forbidden", "path": []any{alias}})
+			case exists:
 				data[alias] = map[string]any{"id": id}
-			} else {
+			default:
 				data[alias] = nil
 			}
 		}
-		_ = writeJSON(w, map[string]any{"data": data})
+		body := map[string]any{"data": data}
+		if len(errs) > 0 {
+			body["errors"] = errs
+		}
+		_ = writeJSON(w, body)
 
 	default:
 		fa.t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
@@ -260,6 +276,56 @@ func TestDeviceGatewaysDropsStaleGateway(t *testing.T) {
 	}
 	if !sameStringSet(got, []string{"gw-live"}) {
 		t.Fatalf("expected stale gateway to be dropped, got: %+v", got)
+	}
+}
+
+// A regression test for R2: a gateway that could not be read (a permission
+// failure, a transient per-entity error) must not be treated the same as one
+// that was deleted. Before the fix, entitiesExist's tolerant decode dropped
+// both alike, so DeviceGateways silently truncated the roster.
+func TestDeviceGatewaysFailsWhenAGatewayIsUnreadable(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-live", "gw-unreadable"}},
+		},
+		Entity{ID: "gw-live", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-unreadable", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.DeviceGateways(context.Background(), "device-1")
+	if err == nil {
+		t.Fatalf("expected an unreadable gateway to surface as an error, got a clean result: %+v", got)
+	}
+	if !errors.Is(err, errEntitiesUnreadable) {
+		t.Fatalf("expected errEntitiesUnreadable, got: %v", err)
+	}
+}
+
+// A read-modify-write caller (the CLI's gateway-set retry loop) must not be
+// able to write back a truncated roster when DeviceGateways itself failed to
+// resolve one of the declared gateways.
+func TestSetDeviceGatewaysFailsWhenCurrentGatewayIsUnreadable(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-unreadable"}},
+		},
+		Entity{ID: "gw-unreadable", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-new"}, nil)
+	if err == nil {
+		t.Fatal("expected SetDeviceGateways to fail rather than write over an unresolved current gateway")
+	}
+	if fa.updateCalls != 0 {
+		t.Fatalf("an unreadable current gateway must not write, got %d update calls", fa.updateCalls)
 	}
 }
 

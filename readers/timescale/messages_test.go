@@ -668,6 +668,116 @@ func TestReadMessagesWithAggregation(t *testing.T) {
 	}
 }
 
+// TestReadMessagesWithAggregationReportsDeviceIDRegardlessOfFilter is a
+// regression test for N4: the aggregated query used to decide whether to
+// project device_id from the caller's filter -- FIRST(device_id, time) only
+// when DeviceIDs held exactly one entry, ” otherwise -- rather than from
+// what the aggregated rows actually carry. A channel that only ever carried
+// one device therefore reported no device_id on an aggregated read unless
+// the caller redundantly restated it as a filter, and a scoped non-admin
+// (whose narrowing lives in DeviceScope, not DeviceIDs) never got
+// attribution on an aggregated read at all. This asserts attribution
+// survives with no DeviceIDs filter at all.
+func TestReadMessagesWithAggregationReportsDeviceIDRegardlessOfFilter(t *testing.T) {
+	writer := twriter.New(db)
+	reader := treader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	gatewayUUID := testsutil.GenerateUUID(t)
+	const deviceSerial = "AGG-DEVICE-1"
+
+	now := float64(time.Now().Unix())
+	value := 42.0
+	messages := []senml.Message{{
+		Channel:   chanID,
+		Publisher: gatewayUUID,
+		Protocol:  mqttProt,
+		Time:      now,
+		Value:     &value,
+		DeviceId:  deviceSerial,
+	}}
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), messages))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{
+		Limit:       100,
+		Offset:      0,
+		Aggregation: "AVG",
+		Interval:    "1 hour",
+		From:        now - 3600,
+		To:          now + 1,
+	})
+	require.Nil(t, err, "expected no error got %s", err)
+	require.NotEmpty(t, page.Messages, "expected a non-empty aggregated result")
+
+	msg, ok := page.Messages[0].(senml.Message)
+	require.True(t, ok, "expected an aggregated row to decode as senml.Message")
+	assert.Equal(t, deviceSerial, msg.DeviceId, "aggregated read must attribute device_id without a redundant DeviceIDs filter")
+}
+
+// TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable is a regression test
+// for Q2: quoting format (N2's fix for the SQL injection through it) makes
+// it match-exact, but the writer still creates a JSON format's table with
+// an unquoted CREATE TABLE IF NOT EXISTS %s, which Postgres folds to lower
+// case. A reader asking for the same mixed-case format it was written under
+// must still find it -- format needs the identical folding applied before
+// it is quoted, or the read silently comes back empty instead of erroring.
+func TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable(t *testing.T) {
+	writer := twriter.New(db)
+	reader := treader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	const mixedCaseFormat = "MyFormat"
+
+	err := writer.ConsumeBlocking(context.TODO(), json.Messages{
+		Format: mixedCaseFormat,
+		Data: []json.Message{{
+			Channel:   chanID,
+			Publisher: pubID,
+			Created:   time.Now().UnixMilli(),
+			Subtopic:  "subtopic/mixed/case",
+			Protocol:  "coap",
+			Payload:   json.Payload{"field": 1.0},
+		}},
+	})
+	require.Nil(t, err, "expected no error got %s", err)
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: mixedCaseFormat})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1, "a mixed-case format must read back what the writer wrote under Postgres's own lower-case folding")
+}
+
+// TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison is a
+// regression test for P4: the branch deciding "is format the default senml
+// table" ran on the raw, case-sensitive rpm.Format, so a request for the
+// default table spelled in another case (?format=MESSAGES) was judged "not
+// the default", picked the JSON code path this table does not fit, and
+// only normalized to defTable afterward -- by which point
+// IsLegacyJSONDeviceFilter no longer recognized it as the legacy-JSON case
+// it exists to swallow, so the caller got a 500 instead of ordinary senml
+// rows.
+func TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison(t *testing.T) {
+	writer := twriter.New(db)
+	reader := treader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+
+	now := float64(time.Now().Unix())
+	msg := senml.Message{
+		Channel:   chanID,
+		Publisher: pubID,
+		Protocol:  mqttProt,
+		Time:      now,
+		Value:     &v,
+	}
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), []senml.Message{msg}))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: "MESSAGES"})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1)
+}
+
 func TestReadJSON(t *testing.T) {
 	writer := twriter.New(db)
 
@@ -830,31 +940,40 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
-func TestReadLegacyJSONTableWithDeviceIDsReturnsEmptyPage(t *testing.T) {
+func TestReadLegacyJSONByDeviceID(t *testing.T) {
 	reader := treader.New(db)
+
 	format := fmt.Sprintf("legacy_json_%d", time.Now().UnixNano())
 	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	created := time.Now().Unix()
 
 	_, err := db.Exec(fmt.Sprintf(`CREATE TABLE %s (
-		created BIGINT NOT NULL,
-		channel VARCHAR(254),
-		subtopic VARCHAR(254),
+		created   BIGINT NOT NULL,
+		channel   VARCHAR(254),
+		subtopic  VARCHAR(254),
 		publisher VARCHAR(254),
-		protocol TEXT,
-		payload JSONB,
+		protocol  TEXT,
+		payload   JSONB,
 		PRIMARY KEY (created, publisher, subtopic)
 	)`, format))
-	require.NoError(t, err)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
 
-	result, err := reader.ReadAll(chanID, readers.PageMetadata{
-		Format:    format,
-		Offset:    0,
-		Limit:     10,
-		DeviceIDs: []string{"meter-a"},
-	})
-	require.NoError(t, err)
-	assert.Empty(t, result.Messages)
-	assert.Equal(t, uint64(0), result.Total)
+	_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s (created, channel, subtopic, publisher, protocol, payload)
+		VALUES ($1, $2, $3, $4, $5, $6)`, format), created, chanID, subtopic, pubID, mqttProt, `{"field":1}`)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	require.Len(t, page.Messages, 1)
+	msg := page.Messages[0].(map[string]any)
+	assert.NotContains(t, msg, "device_id")
+	assert.Equal(t, uint64(1), page.Total)
+
+	page, err = reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format, DeviceIDs: []string{"missing-device"}})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	assert.Empty(t, page.Messages)
+	assert.Equal(t, uint64(0), page.Total)
 }
 
 func fromSenml(msg []senml.Message) []readers.Message {

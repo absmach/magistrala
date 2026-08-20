@@ -117,14 +117,27 @@ func (c *Client) UpsertEntity(ctx context.Context, entity Entity) error {
 	return err
 }
 
+// entityFields is the entity selection every entity query shares, so a new
+// field cannot reach one caller and not another.
+const entityFields = `id kind name external_id: externalId tenant_id: tenantId device_type_id: profileId device_type_version_id: profileVersionId status attributes created_at: createdAt updated_at: updatedAt`
+
+// CreateEntity writes entity as-is: if entity.Attributes declares
+// AttributeGateways ("gateways"), the caller is responsible for calling
+// MarkGateways with those ids afterward (see GatewaysDeclared) -- this
+// method has no way to know it is a device create, let alone flag the
+// gateways it names. See AttributeGateways's doc comment for the
+// invariant this maintains and who currently maintains it.
 func (c *Client) CreateEntity(ctx context.Context, entity Entity) (Entity, error) {
 	var out struct {
 		CreateEntity Entity `json:"createEntity"`
 	}
 	err := c.graphQL(ctx, `mutation CreateEntity($input: CreateEntityInput!) {
-		createEntity(input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		createEntity(input: $input) { `+entityFields+` }
 	}`, map[string]any{atomInputKeyInput: entityCreateInput(entity)}, &out)
-	return out.CreateEntity, err
+	if err != nil {
+		return Entity{}, translateSchemaError(err, entity.Attributes)
+	}
+	return out.CreateEntity, nil
 }
 
 func (c *Client) GetEntity(ctx context.Context, id string) (Entity, error) {
@@ -132,19 +145,26 @@ func (c *Client) GetEntity(ctx context.Context, id string) (Entity, error) {
 		Entity Entity `json:"entity"`
 	}
 	err := c.graphQL(ctx, `query Entity($id: ID!) {
-		entity(id: $id) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		entity(id: $id) { `+entityFields+` }
 	}`, map[string]any{"id": id}, &out)
 	return out.Entity, err
 }
 
+// UpdateEntity replaces entity's whole attributes column with entity as
+// given -- see CreateEntity's doc comment: the same MarkGateways
+// responsibility falls on any caller whose entity.Attributes declares
+// AttributeGateways.
 func (c *Client) UpdateEntity(ctx context.Context, id string, entity Entity) (Entity, error) {
 	var out struct {
 		UpdateEntity Entity `json:"updateEntity"`
 	}
 	err := c.graphQL(ctx, `mutation UpdateEntity($id: ID!, $input: UpdateEntityInput!) {
-		updateEntity(id: $id, input: $input) { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+		updateEntity(id: $id, input: $input) { `+entityFields+` }
 	}`, map[string]any{"id": id, atomInputKeyInput: entityUpdateInput(entity)}, &out)
-	return out.UpdateEntity, err
+	if err != nil {
+		return Entity{}, translateSchemaError(err, entity.Attributes)
+	}
+	return out.UpdateEntity, nil
 }
 
 // CreateObjectGroup creates a group of devices/channels. Atom keeps object
@@ -241,7 +261,7 @@ func (c *Client) GroupMembers(ctx context.Context, groupID string) ([]Entity, er
 		err := c.graphQL(ctx, `query GroupMembers($parentGroupId: ID!, $limit: Int, $offset: Int) {
 			entities(parentGroupId: $parentGroupId, limit: $limit, offset: $offset) {
 				total
-				items { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+				items { `+entityFields+` }
 			}
 		}`, map[string]any{
 			atomInputKeyParentGroupID: groupID,
@@ -798,10 +818,10 @@ func (c *Client) ListEntities(ctx context.Context, q Query) (EntityList, error) 
 	var out struct {
 		Entities EntityList `json:"entities"`
 	}
-	err := c.graphQL(ctx, `query Entities($q: String, $kind: EntityKind, $tenantId: ID, $status: EntityStatus, $attributesContains: JSON, $limit: Int, $offset: Int) {
-		entities(q: $q, kind: $kind, tenantId: $tenantId, status: $status, attributesContains: $attributesContains, limit: $limit, offset: $offset) {
+	err := c.graphQL(ctx, `query Entities($q: String, $kind: EntityKind, $tenantId: ID, $profileId: ID, $status: EntityStatus, $attributesContains: JSON, $limit: Int, $offset: Int) {
+		entities(q: $q, kind: $kind, tenantId: $tenantId, profileId: $profileId, status: $status, attributesContains: $attributesContains, limit: $limit, offset: $offset) {
 			total
-			items { id kind name tenant_id: tenantId status attributes created_at: createdAt updated_at: updatedAt }
+			items { `+entityFields+` }
 		}
 	}`, objectQueryVariables(q), &out)
 	return out.Entities, err
@@ -852,6 +872,12 @@ type graphQLRequest struct {
 
 type graphQLErrorItem struct {
 	Message string `json:"message"`
+	// Path names the response field the error is attributed to — for a
+	// batched, aliased entity lookup this is the alias (e.g. "e3") a
+	// per-entity failure occurred on, letting entityBatch tell "could not
+	// read" apart from a plain absent/null alias. Absent for a genuine
+	// top-level failure, which has no single field to blame.
+	Path []any `json:"path,omitempty"`
 }
 
 type graphQLResponse struct {
@@ -941,7 +967,10 @@ func entityCreateInput(entity Entity) map[string]any {
 	input := map[string]any{atomInputKeyName: entity.Name}
 	setIfNotEmpty(input, "id", entity.ID)
 	setIfNotEmpty(input, atomInputKeyKind, entity.Kind)
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, "tenantId", entity.TenantID)
+	setIfNotEmpty(input, atomInputKeyProfileID, entity.DeviceTypeID)
+	setIfNotEmpty(input, atomInputKeyProfileVersionID, entity.DeviceTypeVersionID)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes
 	} else {
@@ -950,10 +979,19 @@ func entityCreateInput(entity Entity) map[string]any {
 	return input
 }
 
+// entityUpdateInput omits the device type binding when unset, which is what
+// keeps an update from disturbing it: Atom coalesces a missing binding to the
+// stored one.
 func entityUpdateInput(entity Entity) map[string]any {
 	input := map[string]any{}
 	setIfNotEmpty(input, atomInputKeyName, entity.Name)
+	// externalId is MaybeUndefined on Atom's side: omitted leaves it unchanged,
+	// explicit null clears it. Omitting on empty keeps this an update of what
+	// was set, never a silent clear.
+	setIfNotEmpty(input, atomInputKeyExternalID, entity.ExternalID)
 	setIfNotEmpty(input, atomAttributeStatus, entity.Status)
+	setIfNotEmpty(input, atomInputKeyProfileID, entity.DeviceTypeID)
+	setIfNotEmpty(input, atomInputKeyProfileVersionID, entity.DeviceTypeVersionID)
 	if entity.Attributes != nil {
 		input["attributes"] = entity.Attributes
 	}
@@ -1100,6 +1138,7 @@ func objectQueryVariables(q Query) map[string]any {
 	setIfNotEmpty(vars, "q", q.Q)
 	setIfNotEmpty(vars, atomInputKeyKind, q.Kind)
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
+	setIfNotEmpty(vars, atomInputKeyProfileID, q.DeviceTypeID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.AttributesContains != nil {
 		vars["attributesContains"] = q.AttributesContains
@@ -1218,12 +1257,14 @@ func (e Error) Error() string {
 	return fmt.Sprintf("atom request failed with status %d: %s", e.StatusCode, e.Message)
 }
 
+// IsConflict and IsNotFound unwrap, so they still answer for an error a
+// richer type wraps — SchemaValidationError, say.
 func IsConflict(err error) bool {
-	ae, ok := err.(Error)
-	return ok && ae.StatusCode == http.StatusConflict
+	var ae Error
+	return errors.As(err, &ae) && ae.StatusCode == http.StatusConflict
 }
 
 func IsNotFound(err error) bool {
-	ae, ok := err.(Error)
-	return ok && ae.StatusCode == http.StatusNotFound
+	var ae Error
+	return errors.As(err, &ae) && ae.StatusCode == http.StatusNotFound
 }

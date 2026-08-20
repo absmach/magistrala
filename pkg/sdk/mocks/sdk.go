@@ -8106,6 +8106,98 @@ func (_c *SDK_ListClientMembers_Call) RunAndReturn(run func(ctx context.Context,
 	return _c
 }
 
+// ListDeviceGateways provides a mock function for the type SDK
+func (_mock *SDK) ListDeviceGateways(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError) {
+	ret := _mock.Called(ctx, chanID, deviceID, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDeviceGateways")
+	}
+
+	var r0 sdk.DeviceGatewaysPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) (sdk.DeviceGatewaysPage, errors.SDKError)); ok {
+		return returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) sdk.DeviceGatewaysPage); ok {
+		r0 = returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.DeviceGatewaysPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListDeviceGateways_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDeviceGateways'
+type SDK_ListDeviceGateways_Call struct {
+	*mock.Call
+}
+
+// ListDeviceGateways is a helper method to define mock.On call
+//   - ctx context.Context
+//   - chanID string
+//   - deviceID string
+//   - pm sdk.DeviceViewPageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ListDeviceGateways(ctx interface{}, chanID interface{}, deviceID interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListDeviceGateways_Call {
+	return &SDK_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", ctx, chanID, deviceID, pm, domainID, token)}
+}
+
+func (_c *SDK_ListDeviceGateways_Call) Run(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string)) *SDK_ListDeviceGateways_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk.DeviceViewPageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk.DeviceViewPageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListDeviceGateways_Call) Return(deviceGatewaysPage sdk.DeviceGatewaysPage, sDKError errors.SDKError) *SDK_ListDeviceGateways_Call {
+	_c.Call.Return(deviceGatewaysPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListDeviceGateways_Call) RunAndReturn(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError)) *SDK_ListDeviceGateways_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ListDomainMembers provides a mock function for the type SDK
 func (_mock *SDK) ListDomainMembers(ctx context.Context, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
 	ret := _mock.Called(ctx, domainID, pm, token)
@@ -8182,6 +8274,98 @@ func (_c *SDK_ListDomainMembers_Call) Return(entityMembersPage sdk.EntityMembers
 }
 
 func (_c *SDK_ListDomainMembers_Call) RunAndReturn(run func(ctx context.Context, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListDomainMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListGatewayDevices provides a mock function for the type SDK
+func (_mock *SDK) ListGatewayDevices(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.GatewayDevicesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, chanID, publisherID, pm, domainID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListGatewayDevices")
+	}
+
+	var r0 sdk.GatewayDevicesPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) (sdk.GatewayDevicesPage, errors.SDKError)); ok {
+		return returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) sdk.GatewayDevicesPage); ok {
+		r0 = returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.GatewayDevicesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListGatewayDevices_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListGatewayDevices'
+type SDK_ListGatewayDevices_Call struct {
+	*mock.Call
+}
+
+// ListGatewayDevices is a helper method to define mock.On call
+//   - ctx context.Context
+//   - chanID string
+//   - publisherID string
+//   - pm sdk.DeviceViewPageMetadata
+//   - domainID string
+//   - token string
+func (_e *SDK_Expecter) ListGatewayDevices(ctx interface{}, chanID interface{}, publisherID interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListGatewayDevices_Call {
+	return &SDK_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", ctx, chanID, publisherID, pm, domainID, token)}
+}
+
+func (_c *SDK_ListGatewayDevices_Call) Run(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string)) *SDK_ListGatewayDevices_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk.DeviceViewPageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk.DeviceViewPageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		var arg5 string
+		if args[5] != nil {
+			arg5 = args[5].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+			arg5,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListGatewayDevices_Call) Return(gatewayDevicesPage sdk.GatewayDevicesPage, sDKError errors.SDKError) *SDK_ListGatewayDevices_Call {
+	_c.Call.Return(gatewayDevicesPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListGatewayDevices_Call) RunAndReturn(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.GatewayDevicesPage, errors.SDKError)) *SDK_ListGatewayDevices_Call {
 	_c.Call.Return(run)
 	return _c
 }

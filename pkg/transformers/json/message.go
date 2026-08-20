@@ -14,7 +14,10 @@ type Message struct {
 	Publisher string  `json:"publisher,omitempty" db:"publisher" bson:"publisher"`
 	Protocol  string  `json:"protocol,omitempty" db:"protocol" bson:"protocol"`
 	Payload   Payload `json:"payload,omitempty" db:"payload" bson:"payload,omitempty"`
-	DeviceId  string  `json:"device_id,omitempty" db:"device_id" bson:"device_id,omitempty"`
+	// The device's serial, verbatim, popped from the reserved "device_id" key
+	// and accumulated forward across a batch the same way senml.Message.DeviceId
+	// accumulates from bn — never looked up.
+	DeviceId string `json:"device_id,omitempty" db:"device_id" bson:"device_id,omitempty"`
 }
 
 // Messages represents a list of JSON messages.

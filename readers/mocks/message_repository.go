@@ -40,6 +40,150 @@ func (_m *MessageRepository) EXPECT() *MessageRepository_Expecter {
 	return &MessageRepository_Expecter{mock: &_m.Mock}
 }
 
+// ListDeviceGateways provides a mock function for the type MessageRepository
+func (_mock *MessageRepository) ListDeviceGateways(chanID string, deviceID string, pm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	ret := _mock.Called(chanID, deviceID, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListDeviceGateways")
+	}
+
+	var r0 readers.DeviceStatsPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string, readers.PageMetadata) (readers.DeviceStatsPage, error)); ok {
+		return returnFunc(chanID, deviceID, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string, readers.PageMetadata) readers.DeviceStatsPage); ok {
+		r0 = returnFunc(chanID, deviceID, pm)
+	} else {
+		r0 = ret.Get(0).(readers.DeviceStatsPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string, readers.PageMetadata) error); ok {
+		r1 = returnFunc(chanID, deviceID, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MessageRepository_ListDeviceGateways_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDeviceGateways'
+type MessageRepository_ListDeviceGateways_Call struct {
+	*mock.Call
+}
+
+// ListDeviceGateways is a helper method to define mock.On call
+//   - chanID string
+//   - deviceID string
+//   - pm readers.PageMetadata
+func (_e *MessageRepository_Expecter) ListDeviceGateways(chanID interface{}, deviceID interface{}, pm interface{}) *MessageRepository_ListDeviceGateways_Call {
+	return &MessageRepository_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", chanID, deviceID, pm)}
+}
+
+func (_c *MessageRepository_ListDeviceGateways_Call) Run(run func(chanID string, deviceID string, pm readers.PageMetadata)) *MessageRepository_ListDeviceGateways_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 readers.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(readers.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MessageRepository_ListDeviceGateways_Call) Return(deviceStatsPage readers.DeviceStatsPage, err error) *MessageRepository_ListDeviceGateways_Call {
+	_c.Call.Return(deviceStatsPage, err)
+	return _c
+}
+
+func (_c *MessageRepository_ListDeviceGateways_Call) RunAndReturn(run func(chanID string, deviceID string, pm readers.PageMetadata) (readers.DeviceStatsPage, error)) *MessageRepository_ListDeviceGateways_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListGatewayDevices provides a mock function for the type MessageRepository
+func (_mock *MessageRepository) ListGatewayDevices(chanID string, publisherID string, pm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	ret := _mock.Called(chanID, publisherID, pm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListGatewayDevices")
+	}
+
+	var r0 readers.DeviceStatsPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(string, string, readers.PageMetadata) (readers.DeviceStatsPage, error)); ok {
+		return returnFunc(chanID, publisherID, pm)
+	}
+	if returnFunc, ok := ret.Get(0).(func(string, string, readers.PageMetadata) readers.DeviceStatsPage); ok {
+		r0 = returnFunc(chanID, publisherID, pm)
+	} else {
+		r0 = ret.Get(0).(readers.DeviceStatsPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(string, string, readers.PageMetadata) error); ok {
+		r1 = returnFunc(chanID, publisherID, pm)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MessageRepository_ListGatewayDevices_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListGatewayDevices'
+type MessageRepository_ListGatewayDevices_Call struct {
+	*mock.Call
+}
+
+// ListGatewayDevices is a helper method to define mock.On call
+//   - chanID string
+//   - publisherID string
+//   - pm readers.PageMetadata
+func (_e *MessageRepository_Expecter) ListGatewayDevices(chanID interface{}, publisherID interface{}, pm interface{}) *MessageRepository_ListGatewayDevices_Call {
+	return &MessageRepository_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", chanID, publisherID, pm)}
+}
+
+func (_c *MessageRepository_ListGatewayDevices_Call) Run(run func(chanID string, publisherID string, pm readers.PageMetadata)) *MessageRepository_ListGatewayDevices_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 string
+		if args[0] != nil {
+			arg0 = args[0].(string)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 readers.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(readers.PageMetadata)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MessageRepository_ListGatewayDevices_Call) Return(deviceStatsPage readers.DeviceStatsPage, err error) *MessageRepository_ListGatewayDevices_Call {
+	_c.Call.Return(deviceStatsPage, err)
+	return _c
+}
+
+func (_c *MessageRepository_ListGatewayDevices_Call) RunAndReturn(run func(chanID string, publisherID string, pm readers.PageMetadata) (readers.DeviceStatsPage, error)) *MessageRepository_ListGatewayDevices_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // ReadAll provides a mock function for the type MessageRepository
 func (_mock *MessageRepository) ReadAll(chanID string, pm readers.PageMetadata) (readers.MessagesPage, error) {
 	ret := _mock.Called(chanID, pm)

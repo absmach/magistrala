@@ -18,7 +18,13 @@ import (
 	"github.com/ory/dockertest/v3/docker"
 )
 
-var db *sqlx.DB
+var (
+	db *sqlx.DB
+	// dbPort is the host port of the shared test Postgres container, kept
+	// around so init_test.go can open its own connections and databases
+	// against the same instance to exercise migrateDB in isolation.
+	dbPort string
+)
 
 func TestMain(m *testing.M) {
 	pool, err := dockertest.NewPool("")
@@ -43,6 +49,7 @@ func TestMain(m *testing.M) {
 	}
 
 	port := container.GetPort("5432/tcp")
+	dbPort = port
 	url := fmt.Sprintf("host=localhost port=%s user=test dbname=test password=test sslmode=disable", port)
 
 	if err = pool.Retry(func() error {

@@ -32,6 +32,11 @@ func TestEntityTypeString(t *testing.T) {
 			expected: "devices",
 		},
 		{
+			desc:     "Device types entity type",
+			et:       auth.DeviceTypesType,
+			expected: "device_types",
+		},
+		{
 			desc:     "Bootstrap entity type",
 			et:       auth.BootstrapType,
 			expected: "bootstrap",
@@ -94,6 +99,12 @@ func TestParseEntityType(t *testing.T) {
 			desc:     "Parse devices",
 			et:       "devices",
 			expected: auth.DevicesType,
+			err:      false,
+		},
+		{
+			desc:     "Parse device types",
+			et:       "device_types",
+			expected: auth.DeviceTypesType,
 			err:      false,
 		},
 		{
@@ -164,6 +175,12 @@ func TestEntityTypeMarshalJSON(t *testing.T) {
 			desc:     "Marshal devices",
 			et:       auth.DevicesType,
 			expected: []byte(`"devices"`),
+			err:      nil,
+		},
+		{
+			desc:     "Marshal device types",
+			et:       auth.DeviceTypesType,
+			expected: []byte(`"device_types"`),
 			err:      nil,
 		},
 		{
@@ -334,5 +351,88 @@ func TestEntityTypeUnmarshalText(t *testing.T) {
 				assert.Equal(t, tc.expected, et, "UnmarshalText() = %v, expected %v", et, tc.expected)
 			}
 		})
+	}
+}
+
+// TestEntityTypeRoundTrip pins every declared EntityType against all four of
+// its representations at once. String(), ParseEntityType, JSON and text are
+// written separately, so a new variant added to one and forgotten in another
+// only shows up here.
+func TestEntityTypeRoundTrip(t *testing.T) {
+	cases := []struct {
+		et   auth.EntityType
+		name string
+	}{
+		{auth.GroupsType, "groups"},
+		{auth.ChannelsType, "channels"},
+		{auth.BootstrapType, "bootstrap"},
+		{auth.DashboardType, "dashboards"},
+		{auth.MessagesType, "messages"},
+		{auth.DomainsType, "domains"},
+		{auth.UsersType, "users"},
+		{auth.RulesType, "rules"},
+		{auth.ReportsType, "reports"},
+		{auth.DevicesType, "devices"},
+		{auth.DeviceTypesType, "device_types"},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.name, tc.et.String())
+
+			parsed, err := auth.ParseEntityType(tc.name)
+			assert.NoError(t, err)
+			assert.Equal(t, tc.et, parsed)
+
+			marshalled, err := tc.et.MarshalJSON()
+			assert.NoError(t, err)
+			assert.Equal(t, []byte(`"`+tc.name+`"`), marshalled)
+
+			var fromJSON auth.EntityType
+			assert.NoError(t, fromJSON.UnmarshalJSON(marshalled))
+			assert.Equal(t, tc.et, fromJSON)
+
+			text, err := tc.et.MarshalText()
+			assert.NoError(t, err)
+			assert.Equal(t, []byte(tc.name), text)
+
+			var fromText auth.EntityType
+			assert.NoError(t, fromText.UnmarshalText(text))
+			assert.Equal(t, tc.et, fromText)
+		})
+	}
+}
+
+// TestDeviceTypesOperationsAreValid mirrors devices: device types accept any
+// operation, unlike dashboards and messages which accept a fixed pair.
+func TestDeviceTypesOperationsAreValid(t *testing.T) {
+	for _, op := range []string{"view", "update", "create_version", "list_versions"} {
+		assert.True(t, auth.IsValidOperationForEntity(auth.DeviceTypesType, op), "operation %s must be valid for device_types", op)
+	}
+}
+
+// TestScopeUnmarshalJSONNormalizesDeviceTypesOperations is a regression test
+// for N5: Scope.UnmarshalJSON rewrites the generic create/list operations
+// into entity-specific ones for devices, channels and groups, but had no
+// case for DeviceTypesType -- added by this PR -- so a scope of
+// {"entity_type":"device_types","operation":"create"} stayed as bare
+// "create" while the identical scope on devices normalized to
+// "create_devices". Mirrors TestDeviceTypesOperationsAreValid's devices
+// comparison above.
+func TestScopeUnmarshalJSONNormalizesDeviceTypesOperations(t *testing.T) {
+	cases := []struct {
+		op       string
+		expected string
+	}{
+		{op: auth.OpCreate, expected: auth.OpCreateDeviceTypes},
+		{op: auth.OpList, expected: auth.OpListDeviceTypes},
+		{op: "view", expected: "view"},
+	}
+
+	for _, tc := range cases {
+		data := []byte(`{"entity_type":"device_types","operation":"` + tc.op + `"}`)
+		var s auth.Scope
+		assert.NoError(t, s.UnmarshalJSON(data))
+		assert.Equal(t, tc.expected, s.Operation, "operation %s on device_types", tc.op)
 	}
 }

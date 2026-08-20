@@ -144,6 +144,10 @@ var (
 	// ErrInvalidComparator indicates an invalid comparator.
 	ErrInvalidComparator = errors.NewRequestError("invalid comparator")
 
+	// ErrInvalidFormat indicates a message read format that is not a bare
+	// SQL identifier.
+	ErrInvalidFormat = errors.NewRequestError("invalid format")
+
 	// ErrMissingMemberIDs indicates missing member ids.
 	ErrMissingMemberIDs = errors.NewRequestError("missing member ids")
 

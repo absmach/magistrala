@@ -21,14 +21,125 @@ type Tenant struct {
 }
 
 type Entity struct {
-	ID         string     `json:"id,omitempty"`
-	Kind       string     `json:"kind"`
-	Name       string     `json:"name"`
-	TenantID   string     `json:"tenant_id,omitempty"`
+	ID   string `json:"id,omitempty"`
+	Kind string `json:"kind"`
+	Name string `json:"name"`
+	// ExternalID is the identifier assigned outside Atom — a device's serial,
+	// MAC or SKU (ATOM-06). Opaque and unvalidated, case-sensitive, trimmed,
+	// unique per tenant among live entities, and returned byte-identical to
+	// what was stored.
+	ExternalID string `json:"external_id,omitempty"`
+	TenantID   string `json:"tenant_id,omitempty"`
+
+	// DeviceTypeID and DeviceTypeVersionID bind the entity to a device type.
+	// With a device type bound, Atom validates Attributes against that
+	// version's schema on every write. Leaving DeviceTypeVersionID empty binds
+	// to the type's highest-numbered active version.
+	//
+	// Both are write-once-per-call in the sense that Atom coalesces them: an
+	// update that leaves them empty keeps the existing binding rather than
+	// clearing it. There is no way to unbind a device through Atom's API.
+	DeviceTypeID        string `json:"device_type_id,omitempty"`
+	DeviceTypeVersionID string `json:"device_type_version_id,omitempty"`
+
 	Status     string     `json:"status,omitempty"`
 	Attributes Attributes `json:"attributes,omitempty"`
 	CreatedAt  time.Time  `json:"created_at,omitempty"`
 	UpdatedAt  time.Time  `json:"updated_at,omitempty"`
+}
+
+// Measurement is one value a device of a given type reports.
+//
+// Rendered into the device type's JSON Schema, a measurement constrains the
+// device's *attributes*, not its telemetry — see BuildCapabilitySchema.
+type Measurement struct {
+	Name string `json:"name"`
+	Unit string `json:"unit,omitempty"`
+
+	// Access is "r" (default) or "rw". Advisory only: it renders to JSON
+	// Schema's readOnly annotation, which Atom's validator records but does
+	// not enforce.
+	Access string `json:"access,omitempty"`
+
+	// Type is a ValueType* constant, defaulting to ValueTypeNumber.
+	Type     string   `json:"type,omitempty"`
+	Required bool     `json:"required,omitempty"`
+	Min      *float64 `json:"min,omitempty"`
+	Max      *float64 `json:"max,omitempty"`
+	Enum     []string `json:"enum,omitempty"`
+}
+
+// Command is one instruction a device of a given type accepts. Declaring a
+// command does not route it: dispatch is unspecified and out of scope.
+type Command struct {
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
+
+	// Params maps parameter name to a ValueType* constant.
+	Params map[string]string `json:"params,omitempty"`
+}
+
+// CapabilityDocument is what a device type declares, in the terms callers
+// think in, so nobody hand-writes JSON Schema. BuildCapabilitySchema renders
+// it for storage and ParseCapabilityDocument reads it back.
+type CapabilityDocument struct {
+	Measurements []Measurement `json:"measurements,omitempty"`
+	Commands     []Command     `json:"commands,omitempty"`
+}
+
+// DeviceType is a named, versioned declaration of what a class of device
+// measures and accepts. Devices bind to a specific version of one.
+//
+// It maps to an Atom Profile with object_kind "entity" and kind "device". The
+// Atom-side name is never exposed here: "profile" collides with Bootstrap's
+// unrelated Profile, so this concept is Device Type on every Magistrala
+// surface.
+type DeviceType struct {
+	ID       string `json:"id,omitempty"`
+	TenantID string `json:"tenant_id,omitempty"`
+
+	// Key identifies the type within a tenant and cannot be changed after
+	// creation.
+	Key         string    `json:"key"`
+	Name        string    `json:"name"`
+	Description string    `json:"description,omitempty"`
+	Status      string    `json:"status,omitempty"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+}
+
+// DeviceTypeVersion is one immutable revision of a device type's capability
+// document. Devices stay bound to the version they were created against, so a
+// new version never invalidates deployed devices.
+type DeviceTypeVersion struct {
+	ID           string `json:"id,omitempty"`
+	DeviceTypeID string `json:"device_type_id,omitempty"`
+	Version      int    `json:"version"`
+	Status       string `json:"status,omitempty"`
+
+	// Capabilities is the declaration, filled in on read.
+	Capabilities CapabilityDocument `json:"capabilities"`
+
+	// JSONSchema and UISchema are what Atom stores and validates against.
+	// They are exposed for advanced use; Capabilities is the documented path.
+	JSONSchema map[string]any `json:"json_schema,omitempty"`
+	UISchema   map[string]any `json:"ui_schema,omitempty"`
+
+	CreatedAt time.Time `json:"created_at,omitempty"`
+}
+
+type DeviceTypeList struct {
+	Items []DeviceType `json:"items"`
+	Total uint64       `json:"total"`
+}
+
+// DeviceTypeQuery filters a device type listing. TenantID is required: see
+// ListDeviceTypes for why global types are not exposed.
+type DeviceTypeQuery struct {
+	TenantID string
+	Status   string
+	Limit    uint64
+	Offset   uint64
 }
 
 type Group struct {
@@ -65,6 +176,10 @@ type Query struct {
 	Status   string
 	Limit    uint64
 	Offset   uint64
+
+	// DeviceTypeID restricts an entity listing to devices bound to one device
+	// type, across all of its versions.
+	DeviceTypeID string
 
 	// AttributesContains filters by JSONB containment — an entity must contain
 	// every key/value given here (array values match by containment, not equality).

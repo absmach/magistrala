@@ -51,8 +51,22 @@ func (t transformer) Transform(msg *messaging.Message) (any, error) {
 		return nil, errors.Wrap(errDecode, err)
 	}
 
+	// Accumulate bn forward across the raw pack (RFC 8428 §4.6), before
+	// Normalize folds it into Name and discards it. Stashed in the otherwise
+	// unused Link field so it survives Normalize's internal sort — Swap moves
+	// whole records, so the accumulated value travels with the record it
+	// belongs to regardless of how Time ties are broken. Link is never
+	// mapped to the output Message, so this does not change any existing
+	// behaviour.
+	//
+	// Seeded from the broker-level device_id so a pack with no bn in any
+	// record still carries it, matching the JSON transformer's handling of
+	// the same field.
 	deviceID := msg.GetDeviceId()
 	for i := range raw.Records {
+		if raw.Records[i].BaseName != "" {
+			deviceID = raw.Records[i].BaseName
+		}
 		raw.Records[i].Link = deviceID
 	}
 

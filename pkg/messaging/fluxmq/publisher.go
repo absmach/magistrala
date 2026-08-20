@@ -25,7 +25,19 @@ const (
 	// and omitted when one subscribes. A service therefore cannot be fed forged
 	// metadata by a device, and a device cannot read metadata a service set.
 	headerMetadataPrefix = "_flux.mg."
-	protocolMQTT         = "mqtt"
+	// headerDeviceID lives inside headerMetadataPrefix for the same reason:
+	// device_id is authorization-relevant (it feeds a reader grant's device
+	// scope, see readers/api/http/readauthz.go), and Magistrala never sets it
+	// except from its own resolved messaging.Message.DeviceId — a plain,
+	// unnamespaced property would let an untrusted device forge another
+	// device's identity and read back into that device's authorized rows.
+	//
+	// Namespaced under "sys." rather than directly under headerMetadataPrefix
+	// so a first-party service that puts a "device_id" key in its own
+	// Message.Metadata cannot collide with the resolved attribution: the
+	// metadata loop below would otherwise land it at the exact same property.
+	headerDeviceID = headerMetadataPrefix + "sys.device_id"
+	protocolMQTT   = "mqtt"
 )
 
 type publisher struct {
@@ -148,11 +160,13 @@ func messageProperties(msg *messaging.Message) map[string]string {
 		headerExternalID: msg.GetPublisher(),
 		headerProtocol:   msg.GetProtocol(),
 	}
-	if deviceID := msg.GetDeviceId(); deviceID != "" {
-		props["device_id"] = deviceID
-	}
 	if clientID := msg.ClientIdentity(); clientID != "" {
 		props["client_id"] = clientID
+	}
+	// Broker-level, single-device only. Never set from payload accumulation —
+	// see pkg/transformers/senml and pkg/transformers/json for that mechanism.
+	if msg.GetDeviceId() != "" {
+		props[headerDeviceID] = msg.GetDeviceId()
 	}
 	if msg.GetCreated() != 0 {
 		props["created"] = strconv.FormatInt(msg.GetCreated(), 10)

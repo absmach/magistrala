@@ -6,6 +6,7 @@ package atom
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -19,6 +20,12 @@ type fakeAtomDevices struct {
 	t           *testing.T
 	entities    map[string]Entity
 	updateCalls int
+	requests    int
+	// unreadable ids come back null from EntityExistence with a path-attributed
+	// error entry, as a permission failure or transient per-entity error would,
+	// rather than a clean null — which is reserved for ids that genuinely do
+	// not exist.
+	unreadable map[string]struct{}
 }
 
 func newFakeAtomDevices(t *testing.T, seed ...Entity) (*fakeAtomDevices, *httptest.Server) {
@@ -33,6 +40,7 @@ func newFakeAtomDevices(t *testing.T, seed ...Entity) (*fakeAtomDevices, *httpte
 }
 
 func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
+	fa.requests++
 	payload := decodePayload(fa.t, r)
 	switch {
 	case strings.Contains(payload.Query, "mutation UpdateEntity"):
@@ -81,6 +89,62 @@ func (fa *fakeAtomDevices) handle(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		_ = writeJSON(w, map[string]any{"data": map[string]any{"entity": deviceEntityJSON(e)}})
+
+	case strings.Contains(payload.Query, "query EntityDeviceInfo("):
+		data := map[string]any{}
+		var errs []map[string]any
+		for i := 0; ; i++ {
+			raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
+			if !ok {
+				break
+			}
+			id, _ := raw.(string)
+			alias := fmt.Sprintf("e%d", i)
+			if _, blocked := fa.unreadable[id]; blocked {
+				data[alias] = nil
+				errs = append(errs, map[string]any{"message": "forbidden", "path": []any{alias}})
+				continue
+			}
+			e, ok := fa.entities[id]
+			if !ok {
+				data[alias] = nil
+				continue
+			}
+			data[alias] = deviceEntityJSON(e)
+		}
+		body := map[string]any{"data": data}
+		if len(errs) > 0 {
+			body["errors"] = errs
+		}
+		_ = writeJSON(w, body)
+
+	case strings.Contains(payload.Query, "query EntityExistence("):
+		data := map[string]any{}
+		var errs []map[string]any
+		for i := 0; ; i++ {
+			raw, ok := payload.Variables[fmt.Sprintf("id%d", i)]
+			if !ok {
+				break
+			}
+			id, _ := raw.(string)
+			alias := fmt.Sprintf("e%d", i)
+			_, blocked := fa.unreadable[id]
+			_, exists := fa.entities[id]
+			switch {
+			case blocked:
+				data[alias] = nil
+				errs = append(errs, map[string]any{"message": "forbidden", "path": []any{alias}})
+			case exists:
+				data[alias] = map[string]any{"id": id}
+			default:
+				data[alias] = nil
+			}
+		}
+		body := map[string]any{"data": data}
+		if len(errs) > 0 {
+			body["errors"] = errs
+		}
+		_ = writeJSON(w, body)
 
 	default:
 		fa.t.Fatalf("unexpected GraphQL payload: %s", payload.Query)
@@ -150,14 +214,18 @@ func toAnySlice(v any) []any {
 }
 
 func TestSetDeviceGatewaysWritesWhenExpectedCurrentMatches(t *testing.T) {
-	fa, srv := newFakeAtomDevices(t, Entity{
-		ID:   "device-1",
-		Kind: atomKindDevice,
-		Attributes: Attributes{
-			"source":   "magistrala",
-			"gateways": []string{"gw-1", "gw-2"},
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:   "device-1",
+			Kind: atomKindDevice,
+			Attributes: Attributes{
+				"source":   "magistrala",
+				"gateways": []string{"gw-1", "gw-2"},
+			},
 		},
-	})
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-2", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-3"}, []string{"gw-2", "gw-1"})
@@ -169,7 +237,7 @@ func TestSetDeviceGatewaysWritesWhenExpectedCurrentMatches(t *testing.T) {
 	}
 
 	updated := fa.entities["device-1"]
-	got := attrStrings(updated.Attributes, atomAttributeGateways)
+	got := attrStrings(updated.Attributes, AttributeGateways)
 	if !sameStringSet(got, []string{"gw-3"}) {
 		t.Fatalf("unexpected gateways after write: %+v", got)
 	}
@@ -194,18 +262,148 @@ func TestSetDeviceGatewaysConflictWhenExpectedCurrentMismatches(t *testing.T) {
 		t.Fatalf("conflict must not write, got %d update calls", fa.updateCalls)
 	}
 
-	unchanged := attrStrings(fa.entities["device-1"].Attributes, atomAttributeGateways)
+	unchanged := attrStrings(fa.entities["device-1"].Attributes, AttributeGateways)
 	if !sameStringSet(unchanged, []string{"gw-1"}) {
 		t.Fatalf("device gateways must be unchanged after a conflict, got: %+v", unchanged)
 	}
 }
 
+// A regression test for Q1: is_gateway is otherwise entirely manual, so a
+// device newly linked as a gateway can have no is_gateway attribute at all
+// -- exactly the case that let readAuthorizer's R1 scope leg trust it as an
+// unconditional self-publisher, reopening finding 02's cross-tenant leak.
+// SetDeviceGateways must flag it itself rather than depend on the operator
+// having remembered to.
+func TestSetDeviceGatewaysFlagsNewlyLinkedGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-new", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-new"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	gw := fa.entities["gw-new"]
+	isGateway, _ := gw.Attributes[atomAttributeIsGateway].(bool)
+	if !isGateway {
+		t.Fatalf("expected gw-new to be flagged is_gateway after being linked, got: %+v", gw.Attributes)
+	}
+	if gw.Attributes["source"] != "magistrala" {
+		t.Fatalf("flagging is_gateway must preserve the gateway's other attributes, got: %+v", gw.Attributes)
+	}
+}
+
+// A device already flagged is_gateway must not be rewritten -- only the
+// device's own gateways attribute write should count.
+func TestSetDeviceGatewaysSkipsAlreadyFlaggedGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-already", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-already"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+	if fa.updateCalls != 1 {
+		t.Fatalf("expected exactly one write (device-1's own gateways list), got %d", fa.updateCalls)
+	}
+}
+
+// A gateway id that does not yet resolve must not block the write --
+// SetDeviceGateways has always let a device's own gateways attribute name
+// an id that does not (yet, or any longer) exist; best-effort flagging must
+// not turn that into a new hard failure.
+func TestSetDeviceGatewaysToleratesAnUnresolvableNewGateway(t *testing.T) {
+	_, srv := newFakeAtomDevices(t, Entity{ID: "device-1", Kind: atomKindDevice})
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-not-yet-created"}, nil); err != nil {
+		t.Fatalf("an unresolvable new gateway must not fail the write, got: %v", err)
+	}
+}
+
+// A regression test for P1: markGateways must resolve gatewayIDs in one
+// batched round trip via batchEntities, not one GetEntity per id -- the
+// same N+1 shape round 2's finding 15 already retired from DeviceGateways
+// below, reappearing here.
+func TestSetDeviceGatewaysMarksGatewaysInOneBatchedRoundTrip(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice},
+		Entity{ID: "gw-1", Kind: atomKindDevice},
+		Entity{ID: "gw-2", Kind: atomKindDevice},
+		Entity{ID: "gw-3", Kind: atomKindDevice},
+		Entity{ID: "gw-4", Kind: atomKindDevice},
+		Entity{ID: "gw-5", Kind: atomKindDevice},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	gatewayIDs := []string{"gw-1", "gw-2", "gw-3", "gw-4", "gw-5"}
+	if err := client.SetDeviceGateways(context.Background(), "device-1", gatewayIDs, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	for _, id := range gatewayIDs {
+		isGateway, _ := fa.entities[id].Attributes[atomAttributeIsGateway].(bool)
+		if !isGateway {
+			t.Fatalf("expected %s to be flagged is_gateway, got: %+v", id, fa.entities[id].Attributes)
+		}
+	}
+
+	// device-1's own GetEntity, its (empty) liveGateways check (0 requests,
+	// nothing declared yet), one batched EntityDeviceInfo for all 5
+	// gateways, 5 UpdateEntity writes (one per newly-flagged gateway),
+	// device-1's re-read (P2), the S1 re-check's liveGateways (0 requests,
+	// device-1 still declares nothing at this point -- the write that would
+	// change that happens after), and device-1's own final write: 9
+	// requests. A per-id GetEntity loop would cost 5 more (14).
+	if fa.requests != 9 {
+		t.Fatalf("expected 9 requests (one batched lookup, not one per gateway), got %d", fa.requests)
+	}
+}
+
+// A regression test for P2: a device naming itself as one of its own
+// gateways must end up with both its gateways list and its own is_gateway
+// flag set. markGateways sets is_gateway on device-1 through a separate
+// call than the one that writes device-1's gateways list; reusing the
+// snapshot read before markGateways ran -- rather than re-reading -- would
+// silently discard that flag when the gateways list is written back.
+func TestSetDeviceGatewaysPreservesSelfReferencedIsGatewayFlag(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"device-1"}, nil); err != nil {
+		t.Fatalf("set device gateways failed: %v", err)
+	}
+
+	updated := fa.entities["device-1"]
+	isGateway, _ := updated.Attributes[atomAttributeIsGateway].(bool)
+	if !isGateway {
+		t.Fatalf("expected device-1's own is_gateway to survive naming itself as a gateway, got: %+v", updated.Attributes)
+	}
+	got := attrStrings(updated.Attributes, AttributeGateways)
+	if !sameStringSet(got, []string{"device-1"}) {
+		t.Fatalf("expected device-1's gateways list to be written, got: %+v", got)
+	}
+	if updated.Attributes["source"] != "magistrala" {
+		t.Fatalf("write must preserve unrelated attributes, got: %+v", updated.Attributes)
+	}
+}
+
 func TestSetDeviceGatewaysExpectedCurrentIsOrderIndependent(t *testing.T) {
-	_, srv := newFakeAtomDevices(t, Entity{
-		ID:         "device-1",
-		Kind:       atomKindDevice,
-		Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}},
-	})
+	_, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-1", "gw-2"}},
+		},
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-2", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	// expectedCurrent is given in the opposite order to how it is stored.
@@ -232,6 +430,142 @@ func TestDeviceGatewaysDropsStaleGateway(t *testing.T) {
 	}
 	if !sameStringSet(got, []string{"gw-live"}) {
 		t.Fatalf("expected stale gateway to be dropped, got: %+v", got)
+	}
+}
+
+// A regression test for R2: a gateway that could not be read (a permission
+// failure, a transient per-entity error) must not be treated the same as one
+// that was deleted. Before the fix, entitiesExist's tolerant decode dropped
+// both alike, so DeviceGateways silently truncated the roster.
+func TestDeviceGatewaysFailsWhenAGatewayIsUnreadable(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-live", "gw-unreadable"}},
+		},
+		Entity{ID: "gw-live", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-unreadable", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.DeviceGateways(context.Background(), "device-1")
+	if err == nil {
+		t.Fatalf("expected an unreadable gateway to surface as an error, got a clean result: %+v", got)
+	}
+	if !errors.Is(err, errEntitiesUnreadable) {
+		t.Fatalf("expected errEntitiesUnreadable, got: %v", err)
+	}
+}
+
+// A regression test for Q5: with more than one unreadable id, the error must
+// name a specific, deterministic one -- the first in the caller's own
+// declared order -- rather than whichever Go's map iteration happens to
+// yield, which used to vary run to run and made the message impossible to
+// correlate across logs or assert in a test.
+func TestDeviceGatewaysUnreadableErrorNamesFirstDeclaredGateway(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-unreadable-a", "gw-unreadable-b"}},
+		},
+		Entity{ID: "gw-unreadable-a", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-unreadable-b", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable-a": {}, "gw-unreadable-b": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	_, err := client.DeviceGateways(context.Background(), "device-1")
+	if err == nil {
+		t.Fatalf("expected an error")
+	}
+	if !strings.Contains(err.Error(), "gw-unreadable-a") {
+		t.Fatalf("expected the error to name gw-unreadable-a, the first declared gateway, got: %v", err)
+	}
+}
+
+// A read-modify-write caller (the CLI's gateway-set retry loop) must not be
+// able to write back a truncated roster when DeviceGateways itself failed to
+// resolve one of the declared gateways.
+func TestSetDeviceGatewaysFailsWhenCurrentGatewayIsUnreadable(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-unreadable"}},
+		},
+		Entity{ID: "gw-unreadable", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+	fa.unreadable = map[string]struct{}{"gw-unreadable": {}}
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-new"}, nil)
+	if err == nil {
+		t.Fatal("expected SetDeviceGateways to fail rather than write over an unresolved current gateway")
+	}
+	if fa.updateCalls != 0 {
+		t.Fatalf("an unreadable current gateway must not write, got %d update calls", fa.updateCalls)
+	}
+}
+
+// A regression test for the case the CLI's "gateways set changed since last
+// read" retry loop could never actually retry into success: expectedCurrent,
+// as read from DeviceGateways, drops a since-deleted declared gateway — so
+// SetDeviceGateways comparing against the raw stored attribute instead of the
+// same live view would report a conflict forever, on every retry.
+func TestSetDeviceGatewaysSucceedsAfterDeclaredGatewayDeleted(t *testing.T) {
+	_, srv := newFakeAtomDevices(t,
+		Entity{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-live", "gw-deleted"}},
+		},
+		Entity{ID: "gw-live", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		// gw-deleted intentionally not seeded: it no longer resolves.
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	current, err := client.DeviceGateways(context.Background(), "device-1")
+	if err != nil {
+		t.Fatalf("device gateways failed: %v", err)
+	}
+
+	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"gw-live", "gw-new"}, current); err != nil {
+		t.Fatalf("set device gateways failed using DeviceGateways' own view as expectedCurrent: %v", err)
+	}
+}
+
+// DeviceGateways used to cost one GetEntity round trip per declared gateway
+// purely to test existence. liveGateways now resolves them all in one
+// batched EntityExistence request instead, so a device declaring many
+// gateways costs a constant two round trips (the device itself, then the
+// batch) rather than growing with the gateway count.
+func TestDeviceGatewaysBatchesExistenceChecksInOneRoundTrip(t *testing.T) {
+	seed := []Entity{
+		{
+			ID:         "device-1",
+			Kind:       atomKindDevice,
+			Attributes: Attributes{"gateways": []string{"gw-1", "gw-2", "gw-3", "gw-4", "gw-5"}},
+		},
+	}
+	for _, gw := range []string{"gw-1", "gw-2", "gw-3", "gw-4"} {
+		seed = append(seed, Entity{ID: gw, Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}})
+	}
+	// gw-5 intentionally not seeded: it no longer resolves.
+	fa, srv := newFakeAtomDevices(t, seed...)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	got, err := client.DeviceGateways(context.Background(), "device-1")
+	if err != nil {
+		t.Fatalf("device gateways failed: %v", err)
+	}
+	if !sameStringSet(got, []string{"gw-1", "gw-2", "gw-3", "gw-4"}) {
+		t.Fatalf("expected the four live gateways, got: %+v", got)
+	}
+	if fa.requests != 2 {
+		t.Fatalf("expected 2 round trips (device + one batched existence check), got %d", fa.requests)
 	}
 }
 
@@ -269,7 +603,7 @@ func TestGatewayDevicesPreservesExistingGatewaysContainsFilter(t *testing.T) {
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	got, err := client.GatewayDevices(context.Background(), "gw-1", Query{
-		AttributesContains: map[string]any{atomAttributeGateways: []string{"gw-2"}},
+		AttributesContains: map[string]any{AttributeGateways: []string{"gw-2"}},
 	})
 	if err != nil {
 		t.Fatalf("gateway devices failed: %v", err)

@@ -32,6 +32,12 @@ type fakeAtom struct {
 	getCount    map[string]int
 	mutateAtGet map[string]int
 	mutateAttrs map[string]atom.Attributes
+
+	deviceTypes        map[string]atom.DeviceType
+	typeVersions       map[string][]atom.DeviceTypeVersion
+	typeSeq            int
+	versionSeq         int
+	updateEntityGQLErr string
 }
 
 // mutateOnNthGet swaps id's attributes in after its nth GetEntity call,
@@ -46,9 +52,36 @@ func (fa *fakeAtom) mutateOnNthGet(id string, n int, attrs atom.Attributes) {
 	fa.mutateAttrs[id] = attrs
 }
 
+// seedDeviceType registers a device type, and seedDeviceTypeVersion one of its
+// versions. They are methods rather than newFakeAtom arguments so the entity
+// seeding signature the device and gateway tests use stays unchanged.
+func (fa *fakeAtom) seedDeviceType(deviceTypes ...atom.DeviceType) {
+	for _, dt := range deviceTypes {
+		fa.deviceTypes[dt.ID] = dt
+	}
+}
+
+func (fa *fakeAtom) seedDeviceTypeVersion(versions ...atom.DeviceTypeVersion) {
+	for _, v := range versions {
+		fa.typeVersions[v.DeviceTypeID] = append(fa.typeVersions[v.DeviceTypeID], v)
+	}
+}
+
+// failEntityUpdate makes the next UpdateEntity answer with a GraphQL error,
+// which is how Atom reports a device type schema rejection.
+func (fa *fakeAtom) failEntityUpdate(message string) {
+	fa.updateEntityGQLErr = message
+}
+
 func newFakeAtom(t *testing.T, seed ...atom.Entity) *fakeAtom {
 	t.Helper()
-	fa := &fakeAtom{t: t, entities: map[string]atom.Entity{}, getCount: map[string]int{}}
+	fa := &fakeAtom{
+		t:            t,
+		entities:     map[string]atom.Entity{},
+		getCount:     map[string]int{},
+		deviceTypes:  map[string]atom.DeviceType{},
+		typeVersions: map[string][]atom.DeviceTypeVersion{},
+	}
 	for _, e := range seed {
 		fa.entities[e.ID] = e
 	}
@@ -66,6 +99,8 @@ func (fa *fakeAtom) handle(w http.ResponseWriter, r *http.Request) {
 	fa.requests = append(fa.requests, req)
 	w.Header().Set("Content-Type", "application/json")
 
+	// CreateDeviceTypeVersion is matched before CreateDeviceType, whose name is
+	// a prefix of it.
 	switch {
 	case strings.Contains(req.Query, "mutation CreateEntity"):
 		fa.handleCreate(w, req)
@@ -75,11 +110,160 @@ func (fa *fakeAtom) handle(w http.ResponseWriter, r *http.Request) {
 		fa.handleDelete(w, req)
 	case strings.Contains(req.Query, "query Entity("):
 		fa.handleGet(w, req)
+	case strings.Contains(req.Query, "query EntityExistence("):
+		fa.handleEntityExistence(w, req)
+	case strings.Contains(req.Query, "query EntityDeviceInfo("):
+		fa.handleEntityDeviceInfo(w, req)
 	case strings.Contains(req.Query, "query Entities("):
 		fa.handleList(w, req)
+	case strings.Contains(req.Query, "mutation CreateDeviceTypeVersion"):
+		fa.handleCreateDeviceTypeVersion(w, req)
+	case strings.Contains(req.Query, "mutation CreateDeviceType"):
+		fa.handleCreateDeviceType(w, req)
+	case strings.Contains(req.Query, "mutation UpdateDeviceType"):
+		fa.handleUpdateDeviceType(w, req)
+	case strings.Contains(req.Query, "query DeviceTypeVersions("):
+		fa.handleListDeviceTypeVersions(w, req)
+	case strings.Contains(req.Query, "query DeviceTypes("):
+		fa.handleListDeviceTypes(w, req)
+	case strings.Contains(req.Query, "query DeviceType("):
+		fa.handleGetDeviceType(w, req)
 	default:
 		fa.t.Fatalf("unexpected graphql query: %s", req.Query)
 	}
+}
+
+func (fa *fakeAtom) handleCreateDeviceType(w http.ResponseWriter, req gqlRequest) {
+	input, _ := req.Variables["input"].(map[string]any)
+	fa.typeSeq++
+	dt := atom.DeviceType{
+		ID:          fmt.Sprintf("device-type-%d", fa.typeSeq),
+		TenantID:    strVal(input["tenantId"]),
+		Key:         strVal(input["key"]),
+		Name:        strVal(input["displayName"]),
+		Description: strVal(input["description"]),
+		Status:      "active",
+	}
+	if status := strVal(input["status"]); status != "" {
+		dt.Status = status
+	}
+	fa.deviceTypes[dt.ID] = dt
+	writeGQLData(fa.t, w, map[string]any{"createProfile": deviceTypeJSON(dt)})
+}
+
+func (fa *fakeAtom) handleGetDeviceType(w http.ResponseWriter, req gqlRequest) {
+	id, _ := req.Variables["id"].(string)
+	dt, ok := fa.deviceTypes[id]
+	if !ok {
+		writeGQLError(fa.t, w, "device type not found")
+		return
+	}
+	writeGQLData(fa.t, w, map[string]any{"profile": deviceTypeJSON(dt)})
+}
+
+func (fa *fakeAtom) handleListDeviceTypes(w http.ResponseWriter, req gqlRequest) {
+	tenantID := strVal(req.Variables["tenantId"])
+	status := strVal(req.Variables["status"])
+
+	items := []map[string]any{}
+	for _, dt := range fa.deviceTypes {
+		if tenantID != "" && dt.TenantID != tenantID {
+			continue
+		}
+		if status != "" && dt.Status != status {
+			continue
+		}
+		items = append(items, deviceTypeJSON(dt))
+	}
+	writeGQLData(fa.t, w, map[string]any{"profiles": map[string]any{"items": items, "total": len(items)}})
+}
+
+func (fa *fakeAtom) handleUpdateDeviceType(w http.ResponseWriter, req gqlRequest) {
+	id, _ := req.Variables["id"].(string)
+	dt, ok := fa.deviceTypes[id]
+	if !ok {
+		writeGQLError(fa.t, w, "device type not found")
+		return
+	}
+	input, _ := req.Variables["input"].(map[string]any)
+	if name := strVal(input["displayName"]); name != "" {
+		dt.Name = name
+	}
+	if description := strVal(input["description"]); description != "" {
+		dt.Description = description
+	}
+	if status := strVal(input["status"]); status != "" {
+		dt.Status = status
+	}
+	fa.deviceTypes[id] = dt
+	writeGQLData(fa.t, w, map[string]any{"updateProfile": deviceTypeJSON(dt)})
+}
+
+func (fa *fakeAtom) handleCreateDeviceTypeVersion(w http.ResponseWriter, req gqlRequest) {
+	deviceTypeID := strVal(req.Variables["profileId"])
+	input, _ := req.Variables["input"].(map[string]any)
+	fa.versionSeq++
+
+	version := atom.DeviceTypeVersion{
+		ID:           fmt.Sprintf("device-type-version-%d", fa.versionSeq),
+		DeviceTypeID: deviceTypeID,
+		Version:      intVal(input["version"]),
+		Status:       "active",
+		JSONSchema:   mapVal(input["jsonSchema"]),
+		UISchema:     mapVal(input["uiSchema"]),
+	}
+	if status := strVal(input["status"]); status != "" {
+		version.Status = status
+	}
+	fa.typeVersions[deviceTypeID] = append(fa.typeVersions[deviceTypeID], version)
+	writeGQLData(fa.t, w, map[string]any{"createProfileVersion": deviceTypeVersionJSON(version)})
+}
+
+func (fa *fakeAtom) handleListDeviceTypeVersions(w http.ResponseWriter, req gqlRequest) {
+	deviceTypeID := strVal(req.Variables["profileId"])
+	items := []map[string]any{}
+	for _, version := range fa.typeVersions[deviceTypeID] {
+		items = append(items, deviceTypeVersionJSON(version))
+	}
+	writeGQLData(fa.t, w, map[string]any{"profileVersions": items})
+}
+
+func deviceTypeJSON(dt atom.DeviceType) map[string]any {
+	return map[string]any{
+		"id":          dt.ID,
+		"tenant_id":   dt.TenantID,
+		"key":         dt.Key,
+		"name":        dt.Name,
+		"description": dt.Description,
+		"status":      dt.Status,
+	}
+}
+
+func deviceTypeVersionJSON(v atom.DeviceTypeVersion) map[string]any {
+	return map[string]any{
+		"id":             v.ID,
+		"device_type_id": v.DeviceTypeID,
+		"version":        v.Version,
+		"json_schema":    v.JSONSchema,
+		"ui_schema":      v.UISchema,
+		"status":         v.Status,
+	}
+}
+
+func intVal(v any) int {
+	switch n := v.(type) {
+	case float64:
+		return int(n)
+	case int:
+		return n
+	default:
+		return 0
+	}
+}
+
+func mapVal(v any) map[string]any {
+	m, _ := v.(map[string]any)
+	return m
 }
 
 func (fa *fakeAtom) handleCreate(w http.ResponseWriter, req gqlRequest) {
@@ -98,6 +282,12 @@ func (fa *fakeAtom) handleCreate(w http.ResponseWriter, req gqlRequest) {
 }
 
 func (fa *fakeAtom) handleUpdate(w http.ResponseWriter, req gqlRequest) {
+	if message := fa.updateEntityGQLErr; message != "" {
+		fa.updateEntityGQLErr = ""
+		writeGQLError(fa.t, w, message)
+		return
+	}
+
 	id, _ := req.Variables["id"].(string)
 	e, ok := fa.entities[id]
 	if !ok {
@@ -110,6 +300,12 @@ func (fa *fakeAtom) handleUpdate(w http.ResponseWriter, req gqlRequest) {
 	}
 	if status := strVal(input["status"]); status != "" {
 		e.Status = status
+	}
+	if profileID := strVal(input["profileId"]); profileID != "" {
+		e.DeviceTypeID = profileID
+	}
+	if versionID := strVal(input["profileVersionId"]); versionID != "" {
+		e.DeviceTypeVersionID = versionID
 	}
 	if attrs, ok := input["attributes"].(map[string]any); ok {
 		e.Attributes = atom.Attributes(attrs)
@@ -143,6 +339,50 @@ func (fa *fakeAtom) handleGet(w http.ResponseWriter, req gqlRequest) {
 		return
 	}
 	writeGQLData(fa.t, w, map[string]any{"entity": entityJSON(e)})
+}
+
+// handleEntityExistence answers the batched aliased-entity existence check
+// pkg/atom's liveGateways uses (see entitiesExist/entityBatch), one round
+// trip for however many ids it was asked about rather than one per id.
+func (fa *fakeAtom) handleEntityExistence(w http.ResponseWriter, req gqlRequest) {
+	data := map[string]any{}
+	for i := 0; ; i++ {
+		raw, ok := req.Variables[fmt.Sprintf("id%d", i)]
+		if !ok {
+			break
+		}
+		id, _ := raw.(string)
+		alias := fmt.Sprintf("e%d", i)
+		if _, exists := fa.entities[id]; exists {
+			data[alias] = map[string]any{"id": id}
+		} else {
+			data[alias] = nil
+		}
+	}
+	writeGQLData(fa.t, w, data)
+}
+
+// handleEntityDeviceInfo answers the batched aliased-entity lookup
+// pkg/atom's markGateways uses (see batchEntities/EntityDeviceInfo), one
+// round trip for however many gateway ids it was asked about rather than
+// one GetEntity per id.
+func (fa *fakeAtom) handleEntityDeviceInfo(w http.ResponseWriter, req gqlRequest) {
+	data := map[string]any{}
+	for i := 0; ; i++ {
+		raw, ok := req.Variables[fmt.Sprintf("id%d", i)]
+		if !ok {
+			break
+		}
+		id, _ := raw.(string)
+		alias := fmt.Sprintf("e%d", i)
+		e, ok := fa.entities[id]
+		if !ok {
+			data[alias] = nil
+			continue
+		}
+		data[alias] = entityJSON(e)
+	}
+	writeGQLData(fa.t, w, data)
 }
 
 func (fa *fakeAtom) handleList(w http.ResponseWriter, req gqlRequest) {
@@ -185,12 +425,14 @@ func entityJSON(e atom.Entity) map[string]any {
 		attrs = map[string]any{}
 	}
 	return map[string]any{
-		"id":         e.ID,
-		"kind":       e.Kind,
-		"name":       e.Name,
-		"tenant_id":  e.TenantID,
-		"status":     e.Status,
-		"attributes": attrs,
+		"id":                     e.ID,
+		"kind":                   e.Kind,
+		"name":                   e.Name,
+		"tenant_id":              e.TenantID,
+		"device_type_id":         e.DeviceTypeID,
+		"device_type_version_id": e.DeviceTypeVersionID,
+		"status":                 e.Status,
+		"attributes":             attrs,
 	}
 }
 

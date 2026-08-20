@@ -51,6 +51,14 @@ services:
     depends_on:
       atom-db:
         condition: service_healthy
+      # Atom connects to ATOM_EVENTS_AMQP_URL once, at startup, and fails to
+      # start at all if that connection fails (see absmach/atom src/main.rs).
+      # It cannot wait on nginx (the AMQP proxy in front of FluxMQ) here: the
+      # FluxMQ/nginx chain depends on fluxmq-auth, which depends on
+      # atom-bootstrap, which depends on atom -- any depends_on edge from
+      # atom into that chain is a cycle. restart: on-failure absorbs the
+      # transient connect failure on cold boot instead; atom comes back up
+      # once the rest of the chain (and nginx behind it) is ready.
     environment:
       DATABASE_URL: postgres://${ATOM_DB_USER}:${ATOM_DB_PASSWORD}@atom-db:5432/${ATOM_DB_NAME}
       LISTEN_ADDR: 0.0.0.0:8080
@@ -87,6 +95,9 @@ services:
       ATOM_TRUSTED_PROXY_CIDRS: ${ATOM_TRUSTED_PROXY_CIDRS:-}
       ATOM_MIN_PASSWORD_CHARS: ${ATOM_MIN_PASSWORD_CHARS}
       RUST_LOG: ${ATOM_RUST_LOG}
+      ATOM_EVENTS_AMQP_URL: ${ATOM_EVENTS_AMQP_URL}
+      ATOM_EVENTS_AMQP_EXCHANGE: ${ATOM_EVENTS_AMQP_EXCHANGE}
+      ATOM_EVENTS_AMQP_ROUTING_KEY: ${ATOM_EVENTS_AMQP_ROUTING_KEY}
     ports:
       - ${ATOM_HTTP_PORT}:8080
     volumes:
@@ -681,6 +692,9 @@ services:
       ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
       ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE}
       ATOM_TIMEOUT: ${ATOM_TIMEOUT}
+      MG_MESSAGE_BROKER_URL: ${MG_MESSAGE_BROKER_URL}
+      MG_ATOM_EVENTS_EXCHANGE: ${ATOM_EVENTS_AMQP_EXCHANGE}
+      MG_ATOM_EVENTS_ROUTING_KEY: ${ATOM_EVENTS_AMQP_ROUTING_KEY}
       MG_TIMESCALE_READER_GRPC_URL: ${MG_TIMESCALE_READER_GRPC_URL}
       MG_TIMESCALE_READER_GRPC_PORT: ${MG_TIMESCALE_READER_GRPC_PORT}
       MG_TIMESCALE_READER_GRPC_HOST: ${MG_TIMESCALE_READER_GRPC_HOST}

@@ -79,18 +79,40 @@ var (
 
 type MessagePageMetadata struct {
 	PageMetadata
-	Subtopic    string  `json:"subtopic,omitempty"`
-	Publisher   string  `json:"publisher,omitempty"`
-	Comparator  string  `json:"comparator,omitempty"`
-	BoolValue   *bool   `json:"vb,omitempty"`
-	StringValue string  `json:"vs,omitempty"`
-	DataValue   string  `json:"vd,omitempty"`
-	From        float64 `json:"from,omitempty"`
-	To          float64 `json:"to,omitempty"`
-	Aggregation string  `json:"aggregation,omitempty"`
-	Interval    string  `json:"interval,omitempty"`
-	Value       float64 `json:"value,omitempty"`
-	Protocol    string  `json:"protocol,omitempty"`
+	Subtopic  string `json:"subtopic,omitempty"`
+	Publisher string `json:"publisher,omitempty"`
+	// Publishers and DeviceIDs are sent as repeated query parameters, one per
+	// value, so entries are transmitted verbatim and never split on a separator.
+	Publishers  []string `json:"publishers,omitempty"`
+	DeviceIDs   []string `json:"device_ids,omitempty"`
+	Comparator  string   `json:"comparator,omitempty"`
+	BoolValue   *bool    `json:"vb,omitempty"`
+	StringValue string   `json:"vs,omitempty"`
+	DataValue   string   `json:"vd,omitempty"`
+	From        float64  `json:"from,omitempty"`
+	To          float64  `json:"to,omitempty"`
+	Aggregation string   `json:"aggregation,omitempty"`
+	Interval    string   `json:"interval,omitempty"`
+	Value       float64  `json:"value,omitempty"`
+	Protocol    string   `json:"protocol,omitempty"`
+}
+
+// DeviceViewPageMetadata carries the paging and time-range parameters for
+// the MG-15 observed-device endpoints, ListGatewayDevices and
+// ListDeviceGateways. From and To follow the same convention as
+// MessagePageMetadata: left unset (zero), the server applies its own
+// default bound rather than running an unbounded aggregation.
+//
+// From/To are Unix epoch nanoseconds, matching MessagePageMetadata and the
+// LastSeen field on the returned stats — the unit the built-in senml/json
+// transformers store message time in (see transformers.ToUnixNano). A
+// deployment storing a different unit will get an empty page for a defaulted
+// window; supply from/to in your own unit explicitly when needed.
+type DeviceViewPageMetadata struct {
+	Offset uint64  `json:"offset,omitempty"`
+	Limit  uint64  `json:"limit,omitempty"`
+	From   float64 `json:"from,omitempty"`
+	To     float64 `json:"to,omitempty"`
 }
 
 type Operator uint8
@@ -1667,6 +1689,16 @@ type SDK interface {
 
 	// ReadMessages reads messages of specified channel.
 	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, smqerrors.SDKError)
+
+	// ListGatewayDevices lists the devices observed publishing through a
+	// gateway on a channel (MG-15): distinct device_id values, each with its
+	// last-seen time and message count.
+	ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, domainID, token string) (GatewayDevicesPage, smqerrors.SDKError)
+
+	// ListDeviceGateways lists the gateways observed relaying for a device on
+	// a channel (MG-15): distinct publisher values, each with its last-seen
+	// time and message count.
+	ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, domainID, token string) (DeviceGatewaysPage, smqerrors.SDKError)
 
 	// CreateSubscription creates a new subscription.
 	CreateSubscription(ctx context.Context, topic, contact, token string) (string, smqerrors.SDKError)

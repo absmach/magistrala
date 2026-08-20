@@ -402,8 +402,15 @@ old tokens do not survive it.
 
 ```bash
 make cli
-./build/cli health <service>
+./build/cli login admin 12345678
+./build/cli --token "$ATOM_ADMIN_TOKEN" domains list
 ```
+
+The CLI reads the same `ATOM_URL`, `ATOM_SERVICE_TOKEN`/`ATOM_ADMIN_TOKEN` and
+`ATOM_TIMEOUT` variables the services use, so a shell that has sourced
+`docker/.env` needs no extra flags.
+
+See [cli/README.md](cli/README.md) for the Atom GraphQL-backed command reference.
 
 ---
 

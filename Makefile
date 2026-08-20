@@ -5,7 +5,7 @@ override MG_DOCKER_IMAGE_NAME_PREFIX := ghcr.io/absmach/magistrala
 MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
 SERVICES = atom-bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
-TEST_API_SERVICES = certs clients users channels groups domains
+TEST_API_SERVICES = certs
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -285,15 +285,9 @@ define test_api_service
 	--header "Authorization: Bearer $(USER_TOKEN)" \
 	--suppress-health-check=filter_too_much \
 	--exclude-checks=positive_data_acceptance \
-	--exclude-operation-id=requestPasswordReset \
 	--phases=examples,stateful
 endef
 
-test_api_users: TEST_API_URL := http://localhost:9000
-test_api_clients: TEST_API_URL := http://localhost:9000
-test_api_domains: TEST_API_URL := http://localhost:9000
-test_api_channels: TEST_API_URL := http://localhost:9000
-test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
 
 $(TEST_API):

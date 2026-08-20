@@ -68,6 +68,7 @@ paths:
         - $ref: '#/components/parameters/InputChannel'
         - $ref: '#/components/parameters/OutputChannel'
         - $ref: '#/components/parameters/Status'
+        - $ref: '#/components/parameters/ExecutionMode'
       security:
         - bearerAuth: []
       responses:
@@ -294,7 +295,7 @@ components:
               description: Script content
             mode:
               type: string
-              enum: [sandboxed, legacy]
+              enum: [sandboxed, unrestricted]
               description: Execution security mode
           required: [type, value, mode]
         output_channel:
@@ -391,6 +392,17 @@ components:
       required: false
       schema:
         type: string
+    ExecutionMode:
+      name: mode
+      description: |
+        Filter by execution mode. Omit the parameter to return rules in every
+        mode. Rules stored before execution modes were introduced, and rules
+        created without an explicit mode, are returned by `unrestricted`.
+      in: query
+      required: false
+      schema:
+        type: string
+        enum: [sandboxed, unrestricted]
     OutputChannel:
       name: output_channel
       description: Filter by output channel
@@ -447,8 +459,8 @@ components:
                     description: Script content
                   mode:
                     type: string
-                    enum: [sandboxed, legacy]
-                    default: legacy
+                    enum: [sandboxed, unrestricted]
+                    default: unrestricted
                     description: Per-rule execution security mode; omission preserves backwards-compatible unrestricted execution
                 required: [type, value]
               output_channel:
@@ -523,7 +535,7 @@ components:
                     description: Script content
                   mode:
                     type: string
-                    enum: [sandboxed, legacy]
+                    enum: [sandboxed, unrestricted]
                     description: Per-rule execution security mode; omission preserves the stored mode
               output_channel:
                 type: string

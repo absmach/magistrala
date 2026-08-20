@@ -226,7 +226,7 @@ endif
 
 FILTERED_SERVICES = $(filter-out $(RUN_ADDON_ARGS), $(SERVICES))
 
-all: $(SERVICES)
+all: $(SERVICES) $(CLI)
 
 .PHONY: all help $(SERVICES) $(CLI) dockers dockers_dev latest release provision_atom_tokens provision-atom-tokens migrate_atom run_latest run_latest_ci run_tls run_stable run_addons grpc_mtls_certs check_mtls check_certs check_fluxmq_service_certs check_re_trace_key test_api mocks
 

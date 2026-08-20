@@ -4,15 +4,14 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/absmach/magistrala/cli"
 )
 
 func main() {
+	// Cobra has already reported the error, so only the exit code is left.
 	if err := cli.NewRootCmd().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 }

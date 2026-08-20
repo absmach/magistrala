@@ -11,6 +11,7 @@ func NewHealthCmd() *cobra.Command {
 		Use:   "health <service>",
 		Short: "Health Check",
 		Long: "Magistrala service Health Check\n" +
+			"Supported services: certs, fluxmq\n" +
 			"usage:\n" +
 			"\tmagistrala-cli health <service>",
 		Run: func(cmd *cobra.Command, args []string) {

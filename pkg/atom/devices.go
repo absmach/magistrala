@@ -15,6 +15,22 @@ import (
 // matches expectedCurrent — the caller's view was stale, so nothing was written.
 var ErrGatewaysConflict = errors.New("atom: device gateways changed since last read")
 
+// AttributeGateways is a device's own list of the gateways it relays
+// through (spec §8 A12). INVARIANT: every id named here must have
+// attributes.is_gateway set on its own entity -- readAuthorizer's R1 scope
+// leg trusts a held device's publisher identity unconditionally whenever
+// is_gateway is false, so an id named here without it reopens finding 02's
+// cross-tenant leak (Q1). Nothing enforces this at the type level: every
+// writer of this attribute must call MarkGateways with the ids it names
+// immediately after writing, or use GatewaysDeclared to find them. As of
+// this writing the writers are SetDeviceGateways (this file) and the CLI's
+// device create/update commands (cli/devices.go) -- a new one (another
+// service, the SDK, a future API handler) must do the same or this
+// invariant silently breaks for it. Exported (T2) so that new writer can
+// actually find this contract in godoc, rather than needing to already
+// know an unexported identifier exists to look for it.
+const AttributeGateways = "gateways"
+
 // SetDeviceGateways replaces a device's entire gateway list, preserving its
 // other attributes. expectedCurrent must match what DeviceGateways would
 // return right now (order independent) or it fails with ErrGatewaysConflict
@@ -66,7 +82,7 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	}
 
 	attrs := cloneAttributes(device.Attributes)
-	attrs[atomAttributeGateways] = gatewayIDs
+	attrs[AttributeGateways] = gatewayIDs
 	_, err = c.UpdateEntity(ctx, deviceID, Entity{Attributes: attrs})
 	return err
 }
@@ -77,7 +93,7 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 // the check actually covers the data being written rather than a snapshot
 // superseded by the time in between (S1).
 func (c *Client) checkGatewaysCurrent(ctx context.Context, device Entity, expectedCurrent []string) error {
-	current, err := c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
+	current, err := c.liveGateways(ctx, attrStrings(device.Attributes, AttributeGateways))
 	if err != nil {
 		return err
 	}
@@ -163,7 +179,7 @@ func (c *Client) DeviceGateways(ctx context.Context, deviceID string) ([]string,
 		return nil, err
 	}
 
-	return c.liveGateways(ctx, attrStrings(device.Attributes, atomAttributeGateways))
+	return c.liveGateways(ctx, attrStrings(device.Attributes, AttributeGateways))
 }
 
 // liveGateways narrows a device's declared gateway ids down to the ones
@@ -191,7 +207,7 @@ func (c *Client) GatewayDevices(ctx context.Context, gatewayID string, q Query) 
 	for k, v := range q.AttributesContains {
 		filter[k] = v
 	}
-	filter[atomAttributeGateways] = mergeContainsString(filter[atomAttributeGateways], gatewayID)
+	filter[AttributeGateways] = mergeContainsString(filter[AttributeGateways], gatewayID)
 	q.Kind = atomKindDevice
 	q.AttributesContains = filter
 
@@ -235,7 +251,7 @@ func mergeContainsString(existing any, value string) any {
 // unmarshal arbitrary Entity JSON -- so they can find out which ids need
 // MarkGateways after writing it.
 func GatewaysDeclared(e Entity) []string {
-	return attrStrings(e.Attributes, atomAttributeGateways)
+	return attrStrings(e.Attributes, AttributeGateways)
 }
 
 // attrStrings reads a []string-valued attribute, accepting both []string and

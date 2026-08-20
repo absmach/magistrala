@@ -237,7 +237,7 @@ func TestSetDeviceGatewaysWritesWhenExpectedCurrentMatches(t *testing.T) {
 	}
 
 	updated := fa.entities["device-1"]
-	got := attrStrings(updated.Attributes, atomAttributeGateways)
+	got := attrStrings(updated.Attributes, AttributeGateways)
 	if !sameStringSet(got, []string{"gw-3"}) {
 		t.Fatalf("unexpected gateways after write: %+v", got)
 	}
@@ -262,7 +262,7 @@ func TestSetDeviceGatewaysConflictWhenExpectedCurrentMismatches(t *testing.T) {
 		t.Fatalf("conflict must not write, got %d update calls", fa.updateCalls)
 	}
 
-	unchanged := attrStrings(fa.entities["device-1"].Attributes, atomAttributeGateways)
+	unchanged := attrStrings(fa.entities["device-1"].Attributes, AttributeGateways)
 	if !sameStringSet(unchanged, []string{"gw-1"}) {
 		t.Fatalf("device gateways must be unchanged after a conflict, got: %+v", unchanged)
 	}
@@ -385,7 +385,7 @@ func TestSetDeviceGatewaysPreservesSelfReferencedIsGatewayFlag(t *testing.T) {
 	if !isGateway {
 		t.Fatalf("expected device-1's own is_gateway to survive naming itself as a gateway, got: %+v", updated.Attributes)
 	}
-	got := attrStrings(updated.Attributes, atomAttributeGateways)
+	got := attrStrings(updated.Attributes, AttributeGateways)
 	if !sameStringSet(got, []string{"device-1"}) {
 		t.Fatalf("expected device-1's gateways list to be written, got: %+v", got)
 	}
@@ -603,7 +603,7 @@ func TestGatewayDevicesPreservesExistingGatewaysContainsFilter(t *testing.T) {
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
 	got, err := client.GatewayDevices(context.Background(), "gw-1", Query{
-		AttributesContains: map[string]any{atomAttributeGateways: []string{"gw-2"}},
+		AttributesContains: map[string]any{AttributeGateways: []string{"gw-2"}},
 	})
 	if err != nil {
 		t.Fatalf("gateway devices failed: %v", err)

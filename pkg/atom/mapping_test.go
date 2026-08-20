@@ -34,7 +34,7 @@ func TestTenantFromFields(t *testing.T) {
 
 func TestEntityFromFields(t *testing.T) {
 	got := EntityFromFields(ObjectFields{
-		ID:       "client-1",
+		ID:       "device-1",
 		Kind:     KindDevice,
 		Name:     "pump",
 		TenantID: "domain-1",

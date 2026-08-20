@@ -1,4 +1,4 @@
-# MG-02 — Device Type (Atom Profile) client API
+# MG-02 — Device Type (Atom Profile) API
 
 | | |
 |---|---|
@@ -41,7 +41,7 @@ No Atom change is required.
 
 - `DeviceType` and `DeviceTypeVersion` types in `pkg/atom`, mapping to Atom
   Profile / ProfileVersion with `object_kind = "entity"`, `kind = "device"`.
-- Client methods: create, get, list, update, create-version, list-versions.
+- Atom client methods: create, get, list, update, create-version, list-versions.
 - Entity create/update carrying `profile_id` and `profile_version_id`
   (`src/graphql/entities.rs:205-206,275-276`).
 - `ListEntities` gaining the `profileId` filter.
@@ -53,7 +53,7 @@ No Atom change is required.
 - HTTP/SDK/CLI surface — MG-10.
 - Command dispatch. The type *declares* commands; routing them is unspecified
   (see [architecture.md §7](../architecture.md#7-open-questions)).
-- Migrating existing clients onto types.
+- Migrating existing devices onto types.
 
 ## Design
 

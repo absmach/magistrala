@@ -83,14 +83,14 @@ principal group, matching Atom's normal `create_entity` side effect.
 
 `users_verifications` → not migrated (transient OTPs).
 
-### 3.3 clients (things/devices) → entities (kind=`device`)
-| Magistrala `clients` | Atom |
+### 3.3 devices from Magistrala `clients` → entities (kind=`device`)
+| Magistrala `clients` source | Atom |
 |---|---|
-| `id` | `entities.id` (preserved), `kind='device'`, `tenant_id=domain_id`, `profile_id` / `profile_version_id` = seeded active `client` profile |
+| `id` | `entities.id` (preserved), `kind='device'`, `tenant_id=domain_id`, `profile_id` / `profile_version_id` = seeded active `device` profile, falling back to legacy `client` profile |
 | `name` | `entities.name` (per-tenant unique — handle collisions, §6) |
 | `tags,metadata,private_metadata` | `attributes` |
 | `identity` | `attributes.identity` (and/or `entities.alias` if slug-valid) |
-| `secret` (plaintext) | `credentials` row: `kind='shared_key'`, `entity_id=client.id`, `secret_hash`=argon2(secret), `identifier`=identity if present, `status` per client status. **See §5.** |
+| `secret` (plaintext) | `credentials` row: `kind='shared_key'`, `entity_id=device.id`, `secret_hash`=argon2(secret), `identifier`=identity if present, `status` per device status. **See §5.** |
 | `status` 0/1 | `entities.status` |
 | `parent_group_id` | `object_group_entities` membership (§3.5) |
 
@@ -211,7 +211,7 @@ requires an `atom_<32 hex cred-id>_<64 hex secret>` bearer value. Atom's newer
 `shared_key` credential path can reuse operator-provided machine secrets.
 
 **Resolution: preserve.** `phaseDeviceCreds` creates a deterministic
-`credentials(kind='shared_key')` row per client and stores an argon2 verifier for
+`credentials(kind='shared_key')` row per device and stores an argon2 verifier for
 the existing plaintext secret. Using `ATOM_KEY_ENCRYPTION_KEY`, it also stores
 the same encrypted reveal material and HMAC lookup digest Atom writes for newly
 created shared keys:
@@ -219,7 +219,7 @@ created shared keys:
 - Atom can reveal migrated shared keys later to authorized operators;
 - no plaintext secrets are written to a migration report file;
 - re-runs are idempotent because the credential id is uuidv5-derived from the
-  client id.
+  device id.
 
 ### PATs (auth.pats + pat_scopes) — RESOLVED: re-issue
 
@@ -248,7 +248,7 @@ Checks below; the email check matters mainly for dumps merged across instances
 1. **Tenant alias** (domain.route): lowercase-fold; must match slug regex and **not**
    be UUID-shaped; globally unique case-insensitively. Offending rows → report,
    require operator fix or null the alias.
-2. **Entity/resource alias** (client.identity / channel.route): same slug rule,
+2. **Entity/resource alias** (device identity from `clients.identity` / channel.route): same slug rule,
    unique per tenant. On violation, drop the alias (keep UUID) rather than abort.
 3. **Per-tenant name uniqueness**: `entities(name, tenant_id)` and
    `resources` names — Magistrala already enforces `(domain_id, name)` so this is
@@ -335,19 +335,19 @@ Still recommended manually post-cutover:
 - Spot `POST /authz/check` for a sample of (user, domain, action) and
   (device, channel, publish) allowed pre-migration.
 - Admin login (seeded atom-admin) works; a migrated user completes password reset.
-- A migrated client shared key authenticates (§5).
+- A migrated device shared key authenticates (§5).
 
 ---
 
 ## 11. Open items — status
 
 1. **Device key format** (§5) — RESOLVED. Atom access tokens still require
-   `atom_<32hex>_<64hex>`, but client secrets now migrate through Atom
-   `shared_key` credentials instead of access tokens. Existing client keys are
+   `atom_<32hex>_<64hex>`, but device secrets now migrate through Atom
+   `shared_key` credentials instead of access tokens. Existing device keys are
    preserved and no CSV export is needed.
 2. **argon2 params** — RESOLVED. Atom uses `Argon2::default()` (argon2id, v=19,
    m=19456, t=2, p=1, 32-byte tag); migrator emits the matching PHC string and
-   migrated client shared keys verify against Atom's path.
+   migrated device shared keys verify against Atom's path.
 3. **Groups semantics** (§3.5) — RESOLVED. Magistrala groups have no user-member
    table; only `parent_group_id` (clients/channels) + group-scoped roles. They are
    object groupings → `object_groups`. No principal-group case.

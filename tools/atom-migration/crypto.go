@@ -57,7 +57,7 @@ func hashArgon2id(secret []byte) (string, error) {
 
 func newSharedKeyMaterial(credentialID, secret string, cfg config) (sharedKeyMaterial, error) {
 	if len(cfg.AtomKeyEncryptionKey) != 32 {
-		return sharedKeyMaterial{}, fmt.Errorf("ATOM_KEY_ENCRYPTION_KEY is required to migrate client shared keys")
+		return sharedKeyMaterial{}, fmt.Errorf("ATOM_KEY_ENCRYPTION_KEY is required to migrate device shared keys")
 	}
 	hash, err := hashArgon2id([]byte(secret))
 	if err != nil {

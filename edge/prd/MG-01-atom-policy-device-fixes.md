@@ -1,4 +1,4 @@
-# MG-01 — Fix Atom policy client defects
+# MG-01 — Fix Atom policy device defects
 
 | | |
 |---|---|
@@ -62,7 +62,7 @@ entity, and every device-level grant this project introduces will target
 - Register applicability for `entity` / `entity:device`: `read`, `write`,
   `delete`, `manage`.
 - Widen `isSupportedObjectList` (`policy_service.go:182-187`) beyond
-  `user + client + view`, which is required by MG-08.
+  `user + device + view`, which is required by MG-08.
 
 **Out of scope**
 

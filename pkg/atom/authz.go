@@ -58,7 +58,7 @@ func ObjectKind(legacyObjectType, resourceKind string) string {
 		return atomObjectKindResource
 	}
 	switch resourceKind {
-	case KindDevice, atomKindDevice:
+	case KindDevice, KindClient:
 		return atomObjectKindEntity
 	case atomKindGroup:
 		return atomObjectKindGroup

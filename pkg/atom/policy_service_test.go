@@ -561,7 +561,7 @@ func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
 			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
-			name:  "client object type with resource object kind",
+			name:  "device object type with resource object kind",
 			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
@@ -836,12 +836,12 @@ func TestIsSupportedObjectList(t *testing.T) {
 		want bool
 	}{
 		{
-			name: "user view on client is supported",
+			name: "user view on device is supported",
 			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: policies.ViewPermission},
 			want: true,
 		},
 		{
-			name: "user read on client (entity:device) is supported",
+			name: "user read on device (entity:device) is supported",
 			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: atomActionRead},
 			want: true,
 		},
@@ -856,12 +856,12 @@ func TestIsSupportedObjectList(t *testing.T) {
 			want: false,
 		},
 		{
-			name: "non-client object type is unsupported",
+			name: "non-device object type is unsupported",
 			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ChannelType, Permission: policies.ViewPermission},
 			want: false,
 		},
 		{
-			name: "unsupported permission on client is rejected",
+			name: "unsupported permission on device is rejected",
 			pr:   policies.Policy{SubjectType: policies.UserType, Subject: "user-1", ObjectType: policies.ClientType, Permission: policies.EditPermission},
 			want: false,
 		},

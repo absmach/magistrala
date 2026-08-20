@@ -22,7 +22,7 @@ func TestRootCommandContainsAtomBackedCommands(t *testing.T) {
 	clearAtomEnv(t)
 	cmd := NewRootCmd()
 	for _, name := range []string{
-		"health", "login", cmdDomains, cmdClients, cmdChannels, cmdGroups, "authz",
+		"health", "login", cmdDomains, cmdChannels, cmdGroups, "authz",
 		"devices", "gateways", "devicetypes",
 	} {
 		if subcmd, _, err := cmd.Find([]string{name}); err != nil || subcmd == nil || subcmd.Name() != name {

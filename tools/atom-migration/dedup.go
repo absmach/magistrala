@@ -45,16 +45,16 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 		m.tenantAlias[d.ID] = m.dedupAlias(tAlias, "", d.Route, "tenant "+d.ID, rep)
 	}
 
-	clients, err := readClients(ctx, m.clientsDB)
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
-	sort.SliceStable(clients, func(i, j int) bool {
-		return earlier(clients[i].CreatedAt, clients[i].ID, clients[j].CreatedAt, clients[j].ID)
+	sort.SliceStable(devices, func(i, j int) bool {
+		return earlier(devices[i].CreatedAt, devices[i].ID, devices[j].CreatedAt, devices[j].ID)
 	})
 	dNames := newAllocator(false)
 	cAlias := newAllocator(true)
-	for _, c := range clients {
+	for _, c := range devices {
 		if !domSet[c.DomainID] {
 			continue
 		}
@@ -65,7 +65,7 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 			rep.count("renamed.devices", 1)
 		}
 		m.deviceName[c.ID] = final
-		m.clientAlias[c.ID] = m.dedupAlias(cAlias, c.DomainID, c.Identity, "client "+c.ID, rep)
+		m.deviceAlias[c.ID] = m.dedupAlias(cAlias, c.DomainID, c.Identity, "device "+c.ID, rep)
 	}
 
 	chans, err := readChannels(ctx, m.channelsDB)

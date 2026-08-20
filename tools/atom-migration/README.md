@@ -257,11 +257,11 @@ Atom has two machine credential paths that matter for the migration:
 `access_token` bearer credentials (`atom_<32hex>_<64hex>`) and `shared_key`
 credentials used by machine basic-auth style login.
 
-- **Device/client keys** (`clients.secret`) are preserved as Atom `shared_key`
+- **Device keys** (`clients.secret`) are preserved as Atom `shared_key`
   credentials. The migrator stores an argon2 verifier for the existing plaintext
   secret plus Atom-compatible encrypted reveal material and lookup digest using
   `ATOM_KEY_ENCRYPTION_KEY`. That keeps authentication compatible without writing
-  client secrets to a report file, and Atom can reveal the migrated shared key to
+  device secrets to a report file, and Atom can reveal the migrated shared key to
   authorized operators later.
 - **User passwords** (bcrypt → argon2 unconvertible): users land with no password
   credential. Report's `password_reset` TODO lists every user for the email reset.

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type clientsCompatAtomClient interface {
+type devicesCompatAtomClient interface {
 	policyClient
 	policyWriter
 	LoginSharedKey(ctx context.Context, identifier, secret string) (LoginResponse, error)
@@ -29,7 +29,7 @@ type clientsCompatAtomClient interface {
 
 type AtomClientsCompat struct {
 	Authn  smqauthn.Authentication
-	Client clientsCompatAtomClient
+	Client devicesCompatAtomClient
 }
 
 func NewClientsCompat(authn smqauthn.Authentication, client ...*Client) clientsv1.ClientsServiceClient {
@@ -72,11 +72,11 @@ func isAtomUnauthorized(err error) bool {
 }
 
 func (c AtomClientsCompat) RetrieveEntity(context.Context, *commonv1.RetrieveEntityReq, ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
 func (c AtomClientsCompat) RetrieveEntities(context.Context, *commonv1.RetrieveEntitiesReq, ...grpc.CallOption) (*commonv1.RetrieveEntitiesRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
 func (c AtomClientsCompat) AddConnections(ctx context.Context, in *commonv1.AddConnectionsReq, _ ...grpc.CallOption) (*commonv1.AddConnectionsRes, error) {
@@ -102,11 +102,11 @@ func (c AtomClientsCompat) RemoveConnections(ctx context.Context, in *commonv1.R
 }
 
 func (c AtomClientsCompat) RemoveChannelConnections(context.Context, *clientsv1.RemoveChannelConnectionsReq, ...grpc.CallOption) (*clientsv1.RemoveChannelConnectionsRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
 func (c AtomClientsCompat) UnsetParentGroupFromClient(context.Context, *clientsv1.UnsetParentGroupFromClientReq, ...grpc.CallOption) (*clientsv1.UnsetParentGroupFromClientRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom clients compatibility only supports Authenticate")
+	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
 func connectionPolicies(conns []*commonv1.Connection) ([]policies.Policy, error) {

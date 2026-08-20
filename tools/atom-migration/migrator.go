@@ -20,7 +20,7 @@ type migrator struct {
 
 	domainsDB  *sqlx.DB
 	usersDB    *sqlx.DB
-	clientsDB  *sqlx.DB
+	devicesDB  *sqlx.DB
 	channelsDB *sqlx.DB
 	groupsDB   *sqlx.DB
 	authDB     *sqlx.DB
@@ -28,14 +28,14 @@ type migrator struct {
 	reportsDB  *sqlx.DB
 	atom       *sqlx.DB
 
-	profileID        map[string]string // profile key (e.g. "user","client") -> uuid
+	profileID        map[string]string // profile key (e.g. "user","device") -> uuid
 	profileVersionID map[string]string // profile key -> latest active profile_versions.id
 	actionID         map[string]string // action name -> uuid
 
 	migratedUsers  map[string]bool
 	migratedRoles  map[string]bool
 	tenants        map[string]bool   // domain ids that became tenants
-	clientDomain   map[string]string // client id -> domain id
+	deviceDomain   map[string]string // device id -> domain id
 	channelDomain  map[string]string
 	groupDomain    map[string]string
 	resourceDomain map[string]string // resource id -> tenant id
@@ -47,7 +47,7 @@ type migrator struct {
 	deviceName   map[string]string
 	groupName    map[string]string
 	tenantAlias  map[string]string
-	clientAlias  map[string]string
+	deviceAlias  map[string]string
 	channelAlias map[string]string
 }
 
@@ -61,7 +61,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		migratedUsers:    map[string]bool{},
 		migratedRoles:    map[string]bool{},
 		tenants:          map[string]bool{},
-		clientDomain:     map[string]string{},
+		deviceDomain:     map[string]string{},
 		channelDomain:    map[string]string{},
 		groupDomain:      map[string]string{},
 		resourceDomain:   map[string]string{},
@@ -70,7 +70,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		deviceName:       map[string]string{},
 		groupName:        map[string]string{},
 		tenantAlias:      map[string]string{},
-		clientAlias:      map[string]string{},
+		deviceAlias:      map[string]string{},
 		channelAlias:     map[string]string{},
 	}
 	var err error
@@ -84,7 +84,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 	}
 	m.domainsDB = open(collectionDomains, cfg.Domains.DSN())
 	m.usersDB = open("users", cfg.Users.DSN())
-	m.clientsDB = open("clients", cfg.Clients.DSN())
+	m.devicesDB = open("clients", cfg.Devices.DSN())
 	m.channelsDB = open("channels", cfg.Channels.DSN())
 	m.groupsDB = open(collectionGroups, cfg.Groups.DSN())
 	m.authDB = open("auth", cfg.Auth.DSN())
@@ -116,7 +116,7 @@ const (
 )
 
 func (m *migrator) Close() {
-	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.clientsDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
+	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.devicesDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
 		if db != nil {
 			_ = db.Close()
 		}
@@ -143,7 +143,7 @@ func (m *migrator) Run(ctx context.Context, rep *report) error {
 	}{
 		{"tenants", m.phaseTenants},
 		{"entities.users", m.phaseUsers},
-		{"entities.clients", m.phaseClients},
+		{"entities.devices", m.phaseDevices},
 		{"credentials.device_shared_keys", m.phaseDeviceCreds},
 		{"resources.channels", m.phaseChannels},
 		{"resources.rules", m.phaseRules},
@@ -309,25 +309,24 @@ func (m *migrator) phaseUsers(ctx context.Context, rep *report) error {
 	return nil
 }
 
-func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
-	rows, err := readClients(ctx, m.clientsDB)
+func (m *migrator) phaseDevices(ctx context.Context, rep *report) error {
+	rows, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
-	prof := nullStr(m.profileID["client"])
-	profVer := nullStr(m.profileVersionID["client"])
+	prof, profVer := m.deviceProfile()
 	for _, c := range rows {
 		if !m.tenants[c.DomainID] {
-			rep.skip("client_orphan_domain")
-			rep.warnf("client %s skipped: domain %s not migrated", c.ID, c.DomainID)
+			rep.skip("device_orphan_domain")
+			rep.warnf("device %s skipped: domain %s not migrated", c.ID, c.DomainID)
 			continue
 		}
-		m.clientDomain[c.ID] = c.DomainID
+		m.deviceDomain[c.ID] = c.DomainID
 		extra := map[string]any{}
 		putStr(extra, "identity", c.Identity)
 		putTags(extra, c.Tags)
 		putJSON(extra, "private_metadata", c.PrivateMeta)
-		alias := aliasOrNil(m.clientAlias[c.ID])
+		alias := aliasOrNil(m.deviceAlias[c.ID])
 		name := m.deviceName[c.ID]
 		if err := m.exec(ctx,
 			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, profile_version_id, alias, created_at, updated_at)
@@ -337,25 +336,25 @@ func (m *migrator) phaseClients(ctx context.Context, rep *report) error {
 		); err != nil {
 			return err
 		}
-		rep.count("entities.clients", 1)
+		rep.count("entities.devices", 1)
 	}
 	return nil
 }
 
 func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
-	rows, err := readClients(ctx, m.clientsDB)
+	rows, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
 	for _, c := range rows {
-		if _, ok := m.clientDomain[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
+		if _, ok := m.deviceDomain[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
 			continue
 		}
-		// Atom shared keys can preserve the existing Magistrala client secret.
+		// Atom shared keys can preserve the existing Magistrala device secret.
 		// Store the same recoverable/lookup material Atom writes for new shared
 		// keys so migrated credentials authenticate through the indexed path and
 		// can still be revealed by operators.
-		credentialID := clientSharedKeyCredentialID(c.ID)
+		credentialID := deviceSharedKeyCredentialID(c.ID)
 		material, err := newSharedKeyMaterial(credentialID, c.Secret.String, m.cfg)
 		if err != nil {
 			return err
@@ -366,7 +365,7 @@ func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
 				 secret_ciphertext, secret_nonce, secret_key_id, secret_enc_alg,
 				 secret_lookup_hash, metadata, status
 			 )
-			 VALUES ($1,$2,'shared_key',$3,$4,$5,$6,$7,$8,$9,'{"source":"magistrala-client-secret","revealable":true}',$10)
+			 VALUES ($1,$2,'shared_key',$3,$4,$5,$6,$7,$8,$9,'{"source":"magistrala-device-secret","revealable":true}',$10)
 			 ON CONFLICT (id) DO NOTHING`,
 			credentialID, c.ID, nullStr(c.Identity.String), material.Hash,
 			material.Ciphertext, material.Nonce, material.KeyID, material.EncAlg,
@@ -377,6 +376,14 @@ func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
 		rep.count("credentials.device_shared_keys", 1)
 	}
 	return nil
+}
+
+func (m *migrator) deviceProfile() (any, any) {
+	profileKey := "device"
+	if m.profileID[profileKey] == "" {
+		profileKey = "client"
+	}
+	return nullStr(m.profileID[profileKey]), nullStr(m.profileVersionID[profileKey])
 }
 
 func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
@@ -583,15 +590,15 @@ func (m *migrator) phaseGroups(ctx context.Context, rep *report) error {
 }
 
 func (m *migrator) phaseGroupMembership(ctx context.Context, rep *report) error {
-	// clients -> object_group_entities
-	clients, err := readClients(ctx, m.clientsDB)
+	// devices -> object_group_entities
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
-	for _, c := range clients {
-		_, haveClient := m.clientDomain[c.ID]
+	for _, c := range devices {
+		_, haveDevice := m.deviceDomain[c.ID]
 		_, haveGroup := m.groupDomain[c.ParentGroupID.String]
-		if !c.ParentGroupID.Valid || !haveClient || !haveGroup {
+		if !c.ParentGroupID.Valid || !haveDevice || !haveGroup {
 			continue
 		}
 		if err := m.exec(ctx,
@@ -638,7 +645,7 @@ type roleScope struct {
 func (m *migrator) phaseRoles(ctx context.Context, rep *report) error {
 	families := []roleScope{
 		{collectionDomains, m.domainsDB, func(id string) (string, bool) { return id, m.tenants[id] }, permissionScopeTenant, ""},
-		{"clients", m.clientsDB, func(id string) (string, bool) { d, ok := m.clientDomain[id]; return d, ok }, permissionScopeObject, objectKindEntity},
+		{"clients", m.devicesDB, func(id string) (string, bool) { d, ok := m.deviceDomain[id]; return d, ok }, permissionScopeObject, objectKindEntity},
 		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
 		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
 		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
@@ -671,7 +678,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 
 		// Atom roles are unique on (name, tenant_id). Magistrala object roles are
 		// per-instance, so many objects in one tenant can share a role name
-		// (e.g. every client has an "admin" role). Embed the object id to keep the
+		// (e.g. every device has an "admin" role). Embed the object id to keep the
 		// Atom role name unique within the tenant.
 		roleName := f.prefix + ":" + r.EntityID + ":" + r.Name
 		if f.scopeMode == permissionScopeTenant {
@@ -849,7 +856,7 @@ func (m *migrator) insertBlock(ctx context.Context, b permissionBlockPlan) error
 func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
 	// Both clients-db and channels-db keep their own connections copy; union and
 	// dedup so neither side's view is missed.
-	cliConns, err := readConnections(ctx, m.clientsDB)
+	cliConns, err := readConnections(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
@@ -873,14 +880,14 @@ func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
 			rep.skip("conn_orphan_channel")
 			continue
 		}
-		clientDom, ok := m.clientDomain[c.ClientID]
+		deviceDom, ok := m.deviceDomain[c.ClientID]
 		if !ok {
-			rep.skip("conn_orphan_client")
+			rep.skip("conn_orphan_device")
 			continue
 		}
-		if clientDom != dom || c.DomainID != dom {
+		if deviceDom != dom || c.DomainID != dom {
 			rep.skip("conn_domain_mismatch")
-			rep.warnf("connection client=%s channel=%s skipped: connection domain=%s client domain=%s channel domain=%s", c.ClientID, c.ChannelID, c.DomainID, clientDom, dom)
+			rep.warnf("connection device=%s channel=%s skipped: connection domain=%s device domain=%s channel domain=%s", c.ClientID, c.ChannelID, c.DomainID, deviceDom, dom)
 			continue
 		}
 		act, ok := connectionAction(c.Type)
@@ -1113,8 +1120,8 @@ func statusCred(s int16) string {
 	return "revoked"
 }
 
-func clientSharedKeyCredentialID(clientID string) string {
-	return derivedUUID("shared-key", clientID)
+func deviceSharedKeyCredentialID(deviceID string) string {
+	return derivedUUID("shared-key", deviceID)
 }
 
 // attrs merges Magistrala metadata jsonb with extra keys into an Atom attributes

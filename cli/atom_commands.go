@@ -3,7 +3,11 @@
 
 package cli
 
-import "github.com/spf13/cobra"
+import (
+	"fmt"
+
+	"github.com/spf13/cobra"
+)
 
 // Command names, also used by the GraphQL responses that carry the same name.
 const (
@@ -25,7 +29,6 @@ const (
 	varAlias       = "alias"
 	varAttributes  = "attributes"
 	varDescription = "description"
-	varGroupType   = "groupType"
 	varOwnerID     = "ownerId"
 )
 
@@ -42,8 +45,12 @@ const (
 	respResources      = "resources"
 	respCreateResource = "createResource"
 	respGroup          = "group"
-	respCreateGroup    = "createGroup"
 	respAuthzCheck     = "authzCheck"
+
+	// Atom exposes one mutation per group type; both take CreateGroupInput
+	// and set group_type themselves.
+	respCreateObjectGroup    = "createObjectGroup"
+	respCreatePrincipalGroup = "createPrincipalGroup"
 )
 
 const (
@@ -53,6 +60,9 @@ const (
 
 	defaultEntityKind   = "device"
 	defaultResourceKind = "channel"
+
+	groupTypeObject    = "object"
+	groupTypePrincipal = "principal"
 )
 
 const (
@@ -130,8 +140,10 @@ const (
   }
 }`
 
-	createGroupMutation = `mutation CreateGroup($input: CreateGroupInput!) {
-  createGroup(input: $input) { ` + groupFields + ` }
+	// createGroupMutationFormat is completed with the mutation name for the
+	// requested group type.
+	createGroupMutationFormat = `mutation CreateGroup($input: CreateGroupInput!) {
+  %s(input: $input) { ` + groupFields + ` }
 }`
 
 	authzCheckMutation = `mutation AuthzCheck($input: AuthzCheckInput!) {
@@ -151,6 +163,9 @@ type gqlCmdConfig struct {
 	query string
 	// field is the top-level GraphQL response field to print.
 	field string
+	// operation resolves the document and response field when they depend on a
+	// flag. query and field are used verbatim when it is nil.
+	operation func() (query, field string, err error)
 	// anonymous commands run without a bearer token; every other command
 	// requires one.
 	anonymous bool
@@ -184,7 +199,14 @@ func newGQLCmd(opts *rootOptions, cfg gqlCmdConfig) *cobra.Command {
 				return err
 			}
 
-			value, err := client.do(cmd.Context(), cfg.query, variables, cfg.field)
+			query, field := cfg.query, cfg.field
+			if cfg.operation != nil {
+				if query, field, err = cfg.operation(); err != nil {
+					return err
+				}
+			}
+
+			value, err := client.do(cmd.Context(), query, variables, field)
 			if err != nil {
 				return err
 			}
@@ -440,22 +462,34 @@ func newGroupCreateCmd(opts *rootOptions) *cobra.Command {
 		use:   useCreateInDomain,
 		short: "Create a group",
 		args:  cobra.ExactArgs(2),
-		query: createGroupMutation,
-		field: respCreateGroup,
+		operation: func() (string, string, error) {
+			var mutation string
+			switch groupType {
+			case groupTypeObject:
+				mutation = respCreateObjectGroup
+			case groupTypePrincipal:
+				mutation = respCreatePrincipalGroup
+			default:
+				return "", "", fmt.Errorf("unsupported group type %q: expected object or principal", groupType)
+			}
+
+			return fmt.Sprintf(createGroupMutationFormat, mutation), mutation, nil
+		},
 		vars: func(args []string) (map[string]any, error) {
 			attributes, err := parseJSONFlag(attrs)
 			if err != nil {
 				return nil, err
 			}
+			// The specialized mutations set group_type themselves, so sending
+			// it in the input would only be overwritten.
 			input := gqlInput{varTenantID: args[0], varName: args[1]}
-			input.setString(varGroupType, groupType)
 			input.setString(varDescription, description)
 			input.setObject(varAttributes, attributes)
 
 			return map[string]any{varInput: input}, nil
 		},
 		flags: func(cmd *cobra.Command) {
-			cmd.Flags().StringVar(&groupType, "type", "", "group type")
+			cmd.Flags().StringVar(&groupType, "type", groupTypeObject, "group type: object or principal")
 			cmd.Flags().StringVar(&description, varDescription, "", "group description")
 			cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
 		},

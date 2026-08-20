@@ -96,8 +96,13 @@ Channels map to Atom resources with `kind="channel"`.
 
 ## Groups
 
+Atom exposes one mutation per group type, so `--type` selects between
+`createObjectGroup` and `createPrincipalGroup`. It defaults to `object`, and
+any other value is rejected before the request is sent.
+
 ```bash
-./build/cli groups create <domain_id> "Factory Floor" --type object --description "Plant devices"
+./build/cli groups create <domain_id> "Factory Floor" --description "Plant devices"
+./build/cli groups create <domain_id> "Operators" --type principal
 ./build/cli groups list <domain_id>
 ./build/cli groups get <group_id>
 ```

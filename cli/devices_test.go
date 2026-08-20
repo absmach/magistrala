@@ -169,19 +169,47 @@ func TestDevicesCreateCmdFailsWhenMarkingDeclaredGatewaysFails(t *testing.T) {
 	assert.False(t, flagged, "gateway must not appear flagged when the flagging write itself failed")
 }
 
-// A device naming itself as one of its own gateways must end up with the
-// flag set: markDeclaredGateways runs against the entity the API just
-// returned, after the write, so there is no pre-write snapshot for the
-// primary update to clobber it with (the same class of bug P2 fixed in
-// SetDeviceGateways itself).
-func TestDevicesUpdateCmdPreservesSelfReferencedIsGatewayFlag(t *testing.T) {
+// A regression test for A15: a device naming itself as one of its own
+// gateways is the degenerate case of a gateway chain (self-reference would
+// make device-1 both a gateway, via MarkGateways, and a declarer of a
+// gateway of its own -- itself). The update must be rejected before it
+// reaches Atom, not written through as it was before A15.
+func TestDevicesUpdateCmdRejectsSelfReference(t *testing.T) {
 	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
-	executeCommand(t, rootCmd, "device-1", updateCmd, `{"attributes":{"gateways":["device-1"]}}`)
+	out := executeCommand(t, rootCmd, "device-1", updateCmd, `{"attributes":{"gateways":["device-1"]}}`)
 
-	updated := fa.entities["device-1"]
-	assert.Equal(t, true, updated.Attributes["is_gateway"], "expected device-1's own is_gateway to survive naming itself as a gateway, got: %+v", updated.Attributes)
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "cannot declare its own gateways")
+	require.Empty(t, fa.requests, "a rejected write must never reach Atom")
+}
+
+// A regression test for A15: the create and update commands unmarshal
+// arbitrary Entity JSON and write it straight through, so is_gateway and
+// gateways can be set together in one payload -- exactly the combination
+// SetDeviceGateways's own ValidateGatewayChain rejects. This command must
+// reject it too, before ever calling CreateEntity/UpdateEntity.
+func TestDevicesCreateCmdRejectsGatewayDeclaringItsOwnGateways(t *testing.T) {
+	fa := newFakeAtom(t)
+	rootCmd := setFlags(cli.NewDevicesCmd())
+
+	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"is_gateway":true,"gateways":["gw-1"]}}`, "domain-1")
+
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "cannot declare its own gateways")
+	require.Empty(t, fa.requests, "a rejected write must never reach Atom")
+}
+
+func TestDevicesUpdateCmdRejectsGatewayDeclaringItsOwnGateways(t *testing.T) {
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Attributes: atom.Attributes{"is_gateway": true}})
+	rootCmd := setFlags(cli.NewDevicesCmd())
+
+	out := executeCommand(t, rootCmd, "device-1", updateCmd, `{"attributes":{"is_gateway":true,"gateways":["gw-1"]}}`)
+
+	assert.Contains(t, out, "error")
+	assert.Contains(t, out, "cannot declare its own gateways")
+	require.Empty(t, fa.requests, "a rejected write must never reach Atom")
 }
 
 func TestDevicesCmdUsageOnMissingArgs(t *testing.T) {

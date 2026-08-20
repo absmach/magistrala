@@ -100,11 +100,6 @@ const (
 
 const (
 	atomAttributeCreatedAt = "created_at"
-	// atomAttributeIsGateway marks a device as a gateway (spec §8 A12) — a
-	// gateway is not a separate entity kind, just a device with this set.
-	// See AttributeGateways (devices.go) for the invariant this must be
-	// kept in step with, and by whom.
-	atomAttributeIsGateway = "is_gateway"
 	atomAttributeMetadata  = "metadata"
 	atomAttributeRoute     = "route"
 	atomAttributeSource    = "source"

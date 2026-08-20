@@ -286,7 +286,7 @@ func TestSetDeviceGatewaysFlagsNewlyLinkedGateway(t *testing.T) {
 	}
 
 	gw := fa.entities["gw-new"]
-	isGateway, _ := gw.Attributes[atomAttributeIsGateway].(bool)
+	isGateway, _ := gw.Attributes[AttributeIsGateway].(bool)
 	if !isGateway {
 		t.Fatalf("expected gw-new to be flagged is_gateway after being linked, got: %+v", gw.Attributes)
 	}
@@ -346,7 +346,7 @@ func TestSetDeviceGatewaysMarksGatewaysInOneBatchedRoundTrip(t *testing.T) {
 	}
 
 	for _, id := range gatewayIDs {
-		isGateway, _ := fa.entities[id].Attributes[atomAttributeIsGateway].(bool)
+		isGateway, _ := fa.entities[id].Attributes[AttributeIsGateway].(bool)
 		if !isGateway {
 			t.Fatalf("expected %s to be flagged is_gateway, got: %+v", id, fa.entities[id].Attributes)
 		}
@@ -364,33 +364,65 @@ func TestSetDeviceGatewaysMarksGatewaysInOneBatchedRoundTrip(t *testing.T) {
 	}
 }
 
-// A regression test for P2: a device naming itself as one of its own
-// gateways must end up with both its gateways list and its own is_gateway
-// flag set. markGateways sets is_gateway on device-1 through a separate
-// call than the one that writes device-1's gateways list; reusing the
-// snapshot read before markGateways ran -- rather than re-reading -- would
-// silently discard that flag when the gateways list is written back.
-func TestSetDeviceGatewaysPreservesSelfReferencedIsGatewayFlag(t *testing.T) {
+// A regression test for A15: gateways do not chain, and self-reference is
+// the degenerate case of that -- a device naming itself as one of its own
+// gateways would, via MarkGateways, become a gateway that also declares a
+// gateway of its own (itself). SetDeviceGateways must reject this before
+// MarkGateways ever runs, not silently honor it as before A15.
+func TestSetDeviceGatewaysRejectsSelfReference(t *testing.T) {
 	fa, srv := newFakeAtomDevices(t,
 		Entity{ID: "device-1", Kind: atomKindDevice, Attributes: Attributes{"source": "magistrala"}},
 	)
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	if err := client.SetDeviceGateways(context.Background(), "device-1", []string{"device-1"}, nil); err != nil {
-		t.Fatalf("set device gateways failed: %v", err)
+	err := client.SetDeviceGateways(context.Background(), "device-1", []string{"device-1"}, nil)
+	if !errors.Is(err, ErrGatewayCannotHaveGateways) {
+		t.Fatalf("expected ErrGatewayCannotHaveGateways, got %v", err)
 	}
+	if fa.updateCalls != 0 {
+		t.Fatalf("a rejected self-reference must not write, got %d update calls", fa.updateCalls)
+	}
+	unchanged := fa.entities["device-1"]
+	if _, isGateway := unchanged.Attributes[AttributeIsGateway]; isGateway {
+		t.Fatalf("device-1 must not be flagged is_gateway when the write was rejected, got: %+v", unchanged.Attributes)
+	}
+}
 
-	updated := fa.entities["device-1"]
-	isGateway, _ := updated.Attributes[atomAttributeIsGateway].(bool)
-	if !isGateway {
-		t.Fatalf("expected device-1's own is_gateway to survive naming itself as a gateway, got: %+v", updated.Attributes)
+// A regression test for A15: a device already flagged is_gateway may not be
+// given upstream gateways of its own -- gateways do not chain.
+func TestSetDeviceGatewaysRejectsGatewayDeclaringItsOwnGateways(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+		Entity{ID: "gw-2", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	err := client.SetDeviceGateways(context.Background(), "gw-1", []string{"gw-2"}, nil)
+	if !errors.Is(err, ErrGatewayCannotHaveGateways) {
+		t.Fatalf("expected ErrGatewayCannotHaveGateways, got %v", err)
 	}
-	got := attrStrings(updated.Attributes, AttributeGateways)
-	if !sameStringSet(got, []string{"device-1"}) {
-		t.Fatalf("expected device-1's gateways list to be written, got: %+v", got)
+	if fa.updateCalls != 0 {
+		t.Fatalf("a rejected chain must not write, got %d update calls", fa.updateCalls)
 	}
-	if updated.Attributes["source"] != "magistrala" {
-		t.Fatalf("write must preserve unrelated attributes, got: %+v", updated.Attributes)
+	got := attrStrings(fa.entities["gw-1"].Attributes, AttributeGateways)
+	if len(got) != 0 {
+		t.Fatalf("gw-1's gateways must be unchanged, got: %+v", got)
+	}
+}
+
+// Clearing a gateway's (empty) gateway list is not chaining and must still
+// be allowed regardless of is_gateway.
+func TestSetDeviceGatewaysAllowsClearingAGatewaysEmptyList(t *testing.T) {
+	fa, srv := newFakeAtomDevices(t,
+		Entity{ID: "gw-1", Kind: atomKindDevice, Attributes: Attributes{"is_gateway": true, "gateways": []string{}}},
+	)
+
+	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
+	if err := client.SetDeviceGateways(context.Background(), "gw-1", nil, nil); err != nil {
+		t.Fatalf("clearing an already-empty gateway list must succeed, got: %v", err)
+	}
+	if fa.updateCalls != 1 {
+		t.Fatalf("expected exactly one write, got %d", fa.updateCalls)
 	}
 }
 

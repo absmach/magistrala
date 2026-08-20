@@ -93,7 +93,7 @@ func (c *Client) EntityDeviceInfo(ctx context.Context, ids []string) (map[string
 		if err := json.Unmarshal(data, &entity); err != nil {
 			return nil, nil, err
 		}
-		isGateway, _ := entity.Attributes[atomAttributeIsGateway].(bool)
+		isGateway, _ := entity.Attributes[AttributeIsGateway].(bool)
 		out[id] = DeviceInfo{ExternalID: entity.ExternalID, IsGateway: isGateway}
 	}
 	return out, unreadable, nil

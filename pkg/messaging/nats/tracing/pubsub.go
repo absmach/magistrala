@@ -43,7 +43,7 @@ func NewPubSub(config server.Config, tracer trace.Tracer, pubsub messaging.PubSu
 
 // Subscribe creates a new subscription and traces the operation.
 func (pm *pubsubMiddleware) Subscribe(ctx context.Context, cfg messaging.SubscriberConfig) error {
-	ctx, span := tracing.CreateSpan(ctx, subscribeOP, cfg.ID, cfg.Topic, "", 0, pm.host, trace.SpanKindDevice, pm.tracer)
+	ctx, span := tracing.CreateSpan(ctx, subscribeOP, cfg.ID, cfg.Topic, "", 0, pm.host, trace.SpanKindClient, pm.tracer)
 	defer span.End()
 
 	span.SetAttributes(defaultAttributes...)

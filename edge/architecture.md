@@ -861,6 +861,7 @@ something else, including the reversals.
 | A9 | Declared device↔gateway association | 🔴 | MG-15 | ⚠️ Superseded by A10 |
 | A10 | Group or relation? | 🔴 | MG-09, MG-15 | ✅ **Relation** — `gateways []` on the device |
 | A11 | What kind of thing is a Gateway? | 🟡 | model-wide | ✅ **Device with a proxy role** — reachability, not containment |
+| A15 | Can a gateway declare gateways of its own? | 🔴 | MG-09, UI-01 | ✅ **No — gateways do not chain**; enforced at write time |
 | B1 | Pending device data | ⚪ | — | ⚠️ **Superseded by A7+A8** — accept, late-bind |
 | B2 | Revocation window | 🟡 | MG-08 | open |
 | B3 | Admin bypass mechanism | 🟡 | MG-08 | ✅ **Explicit capability check** |
@@ -1590,6 +1591,75 @@ leaves it open.
 
 **Notes:** A staging decision, not a reversal of the model. The design above stays
 the target.
+
+---
+
+#### A15 🔴 Can a gateway declare gateways of its own?
+
+**Narrows:** A12's composability — a gateway may still report its own
+telemetry directly, per §2.2 consequence 4; what this rules out is a gateway
+being *reachable through* another gateway.
+
+Nothing in phase 1 forbade it. `gateways []` is 0..N on **any** device (§2.3),
+and a Gateway is just a Device (§2.1) — so by the letter of the model, gateway
+A could declare `gateways: ["B"]` where B is also `is_gateway: true`, and the
+implementation agreed: `pkg/atom/devices.go`'s `SetDeviceGateways` had no check
+against it, and explicitly special-cased the degenerate instance of it — a
+device naming *itself* — as supported, working behavior (the pre-A15 `P2` path,
+re-reading the device after `MarkGateways` specifically so a self-referential
+`is_gateway` write would not be clobbered).
+
+**The product decision: reject it.** A gateway may not carry a non-empty
+`gateways []` of its own — including naming itself. Two reasons:
+
+- **The relation is a reachability path (§2.1), and a gateway's own reachability
+  is not staged.** Every purpose the relation serves — commissioning record,
+  fault correlation, downlink hint, UI — assumes the *far* end is a leaf device
+  that cannot represent itself otherwise. A gateway already can: it holds
+  credentials and connects directly (§2.2 consequence 4). Chaining adds a
+  topology (and a downlink-routing question, §2.2 consequence 6) the model
+  never designed for, for a case the capability model does not need — a
+  concentrator-meter's own telemetry is already covered by A12 without chaining.
+- **It was never exercised deliberately.** The self-reference path existed
+  because nothing rejected it, not because a deployment needed it. Closing it
+  now, before MG-09 freezes the public API (its own words: "widest blast radius
+  in the programme"), is cheaper than closing it after the SDK and every client
+  ship against the wider contract.
+
+**DECIDED: gateways do not chain.** A device may not simultaneously carry
+`is_gateway: true` and a non-empty `gateways []`. Enforced at write time by
+`pkg/atom.ValidateGatewayChain`, called from both existing writers of these
+attributes — `SetDeviceGateways` and the CLI's device create/update commands —
+per the invariant contract on `AttributeGateways`. Self-reference is rejected
+by the same check, since it is the case where the two facts land in one call.
+
+**Consequences**
+
+- **Does not touch A12.** A gateway that also reports its own measurements —
+  the composite device UI-01's criterion 4 exists to guard — is unaffected: it
+  connects directly and never populates its own `gateways []`. Only *upstream*
+  gateways of a gateway are rejected.
+- **Magistrala-only.** Atom has no notion of "gateway" (ATOM-05) — `is_gateway`
+  and `gateways` are Magistrala-side attribute conventions on a generic
+  `device` entity, so nothing in Atom changes.
+- **Two write paths today, both updated.** `pkg/atom/devices.go`
+  (`SetDeviceGateways`) and `cli/devices.go` (create/update, which bypass
+  `SetDeviceGateways` entirely per the existing `P3` note). A future writer —
+  MG-09's HTTP API/SDK, not yet built — must call `ValidateGatewayChain` too,
+  the same obligation `AttributeGateways`'s doc comment already states for
+  `MarkGateways`.
+- **No migration performed here.** Existing data was only ever reachable
+  through the CLI (no UI or API enforced anything before this). Nothing in
+  this change sweeps or corrects devices already in that state; it only stops
+  new writes from creating it.
+
+**Decision:** Gateways do not chain — `is_gateway` and non-empty `gateways []`
+are mutually exclusive on one device, self-reference included
+
+**Notes:** A restriction relative to what phase 1 specified, not an
+implementation bug fix — the pre-A15 code was behaving as designed. Reached
+after `magistrala-ui`'s UI-side gateway-promotion logic diverged from the Go
+model and needed one of the two changed to match.
 
 ---
 

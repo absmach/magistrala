@@ -15,21 +15,41 @@ import (
 // matches expectedCurrent — the caller's view was stale, so nothing was written.
 var ErrGatewaysConflict = errors.New("atom: device gateways changed since last read")
 
+// ErrGatewayCannotHaveGateways means the write being validated would leave a
+// device both a gateway and reachable through gateways of its own. Decided:
+// gateways do not chain -- a device with AttributeIsGateway set may not
+// declare AttributeGateways, and vice versa. See ValidateGatewayChain.
+var ErrGatewayCannotHaveGateways = errors.New("atom: a gateway cannot declare its own gateways")
+
 // AttributeGateways is a device's own list of the gateways it relays
-// through (spec §8 A12). INVARIANT: every id named here must have
-// attributes.is_gateway set on its own entity -- readAuthorizer's R1 scope
-// leg trusts a held device's publisher identity unconditionally whenever
-// is_gateway is false, so an id named here without it reopens finding 02's
-// cross-tenant leak (Q1). Nothing enforces this at the type level: every
-// writer of this attribute must call MarkGateways with the ids it names
-// immediately after writing, or use GatewaysDeclared to find them. As of
-// this writing the writers are SetDeviceGateways (this file) and the CLI's
-// device create/update commands (cli/devices.go) -- a new one (another
-// service, the SDK, a future API handler) must do the same or this
-// invariant silently breaks for it. Exported (T2) so that new writer can
-// actually find this contract in godoc, rather than needing to already
-// know an unexported identifier exists to look for it.
+// through (spec §8 A12). Two invariants apply, and nothing enforces either
+// at the type level -- every writer of this attribute (and of
+// AttributeIsGateway) is responsible for upholding both itself:
+//
+//  1. Every id named here must have AttributeIsGateway set on its own
+//     entity -- readAuthorizer's R1 scope leg trusts a held device's
+//     publisher identity unconditionally whenever is_gateway is false, so
+//     an id named here without it reopens finding 02's cross-tenant leak
+//     (Q1). Call MarkGateways with the ids it names immediately after
+//     writing, or use GatewaysDeclared to find them.
+//  2. A device may not carry both this attribute (non-empty) and
+//     AttributeIsGateway=true -- gateways do not chain (architecture.md §8
+//     A15). Call ValidateGatewayChain with the values about to be persisted
+//     before writing them.
+//
+// As of this writing the writers are SetDeviceGateways (this file) and the
+// CLI's device create/update commands (cli/devices.go) -- a new one
+// (another service, the SDK, a future API handler) must do the same or
+// these invariants silently break for it. Exported (T2) so that a new
+// writer can actually find this contract in godoc, rather than needing to
+// already know an unexported identifier exists to look for it.
 const AttributeGateways = "gateways"
+
+// AttributeIsGateway marks a device as a gateway (spec §8 A12) — a gateway
+// is not a separate entity kind, just a device with this set. Exported
+// alongside AttributeGateways: see its doc comment above for the two
+// invariants this attribute is half of.
+const AttributeIsGateway = "is_gateway"
 
 // SetDeviceGateways replaces a device's entire gateway list, preserving its
 // other attributes. expectedCurrent must match what DeviceGateways would
@@ -51,32 +71,38 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	if err := c.checkGatewaysCurrent(ctx, device, expectedCurrent); err != nil {
 		return err
 	}
+	isGateway, _ := device.Attributes[AttributeIsGateway].(bool)
+	if err := ValidateGatewayChain(deviceID, isGateway, gatewayIDs); err != nil {
+		return err
+	}
 
 	if err := c.MarkGateways(ctx, gatewayIDs); err != nil {
 		return err
 	}
 
-	// Re-read rather than reuse the snapshot taken above (P2): a device can
-	// name itself as one of its own gateways, in which case MarkGateways
-	// just wrote deviceID's own is_gateway through a separate call. Writing
-	// back the pre-mark snapshot here would silently discard that -- the
-	// same instant, no unrelated write in between required to trigger it.
+	// Re-read rather than reuse the snapshot taken above (S1): MarkGateways
+	// can take a while -- a batched read plus up to one UpdateEntity per
+	// unflagged gateway -- the widest gap this function has ever had
+	// between checking and writing, so a concurrent edit to deviceID's own
+	// attributes (this call's own gateways write aside) can land in it.
+	// ValidateGatewayChain above already rejects deviceID naming itself in
+	// gatewayIDs, so unlike before that check existed, MarkGateways can no
+	// longer have written to deviceID itself as a side effect here -- this
+	// re-read exists solely to narrow the race window, not to recover a
+	// self-write.
 	device, err = c.GetEntity(ctx, deviceID)
 	if err != nil {
 		return err
 	}
-	// Re-check against this re-read too (S1): MarkGateways can take a
-	// while -- a batched read plus up to one UpdateEntity per unflagged
-	// gateway -- the widest gap this function has ever had between
-	// checking and writing. The check above only covers the read at the
-	// top; without checking again here, a concurrent SetDeviceGateways
-	// landing in that window is visible in this re-read but gets silently
-	// overwritten by the write below regardless -- exactly the outcome
-	// ErrGatewaysConflict exists to report. This still cannot close the
-	// race against a genuinely concurrent edit landing after this second
-	// check — Atom has no compare-and-swap — but it shrinks the
-	// uncovered window back down to the same check-to-write gap that
-	// existed before MarkGateways was introduced.
+	// Re-check against this re-read too (S1): the check above only covers
+	// the read at the top; without checking again here, a concurrent
+	// SetDeviceGateways landing in that window is visible in this re-read
+	// but gets silently overwritten by the write below regardless --
+	// exactly the outcome ErrGatewaysConflict exists to report. This still
+	// cannot close the race against a genuinely concurrent edit landing
+	// after this second check — Atom has no compare-and-swap — but it
+	// shrinks the uncovered window back down to the same check-to-write gap
+	// that existed before MarkGateways was introduced.
 	if err := c.checkGatewaysCurrent(ctx, device, expectedCurrent); err != nil {
 		return err
 	}
@@ -85,6 +111,31 @@ func (c *Client) SetDeviceGateways(ctx context.Context, deviceID string, gateway
 	attrs[AttributeGateways] = gatewayIDs
 	_, err = c.UpdateEntity(ctx, deviceID, Entity{Attributes: attrs})
 	return err
+}
+
+// ValidateGatewayChain rejects a write that would leave deviceID both a
+// gateway and reachable through gateways of its own (architecture.md §8
+// A15: gateways do not chain). isGateway and gatewayIDs are the
+// AttributeIsGateway and AttributeGateways values the write in progress is
+// about to persist for deviceID -- not necessarily what is stored today.
+//
+// Self-reference -- deviceID present in gatewayIDs -- is rejected by the
+// same rule: MarkGateways would flag deviceID itself is_gateway as a side
+// effect of writing gatewayIDs, which is exactly the state this guards
+// against, whether or not isGateway was already true going in.
+func ValidateGatewayChain(deviceID string, isGateway bool, gatewayIDs []string) error {
+	if len(gatewayIDs) == 0 {
+		return nil
+	}
+	if isGateway {
+		return ErrGatewayCannotHaveGateways
+	}
+	for _, id := range gatewayIDs {
+		if id == deviceID {
+			return ErrGatewayCannotHaveGateways
+		}
+	}
+	return nil
 }
 
 // checkGatewaysCurrent reports ErrGatewaysConflict if device's live gateway
@@ -158,12 +209,12 @@ func (c *Client) MarkGateways(ctx context.Context, gatewayIDs []string) error {
 		if err := json.Unmarshal(data, &gateway); err != nil {
 			return err
 		}
-		if isGateway, _ := gateway.Attributes[atomAttributeIsGateway].(bool); isGateway {
+		if isGateway, _ := gateway.Attributes[AttributeIsGateway].(bool); isGateway {
 			continue
 		}
 
 		attrs := cloneAttributes(gateway.Attributes)
-		attrs[atomAttributeIsGateway] = true
+		attrs[AttributeIsGateway] = true
 		if _, err := c.UpdateEntity(ctx, id, Entity{Attributes: attrs}); err != nil {
 			return err
 		}

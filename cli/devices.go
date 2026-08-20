@@ -114,6 +114,12 @@ func handleDeviceCreate(cmd *cobra.Command, args []string) {
 	device.Kind = atomKindDevice
 	device.TenantID = args[1]
 
+	// A new device has no id yet, so self-reference cannot arise here --
+	// only the is_gateway-plus-gateways combination can.
+	if err := validateGatewayChain(cmd, "", device); err != nil {
+		return
+	}
+
 	created, err := atomClient.CreateEntity(cmd.Context(), device)
 	if err != nil {
 		logErrorCmd(*cmd, err)
@@ -181,6 +187,10 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 		return
 	}
 
+	if err := validateGatewayChain(cmd, deviceID, device); err != nil {
+		return
+	}
+
 	updated, err := atomClient.UpdateEntity(cmd.Context(), deviceID, device)
 	if err != nil {
 		logErrorCmd(*cmd, err)
@@ -193,6 +203,27 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 	}
 
 	logJSONCmd(*cmd, updated)
+}
+
+// validateGatewayChain rejects a create/update payload that would leave the
+// device both a gateway and reachable through gateways of its own
+// (pkg/atom.ValidateGatewayChain, architecture.md §8 A15) -- this command
+// bypasses SetDeviceGateways entirely, so that check never runs unless
+// something here calls it too. deviceID is "" for create, where
+// self-reference cannot yet arise.
+//
+// Checked against exactly the payload being written, not a re-read of the
+// device: UpdateEntity replaces the whole attributes value rather than
+// merging (see fakeAtomDevices in pkg/atom's tests), so whatever this
+// payload sets for is_gateway and gateways is exactly what will be
+// persisted -- there is no stale prior state to additionally account for.
+func validateGatewayChain(cmd *cobra.Command, deviceID string, device atom.Entity) error {
+	isGateway, _ := device.Attributes[atom.AttributeIsGateway].(bool)
+	if err := atom.ValidateGatewayChain(deviceID, isGateway, atom.GatewaysDeclared(device)); err != nil {
+		logErrorCmd(*cmd, err)
+		return err
+	}
+	return nil
 }
 
 // markDeclaredGateways flags is_gateway on every id the just-written

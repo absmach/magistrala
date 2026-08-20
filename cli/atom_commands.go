@@ -5,14 +5,15 @@ package cli
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/spf13/cobra"
 )
 
 const (
 	tenantFields   = "id name alias status tags attributes createdAt updatedAt"
-	entityFields   = "id kind profileId profileVersionId name alias tenantId parentGroupId status attributes createdAt updatedAt"
-	resourceFields = "id kind name alias tenantId ownerId parentGroupId attributes createdAt updatedAt"
+	entityFields   = "id kind profileId profileVersionId name alias tenantId objectGroupIds status attributes createdAt updatedAt"
+	resourceFields = "id kind name alias tenantId ownerId objectGroupIds attributes createdAt updatedAt"
 	groupFields    = "id name tenantId groupType description parentId status attributes createdAt updatedAt"
 )
 
@@ -389,26 +390,31 @@ func newGroupCreateCmd(opts *rootOptions) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			var out struct {
-				CreateGroup map[string]any `json:"createGroup"`
+			mutationName := "createObjectGroup"
+			switch groupType {
+			case "object":
+			case "principal":
+				mutationName = "createPrincipalGroup"
+			default:
+				return fmt.Errorf("unsupported group type %q: expected object or principal", groupType)
 			}
+			var out map[string]map[string]any
 			err = client.do(context.Background(), `
 mutation CreateGroup($input: CreateGroupInput!) {
-  createGroup(input: $input) { `+groupFields+` }
+  `+mutationName+`(input: $input) { `+groupFields+` }
 }`, map[string]any{"input": map[string]any{
 				"tenantId":    args[0],
 				"name":        args[1],
-				"groupType":   optionalString(groupType),
 				"description": optionalString(description),
 				"attributes":  optionalObject(attributes),
 			}}, &out)
 			if err != nil {
 				return err
 			}
-			return writeOutput(cmd, out.CreateGroup)
+			return writeOutput(cmd, out[mutationName])
 		},
 	}
-	cmd.Flags().StringVar(&groupType, "type", "", "group type")
+	cmd.Flags().StringVar(&groupType, "type", "object", "group type: object or principal")
 	cmd.Flags().StringVar(&description, "description", "", "group description")
 	cmd.Flags().StringVar(&attrs, "attributes", "", "JSON attributes")
 	return cmd

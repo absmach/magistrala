@@ -616,7 +616,7 @@ needs exists server-side and is simply not wired up:
 | Device types, versioned, with **JSON Schema enforcement on write** | `profiles` + `profile_versions`; `src/identity/repo.rs:641` | No profile API at all |
 | Group membership | `addGroupMember`, `removeGroupMember`, `groupMembers`, `entityGroups` (`graphql/groups.rs:645,699,90,104`) | **None** — only the migration tool, via raw SQL |
 | Object vs principal groups | `createObjectGroup`, `createPrincipalGroup` (`:346,355`) | Generic `createGroup` only |
-| Group hierarchy | `setGroupParent`, `childGroups`, `includeDescendants` (`:429,121`) | `groupCreateInput` **drops** `parentId` (`client.go:751-760`) |
+| Group hierarchy | `setGroupParent`, `childGroups`, `includeDescendants` (`:429,121`) | `groupCreateInput` **drops** `parentId` (`api.go:751-760`) |
 | Grant scope modes | 10, incl. `object_type`, `group_direct_objects`, `group_descendant_objects` (`001_initial.sql:607`) | Writes only `object`, `tenant`, `platform` (`policy_service.go:196-205`) |
 | Entity list filters | `profileId`, `parentGroupId`, `includeDescendants`, `status` (`entities.rs:74-87`) | Sends none |
 | Authorization-filtered listing | `entities()` routes through `authorized_object_ids` (`entities.rs:123`) | Unused |

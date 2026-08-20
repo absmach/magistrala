@@ -55,7 +55,7 @@ func TestEntityFromFields(t *testing.T) {
 }
 
 func TestDeviceKindNamesMapToAtomDeviceKind(t *testing.T) {
-	for _, kind := range []string{KindDevice, KindClient} {
+	for _, kind := range []string{KindDevice} {
 		if got := entityKind(kind); got != atomKindDevice {
 			t.Fatalf("%q must map to the atom kind %q, got %q", kind, atomKindDevice, got)
 		}

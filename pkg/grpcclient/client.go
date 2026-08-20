@@ -7,7 +7,7 @@ import (
 	"context"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
 	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
 	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
@@ -53,18 +53,18 @@ func SetupDomainsClient(ctx context.Context, cfg Config) (grpcDomainsV1.DomainsS
 	return grpcDomainsV1.NewDomainsServiceClient(client.Connection()), client, nil
 }
 
-// SetupClientsClient loads clients gRPC configuration and creates new clients gRPC client.
+// SetupDevicesClient loads devices gRPC configuration and creates new devices gRPC client.
 //
 // For example:
 //
-// clientClient, clientHandler, err := grpcclient.SetupClients(ctx, grpcclient.Config{}).
-func SetupClientsClient(ctx context.Context, cfg Config) (grpcClientsV1.ClientsServiceClient, Handler, error) {
+// clientClient, clientHandler, err := grpcclient.SetupDevices(ctx, grpcclient.Config{}).
+func SetupDevicesClient(ctx context.Context, cfg Config) (grpcDevicesV1.DevicesServiceClient, Handler, error) {
 	client, err := NewHandler(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return grpcClientsV1.NewClientsServiceClient(client.Connection()), client, nil
+	return grpcDevicesV1.NewDevicesServiceClient(client.Connection()), client, nil
 }
 
 // SetupChannelsClient loads channels gRPC configuration and creates new channels gRPC client.

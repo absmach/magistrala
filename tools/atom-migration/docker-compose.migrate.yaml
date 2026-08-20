@@ -55,7 +55,7 @@ services:
     volumes:
       - users-src:${SRC_MOUNT:-/var/lib/postgresql}
 
-  clients-db:
+  devices-db:
     <<: *src-db
     environment:
       POSTGRES_USER: ${SRC_DB_USER:-magistrala}
@@ -63,7 +63,7 @@ services:
       POSTGRES_DB: clients
       PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
     volumes:
-      - clients-src:${SRC_MOUNT:-/var/lib/postgresql}
+      - devices-src:${SRC_MOUNT:-/var/lib/postgresql}
 
   channels-db:
     <<: *src-db
@@ -161,7 +161,7 @@ services:
         condition: service_healthy
       users-db:
         condition: service_healthy
-      clients-db:
+      devices-db:
         condition: service_healthy
       channels-db:
         condition: service_healthy
@@ -199,9 +199,9 @@ volumes:
   users-src:
     external: true
     name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}users-db-volume
-  clients-src:
+  devices-src:
     external: true
-    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}clients-db-volume
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}devices-db-volume
   channels-src:
     external: true
     name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}channels-db-volume

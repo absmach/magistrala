@@ -27,7 +27,7 @@ All `magistrala/magistrala`, port 5432, on network `magistrala-base-net`:
 |-----------|---------|----------------|
 | `domains-db` | `domains` | `domains`, `invitations`, `domains_roles`, `domains_role_actions`, `domains_role_members` |
 | `users-db` | `users` | `users`, `users_verifications` |
-| `clients-db` | `clients` | `clients`, `connections`, `clients_roles*`, plus its embedded `groups` copy |
+| `devices-db` | `clients` | `clients`, `connections`, `clients_roles*`, plus its embedded `groups` copy |
 | `channels-db` | `channels` | `channels`, `connections`, `channels_roles*` |
 | `groups-db` | `groups` | `groups`, `groups_roles*` |
 | `auth-db` | `auth` | `pats`, `pat_scopes` (skip `keys` — short-lived JWTs; skip legacy `policies`/`domains` mirror) |

@@ -161,7 +161,7 @@ depend on):
 
 ```bash
 docker compose -f docker/docker-compose.yaml up -d --no-deps \
-  auth-db users-db domains-db clients-db channels-db groups-db \
+  auth-db users-db domains-db devices-db channels-db groups-db \
   re-db reports-db
 ```
 

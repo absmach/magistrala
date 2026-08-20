@@ -64,7 +64,7 @@ func Provision(ctx context.Context, conf Config) error {
 
 	msgContentType := string(mgSDK.CTJSONSenML)
 	sdkConf := sdk.Config{
-		ClientsURL:      conf.Host,
+		DevicesURL:      conf.Host,
 		UsersURL:        conf.Host,
 		ReaderURL:       defReaderURL,
 		HTTPAdapterURL:  fmt.Sprintf("%s/http", conf.Host),

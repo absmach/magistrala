@@ -199,11 +199,11 @@ stays untouched.
 
 - SDK: `pkg/sdk/clients.go` → `devices.go`; new `gateways.go`. Interface block at
   `pkg/sdk/sdk.go:712-840`.
-- Protos: `internal/proto/clients/v1/clients.proto` → `devices/v1/devices.proto`;
-  `ClientsService` → `DevicesService`. Regenerate into `api/grpc/devices/`.
+- Protos: `internal/proto/devices/v1/clients.proto` → `devices/v1/devices.proto`;
+  `DevicesService` → `DevicesService`. Regenerate into `api/grpc/devices/`.
 - `internal/proto/common/v1/common.proto:52` `Connection` — assess whether it
   needs a device field or whether channel connections stay gateway-level.
-- `pkg/atom/mapping.go:6-12`: `KindClient` → `KindDevice`. No gateway kind.
+- `pkg/atom/mapping.go:6-12`: `KindDevice` → `KindDevice`. No gateway kind.
 - `is_gateway` and `gateways` carried as entity attributes.
 
 ## Acceptance criteria

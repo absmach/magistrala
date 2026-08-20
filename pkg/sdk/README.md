@@ -26,7 +26,7 @@ import (
 func main() {
     conf := sdk.Config{
         UsersURL:       "http://localhost:9002",
-        ClientsURL:     "http://localhost:9000",
+        DevicesURL:     "http://localhost:9000",
         ChannelsURL:    "http://localhost:9001",
         DomainsURL:     "http://localhost:8189",
         HTTPAdapterURL: "http://localhost:8008",
@@ -78,7 +78,7 @@ func main() {
 type Config struct {
     CertsURL        string
     HTTPAdapterURL  string
-    ClientsURL      string
+    DevicesURL      string
     UsersURL        string
     GroupsURL       string
     ChannelsURL     string

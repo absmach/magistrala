@@ -183,7 +183,7 @@ trap cleanup EXIT
 
 # --- bring up source DBs + Atom DB, seed the Atom schema ---
 log "Starting source DBs, Atom DB and Atom schema seeder"
-dc up -d --wait domains-db users-db clients-db channels-db groups-db auth-db re-db reports-db atom-db
+dc up -d --wait domains-db users-db devices-db channels-db groups-db auth-db re-db reports-db atom-db
 dc up -d atom
 
 log "Waiting for Atom to apply its schema into the target volume"

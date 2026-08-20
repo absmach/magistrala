@@ -854,7 +854,7 @@ func (m *migrator) insertBlock(ctx context.Context, b permissionBlockPlan) error
 }
 
 func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
-	// Both clients-db and channels-db keep their own connections copy; union and
+	// Both devices-db and channels-db keep their own connections copy; union and
 	// dedup so neither side's view is missed.
 	cliConns, err := readConnections(ctx, m.devicesDB)
 	if err != nil {

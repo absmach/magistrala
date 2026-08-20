@@ -5,7 +5,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v7.35.1
-// source: clients/v1/clients.proto
+// source: devices/v1/devices.proto
 
 package v1
 
@@ -201,27 +201,27 @@ func (*RemoveChannelConnectionsRes) Descriptor() ([]byte, []int) {
 	return file_clients_v1_clients_proto_rawDescGZIP(), []int{3}
 }
 
-type UnsetParentGroupFromClientReq struct {
+type UnsetParentGroupFromDeviceReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ParentGroupId string                 `protobuf:"bytes,1,opt,name=parent_group_id,json=parentGroupId,proto3" json:"parent_group_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UnsetParentGroupFromClientReq) Reset() {
-	*x = UnsetParentGroupFromClientReq{}
+func (x *UnsetParentGroupFromDeviceReq) Reset() {
+	*x = UnsetParentGroupFromDeviceReq{}
 	mi := &file_clients_v1_clients_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UnsetParentGroupFromClientReq) String() string {
+func (x *UnsetParentGroupFromDeviceReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UnsetParentGroupFromClientReq) ProtoMessage() {}
+func (*UnsetParentGroupFromDeviceReq) ProtoMessage() {}
 
-func (x *UnsetParentGroupFromClientReq) ProtoReflect() protoreflect.Message {
+func (x *UnsetParentGroupFromDeviceReq) ProtoReflect() protoreflect.Message {
 	mi := &file_clients_v1_clients_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -233,38 +233,38 @@ func (x *UnsetParentGroupFromClientReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UnsetParentGroupFromClientReq.ProtoReflect.Descriptor instead.
-func (*UnsetParentGroupFromClientReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use UnsetParentGroupFromDeviceReq.ProtoReflect.Descriptor instead.
+func (*UnsetParentGroupFromDeviceReq) Descriptor() ([]byte, []int) {
 	return file_clients_v1_clients_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *UnsetParentGroupFromClientReq) GetParentGroupId() string {
+func (x *UnsetParentGroupFromDeviceReq) GetParentGroupId() string {
 	if x != nil {
 		return x.ParentGroupId
 	}
 	return ""
 }
 
-type UnsetParentGroupFromClientRes struct {
+type UnsetParentGroupFromDeviceRes struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *UnsetParentGroupFromClientRes) Reset() {
-	*x = UnsetParentGroupFromClientRes{}
+func (x *UnsetParentGroupFromDeviceRes) Reset() {
+	*x = UnsetParentGroupFromDeviceRes{}
 	mi := &file_clients_v1_clients_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *UnsetParentGroupFromClientRes) String() string {
+func (x *UnsetParentGroupFromDeviceRes) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*UnsetParentGroupFromClientRes) ProtoMessage() {}
+func (*UnsetParentGroupFromDeviceRes) ProtoMessage() {}
 
-func (x *UnsetParentGroupFromClientRes) ProtoReflect() protoreflect.Message {
+func (x *UnsetParentGroupFromDeviceRes) ProtoReflect() protoreflect.Message {
 	mi := &file_clients_v1_clients_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -276,8 +276,8 @@ func (x *UnsetParentGroupFromClientRes) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use UnsetParentGroupFromClientRes.ProtoReflect.Descriptor instead.
-func (*UnsetParentGroupFromClientRes) Descriptor() ([]byte, []int) {
+// Deprecated: Use UnsetParentGroupFromDeviceRes.ProtoReflect.Descriptor instead.
+func (*UnsetParentGroupFromDeviceRes) Descriptor() ([]byte, []int) {
 	return file_clients_v1_clients_proto_rawDescGZIP(), []int{5}
 }
 
@@ -285,8 +285,8 @@ var File_clients_v1_clients_proto protoreflect.FileDescriptor
 
 const file_clients_v1_clients_proto_rawDesc = "" +
 	"\n" +
-	"\x18clients/v1/clients.proto\x12\n" +
-	"clients.v1\x1a\x16common/v1/common.proto\" \n" +
+	"\x18devices/v1/devices.proto\x12\n" +
+	"devices.v1\x1a\x16common/v1/common.proto\" \n" +
 	"\bAuthnReq\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"@\n" +
 	"\bAuthnRes\x12$\n" +
@@ -296,17 +296,17 @@ const file_clients_v1_clients_proto_rawDesc = "" +
 	"\n" +
 	"channel_id\x18\x01 \x01(\tR\tchannelId\"\x1d\n" +
 	"\x1bRemoveChannelConnectionsRes\"G\n" +
-	"\x1dUnsetParentGroupFromClientReq\x12&\n" +
+	"\x1dUnsetParentGroupFromDeviceReq\x12&\n" +
 	"\x0fparent_group_id\x18\x01 \x01(\tR\rparentGroupId\"\x1f\n" +
-	"\x1dUnsetParentGroupFromClientRes2\x83\x05\n" +
-	"\x0eClientsService\x12<\n" +
-	"\fAuthenticate\x12\x14.clients.v1.AuthnReq\x1a\x14.clients.v1.AuthnRes\"\x00\x12N\n" +
+	"\x1dUnsetParentGroupFromDeviceRes2\x83\x05\n" +
+	"\x0eDevicesService\x12<\n" +
+	"\fAuthenticate\x12\x14.devices.v1.AuthnReq\x1a\x14.devices.v1.AuthnRes\"\x00\x12N\n" +
 	"\x0eRetrieveEntity\x12\x1c.common.v1.RetrieveEntityReq\x1a\x1c.common.v1.RetrieveEntityRes\"\x00\x12T\n" +
 	"\x10RetrieveEntities\x12\x1e.common.v1.RetrieveEntitiesReq\x1a\x1e.common.v1.RetrieveEntitiesRes\"\x00\x12N\n" +
 	"\x0eAddConnections\x12\x1c.common.v1.AddConnectionsReq\x1a\x1c.common.v1.AddConnectionsRes\"\x00\x12W\n" +
 	"\x11RemoveConnections\x12\x1f.common.v1.RemoveConnectionsReq\x1a\x1f.common.v1.RemoveConnectionsRes\"\x00\x12n\n" +
-	"\x18RemoveChannelConnections\x12'.clients.v1.RemoveChannelConnectionsReq\x1a'.clients.v1.RemoveChannelConnectionsRes\"\x00\x12t\n" +
-	"\x1aUnsetParentGroupFromClient\x12).clients.v1.UnsetParentGroupFromClientReq\x1a).clients.v1.UnsetParentGroupFromClientRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/clients/v1b\x06proto3"
+	"\x18RemoveChannelConnections\x12'.devices.v1.RemoveChannelConnectionsReq\x1a'.devices.v1.RemoveChannelConnectionsRes\"\x00\x12t\n" +
+	"\x1aUnsetParentGroupFromDevice\x12).devices.v1.UnsetParentGroupFromDeviceReq\x1a).devices.v1.UnsetParentGroupFromDeviceRes\"\x00B3Z1github.com/absmach/magistrala/api/grpc/devices/v1b\x06proto3"
 
 var (
 	file_clients_v1_clients_proto_rawDescOnce sync.Once
@@ -322,12 +322,12 @@ func file_clients_v1_clients_proto_rawDescGZIP() []byte {
 
 var file_clients_v1_clients_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_clients_v1_clients_proto_goTypes = []any{
-	(*AuthnReq)(nil),                      // 0: clients.v1.AuthnReq
-	(*AuthnRes)(nil),                      // 1: clients.v1.AuthnRes
-	(*RemoveChannelConnectionsReq)(nil),   // 2: clients.v1.RemoveChannelConnectionsReq
-	(*RemoveChannelConnectionsRes)(nil),   // 3: clients.v1.RemoveChannelConnectionsRes
-	(*UnsetParentGroupFromClientReq)(nil), // 4: clients.v1.UnsetParentGroupFromClientReq
-	(*UnsetParentGroupFromClientRes)(nil), // 5: clients.v1.UnsetParentGroupFromClientRes
+	(*AuthnReq)(nil),                      // 0: devices.v1.AuthnReq
+	(*AuthnRes)(nil),                      // 1: devices.v1.AuthnRes
+	(*RemoveChannelConnectionsReq)(nil),   // 2: devices.v1.RemoveChannelConnectionsReq
+	(*RemoveChannelConnectionsRes)(nil),   // 3: devices.v1.RemoveChannelConnectionsRes
+	(*UnsetParentGroupFromDeviceReq)(nil), // 4: devices.v1.UnsetParentGroupFromDeviceReq
+	(*UnsetParentGroupFromDeviceRes)(nil), // 5: devices.v1.UnsetParentGroupFromDeviceRes
 	(*v1.RetrieveEntityReq)(nil),          // 6: common.v1.RetrieveEntityReq
 	(*v1.RetrieveEntitiesReq)(nil),        // 7: common.v1.RetrieveEntitiesReq
 	(*v1.AddConnectionsReq)(nil),          // 8: common.v1.AddConnectionsReq
@@ -338,20 +338,20 @@ var file_clients_v1_clients_proto_goTypes = []any{
 	(*v1.RemoveConnectionsRes)(nil),       // 13: common.v1.RemoveConnectionsRes
 }
 var file_clients_v1_clients_proto_depIdxs = []int32{
-	0,  // 0: clients.v1.ClientsService.Authenticate:input_type -> clients.v1.AuthnReq
-	6,  // 1: clients.v1.ClientsService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
-	7,  // 2: clients.v1.ClientsService.RetrieveEntities:input_type -> common.v1.RetrieveEntitiesReq
-	8,  // 3: clients.v1.ClientsService.AddConnections:input_type -> common.v1.AddConnectionsReq
-	9,  // 4: clients.v1.ClientsService.RemoveConnections:input_type -> common.v1.RemoveConnectionsReq
-	2,  // 5: clients.v1.ClientsService.RemoveChannelConnections:input_type -> clients.v1.RemoveChannelConnectionsReq
-	4,  // 6: clients.v1.ClientsService.UnsetParentGroupFromClient:input_type -> clients.v1.UnsetParentGroupFromClientReq
-	1,  // 7: clients.v1.ClientsService.Authenticate:output_type -> clients.v1.AuthnRes
-	10, // 8: clients.v1.ClientsService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
-	11, // 9: clients.v1.ClientsService.RetrieveEntities:output_type -> common.v1.RetrieveEntitiesRes
-	12, // 10: clients.v1.ClientsService.AddConnections:output_type -> common.v1.AddConnectionsRes
-	13, // 11: clients.v1.ClientsService.RemoveConnections:output_type -> common.v1.RemoveConnectionsRes
-	3,  // 12: clients.v1.ClientsService.RemoveChannelConnections:output_type -> clients.v1.RemoveChannelConnectionsRes
-	5,  // 13: clients.v1.ClientsService.UnsetParentGroupFromClient:output_type -> clients.v1.UnsetParentGroupFromClientRes
+	0,  // 0: devices.v1.DevicesService.Authenticate:input_type -> devices.v1.AuthnReq
+	6,  // 1: devices.v1.DevicesService.RetrieveEntity:input_type -> common.v1.RetrieveEntityReq
+	7,  // 2: devices.v1.DevicesService.RetrieveEntities:input_type -> common.v1.RetrieveEntitiesReq
+	8,  // 3: devices.v1.DevicesService.AddConnections:input_type -> common.v1.AddConnectionsReq
+	9,  // 4: devices.v1.DevicesService.RemoveConnections:input_type -> common.v1.RemoveConnectionsReq
+	2,  // 5: devices.v1.DevicesService.RemoveChannelConnections:input_type -> devices.v1.RemoveChannelConnectionsReq
+	4,  // 6: devices.v1.DevicesService.UnsetParentGroupFromDevice:input_type -> devices.v1.UnsetParentGroupFromDeviceReq
+	1,  // 7: devices.v1.DevicesService.Authenticate:output_type -> devices.v1.AuthnRes
+	10, // 8: devices.v1.DevicesService.RetrieveEntity:output_type -> common.v1.RetrieveEntityRes
+	11, // 9: devices.v1.DevicesService.RetrieveEntities:output_type -> common.v1.RetrieveEntitiesRes
+	12, // 10: devices.v1.DevicesService.AddConnections:output_type -> common.v1.AddConnectionsRes
+	13, // 11: devices.v1.DevicesService.RemoveConnections:output_type -> common.v1.RemoveConnectionsRes
+	3,  // 12: devices.v1.DevicesService.RemoveChannelConnections:output_type -> devices.v1.RemoveChannelConnectionsRes
+	5,  // 13: devices.v1.DevicesService.UnsetParentGroupFromDevice:output_type -> devices.v1.UnsetParentGroupFromDeviceRes
 	7,  // [7:14] is the sub-list for method output_type
 	0,  // [0:7] is the sub-list for method input_type
 	0,  // [0:0] is the sub-list for extension type_name

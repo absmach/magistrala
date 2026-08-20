@@ -6,7 +6,6 @@ package atom
 const (
 	KindUser    = "user"
 	KindDevice  = "device"
-	KindClient  = "client"
 	KindChannel = "channel"
 	KindRule    = "rule"
 	KindAlarm   = "alarm"
@@ -83,7 +82,7 @@ func entityKind(kind string) string {
 	switch kind {
 	case KindUser:
 		return atomKindHuman
-	case KindDevice, KindClient:
+	case KindDevice:
 		return atomKindDevice
 	default:
 		return kind

@@ -27,7 +27,7 @@ func TestDevicesCreateCmd(t *testing.T) {
 	assert.Equal(t, "domain-1", got.TenantID)
 	assert.Equal(t, true, got.Attributes["is_gateway"])
 
-	// The literal wire kind must be "device" — atom.KindDevice/KindClient
+	// The literal wire kind must be "device" — atom.KindDevice/KindDevice
 	// both equal "client" and would be wrong here (see cli/devices.go).
 	require.Len(t, fa.requests, 1)
 	input, _ := fa.requests[0].Variables["input"].(map[string]any)

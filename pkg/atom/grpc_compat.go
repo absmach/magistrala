@@ -10,8 +10,8 @@ import (
 	"strings"
 
 	channelsv1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	clientsv1 "github.com/absmach/magistrala/api/grpc/clients/v1"
 	commonv1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	devicesv1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	domainsv1 "github.com/absmach/magistrala/api/grpc/domains/v1"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
@@ -27,27 +27,27 @@ type devicesCompatAtomClient interface {
 	LoginSharedKey(ctx context.Context, identifier, secret string) (LoginResponse, error)
 }
 
-type AtomClientsCompat struct {
+type AtomDevicesCompat struct {
 	Authn  smqauthn.Authentication
 	Client devicesCompatAtomClient
 }
 
-func NewClientsCompat(authn smqauthn.Authentication, client ...*Client) clientsv1.ClientsServiceClient {
+func NewDevicesCompat(authn smqauthn.Authentication, client ...*Client) devicesv1.DevicesServiceClient {
 	atomClient := NewClient(LoadConfig())
 	if len(client) > 0 && client[0] != nil {
 		atomClient = client[0]
 	}
-	return AtomClientsCompat{Authn: authn, Client: atomClient}
+	return AtomDevicesCompat{Authn: authn, Client: atomClient}
 }
 
-func (c AtomClientsCompat) Authenticate(ctx context.Context, in *clientsv1.AuthnReq, _ ...grpc.CallOption) (*clientsv1.AuthnRes, error) {
+func (c AtomDevicesCompat) Authenticate(ctx context.Context, in *devicesv1.AuthnReq, _ ...grpc.CallOption) (*devicesv1.AuthnRes, error) {
 	token := in.GetToken()
 	if prefix, id, key, err := smqauthn.AuthUnpack(token); err == nil {
 		switch prefix {
 		case smqauthn.BasicAuth:
 			res, loginErr := c.Client.LoginSharedKey(ctx, id, key)
 			if loginErr == nil {
-				return &clientsv1.AuthnRes{Authenticated: true, Id: res.EntityID}, nil
+				return &devicesv1.AuthnRes{Authenticated: true, Id: res.EntityID}, nil
 			}
 			if !isAtomUnauthorized(loginErr) {
 				return nil, loginErr
@@ -63,7 +63,7 @@ func (c AtomClientsCompat) Authenticate(ctx context.Context, in *clientsv1.Authn
 	if err != nil {
 		return nil, err
 	}
-	return &clientsv1.AuthnRes{Authenticated: true, Id: session.UserID}, nil
+	return &devicesv1.AuthnRes{Authenticated: true, Id: session.UserID}, nil
 }
 
 func isAtomUnauthorized(err error) bool {
@@ -71,15 +71,15 @@ func isAtomUnauthorized(err error) bool {
 	return ok && atomErr.StatusCode == http.StatusUnauthorized
 }
 
-func (c AtomClientsCompat) RetrieveEntity(context.Context, *commonv1.RetrieveEntityReq, ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
+func (c AtomDevicesCompat) RetrieveEntity(context.Context, *commonv1.RetrieveEntityReq, ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
-func (c AtomClientsCompat) RetrieveEntities(context.Context, *commonv1.RetrieveEntitiesReq, ...grpc.CallOption) (*commonv1.RetrieveEntitiesRes, error) {
+func (c AtomDevicesCompat) RetrieveEntities(context.Context, *commonv1.RetrieveEntitiesReq, ...grpc.CallOption) (*commonv1.RetrieveEntitiesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
-func (c AtomClientsCompat) AddConnections(ctx context.Context, in *commonv1.AddConnectionsReq, _ ...grpc.CallOption) (*commonv1.AddConnectionsRes, error) {
+func (c AtomDevicesCompat) AddConnections(ctx context.Context, in *commonv1.AddConnectionsReq, _ ...grpc.CallOption) (*commonv1.AddConnectionsRes, error) {
 	prs, err := connectionPolicies(in.GetConnections())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -90,7 +90,7 @@ func (c AtomClientsCompat) AddConnections(ctx context.Context, in *commonv1.AddC
 	return &commonv1.AddConnectionsRes{Ok: true}, nil
 }
 
-func (c AtomClientsCompat) RemoveConnections(ctx context.Context, in *commonv1.RemoveConnectionsReq, _ ...grpc.CallOption) (*commonv1.RemoveConnectionsRes, error) {
+func (c AtomDevicesCompat) RemoveConnections(ctx context.Context, in *commonv1.RemoveConnectionsReq, _ ...grpc.CallOption) (*commonv1.RemoveConnectionsRes, error) {
 	prs, err := connectionPolicies(in.GetConnections())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
@@ -101,11 +101,11 @@ func (c AtomClientsCompat) RemoveConnections(ctx context.Context, in *commonv1.R
 	return &commonv1.RemoveConnectionsRes{Ok: true}, nil
 }
 
-func (c AtomClientsCompat) RemoveChannelConnections(context.Context, *clientsv1.RemoveChannelConnectionsReq, ...grpc.CallOption) (*clientsv1.RemoveChannelConnectionsRes, error) {
+func (c AtomDevicesCompat) RemoveChannelConnections(context.Context, *devicesv1.RemoveChannelConnectionsReq, ...grpc.CallOption) (*devicesv1.RemoveChannelConnectionsRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 
-func (c AtomClientsCompat) UnsetParentGroupFromClient(context.Context, *clientsv1.UnsetParentGroupFromClientReq, ...grpc.CallOption) (*clientsv1.UnsetParentGroupFromClientRes, error) {
+func (c AtomDevicesCompat) UnsetParentGroupFromDevice(context.Context, *devicesv1.UnsetParentGroupFromDeviceReq, ...grpc.CallOption) (*devicesv1.UnsetParentGroupFromDeviceRes, error) {
 	return nil, status.Error(codes.Unimplemented, "atom devices compatibility only supports Authenticate")
 }
 

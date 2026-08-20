@@ -20,7 +20,7 @@ import (
 const (
 	defURL             string = "http://localhost"
 	defUsersURL        string = defURL + ":9002"
-	defCLientsURL      string = defURL + ":9006"
+	defDevicesURL      string = defURL + ":9006"
 	defDomainsURL      string = defURL + ":9003"
 	defChannelsURL     string = defURL + ":9005"
 	defGroupsURL       string = defURL + ":9004"
@@ -33,7 +33,7 @@ const (
 )
 
 type remotes struct {
-	ClientsURL      string `toml:"clients_url"`
+	DevicesURL      string `toml:"devices_url"`
 	UsersURL        string `toml:"users_url"`
 	DomainsURL      string `toml:"domains_url"`
 	ChannelsURL     string `toml:"channels_url"`
@@ -102,7 +102,7 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 	case os.IsNotExist(err):
 		defaultConfig := config{
 			Remotes: remotes{
-				ClientsURL:      defCLientsURL,
+				DevicesURL:      defDevicesURL,
 				UsersURL:        defUsersURL,
 				DomainsURL:      defDomainsURL,
 				ChannelsURL:     defChannelsURL,
@@ -163,8 +163,8 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 		RawOutput = rawOutput || RawOutput
 	}
 
-	if sdkConf.ClientsURL == "" && config.Remotes.ClientsURL != "" {
-		sdkConf.ClientsURL = config.Remotes.ClientsURL
+	if sdkConf.DevicesURL == "" && config.Remotes.DevicesURL != "" {
+		sdkConf.DevicesURL = config.Remotes.DevicesURL
 	}
 
 	if sdkConf.UsersURL == "" && config.Remotes.UsersURL != "" {
@@ -242,7 +242,7 @@ func setConfigValue(key, value string) error {
 	}
 
 	configKeyToField := map[string]any{
-		"clients_url":      &config.Remotes.ClientsURL,
+		"devices_url":      &config.Remotes.DevicesURL,
 		"users_url":        &config.Remotes.UsersURL,
 		"http_adapter_url": &config.Remotes.HTTPAdapterURL,
 		"certs_url":        &config.Remotes.CertsURL,

@@ -63,7 +63,7 @@ that silently cannot be used as intended.
 
 ### `parentId` is dropped
 
-`groupCreateInput` (`client.go:751-760`) builds the create input without
+`groupCreateInput` (`api.go:751-760`) builds the create input without
 `parentId` even though `Group` carries it (`types.go:39`). Nested groups are
 therefore uncreatable from Go. The hierarchy is needed for
 Customer → Site → meters roll-ups via `includeDescendants`.

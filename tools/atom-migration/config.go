@@ -75,7 +75,7 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 	cfg := config{
 		Domains:  mk("MG_DOMAINS"),
 		Users:    mk("MG_USERS"),
-		Devices:  mk("MG_CLIENTS"),
+		Devices:  mk("MG_DEVICES"),
 		Channels: mk("MG_CHANNELS"),
 		Groups:   mk("MG_GROUPS"),
 		Auth:     mk("MG_AUTH"),

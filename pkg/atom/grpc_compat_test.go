@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	clientsv1 "github.com/absmach/magistrala/api/grpc/clients/v1"
 	commonv1 "github.com/absmach/magistrala/api/grpc/common/v1"
+	devicesv1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
 )
@@ -38,7 +38,7 @@ func (f *fakeClientsCompatClient) LoginSharedKey(context.Context, string, string
 	return LoginResponse{}, nil
 }
 
-func TestAtomClientsCompatAuthenticatesBasicSharedKeyWithAtomLogin(t *testing.T) {
+func TestAtomDevicesCompatAuthenticatesBasicSharedKeyWithAtomLogin(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != "/auth/login" {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
@@ -60,10 +60,10 @@ func TestAtomClientsCompatAuthenticatesBasicSharedKeyWithAtomLogin(t *testing.T)
 	defer srv.Close()
 
 	fallback := &recordingAuthn{}
-	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
+	compat := NewDevicesCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
 	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, testDeviceSecret)
 
-	res, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
+	res, err := compat.Authenticate(context.Background(), &devicesv1.AuthnReq{Token: token})
 	if err != nil {
 		t.Fatalf("authenticate basic shared key: %v", err)
 	}
@@ -75,17 +75,17 @@ func TestAtomClientsCompatAuthenticatesBasicSharedKeyWithAtomLogin(t *testing.T)
 	}
 }
 
-func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicSharedKeyRejected(t *testing.T) {
+func TestAtomDevicesCompatFallsBackToBearerTokenWhenBasicSharedKeyRejected(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "invalid credentials", http.StatusUnauthorized)
 	}))
 	defer srv.Close()
 
 	fallback := &recordingAuthn{session: smqauthn.Session{UserID: "entity-2"}}
-	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
+	compat := NewDevicesCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
 	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, "atom_token")
 
-	res, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
+	res, err := compat.Authenticate(context.Background(), &devicesv1.AuthnReq{Token: token})
 	if err != nil {
 		t.Fatalf("authenticate fallback token: %v", err)
 	}
@@ -97,17 +97,17 @@ func TestAtomClientsCompatFallsBackToBearerTokenWhenBasicSharedKeyRejected(t *te
 	}
 }
 
-func TestAtomClientsCompatDoesNotHideAtomSharedKeyLoginFailures(t *testing.T) {
+func TestAtomDevicesCompatDoesNotHideAtomSharedKeyLoginFailures(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		http.Error(w, "atom unavailable", http.StatusInternalServerError)
 	}))
 	defer srv.Close()
 
 	fallback := &recordingAuthn{session: smqauthn.Session{UserID: "entity-2"}}
-	compat := NewClientsCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
+	compat := NewDevicesCompat(fallback, NewClient(Config{URL: srv.URL, Timeout: time.Second}))
 	token := smqauthn.AuthPack(smqauthn.BasicAuth, testEntityID, testDeviceSecret)
 
-	_, err := compat.Authenticate(context.Background(), &clientsv1.AuthnReq{Token: token})
+	_, err := compat.Authenticate(context.Background(), &devicesv1.AuthnReq{Token: token})
 	if err == nil {
 		t.Fatal("expected Atom login failure")
 	}
@@ -116,7 +116,7 @@ func TestAtomClientsCompatDoesNotHideAtomSharedKeyLoginFailures(t *testing.T) {
 	}
 }
 
-func TestAtomClientsCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.T) {
+func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.T) {
 	client := &fakeClientsCompatClient{
 		fakePolicyClient: fakePolicyClient{
 			capIDs: map[string]string{
@@ -169,7 +169,7 @@ func TestAtomClientsCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 			},
 		},
 	}
-	compat := AtomClientsCompat{Client: client}
+	compat := AtomDevicesCompat{Client: client}
 
 	res, err := compat.RemoveConnections(context.Background(), &commonv1.RemoveConnectionsReq{
 		Connections: []*commonv1.Connection{

@@ -11,7 +11,7 @@ import (
 	"testing"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	"github.com/absmach/magistrala/pkg/policies"
@@ -31,14 +31,14 @@ const (
 	e2eSubject = e2eDomain + "_" + e2eUserID
 )
 
-// fakeClientsClient satisfies grpcClientsV1.ClientsServiceClient without implementing every
+// fakeClientsClient satisfies grpcDevicesV1.DevicesServiceClient without implementing every
 // method: only Authenticate is reachable through the request paths exercised below.
 type fakeClientsClient struct {
-	grpcClientsV1.ClientsServiceClient
+	grpcDevicesV1.DevicesServiceClient
 }
 
-func (fakeClientsClient) Authenticate(context.Context, *grpcClientsV1.AuthnReq, ...grpc.CallOption) (*grpcClientsV1.AuthnRes, error) {
-	return &grpcClientsV1.AuthnRes{Authenticated: true, Id: "client-1"}, nil
+func (fakeClientsClient) Authenticate(context.Context, *grpcDevicesV1.AuthnReq, ...grpc.CallOption) (*grpcDevicesV1.AuthnRes, error) {
+	return &grpcDevicesV1.AuthnRes{Authenticated: true, Id: "client-1"}, nil
 }
 
 // fakeChannelsClient stubs the channel-level subscribe check that this change does not alter.

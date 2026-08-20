@@ -5,7 +5,7 @@ package redis
 
 import "github.com/redis/go-redis/v9"
 
-// Connect create new RedisDB client and connect to RedisDB server.
+// Connect creates a new RedisDB handle and connects to the RedisDB server.
 func Connect(url string) (*redis.Client, error) {
 	opts, err := redis.ParseURL(url)
 	if err != nil {

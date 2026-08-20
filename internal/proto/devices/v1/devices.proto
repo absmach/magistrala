@@ -3,16 +3,16 @@
 
 syntax = "proto3";
 
-package clients.v1;
+package devices.v1;
 
 import "common/v1/common.proto";
 
-option go_package = "github.com/absmach/magistrala/api/grpc/clients/v1";
+option go_package = "github.com/absmach/magistrala/api/grpc/devices/v1";
 
-// ClientsService is a service that provides clients
+// DevicesService is a service that provides devices
 // authorization functionalities for Magistrala services.
-service ClientsService {
-  // Authorize checks if the client is authorized to perform
+service DevicesService {
+  // Authorize checks if the device is authorized to perform
   rpc Authenticate(AuthnReq)
     returns (AuthnRes) {}
 
@@ -31,8 +31,8 @@ service ClientsService {
   rpc RemoveChannelConnections(RemoveChannelConnectionsReq)
     returns(RemoveChannelConnectionsRes) {}
 
-  rpc UnsetParentGroupFromClient(UnsetParentGroupFromClientReq)
-    returns(UnsetParentGroupFromClientRes){}
+  rpc UnsetParentGroupFromDevice(UnsetParentGroupFromDeviceReq)
+    returns(UnsetParentGroupFromDeviceRes){}
 }
 
 
@@ -53,10 +53,10 @@ message RemoveChannelConnectionsRes {
 
 }
 
-message UnsetParentGroupFromClientReq {
+message UnsetParentGroupFromDeviceReq {
   string parent_group_id = 1;
 }
 
-message UnsetParentGroupFromClientRes {
+message UnsetParentGroupFromDeviceRes {
 
 }

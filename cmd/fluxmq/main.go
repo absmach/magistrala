@@ -3,7 +3,7 @@
 
 // Package main contains the FluxMQ auth bridge service entry point.
 // This service implements the FluxMQ auth callout server using ConnectRPC,
-// bridging authentication requests to Magistrala's Clients service and
+// bridging authentication requests to Magistrala's Devices service and
 // authorization requests to Magistrala's Channels service.
 package main
 
@@ -108,7 +108,7 @@ func main() {
 	}
 	atomAuthz := atom.NewClient(atomCfg)
 	authn := atomauthn.NewAuthentication()
-	clientsClient := atom.NewClientsCompat(authn, atomAuthz)
+	clientsClient := atom.NewDevicesCompat(authn, atomAuthz)
 	domainsClient := atom.NewDomainsCompat(atomAuthz)
 	channelsClient := atom.NewChannelsCompat(atomAuthz)
 	logger.Info("FluxMQ authentication, authorization, and route resolution configured to use Atom")

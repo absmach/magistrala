@@ -6,6 +6,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/spf13/cobra"
@@ -57,6 +58,9 @@ Examples:
   devices <device_id> disable`,
 
 		Run: func(cmd *cobra.Command, args []string) {
+			if !requireAtomClient(cmd) {
+				return
+			}
 			if len(args) == 0 {
 				logUsageCmd(*cmd, cmd.Use)
 				return
@@ -112,6 +116,11 @@ func handleDeviceCreate(cmd *cobra.Command, args []string) {
 
 	created, err := atomClient.CreateEntity(cmd.Context(), device)
 	if err != nil {
+		logErrorCmd(*cmd, err)
+		return
+	}
+
+	if err := markDeclaredGateways(cmd, created); err != nil {
 		logErrorCmd(*cmd, err)
 		return
 	}
@@ -178,7 +187,46 @@ func handleDeviceUpdate(cmd *cobra.Command, deviceID string, args []string) {
 		return
 	}
 
+	if err := markDeclaredGateways(cmd, updated); err != nil {
+		logErrorCmd(*cmd, err)
+		return
+	}
+
 	logJSONCmd(*cmd, updated)
+}
+
+// markDeclaredGateways flags is_gateway on every id the just-written
+// entity's gateways attribute names, the same way "gateways set" does via
+// SetDeviceGateways -- but this command bypasses SetDeviceGateways
+// entirely, unmarshaling arbitrary Entity JSON and writing it straight
+// through. Left unpatched, devices <id> update '{"attributes":
+// {"gateways":["gw-1"]}}' creates a real relay with gw-1 unflagged: the
+// help text above points operators at exactly this command for gateways,
+// so it is a reachable path back to Q1's cross-tenant leak, not a
+// theoretical one (P3).
+//
+// Runs after the entity write, against the entity the API just returned --
+// not the caller-unmarshaled one -- rather than before it: a device that
+// names itself as one of its own gateways then has its own just-written
+// attributes marked directly, instead of a snapshot taken before this
+// write landed racing it the way SetDeviceGateways's own pre-P2 bug did.
+//
+// A marking failure is returned rather than merely logged (S2): the entity
+// write it follows has already succeeded and cannot be rolled back -- Atom
+// has no cross-entity transactions -- but silently continuing to print a
+// clean success result would leave an operator believing a gateway is
+// trusted when it is not. Callers must treat this the same as any other
+// command failure: report it and stop, not report it and proceed anyway.
+func markDeclaredGateways(cmd *cobra.Command, entity atom.Entity) error {
+	gatewayIDs := atom.GatewaysDeclared(entity)
+	if len(gatewayIDs) == 0 {
+		return nil
+	}
+	if err := atomClient.MarkGateways(cmd.Context(), gatewayIDs); err != nil {
+		return fmt.Errorf("%s was saved, but flagging its declared gateways (%s) failed -- run \"gateways set %s %s\" to retry: %w",
+			entity.ID, strings.Join(gatewayIDs, ","), entity.ID, strings.Join(gatewayIDs, ","), err)
+	}
+	return nil
 }
 
 func handleDeviceDelete(cmd *cobra.Command, deviceID string, args []string) {

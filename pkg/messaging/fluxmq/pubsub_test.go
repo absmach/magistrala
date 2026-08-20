@@ -246,7 +246,7 @@ func TestMessagePropertiesIncludesMetadata(t *testing.T) {
 		headerExternalID: "publisher",
 		headerProtocol:   "mqtt",
 		"client_id":      "publisher",
-		"device_id":      "device",
+		headerDeviceID:   "device",
 		"created":        "1710000000000000123",
 		headerMetadataPrefix + "magistrala.re.trace": `["rule-1"]`,
 	}
@@ -289,6 +289,39 @@ func TestMetadataPropertyRoundTrip(t *testing.T) {
 	}
 	if got.DeviceId != want.DeviceId {
 		t.Fatalf("device_id mismatch: got %q, want %q", got.DeviceId, want.DeviceId)
+	}
+}
+
+func TestDeviceIDPropertyRoundTrip(t *testing.T) {
+	want := &messaging.Message{
+		Publisher: "gateway-1",
+		Protocol:  "mqtt",
+		Payload:   []byte("payload"),
+		DeviceId:  "dev-1",
+	}
+
+	properties := messageProperties(want)
+	headers := make(map[string]any, len(properties))
+	for key, value := range properties {
+		headers[key] = value
+	}
+
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	if err != nil {
+		t.Fatalf("reconstruct message: %v", err)
+	}
+	if got.GetDeviceId() != want.GetDeviceId() {
+		t.Fatalf("device ID mismatch: got %q, want %q", got.GetDeviceId(), want.GetDeviceId())
+	}
+}
+
+func TestMessagePropertiesOmitsDeviceIDWhenUnset(t *testing.T) {
+	msg := &messaging.Message{Publisher: "gateway-1", Protocol: "mqtt"}
+
+	got := messageProperties(msg)
+
+	if _, ok := got[headerDeviceID]; ok {
+		t.Fatalf("expected no %q property when DeviceId is unset, got %#v", headerDeviceID, got)
 	}
 }
 

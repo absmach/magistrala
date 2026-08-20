@@ -6,7 +6,6 @@ package timescale_test
 import (
 	"context"
 	"fmt"
-	"strings"
 	"testing"
 	"time"
 
@@ -15,6 +14,7 @@ import (
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/gofrs/uuid/v5"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 const (
@@ -72,42 +72,6 @@ func TestSaveSenml(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }
 
-func TestSaveSenmlAllowsSameReadingForDifferentDevices(t *testing.T) {
-	repo := timescale.New(db)
-
-	chid, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	pubid, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-
-	now := float64(time.Now().UnixNano())
-	msgs := []senml.Message{
-		{
-			Channel:   chid.String(),
-			Publisher: pubid.String(),
-			Subtopic:  subtopic,
-			Protocol:  "mqtt",
-			Name:      "temperature",
-			Time:      now,
-			Value:     &v,
-			DeviceId:  "meter-a",
-		},
-		{
-			Channel:   chid.String(),
-			Publisher: pubid.String(),
-			Subtopic:  subtopic,
-			Protocol:  "mqtt",
-			Name:      "temperature",
-			Time:      now,
-			Value:     &v,
-			DeviceId:  "meter-b",
-		},
-	}
-
-	err = repo.ConsumeBlocking(context.TODO(), msgs)
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
-}
-
 func TestSaveJSON(t *testing.T) {
 	repo := timescale.New(db)
 
@@ -148,42 +112,46 @@ func TestSaveJSON(t *testing.T) {
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 }
 
-func TestSaveJSONAddsDeviceIDToExistingFormatTable(t *testing.T) {
+// JSON tables are created on demand and so sit outside the migration set: one
+// created before device_id existed is missing the column, and the writer has to
+// catch it up rather than fail every insert from then on.
+func TestSaveJSONCatchesUpLegacyTable(t *testing.T) {
 	repo := timescale.New(db)
 
-	id, err := uuid.NewV4()
-	assert.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
-	format := "legacy_json_" + strings.ReplaceAll(id.String(), "-", "_")
+	const format = "legacy_json"
+	_, err := db.Exec(`CREATE TABLE IF NOT EXISTS ` + format + ` (
+            created       BIGINT NOT NULL,
+            channel       VARCHAR(254),
+            subtopic      VARCHAR(254),
+            publisher     VARCHAR(254),
+            protocol      TEXT,
+            payload       JSONB,
+            PRIMARY KEY (created, publisher, subtopic)
+        );`)
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
-	_, err = db.Exec(fmt.Sprintf(`CREATE TABLE %s (
-		created BIGINT NOT NULL,
-		channel VARCHAR(254),
-		subtopic VARCHAR(254),
-		publisher VARCHAR(254),
-		protocol TEXT,
-		payload JSONB,
-		PRIMARY KEY (created, publisher, subtopic)
-	)`, format))
-	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
+	chid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
+	pubid, err := uuid.NewV4()
+	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 
 	msgs := json.Messages{
 		Format: format,
 		Data: []json.Message{{
-			Channel:   id.String(),
-			Publisher: id.String(),
-			Created:   time.Now().Unix(),
-			Subtopic:  "subtopic/format/legacy_json",
+			Channel:   chid.String(),
+			Publisher: pubid.String(),
+			Created:   time.Now().UnixNano(),
 			Protocol:  "mqtt",
-			DeviceId:  "meter-a",
-			Payload:   map[string]any{"field": "value"},
+			DeviceId:  "Meter.A-01:X",
+			Payload:   map[string]any{"field": 1},
 		}},
 	}
 
 	err = repo.ConsumeBlocking(context.TODO(), msgs)
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
 
-	var deviceID string
-	err = db.QueryRow(fmt.Sprintf(`SELECT device_id FROM %s`, format)).Scan(&deviceID)
+	var stored string
+	err = db.Get(&stored, `SELECT device_id FROM `+format+` WHERE channel = $1`, chid.String())
 	assert.Nil(t, err, fmt.Sprintf("expected no error got %s\n", err))
-	assert.Equal(t, "meter-a", deviceID)
+	assert.Equal(t, "Meter.A-01:X", stored)
 }

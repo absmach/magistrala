@@ -12,9 +12,10 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/absmach/magistrala/pkg/transformers/senml"
 	"github.com/absmach/magistrala/readers"
+	"github.com/absmach/magistrala/readers/pgutil"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jmoiron/sqlx" // required for DB access
+	"github.com/lib/pq"
 )
 
 // Table for SenML messages.
@@ -27,15 +28,19 @@ const (
 var _ readers.MessageRepository = (*timescaleRepository)(nil)
 
 const (
-	messageFieldChannel    = "channel"
-	messageFieldDeviceID   = "device_id"
-	messageFieldDeviceIDs  = "device_ids"
-	messageFieldName       = "name"
-	messageFieldProtocol   = "protocol"
-	messageFieldPublisher  = "publisher"
-	messageFieldPublishers = "publishers"
-	messageFieldSubtopic   = "subtopic"
-	messageFieldValue      = "value"
+	messageFieldChannel      = "channel"
+	messageFieldDeviceID     = "device_id"
+	messageFieldDeviceIDs    = "device_ids"
+	messageFieldScope        = "device_scope"
+	scopeParamPublishers     = "scope_publishers"
+	scopeParamSelfPublishers = "scope_self_publishers"
+	scopeParamDeviceIDs      = "scope_device_ids"
+	messageFieldName         = "name"
+	messageFieldProtocol     = "protocol"
+	messageFieldPublisher    = "publisher"
+	messageFieldPublishers   = "publishers"
+	messageFieldSubtopic     = "subtopic"
+	messageFieldValue        = "value"
 )
 
 type timescaleRepository struct {
@@ -52,8 +57,19 @@ func New(db *sqlx.DB) readers.MessageRepository {
 func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (readers.MessagesPage, error) {
 	format := defTable
 
-	if rpm.Format != "" && rpm.Format != defTable {
-		format = rpm.Format
+	// Postgres folds an unquoted identifier to lower case, and that is
+	// exactly how the writer creates a JSON format's table (its CREATE
+	// TABLE IF NOT EXISTS %s is unquoted too). Quoting format below makes
+	// it match-exact rather than fold, so it has to be lower-cased before
+	// anything compares it against defTable, not after (P4) -- otherwise a
+	// request for the default table spelled in another case (e.g. MESSAGES)
+	// is judged "not the default", picks the JSON code path this table does
+	// not fit, and only then normalizes down to defTable.
+	if rpm.Format != "" {
+		normalized := strings.ToLower(rpm.Format)
+		if normalized != defTable {
+			format = normalized
+		}
 	}
 
 	isSenml := (format == defTable)
@@ -86,8 +102,17 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	where := fmtCondition(rpm)
 
+	// format is a request-supplied table name (readers/api/http/requests.go
+	// restricts it to a bare identifier, but that check lives in a different
+	// package and this call site must not rely on a caller having applied
+	// it). Quoting it is what actually stops it from being interpreted as
+	// anything other than one identifier -- an unquoted %s would let it close
+	// the FROM clause and append arbitrary SQL that every WHERE predicate
+	// MG-08's authorization relies on sits downstream of.
+	quotedFormat := pq.QuoteIdentifier(format)
+
 	var q string
-	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, format, where)
+	totalQuery := fmt.Sprintf(`SELECT COUNT(*) FROM %s WHERE %s;`, quotedFormat, where)
 
 	if isAggregated {
 		q = fmt.Sprintf(`
@@ -108,52 +133,51 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 			%s
 			%s;
 			`,
-			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, aggregateDeviceIDProjection(rpm), format, where, orderClause, pgData)
+			rpm.Interval, timeDivisor, timeDivisor, rpm.Aggregation, "FIRST(device_id, time) AS device_id", quotedFormat, where, orderClause, pgData)
 
-		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, format, where)
+		totalQuery = fmt.Sprintf(`SELECT COUNT(*) FROM (SELECT EXTRACT(epoch FROM time_bucket('%s', to_timestamp(time/%d))) AS time, %s(value) AS value FROM %s WHERE %s GROUP BY 1) AS subquery;`, rpm.Interval, timeDivisor, rpm.Aggregation, quotedFormat, where)
 	} else {
-		q = fmt.Sprintf(`SELECT * FROM %s WHERE %s %s %s;`, format, where, orderClause, pgData)
+		q = fmt.Sprintf(`SELECT * FROM %s WHERE %s %s %s;`, quotedFormat, where, orderClause, pgData)
 	}
 
 	params := map[string]any{
-		messageFieldChannel:    chanID,
-		"limit":                rpm.Limit,
-		"offset":               rpm.Offset,
-		messageFieldSubtopic:   rpm.Subtopic,
-		messageFieldPublisher:  rpm.Publisher,
-		messageFieldPublishers: rpm.Publishers,
-		messageFieldDeviceIDs:  rpm.DeviceIDs,
-		messageFieldName:       rpm.Name,
-		messageFieldProtocol:   rpm.Protocol,
-		messageFieldValue:      rpm.Value,
-		"bool_value":           rpm.BoolValue,
-		"string_value":         rpm.StringValue,
-		"data_value":           rpm.DataValue,
-		"from":                 rpm.From,
-		"to":                   rpm.To,
+		messageFieldChannel:      chanID,
+		"limit":                  rpm.Limit,
+		"offset":                 rpm.Offset,
+		messageFieldSubtopic:     rpm.Subtopic,
+		messageFieldPublisher:    rpm.Publisher,
+		messageFieldPublishers:   rpm.Publishers,
+		messageFieldDeviceIDs:    rpm.DeviceIDs,
+		scopeParamPublishers:     rpm.DeviceScope.Publishers(),
+		scopeParamSelfPublishers: rpm.DeviceScope.SelfPublishers(),
+		scopeParamDeviceIDs:      rpm.DeviceScope.Devices(),
+		messageFieldName:         rpm.Name,
+		messageFieldProtocol:     rpm.Protocol,
+		messageFieldValue:        rpm.Value,
+		"bool_value":             rpm.BoolValue,
+		"string_value":           rpm.StringValue,
+		"data_value":             rpm.DataValue,
+		"from":                   rpm.From,
+		"to":                     rpm.To,
 	}
 
 	rows, err := tr.db.NamedQuery(q, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok {
-			if pgErr.Code == pgerrcode.UndefinedTable {
+		if pgErr, ok := pgutil.PgError(err); ok {
+			switch pgErr.Code {
+			case pgerrcode.UndefinedTable:
 				return readers.MessagesPage{}, nil
-			}
-			if pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-				return emptyPage(rpm), nil
+			case pgerrcode.UndefinedColumn:
+				if pgutil.IsLegacyJSONDeviceFilter(format, defTable, rpm, pgErr) {
+					return pgutil.EmptyPage(rpm), nil
+				}
 			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
 	defer rows.Close()
 
-	page := readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
+	page := pgutil.EmptyPage(rpm)
 
 	switch format {
 	case defTable:
@@ -181,11 +205,10 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 
 	rows, err = tr.db.NamedQuery(totalQuery, params)
 	if err != nil {
-		if preErr, ok := err.(*pgconn.PrepareError); ok {
-			err = preErr.Unwrap()
-		}
-		if pgErr, ok := err.(*pgconn.PgError); ok && pgErr.Code == pgerrcode.UndefinedColumn && len(rpm.DeviceIDs) > 0 && format != defTable {
-			return emptyPage(rpm), nil
+		if pgErr, ok := pgutil.PgError(err); ok {
+			if pgErr.Code == pgerrcode.UndefinedColumn && pgutil.IsLegacyJSONDeviceFilter(format, defTable, rpm, pgErr) {
+				return pgutil.EmptyPage(rpm), nil
+			}
 		}
 		return readers.MessagesPage{}, errors.Wrap(readers.ErrReadMessages, err)
 	}
@@ -202,11 +225,20 @@ func (tr timescaleRepository) ReadAll(chanID string, rpm readers.PageMetadata) (
 	return page, nil
 }
 
-func emptyPage(rpm readers.PageMetadata) readers.MessagesPage {
-	return readers.MessagesPage{
-		PageMetadata: rpm,
-		Messages:     []readers.Message{},
-	}
+// ListGatewayDevices implements readers.MessageRepository. The WHERE clause
+// pgutil.DeviceStats builds leads with channel then publisher, matching this
+// backend's idx_channel_publisher_device_id_time, so this direction does not
+// fall back to a full partition scan.
+func (tr timescaleRepository) ListGatewayDevices(chanID, publisherID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldPublisher, publisherID, messageFieldDeviceID, true, rpm)
+}
+
+// ListDeviceGateways implements readers.MessageRepository. The WHERE clause
+// pgutil.DeviceStats builds leads with channel then device_id, matching the
+// leading columns of MG-06's idx_channel_device_id_name_time, so this
+// direction does not fall back to a full partition scan either.
+func (tr timescaleRepository) ListDeviceGateways(chanID, deviceID string, rpm readers.PageMetadata) (readers.DeviceStatsPage, error) {
+	return pgutil.DeviceStats(tr.db, defTable, chanID, messageFieldDeviceID, deviceID, messageFieldPublisher, false, rpm)
 }
 
 func fmtCondition(rpm readers.PageMetadata) string {
@@ -234,6 +266,19 @@ func fmtCondition(rpm readers.PageMetadata) string {
 		conditions = append(conditions, " publisher = :publisher ")
 	}
 
+	// The authorization scope is an OR of three legs, not AND — see the
+	// matching comment in readers/postgres/messages.go's fmtCondition for the
+	// full reasoning behind each. In short: leg 1 trusts a non-gateway held
+	// device's publisher identity unconditionally, since it is never anyone's
+	// relay (R1); leg 2 is the previous device_id = '' guard, kept for a
+	// held device flagged as a gateway (spec §8 A12) publishing its own
+	// telemetry; leg 3 is the unchanged device_id-based relay match.
+	if _, ok := query[messageFieldScope]; ok {
+		conditions = append(conditions, " ( publisher = ANY(:scope_self_publishers) OR (device_id = '' AND publisher = ANY(:scope_publishers)) OR device_id = ANY(:scope_device_ids) ) ")
+	}
+
+	// Ordered to match idx_channel_device_id_name_time, which sits between the
+	// publisher and name indexes.
 	if _, ok := query[messageFieldDeviceIDs]; ok {
 		conditions = append(conditions, " device_id = ANY(:device_ids) ")
 	}
@@ -285,13 +330,6 @@ func fmtCondition(rpm readers.PageMetadata) string {
 	return strings.Join(conditions, " AND ")
 }
 
-func aggregateDeviceIDProjection(rpm readers.PageMetadata) string {
-	if len(rpm.DeviceIDs) == 1 {
-		return "FIRST(device_id, time) AS device_id"
-	}
-	return "'' AS device_id"
-}
-
 type senmlMessage struct {
 	ID string `db:"id"`
 	senml.Message
@@ -302,9 +340,9 @@ type jsonMessage struct {
 	Created   int64  `db:"created"`
 	Subtopic  string `db:"subtopic"`
 	Publisher string `db:"publisher"`
-	DeviceId  string `db:"device_id"`
 	Protocol  string `db:"protocol"`
 	Payload   []byte `db:"payload"`
+	DeviceID  string `db:"device_id"`
 }
 
 func (msg jsonMessage) toMap() (map[string]any, error) {
@@ -316,8 +354,11 @@ func (msg jsonMessage) toMap() (map[string]any, error) {
 		messageFieldProtocol:  msg.Protocol,
 		"payload":             map[string]any{},
 	}
-	if msg.DeviceId != "" {
-		ret[messageFieldDeviceID] = msg.DeviceId
+	// Mirrors the `omitempty` on senml.Message.DeviceId: rows with no device —
+	// direct publishers, or anything written before this column existed — are
+	// reported exactly as they were before.
+	if msg.DeviceID != "" {
+		ret[messageFieldDeviceID] = msg.DeviceID
 	}
 	pld := make(map[string]any)
 	if err := json.Unmarshal(msg.Payload, &pld); err != nil {

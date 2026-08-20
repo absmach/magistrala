@@ -36,8 +36,12 @@ type Message struct {
 	Created   int64                  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`                  // Unix timestamp in nanoseconds
 	ClientId  string                 `protobuf:"bytes,8,opt,name=client_id,json=clientId,proto3" json:"client_id,omitempty"` // Transport-level client identifier
 	// Internal metadata propagated between services
-	Metadata      map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	DeviceId      string            `protobuf:"bytes,10,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
+	Metadata map[string]string `protobuf:"bytes,9,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Set only when a publish is already known to be about exactly one
+	// device before it reaches the broker. Never inferred from a raw
+	// gateway batch — see pkg/transformers/senml and pkg/transformers/json
+	// for the per-record mechanism a batch actually uses.
+	DeviceId      string `protobuf:"bytes,10,opt,name=device_id,json=deviceId,proto3" json:"device_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

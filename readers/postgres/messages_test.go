@@ -707,32 +707,105 @@ func TestReadJSON(t *testing.T) {
 	}
 }
 
-func TestReadLegacyJSONTableWithDeviceIDsReturnsEmptyPage(t *testing.T) {
+func TestReadLegacyJSONByDeviceID(t *testing.T) {
 	reader := preader.New(db)
+
 	format := fmt.Sprintf("legacy_json_%d", time.Now().UnixNano())
 	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	created := time.Now().Unix()
 
 	_, err := db.Exec(fmt.Sprintf(`CREATE TABLE %s (
-		id UUID,
-		created BIGINT,
-		channel VARCHAR(254),
-		subtopic VARCHAR(254),
+		id        UUID,
+		created   BIGINT,
+		channel   VARCHAR(254),
+		subtopic  VARCHAR(254),
 		publisher VARCHAR(254),
-		protocol TEXT,
-		payload JSONB,
+		protocol  TEXT,
+		payload   JSONB,
 		PRIMARY KEY (id)
 	)`, format))
-	require.NoError(t, err)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
 
-	result, err := reader.ReadAll(chanID, readers.PageMetadata{
-		Format:    format,
-		Offset:    0,
-		Limit:     10,
-		DeviceIDs: []string{"meter-a"},
+	_, err = db.Exec(fmt.Sprintf(`INSERT INTO %s (id, created, channel, subtopic, publisher, protocol, payload)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)`, format), testsutil.GenerateUUID(t), created, chanID, subtopic, pubID, mqttProt, `{"field":1}`)
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	require.Len(t, page.Messages, 1)
+	msg := page.Messages[0].(map[string]any)
+	assert.NotContains(t, msg, "device_id")
+	assert.Equal(t, uint64(1), page.Total)
+
+	page, err = reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: format, DeviceIDs: []string{"missing-device"}})
+	require.Nil(t, err, fmt.Sprintf("expected no error got %s", err))
+	assert.Empty(t, page.Messages)
+	assert.Equal(t, uint64(0), page.Total)
+}
+
+// TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable is a regression test
+// for Q2: quoting format (N2's fix for the SQL injection through it) makes
+// it match-exact, but the writer still creates a JSON format's table with
+// an unquoted CREATE TABLE IF NOT EXISTS %s, which Postgres folds to lower
+// case. A reader asking for the same mixed-case format it was written under
+// must still find it -- format needs the identical folding applied before
+// it is quoted, or the read silently comes back empty instead of erroring.
+func TestReadJSONFormatIsCaseSensitiveLikeItsQuotedTable(t *testing.T) {
+	writer := pwriter.New(db)
+	reader := preader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+	const mixedCaseFormat = "MyFormat"
+
+	err := writer.ConsumeBlocking(context.TODO(), json.Messages{
+		Format: mixedCaseFormat,
+		Data: []json.Message{{
+			Channel:   chanID,
+			Publisher: pubID,
+			Created:   time.Now().UnixMilli(),
+			Subtopic:  "subtopic/mixed/case",
+			Protocol:  "coap",
+			Payload:   json.Payload{"field": 1.0},
+		}},
 	})
-	require.NoError(t, err)
-	assert.Empty(t, result.Messages)
-	assert.Equal(t, uint64(0), result.Total)
+	require.Nil(t, err, "expected no error got %s", err)
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: mixedCaseFormat})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1, "a mixed-case format must read back what the writer wrote under Postgres's own lower-case folding")
+}
+
+// TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison is a
+// regression test for P4: the branch deciding "is format the default senml
+// table" ran on the raw, case-sensitive rpm.Format, so a request for the
+// default table spelled in another case (?format=MESSAGES) was judged "not
+// the default", picked the JSON order-by column the senml table does not
+// have, and only normalized to defTable afterward -- by which point
+// IsLegacyJSONDeviceFilter no longer recognized it as the legacy-JSON case
+// it exists to swallow, so the caller got a 500 instead of ordinary senml
+// rows.
+func TestReadWithUpperCaseDefaultFormatNormalizesBeforeComparison(t *testing.T) {
+	writer := pwriter.New(db)
+	reader := preader.New(db)
+
+	chanID := testsutil.GenerateUUID(t)
+	pubID := testsutil.GenerateUUID(t)
+
+	now := float64(time.Now().Unix())
+	msg := senml.Message{
+		Channel:   chanID,
+		Publisher: pubID,
+		Protocol:  mqttProt,
+		Time:      now,
+		Value:     &v,
+	}
+	require.Nil(t, writer.ConsumeBlocking(context.TODO(), []senml.Message{msg}))
+
+	page, err := reader.ReadAll(chanID, readers.PageMetadata{Offset: 0, Limit: 100, Format: "MESSAGES"})
+	require.Nil(t, err, "expected no error got %s", err)
+	assert.Len(t, page.Messages, 1)
 }
 
 func fromSenml(msg []senml.Message) []readers.Message {

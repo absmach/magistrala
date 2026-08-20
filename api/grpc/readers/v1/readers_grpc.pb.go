@@ -22,7 +22,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ReadersService_ReadMessages_FullMethodName = "/readers.v1.ReadersService/ReadMessages"
+	ReadersService_ReadMessages_FullMethodName       = "/readers.v1.ReadersService/ReadMessages"
+	ReadersService_ListGatewayDevices_FullMethodName = "/readers.v1.ReadersService/ListGatewayDevices"
+	ReadersService_ListDeviceGateways_FullMethodName = "/readers.v1.ReadersService/ListDeviceGateways"
 )
 
 // ReadersServiceClient is the client API for ReadersService service.
@@ -33,6 +35,15 @@ const (
 // readers functionalities for Magistrala services.
 type ReadersServiceClient interface {
 	ReadMessages(ctx context.Context, in *ReadMessagesReq, opts ...grpc.CallOption) (*ReadMessagesRes, error)
+	// ListGatewayDevices returns the devices observed publishing through a
+	// gateway (MG-15): distinct device_id values for messages on channel_id
+	// published by publisher_id, each with its last-seen time and message
+	// count.
+	ListGatewayDevices(ctx context.Context, in *ListGatewayDevicesReq, opts ...grpc.CallOption) (*DeviceStatsRes, error)
+	// ListDeviceGateways returns the gateways observed relaying for a device
+	// (MG-15): distinct publisher values for messages on channel_id carrying
+	// device_id, each with its last-seen time and message count.
+	ListDeviceGateways(ctx context.Context, in *ListDeviceGatewaysReq, opts ...grpc.CallOption) (*DeviceStatsRes, error)
 }
 
 type readersServiceClient struct {
@@ -53,6 +64,26 @@ func (c *readersServiceClient) ReadMessages(ctx context.Context, in *ReadMessage
 	return out, nil
 }
 
+func (c *readersServiceClient) ListGatewayDevices(ctx context.Context, in *ListGatewayDevicesReq, opts ...grpc.CallOption) (*DeviceStatsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeviceStatsRes)
+	err := c.cc.Invoke(ctx, ReadersService_ListGatewayDevices_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *readersServiceClient) ListDeviceGateways(ctx context.Context, in *ListDeviceGatewaysReq, opts ...grpc.CallOption) (*DeviceStatsRes, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DeviceStatsRes)
+	err := c.cc.Invoke(ctx, ReadersService_ListDeviceGateways_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ReadersServiceServer is the server API for ReadersService service.
 // All implementations must embed UnimplementedReadersServiceServer
 // for forward compatibility.
@@ -61,6 +92,15 @@ func (c *readersServiceClient) ReadMessages(ctx context.Context, in *ReadMessage
 // readers functionalities for Magistrala services.
 type ReadersServiceServer interface {
 	ReadMessages(context.Context, *ReadMessagesReq) (*ReadMessagesRes, error)
+	// ListGatewayDevices returns the devices observed publishing through a
+	// gateway (MG-15): distinct device_id values for messages on channel_id
+	// published by publisher_id, each with its last-seen time and message
+	// count.
+	ListGatewayDevices(context.Context, *ListGatewayDevicesReq) (*DeviceStatsRes, error)
+	// ListDeviceGateways returns the gateways observed relaying for a device
+	// (MG-15): distinct publisher values for messages on channel_id carrying
+	// device_id, each with its last-seen time and message count.
+	ListDeviceGateways(context.Context, *ListDeviceGatewaysReq) (*DeviceStatsRes, error)
 	mustEmbedUnimplementedReadersServiceServer()
 }
 
@@ -73,6 +113,12 @@ type UnimplementedReadersServiceServer struct{}
 
 func (UnimplementedReadersServiceServer) ReadMessages(context.Context, *ReadMessagesReq) (*ReadMessagesRes, error) {
 	return nil, status.Error(codes.Unimplemented, "method ReadMessages not implemented")
+}
+func (UnimplementedReadersServiceServer) ListGatewayDevices(context.Context, *ListGatewayDevicesReq) (*DeviceStatsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListGatewayDevices not implemented")
+}
+func (UnimplementedReadersServiceServer) ListDeviceGateways(context.Context, *ListDeviceGatewaysReq) (*DeviceStatsRes, error) {
+	return nil, status.Error(codes.Unimplemented, "method ListDeviceGateways not implemented")
 }
 func (UnimplementedReadersServiceServer) mustEmbedUnimplementedReadersServiceServer() {}
 func (UnimplementedReadersServiceServer) testEmbeddedByValue()                        {}
@@ -113,6 +159,42 @@ func _ReadersService_ReadMessages_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ReadersService_ListGatewayDevices_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListGatewayDevicesReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReadersServiceServer).ListGatewayDevices(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReadersService_ListGatewayDevices_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReadersServiceServer).ListGatewayDevices(ctx, req.(*ListGatewayDevicesReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ReadersService_ListDeviceGateways_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ListDeviceGatewaysReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReadersServiceServer).ListDeviceGateways(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReadersService_ListDeviceGateways_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReadersServiceServer).ListDeviceGateways(ctx, req.(*ListDeviceGatewaysReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ReadersService_ServiceDesc is the grpc.ServiceDesc for ReadersService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -123,6 +205,14 @@ var ReadersService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ReadMessages",
 			Handler:    _ReadersService_ReadMessages_Handler,
+		},
+		{
+			MethodName: "ListGatewayDevices",
+			Handler:    _ReadersService_ListGatewayDevices_Handler,
+		},
+		{
+			MethodName: "ListDeviceGateways",
+			Handler:    _ReadersService_ListDeviceGateways_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

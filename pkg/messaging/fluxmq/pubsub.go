@@ -237,7 +237,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 
 	clientID := stringHeader(headers, "client_id")
 	publisher := stringHeader(headers, headerExternalID)
-	deviceID := stringHeader(headers, "device_id")
+	deviceID := stringHeader(headers, headerDeviceID)
 
 	protocol := stringHeader(headers, headerProtocol)
 	if protocol == "" {
@@ -256,6 +256,12 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 	// metadata is the exception rather than the rule.
 	var metadata map[string]string
 	for key, value := range headers {
+		if key == headerDeviceID {
+			// Already extracted above into deviceID — it shares the
+			// metadata namespace for broker-side forgery protection, not
+			// because it is user metadata.
+			continue
+		}
 		metadataKey, ok := strings.CutPrefix(key, headerMetadataPrefix)
 		if !ok || metadataKey == "" {
 			continue

@@ -94,7 +94,7 @@ const (
 )
 
 const (
-	atomContextDomainID         = "domain_id"
+	atomContextWorkspaceID      = "workspace_id"
 	atomContextLegacyObjectType = "legacy_object_type"
 )
 

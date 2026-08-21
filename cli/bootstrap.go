@@ -12,9 +12,9 @@ import (
 
 var cmdBootstrap = []cobra.Command{
 	{
-		Use:   "create <JSON_config> <domain_id> <user_auth_token>",
+		Use:   "create <JSON_config> <workspace_id> <user_auth_token>",
 		Short: "Create config",
-		Long:  `Create a new bootstrap enrollment in the given domain`,
+		Long:  `Create a new bootstrap enrollment in the given workspace`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -37,7 +37,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get [all | <config_id>] <domain_id> <user_auth_token>",
+		Use:   "get [all | <config_id>] <workspace_id> <user_auth_token>",
 		Short: "Get config",
 		Long: `Get bootstrap enrollment with given ID belonging to the user identified by the given key.
 				all - lists all config
@@ -73,7 +73,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "update [config <JSON_config> | connection <id> <channel_ids> | certs  <id> <client_cert> <client_key> <ca> ] <domain_id> <user_auth_token>",
+		Use:   "update [config <JSON_config> | connection <id> <channel_ids> | certs  <id> <client_cert> <client_key> <ca> ] <workspace_id> <user_auth_token>",
 		Short: "Update config",
 		Long: `Updates editable fields of the provided Config.
 				config <JSON_config> - Updates editable fields of the provided Config.
@@ -127,7 +127,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "remove <config_id> <domain_id> <user_auth_token>",
+		Use:   "remove <config_id> <workspace_id> <user_auth_token>",
 		Short: "Remove config",
 		Long:  `Removes Config with specified key that belongs to the user identified by the given key`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -174,7 +174,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "whitelist <JSON_config> <domain_id> <user_auth_token>",
+		Use:   "whitelist <JSON_config> <workspace_id> <user_auth_token>",
 		Short: "Whitelist config",
 		Long:  `Whitelist updates bootstrap status for the given enrollment`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -198,7 +198,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "profiles [create <JSON_profile> <domain_id> <user_auth_token> | get [all | <profile_id>] <domain_id> <user_auth_token> | update <JSON_profile> <domain_id> <user_auth_token> | remove <profile_id> <domain_id> <user_auth_token>]",
+		Use:   "profiles [create <JSON_profile> <workspace_id> <user_auth_token> | get [all | <profile_id>] <workspace_id> <user_auth_token> | update <JSON_profile> <workspace_id> <user_auth_token> | remove <profile_id> <workspace_id> <user_auth_token>]",
 		Short: "Manage bootstrap profiles",
 		Long: `Manage bootstrap profiles.
 				create <JSON_profile> - Create a bootstrap profile.
@@ -297,7 +297,7 @@ var cmdBootstrap = []cobra.Command{
 		},
 	},
 	{
-		Use:   "enrollments [assign-profile <config_id> <profile_id> <domain_id> <user_auth_token> | bind <config_id> <JSON_bindings> <domain_id> <user_auth_token> | get-bindings <config_id> <domain_id> <user_auth_token> | refresh-bindings <config_id> <domain_id> <user_auth_token>]",
+		Use:   "enrollments [assign-profile <config_id> <profile_id> <workspace_id> <user_auth_token> | bind <config_id> <JSON_bindings> <workspace_id> <user_auth_token> | get-bindings <config_id> <workspace_id> <user_auth_token> | refresh-bindings <config_id> <workspace_id> <user_auth_token>]",
 		Short: "Manage bootstrap enrollment bindings",
 		Long: `Manage bootstrap enrollment profile assignments and bindings.
 				assign-profile <config_id> <profile_id> - Assign a profile to an enrollment.

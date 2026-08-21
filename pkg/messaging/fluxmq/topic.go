@@ -79,7 +79,7 @@ func queueFilter(prefix, topic string) string {
 	return queuePrefix + prefix + "/" + path
 }
 
-func parseMQTTTopic(prefix, topic string) (domainID, channelID, subtopic string, err error) {
+func parseMQTTTopic(prefix, topic string) (workspaceID, channelID, subtopic string, err error) {
 	topic = strings.TrimPrefix(strings.TrimSpace(topic), "/")
 	if !strings.HasPrefix(topic, prefix+"/") {
 		return "", "", "", messaging.ErrMalformedTopic
@@ -88,12 +88,12 @@ func parseMQTTTopic(prefix, topic string) (domainID, channelID, subtopic string,
 	// so ParseSubscribeTopic can parse it.
 	normalized := msgPrefix + "/" + strings.TrimPrefix(topic, prefix+"/")
 
-	domainID, channelID, subtopic, _, err = messaging.ParseSubscribeTopic(normalized)
+	workspaceID, channelID, subtopic, _, err = messaging.ParseSubscribeTopic(normalized)
 	if err != nil {
 		return "", "", "", err
 	}
 
-	return domainID, channelID, subtopic, nil
+	return workspaceID, channelID, subtopic, nil
 }
 
 func stringHeader(headers map[string]any, key string) string {

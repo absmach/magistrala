@@ -37,7 +37,7 @@ func TestPatScopesClientsMigration(t *testing.T) {
 	for _, scope := range scopes {
 		// Simulates scope rows written before ClientsType was removed.
 		_, err = db.ExecContext(ctx, `
-			INSERT INTO pat_scopes (id, pat_id, domain_id, entity_type, operation, entity_id)
+			INSERT INTO pat_scopes (id, pat_id, workspace_id, entity_type, operation, entity_id)
 			VALUES ($1, $2, $3, 'clients', $4, $5)`,
 			scope.id, patID, generateID(t), scope.operation, auth.AnyIDs)
 		require.NoError(t, err)

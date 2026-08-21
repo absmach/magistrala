@@ -40,14 +40,14 @@ const (
 )
 
 type Session struct {
-	Type         TokenType
-	PatID        string
-	UserID       string
-	DomainID     string
-	DomainUserID string
-	SuperAdmin   bool
-	Verified     bool
-	Role         Role
+	Type            TokenType
+	PatID           string
+	UserID          string
+	WorkspaceID     string
+	WorkspaceUserID string
+	SuperAdmin      bool
+	Verified        bool
+	Role            Role
 }
 
 // Authn is magistrala authentication library.
@@ -62,13 +62,13 @@ type AuthPrefix int
 const (
 	Unknown AuthPrefix = iota
 	BasicAuth
-	DomainAuth
+	WorkspaceAuth
 )
 
 var authPrefixStrings = [3]string{
 	"Unknown",
 	"Basic",
-	"Domain",
+	"Workspace",
 }
 
 // String returns the string representation (e.g., "Basic") of the AuthPrefix.

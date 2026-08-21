@@ -55,7 +55,7 @@ func gatewayDevicesReq(publisherID string) deviceViewReq {
 	return deviceViewReq{
 		chanID:    e2eChanID,
 		token:     "token",
-		domain:    e2eDomain,
+		workspace: e2eWorkspace,
 		filterVal: publisherID,
 		pageMeta:  readers.PageMetadata{Limit: 10},
 	}
@@ -65,7 +65,7 @@ func deviceGatewaysReq(deviceID string) deviceViewReq {
 	return deviceViewReq{
 		chanID:    e2eChanID,
 		token:     "token",
-		domain:    e2eDomain,
+		workspace: e2eWorkspace,
 		filterVal: deviceID,
 		pageMeta:  readers.PageMetadata{Limit: 10},
 	}
@@ -287,7 +287,7 @@ func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 	valid := deviceViewReq{
 		chanID:            e2eChanID,
 		token:             "token",
-		domain:            e2eDomain,
+		workspace:         e2eWorkspace,
 		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 		filterIsPublisher: true,
 		pageMeta:          readers.PageMetadata{Limit: 10},
@@ -301,7 +301,7 @@ func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 	serial := deviceViewReq{
 		chanID:    e2eChanID,
 		token:     "token",
-		domain:    e2eDomain,
+		workspace: e2eWorkspace,
 		filterVal: "Meter.A-01:X",
 		pageMeta:  readers.PageMetadata{Limit: 10},
 	}

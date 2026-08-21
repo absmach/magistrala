@@ -13,7 +13,7 @@ import (
 // migrated must exist in Atom, and a sample of reconstructed authz edges
 // (device→channel publish/subscribe) must be present. Read-only.
 func (m *migrator) Verify(ctx context.Context, rep *report) error {
-	domSet, err := m.domainSet(ctx)
+	domSet, err := m.workspaceSet(ctx)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	}
 
 	// 1. tenants
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -64,16 +64,16 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	m.reconcile(rep, "entities.users", userIDs, atomEntities)
 	m.reconcile(rep, "principal_group_members.authenticated_users", userIDs, atomAuthenticatedUsers)
 
-	// 3. device entities (only those with a valid domain were migrated)
+	// 3. device entities (only those with a valid workspace were migrated)
 	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
 	m.reconcile(rep, "entities.devices", idsOf(len(devices), func(i int) (string, bool) {
-		return devices[i].ID, domSet[devices[i].DomainID]
+		return devices[i].ID, domSet[devices[i].WorkspaceID]
 	}), atomEntities)
 	m.reconcile(rep, "credentials.device_shared_keys", idsOf(len(devices), func(i int) (string, bool) {
-		return deviceSharedKeyCredentialID(devices[i].ID), domSet[devices[i].DomainID] && devices[i].Secret.Valid && devices[i].Secret.String != ""
+		return deviceSharedKeyCredentialID(devices[i].ID), domSet[devices[i].WorkspaceID] && devices[i].Secret.Valid && devices[i].Secret.String != ""
 	}), atomSharedKeys)
 
 	pats, err := readPATs(ctx, m.authDB)
@@ -94,7 +94,7 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 		return err
 	}
 	m.reconcile(rep, "resources.channels", idsOf(len(chans), func(i int) (string, bool) {
-		return chans[i].ID, domSet[chans[i].DomainID]
+		return chans[i].ID, domSet[chans[i].WorkspaceID]
 	}), atomResources)
 
 	// 4b. resources: rules, reports
@@ -103,14 +103,14 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 		return err
 	}
 	m.reconcile(rep, "resources.rules", idsOf(len(rules), func(i int) (string, bool) {
-		return rules[i].ID, domSet[rules[i].DomainID]
+		return rules[i].ID, domSet[rules[i].WorkspaceID]
 	}), atomResources)
 	reports, err := readReports(ctx, m.reportsDB)
 	if err != nil {
 		return err
 	}
 	m.reconcile(rep, "resources.reports", idsOf(len(reports), func(i int) (string, bool) {
-		return reports[i].ID, domSet[reports[i].DomainID]
+		return reports[i].ID, domSet[reports[i].WorkspaceID]
 	}), atomResources)
 
 	// 5. object_groups
@@ -119,7 +119,7 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 		return err
 	}
 	m.reconcile(rep, "object_groups", idsOf(len(grps), func(i int) (string, bool) {
-		return grps[i].ID, domSet[grps[i].DomainID]
+		return grps[i].ID, domSet[grps[i].WorkspaceID]
 	}), atomGroups)
 
 	// 6. authz spot-check: every connection must have a device->channel policy.
@@ -129,8 +129,8 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	return nil
 }
 
-func (m *migrator) domainSet(ctx context.Context) (map[string]bool, error) {
-	doms, err := readDomains(ctx, m.domainsDB)
+func (m *migrator) workspaceSet(ctx context.Context) (map[string]bool, error) {
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return nil, err
 	}
@@ -170,20 +170,20 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 	if err != nil {
 		return err
 	}
-	deviceDomain := map[string]string{}
+	deviceWorkspace := map[string]string{}
 	for _, c := range devices {
-		if domSet[c.DomainID] {
-			deviceDomain[c.ID] = c.DomainID
+		if domSet[c.WorkspaceID] {
+			deviceWorkspace[c.ID] = c.WorkspaceID
 		}
 	}
 	channels, err := readChannels(ctx, m.channelsDB)
 	if err != nil {
 		return err
 	}
-	channelDomain := map[string]string{}
+	channelWorkspace := map[string]string{}
 	for _, c := range channels {
-		if domSet[c.DomainID] {
-			channelDomain[c.ID] = c.DomainID
+		if domSet[c.WorkspaceID] {
+			channelWorkspace[c.ID] = c.WorkspaceID
 		}
 	}
 	// Build atom edge set: subject_id | channel(object_id) | action.
@@ -215,12 +215,12 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 		if !ok {
 			continue
 		}
-		chDom, ok := channelDomain[c.ChannelID]
+		chDom, ok := channelWorkspace[c.ChannelID]
 		if !ok {
 			continue
 		}
-		deviceDom, ok := deviceDomain[c.ClientID]
-		if !ok || deviceDom != chDom || c.DomainID != chDom {
+		deviceDom, ok := deviceWorkspace[c.ClientID]
+		if !ok || deviceDom != chDom || c.WorkspaceID != chDom {
 			continue
 		}
 		k := c.ClientID + "|" + c.ChannelID + "|" + act

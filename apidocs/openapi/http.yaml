@@ -27,7 +27,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /m/{domainPrefix}/c/{channelPrefix}:
+  /m/{workspacePrefix}/c/{channelPrefix}:
     post:
       summary: Sends message to the communication channel
       description: |
@@ -36,7 +36,7 @@ paths:
       tags:
         - messages
       parameters:
-        - $ref: "#/components/parameters/domainPrefix"
+        - $ref: "#/components/parameters/workspacePrefix"
         - $ref: "#/components/parameters/channelPrefix"
       requestBody:
         $ref: "#/components/requestBodies/MessageReq"
@@ -132,13 +132,13 @@ components:
         $ref: "#/components/schemas/SenMLRecord"
 
   parameters:
-    domainPrefix:
-      name: domainPrefix
-      description: ID or route of the domain associated with the channel and client.
+    workspacePrefix:
+      name: workspacePrefix
+      description: ID or route of the workspace associated with the channel and client.
       in: path
       schema:
         type: string
-      example: mydomain
+      example: myworkspace
       required: true
     channelPrefix:
       name: channelPrefix

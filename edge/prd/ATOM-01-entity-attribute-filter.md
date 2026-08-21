@@ -20,7 +20,7 @@ Device meter-7 { gateways: ["gw-a", "gw-b"] }        // phase 1: IDs
 "Which devices are declared on this gateway" is therefore exactly an
 `attributesContains` query with JSONB array containment. Without it, the gateway
 view has no declared-device list and the only fallback is fetching every device
-in the domain and filtering client-side — which paginates incorrectly.
+in the workspace and filtering client-side — which paginates incorrectly.
 
 > This PRD was briefly demoted to P2 when an intermediate design stored the
 > relation as a group. A10 reversed that; the justification is restored.
@@ -31,7 +31,7 @@ Callers cannot filter entities or groups by attribute. `resources()` already
 supports this; `entities()` and `groups()` do not, purely because the parameter
 is hardcoded to `None` at the resolver.
 
-Any product storing domain-specific state in `attributes` — which is what
+Any product storing workspace-specific state in `attributes` — which is what
 `attributes` is for — currently has to fetch and filter client-side, which does
 not paginate correctly and does not compose with authorization filtering.
 

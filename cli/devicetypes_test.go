@@ -18,13 +18,13 @@ func TestDeviceTypesCreateCmd(t *testing.T) {
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	deviceTypeJSON := `{"key":"thermostat","name":"Thermostat","description":"wall unit"}`
-	out := executeCommand(t, rootCmd, createCmd, deviceTypeJSON, "domain-1")
+	out := executeCommand(t, rootCmd, createCmd, deviceTypeJSON, "workspace-1")
 
 	var got atom.DeviceType
 	require.NoError(t, json.Unmarshal([]byte(out), &got))
 	assert.Equal(t, "thermostat", got.Key)
 	assert.Equal(t, "Thermostat", got.Name)
-	assert.Equal(t, "domain-1", got.TenantID)
+	assert.Equal(t, "workspace-1", got.TenantID)
 
 	// Atom stores device types as Profiles narrowed by object_kind/kind; a
 	// type created without that narrowing would not come back from a listing.
@@ -32,12 +32,12 @@ func TestDeviceTypesCreateCmd(t *testing.T) {
 	input, _ := fa.requests[0].Variables["input"].(map[string]any)
 	assert.Equal(t, "entity", input["objectKind"])
 	assert.Equal(t, "device", input["kind"])
-	assert.Equal(t, "domain-1", input["tenantId"])
+	assert.Equal(t, "workspace-1", input["tenantId"])
 }
 
 func TestDeviceTypesGetCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Name: "Thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Name: "Thermostat", Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	out := executeCommand(t, rootCmd, "device-type-1", getCmd)
@@ -51,36 +51,36 @@ func TestDeviceTypesGetCmd(t *testing.T) {
 func TestDeviceTypesGetAllCmd(t *testing.T) {
 	fa := newFakeAtom(t)
 	fa.seedDeviceType(
-		atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"},
-		atom.DeviceType{ID: "device-type-2", TenantID: "domain-1", Key: "valve", Status: "active"},
-		atom.DeviceType{ID: "device-type-3", TenantID: "domain-2", Key: "meter", Status: "active"},
+		atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"},
+		atom.DeviceType{ID: "device-type-2", TenantID: "workspace-1", Key: "valve", Status: "active"},
+		atom.DeviceType{ID: "device-type-3", TenantID: "workspace-2", Key: "meter", Status: "active"},
 	)
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
-	out := executeCommand(t, rootCmd, allCmd, getCmd, "domain-1")
+	out := executeCommand(t, rootCmd, allCmd, getCmd, "workspace-1")
 
 	var got atom.DeviceTypeList
 	require.NoError(t, json.Unmarshal([]byte(out), &got))
 	assert.Equal(t, uint64(2), got.Total)
 }
 
-// TestDeviceTypesGetAllRequiresDomain pins the trap: Atom answers a
+// TestDeviceTypesGetAllRequiresWorkspace pins the trap: Atom answers a
 // tenant-less device type listing with every tenant's types, so the CLI must
 // refuse rather than pass the query through.
-func TestDeviceTypesGetAllRequiresDomain(t *testing.T) {
+func TestDeviceTypesGetAllRequiresWorkspace(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	out := executeCommand(t, rootCmd, allCmd, getCmd)
 
 	assert.Contains(t, out, "usage")
-	assert.Empty(t, fa.requests, "no listing may reach Atom without a domain")
+	assert.Empty(t, fa.requests, "no listing may reach Atom without a workspace")
 }
 
 func TestDeviceTypesUpdateCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Name: "Thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Name: "Thermostat", Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	out := executeCommand(t, rootCmd, "device-type-1", updateCmd, `{"name":"Thermostat mk2","status":"deprecated"}`)
@@ -94,7 +94,7 @@ func TestDeviceTypesUpdateCmd(t *testing.T) {
 
 func TestDeviceTypesCreateVersionCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	capabilities := `{"capabilities":{"measurements":[{"name":"temperature","type":"number","unit":"Cel","access":"rw","required":true}],"commands":[{"name":"reboot"}]}}`
@@ -121,7 +121,7 @@ func TestDeviceTypesCreateVersionCmd(t *testing.T) {
 // fixed at creation, so staging a draft is only possible here.
 func TestDeviceTypesCreateVersionDraftCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	body := `{"status":"draft","capabilities":{"measurements":[{"name":"humidity","type":"number"}]}}`
@@ -134,7 +134,7 @@ func TestDeviceTypesCreateVersionDraftCmd(t *testing.T) {
 
 func TestDeviceTypesCreateVersionRejectsBadCapabilityCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	body := `{"capabilities":{"measurements":[{"name":"temperature","type":"tesseract"}]}}`
@@ -147,7 +147,7 @@ func TestDeviceTypesCreateVersionRejectsBadCapabilityCmd(t *testing.T) {
 
 func TestDeviceTypesVersionsCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	fa.seedDeviceTypeVersion(
 		atom.DeviceTypeVersion{ID: "version-2", DeviceTypeID: "device-type-1", Version: 2, Status: "active"},
 		atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "deprecated"},
@@ -165,7 +165,7 @@ func TestDeviceTypesVersionsCmd(t *testing.T) {
 
 func TestDeviceTypesActiveVersionCmd(t *testing.T) {
 	fa := newFakeAtom(t)
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	fa.seedDeviceTypeVersion(
 		atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "active"},
 		atom.DeviceTypeVersion{ID: "version-2", DeviceTypeID: "device-type-1", Version: 2, Status: "active"},
@@ -182,8 +182,8 @@ func TestDeviceTypesActiveVersionCmd(t *testing.T) {
 }
 
 func TestDeviceTypesBindCmd(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	fa.seedDeviceTypeVersion(atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "active"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
@@ -199,8 +199,8 @@ func TestDeviceTypesBindCmd(t *testing.T) {
 // ordinary device update: Atom binds a caller-named version whatever its
 // status, so deprecating one would not stop new bindings without this check.
 func TestDeviceTypesBindRejectsDeprecatedVersion(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	fa.seedDeviceTypeVersion(atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "deprecated"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
@@ -214,8 +214,8 @@ func TestDeviceTypesBindRejectsDeprecatedVersion(t *testing.T) {
 }
 
 func TestDeviceTypesBindRejectsDeprecatedType(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "deprecated"})
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "deprecated"})
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())
 
 	out := executeCommand(t, rootCmd, "device-type-1", bindCmd, "device-1")
@@ -228,8 +228,8 @@ func TestDeviceTypesBindRejectsDeprecatedType(t *testing.T) {
 // reaches the operator with the field and the constraint intact, rather than
 // as the validator's raw sentence.
 func TestDeviceTypesBindSurfacesSchemaViolations(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
-	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "domain-1", Key: "thermostat", Status: "active"})
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"})
+	fa.seedDeviceType(atom.DeviceType{ID: "device-type-1", TenantID: "workspace-1", Key: "thermostat", Status: "active"})
 	fa.seedDeviceTypeVersion(atom.DeviceTypeVersion{ID: "version-1", DeviceTypeID: "device-type-1", Version: 1, Status: "active"})
 	fa.failEntityUpdate("attributes failed profile schema validation: 'temperature' is a required property; Additional properties are not allowed ('colour' was unexpected)")
 	rootCmd := setFlags(cli.NewDeviceTypesCmd())

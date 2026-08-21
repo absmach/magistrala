@@ -33,7 +33,7 @@ func (a AuthorizationCompat) Authorize(ctx context.Context, pr smqauthz.PolicyRe
 		ObjectKind: objectKind,
 		ObjectID:   pr.Object,
 		Context: map[string]any{
-			atomContextDomainID:         pr.Domain,
+			atomContextWorkspaceID:      pr.Workspace,
 			"legacy_object_kind":        pr.ObjectKind,
 			atomContextLegacyObjectType: pr.ObjectType,
 			"legacy_permission":         pr.Permission,
@@ -111,7 +111,7 @@ func legacyResourceKind(objectKind, objectType string) string {
 		return "client"
 	case policies.GroupsKind, policies.NewGroupKind:
 		return atomObjectKindGroup
-	case policies.DomainsKind:
+	case policies.WorkspacesKind:
 		return atomObjectKindTenant
 	default:
 		switch objectType {
@@ -121,7 +121,7 @@ func legacyResourceKind(objectKind, objectType string) string {
 			return "client"
 		case policies.GroupType:
 			return atomObjectKindGroup
-		case policies.DomainType:
+		case policies.WorkspaceType:
 			return atomObjectKindTenant
 		case policies.RulesType:
 			return KindRule

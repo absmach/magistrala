@@ -65,7 +65,7 @@ func MakeHandler(svc certs.Service, authn smqauthn.AuthNMiddleware, logger *slog
 
 	mux := chi.NewRouter()
 
-	mux.Route("/{domainID}", func(r chi.Router) {
+	mux.Route("/{workspaceID}", func(r chi.Router) {
 		r.Route("/certs", func(r chi.Router) {
 			r.Group(func(r chi.Router) {
 				r.Use(authn.Middleware())

@@ -158,7 +158,7 @@ auth:
       role: "service"
       current_secret_file: "/etc/fluxmq/secrets/re-current"
       permissions:
-        # Rule outputs are republished to m.<domain>.c.<channel>.<subtopic>,
+        # Rule outputs are republished to m.<workspace>.c.<channel>.<subtopic>,
         # whose tenant and channel identifiers cannot be enumerated here, so the
         # grant is the topic namespace rather than a list of exact keys. Being a
         # prefix it is also an ordinary topic publish, which the cluster
@@ -205,7 +205,7 @@ auth:
       role: "service"
       current_secret_file: "/etc/fluxmq/secrets/fluxmq-auth-current"
       permissions:
-        # Messages are published to m.<domain>.c.<channel>.<subtopic>, whose
+        # Messages are published to m.<workspace>.c.<channel>.<subtopic>, whose
         # tenant and channel identifiers cannot be enumerated here. It runs no
         # consumer, so it is granted no subscribe.
         publish:

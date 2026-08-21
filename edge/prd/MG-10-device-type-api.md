@@ -44,7 +44,7 @@ Operators should not hand-write JSON Schema. The SDK exposes the declaration;
 
 ```go
 type DeviceType struct {
-    ID, Name, Key, Description, DomainID string
+    ID, Name, Key, Description, WorkspaceID string
     Version      int
     Measurements []Measurement
     Commands     []Command
@@ -59,13 +59,13 @@ the abstraction has failed.
 ### Routes
 
 ```
-POST   /{domainID}/device-types
-GET    /{domainID}/device-types
-GET    /{domainID}/device-types/{id}
-PATCH  /{domainID}/device-types/{id}
-POST   /{domainID}/device-types/{id}/versions
-GET    /{domainID}/device-types/{id}/versions
-GET    /{domainID}/devices?device_type_id={id}
+POST   /{workspaceID}/device-types
+GET    /{workspaceID}/device-types
+GET    /{workspaceID}/device-types/{id}
+PATCH  /{workspaceID}/device-types/{id}
+POST   /{workspaceID}/device-types/{id}/versions
+GET    /{workspaceID}/device-types/{id}/versions
+GET    /{workspaceID}/devices?device_type_id={id}
 ```
 
 Hyphenated to match existing multi-word resource conventions
@@ -111,7 +111,7 @@ would break the concentrator-meter case the capability model exists to allow.
 4. Create version 2; devices on version 1 continue working unchanged.
 5. Deprecate version 1; new bindings are refused, existing ones unaffected.
 6. `GET /devices?device_type_id=` returns exactly the bound devices.
-7. Global (tenant-less) types are listed alongside domain types, if exposed at all
+7. Global (tenant-less) types are listed alongside workspace types, if exposed at all
    — per the MG-02 decision.
 8. Error responses are actionable: field path, expected constraint.
 9. No route, field or doc string calls this a "profile".

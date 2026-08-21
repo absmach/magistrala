@@ -14,7 +14,7 @@ import (
 
 const (
 	usageGatewaysSet     = "cli gateways set <device_id> <gateway_id1,gateway_id2,...>"
-	usageGatewaysDevices = "cli gateways <gateway_id> devices <domain_id>"
+	usageGatewaysDevices = "cli gateways <gateway_id> devices <workspace_id>"
 )
 
 // NewGatewaysCmd is a thin view over devices filtered by is_gateway, not a
@@ -26,11 +26,11 @@ func NewGatewaysCmd() *cobra.Command {
 		Short: "Device-gateway reachability",
 		Long: `Format:
   gateways set <device_id> <gateway_id1,gateway_id2,...>
-  gateways <gateway_id> devices <domain_id>
+  gateways <gateway_id> devices <workspace_id>
 
 Examples:
   gateways set device-123 gw-1,gw-2
-  gateways gw-1 devices domain-1`,
+  gateways gw-1 devices workspace-1`,
 
 		Run: func(cmd *cobra.Command, args []string) {
 			if !requireAtomClient(cmd) {

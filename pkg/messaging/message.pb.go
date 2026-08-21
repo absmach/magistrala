@@ -28,7 +28,7 @@ const (
 type Message struct {
 	state     protoimpl.MessageState `protogen:"open.v1"`
 	Channel   string                 `protobuf:"bytes,1,opt,name=channel,proto3" json:"channel,omitempty"`
-	Domain    string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
+	Workspace string                 `protobuf:"bytes,2,opt,name=workspace,proto3" json:"workspace,omitempty"`
 	Subtopic  string                 `protobuf:"bytes,3,opt,name=subtopic,proto3" json:"subtopic,omitempty"`
 	Publisher string                 `protobuf:"bytes,4,opt,name=publisher,proto3" json:"publisher,omitempty"`
 	Protocol  string                 `protobuf:"bytes,5,opt,name=protocol,proto3" json:"protocol,omitempty"`
@@ -83,9 +83,9 @@ func (x *Message) GetChannel() string {
 	return ""
 }
 
-func (x *Message) GetDomain() string {
+func (x *Message) GetWorkspace() string {
 	if x != nil {
-		return x.Domain
+		return x.Workspace
 	}
 	return ""
 }
@@ -150,10 +150,10 @@ var File_pkg_messaging_message_proto protoreflect.FileDescriptor
 
 const file_pkg_messaging_message_proto_rawDesc = "" +
 	"\n" +
-	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\xfa\x02\n" +
+	"\x1bpkg/messaging/message.proto\x12\tmessaging\"\x80\x03\n" +
 	"\aMessage\x12\x18\n" +
-	"\achannel\x18\x01 \x01(\tR\achannel\x12\x16\n" +
-	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x1a\n" +
+	"\achannel\x18\x01 \x01(\tR\achannel\x12\x1c\n" +
+	"\tworkspace\x18\x02 \x01(\tR\tworkspace\x12\x1a\n" +
 	"\bsubtopic\x18\x03 \x01(\tR\bsubtopic\x12\x1c\n" +
 	"\tpublisher\x18\x04 \x01(\tR\tpublisher\x12\x1a\n" +
 	"\bprotocol\x18\x05 \x01(\tR\bprotocol\x12\x18\n" +

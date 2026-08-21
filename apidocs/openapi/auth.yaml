@@ -493,15 +493,15 @@ components:
     Scope:
       type: object
       properties:
-        optional_domain_id:
+        optional_workspace_id:
           type: string
           format: uuid
           example: "bb7edb32-2eac-4aad-aebe-ed96fe073879"
-          description: Optional domain ID for the scope
+          description: Optional workspace ID for the scope
         entity_type:
           type: string
           enum:
-            [groups, channels, clients, domains, users, dashboards, messages]
+            [groups, channels, clients, workspaces, users, dashboards, messages]
           example: "groups"
           description: Type of entity the scope applies to
         entity_id:
@@ -588,9 +588,9 @@ components:
         type: string
         format: uuid
       required: true
-    DomainID:
-      name: domainID
-      description: Unique domain identifier.
+    WorkspaceID:
+      name: workspaceID
+      description: Unique workspace identifier.
       in: path
       schema:
         type: string
@@ -599,21 +599,21 @@ components:
       example: bb7edb32-2eac-4aad-aebe-ed96fe073879
     Status:
       name: status
-      description: Domain status.
+      description: Workspace status.
       in: query
       schema:
         type: string
         default: enabled
       required: false
       example: enabled
-    DomainName:
+    WorkspaceName:
       name: name
-      description: Domain's name.
+      description: Workspace's name.
       in: query
       schema:
         type: string
       required: false
-      example: "domainName"
+      example: "workspaceName"
     Permission:
       name: permission
       description: permission.

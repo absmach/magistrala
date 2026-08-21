@@ -62,7 +62,7 @@ func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Au
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		scope, noAccess, err := authzDeviceView(ctx, req.chanID, req.domain, req.token, req.key, authn, clients, channels, readAuthz, nil, nil)
+		scope, noAccess, err := authzDeviceView(ctx, req.chanID, req.workspace, req.token, req.key, authn, clients, channels, readAuthz, nil, nil)
 		if err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}
@@ -105,7 +105,7 @@ func listDeviceGatewaysEndpoint(svc readers.MessageRepository, authn smqauthn.Au
 			return nil, errors.Wrap(apiutil.ErrValidation, err)
 		}
 
-		_, noAccess, err := authzDeviceView(ctx, req.chanID, req.domain, req.token, req.key, authn, clients, channels, readAuthz, nil, []string{req.filterVal})
+		_, noAccess, err := authzDeviceView(ctx, req.chanID, req.workspace, req.token, req.key, authn, clients, channels, readAuthz, nil, []string{req.filterVal})
 		if err != nil {
 			return nil, errors.Wrap(svcerr.ErrAuthorization, err)
 		}

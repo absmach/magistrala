@@ -8,10 +8,10 @@ import (
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
-	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
 	grpcGroupsV1 "github.com/absmach/magistrala/api/grpc/groups/v1"
 	grpcTokenV1 "github.com/absmach/magistrala/api/grpc/token/v1"
 	grpcUsersV1 "github.com/absmach/magistrala/api/grpc/users/v1"
+	grpcWorkspacesV1 "github.com/absmach/magistrala/api/grpc/workspaces/v1"
 	tokengrpc "github.com/absmach/magistrala/auth/api/grpc/token"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
@@ -39,18 +39,18 @@ func SetupTokenClient(ctx context.Context, cfg Config) (grpcTokenV1.TokenService
 	return tokengrpc.NewTokenClient(client.Connection(), cfg.Timeout), client, nil
 }
 
-// SetupDomiansClient loads domains gRPC configuration and creates a new domains gRPC client.
+// SetupDomiansClient loads workspaces gRPC configuration and creates a new workspaces gRPC client.
 //
 // For example:
 //
-// domainsClient, domainsHandler, err := grpcclient.SetupDomainsClient(ctx, grpcclient.Config{}).
-func SetupDomainsClient(ctx context.Context, cfg Config) (grpcDomainsV1.DomainsServiceClient, Handler, error) {
+// workspacesClient, workspacesHandler, err := grpcclient.SetupWorkspacesClient(ctx, grpcclient.Config{}).
+func SetupWorkspacesClient(ctx context.Context, cfg Config) (grpcWorkspacesV1.WorkspacesServiceClient, Handler, error) {
 	client, err := NewHandler(cfg)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return grpcDomainsV1.NewDomainsServiceClient(client.Connection()), client, nil
+	return grpcWorkspacesV1.NewWorkspacesServiceClient(client.Connection()), client, nil
 }
 
 // SetupDevicesClient loads devices gRPC configuration and creates new devices gRPC client.

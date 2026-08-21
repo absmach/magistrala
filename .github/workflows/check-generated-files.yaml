@@ -61,7 +61,7 @@ jobs:
               - "clients/clients.go"
               - "pkg/authz.go"
               - "pkg/authn.go"
-              - "auth/domains.go"
+              - "auth/workspaces.go"
               - "auth/keys.go"
               - "auth/service.go"
               - "pkg/events/events.go"

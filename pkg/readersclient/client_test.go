@@ -51,8 +51,8 @@ func (stub *readersClientStub) ListDeviceGateways(ctx context.Context, req *grpc
 
 func TestReadMessages(t *testing.T) {
 	req := &grpcReadersV1.ReadMessagesReq{
-		ChannelId: "channel",
-		DomainId:  "domain",
+		ChannelId:   "channel",
+		WorkspaceId: "workspace",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Publishers: []string{"publisher-1", "publisher-2"},
 			Order:      "time",
@@ -99,7 +99,7 @@ func TestReadMessagesError(t *testing.T) {
 func TestListGatewayDevices(t *testing.T) {
 	req := &grpcReadersV1.ListGatewayDevicesReq{
 		ChannelId:   "channel",
-		DomainId:    "domain",
+		WorkspaceId: "workspace",
 		PublisherId: "publisher-1",
 	}
 	expected := &grpcReadersV1.DeviceStatsRes{
@@ -136,9 +136,9 @@ func TestListGatewayDevicesError(t *testing.T) {
 
 func TestListDeviceGateways(t *testing.T) {
 	req := &grpcReadersV1.ListDeviceGatewaysReq{
-		ChannelId: "channel",
-		DomainId:  "domain",
-		DeviceId:  "Meter.A-01:X",
+		ChannelId:   "channel",
+		WorkspaceId: "workspace",
+		DeviceId:    "Meter.A-01:X",
 	}
 	expected := &grpcReadersV1.DeviceStatsRes{
 		Total: 1,

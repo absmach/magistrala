@@ -61,7 +61,7 @@ P5                           └──► UI-01 ─┴──► UI-02
 **Orderings that must not be swapped:**
 - **ATOM-01 before MG-09** — the gateway→devices reverse lookup is an
   `attributesContains` query; without it, listing a gateway's devices means
-  fetching every device in the domain.
+  fetching every device in the workspace.
 - **ATOM-03 before UI-03 claims to revoke** — with multi-group membership,
   removing a device from one group does not necessarily end access. Without the
   reverse lookup the UI can only honestly say "removed from this group".
@@ -111,7 +111,7 @@ the primitives the model needs. All three are additive.
 | [MG-02](./MG-02-device-type-api.md)     | MG   | Device Type (Atom Profile) API              | —            | Draft  |
 | [MG-03](./MG-03-group-device.md)        | MG   | Group membership, hierarchy and group kinds | ATOM-04      | Draft  |
 | [MG-04](./MG-04-group-scoped-grants.md) | MG   | Group-scoped permission blocks              | MG-01, MG-03 | Draft  |
-| [MG-14](./MG-14-atom-event-consumer.md) | MG   | Consume Atom domain events                  | —            | Draft  |
+| [MG-14](./MG-14-atom-event-consumer.md) | MG   | Consume Atom workspace events                  | —            | Draft  |
 
 MG-14 is independent of the rest of P1 and can start immediately. MG-08 ships
 TTL-only without it, so land it first if you want its authorized-set cache

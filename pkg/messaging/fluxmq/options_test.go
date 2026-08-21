@@ -76,8 +76,8 @@ func TestInternalMetadataRequiresMTLS(t *testing.T) {
 
 func TestMQTTTopicToWireTopic(t *testing.T) {
 	for input, want := range map[string]string{
-		"m/domain/c/channel/subtopic":  "m.domain.c.channel.subtopic",
-		"m/domain/c/channel/sub.topic": "m.domain.c.channel.sub%2Etopic",
+		"m/workspace/c/channel/subtopic":  "m.workspace.c.channel.subtopic",
+		"m/workspace/c/channel/sub.topic": "m.workspace.c.channel.sub%2Etopic",
 	} {
 		if got := mqttTopicToWireTopic(input); got != want {
 			t.Fatalf("wire topic = %q, want %q", got, want)

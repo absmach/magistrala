@@ -16,8 +16,8 @@ var (
 	// ErrAuthorization indicates failure occurred while authorizing the entity.
 	ErrAuthorization = errors.NewAuthZError("failed to perform authorization over the entity")
 
-	// ErrDomainAuthorization indicates failure occurred while authorizing the domain.
-	ErrDomainAuthorization = errors.NewAuthZError("failed to perform authorization over the domain")
+	// ErrWorkspaceAuthorization indicates failure occurred while authorizing the workspace.
+	ErrWorkspaceAuthorization = errors.NewAuthZError("failed to perform authorization over the workspace")
 
 	// ErrUnauthorizedPAT indicates failure occurred while authorizing PAT.
 	ErrUnauthorizedPAT = errors.NewAuthZError("failed to authorize PAT")

@@ -71,13 +71,13 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 		// (invalidateDeviceInfo) are now separate, so an entity.create /
 		// entity.update event only has to refresh the lightweight
 		// translation cache rather than recompute every subject's
-		// authorized set in the domain (N3).
+		// authorized set in the workspace (N3).
 		invalidation.Register(atomevents.FamilyTranslation, invalidatorFunc(readAuthz.invalidateDeviceInfo))
 		invalidation.Register(atomevents.FamilyAuthorizedSet, readAuthz)
 	}
 
 	mux := chi.NewRouter()
-	mux.Get("/{domainID}/channels/{chanID}/messages", kithttp.NewServer(
+	mux.Get("/{workspaceID}/channels/{chanID}/messages", kithttp.NewServer(
 		listMessagesEndpoint(svc, authn, clients, channels, readAuthz),
 		decodeList,
 		encodeResponse,
@@ -103,13 +103,13 @@ func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, c
 	// has to know to apply. Keeping both directions consistent rather than
 	// only routing device_id this way avoids that asymmetry looking
 	// accidental.
-	mux.Get("/{domainID}/channels/{chanID}/devices", kithttp.NewServer(
+	mux.Get("/{workspaceID}/channels/{chanID}/devices", kithttp.NewServer(
 		listGatewayDevicesEndpoint(svc, authn, clients, channels, readAuthz),
 		decodeGatewayDevices,
 		encodeResponse,
 		opts...,
 	).ServeHTTP)
-	mux.Get("/{domainID}/channels/{chanID}/publishers", kithttp.NewServer(
+	mux.Get("/{workspaceID}/channels/{chanID}/publishers", kithttp.NewServer(
 		listDeviceGatewaysEndpoint(svc, authn, clients, channels, readAuthz),
 		decodeDeviceGateways,
 		encodeResponse,
@@ -220,10 +220,10 @@ func decodeList(_ context.Context, r *http.Request) (any, error) {
 	}
 
 	req := listMessagesReq{
-		chanID: chi.URLParam(r, "chanID"),
-		token:  apiutil.ExtractBearerToken(r),
-		domain: chi.URLParam(r, "domainID"),
-		key:    apiutil.ExtractClientSecret(r),
+		chanID:    chi.URLParam(r, "chanID"),
+		token:     apiutil.ExtractBearerToken(r),
+		workspace: chi.URLParam(r, "workspaceID"),
+		key:       apiutil.ExtractClientSecret(r),
 		pageMeta: readers.PageMetadata{
 			Offset:      offset,
 			Limit:       limit,
@@ -293,7 +293,7 @@ func decodeDeviceView(r *http.Request, idKey string, filterIsPublisher bool) (an
 	req := deviceViewReq{
 		chanID:            chi.URLParam(r, "chanID"),
 		token:             apiutil.ExtractBearerToken(r),
-		domain:            chi.URLParam(r, "domainID"),
+		workspace:         chi.URLParam(r, "workspaceID"),
 		key:               apiutil.ExtractClientSecret(r),
 		filterVal:         filterVal,
 		filterIsPublisher: filterIsPublisher,
@@ -352,11 +352,11 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 // set. noAccess means the caller may read nothing on this channel, so the response must be empty
 // rather than unfiltered.
 func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
-	clientID, clientType, superAdmin, err := authenticate(ctx, req.token, req.key, req.domain, authn, clients)
+	clientID, clientType, superAdmin, err := authenticate(ctx, req.token, req.key, req.workspace, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
-	if err := authorize(ctx, clientID, clientType, req.chanID, req.domain, channels); err != nil {
+	if err := authorize(ctx, clientID, clientType, req.chanID, req.workspace, channels); err != nil {
 		return readers.PageMetadata{}, false, err
 	}
 
@@ -364,12 +364,12 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 		return req.pageMeta, false, nil
 	}
 
-	// Per-device grants only exist for domain users, not for clients authenticating with a secret key.
+	// Per-device grants only exist for workspace users, not for clients authenticating with a secret key.
 	if clientType != policies.UserType {
 		return req.pageMeta, false, nil
 	}
 
-	scope, err := readAuthz.resolve(ctx, req.domain, clientID, requestedPublishers(req.pageMeta), requestedDeviceIDs(req.pageMeta))
+	scope, err := readAuthz.resolve(ctx, req.workspace, clientID, requestedPublishers(req.pageMeta), requestedDeviceIDs(req.pageMeta))
 	if err != nil {
 		return readers.PageMetadata{}, false, err
 	}
@@ -385,7 +385,7 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, token, key, domain string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
+func authenticate(ctx context.Context, token, key, workspace string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
 	switch {
 	case token != "":
 		session, err := authn.Authenticate(ctx, token)
@@ -396,10 +396,10 @@ func authenticate(ctx context.Context, token, key, domain string, authn smqauthn
 			return session.UserID, policies.UserType, true, nil
 		}
 
-		return policies.EncodeDomainUserID(domain, session.UserID), policies.UserType, false, nil
+		return policies.EncodeWorkspaceUserID(workspace, session.UserID), policies.UserType, false, nil
 	case key != "":
 		res, err := clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{
-			Token: smqauthn.AuthPack(smqauthn.DomainAuth, domain, key),
+			Token: smqauthn.AuthPack(smqauthn.WorkspaceAuth, workspace, key),
 		})
 		if err != nil {
 			return "", "", false, err
@@ -413,13 +413,13 @@ func authenticate(ctx context.Context, token, key, domain string, authn smqauthn
 	}
 }
 
-func authorize(ctx context.Context, clientID, clientType, chanID, domain string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
+func authorize(ctx context.Context, clientID, clientType, chanID, workspace string, channels grpcChannelsV1.ChannelsServiceClient) (err error) {
 	res, err := channels.Authorize(ctx, &grpcChannelsV1.AuthzReq{
-		ClientId:   clientID,
-		ClientType: clientType,
-		Type:       uint32(connections.Subscribe),
-		ChannelId:  chanID,
-		DomainId:   domain,
+		ClientId:    clientID,
+		ClientType:  clientType,
+		Type:        uint32(connections.Subscribe),
+		ChannelId:   chanID,
+		WorkspaceId: workspace,
 	})
 	if err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)

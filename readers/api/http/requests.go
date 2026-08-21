@@ -30,11 +30,11 @@ var validAggregations = []string{"MAX", "MIN", "AVG", "SUM", "COUNT"}
 var validFormat = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]{0,62}$`)
 
 type listMessagesReq struct {
-	chanID   string
-	token    string
-	domain   string
-	key      string
-	pageMeta readers.PageMetadata
+	chanID    string
+	token     string
+	workspace string
+	key       string
+	pageMeta  readers.PageMetadata
 }
 
 func (req listMessagesReq) validate() error {
@@ -104,7 +104,7 @@ func (req listMessagesReq) validate() error {
 type deviceViewReq struct {
 	chanID            string
 	token             string
-	domain            string
+	workspace         string
 	key               string
 	filterVal         string
 	filterIsPublisher bool

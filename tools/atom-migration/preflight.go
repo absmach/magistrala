@@ -18,7 +18,7 @@ func (m *migrator) preflight(ctx context.Context, rep *report) error {
 		m.pfTenantNames,
 		m.pfTenantAlias,
 		m.pfEntityResourceAlias,
-		m.pfClientNames,
+		m.pfDeviceNames,
 		m.pfGroupNames,
 		m.pfOrphans,
 	}
@@ -158,7 +158,7 @@ func (m *migrator) pfTenantAlias(ctx context.Context, rep *report) error {
 // (case-folded). Collision within a domain => block (would violate Atom's unique
 // index mid-apply). Invalid shape => warn (dropped).
 func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error {
-	clients, err := readClients(ctx, m.clientsDB)
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
@@ -168,19 +168,19 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 	}
 	// key = domain|alias
 	cKeys := []string{}
-	for _, c := range clients {
+	for _, c := range devices {
 		if !c.Identity.Valid || c.Identity.String == "" {
 			continue
 		}
 		a, ok := normalizeAlias(c.Identity.String)
 		if !ok {
-			rep.warnf("client %s alias %q invalid slug -> dropped", c.ID, c.Identity.String)
+			rep.warnf("device %s alias %q invalid slug -> dropped", c.ID, c.Identity.String)
 			continue
 		}
 		cKeys = append(cKeys, c.DomainID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return cKeys }) {
-		rep.warnf("device alias collision (%s) across %d clients in one tenant -> duplicates auto-suffixed", k, n)
+		rep.warnf("device alias collision (%s) across %d devices in one tenant -> duplicates auto-suffixed", k, n)
 	}
 	rKeys := []string{}
 	for _, ch := range chans {
@@ -200,25 +200,25 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 	return nil
 }
 
-// pfClientNames: device entities are unique on (name, tenant_id). Magistrala
+// pfDeviceNames: device entities are unique on (name, tenant_id). Magistrala
 // dropped the (domain_id, name) unique constraint, so same-domain name dups are
 // possible and would break the Atom insert.
-func (m *migrator) pfClientNames(ctx context.Context, rep *report) error {
-	clients, err := readClients(ctx, m.clientsDB)
+func (m *migrator) pfDeviceNames(ctx context.Context, rep *report) error {
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
 	keys := []string{}
-	for _, c := range clients {
+	for _, c := range devices {
 		keys = append(keys, c.DomainID+"|"+firstNonEmpty(c.Name.String, c.ID))
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
-		rep.warnf("device name collision (%s) across %d clients in one tenant -> duplicates auto-renamed", k, n)
+		rep.warnf("device name collision (%s) across %d devices in one tenant -> duplicates auto-renamed", k, n)
 	}
 	return nil
 }
 
-// pfOrphans: clients/channels/groups whose domain_id has no surviving domain are
+// pfOrphans: devices/channels/groups whose domain_id has no surviving domain are
 // skipped during load. Advisory only.
 func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	doms, err := readDomains(ctx, m.domainsDB)
@@ -240,17 +240,17 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 			rep.warnf("%d %s reference a missing domain -> will be skipped", n, label)
 		}
 	}
-	clients, err := readClients(ctx, m.clientsDB)
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
 	count(func() []string {
-		out := make([]string, len(clients))
-		for i, c := range clients {
+		out := make([]string, len(devices))
+		for i, c := range devices {
 			out[i] = c.DomainID
 		}
 		return out
-	}, "clients")
+	}, "devices")
 	chans, err := readChannels(ctx, m.channelsDB)
 	if err != nil {
 		return err

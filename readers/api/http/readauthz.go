@@ -12,7 +12,7 @@ import (
 	"time"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	"github.com/absmach/magistrala/pkg/atom"
 	atomevents "github.com/absmach/magistrala/pkg/atom/events"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
@@ -582,7 +582,7 @@ func (a *readAuthorizer) isDomainAdmin(ctx context.Context, domain, subject stri
 // caller must hold at least one device grant (otherwise noAccess, reported as
 // an empty page, never an error), but never needs to hold a grant on the
 // gateway client itself.
-func authzDeviceView(ctx context.Context, chanID, domain, token, key string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
+func authzDeviceView(ctx context.Context, chanID, domain, token, key string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer, requestedPublishers, requestedDeviceIDs []string) (scope *readers.DeviceScope, noAccess bool, err error) {
 	clientID, clientType, superAdmin, err := authenticate(ctx, token, key, domain, authn, clients)
 	if err != nil {
 		return nil, false, err

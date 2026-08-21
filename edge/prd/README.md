@@ -89,7 +89,7 @@ inherit.
 | [ATOM-02](./ATOM-02-authorized-object-ids-filters.md) | Atom | Expose scoping filters on `authorizedObjectIds`         | —          | Draft  |
 | [ATOM-04](./ATOM-04-many-to-many-group-membership.md) | Atom | Many-to-many object group membership                    | —          | Draft  |
 | [ATOM-06](./ATOM-06-entity-external-id.md)            | Atom | Entity `external_id`, unique per tenant                 | —          | Draft  |
-| [MG-01](./MG-01-atom-policy-client-fixes.md)          | MG   | Fix Atom policy client defects                          | —          | Draft  |
+| [MG-01](./MG-01-atom-policy-device-fixes.md)          | MG   | Fix Atom policy device defects                          | —          | Draft  |
 
 ATOM-04 is the largest of the Atom items and the only one touching the
 authorization evaluation path. ATOM-01 and ATOM-02 are parameter plumbing —
@@ -108,8 +108,8 @@ the primitives the model needs. All three are additive.
 
 | PRD                                     | Repo | Title                                       | Depends on   | Status |
 | --------------------------------------- | ---- | ------------------------------------------- | ------------ | ------ |
-| [MG-02](./MG-02-device-type-client.md)  | MG   | Device Type (Atom Profile) client API       | —            | Draft  |
-| [MG-03](./MG-03-group-client.md)        | MG   | Group membership, hierarchy and group kinds | ATOM-04      | Draft  |
+| [MG-02](./MG-02-device-type-api.md)     | MG   | Device Type (Atom Profile) API              | —            | Draft  |
+| [MG-03](./MG-03-group-device.md)        | MG   | Group membership, hierarchy and group kinds | ATOM-04      | Draft  |
 | [MG-04](./MG-04-group-scoped-grants.md) | MG   | Group-scoped permission blocks              | MG-01, MG-03 | Draft  |
 | [MG-14](./MG-14-atom-event-consumer.md) | MG   | Consume Atom domain events                  | —            | Draft  |
 

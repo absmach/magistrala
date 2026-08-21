@@ -33,9 +33,9 @@ var (
 
 var cmdProvision = []cobra.Command{
 	{
-		Use:   "clients <clients_file> <domain_id> <user_token>",
-		Short: "Provision clients",
-		Long:  `Bulk create clients`,
+		Use:   "devices <devices_file> <domain_id> <user_token>",
+		Short: "Provision devices",
+		Long:  `Bulk create devices`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -47,19 +47,19 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			clients, err := clientsFromFile(args[0])
+			devices, err := devicesFromFile(args[0])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			clients, err = sdk.CreateClients(cmd.Context(), clients, args[1], args[2])
+			devices, err = sdk.CreateClients(cmd.Context(), devices, args[1], args[2])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSONCmd(*cmd, clients)
+			logJSONCmd(*cmd, devices)
 		},
 	},
 	{
@@ -95,7 +95,7 @@ var cmdProvision = []cobra.Command{
 	{
 		Use:   "connect <connections_file> <domain_id> <user_token>",
 		Short: "Provision connections",
-		Long:  `Bulk connect clients to channels`,
+		Long:  `Bulk connect devices to channels`,
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -120,13 +120,13 @@ var cmdProvision = []cobra.Command{
 	{
 		Use:   "test",
 		Short: "test",
-		Long: `Provisions test setup: one test user, two clients and two channels. \
-						Connect both clients to one of the channels, \
-						and only on client to other channel.`,
+		Long: `Provisions test setup: one test user, two devices and two channels. \
+						Connect both devices to one of the channels, \
+						and only one device to the other channel.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			numClients := 2
+			numDevices := 2
 			numChan := 2
-			clients := []smqsdk.Client{}
+			devices := []smqsdk.Client{}
 			channels := []smqsdk.Channel{}
 
 			if len(args) != 0 {
@@ -174,16 +174,16 @@ var cmdProvision = []cobra.Command{
 				return
 			}
 
-			// Create clients
-			for i := 0; i < numClients; i++ {
+			// Create devices
+			for i := 0; i < numDevices; i++ {
 				t := smqsdk.Client{
-					Name:   fmt.Sprintf("%s-client-%d", name, i),
+					Name:   fmt.Sprintf("%s-device-%d", name, i),
 					Status: smqsdk.EnabledStatus,
 				}
 
-				clients = append(clients, t)
+				devices = append(devices, t)
 			}
-			clients, err = sdk.CreateClients(cmd.Context(), clients, domain.ID, ut.AccessToken)
+			devices, err = sdk.CreateClients(cmd.Context(), devices, domain.ID, ut.AccessToken)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -204,10 +204,10 @@ var cmdProvision = []cobra.Command{
 				channels = append(channels, c)
 			}
 
-			// Connect clients to channels - first client to both channels, second only to first
+			// Connect devices to channels: first device to both channels, second only to first.
 			conIDs := smqsdk.Connection{
 				ChannelIDs: []string{channels[0].ID},
-				ClientIDs:  []string{clients[0].ID},
+				ClientIDs:  []string{devices[0].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
 			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
@@ -217,7 +217,7 @@ var cmdProvision = []cobra.Command{
 
 			conIDs = smqsdk.Connection{
 				ChannelIDs: []string{channels[1].ID},
-				ClientIDs:  []string{clients[0].ID},
+				ClientIDs:  []string{devices[0].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
 			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
@@ -227,7 +227,7 @@ var cmdProvision = []cobra.Command{
 
 			conIDs = smqsdk.Connection{
 				ChannelIDs: []string{channels[0].ID},
-				ClientIDs:  []string{clients[1].ID},
+				ClientIDs:  []string{devices[1].ID},
 				Types:      []string{PublishType, SubscribeType},
 			}
 			if err := sdk.Connect(cmd.Context(), conIDs, domain.ID, ut.AccessToken); err != nil {
@@ -236,20 +236,20 @@ var cmdProvision = []cobra.Command{
 			}
 
 			// send message to test connectivity
-			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, devices[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, clients[1].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[0].ID, devices[1].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
-			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[1].ID, clients[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
+			if err := sdk.SendMessage(cmd.Context(), domain.ID, channels[1].ID, devices[0].Credentials.Secret, fmt.Sprintf(msgFormat, time.Now().Unix(), rand.Int())); err != nil {
 				logErrorCmd(*cmd, err)
 				return
 			}
 
-			logJSONCmd(*cmd, user, ut, clients, channels)
+			logJSONCmd(*cmd, user, ut, devices, channels)
 		},
 	},
 }
@@ -257,9 +257,9 @@ var cmdProvision = []cobra.Command{
 // NewProvisionCmd returns provision command.
 func NewProvisionCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "provision [clients | channels | connect | test]",
-		Short: "Provision clients and channels from a config file",
-		Long:  `Provision clients and channels: use json or csv file to bulk provision clients and channels`,
+		Use:   "provision [devices | channels | connect | test]",
+		Short: "Provision devices and channels from a config file",
+		Long:  `Provision devices and channels: use json or csv file to bulk provision devices and channels`,
 	}
 
 	for i := range cmdProvision {
@@ -269,7 +269,7 @@ func NewProvisionCmd() *cobra.Command {
 	return &cmd
 }
 
-func clientsFromFile(path string) ([]smqsdk.Client, error) {
+func devicesFromFile(path string) ([]smqsdk.Client, error) {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return []smqsdk.Client{}, err
 	}
@@ -280,7 +280,7 @@ func clientsFromFile(path string) ([]smqsdk.Client, error) {
 	}
 	defer file.Close()
 
-	clients := []smqsdk.Client{}
+	devices := []smqsdk.Client{}
 	switch filepath.Ext(path) {
 	case csvExt:
 		reader := csv.NewReader(file)
@@ -298,14 +298,14 @@ func clientsFromFile(path string) ([]smqsdk.Client, error) {
 				return []smqsdk.Client{}, errors.New("empty line found in file")
 			}
 
-			client := smqsdk.Client{
+			device := smqsdk.Client{
 				Name: l[0],
 			}
 
-			clients = append(clients, client)
+			devices = append(devices, device)
 		}
 	case jsonExt:
-		err := json.NewDecoder(file).Decode(&clients)
+		err := json.NewDecoder(file).Decode(&devices)
 		if err != nil {
 			return []smqsdk.Client{}, err
 		}
@@ -313,7 +313,7 @@ func clientsFromFile(path string) ([]smqsdk.Client, error) {
 		return []smqsdk.Client{}, err
 	}
 
-	return clients, nil
+	return devices, nil
 }
 
 func channelsFromFile(path string) ([]smqsdk.Channel, error) {

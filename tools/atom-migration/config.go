@@ -34,7 +34,7 @@ func (d dbConn) DSN() string {
 type config struct {
 	Domains  dbConn
 	Users    dbConn
-	Clients  dbConn
+	Devices  dbConn
 	Channels dbConn
 	Groups   dbConn
 	Auth     dbConn
@@ -75,7 +75,7 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 	cfg := config{
 		Domains:  mk("MG_DOMAINS"),
 		Users:    mk("MG_USERS"),
-		Clients:  mk("MG_CLIENTS"),
+		Devices:  mk("MG_DEVICES"),
 		Channels: mk("MG_CHANNELS"),
 		Groups:   mk("MG_GROUPS"),
 		Auth:     mk("MG_AUTH"),
@@ -98,7 +98,7 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 	// Default names if .env omitted them.
 	defName := map[*string]string{
 		&cfg.Domains.Name: collectionDomains, &cfg.Users.Name: "users",
-		&cfg.Clients.Name: "clients", &cfg.Channels.Name: "channels",
+		&cfg.Devices.Name: "clients", &cfg.Channels.Name: "channels",
 		&cfg.Groups.Name: collectionGroups, &cfg.Auth.Name: "auth",
 		&cfg.RE.Name: "rules_engine", &cfg.Reports.Name: "reports",
 	}

@@ -11,7 +11,7 @@ import (
 	authv1 "github.com/absmach/fluxmq/pkg/proto/auth/v1"
 	"github.com/absmach/fluxmq/pkg/proto/auth/v1/authv1connect"
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/authn"
@@ -26,7 +26,7 @@ var _ authv1connect.AuthServiceHandler = (*connectServer)(nil)
 
 type connectServer struct {
 	authv1connect.UnimplementedAuthServiceHandler
-	clients  grpcClientsV1.ClientsServiceClient
+	clients  grpcDevicesV1.DevicesServiceClient
 	channels grpcChannelsV1.ChannelsServiceClient
 	atomAuth atom.Authorizer
 	parser   messaging.TopicParser
@@ -35,7 +35,7 @@ type connectServer struct {
 // NewServer creates a FluxMQ AuthService Connect handler that bridges to
 // Magistrala's Clients (authn) and Channels (authz) services.
 func NewServer(
-	clients grpcClientsV1.ClientsServiceClient,
+	clients grpcDevicesV1.DevicesServiceClient,
 	channels grpcChannelsV1.ChannelsServiceClient,
 	parser messaging.TopicParser,
 	atomAuth ...atom.Authorizer,
@@ -64,14 +64,14 @@ func (s *connectServer) Authenticate(ctx context.Context, req *connect.Request[a
 	}
 
 	token := authn.AuthPack(authn.BasicAuth, username, password)
-	res, err := s.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{Token: token})
+	res, err := s.clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{Token: token})
 	if err != nil {
 		if !shouldTryDomainAuth(req.Msg, username, password) {
 			return nil, encodeError(err)
 		}
 
 		token = authn.AuthPack(authn.DomainAuth, username, password)
-		res, err = s.clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{Token: token})
+		res, err = s.clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{Token: token})
 		if err != nil {
 			return nil, encodeError(err)
 		}

@@ -12,7 +12,7 @@ user_token = ""
 [remotes]
   certs_url = "http://localhost:9019"
   channels_url = "http://localhost:9005"
-  clients_url = "http://localhost:9006"
+  devices_url = "http://localhost:9006"
   domains_url = "http://localhost:9003"
   groups_url = "http://localhost:9004"
   host_url = "http://localhost"

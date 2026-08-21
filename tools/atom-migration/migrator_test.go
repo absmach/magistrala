@@ -90,23 +90,23 @@ func TestMapActionPreservesChannelPublishSubscribeVariants(t *testing.T) {
 	}
 }
 
-func TestClientSharedKeyCredentialIDIsStable(t *testing.T) {
-	clientID := "11111111-1111-1111-1111-111111111111"
-	got := clientSharedKeyCredentialID(clientID)
+func TestDeviceSharedKeyCredentialIDIsStable(t *testing.T) {
+	deviceID := "11111111-1111-1111-1111-111111111111"
+	got := deviceSharedKeyCredentialID(deviceID)
 	if got == "" {
 		t.Fatal("expected credential id")
 	}
-	if again := clientSharedKeyCredentialID(clientID); again != got {
+	if again := deviceSharedKeyCredentialID(deviceID); again != got {
 		t.Fatalf("credential id is not stable: got %q then %q", got, again)
 	}
-	if oldAPIKeyID := derivedUUID("devcred", clientID); oldAPIKeyID == got {
+	if oldAPIKeyID := derivedUUID("devcred", deviceID); oldAPIKeyID == got {
 		t.Fatalf("shared-key credential id must not collide with legacy API-key id %q", oldAPIKeyID)
 	}
 }
 
 func TestNewSharedKeyMaterialEncryptsRecoverableSecret(t *testing.T) {
-	secret := "client-secret"
-	credentialID := clientSharedKeyCredentialID("11111111-1111-1111-1111-111111111111")
+	secret := "device-secret"
+	credentialID := deviceSharedKeyCredentialID("11111111-1111-1111-1111-111111111111")
 	cfg := config{
 		AtomKeyEncryptionKey:   []byte("0123456789abcdef0123456789abcdef"),
 		AtomKeyEncryptionKeyID: "local:test",

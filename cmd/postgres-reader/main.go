@@ -119,7 +119,7 @@ func main() {
 
 	atomCfg := atom.LoadConfig()
 	authn := atomauthn.NewAuthentication()
-	clientsClient := atom.NewClientsCompat(authn)
+	clientsClient := atom.NewDevicesCompat(authn)
 	atomClient := atom.NewClient(atomCfg)
 	channelsClient := atom.NewChannelsCompat(atomClient)
 	policyEvaluator := atom.NewPolicyEvaluator(atomClient)

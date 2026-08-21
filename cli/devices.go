@@ -13,7 +13,7 @@ import (
 )
 
 // atomKindDevice is the literal Atom wire kind for CreateEntity/ListEntities.
-// atom.KindDevice and atom.KindClient are both the Magistrala-internal label
+// atom.KindDevice and atom.KindDevice are both the Magistrala-internal label
 // "client" — entityCreateInput passes Kind through unmodified, so using
 // either constant here would send the wrong value to Atom.
 const atomKindDevice = "device"

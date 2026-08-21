@@ -48,7 +48,7 @@ At the same time, it avoids the typical complexity of many IoT platforms, where 
 
 Magistrala is built around a small number of main concepts:
 - users
-- clients (devices)
+- devices
 - channels
 - messages
 - policies
@@ -109,9 +109,9 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 
 ### 📦 Device & Application Model
 
-- Device (client) provisioning and lifecycle management
+- Device provisioning and lifecycle management
 - Channels for grouping and controlling message flow
-- Application-level grouping and sharing of clients
+- Application-level grouping and sharing of devices
 - Simple but flexible communication model
 
 ### ⚙️ Processing & Automation
@@ -148,7 +148,7 @@ Magistrala uses **Atom** as the backend for identity, authorization, and the cat
 Atom is the source of truth for:
 - domains
 - users
-- clients
+- devices
 - channels
 - groups
 - roles
@@ -164,16 +164,16 @@ Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `doc
 | ------------------ | ---------------------------- | ------------------------------------------------------------------ |
 | Domain             | Tenant                       | Isolation boundary for one organization, project, or environment   |
 | User               | Entity with kind `human`     | A person who logs in and uses the UI/API                           |
-| Client             | Entity with kind `device`    | A device or application that sends/receives data                   |
-| Channel            | Resource with kind `channel` | A messaging/data path that clients can publish or subscribe to     |
-| Group              | Group                        | A collection of users, clients, channels, or other grouped objects |
+| Device             | Entity with kind `device`    | A device or application that sends/receives data                   |
+| Channel            | Resource with kind `channel` | A messaging/data path that devices can publish or subscribe to     |
+| Group              | Group                        | A collection of users, devices, channels, or other grouped objects |
 
 In simple terms:
 
 ```text
 MG Domain  = Atom Tenant
 MG User    = Atom Human Entity
-MG Client  = Atom Device Entity
+MG Device  = Atom Device Entity
 MG Channel = Atom Channel Resource
 MG Group   = Atom Group
 ```
@@ -240,7 +240,7 @@ Can user1 manage roles for client1?
 Atom checks:
 
 ```text
-Does user1 have role.manage on client1, or on the domain that contains client1?
+Does user1 have role.manage on device1, or on the domain that contains device1?
 ```
 
 When MG UI checks:
@@ -260,7 +260,7 @@ Does user1 have policy.manage on channel1, or on the domain that contains channe
 If a user is domain admin, they usually receive a tenant-scoped role in Atom.
 
 That tenant-scoped role can allow them to manage objects inside the domain:
-- clients
+- devices
 - channels
 - groups
 - rules

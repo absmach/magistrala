@@ -68,20 +68,6 @@ Domains map to Atom tenants.
 ./build/cli domains get <domain_id>
 ```
 
-## Clients
-
-Clients map to Atom entities. The default entity kind is `device`; the other
-`EntityKind` values are `human`, `service`, `workload` and `application`. Pass
-an empty `--kind` to list every kind.
-
-```bash
-./build/cli clients create <domain_id> "Thermostat 1"
-./build/cli clients create <domain_id> "Gateway" --kind application --attributes '{"site":"lab"}'
-./build/cli clients list <domain_id>
-./build/cli clients list <domain_id> --kind ""
-./build/cli clients get <client_id>
-```
-
 ## Channels
 
 Channels map to Atom resources with `kind="channel"`.
@@ -116,10 +102,8 @@ any other value is rejected before the request is sent.
 
 ## Devices, gateways and device types
 
-These commands go through `pkg/atom`'s typed client rather than the raw
-GraphQL path the commands above use. Devices are Atom entities of kind
-`device`, so `devices all get <domain_id>` and `clients list <domain_id>`
-return the same objects.
+These commands go through `pkg/atom`'s typed client. Devices are Atom entities
+of kind `device`.
 
 ```bash
 ./build/cli devices create <JSON_device> <domain_id>

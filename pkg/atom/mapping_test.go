@@ -34,7 +34,7 @@ func TestTenantFromFields(t *testing.T) {
 
 func TestEntityFromFields(t *testing.T) {
 	got := EntityFromFields(ObjectFields{
-		ID:       "client-1",
+		ID:       "device-1",
 		Kind:     KindDevice,
 		Name:     "pump",
 		TenantID: "domain-1",
@@ -55,7 +55,7 @@ func TestEntityFromFields(t *testing.T) {
 }
 
 func TestDeviceKindNamesMapToAtomDeviceKind(t *testing.T) {
-	for _, kind := range []string{KindDevice, KindClient} {
+	for _, kind := range []string{KindDevice} {
 		if got := entityKind(kind); got != atomKindDevice {
 			t.Fatalf("%q must map to the atom kind %q, got %q", kind, atomKindDevice, got)
 		}

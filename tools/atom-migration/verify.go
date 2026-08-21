@@ -65,15 +65,15 @@ func (m *migrator) Verify(ctx context.Context, rep *report) error {
 	m.reconcile(rep, "principal_group_members.authenticated_users", userIDs, atomAuthenticatedUsers)
 
 	// 3. device entities (only those with a valid domain were migrated)
-	clients, err := readClients(ctx, m.clientsDB)
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
-	m.reconcile(rep, "entities.clients", idsOf(len(clients), func(i int) (string, bool) {
-		return clients[i].ID, domSet[clients[i].DomainID]
+	m.reconcile(rep, "entities.devices", idsOf(len(devices), func(i int) (string, bool) {
+		return devices[i].ID, domSet[devices[i].DomainID]
 	}), atomEntities)
-	m.reconcile(rep, "credentials.device_shared_keys", idsOf(len(clients), func(i int) (string, bool) {
-		return clientSharedKeyCredentialID(clients[i].ID), domSet[clients[i].DomainID] && clients[i].Secret.Valid && clients[i].Secret.String != ""
+	m.reconcile(rep, "credentials.device_shared_keys", idsOf(len(devices), func(i int) (string, bool) {
+		return deviceSharedKeyCredentialID(devices[i].ID), domSet[devices[i].DomainID] && devices[i].Secret.Valid && devices[i].Secret.String != ""
 	}), atomSharedKeys)
 
 	pats, err := readPATs(ctx, m.authDB)
@@ -158,7 +158,7 @@ func (m *migrator) reconcile(rep *report, label string, expected []string, atom 
 }
 
 func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet map[string]bool) error {
-	cli, err := readConnections(ctx, m.clientsDB)
+	cli, err := readConnections(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
@@ -166,14 +166,14 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 	if err != nil {
 		return err
 	}
-	clients, err := readClients(ctx, m.clientsDB)
+	devices, err := readDevices(ctx, m.devicesDB)
 	if err != nil {
 		return err
 	}
-	clientDomain := map[string]string{}
-	for _, c := range clients {
+	deviceDomain := map[string]string{}
+	for _, c := range devices {
 		if domSet[c.DomainID] {
-			clientDomain[c.ID] = c.DomainID
+			deviceDomain[c.ID] = c.DomainID
 		}
 	}
 	channels, err := readChannels(ctx, m.channelsDB)
@@ -219,8 +219,8 @@ func (m *migrator) verifyConnections(ctx context.Context, rep *report, domSet ma
 		if !ok {
 			continue
 		}
-		clDom, ok := clientDomain[c.ClientID]
-		if !ok || clDom != chDom || c.DomainID != chDom {
+		deviceDom, ok := deviceDomain[c.ClientID]
+		if !ok || deviceDom != chDom || c.DomainID != chDom {
 			continue
 		}
 		k := c.ClientID + "|" + c.ChannelID + "|" + act

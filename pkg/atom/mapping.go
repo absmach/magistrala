@@ -5,8 +5,7 @@ package atom
 
 const (
 	KindUser    = "user"
-	KindDevice  = "client"
-	KindClient  = KindDevice
+	KindDevice  = "device"
 	KindChannel = "channel"
 	KindRule    = "rule"
 	KindAlarm   = "alarm"

@@ -1,4 +1,4 @@
-# MG-01 — Fix Atom policy client defects
+# MG-01 — Fix Atom policy device defects
 
 | | |
 |---|---|
@@ -16,7 +16,7 @@ binary — and each becomes a live correctness or security bug the moment it is.
 
 ### 1. `objectType` is sent unnamespaced
 
-`policy_service.go:139` sends `ObjectType: entityKind(KindClient)` → `"device"`.
+`policy_service.go:139` sends `ObjectType: entityKind(KindDevice)` → `"device"`.
 The write path sends the namespaced form `"entity:device"`
 (`policy_service.go:225`).
 
@@ -38,7 +38,7 @@ not a pagination nit.
 
 ### 3. `CapabilityID` cannot see past 100 actions
 
-`client.go:272-287` linear-scans `actions(limit: 100)`. Action 101 is
+`api.go:272-287` linear-scans `actions(limit: 100)`. Action 101 is
 unresolvable, and the failure is a confusing "not found" far from the cause.
 
 ### 4. No applicability registered for `objectKind: entity`
@@ -62,7 +62,7 @@ entity, and every device-level grant this project introduces will target
 - Register applicability for `entity` / `entity:device`: `read`, `write`,
   `delete`, `manage`.
 - Widen `isSupportedObjectList` (`policy_service.go:182-187`) beyond
-  `user + client + view`, which is required by MG-08.
+  `user + device + view`, which is required by MG-08.
 
 **Out of scope**
 

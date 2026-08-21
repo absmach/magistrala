@@ -43,7 +43,7 @@ type srcUser struct {
 	UpdatedAt      sql.NullTime   `db:"updated_at"`
 }
 
-type srcClient struct {
+type srcDevice struct {
 	ID            string         `db:"id"`
 	Name          sql.NullString `db:"name"`
 	DomainID      string         `db:"domain_id"`
@@ -181,8 +181,8 @@ func readUsers(ctx context.Context, db *sqlx.DB) ([]srcUser, error) {
 	return out, db.SelectContext(ctx, &out, q)
 }
 
-func readClients(ctx context.Context, db *sqlx.DB) ([]srcClient, error) {
-	var out []srcClient
+func readDevices(ctx context.Context, db *sqlx.DB) ([]srcDevice, error) {
+	var out []srcDevice
 	q := `SELECT id, name, domain_id, parent_group_id, identity, secret, tags, metadata, private_metadata,
 	             status, created_at, updated_at
 	      FROM clients`

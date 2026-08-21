@@ -28,12 +28,12 @@ GROUPS_GRPC_SERVER_CN=groups
 GROUPS_GRPC_CLIENT_CN=groups-client
 GROUPS_GRPC_SERVER_CRT_FILE_NAME=groups-grpc-server
 GROUPS_GRPC_CLIENT_CRT_FILE_NAME=groups-grpc-client
-CLIENTS_GRPC_SERVER_CONF_FILE_NAME=clients-grpc-server.conf
-CLIENTS_GRPC_CLIENT_CONF_FILE_NAME=clients-grpc-client.conf
-CLIENTS_GRPC_SERVER_CN=clients
-CLIENTS_GRPC_CLIENT_CN=clients-client
-CLIENTS_GRPC_SERVER_CRT_FILE_NAME=clients-grpc-server
-CLIENTS_GRPC_CLIENT_CRT_FILE_NAME=clients-grpc-client
+DEVICES_GRPC_SERVER_CONF_FILE_NAME=devices-grpc-server.conf
+DEVICES_GRPC_CLIENT_CONF_FILE_NAME=devices-grpc-client.conf
+DEVICES_GRPC_SERVER_CN=devices
+DEVICES_GRPC_CLIENT_CN=devices-client
+DEVICES_GRPC_SERVER_CRT_FILE_NAME=devices-grpc-server
+DEVICES_GRPC_CLIENT_CRT_FILE_NAME=devices-grpc-client
 CHANNELS_GRPC_SERVER_CONF_FILE_NAME=channels-grpc-server.conf
 CHANNELS_GRPC_CLIENT_CONF_FILE_NAME=channels-grpc-client.conf
 CHANNELS_GRPC_SERVER_CN=channels
@@ -140,7 +140,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs clients_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret re_trace_key
+all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs devices_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -330,8 +330,8 @@ domains_grpc_certs:
 groups_grpc_certs:
 	$(call gen_grpc_cert_pair,$(GROUPS_GRPC_SERVER_CRT_FILE_NAME),$(GROUPS_GRPC_SERVER_CN),$(GROUPS_GRPC_CLIENT_CRT_FILE_NAME),$(GROUPS_GRPC_CLIENT_CN))
 
-clients_grpc_certs:
-	$(call gen_grpc_cert_pair,$(CLIENTS_GRPC_SERVER_CRT_FILE_NAME),$(CLIENTS_GRPC_SERVER_CN),$(CLIENTS_GRPC_CLIENT_CRT_FILE_NAME),$(CLIENTS_GRPC_CLIENT_CN))
+devices_grpc_certs:
+	$(call gen_grpc_cert_pair,$(DEVICES_GRPC_SERVER_CRT_FILE_NAME),$(DEVICES_GRPC_SERVER_CN),$(DEVICES_GRPC_CLIENT_CRT_FILE_NAME),$(DEVICES_GRPC_CLIENT_CN))
 
 channels_grpc_certs:
 	$(call gen_grpc_cert_pair,$(CHANNELS_GRPC_SERVER_CRT_FILE_NAME),$(CHANNELS_GRPC_SERVER_CN),$(CHANNELS_GRPC_CLIENT_CRT_FILE_NAME),$(CHANNELS_GRPC_CLIENT_CN))

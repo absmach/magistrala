@@ -1903,7 +1903,7 @@ type mgSDK struct {
 type Config struct {
 	CertsURL       string
 	HTTPAdapterURL string
-	ClientsURL     string
+	DevicesURL     string
 	UsersURL       string
 	GroupsURL      string
 	ChannelsURL    string
@@ -1926,7 +1926,7 @@ func NewSDK(conf Config) SDK {
 	return &mgSDK{
 		certsURL:       conf.CertsURL,
 		httpAdapterURL: conf.HTTPAdapterURL,
-		clientsURL:     conf.ClientsURL,
+		clientsURL:     conf.DevicesURL,
 		usersURL:       conf.UsersURL,
 		groupsURL:      conf.GroupsURL,
 		channelsURL:    conf.ChannelsURL,

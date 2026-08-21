@@ -26,7 +26,7 @@ import (
 	apostgres "github.com/absmach/magistrala/auth/postgres"
 	"github.com/absmach/magistrala/auth/tokenizer/asymmetric"
 	"github.com/absmach/magistrala/auth/tokenizer/symmetric"
-	redisclient "github.com/absmach/magistrala/internal/clients/redis"
+	redisclient "github.com/absmach/magistrala/internal/drivers/redis"
 	mglog "github.com/absmach/magistrala/logger"
 	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/jaeger"

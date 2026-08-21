@@ -12,7 +12,6 @@ import (
 // Command names, also used by the GraphQL responses that carry the same name.
 const (
 	cmdDomains  = "domains"
-	cmdClients  = "clients"
 	cmdChannels = "channels"
 	cmdGroups   = "groups"
 )
@@ -97,21 +96,6 @@ const (
 
 	createDomainMutation = `mutation CreateDomain($input: CreateTenantInput!) {
   createTenant(input: $input) { ` + tenantFields + ` }
-}`
-
-	getClientQuery = `query GetClient($id: ID!) {
-  entity(id: $id) { ` + entityFields + ` }
-}`
-
-	listClientsQuery = `query ListClients($tenantId: ID, $kind: EntityKind, $limit: Int, $offset: Int) {
-  entities(tenantId: $tenantId, kind: $kind, limit: $limit, offset: $offset) {
-    total
-    items { ` + entityFields + ` }
-  }
-}`
-
-	createClientMutation = `mutation CreateClient($input: CreateEntityInput!) {
-  createEntity(input: $input) { ` + entityFields + ` }
 }`
 
 	getChannelQuery = `query GetChannel($id: ID!) {
@@ -308,71 +292,6 @@ func newDomainListCmd(opts *rootOptions) *cobra.Command {
 		field: respTenants,
 		vars: func(_ []string) (map[string]any, error) {
 			return listVariables(), nil
-		},
-	})
-}
-
-func newGraphQLClientsCmd(opts *rootOptions) *cobra.Command {
-	cmd := &cobra.Command{Use: cmdClients, Short: "Manage Magistrala clients through Atom entities"}
-	cmd.AddCommand(
-		newClientCreateCmd(opts),
-		newClientListCmd(opts),
-		newGetCmd(opts, "get <client_id>", "Get a client", getClientQuery, respEntity),
-	)
-
-	return cmd
-}
-
-func newClientCreateCmd(opts *rootOptions) *cobra.Command {
-	var alias, kind, attrs string
-
-	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useCreateInDomain,
-		short: "Create a client",
-		args:  cobra.ExactArgs(2),
-		query: createClientMutation,
-		field: respCreateEntity,
-		vars: func(args []string) (map[string]any, error) {
-			attributes, err := parseJSONFlag(attrs)
-			if err != nil {
-				return nil, err
-			}
-			input := gqlInput{varTenantID: args[0], varName: args[1]}
-			input.setString(varKind, kind)
-			input.setString(varAlias, alias)
-			input.setObject(varAttributes, attributes)
-
-			return map[string]any{varInput: input}, nil
-		},
-		flags: func(cmd *cobra.Command) {
-			cmd.Flags().StringVar(&alias, varAlias, "", "client alias")
-			cmd.Flags().StringVar(&kind, varKind, defaultEntityKind, "Atom EntityKind value")
-			cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
-		},
-	})
-}
-
-func newClientListCmd(opts *rootOptions) *cobra.Command {
-	var kind string
-
-	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useListInDomain,
-		short: "List clients",
-		args:  cobra.ExactArgs(1),
-		query: listClientsQuery,
-		field: respEntities,
-		vars: func(args []string) (map[string]any, error) {
-			variables := listVariables()
-			variables[varTenantID] = args[0]
-			// An empty kind is not a valid EntityKind, so it means "no filter".
-			if kind != "" {
-				variables[varKind] = kind
-			}
-
-			return variables, nil
-		},
-		flags: func(cmd *cobra.Command) {
-			cmd.Flags().StringVar(&kind, varKind, defaultEntityKind, "Atom EntityKind filter, empty lists every kind")
 		},
 	})
 }

@@ -7,7 +7,7 @@ import (
 	"context"
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
@@ -16,7 +16,7 @@ import (
 	"github.com/go-kit/kit/endpoint"
 )
 
-func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
+func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(listMessagesReq)
 		if err := req.validate(); err != nil {
@@ -55,7 +55,7 @@ func listMessagesEndpoint(svc readers.MessageRepository, authn smqauthn.Authenti
 // readers/messages.go). noAccess — the caller holds no per-device grant at all
 // — is reported as an empty page, matching how a filtered-out publisher or
 // device_id behaves on a message read, not as an error.
-func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
+func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(deviceViewReq)
 		if err := req.validate(); err != nil {
@@ -98,7 +98,7 @@ func listGatewayDevicesEndpoint(svc readers.MessageRepository, authn smqauthn.Au
 // here (see the DeviceScope comment on readers.MessageRepository's
 // ListDeviceGateways), so once it has passed authzDeviceView every row the
 // query can produce already belongs to that one authorized device.
-func listDeviceGatewaysEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
+func listDeviceGatewaysEndpoint(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) endpoint.Endpoint {
 	return func(ctx context.Context, request any) (any, error) {
 		req := request.(deviceViewReq)
 		if err := req.validate(); err != nil {

@@ -37,33 +37,20 @@ func runRootCmd(t *testing.T, args ...string) error {
 	return cmd.Execute()
 }
 
-func TestClientAndChannelSelectionsUseAtomObjectGroupFields(t *testing.T) {
-	tests := []struct {
-		name    string
-		command string
-		data    string
-	}{
-		{name: "clients list", command: cmdClients, data: `{"data":{"entities":{"total":0,"items":[]}}}`},
-		{name: "channels list", command: cmdChannels, data: `{"data":{"resources":{"total":0,"items":[]}}}`},
+func TestChannelSelectionsUseAtomObjectGroupFields(t *testing.T) {
+	clearAtomEnv(t)
+	server, req := recordingServer(t, `{"data":{"resources":{"total":0,"items":[]}}}`)
+
+	err := runRootCmd(t, "--graphql-url", server.URL, "--token", "test-token", cmdChannels, useList, "domain-1")
+	if err != nil {
+		t.Fatalf("execute command: %v", err)
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			clearAtomEnv(t)
-			server, req := recordingServer(t, tc.data)
-
-			err := runRootCmd(t, "--graphql-url", server.URL, "--token", "test-token", tc.command, useList, "domain-1")
-			if err != nil {
-				t.Fatalf("execute command: %v", err)
-			}
-
-			if strings.Contains(req.Query, "parentGroupId") {
-				t.Errorf("query uses stale parentGroupId field: %s", req.Query)
-			}
-			if !strings.Contains(req.Query, "objectGroupIds") {
-				t.Errorf("query does not select objectGroupIds: %s", req.Query)
-			}
-		})
+	if strings.Contains(req.Query, "parentGroupId") {
+		t.Errorf("query uses stale parentGroupId field: %s", req.Query)
+	}
+	if !strings.Contains(req.Query, "objectGroupIds") {
+		t.Errorf("query does not select objectGroupIds: %s", req.Query)
 	}
 }
 

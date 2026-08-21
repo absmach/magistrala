@@ -72,7 +72,7 @@ func Test(ctx context.Context, conf Config) {
 		UsersURL:        fmt.Sprintf("http://%s:%s", conf.Host, usersPort),
 		GroupsURL:       fmt.Sprintf("http://%s:%s", conf.Host, groupsPort),
 		DomainsURL:      fmt.Sprintf("http://%s:%s", conf.Host, domainsPort),
-		ClientsURL:      fmt.Sprintf("http://%s:%s", conf.Host, clientsPort),
+		DevicesURL:      fmt.Sprintf("http://%s:%s", conf.Host, clientsPort),
 		ChannelsURL:     fmt.Sprintf("http://%s:%s", conf.Host, channelsPort),
 		HTTPAdapterURL:  fmt.Sprintf("http://%s/http", conf.Host),
 		MsgContentType:  sdk.CTJSONSenML,

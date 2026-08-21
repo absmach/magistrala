@@ -24,10 +24,10 @@ default values.
 | MG_POSTGRES_SSL_CERT                | Postgres SSL certificate path                | ""                           |
 | MG_POSTGRES_SSL_KEY                 | Postgres SSL key                             | ""                           |
 | MG_POSTGRES_SSL_ROOT_CERT           | Postgres SSL root certificate path           | ""                           |
-| MG_CLIENTS_GRPC_URL                 | Clients service Auth gRPC URL                | localhost:7000               |
-| MG_CLIENTS_GRPC_TIMEOUT             | Clients service Auth gRPC timeout in seconds | 1s                           |
-| MG_CLIENTS_GRPC_CLIENT_TLS          | Clients service Auth gRPC TLS mode flag      | false                        |
-| MG_CLIENTS_GRPC_CA_CERTS            | Clients service Auth gRPC CA certificates    | ""                           |
+| MG_DEVICES_GRPC_URL                 | Clients service Auth gRPC URL                | localhost:7000               |
+| MG_DEVICES_GRPC_TIMEOUT             | Clients service Auth gRPC timeout in seconds | 1s                           |
+| MG_DEVICES_GRPC_CLIENT_TLS          | Clients service Auth gRPC TLS mode flag      | false                        |
+| MG_DEVICES_GRPC_CA_CERTS            | Clients service Auth gRPC CA certificates    | ""                           |
 | MG_AUTH_GRPC_URL                    | Auth service gRPC URL                        | localhost:7001               |
 | MG_AUTH_GRPC_TIMEOUT                | Auth service gRPC request timeout in seconds | 1s                           |
 | MG_AUTH_GRPC_CLIENT_TLS             | Auth service gRPC TLS mode flag              | false                        |
@@ -70,10 +70,10 @@ MG_POSTGRES_SSL_MODE=[Postgres SSL mode] \
 MG_POSTGRES_SSL_CERT=[Postgres SSL cert] \
 MG_POSTGRES_SSL_KEY=[Postgres SSL key] \
 MG_POSTGRES_SSL_ROOT_CERT=[Postgres SSL Root cert] \
-MG_CLIENTS_GRPC_URL=[Clients service Auth GRPC URL] \
-MG_CLIENTS_GRPC_TIMEOUT=[Clients service Auth gRPC request timeout in seconds] \
-MG_CLIENTS_GRPC_CLIENT_TLS=[Clients service Auth gRPC TLS mode flag] \
-MG_CLIENTS_GRPC_CA_CERTS=[Clients service Auth gRPC CA certificates] \
+MG_DEVICES_GRPC_URL=[Clients service Auth GRPC URL] \
+MG_DEVICES_GRPC_TIMEOUT=[Clients service Auth gRPC request timeout in seconds] \
+MG_DEVICES_GRPC_CLIENT_TLS=[Clients service Auth gRPC TLS mode flag] \
+MG_DEVICES_GRPC_CA_CERTS=[Clients service Auth gRPC CA certificates] \
 MG_AUTH_GRPC_URL=[Auth service gRPC URL] \
 MG_AUTH_GRPC_TIMEOUT=[Auth service gRPC request timeout in seconds] \
 MG_AUTH_GRPC_CLIENT_TLS=[Auth service gRPC TLS mode flag] \

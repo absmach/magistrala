@@ -10,7 +10,7 @@ import (
 
 	"github.com/absmach/magistrala"
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
-	grpcClientsV1 "github.com/absmach/magistrala/api/grpc/clients/v1"
+	grpcDevicesV1 "github.com/absmach/magistrala/api/grpc/devices/v1"
 	api "github.com/absmach/magistrala/api/http"
 	apiutil "github.com/absmach/magistrala/api/http/util"
 	atomevents "github.com/absmach/magistrala/pkg/atom/events"
@@ -58,7 +58,7 @@ const (
 // falls back to pure TTL-based expiry exactly as it did before MG-14; event-
 // driven invalidation is an optimization layered on top of that TTL, never a
 // substitute for it.
-func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices deviceInfoResolver, invalidation *atomevents.Registry, svcName, instanceID string) http.Handler {
+func MakeHandler(svc readers.MessageRepository, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, policyEvaluator policies.Evaluator, policyLister policies.Service, devices deviceInfoResolver, invalidation *atomevents.Registry, svcName, instanceID string) http.Handler {
 	opts := []kithttp.ServerOption{
 		kithttp.ServerErrorEncoder(api.EncodeError),
 	}
@@ -351,7 +351,7 @@ func encodeResponse(_ context.Context, w http.ResponseWriter, response any) erro
 // query to the devices the caller is authorized to read and narrows their own filters to the same
 // set. noAccess means the caller may read nothing on this channel, so the response must be empty
 // rather than unfiltered.
-func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
+func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient, channels grpcChannelsV1.ChannelsServiceClient, readAuthz *readAuthorizer) (pm readers.PageMetadata, noAccess bool, err error) {
 	clientID, clientType, superAdmin, err := authenticate(ctx, req.token, req.key, req.domain, authn, clients)
 	if err != nil {
 		return readers.PageMetadata{}, false, err
@@ -385,7 +385,7 @@ func authnAuthz(ctx context.Context, req listMessagesReq, authn smqauthn.Authent
 	return pm, false, nil
 }
 
-func authenticate(ctx context.Context, token, key, domain string, authn smqauthn.Authentication, clients grpcClientsV1.ClientsServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
+func authenticate(ctx context.Context, token, key, domain string, authn smqauthn.Authentication, clients grpcDevicesV1.DevicesServiceClient) (clientID string, clientType string, superAdmin bool, err error) {
 	switch {
 	case token != "":
 		session, err := authn.Authenticate(ctx, token)
@@ -398,7 +398,7 @@ func authenticate(ctx context.Context, token, key, domain string, authn smqauthn
 
 		return policies.EncodeDomainUserID(domain, session.UserID), policies.UserType, false, nil
 	case key != "":
-		res, err := clients.Authenticate(ctx, &grpcClientsV1.AuthnReq{
+		res, err := clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{
 			Token: smqauthn.AuthPack(smqauthn.DomainAuth, domain, key),
 		})
 		if err != nil {

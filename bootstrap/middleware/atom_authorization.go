@@ -7,7 +7,7 @@ import (
 	"context"
 
 	"github.com/absmach/magistrala/bootstrap"
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/policies"
 )

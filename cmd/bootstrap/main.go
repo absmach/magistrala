@@ -20,8 +20,8 @@ import (
 	"github.com/absmach/magistrala/bootstrap/middleware"
 	bootstrappg "github.com/absmach/magistrala/bootstrap/postgres"
 	"github.com/absmach/magistrala/bootstrap/tracing"
-	"github.com/absmach/magistrala/internal/atom"
 	mglog "github.com/absmach/magistrala/logger"
+	"github.com/absmach/magistrala/pkg/atom"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	atomauthn "github.com/absmach/magistrala/pkg/authn/atom"
 	"github.com/absmach/magistrala/pkg/events/store"
@@ -181,6 +181,9 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 		cfg.DBEncryptionKeyID,
 		idp,
 	)
+	if err := bootstrap.ReconcileAtom(ctx, svc, atomClient); err != nil {
+		return nil, fmt.Errorf("reconcile Bootstrap Atom projections: %w", err)
+	}
 
 	publisher, err := store.NewPublisher(ctx, cfg.ESURL, "bootstrap-es-pub")
 	if err != nil {

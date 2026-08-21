@@ -11,7 +11,7 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/postgres"
-	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	"github.com/gofrs/uuid/v5"

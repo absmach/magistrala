@@ -18,7 +18,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	bsapi "github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/mocks"
-	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"

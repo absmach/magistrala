@@ -14,7 +14,7 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	"github.com/absmach/magistrala/bootstrap/events/producer"
 	"github.com/absmach/magistrala/bootstrap/mocks"
-	"github.com/absmach/magistrala/internal/testsutil"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"

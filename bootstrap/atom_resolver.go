@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/absmach/magistrala/internal/atom"
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 )

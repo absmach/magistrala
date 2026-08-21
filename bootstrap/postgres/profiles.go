@@ -122,9 +122,14 @@ type dbProfilesPage struct {
 
 func profilesPageQuery(pm dbProfilesPage) string {
 	var query []string
-	query = append(query, "domain_id = :domain_id")
+	if pm.DomainID != "" {
+		query = append(query, "domain_id = :domain_id")
+	}
 	if pm.Name != "" {
 		query = append(query, "name ILIKE '%' || :name || '%'")
+	}
+	if len(query) == 0 {
+		return ""
 	}
 	return fmt.Sprintf("WHERE %s", strings.Join(query, " AND "))
 }

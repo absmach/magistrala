@@ -150,6 +150,28 @@ Setting `MG_BOOTSTRAP_HTTP_SERVER_CERT` and `MG_BOOTSTRAP_HTTP_SERVER_KEY` will 
 
 Bootstrap PostgreSQL is authoritative for enrollments, profiles, templates, certificates, encrypted external keys and encrypted binding snapshots. ATOM is authoritative for identity and authorization and receives only non-secret bootstrap resource projections.
 
+## Legacy bcrypt enrollment migration
+
+This release does not retain the pre-HKDF Bootstrap request. A bcrypt hash
+cannot provide the recoverable root key needed for the challenge/proof protocol,
+so every bcrypt-backed enrollment must be re-enrolled before the release.
+
+Re-enroll each legacy device as follows:
+
+1. Inventory bcrypt-backed Bootstrap rows and identify their device owners.
+2. Generate and deliver a new Bootstrap root key through the device's approved
+   out-of-band provisioning channel; never recover or log the old key.
+3. Create a replacement enrollment with a unique replacement external ID and
+   that new key; this stores an encrypted key envelope with
+   `bootstrap_key_version` set to one.
+4. Update the device to use its replacement external ID with
+   `POST /clients/bootstrap/challenges/{externalID}`
+   followed by `POST /clients/bootstrap/configurations/{externalID}`, then
+   verify one successful challenge/proof bootstrap.
+5. Disable and remove the bcrypt-backed enrollment only after the replacement
+   has successfully bootstrapped. Keep a rollback record of the original
+   enrollment metadata, never its key, until the migration window closes.
+
 ## Usage
 
 For more information about service capabilities and its usage, please check out the [API documentation](https://docs.api.magistrala.absmach.eu/?urls.primaryName=bootstrap.yaml).

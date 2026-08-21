@@ -63,6 +63,12 @@ func (c *Client) CreateTenant(ctx context.Context, tenant Tenant) (Tenant, error
 	err := c.graphQL(ctx, `mutation CreateTenant($input: CreateTenantInput!) {
 		createTenant(input: $input) { id name route: alias status tags attributes created_by: createdBy updated_by: updatedBy created_at: createdAt updated_at: updatedAt }
 	}`, map[string]any{atomInputKeyInput: tenantCreateInput(tenant)}, &out)
+	if err != nil {
+		return Tenant{}, err
+	}
+	if err := c.seedDefaultDeviceTypes(ctx, out.CreateTenant.ID); err != nil {
+		return Tenant{}, fmt.Errorf("seed default device types: %w", err)
+	}
 	return out.CreateTenant, err
 }
 

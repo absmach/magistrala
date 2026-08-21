@@ -4,8 +4,10 @@
 package cli
 
 import (
+	"encoding/json"
 	"fmt"
 
+	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/spf13/cobra"
 )
 
@@ -92,10 +94,6 @@ const (
     total
     items { ` + tenantFields + ` }
   }
-}`
-
-	createDomainMutation = `mutation CreateDomain($input: CreateTenantInput!) {
-  createTenant(input: $input) { ` + tenantFields + ` }
 }`
 
 	getChannelQuery = `query GetChannel($id: ID!) {
@@ -259,28 +257,40 @@ func newDomainsCmd(opts *rootOptions) *cobra.Command {
 func newDomainCreateCmd(opts *rootOptions) *cobra.Command {
 	var alias, attrs string
 
-	return newGQLCmd(opts, gqlCmdConfig{
-		use:   "create <name>",
-		short: "Create a domain",
-		args:  cobra.ExactArgs(1),
-		query: createDomainMutation,
-		field: respCreateTenant,
-		vars: func(args []string) (map[string]any, error) {
+	cmd := &cobra.Command{
+		Use:   "create <name>",
+		Short: "Create a domain",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmd.SilenceUsage = true
+			if !requireAtomClient(cmd) {
+				return nil
+			}
 			attributes, err := parseJSONFlag(attrs)
 			if err != nil {
-				return nil, err
+				return err
 			}
-			input := gqlInput{varName: args[0]}
-			input.setString(varAlias, alias)
-			input.setObject(varAttributes, attributes)
 
-			return map[string]any{varInput: input}, nil
+			tenant, err := atomClient.CreateTenant(cmd.Context(), atom.Tenant{
+				Name:       args[0],
+				Route:      alias,
+				Attributes: attributes,
+			})
+			if err != nil {
+				return err
+			}
+
+			raw, err := json.Marshal(tenant)
+			if err != nil {
+				return err
+			}
+			return writeOutput(cmd, raw)
 		},
-		flags: func(cmd *cobra.Command) {
-			cmd.Flags().StringVar(&alias, varAlias, "", "domain alias")
-			cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
-		},
-	})
+	}
+	cmd.Flags().StringVar(&alias, varAlias, "", "domain alias")
+	cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
+
+	return cmd
 }
 
 func newDomainListCmd(opts *rootOptions) *cobra.Command {

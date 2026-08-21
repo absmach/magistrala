@@ -108,3 +108,88 @@ func TestGroupCreateRejectsUnsupportedGroupType(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestDomainCreateSeedsDefaultDeviceTypes(t *testing.T) {
+	clearAtomEnv(t)
+	createdKeys := map[string]bool{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req graphQLRequest
+		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+			t.Fatalf("decode request: %v", err)
+		}
+
+		switch {
+		case strings.Contains(req.Query, "createTenant"):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createTenant": map[string]any{
+						"id":     "domain-1",
+						"name":   "Domain",
+						"route":  "domain",
+						"status": "active",
+					},
+				},
+			})
+		case strings.Contains(req.Query, "query DeviceTypes("):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"profiles": map[string]any{"total": 0, "items": []any{}},
+				},
+			})
+		case strings.Contains(req.Query, "mutation CreateDeviceType("):
+			input, ok := req.Variables[varInput].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected profile input: %#v", req.Variables[varInput])
+			}
+			key, _ := input["key"].(string)
+			createdKeys[key] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createProfile": map[string]any{
+						"id":        "profile-" + key,
+						"tenant_id": "domain-1",
+						"key":       key,
+						"name":      input["displayName"],
+						"status":    "active",
+					},
+				},
+			})
+		case strings.Contains(req.Query, "query DeviceTypeVersions("):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"profileVersions": []any{}},
+			})
+		case strings.Contains(req.Query, "mutation CreateDeviceTypeVersion("):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createProfileVersion": map[string]any{
+						"id":             "version-1",
+						"device_type_id": req.Variables["profileId"],
+						"version":        1,
+						"json_schema":    req.Variables[varInput].(map[string]any)["jsonSchema"],
+						"ui_schema":      req.Variables[varInput].(map[string]any)["uiSchema"],
+						"status":         "active",
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected query: %s", req.Query)
+		}
+	}))
+	defer server.Close()
+
+	err := runRootCmd(t,
+		"--graphql-url", server.URL+atomGraphQLPath,
+		"--token", "test-token",
+		cmdDomains, "create", "Domain",
+		"--alias", "domain",
+	)
+	if err != nil {
+		t.Fatalf("execute command: %v", err)
+	}
+
+	for _, key := range []string{"water-meter", "pressure-sensor", "energy-meter", "pump-controller"} {
+		if !createdKeys[key] {
+			t.Fatalf("default device type %q was not created: %+v", key, createdKeys)
+		}
+	}
+}

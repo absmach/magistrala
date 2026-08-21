@@ -303,6 +303,8 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 }
 
 func TestCreateTenantMapsRouteToAlias(t *testing.T) {
+	createdKeys := map[string]bool{}
+	versionedTypes := 0
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != http.MethodPost || r.URL.Path != atomGraphQLPath {
 			t.Fatalf("unexpected request: %s %s", r.Method, r.URL.Path)
@@ -314,29 +316,84 @@ func TestCreateTenantMapsRouteToAlias(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
-		if !strings.Contains(payload.Query, "createTenant") || !strings.Contains(payload.Query, "route: alias") {
-			t.Fatalf("query does not map tenant alias to route: %s", payload.Query)
-		}
-		input, ok := payload.Variables["input"].(map[string]any)
-		if !ok {
-			t.Fatalf("unexpected input: %+v", payload.Variables["input"])
-		}
-		if input["alias"] != "d1" {
-			t.Fatalf("expected alias input from route, got: %+v", input)
-		}
-		if _, ok := input["route"]; ok {
-			t.Fatalf("input must not use Atom route field: %+v", input)
-		}
-		_ = json.NewEncoder(w).Encode(map[string]any{
-			"data": map[string]any{
-				"createTenant": map[string]any{
-					"id":     testTenantID,
-					"name":   "D1",
-					"route":  "d1",
-					"status": "active",
+
+		switch {
+		case strings.Contains(payload.Query, "createTenant"):
+			if !strings.Contains(payload.Query, "route: alias") {
+				t.Fatalf("query does not map tenant alias to route: %s", payload.Query)
+			}
+			input, ok := payload.Variables["input"].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected input: %+v", payload.Variables["input"])
+			}
+			if input["alias"] != "d1" {
+				t.Fatalf("expected alias input from route, got: %+v", input)
+			}
+			if _, ok := input["route"]; ok {
+				t.Fatalf("input must not use Atom route field: %+v", input)
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createTenant": map[string]any{
+						"id":     testTenantID,
+						"name":   "D1",
+						"route":  "d1",
+						"status": "active",
+					},
 				},
-			},
-		})
+			})
+		case strings.Contains(payload.Query, "query DeviceTypes("):
+			if payload.Variables["tenantId"] != testTenantID {
+				t.Fatalf("default device type list must be tenant scoped: %+v", payload.Variables)
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"profiles": map[string]any{"total": 0, "items": []any{}},
+				},
+			})
+		case strings.Contains(payload.Query, "mutation CreateDeviceType("):
+			input, ok := payload.Variables["input"].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected device type input: %+v", payload.Variables["input"])
+			}
+			key, _ := input["key"].(string)
+			createdKeys[key] = true
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createProfile": map[string]any{
+						"id":        "profile-" + key,
+						"tenant_id": testTenantID,
+						"key":       key,
+						"name":      input["displayName"],
+						"status":    DeviceTypeStatusActive,
+					},
+				},
+			})
+		case strings.Contains(payload.Query, "query DeviceTypeVersions("):
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{"profileVersions": []any{}},
+			})
+		case strings.Contains(payload.Query, "mutation CreateDeviceTypeVersion("):
+			versionedTypes++
+			input, ok := payload.Variables["input"].(map[string]any)
+			if !ok {
+				t.Fatalf("unexpected device type version input: %+v", payload.Variables["input"])
+			}
+			_ = json.NewEncoder(w).Encode(map[string]any{
+				"data": map[string]any{
+					"createProfileVersion": map[string]any{
+						"id":             fmt.Sprintf("version-%d", versionedTypes),
+						"device_type_id": payload.Variables["profileId"],
+						"version":        input["version"],
+						"json_schema":    input["jsonSchema"],
+						"ui_schema":      input["uiSchema"],
+						"status":         DeviceTypeVersionStatusActive,
+					},
+				},
+			})
+		default:
+			t.Fatalf("unexpected GraphQL query: %s", payload.Query)
+		}
 	}))
 	defer srv.Close()
 
@@ -347,6 +404,17 @@ func TestCreateTenantMapsRouteToAlias(t *testing.T) {
 	}
 	if got.ID != testTenantID || got.Route != "d1" {
 		t.Fatalf("unexpected tenant: %+v", got)
+	}
+	if got, want := len(createdKeys), len(defaultDeviceTypes(testTenantID)); got != want {
+		t.Fatalf("expected %d default device types, got %d: %+v", want, got, createdKeys)
+	}
+	for _, key := range []string{"water-meter", "pressure-sensor", "energy-meter", "pump-controller"} {
+		if !createdKeys[key] {
+			t.Fatalf("default device type %q was not created: %+v", key, createdKeys)
+		}
+	}
+	if versionedTypes != len(defaultDeviceTypes(testTenantID)) {
+		t.Fatalf("expected every default device type to get a version, got %d", versionedTypes)
 	}
 }
 

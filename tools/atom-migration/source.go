@@ -14,7 +14,7 @@ import (
 
 // --- source row structs (Magistrala) ---
 
-type srcDomain struct {
+type srcWorkspace struct {
 	ID        string         `db:"id"`
 	Name      sql.NullString `db:"name"`
 	Route     sql.NullString `db:"route"`
@@ -46,7 +46,7 @@ type srcUser struct {
 type srcDevice struct {
 	ID            string         `db:"id"`
 	Name          sql.NullString `db:"name"`
-	DomainID      string         `db:"domain_id"`
+	WorkspaceID   string         `db:"workspace_id"`
 	ParentGroupID sql.NullString `db:"parent_group_id"`
 	Identity      sql.NullString `db:"identity"`
 	Secret        sql.NullString `db:"secret"`
@@ -61,7 +61,7 @@ type srcDevice struct {
 type srcChannel struct {
 	ID            string         `db:"id"`
 	Name          sql.NullString `db:"name"`
-	DomainID      string         `db:"domain_id"`
+	WorkspaceID   string         `db:"workspace_id"`
 	ParentGroupID sql.NullString `db:"parent_group_id"`
 	Route         sql.NullString `db:"route"`
 	Tags          pq.StringArray `db:"tags"`
@@ -73,16 +73,16 @@ type srcChannel struct {
 }
 
 type srcConnection struct {
-	ChannelID string `db:"channel_id"`
-	DomainID  string `db:"domain_id"`
-	ClientID  string `db:"client_id"`
-	Type      int16  `db:"type"`
+	ChannelID   string `db:"channel_id"`
+	WorkspaceID string `db:"workspace_id"`
+	ClientID    string `db:"client_id"`
+	Type        int16  `db:"type"`
 }
 
 type srcGroup struct {
 	ID          string         `db:"id"`
 	ParentID    sql.NullString `db:"parent_id"`
-	DomainID    string         `db:"domain_id"`
+	WorkspaceID string         `db:"workspace_id"`
 	Name        string         `db:"name"`
 	Description sql.NullString `db:"description"`
 	Metadata    []byte         `db:"metadata"`
@@ -125,7 +125,7 @@ type srcPAT struct {
 type srcRule struct {
 	ID              string          `db:"id"`
 	Name            sql.NullString  `db:"name"`
-	DomainID        string          `db:"domain_id"`
+	WorkspaceID     string          `db:"workspace_id"`
 	Metadata        []byte          `db:"metadata"`
 	CreatedBy       sql.NullString  `db:"created_by"`
 	CreatedAt       sql.NullTime    `db:"created_at"`
@@ -149,7 +149,7 @@ type srcReport struct {
 	ID              string          `db:"id"`
 	Name            sql.NullString  `db:"name"`
 	Description     sql.NullString  `db:"description"`
-	DomainID        string          `db:"domain_id"`
+	WorkspaceID     string          `db:"workspace_id"`
 	Status          int16           `db:"status"`
 	CreatedAt       sql.NullTime    `db:"created_at"`
 	CreatedBy       sql.NullString  `db:"created_by"`
@@ -167,9 +167,9 @@ type srcReport struct {
 
 // --- readers ---
 
-func readDomains(ctx context.Context, db *sqlx.DB) ([]srcDomain, error) {
-	var out []srcDomain
-	q := `SELECT id, name, route, tags, metadata, created_at, updated_at, created_by, updated_by, status FROM domains`
+func readWorkspaces(ctx context.Context, db *sqlx.DB) ([]srcWorkspace, error) {
+	var out []srcWorkspace
+	q := `SELECT id, name, route, tags, metadata, created_at, updated_at, created_by, updated_by, status FROM workspaces`
 	return out, db.SelectContext(ctx, &out, q)
 }
 
@@ -183,7 +183,7 @@ func readUsers(ctx context.Context, db *sqlx.DB) ([]srcUser, error) {
 
 func readDevices(ctx context.Context, db *sqlx.DB) ([]srcDevice, error) {
 	var out []srcDevice
-	q := `SELECT id, name, domain_id, parent_group_id, identity, secret, tags, metadata, private_metadata,
+	q := `SELECT id, name, workspace_id, parent_group_id, identity, secret, tags, metadata, private_metadata,
 	             status, created_at, updated_at
 	      FROM clients`
 	return out, db.SelectContext(ctx, &out, q)
@@ -191,12 +191,12 @@ func readDevices(ctx context.Context, db *sqlx.DB) ([]srcDevice, error) {
 
 func readConnections(ctx context.Context, db *sqlx.DB) ([]srcConnection, error) {
 	var out []srcConnection
-	return out, db.SelectContext(ctx, &out, `SELECT channel_id, domain_id, client_id, type FROM connections`)
+	return out, db.SelectContext(ctx, &out, `SELECT channel_id, workspace_id, client_id, type FROM connections`)
 }
 
 func readChannels(ctx context.Context, db *sqlx.DB) ([]srcChannel, error) {
 	var out []srcChannel
-	q := `SELECT id, name, domain_id, parent_group_id, route, tags, metadata, created_by,
+	q := `SELECT id, name, workspace_id, parent_group_id, route, tags, metadata, created_by,
 	             status, created_at, updated_at
 	      FROM channels`
 	return out, db.SelectContext(ctx, &out, q)
@@ -204,7 +204,7 @@ func readChannels(ctx context.Context, db *sqlx.DB) ([]srcChannel, error) {
 
 func readGroups(ctx context.Context, db *sqlx.DB) ([]srcGroup, error) {
 	var out []srcGroup
-	q := `SELECT id, parent_id, domain_id, name, description, metadata, tags, status,
+	q := `SELECT id, parent_id, workspace_id, name, description, metadata, tags, status,
 	             created_at, updated_at
 	      FROM groups`
 	return out, db.SelectContext(ctx, &out, q)
@@ -212,7 +212,7 @@ func readGroups(ctx context.Context, db *sqlx.DB) ([]srcGroup, error) {
 
 func readRules(ctx context.Context, db *sqlx.DB) ([]srcRule, error) {
 	var out []srcRule
-	q := `SELECT id, name, domain_id, metadata, created_by, created_at, updated_at, updated_by,
+	q := `SELECT id, name, workspace_id, metadata, created_by, created_at, updated_at, updated_by,
 	             input_channel, input_topic, outputs, status, logic_type, logic_value,
 	             "time", recurring, recurring_period, start_datetime, tags
 	      FROM rules`
@@ -221,7 +221,7 @@ func readRules(ctx context.Context, db *sqlx.DB) ([]srcRule, error) {
 
 func readReports(ctx context.Context, db *sqlx.DB) ([]srcReport, error) {
 	var out []srcReport
-	q := `SELECT id, name, description, domain_id, status, created_at, created_by, updated_at,
+	q := `SELECT id, name, description, workspace_id, status, created_at, created_by, updated_at,
 	             updated_by, due, recurring, recurring_period, start_datetime,
 	             config, email, metrics, report_template
 	      FROM report_config`
@@ -255,23 +255,23 @@ func readPATs(ctx context.Context, db *sqlx.DB) ([]srcPAT, error) {
 }
 
 type srcPATScope struct {
-	PatID      string         `db:"pat_id"`
-	DomainID   sql.NullString `db:"domain_id"`
-	EntityType string         `db:"entity_type"`
-	Operation  string         `db:"operation"`
-	EntityID   string         `db:"entity_id"`
+	PatID       string         `db:"pat_id"`
+	WorkspaceID sql.NullString `db:"workspace_id"`
+	EntityType  string         `db:"entity_type"`
+	Operation   string         `db:"operation"`
+	EntityID    string         `db:"entity_id"`
 }
 
 func readPATScopes(ctx context.Context, db *sqlx.DB) ([]srcPATScope, error) {
 	var out []srcPATScope
-	q := `SELECT pat_id, domain_id, entity_type, operation, entity_id FROM pat_scopes`
+	q := `SELECT pat_id, workspace_id, entity_type, operation, entity_id FROM pat_scopes`
 	return out, db.SelectContext(ctx, &out, q)
 }
 
 type srcInvitation struct {
 	InvitedBy   string       `db:"invited_by"`
 	InviteeID   string       `db:"invitee_user_id"`
-	DomainID    string       `db:"domain_id"`
+	WorkspaceID string       `db:"workspace_id"`
 	RoleID      string       `db:"role_id"`
 	CreatedAt   sql.NullTime `db:"created_at"`
 	ConfirmedAt sql.NullTime `db:"confirmed_at"`
@@ -280,6 +280,6 @@ type srcInvitation struct {
 
 func readInvitations(ctx context.Context, db *sqlx.DB) ([]srcInvitation, error) {
 	var out []srcInvitation
-	q := `SELECT invited_by, invitee_user_id, domain_id, role_id, created_at, confirmed_at, rejected_at FROM invitations`
+	q := `SELECT invited_by, invitee_user_id, workspace_id, role_id, created_at, confirmed_at, rejected_at FROM invitations`
 	return out, db.SelectContext(ctx, &out, q)
 }

@@ -28,7 +28,7 @@ const (
 	operation      = "test_operation"
 	entityType     = "client"
 	userID         = "user_id"
-	domainID       = "domain_id"
+	workspaceID    = "workspace_id"
 	filePermission = 0o644
 )
 
@@ -38,9 +38,9 @@ var req = callout.Request{
 		EntityType: entityType,
 	},
 	Payload: map[string]any{
-		"sender": userID,
-		"time":   time.Now().UTC(),
-		"domain": domainID,
+		"sender":    userID,
+		"time":      time.Now().UTC(),
+		"workspace": workspaceID,
 	},
 }
 
@@ -230,7 +230,7 @@ func TestCallout_MakeRequest(t *testing.T) {
 			desc: "successful GET request with query params",
 			serverHandler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				assert.Equal(t, http.MethodGet, r.Method)
-				assert.Equal(t, domainID, r.URL.Query().Get("domain"))
+				assert.Equal(t, workspaceID, r.URL.Query().Get("workspace"))
 				assert.Equal(t, userID, r.URL.Query().Get("sender"))
 				w.WriteHeader(http.StatusOK)
 			}),

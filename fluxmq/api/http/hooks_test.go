@@ -16,7 +16,7 @@ import (
 )
 
 type fakeHookParser struct {
-	domainID        string
+	workspaceID     string
 	channelID       string
 	subtopic        string
 	topicType       messaging.TopicType
@@ -27,20 +27,20 @@ type fakeHookParser struct {
 
 func (p *fakeHookParser) ParsePublishTopic(context.Context, string, bool) (string, string, string, messaging.TopicType, error) {
 	p.publishCalled = true
-	return p.domainID, p.channelID, p.subtopic, p.topicType, p.err
+	return p.workspaceID, p.channelID, p.subtopic, p.topicType, p.err
 }
 
 func (p *fakeHookParser) ParseSubscribeTopic(context.Context, string, bool) (string, string, string, messaging.TopicType, error) {
 	p.subscribeCalled = true
-	return p.domainID, p.channelID, p.subtopic, p.topicType, p.err
+	return p.workspaceID, p.channelID, p.subtopic, p.topicType, p.err
 }
 
 func TestHooksHandlerReturnsCanonicalTopicModifier(t *testing.T) {
 	parser := &fakeHookParser{
-		domainID:  "26ad5c3f-cd91-4ff0-9685-0c3115643174",
-		channelID: "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
-		subtopic:  "messages",
-		topicType: messaging.MessageType,
+		workspaceID: "26ad5c3f-cd91-4ff0-9685-0c3115643174",
+		channelID:   "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
+		subtopic:    "messages",
+		topicType:   messaging.MessageType,
 	}
 	req := httptest.NewRequest("POST", "/hooks", strings.NewReader(`{
 		"hook":"auth_on_publish",
@@ -65,10 +65,10 @@ func TestHooksHandlerReturnsCanonicalTopicModifier(t *testing.T) {
 
 func TestHooksHandlerUsesSubscribeParserForSubscribeAndUnsubscribe(t *testing.T) {
 	parser := &fakeHookParser{
-		domainID:  "26ad5c3f-cd91-4ff0-9685-0c3115643174",
-		channelID: "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
-		subtopic:  "messages/+",
-		topicType: messaging.MessageType,
+		workspaceID: "26ad5c3f-cd91-4ff0-9685-0c3115643174",
+		channelID:   "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
+		subtopic:    "messages/+",
+		topicType:   messaging.MessageType,
 	}
 	for _, hook := range []string{hookAuthOnSubscribe, hookAuthOnUnsubscribe} {
 		parser.publishCalled = false

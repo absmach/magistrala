@@ -13,7 +13,7 @@ on:
       - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
-      - "domains/api/http/**"
+      - "workspaces/api/http/**"
       - "groups/api/http/**"
       - "users/api/**"
       - "bootstrap/api/**"
@@ -29,7 +29,7 @@ on:
       - "internal/atom/**"
       - "channels/api/http/**"
       - "clients/api/http/**"
-      - "domains/api/http/**"
+      - "workspaces/api/http/**"
       - "groups/api/http/**"
       - "users/api/**"
       - "bootstrap/api/**"
@@ -45,9 +45,9 @@ env:
   ATOM_LOGIN_URL: http://localhost/auth/login
   USER_IDENTITY: admin
   USER_SECRET: 12345678
-  DOMAIN_NAME: demo-test
+  WORKSPACE_NAME: demo-test
   USERS_URL: http://localhost
-  DOMAIN_URL: http://localhost
+  WORKSPACE_URL: http://localhost
   CLIENTS_URL: http://localhost
   CHANNELS_URL: http://localhost
   GROUPS_URL: http://localhost
@@ -78,10 +78,10 @@ jobs:
             workflow:
               - ".github/workflows/api-tests.yaml"
 
-            domains:
-              - "apidocs/openapi/domains.yaml"
+            workspaces:
+              - "apidocs/openapi/workspaces.yaml"
               - "internal/atom/**"
-              - "domains/api/http/**"
+              - "workspaces/api/http/**"
 
             clients:
               - "apidocs/openapi/devices.yaml"
@@ -195,15 +195,15 @@ jobs:
           coverage-artifact-name: schema-coverage-channels
           coverage-pr-comment: false
 
-      - name: Run Domains API tests
-        if: (steps.changes.outputs.domains == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('domains/api/http/**') != ''
+      - name: Run Workspaces API tests
+        if: (steps.changes.outputs.workspaces == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('workspaces/api/http/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
-          schema: apidocs/openapi/domains.yaml
-          base-url: ${{ env.DOMAIN_URL }}
+          schema: apidocs/openapi/workspaces.yaml
+          base-url: ${{ env.WORKSPACE_URL }}
           checks: all
           args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-          coverage-artifact-name: schema-coverage-domains
+          coverage-artifact-name: schema-coverage-workspaces
           coverage-pr-comment: false
 
       - name: Run Bootstrap API tests

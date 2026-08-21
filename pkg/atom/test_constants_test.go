@@ -5,7 +5,7 @@ package atom
 
 const (
 	testDeviceSecret = "device-secret"
-	testDomainID     = "domain-1"
+	testWorkspaceID  = "workspace-1"
 	testTenantID     = "tenant-1"
 	testEntityID     = "entity-1"
 	testDeviceID     = "device-1"

@@ -90,29 +90,29 @@ func (m *migrator) pfHumanNames(ctx context.Context, rep *report) error {
 	return nil
 }
 
-// pfTenantNames: tenants.name is UNIQUE and NOT NULL. Magistrala domain.name is
+// pfTenantNames: tenants.name is UNIQUE and NOT NULL. Magistrala workspace.name is
 // nullable and non-unique, so empty or duplicate names break the load.
 func (m *migrator) pfTenantNames(ctx context.Context, rep *report) error {
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
 	names := make([]string, 0, len(doms))
 	for _, d := range doms {
 		if !d.Name.Valid || strings.TrimSpace(d.Name.String) == "" {
-			rep.warnf("domain %s has empty name -> will use its id (tenants.name is NOT NULL UNIQUE)", d.ID)
+			rep.warnf("workspace %s has empty name -> will use its id (tenants.name is NOT NULL UNIQUE)", d.ID)
 			continue
 		}
 		names = append(names, d.Name.String)
 	}
 	for name, n := range dupGroups(func() []string { return names }) {
-		rep.warnf("domain name %q used by %d domains -> duplicates auto-renamed (tenants.name is UNIQUE)", name, n)
+		rep.warnf("workspace name %q used by %d workspaces -> duplicates auto-renamed (tenants.name is UNIQUE)", name, n)
 	}
 	return nil
 }
 
 // pfGroupNames: object_groups(name, tenant_id) is UNIQUE. Magistrala dropped the
-// groups (domain_id, name) constraint, so same-domain dups are possible.
+// groups (workspace_id, name) constraint, so same-workspace dups are possible.
 func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
 	grps, err := readGroups(ctx, m.groupsDB)
 	if err != nil {
@@ -120,7 +120,7 @@ func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
 	}
 	keys := make([]string, 0, len(grps))
 	for _, g := range grps {
-		keys = append(keys, g.DomainID+"|"+g.Name)
+		keys = append(keys, g.WorkspaceID+"|"+g.Name)
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
 		rep.warnf("group name collision (%s) across %d groups in one tenant -> duplicates auto-renamed", k, n)
@@ -128,11 +128,11 @@ func (m *migrator) pfGroupNames(ctx context.Context, rep *report) error {
 	return nil
 }
 
-// pfTenantAlias: domain.route -> tenants.alias. Globally unique, case-folded,
+// pfTenantAlias: workspace.route -> tenants.alias. Globally unique, case-folded,
 // slug-shaped, not UUID-shaped. Invalid shape => alias dropped (warn). Case-fold
 // collision among otherwise-valid aliases => block.
 func (m *migrator) pfTenantAlias(ctx context.Context, rep *report) error {
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -149,13 +149,13 @@ func (m *migrator) pfTenantAlias(ctx context.Context, rep *report) error {
 		valid = append(valid, a)
 	}
 	for a, n := range dupGroups(func() []string { return valid }) {
-		rep.warnf("tenant alias %q collides case-insensitively across %d domains -> duplicates auto-suffixed", a, n)
+		rep.warnf("tenant alias %q collides case-insensitively across %d workspaces -> duplicates auto-suffixed", a, n)
 	}
 	return nil
 }
 
 // pfEntityResourceAlias: client.identity / channel.route are unique per tenant
-// (case-folded). Collision within a domain => block (would violate Atom's unique
+// (case-folded). Collision within a workspace => block (would violate Atom's unique
 // index mid-apply). Invalid shape => warn (dropped).
 func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error {
 	devices, err := readDevices(ctx, m.devicesDB)
@@ -166,7 +166,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 	if err != nil {
 		return err
 	}
-	// key = domain|alias
+	// key = workspace|alias
 	cKeys := []string{}
 	for _, c := range devices {
 		if !c.Identity.Valid || c.Identity.String == "" {
@@ -177,7 +177,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 			rep.warnf("device %s alias %q invalid slug -> dropped", c.ID, c.Identity.String)
 			continue
 		}
-		cKeys = append(cKeys, c.DomainID+"|"+a)
+		cKeys = append(cKeys, c.WorkspaceID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return cKeys }) {
 		rep.warnf("device alias collision (%s) across %d devices in one tenant -> duplicates auto-suffixed", k, n)
@@ -192,7 +192,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 			rep.warnf("channel %s alias %q invalid slug -> dropped", ch.ID, ch.Route.String)
 			continue
 		}
-		rKeys = append(rKeys, ch.DomainID+"|"+a)
+		rKeys = append(rKeys, ch.WorkspaceID+"|"+a)
 	}
 	for k, n := range dupGroups(func() []string { return rKeys }) {
 		rep.warnf("channel alias collision (%s) across %d channels in one tenant -> duplicates auto-suffixed", k, n)
@@ -201,7 +201,7 @@ func (m *migrator) pfEntityResourceAlias(ctx context.Context, rep *report) error
 }
 
 // pfDeviceNames: device entities are unique on (name, tenant_id). Magistrala
-// dropped the (domain_id, name) unique constraint, so same-domain name dups are
+// dropped the (workspace_id, name) unique constraint, so same-workspace name dups are
 // possible and would break the Atom insert.
 func (m *migrator) pfDeviceNames(ctx context.Context, rep *report) error {
 	devices, err := readDevices(ctx, m.devicesDB)
@@ -210,7 +210,7 @@ func (m *migrator) pfDeviceNames(ctx context.Context, rep *report) error {
 	}
 	keys := []string{}
 	for _, c := range devices {
-		keys = append(keys, c.DomainID+"|"+firstNonEmpty(c.Name.String, c.ID))
+		keys = append(keys, c.WorkspaceID+"|"+firstNonEmpty(c.Name.String, c.ID))
 	}
 	for k, n := range dupGroups(func() []string { return keys }) {
 		rep.warnf("device name collision (%s) across %d devices in one tenant -> duplicates auto-renamed", k, n)
@@ -218,10 +218,10 @@ func (m *migrator) pfDeviceNames(ctx context.Context, rep *report) error {
 	return nil
 }
 
-// pfOrphans: devices/channels/groups whose domain_id has no surviving domain are
+// pfOrphans: devices/channels/groups whose workspace_id has no surviving workspace are
 // skipped during load. Advisory only.
 func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -237,7 +237,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 			}
 		}
 		if n > 0 {
-			rep.warnf("%d %s reference a missing domain -> will be skipped", n, label)
+			rep.warnf("%d %s reference a missing workspace -> will be skipped", n, label)
 		}
 	}
 	devices, err := readDevices(ctx, m.devicesDB)
@@ -247,7 +247,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	count(func() []string {
 		out := make([]string, len(devices))
 		for i, c := range devices {
-			out[i] = c.DomainID
+			out[i] = c.WorkspaceID
 		}
 		return out
 	}, "devices")
@@ -258,7 +258,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	count(func() []string {
 		out := make([]string, len(chans))
 		for i, c := range chans {
-			out[i] = c.DomainID
+			out[i] = c.WorkspaceID
 		}
 		return out
 	}, "channels")
@@ -269,7 +269,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	count(func() []string {
 		out := make([]string, len(grps))
 		for i, g := range grps {
-			out[i] = g.DomainID
+			out[i] = g.WorkspaceID
 		}
 		return out
 	}, "groups")
@@ -280,7 +280,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	count(func() []string {
 		out := make([]string, len(rules))
 		for i, r := range rules {
-			out[i] = r.DomainID
+			out[i] = r.WorkspaceID
 		}
 		return out
 	}, "rules")
@@ -291,7 +291,7 @@ func (m *migrator) pfOrphans(ctx context.Context, rep *report) error {
 	count(func() []string {
 		out := make([]string, len(reports))
 		for i, r := range reports {
-			out[i] = r.DomainID
+			out[i] = r.WorkspaceID
 		}
 		return out
 	}, "reports")

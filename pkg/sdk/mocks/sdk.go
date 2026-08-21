@@ -44,8 +44,8 @@ func (_m *SDK) EXPECT() *SDK_Expecter {
 }
 
 // AcceptInvitation provides a mock function for the type SDK
-func (_mock *SDK) AcceptInvitation(ctx context.Context, domainID string, token string) error {
-	ret := _mock.Called(ctx, domainID, token)
+func (_mock *SDK) AcceptInvitation(ctx context.Context, workspaceID string, token string) error {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AcceptInvitation")
@@ -53,7 +53,7 @@ func (_mock *SDK) AcceptInvitation(ctx context.Context, domainID string, token s
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -67,13 +67,13 @@ type SDK_AcceptInvitation_Call struct {
 
 // AcceptInvitation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AcceptInvitation(ctx interface{}, domainID interface{}, token interface{}) *SDK_AcceptInvitation_Call {
-	return &SDK_AcceptInvitation_Call{Call: _e.mock.On("AcceptInvitation", ctx, domainID, token)}
+func (_e *SDK_Expecter) AcceptInvitation(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_AcceptInvitation_Call {
+	return &SDK_AcceptInvitation_Call{Call: _e.mock.On("AcceptInvitation", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_AcceptInvitation_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_AcceptInvitation_Call {
+func (_c *SDK_AcceptInvitation_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_AcceptInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -101,14 +101,14 @@ func (_c *SDK_AcceptInvitation_Call) Return(err error) *SDK_AcceptInvitation_Cal
 	return _c
 }
 
-func (_c *SDK_AcceptInvitation_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) error) *SDK_AcceptInvitation_Call {
+func (_c *SDK_AcceptInvitation_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) error) *SDK_AcceptInvitation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddBootstrap provides a mock function for the type SDK
-func (_mock *SDK) AddBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) (string, errors.SDKError) {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) AddBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string) (string, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddBootstrap")
@@ -117,15 +117,15 @@ func (_mock *SDK) AddBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, dom
 	var r0 string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) (string, errors.SDKError)); ok {
-		return returnFunc(ctx, cfg, domainID, token)
+		return returnFunc(ctx, cfg, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) string); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapConfig, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, cfg, domainID, token)
+		r1 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -142,13 +142,13 @@ type SDK_AddBootstrap_Call struct {
 // AddBootstrap is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.BootstrapConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_AddBootstrap_Call {
-	return &SDK_AddBootstrap_Call{Call: _e.mock.On("AddBootstrap", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) AddBootstrap(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_AddBootstrap_Call {
+	return &SDK_AddBootstrap_Call{Call: _e.mock.On("AddBootstrap", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_AddBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_AddBootstrap_Call {
+func (_c *SDK_AddBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string)) *SDK_AddBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -181,14 +181,14 @@ func (_c *SDK_AddBootstrap_Call) Return(s string, sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_AddBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) (string, errors.SDKError)) *SDK_AddBootstrap_Call {
+func (_c *SDK_AddBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string) (string, errors.SDKError)) *SDK_AddBootstrap_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddChildren provides a mock function for the type SDK
-func (_mock *SDK) AddChildren(ctx context.Context, id string, domainID string, groupIDs []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupIDs, token)
+func (_mock *SDK) AddChildren(ctx context.Context, id string, workspaceID string, groupIDs []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupIDs, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddChildren")
@@ -196,7 +196,7 @@ func (_mock *SDK) AddChildren(ctx context.Context, id string, domainID string, g
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupIDs, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupIDs, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -213,14 +213,14 @@ type SDK_AddChildren_Call struct {
 // AddChildren is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupIDs []string
 //   - token string
-func (_e *SDK_Expecter) AddChildren(ctx interface{}, id interface{}, domainID interface{}, groupIDs interface{}, token interface{}) *SDK_AddChildren_Call {
-	return &SDK_AddChildren_Call{Call: _e.mock.On("AddChildren", ctx, id, domainID, groupIDs, token)}
+func (_e *SDK_Expecter) AddChildren(ctx interface{}, id interface{}, workspaceID interface{}, groupIDs interface{}, token interface{}) *SDK_AddChildren_Call {
+	return &SDK_AddChildren_Call{Call: _e.mock.On("AddChildren", ctx, id, workspaceID, groupIDs, token)}
 }
 
-func (_c *SDK_AddChildren_Call) Run(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string)) *SDK_AddChildren_Call {
+func (_c *SDK_AddChildren_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupIDs []string, token string)) *SDK_AddChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -258,14 +258,14 @@ func (_c *SDK_AddChildren_Call) Return(sDKError errors.SDKError) *SDK_AddChildre
 	return _c
 }
 
-func (_c *SDK_AddChildren_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string) errors.SDKError) *SDK_AddChildren_Call {
+func (_c *SDK_AddChildren_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupIDs []string, token string) errors.SDKError) *SDK_AddChildren_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddClientRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AddClientRoleActions(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, actions, token)
+func (_mock *SDK) AddClientRoleActions(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, actions, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddClientRoleActions")
@@ -274,17 +274,17 @@ func (_mock *SDK) AddClientRoleActions(ctx context.Context, id string, roleID st
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, actions, token)
+		return returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -302,14 +302,14 @@ type SDK_AddClientRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_AddClientRoleActions_Call {
-	return &SDK_AddClientRoleActions_Call{Call: _e.mock.On("AddClientRoleActions", ctx, id, roleID, domainID, actions, token)}
+func (_e *SDK_Expecter) AddClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_AddClientRoleActions_Call {
+	return &SDK_AddClientRoleActions_Call{Call: _e.mock.On("AddClientRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
-func (_c *SDK_AddClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_AddClientRoleActions_Call {
+func (_c *SDK_AddClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string)) *SDK_AddClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -352,14 +352,14 @@ func (_c *SDK_AddClientRoleActions_Call) Return(strings []string, sDKError error
 	return _c
 }
 
-func (_c *SDK_AddClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddClientRoleActions_Call {
+func (_c *SDK_AddClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddClientRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddClientRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) AddClientRoleMembers(ctx context.Context, id string, roleID string, domainID string, members []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, members, token)
+func (_mock *SDK) AddClientRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, members, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddClientRoleMembers")
@@ -368,17 +368,17 @@ func (_mock *SDK) AddClientRoleMembers(ctx context.Context, id string, roleID st
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, members, token)
+		return returnFunc(ctx, id, roleID, workspaceID, members, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -396,14 +396,14 @@ type SDK_AddClientRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_AddClientRoleMembers_Call {
-	return &SDK_AddClientRoleMembers_Call{Call: _e.mock.On("AddClientRoleMembers", ctx, id, roleID, domainID, members, token)}
+func (_e *SDK_Expecter) AddClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_AddClientRoleMembers_Call {
+	return &SDK_AddClientRoleMembers_Call{Call: _e.mock.On("AddClientRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
-func (_c *SDK_AddClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_AddClientRoleMembers_Call {
+func (_c *SDK_AddClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string)) *SDK_AddClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -446,17 +446,17 @@ func (_c *SDK_AddClientRoleMembers_Call) Return(strings []string, sDKError error
 	return _c
 }
 
-func (_c *SDK_AddClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddClientRoleMembers_Call {
+func (_c *SDK_AddClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddClientRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// AddDomainRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AddDomainRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError) {
+// AddWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) AddWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, actions, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AddDomainRoleActions")
+		panic("no return value specified for AddWorkspaceRoleActions")
 	}
 
 	var r0 []string
@@ -481,22 +481,22 @@ func (_mock *SDK) AddDomainRoleActions(ctx context.Context, id string, roleID st
 	return r0, r1
 }
 
-// SDK_AddDomainRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDomainRoleActions'
-type SDK_AddDomainRoleActions_Call struct {
+// SDK_AddWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleActions'
+type SDK_AddWorkspaceRoleActions_Call struct {
 	*mock.Call
 }
 
-// AddDomainRoleActions is a helper method to define mock.On call
+// AddWorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddDomainRoleActions_Call {
-	return &SDK_AddDomainRoleActions_Call{Call: _e.mock.On("AddDomainRoleActions", ctx, id, roleID, actions, token)}
+func (_e *SDK_Expecter) AddWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddWorkspaceRoleActions_Call {
+	return &SDK_AddWorkspaceRoleActions_Call{Call: _e.mock.On("AddWorkspaceRoleActions", ctx, id, roleID, actions, token)}
 }
 
-func (_c *SDK_AddDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_AddDomainRoleActions_Call {
+func (_c *SDK_AddWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_AddWorkspaceRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -529,22 +529,22 @@ func (_c *SDK_AddDomainRoleActions_Call) Run(run func(ctx context.Context, id st
 	return _c
 }
 
-func (_c *SDK_AddDomainRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddDomainRoleActions_Call {
+func (_c *SDK_AddWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleActions_Call {
 	_c.Call.Return(strings, sDKError)
 	return _c
 }
 
-func (_c *SDK_AddDomainRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddDomainRoleActions_Call {
+func (_c *SDK_AddWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// AddDomainRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) AddDomainRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError) {
+// AddWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) AddWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, members, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AddDomainRoleMembers")
+		panic("no return value specified for AddWorkspaceRoleMembers")
 	}
 
 	var r0 []string
@@ -569,22 +569,22 @@ func (_mock *SDK) AddDomainRoleMembers(ctx context.Context, id string, roleID st
 	return r0, r1
 }
 
-// SDK_AddDomainRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddDomainRoleMembers'
-type SDK_AddDomainRoleMembers_Call struct {
+// SDK_AddWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleMembers'
+type SDK_AddWorkspaceRoleMembers_Call struct {
 	*mock.Call
 }
 
-// AddDomainRoleMembers is a helper method to define mock.On call
+// AddWorkspaceRoleMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddDomainRoleMembers_Call {
-	return &SDK_AddDomainRoleMembers_Call{Call: _e.mock.On("AddDomainRoleMembers", ctx, id, roleID, members, token)}
+func (_e *SDK_Expecter) AddWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddWorkspaceRoleMembers_Call {
+	return &SDK_AddWorkspaceRoleMembers_Call{Call: _e.mock.On("AddWorkspaceRoleMembers", ctx, id, roleID, members, token)}
 }
 
-func (_c *SDK_AddDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_AddDomainRoleMembers_Call {
+func (_c *SDK_AddWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_AddWorkspaceRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -617,19 +617,19 @@ func (_c *SDK_AddDomainRoleMembers_Call) Run(run func(ctx context.Context, id st
 	return _c
 }
 
-func (_c *SDK_AddDomainRoleMembers_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddDomainRoleMembers_Call {
+func (_c *SDK_AddWorkspaceRoleMembers_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleMembers_Call {
 	_c.Call.Return(strings, sDKError)
 	return _c
 }
 
-func (_c *SDK_AddDomainRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddDomainRoleMembers_Call {
+func (_c *SDK_AddWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddGroupRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AddGroupRoleActions(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, actions, token)
+func (_mock *SDK) AddGroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, actions, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddGroupRoleActions")
@@ -638,17 +638,17 @@ func (_mock *SDK) AddGroupRoleActions(ctx context.Context, id string, roleID str
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, actions, token)
+		return returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -666,14 +666,14 @@ type SDK_AddGroupRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_AddGroupRoleActions_Call {
-	return &SDK_AddGroupRoleActions_Call{Call: _e.mock.On("AddGroupRoleActions", ctx, id, roleID, domainID, actions, token)}
+func (_e *SDK_Expecter) AddGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_AddGroupRoleActions_Call {
+	return &SDK_AddGroupRoleActions_Call{Call: _e.mock.On("AddGroupRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
-func (_c *SDK_AddGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_AddGroupRoleActions_Call {
+func (_c *SDK_AddGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string)) *SDK_AddGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -716,14 +716,14 @@ func (_c *SDK_AddGroupRoleActions_Call) Return(strings []string, sDKError errors
 	return _c
 }
 
-func (_c *SDK_AddGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddGroupRoleActions_Call {
+func (_c *SDK_AddGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddGroupRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddGroupRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) AddGroupRoleMembers(ctx context.Context, id string, roleID string, domainID string, members []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, members, token)
+func (_mock *SDK) AddGroupRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, members, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddGroupRoleMembers")
@@ -732,17 +732,17 @@ func (_mock *SDK) AddGroupRoleMembers(ctx context.Context, id string, roleID str
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, members, token)
+		return returnFunc(ctx, id, roleID, workspaceID, members, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -760,14 +760,14 @@ type SDK_AddGroupRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_AddGroupRoleMembers_Call {
-	return &SDK_AddGroupRoleMembers_Call{Call: _e.mock.On("AddGroupRoleMembers", ctx, id, roleID, domainID, members, token)}
+func (_e *SDK_Expecter) AddGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_AddGroupRoleMembers_Call {
+	return &SDK_AddGroupRoleMembers_Call{Call: _e.mock.On("AddGroupRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
-func (_c *SDK_AddGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_AddGroupRoleMembers_Call {
+func (_c *SDK_AddGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string)) *SDK_AddGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -810,14 +810,14 @@ func (_c *SDK_AddGroupRoleMembers_Call) Return(strings []string, sDKError errors
 	return _c
 }
 
-func (_c *SDK_AddGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddGroupRoleMembers_Call {
+func (_c *SDK_AddGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddGroupRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddReportConfig provides a mock function for the type SDK
-func (_mock *SDK) AddReportConfig(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) AddReportConfig(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddReportConfig")
@@ -826,15 +826,15 @@ func (_mock *SDK) AddReportConfig(ctx context.Context, cfg sdk.ReportConfig, dom
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, cfg, domainID, token)
+		return returnFunc(ctx, cfg, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, cfg, domainID, token)
+		r1 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -851,13 +851,13 @@ type SDK_AddReportConfig_Call struct {
 // AddReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.ReportConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddReportConfig(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_AddReportConfig_Call {
-	return &SDK_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) AddReportConfig(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_AddReportConfig_Call {
+	return &SDK_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_AddReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_AddReportConfig_Call {
+func (_c *SDK_AddReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string)) *SDK_AddReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -890,14 +890,14 @@ func (_c *SDK_AddReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKErr
 	return _c
 }
 
-func (_c *SDK_AddReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_AddReportConfig_Call {
+func (_c *SDK_AddReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_AddReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AddRule provides a mock function for the type SDK
-func (_mock *SDK) AddRule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, r, domainID, token)
+func (_mock *SDK) AddRule(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AddRule")
@@ -906,15 +906,15 @@ func (_mock *SDK) AddRule(ctx context.Context, r sdk.Rule, domainID string, toke
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, r, domainID, token)
+		return returnFunc(ctx, r, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, r, domainID, token)
+		r0 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, r, domainID, token)
+		r1 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -931,13 +931,13 @@ type SDK_AddRule_Call struct {
 // AddRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - r sdk.Rule
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddRule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_AddRule_Call {
-	return &SDK_AddRule_Call{Call: _e.mock.On("AddRule", ctx, r, domainID, token)}
+func (_e *SDK_Expecter) AddRule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_AddRule_Call {
+	return &SDK_AddRule_Call{Call: _e.mock.On("AddRule", ctx, r, workspaceID, token)}
 }
 
-func (_c *SDK_AddRule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_AddRule_Call {
+func (_c *SDK_AddRule_Call) Run(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string)) *SDK_AddRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -970,14 +970,14 @@ func (_c *SDK_AddRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_AddRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_AddRule_Call {
+func (_c *SDK_AddRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_AddRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AssignBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, profileID, domainID, token)
+func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, profileID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, profileID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AssignBootstrapProfile")
@@ -985,7 +985,7 @@ func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, p
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, profileID, domainID, token)
+		r0 = returnFunc(ctx, configID, profileID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -1003,13 +1003,13 @@ type SDK_AssignBootstrapProfile_Call struct {
 //   - ctx context.Context
 //   - configID string
 //   - profileID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AssignBootstrapProfile(ctx interface{}, configID interface{}, profileID interface{}, domainID interface{}, token interface{}) *SDK_AssignBootstrapProfile_Call {
-	return &SDK_AssignBootstrapProfile_Call{Call: _e.mock.On("AssignBootstrapProfile", ctx, configID, profileID, domainID, token)}
+func (_e *SDK_Expecter) AssignBootstrapProfile(ctx interface{}, configID interface{}, profileID interface{}, workspaceID interface{}, token interface{}) *SDK_AssignBootstrapProfile_Call {
+	return &SDK_AssignBootstrapProfile_Call{Call: _e.mock.On("AssignBootstrapProfile", ctx, configID, profileID, workspaceID, token)}
 }
 
-func (_c *SDK_AssignBootstrapProfile_Call) Run(run func(ctx context.Context, configID string, profileID string, domainID string, token string)) *SDK_AssignBootstrapProfile_Call {
+func (_c *SDK_AssignBootstrapProfile_Call) Run(run func(ctx context.Context, configID string, profileID string, workspaceID string, token string)) *SDK_AssignBootstrapProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1047,14 +1047,14 @@ func (_c *SDK_AssignBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_AssignBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, configID string, profileID string, domainID string, token string) errors.SDKError) *SDK_AssignBootstrapProfile_Call {
+func (_c *SDK_AssignBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, configID string, profileID string, workspaceID string, token string) errors.SDKError) *SDK_AssignBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // AvailableClientRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AvailableClientRoleActions(ctx context.Context, domainID string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, domainID, token)
+func (_mock *SDK) AvailableClientRoleActions(ctx context.Context, workspaceID string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AvailableClientRoleActions")
@@ -1063,17 +1063,17 @@ func (_mock *SDK) AvailableClientRoleActions(ctx context.Context, domainID strin
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, domainID, token)
+		return returnFunc(ctx, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) []string); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, domainID, token)
+		r1 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1089,13 +1089,13 @@ type SDK_AvailableClientRoleActions_Call struct {
 
 // AvailableClientRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AvailableClientRoleActions(ctx interface{}, domainID interface{}, token interface{}) *SDK_AvailableClientRoleActions_Call {
-	return &SDK_AvailableClientRoleActions_Call{Call: _e.mock.On("AvailableClientRoleActions", ctx, domainID, token)}
+func (_e *SDK_Expecter) AvailableClientRoleActions(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_AvailableClientRoleActions_Call {
+	return &SDK_AvailableClientRoleActions_Call{Call: _e.mock.On("AvailableClientRoleActions", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_AvailableClientRoleActions_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_AvailableClientRoleActions_Call {
+func (_c *SDK_AvailableClientRoleActions_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_AvailableClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1123,17 +1123,17 @@ func (_c *SDK_AvailableClientRoleActions_Call) Return(strings []string, sDKError
 	return _c
 }
 
-func (_c *SDK_AvailableClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) ([]string, errors.SDKError)) *SDK_AvailableClientRoleActions_Call {
+func (_c *SDK_AvailableClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) ([]string, errors.SDKError)) *SDK_AvailableClientRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// AvailableDomainRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AvailableDomainRoleActions(ctx context.Context, token string) ([]string, errors.SDKError) {
+// AvailableWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) AvailableWorkspaceRoleActions(ctx context.Context, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for AvailableDomainRoleActions")
+		panic("no return value specified for AvailableWorkspaceRoleActions")
 	}
 
 	var r0 []string
@@ -1158,19 +1158,19 @@ func (_mock *SDK) AvailableDomainRoleActions(ctx context.Context, token string) 
 	return r0, r1
 }
 
-// SDK_AvailableDomainRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AvailableDomainRoleActions'
-type SDK_AvailableDomainRoleActions_Call struct {
+// SDK_AvailableWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AvailableWorkspaceRoleActions'
+type SDK_AvailableWorkspaceRoleActions_Call struct {
 	*mock.Call
 }
 
-// AvailableDomainRoleActions is a helper method to define mock.On call
+// AvailableWorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *SDK_Expecter) AvailableDomainRoleActions(ctx interface{}, token interface{}) *SDK_AvailableDomainRoleActions_Call {
-	return &SDK_AvailableDomainRoleActions_Call{Call: _e.mock.On("AvailableDomainRoleActions", ctx, token)}
+func (_e *SDK_Expecter) AvailableWorkspaceRoleActions(ctx interface{}, token interface{}) *SDK_AvailableWorkspaceRoleActions_Call {
+	return &SDK_AvailableWorkspaceRoleActions_Call{Call: _e.mock.On("AvailableWorkspaceRoleActions", ctx, token)}
 }
 
-func (_c *SDK_AvailableDomainRoleActions_Call) Run(run func(ctx context.Context, token string)) *SDK_AvailableDomainRoleActions_Call {
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) Run(run func(ctx context.Context, token string)) *SDK_AvailableWorkspaceRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1188,12 +1188,12 @@ func (_c *SDK_AvailableDomainRoleActions_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *SDK_AvailableDomainRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AvailableDomainRoleActions_Call {
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AvailableWorkspaceRoleActions_Call {
 	_c.Call.Return(strings, sDKError)
 	return _c
 }
 
-func (_c *SDK_AvailableDomainRoleActions_Call) RunAndReturn(run func(ctx context.Context, token string) ([]string, errors.SDKError)) *SDK_AvailableDomainRoleActions_Call {
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, token string) ([]string, errors.SDKError)) *SDK_AvailableWorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1275,8 +1275,8 @@ func (_c *SDK_AvailableGroupRoleActions_Call) RunAndReturn(run func(ctx context.
 }
 
 // BindBootstrapResources provides a mock function for the type SDK
-func (_mock *SDK) BindBootstrapResources(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, bindings, domainID, token)
+func (_mock *SDK) BindBootstrapResources(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, bindings, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BindBootstrapResources")
@@ -1284,7 +1284,7 @@ func (_mock *SDK) BindBootstrapResources(ctx context.Context, configID string, b
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []sdk.BootstrapBindingRequest, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, bindings, domainID, token)
+		r0 = returnFunc(ctx, configID, bindings, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -1302,13 +1302,13 @@ type SDK_BindBootstrapResources_Call struct {
 //   - ctx context.Context
 //   - configID string
 //   - bindings []sdk.BootstrapBindingRequest
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BindBootstrapResources(ctx interface{}, configID interface{}, bindings interface{}, domainID interface{}, token interface{}) *SDK_BindBootstrapResources_Call {
-	return &SDK_BindBootstrapResources_Call{Call: _e.mock.On("BindBootstrapResources", ctx, configID, bindings, domainID, token)}
+func (_e *SDK_Expecter) BindBootstrapResources(ctx interface{}, configID interface{}, bindings interface{}, workspaceID interface{}, token interface{}) *SDK_BindBootstrapResources_Call {
+	return &SDK_BindBootstrapResources_Call{Call: _e.mock.On("BindBootstrapResources", ctx, configID, bindings, workspaceID, token)}
 }
 
-func (_c *SDK_BindBootstrapResources_Call) Run(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string)) *SDK_BindBootstrapResources_Call {
+func (_c *SDK_BindBootstrapResources_Call) Run(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, workspaceID string, token string)) *SDK_BindBootstrapResources_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1346,7 +1346,7 @@ func (_c *SDK_BindBootstrapResources_Call) Return(sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_BindBootstrapResources_Call) RunAndReturn(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, domainID string, token string) errors.SDKError) *SDK_BindBootstrapResources_Call {
+func (_c *SDK_BindBootstrapResources_Call) RunAndReturn(run func(ctx context.Context, configID string, bindings []sdk.BootstrapBindingRequest, workspaceID string, token string) errors.SDKError) *SDK_BindBootstrapResources_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1426,8 +1426,8 @@ func (_c *SDK_Bootstrap_Call) RunAndReturn(run func(ctx context.Context, externa
 }
 
 // BootstrapBindings provides a mock function for the type SDK
-func (_mock *SDK) BootstrapBindings(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError) {
-	ret := _mock.Called(ctx, configID, domainID, token)
+func (_mock *SDK) BootstrapBindings(ctx context.Context, configID string, workspaceID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError) {
+	ret := _mock.Called(ctx, configID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BootstrapBindings")
@@ -1436,17 +1436,17 @@ func (_mock *SDK) BootstrapBindings(ctx context.Context, configID string, domain
 	var r0 []sdk.BootstrapBindingSnapshot
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)); ok {
-		return returnFunc(ctx, configID, domainID, token)
+		return returnFunc(ctx, configID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) []sdk.BootstrapBindingSnapshot); ok {
-		r0 = returnFunc(ctx, configID, domainID, token)
+		r0 = returnFunc(ctx, configID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]sdk.BootstrapBindingSnapshot)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, configID, domainID, token)
+		r1 = returnFunc(ctx, configID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1463,13 +1463,13 @@ type SDK_BootstrapBindings_Call struct {
 // BootstrapBindings is a helper method to define mock.On call
 //   - ctx context.Context
 //   - configID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_BootstrapBindings_Call {
-	return &SDK_BootstrapBindings_Call{Call: _e.mock.On("BootstrapBindings", ctx, configID, domainID, token)}
+func (_e *SDK_Expecter) BootstrapBindings(ctx interface{}, configID interface{}, workspaceID interface{}, token interface{}) *SDK_BootstrapBindings_Call {
+	return &SDK_BootstrapBindings_Call{Call: _e.mock.On("BootstrapBindings", ctx, configID, workspaceID, token)}
 }
 
-func (_c *SDK_BootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_BootstrapBindings_Call {
+func (_c *SDK_BootstrapBindings_Call) Run(run func(ctx context.Context, configID string, workspaceID string, token string)) *SDK_BootstrapBindings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1502,14 +1502,14 @@ func (_c *SDK_BootstrapBindings_Call) Return(bootstrapBindingSnapshots []sdk.Boo
 	return _c
 }
 
-func (_c *SDK_BootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)) *SDK_BootstrapBindings_Call {
+func (_c *SDK_BootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, workspaceID string, token string) ([]sdk.BootstrapBindingSnapshot, errors.SDKError)) *SDK_BootstrapBindings_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // BootstrapProfiles provides a mock function for the type SDK
-func (_mock *SDK) BootstrapProfiles(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) BootstrapProfiles(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for BootstrapProfiles")
@@ -1518,15 +1518,15 @@ func (_mock *SDK) BootstrapProfiles(ctx context.Context, pm sdk.PageMetadata, do
 	var r0 sdk.BootstrapProfilesPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.BootstrapProfilesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.BootstrapProfilesPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapProfilesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1543,13 +1543,13 @@ type SDK_BootstrapProfiles_Call struct {
 // BootstrapProfiles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BootstrapProfiles(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_BootstrapProfiles_Call {
-	return &SDK_BootstrapProfiles_Call{Call: _e.mock.On("BootstrapProfiles", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) BootstrapProfiles(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_BootstrapProfiles_Call {
+	return &SDK_BootstrapProfiles_Call{Call: _e.mock.On("BootstrapProfiles", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_BootstrapProfiles_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_BootstrapProfiles_Call {
+func (_c *SDK_BootstrapProfiles_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_BootstrapProfiles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1582,7 +1582,7 @@ func (_c *SDK_BootstrapProfiles_Call) Return(bootstrapProfilesPage sdk.Bootstrap
 	return _c
 }
 
-func (_c *SDK_BootstrapProfiles_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError)) *SDK_BootstrapProfiles_Call {
+func (_c *SDK_BootstrapProfiles_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.BootstrapProfilesPage, errors.SDKError)) *SDK_BootstrapProfiles_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1668,8 +1668,8 @@ func (_c *SDK_BootstrapSecure_Call) RunAndReturn(run func(ctx context.Context, e
 }
 
 // Bootstraps provides a mock function for the type SDK
-func (_mock *SDK) Bootstraps(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) Bootstraps(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.BootstrapPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Bootstraps")
@@ -1678,15 +1678,15 @@ func (_mock *SDK) Bootstraps(ctx context.Context, pm sdk.PageMetadata, domainID 
 	var r0 sdk.BootstrapPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.BootstrapPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.BootstrapPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1703,13 +1703,13 @@ type SDK_Bootstraps_Call struct {
 // Bootstraps is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Bootstraps(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Bootstraps_Call {
-	return &SDK_Bootstraps_Call{Call: _e.mock.On("Bootstraps", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) Bootstraps(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Bootstraps_Call {
+	return &SDK_Bootstraps_Call{Call: _e.mock.On("Bootstraps", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_Bootstraps_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Bootstraps_Call {
+func (_c *SDK_Bootstraps_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_Bootstraps_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1742,14 +1742,14 @@ func (_c *SDK_Bootstraps_Call) Return(bootstrapPage sdk.BootstrapPage, sDKError 
 	return _c
 }
 
-func (_c *SDK_Bootstraps_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.BootstrapPage, errors.SDKError)) *SDK_Bootstraps_Call {
+func (_c *SDK_Bootstraps_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.BootstrapPage, errors.SDKError)) *SDK_Bootstraps_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Channel provides a mock function for the type SDK
-func (_mock *SDK) Channel(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) Channel(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Channel")
@@ -1758,15 +1758,15 @@ func (_mock *SDK) Channel(ctx context.Context, id string, domainID string, token
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1783,13 +1783,13 @@ type SDK_Channel_Call struct {
 // Channel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Channel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Channel_Call {
-	return &SDK_Channel_Call{Call: _e.mock.On("Channel", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) Channel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Channel_Call {
+	return &SDK_Channel_Call{Call: _e.mock.On("Channel", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_Channel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Channel_Call {
+func (_c *SDK_Channel_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_Channel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1822,14 +1822,14 @@ func (_c *SDK_Channel_Call) Return(channel sdk.Channel, sDKError errors.SDKError
 	return _c
 }
 
-func (_c *SDK_Channel_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_Channel_Call {
+func (_c *SDK_Channel_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_Channel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Channels provides a mock function for the type SDK
-func (_mock *SDK) Channels(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ChannelsPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) Channels(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ChannelsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Channels")
@@ -1838,15 +1838,15 @@ func (_mock *SDK) Channels(ctx context.Context, pm sdk.PageMetadata, domainID st
 	var r0 sdk.ChannelsPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.ChannelsPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.ChannelsPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ChannelsPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1863,13 +1863,13 @@ type SDK_Channels_Call struct {
 // Channels is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Channels(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Channels_Call {
-	return &SDK_Channels_Call{Call: _e.mock.On("Channels", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) Channels(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Channels_Call {
+	return &SDK_Channels_Call{Call: _e.mock.On("Channels", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_Channels_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Channels_Call {
+func (_c *SDK_Channels_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_Channels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1902,14 +1902,14 @@ func (_c *SDK_Channels_Call) Return(channelsPage sdk.ChannelsPage, sDKError erro
 	return _c
 }
 
-func (_c *SDK_Channels_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ChannelsPage, errors.SDKError)) *SDK_Channels_Call {
+func (_c *SDK_Channels_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ChannelsPage, errors.SDKError)) *SDK_Channels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Children provides a mock function for the type SDK
-func (_mock *SDK) Children(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, pm, token)
+func (_mock *SDK) Children(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Children")
@@ -1918,15 +1918,15 @@ func (_mock *SDK) Children(ctx context.Context, id string, domainID string, pm s
 	var r0 sdk.GroupsPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.GroupsPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, pm, token)
+		return returnFunc(ctx, id, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.GroupsPage); ok {
-		r0 = returnFunc(ctx, id, domainID, pm, token)
+		r0 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.GroupsPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, pm, token)
+		r1 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -1943,14 +1943,14 @@ type SDK_Children_Call struct {
 // Children is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Children(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_Children_Call {
-	return &SDK_Children_Call{Call: _e.mock.On("Children", ctx, id, domainID, pm, token)}
+func (_e *SDK_Expecter) Children(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_Children_Call {
+	return &SDK_Children_Call{Call: _e.mock.On("Children", ctx, id, workspaceID, pm, token)}
 }
 
-func (_c *SDK_Children_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string)) *SDK_Children_Call {
+func (_c *SDK_Children_Call) Run(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_Children_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -1988,14 +1988,14 @@ func (_c *SDK_Children_Call) Return(groupsPage sdk.GroupsPage, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_Children_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError)) *SDK_Children_Call {
+func (_c *SDK_Children_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.GroupsPage, errors.SDKError)) *SDK_Children_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Client provides a mock function for the type SDK
-func (_mock *SDK) Client(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) Client(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Client")
@@ -2004,15 +2004,15 @@ func (_mock *SDK) Client(ctx context.Context, id string, domainID string, token 
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2029,13 +2029,13 @@ type SDK_Client_Call struct {
 // Client is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Client(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Client_Call {
-	return &SDK_Client_Call{Call: _e.mock.On("Client", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) Client(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Client_Call {
+	return &SDK_Client_Call{Call: _e.mock.On("Client", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_Client_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Client_Call {
+func (_c *SDK_Client_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_Client_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2068,14 +2068,14 @@ func (_c *SDK_Client_Call) Return(client sdk.Client, sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_Client_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_Client_Call {
+func (_c *SDK_Client_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_Client_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ClientRole provides a mock function for the type SDK
-func (_mock *SDK) ClientRole(ctx context.Context, id string, roleID string, domainID string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) ClientRole(ctx context.Context, id string, roleID string, workspaceID string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClientRole")
@@ -2084,15 +2084,15 @@ func (_mock *SDK) ClientRole(ctx context.Context, id string, roleID string, doma
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, token)
+		return returnFunc(ctx, id, roleID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2110,13 +2110,13 @@ type SDK_ClientRole_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ClientRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_ClientRole_Call {
-	return &SDK_ClientRole_Call{Call: _e.mock.On("ClientRole", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) ClientRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_ClientRole_Call {
+	return &SDK_ClientRole_Call{Call: _e.mock.On("ClientRole", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_ClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_ClientRole_Call {
+func (_c *SDK_ClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_ClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2154,14 +2154,14 @@ func (_c *SDK_ClientRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_ClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) (sdk.Role, errors.SDKError)) *SDK_ClientRole_Call {
+func (_c *SDK_ClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) (sdk.Role, errors.SDKError)) *SDK_ClientRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ClientRoleActions provides a mock function for the type SDK
-func (_mock *SDK) ClientRoleActions(ctx context.Context, id string, roleID string, domainID string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) ClientRoleActions(ctx context.Context, id string, roleID string, workspaceID string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClientRoleActions")
@@ -2170,17 +2170,17 @@ func (_mock *SDK) ClientRoleActions(ctx context.Context, id string, roleID strin
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, token)
+		return returnFunc(ctx, id, roleID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2198,13 +2198,13 @@ type SDK_ClientRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_ClientRoleActions_Call {
-	return &SDK_ClientRoleActions_Call{Call: _e.mock.On("ClientRoleActions", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) ClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_ClientRoleActions_Call {
+	return &SDK_ClientRoleActions_Call{Call: _e.mock.On("ClientRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_ClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_ClientRoleActions_Call {
+func (_c *SDK_ClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_ClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2242,14 +2242,14 @@ func (_c *SDK_ClientRoleActions_Call) Return(strings []string, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_ClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) ([]string, errors.SDKError)) *SDK_ClientRoleActions_Call {
+func (_c *SDK_ClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) ([]string, errors.SDKError)) *SDK_ClientRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ClientRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) ClientRoleMembers(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, pm, token)
+func (_mock *SDK) ClientRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClientRoleMembers")
@@ -2258,15 +2258,15 @@ func (_mock *SDK) ClientRoleMembers(ctx context.Context, id string, roleID strin
 	var r0 sdk.RoleMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, sdk.PageMetadata, string) (sdk.RoleMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, pm, token)
+		return returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, sdk.PageMetadata, string) sdk.RoleMembersPage); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, pm, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.RoleMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, pm, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2284,14 +2284,14 @@ type SDK_ClientRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ClientRoleMembers_Call {
-	return &SDK_ClientRoleMembers_Call{Call: _e.mock.On("ClientRoleMembers", ctx, id, roleID, domainID, pm, token)}
+func (_e *SDK_Expecter) ClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ClientRoleMembers_Call {
+	return &SDK_ClientRoleMembers_Call{Call: _e.mock.On("ClientRoleMembers", ctx, id, roleID, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string)) *SDK_ClientRoleMembers_Call {
+func (_c *SDK_ClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2334,14 +2334,14 @@ func (_c *SDK_ClientRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage
 	return _c
 }
 
-func (_c *SDK_ClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_ClientRoleMembers_Call {
+func (_c *SDK_ClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_ClientRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ClientRoles provides a mock function for the type SDK
-func (_mock *SDK) ClientRoles(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, pm, token)
+func (_mock *SDK) ClientRoles(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ClientRoles")
@@ -2350,15 +2350,15 @@ func (_mock *SDK) ClientRoles(ctx context.Context, id string, domainID string, p
 	var r0 sdk.RolesPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.RolesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, pm, token)
+		return returnFunc(ctx, id, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.RolesPage); ok {
-		r0 = returnFunc(ctx, id, domainID, pm, token)
+		r0 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.RolesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, pm, token)
+		r1 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2375,14 +2375,14 @@ type SDK_ClientRoles_Call struct {
 // ClientRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ClientRoles(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ClientRoles_Call {
-	return &SDK_ClientRoles_Call{Call: _e.mock.On("ClientRoles", ctx, id, domainID, pm, token)}
+func (_e *SDK_Expecter) ClientRoles(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ClientRoles_Call {
+	return &SDK_ClientRoles_Call{Call: _e.mock.On("ClientRoles", ctx, id, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ClientRoles_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string)) *SDK_ClientRoles_Call {
+func (_c *SDK_ClientRoles_Call) Run(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ClientRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2420,14 +2420,14 @@ func (_c *SDK_ClientRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.
 	return _c
 }
 
-func (_c *SDK_ClientRoles_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_ClientRoles_Call {
+func (_c *SDK_ClientRoles_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_ClientRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Clients provides a mock function for the type SDK
-func (_mock *SDK) Clients(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ClientsPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) Clients(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ClientsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Clients")
@@ -2436,15 +2436,15 @@ func (_mock *SDK) Clients(ctx context.Context, pm sdk.PageMetadata, domainID str
 	var r0 sdk.ClientsPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.ClientsPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.ClientsPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ClientsPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2461,13 +2461,13 @@ type SDK_Clients_Call struct {
 // Clients is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Clients(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Clients_Call {
-	return &SDK_Clients_Call{Call: _e.mock.On("Clients", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) Clients(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Clients_Call {
+	return &SDK_Clients_Call{Call: _e.mock.On("Clients", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_Clients_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Clients_Call {
+func (_c *SDK_Clients_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_Clients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2500,14 +2500,14 @@ func (_c *SDK_Clients_Call) Return(clientsPage sdk.ClientsPage, sDKError errors.
 	return _c
 }
 
-func (_c *SDK_Clients_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ClientsPage, errors.SDKError)) *SDK_Clients_Call {
+func (_c *SDK_Clients_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ClientsPage, errors.SDKError)) *SDK_Clients_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Connect provides a mock function for the type SDK
-func (_mock *SDK) Connect(ctx context.Context, conn sdk.Connection, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, conn, domainID, token)
+func (_mock *SDK) Connect(ctx context.Context, conn sdk.Connection, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, conn, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Connect")
@@ -2515,7 +2515,7 @@ func (_mock *SDK) Connect(ctx context.Context, conn sdk.Connection, domainID str
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Connection, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, conn, domainID, token)
+		r0 = returnFunc(ctx, conn, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2532,13 +2532,13 @@ type SDK_Connect_Call struct {
 // Connect is a helper method to define mock.On call
 //   - ctx context.Context
 //   - conn sdk.Connection
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Connect(ctx interface{}, conn interface{}, domainID interface{}, token interface{}) *SDK_Connect_Call {
-	return &SDK_Connect_Call{Call: _e.mock.On("Connect", ctx, conn, domainID, token)}
+func (_e *SDK_Expecter) Connect(ctx interface{}, conn interface{}, workspaceID interface{}, token interface{}) *SDK_Connect_Call {
+	return &SDK_Connect_Call{Call: _e.mock.On("Connect", ctx, conn, workspaceID, token)}
 }
 
-func (_c *SDK_Connect_Call) Run(run func(ctx context.Context, conn sdk.Connection, domainID string, token string)) *SDK_Connect_Call {
+func (_c *SDK_Connect_Call) Run(run func(ctx context.Context, conn sdk.Connection, workspaceID string, token string)) *SDK_Connect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2571,14 +2571,14 @@ func (_c *SDK_Connect_Call) Return(sDKError errors.SDKError) *SDK_Connect_Call {
 	return _c
 }
 
-func (_c *SDK_Connect_Call) RunAndReturn(run func(ctx context.Context, conn sdk.Connection, domainID string, token string) errors.SDKError) *SDK_Connect_Call {
+func (_c *SDK_Connect_Call) RunAndReturn(run func(ctx context.Context, conn sdk.Connection, workspaceID string, token string) errors.SDKError) *SDK_Connect_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ConnectClients provides a mock function for the type SDK
-func (_mock *SDK) ConnectClients(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, channelID, clientIDs, connTypes, domainID, token)
+func (_mock *SDK) ConnectClients(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, channelID, clientIDs, connTypes, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ConnectClients")
@@ -2586,7 +2586,7 @@ func (_mock *SDK) ConnectClients(ctx context.Context, channelID string, clientID
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, []string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, channelID, clientIDs, connTypes, domainID, token)
+		r0 = returnFunc(ctx, channelID, clientIDs, connTypes, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -2605,13 +2605,13 @@ type SDK_ConnectClients_Call struct {
 //   - channelID string
 //   - clientIDs []string
 //   - connTypes []string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ConnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, domainID interface{}, token interface{}) *SDK_ConnectClients_Call {
-	return &SDK_ConnectClients_Call{Call: _e.mock.On("ConnectClients", ctx, channelID, clientIDs, connTypes, domainID, token)}
+func (_e *SDK_Expecter) ConnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, workspaceID interface{}, token interface{}) *SDK_ConnectClients_Call {
+	return &SDK_ConnectClients_Call{Call: _e.mock.On("ConnectClients", ctx, channelID, clientIDs, connTypes, workspaceID, token)}
 }
 
-func (_c *SDK_ConnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string)) *SDK_ConnectClients_Call {
+func (_c *SDK_ConnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string)) *SDK_ConnectClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2654,14 +2654,14 @@ func (_c *SDK_ConnectClients_Call) Return(sDKError errors.SDKError) *SDK_Connect
 	return _c
 }
 
-func (_c *SDK_ConnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string) errors.SDKError) *SDK_ConnectClients_Call {
+func (_c *SDK_ConnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string) errors.SDKError) *SDK_ConnectClients_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) CreateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
-	ret := _mock.Called(ctx, profile, domainID, token)
+func (_mock *SDK) CreateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
+	ret := _mock.Called(ctx, profile, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateBootstrapProfile")
@@ -2670,15 +2670,15 @@ func (_mock *SDK) CreateBootstrapProfile(ctx context.Context, profile sdk.Bootst
 	var r0 sdk.BootstrapProfile
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
-		return returnFunc(ctx, profile, domainID, token)
+		return returnFunc(ctx, profile, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) sdk.BootstrapProfile); ok {
-		r0 = returnFunc(ctx, profile, domainID, token)
+		r0 = returnFunc(ctx, profile, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapProfile)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, profile, domainID, token)
+		r1 = returnFunc(ctx, profile, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2695,13 +2695,13 @@ type SDK_CreateBootstrapProfile_Call struct {
 // CreateBootstrapProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - profile sdk.BootstrapProfile
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_CreateBootstrapProfile_Call {
-	return &SDK_CreateBootstrapProfile_Call{Call: _e.mock.On("CreateBootstrapProfile", ctx, profile, domainID, token)}
+func (_e *SDK_Expecter) CreateBootstrapProfile(ctx interface{}, profile interface{}, workspaceID interface{}, token interface{}) *SDK_CreateBootstrapProfile_Call {
+	return &SDK_CreateBootstrapProfile_Call{Call: _e.mock.On("CreateBootstrapProfile", ctx, profile, workspaceID, token)}
 }
 
-func (_c *SDK_CreateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_CreateBootstrapProfile_Call {
+func (_c *SDK_CreateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string)) *SDK_CreateBootstrapProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2734,7 +2734,7 @@ func (_c *SDK_CreateBootstrapProfile_Call) Return(bootstrapProfile sdk.Bootstrap
 	return _c
 }
 
-func (_c *SDK_CreateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_CreateBootstrapProfile_Call {
+func (_c *SDK_CreateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_CreateBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -2814,8 +2814,8 @@ func (_c *SDK_CreateCSR_Call) RunAndReturn(run func(ctx context.Context, metadat
 }
 
 // CreateChannel provides a mock function for the type SDK
-func (_mock *SDK) CreateChannel(ctx context.Context, channel sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, channel, domainID, token)
+func (_mock *SDK) CreateChannel(ctx context.Context, channel sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, channel, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateChannel")
@@ -2824,15 +2824,15 @@ func (_mock *SDK) CreateChannel(ctx context.Context, channel sdk.Channel, domain
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, channel, domainID, token)
+		return returnFunc(ctx, channel, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, channel, domainID, token)
+		r0 = returnFunc(ctx, channel, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Channel, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, channel, domainID, token)
+		r1 = returnFunc(ctx, channel, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2849,13 +2849,13 @@ type SDK_CreateChannel_Call struct {
 // CreateChannel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - channel sdk.Channel
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateChannel(ctx interface{}, channel interface{}, domainID interface{}, token interface{}) *SDK_CreateChannel_Call {
-	return &SDK_CreateChannel_Call{Call: _e.mock.On("CreateChannel", ctx, channel, domainID, token)}
+func (_e *SDK_Expecter) CreateChannel(ctx interface{}, channel interface{}, workspaceID interface{}, token interface{}) *SDK_CreateChannel_Call {
+	return &SDK_CreateChannel_Call{Call: _e.mock.On("CreateChannel", ctx, channel, workspaceID, token)}
 }
 
-func (_c *SDK_CreateChannel_Call) Run(run func(ctx context.Context, channel sdk.Channel, domainID string, token string)) *SDK_CreateChannel_Call {
+func (_c *SDK_CreateChannel_Call) Run(run func(ctx context.Context, channel sdk.Channel, workspaceID string, token string)) *SDK_CreateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2888,14 +2888,14 @@ func (_c *SDK_CreateChannel_Call) Return(channel1 sdk.Channel, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_CreateChannel_Call) RunAndReturn(run func(ctx context.Context, channel sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_CreateChannel_Call {
+func (_c *SDK_CreateChannel_Call) RunAndReturn(run func(ctx context.Context, channel sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_CreateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateChannels provides a mock function for the type SDK
-func (_mock *SDK) CreateChannels(ctx context.Context, channels []sdk.Channel, domainID string, token string) ([]sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, channels, domainID, token)
+func (_mock *SDK) CreateChannels(ctx context.Context, channels []sdk.Channel, workspaceID string, token string) ([]sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, channels, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateChannels")
@@ -2904,17 +2904,17 @@ func (_mock *SDK) CreateChannels(ctx context.Context, channels []sdk.Channel, do
 	var r0 []sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, []sdk.Channel, string, string) ([]sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, channels, domainID, token)
+		return returnFunc(ctx, channels, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, []sdk.Channel, string, string) []sdk.Channel); ok {
-		r0 = returnFunc(ctx, channels, domainID, token)
+		r0 = returnFunc(ctx, channels, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]sdk.Channel)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, []sdk.Channel, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, channels, domainID, token)
+		r1 = returnFunc(ctx, channels, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -2931,13 +2931,13 @@ type SDK_CreateChannels_Call struct {
 // CreateChannels is a helper method to define mock.On call
 //   - ctx context.Context
 //   - channels []sdk.Channel
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateChannels(ctx interface{}, channels interface{}, domainID interface{}, token interface{}) *SDK_CreateChannels_Call {
-	return &SDK_CreateChannels_Call{Call: _e.mock.On("CreateChannels", ctx, channels, domainID, token)}
+func (_e *SDK_Expecter) CreateChannels(ctx interface{}, channels interface{}, workspaceID interface{}, token interface{}) *SDK_CreateChannels_Call {
+	return &SDK_CreateChannels_Call{Call: _e.mock.On("CreateChannels", ctx, channels, workspaceID, token)}
 }
 
-func (_c *SDK_CreateChannels_Call) Run(run func(ctx context.Context, channels []sdk.Channel, domainID string, token string)) *SDK_CreateChannels_Call {
+func (_c *SDK_CreateChannels_Call) Run(run func(ctx context.Context, channels []sdk.Channel, workspaceID string, token string)) *SDK_CreateChannels_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -2970,14 +2970,14 @@ func (_c *SDK_CreateChannels_Call) Return(channels1 []sdk.Channel, sDKError erro
 	return _c
 }
 
-func (_c *SDK_CreateChannels_Call) RunAndReturn(run func(ctx context.Context, channels []sdk.Channel, domainID string, token string) ([]sdk.Channel, errors.SDKError)) *SDK_CreateChannels_Call {
+func (_c *SDK_CreateChannels_Call) RunAndReturn(run func(ctx context.Context, channels []sdk.Channel, workspaceID string, token string) ([]sdk.Channel, errors.SDKError)) *SDK_CreateChannels_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateClient provides a mock function for the type SDK
-func (_mock *SDK) CreateClient(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, client, domainID, token)
+func (_mock *SDK) CreateClient(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, client, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateClient")
@@ -2986,15 +2986,15 @@ func (_mock *SDK) CreateClient(ctx context.Context, client sdk.Client, domainID 
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, client, domainID, token)
+		return returnFunc(ctx, client, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, client, domainID, token)
+		r0 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Client, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, client, domainID, token)
+		r1 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -3011,13 +3011,13 @@ type SDK_CreateClient_Call struct {
 // CreateClient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - client sdk.Client
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateClient(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_CreateClient_Call {
-	return &SDK_CreateClient_Call{Call: _e.mock.On("CreateClient", ctx, client, domainID, token)}
+func (_e *SDK_Expecter) CreateClient(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_CreateClient_Call {
+	return &SDK_CreateClient_Call{Call: _e.mock.On("CreateClient", ctx, client, workspaceID, token)}
 }
 
-func (_c *SDK_CreateClient_Call) Run(run func(ctx context.Context, client sdk.Client, domainID string, token string)) *SDK_CreateClient_Call {
+func (_c *SDK_CreateClient_Call) Run(run func(ctx context.Context, client sdk.Client, workspaceID string, token string)) *SDK_CreateClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3050,14 +3050,14 @@ func (_c *SDK_CreateClient_Call) Return(client1 sdk.Client, sDKError errors.SDKE
 	return _c
 }
 
-func (_c *SDK_CreateClient_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_CreateClient_Call {
+func (_c *SDK_CreateClient_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_CreateClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateClientRole provides a mock function for the type SDK
-func (_mock *SDK) CreateClientRole(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, rq, token)
+func (_mock *SDK) CreateClientRole(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, rq, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateClientRole")
@@ -3066,15 +3066,15 @@ func (_mock *SDK) CreateClientRole(ctx context.Context, id string, domainID stri
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.RoleReq, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, rq, token)
+		return returnFunc(ctx, id, workspaceID, rq, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.RoleReq, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, domainID, rq, token)
+		r0 = returnFunc(ctx, id, workspaceID, rq, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.RoleReq, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, rq, token)
+		r1 = returnFunc(ctx, id, workspaceID, rq, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -3091,14 +3091,14 @@ type SDK_CreateClientRole_Call struct {
 // CreateClientRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateClientRole(ctx interface{}, id interface{}, domainID interface{}, rq interface{}, token interface{}) *SDK_CreateClientRole_Call {
-	return &SDK_CreateClientRole_Call{Call: _e.mock.On("CreateClientRole", ctx, id, domainID, rq, token)}
+func (_e *SDK_Expecter) CreateClientRole(ctx interface{}, id interface{}, workspaceID interface{}, rq interface{}, token interface{}) *SDK_CreateClientRole_Call {
+	return &SDK_CreateClientRole_Call{Call: _e.mock.On("CreateClientRole", ctx, id, workspaceID, rq, token)}
 }
 
-func (_c *SDK_CreateClientRole_Call) Run(run func(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string)) *SDK_CreateClientRole_Call {
+func (_c *SDK_CreateClientRole_Call) Run(run func(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string)) *SDK_CreateClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3136,14 +3136,14 @@ func (_c *SDK_CreateClientRole_Call) Return(role sdk.Role, sDKError errors.SDKEr
 	return _c
 }
 
-func (_c *SDK_CreateClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateClientRole_Call {
+func (_c *SDK_CreateClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateClientRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateClients provides a mock function for the type SDK
-func (_mock *SDK) CreateClients(ctx context.Context, client []sdk.Client, domainID string, token string) ([]sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, client, domainID, token)
+func (_mock *SDK) CreateClients(ctx context.Context, client []sdk.Client, workspaceID string, token string) ([]sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, client, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateClients")
@@ -3152,17 +3152,17 @@ func (_mock *SDK) CreateClients(ctx context.Context, client []sdk.Client, domain
 	var r0 []sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, []sdk.Client, string, string) ([]sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, client, domainID, token)
+		return returnFunc(ctx, client, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, []sdk.Client, string, string) []sdk.Client); ok {
-		r0 = returnFunc(ctx, client, domainID, token)
+		r0 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]sdk.Client)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, []sdk.Client, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, client, domainID, token)
+		r1 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -3179,13 +3179,13 @@ type SDK_CreateClients_Call struct {
 // CreateClients is a helper method to define mock.On call
 //   - ctx context.Context
 //   - client []sdk.Client
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateClients(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_CreateClients_Call {
-	return &SDK_CreateClients_Call{Call: _e.mock.On("CreateClients", ctx, client, domainID, token)}
+func (_e *SDK_Expecter) CreateClients(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_CreateClients_Call {
+	return &SDK_CreateClients_Call{Call: _e.mock.On("CreateClients", ctx, client, workspaceID, token)}
 }
 
-func (_c *SDK_CreateClients_Call) Run(run func(ctx context.Context, client []sdk.Client, domainID string, token string)) *SDK_CreateClients_Call {
+func (_c *SDK_CreateClients_Call) Run(run func(ctx context.Context, client []sdk.Client, workspaceID string, token string)) *SDK_CreateClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3218,30 +3218,30 @@ func (_c *SDK_CreateClients_Call) Return(clients []sdk.Client, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_CreateClients_Call) RunAndReturn(run func(ctx context.Context, client []sdk.Client, domainID string, token string) ([]sdk.Client, errors.SDKError)) *SDK_CreateClients_Call {
+func (_c *SDK_CreateClients_Call) RunAndReturn(run func(ctx context.Context, client []sdk.Client, workspaceID string, token string) ([]sdk.Client, errors.SDKError)) *SDK_CreateClients_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateDomain provides a mock function for the type SDK
-func (_mock *SDK) CreateDomain(ctx context.Context, d sdk.Domain, token string) (sdk.Domain, errors.SDKError) {
+// CreateWorkspace provides a mock function for the type SDK
+func (_mock *SDK) CreateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
 	ret := _mock.Called(ctx, d, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateDomain")
+		panic("no return value specified for CreateWorkspace")
 	}
 
-	var r0 sdk.Domain
+	var r0 sdk.Workspace
 	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Domain, string) (sdk.Domain, errors.SDKError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
 		return returnFunc(ctx, d, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Domain, string) sdk.Domain); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
 		r0 = returnFunc(ctx, d, token)
 	} else {
-		r0 = ret.Get(0).(sdk.Domain)
+		r0 = ret.Get(0).(sdk.Workspace)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Domain, string) errors.SDKError); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
 		r1 = returnFunc(ctx, d, token)
 	} else {
 		if ret.Get(1) != nil {
@@ -3251,28 +3251,28 @@ func (_mock *SDK) CreateDomain(ctx context.Context, d sdk.Domain, token string) 
 	return r0, r1
 }
 
-// SDK_CreateDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDomain'
-type SDK_CreateDomain_Call struct {
+// SDK_CreateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspace'
+type SDK_CreateWorkspace_Call struct {
 	*mock.Call
 }
 
-// CreateDomain is a helper method to define mock.On call
+// CreateWorkspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - d sdk.Domain
+//   - d sdk.Workspace
 //   - token string
-func (_e *SDK_Expecter) CreateDomain(ctx interface{}, d interface{}, token interface{}) *SDK_CreateDomain_Call {
-	return &SDK_CreateDomain_Call{Call: _e.mock.On("CreateDomain", ctx, d, token)}
+func (_e *SDK_Expecter) CreateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_CreateWorkspace_Call {
+	return &SDK_CreateWorkspace_Call{Call: _e.mock.On("CreateWorkspace", ctx, d, token)}
 }
 
-func (_c *SDK_CreateDomain_Call) Run(run func(ctx context.Context, d sdk.Domain, token string)) *SDK_CreateDomain_Call {
+func (_c *SDK_CreateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_CreateWorkspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 sdk.Domain
+		var arg1 sdk.Workspace
 		if args[1] != nil {
-			arg1 = args[1].(sdk.Domain)
+			arg1 = args[1].(sdk.Workspace)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -3287,22 +3287,22 @@ func (_c *SDK_CreateDomain_Call) Run(run func(ctx context.Context, d sdk.Domain,
 	return _c
 }
 
-func (_c *SDK_CreateDomain_Call) Return(domain sdk.Domain, sDKError errors.SDKError) *SDK_CreateDomain_Call {
-	_c.Call.Return(domain, sDKError)
+func (_c *SDK_CreateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_CreateWorkspace_Call {
+	_c.Call.Return(workspace, sDKError)
 	return _c
 }
 
-func (_c *SDK_CreateDomain_Call) RunAndReturn(run func(ctx context.Context, d sdk.Domain, token string) (sdk.Domain, errors.SDKError)) *SDK_CreateDomain_Call {
+func (_c *SDK_CreateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_CreateWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// CreateDomainRole provides a mock function for the type SDK
-func (_mock *SDK) CreateDomainRole(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
+// CreateWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) CreateWorkspaceRole(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
 	ret := _mock.Called(ctx, id, rq, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CreateDomainRole")
+		panic("no return value specified for CreateWorkspaceRole")
 	}
 
 	var r0 sdk.Role
@@ -3325,21 +3325,21 @@ func (_mock *SDK) CreateDomainRole(ctx context.Context, id string, rq sdk.RoleRe
 	return r0, r1
 }
 
-// SDK_CreateDomainRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateDomainRole'
-type SDK_CreateDomainRole_Call struct {
+// SDK_CreateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspaceRole'
+type SDK_CreateWorkspaceRole_Call struct {
 	*mock.Call
 }
 
-// CreateDomainRole is a helper method to define mock.On call
+// CreateWorkspaceRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateDomainRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateDomainRole_Call {
-	return &SDK_CreateDomainRole_Call{Call: _e.mock.On("CreateDomainRole", ctx, id, rq, token)}
+func (_e *SDK_Expecter) CreateWorkspaceRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateWorkspaceRole_Call {
+	return &SDK_CreateWorkspaceRole_Call{Call: _e.mock.On("CreateWorkspaceRole", ctx, id, rq, token)}
 }
 
-func (_c *SDK_CreateDomainRole_Call) Run(run func(ctx context.Context, id string, rq sdk.RoleReq, token string)) *SDK_CreateDomainRole_Call {
+func (_c *SDK_CreateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, rq sdk.RoleReq, token string)) *SDK_CreateWorkspaceRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3367,19 +3367,19 @@ func (_c *SDK_CreateDomainRole_Call) Run(run func(ctx context.Context, id string
 	return _c
 }
 
-func (_c *SDK_CreateDomainRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_CreateDomainRole_Call {
+func (_c *SDK_CreateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_CreateWorkspaceRole_Call {
 	_c.Call.Return(role, sDKError)
 	return _c
 }
 
-func (_c *SDK_CreateDomainRole_Call) RunAndReturn(run func(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateDomainRole_Call {
+func (_c *SDK_CreateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateWorkspaceRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateGroup provides a mock function for the type SDK
-func (_mock *SDK) CreateGroup(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, group, domainID, token)
+func (_mock *SDK) CreateGroup(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, group, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateGroup")
@@ -3388,15 +3388,15 @@ func (_mock *SDK) CreateGroup(ctx context.Context, group sdk.Group, domainID str
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, group, domainID, token)
+		return returnFunc(ctx, group, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, group, domainID, token)
+		r0 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Group, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, group, domainID, token)
+		r1 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -3413,13 +3413,13 @@ type SDK_CreateGroup_Call struct {
 // CreateGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group sdk.Group
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateGroup(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_CreateGroup_Call {
-	return &SDK_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group, domainID, token)}
+func (_e *SDK_Expecter) CreateGroup(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_CreateGroup_Call {
+	return &SDK_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group, workspaceID, token)}
 }
 
-func (_c *SDK_CreateGroup_Call) Run(run func(ctx context.Context, group sdk.Group, domainID string, token string)) *SDK_CreateGroup_Call {
+func (_c *SDK_CreateGroup_Call) Run(run func(ctx context.Context, group sdk.Group, workspaceID string, token string)) *SDK_CreateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3452,14 +3452,14 @@ func (_c *SDK_CreateGroup_Call) Return(group1 sdk.Group, sDKError errors.SDKErro
 	return _c
 }
 
-func (_c *SDK_CreateGroup_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_CreateGroup_Call {
+func (_c *SDK_CreateGroup_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_CreateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // CreateGroupRole provides a mock function for the type SDK
-func (_mock *SDK) CreateGroupRole(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, rq, token)
+func (_mock *SDK) CreateGroupRole(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, rq, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateGroupRole")
@@ -3468,15 +3468,15 @@ func (_mock *SDK) CreateGroupRole(ctx context.Context, id string, domainID strin
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.RoleReq, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, rq, token)
+		return returnFunc(ctx, id, workspaceID, rq, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.RoleReq, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, domainID, rq, token)
+		r0 = returnFunc(ctx, id, workspaceID, rq, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.RoleReq, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, rq, token)
+		r1 = returnFunc(ctx, id, workspaceID, rq, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -3493,14 +3493,14 @@ type SDK_CreateGroupRole_Call struct {
 // CreateGroupRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateGroupRole(ctx interface{}, id interface{}, domainID interface{}, rq interface{}, token interface{}) *SDK_CreateGroupRole_Call {
-	return &SDK_CreateGroupRole_Call{Call: _e.mock.On("CreateGroupRole", ctx, id, domainID, rq, token)}
+func (_e *SDK_Expecter) CreateGroupRole(ctx interface{}, id interface{}, workspaceID interface{}, rq interface{}, token interface{}) *SDK_CreateGroupRole_Call {
+	return &SDK_CreateGroupRole_Call{Call: _e.mock.On("CreateGroupRole", ctx, id, workspaceID, rq, token)}
 }
 
-func (_c *SDK_CreateGroupRole_Call) Run(run func(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string)) *SDK_CreateGroupRole_Call {
+func (_c *SDK_CreateGroupRole_Call) Run(run func(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string)) *SDK_CreateGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3538,7 +3538,7 @@ func (_c *SDK_CreateGroupRole_Call) Return(role sdk.Role, sDKError errors.SDKErr
 	return _c
 }
 
-func (_c *SDK_CreateGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateGroupRole_Call {
+func (_c *SDK_CreateGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateGroupRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3766,8 +3766,8 @@ func (_c *SDK_CreateUser_Call) RunAndReturn(run func(ctx context.Context, user s
 }
 
 // DeleteAlarm provides a mock function for the type SDK
-func (_mock *SDK) DeleteAlarm(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DeleteAlarm(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteAlarm")
@@ -3775,7 +3775,7 @@ func (_mock *SDK) DeleteAlarm(ctx context.Context, id string, domainID string, t
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -3792,13 +3792,13 @@ type SDK_DeleteAlarm_Call struct {
 // DeleteAlarm is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteAlarm(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteAlarm_Call {
-	return &SDK_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DeleteAlarm(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteAlarm_Call {
+	return &SDK_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteAlarm_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteAlarm_Call {
+func (_c *SDK_DeleteAlarm_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DeleteAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3831,14 +3831,14 @@ func (_c *SDK_DeleteAlarm_Call) Return(sDKError errors.SDKError) *SDK_DeleteAlar
 	return _c
 }
 
-func (_c *SDK_DeleteAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteAlarm_Call {
+func (_c *SDK_DeleteAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_DeleteAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteCert provides a mock function for the type SDK
-func (_mock *SDK) DeleteCert(ctx context.Context, entityID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, entityID, domainID, token)
+func (_mock *SDK) DeleteCert(ctx context.Context, entityID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, entityID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteCert")
@@ -3846,7 +3846,7 @@ func (_mock *SDK) DeleteCert(ctx context.Context, entityID string, domainID stri
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, entityID, domainID, token)
+		r0 = returnFunc(ctx, entityID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -3863,13 +3863,13 @@ type SDK_DeleteCert_Call struct {
 // DeleteCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entityID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteCert(ctx interface{}, entityID interface{}, domainID interface{}, token interface{}) *SDK_DeleteCert_Call {
-	return &SDK_DeleteCert_Call{Call: _e.mock.On("DeleteCert", ctx, entityID, domainID, token)}
+func (_e *SDK_Expecter) DeleteCert(ctx interface{}, entityID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteCert_Call {
+	return &SDK_DeleteCert_Call{Call: _e.mock.On("DeleteCert", ctx, entityID, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteCert_Call) Run(run func(ctx context.Context, entityID string, domainID string, token string)) *SDK_DeleteCert_Call {
+func (_c *SDK_DeleteCert_Call) Run(run func(ctx context.Context, entityID string, workspaceID string, token string)) *SDK_DeleteCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3902,14 +3902,14 @@ func (_c *SDK_DeleteCert_Call) Return(sDKError errors.SDKError) *SDK_DeleteCert_
 	return _c
 }
 
-func (_c *SDK_DeleteCert_Call) RunAndReturn(run func(ctx context.Context, entityID string, domainID string, token string) errors.SDKError) *SDK_DeleteCert_Call {
+func (_c *SDK_DeleteCert_Call) RunAndReturn(run func(ctx context.Context, entityID string, workspaceID string, token string) errors.SDKError) *SDK_DeleteCert_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteChannel provides a mock function for the type SDK
-func (_mock *SDK) DeleteChannel(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DeleteChannel(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteChannel")
@@ -3917,7 +3917,7 @@ func (_mock *SDK) DeleteChannel(ctx context.Context, id string, domainID string,
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -3934,13 +3934,13 @@ type SDK_DeleteChannel_Call struct {
 // DeleteChannel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteChannel_Call {
-	return &SDK_DeleteChannel_Call{Call: _e.mock.On("DeleteChannel", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DeleteChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteChannel_Call {
+	return &SDK_DeleteChannel_Call{Call: _e.mock.On("DeleteChannel", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteChannel_Call {
+func (_c *SDK_DeleteChannel_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DeleteChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -3973,14 +3973,14 @@ func (_c *SDK_DeleteChannel_Call) Return(sDKError errors.SDKError) *SDK_DeleteCh
 	return _c
 }
 
-func (_c *SDK_DeleteChannel_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteChannel_Call {
+func (_c *SDK_DeleteChannel_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_DeleteChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteClient provides a mock function for the type SDK
-func (_mock *SDK) DeleteClient(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DeleteClient(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteClient")
@@ -3988,7 +3988,7 @@ func (_mock *SDK) DeleteClient(ctx context.Context, id string, domainID string, 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4005,13 +4005,13 @@ type SDK_DeleteClient_Call struct {
 // DeleteClient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteClient_Call {
-	return &SDK_DeleteClient_Call{Call: _e.mock.On("DeleteClient", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DeleteClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteClient_Call {
+	return &SDK_DeleteClient_Call{Call: _e.mock.On("DeleteClient", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteClient_Call {
+func (_c *SDK_DeleteClient_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DeleteClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4044,14 +4044,14 @@ func (_c *SDK_DeleteClient_Call) Return(sDKError errors.SDKError) *SDK_DeleteCli
 	return _c
 }
 
-func (_c *SDK_DeleteClient_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteClient_Call {
+func (_c *SDK_DeleteClient_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_DeleteClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteClientRole provides a mock function for the type SDK
-func (_mock *SDK) DeleteClientRole(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) DeleteClientRole(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteClientRole")
@@ -4059,7 +4059,7 @@ func (_mock *SDK) DeleteClientRole(ctx context.Context, id string, roleID string
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4077,13 +4077,13 @@ type SDK_DeleteClientRole_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteClientRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_DeleteClientRole_Call {
-	return &SDK_DeleteClientRole_Call{Call: _e.mock.On("DeleteClientRole", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) DeleteClientRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteClientRole_Call {
+	return &SDK_DeleteClientRole_Call{Call: _e.mock.On("DeleteClientRole", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_DeleteClientRole_Call {
+func (_c *SDK_DeleteClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_DeleteClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4121,17 +4121,17 @@ func (_c *SDK_DeleteClientRole_Call) Return(sDKError errors.SDKError) *SDK_Delet
 	return _c
 }
 
-func (_c *SDK_DeleteClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_DeleteClientRole_Call {
+func (_c *SDK_DeleteClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_DeleteClientRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DeleteDomainRole provides a mock function for the type SDK
-func (_mock *SDK) DeleteDomainRole(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+// DeleteWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) DeleteWorkspaceRole(ctx context.Context, id string, roleID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DeleteDomainRole")
+		panic("no return value specified for DeleteWorkspaceRole")
 	}
 
 	var r0 errors.SDKError
@@ -4145,21 +4145,21 @@ func (_mock *SDK) DeleteDomainRole(ctx context.Context, id string, roleID string
 	return r0
 }
 
-// SDK_DeleteDomainRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteDomainRole'
-type SDK_DeleteDomainRole_Call struct {
+// SDK_DeleteWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWorkspaceRole'
+type SDK_DeleteWorkspaceRole_Call struct {
 	*mock.Call
 }
 
-// DeleteDomainRole is a helper method to define mock.On call
+// DeleteWorkspaceRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) DeleteDomainRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteDomainRole_Call {
-	return &SDK_DeleteDomainRole_Call{Call: _e.mock.On("DeleteDomainRole", ctx, id, roleID, token)}
+func (_e *SDK_Expecter) DeleteWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteWorkspaceRole_Call {
+	return &SDK_DeleteWorkspaceRole_Call{Call: _e.mock.On("DeleteWorkspaceRole", ctx, id, roleID, token)}
 }
 
-func (_c *SDK_DeleteDomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DeleteDomainRole_Call {
+func (_c *SDK_DeleteWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DeleteWorkspaceRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4187,19 +4187,19 @@ func (_c *SDK_DeleteDomainRole_Call) Run(run func(ctx context.Context, id string
 	return _c
 }
 
-func (_c *SDK_DeleteDomainRole_Call) Return(sDKError errors.SDKError) *SDK_DeleteDomainRole_Call {
+func (_c *SDK_DeleteWorkspaceRole_Call) Return(sDKError errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_DeleteDomainRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_DeleteDomainRole_Call {
+func (_c *SDK_DeleteWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteGroup provides a mock function for the type SDK
-func (_mock *SDK) DeleteGroup(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DeleteGroup(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroup")
@@ -4207,7 +4207,7 @@ func (_mock *SDK) DeleteGroup(ctx context.Context, id string, domainID string, t
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4224,13 +4224,13 @@ type SDK_DeleteGroup_Call struct {
 // DeleteGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteGroup_Call {
-	return &SDK_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DeleteGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteGroup_Call {
+	return &SDK_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteGroup_Call {
+func (_c *SDK_DeleteGroup_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DeleteGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4263,14 +4263,14 @@ func (_c *SDK_DeleteGroup_Call) Return(sDKError errors.SDKError) *SDK_DeleteGrou
 	return _c
 }
 
-func (_c *SDK_DeleteGroup_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteGroup_Call {
+func (_c *SDK_DeleteGroup_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_DeleteGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteGroupRole provides a mock function for the type SDK
-func (_mock *SDK) DeleteGroupRole(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) DeleteGroupRole(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteGroupRole")
@@ -4278,7 +4278,7 @@ func (_mock *SDK) DeleteGroupRole(ctx context.Context, id string, roleID string,
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4296,13 +4296,13 @@ type SDK_DeleteGroupRole_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteGroupRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_DeleteGroupRole_Call {
-	return &SDK_DeleteGroupRole_Call{Call: _e.mock.On("DeleteGroupRole", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) DeleteGroupRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteGroupRole_Call {
+	return &SDK_DeleteGroupRole_Call{Call: _e.mock.On("DeleteGroupRole", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_DeleteGroupRole_Call {
+func (_c *SDK_DeleteGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_DeleteGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4340,14 +4340,14 @@ func (_c *SDK_DeleteGroupRole_Call) Return(sDKError errors.SDKError) *SDK_Delete
 	return _c
 }
 
-func (_c *SDK_DeleteGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_DeleteGroupRole_Call {
+func (_c *SDK_DeleteGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_DeleteGroupRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteInvitation provides a mock function for the type SDK
-func (_mock *SDK) DeleteInvitation(ctx context.Context, userID string, domainID string, token string) error {
-	ret := _mock.Called(ctx, userID, domainID, token)
+func (_mock *SDK) DeleteInvitation(ctx context.Context, userID string, workspaceID string, token string) error {
+	ret := _mock.Called(ctx, userID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteInvitation")
@@ -4355,7 +4355,7 @@ func (_mock *SDK) DeleteInvitation(ctx context.Context, userID string, domainID 
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
-		r0 = returnFunc(ctx, userID, domainID, token)
+		r0 = returnFunc(ctx, userID, workspaceID, token)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -4370,13 +4370,13 @@ type SDK_DeleteInvitation_Call struct {
 // DeleteInvitation is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteInvitation(ctx interface{}, userID interface{}, domainID interface{}, token interface{}) *SDK_DeleteInvitation_Call {
-	return &SDK_DeleteInvitation_Call{Call: _e.mock.On("DeleteInvitation", ctx, userID, domainID, token)}
+func (_e *SDK_Expecter) DeleteInvitation(ctx interface{}, userID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteInvitation_Call {
+	return &SDK_DeleteInvitation_Call{Call: _e.mock.On("DeleteInvitation", ctx, userID, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteInvitation_Call) Run(run func(ctx context.Context, userID string, domainID string, token string)) *SDK_DeleteInvitation_Call {
+func (_c *SDK_DeleteInvitation_Call) Run(run func(ctx context.Context, userID string, workspaceID string, token string)) *SDK_DeleteInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4409,14 +4409,14 @@ func (_c *SDK_DeleteInvitation_Call) Return(err error) *SDK_DeleteInvitation_Cal
 	return _c
 }
 
-func (_c *SDK_DeleteInvitation_Call) RunAndReturn(run func(ctx context.Context, userID string, domainID string, token string) error) *SDK_DeleteInvitation_Call {
+func (_c *SDK_DeleteInvitation_Call) RunAndReturn(run func(ctx context.Context, userID string, workspaceID string, token string) error) *SDK_DeleteInvitation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DeleteReportTemplate provides a mock function for the type SDK
-func (_mock *SDK) DeleteReportTemplate(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DeleteReportTemplate(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DeleteReportTemplate")
@@ -4424,7 +4424,7 @@ func (_mock *SDK) DeleteReportTemplate(ctx context.Context, id string, domainID 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4441,13 +4441,13 @@ type SDK_DeleteReportTemplate_Call struct {
 // DeleteReportTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteReportTemplate(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DeleteReportTemplate_Call {
-	return &SDK_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DeleteReportTemplate(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteReportTemplate_Call {
+	return &SDK_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DeleteReportTemplate_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DeleteReportTemplate_Call {
+func (_c *SDK_DeleteReportTemplate_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DeleteReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4480,7 +4480,7 @@ func (_c *SDK_DeleteReportTemplate_Call) Return(sDKError errors.SDKError) *SDK_D
 	return _c
 }
 
-func (_c *SDK_DeleteReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_DeleteReportTemplate_Call {
+func (_c *SDK_DeleteReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_DeleteReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4616,8 +4616,8 @@ func (_c *SDK_DeleteUser_Call) RunAndReturn(run func(ctx context.Context, id str
 }
 
 // DisableChannel provides a mock function for the type SDK
-func (_mock *SDK) DisableChannel(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DisableChannel(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableChannel")
@@ -4626,15 +4626,15 @@ func (_mock *SDK) DisableChannel(ctx context.Context, id string, domainID string
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -4651,13 +4651,13 @@ type SDK_DisableChannel_Call struct {
 // DisableChannel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableChannel_Call {
-	return &SDK_DisableChannel_Call{Call: _e.mock.On("DisableChannel", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DisableChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableChannel_Call {
+	return &SDK_DisableChannel_Call{Call: _e.mock.On("DisableChannel", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DisableChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableChannel_Call {
+func (_c *SDK_DisableChannel_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DisableChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4690,14 +4690,14 @@ func (_c *SDK_DisableChannel_Call) Return(channel sdk.Channel, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_DisableChannel_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_DisableChannel_Call {
+func (_c *SDK_DisableChannel_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_DisableChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisableClient provides a mock function for the type SDK
-func (_mock *SDK) DisableClient(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DisableClient(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableClient")
@@ -4706,15 +4706,15 @@ func (_mock *SDK) DisableClient(ctx context.Context, id string, domainID string,
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -4731,13 +4731,13 @@ type SDK_DisableClient_Call struct {
 // DisableClient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableClient_Call {
-	return &SDK_DisableClient_Call{Call: _e.mock.On("DisableClient", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DisableClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableClient_Call {
+	return &SDK_DisableClient_Call{Call: _e.mock.On("DisableClient", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DisableClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableClient_Call {
+func (_c *SDK_DisableClient_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DisableClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4770,22 +4770,22 @@ func (_c *SDK_DisableClient_Call) Return(client sdk.Client, sDKError errors.SDKE
 	return _c
 }
 
-func (_c *SDK_DisableClient_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_DisableClient_Call {
+func (_c *SDK_DisableClient_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_DisableClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DisableDomain provides a mock function for the type SDK
-func (_mock *SDK) DisableDomain(ctx context.Context, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, domainID, token)
+// DisableWorkspace provides a mock function for the type SDK
+func (_mock *SDK) DisableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DisableDomain")
+		panic("no return value specified for DisableWorkspace")
 	}
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -4794,20 +4794,20 @@ func (_mock *SDK) DisableDomain(ctx context.Context, domainID string, token stri
 	return r0
 }
 
-// SDK_DisableDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableDomain'
-type SDK_DisableDomain_Call struct {
+// SDK_DisableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableWorkspace'
+type SDK_DisableWorkspace_Call struct {
 	*mock.Call
 }
 
-// DisableDomain is a helper method to define mock.On call
+// DisableWorkspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_DisableDomain_Call {
-	return &SDK_DisableDomain_Call{Call: _e.mock.On("DisableDomain", ctx, domainID, token)}
+func (_e *SDK_Expecter) DisableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_DisableWorkspace_Call {
+	return &SDK_DisableWorkspace_Call{Call: _e.mock.On("DisableWorkspace", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_DisableDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_DisableDomain_Call {
+func (_c *SDK_DisableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_DisableWorkspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4830,19 +4830,19 @@ func (_c *SDK_DisableDomain_Call) Run(run func(ctx context.Context, domainID str
 	return _c
 }
 
-func (_c *SDK_DisableDomain_Call) Return(sDKError errors.SDKError) *SDK_DisableDomain_Call {
+func (_c *SDK_DisableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_DisableWorkspace_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_DisableDomain_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) errors.SDKError) *SDK_DisableDomain_Call {
+func (_c *SDK_DisableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_DisableWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisableGroup provides a mock function for the type SDK
-func (_mock *SDK) DisableGroup(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DisableGroup(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableGroup")
@@ -4851,15 +4851,15 @@ func (_mock *SDK) DisableGroup(ctx context.Context, id string, domainID string, 
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -4876,13 +4876,13 @@ type SDK_DisableGroup_Call struct {
 // DisableGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableGroup_Call {
-	return &SDK_DisableGroup_Call{Call: _e.mock.On("DisableGroup", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DisableGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableGroup_Call {
+	return &SDK_DisableGroup_Call{Call: _e.mock.On("DisableGroup", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DisableGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableGroup_Call {
+func (_c *SDK_DisableGroup_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DisableGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4915,14 +4915,14 @@ func (_c *SDK_DisableGroup_Call) Return(group sdk.Group, sDKError errors.SDKErro
 	return _c
 }
 
-func (_c *SDK_DisableGroup_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_DisableGroup_Call {
+func (_c *SDK_DisableGroup_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_DisableGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisableReportConfig provides a mock function for the type SDK
-func (_mock *SDK) DisableReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DisableReportConfig(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableReportConfig")
@@ -4931,15 +4931,15 @@ func (_mock *SDK) DisableReportConfig(ctx context.Context, id string, domainID s
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -4956,13 +4956,13 @@ type SDK_DisableReportConfig_Call struct {
 // DisableReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableReportConfig_Call {
-	return &SDK_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DisableReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableReportConfig_Call {
+	return &SDK_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DisableReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableReportConfig_Call {
+func (_c *SDK_DisableReportConfig_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DisableReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -4995,14 +4995,14 @@ func (_c *SDK_DisableReportConfig_Call) Return(reportConfig sdk.ReportConfig, sD
 	return _c
 }
 
-func (_c *SDK_DisableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_DisableReportConfig_Call {
+func (_c *SDK_DisableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_DisableReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisableRule provides a mock function for the type SDK
-func (_mock *SDK) DisableRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) DisableRule(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisableRule")
@@ -5011,15 +5011,15 @@ func (_mock *SDK) DisableRule(ctx context.Context, id string, domainID string, t
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -5036,13 +5036,13 @@ type SDK_DisableRule_Call struct {
 // DisableRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_DisableRule_Call {
-	return &SDK_DisableRule_Call{Call: _e.mock.On("DisableRule", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) DisableRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableRule_Call {
+	return &SDK_DisableRule_Call{Call: _e.mock.On("DisableRule", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_DisableRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_DisableRule_Call {
+func (_c *SDK_DisableRule_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_DisableRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5075,7 +5075,7 @@ func (_c *SDK_DisableRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) 
 	return _c
 }
 
-func (_c *SDK_DisableRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_DisableRule_Call {
+func (_c *SDK_DisableRule_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_DisableRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5155,8 +5155,8 @@ func (_c *SDK_DisableUser_Call) RunAndReturn(run func(ctx context.Context, id st
 }
 
 // Disconnect provides a mock function for the type SDK
-func (_mock *SDK) Disconnect(ctx context.Context, conn sdk.Connection, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, conn, domainID, token)
+func (_mock *SDK) Disconnect(ctx context.Context, conn sdk.Connection, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, conn, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Disconnect")
@@ -5164,7 +5164,7 @@ func (_mock *SDK) Disconnect(ctx context.Context, conn sdk.Connection, domainID 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Connection, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, conn, domainID, token)
+		r0 = returnFunc(ctx, conn, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -5181,13 +5181,13 @@ type SDK_Disconnect_Call struct {
 // Disconnect is a helper method to define mock.On call
 //   - ctx context.Context
 //   - conn sdk.Connection
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Disconnect(ctx interface{}, conn interface{}, domainID interface{}, token interface{}) *SDK_Disconnect_Call {
-	return &SDK_Disconnect_Call{Call: _e.mock.On("Disconnect", ctx, conn, domainID, token)}
+func (_e *SDK_Expecter) Disconnect(ctx interface{}, conn interface{}, workspaceID interface{}, token interface{}) *SDK_Disconnect_Call {
+	return &SDK_Disconnect_Call{Call: _e.mock.On("Disconnect", ctx, conn, workspaceID, token)}
 }
 
-func (_c *SDK_Disconnect_Call) Run(run func(ctx context.Context, conn sdk.Connection, domainID string, token string)) *SDK_Disconnect_Call {
+func (_c *SDK_Disconnect_Call) Run(run func(ctx context.Context, conn sdk.Connection, workspaceID string, token string)) *SDK_Disconnect_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5220,14 +5220,14 @@ func (_c *SDK_Disconnect_Call) Return(sDKError errors.SDKError) *SDK_Disconnect_
 	return _c
 }
 
-func (_c *SDK_Disconnect_Call) RunAndReturn(run func(ctx context.Context, conn sdk.Connection, domainID string, token string) errors.SDKError) *SDK_Disconnect_Call {
+func (_c *SDK_Disconnect_Call) RunAndReturn(run func(ctx context.Context, conn sdk.Connection, workspaceID string, token string) errors.SDKError) *SDK_Disconnect_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // DisconnectClients provides a mock function for the type SDK
-func (_mock *SDK) DisconnectClients(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, channelID, clientIDs, connTypes, domainID, token)
+func (_mock *SDK) DisconnectClients(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, channelID, clientIDs, connTypes, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DisconnectClients")
@@ -5235,7 +5235,7 @@ func (_mock *SDK) DisconnectClients(ctx context.Context, channelID string, clien
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, []string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, channelID, clientIDs, connTypes, domainID, token)
+		r0 = returnFunc(ctx, channelID, clientIDs, connTypes, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -5254,13 +5254,13 @@ type SDK_DisconnectClients_Call struct {
 //   - channelID string
 //   - clientIDs []string
 //   - connTypes []string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisconnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, domainID interface{}, token interface{}) *SDK_DisconnectClients_Call {
-	return &SDK_DisconnectClients_Call{Call: _e.mock.On("DisconnectClients", ctx, channelID, clientIDs, connTypes, domainID, token)}
+func (_e *SDK_Expecter) DisconnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, workspaceID interface{}, token interface{}) *SDK_DisconnectClients_Call {
+	return &SDK_DisconnectClients_Call{Call: _e.mock.On("DisconnectClients", ctx, channelID, clientIDs, connTypes, workspaceID, token)}
 }
 
-func (_c *SDK_DisconnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string)) *SDK_DisconnectClients_Call {
+func (_c *SDK_DisconnectClients_Call) Run(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string)) *SDK_DisconnectClients_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5303,31 +5303,31 @@ func (_c *SDK_DisconnectClients_Call) Return(sDKError errors.SDKError) *SDK_Disc
 	return _c
 }
 
-func (_c *SDK_DisconnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, domainID string, token string) errors.SDKError) *SDK_DisconnectClients_Call {
+func (_c *SDK_DisconnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string) errors.SDKError) *SDK_DisconnectClients_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Domain provides a mock function for the type SDK
-func (_mock *SDK) Domain(ctx context.Context, domainID string, token string) (sdk.Domain, errors.SDKError) {
-	ret := _mock.Called(ctx, domainID, token)
+// Workspace provides a mock function for the type SDK
+func (_mock *SDK) Workspace(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError) {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Domain")
+		panic("no return value specified for Workspace")
 	}
 
-	var r0 sdk.Domain
+	var r0 sdk.Workspace
 	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.Domain, errors.SDKError)); ok {
-		return returnFunc(ctx, domainID, token)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.Workspace, errors.SDKError)); ok {
+		return returnFunc(ctx, workspaceID, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.Domain); ok {
-		r0 = returnFunc(ctx, domainID, token)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.Workspace); ok {
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
-		r0 = ret.Get(0).(sdk.Domain)
+		r0 = ret.Get(0).(sdk.Workspace)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, domainID, token)
+		r1 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -5336,20 +5336,20 @@ func (_mock *SDK) Domain(ctx context.Context, domainID string, token string) (sd
 	return r0, r1
 }
 
-// SDK_Domain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Domain'
-type SDK_Domain_Call struct {
+// SDK_Workspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspace'
+type SDK_Workspace_Call struct {
 	*mock.Call
 }
 
-// Domain is a helper method to define mock.On call
+// Workspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Domain(ctx interface{}, domainID interface{}, token interface{}) *SDK_Domain_Call {
-	return &SDK_Domain_Call{Call: _e.mock.On("Domain", ctx, domainID, token)}
+func (_e *SDK_Expecter) Workspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_Workspace_Call {
+	return &SDK_Workspace_Call{Call: _e.mock.On("Workspace", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_Domain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_Domain_Call {
+func (_c *SDK_Workspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_Workspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5372,57 +5372,57 @@ func (_c *SDK_Domain_Call) Run(run func(ctx context.Context, domainID string, to
 	return _c
 }
 
-func (_c *SDK_Domain_Call) Return(domain sdk.Domain, sDKError errors.SDKError) *SDK_Domain_Call {
-	_c.Call.Return(domain, sDKError)
+func (_c *SDK_Workspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_Workspace_Call {
+	_c.Call.Return(workspace, sDKError)
 	return _c
 }
 
-func (_c *SDK_Domain_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) (sdk.Domain, errors.SDKError)) *SDK_Domain_Call {
+func (_c *SDK_Workspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError)) *SDK_Workspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DomainInvitations provides a mock function for the type SDK
-func (_mock *SDK) DomainInvitations(ctx context.Context, pm sdk.PageMetadata, token string, domainID string) (sdk.InvitationPage, error) {
-	ret := _mock.Called(ctx, pm, token, domainID)
+// WorkspaceInvitations provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceInvitations(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error) {
+	ret := _mock.Called(ctx, pm, token, workspaceID)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DomainInvitations")
+		panic("no return value specified for WorkspaceInvitations")
 	}
 
 	var r0 sdk.InvitationPage
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.InvitationPage, error)); ok {
-		return returnFunc(ctx, pm, token, domainID)
+		return returnFunc(ctx, pm, token, workspaceID)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.InvitationPage); ok {
-		r0 = returnFunc(ctx, pm, token, domainID)
+		r0 = returnFunc(ctx, pm, token, workspaceID)
 	} else {
 		r0 = ret.Get(0).(sdk.InvitationPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) error); ok {
-		r1 = returnFunc(ctx, pm, token, domainID)
+		r1 = returnFunc(ctx, pm, token, workspaceID)
 	} else {
 		r1 = ret.Error(1)
 	}
 	return r0, r1
 }
 
-// SDK_DomainInvitations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainInvitations'
-type SDK_DomainInvitations_Call struct {
+// SDK_WorkspaceInvitations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceInvitations'
+type SDK_WorkspaceInvitations_Call struct {
 	*mock.Call
 }
 
-// DomainInvitations is a helper method to define mock.On call
+// WorkspaceInvitations is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-//   - domainID string
-func (_e *SDK_Expecter) DomainInvitations(ctx interface{}, pm interface{}, token interface{}, domainID interface{}) *SDK_DomainInvitations_Call {
-	return &SDK_DomainInvitations_Call{Call: _e.mock.On("DomainInvitations", ctx, pm, token, domainID)}
+//   - workspaceID string
+func (_e *SDK_Expecter) WorkspaceInvitations(ctx interface{}, pm interface{}, token interface{}, workspaceID interface{}) *SDK_WorkspaceInvitations_Call {
+	return &SDK_WorkspaceInvitations_Call{Call: _e.mock.On("WorkspaceInvitations", ctx, pm, token, workspaceID)}
 }
 
-func (_c *SDK_DomainInvitations_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string, domainID string)) *SDK_DomainInvitations_Call {
+func (_c *SDK_WorkspaceInvitations_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string)) *SDK_WorkspaceInvitations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5450,22 +5450,22 @@ func (_c *SDK_DomainInvitations_Call) Run(run func(ctx context.Context, pm sdk.P
 	return _c
 }
 
-func (_c *SDK_DomainInvitations_Call) Return(invitations sdk.InvitationPage, err error) *SDK_DomainInvitations_Call {
+func (_c *SDK_WorkspaceInvitations_Call) Return(invitations sdk.InvitationPage, err error) *SDK_WorkspaceInvitations_Call {
 	_c.Call.Return(invitations, err)
 	return _c
 }
 
-func (_c *SDK_DomainInvitations_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string, domainID string) (sdk.InvitationPage, error)) *SDK_DomainInvitations_Call {
+func (_c *SDK_WorkspaceInvitations_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error)) *SDK_WorkspaceInvitations_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DomainRole provides a mock function for the type SDK
-func (_mock *SDK) DomainRole(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError) {
+// WorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRole(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DomainRole")
+		panic("no return value specified for WorkspaceRole")
 	}
 
 	var r0 sdk.Role
@@ -5488,21 +5488,21 @@ func (_mock *SDK) DomainRole(ctx context.Context, id string, roleID string, toke
 	return r0, r1
 }
 
-// SDK_DomainRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainRole'
-type SDK_DomainRole_Call struct {
+// SDK_WorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRole'
+type SDK_WorkspaceRole_Call struct {
 	*mock.Call
 }
 
-// DomainRole is a helper method to define mock.On call
+// WorkspaceRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) DomainRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DomainRole_Call {
-	return &SDK_DomainRole_Call{Call: _e.mock.On("DomainRole", ctx, id, roleID, token)}
+func (_e *SDK_Expecter) WorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRole_Call {
+	return &SDK_WorkspaceRole_Call{Call: _e.mock.On("WorkspaceRole", ctx, id, roleID, token)}
 }
 
-func (_c *SDK_DomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DomainRole_Call {
+func (_c *SDK_WorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5530,22 +5530,22 @@ func (_c *SDK_DomainRole_Call) Run(run func(ctx context.Context, id string, role
 	return _c
 }
 
-func (_c *SDK_DomainRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_DomainRole_Call {
+func (_c *SDK_WorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_WorkspaceRole_Call {
 	_c.Call.Return(role, sDKError)
 	return _c
 }
 
-func (_c *SDK_DomainRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError)) *SDK_DomainRole_Call {
+func (_c *SDK_WorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError)) *SDK_WorkspaceRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DomainRoleActions provides a mock function for the type SDK
-func (_mock *SDK) DomainRoleActions(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError) {
+// WorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DomainRoleActions")
+		panic("no return value specified for WorkspaceRoleActions")
 	}
 
 	var r0 []string
@@ -5570,21 +5570,21 @@ func (_mock *SDK) DomainRoleActions(ctx context.Context, id string, roleID strin
 	return r0, r1
 }
 
-// SDK_DomainRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainRoleActions'
-type SDK_DomainRoleActions_Call struct {
+// SDK_WorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleActions'
+type SDK_WorkspaceRoleActions_Call struct {
 	*mock.Call
 }
 
-// DomainRoleActions is a helper method to define mock.On call
+// WorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) DomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DomainRoleActions_Call {
-	return &SDK_DomainRoleActions_Call{Call: _e.mock.On("DomainRoleActions", ctx, id, roleID, token)}
+func (_e *SDK_Expecter) WorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRoleActions_Call {
+	return &SDK_WorkspaceRoleActions_Call{Call: _e.mock.On("WorkspaceRoleActions", ctx, id, roleID, token)}
 }
 
-func (_c *SDK_DomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DomainRoleActions_Call {
+func (_c *SDK_WorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5612,22 +5612,22 @@ func (_c *SDK_DomainRoleActions_Call) Run(run func(ctx context.Context, id strin
 	return _c
 }
 
-func (_c *SDK_DomainRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_DomainRoleActions_Call {
+func (_c *SDK_WorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_WorkspaceRoleActions_Call {
 	_c.Call.Return(strings, sDKError)
 	return _c
 }
 
-func (_c *SDK_DomainRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError)) *SDK_DomainRoleActions_Call {
+func (_c *SDK_WorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError)) *SDK_WorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DomainRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) DomainRoleMembers(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
+// WorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoleMembers(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, pm, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DomainRoleMembers")
+		panic("no return value specified for WorkspaceRoleMembers")
 	}
 
 	var r0 sdk.RoleMembersPage
@@ -5650,22 +5650,22 @@ func (_mock *SDK) DomainRoleMembers(ctx context.Context, id string, roleID strin
 	return r0, r1
 }
 
-// SDK_DomainRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainRoleMembers'
-type SDK_DomainRoleMembers_Call struct {
+// SDK_WorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleMembers'
+type SDK_WorkspaceRoleMembers_Call struct {
 	*mock.Call
 }
 
-// DomainRoleMembers is a helper method to define mock.On call
+// WorkspaceRoleMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) DomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_DomainRoleMembers_Call {
-	return &SDK_DomainRoleMembers_Call{Call: _e.mock.On("DomainRoleMembers", ctx, id, roleID, pm, token)}
+func (_e *SDK_Expecter) WorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoleMembers_Call {
+	return &SDK_WorkspaceRoleMembers_Call{Call: _e.mock.On("WorkspaceRoleMembers", ctx, id, roleID, pm, token)}
 }
 
-func (_c *SDK_DomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string)) *SDK_DomainRoleMembers_Call {
+func (_c *SDK_WorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5698,22 +5698,22 @@ func (_c *SDK_DomainRoleMembers_Call) Run(run func(ctx context.Context, id strin
 	return _c
 }
 
-func (_c *SDK_DomainRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage, sDKError errors.SDKError) *SDK_DomainRoleMembers_Call {
+func (_c *SDK_WorkspaceRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage, sDKError errors.SDKError) *SDK_WorkspaceRoleMembers_Call {
 	_c.Call.Return(roleMembersPage, sDKError)
 	return _c
 }
 
-func (_c *SDK_DomainRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_DomainRoleMembers_Call {
+func (_c *SDK_WorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_WorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// DomainRoles provides a mock function for the type SDK
-func (_mock *SDK) DomainRoles(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
+// WorkspaceRoles provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoles(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
 	ret := _mock.Called(ctx, id, pm, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for DomainRoles")
+		panic("no return value specified for WorkspaceRoles")
 	}
 
 	var r0 sdk.RolesPage
@@ -5736,21 +5736,21 @@ func (_mock *SDK) DomainRoles(ctx context.Context, id string, pm sdk.PageMetadat
 	return r0, r1
 }
 
-// SDK_DomainRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DomainRoles'
-type SDK_DomainRoles_Call struct {
+// SDK_WorkspaceRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoles'
+type SDK_WorkspaceRoles_Call struct {
 	*mock.Call
 }
 
-// DomainRoles is a helper method to define mock.On call
+// WorkspaceRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) DomainRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_DomainRoles_Call {
-	return &SDK_DomainRoles_Call{Call: _e.mock.On("DomainRoles", ctx, id, pm, token)}
+func (_e *SDK_Expecter) WorkspaceRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoles_Call {
+	return &SDK_WorkspaceRoles_Call{Call: _e.mock.On("WorkspaceRoles", ctx, id, pm, token)}
 }
 
-func (_c *SDK_DomainRoles_Call) Run(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string)) *SDK_DomainRoles_Call {
+func (_c *SDK_WorkspaceRoles_Call) Run(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5778,33 +5778,33 @@ func (_c *SDK_DomainRoles_Call) Run(run func(ctx context.Context, id string, pm 
 	return _c
 }
 
-func (_c *SDK_DomainRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.SDKError) *SDK_DomainRoles_Call {
+func (_c *SDK_WorkspaceRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.SDKError) *SDK_WorkspaceRoles_Call {
 	_c.Call.Return(rolesPage, sDKError)
 	return _c
 }
 
-func (_c *SDK_DomainRoles_Call) RunAndReturn(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_DomainRoles_Call {
+func (_c *SDK_WorkspaceRoles_Call) RunAndReturn(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_WorkspaceRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// Domains provides a mock function for the type SDK
-func (_mock *SDK) Domains(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.DomainsPage, errors.SDKError) {
+// Workspaces provides a mock function for the type SDK
+func (_mock *SDK) Workspaces(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError) {
 	ret := _mock.Called(ctx, pm, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Domains")
+		panic("no return value specified for Workspaces")
 	}
 
-	var r0 sdk.DomainsPage
+	var r0 sdk.WorkspacesPage
 	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) (sdk.DomainsPage, errors.SDKError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) (sdk.WorkspacesPage, errors.SDKError)); ok {
 		return returnFunc(ctx, pm, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) sdk.DomainsPage); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) sdk.WorkspacesPage); ok {
 		r0 = returnFunc(ctx, pm, token)
 	} else {
-		r0 = ret.Get(0).(sdk.DomainsPage)
+		r0 = ret.Get(0).(sdk.WorkspacesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string) errors.SDKError); ok {
 		r1 = returnFunc(ctx, pm, token)
@@ -5816,20 +5816,20 @@ func (_mock *SDK) Domains(ctx context.Context, pm sdk.PageMetadata, token string
 	return r0, r1
 }
 
-// SDK_Domains_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Domains'
-type SDK_Domains_Call struct {
+// SDK_Workspaces_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspaces'
+type SDK_Workspaces_Call struct {
 	*mock.Call
 }
 
-// Domains is a helper method to define mock.On call
+// Workspaces is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Domains(ctx interface{}, pm interface{}, token interface{}) *SDK_Domains_Call {
-	return &SDK_Domains_Call{Call: _e.mock.On("Domains", ctx, pm, token)}
+func (_e *SDK_Expecter) Workspaces(ctx interface{}, pm interface{}, token interface{}) *SDK_Workspaces_Call {
+	return &SDK_Workspaces_Call{Call: _e.mock.On("Workspaces", ctx, pm, token)}
 }
 
-func (_c *SDK_Domains_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_Domains_Call {
+func (_c *SDK_Workspaces_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_Workspaces_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5852,12 +5852,12 @@ func (_c *SDK_Domains_Call) Run(run func(ctx context.Context, pm sdk.PageMetadat
 	return _c
 }
 
-func (_c *SDK_Domains_Call) Return(domainsPage sdk.DomainsPage, sDKError errors.SDKError) *SDK_Domains_Call {
-	_c.Call.Return(domainsPage, sDKError)
+func (_c *SDK_Workspaces_Call) Return(workspacesPage sdk.WorkspacesPage, sDKError errors.SDKError) *SDK_Workspaces_Call {
+	_c.Call.Return(workspacesPage, sDKError)
 	return _c
 }
 
-func (_c *SDK_Domains_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.DomainsPage, errors.SDKError)) *SDK_Domains_Call {
+func (_c *SDK_Workspaces_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError)) *SDK_Workspaces_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5925,8 +5925,8 @@ func (_c *SDK_DownloadCA_Call) RunAndReturn(run func(ctx context.Context) (sdk.C
 }
 
 // EnableChannel provides a mock function for the type SDK
-func (_mock *SDK) EnableChannel(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) EnableChannel(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableChannel")
@@ -5935,15 +5935,15 @@ func (_mock *SDK) EnableChannel(ctx context.Context, id string, domainID string,
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -5960,13 +5960,13 @@ type SDK_EnableChannel_Call struct {
 // EnableChannel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableChannel(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableChannel_Call {
-	return &SDK_EnableChannel_Call{Call: _e.mock.On("EnableChannel", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) EnableChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableChannel_Call {
+	return &SDK_EnableChannel_Call{Call: _e.mock.On("EnableChannel", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_EnableChannel_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableChannel_Call {
+func (_c *SDK_EnableChannel_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_EnableChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -5999,14 +5999,14 @@ func (_c *SDK_EnableChannel_Call) Return(channel sdk.Channel, sDKError errors.SD
 	return _c
 }
 
-func (_c *SDK_EnableChannel_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_EnableChannel_Call {
+func (_c *SDK_EnableChannel_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_EnableChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // EnableClient provides a mock function for the type SDK
-func (_mock *SDK) EnableClient(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) EnableClient(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableClient")
@@ -6015,15 +6015,15 @@ func (_mock *SDK) EnableClient(ctx context.Context, id string, domainID string, 
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6040,13 +6040,13 @@ type SDK_EnableClient_Call struct {
 // EnableClient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableClient(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableClient_Call {
-	return &SDK_EnableClient_Call{Call: _e.mock.On("EnableClient", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) EnableClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableClient_Call {
+	return &SDK_EnableClient_Call{Call: _e.mock.On("EnableClient", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_EnableClient_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableClient_Call {
+func (_c *SDK_EnableClient_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_EnableClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6079,22 +6079,22 @@ func (_c *SDK_EnableClient_Call) Return(client sdk.Client, sDKError errors.SDKEr
 	return _c
 }
 
-func (_c *SDK_EnableClient_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_EnableClient_Call {
+func (_c *SDK_EnableClient_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_EnableClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// EnableDomain provides a mock function for the type SDK
-func (_mock *SDK) EnableDomain(ctx context.Context, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, domainID, token)
+// EnableWorkspace provides a mock function for the type SDK
+func (_mock *SDK) EnableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for EnableDomain")
+		panic("no return value specified for EnableWorkspace")
 	}
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -6103,20 +6103,20 @@ func (_mock *SDK) EnableDomain(ctx context.Context, domainID string, token strin
 	return r0
 }
 
-// SDK_EnableDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableDomain'
-type SDK_EnableDomain_Call struct {
+// SDK_EnableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableWorkspace'
+type SDK_EnableWorkspace_Call struct {
 	*mock.Call
 }
 
-// EnableDomain is a helper method to define mock.On call
+// EnableWorkspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_EnableDomain_Call {
-	return &SDK_EnableDomain_Call{Call: _e.mock.On("EnableDomain", ctx, domainID, token)}
+func (_e *SDK_Expecter) EnableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_EnableWorkspace_Call {
+	return &SDK_EnableWorkspace_Call{Call: _e.mock.On("EnableWorkspace", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_EnableDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_EnableDomain_Call {
+func (_c *SDK_EnableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_EnableWorkspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6139,19 +6139,19 @@ func (_c *SDK_EnableDomain_Call) Run(run func(ctx context.Context, domainID stri
 	return _c
 }
 
-func (_c *SDK_EnableDomain_Call) Return(sDKError errors.SDKError) *SDK_EnableDomain_Call {
+func (_c *SDK_EnableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_EnableWorkspace_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_EnableDomain_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) errors.SDKError) *SDK_EnableDomain_Call {
+func (_c *SDK_EnableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_EnableWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // EnableGroup provides a mock function for the type SDK
-func (_mock *SDK) EnableGroup(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) EnableGroup(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableGroup")
@@ -6160,15 +6160,15 @@ func (_mock *SDK) EnableGroup(ctx context.Context, id string, domainID string, t
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6185,13 +6185,13 @@ type SDK_EnableGroup_Call struct {
 // EnableGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableGroup(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableGroup_Call {
-	return &SDK_EnableGroup_Call{Call: _e.mock.On("EnableGroup", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) EnableGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableGroup_Call {
+	return &SDK_EnableGroup_Call{Call: _e.mock.On("EnableGroup", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_EnableGroup_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableGroup_Call {
+func (_c *SDK_EnableGroup_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_EnableGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6224,14 +6224,14 @@ func (_c *SDK_EnableGroup_Call) Return(group sdk.Group, sDKError errors.SDKError
 	return _c
 }
 
-func (_c *SDK_EnableGroup_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_EnableGroup_Call {
+func (_c *SDK_EnableGroup_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_EnableGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // EnableReportConfig provides a mock function for the type SDK
-func (_mock *SDK) EnableReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) EnableReportConfig(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableReportConfig")
@@ -6240,15 +6240,15 @@ func (_mock *SDK) EnableReportConfig(ctx context.Context, id string, domainID st
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6265,13 +6265,13 @@ type SDK_EnableReportConfig_Call struct {
 // EnableReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableReportConfig_Call {
-	return &SDK_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) EnableReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableReportConfig_Call {
+	return &SDK_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_EnableReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableReportConfig_Call {
+func (_c *SDK_EnableReportConfig_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_EnableReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6304,14 +6304,14 @@ func (_c *SDK_EnableReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDK
 	return _c
 }
 
-func (_c *SDK_EnableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_EnableReportConfig_Call {
+func (_c *SDK_EnableReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_EnableReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // EnableRule provides a mock function for the type SDK
-func (_mock *SDK) EnableRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) EnableRule(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EnableRule")
@@ -6320,15 +6320,15 @@ func (_mock *SDK) EnableRule(ctx context.Context, id string, domainID string, to
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6345,13 +6345,13 @@ type SDK_EnableRule_Call struct {
 // EnableRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_EnableRule_Call {
-	return &SDK_EnableRule_Call{Call: _e.mock.On("EnableRule", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) EnableRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableRule_Call {
+	return &SDK_EnableRule_Call{Call: _e.mock.On("EnableRule", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_EnableRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_EnableRule_Call {
+func (_c *SDK_EnableRule_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_EnableRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6384,7 +6384,7 @@ func (_c *SDK_EnableRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_EnableRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_EnableRule_Call {
+func (_c *SDK_EnableRule_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_EnableRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6464,8 +6464,8 @@ func (_c *SDK_EnableUser_Call) RunAndReturn(run func(ctx context.Context, id str
 }
 
 // EntityID provides a mock function for the type SDK
-func (_mock *SDK) EntityID(ctx context.Context, serialNumber string, domainID string, token string) (string, errors.SDKError) {
-	ret := _mock.Called(ctx, serialNumber, domainID, token)
+func (_mock *SDK) EntityID(ctx context.Context, serialNumber string, workspaceID string, token string) (string, errors.SDKError) {
+	ret := _mock.Called(ctx, serialNumber, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EntityID")
@@ -6474,15 +6474,15 @@ func (_mock *SDK) EntityID(ctx context.Context, serialNumber string, domainID st
 	var r0 string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (string, errors.SDKError)); ok {
-		return returnFunc(ctx, serialNumber, domainID, token)
+		return returnFunc(ctx, serialNumber, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) string); ok {
-		r0 = returnFunc(ctx, serialNumber, domainID, token)
+		r0 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, serialNumber, domainID, token)
+		r1 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6499,13 +6499,13 @@ type SDK_EntityID_Call struct {
 // EntityID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EntityID(ctx interface{}, serialNumber interface{}, domainID interface{}, token interface{}) *SDK_EntityID_Call {
-	return &SDK_EntityID_Call{Call: _e.mock.On("EntityID", ctx, serialNumber, domainID, token)}
+func (_e *SDK_Expecter) EntityID(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_EntityID_Call {
+	return &SDK_EntityID_Call{Call: _e.mock.On("EntityID", ctx, serialNumber, workspaceID, token)}
 }
 
-func (_c *SDK_EntityID_Call) Run(run func(ctx context.Context, serialNumber string, domainID string, token string)) *SDK_EntityID_Call {
+func (_c *SDK_EntityID_Call) Run(run func(ctx context.Context, serialNumber string, workspaceID string, token string)) *SDK_EntityID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6538,22 +6538,22 @@ func (_c *SDK_EntityID_Call) Return(s string, sDKError errors.SDKError) *SDK_Ent
 	return _c
 }
 
-func (_c *SDK_EntityID_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, domainID string, token string) (string, errors.SDKError)) *SDK_EntityID_Call {
+func (_c *SDK_EntityID_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, workspaceID string, token string) (string, errors.SDKError)) *SDK_EntityID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// FreezeDomain provides a mock function for the type SDK
-func (_mock *SDK) FreezeDomain(ctx context.Context, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, domainID, token)
+// FreezeWorkspace provides a mock function for the type SDK
+func (_mock *SDK) FreezeWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for FreezeDomain")
+		panic("no return value specified for FreezeWorkspace")
 	}
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -6562,20 +6562,20 @@ func (_mock *SDK) FreezeDomain(ctx context.Context, domainID string, token strin
 	return r0
 }
 
-// SDK_FreezeDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FreezeDomain'
-type SDK_FreezeDomain_Call struct {
+// SDK_FreezeWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FreezeWorkspace'
+type SDK_FreezeWorkspace_Call struct {
 	*mock.Call
 }
 
-// FreezeDomain is a helper method to define mock.On call
+// FreezeWorkspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) FreezeDomain(ctx interface{}, domainID interface{}, token interface{}) *SDK_FreezeDomain_Call {
-	return &SDK_FreezeDomain_Call{Call: _e.mock.On("FreezeDomain", ctx, domainID, token)}
+func (_e *SDK_Expecter) FreezeWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_FreezeWorkspace_Call {
+	return &SDK_FreezeWorkspace_Call{Call: _e.mock.On("FreezeWorkspace", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_FreezeDomain_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_FreezeDomain_Call {
+func (_c *SDK_FreezeWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_FreezeWorkspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6598,12 +6598,12 @@ func (_c *SDK_FreezeDomain_Call) Run(run func(ctx context.Context, domainID stri
 	return _c
 }
 
-func (_c *SDK_FreezeDomain_Call) Return(sDKError errors.SDKError) *SDK_FreezeDomain_Call {
+func (_c *SDK_FreezeWorkspace_Call) Return(sDKError errors.SDKError) *SDK_FreezeWorkspace_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_FreezeDomain_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) errors.SDKError) *SDK_FreezeDomain_Call {
+func (_c *SDK_FreezeWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_FreezeWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6673,8 +6673,8 @@ func (_c *SDK_GenerateCRL_Call) RunAndReturn(run func(ctx context.Context) ([]by
 }
 
 // GenerateReport provides a mock function for the type SDK
-func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError) {
-	ret := _mock.Called(ctx, config, action, domainID, token)
+func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, workspaceID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError) {
+	ret := _mock.Called(ctx, config, action, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GenerateReport")
@@ -6684,22 +6684,22 @@ func (_mock *SDK) GenerateReport(ctx context.Context, config sdk.ReportConfig, a
 	var r1 *sdk.ReportFile
 	var r2 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)); ok {
-		return returnFunc(ctx, config, action, domainID, token)
+		return returnFunc(ctx, config, action, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) sdk.ReportPage); ok {
-		r0 = returnFunc(ctx, config, action, domainID, token)
+		r0 = returnFunc(ctx, config, action, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) *sdk.ReportFile); ok {
-		r1 = returnFunc(ctx, config, action, domainID, token)
+		r1 = returnFunc(ctx, config, action, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*sdk.ReportFile)
 		}
 	}
 	if returnFunc, ok := ret.Get(2).(func(context.Context, sdk.ReportConfig, sdk.ReportAction, string, string) errors.SDKError); ok {
-		r2 = returnFunc(ctx, config, action, domainID, token)
+		r2 = returnFunc(ctx, config, action, workspaceID, token)
 	} else {
 		if ret.Get(2) != nil {
 			r2 = ret.Get(2).(errors.SDKError)
@@ -6717,13 +6717,13 @@ type SDK_GenerateReport_Call struct {
 //   - ctx context.Context
 //   - config sdk.ReportConfig
 //   - action sdk.ReportAction
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GenerateReport(ctx interface{}, config interface{}, action interface{}, domainID interface{}, token interface{}) *SDK_GenerateReport_Call {
-	return &SDK_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, config, action, domainID, token)}
+func (_e *SDK_Expecter) GenerateReport(ctx interface{}, config interface{}, action interface{}, workspaceID interface{}, token interface{}) *SDK_GenerateReport_Call {
+	return &SDK_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, config, action, workspaceID, token)}
 }
 
-func (_c *SDK_GenerateReport_Call) Run(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string)) *SDK_GenerateReport_Call {
+func (_c *SDK_GenerateReport_Call) Run(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, workspaceID string, token string)) *SDK_GenerateReport_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6761,14 +6761,14 @@ func (_c *SDK_GenerateReport_Call) Return(reportPage sdk.ReportPage, reportFile 
 	return _c
 }
 
-func (_c *SDK_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, domainID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)) *SDK_GenerateReport_Call {
+func (_c *SDK_GenerateReport_Call) RunAndReturn(run func(ctx context.Context, config sdk.ReportConfig, action sdk.ReportAction, workspaceID string, token string) (sdk.ReportPage, *sdk.ReportFile, errors.SDKError)) *SDK_GenerateReport_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Group provides a mock function for the type SDK
-func (_mock *SDK) Group(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) Group(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Group")
@@ -6777,15 +6777,15 @@ func (_mock *SDK) Group(ctx context.Context, id string, domainID string, token s
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6802,13 +6802,13 @@ type SDK_Group_Call struct {
 // Group is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Group(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_Group_Call {
-	return &SDK_Group_Call{Call: _e.mock.On("Group", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) Group(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Group_Call {
+	return &SDK_Group_Call{Call: _e.mock.On("Group", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_Group_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_Group_Call {
+func (_c *SDK_Group_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_Group_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6841,14 +6841,14 @@ func (_c *SDK_Group_Call) Return(group sdk.Group, sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_Group_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_Group_Call {
+func (_c *SDK_Group_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_Group_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GroupRole provides a mock function for the type SDK
-func (_mock *SDK) GroupRole(ctx context.Context, id string, roleID string, domainID string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) GroupRole(ctx context.Context, id string, roleID string, workspaceID string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GroupRole")
@@ -6857,15 +6857,15 @@ func (_mock *SDK) GroupRole(ctx context.Context, id string, roleID string, domai
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, token)
+		return returnFunc(ctx, id, roleID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6883,13 +6883,13 @@ type SDK_GroupRole_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GroupRole(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_GroupRole_Call {
-	return &SDK_GroupRole_Call{Call: _e.mock.On("GroupRole", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) GroupRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_GroupRole_Call {
+	return &SDK_GroupRole_Call{Call: _e.mock.On("GroupRole", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_GroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_GroupRole_Call {
+func (_c *SDK_GroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_GroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -6927,14 +6927,14 @@ func (_c *SDK_GroupRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *S
 	return _c
 }
 
-func (_c *SDK_GroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) (sdk.Role, errors.SDKError)) *SDK_GroupRole_Call {
+func (_c *SDK_GroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) (sdk.Role, errors.SDKError)) *SDK_GroupRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GroupRoleActions provides a mock function for the type SDK
-func (_mock *SDK) GroupRoleActions(ctx context.Context, id string, roleID string, domainID string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) GroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GroupRoleActions")
@@ -6943,17 +6943,17 @@ func (_mock *SDK) GroupRoleActions(ctx context.Context, id string, roleID string
 	var r0 []string
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, token)
+		return returnFunc(ctx, id, roleID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]string)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -6971,13 +6971,13 @@ type SDK_GroupRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_GroupRoleActions_Call {
-	return &SDK_GroupRoleActions_Call{Call: _e.mock.On("GroupRoleActions", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) GroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_GroupRoleActions_Call {
+	return &SDK_GroupRoleActions_Call{Call: _e.mock.On("GroupRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_GroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_GroupRoleActions_Call {
+func (_c *SDK_GroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_GroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7015,14 +7015,14 @@ func (_c *SDK_GroupRoleActions_Call) Return(strings []string, sDKError errors.SD
 	return _c
 }
 
-func (_c *SDK_GroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) ([]string, errors.SDKError)) *SDK_GroupRoleActions_Call {
+func (_c *SDK_GroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) ([]string, errors.SDKError)) *SDK_GroupRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GroupRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) GroupRoleMembers(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, domainID, pm, token)
+func (_mock *SDK) GroupRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GroupRoleMembers")
@@ -7031,15 +7031,15 @@ func (_mock *SDK) GroupRoleMembers(ctx context.Context, id string, roleID string
 	var r0 sdk.RoleMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, sdk.PageMetadata, string) (sdk.RoleMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, domainID, pm, token)
+		return returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, sdk.PageMetadata, string) sdk.RoleMembersPage); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, pm, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.RoleMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, domainID, pm, token)
+		r1 = returnFunc(ctx, id, roleID, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7057,14 +7057,14 @@ type SDK_GroupRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) GroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_GroupRoleMembers_Call {
-	return &SDK_GroupRoleMembers_Call{Call: _e.mock.On("GroupRoleMembers", ctx, id, roleID, domainID, pm, token)}
+func (_e *SDK_Expecter) GroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_GroupRoleMembers_Call {
+	return &SDK_GroupRoleMembers_Call{Call: _e.mock.On("GroupRoleMembers", ctx, id, roleID, workspaceID, pm, token)}
 }
 
-func (_c *SDK_GroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string)) *SDK_GroupRoleMembers_Call {
+func (_c *SDK_GroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_GroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7107,14 +7107,14 @@ func (_c *SDK_GroupRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage,
 	return _c
 }
 
-func (_c *SDK_GroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_GroupRoleMembers_Call {
+func (_c *SDK_GroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_GroupRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GroupRoles provides a mock function for the type SDK
-func (_mock *SDK) GroupRoles(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, pm, token)
+func (_mock *SDK) GroupRoles(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GroupRoles")
@@ -7123,15 +7123,15 @@ func (_mock *SDK) GroupRoles(ctx context.Context, id string, domainID string, pm
 	var r0 sdk.RolesPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.RolesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, pm, token)
+		return returnFunc(ctx, id, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.RolesPage); ok {
-		r0 = returnFunc(ctx, id, domainID, pm, token)
+		r0 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.RolesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, pm, token)
+		r1 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7148,14 +7148,14 @@ type SDK_GroupRoles_Call struct {
 // GroupRoles is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) GroupRoles(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_GroupRoles_Call {
-	return &SDK_GroupRoles_Call{Call: _e.mock.On("GroupRoles", ctx, id, domainID, pm, token)}
+func (_e *SDK_Expecter) GroupRoles(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_GroupRoles_Call {
+	return &SDK_GroupRoles_Call{Call: _e.mock.On("GroupRoles", ctx, id, workspaceID, pm, token)}
 }
 
-func (_c *SDK_GroupRoles_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string)) *SDK_GroupRoles_Call {
+func (_c *SDK_GroupRoles_Call) Run(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_GroupRoles_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7193,14 +7193,14 @@ func (_c *SDK_GroupRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_GroupRoles_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_GroupRoles_Call {
+func (_c *SDK_GroupRoles_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_GroupRoles_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Groups provides a mock function for the type SDK
-func (_mock *SDK) Groups(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.GroupsPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) Groups(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.GroupsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Groups")
@@ -7209,15 +7209,15 @@ func (_mock *SDK) Groups(ctx context.Context, pm sdk.PageMetadata, domainID stri
 	var r0 sdk.GroupsPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.GroupsPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.GroupsPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.GroupsPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7234,13 +7234,13 @@ type SDK_Groups_Call struct {
 // Groups is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Groups(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_Groups_Call {
-	return &SDK_Groups_Call{Call: _e.mock.On("Groups", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) Groups(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Groups_Call {
+	return &SDK_Groups_Call{Call: _e.mock.On("Groups", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_Groups_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_Groups_Call {
+func (_c *SDK_Groups_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_Groups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7273,7 +7273,7 @@ func (_c *SDK_Groups_Call) Return(groupsPage sdk.GroupsPage, sDKError errors.SDK
 	return _c
 }
 
-func (_c *SDK_Groups_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.GroupsPage, errors.SDKError)) *SDK_Groups_Call {
+func (_c *SDK_Groups_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.GroupsPage, errors.SDKError)) *SDK_Groups_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -7341,8 +7341,8 @@ func (_c *SDK_Health_Call) RunAndReturn(run func(service string) (sdk.HealthInfo
 }
 
 // Hierarchy provides a mock function for the type SDK
-func (_mock *SDK) Hierarchy(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.GroupsHierarchyPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, pm, token)
+func (_mock *SDK) Hierarchy(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.GroupsHierarchyPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Hierarchy")
@@ -7351,15 +7351,15 @@ func (_mock *SDK) Hierarchy(ctx context.Context, id string, domainID string, pm 
 	var r0 sdk.GroupsHierarchyPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.GroupsHierarchyPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, pm, token)
+		return returnFunc(ctx, id, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.GroupsHierarchyPage); ok {
-		r0 = returnFunc(ctx, id, domainID, pm, token)
+		r0 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.GroupsHierarchyPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, pm, token)
+		r1 = returnFunc(ctx, id, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7376,14 +7376,14 @@ type SDK_Hierarchy_Call struct {
 // Hierarchy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Hierarchy(ctx interface{}, id interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_Hierarchy_Call {
-	return &SDK_Hierarchy_Call{Call: _e.mock.On("Hierarchy", ctx, id, domainID, pm, token)}
+func (_e *SDK_Expecter) Hierarchy(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_Hierarchy_Call {
+	return &SDK_Hierarchy_Call{Call: _e.mock.On("Hierarchy", ctx, id, workspaceID, pm, token)}
 }
 
-func (_c *SDK_Hierarchy_Call) Run(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string)) *SDK_Hierarchy_Call {
+func (_c *SDK_Hierarchy_Call) Run(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_Hierarchy_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7421,7 +7421,7 @@ func (_c *SDK_Hierarchy_Call) Return(groupsHierarchyPage sdk.GroupsHierarchyPage
 	return _c
 }
 
-func (_c *SDK_Hierarchy_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, pm sdk.PageMetadata, token string) (sdk.GroupsHierarchyPage, errors.SDKError)) *SDK_Hierarchy_Call {
+func (_c *SDK_Hierarchy_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.GroupsHierarchyPage, errors.SDKError)) *SDK_Hierarchy_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -7499,8 +7499,8 @@ func (_c *SDK_Invitations_Call) RunAndReturn(run func(ctx context.Context, pm sd
 }
 
 // IssueCert provides a mock function for the type SDK
-func (_mock *SDK) IssueCert(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, domainID string, token string) (sdk.Certificate, errors.SDKError) {
-	ret := _mock.Called(ctx, entityID, ttl, ipAddrs, opts, domainID, token)
+func (_mock *SDK) IssueCert(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, workspaceID string, token string) (sdk.Certificate, errors.SDKError) {
+	ret := _mock.Called(ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueCert")
@@ -7509,15 +7509,15 @@ func (_mock *SDK) IssueCert(ctx context.Context, entityID string, ttl string, ip
 	var r0 sdk.Certificate
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, sdk.Options, string, string) (sdk.Certificate, errors.SDKError)); ok {
-		return returnFunc(ctx, entityID, ttl, ipAddrs, opts, domainID, token)
+		return returnFunc(ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, sdk.Options, string, string) sdk.Certificate); ok {
-		r0 = returnFunc(ctx, entityID, ttl, ipAddrs, opts, domainID, token)
+		r0 = returnFunc(ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Certificate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string, sdk.Options, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, entityID, ttl, ipAddrs, opts, domainID, token)
+		r1 = returnFunc(ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7537,13 +7537,13 @@ type SDK_IssueCert_Call struct {
 //   - ttl string
 //   - ipAddrs []string
 //   - opts sdk.Options
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) IssueCert(ctx interface{}, entityID interface{}, ttl interface{}, ipAddrs interface{}, opts interface{}, domainID interface{}, token interface{}) *SDK_IssueCert_Call {
-	return &SDK_IssueCert_Call{Call: _e.mock.On("IssueCert", ctx, entityID, ttl, ipAddrs, opts, domainID, token)}
+func (_e *SDK_Expecter) IssueCert(ctx interface{}, entityID interface{}, ttl interface{}, ipAddrs interface{}, opts interface{}, workspaceID interface{}, token interface{}) *SDK_IssueCert_Call {
+	return &SDK_IssueCert_Call{Call: _e.mock.On("IssueCert", ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)}
 }
 
-func (_c *SDK_IssueCert_Call) Run(run func(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, domainID string, token string)) *SDK_IssueCert_Call {
+func (_c *SDK_IssueCert_Call) Run(run func(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, workspaceID string, token string)) *SDK_IssueCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7591,14 +7591,14 @@ func (_c *SDK_IssueCert_Call) Return(certificate sdk.Certificate, sDKError error
 	return _c
 }
 
-func (_c *SDK_IssueCert_Call) RunAndReturn(run func(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, domainID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_IssueCert_Call {
+func (_c *SDK_IssueCert_Call) RunAndReturn(run func(ctx context.Context, entityID string, ttl string, ipAddrs []string, opts sdk.Options, workspaceID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_IssueCert_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // IssueFromCSR provides a mock function for the type SDK
-func (_mock *SDK) IssueFromCSR(ctx context.Context, entityID string, ttl string, csr string, domainID string, token string) (sdk.Certificate, errors.SDKError) {
-	ret := _mock.Called(ctx, entityID, ttl, csr, domainID, token)
+func (_mock *SDK) IssueFromCSR(ctx context.Context, entityID string, ttl string, csr string, workspaceID string, token string) (sdk.Certificate, errors.SDKError) {
+	ret := _mock.Called(ctx, entityID, ttl, csr, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for IssueFromCSR")
@@ -7607,15 +7607,15 @@ func (_mock *SDK) IssueFromCSR(ctx context.Context, entityID string, ttl string,
 	var r0 sdk.Certificate
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (sdk.Certificate, errors.SDKError)); ok {
-		return returnFunc(ctx, entityID, ttl, csr, domainID, token)
+		return returnFunc(ctx, entityID, ttl, csr, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) sdk.Certificate); ok {
-		r0 = returnFunc(ctx, entityID, ttl, csr, domainID, token)
+		r0 = returnFunc(ctx, entityID, ttl, csr, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Certificate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, entityID, ttl, csr, domainID, token)
+		r1 = returnFunc(ctx, entityID, ttl, csr, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7634,13 +7634,13 @@ type SDK_IssueFromCSR_Call struct {
 //   - entityID string
 //   - ttl string
 //   - csr string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) IssueFromCSR(ctx interface{}, entityID interface{}, ttl interface{}, csr interface{}, domainID interface{}, token interface{}) *SDK_IssueFromCSR_Call {
-	return &SDK_IssueFromCSR_Call{Call: _e.mock.On("IssueFromCSR", ctx, entityID, ttl, csr, domainID, token)}
+func (_e *SDK_Expecter) IssueFromCSR(ctx interface{}, entityID interface{}, ttl interface{}, csr interface{}, workspaceID interface{}, token interface{}) *SDK_IssueFromCSR_Call {
+	return &SDK_IssueFromCSR_Call{Call: _e.mock.On("IssueFromCSR", ctx, entityID, ttl, csr, workspaceID, token)}
 }
 
-func (_c *SDK_IssueFromCSR_Call) Run(run func(ctx context.Context, entityID string, ttl string, csr string, domainID string, token string)) *SDK_IssueFromCSR_Call {
+func (_c *SDK_IssueFromCSR_Call) Run(run func(ctx context.Context, entityID string, ttl string, csr string, workspaceID string, token string)) *SDK_IssueFromCSR_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7683,7 +7683,7 @@ func (_c *SDK_IssueFromCSR_Call) Return(certificate sdk.Certificate, sDKError er
 	return _c
 }
 
-func (_c *SDK_IssueFromCSR_Call) RunAndReturn(run func(ctx context.Context, entityID string, ttl string, csr string, domainID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_IssueFromCSR_Call {
+func (_c *SDK_IssueFromCSR_Call) RunAndReturn(run func(ctx context.Context, entityID string, ttl string, csr string, workspaceID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_IssueFromCSR_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -7775,8 +7775,8 @@ func (_c *SDK_IssueFromCSRInternal_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // ListAlarms provides a mock function for the type SDK
-func (_mock *SDK) ListAlarms(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.AlarmsPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) ListAlarms(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.AlarmsPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListAlarms")
@@ -7785,15 +7785,15 @@ func (_mock *SDK) ListAlarms(ctx context.Context, pm sdk.PageMetadata, domainID 
 	var r0 sdk.AlarmsPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.AlarmsPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.AlarmsPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.AlarmsPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7810,13 +7810,13 @@ type SDK_ListAlarms_Call struct {
 // ListAlarms is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListAlarms(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListAlarms_Call {
-	return &SDK_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) ListAlarms(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListAlarms_Call {
+	return &SDK_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListAlarms_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListAlarms_Call {
+func (_c *SDK_ListAlarms_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_ListAlarms_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7849,14 +7849,14 @@ func (_c *SDK_ListAlarms_Call) Return(alarmsPage sdk.AlarmsPage, sDKError errors
 	return _c
 }
 
-func (_c *SDK_ListAlarms_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.AlarmsPage, errors.SDKError)) *SDK_ListAlarms_Call {
+func (_c *SDK_ListAlarms_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.AlarmsPage, errors.SDKError)) *SDK_ListAlarms_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListCerts provides a mock function for the type SDK
-func (_mock *SDK) ListCerts(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.CertificatePage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) ListCerts(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.CertificatePage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListCerts")
@@ -7865,15 +7865,15 @@ func (_mock *SDK) ListCerts(ctx context.Context, pm sdk.PageMetadata, domainID s
 	var r0 sdk.CertificatePage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.CertificatePage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.CertificatePage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.CertificatePage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7890,13 +7890,13 @@ type SDK_ListCerts_Call struct {
 // ListCerts is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListCerts(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListCerts_Call {
-	return &SDK_ListCerts_Call{Call: _e.mock.On("ListCerts", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) ListCerts(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListCerts_Call {
+	return &SDK_ListCerts_Call{Call: _e.mock.On("ListCerts", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListCerts_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListCerts_Call {
+func (_c *SDK_ListCerts_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_ListCerts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -7929,14 +7929,14 @@ func (_c *SDK_ListCerts_Call) Return(certificatePage sdk.CertificatePage, sDKErr
 	return _c
 }
 
-func (_c *SDK_ListCerts_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.CertificatePage, errors.SDKError)) *SDK_ListCerts_Call {
+func (_c *SDK_ListCerts_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.CertificatePage, errors.SDKError)) *SDK_ListCerts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListChannelMembers provides a mock function for the type SDK
-func (_mock *SDK) ListChannelMembers(ctx context.Context, channelID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, channelID, domainID, pm, token)
+func (_mock *SDK) ListChannelMembers(ctx context.Context, channelID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, channelID, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListChannelMembers")
@@ -7945,15 +7945,15 @@ func (_mock *SDK) ListChannelMembers(ctx context.Context, channelID string, doma
 	var r0 sdk.EntityMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, channelID, domainID, pm, token)
+		return returnFunc(ctx, channelID, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
-		r0 = returnFunc(ctx, channelID, domainID, pm, token)
+		r0 = returnFunc(ctx, channelID, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.EntityMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, channelID, domainID, pm, token)
+		r1 = returnFunc(ctx, channelID, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -7970,14 +7970,14 @@ type SDK_ListChannelMembers_Call struct {
 // ListChannelMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - channelID string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListChannelMembers(ctx interface{}, channelID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListChannelMembers_Call {
-	return &SDK_ListChannelMembers_Call{Call: _e.mock.On("ListChannelMembers", ctx, channelID, domainID, pm, token)}
+func (_e *SDK_Expecter) ListChannelMembers(ctx interface{}, channelID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListChannelMembers_Call {
+	return &SDK_ListChannelMembers_Call{Call: _e.mock.On("ListChannelMembers", ctx, channelID, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ListChannelMembers_Call) Run(run func(ctx context.Context, channelID string, domainID string, pm sdk.PageMetadata, token string)) *SDK_ListChannelMembers_Call {
+func (_c *SDK_ListChannelMembers_Call) Run(run func(ctx context.Context, channelID string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListChannelMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8015,14 +8015,14 @@ func (_c *SDK_ListChannelMembers_Call) Return(entityMembersPage sdk.EntityMember
 	return _c
 }
 
-func (_c *SDK_ListChannelMembers_Call) RunAndReturn(run func(ctx context.Context, channelID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListChannelMembers_Call {
+func (_c *SDK_ListChannelMembers_Call) RunAndReturn(run func(ctx context.Context, channelID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListChannelMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListClientMembers provides a mock function for the type SDK
-func (_mock *SDK) ListClientMembers(ctx context.Context, clientID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, clientID, domainID, pm, token)
+func (_mock *SDK) ListClientMembers(ctx context.Context, clientID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, clientID, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListClientMembers")
@@ -8031,15 +8031,15 @@ func (_mock *SDK) ListClientMembers(ctx context.Context, clientID string, domain
 	var r0 sdk.EntityMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, clientID, domainID, pm, token)
+		return returnFunc(ctx, clientID, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
-		r0 = returnFunc(ctx, clientID, domainID, pm, token)
+		r0 = returnFunc(ctx, clientID, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.EntityMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, clientID, domainID, pm, token)
+		r1 = returnFunc(ctx, clientID, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8056,14 +8056,14 @@ type SDK_ListClientMembers_Call struct {
 // ListClientMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - clientID string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListClientMembers(ctx interface{}, clientID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListClientMembers_Call {
-	return &SDK_ListClientMembers_Call{Call: _e.mock.On("ListClientMembers", ctx, clientID, domainID, pm, token)}
+func (_e *SDK_Expecter) ListClientMembers(ctx interface{}, clientID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListClientMembers_Call {
+	return &SDK_ListClientMembers_Call{Call: _e.mock.On("ListClientMembers", ctx, clientID, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ListClientMembers_Call) Run(run func(ctx context.Context, clientID string, domainID string, pm sdk.PageMetadata, token string)) *SDK_ListClientMembers_Call {
+func (_c *SDK_ListClientMembers_Call) Run(run func(ctx context.Context, clientID string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListClientMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8101,14 +8101,14 @@ func (_c *SDK_ListClientMembers_Call) Return(entityMembersPage sdk.EntityMembers
 	return _c
 }
 
-func (_c *SDK_ListClientMembers_Call) RunAndReturn(run func(ctx context.Context, clientID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListClientMembers_Call {
+func (_c *SDK_ListClientMembers_Call) RunAndReturn(run func(ctx context.Context, clientID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListClientMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListDeviceGateways provides a mock function for the type SDK
-func (_mock *SDK) ListDeviceGateways(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError) {
-	ret := _mock.Called(ctx, chanID, deviceID, pm, domainID, token)
+func (_mock *SDK) ListDeviceGateways(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError) {
+	ret := _mock.Called(ctx, chanID, deviceID, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListDeviceGateways")
@@ -8117,15 +8117,15 @@ func (_mock *SDK) ListDeviceGateways(ctx context.Context, chanID string, deviceI
 	var r0 sdk.DeviceGatewaysPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) (sdk.DeviceGatewaysPage, errors.SDKError)); ok {
-		return returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+		return returnFunc(ctx, chanID, deviceID, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) sdk.DeviceGatewaysPage); ok {
-		r0 = returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+		r0 = returnFunc(ctx, chanID, deviceID, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.DeviceGatewaysPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, chanID, deviceID, pm, domainID, token)
+		r1 = returnFunc(ctx, chanID, deviceID, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8144,13 +8144,13 @@ type SDK_ListDeviceGateways_Call struct {
 //   - chanID string
 //   - deviceID string
 //   - pm sdk.DeviceViewPageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListDeviceGateways(ctx interface{}, chanID interface{}, deviceID interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListDeviceGateways_Call {
-	return &SDK_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", ctx, chanID, deviceID, pm, domainID, token)}
+func (_e *SDK_Expecter) ListDeviceGateways(ctx interface{}, chanID interface{}, deviceID interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListDeviceGateways_Call {
+	return &SDK_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", ctx, chanID, deviceID, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListDeviceGateways_Call) Run(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string)) *SDK_ListDeviceGateways_Call {
+func (_c *SDK_ListDeviceGateways_Call) Run(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string)) *SDK_ListDeviceGateways_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8193,31 +8193,31 @@ func (_c *SDK_ListDeviceGateways_Call) Return(deviceGatewaysPage sdk.DeviceGatew
 	return _c
 }
 
-func (_c *SDK_ListDeviceGateways_Call) RunAndReturn(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError)) *SDK_ListDeviceGateways_Call {
+func (_c *SDK_ListDeviceGateways_Call) RunAndReturn(run func(ctx context.Context, chanID string, deviceID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string) (sdk.DeviceGatewaysPage, errors.SDKError)) *SDK_ListDeviceGateways_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// ListDomainMembers provides a mock function for the type SDK
-func (_mock *SDK) ListDomainMembers(ctx context.Context, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, domainID, pm, token)
+// ListWorkspaceMembers provides a mock function for the type SDK
+func (_mock *SDK) ListWorkspaceMembers(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, workspaceID, pm, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ListDomainMembers")
+		panic("no return value specified for ListWorkspaceMembers")
 	}
 
 	var r0 sdk.EntityMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, domainID, pm, token)
+		return returnFunc(ctx, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
-		r0 = returnFunc(ctx, domainID, pm, token)
+		r0 = returnFunc(ctx, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.EntityMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, domainID, pm, token)
+		r1 = returnFunc(ctx, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8226,21 +8226,21 @@ func (_mock *SDK) ListDomainMembers(ctx context.Context, domainID string, pm sdk
 	return r0, r1
 }
 
-// SDK_ListDomainMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListDomainMembers'
-type SDK_ListDomainMembers_Call struct {
+// SDK_ListWorkspaceMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWorkspaceMembers'
+type SDK_ListWorkspaceMembers_Call struct {
 	*mock.Call
 }
 
-// ListDomainMembers is a helper method to define mock.On call
+// ListWorkspaceMembers is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListDomainMembers(ctx interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListDomainMembers_Call {
-	return &SDK_ListDomainMembers_Call{Call: _e.mock.On("ListDomainMembers", ctx, domainID, pm, token)}
+func (_e *SDK_Expecter) ListWorkspaceMembers(ctx interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListWorkspaceMembers_Call {
+	return &SDK_ListWorkspaceMembers_Call{Call: _e.mock.On("ListWorkspaceMembers", ctx, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ListDomainMembers_Call) Run(run func(ctx context.Context, domainID string, pm sdk.PageMetadata, token string)) *SDK_ListDomainMembers_Call {
+func (_c *SDK_ListWorkspaceMembers_Call) Run(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListWorkspaceMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8268,19 +8268,19 @@ func (_c *SDK_ListDomainMembers_Call) Run(run func(ctx context.Context, domainID
 	return _c
 }
 
-func (_c *SDK_ListDomainMembers_Call) Return(entityMembersPage sdk.EntityMembersPage, sDKError errors.SDKError) *SDK_ListDomainMembers_Call {
+func (_c *SDK_ListWorkspaceMembers_Call) Return(entityMembersPage sdk.EntityMembersPage, sDKError errors.SDKError) *SDK_ListWorkspaceMembers_Call {
 	_c.Call.Return(entityMembersPage, sDKError)
 	return _c
 }
 
-func (_c *SDK_ListDomainMembers_Call) RunAndReturn(run func(ctx context.Context, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListDomainMembers_Call {
+func (_c *SDK_ListWorkspaceMembers_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListWorkspaceMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListGatewayDevices provides a mock function for the type SDK
-func (_mock *SDK) ListGatewayDevices(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.GatewayDevicesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, chanID, publisherID, pm, domainID, token)
+func (_mock *SDK) ListGatewayDevices(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string) (sdk.GatewayDevicesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, chanID, publisherID, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListGatewayDevices")
@@ -8289,15 +8289,15 @@ func (_mock *SDK) ListGatewayDevices(ctx context.Context, chanID string, publish
 	var r0 sdk.GatewayDevicesPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) (sdk.GatewayDevicesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+		return returnFunc(ctx, chanID, publisherID, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) sdk.GatewayDevicesPage); ok {
-		r0 = returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+		r0 = returnFunc(ctx, chanID, publisherID, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.GatewayDevicesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.DeviceViewPageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, chanID, publisherID, pm, domainID, token)
+		r1 = returnFunc(ctx, chanID, publisherID, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8316,13 +8316,13 @@ type SDK_ListGatewayDevices_Call struct {
 //   - chanID string
 //   - publisherID string
 //   - pm sdk.DeviceViewPageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListGatewayDevices(ctx interface{}, chanID interface{}, publisherID interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListGatewayDevices_Call {
-	return &SDK_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", ctx, chanID, publisherID, pm, domainID, token)}
+func (_e *SDK_Expecter) ListGatewayDevices(ctx interface{}, chanID interface{}, publisherID interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListGatewayDevices_Call {
+	return &SDK_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", ctx, chanID, publisherID, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListGatewayDevices_Call) Run(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string)) *SDK_ListGatewayDevices_Call {
+func (_c *SDK_ListGatewayDevices_Call) Run(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string)) *SDK_ListGatewayDevices_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8365,14 +8365,14 @@ func (_c *SDK_ListGatewayDevices_Call) Return(gatewayDevicesPage sdk.GatewayDevi
 	return _c
 }
 
-func (_c *SDK_ListGatewayDevices_Call) RunAndReturn(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, domainID string, token string) (sdk.GatewayDevicesPage, errors.SDKError)) *SDK_ListGatewayDevices_Call {
+func (_c *SDK_ListGatewayDevices_Call) RunAndReturn(run func(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string) (sdk.GatewayDevicesPage, errors.SDKError)) *SDK_ListGatewayDevices_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListGroupMembers provides a mock function for the type SDK
-func (_mock *SDK) ListGroupMembers(ctx context.Context, groupID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, groupID, domainID, pm, token)
+func (_mock *SDK) ListGroupMembers(ctx context.Context, groupID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, groupID, workspaceID, pm, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListGroupMembers")
@@ -8381,15 +8381,15 @@ func (_mock *SDK) ListGroupMembers(ctx context.Context, groupID string, domainID
 	var r0 sdk.EntityMembersPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, groupID, domainID, pm, token)
+		return returnFunc(ctx, groupID, workspaceID, pm, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
-		r0 = returnFunc(ctx, groupID, domainID, pm, token)
+		r0 = returnFunc(ctx, groupID, workspaceID, pm, token)
 	} else {
 		r0 = ret.Get(0).(sdk.EntityMembersPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, groupID, domainID, pm, token)
+		r1 = returnFunc(ctx, groupID, workspaceID, pm, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8406,14 +8406,14 @@ type SDK_ListGroupMembers_Call struct {
 // ListGroupMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - groupID string
-//   - domainID string
+//   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListGroupMembers(ctx interface{}, groupID interface{}, domainID interface{}, pm interface{}, token interface{}) *SDK_ListGroupMembers_Call {
-	return &SDK_ListGroupMembers_Call{Call: _e.mock.On("ListGroupMembers", ctx, groupID, domainID, pm, token)}
+func (_e *SDK_Expecter) ListGroupMembers(ctx interface{}, groupID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListGroupMembers_Call {
+	return &SDK_ListGroupMembers_Call{Call: _e.mock.On("ListGroupMembers", ctx, groupID, workspaceID, pm, token)}
 }
 
-func (_c *SDK_ListGroupMembers_Call) Run(run func(ctx context.Context, groupID string, domainID string, pm sdk.PageMetadata, token string)) *SDK_ListGroupMembers_Call {
+func (_c *SDK_ListGroupMembers_Call) Run(run func(ctx context.Context, groupID string, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListGroupMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8451,14 +8451,14 @@ func (_c *SDK_ListGroupMembers_Call) Return(entityMembersPage sdk.EntityMembersP
 	return _c
 }
 
-func (_c *SDK_ListGroupMembers_Call) RunAndReturn(run func(ctx context.Context, groupID string, domainID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListGroupMembers_Call {
+func (_c *SDK_ListGroupMembers_Call) RunAndReturn(run func(ctx context.Context, groupID string, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListGroupMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListReportsConfig provides a mock function for the type SDK
-func (_mock *SDK) ListReportsConfig(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ReportConfigPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) ListReportsConfig(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ReportConfigPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListReportsConfig")
@@ -8467,15 +8467,15 @@ func (_mock *SDK) ListReportsConfig(ctx context.Context, pm sdk.PageMetadata, do
 	var r0 sdk.ReportConfigPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.ReportConfigPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.ReportConfigPage); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfigPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8492,13 +8492,13 @@ type SDK_ListReportsConfig_Call struct {
 // ListReportsConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListReportsConfig(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListReportsConfig_Call {
-	return &SDK_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) ListReportsConfig(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListReportsConfig_Call {
+	return &SDK_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListReportsConfig_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListReportsConfig_Call {
+func (_c *SDK_ListReportsConfig_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_ListReportsConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8531,14 +8531,14 @@ func (_c *SDK_ListReportsConfig_Call) Return(reportConfigPage sdk.ReportConfigPa
 	return _c
 }
 
-func (_c *SDK_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.ReportConfigPage, errors.SDKError)) *SDK_ListReportsConfig_Call {
+func (_c *SDK_ListReportsConfig_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.ReportConfigPage, errors.SDKError)) *SDK_ListReportsConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListRules provides a mock function for the type SDK
-func (_mock *SDK) ListRules(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.Page, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, domainID, token)
+func (_mock *SDK) ListRules(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.Page, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListRules")
@@ -8547,15 +8547,15 @@ func (_mock *SDK) ListRules(ctx context.Context, pm sdk.PageMetadata, domainID s
 	var r0 sdk.Page
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.Page, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, domainID, token)
+		return returnFunc(ctx, pm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.Page); ok {
-		r0 = returnFunc(ctx, pm, domainID, token)
+		r0 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Page)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, domainID, token)
+		r1 = returnFunc(ctx, pm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8572,13 +8572,13 @@ type SDK_ListRules_Call struct {
 // ListRules is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListRules(ctx interface{}, pm interface{}, domainID interface{}, token interface{}) *SDK_ListRules_Call {
-	return &SDK_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm, domainID, token)}
+func (_e *SDK_Expecter) ListRules(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListRules_Call {
+	return &SDK_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm, workspaceID, token)}
 }
 
-func (_c *SDK_ListRules_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string)) *SDK_ListRules_Call {
+func (_c *SDK_ListRules_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string)) *SDK_ListRules_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8611,7 +8611,7 @@ func (_c *SDK_ListRules_Call) Return(page sdk.Page, sDKError errors.SDKError) *S
 	return _c
 }
 
-func (_c *SDK_ListRules_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, domainID string, token string) (sdk.Page, errors.SDKError)) *SDK_ListRules_Call {
+func (_c *SDK_ListRules_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, workspaceID string, token string) (sdk.Page, errors.SDKError)) *SDK_ListRules_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8765,8 +8765,8 @@ func (_c *SDK_OCSP_Call) RunAndReturn(run func(ctx context.Context, serialNumber
 }
 
 // ReadMessages provides a mock function for the type SDK
-func (_mock *SDK) ReadMessages(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string) (sdk.MessagesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, chanID, domainID, token)
+func (_mock *SDK) ReadMessages(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, workspaceID string, token string) (sdk.MessagesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, chanID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ReadMessages")
@@ -8775,15 +8775,15 @@ func (_mock *SDK) ReadMessages(ctx context.Context, pm sdk.MessagePageMetadata, 
 	var r0 sdk.MessagesPage
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.MessagePageMetadata, string, string, string) (sdk.MessagesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, chanID, domainID, token)
+		return returnFunc(ctx, pm, chanID, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.MessagePageMetadata, string, string, string) sdk.MessagesPage); ok {
-		r0 = returnFunc(ctx, pm, chanID, domainID, token)
+		r0 = returnFunc(ctx, pm, chanID, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.MessagesPage)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.MessagePageMetadata, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, chanID, domainID, token)
+		r1 = returnFunc(ctx, pm, chanID, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -8801,13 +8801,13 @@ type SDK_ReadMessages_Call struct {
 //   - ctx context.Context
 //   - pm sdk.MessagePageMetadata
 //   - chanID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ReadMessages(ctx interface{}, pm interface{}, chanID interface{}, domainID interface{}, token interface{}) *SDK_ReadMessages_Call {
-	return &SDK_ReadMessages_Call{Call: _e.mock.On("ReadMessages", ctx, pm, chanID, domainID, token)}
+func (_e *SDK_Expecter) ReadMessages(ctx interface{}, pm interface{}, chanID interface{}, workspaceID interface{}, token interface{}) *SDK_ReadMessages_Call {
+	return &SDK_ReadMessages_Call{Call: _e.mock.On("ReadMessages", ctx, pm, chanID, workspaceID, token)}
 }
 
-func (_c *SDK_ReadMessages_Call) Run(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string)) *SDK_ReadMessages_Call {
+func (_c *SDK_ReadMessages_Call) Run(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, workspaceID string, token string)) *SDK_ReadMessages_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8845,14 +8845,14 @@ func (_c *SDK_ReadMessages_Call) Return(messagesPage sdk.MessagesPage, sDKError 
 	return _c
 }
 
-func (_c *SDK_ReadMessages_Call) RunAndReturn(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, domainID string, token string) (sdk.MessagesPage, errors.SDKError)) *SDK_ReadMessages_Call {
+func (_c *SDK_ReadMessages_Call) RunAndReturn(run func(ctx context.Context, pm sdk.MessagePageMetadata, chanID string, workspaceID string, token string) (sdk.MessagesPage, errors.SDKError)) *SDK_ReadMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RefreshBootstrapBindings provides a mock function for the type SDK
-func (_mock *SDK) RefreshBootstrapBindings(ctx context.Context, configID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, configID, domainID, token)
+func (_mock *SDK) RefreshBootstrapBindings(ctx context.Context, configID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, configID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RefreshBootstrapBindings")
@@ -8860,7 +8860,7 @@ func (_mock *SDK) RefreshBootstrapBindings(ctx context.Context, configID string,
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, configID, domainID, token)
+		r0 = returnFunc(ctx, configID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -8877,13 +8877,13 @@ type SDK_RefreshBootstrapBindings_Call struct {
 // RefreshBootstrapBindings is a helper method to define mock.On call
 //   - ctx context.Context
 //   - configID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx interface{}, configID interface{}, domainID interface{}, token interface{}) *SDK_RefreshBootstrapBindings_Call {
-	return &SDK_RefreshBootstrapBindings_Call{Call: _e.mock.On("RefreshBootstrapBindings", ctx, configID, domainID, token)}
+func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx interface{}, configID interface{}, workspaceID interface{}, token interface{}) *SDK_RefreshBootstrapBindings_Call {
+	return &SDK_RefreshBootstrapBindings_Call{Call: _e.mock.On("RefreshBootstrapBindings", ctx, configID, workspaceID, token)}
 }
 
-func (_c *SDK_RefreshBootstrapBindings_Call) Run(run func(ctx context.Context, configID string, domainID string, token string)) *SDK_RefreshBootstrapBindings_Call {
+func (_c *SDK_RefreshBootstrapBindings_Call) Run(run func(ctx context.Context, configID string, workspaceID string, token string)) *SDK_RefreshBootstrapBindings_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -8916,7 +8916,7 @@ func (_c *SDK_RefreshBootstrapBindings_Call) Return(sDKError errors.SDKError) *S
 	return _c
 }
 
-func (_c *SDK_RefreshBootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, domainID string, token string) errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
+func (_c *SDK_RefreshBootstrapBindings_Call) RunAndReturn(run func(ctx context.Context, configID string, workspaceID string, token string) errors.SDKError) *SDK_RefreshBootstrapBindings_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8990,8 +8990,8 @@ func (_c *SDK_RefreshToken_Call) RunAndReturn(run func(ctx context.Context, toke
 }
 
 // RejectInvitation provides a mock function for the type SDK
-func (_mock *SDK) RejectInvitation(ctx context.Context, domainID string, token string) error {
-	ret := _mock.Called(ctx, domainID, token)
+func (_mock *SDK) RejectInvitation(ctx context.Context, workspaceID string, token string) error {
+	ret := _mock.Called(ctx, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RejectInvitation")
@@ -8999,7 +8999,7 @@ func (_mock *SDK) RejectInvitation(ctx context.Context, domainID string, token s
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
-		r0 = returnFunc(ctx, domainID, token)
+		r0 = returnFunc(ctx, workspaceID, token)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -9013,13 +9013,13 @@ type SDK_RejectInvitation_Call struct {
 
 // RejectInvitation is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RejectInvitation(ctx interface{}, domainID interface{}, token interface{}) *SDK_RejectInvitation_Call {
-	return &SDK_RejectInvitation_Call{Call: _e.mock.On("RejectInvitation", ctx, domainID, token)}
+func (_e *SDK_Expecter) RejectInvitation(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_RejectInvitation_Call {
+	return &SDK_RejectInvitation_Call{Call: _e.mock.On("RejectInvitation", ctx, workspaceID, token)}
 }
 
-func (_c *SDK_RejectInvitation_Call) Run(run func(ctx context.Context, domainID string, token string)) *SDK_RejectInvitation_Call {
+func (_c *SDK_RejectInvitation_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_RejectInvitation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9047,14 +9047,14 @@ func (_c *SDK_RejectInvitation_Call) Return(err error) *SDK_RejectInvitation_Cal
 	return _c
 }
 
-func (_c *SDK_RejectInvitation_Call) RunAndReturn(run func(ctx context.Context, domainID string, token string) error) *SDK_RejectInvitation_Call {
+func (_c *SDK_RejectInvitation_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) error) *SDK_RejectInvitation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllChildren provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllChildren(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) RemoveAllChildren(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllChildren")
@@ -9062,7 +9062,7 @@ func (_mock *SDK) RemoveAllChildren(ctx context.Context, id string, domainID str
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9079,13 +9079,13 @@ type SDK_RemoveAllChildren_Call struct {
 // RemoveAllChildren is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllChildren(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllChildren_Call {
-	return &SDK_RemoveAllChildren_Call{Call: _e.mock.On("RemoveAllChildren", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) RemoveAllChildren(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllChildren_Call {
+	return &SDK_RemoveAllChildren_Call{Call: _e.mock.On("RemoveAllChildren", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveAllChildren_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveAllChildren_Call {
+func (_c *SDK_RemoveAllChildren_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_RemoveAllChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9118,14 +9118,14 @@ func (_c *SDK_RemoveAllChildren_Call) Return(sDKError errors.SDKError) *SDK_Remo
 	return _c
 }
 
-func (_c *SDK_RemoveAllChildren_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveAllChildren_Call {
+func (_c *SDK_RemoveAllChildren_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllChildren_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllClientRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllClientRoleActions(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) RemoveAllClientRoleActions(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllClientRoleActions")
@@ -9133,7 +9133,7 @@ func (_mock *SDK) RemoveAllClientRoleActions(ctx context.Context, id string, rol
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9151,13 +9151,13 @@ type SDK_RemoveAllClientRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllClientRoleActions_Call {
-	return &SDK_RemoveAllClientRoleActions_Call{Call: _e.mock.On("RemoveAllClientRoleActions", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) RemoveAllClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllClientRoleActions_Call {
+	return &SDK_RemoveAllClientRoleActions_Call{Call: _e.mock.On("RemoveAllClientRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveAllClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllClientRoleActions_Call {
+func (_c *SDK_RemoveAllClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_RemoveAllClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9195,14 +9195,14 @@ func (_c *SDK_RemoveAllClientRoleActions_Call) Return(sDKError errors.SDKError) 
 	return _c
 }
 
-func (_c *SDK_RemoveAllClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_RemoveAllClientRoleActions_Call {
+func (_c *SDK_RemoveAllClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllClientRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllClientRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllClientRoleMembers(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) RemoveAllClientRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllClientRoleMembers")
@@ -9210,7 +9210,7 @@ func (_mock *SDK) RemoveAllClientRoleMembers(ctx context.Context, id string, rol
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9228,13 +9228,13 @@ type SDK_RemoveAllClientRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllClientRoleMembers_Call {
-	return &SDK_RemoveAllClientRoleMembers_Call{Call: _e.mock.On("RemoveAllClientRoleMembers", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) RemoveAllClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllClientRoleMembers_Call {
+	return &SDK_RemoveAllClientRoleMembers_Call{Call: _e.mock.On("RemoveAllClientRoleMembers", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveAllClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllClientRoleMembers_Call {
+func (_c *SDK_RemoveAllClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_RemoveAllClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9272,17 +9272,17 @@ func (_c *SDK_RemoveAllClientRoleMembers_Call) Return(sDKError errors.SDKError) 
 	return _c
 }
 
-func (_c *SDK_RemoveAllClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_RemoveAllClientRoleMembers_Call {
+func (_c *SDK_RemoveAllClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllClientRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RemoveAllDomainRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllDomainRoleActions(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+// RemoveAllWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) RemoveAllWorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RemoveAllDomainRoleActions")
+		panic("no return value specified for RemoveAllWorkspaceRoleActions")
 	}
 
 	var r0 errors.SDKError
@@ -9296,21 +9296,21 @@ func (_mock *SDK) RemoveAllDomainRoleActions(ctx context.Context, id string, rol
 	return r0
 }
 
-// SDK_RemoveAllDomainRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllDomainRoleActions'
-type SDK_RemoveAllDomainRoleActions_Call struct {
+// SDK_RemoveAllWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleActions'
+type SDK_RemoveAllWorkspaceRoleActions_Call struct {
 	*mock.Call
 }
 
-// RemoveAllDomainRoleActions is a helper method to define mock.On call
+// RemoveAllWorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllDomainRoleActions_Call {
-	return &SDK_RemoveAllDomainRoleActions_Call{Call: _e.mock.On("RemoveAllDomainRoleActions", ctx, id, roleID, token)}
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleActions_Call {
+	return &SDK_RemoveAllWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleActions", ctx, id, roleID, token)}
 }
 
-func (_c *SDK_RemoveAllDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllDomainRoleActions_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9338,22 +9338,22 @@ func (_c *SDK_RemoveAllDomainRoleActions_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *SDK_RemoveAllDomainRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllDomainRoleActions_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_RemoveAllDomainRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllDomainRoleActions_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RemoveAllDomainRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllDomainRoleMembers(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+// RemoveAllWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) RemoveAllWorkspaceRoleMembers(ctx context.Context, id string, roleID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RemoveAllDomainRoleMembers")
+		panic("no return value specified for RemoveAllWorkspaceRoleMembers")
 	}
 
 	var r0 errors.SDKError
@@ -9367,21 +9367,21 @@ func (_mock *SDK) RemoveAllDomainRoleMembers(ctx context.Context, id string, rol
 	return r0
 }
 
-// SDK_RemoveAllDomainRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllDomainRoleMembers'
-type SDK_RemoveAllDomainRoleMembers_Call struct {
+// SDK_RemoveAllWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleMembers'
+type SDK_RemoveAllWorkspaceRoleMembers_Call struct {
 	*mock.Call
 }
 
-// RemoveAllDomainRoleMembers is a helper method to define mock.On call
+// RemoveAllWorkspaceRoleMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllDomainRoleMembers_Call {
-	return &SDK_RemoveAllDomainRoleMembers_Call{Call: _e.mock.On("RemoveAllDomainRoleMembers", ctx, id, roleID, token)}
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleMembers_Call {
+	return &SDK_RemoveAllWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleMembers", ctx, id, roleID, token)}
 }
 
-func (_c *SDK_RemoveAllDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllDomainRoleMembers_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9409,19 +9409,19 @@ func (_c *SDK_RemoveAllDomainRoleMembers_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *SDK_RemoveAllDomainRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllDomainRoleMembers_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_RemoveAllDomainRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllDomainRoleMembers_Call {
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllGroupRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllGroupRoleActions(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) RemoveAllGroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllGroupRoleActions")
@@ -9429,7 +9429,7 @@ func (_mock *SDK) RemoveAllGroupRoleActions(ctx context.Context, id string, role
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9447,13 +9447,13 @@ type SDK_RemoveAllGroupRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllGroupRoleActions_Call {
-	return &SDK_RemoveAllGroupRoleActions_Call{Call: _e.mock.On("RemoveAllGroupRoleActions", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) RemoveAllGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllGroupRoleActions_Call {
+	return &SDK_RemoveAllGroupRoleActions_Call{Call: _e.mock.On("RemoveAllGroupRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveAllGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllGroupRoleActions_Call {
+func (_c *SDK_RemoveAllGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_RemoveAllGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9491,14 +9491,14 @@ func (_c *SDK_RemoveAllGroupRoleActions_Call) Return(sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_RemoveAllGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleActions_Call {
+func (_c *SDK_RemoveAllGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveAllGroupRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllGroupRoleMembers(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, token)
+func (_mock *SDK) RemoveAllGroupRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveAllGroupRoleMembers")
@@ -9506,7 +9506,7 @@ func (_mock *SDK) RemoveAllGroupRoleMembers(ctx context.Context, id string, role
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9524,13 +9524,13 @@ type SDK_RemoveAllGroupRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, token interface{}) *SDK_RemoveAllGroupRoleMembers_Call {
-	return &SDK_RemoveAllGroupRoleMembers_Call{Call: _e.mock.On("RemoveAllGroupRoleMembers", ctx, id, roleID, domainID, token)}
+func (_e *SDK_Expecter) RemoveAllGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllGroupRoleMembers_Call {
+	return &SDK_RemoveAllGroupRoleMembers_Call{Call: _e.mock.On("RemoveAllGroupRoleMembers", ctx, id, roleID, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveAllGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, token string)) *SDK_RemoveAllGroupRoleMembers_Call {
+func (_c *SDK_RemoveAllGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, token string)) *SDK_RemoveAllGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9568,14 +9568,14 @@ func (_c *SDK_RemoveAllGroupRoleMembers_Call) Return(sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_RemoveAllGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleMembers_Call {
+func (_c *SDK_RemoveAllGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveBootstrap provides a mock function for the type SDK
-func (_mock *SDK) RemoveBootstrap(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) RemoveBootstrap(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveBootstrap")
@@ -9583,7 +9583,7 @@ func (_mock *SDK) RemoveBootstrap(ctx context.Context, id string, domainID strin
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9600,13 +9600,13 @@ type SDK_RemoveBootstrap_Call struct {
 // RemoveBootstrap is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrap_Call {
-	return &SDK_RemoveBootstrap_Call{Call: _e.mock.On("RemoveBootstrap", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) RemoveBootstrap(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveBootstrap_Call {
+	return &SDK_RemoveBootstrap_Call{Call: _e.mock.On("RemoveBootstrap", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrap_Call {
+func (_c *SDK_RemoveBootstrap_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_RemoveBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9639,14 +9639,14 @@ func (_c *SDK_RemoveBootstrap_Call) Return(sDKError errors.SDKError) *SDK_Remove
 	return _c
 }
 
-func (_c *SDK_RemoveBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrap_Call {
+func (_c *SDK_RemoveBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveBootstrap_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) RemoveBootstrapProfile(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) RemoveBootstrapProfile(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveBootstrapProfile")
@@ -9654,7 +9654,7 @@ func (_mock *SDK) RemoveBootstrapProfile(ctx context.Context, id string, domainI
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9671,13 +9671,13 @@ type SDK_RemoveBootstrapProfile_Call struct {
 // RemoveBootstrapProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveBootstrapProfile_Call {
-	return &SDK_RemoveBootstrapProfile_Call{Call: _e.mock.On("RemoveBootstrapProfile", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveBootstrapProfile_Call {
+	return &SDK_RemoveBootstrapProfile_Call{Call: _e.mock.On("RemoveBootstrapProfile", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveBootstrapProfile_Call {
+func (_c *SDK_RemoveBootstrapProfile_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_RemoveBootstrapProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9710,14 +9710,14 @@ func (_c *SDK_RemoveBootstrapProfile_Call) Return(sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_RemoveBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
+func (_c *SDK_RemoveBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveChannelParent provides a mock function for the type SDK
-func (_mock *SDK) RemoveChannelParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) RemoveChannelParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveChannelParent")
@@ -9725,7 +9725,7 @@ func (_mock *SDK) RemoveChannelParent(ctx context.Context, id string, domainID s
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9742,14 +9742,14 @@ type SDK_RemoveChannelParent_Call struct {
 // RemoveChannelParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveChannelParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveChannelParent_Call {
-	return &SDK_RemoveChannelParent_Call{Call: _e.mock.On("RemoveChannelParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) RemoveChannelParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveChannelParent_Call {
+	return &SDK_RemoveChannelParent_Call{Call: _e.mock.On("RemoveChannelParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_RemoveChannelParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveChannelParent_Call {
+func (_c *SDK_RemoveChannelParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_RemoveChannelParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9787,14 +9787,14 @@ func (_c *SDK_RemoveChannelParent_Call) Return(sDKError errors.SDKError) *SDK_Re
 	return _c
 }
 
-func (_c *SDK_RemoveChannelParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_RemoveChannelParent_Call {
+func (_c *SDK_RemoveChannelParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_RemoveChannelParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveChildren provides a mock function for the type SDK
-func (_mock *SDK) RemoveChildren(ctx context.Context, id string, domainID string, groupIDs []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupIDs, token)
+func (_mock *SDK) RemoveChildren(ctx context.Context, id string, workspaceID string, groupIDs []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupIDs, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveChildren")
@@ -9802,7 +9802,7 @@ func (_mock *SDK) RemoveChildren(ctx context.Context, id string, domainID string
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupIDs, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupIDs, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9819,14 +9819,14 @@ type SDK_RemoveChildren_Call struct {
 // RemoveChildren is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupIDs []string
 //   - token string
-func (_e *SDK_Expecter) RemoveChildren(ctx interface{}, id interface{}, domainID interface{}, groupIDs interface{}, token interface{}) *SDK_RemoveChildren_Call {
-	return &SDK_RemoveChildren_Call{Call: _e.mock.On("RemoveChildren", ctx, id, domainID, groupIDs, token)}
+func (_e *SDK_Expecter) RemoveChildren(ctx interface{}, id interface{}, workspaceID interface{}, groupIDs interface{}, token interface{}) *SDK_RemoveChildren_Call {
+	return &SDK_RemoveChildren_Call{Call: _e.mock.On("RemoveChildren", ctx, id, workspaceID, groupIDs, token)}
 }
 
-func (_c *SDK_RemoveChildren_Call) Run(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string)) *SDK_RemoveChildren_Call {
+func (_c *SDK_RemoveChildren_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupIDs []string, token string)) *SDK_RemoveChildren_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9864,14 +9864,14 @@ func (_c *SDK_RemoveChildren_Call) Return(sDKError errors.SDKError) *SDK_RemoveC
 	return _c
 }
 
-func (_c *SDK_RemoveChildren_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupIDs []string, token string) errors.SDKError) *SDK_RemoveChildren_Call {
+func (_c *SDK_RemoveChildren_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupIDs []string, token string) errors.SDKError) *SDK_RemoveChildren_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveClientParent provides a mock function for the type SDK
-func (_mock *SDK) RemoveClientParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) RemoveClientParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveClientParent")
@@ -9879,7 +9879,7 @@ func (_mock *SDK) RemoveClientParent(ctx context.Context, id string, domainID st
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9896,14 +9896,14 @@ type SDK_RemoveClientParent_Call struct {
 // RemoveClientParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveClientParent_Call {
-	return &SDK_RemoveClientParent_Call{Call: _e.mock.On("RemoveClientParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) RemoveClientParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveClientParent_Call {
+	return &SDK_RemoveClientParent_Call{Call: _e.mock.On("RemoveClientParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_RemoveClientParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveClientParent_Call {
+func (_c *SDK_RemoveClientParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_RemoveClientParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -9941,14 +9941,14 @@ func (_c *SDK_RemoveClientParent_Call) Return(sDKError errors.SDKError) *SDK_Rem
 	return _c
 }
 
-func (_c *SDK_RemoveClientParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_RemoveClientParent_Call {
+func (_c *SDK_RemoveClientParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_RemoveClientParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveClientRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveClientRoleActions(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, actions, token)
+func (_mock *SDK) RemoveClientRoleActions(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, actions, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveClientRoleActions")
@@ -9956,7 +9956,7 @@ func (_mock *SDK) RemoveClientRoleActions(ctx context.Context, id string, roleID
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -9974,14 +9974,14 @@ type SDK_RemoveClientRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_RemoveClientRoleActions_Call {
-	return &SDK_RemoveClientRoleActions_Call{Call: _e.mock.On("RemoveClientRoleActions", ctx, id, roleID, domainID, actions, token)}
+func (_e *SDK_Expecter) RemoveClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_RemoveClientRoleActions_Call {
+	return &SDK_RemoveClientRoleActions_Call{Call: _e.mock.On("RemoveClientRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
-func (_c *SDK_RemoveClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_RemoveClientRoleActions_Call {
+func (_c *SDK_RemoveClientRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string)) *SDK_RemoveClientRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10024,14 +10024,14 @@ func (_c *SDK_RemoveClientRoleActions_Call) Return(sDKError errors.SDKError) *SD
 	return _c
 }
 
-func (_c *SDK_RemoveClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) errors.SDKError) *SDK_RemoveClientRoleActions_Call {
+func (_c *SDK_RemoveClientRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) errors.SDKError) *SDK_RemoveClientRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveClientRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveClientRoleMembers(ctx context.Context, id string, roleID string, domainID string, members []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, members, token)
+func (_mock *SDK) RemoveClientRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, members, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveClientRoleMembers")
@@ -10039,7 +10039,7 @@ func (_mock *SDK) RemoveClientRoleMembers(ctx context.Context, id string, roleID
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10057,14 +10057,14 @@ type SDK_RemoveClientRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_RemoveClientRoleMembers_Call {
-	return &SDK_RemoveClientRoleMembers_Call{Call: _e.mock.On("RemoveClientRoleMembers", ctx, id, roleID, domainID, members, token)}
+func (_e *SDK_Expecter) RemoveClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_RemoveClientRoleMembers_Call {
+	return &SDK_RemoveClientRoleMembers_Call{Call: _e.mock.On("RemoveClientRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
-func (_c *SDK_RemoveClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_RemoveClientRoleMembers_Call {
+func (_c *SDK_RemoveClientRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string)) *SDK_RemoveClientRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10107,17 +10107,17 @@ func (_c *SDK_RemoveClientRoleMembers_Call) Return(sDKError errors.SDKError) *SD
 	return _c
 }
 
-func (_c *SDK_RemoveClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string) errors.SDKError) *SDK_RemoveClientRoleMembers_Call {
+func (_c *SDK_RemoveClientRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) errors.SDKError) *SDK_RemoveClientRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RemoveDomainRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveDomainRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError {
+// RemoveWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) RemoveWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, actions, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RemoveDomainRoleActions")
+		panic("no return value specified for RemoveWorkspaceRoleActions")
 	}
 
 	var r0 errors.SDKError
@@ -10131,22 +10131,22 @@ func (_mock *SDK) RemoveDomainRoleActions(ctx context.Context, id string, roleID
 	return r0
 }
 
-// SDK_RemoveDomainRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveDomainRoleActions'
-type SDK_RemoveDomainRoleActions_Call struct {
+// SDK_RemoveWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleActions'
+type SDK_RemoveWorkspaceRoleActions_Call struct {
 	*mock.Call
 }
 
-// RemoveDomainRoleActions is a helper method to define mock.On call
+// RemoveWorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveDomainRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveDomainRoleActions_Call {
-	return &SDK_RemoveDomainRoleActions_Call{Call: _e.mock.On("RemoveDomainRoleActions", ctx, id, roleID, actions, token)}
+func (_e *SDK_Expecter) RemoveWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveWorkspaceRoleActions_Call {
+	return &SDK_RemoveWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveWorkspaceRoleActions", ctx, id, roleID, actions, token)}
 }
 
-func (_c *SDK_RemoveDomainRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_RemoveDomainRoleActions_Call {
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_RemoveWorkspaceRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10179,22 +10179,22 @@ func (_c *SDK_RemoveDomainRoleActions_Call) Run(run func(ctx context.Context, id
 	return _c
 }
 
-func (_c *SDK_RemoveDomainRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveDomainRoleActions_Call {
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_RemoveDomainRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError) *SDK_RemoveDomainRoleActions_Call {
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// RemoveDomainRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveDomainRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError {
+// RemoveWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) RemoveWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, members, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for RemoveDomainRoleMembers")
+		panic("no return value specified for RemoveWorkspaceRoleMembers")
 	}
 
 	var r0 errors.SDKError
@@ -10208,22 +10208,22 @@ func (_mock *SDK) RemoveDomainRoleMembers(ctx context.Context, id string, roleID
 	return r0
 }
 
-// SDK_RemoveDomainRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveDomainRoleMembers'
-type SDK_RemoveDomainRoleMembers_Call struct {
+// SDK_RemoveWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleMembers'
+type SDK_RemoveWorkspaceRoleMembers_Call struct {
 	*mock.Call
 }
 
-// RemoveDomainRoleMembers is a helper method to define mock.On call
+// RemoveWorkspaceRoleMembers is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveDomainRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveDomainRoleMembers_Call {
-	return &SDK_RemoveDomainRoleMembers_Call{Call: _e.mock.On("RemoveDomainRoleMembers", ctx, id, roleID, members, token)}
+func (_e *SDK_Expecter) RemoveWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveWorkspaceRoleMembers_Call {
+	return &SDK_RemoveWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveWorkspaceRoleMembers", ctx, id, roleID, members, token)}
 }
 
-func (_c *SDK_RemoveDomainRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_RemoveDomainRoleMembers_Call {
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_RemoveWorkspaceRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10256,19 +10256,19 @@ func (_c *SDK_RemoveDomainRoleMembers_Call) Run(run func(ctx context.Context, id
 	return _c
 }
 
-func (_c *SDK_RemoveDomainRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveDomainRoleMembers_Call {
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
 	_c.Call.Return(sDKError)
 	return _c
 }
 
-func (_c *SDK_RemoveDomainRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError) *SDK_RemoveDomainRoleMembers_Call {
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveGroupParent provides a mock function for the type SDK
-func (_mock *SDK) RemoveGroupParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) RemoveGroupParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveGroupParent")
@@ -10276,7 +10276,7 @@ func (_mock *SDK) RemoveGroupParent(ctx context.Context, id string, domainID str
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10293,14 +10293,14 @@ type SDK_RemoveGroupParent_Call struct {
 // RemoveGroupParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_RemoveGroupParent_Call {
-	return &SDK_RemoveGroupParent_Call{Call: _e.mock.On("RemoveGroupParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) RemoveGroupParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveGroupParent_Call {
+	return &SDK_RemoveGroupParent_Call{Call: _e.mock.On("RemoveGroupParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_RemoveGroupParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_RemoveGroupParent_Call {
+func (_c *SDK_RemoveGroupParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_RemoveGroupParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10338,14 +10338,14 @@ func (_c *SDK_RemoveGroupParent_Call) Return(sDKError errors.SDKError) *SDK_Remo
 	return _c
 }
 
-func (_c *SDK_RemoveGroupParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_RemoveGroupParent_Call {
+func (_c *SDK_RemoveGroupParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_RemoveGroupParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveGroupRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveGroupRoleActions(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, actions, token)
+func (_mock *SDK) RemoveGroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, actions, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveGroupRoleActions")
@@ -10353,7 +10353,7 @@ func (_mock *SDK) RemoveGroupRoleActions(ctx context.Context, id string, roleID 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, actions, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, actions, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10371,14 +10371,14 @@ type SDK_RemoveGroupRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, actions interface{}, token interface{}) *SDK_RemoveGroupRoleActions_Call {
-	return &SDK_RemoveGroupRoleActions_Call{Call: _e.mock.On("RemoveGroupRoleActions", ctx, id, roleID, domainID, actions, token)}
+func (_e *SDK_Expecter) RemoveGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_RemoveGroupRoleActions_Call {
+	return &SDK_RemoveGroupRoleActions_Call{Call: _e.mock.On("RemoveGroupRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
-func (_c *SDK_RemoveGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string)) *SDK_RemoveGroupRoleActions_Call {
+func (_c *SDK_RemoveGroupRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string)) *SDK_RemoveGroupRoleActions_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10421,14 +10421,14 @@ func (_c *SDK_RemoveGroupRoleActions_Call) Return(sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_RemoveGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, actions []string, token string) errors.SDKError) *SDK_RemoveGroupRoleActions_Call {
+func (_c *SDK_RemoveGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) errors.SDKError) *SDK_RemoveGroupRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveGroupRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveGroupRoleMembers(ctx context.Context, id string, roleID string, domainID string, members []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, domainID, members, token)
+func (_mock *SDK) RemoveGroupRoleMembers(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, workspaceID, members, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveGroupRoleMembers")
@@ -10436,7 +10436,7 @@ func (_mock *SDK) RemoveGroupRoleMembers(ctx context.Context, id string, roleID 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, domainID, members, token)
+		r0 = returnFunc(ctx, id, roleID, workspaceID, members, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10454,14 +10454,14 @@ type SDK_RemoveGroupRoleMembers_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - roleID string
-//   - domainID string
+//   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, domainID interface{}, members interface{}, token interface{}) *SDK_RemoveGroupRoleMembers_Call {
-	return &SDK_RemoveGroupRoleMembers_Call{Call: _e.mock.On("RemoveGroupRoleMembers", ctx, id, roleID, domainID, members, token)}
+func (_e *SDK_Expecter) RemoveGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_RemoveGroupRoleMembers_Call {
+	return &SDK_RemoveGroupRoleMembers_Call{Call: _e.mock.On("RemoveGroupRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
-func (_c *SDK_RemoveGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string)) *SDK_RemoveGroupRoleMembers_Call {
+func (_c *SDK_RemoveGroupRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string)) *SDK_RemoveGroupRoleMembers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10504,14 +10504,14 @@ func (_c *SDK_RemoveGroupRoleMembers_Call) Return(sDKError errors.SDKError) *SDK
 	return _c
 }
 
-func (_c *SDK_RemoveGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, domainID string, members []string, token string) errors.SDKError) *SDK_RemoveGroupRoleMembers_Call {
+func (_c *SDK_RemoveGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, members []string, token string) errors.SDKError) *SDK_RemoveGroupRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveReportConfig provides a mock function for the type SDK
-func (_mock *SDK) RemoveReportConfig(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) RemoveReportConfig(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveReportConfig")
@@ -10519,7 +10519,7 @@ func (_mock *SDK) RemoveReportConfig(ctx context.Context, id string, domainID st
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10536,13 +10536,13 @@ type SDK_RemoveReportConfig_Call struct {
 // RemoveReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveReportConfig_Call {
-	return &SDK_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) RemoveReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveReportConfig_Call {
+	return &SDK_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveReportConfig_Call {
+func (_c *SDK_RemoveReportConfig_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_RemoveReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10575,14 +10575,14 @@ func (_c *SDK_RemoveReportConfig_Call) Return(sDKError errors.SDKError) *SDK_Rem
 	return _c
 }
 
-func (_c *SDK_RemoveReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveReportConfig_Call {
+func (_c *SDK_RemoveReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RemoveRule provides a mock function for the type SDK
-func (_mock *SDK) RemoveRule(ctx context.Context, id string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) RemoveRule(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RemoveRule")
@@ -10590,7 +10590,7 @@ func (_mock *SDK) RemoveRule(ctx context.Context, id string, domainID string, to
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10607,13 +10607,13 @@ type SDK_RemoveRule_Call struct {
 // RemoveRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_RemoveRule_Call {
-	return &SDK_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) RemoveRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveRule_Call {
+	return &SDK_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_RemoveRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_RemoveRule_Call {
+func (_c *SDK_RemoveRule_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_RemoveRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10646,14 +10646,14 @@ func (_c *SDK_RemoveRule_Call) Return(sDKError errors.SDKError) *SDK_RemoveRule_
 	return _c
 }
 
-func (_c *SDK_RemoveRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) errors.SDKError) *SDK_RemoveRule_Call {
+func (_c *SDK_RemoveRule_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RenewCert provides a mock function for the type SDK
-func (_mock *SDK) RenewCert(ctx context.Context, serialNumber string, domainID string, token string) (sdk.Certificate, errors.SDKError) {
-	ret := _mock.Called(ctx, serialNumber, domainID, token)
+func (_mock *SDK) RenewCert(ctx context.Context, serialNumber string, workspaceID string, token string) (sdk.Certificate, errors.SDKError) {
+	ret := _mock.Called(ctx, serialNumber, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RenewCert")
@@ -10662,15 +10662,15 @@ func (_mock *SDK) RenewCert(ctx context.Context, serialNumber string, domainID s
 	var r0 sdk.Certificate
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Certificate, errors.SDKError)); ok {
-		return returnFunc(ctx, serialNumber, domainID, token)
+		return returnFunc(ctx, serialNumber, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Certificate); ok {
-		r0 = returnFunc(ctx, serialNumber, domainID, token)
+		r0 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Certificate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, serialNumber, domainID, token)
+		r1 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -10687,13 +10687,13 @@ type SDK_RenewCert_Call struct {
 // RenewCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RenewCert(ctx interface{}, serialNumber interface{}, domainID interface{}, token interface{}) *SDK_RenewCert_Call {
-	return &SDK_RenewCert_Call{Call: _e.mock.On("RenewCert", ctx, serialNumber, domainID, token)}
+func (_e *SDK_Expecter) RenewCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_RenewCert_Call {
+	return &SDK_RenewCert_Call{Call: _e.mock.On("RenewCert", ctx, serialNumber, workspaceID, token)}
 }
 
-func (_c *SDK_RenewCert_Call) Run(run func(ctx context.Context, serialNumber string, domainID string, token string)) *SDK_RenewCert_Call {
+func (_c *SDK_RenewCert_Call) Run(run func(ctx context.Context, serialNumber string, workspaceID string, token string)) *SDK_RenewCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10726,7 +10726,7 @@ func (_c *SDK_RenewCert_Call) Return(certificate sdk.Certificate, sDKError error
 	return _c
 }
 
-func (_c *SDK_RenewCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, domainID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_RenewCert_Call {
+func (_c *SDK_RenewCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, workspaceID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_RenewCert_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -10862,8 +10862,8 @@ func (_c *SDK_ResetPasswordRequest_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // RevokeAll provides a mock function for the type SDK
-func (_mock *SDK) RevokeAll(ctx context.Context, entityID string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, entityID, domainID, token)
+func (_mock *SDK) RevokeAll(ctx context.Context, entityID string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, entityID, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeAll")
@@ -10871,7 +10871,7 @@ func (_mock *SDK) RevokeAll(ctx context.Context, entityID string, domainID strin
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, entityID, domainID, token)
+		r0 = returnFunc(ctx, entityID, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10888,13 +10888,13 @@ type SDK_RevokeAll_Call struct {
 // RevokeAll is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entityID string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RevokeAll(ctx interface{}, entityID interface{}, domainID interface{}, token interface{}) *SDK_RevokeAll_Call {
-	return &SDK_RevokeAll_Call{Call: _e.mock.On("RevokeAll", ctx, entityID, domainID, token)}
+func (_e *SDK_Expecter) RevokeAll(ctx interface{}, entityID interface{}, workspaceID interface{}, token interface{}) *SDK_RevokeAll_Call {
+	return &SDK_RevokeAll_Call{Call: _e.mock.On("RevokeAll", ctx, entityID, workspaceID, token)}
 }
 
-func (_c *SDK_RevokeAll_Call) Run(run func(ctx context.Context, entityID string, domainID string, token string)) *SDK_RevokeAll_Call {
+func (_c *SDK_RevokeAll_Call) Run(run func(ctx context.Context, entityID string, workspaceID string, token string)) *SDK_RevokeAll_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10927,14 +10927,14 @@ func (_c *SDK_RevokeAll_Call) Return(sDKError errors.SDKError) *SDK_RevokeAll_Ca
 	return _c
 }
 
-func (_c *SDK_RevokeAll_Call) RunAndReturn(run func(ctx context.Context, entityID string, domainID string, token string) errors.SDKError) *SDK_RevokeAll_Call {
+func (_c *SDK_RevokeAll_Call) RunAndReturn(run func(ctx context.Context, entityID string, workspaceID string, token string) errors.SDKError) *SDK_RevokeAll_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // RevokeCert provides a mock function for the type SDK
-func (_mock *SDK) RevokeCert(ctx context.Context, serialNumber string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, serialNumber, domainID, token)
+func (_mock *SDK) RevokeCert(ctx context.Context, serialNumber string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, serialNumber, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for RevokeCert")
@@ -10942,7 +10942,7 @@ func (_mock *SDK) RevokeCert(ctx context.Context, serialNumber string, domainID 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, serialNumber, domainID, token)
+		r0 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -10959,13 +10959,13 @@ type SDK_RevokeCert_Call struct {
 // RevokeCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RevokeCert(ctx interface{}, serialNumber interface{}, domainID interface{}, token interface{}) *SDK_RevokeCert_Call {
-	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, serialNumber, domainID, token)}
+func (_e *SDK_Expecter) RevokeCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_RevokeCert_Call {
+	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, serialNumber, workspaceID, token)}
 }
 
-func (_c *SDK_RevokeCert_Call) Run(run func(ctx context.Context, serialNumber string, domainID string, token string)) *SDK_RevokeCert_Call {
+func (_c *SDK_RevokeCert_Call) Run(run func(ctx context.Context, serialNumber string, workspaceID string, token string)) *SDK_RevokeCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -10998,7 +10998,7 @@ func (_c *SDK_RevokeCert_Call) Return(sDKError errors.SDKError) *SDK_RevokeCert_
 	return _c
 }
 
-func (_c *SDK_RevokeCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, domainID string, token string) errors.SDKError) *SDK_RevokeCert_Call {
+func (_c *SDK_RevokeCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, workspaceID string, token string) errors.SDKError) *SDK_RevokeCert_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -11141,8 +11141,8 @@ func (_c *SDK_SendInvitation_Call) RunAndReturn(run func(ctx context.Context, in
 }
 
 // SendMessage provides a mock function for the type SDK
-func (_mock *SDK) SendMessage(ctx context.Context, domainID string, topic string, msg string, secret string) errors.SDKError {
-	ret := _mock.Called(ctx, domainID, topic, msg, secret)
+func (_mock *SDK) SendMessage(ctx context.Context, workspaceID string, topic string, msg string, secret string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, topic, msg, secret)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SendMessage")
@@ -11150,7 +11150,7 @@ func (_mock *SDK) SendMessage(ctx context.Context, domainID string, topic string
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, domainID, topic, msg, secret)
+		r0 = returnFunc(ctx, workspaceID, topic, msg, secret)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11166,15 +11166,15 @@ type SDK_SendMessage_Call struct {
 
 // SendMessage is a helper method to define mock.On call
 //   - ctx context.Context
-//   - domainID string
+//   - workspaceID string
 //   - topic string
 //   - msg string
 //   - secret string
-func (_e *SDK_Expecter) SendMessage(ctx interface{}, domainID interface{}, topic interface{}, msg interface{}, secret interface{}) *SDK_SendMessage_Call {
-	return &SDK_SendMessage_Call{Call: _e.mock.On("SendMessage", ctx, domainID, topic, msg, secret)}
+func (_e *SDK_Expecter) SendMessage(ctx interface{}, workspaceID interface{}, topic interface{}, msg interface{}, secret interface{}) *SDK_SendMessage_Call {
+	return &SDK_SendMessage_Call{Call: _e.mock.On("SendMessage", ctx, workspaceID, topic, msg, secret)}
 }
 
-func (_c *SDK_SendMessage_Call) Run(run func(ctx context.Context, domainID string, topic string, msg string, secret string)) *SDK_SendMessage_Call {
+func (_c *SDK_SendMessage_Call) Run(run func(ctx context.Context, workspaceID string, topic string, msg string, secret string)) *SDK_SendMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11212,7 +11212,7 @@ func (_c *SDK_SendMessage_Call) Return(sDKError errors.SDKError) *SDK_SendMessag
 	return _c
 }
 
-func (_c *SDK_SendMessage_Call) RunAndReturn(run func(ctx context.Context, domainID string, topic string, msg string, secret string) errors.SDKError) *SDK_SendMessage_Call {
+func (_c *SDK_SendMessage_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, topic string, msg string, secret string) errors.SDKError) *SDK_SendMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -11277,8 +11277,8 @@ func (_c *SDK_SendVerification_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // SetChannelParent provides a mock function for the type SDK
-func (_mock *SDK) SetChannelParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) SetChannelParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetChannelParent")
@@ -11286,7 +11286,7 @@ func (_mock *SDK) SetChannelParent(ctx context.Context, id string, domainID stri
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11303,14 +11303,14 @@ type SDK_SetChannelParent_Call struct {
 // SetChannelParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetChannelParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetChannelParent_Call {
-	return &SDK_SetChannelParent_Call{Call: _e.mock.On("SetChannelParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) SetChannelParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetChannelParent_Call {
+	return &SDK_SetChannelParent_Call{Call: _e.mock.On("SetChannelParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_SetChannelParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetChannelParent_Call {
+func (_c *SDK_SetChannelParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_SetChannelParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11348,14 +11348,14 @@ func (_c *SDK_SetChannelParent_Call) Return(sDKError errors.SDKError) *SDK_SetCh
 	return _c
 }
 
-func (_c *SDK_SetChannelParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_SetChannelParent_Call {
+func (_c *SDK_SetChannelParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_SetChannelParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SetClientParent provides a mock function for the type SDK
-func (_mock *SDK) SetClientParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) SetClientParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetClientParent")
@@ -11363,7 +11363,7 @@ func (_mock *SDK) SetClientParent(ctx context.Context, id string, domainID strin
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11380,14 +11380,14 @@ type SDK_SetClientParent_Call struct {
 // SetClientParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetClientParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetClientParent_Call {
-	return &SDK_SetClientParent_Call{Call: _e.mock.On("SetClientParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) SetClientParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetClientParent_Call {
+	return &SDK_SetClientParent_Call{Call: _e.mock.On("SetClientParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_SetClientParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetClientParent_Call {
+func (_c *SDK_SetClientParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_SetClientParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11425,7 +11425,7 @@ func (_c *SDK_SetClientParent_Call) Return(sDKError errors.SDKError) *SDK_SetCli
 	return _c
 }
 
-func (_c *SDK_SetClientParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_SetClientParent_Call {
+func (_c *SDK_SetClientParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_SetClientParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -11484,8 +11484,8 @@ func (_c *SDK_SetContentType_Call) RunAndReturn(run func(ct sdk.ContentType) err
 }
 
 // SetGroupParent provides a mock function for the type SDK
-func (_mock *SDK) SetGroupParent(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, domainID, groupID, token)
+func (_mock *SDK) SetGroupParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetGroupParent")
@@ -11493,7 +11493,7 @@ func (_mock *SDK) SetGroupParent(ctx context.Context, id string, domainID string
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, domainID, groupID, token)
+		r0 = returnFunc(ctx, id, workspaceID, groupID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11510,14 +11510,14 @@ type SDK_SetGroupParent_Call struct {
 // SetGroupParent is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetGroupParent(ctx interface{}, id interface{}, domainID interface{}, groupID interface{}, token interface{}) *SDK_SetGroupParent_Call {
-	return &SDK_SetGroupParent_Call{Call: _e.mock.On("SetGroupParent", ctx, id, domainID, groupID, token)}
+func (_e *SDK_Expecter) SetGroupParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetGroupParent_Call {
+	return &SDK_SetGroupParent_Call{Call: _e.mock.On("SetGroupParent", ctx, id, workspaceID, groupID, token)}
 }
 
-func (_c *SDK_SetGroupParent_Call) Run(run func(ctx context.Context, id string, domainID string, groupID string, token string)) *SDK_SetGroupParent_Call {
+func (_c *SDK_SetGroupParent_Call) Run(run func(ctx context.Context, id string, workspaceID string, groupID string, token string)) *SDK_SetGroupParent_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11555,14 +11555,14 @@ func (_c *SDK_SetGroupParent_Call) Return(sDKError errors.SDKError) *SDK_SetGrou
 	return _c
 }
 
-func (_c *SDK_SetGroupParent_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, groupID string, token string) errors.SDKError) *SDK_SetGroupParent_Call {
+func (_c *SDK_SetGroupParent_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError) *SDK_SetGroupParent_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateAlarm provides a mock function for the type SDK
-func (_mock *SDK) UpdateAlarm(ctx context.Context, alarm sdk.Alarm, domainID string, token string) (sdk.Alarm, errors.SDKError) {
-	ret := _mock.Called(ctx, alarm, domainID, token)
+func (_mock *SDK) UpdateAlarm(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string) (sdk.Alarm, errors.SDKError) {
+	ret := _mock.Called(ctx, alarm, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateAlarm")
@@ -11571,15 +11571,15 @@ func (_mock *SDK) UpdateAlarm(ctx context.Context, alarm sdk.Alarm, domainID str
 	var r0 sdk.Alarm
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) (sdk.Alarm, errors.SDKError)); ok {
-		return returnFunc(ctx, alarm, domainID, token)
+		return returnFunc(ctx, alarm, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Alarm, string, string) sdk.Alarm); ok {
-		r0 = returnFunc(ctx, alarm, domainID, token)
+		r0 = returnFunc(ctx, alarm, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Alarm)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Alarm, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, alarm, domainID, token)
+		r1 = returnFunc(ctx, alarm, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -11596,13 +11596,13 @@ type SDK_UpdateAlarm_Call struct {
 // UpdateAlarm is a helper method to define mock.On call
 //   - ctx context.Context
 //   - alarm sdk.Alarm
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateAlarm(ctx interface{}, alarm interface{}, domainID interface{}, token interface{}) *SDK_UpdateAlarm_Call {
-	return &SDK_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm, domainID, token)}
+func (_e *SDK_Expecter) UpdateAlarm(ctx interface{}, alarm interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateAlarm_Call {
+	return &SDK_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateAlarm_Call) Run(run func(ctx context.Context, alarm sdk.Alarm, domainID string, token string)) *SDK_UpdateAlarm_Call {
+func (_c *SDK_UpdateAlarm_Call) Run(run func(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string)) *SDK_UpdateAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11635,14 +11635,14 @@ func (_c *SDK_UpdateAlarm_Call) Return(alarm1 sdk.Alarm, sDKError errors.SDKErro
 	return _c
 }
 
-func (_c *SDK_UpdateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm sdk.Alarm, domainID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_UpdateAlarm_Call {
+func (_c *SDK_UpdateAlarm_Call) RunAndReturn(run func(ctx context.Context, alarm sdk.Alarm, workspaceID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_UpdateAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBootstrap provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) UpdateBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrap")
@@ -11650,7 +11650,7 @@ func (_mock *SDK) UpdateBootstrap(ctx context.Context, cfg sdk.BootstrapConfig, 
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapConfig, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11667,13 +11667,13 @@ type SDK_UpdateBootstrap_Call struct {
 // UpdateBootstrap is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.BootstrapConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrap(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrap_Call {
-	return &SDK_UpdateBootstrap_Call{Call: _e.mock.On("UpdateBootstrap", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) UpdateBootstrap(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrap_Call {
+	return &SDK_UpdateBootstrap_Call{Call: _e.mock.On("UpdateBootstrap", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string)) *SDK_UpdateBootstrap_Call {
+func (_c *SDK_UpdateBootstrap_Call) Run(run func(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string)) *SDK_UpdateBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11706,14 +11706,14 @@ func (_c *SDK_UpdateBootstrap_Call) Return(sDKError errors.SDKError) *SDK_Update
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrap_Call {
+func (_c *SDK_UpdateBootstrap_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.BootstrapConfig, workspaceID string, token string) errors.SDKError) *SDK_UpdateBootstrap_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBootstrapCerts provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrapCerts(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, id, clientCert, clientKey, ca, domainID, token)
+func (_mock *SDK) UpdateBootstrapCerts(ctx context.Context, id string, clientCert string, clientKey string, ca string, workspaceID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, clientCert, clientKey, ca, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapCerts")
@@ -11722,15 +11722,15 @@ func (_mock *SDK) UpdateBootstrapCerts(ctx context.Context, id string, clientCer
 	var r0 sdk.BootstrapConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+		return returnFunc(ctx, id, clientCert, clientKey, ca, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string, string) sdk.BootstrapConfig); ok {
-		r0 = returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+		r0 = returnFunc(ctx, id, clientCert, clientKey, ca, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, clientCert, clientKey, ca, domainID, token)
+		r1 = returnFunc(ctx, id, clientCert, clientKey, ca, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -11750,13 +11750,13 @@ type SDK_UpdateBootstrapCerts_Call struct {
 //   - clientCert string
 //   - clientKey string
 //   - ca string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx interface{}, id interface{}, clientCert interface{}, clientKey interface{}, ca interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapCerts_Call {
-	return &SDK_UpdateBootstrapCerts_Call{Call: _e.mock.On("UpdateBootstrapCerts", ctx, id, clientCert, clientKey, ca, domainID, token)}
+func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx interface{}, id interface{}, clientCert interface{}, clientKey interface{}, ca interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapCerts_Call {
+	return &SDK_UpdateBootstrapCerts_Call{Call: _e.mock.On("UpdateBootstrapCerts", ctx, id, clientCert, clientKey, ca, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateBootstrapCerts_Call) Run(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string)) *SDK_UpdateBootstrapCerts_Call {
+func (_c *SDK_UpdateBootstrapCerts_Call) Run(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, workspaceID string, token string)) *SDK_UpdateBootstrapCerts_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11804,14 +11804,14 @@ func (_c *SDK_UpdateBootstrapCerts_Call) Return(bootstrapConfig sdk.BootstrapCon
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrapCerts_Call) RunAndReturn(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_UpdateBootstrapCerts_Call {
+func (_c *SDK_UpdateBootstrapCerts_Call) RunAndReturn(run func(ctx context.Context, id string, clientCert string, clientKey string, ca string, workspaceID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_UpdateBootstrapCerts_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBootstrapConnection provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, channels, domainID, token)
+func (_mock *SDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, channels, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapConnection")
@@ -11819,7 +11819,7 @@ func (_mock *SDK) UpdateBootstrapConnection(ctx context.Context, id string, chan
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, []string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, channels, domainID, token)
+		r0 = returnFunc(ctx, id, channels, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -11837,13 +11837,13 @@ type SDK_UpdateBootstrapConnection_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - channels []string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx interface{}, id interface{}, channels interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapConnection_Call {
-	return &SDK_UpdateBootstrapConnection_Call{Call: _e.mock.On("UpdateBootstrapConnection", ctx, id, channels, domainID, token)}
+func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx interface{}, id interface{}, channels interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapConnection_Call {
+	return &SDK_UpdateBootstrapConnection_Call{Call: _e.mock.On("UpdateBootstrapConnection", ctx, id, channels, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateBootstrapConnection_Call) Run(run func(ctx context.Context, id string, channels []string, domainID string, token string)) *SDK_UpdateBootstrapConnection_Call {
+func (_c *SDK_UpdateBootstrapConnection_Call) Run(run func(ctx context.Context, id string, channels []string, workspaceID string, token string)) *SDK_UpdateBootstrapConnection_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11881,14 +11881,14 @@ func (_c *SDK_UpdateBootstrapConnection_Call) Return(sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrapConnection_Call) RunAndReturn(run func(ctx context.Context, id string, channels []string, domainID string, token string) errors.SDKError) *SDK_UpdateBootstrapConnection_Call {
+func (_c *SDK_UpdateBootstrapConnection_Call) RunAndReturn(run func(ctx context.Context, id string, channels []string, workspaceID string, token string) errors.SDKError) *SDK_UpdateBootstrapConnection_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
-	ret := _mock.Called(ctx, profile, domainID, token)
+func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
+	ret := _mock.Called(ctx, profile, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateBootstrapProfile")
@@ -11897,15 +11897,15 @@ func (_mock *SDK) UpdateBootstrapProfile(ctx context.Context, profile sdk.Bootst
 	var r0 sdk.BootstrapProfile
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
-		return returnFunc(ctx, profile, domainID, token)
+		return returnFunc(ctx, profile, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.BootstrapProfile, string, string) sdk.BootstrapProfile); ok {
-		r0 = returnFunc(ctx, profile, domainID, token)
+		r0 = returnFunc(ctx, profile, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapProfile)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.BootstrapProfile, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, profile, domainID, token)
+		r1 = returnFunc(ctx, profile, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -11922,13 +11922,13 @@ type SDK_UpdateBootstrapProfile_Call struct {
 // UpdateBootstrapProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - profile sdk.BootstrapProfile
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx interface{}, profile interface{}, domainID interface{}, token interface{}) *SDK_UpdateBootstrapProfile_Call {
-	return &SDK_UpdateBootstrapProfile_Call{Call: _e.mock.On("UpdateBootstrapProfile", ctx, profile, domainID, token)}
+func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx interface{}, profile interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapProfile_Call {
+	return &SDK_UpdateBootstrapProfile_Call{Call: _e.mock.On("UpdateBootstrapProfile", ctx, profile, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string)) *SDK_UpdateBootstrapProfile_Call {
+func (_c *SDK_UpdateBootstrapProfile_Call) Run(run func(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string)) *SDK_UpdateBootstrapProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -11961,14 +11961,14 @@ func (_c *SDK_UpdateBootstrapProfile_Call) Return(bootstrapProfile sdk.Bootstrap
 	return _c
 }
 
-func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_UpdateBootstrapProfile_Call {
+func (_c *SDK_UpdateBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, profile sdk.BootstrapProfile, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_UpdateBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateChannel provides a mock function for the type SDK
-func (_mock *SDK) UpdateChannel(ctx context.Context, channel sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, channel, domainID, token)
+func (_mock *SDK) UpdateChannel(ctx context.Context, channel sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, channel, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateChannel")
@@ -11977,15 +11977,15 @@ func (_mock *SDK) UpdateChannel(ctx context.Context, channel sdk.Channel, domain
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, channel, domainID, token)
+		return returnFunc(ctx, channel, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, channel, domainID, token)
+		r0 = returnFunc(ctx, channel, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Channel, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, channel, domainID, token)
+		r1 = returnFunc(ctx, channel, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12002,13 +12002,13 @@ type SDK_UpdateChannel_Call struct {
 // UpdateChannel is a helper method to define mock.On call
 //   - ctx context.Context
 //   - channel sdk.Channel
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateChannel(ctx interface{}, channel interface{}, domainID interface{}, token interface{}) *SDK_UpdateChannel_Call {
-	return &SDK_UpdateChannel_Call{Call: _e.mock.On("UpdateChannel", ctx, channel, domainID, token)}
+func (_e *SDK_Expecter) UpdateChannel(ctx interface{}, channel interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateChannel_Call {
+	return &SDK_UpdateChannel_Call{Call: _e.mock.On("UpdateChannel", ctx, channel, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateChannel_Call) Run(run func(ctx context.Context, channel sdk.Channel, domainID string, token string)) *SDK_UpdateChannel_Call {
+func (_c *SDK_UpdateChannel_Call) Run(run func(ctx context.Context, channel sdk.Channel, workspaceID string, token string)) *SDK_UpdateChannel_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12041,14 +12041,14 @@ func (_c *SDK_UpdateChannel_Call) Return(channel1 sdk.Channel, sDKError errors.S
 	return _c
 }
 
-func (_c *SDK_UpdateChannel_Call) RunAndReturn(run func(ctx context.Context, channel sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_UpdateChannel_Call {
+func (_c *SDK_UpdateChannel_Call) RunAndReturn(run func(ctx context.Context, channel sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_UpdateChannel_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateChannelTags provides a mock function for the type SDK
-func (_mock *SDK) UpdateChannelTags(ctx context.Context, c sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError) {
-	ret := _mock.Called(ctx, c, domainID, token)
+func (_mock *SDK) UpdateChannelTags(ctx context.Context, c sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
+	ret := _mock.Called(ctx, c, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateChannelTags")
@@ -12057,15 +12057,15 @@ func (_mock *SDK) UpdateChannelTags(ctx context.Context, c sdk.Channel, domainID
 	var r0 sdk.Channel
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) (sdk.Channel, errors.SDKError)); ok {
-		return returnFunc(ctx, c, domainID, token)
+		return returnFunc(ctx, c, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Channel, string, string) sdk.Channel); ok {
-		r0 = returnFunc(ctx, c, domainID, token)
+		r0 = returnFunc(ctx, c, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Channel)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Channel, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, c, domainID, token)
+		r1 = returnFunc(ctx, c, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12082,13 +12082,13 @@ type SDK_UpdateChannelTags_Call struct {
 // UpdateChannelTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - c sdk.Channel
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateChannelTags(ctx interface{}, c interface{}, domainID interface{}, token interface{}) *SDK_UpdateChannelTags_Call {
-	return &SDK_UpdateChannelTags_Call{Call: _e.mock.On("UpdateChannelTags", ctx, c, domainID, token)}
+func (_e *SDK_Expecter) UpdateChannelTags(ctx interface{}, c interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateChannelTags_Call {
+	return &SDK_UpdateChannelTags_Call{Call: _e.mock.On("UpdateChannelTags", ctx, c, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateChannelTags_Call) Run(run func(ctx context.Context, c sdk.Channel, domainID string, token string)) *SDK_UpdateChannelTags_Call {
+func (_c *SDK_UpdateChannelTags_Call) Run(run func(ctx context.Context, c sdk.Channel, workspaceID string, token string)) *SDK_UpdateChannelTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12121,14 +12121,14 @@ func (_c *SDK_UpdateChannelTags_Call) Return(channel sdk.Channel, sDKError error
 	return _c
 }
 
-func (_c *SDK_UpdateChannelTags_Call) RunAndReturn(run func(ctx context.Context, c sdk.Channel, domainID string, token string) (sdk.Channel, errors.SDKError)) *SDK_UpdateChannelTags_Call {
+func (_c *SDK_UpdateChannelTags_Call) RunAndReturn(run func(ctx context.Context, c sdk.Channel, workspaceID string, token string) (sdk.Channel, errors.SDKError)) *SDK_UpdateChannelTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateClient provides a mock function for the type SDK
-func (_mock *SDK) UpdateClient(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, client, domainID, token)
+func (_mock *SDK) UpdateClient(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, client, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClient")
@@ -12137,15 +12137,15 @@ func (_mock *SDK) UpdateClient(ctx context.Context, client sdk.Client, domainID 
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, client, domainID, token)
+		return returnFunc(ctx, client, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, client, domainID, token)
+		r0 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Client, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, client, domainID, token)
+		r1 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12162,13 +12162,13 @@ type SDK_UpdateClient_Call struct {
 // UpdateClient is a helper method to define mock.On call
 //   - ctx context.Context
 //   - client sdk.Client
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClient(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_UpdateClient_Call {
-	return &SDK_UpdateClient_Call{Call: _e.mock.On("UpdateClient", ctx, client, domainID, token)}
+func (_e *SDK_Expecter) UpdateClient(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClient_Call {
+	return &SDK_UpdateClient_Call{Call: _e.mock.On("UpdateClient", ctx, client, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateClient_Call) Run(run func(ctx context.Context, client sdk.Client, domainID string, token string)) *SDK_UpdateClient_Call {
+func (_c *SDK_UpdateClient_Call) Run(run func(ctx context.Context, client sdk.Client, workspaceID string, token string)) *SDK_UpdateClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12201,14 +12201,14 @@ func (_c *SDK_UpdateClient_Call) Return(client1 sdk.Client, sDKError errors.SDKE
 	return _c
 }
 
-func (_c *SDK_UpdateClient_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClient_Call {
+func (_c *SDK_UpdateClient_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateClientRole provides a mock function for the type SDK
-func (_mock *SDK) UpdateClientRole(ctx context.Context, id string, roleID string, newName string, domainID string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, newName, domainID, token)
+func (_mock *SDK) UpdateClientRole(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, newName, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientRole")
@@ -12217,15 +12217,15 @@ func (_mock *SDK) UpdateClientRole(ctx context.Context, id string, roleID string
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, newName, domainID, token)
+		return returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, newName, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, newName, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12244,13 +12244,13 @@ type SDK_UpdateClientRole_Call struct {
 //   - id string
 //   - roleID string
 //   - newName string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientRole_Call {
-	return &SDK_UpdateClientRole_Call{Call: _e.mock.On("UpdateClientRole", ctx, id, roleID, newName, domainID, token)}
+func (_e *SDK_Expecter) UpdateClientRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientRole_Call {
+	return &SDK_UpdateClientRole_Call{Call: _e.mock.On("UpdateClientRole", ctx, id, roleID, newName, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string)) *SDK_UpdateClientRole_Call {
+func (_c *SDK_UpdateClientRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string)) *SDK_UpdateClientRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12293,14 +12293,14 @@ func (_c *SDK_UpdateClientRole_Call) Return(role sdk.Role, sDKError errors.SDKEr
 	return _c
 }
 
-func (_c *SDK_UpdateClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateClientRole_Call {
+func (_c *SDK_UpdateClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateClientRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateClientSecret provides a mock function for the type SDK
-func (_mock *SDK) UpdateClientSecret(ctx context.Context, id string, secret string, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, id, secret, domainID, token)
+func (_mock *SDK) UpdateClientSecret(ctx context.Context, id string, secret string, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, id, secret, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientSecret")
@@ -12309,15 +12309,15 @@ func (_mock *SDK) UpdateClientSecret(ctx context.Context, id string, secret stri
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, id, secret, domainID, token)
+		return returnFunc(ctx, id, secret, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, id, secret, domainID, token)
+		r0 = returnFunc(ctx, id, secret, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, secret, domainID, token)
+		r1 = returnFunc(ctx, id, secret, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12335,13 +12335,13 @@ type SDK_UpdateClientSecret_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - secret string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientSecret(ctx interface{}, id interface{}, secret interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientSecret_Call {
-	return &SDK_UpdateClientSecret_Call{Call: _e.mock.On("UpdateClientSecret", ctx, id, secret, domainID, token)}
+func (_e *SDK_Expecter) UpdateClientSecret(ctx interface{}, id interface{}, secret interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientSecret_Call {
+	return &SDK_UpdateClientSecret_Call{Call: _e.mock.On("UpdateClientSecret", ctx, id, secret, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateClientSecret_Call) Run(run func(ctx context.Context, id string, secret string, domainID string, token string)) *SDK_UpdateClientSecret_Call {
+func (_c *SDK_UpdateClientSecret_Call) Run(run func(ctx context.Context, id string, secret string, workspaceID string, token string)) *SDK_UpdateClientSecret_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12379,14 +12379,14 @@ func (_c *SDK_UpdateClientSecret_Call) Return(client sdk.Client, sDKError errors
 	return _c
 }
 
-func (_c *SDK_UpdateClientSecret_Call) RunAndReturn(run func(ctx context.Context, id string, secret string, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClientSecret_Call {
+func (_c *SDK_UpdateClientSecret_Call) RunAndReturn(run func(ctx context.Context, id string, secret string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClientSecret_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateClientTags provides a mock function for the type SDK
-func (_mock *SDK) UpdateClientTags(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError) {
-	ret := _mock.Called(ctx, client, domainID, token)
+func (_mock *SDK) UpdateClientTags(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError) {
+	ret := _mock.Called(ctx, client, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateClientTags")
@@ -12395,15 +12395,15 @@ func (_mock *SDK) UpdateClientTags(ctx context.Context, client sdk.Client, domai
 	var r0 sdk.Client
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) (sdk.Client, errors.SDKError)); ok {
-		return returnFunc(ctx, client, domainID, token)
+		return returnFunc(ctx, client, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Client, string, string) sdk.Client); ok {
-		r0 = returnFunc(ctx, client, domainID, token)
+		r0 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Client)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Client, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, client, domainID, token)
+		r1 = returnFunc(ctx, client, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12420,13 +12420,13 @@ type SDK_UpdateClientTags_Call struct {
 // UpdateClientTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - client sdk.Client
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientTags(ctx interface{}, client interface{}, domainID interface{}, token interface{}) *SDK_UpdateClientTags_Call {
-	return &SDK_UpdateClientTags_Call{Call: _e.mock.On("UpdateClientTags", ctx, client, domainID, token)}
+func (_e *SDK_Expecter) UpdateClientTags(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientTags_Call {
+	return &SDK_UpdateClientTags_Call{Call: _e.mock.On("UpdateClientTags", ctx, client, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateClientTags_Call) Run(run func(ctx context.Context, client sdk.Client, domainID string, token string)) *SDK_UpdateClientTags_Call {
+func (_c *SDK_UpdateClientTags_Call) Run(run func(ctx context.Context, client sdk.Client, workspaceID string, token string)) *SDK_UpdateClientTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12459,30 +12459,30 @@ func (_c *SDK_UpdateClientTags_Call) Return(client1 sdk.Client, sDKError errors.
 	return _c
 }
 
-func (_c *SDK_UpdateClientTags_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, domainID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClientTags_Call {
+func (_c *SDK_UpdateClientTags_Call) RunAndReturn(run func(ctx context.Context, client sdk.Client, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_UpdateClientTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateDomain provides a mock function for the type SDK
-func (_mock *SDK) UpdateDomain(ctx context.Context, d sdk.Domain, token string) (sdk.Domain, errors.SDKError) {
+// UpdateWorkspace provides a mock function for the type SDK
+func (_mock *SDK) UpdateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
 	ret := _mock.Called(ctx, d, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateDomain")
+		panic("no return value specified for UpdateWorkspace")
 	}
 
-	var r0 sdk.Domain
+	var r0 sdk.Workspace
 	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Domain, string) (sdk.Domain, errors.SDKError)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
 		return returnFunc(ctx, d, token)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Domain, string) sdk.Domain); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
 		r0 = returnFunc(ctx, d, token)
 	} else {
-		r0 = ret.Get(0).(sdk.Domain)
+		r0 = ret.Get(0).(sdk.Workspace)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Domain, string) errors.SDKError); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
 		r1 = returnFunc(ctx, d, token)
 	} else {
 		if ret.Get(1) != nil {
@@ -12492,28 +12492,28 @@ func (_mock *SDK) UpdateDomain(ctx context.Context, d sdk.Domain, token string) 
 	return r0, r1
 }
 
-// SDK_UpdateDomain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDomain'
-type SDK_UpdateDomain_Call struct {
+// SDK_UpdateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspace'
+type SDK_UpdateWorkspace_Call struct {
 	*mock.Call
 }
 
-// UpdateDomain is a helper method to define mock.On call
+// UpdateWorkspace is a helper method to define mock.On call
 //   - ctx context.Context
-//   - d sdk.Domain
+//   - d sdk.Workspace
 //   - token string
-func (_e *SDK_Expecter) UpdateDomain(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateDomain_Call {
-	return &SDK_UpdateDomain_Call{Call: _e.mock.On("UpdateDomain", ctx, d, token)}
+func (_e *SDK_Expecter) UpdateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateWorkspace_Call {
+	return &SDK_UpdateWorkspace_Call{Call: _e.mock.On("UpdateWorkspace", ctx, d, token)}
 }
 
-func (_c *SDK_UpdateDomain_Call) Run(run func(ctx context.Context, d sdk.Domain, token string)) *SDK_UpdateDomain_Call {
+func (_c *SDK_UpdateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_UpdateWorkspace_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 sdk.Domain
+		var arg1 sdk.Workspace
 		if args[1] != nil {
-			arg1 = args[1].(sdk.Domain)
+			arg1 = args[1].(sdk.Workspace)
 		}
 		var arg2 string
 		if args[2] != nil {
@@ -12528,22 +12528,22 @@ func (_c *SDK_UpdateDomain_Call) Run(run func(ctx context.Context, d sdk.Domain,
 	return _c
 }
 
-func (_c *SDK_UpdateDomain_Call) Return(domain sdk.Domain, sDKError errors.SDKError) *SDK_UpdateDomain_Call {
-	_c.Call.Return(domain, sDKError)
+func (_c *SDK_UpdateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_UpdateWorkspace_Call {
+	_c.Call.Return(workspace, sDKError)
 	return _c
 }
 
-func (_c *SDK_UpdateDomain_Call) RunAndReturn(run func(ctx context.Context, d sdk.Domain, token string) (sdk.Domain, errors.SDKError)) *SDK_UpdateDomain_Call {
+func (_c *SDK_UpdateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_UpdateWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// UpdateDomainRole provides a mock function for the type SDK
-func (_mock *SDK) UpdateDomainRole(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError) {
+// UpdateWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) UpdateWorkspaceRole(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, newName, token)
 
 	if len(ret) == 0 {
-		panic("no return value specified for UpdateDomainRole")
+		panic("no return value specified for UpdateWorkspaceRole")
 	}
 
 	var r0 sdk.Role
@@ -12566,22 +12566,22 @@ func (_mock *SDK) UpdateDomainRole(ctx context.Context, id string, roleID string
 	return r0, r1
 }
 
-// SDK_UpdateDomainRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateDomainRole'
-type SDK_UpdateDomainRole_Call struct {
+// SDK_UpdateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspaceRole'
+type SDK_UpdateWorkspaceRole_Call struct {
 	*mock.Call
 }
 
-// UpdateDomainRole is a helper method to define mock.On call
+// UpdateWorkspaceRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
 //   - roleID string
 //   - newName string
 //   - token string
-func (_e *SDK_Expecter) UpdateDomainRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateDomainRole_Call {
-	return &SDK_UpdateDomainRole_Call{Call: _e.mock.On("UpdateDomainRole", ctx, id, roleID, newName, token)}
+func (_e *SDK_Expecter) UpdateWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateWorkspaceRole_Call {
+	return &SDK_UpdateWorkspaceRole_Call{Call: _e.mock.On("UpdateWorkspaceRole", ctx, id, roleID, newName, token)}
 }
 
-func (_c *SDK_UpdateDomainRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, token string)) *SDK_UpdateDomainRole_Call {
+func (_c *SDK_UpdateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, token string)) *SDK_UpdateWorkspaceRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12614,19 +12614,19 @@ func (_c *SDK_UpdateDomainRole_Call) Run(run func(ctx context.Context, id string
 	return _c
 }
 
-func (_c *SDK_UpdateDomainRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_UpdateDomainRole_Call {
+func (_c *SDK_UpdateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_UpdateWorkspaceRole_Call {
 	_c.Call.Return(role, sDKError)
 	return _c
 }
 
-func (_c *SDK_UpdateDomainRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateDomainRole_Call {
+func (_c *SDK_UpdateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateWorkspaceRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateGroup provides a mock function for the type SDK
-func (_mock *SDK) UpdateGroup(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, group, domainID, token)
+func (_mock *SDK) UpdateGroup(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, group, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroup")
@@ -12635,15 +12635,15 @@ func (_mock *SDK) UpdateGroup(ctx context.Context, group sdk.Group, domainID str
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, group, domainID, token)
+		return returnFunc(ctx, group, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, group, domainID, token)
+		r0 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Group, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, group, domainID, token)
+		r1 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12660,13 +12660,13 @@ type SDK_UpdateGroup_Call struct {
 // UpdateGroup is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group sdk.Group
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroup(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroup_Call {
-	return &SDK_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group, domainID, token)}
+func (_e *SDK_Expecter) UpdateGroup(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroup_Call {
+	return &SDK_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateGroup_Call) Run(run func(ctx context.Context, group sdk.Group, domainID string, token string)) *SDK_UpdateGroup_Call {
+func (_c *SDK_UpdateGroup_Call) Run(run func(ctx context.Context, group sdk.Group, workspaceID string, token string)) *SDK_UpdateGroup_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12699,14 +12699,14 @@ func (_c *SDK_UpdateGroup_Call) Return(group1 sdk.Group, sDKError errors.SDKErro
 	return _c
 }
 
-func (_c *SDK_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_UpdateGroup_Call {
+func (_c *SDK_UpdateGroup_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_UpdateGroup_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateGroupRole provides a mock function for the type SDK
-func (_mock *SDK) UpdateGroupRole(ctx context.Context, id string, roleID string, newName string, domainID string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, newName, domainID, token)
+func (_mock *SDK) UpdateGroupRole(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, newName, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroupRole")
@@ -12715,15 +12715,15 @@ func (_mock *SDK) UpdateGroupRole(ctx context.Context, id string, roleID string,
 	var r0 sdk.Role
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, newName, domainID, token)
+		return returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, newName, domainID, token)
+		r0 = returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Role)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, newName, domainID, token)
+		r1 = returnFunc(ctx, id, roleID, newName, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12742,13 +12742,13 @@ type SDK_UpdateGroupRole_Call struct {
 //   - id string
 //   - roleID string
 //   - newName string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroupRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroupRole_Call {
-	return &SDK_UpdateGroupRole_Call{Call: _e.mock.On("UpdateGroupRole", ctx, id, roleID, newName, domainID, token)}
+func (_e *SDK_Expecter) UpdateGroupRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroupRole_Call {
+	return &SDK_UpdateGroupRole_Call{Call: _e.mock.On("UpdateGroupRole", ctx, id, roleID, newName, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string)) *SDK_UpdateGroupRole_Call {
+func (_c *SDK_UpdateGroupRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string)) *SDK_UpdateGroupRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12791,14 +12791,14 @@ func (_c *SDK_UpdateGroupRole_Call) Return(role sdk.Role, sDKError errors.SDKErr
 	return _c
 }
 
-func (_c *SDK_UpdateGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, domainID string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateGroupRole_Call {
+func (_c *SDK_UpdateGroupRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, workspaceID string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateGroupRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateGroupTags provides a mock function for the type SDK
-func (_mock *SDK) UpdateGroupTags(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError) {
-	ret := _mock.Called(ctx, group, domainID, token)
+func (_mock *SDK) UpdateGroupTags(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError) {
+	ret := _mock.Called(ctx, group, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateGroupTags")
@@ -12807,15 +12807,15 @@ func (_mock *SDK) UpdateGroupTags(ctx context.Context, group sdk.Group, domainID
 	var r0 sdk.Group
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) (sdk.Group, errors.SDKError)); ok {
-		return returnFunc(ctx, group, domainID, token)
+		return returnFunc(ctx, group, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Group, string, string) sdk.Group); ok {
-		r0 = returnFunc(ctx, group, domainID, token)
+		r0 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Group)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Group, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, group, domainID, token)
+		r1 = returnFunc(ctx, group, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -12832,13 +12832,13 @@ type SDK_UpdateGroupTags_Call struct {
 // UpdateGroupTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - group sdk.Group
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroupTags(ctx interface{}, group interface{}, domainID interface{}, token interface{}) *SDK_UpdateGroupTags_Call {
-	return &SDK_UpdateGroupTags_Call{Call: _e.mock.On("UpdateGroupTags", ctx, group, domainID, token)}
+func (_e *SDK_Expecter) UpdateGroupTags(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroupTags_Call {
+	return &SDK_UpdateGroupTags_Call{Call: _e.mock.On("UpdateGroupTags", ctx, group, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateGroupTags_Call) Run(run func(ctx context.Context, group sdk.Group, domainID string, token string)) *SDK_UpdateGroupTags_Call {
+func (_c *SDK_UpdateGroupTags_Call) Run(run func(ctx context.Context, group sdk.Group, workspaceID string, token string)) *SDK_UpdateGroupTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -12871,7 +12871,7 @@ func (_c *SDK_UpdateGroupTags_Call) Return(group1 sdk.Group, sDKError errors.SDK
 	return _c
 }
 
-func (_c *SDK_UpdateGroupTags_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, domainID string, token string) (sdk.Group, errors.SDKError)) *SDK_UpdateGroupTags_Call {
+func (_c *SDK_UpdateGroupTags_Call) RunAndReturn(run func(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError)) *SDK_UpdateGroupTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -13031,8 +13031,8 @@ func (_c *SDK_UpdateProfilePicture_Call) RunAndReturn(run func(ctx context.Conte
 }
 
 // UpdateReportConfig provides a mock function for the type SDK
-func (_mock *SDK) UpdateReportConfig(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) UpdateReportConfig(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateReportConfig")
@@ -13041,15 +13041,15 @@ func (_mock *SDK) UpdateReportConfig(ctx context.Context, cfg sdk.ReportConfig, 
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, cfg, domainID, token)
+		return returnFunc(ctx, cfg, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, cfg, domainID, token)
+		r1 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -13066,13 +13066,13 @@ type SDK_UpdateReportConfig_Call struct {
 // UpdateReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.ReportConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportConfig(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportConfig_Call {
-	return &SDK_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) UpdateReportConfig(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportConfig_Call {
+	return &SDK_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportConfig_Call {
+func (_c *SDK_UpdateReportConfig_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string)) *SDK_UpdateReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13105,14 +13105,14 @@ func (_c *SDK_UpdateReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDK
 	return _c
 }
 
-func (_c *SDK_UpdateReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportConfig_Call {
+func (_c *SDK_UpdateReportConfig_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateReportSchedule provides a mock function for the type SDK
-func (_mock *SDK) UpdateReportSchedule(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) UpdateReportSchedule(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateReportSchedule")
@@ -13121,15 +13121,15 @@ func (_mock *SDK) UpdateReportSchedule(ctx context.Context, cfg sdk.ReportConfig
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, cfg, domainID, token)
+		return returnFunc(ctx, cfg, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, cfg, domainID, token)
+		r1 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -13146,13 +13146,13 @@ type SDK_UpdateReportSchedule_Call struct {
 // UpdateReportSchedule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.ReportConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportSchedule_Call {
-	return &SDK_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportSchedule_Call {
+	return &SDK_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateReportSchedule_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportSchedule_Call {
+func (_c *SDK_UpdateReportSchedule_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string)) *SDK_UpdateReportSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13185,14 +13185,14 @@ func (_c *SDK_UpdateReportSchedule_Call) Return(reportConfig sdk.ReportConfig, s
 	return _c
 }
 
-func (_c *SDK_UpdateReportSchedule_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportSchedule_Call {
+func (_c *SDK_UpdateReportSchedule_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_UpdateReportSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateReportTemplate provides a mock function for the type SDK
-func (_mock *SDK) UpdateReportTemplate(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, cfg, domainID, token)
+func (_mock *SDK) UpdateReportTemplate(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, cfg, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateReportTemplate")
@@ -13200,7 +13200,7 @@ func (_mock *SDK) UpdateReportTemplate(ctx context.Context, cfg sdk.ReportConfig
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.ReportConfig, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, cfg, domainID, token)
+		r0 = returnFunc(ctx, cfg, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -13217,13 +13217,13 @@ type SDK_UpdateReportTemplate_Call struct {
 // UpdateReportTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg sdk.ReportConfig
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportTemplate(ctx interface{}, cfg interface{}, domainID interface{}, token interface{}) *SDK_UpdateReportTemplate_Call {
-	return &SDK_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, cfg, domainID, token)}
+func (_e *SDK_Expecter) UpdateReportTemplate(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportTemplate_Call {
+	return &SDK_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, cfg, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateReportTemplate_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string)) *SDK_UpdateReportTemplate_Call {
+func (_c *SDK_UpdateReportTemplate_Call) Run(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string)) *SDK_UpdateReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13256,14 +13256,14 @@ func (_c *SDK_UpdateReportTemplate_Call) Return(sDKError errors.SDKError) *SDK_U
 	return _c
 }
 
-func (_c *SDK_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, domainID string, token string) errors.SDKError) *SDK_UpdateReportTemplate_Call {
+func (_c *SDK_UpdateReportTemplate_Call) RunAndReturn(run func(ctx context.Context, cfg sdk.ReportConfig, workspaceID string, token string) errors.SDKError) *SDK_UpdateReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateRule provides a mock function for the type SDK
-func (_mock *SDK) UpdateRule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, r, domainID, token)
+func (_mock *SDK) UpdateRule(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRule")
@@ -13272,15 +13272,15 @@ func (_mock *SDK) UpdateRule(ctx context.Context, r sdk.Rule, domainID string, t
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, r, domainID, token)
+		return returnFunc(ctx, r, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, r, domainID, token)
+		r0 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, r, domainID, token)
+		r1 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -13297,13 +13297,13 @@ type SDK_UpdateRule_Call struct {
 // UpdateRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - r sdk.Rule
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRule_Call {
-	return &SDK_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, r, domainID, token)}
+func (_e *SDK_Expecter) UpdateRule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRule_Call {
+	return &SDK_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, r, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateRule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRule_Call {
+func (_c *SDK_UpdateRule_Call) Run(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string)) *SDK_UpdateRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13336,14 +13336,14 @@ func (_c *SDK_UpdateRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *
 	return _c
 }
 
-func (_c *SDK_UpdateRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRule_Call {
+func (_c *SDK_UpdateRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateRuleSchedule provides a mock function for the type SDK
-func (_mock *SDK) UpdateRuleSchedule(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, r, domainID, token)
+func (_mock *SDK) UpdateRuleSchedule(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRuleSchedule")
@@ -13352,15 +13352,15 @@ func (_mock *SDK) UpdateRuleSchedule(ctx context.Context, r sdk.Rule, domainID s
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, r, domainID, token)
+		return returnFunc(ctx, r, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, r, domainID, token)
+		r0 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, r, domainID, token)
+		r1 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -13377,13 +13377,13 @@ type SDK_UpdateRuleSchedule_Call struct {
 // UpdateRuleSchedule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - r sdk.Rule
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRuleSchedule_Call {
-	return &SDK_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r, domainID, token)}
+func (_e *SDK_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRuleSchedule_Call {
+	return &SDK_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRuleSchedule_Call {
+func (_c *SDK_UpdateRuleSchedule_Call) Run(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string)) *SDK_UpdateRuleSchedule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13416,14 +13416,14 @@ func (_c *SDK_UpdateRuleSchedule_Call) Return(rule sdk.Rule, sDKError errors.SDK
 	return _c
 }
 
-func (_c *SDK_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleSchedule_Call {
+func (_c *SDK_UpdateRuleSchedule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleSchedule_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // UpdateRuleTags provides a mock function for the type SDK
-func (_mock *SDK) UpdateRuleTags(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, r, domainID, token)
+func (_mock *SDK) UpdateRuleTags(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, r, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for UpdateRuleTags")
@@ -13432,15 +13432,15 @@ func (_mock *SDK) UpdateRuleTags(ctx context.Context, r sdk.Rule, domainID strin
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, r, domainID, token)
+		return returnFunc(ctx, r, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Rule, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, r, domainID, token)
+		r0 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Rule, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, r, domainID, token)
+		r1 = returnFunc(ctx, r, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -13457,13 +13457,13 @@ type SDK_UpdateRuleTags_Call struct {
 // UpdateRuleTags is a helper method to define mock.On call
 //   - ctx context.Context
 //   - r sdk.Rule
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRuleTags(ctx interface{}, r interface{}, domainID interface{}, token interface{}) *SDK_UpdateRuleTags_Call {
-	return &SDK_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r, domainID, token)}
+func (_e *SDK_Expecter) UpdateRuleTags(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRuleTags_Call {
+	return &SDK_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r, workspaceID, token)}
 }
 
-func (_c *SDK_UpdateRuleTags_Call) Run(run func(ctx context.Context, r sdk.Rule, domainID string, token string)) *SDK_UpdateRuleTags_Call {
+func (_c *SDK_UpdateRuleTags_Call) Run(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string)) *SDK_UpdateRuleTags_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -13496,7 +13496,7 @@ func (_c *SDK_UpdateRuleTags_Call) Return(rule sdk.Rule, sDKError errors.SDKErro
 	return _c
 }
 
-func (_c *SDK_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleTags_Call {
+func (_c *SDK_UpdateRuleTags_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rule, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_UpdateRuleTags_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -14147,8 +14147,8 @@ func (_c *SDK_VerifyEmail_Call) RunAndReturn(run func(ctx context.Context, verif
 }
 
 // ViewAlarm provides a mock function for the type SDK
-func (_mock *SDK) ViewAlarm(ctx context.Context, id string, domainID string, token string) (sdk.Alarm, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewAlarm(ctx context.Context, id string, workspaceID string, token string) (sdk.Alarm, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewAlarm")
@@ -14157,15 +14157,15 @@ func (_mock *SDK) ViewAlarm(ctx context.Context, id string, domainID string, tok
 	var r0 sdk.Alarm
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Alarm, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Alarm); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Alarm)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14182,13 +14182,13 @@ type SDK_ViewAlarm_Call struct {
 // ViewAlarm is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewAlarm(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewAlarm_Call {
-	return &SDK_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewAlarm(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewAlarm_Call {
+	return &SDK_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewAlarm_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewAlarm_Call {
+func (_c *SDK_ViewAlarm_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewAlarm_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14221,14 +14221,14 @@ func (_c *SDK_ViewAlarm_Call) Return(alarm sdk.Alarm, sDKError errors.SDKError) 
 	return _c
 }
 
-func (_c *SDK_ViewAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_ViewAlarm_Call {
+func (_c *SDK_ViewAlarm_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Alarm, errors.SDKError)) *SDK_ViewAlarm_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ViewBootstrap provides a mock function for the type SDK
-func (_mock *SDK) ViewBootstrap(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewBootstrap(ctx context.Context, id string, workspaceID string, token string) (sdk.BootstrapConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewBootstrap")
@@ -14237,15 +14237,15 @@ func (_mock *SDK) ViewBootstrap(ctx context.Context, id string, domainID string,
 	var r0 sdk.BootstrapConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapConfig); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14262,13 +14262,13 @@ type SDK_ViewBootstrap_Call struct {
 // ViewBootstrap is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewBootstrap(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrap_Call {
-	return &SDK_ViewBootstrap_Call{Call: _e.mock.On("ViewBootstrap", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewBootstrap(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewBootstrap_Call {
+	return &SDK_ViewBootstrap_Call{Call: _e.mock.On("ViewBootstrap", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewBootstrap_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrap_Call {
+func (_c *SDK_ViewBootstrap_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewBootstrap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14301,14 +14301,14 @@ func (_c *SDK_ViewBootstrap_Call) Return(bootstrapConfig sdk.BootstrapConfig, sD
 	return _c
 }
 
-func (_c *SDK_ViewBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_ViewBootstrap_Call {
+func (_c *SDK_ViewBootstrap_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.BootstrapConfig, errors.SDKError)) *SDK_ViewBootstrap_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ViewBootstrapProfile provides a mock function for the type SDK
-func (_mock *SDK) ViewBootstrapProfile(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewBootstrapProfile(ctx context.Context, id string, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewBootstrapProfile")
@@ -14317,15 +14317,15 @@ func (_mock *SDK) ViewBootstrapProfile(ctx context.Context, id string, domainID 
 	var r0 sdk.BootstrapProfile
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.BootstrapProfile, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.BootstrapProfile); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.BootstrapProfile)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14342,13 +14342,13 @@ type SDK_ViewBootstrapProfile_Call struct {
 // ViewBootstrapProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewBootstrapProfile(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewBootstrapProfile_Call {
-	return &SDK_ViewBootstrapProfile_Call{Call: _e.mock.On("ViewBootstrapProfile", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewBootstrapProfile(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewBootstrapProfile_Call {
+	return &SDK_ViewBootstrapProfile_Call{Call: _e.mock.On("ViewBootstrapProfile", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewBootstrapProfile_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewBootstrapProfile_Call {
+func (_c *SDK_ViewBootstrapProfile_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewBootstrapProfile_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14381,7 +14381,7 @@ func (_c *SDK_ViewBootstrapProfile_Call) Return(bootstrapProfile sdk.BootstrapPr
 	return _c
 }
 
-func (_c *SDK_ViewBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_ViewBootstrapProfile_Call {
+func (_c *SDK_ViewBootstrapProfile_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.BootstrapProfile, errors.SDKError)) *SDK_ViewBootstrapProfile_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -14449,8 +14449,8 @@ func (_c *SDK_ViewCA_Call) RunAndReturn(run func(ctx context.Context) (sdk.Certi
 }
 
 // ViewCert provides a mock function for the type SDK
-func (_mock *SDK) ViewCert(ctx context.Context, serialNumber string, domainID string, token string) (sdk.Certificate, errors.SDKError) {
-	ret := _mock.Called(ctx, serialNumber, domainID, token)
+func (_mock *SDK) ViewCert(ctx context.Context, serialNumber string, workspaceID string, token string) (sdk.Certificate, errors.SDKError) {
+	ret := _mock.Called(ctx, serialNumber, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewCert")
@@ -14459,15 +14459,15 @@ func (_mock *SDK) ViewCert(ctx context.Context, serialNumber string, domainID st
 	var r0 sdk.Certificate
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Certificate, errors.SDKError)); ok {
-		return returnFunc(ctx, serialNumber, domainID, token)
+		return returnFunc(ctx, serialNumber, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Certificate); ok {
-		r0 = returnFunc(ctx, serialNumber, domainID, token)
+		r0 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Certificate)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, serialNumber, domainID, token)
+		r1 = returnFunc(ctx, serialNumber, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14484,13 +14484,13 @@ type SDK_ViewCert_Call struct {
 // ViewCert is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewCert(ctx interface{}, serialNumber interface{}, domainID interface{}, token interface{}) *SDK_ViewCert_Call {
-	return &SDK_ViewCert_Call{Call: _e.mock.On("ViewCert", ctx, serialNumber, domainID, token)}
+func (_e *SDK_Expecter) ViewCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_ViewCert_Call {
+	return &SDK_ViewCert_Call{Call: _e.mock.On("ViewCert", ctx, serialNumber, workspaceID, token)}
 }
 
-func (_c *SDK_ViewCert_Call) Run(run func(ctx context.Context, serialNumber string, domainID string, token string)) *SDK_ViewCert_Call {
+func (_c *SDK_ViewCert_Call) Run(run func(ctx context.Context, serialNumber string, workspaceID string, token string)) *SDK_ViewCert_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14523,14 +14523,14 @@ func (_c *SDK_ViewCert_Call) Return(certificate sdk.Certificate, sDKError errors
 	return _c
 }
 
-func (_c *SDK_ViewCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, domainID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_ViewCert_Call {
+func (_c *SDK_ViewCert_Call) RunAndReturn(run func(ctx context.Context, serialNumber string, workspaceID string, token string) (sdk.Certificate, errors.SDKError)) *SDK_ViewCert_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ViewReportConfig provides a mock function for the type SDK
-func (_mock *SDK) ViewReportConfig(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewReportConfig(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewReportConfig")
@@ -14539,15 +14539,15 @@ func (_mock *SDK) ViewReportConfig(ctx context.Context, id string, domainID stri
 	var r0 sdk.ReportConfig
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportConfig, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportConfig); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.ReportConfig)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14564,13 +14564,13 @@ type SDK_ViewReportConfig_Call struct {
 // ViewReportConfig is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewReportConfig(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewReportConfig_Call {
-	return &SDK_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewReportConfig_Call {
+	return &SDK_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewReportConfig_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewReportConfig_Call {
+func (_c *SDK_ViewReportConfig_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewReportConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14603,14 +14603,14 @@ func (_c *SDK_ViewReportConfig_Call) Return(reportConfig sdk.ReportConfig, sDKEr
 	return _c
 }
 
-func (_c *SDK_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_ViewReportConfig_Call {
+func (_c *SDK_ViewReportConfig_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportConfig, errors.SDKError)) *SDK_ViewReportConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ViewReportTemplate provides a mock function for the type SDK
-func (_mock *SDK) ViewReportTemplate(ctx context.Context, id string, domainID string, token string) (sdk.ReportTemplate, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewReportTemplate(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportTemplate, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewReportTemplate")
@@ -14619,17 +14619,17 @@ func (_mock *SDK) ViewReportTemplate(ctx context.Context, id string, domainID st
 	var r0 sdk.ReportTemplate
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.ReportTemplate, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.ReportTemplate); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(sdk.ReportTemplate)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14646,13 +14646,13 @@ type SDK_ViewReportTemplate_Call struct {
 // ViewReportTemplate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewReportTemplate(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewReportTemplate_Call {
-	return &SDK_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewReportTemplate(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewReportTemplate_Call {
+	return &SDK_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewReportTemplate_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewReportTemplate_Call {
+func (_c *SDK_ViewReportTemplate_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewReportTemplate_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14685,14 +14685,14 @@ func (_c *SDK_ViewReportTemplate_Call) Return(reportTemplate sdk.ReportTemplate,
 	return _c
 }
 
-func (_c *SDK_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.ReportTemplate, errors.SDKError)) *SDK_ViewReportTemplate_Call {
+func (_c *SDK_ViewReportTemplate_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.ReportTemplate, errors.SDKError)) *SDK_ViewReportTemplate_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ViewRule provides a mock function for the type SDK
-func (_mock *SDK) ViewRule(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError) {
-	ret := _mock.Called(ctx, id, domainID, token)
+func (_mock *SDK) ViewRule(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError) {
+	ret := _mock.Called(ctx, id, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ViewRule")
@@ -14701,15 +14701,15 @@ func (_mock *SDK) ViewRule(ctx context.Context, id string, domainID string, toke
 	var r0 sdk.Rule
 	var r1 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Rule, errors.SDKError)); ok {
-		return returnFunc(ctx, id, domainID, token)
+		return returnFunc(ctx, id, workspaceID, token)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Rule); ok {
-		r0 = returnFunc(ctx, id, domainID, token)
+		r0 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		r0 = ret.Get(0).(sdk.Rule)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, domainID, token)
+		r1 = returnFunc(ctx, id, workspaceID, token)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(errors.SDKError)
@@ -14726,13 +14726,13 @@ type SDK_ViewRule_Call struct {
 // ViewRule is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewRule(ctx interface{}, id interface{}, domainID interface{}, token interface{}) *SDK_ViewRule_Call {
-	return &SDK_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, id, domainID, token)}
+func (_e *SDK_Expecter) ViewRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewRule_Call {
+	return &SDK_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, id, workspaceID, token)}
 }
 
-func (_c *SDK_ViewRule_Call) Run(run func(ctx context.Context, id string, domainID string, token string)) *SDK_ViewRule_Call {
+func (_c *SDK_ViewRule_Call) Run(run func(ctx context.Context, id string, workspaceID string, token string)) *SDK_ViewRule_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14765,7 +14765,7 @@ func (_c *SDK_ViewRule_Call) Return(rule sdk.Rule, sDKError errors.SDKError) *SD
 	return _c
 }
 
-func (_c *SDK_ViewRule_Call) RunAndReturn(run func(ctx context.Context, id string, domainID string, token string) (sdk.Rule, errors.SDKError)) *SDK_ViewRule_Call {
+func (_c *SDK_ViewRule_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Rule, errors.SDKError)) *SDK_ViewRule_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -14845,8 +14845,8 @@ func (_c *SDK_ViewSubscription_Call) RunAndReturn(run func(ctx context.Context, 
 }
 
 // Whitelist provides a mock function for the type SDK
-func (_mock *SDK) Whitelist(ctx context.Context, clientID string, status sdk.BootstrapStatus, domainID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, clientID, status, domainID, token)
+func (_mock *SDK) Whitelist(ctx context.Context, clientID string, status sdk.BootstrapStatus, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, clientID, status, workspaceID, token)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Whitelist")
@@ -14854,7 +14854,7 @@ func (_mock *SDK) Whitelist(ctx context.Context, clientID string, status sdk.Boo
 
 	var r0 errors.SDKError
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.BootstrapStatus, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, clientID, status, domainID, token)
+		r0 = returnFunc(ctx, clientID, status, workspaceID, token)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(errors.SDKError)
@@ -14872,13 +14872,13 @@ type SDK_Whitelist_Call struct {
 //   - ctx context.Context
 //   - clientID string
 //   - status sdk.BootstrapStatus
-//   - domainID string
+//   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Whitelist(ctx interface{}, clientID interface{}, status interface{}, domainID interface{}, token interface{}) *SDK_Whitelist_Call {
-	return &SDK_Whitelist_Call{Call: _e.mock.On("Whitelist", ctx, clientID, status, domainID, token)}
+func (_e *SDK_Expecter) Whitelist(ctx interface{}, clientID interface{}, status interface{}, workspaceID interface{}, token interface{}) *SDK_Whitelist_Call {
+	return &SDK_Whitelist_Call{Call: _e.mock.On("Whitelist", ctx, clientID, status, workspaceID, token)}
 }
 
-func (_c *SDK_Whitelist_Call) Run(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, domainID string, token string)) *SDK_Whitelist_Call {
+func (_c *SDK_Whitelist_Call) Run(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, workspaceID string, token string)) *SDK_Whitelist_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -14916,7 +14916,7 @@ func (_c *SDK_Whitelist_Call) Return(sDKError errors.SDKError) *SDK_Whitelist_Ca
 	return _c
 }
 
-func (_c *SDK_Whitelist_Call) RunAndReturn(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, domainID string, token string) errors.SDKError) *SDK_Whitelist_Call {
+func (_c *SDK_Whitelist_Call) RunAndReturn(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, workspaceID string, token string) errors.SDKError) *SDK_Whitelist_Call {
 	_c.Call.Return(run)
 	return _c
 }

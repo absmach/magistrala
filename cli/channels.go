@@ -23,13 +23,13 @@ const (
 	sendVerification = "send-verification"
 	verifyEmail      = "verify-email"
 
-	usageCreate  = "cli channels create <JSON_channel> <domain_id> <user_auth_token>"
-	usageGet     = "cli channels <channel_id|all> get <domain_id> <user_auth_token>"
-	usageUpdate  = "cli channels <channel_id> update <JSON_string> <domain_id> <user_auth_token>"
-	usageDelete  = "cli channels <channel_id> delete <domain_id> <user_auth_token>"
-	usageEnable  = "cli channels <channel_id> enable <domain_id> <user_auth_token>"
-	usageDisable = "cli channels <channel_id> disable <domain_id> <user_auth_token>"
-	usageUsers   = "cli channels <channel_id> users <domain_id> <user_auth_token>"
+	usageCreate  = "cli channels create <JSON_channel> <workspace_id> <user_auth_token>"
+	usageGet     = "cli channels <channel_id|all> get <workspace_id> <user_auth_token>"
+	usageUpdate  = "cli channels <channel_id> update <JSON_string> <workspace_id> <user_auth_token>"
+	usageDelete  = "cli channels <channel_id> delete <workspace_id> <user_auth_token>"
+	usageEnable  = "cli channels <channel_id> enable <workspace_id> <user_auth_token>"
+	usageDisable = "cli channels <channel_id> disable <workspace_id> <user_auth_token>"
+	usageUsers   = "cli channels <channel_id> users <workspace_id> <user_auth_token>"
 )
 
 func NewChannelsCmd() *cobra.Command {
@@ -43,14 +43,14 @@ func NewChannelsCmd() *cobra.Command {
 Operations (require channel_id/all): get, update, delete, enable, disable, users
 
 Examples:
-  channels create <JSON_channel> <domain_id> <user_auth_token>
-  channels all get <domain_id> <user_auth_token>
-  channels <channel_id> get <domain_id> <user_auth_token>
-  channels <channel_id> update <JSON_string> <domain_id> <user_auth_token>
-  channels <channel_id> delete <domain_id> <user_auth_token>
-  channels <channel_id> enable <domain_id> <user_auth_token>
-  channels <channel_id> disable <domain_id> <user_auth_token>
-  channels <channel_id> users <domain_id> <user_auth_token>`,
+  channels create <JSON_channel> <workspace_id> <user_auth_token>
+  channels all get <workspace_id> <user_auth_token>
+  channels <channel_id> get <workspace_id> <user_auth_token>
+  channels <channel_id> update <JSON_string> <workspace_id> <user_auth_token>
+  channels <channel_id> delete <workspace_id> <user_auth_token>
+  channels <channel_id> enable <workspace_id> <user_auth_token>
+  channels <channel_id> disable <workspace_id> <user_auth_token>
+  channels <channel_id> users <workspace_id> <user_auth_token>`,
 
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) == 0 {

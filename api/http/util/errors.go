@@ -232,8 +232,8 @@ var (
 	// ErrLenSearchQuery indicates search query length.
 	ErrLenSearchQuery = errors.NewRequestError("search query must be at least 3 characters")
 
-	// ErrMissingDomainID indicates missing domainID.
-	ErrMissingDomainID = errors.NewRequestError("missing domainID")
+	// ErrMissingWorkspaceID indicates missing workspaceID.
+	ErrMissingWorkspaceID = errors.NewRequestError("missing workspaceID")
 
 	// ErrMissingUsername indicates missing user name.
 	ErrMissingUsername = errors.NewRequestError("missing username")

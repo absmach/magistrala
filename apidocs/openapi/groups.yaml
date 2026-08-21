@@ -37,7 +37,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/groups:
+  /{workspaceID}/groups:
     post:
       operationId: createGroup
       tags:
@@ -47,7 +47,7 @@ paths:
         Creates new group that can be used for grouping entities. New account will
         be uniquely identified by its identity.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       requestBody:
         $ref: "#/components/requestBodies/GroupCreateReq"
       security:
@@ -85,7 +85,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Order"
@@ -121,7 +121,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}:
+  /{workspaceID}/groups/{groupID}:
     get:
       operationId: getGroup
       summary: Gets group info.
@@ -130,7 +130,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -158,7 +158,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -191,7 +191,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -209,7 +209,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/tags:
+  /{workspaceID}/groups/{groupID}/tags:
     patch:
       operationId: updateGroupTags
       summary: Updates group tags.
@@ -220,7 +220,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -246,7 +246,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/enable:
+  /{workspaceID}/groups/{groupID}/enable:
     post:
       operationId: enableGroup
       summary: Enables a group
@@ -255,7 +255,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -279,7 +279,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/disable:
+  /{workspaceID}/groups/{groupID}/disable:
     post:
       operationId: disableGroup
       summary: Disables a group
@@ -288,7 +288,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -312,7 +312,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/hierarchy:
+  /{workspaceID}/groups/{groupID}/hierarchy:
     get:
       operationId: listGroupHierarchy
       summary: Lists groups hierarchy.
@@ -326,7 +326,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Level"
         - $ref: "#/components/parameters/Tree"
@@ -349,7 +349,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/parent:
+  /{workspaceID}/groups/{groupID}/parent:
     post:
       operationId: setGroupParentGroup
       summary: Sets a parent group for a group.
@@ -358,7 +358,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/GroupParentReq"
@@ -393,7 +393,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/GroupParentReq"
@@ -420,7 +420,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/children:
+  /{workspaceID}/groups/{groupID}/children:
     post:
       operationId: addChildrenGroups
       summary: Add children groups.
@@ -429,7 +429,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/GroupChildrenReq"
@@ -463,7 +463,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "#/components/requestBodies/GroupChildrenReq"
@@ -502,7 +502,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -527,7 +527,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/children/all:
+  /{workspaceID}/groups/{groupID}/children/all:
     delete:
       operationId: removeAllChildrenGroups
       summary: Remove all children groups.
@@ -536,7 +536,7 @@ paths:
       tags:
         - Groups
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -560,7 +560,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles:
+  /{workspaceID}/groups/{groupID}/roles:
     post:
       operationId: createGroupRole
       summary: Creates a role for a group
@@ -569,7 +569,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/CreateRoleReq"
@@ -602,7 +602,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -625,7 +625,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/members:
+  /{workspaceID}/groups/{groupID}/roles/members:
     get:
       operationId: getGroupMembers
       tags:
@@ -634,7 +634,7 @@ paths:
       description: |
         Retrieves members from role for the specific group.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
       security:
         - bearerAuth: []
@@ -655,7 +655,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}:
     get:
       operationId: getGroupRole
       tags:
@@ -664,7 +664,7 @@ paths:
       description: |
         Retrieves a specific group role that is identified by the role name.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -694,7 +694,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -726,7 +726,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -748,7 +748,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/actions:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/actions:
     post:
       operationId: addGroupRoleAction
       summary: Adds a role action for a group role.
@@ -757,7 +757,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -789,7 +789,7 @@ paths:
       description: |
         Retrieves a list of group role actions.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -811,7 +811,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/actions/delete:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/actions/delete:
     post:
       operationId: deleteGroupRoleAction
       summary: Deletes role actions for a group role.
@@ -820,7 +820,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -844,7 +844,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/actions/delete-all:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/actions/delete-all:
     post:
       operationId: deleteAllGroupRoleActions
       summary: Deletes all role actions for a group role.
@@ -853,7 +853,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -875,7 +875,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/members:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/members:
     post:
       operationId: addGroupRoleMember
       summary: Adds a member to a group role.
@@ -884,7 +884,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -916,7 +916,7 @@ paths:
       description: |
         Retrieves a list of group role members.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -938,7 +938,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/members/delete:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/members/delete:
     post:
       operationId: deleteGroupRoleMembers
       summary: Deletes members from a group role.
@@ -947,7 +947,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -971,7 +971,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/{groupID}/roles/{roleID}/members/delete-all:
+  /{workspaceID}/groups/{groupID}/roles/{roleID}/members/delete-all:
     post:
       operationId: deleteAllGroupRoleMembers
       summary: Deletes all members from a group role.
@@ -980,7 +980,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/GroupID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -1002,7 +1002,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/groups/roles/available-actions:
+  /{workspaceID}/groups/roles/available-actions:
     get:
       operationId: listAvailableActions
       tags:
@@ -1011,7 +1011,7 @@ paths:
       description: |
         Retrieves a list of available actions.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       security:
         - bearerAuth: []
       responses:
@@ -1063,7 +1063,7 @@ components:
           description: Id of parent group, it must be existing group.
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "workspace": "example.com" }
           description: Arbitrary, object-encoded groups's data.
         status:
           type: string
@@ -1085,11 +1085,11 @@ components:
           type: string
           example: groupName
           description: Free-form group name. Group name is unique on the given hierarchy level.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which the group belongs..
+          description: ID of the workspace to which the group belongs..
         parent_id:
           type: string
           format: uuid
@@ -1588,7 +1588,7 @@ components:
         type: string
         enum:
           - direct
-          - domain
+          - workspace
           - indirect
           - indirect_group
       required: false

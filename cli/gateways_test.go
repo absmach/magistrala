@@ -104,13 +104,13 @@ func TestGatewaysSetCmdConflictLandingDuringMarking(t *testing.T) {
 
 func TestGatewaysDevicesCmd(t *testing.T) {
 	newFakeAtom(t,
-		atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1", Attributes: atom.Attributes{"gateways": []string{"gw-1"}}},
-		atom.Entity{ID: "device-2", Kind: "device", TenantID: "domain-1", Attributes: atom.Attributes{"gateways": []string{"gw-2"}}},
-		atom.Entity{ID: "device-3", Kind: "device", TenantID: "domain-1", Attributes: atom.Attributes{"gateways": []string{"gw-1", "gw-2"}}},
+		atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1", Attributes: atom.Attributes{"gateways": []string{"gw-1"}}},
+		atom.Entity{ID: "device-2", Kind: "device", TenantID: "workspace-1", Attributes: atom.Attributes{"gateways": []string{"gw-2"}}},
+		atom.Entity{ID: "device-3", Kind: "device", TenantID: "workspace-1", Attributes: atom.Attributes{"gateways": []string{"gw-1", "gw-2"}}},
 	)
 	rootCmd := setFlags(cli.NewGatewaysCmd())
 
-	out := executeCommand(t, rootCmd, "gw-1", "devices", "domain-1")
+	out := executeCommand(t, rootCmd, "gw-1", "devices", "workspace-1")
 
 	var got atom.EntityList
 	require.NoError(t, json.Unmarshal([]byte(out), &got))

@@ -71,7 +71,7 @@ func TestListResources(t *testing.T) {
 		if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 			t.Fatalf("decode request: %v", err)
 		}
-		if payload.Variables["kind"] != KindRule || payload.Variables["tenantId"] != testDomainID {
+		if payload.Variables["kind"] != KindRule || payload.Variables["tenantId"] != testWorkspaceID {
 			t.Fatalf("unexpected variables: %+v", payload.Variables)
 		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
@@ -86,7 +86,7 @@ func TestListResources(t *testing.T) {
 	defer srv.Close()
 
 	client := NewClient(Config{URL: srv.URL, Timeout: time.Second})
-	got, err := client.ListResources(context.Background(), Query{Kind: KindRule, TenantID: testDomainID})
+	got, err := client.ListResources(context.Background(), Query{Kind: KindRule, TenantID: testWorkspaceID})
 	if err != nil {
 		t.Fatalf("list failed: %v", err)
 	}
@@ -200,7 +200,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 					input["action"] != atomActionRead ||
 					input["objectKind"] != atomObjectKindEntity ||
 					input["objectType"] != atomKindDevice ||
-					input["tenantId"] != testDomainID {
+					input["tenantId"] != testWorkspaceID {
 					t.Fatalf("unexpected authorized objects input: %+v", input)
 				}
 				_ = json.NewEncoder(w).Encode(map[string]any{
@@ -242,7 +242,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 			_ = json.NewEncoder(w).Encode(IntrospectionResponse{
 				Active:    true,
 				EntityID:  testEntityID,
-				TenantID:  testDomainID,
+				TenantID:  testWorkspaceID,
 				SessionID: "session-1",
 			})
 		default:
@@ -269,7 +269,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 		Action:     atomActionRead,
 		ObjectKind: atomObjectKindEntity,
 		ObjectType: atomKindDevice,
-		TenantID:   testDomainID,
+		TenantID:   testWorkspaceID,
 		Limit:      10,
 	})
 	if err != nil {
@@ -291,7 +291,7 @@ func TestCurrentAtomCompatibilitySurface(t *testing.T) {
 	if err != nil {
 		t.Fatalf("introspection failed: %v", err)
 	}
-	if !introspection.Active || introspection.EntityID != testEntityID || introspection.TenantID != testDomainID {
+	if !introspection.Active || introspection.EntityID != testEntityID || introspection.TenantID != testWorkspaceID {
 		t.Fatalf("unexpected introspection response: %+v", introspection)
 	}
 

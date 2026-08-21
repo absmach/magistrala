@@ -35,15 +35,15 @@ x-src-db: &src-db
     - migrate-net
 
 services:
-  domains-db:
+  workspaces-db:
     <<: *src-db
     environment:
       POSTGRES_USER: ${SRC_DB_USER:-magistrala}
       POSTGRES_PASSWORD: ${SRC_DB_PASS:-magistrala}
-      POSTGRES_DB: domains
+      POSTGRES_DB: workspaces
       PGDATA: ${SRC_PGDATA:-/var/lib/postgresql/18/docker}
     volumes:
-      - domains-src:${SRC_MOUNT:-/var/lib/postgresql}
+      - workspaces-src:${SRC_MOUNT:-/var/lib/postgresql}
 
   users-db:
     <<: *src-db
@@ -157,7 +157,7 @@ services:
     depends_on:
       atom-db:
         condition: service_healthy
-      domains-db:
+      workspaces-db:
         condition: service_healthy
       users-db:
         condition: service_healthy
@@ -193,9 +193,9 @@ networks:
 # All source volumes and the Atom target are pre-existing (external): Compose
 # never creates or deletes them, so `down` can never destroy migration data.
 volumes:
-  domains-src:
+  workspaces-src:
     external: true
-    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}domains-db-volume
+    name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}workspaces-db-volume
   users-src:
     external: true
     name: ${SRC_VOL_PREFIX:-magistrala_magistrala-}users-db-volume

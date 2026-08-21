@@ -36,10 +36,10 @@ func (es *publisherES) Publish(ctx context.Context, topic string, msg *messaging
 	}
 
 	me := publishEvent{
-		domainID:  msg.Domain,
-		channelID: msg.Channel,
-		clientID:  msg.ClientIdentity(),
-		subtopic:  msg.Subtopic,
+		workspaceID: msg.Workspace,
+		channelID:   msg.Channel,
+		clientID:    msg.ClientIdentity(),
+		subtopic:    msg.Subtopic,
 	}
 
 	return es.ep.Publish(ctx, publishStream, me)

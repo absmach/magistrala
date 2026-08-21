@@ -74,6 +74,11 @@ func (c *Client) seedDefaultDeviceTypes(ctx context.Context, tenantID string) er
 	return nil
 }
 
+// SeedDefaultDeviceTypes creates the default device type catalogue for a tenant.
+func (c *Client) SeedDefaultDeviceTypes(ctx context.Context, tenantID string) error {
+	return c.seedDefaultDeviceTypes(ctx, tenantID)
+}
+
 func defaultType(tenantID, key, name, description string, measurements []Measurement, commands ...Command) defaultDeviceType {
 	return defaultDeviceType{
 		DeviceType: DeviceType{

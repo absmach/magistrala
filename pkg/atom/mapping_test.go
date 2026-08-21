@@ -11,7 +11,7 @@ import (
 func TestTenantFromFields(t *testing.T) {
 	created := time.Date(2026, 4, 30, 10, 11, 12, 0, time.UTC)
 	got := TenantFromFields(ObjectFields{
-		ID:        "domain-1",
+		ID:        "workspace-1",
 		Name:      "Acme",
 		Route:     "acme",
 		Status:    "enabled",
@@ -21,7 +21,7 @@ func TestTenantFromFields(t *testing.T) {
 		CreatedAt: created,
 	})
 
-	if got.ID != "domain-1" || got.Name != "Acme" || got.Route != "acme" {
+	if got.ID != "workspace-1" || got.Name != "Acme" || got.Route != "acme" {
 		t.Fatalf("unexpected tenant: %+v", got)
 	}
 	if got.Attributes["source"] != "magistrala" {
@@ -37,13 +37,13 @@ func TestEntityFromFields(t *testing.T) {
 		ID:       "device-1",
 		Kind:     KindDevice,
 		Name:     "pump",
-		TenantID: "domain-1",
+		TenantID: "workspace-1",
 		Status:   "enabled",
 		ParentID: "group-1",
 		Tags:     []string{"field"},
 	})
 
-	if got.Kind != "device" || got.TenantID != "domain-1" {
+	if got.Kind != "device" || got.TenantID != "workspace-1" {
 		t.Fatalf("unexpected entity: %+v", got)
 	}
 	if got.Attributes["magistrala_kind"] != KindDevice {
@@ -67,7 +67,7 @@ func TestResourceFromFieldsOmitsEmptyValues(t *testing.T) {
 		ID:       "channel-1",
 		Kind:     KindChannel,
 		Name:     "telemetry",
-		TenantID: "domain-1",
+		TenantID: "workspace-1",
 	})
 
 	if _, ok := got.Attributes["tags"]; ok {
@@ -83,7 +83,7 @@ func TestResourceFromFieldsExcludesParentGroupID(t *testing.T) {
 		ID:       "channel-1",
 		Kind:     KindChannel,
 		Name:     "telemetry",
-		TenantID: "domain-1",
+		TenantID: "workspace-1",
 		ParentID: "group-1",
 	})
 

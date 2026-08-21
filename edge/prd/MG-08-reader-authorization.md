@@ -54,8 +54,8 @@ away.
 - Wire `PolicyService` into the reader binaries — it is `nil` everywhere today
   (`cmd/auth/main.go:182`; readers construct only `channels` at
   `cmd/timescale-reader/main.go:109`, `cmd/postgres-reader/main.go:109`).
-- Bypass for domain admins, who legitimately read the whole channel.
-- Cache the resolved set per `(subject, domain)` with a short TTL.
+- Bypass for workspace admins, who legitimately read the whole channel.
+- Cache the resolved set per `(subject, workspace)` with a short TTL.
 
 **Out of scope**
 
@@ -75,7 +75,7 @@ subjectID:  <caller>
 action:     "read"
 objectKind: "entity"
 objectType: "entity:device"      // namespaced — see MG-01
-tenantID:   <domain>
+tenantID:   <workspace>
 ```
 
 Requires MG-01 (the `objectType` fix and the `isSupportedObjectList` widening) or
@@ -127,7 +127,7 @@ Two mitigations, in order:
 1. **Prefer server-side narrowing.** ATOM-02 exposes `parentGroupId`,
    `includeDescendants` and `attributesContains` on `authorizedObjectIds`, so the
    set can be narrowed in Atom rather than materialised in Go.
-2. Cache per `(subject, domain)` with a short TTL. Group-scoped grants (MG-04)
+2. Cache per `(subject, workspace)` with a short TTL. Group-scoped grants (MG-04)
    keep the practical set small.
 
 If fleets outgrow both, the filter has to move into Atom entirely. Worth knowing
@@ -136,7 +136,7 @@ before it bites rather than after.
 ### Admin bypass
 
 Per [spec §8 B3](../architecture.md#8-decision-record): determine "may read all devices in this
-domain" from an **explicit tenant-scoped capability check**.
+workspace" from an **explicit tenant-scoped capability check**.
 
 Not by string-matching a role name, and specifically **not** by treating an empty
 authorized set as "unrestricted" — two opposite situations produce an identical
@@ -144,7 +144,7 @@ empty list:
 
 | Caller | Per-device grants | Should see |
 |---|---|---|
-| Domain admin | none — holds a *tenant-wide* grant | everything |
+| Workspace admin | none — holds a *tenant-wide* grant | everything |
 | User with no access at all | none | nothing |
 
 Reading empty as unrestricted gives both everything, so the caller with the
@@ -158,7 +158,7 @@ directly makes empty unambiguously mean "no access".
 A1. A user without a grant covering publisher X receives no rows for X, whatever
     `publishers` they request. This fails on today's `main` — it is the defect.
 A2. A user requesting `publishers` they *are* entitled to gets exactly those.
-A3. A domain admin is unaffected.
+A3. A workspace admin is unaffected.
 A4. A user with no publisher grants receives empty, **not everything** — the
     empty-set inversion is the failure mode that matters.
 
@@ -169,7 +169,7 @@ A4. A user with no publisher grants receives empty, **not everything** — the
 2. The same user requesting `device_ids=2` receives **empty**, not meter 2's data.
 3. Requesting `device_ids=1,2` returns meter 1 only.
 4. A user with **no** device grants receives empty, not everything.
-5. A domain admin receives all three.
+5. A workspace admin receives all three.
 6. Equivalent behaviour for `publishers`.
 7. Unauthorized IDs are dropped silently — the response does not reveal whether
    they exist.

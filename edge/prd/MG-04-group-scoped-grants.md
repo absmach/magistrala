@@ -11,7 +11,7 @@
 ## Problem
 
 `pkg/atom` writes only three of Atom's ten scope modes — `object`, `tenant` and
-`platform` (`policy_service.go:196-205`). Everything that is not a domain or the
+`platform` (`policy_service.go:196-205`). Everything that is not a workspace or the
 platform collapses to a single-instance `object` block (`:203`).
 
 Granting a customer read access to 500 meters therefore means 500 permission
@@ -78,7 +78,7 @@ One block, one policy, per customer:
 ```
 PermissionBlock {
   scope_mode:  "group_direct_objects",
-  tenant_id:   <domain>,
+  tenant_id:   <workspace>,
   group_id:    <customer group>,
   object_kind: "entity",
   object_type: "entity:device",

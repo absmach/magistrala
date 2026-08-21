@@ -20,8 +20,8 @@ import (
 )
 
 const (
-	testDomain  = "domain-1"
-	testSubject = "domain-1_user-1"
+	testWorkspace = "workspace-1"
+	testSubject   = "workspace-1_user-1"
 )
 
 // The PRD's worked example: three meters on one channel, a customer granted
@@ -112,7 +112,7 @@ func customerAuthorizer(t *testing.T, resolver deviceInfoResolver, granted ...st
 func TestResolveBoundsScopeToGrantedDevices(t *testing.T) {
 	authz := customerAuthorizer(t, allMeters(), meter1UUID, meter3UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.False(t, got.noAccess)
 	require.NotNil(t, got.scope)
@@ -145,7 +145,7 @@ func TestResolveExcludesGatewaysFromSelfPublisherIDs(t *testing.T) {
 	}
 	authz := customerAuthorizer(t, resolver, meter1UUID, gatewayUUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
@@ -166,7 +166,7 @@ func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
 	}
 	authz := customerAuthorizer(t, resolver, meter1UUID, meter3UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
@@ -182,7 +182,7 @@ func TestResolveTreatsUnresolvedDeviceInfoAsGatewayForSafety(t *testing.T) {
 // apart from "genuinely has no info" once EntityDeviceInfo's own return
 // discarded that distinction. Two subjects share meter3UUID; the resolver
 // blocks it only for the first subject's load, so the second subject's load
-// -- served from the same per-domain translation cache -- must resolve it
+// -- served from the same per-workspace translation cache -- must resolve it
 // cleanly rather than inherit the first load's transient failure.
 func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
@@ -192,7 +192,7 @@ func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
 		return pr.Subject == testSubject
 	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Subject == "domain-1_user-2"
+		return pr.Subject == "workspace-1_user-2"
 	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
 
 	resolver := &fakeResolver{
@@ -201,7 +201,7 @@ func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
 	}
 	authz := newReadAuthorizer(evaluator, lister, resolver)
 
-	first, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	first, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, first.scope)
 	assert.Empty(t, first.scope.SelfPublisherIDs, "the transiently-unreadable device must not get unconditional publisher trust on the load that hit the failure")
@@ -209,7 +209,7 @@ func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
 	// The blip clears.
 	resolver.unreadable = nil
 
-	second, err := authz.resolve(context.Background(), testDomain, "domain-1_user-2", nil, nil)
+	second, err := authz.resolve(context.Background(), testWorkspace, "workspace-1_user-2", nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, second.scope)
 	assert.Equal(t, []string{meter3UUID}, second.scope.SelfPublisherIDs, "a later load must not inherit the earlier transient failure from the translation cache")
@@ -220,7 +220,7 @@ func TestResolveDoesNotCacheATransientDeviceInfoFailure(t *testing.T) {
 func TestResolveUnauthorizedDeviceIsDenied(t *testing.T) {
 	authz := customerAuthorizer(t, allMeters(), meter1UUID, meter3UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, []string{meter2Serial})
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, []string{meter2Serial})
 	require.NoError(t, err, "an unauthorized id must be dropped, not raised as an error that reveals it")
 	assert.True(t, got.noAccess)
 	assert.Nil(t, got.scope)
@@ -232,7 +232,7 @@ func TestResolveUnauthorizedDeviceIsDenied(t *testing.T) {
 func TestResolveMixedRequestKeepsOnlyAuthorized(t *testing.T) {
 	authz := customerAuthorizer(t, allMeters(), meter1UUID, meter3UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, []string{meter1Serial, meter2Serial})
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, []string{meter1Serial, meter2Serial})
 	require.NoError(t, err)
 	require.False(t, got.noAccess)
 	assert.Equal(t, []string{meter1Serial}, got.deviceIDs)
@@ -250,7 +250,7 @@ func TestResolveNoGrantsIsEmptyNotEverything(t *testing.T) {
 
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.True(t, got.noAccess, "zero authorized devices must mean zero rows, never an unfiltered read")
 	assert.Nil(t, got.scope)
@@ -270,12 +270,12 @@ func TestEmptyDeviceScopeMatchesNothing(t *testing.T) {
 	assert.False(t, unset.Empty(), "an absent scope is unbounded, which is not the same as bounded-to-nothing")
 }
 
-// Criterion 5: a domain admin receives all three, and is not narrowed at all.
-func TestResolveDomainAdminIsUnrestricted(t *testing.T) {
+// Criterion 5: a workspace admin receives all three, and is not narrowed at all.
+func TestResolveWorkspaceAdminIsUnrestricted(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
 	lister := policymocks.NewService(t)
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.ObjectType == policies.DomainType && pr.Permission == policies.AdminPermission
+		return pr.ObjectType == policies.WorkspaceType && pr.Permission == policies.AdminPermission
 	})).Return(nil)
 	// No ListAllObjects expectation: the bypass must never fall through to the
 	// per-device lookup, whose empty result for an admin would otherwise have to
@@ -283,7 +283,7 @@ func TestResolveDomainAdminIsUnrestricted(t *testing.T) {
 
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 
-	got, err := authz.resolve(context.Background(), testDomain, "domain-1_admin", nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, "workspace-1_admin", nil, nil)
 	require.NoError(t, err)
 	assert.False(t, got.noAccess)
 	assert.Nil(t, got.scope, "an admin's query is unbounded")
@@ -298,7 +298,7 @@ func TestAdminBypassIsCapabilityDrivenNotGrantCount(t *testing.T) {
 	adminEvaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(nil)
 	admin := newReadAuthorizer(adminEvaluator, adminLister, allMeters())
 
-	adminScope, err := admin.resolve(context.Background(), testDomain, "domain-1_admin", nil, nil)
+	adminScope, err := admin.resolve(context.Background(), testWorkspace, "workspace-1_admin", nil, nil)
 	require.NoError(t, err)
 	assert.False(t, adminScope.noAccess, "an admin with no per-device grants still reads everything")
 	assert.Nil(t, adminScope.scope)
@@ -312,7 +312,7 @@ func TestAdminBypassIsCapabilityDrivenNotGrantCount(t *testing.T) {
 	}
 	user := customerAuthorizer(t, &fakeResolver{serials: serialsByUUID}, granted...)
 
-	userScope, err := user.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	userScope, err := user.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.False(t, userScope.noAccess)
 	require.NotNil(t, userScope.scope, "a large grant set is still a bounded one")
@@ -338,7 +338,7 @@ func TestResolvePublishersBehaveTheSame(t *testing.T) {
 		t.Run(tc.desc, func(t *testing.T) {
 			authz := customerAuthorizer(t, allMeters(), meter1UUID, meter3UUID)
 
-			got, err := authz.resolve(context.Background(), testDomain, testSubject, tc.requested, nil)
+			got, err := authz.resolve(context.Background(), testWorkspace, testSubject, tc.requested, nil)
 			require.NoError(t, err)
 			assert.Equal(t, tc.noAccess, got.noAccess)
 			assert.Equal(t, tc.want, got.publishers)
@@ -354,7 +354,7 @@ func TestResolveTranslatesUUIDsToSerials(t *testing.T) {
 	resolver := allMeters()
 	authz := customerAuthorizer(t, resolver, meter1UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
@@ -375,7 +375,7 @@ func TestResolveTranslatesUUIDsToSerials(t *testing.T) {
 func TestResolveKeepsPublisherIdentityForUnresolvedEntityIDs(t *testing.T) {
 	authz := customerAuthorizer(t, &fakeResolver{serials: map[string]string{meter1UUID: meter1Serial}}, meter1UUID, meter3UUID)
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.NotNil(t, got.scope)
 
@@ -394,14 +394,14 @@ func TestResolveWithoutResolverIsAnError(t *testing.T) {
 
 	authz := newReadAuthorizer(evaluator, lister, nil)
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	assert.ErrorIs(t, err, errNoDeviceInfoResolver)
 }
 
 func TestResolvePropagatesResolverError(t *testing.T) {
 	authz := customerAuthorizer(t, &fakeResolver{err: errors.New("atom unreachable")}, meter1UUID)
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	assert.Error(t, err)
 }
 
@@ -413,7 +413,7 @@ func TestResolvePropagatesListerError(t *testing.T) {
 
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	assert.Error(t, err)
 }
 
@@ -435,7 +435,7 @@ func TestReadAuthorizerCacheExpires(t *testing.T) {
 	authz.ttl = 50 * time.Millisecond
 	authz.now = func() time.Time { return clock }
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.False(t, got.noAccess)
 	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
@@ -443,7 +443,7 @@ func TestReadAuthorizerCacheExpires(t *testing.T) {
 	// Within the TTL the cached grant is served, translation included — that is
 	// what makes it a cache rather than a pass-through.
 	clock = clock.Add(10 * time.Millisecond)
-	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err = authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.False(t, got.noAccess)
 	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
@@ -451,12 +451,12 @@ func TestReadAuthorizerCacheExpires(t *testing.T) {
 
 	// Past the TTL the revocation takes effect.
 	clock = clock.Add(100 * time.Millisecond)
-	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err = authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.True(t, got.noAccess, "a revoked grant must not outlive the TTL")
 }
 
-func TestReadAuthorizerCacheIsKeyedPerSubjectAndDomain(t *testing.T) {
+func TestReadAuthorizerCacheIsKeyedPerSubjectAndWorkspace(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
 	lister := policymocks.NewService(t)
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
@@ -464,14 +464,14 @@ func TestReadAuthorizerCacheIsKeyedPerSubjectAndDomain(t *testing.T) {
 		return pr.Subject == testSubject
 	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Subject == "domain-1_user-2"
+		return pr.Subject == "workspace-1_user-2"
 	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
 
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 
-	first, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	first, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
-	second, err := authz.resolve(context.Background(), testDomain, "domain-1_user-2", nil, nil)
+	second, err := authz.resolve(context.Background(), testWorkspace, "workspace-1_user-2", nil, nil)
 	require.NoError(t, err)
 
 	assert.Equal(t, []string{meter1Serial}, first.scope.DeviceIDs)
@@ -483,7 +483,7 @@ func TestReadAuthorizerCacheIsKeyedPerSubjectAndDomain(t *testing.T) {
 // atomevents.FamilyTranslation, so they must invalidate the device-info
 // cache without touching the authorized-set cache — otherwise a burst of
 // such events during a bulk import forces every concurrent reader in the
-// domain back through ListAllObjects for no reason a translation-only event
+// workspace back through ListAllObjects for no reason a translation-only event
 // actually requires. ListAllObjects is mocked .Once(): a second call here
 // would fail the mock's own expectations, not just an assertion.
 func TestInvalidateDeviceInfoDoesNotForceAuthorizedSetRecompute(t *testing.T) {
@@ -497,13 +497,13 @@ func TestInvalidateDeviceInfoDoesNotForceAuthorizedSetRecompute(t *testing.T) {
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 	authz.ttl = time.Hour
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
 
-	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testDomain))
+	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testWorkspace))
 
-	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err = authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs, "authorized set must still be served from its own cache, untouched by a translation-only invalidation")
 }
@@ -511,7 +511,7 @@ func TestInvalidateDeviceInfoDoesNotForceAuthorizedSetRecompute(t *testing.T) {
 // TestInvalidateDeviceInfoForcesRetranslationOnNextLoad proves the
 // translation cache is actually cleared, not merely left unconsulted: two
 // subjects share a device, so the second subject's load reuses whatever
-// invalidateDeviceInfo left behind in the shared per-domain translation
+// invalidateDeviceInfo left behind in the shared per-workspace translation
 // cache.
 func TestInvalidateDeviceInfoForcesRetranslationOnNextLoad(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
@@ -522,24 +522,24 @@ func TestInvalidateDeviceInfoForcesRetranslationOnNextLoad(t *testing.T) {
 		return pr.Subject == testSubject
 	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Subject == "domain-1_user-2"
+		return pr.Subject == "workspace-1_user-2"
 	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
 
 	resolver := allMeters()
 	authz := newReadAuthorizer(evaluator, lister, resolver)
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, 1, resolver.calls)
 
-	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testDomain))
+	require.NoError(t, authz.invalidateDeviceInfo(context.Background(), testWorkspace))
 
-	_, err = authz.resolve(context.Background(), testDomain, "domain-1_user-2", nil, nil)
+	_, err = authz.resolve(context.Background(), testWorkspace, "workspace-1_user-2", nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, 2, resolver.calls, "invalidateDeviceInfo must clear the shared translation cache, not just go unused")
 }
 
-// Criterion 4: an Atom event invalidating this domain must take effect well
+// Criterion 4: an Atom event invalidating this workspace must take effect well
 // within the TTL, not wait for it — that is the whole point of MG-14.
 func TestReadAuthorizerInvalidateForcesRecompute(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
@@ -554,44 +554,44 @@ func TestReadAuthorizerInvalidateForcesRecompute(t *testing.T) {
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 	authz.ttl = time.Hour // long enough that only Invalidate, never the TTL, can explain the second result
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	require.Equal(t, []string{meter1Serial}, got.scope.DeviceIDs)
 
-	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+	require.NoError(t, authz.Invalidate(context.Background(), testWorkspace))
 
-	got, err = authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err = authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
-	assert.True(t, got.noAccess, "a revoked grant must not survive an Invalidate for its domain")
+	assert.True(t, got.noAccess, "a revoked grant must not survive an Invalidate for its workspace")
 }
 
 // Criterion 8: an event for one tenant must not disturb another's cache.
-func TestReadAuthorizerInvalidateIsScopedToItsDomain(t *testing.T) {
+func TestReadAuthorizerInvalidateIsScopedToItsWorkspace(t *testing.T) {
 	evaluator := policymocks.NewEvaluator(t)
 	lister := policymocks.NewService(t)
 
-	otherDomain := "domain-2"
+	otherWorkspace := "workspace-2"
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("denied"))
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Domain == testDomain
+		return pr.Workspace == testWorkspace
 	})).Return(policies.PolicyPage{Policies: []string{meter1UUID}}, nil).Once()
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Domain == otherDomain
+		return pr.Workspace == otherWorkspace
 	})).Return(policies.PolicyPage{Policies: []string{meter3UUID}}, nil).Once()
 
 	authz := newReadAuthorizer(evaluator, lister, allMeters())
 	authz.ttl = time.Hour
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
-	_, err = authz.resolve(context.Background(), otherDomain, testSubject, nil, nil)
+	_, err = authz.resolve(context.Background(), otherWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 
-	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+	require.NoError(t, authz.Invalidate(context.Background(), testWorkspace))
 
-	// otherDomain's entry must still be cached: a third ListAllObjects call
+	// otherWorkspace's entry must still be cached: a third ListAllObjects call
 	// here would fail the mock's expectations (each is set up Once()).
-	got, err := authz.resolve(context.Background(), otherDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), otherWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.Equal(t, []string{meter3Serial}, got.scope.DeviceIDs)
 }
@@ -601,11 +601,11 @@ func TestReadAuthorizerInvalidateIsScopedToItsDomain(t *testing.T) {
 func TestReadAuthorizerInvalidateIsIdempotent(t *testing.T) {
 	authz := customerAuthorizer(t, allMeters(), meter1UUID)
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 
-	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
-	require.NoError(t, authz.Invalidate(context.Background(), testDomain), "invalidating an already-empty domain must not error")
+	require.NoError(t, authz.Invalidate(context.Background(), testWorkspace))
+	require.NoError(t, authz.Invalidate(context.Background(), testWorkspace), "invalidating an already-empty workspace must not error")
 }
 
 // A regression test for R5's first residual: an invalidation landing while a
@@ -626,7 +626,7 @@ func TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad(t *testing.T) {
 				first = false
 				// Simulate a revocation landing while this very load is in
 				// flight, before it returns the pre-revocation grant.
-				require.NoError(t, authz.Invalidate(ctx, testDomain))
+				require.NoError(t, authz.Invalidate(ctx, testWorkspace))
 				return policies.PolicyPage{Policies: []string{meter1UUID}}, nil
 			}
 			// The retry this must trigger sees the post-revocation state.
@@ -636,30 +636,30 @@ func TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad(t *testing.T) {
 	authz = newReadAuthorizer(evaluator, lister, allMeters())
 	authz.ttl = time.Hour
 
-	got, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	got, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
 	assert.True(t, got.noAccess, "a grant that went stale mid-load must not be served, only retried")
 	assert.False(t, first, "the retry must have run")
 }
 
-// A regression test for R5's second residual: a domain's epoch entry must not
+// A regression test for R5's second residual: a workspace's epoch entry must not
 // accumulate forever once nothing depends on it. Safe to prune only once no
-// load for the domain is in flight — TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad
+// load for the workspace is in flight — TestReadAuthorizerRetriesWhenInvalidationLandsMidLoad
 // covers the case where one is.
 func TestReadAuthorizerInvalidatePrunesEpochOnceNoLoadIsInFlight(t *testing.T) {
 	authz := customerAuthorizer(t, allMeters(), meter1UUID)
 
-	_, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil)
+	_, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil)
 	require.NoError(t, err)
-	require.NoError(t, authz.Invalidate(context.Background(), testDomain))
+	require.NoError(t, authz.Invalidate(context.Background(), testWorkspace))
 
 	authz.mu.Lock()
-	_, tracked := authz.epoch[testDomain]
+	_, tracked := authz.epoch[testWorkspace]
 	authz.mu.Unlock()
-	assert.False(t, tracked, "a domain's epoch entry must be forgotten once its cache is clear and nothing is loading")
+	assert.False(t, tracked, "a workspace's epoch entry must be forgotten once its cache is clear and nothing is loading")
 }
 
-func TestReadAuthorizerInvalidateEmptyDomainIsNoop(t *testing.T) {
+func TestReadAuthorizerInvalidateEmptyWorkspaceIsNoop(t *testing.T) {
 	authz := newReadAuthorizer(policymocks.NewEvaluator(t), policymocks.NewService(t), allMeters())
 	assert.NoError(t, authz.Invalidate(context.Background(), ""))
 }
@@ -760,13 +760,13 @@ func BenchmarkResolveAuthorizedSetSizes(b *testing.B) {
 
 			// Warm the cache: the steady state is a cache hit, since the TTL
 			// covers far more than one request.
-			if _, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil); err != nil {
+			if _, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil); err != nil {
 				b.Fatal(err)
 			}
 
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
-				if _, err := authz.resolve(context.Background(), testDomain, testSubject, nil, nil); err != nil {
+				if _, err := authz.resolve(context.Background(), testWorkspace, testSubject, nil, nil); err != nil {
 					b.Fatal(err)
 				}
 			}

@@ -27,7 +27,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/alarms:
+  /{workspaceID}/alarms:
     get:
       operationId: listAlarms
       summary: List Alarms
@@ -36,7 +36,7 @@ paths:
       tags:
         - alarms
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Order'
@@ -68,7 +68,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/alarms/{alarmID}:
+  /{workspaceID}/alarms/{alarmID}:
     get:
       operationId: viewAlarm
       summary: View Alarm
@@ -76,7 +76,7 @@ paths:
       tags:
         - alarms
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/AlarmID'
       security:
         - bearerAuth: []
@@ -102,7 +102,7 @@ paths:
       tags:
         - alarms
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/AlarmID'
       security:
         - bearerAuth: []
@@ -132,7 +132,7 @@ paths:
       tags:
         - alarms
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/AlarmID'
       security:
         - bearerAuth: []
@@ -176,9 +176,9 @@ components:
         rule_id:
           type: string
           description: Rule ID that triggered this alarm
-        domain_id:
+        workspace_id:
           type: string
-          description: Domain ID this alarm belongs to
+          description: Workspace ID this alarm belongs to
         channel_id:
           type: string
           description: Channel ID where the alarm was triggered
@@ -291,9 +291,9 @@ components:
         - limit
 
   parameters:
-    DomainID:
-      name: domainID
-      description: Domain ID
+    WorkspaceID:
+      name: workspaceID
+      description: Workspace ID
       in: path
       required: true
       schema:
@@ -478,12 +478,12 @@ components:
           operationId: updateAlarm
           parameters:
             alarmID: $response.body#/id
-            domainID: $response.body#/domain_id
+            workspaceID: $response.body#/workspace_id
         delete:
           operationId: deleteAlarm
           parameters:
             alarmID: $response.body#/id
-            domainID: $response.body#/domain_id
+            workspaceID: $response.body#/workspace_id
     AlarmsPageRes:
       description: Alarms page retrieved
       content:

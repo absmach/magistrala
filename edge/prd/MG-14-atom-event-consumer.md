@@ -1,4 +1,4 @@
-# MG-14 — Consume Atom domain events
+# MG-14 — Consume Atom workspace events
 
 | | |
 |---|---|
@@ -37,7 +37,7 @@ events exist: all Magistrala event consumers were deleted in
 ## What Atom provides
 
 A transactional outbox (`migrations/004_event_outbox.sql`) with an AMQP publisher
-(`src/events/publisher.rs`), emitting ~40 domain events. The ones that matter
+(`src/events/publisher.rs`), emitting ~40 workspace events. The ones that matter
 here:
 
 | Event | Invalidates |

@@ -28,7 +28,7 @@ message RetrieveEntityRes {
 
 message EntityBasic {
   string id = 1;
-  string domain_id = 2;
+  string workspace_id = 2;
   string parent_group_id = 3;
   uint32 status = 4;
 }
@@ -52,11 +52,11 @@ message RemoveConnectionsRes {
 message Connection {
   string client_id = 1;
   string channel_id = 2;
-  string domain_id  = 3;
+  string workspace_id  = 3;
   uint32 type = 4;
 }
 
 message RetrieveIDByRouteReq{
   string route = 1;
-  string domain_id = 2;
+  string workspace_id = 2;
 }

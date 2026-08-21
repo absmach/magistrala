@@ -169,7 +169,7 @@ func (lm *loggingMiddleware) Authorize(ctx context.Context, pr policies.Policy, 
 					slog.String("entity_type", patAuthz.EntityType.String()),
 					slog.String("entity_id", patAuthz.EntityID),
 					slog.String("operation", patAuthz.Operation),
-					slog.String("domain", patAuthz.Domain),
+					slog.String("workspace", patAuthz.Workspace),
 				),
 			)
 		}
@@ -355,7 +355,7 @@ func (lm *loggingMiddleware) AddScope(ctx context.Context, token, patID string, 
 		var groupArgs []any
 		for _, s := range scopes {
 			groupArgs = append(groupArgs, slog.String("entity_type", s.EntityType.String()))
-			groupArgs = append(groupArgs, slog.String("domain_id", s.DomainID))
+			groupArgs = append(groupArgs, slog.String("workspace_id", s.WorkspaceID))
 			groupArgs = append(groupArgs, slog.String("operation", s.Operation))
 			groupArgs = append(groupArgs, slog.String("entity_id", s.EntityID))
 		}
@@ -427,12 +427,12 @@ func (lm *loggingMiddleware) IdentifyPAT(ctx context.Context, paToken string) (p
 	return lm.svc.IdentifyPAT(ctx, paToken)
 }
 
-func (lm *loggingMiddleware) AuthorizePAT(ctx context.Context, userID, patID string, entityType auth.EntityType, domainID string, operation string, entityID string) (err error) {
+func (lm *loggingMiddleware) AuthorizePAT(ctx context.Context, userID, patID string, entityType auth.EntityType, workspaceID string, operation string, entityID string) (err error) {
 	defer func(begin time.Time) {
 		args := []any{
 			slog.String("duration", time.Since(begin).String()),
 			slog.String("entity_type", entityType.String()),
-			slog.String("domain_id", domainID),
+			slog.String("workspace_id", workspaceID),
 			slog.String("operation", operation),
 			slog.String("entities", entityID),
 		}
@@ -443,5 +443,5 @@ func (lm *loggingMiddleware) AuthorizePAT(ctx context.Context, userID, patID str
 		}
 		lm.logger.Info("Authorize PAT completed successfully", args...)
 	}(time.Now())
-	return lm.svc.AuthorizePAT(ctx, userID, patID, entityType, domainID, operation, entityID)
+	return lm.svc.AuthorizePAT(ctx, userID, patID, entityType, workspaceID, operation, entityID)
 }

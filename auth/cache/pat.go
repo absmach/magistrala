@@ -28,7 +28,7 @@ func NewPatsCache(client *redis.Client, duration time.Duration) auth.Cache {
 
 func (pc *patCache) Save(ctx context.Context, userID string, scopes []auth.Scope) error {
 	for _, sc := range scopes {
-		key := generateKey(userID, sc.PatID, sc.DomainID, sc.EntityType, sc.Operation, sc.EntityID)
+		key := generateKey(userID, sc.PatID, sc.WorkspaceID, sc.EntityType, sc.Operation, sc.EntityID)
 		if err := pc.client.Set(ctx, key, sc.ID, pc.duration).Err(); err != nil {
 			return errors.Wrap(repoerr.ErrCreateEntity, err)
 		}
@@ -37,9 +37,9 @@ func (pc *patCache) Save(ctx context.Context, userID string, scopes []auth.Scope
 	return nil
 }
 
-func (pc *patCache) CheckScope(ctx context.Context, userID, patID, domainID string, entityType auth.EntityType, operation string, entityID string) bool {
-	exactKey := fmt.Sprintf("pat:%s:%s:%s:%s:%s:%s", userID, patID, entityType, domainID, operation, entityID)
-	wildcardKey := fmt.Sprintf("pat:%s:%s:%s:%s:%s:*", userID, patID, entityType, domainID, operation)
+func (pc *patCache) CheckScope(ctx context.Context, userID, patID, workspaceID string, entityType auth.EntityType, operation string, entityID string) bool {
+	exactKey := fmt.Sprintf("pat:%s:%s:%s:%s:%s:%s", userID, patID, entityType, workspaceID, operation, entityID)
+	wildcardKey := fmt.Sprintf("pat:%s:%s:%s:%s:%s:*", userID, patID, entityType, workspaceID, operation)
 
 	res, err := pc.client.Exists(ctx, exactKey, wildcardKey).Result()
 	if err != nil {
@@ -115,6 +115,6 @@ func (pc *patCache) RemoveAllScope(ctx context.Context, userID, patID string) er
 	return nil
 }
 
-func generateKey(userID, patID, domainId string, entityType auth.EntityType, operation string, entityID string) string {
-	return fmt.Sprintf("pat:%s:%s:%s:%s:%s:%s", userID, patID, entityType, domainId, operation, entityID)
+func generateKey(userID, patID, workspaceId string, entityType auth.EntityType, operation string, entityID string) string {
+	return fmt.Sprintf("pat:%s:%s:%s:%s:%s:%s", userID, patID, entityType, workspaceId, operation, entityID)
 }

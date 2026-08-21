@@ -17,7 +17,7 @@ import (
 // stable order (created_at, id) and the loser of a collision keeps its original
 // value plus an id-derived suffix, so re-runs produce identical output.
 func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -55,17 +55,17 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 	dNames := newAllocator(false)
 	cAlias := newAllocator(true)
 	for _, c := range devices {
-		if !domSet[c.DomainID] {
+		if !domSet[c.WorkspaceID] {
 			continue
 		}
 		base := firstNonEmpty(strings.TrimSpace(nsToStr(c.Name)), c.ID)
-		final := dNames.take(c.DomainID, base, c.ID)
+		final := dNames.take(c.WorkspaceID, base, c.ID)
 		if final != base {
 			rep.warnf("device %s name %q -> %q (entities(name, tenant_id) is UNIQUE)", c.ID, base, final)
 			rep.count("renamed.devices", 1)
 		}
 		m.deviceName[c.ID] = final
-		m.deviceAlias[c.ID] = m.dedupAlias(cAlias, c.DomainID, c.Identity, "device "+c.ID, rep)
+		m.deviceAlias[c.ID] = m.dedupAlias(cAlias, c.WorkspaceID, c.Identity, "device "+c.ID, rep)
 	}
 
 	chans, err := readChannels(ctx, m.channelsDB)
@@ -77,10 +77,10 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 	})
 	chAlias := newAllocator(true)
 	for _, ch := range chans {
-		if !domSet[ch.DomainID] {
+		if !domSet[ch.WorkspaceID] {
 			continue
 		}
-		m.channelAlias[ch.ID] = m.dedupAlias(chAlias, ch.DomainID, ch.Route, "channel "+ch.ID, rep)
+		m.channelAlias[ch.ID] = m.dedupAlias(chAlias, ch.WorkspaceID, ch.Route, "channel "+ch.ID, rep)
 	}
 
 	grps, err := readGroups(ctx, m.groupsDB)
@@ -92,11 +92,11 @@ func (m *migrator) buildDedup(ctx context.Context, rep *report) error {
 	})
 	gNames := newAllocator(false)
 	for _, g := range grps {
-		if !domSet[g.DomainID] {
+		if !domSet[g.WorkspaceID] {
 			continue
 		}
 		base := firstNonEmpty(strings.TrimSpace(g.Name), g.ID)
-		final := gNames.take(g.DomainID, base, g.ID)
+		final := gNames.take(g.WorkspaceID, base, g.ID)
 		if final != base {
 			rep.warnf("group %s name %q -> %q (object_groups(name, tenant_id) is UNIQUE)", g.ID, base, final)
 			rep.count("renamed.groups", 1)

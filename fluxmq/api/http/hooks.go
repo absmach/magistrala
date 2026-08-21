@@ -95,15 +95,15 @@ func resolveHookTopic(ctx context.Context, parser messaging.TopicParser, req hoo
 		return "", fmt.Errorf("topic parser is not configured")
 	}
 
-	var domainID, channelID, subtopic string
+	var workspaceID, channelID, subtopic string
 	var topicType messaging.TopicType
 	var err error
 
 	switch strings.ToLower(strings.TrimSpace(req.Hook)) {
 	case hookAuthOnPublish:
-		domainID, channelID, subtopic, topicType, err = parser.ParsePublishTopic(ctx, req.Topic, true)
+		workspaceID, channelID, subtopic, topicType, err = parser.ParsePublishTopic(ctx, req.Topic, true)
 	case hookAuthOnSubscribe, hookAuthOnUnsubscribe:
-		domainID, channelID, subtopic, topicType, err = parser.ParseSubscribeTopic(ctx, req.Topic, true)
+		workspaceID, channelID, subtopic, topicType, err = parser.ParseSubscribeTopic(ctx, req.Topic, true)
 	default:
 		return "", nil
 	}
@@ -114,7 +114,7 @@ func resolveHookTopic(ctx context.Context, parser messaging.TopicParser, req hoo
 		return "", nil
 	}
 
-	return messaging.EncodeTopic(domainID, channelID, subtopic), nil
+	return messaging.EncodeTopic(workspaceID, channelID, subtopic), nil
 }
 
 func isMessageTopic(topic string) bool {

@@ -15,7 +15,7 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 )
 
-func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanName, domainID, token string) (MessagesPage, errors.SDKError) {
+func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanName, workspaceID, token string) (MessagesPage, errors.SDKError) {
 	chanNameParts := strings.SplitN(chanName, "/", channelParts)
 	chanID := chanNameParts[0]
 	subtopicPart := ""
@@ -23,7 +23,7 @@ func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanN
 		subtopicPart = fmt.Sprintf("?subtopic=%s", chanNameParts[1])
 	}
 
-	msgURL, err := sdk.withMessageQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/messages%s", domainID, chanID, subtopicPart), pm)
+	msgURL, err := sdk.withMessageQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/messages%s", workspaceID, chanID, subtopicPart), pm)
 	if err != nil {
 		return MessagesPage{}, errors.NewSDKError(err)
 	}
@@ -46,8 +46,8 @@ func (sdk mgSDK) ReadMessages(ctx context.Context, pm MessagePageMetadata, chanN
 
 // ListGatewayDevices lists the devices observed publishing through a gateway
 // on a channel (MG-15).
-func (sdk mgSDK) ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, domainID, token string) (GatewayDevicesPage, errors.SDKError) {
-	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/devices", domainID, chanID), "publisher", publisherID, pm)
+func (sdk mgSDK) ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, workspaceID, token string) (GatewayDevicesPage, errors.SDKError) {
+	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/devices", workspaceID, chanID), "publisher", publisherID, pm)
 	if err != nil {
 		return GatewayDevicesPage{}, errors.NewSDKError(err)
 	}
@@ -70,8 +70,8 @@ func (sdk mgSDK) ListGatewayDevices(ctx context.Context, chanID, publisherID str
 
 // ListDeviceGateways lists the gateways observed relaying for a device on a
 // channel (MG-15).
-func (sdk mgSDK) ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, domainID, token string) (DeviceGatewaysPage, errors.SDKError) {
-	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/publishers", domainID, chanID), "device_id", deviceID, pm)
+func (sdk mgSDK) ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, workspaceID, token string) (DeviceGatewaysPage, errors.SDKError) {
+	msgURL, err := sdk.withDeviceViewQueryParams(sdk.readersURL, fmt.Sprintf("%s/channels/%s/publishers", workspaceID, chanID), "device_id", deviceID, pm)
 	if err != nil {
 		return DeviceGatewaysPage{}, errors.NewSDKError(err)
 	}

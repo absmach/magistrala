@@ -378,8 +378,8 @@ func (pr *patRepo) RemoveAllPAT(ctx context.Context, userID string) error {
 
 func (pr *patRepo) AddScope(ctx context.Context, userID string, scopes []auth.Scope) error {
 	q := `
-		INSERT INTO pat_scopes (id, pat_id, entity_type, domain_id, operation, entity_id)
-		VALUES (:id, :pat_id, :entity_type, :domain_id, :operation, :entity_id)`
+		INSERT INTO pat_scopes (id, pat_id, entity_type, workspace_id, operation, entity_id)
+		VALUES (:id, :pat_id, :entity_type, :workspace_id, :operation, :entity_id)`
 
 	var newScopes []auth.Scope
 
@@ -415,17 +415,17 @@ func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope,
 			FROM pat_scopes
 			WHERE pat_id = :pat_id
 			  AND entity_type = :entity_type
-			  AND domain_id = :domain_id
+			  AND workspace_id = :workspace_id
 			  AND operation = :operation
 			  AND entity_id = :entity_id
 		)`
 
 	params := dbScope{
-		PatID:      sc.PatID,
-		DomainID:   sc.DomainID,
-		EntityType: sc.EntityType.String(),
-		Operation:  sc.Operation,
-		EntityID:   auth.AnyIDs,
+		PatID:       sc.PatID,
+		WorkspaceID: sc.WorkspaceID,
+		EntityType:  sc.EntityType.String(),
+		Operation:   sc.Operation,
+		EntityID:    auth.AnyIDs,
 	}
 
 	rows, err := pr.db.NamedQueryContext(ctx, q, params)
@@ -452,15 +452,15 @@ func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope,
 				FROM pat_scopes
 				WHERE pat_id = :pat_id
 				AND entity_type = :entity_type
-				AND domain_id = :domain_id
+				AND workspace_id = :workspace_id
 				AND operation = :operation
 			)`
 
 		newParams := dbScope{
-			PatID:      sc.PatID,
-			DomainID:   sc.DomainID,
-			EntityType: sc.EntityType.String(),
-			Operation:  sc.Operation,
+			PatID:       sc.PatID,
+			WorkspaceID: sc.WorkspaceID,
+			EntityType:  sc.EntityType.String(),
+			Operation:   sc.Operation,
 		}
 
 		rows, err := pr.db.NamedQueryContext(ctx, checkEntityQuery, newParams)
@@ -482,7 +482,7 @@ func (pr *patRepo) processScope(ctx context.Context, sc auth.Scope) (auth.Scope,
 			SET entity_id = :entity_id
 			WHERE pat_id = :pat_id
 			AND entity_type = :entity_type
-			AND domain_id = :domain_id
+			AND workspace_id = :workspace_id
 			AND operation = :operation`
 
 			if _, err := pr.db.NamedExecContext(ctx, updateWithWildcardQuery, params); err != nil {
@@ -515,28 +515,28 @@ func (pr *patRepo) RemoveScope(ctx context.Context, userID string, scopesIDs ...
 	return nil
 }
 
-func (pr *patRepo) CheckScope(ctx context.Context, userID, patID string, entityType auth.EntityType, domainID string, operation string, entityID string) error {
+func (pr *patRepo) CheckScope(ctx context.Context, userID, patID string, entityType auth.EntityType, workspaceID string, operation string, entityID string) error {
 	q := `
-        SELECT id, pat_id, entity_type, domain_id, operation, entity_id
+        SELECT id, pat_id, entity_type, workspace_id, operation, entity_id
         FROM pat_scopes 
         WHERE pat_id = :pat_id 
           AND entity_type = :entity_type
-          AND domain_id = :domain_id
+          AND workspace_id = :workspace_id
           AND operation = :operation
           AND (entity_id = :entity_id OR entity_id = '*')
         LIMIT 1`
 
-	authorized := pr.cache.CheckScope(ctx, userID, patID, domainID, entityType, operation, entityID)
+	authorized := pr.cache.CheckScope(ctx, userID, patID, workspaceID, entityType, operation, entityID)
 	if authorized {
 		return nil
 	}
 
 	scope := dbScope{
-		PatID:      patID,
-		EntityType: entityType.String(),
-		DomainID:   domainID,
-		Operation:  operation,
-		EntityID:   entityID,
+		PatID:       patID,
+		EntityType:  entityType.String(),
+		WorkspaceID: workspaceID,
+		Operation:   operation,
+		EntityID:    entityID,
 	}
 
 	rows, err := pr.db.NamedQueryContext(ctx, q, scope)
@@ -556,19 +556,19 @@ func (pr *patRepo) CheckScope(ctx context.Context, userID, patID string, entityT
 			return errors.Wrap(repoerr.ErrViewEntity, err)
 		}
 		authScope := auth.Scope{
-			ID:         sc.ID,
-			PatID:      sc.PatID,
-			DomainID:   sc.DomainID,
-			EntityType: entityType,
-			EntityID:   sc.EntityID,
-			Operation:  sc.Operation,
+			ID:          sc.ID,
+			PatID:       sc.PatID,
+			WorkspaceID: sc.WorkspaceID,
+			EntityType:  entityType,
+			EntityID:    sc.EntityID,
+			Operation:   sc.Operation,
 		}
 
 		if err := pr.cache.Save(ctx, userID, []auth.Scope{authScope}); err != nil {
 			return err
 		}
 
-		if authScope.Authorized(entityType, domainID, operation, entityID) {
+		if authScope.Authorized(entityType, workspaceID, operation, entityID) {
 			return nil
 		}
 	}
@@ -625,7 +625,7 @@ func (pr *patRepo) RetrieveScope(ctx context.Context, pm auth.ScopesPageMeta) (a
 
 func (pr *patRepo) retrieveScopeFromDB(ctx context.Context, pm dbPagemeta) ([]auth.Scope, error) {
 	q := `
-		SELECT id, pat_id, entity_type, domain_id, operation, entity_id
+		SELECT id, pat_id, entity_type, workspace_id, operation, entity_id
 		FROM pat_scopes WHERE pat_id = :pat_id OFFSET :offset LIMIT :limit`
 	scopeRows, err := pr.db.NamedQueryContext(ctx, q, pm)
 	if err != nil {

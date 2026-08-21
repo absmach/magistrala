@@ -30,14 +30,14 @@ func TestStreamFilter(t *testing.T) {
 		{
 			name:   "specific topic filter",
 			prefix: "writers",
-			topic:  "writers/domain/c/channel/+",
-			want:   "domain/c/channel/+",
+			topic:  "writers/workspace/c/channel/+",
+			want:   "workspace/c/channel/+",
 		},
 		{
 			name:   "topic without prefix",
 			prefix: "alarms",
-			topic:  "domain/c/channel/#",
-			want:   "domain/c/channel/#",
+			topic:  "workspace/c/channel/#",
+			want:   "workspace/c/channel/#",
 		},
 	}
 
@@ -81,14 +81,14 @@ func TestTopicFilter(t *testing.T) {
 		{
 			name:   "specific topic",
 			prefix: "m",
-			topic:  "m/domain/c/channel/subtopic",
-			want:   "m/domain/c/channel/subtopic",
+			topic:  "m/workspace/c/channel/subtopic",
+			want:   "m/workspace/c/channel/subtopic",
 		},
 		{
 			name:   "single-level wildcard",
 			prefix: "m",
-			topic:  "m/domain/c/+/subtopic",
-			want:   "m/domain/c/+/subtopic",
+			topic:  "m/workspace/c/+/subtopic",
+			want:   "m/workspace/c/+/subtopic",
 		},
 	}
 
@@ -107,64 +107,64 @@ func TestParseMQTTTopic(t *testing.T) {
 		name      string
 		prefix    string
 		topic     string
-		domain    string
+		workspace string
 		channel   string
 		subtopic  string
 		shouldErr bool
 	}{
 		{
-			name:     "default prefix with subtopic path",
-			prefix:   "m",
-			topic:    "m/domain/c/channel/sub/topic",
-			domain:   "domain",
-			channel:  "channel",
-			subtopic: "sub/topic",
+			name:      "default prefix with subtopic path",
+			prefix:    "m",
+			topic:     "m/workspace/c/channel/sub/topic",
+			workspace: "workspace",
+			channel:   "channel",
+			subtopic:  "sub/topic",
 		},
 		{
-			name:     "alternate prefix without subtopic",
-			prefix:   "writers",
-			topic:    "writers/domain/c/channel",
-			domain:   "domain",
-			channel:  "channel",
-			subtopic: "",
+			name:      "alternate prefix without subtopic",
+			prefix:    "writers",
+			topic:     "writers/workspace/c/channel",
+			workspace: "workspace",
+			channel:   "channel",
+			subtopic:  "",
 		},
 		{
-			name:     "leading slash is ignored",
-			prefix:   "alarms",
-			topic:    "/alarms/domain/c/channel/critical/high",
-			domain:   "domain",
-			channel:  "channel",
-			subtopic: "critical/high",
+			name:      "leading slash is ignored",
+			prefix:    "alarms",
+			topic:     "/alarms/workspace/c/channel/critical/high",
+			workspace: "workspace",
+			channel:   "channel",
+			subtopic:  "critical/high",
 		},
 		{
 			name:      "mismatched prefix",
 			prefix:    "writers",
-			topic:     "m/domain/c/channel",
+			topic:     "m/workspace/c/channel",
 			shouldErr: true,
 		},
 		{
 			name:      "invalid shape",
 			prefix:    "m",
-			topic:     "m/domain/channel",
+			topic:     "m/workspace/channel",
 			shouldErr: true,
 		},
 		{
 			name:      "empty subtopic segment",
 			prefix:    "m",
-			topic:     "m/domain/c/channel/sub//topic",
+			topic:     "m/workspace/c/channel/sub//topic",
 			shouldErr: true,
 		},
 		{
 			name:      "dot topic is invalid",
 			prefix:    "m",
-			topic:     "m.domain.c.channel.sub.topic",
+			topic:     "m.workspace.c.channel.sub.topic",
 			shouldErr: true,
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			domain, channel, subtopic, err := parseMQTTTopic(tc.prefix, tc.topic)
+			workspace, channel, subtopic, err := parseMQTTTopic(tc.prefix, tc.topic)
 			if tc.shouldErr {
 				if err == nil {
 					t.Fatal("expected parse error, got nil")
@@ -175,37 +175,37 @@ func TestParseMQTTTopic(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected parse error: %v", err)
 			}
-			if domain != tc.domain || channel != tc.channel || subtopic != tc.subtopic {
-				t.Fatalf("parsed topic mismatch: got domain=%q channel=%q subtopic=%q", domain, channel, subtopic)
+			if workspace != tc.workspace || channel != tc.channel || subtopic != tc.subtopic {
+				t.Fatalf("parsed topic mismatch: got workspace=%q channel=%q subtopic=%q", workspace, channel, subtopic)
 			}
 		})
 	}
 }
 
 func TestParseMQTTTopicFromStreamRoutingKey(t *testing.T) {
-	// Stream queue routing keys have the format "$queue/<prefix>/<domain>/c/<channel>[/<subtopic>]".
+	// Stream queue routing keys have the format "$queue/<prefix>/<workspace>/c/<channel>[/<subtopic>]".
 	// After stripping "$queue/", the remainder is a valid MQTT-style topic for parseMQTTTopic.
 	cases := []struct {
 		name       string
 		routingKey string
 		prefix     string
-		domain     string
+		workspace  string
 		channel    string
 		subtopic   string
 	}{
 		{
 			name:       "writers queue with subtopic",
-			routingKey: "$queue/writers/domain/c/channel/temp",
+			routingKey: "$queue/writers/workspace/c/channel/temp",
 			prefix:     "writers",
-			domain:     "domain",
+			workspace:  "workspace",
 			channel:    "channel",
 			subtopic:   "temp",
 		},
 		{
 			name:       "main queue without subtopic",
-			routingKey: "$queue/m/domain/c/channel",
+			routingKey: "$queue/m/workspace/c/channel",
 			prefix:     "m",
-			domain:     "domain",
+			workspace:  "workspace",
 			channel:    "channel",
 			subtopic:   "",
 		},
@@ -213,7 +213,7 @@ func TestParseMQTTTopicFromStreamRoutingKey(t *testing.T) {
 			name:       "alarms queue with nested subtopic",
 			routingKey: "$queue/alarms/dom/c/ch/critical/high",
 			prefix:     "alarms",
-			domain:     "dom",
+			workspace:  "dom",
 			channel:    "ch",
 			subtopic:   "critical/high",
 		},
@@ -221,12 +221,12 @@ func TestParseMQTTTopicFromStreamRoutingKey(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			mqttTopic := strings.TrimPrefix(tc.routingKey, "$queue/")
-			domain, channel, subtopic, err := parseMQTTTopic(tc.prefix, mqttTopic)
+			workspace, channel, subtopic, err := parseMQTTTopic(tc.prefix, mqttTopic)
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if domain != tc.domain || channel != tc.channel || subtopic != tc.subtopic {
-				t.Fatalf("got domain=%q channel=%q subtopic=%q", domain, channel, subtopic)
+			if workspace != tc.workspace || channel != tc.channel || subtopic != tc.subtopic {
+				t.Fatalf("got workspace=%q channel=%q subtopic=%q", workspace, channel, subtopic)
 			}
 		})
 	}
@@ -256,8 +256,8 @@ func TestStringHeader(t *testing.T) {
 }
 
 func TestFormatConsumerName(t *testing.T) {
-	got := formatConsumerName("m/domain/c/channel/#", "re/service 1")
-	want := "m_domain_c_channel__-re_service_1"
+	got := formatConsumerName("m/workspace/c/channel/#", "re/service 1")
+	want := "m_workspace_c_channel__-re_service_1"
 	if got != want {
 		t.Fatalf("consumer name mismatch: got %q, want %q", got, want)
 	}

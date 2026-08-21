@@ -16,8 +16,8 @@ import (
 
 func TestDecodeReadMessagesRequestReadsDeviceIDs(t *testing.T) {
 	got, err := decodeReadMessagesRequest(context.Background(), &grpcReadersV1.ReadMessagesReq{
-		ChannelId: "channel",
-		DomainId:  "domain",
+		ChannelId:   "channel",
+		WorkspaceId: "workspace",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Limit:     10,
 			DeviceIds: []string{"meter-a", "meter-b"},
@@ -33,7 +33,7 @@ func TestDecodeReadMessagesRequestReadsDeviceIDs(t *testing.T) {
 func TestDecodeListGatewayDevicesRequest(t *testing.T) {
 	got, err := decodeListGatewayDevicesRequest(context.Background(), &grpcReadersV1.ListGatewayDevicesReq{
 		ChannelId:   "channel",
-		DomainId:    "domain",
+		WorkspaceId: "workspace",
 		PublisherId: "gateway-1",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Offset: 5,
@@ -47,7 +47,7 @@ func TestDecodeListGatewayDevicesRequest(t *testing.T) {
 	req, ok := got.(deviceViewReq)
 	require.True(t, ok)
 	assert.Equal(t, "channel", req.chanID)
-	assert.Equal(t, "domain", req.domain)
+	assert.Equal(t, "workspace", req.workspace)
 	assert.Equal(t, "gateway-1", req.filterVal)
 	assert.Equal(t, uint64(5), req.pageMeta.Offset)
 	assert.Equal(t, uint64(10), req.pageMeta.Limit)
@@ -57,9 +57,9 @@ func TestDecodeListGatewayDevicesRequest(t *testing.T) {
 
 func TestDecodeListDeviceGatewaysRequest(t *testing.T) {
 	got, err := decodeListDeviceGatewaysRequest(context.Background(), &grpcReadersV1.ListDeviceGatewaysReq{
-		ChannelId: "channel",
-		DomainId:  "domain",
-		DeviceId:  "Meter.A-01:X",
+		ChannelId:   "channel",
+		WorkspaceId: "workspace",
+		DeviceId:    "Meter.A-01:X",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Offset: 0,
 			Limit:  10,
@@ -83,7 +83,7 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 
 	gotGateway, err := decodeListGatewayDevicesRequest(context.Background(), &grpcReadersV1.ListGatewayDevicesReq{
 		ChannelId:   "channel",
-		DomainId:    "domain",
+		WorkspaceId: "workspace",
 		PublisherId: "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Offset: 0,
@@ -97,9 +97,9 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 	assert.InDelta(t, window, gatewayReq.pageMeta.To-gatewayReq.pageMeta.From, 2)
 
 	gotDevice, err := decodeListDeviceGatewaysRequest(context.Background(), &grpcReadersV1.ListDeviceGatewaysReq{
-		ChannelId: "channel",
-		DomainId:  "domain",
-		DeviceId:  "Meter.A-01:X",
+		ChannelId:   "channel",
+		WorkspaceId: "workspace",
+		DeviceId:    "Meter.A-01:X",
 		PageMetadata: &grpcReadersV1.PageMetadata{
 			Offset: 0,
 			Limit:  10,
@@ -120,7 +120,7 @@ func TestDecodeDeviceViewAppliesDefaultWindow(t *testing.T) {
 func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 	valid := deviceViewReq{
 		chanID:            "channel",
-		domain:            "domain",
+		workspace:         "workspace",
 		filterVal:         "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 		filterIsPublisher: true,
 		pageMeta:          readers.PageMetadata{Limit: 10},
@@ -133,7 +133,7 @@ func TestDeviceViewReqValidateRejectsMalformedPublisherID(t *testing.T) {
 
 	serial := deviceViewReq{
 		chanID:    "channel",
-		domain:    "domain",
+		workspace: "workspace",
 		filterVal: "Meter.A-01:X",
 		pageMeta:  readers.PageMetadata{Limit: 10},
 	}

@@ -38,22 +38,22 @@ The following actions are supported:
 - obtain (API keys only)
 - revoke (API keys only)
 
-## Domains
+## Workspaces
 
-Domains are used to group users and clients. Each domain has a unique `route` that is associated with the domain. Domains are used to group users and their entities.
+Workspaces are used to group users and clients. Each workspace has a unique `route` that is associated with the workspace. Workspaces are used to group users and their entities.
 
-Domain consists of the following fields:
+Workspace consists of the following fields:
 
-- ID - UUID uniquely representing domain
-- Name - name of the domain
+- ID - UUID uniquely representing workspace
+- Name - name of the workspace
 - Tags - array of tags
-- Metadata - Arbitrary, object-encoded domain's data
-- Route - unique route of the domain used in messaging
-- CreatedAt - timestamp at which the domain is created
-- UpdatedAt - timestamp at which the domain is updated
-- UpdatedBy - user that updated the domain
-- CreatedBy - user that created the domain
-- Status - domain status
+- Metadata - Arbitrary, object-encoded workspace's data
+- Route - unique route of the workspace used in messaging
+- CreatedAt - timestamp at which the workspace is created
+- UpdatedAt - timestamp at which the workspace is updated
+- UpdatedBy - user that updated the workspace
+- CreatedBy - user that created the workspace
+- Status - workspace status
 
 ## Configuration
 
@@ -218,7 +218,7 @@ PATs can be scoped to the following entity types:
 | `groups`     | User groups            |
 | `channels`   | Communication channels |
 | `clients`    | Client applications    |
-| `domains`    | Organizational domains |
+| `workspaces`    | Organizational workspaces |
 | `users`      | User accounts          |
 | `dashboards` | Dashboard interfaces   |
 | `messages`   | Message content        |
@@ -261,20 +261,20 @@ curl --location --request PATCH 'http://localhost:9001/pats/a2500226-95dc-4285-8
 --data '{
     "scopes": [
         {
-            "optional_domain_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
             "entity_type": "clients",
             "operation": "create",
             "entity_id": "*"
         },
         {
-            "optional_domain_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
             "entity_type": "channels",
             "operation": "create",
             "entity_id": "cfbc6936-5748-4339-a8ef-37b64b02bc96"
         },
         {
             "entity_type": "dashboards",
-            "optional_domain_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
+            "optional_workspace_id": "c16c980a-9d4c-4793-8fb2-c81304cf1d9f",
             "operation": "read",
             "entity_id": "*"
         }
@@ -340,7 +340,7 @@ curl --location 'http://localhost:9006/c16c980a-9d4c-4793-8fb2-c81304cf1d9f/clie
 }'
 ```
 
-This example shows how to create a client in a specific domain (`c16c980a-9d4c-4793-8fb2-c81304cf1d9f`) using a PAT for authentication. The PAT must have the appropriate scope (e.g., `clients` entity type with `create` operation) for this domain.
+This example shows how to create a client in a specific workspace (`c16c980a-9d4c-4793-8fb2-c81304cf1d9f`) using a PAT for authentication. The PAT must have the appropriate scope (e.g., `clients` entity type with `create` operation) for this workspace.
 
 ### Wildcard Entity IDs
 
@@ -355,44 +355,44 @@ Using wildcards should be done carefully, as they grant broader permissions. Alw
 
 ### Scope Examples
 
-#### Allow Creating Any Client in a Domain
+#### Allow Creating Any Client in a Workspace
 
 ```json
 {
-  "optional_domain_id": "domain_id",
+  "optional_workspace_id": "workspace_id",
   "entity_type": "clients",
   "operation": "create",
   "entity_id": "*"
 }
 ```
 
-This scope allows the PAT to create any client within the specified domain. The wildcard `*` for `entity_id` means the token can create any client, not just a specific one.
+This scope allows the PAT to create any client within the specified workspace. The wildcard `*` for `entity_id` means the token can create any client, not just a specific one.
 
 #### Allow Publishing to a Specific Channel
 
 ```json
 {
-  "optional_domain_id": "domain_id",
+  "optional_workspace_id": "workspace_id",
   "entity_type": "channels",
   "operation": "publish",
   "entity_id": "channel_id"
 }
 ```
 
-This scope restricts the PAT to only publish to a specific channel (`channel_id`) within the specified domain. No wildcard is used, so the permission is limited to just this one channel.
+This scope restricts the PAT to only publish to a specific channel (`channel_id`) within the specified workspace. No wildcard is used, so the permission is limited to just this one channel.
 
 #### Allow Reading All Dashboards
 
 ```json
 {
-  "optional_domain_id": "domain_id",
+  "optional_workspace_id": "workspace_id",
   "entity_type": "dashboards",
   "operation": "read",
   "entity_id": "*"
 }
 ```
 
-This scope allows the PAT to read all dashboards within the specified domain. The wildcard `*` for `entity_id` means the token can read any dashboard in that domain.
+This scope allows the PAT to read all dashboards within the specified workspace. The wildcard `*` for `entity_id` means the token can read any dashboard in that workspace.
 
 ### Best Practices
 
@@ -425,11 +425,11 @@ CREATE TABLE IF NOT EXISTS pats (
 CREATE TABLE IF NOT EXISTS pat_scopes (
     id                  VARCHAR(36) PRIMARY KEY,
     pat_id              VARCHAR(36) REFERENCES pats(id) ON DELETE CASCADE,
-    optional_domain_id  VARCHAR(36),
+    optional_workspace_id  VARCHAR(36),
     entity_type         VARCHAR(50) NOT NULL,
     operation           VARCHAR(50) NOT NULL,
     entity_id           VARCHAR(50) NOT NULL,
-    UNIQUE (pat_id, optional_domain_id, entity_type, operation, entity_id)
+    UNIQUE (pat_id, optional_workspace_id, entity_type, operation, entity_id)
 )
 ```
 

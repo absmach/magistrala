@@ -106,7 +106,7 @@ type BootstrapConfig struct {
 // BootstrapProfile represents a bootstrap profile template.
 type BootstrapProfile struct {
 	ID              string         `json:"id,omitempty"`
-	DomainID        string         `json:"domain_id,omitempty"`
+	WorkspaceID     string         `json:"workspace_id,omitempty"`
 	Name            string         `json:"name,omitempty"`
 	Description     string         `json:"description,omitempty"`
 	ContentFormat   string         `json:"content_format,omitempty"`
@@ -148,13 +148,13 @@ type bootstrapBindingsRes struct {
 	Bindings []BootstrapBindingSnapshot `json:"bindings"`
 }
 
-func (sdk mgSDK) AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, errors.SDKError) {
+func (sdk mgSDK) AddBootstrap(ctx context.Context, cfg BootstrapConfig, workspaceID, token string) (string, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return "", errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, workspaceID, configsEndpoint)
 
 	headers, _, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK, http.StatusCreated)
 	if sdkerr != nil {
@@ -166,13 +166,13 @@ func (sdk mgSDK) AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID
 	return id, nil
 }
 
-func (sdk mgSDK) CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, errors.SDKError) {
+func (sdk mgSDK) CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, workspaceID, token string) (BootstrapProfile, errors.SDKError) {
 	data, err := json.Marshal(profile)
 	if err != nil {
 		return BootstrapProfile{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapProfilesPath)
+	url := fmt.Sprintf("%s/%s/%s", sdk.bootstrapURL, workspaceID, bootstrapProfilesPath)
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK, http.StatusCreated)
 	if sdkerr != nil {
 		return BootstrapProfile{}, sdkerr
@@ -186,8 +186,8 @@ func (sdk mgSDK) CreateBootstrapProfile(ctx context.Context, profile BootstrapPr
 	return saved, nil
 }
 
-func (sdk mgSDK) Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", domainID, configsEndpoint)
+func (sdk mgSDK) Bootstraps(ctx context.Context, pm PageMetadata, workspaceID, token string) (BootstrapPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", workspaceID, configsEndpoint)
 	url, err := sdk.withQueryParams(sdk.bootstrapURL, endpoint, pm)
 	if err != nil {
 		return BootstrapPage{}, errors.NewSDKError(err)
@@ -206,8 +206,8 @@ func (sdk mgSDK) Bootstraps(ctx context.Context, pm PageMetadata, domainID, toke
 	return bb, nil
 }
 
-func (sdk mgSDK) BootstrapProfiles(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapProfilesPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", domainID, bootstrapProfilesPath)
+func (sdk mgSDK) BootstrapProfiles(ctx context.Context, pm PageMetadata, workspaceID, token string) (BootstrapProfilesPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", workspaceID, bootstrapProfilesPath)
 	url, err := sdk.withQueryParams(sdk.bootstrapURL, endpoint, pm)
 	if err != nil {
 		return BootstrapProfilesPage{}, errors.NewSDKError(err)
@@ -226,7 +226,7 @@ func (sdk mgSDK) BootstrapProfiles(ctx context.Context, pm PageMetadata, domainI
 	return page, nil
 }
 
-func (sdk mgSDK) Whitelist(ctx context.Context, id string, status BootstrapStatus, domainID, token string) errors.SDKError {
+func (sdk mgSDK) Whitelist(ctx context.Context, id string, status BootstrapStatus, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
@@ -241,18 +241,18 @@ func (sdk mgSDK) Whitelist(ctx context.Context, id string, status BootstrapStatu
 		return errors.NewSDKErrorWithStatus(errInvalidBootstrapStatus, http.StatusBadRequest)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, id, action)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, configsEndpoint, id, action)
 
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusOK)
 
 	return sdkerr
 }
 
-func (sdk mgSDK) ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) ViewBootstrap(ctx context.Context, id, workspaceID, token string) (BootstrapConfig, errors.SDKError) {
 	if id == "" {
 		return BootstrapConfig{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, configsEndpoint, id)
 
 	_, body, err := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
@@ -267,12 +267,12 @@ func (sdk mgSDK) ViewBootstrap(ctx context.Context, id, domainID, token string) 
 	return bc, nil
 }
 
-func (sdk mgSDK) ViewBootstrapProfile(ctx context.Context, id, domainID, token string) (BootstrapProfile, errors.SDKError) {
+func (sdk mgSDK) ViewBootstrapProfile(ctx context.Context, id, workspaceID, token string) (BootstrapProfile, errors.SDKError) {
 	if id == "" {
 		return BootstrapProfile{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapProfilesPath, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, bootstrapProfilesPath, id)
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return BootstrapProfile{}, sdkerr
@@ -286,11 +286,11 @@ func (sdk mgSDK) ViewBootstrapProfile(ctx context.Context, id, domainID, token s
 	return profile, nil
 }
 
-func (sdk mgSDK) UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) errors.SDKError {
+func (sdk mgSDK) UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, workspaceID, token string) errors.SDKError {
 	if cfg.ID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, cfg.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, configsEndpoint, cfg.ID)
 
 	data, err := json.Marshal(cfg)
 	if err != nil {
@@ -302,12 +302,12 @@ func (sdk mgSDK) UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domai
 	return sdkerr
 }
 
-func (sdk mgSDK) UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, errors.SDKError) {
+func (sdk mgSDK) UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, workspaceID, token string) (BootstrapProfile, errors.SDKError) {
 	if profile.ID == "" {
 		return BootstrapProfile{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapProfilesPath, profile.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, bootstrapProfilesPath, profile.ID)
 	data, err := json.Marshal(profile)
 	if err != nil {
 		return BootstrapProfile{}, errors.NewSDKError(err)
@@ -326,11 +326,11 @@ func (sdk mgSDK) UpdateBootstrapProfile(ctx context.Context, profile BootstrapPr
 	return updated, nil
 }
 
-func (sdk mgSDK) UpdateBootstrapCerts(ctx context.Context, id, clientCert, clientKey, ca, domainID, token string) (BootstrapConfig, errors.SDKError) {
+func (sdk mgSDK) UpdateBootstrapCerts(ctx context.Context, id, clientCert, clientKey, ca, workspaceID, token string) (BootstrapConfig, errors.SDKError) {
 	if id == "" {
 		return BootstrapConfig{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapCertsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, bootstrapCertsEndpoint, id)
 	request := BootstrapConfig{
 		ClientCert: clientCert,
 		ClientKey:  clientKey,
@@ -355,44 +355,44 @@ func (sdk mgSDK) UpdateBootstrapCerts(ctx context.Context, id, clientCert, clien
 	return bc, nil
 }
 
-func (sdk mgSDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) errors.SDKError {
+func (sdk mgSDK) UpdateBootstrapConnection(ctx context.Context, id string, channels []string, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 	_ = ctx
 	_ = channels
-	_ = domainID
+	_ = workspaceID
 	_ = token
 
 	return errors.NewSDKError(errBootstrapConnectionsDisabled)
 }
 
-func (sdk mgSDK) RemoveBootstrap(ctx context.Context, id, domainID, token string) errors.SDKError {
+func (sdk mgSDK) RemoveBootstrap(ctx context.Context, id, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, configsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, configsEndpoint, id)
 
 	_, _, err := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return err
 }
 
-func (sdk mgSDK) RemoveBootstrapProfile(ctx context.Context, id, domainID, token string) errors.SDKError {
+func (sdk mgSDK) RemoveBootstrapProfile(ctx context.Context, id, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, domainID, bootstrapProfilesPath, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.bootstrapURL, workspaceID, bootstrapProfilesPath, id)
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkerr
 }
 
-func (sdk mgSDK) AssignBootstrapProfile(ctx context.Context, configID, profileID, domainID, token string) errors.SDKError {
+func (sdk mgSDK) AssignBootstrapProfile(ctx context.Context, configID, profileID, workspaceID, token string) errors.SDKError {
 	if configID == "" || profileID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/profile", sdk.bootstrapURL, domainID, bootstrapEnrollmentsPath, configID)
+	url := fmt.Sprintf("%s/%s/%s/%s/profile", sdk.bootstrapURL, workspaceID, bootstrapEnrollmentsPath, configID)
 	request := struct {
 		ProfileID string `json:"profile_id"`
 	}{
@@ -407,12 +407,12 @@ func (sdk mgSDK) AssignBootstrapProfile(ctx context.Context, configID, profileID
 	return sdkerr
 }
 
-func (sdk mgSDK) BindBootstrapResources(ctx context.Context, configID string, bindings []BootstrapBindingRequest, domainID, token string) errors.SDKError {
+func (sdk mgSDK) BindBootstrapResources(ctx context.Context, configID string, bindings []BootstrapBindingRequest, workspaceID, token string) errors.SDKError {
 	if configID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/bindings", sdk.bootstrapURL, domainID, bootstrapEnrollmentsPath, configID)
+	url := fmt.Sprintf("%s/%s/%s/%s/bindings", sdk.bootstrapURL, workspaceID, bootstrapEnrollmentsPath, configID)
 	request := struct {
 		Bindings []BootstrapBindingRequest `json:"bindings"`
 	}{
@@ -427,12 +427,12 @@ func (sdk mgSDK) BindBootstrapResources(ctx context.Context, configID string, bi
 	return sdkerr
 }
 
-func (sdk mgSDK) BootstrapBindings(ctx context.Context, configID, domainID, token string) ([]BootstrapBindingSnapshot, errors.SDKError) {
+func (sdk mgSDK) BootstrapBindings(ctx context.Context, configID, workspaceID, token string) ([]BootstrapBindingSnapshot, errors.SDKError) {
 	if configID == "" {
 		return nil, errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/bindings", sdk.bootstrapURL, domainID, bootstrapEnrollmentsPath, configID)
+	url := fmt.Sprintf("%s/%s/%s/%s/bindings", sdk.bootstrapURL, workspaceID, bootstrapEnrollmentsPath, configID)
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
 		return nil, sdkerr
@@ -449,12 +449,12 @@ func (sdk mgSDK) BootstrapBindings(ctx context.Context, configID, domainID, toke
 	return res.Bindings, nil
 }
 
-func (sdk mgSDK) RefreshBootstrapBindings(ctx context.Context, configID, domainID, token string) errors.SDKError {
+func (sdk mgSDK) RefreshBootstrapBindings(ctx context.Context, configID, workspaceID, token string) errors.SDKError {
 	if configID == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/bindings/refresh", sdk.bootstrapURL, domainID, bootstrapEnrollmentsPath, configID)
+	url := fmt.Sprintf("%s/%s/%s/%s/bindings/refresh", sdk.bootstrapURL, workspaceID, bootstrapEnrollmentsPath, configID)
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusNoContent)
 	return sdkerr
 }

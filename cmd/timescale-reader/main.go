@@ -56,7 +56,7 @@ type config struct {
 
 // atomEventsConfig points this reader at the same AMQP broker every other
 // AMQP-speaking Magistrala service already uses (MG_MESSAGE_BROKER_URL) to
-// consume Atom's domain events (MG-14). Exchange/RoutingKey must match
+// consume Atom's workspace events (MG-14). Exchange/RoutingKey must match
 // Atom's own ATOM_EVENTS_AMQP_EXCHANGE/ATOM_EVENTS_AMQP_ROUTING_KEY --
 // docker/.env sets both pairs from the same values for exactly that reason.
 type atomEventsConfig struct {

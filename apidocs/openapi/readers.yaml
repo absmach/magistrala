@@ -33,7 +33,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/channels/{chanId}/messages:
+  /{workspaceID}/channels/{chanId}/messages:
     get:
       operationId: getMessages
       summary: Retrieves messages sent to single channel
@@ -45,7 +45,7 @@ paths:
       tags:
         - readers
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ChanId"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -142,9 +142,9 @@ components:
                 description: Time of updating measurement.
 
   parameters:
-    DomainID:
-      name: domainID
-      description: Unique domain identifier.
+    WorkspaceID:
+      name: workspaceID
+      description: Unique workspace identifier.
       in: path
       schema:
         type: string

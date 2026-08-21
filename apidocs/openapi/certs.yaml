@@ -31,7 +31,7 @@ security:
   - BearerAuth: []
 
 paths:
-  /{domainID}/certs/issue/{entityID}:
+  /{workspaceID}/certs/issue/{entityID}:
     post:
       tags:
         - certificates
@@ -41,7 +41,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/EntityID'
       requestBody:
         required: true
@@ -63,7 +63,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs/{id}/renew:
+  /{workspaceID}/certs/{id}/renew:
     patch:
       tags:
         - certificates
@@ -73,7 +73,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/CertID'
       responses:
         '200':
@@ -91,7 +91,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs/{id}/revoke:
+  /{workspaceID}/certs/{id}/revoke:
     patch:
       tags:
         - certificates
@@ -101,7 +101,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/CertID'
       responses:
         '204':
@@ -115,7 +115,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs/{entityID}/delete:
+  /{workspaceID}/certs/{entityID}/delete:
     delete:
       tags:
         - certificates
@@ -125,7 +125,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/EntityID'
       responses:
         '204':
@@ -137,7 +137,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs:
+  /{workspaceID}/certs:
     get:
       tags:
         - certificates
@@ -147,7 +147,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/EntityIDFilter'
@@ -165,7 +165,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs/{id}:
+  /{workspaceID}/certs/{id}:
     get:
       tags:
         - certificates
@@ -175,7 +175,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/CertID'
       responses:
         '200':
@@ -191,7 +191,7 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
 
-  /{domainID}/certs/csrs/{entityID}:
+  /{workspaceID}/certs/csrs/{entityID}:
     post:
       tags:
         - certificates
@@ -201,7 +201,7 @@ paths:
       security:
         - BearerAuth: []
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/EntityID'
         - $ref: '#/components/parameters/TTL'
       requestBody:
@@ -394,11 +394,11 @@ components:
       description: Agent authentication token for internal operations
 
   parameters:
-    DomainID:
-      name: domainID
+    WorkspaceID:
+      name: workspaceID
       in: path
       required: true
-      description: Domain identifier
+      description: Workspace identifier
       schema:
         type: string
     EntityID:

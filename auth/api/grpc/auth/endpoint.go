@@ -47,12 +47,12 @@ func authorizeEndpoint(svc auth.Service) endpoint.Endpoint {
 				EntityType: entityType,
 				EntityID:   req.EntityID,
 				Operation:  req.Operation,
-				Domain:     req.Domain,
+				Workspace:  req.Workspace,
 			}
 		}
 
 		err := svc.Authorize(ctx, policies.Policy{
-			Domain:      req.Domain,
+			Workspace:   req.Workspace,
 			SubjectType: req.SubjectType,
 			SubjectKind: req.SubjectKind,
 			Subject:     req.Subject,

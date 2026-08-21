@@ -32,10 +32,10 @@ servers:
         default: '8008'
 
 channels:
-  'm/{domainPrefix}/c/{channelPrefix}/{subtopic}':
+  'm/{workspacePrefix}/c/{channelPrefix}/{subtopic}':
     parameters:
-      domainPrefix:
-        $ref: '#/components/parameters/domainPrefix'
+      workspacePrefix:
+        $ref: '#/components/parameters/workspacePrefix'
         in: path
         required: true
       channelPrefix:
@@ -129,8 +129,8 @@ components:
 
         ```
   parameters:
-    domainPrefix:
-      description: ID or route of the domain associated with the channel and client.
+    workspacePrefix:
+      description: ID or route of the workspace associated with the channel and client.
       schema:
         type: string
     channelPrefix:

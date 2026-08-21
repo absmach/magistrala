@@ -19,7 +19,7 @@ const alarmsEndpoint = "alarms"
 type Alarm struct {
 	ID             string    `json:"id,omitempty"`
 	RuleID         string    `json:"rule_id,omitempty"`
-	DomainID       string    `json:"domain_id,omitempty"`
+	WorkspaceID    string    `json:"workspace_id,omitempty"`
 	ChannelID      string    `json:"channel_id,omitempty"`
 	ClientID       string    `json:"client_id,omitempty"`
 	Subtopic       string    `json:"subtopic,omitempty"`
@@ -50,13 +50,13 @@ type AlarmsPage struct {
 	Alarms []Alarm `json:"alarms"`
 }
 
-func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, errors.SDKError) {
+func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, errors.SDKError) {
 	data, err := json.Marshal(alarm)
 	if err != nil {
 		return Alarm{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, domainID, alarmsEndpoint, alarm.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, workspaceID, alarmsEndpoint, alarm.ID)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -71,8 +71,8 @@ func (sdk mgSDK) UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token s
 	return a, nil
 }
 
-func (sdk mgSDK) ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, domainID, alarmsEndpoint, id)
+func (sdk mgSDK) ViewAlarm(ctx context.Context, id, workspaceID, token string) (Alarm, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, workspaceID, alarmsEndpoint, id)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -87,8 +87,8 @@ func (sdk mgSDK) ViewAlarm(ctx context.Context, id, domainID, token string) (Ala
 	return a, nil
 }
 
-func (sdk mgSDK) ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", domainID, alarmsEndpoint)
+func (sdk mgSDK) ListAlarms(ctx context.Context, pm PageMetadata, workspaceID, token string) (AlarmsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", workspaceID, alarmsEndpoint)
 	url, err := sdk.withQueryParams(sdk.alarmsURL, endpoint, pm)
 	if err != nil {
 		return AlarmsPage{}, errors.NewSDKError(err)
@@ -107,8 +107,8 @@ func (sdk mgSDK) ListAlarms(ctx context.Context, pm PageMetadata, domainID, toke
 	return ap, nil
 }
 
-func (sdk mgSDK) DeleteAlarm(ctx context.Context, id, domainID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, domainID, alarmsEndpoint, id)
+func (sdk mgSDK) DeleteAlarm(ctx context.Context, id, workspaceID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.alarmsURL, workspaceID, alarmsEndpoint, id)
 
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent, http.StatusOK)
 	return sdkerr

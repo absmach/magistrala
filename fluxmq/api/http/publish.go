@@ -19,9 +19,9 @@ import (
 )
 
 const (
-	contentType        = "application/json"
-	httpProto          = "http"
-	domainIDContextKey = "domain_id"
+	contentType           = "application/json"
+	httpProto             = "http"
+	workspaceIDContextKey = "workspace_id"
 )
 
 type publishRequest struct {
@@ -58,7 +58,7 @@ func MakePublishHandler(
 		publisher: publisher,
 	}
 	r := chi.NewRouter()
-	r.Post("/{domainID}/channels/{channelID}/messages", h.publish)
+	r.Post("/{workspaceID}/channels/{channelID}/messages", h.publish)
 	r.Get("/health", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", contentType)
 		w.WriteHeader(http.StatusOK)
@@ -70,10 +70,10 @@ func MakePublishHandler(
 }
 
 func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
-	domainID := chi.URLParam(r, "domainID")
+	workspaceID := chi.URLParam(r, "workspaceID")
 	channelID := chi.URLParam(r, "channelID")
-	if domainID == "" || channelID == "" {
-		writeError(w, http.StatusBadRequest, "domainID and channelID are required")
+	if workspaceID == "" || channelID == "" {
+		writeError(w, http.StatusBadRequest, "workspaceID and channelID are required")
 		return
 	}
 
@@ -101,22 +101,22 @@ func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
 
 	publisherID := session.UserID
 	if req.ClientID != "" {
-		if err := h.ensureClientPublisher(r.Context(), domainID, channelID, session.UserID, req.ClientID); err != nil {
+		if err := h.ensureClientPublisher(r.Context(), workspaceID, channelID, session.UserID, req.ClientID); err != nil {
 			writeError(w, http.StatusForbidden, err.Error())
 			return
 		}
 		publisherID = req.ClientID
 	}
-	if err := h.ensureUserPublish(r.Context(), domainID, channelID, session.UserID, req.ClientID); err != nil {
+	if err := h.ensureUserPublish(r.Context(), workspaceID, channelID, session.UserID, req.ClientID); err != nil {
 		writeError(w, http.StatusForbidden, err.Error())
 		return
 	}
 
 	subtopic := cleanSubtopic(req.Subtopic)
-	topic := messaging.EncodeTopicSuffix(domainID, channelID, subtopic)
+	topic := messaging.EncodeTopicSuffix(workspaceID, channelID, subtopic)
 
 	msg := &messaging.Message{
-		Domain:    domainID,
+		Workspace: workspaceID,
 		Channel:   channelID,
 		Subtopic:  subtopic,
 		Publisher: publisherID,
@@ -139,7 +139,7 @@ func (h publishHandler) publish(w http.ResponseWriter, r *http.Request) {
 
 func (h publishHandler) ensureUserPublish(
 	ctx context.Context,
-	domainID string,
+	workspaceID string,
 	channelID string,
 	userID string,
 	clientID string,
@@ -151,7 +151,7 @@ func (h publishHandler) ensureUserPublish(
 		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
-			domainIDContextKey:    domainID,
+			workspaceIDContextKey: workspaceID,
 			"publisher_client_id": clientID,
 		},
 	})
@@ -166,7 +166,7 @@ func (h publishHandler) ensureUserPublish(
 
 func (h publishHandler) ensureClientPublisher(
 	ctx context.Context,
-	domainID string,
+	workspaceID string,
 	channelID string,
 	userID string,
 	clientID string,
@@ -178,8 +178,8 @@ func (h publishHandler) ensureClientPublisher(
 	if client.Kind != "device" && attrString(client.Attributes, "magistrala_kind") != atom.KindDevice {
 		return fmt.Errorf("publisher identity is not a client")
 	}
-	if client.TenantID == "" || client.TenantID != domainID {
-		return fmt.Errorf("publisher client belongs to a different domain")
+	if client.TenantID == "" || client.TenantID != workspaceID {
+		return fmt.Errorf("publisher client belongs to a different workspace")
 	}
 	userAccess, err := h.atom.CheckAuthz(ctx, atom.AuthzRequest{
 		SubjectID:  userID,
@@ -188,7 +188,7 @@ func (h publishHandler) ensureClientPublisher(
 		ObjectKind: "entity",
 		ObjectID:   clientID,
 		Context: map[string]any{
-			domainIDContextKey: domainID,
+			workspaceIDContextKey: workspaceID,
 		},
 	})
 	if err != nil {
@@ -204,7 +204,7 @@ func (h publishHandler) ensureClientPublisher(
 		ObjectKind: "resource",
 		ObjectID:   channelID,
 		Context: map[string]any{
-			domainIDContextKey: domainID,
+			workspaceIDContextKey: workspaceID,
 		},
 	})
 	if err != nil {

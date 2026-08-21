@@ -18,7 +18,7 @@ import (
 // value, so entries reach the reader byte-identically — device serials carry no
 // format constraint (MG-09) and would not survive being joined on a separator.
 func TestWithMessageQueryParamsRepeatsListFilters(t *testing.T) {
-	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "domain/channels/chan/messages", MessagePageMetadata{
+	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "workspace/channels/chan/messages", MessagePageMetadata{
 		Publishers: []string{"pub-a", "pub-b"},
 		DeviceIDs:  []string{"Meter.A-01:X", "meter/b,02"},
 		Publisher:  "pub-c",
@@ -35,7 +35,7 @@ func TestWithMessageQueryParamsRepeatsListFilters(t *testing.T) {
 }
 
 func TestWithMessageQueryParamsOmitsUnsetListFilters(t *testing.T) {
-	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "domain/channels/chan/messages", MessagePageMetadata{})
+	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "workspace/channels/chan/messages", MessagePageMetadata{})
 	require.NoError(t, err)
 
 	parsed, err := url.Parse(raw)
@@ -49,7 +49,7 @@ func TestWithMessageQueryParamsOmitsUnsetListFilters(t *testing.T) {
 // An empty slice is erased by `omitempty` exactly as a nil one is, so it cannot
 // express "match nothing" — the same contract readers.PageMetadata documents.
 func TestWithMessageQueryParamsDropsEmptyListFilters(t *testing.T) {
-	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "domain/channels/chan/messages", MessagePageMetadata{
+	raw, err := mgSDK{}.withMessageQueryParams("http://localhost", "workspace/channels/chan/messages", MessagePageMetadata{
 		DeviceIDs: []string{},
 	})
 	require.NoError(t, err)
@@ -64,7 +64,7 @@ func TestWithMessageQueryParamsDropsEmptyListFilters(t *testing.T) {
 // publisher id or device serial) plus the paging/time bounds as query
 // parameters — never as path segments, since a serial may contain `/`.
 func TestWithDeviceViewQueryParamsIncludesAnchorAndBounds(t *testing.T) {
-	raw, err := mgSDK{}.withDeviceViewQueryParams("http://localhost", "domain/channels/chan/devices", "device_id", "Meter.A-01:X", DeviceViewPageMetadata{
+	raw, err := mgSDK{}.withDeviceViewQueryParams("http://localhost", "workspace/channels/chan/devices", "device_id", "Meter.A-01:X", DeviceViewPageMetadata{
 		Offset: 5,
 		Limit:  10,
 		From:   100.5,
@@ -75,7 +75,7 @@ func TestWithDeviceViewQueryParamsIncludesAnchorAndBounds(t *testing.T) {
 	parsed, err := url.Parse(raw)
 	require.NoError(t, err)
 
-	assert.Equal(t, "/domain/channels/chan/devices", parsed.Path)
+	assert.Equal(t, "/workspace/channels/chan/devices", parsed.Path)
 	q := parsed.Query()
 	assert.Equal(t, []string{"Meter.A-01:X"}, q["device_id"])
 	assert.Equal(t, []string{"5"}, q["offset"])
@@ -87,13 +87,13 @@ func TestWithDeviceViewQueryParamsIncludesAnchorAndBounds(t *testing.T) {
 // The anchor value is URL-encoded, so a format-unconstrained serial (MG-09)
 // with `/`, spaces and `:` round-trips byte-identically.
 func TestWithDeviceViewQueryParamsEncodesAnchorValue(t *testing.T) {
-	raw, err := mgSDK{}.withDeviceViewQueryParams("http://localhost", "domain/channels/chan/publishers", "device_id", "meter/01:X y", DeviceViewPageMetadata{})
+	raw, err := mgSDK{}.withDeviceViewQueryParams("http://localhost", "workspace/channels/chan/publishers", "device_id", "meter/01:X y", DeviceViewPageMetadata{})
 	require.NoError(t, err)
 
 	parsed, err := url.Parse(raw)
 	require.NoError(t, err)
 
-	assert.Equal(t, "/domain/channels/chan/publishers", parsed.Path)
+	assert.Equal(t, "/workspace/channels/chan/publishers", parsed.Path)
 	assert.Equal(t, []string{"meter/01:X y"}, parsed.Query()["device_id"])
 	assert.Len(t, parsed.Query(), 1, "an empty DeviceViewPageMetadata must add no other parameters")
 }
@@ -125,11 +125,11 @@ func TestListGatewayDevicesBuildsURLAndUnmarshalsResponse(t *testing.T) {
 		client:         server.Client(),
 	}
 
-	page, sdkerr := mg.ListGatewayDevices(context.Background(), "chan-1", "gateway-1", DeviceViewPageMetadata{Limit: 10}, "domain-1", "token")
+	page, sdkerr := mg.ListGatewayDevices(context.Background(), "chan-1", "gateway-1", DeviceViewPageMetadata{Limit: 10}, "workspace-1", "token")
 	require.Nil(t, sdkerr)
 
 	assert.Equal(t, http.MethodGet, gotMeth)
-	assert.Equal(t, "/domain-1/channels/chan-1/devices", gotPath)
+	assert.Equal(t, "/workspace-1/channels/chan-1/devices", gotPath)
 	assert.Equal(t, "Bearer token", gotAuth)
 	assert.Equal(t, []string{"gateway-1"}, gotQuery["publisher"])
 	assert.Equal(t, []string{"10"}, gotQuery["limit"])
@@ -165,11 +165,11 @@ func TestListDeviceGatewaysBuildsURLAndUnmarshalsResponse(t *testing.T) {
 		client:         server.Client(),
 	}
 
-	page, sdkerr := mg.ListDeviceGateways(context.Background(), "chan-1", "Meter.A/01:X", DeviceViewPageMetadata{Limit: 10}, "domain-1", "token")
+	page, sdkerr := mg.ListDeviceGateways(context.Background(), "chan-1", "Meter.A/01:X", DeviceViewPageMetadata{Limit: 10}, "workspace-1", "token")
 	require.Nil(t, sdkerr)
 
 	assert.Equal(t, http.MethodGet, gotMeth)
-	assert.Equal(t, "/domain-1/channels/chan-1/publishers", gotPath)
+	assert.Equal(t, "/workspace-1/channels/chan-1/publishers", gotPath)
 	assert.Equal(t, []string{"Meter.A/01:X"}, gotQuery["device_id"])
 
 	require.Len(t, page.Publishers, 2)

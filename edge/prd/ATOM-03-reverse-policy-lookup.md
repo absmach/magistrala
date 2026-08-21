@@ -27,7 +27,7 @@ Two consequences:
 
 "Who can access X" is the inverse of "what can this subject access", which Atom
 already answers. Every system with a sharing model needs both directions. No
-domain semantics are introduced.
+workspace semantics are introduced.
 
 ## Scope
 

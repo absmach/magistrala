@@ -61,11 +61,11 @@ See [spec §2.4](../architecture.md#24-declared-and-observed) and
 ### Shape
 
 ```
-GET /{domainID}/gateways/{id}/devices?from=…&to=…
+GET /{workspaceID}/gateways/{id}/devices?from=…&to=…
   → [ { serial, status, last_seen, message_count, device_id? }, … ]
        status ∈ healthy | silent | undeclared
 
-GET /{domainID}/devices/{id}/gateways
+GET /{workspaceID}/devices/{id}/gateways
   → [ { gateway_id, declared, last_seen, message_count }, … ]
 ```
 

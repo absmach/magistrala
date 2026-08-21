@@ -60,10 +60,10 @@ func TestHandlerInvalidatesMappedFamily(t *testing.T) {
 			registry.Register(tc.family, inv)
 
 			h := NewHandler(registry, nil)
-			ev := rawEvent{data: map[string]any{"event": tc.event, "tenant_id": "domain-1"}}
+			ev := rawEvent{data: map[string]any{"event": tc.event, "tenant_id": "workspace-1"}}
 
 			require.NoError(t, h.Handle(context.Background(), ev))
-			assert.Equal(t, []string{"domain-1"}, inv.keys)
+			assert.Equal(t, []string{"workspace-1"}, inv.keys)
 		})
 	}
 }
@@ -84,11 +84,11 @@ func TestHandlerEntityLifecycleInvalidatesBothFamilies(t *testing.T) {
 			registry.Register(FamilyAuthorizedSet, authorized)
 
 			h := NewHandler(registry, nil)
-			ev := rawEvent{data: map[string]any{"event": event, "tenant_id": "domain-1"}}
+			ev := rawEvent{data: map[string]any{"event": event, "tenant_id": "workspace-1"}}
 
 			require.NoError(t, h.Handle(context.Background(), ev))
-			assert.Equal(t, []string{"domain-1"}, translation.keys)
-			assert.Equal(t, []string{"domain-1"}, authorized.keys)
+			assert.Equal(t, []string{"workspace-1"}, translation.keys)
+			assert.Equal(t, []string{"workspace-1"}, authorized.keys)
 		})
 	}
 }
@@ -163,7 +163,7 @@ func TestHandlerIgnoresUnrecognisedEvent(t *testing.T) {
 	registry.Register(FamilyAuthorizedSet, inv)
 
 	h := NewHandler(registry, nil)
-	ev := rawEvent{data: map[string]any{"event": "audit.log", "tenant_id": "domain-1"}}
+	ev := rawEvent{data: map[string]any{"event": "audit.log", "tenant_id": "workspace-1"}}
 
 	require.NoError(t, h.Handle(context.Background(), ev))
 	assert.Empty(t, inv.keys, "an event this consumer does not track must never invalidate anything")
@@ -195,12 +195,12 @@ func TestHandleDuplicateDeliveryIsHarmless(t *testing.T) {
 	registry.Register(FamilyTranslation, inv)
 
 	h := NewHandler(registry, nil)
-	ev := rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "domain-1"}}
+	ev := rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "workspace-1"}}
 
 	require.NoError(t, h.Handle(context.Background(), ev))
 	require.NoError(t, h.Handle(context.Background(), ev))
 
-	assert.Equal(t, []string{"domain-1", "domain-1"}, inv.keys, "replaying the same event must not error even though it invalidates twice")
+	assert.Equal(t, []string{"workspace-1", "workspace-1"}, inv.keys, "replaying the same event must not error even though it invalidates twice")
 }
 
 func TestHandleScopesInvalidationToEventsOwnTenant(t *testing.T) {
@@ -210,8 +210,8 @@ func TestHandleScopesInvalidationToEventsOwnTenant(t *testing.T) {
 
 	h := NewHandler(registry, nil)
 
-	require.NoError(t, h.Handle(context.Background(), rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "domain-1"}}))
-	require.NoError(t, h.Handle(context.Background(), rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "domain-2"}}))
+	require.NoError(t, h.Handle(context.Background(), rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "workspace-1"}}))
+	require.NoError(t, h.Handle(context.Background(), rawEvent{data: map[string]any{"event": "entity.update", "tenant_id": "workspace-2"}}))
 
-	assert.Equal(t, []string{"domain-1", "domain-2"}, inv.keys, "each event must only carry its own tenant into the invalidation")
+	assert.Equal(t, []string{"workspace-1", "workspace-2"}, inv.keys, "each event must only carry its own tenant into the invalidation")
 }

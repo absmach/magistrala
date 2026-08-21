@@ -29,7 +29,7 @@ func (c *authzClient) CheckAuthz(_ context.Context, req atom.AuthzRequest) (atom
 
 func TestAuthorizeBuildsResourceRequest(t *testing.T) {
 	client := &authzClient{res: atom.AuthzResponse{Allowed: true}}
-	session := authn.Session{UserID: "user-1", DomainID: "domain-1"}
+	session := authn.Session{UserID: "user-1", WorkspaceID: "workspace-1"}
 
 	err := atom.Authorize(context.Background(), client, session, "view", policies.RulesType, "rule-1", atom.KindRule)
 
@@ -41,7 +41,7 @@ func TestAuthorizeBuildsResourceRequest(t *testing.T) {
 		ObjectKind: "resource",
 		ObjectID:   "rule-1",
 		Context: map[string]any{
-			"domain_id":          "domain-1",
+			"workspace_id":       "workspace-1",
 			"legacy_object_type": policies.RulesType,
 		},
 	}, client.req)
@@ -49,13 +49,13 @@ func TestAuthorizeBuildsResourceRequest(t *testing.T) {
 
 func TestAuthorizeBuildsTenantRequest(t *testing.T) {
 	client := &authzClient{res: atom.AuthzResponse{Allowed: true}}
-	session := authn.Session{UserID: "user-1", DomainID: "domain-1"}
+	session := authn.Session{UserID: "user-1", WorkspaceID: "workspace-1"}
 
-	err := atom.Authorize(context.Background(), client, session, "create", policies.DomainType, "domain-1", atom.KindRule)
+	err := atom.Authorize(context.Background(), client, session, "create", policies.WorkspaceType, "workspace-1", atom.KindRule)
 
 	assert.NoError(t, err)
 	assert.Equal(t, "tenant", client.req.ObjectKind)
-	assert.Equal(t, "domain-1", client.req.ObjectID)
+	assert.Equal(t, "workspace-1", client.req.ObjectID)
 	assert.Empty(t, client.req.ResourceID)
 }
 
@@ -72,10 +72,10 @@ func TestChannelsCompatAuthorizeBuildsResourceRequest(t *testing.T) {
 	compat := atom.NewChannelsCompat(client)
 
 	res, err := compat.Authorize(context.Background(), &channelsv1.AuthzReq{
-		ClientId:  "domain-1_user-1",
-		DomainId:  "domain-1",
-		Type:      uint32(connections.Subscribe),
-		ChannelId: "channel-1",
+		ClientId:    "workspace-1_user-1",
+		WorkspaceId: "workspace-1",
+		Type:        uint32(connections.Subscribe),
+		ChannelId:   "channel-1",
 	})
 
 	assert.NoError(t, err)
@@ -87,7 +87,7 @@ func TestChannelsCompatAuthorizeBuildsResourceRequest(t *testing.T) {
 		ObjectKind: "resource",
 		ObjectID:   "channel-1",
 		Context: map[string]any{
-			"domain_id": "domain-1",
+			"workspace_id": "workspace-1",
 		},
 	}, client.req)
 }

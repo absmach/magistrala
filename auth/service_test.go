@@ -42,7 +42,7 @@ var (
 	ErrExpiry    = errors.New("token is expired")
 	inValidToken = "invalid"
 	userID       = testsutil.GenerateUUID(&testing.T{})
-	domainID     = testsutil.GenerateUUID(&testing.T{})
+	workspaceID  = testsutil.GenerateUUID(&testing.T{})
 	accessKey    = auth.Key{
 		IssuedAt:  time.Now(),
 		ExpiresAt: time.Now().Add(refreshDuration),
@@ -884,20 +884,20 @@ func TestAuthorize(t *testing.T) {
 	svc, _ := newService(t)
 
 	cases := []struct {
-		desc                 string
-		policyReq            policies.Policy
-		patAuthz             *auth.PATAuthz
-		checkDomainPolicyReq policies.Policy
-		checkPolicyReq       policies.Policy
-		patErr               error
-		parseReq             string
-		parseRes             auth.Key
-		parseErr             error
-		callBackErr          error
-		checkPolicyErr       error
-		checkDomainPolicyErr error
-		authorizePATErr      error
-		err                  error
+		desc                    string
+		policyReq               policies.Policy
+		patAuthz                *auth.PATAuthz
+		checkWorkspacePolicyReq policies.Policy
+		checkPolicyReq          policies.Policy
+		patErr                  error
+		parseReq                string
+		parseRes                auth.Key
+		parseErr                error
+		callBackErr             error
+		checkPolicyErr          error
+		checkWorkspacePolicyErr error
+		authorizePATErr         error
+		err                     error
 	}{
 		{
 			desc: "authorize a user key successfully",
@@ -915,11 +915,11 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
-			checkDomainPolicyReq: policies.Policy{
+			checkWorkspacePolicyReq: policies.Policy{
 				Subject:     userID,
 				SubjectType: policies.UserType,
 				Object:      validID,
-				ObjectType:  policies.DomainType,
+				ObjectType:  policies.WorkspaceType,
 				Permission:  policies.MembershipPermission,
 			},
 			err: nil,
@@ -933,7 +933,7 @@ func TestAuthorize(t *testing.T) {
 				Object:      validID,
 				ObjectType:  policies.ClientType,
 				Permission:  policies.ViewPermission,
-				Domain:      domainID,
+				Workspace:   workspaceID,
 			},
 			patAuthz: &auth.PATAuthz{
 				PatID:      validID,
@@ -941,13 +941,13 @@ func TestAuthorize(t *testing.T) {
 				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "read",
-				Domain:     domainID,
+				Workspace:  workspaceID,
 			},
-			checkDomainPolicyReq: policies.Policy{
+			checkWorkspacePolicyReq: policies.Policy{
 				Subject:     userID,
 				SubjectType: policies.UserType,
-				Object:      domainID,
-				ObjectType:  policies.DomainType,
+				Object:      workspaceID,
+				ObjectType:  policies.WorkspaceType,
 				Permission:  policies.MembershipPermission,
 			},
 			checkPolicyReq: policies.Policy{
@@ -957,7 +957,7 @@ func TestAuthorize(t *testing.T) {
 				Object:      validID,
 				ObjectType:  policies.ClientType,
 				Permission:  policies.ViewPermission,
-				Domain:      domainID,
+				Workspace:   workspaceID,
 			},
 			err: nil,
 		},
@@ -974,7 +974,7 @@ func TestAuthorize(t *testing.T) {
 				PatID:      validID,
 				UserID:     userID,
 				EntityType: auth.ChannelsType,
-				Domain:     domainID,
+				Workspace:  workspaceID,
 				Operation:  auth.OpListChannels,
 				EntityID:   auth.AnyIDs,
 			},
@@ -1001,7 +1001,7 @@ func TestAuthorize(t *testing.T) {
 				PatID:      validID,
 				UserID:     userID,
 				EntityType: auth.EntityType(100),
-				Domain:     domainID,
+				Workspace:  workspaceID,
 				Operation:  auth.OpListChannels,
 				EntityID:   auth.AnyIDs,
 			},
@@ -1012,8 +1012,8 @@ func TestAuthorize(t *testing.T) {
 				ObjectType:  policies.PlatformType,
 				Permission:  policies.AdminPermission,
 			},
-			patErr: errors.New("unknown domain entity type invalid"),
-			err:    errors.New("unknown domain entity type invalid"),
+			patErr: errors.New("unknown workspace entity type invalid"),
+			err:    errors.New("unknown workspace entity type invalid"),
 		},
 
 		{
@@ -1032,7 +1032,7 @@ func TestAuthorize(t *testing.T) {
 				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "read",
-				Domain:     domainID,
+				Workspace:  workspaceID,
 			},
 			checkPolicyReq:  policies.Policy{},
 			authorizePATErr: svcerr.ErrAuthorization,
@@ -1055,7 +1055,7 @@ func TestAuthorize(t *testing.T) {
 				EntityType: auth.DevicesType,
 				EntityID:   validID,
 				Operation:  "write",
-				Domain:     domainID,
+				Workspace:  workspaceID,
 			},
 			checkPolicyReq:  policies.Policy{},
 			authorizePATErr: svcerr.ErrAuthorization,
@@ -1093,7 +1093,7 @@ func TestAuthorize(t *testing.T) {
 				if patErr == nil {
 					patErr = tc.authorizePATErr
 				}
-				patCall = patsrepo.On("CheckScope", mock.Anything, tc.patAuthz.UserID, tc.patAuthz.PatID, tc.patAuthz.EntityType, tc.patAuthz.Domain, tc.patAuthz.Operation, tc.patAuthz.EntityID).Return(patErr)
+				patCall = patsrepo.On("CheckScope", mock.Anything, tc.patAuthz.UserID, tc.patAuthz.PatID, tc.patAuthz.EntityType, tc.patAuthz.Workspace, tc.patAuthz.Operation, tc.patAuthz.EntityID).Return(patErr)
 			}
 			repoCall := krepo.On("Remove", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 			err := svc.Authorize(context.Background(), tc.policyReq, tc.patAuthz)
@@ -1154,85 +1154,85 @@ func TestSwitchToPermission(t *testing.T) {
 	}
 }
 
-func TestEncodeDomainUserID(t *testing.T) {
+func TestEncodeWorkspaceUserID(t *testing.T) {
 	cases := []struct {
-		desc     string
-		domainID string
-		userID   string
-		response string
+		desc        string
+		workspaceID string
+		userID      string
+		response    string
 	}{
 		{
-			desc:     "encode domain user id successfully",
-			domainID: validID,
-			userID:   validID,
-			response: validID + "_" + validID,
+			desc:        "encode workspace user id successfully",
+			workspaceID: validID,
+			userID:      validID,
+			response:    validID + "_" + validID,
 		},
 		{
-			desc:     "encode domain user id with empty userID",
-			domainID: validID,
-			userID:   "",
-			response: "",
+			desc:        "encode workspace user id with empty userID",
+			workspaceID: validID,
+			userID:      "",
+			response:    "",
 		},
 		{
-			desc:     "encode domain user id with empty domain ID",
-			domainID: "",
-			userID:   validID,
-			response: "",
+			desc:        "encode workspace user id with empty workspace ID",
+			workspaceID: "",
+			userID:      validID,
+			response:    "",
 		},
 		{
-			desc:     "encode domain user id with empty domain ID and userID",
-			domainID: "",
-			userID:   "",
-			response: "",
+			desc:        "encode workspace user id with empty workspace ID and userID",
+			workspaceID: "",
+			userID:      "",
+			response:    "",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ar := auth.EncodeDomainUserID(tc.domainID, tc.userID)
+			ar := auth.EncodeWorkspaceUserID(tc.workspaceID, tc.userID)
 			assert.Equal(t, tc.response, ar, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.response, ar))
 		})
 	}
 }
 
-func TestDecodeDomainUserID(t *testing.T) {
+func TestDecodeWorkspaceUserID(t *testing.T) {
 	cases := []struct {
-		desc         string
-		domainUserID string
-		respDomainID string
-		respUserID   string
+		desc            string
+		workspaceUserID string
+		respWorkspaceID string
+		respUserID      string
 	}{
 		{
-			desc:         "decode domain user id successfully",
-			domainUserID: validID + "_" + validID,
-			respDomainID: validID,
-			respUserID:   validID,
+			desc:            "decode workspace user id successfully",
+			workspaceUserID: validID + "_" + validID,
+			respWorkspaceID: validID,
+			respUserID:      validID,
 		},
 		{
-			desc:         "decode domain user id with empty domainUserID",
-			domainUserID: "",
-			respDomainID: "",
-			respUserID:   "",
+			desc:            "decode workspace user id with empty workspaceUserID",
+			workspaceUserID: "",
+			respWorkspaceID: "",
+			respUserID:      "",
 		},
 		{
-			desc:         "decode domain user id with empty UserID",
-			domainUserID: validID,
-			respDomainID: validID,
-			respUserID:   "",
+			desc:            "decode workspace user id with empty UserID",
+			workspaceUserID: validID,
+			respWorkspaceID: validID,
+			respUserID:      "",
 		},
 		{
-			desc:         "decode domain user id with invalid domainuserId",
-			domainUserID: validID + "_" + validID + "_" + validID + "_" + validID,
-			respDomainID: "",
-			respUserID:   "",
+			desc:            "decode workspace user id with invalid workspaceuserId",
+			workspaceUserID: validID + "_" + validID + "_" + validID + "_" + validID,
+			respWorkspaceID: "",
+			respUserID:      "",
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.desc, func(t *testing.T) {
-			ar, er := auth.DecodeDomainUserID(tc.domainUserID)
+			ar, er := auth.DecodeWorkspaceUserID(tc.workspaceUserID)
 			assert.Equal(t, tc.respUserID, er, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.respUserID, er))
-			assert.Equal(t, tc.respDomainID, ar, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.respDomainID, ar))
+			assert.Equal(t, tc.respWorkspaceID, ar, fmt.Sprintf("%s expected %s got %s\n", tc.desc, tc.respWorkspaceID, ar))
 		})
 	}
 }

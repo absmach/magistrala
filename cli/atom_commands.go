@@ -5,17 +5,17 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
-	"github.com/absmach/magistrala/pkg/atom"
 	"github.com/spf13/cobra"
 )
 
 // Command names, also used by the GraphQL responses that carry the same name.
 const (
-	cmdDomains  = "domains"
-	cmdChannels = "channels"
-	cmdGroups   = "groups"
+	cmdWorkspaces = "workspaces"
+	cmdChannels   = "channels"
+	cmdGroups     = "groups"
 )
 
 // GraphQL variable and input object keys.
@@ -55,9 +55,9 @@ const (
 )
 
 const (
-	useList           = "list"
-	useCreateInDomain = "create <domain_id> <name>"
-	useListInDomain   = "list <domain_id>"
+	useList              = "list"
+	useCreateInWorkspace = "create <workspace_id> <name>"
+	useListInWorkspace   = "list <workspace_id>"
 
 	defaultEntityKind   = "device"
 	defaultResourceKind = "channel"
@@ -85,15 +85,19 @@ const (
   }
 }`
 
-	getDomainQuery = `query GetDomain($id: ID!) {
+	getWorkspaceQuery = `query GetWorkspace($id: ID!) {
   tenant(id: $id) { ` + tenantFields + ` }
 }`
 
-	listDomainsQuery = `query ListDomains($limit: Int, $offset: Int) {
+	listWorkspacesQuery = `query ListWorkspaces($limit: Int, $offset: Int) {
   tenants(limit: $limit, offset: $offset) {
     total
     items { ` + tenantFields + ` }
   }
+}`
+
+	createWorkspaceMutation = `mutation CreateWorkspace($input: CreateTenantInput!) {
+  createTenant(input: $input) { ` + tenantFields + ` }
 }`
 
 	getChannelQuery = `query GetChannel($id: ID!) {
@@ -156,6 +160,8 @@ type gqlCmdConfig struct {
 	vars func(args []string) (map[string]any, error)
 	// flags registers command specific flags.
 	flags func(cmd *cobra.Command)
+	// after runs after a successful GraphQL operation and before output.
+	after func(cmd *cobra.Command, value json.RawMessage) error
 }
 
 func newGQLCmd(opts *rootOptions, cfg gqlCmdConfig) *cobra.Command {
@@ -191,6 +197,11 @@ func newGQLCmd(opts *rootOptions, cfg gqlCmdConfig) *cobra.Command {
 			value, err := client.do(cmd.Context(), query, variables, field)
 			if err != nil {
 				return err
+			}
+			if cfg.after != nil {
+				if err := cfg.after(cmd, value); err != nil {
+					return err
+				}
 			}
 
 			return writeOutput(cmd, value)
@@ -243,62 +254,68 @@ func newLoginCmd(opts *rootOptions) *cobra.Command {
 	})
 }
 
-func newDomainsCmd(opts *rootOptions) *cobra.Command {
-	cmd := &cobra.Command{Use: cmdDomains, Short: "Manage Magistrala domains through Atom tenants"}
+func newWorkspacesCmd(opts *rootOptions) *cobra.Command {
+	cmd := &cobra.Command{Use: cmdWorkspaces, Short: "Manage Magistrala workspaces through Atom tenants"}
 	cmd.AddCommand(
-		newDomainCreateCmd(opts),
-		newDomainListCmd(opts),
-		newGetCmd(opts, "get <domain_id>", "Get a domain", getDomainQuery, respTenant),
+		newWorkspaceCreateCmd(opts),
+		newWorkspaceListCmd(opts),
+		newGetCmd(opts, "get <workspace_id>", "Get a workspace", getWorkspaceQuery, respTenant),
 	)
 
 	return cmd
 }
 
-func newDomainCreateCmd(opts *rootOptions) *cobra.Command {
+func newWorkspaceCreateCmd(opts *rootOptions) *cobra.Command {
 	var alias, attrs string
 
-	cmd := &cobra.Command{
-		Use:   "create <name>",
-		Short: "Create a domain",
-		Args:  cobra.ExactArgs(1),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.SilenceUsage = true
-			if !requireAtomClient(cmd) {
-				return nil
-			}
+	return newGQLCmd(opts, gqlCmdConfig{
+		use:   "create <name>",
+		short: "Create a workspace",
+		args:  cobra.ExactArgs(1),
+		query: createWorkspaceMutation,
+		field: respCreateTenant,
+		vars: func(args []string) (map[string]any, error) {
 			attributes, err := parseJSONFlag(attrs)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			tenant, err := atomClient.CreateTenant(cmd.Context(), atom.Tenant{
-				Name:       args[0],
-				Route:      alias,
-				Attributes: attributes,
-			})
-			if err != nil {
-				return err
+			input := gqlInput{
+				varName: args[0],
 			}
+			input.setString(varAlias, alias)
+			input.setObject(varAttributes, attributes)
 
-			raw, err := json.Marshal(tenant)
-			if err != nil {
-				return err
-			}
-			return writeOutput(cmd, raw)
+			return map[string]any{varInput: input}, nil
 		},
-	}
-	cmd.Flags().StringVar(&alias, varAlias, "", "domain alias")
-	cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
-
-	return cmd
+		after: func(cmd *cobra.Command, value json.RawMessage) error {
+			if atomClient == nil {
+				return errors.New("atom client is not configured: call cli.SetAtomClient before running this command")
+			}
+			var tenant struct {
+				ID string `json:"id"`
+			}
+			if err := json.Unmarshal(value, &tenant); err != nil {
+				return err
+			}
+			if tenant.ID == "" {
+				return errors.New("created workspace response missing id")
+			}
+			return atomClient.SeedDefaultDeviceTypes(cmd.Context(), tenant.ID)
+		},
+		flags: func(cmd *cobra.Command) {
+			cmd.Flags().StringVar(&alias, varAlias, "", "workspace alias")
+			cmd.Flags().StringVar(&attrs, varAttributes, "", "JSON attributes")
+		},
+	})
 }
 
-func newDomainListCmd(opts *rootOptions) *cobra.Command {
+func newWorkspaceListCmd(opts *rootOptions) *cobra.Command {
 	return newGQLCmd(opts, gqlCmdConfig{
 		use:   useList,
-		short: "List domains",
+		short: "List workspaces",
 		args:  cobra.NoArgs,
-		query: listDomainsQuery,
+		query: listWorkspacesQuery,
 		field: respTenants,
 		vars: func(_ []string) (map[string]any, error) {
 			return listVariables(), nil
@@ -321,7 +338,7 @@ func newChannelCreateCmd(opts *rootOptions) *cobra.Command {
 	var alias, kind, ownerID, attrs string
 
 	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useCreateInDomain,
+		use:   useCreateInWorkspace,
 		short: "Create a channel",
 		args:  cobra.ExactArgs(2),
 		query: createChannelMutation,
@@ -352,7 +369,7 @@ func newChannelListCmd(opts *rootOptions) *cobra.Command {
 	var kind string
 
 	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useListInDomain,
+		use:   useListInWorkspace,
 		short: "List channels",
 		args:  cobra.ExactArgs(1),
 		query: listChannelsQuery,
@@ -388,7 +405,7 @@ func newGroupCreateCmd(opts *rootOptions) *cobra.Command {
 	var groupType, description, attrs string
 
 	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useCreateInDomain,
+		use:   useCreateInWorkspace,
 		short: "Create a group",
 		args:  cobra.ExactArgs(2),
 		operation: func() (string, string, error) {
@@ -427,7 +444,7 @@ func newGroupCreateCmd(opts *rootOptions) *cobra.Command {
 
 func newGroupListCmd(opts *rootOptions) *cobra.Command {
 	return newGQLCmd(opts, gqlCmdConfig{
-		use:   useListInDomain,
+		use:   useListInWorkspace,
 		short: "List groups",
 		args:  cobra.ExactArgs(1),
 		query: listGroupsQuery,

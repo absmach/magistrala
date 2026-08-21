@@ -34,10 +34,11 @@ services:
       - bootstrap-db
     restart: on-failure
     ports:
-      - ${MG_BOOTSTRAP_HTTP_PORT}:${MG_BOOTSTRAP_HTTP_PORT}
+      - ${MG_BOOTSTRAP_HOST_PORT:-9010}:${MG_BOOTSTRAP_HTTP_PORT}
     environment:
       MG_BOOTSTRAP_LOG_LEVEL: ${MG_BOOTSTRAP_LOG_LEVEL}
-      MG_BOOTSTRAP_ENCRYPT_KEY: ${MG_BOOTSTRAP_ENCRYPT_KEY}
+      MG_BOOTSTRAP_DB_ENCRYPTION_KEY: ${MG_BOOTSTRAP_DB_ENCRYPTION_KEY}
+      MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID: ${MG_BOOTSTRAP_DB_ENCRYPTION_KEY_ID}
       MG_BOOTSTRAP_EVENT_CONSUMER: ${MG_BOOTSTRAP_EVENT_CONSUMER}
       MG_ES_URL: ${MG_ES_URL}
       MG_BOOTSTRAP_HTTP_HOST: ${MG_BOOTSTRAP_HTTP_HOST}
@@ -66,28 +67,15 @@ services:
       MG_DOMAINS_GRPC_SERVER_CA_CERTS: ${MG_DOMAINS_GRPC_SERVER_CA_CERTS:+/domains-grpc-server-ca.crt}
       MG_DEVICES_URL: ${MG_DEVICES_URL}
       MG_CHANNELS_URL: ${MG_CHANNELS_URL}
+      ATOM_URL: ${ATOM_URL}
+      ATOM_SERVICE_TOKEN: ${MG_ATOM_TOKEN_BOOTSTRAP}
+      ATOM_JWKS_URL: ${ATOM_JWKS_URL}
+      ATOM_JWT_ISSUER: ${ATOM_JWT_ISSUER}
+      ATOM_JWT_AUDIENCE: ${ATOM_JWT_AUDIENCE:-magistrala}
+      ATOM_TIMEOUT: ${ATOM_TIMEOUT}
       MG_JAEGER_URL: ${MG_JAEGER_URL}
       MG_JAEGER_TRACE_RATIO: ${MG_JAEGER_TRACE_RATIO}
       MG_SEND_TELEMETRY: ${MG_SEND_TELEMETRY}
-      MG_SPICEDB_PRE_SHARED_KEY: ${MG_SPICEDB_PRE_SHARED_KEY}
-      MG_SPICEDB_HOST: ${MG_SPICEDB_HOST}
-      MG_SPICEDB_PORT: ${MG_SPICEDB_PORT}
       MG_ALLOW_UNVERIFIED_USER: ${MG_ALLOW_UNVERIFIED_USER}
     networks:
       - magistrala-base-net
-    volumes:
-      - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_CERT:-./ssl/placeholder}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_CERT:+.crt}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_CLIENT_KEY:-./ssl/placeholder}
-        target: /auth-grpc-client${MG_AUTH_GRPC_CLIENT_KEY:+.key}
-        bind:
-          create_host_path: true
-      - type: bind
-        source: ${MG_ADDONS_CERTS_PATH_PREFIX}${MG_AUTH_GRPC_SERVER_CA_CERTS:-./ssl/placeholder}
-        target: /auth-grpc-server-ca${MG_AUTH_GRPC_SERVER_CA_CERTS:+.crt}
-        bind:
-          create_host_path: true

@@ -2,28 +2,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
 server:
-  tcp:
-    v3:
-      addr: "0.0.0.0:1883"
-      protocol: "v3"
-      max_connections: 10000
-      read_timeout: 60s
-      write_timeout: 60s
-    v5:
-      addr: "0.0.0.0:1884"
-      protocol: "v5"
-      max_connections: 10000
-      read_timeout: 60s
-      write_timeout: 60s
-  websocket:
-    v3:
-      addr: "0.0.0.0:8883"
-      path: "/mqtt"
-      protocol: "v3"
-    v5:
-      addr: "0.0.0.0:8884"
-      path: "/mqtt"
-      protocol: "v5"
+  mqtt:
+    tcp:
+      v3:
+        addr: "0.0.0.0:1883"
+        protocol: "v3"
+        max_connections: 10000
+        read_timeout: 60s
+        write_timeout: 60s
+      v5:
+        addr: "0.0.0.0:1884"
+        protocol: "v5"
+        max_connections: 10000
+        read_timeout: 60s
+        write_timeout: 60s
+    websocket:
+      v3:
+        addr: "0.0.0.0:8883"
+        path: "/mqtt"
+        protocol: "v3"
+      v5:
+        addr: "0.0.0.0:8884"
+        path: "/mqtt"
+        protocol: "v5"
   http:
     plain:
       addr: "0.0.0.0:8090"
@@ -78,7 +79,7 @@ log:
 storage:
   type: "badger"
   badger_dir: "/tmp/fluxmq/data"
-  sync_writes: false
+  badger_sync_writes: false
 
 cluster:
   enabled: true

@@ -51,7 +51,7 @@ env:
   CLIENTS_URL: http://localhost
   CHANNELS_URL: http://localhost
   GROUPS_URL: http://localhost
-  BOOTSTRAP_URL: http://localhost:9013
+  BOOTSTRAP_URL: http://localhost:9010
   CERTS_URL: http://localhost:9019
   READERS_URL: http://localhost:9011
 

@@ -52,7 +52,9 @@ func (sc *SecretCipher) seal(purpose string, plain []byte, aad string) (string, 
 		return "", err
 	}
 	ciphertext := aead.Seal(nil, nonce, plain, []byte(aad))
-	payload := append(nonce, ciphertext...)
+	payload := make([]byte, len(nonce)+len(ciphertext))
+	copy(payload, nonce)
+	copy(payload[len(nonce):], ciphertext)
 	return strings.Join([]string{
 		databaseEnvelopeVersion,
 		sc.keyID,

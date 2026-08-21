@@ -93,22 +93,6 @@ func validateRequiredBindings(profile Profile, bindings []BindingSnapshot) error
 	return nil
 }
 
-func mergeBindingSnapshots(existing, updated []BindingSnapshot) []BindingSnapshot {
-	merged := make(map[string]BindingSnapshot, len(existing)+len(updated))
-	for _, binding := range existing {
-		merged[binding.Slot] = binding
-	}
-	for _, binding := range updated {
-		merged[binding.Slot] = binding
-	}
-
-	bindings := make([]BindingSnapshot, 0, len(merged))
-	for _, binding := range merged {
-		bindings = append(bindings, binding)
-	}
-	return bindings
-}
-
 func validateProfileTemplate(p Profile) error {
 	if p.ContentTemplate == "" || p.ContentFormat == ContentFormatRaw {
 		return nil

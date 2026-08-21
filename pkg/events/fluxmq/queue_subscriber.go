@@ -44,7 +44,7 @@ var (
 // QueueSubscriberConfig names the AMQP topology NewQueueSubscriber binds
 // against: a durable topic exchange and the one fixed routing key every
 // message on it carries. Atom's outbox publisher (absmach/atom
-// src/events/publisher.rs) publishes every domain event to one such
+// src/events/publisher.rs) publishes every workspace event to one such
 // (exchange, routing_key) pair regardless of event type -- it never routes
 // per event type, so consumers tell events apart from the payload's own
 // "event" field, not from AMQP routing (see pkg/atom/events).

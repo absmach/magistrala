@@ -13,7 +13,7 @@ tags:
   - name: reports
     description: Operations related to report configurations and generation
 paths:
-  /{domainID}/reports:
+  /{workspaceID}/reports:
     post:
       operationId: generateReport
       summary: Generate a report
@@ -21,7 +21,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
       security:
         - bearerAuth: []
       requestBody:
@@ -47,7 +47,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/reports/configs:
+  /{workspaceID}/reports/configs:
     post:
       operationId: addReportConfig
       summary: Create a report configuration
@@ -55,7 +55,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
       security:
         - bearerAuth: []
       requestBody:
@@ -87,7 +87,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit'
       security:
@@ -106,7 +106,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/reports/configs/{reportID}:
+  /{workspaceID}/reports/configs/{reportID}:
     get:
       operationId: viewReportConfig
       summary: View a report configuration
@@ -114,7 +114,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -138,7 +138,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -169,7 +169,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -183,7 +183,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/reports/configs/{reportID}/schedule:
+  /{workspaceID}/reports/configs/{reportID}/schedule:
     patch:
       operationId: updateReportSchedule
       summary: Update report schedule
@@ -191,7 +191,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -216,7 +216,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/reports/configs/{reportID}/enable:
+  /{workspaceID}/reports/configs/{reportID}/enable:
     post:
       operationId: enableReportConfig
       summary: Enable a report configuration
@@ -224,7 +224,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -242,7 +242,7 @@ paths:
         '500':
           $ref: '#/components/responses/ServiceError'
 
-  /{domainID}/reports/configs/{reportID}/disable:
+  /{workspaceID}/reports/configs/{reportID}/disable:
     post:
       operationId: disableReportConfig
       summary: Disable a report configuration
@@ -250,7 +250,7 @@ paths:
       tags:
         - reports
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/ReportID'
       security:
         - bearerAuth: []
@@ -289,7 +289,7 @@ components:
           type: string
         description:
           type: string
-        domain_id:
+        workspace_id:
           type: string
           readOnly: true
         schedule:
@@ -508,8 +508,8 @@ components:
             $ref: '#/components/schemas/ReportConfig'
 
   parameters:
-    DomainID:
-      name: domainID
+    WorkspaceID:
+      name: workspaceID
       in: path
       required: true
       schema:

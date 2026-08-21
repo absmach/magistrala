@@ -38,7 +38,7 @@ deployments.
 
 Add `cli/devices.go`, `cli/gateways.go`, `cli/devicetypes.go`. This is **net-new,
 not a rewrite** — `cli/clients.go` was deleted in `16ba29cf4` along with
-`users.go`, `groups.go` and `domains.go`.
+`users.go`, `groups.go` and `workspaces.go`.
 
 Follow the shape of the surviving `cli/channels.go:35`.
 
@@ -117,7 +117,7 @@ aggregate reference in
 3. ⏸ *Phase 2* — CLI can manage device types and versions.
 4. PATs scoped to `devices` authorize device operations and nothing else — and
    cover gateways, since a gateway is a device.
-5. A PAT issued before the change, carrying a `bootstrap` or `domains` scope,
+5. A PAT issued before the change, carrying a `bootstrap` or `workspaces` scope,
    still authorizes the same operations after the enum is renumbered — proving
    ordering is not load-bearing.
 6. `permission.yaml` validates at startup (`pkg/permissions` rejects unknown
@@ -147,6 +147,6 @@ aggregate reference in
   `cli` is an unimported library. These commands ship unreachable unless the
   binary is restored — out of scope here, but it makes acceptance criteria 1–3
   testable only at package level. Flag it; do not silently expand scope.
-- **Channels have no roles** while devices, groups and domains do
+- **Channels have no roles** while devices, groups and workspaces do
   (`pkg/sdk/channels.go` has no role methods). Pre-existing and out of scope, but
   1.0 freezes it. Worth a decision before release.

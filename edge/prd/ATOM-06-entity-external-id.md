@@ -58,7 +58,7 @@ uniqueness on an opaque string, and never interprets it.
 - `externalId` as an exact-match filter on the `entities` query.
 - ⏸ *Phase 2* — the same filter on `authorizedObjectIds`, landing with ATOM-02
   which touches that resolver anyway. Nothing in phase 1 consumes it.
-- `external_id` on the `Entity` GraphQL type and in `entity.*` domain events.
+- `external_id` on the `Entity` GraphQL type and in `entity.*` workspace events.
 
 > **Phase 1 touches only the `entities` query.** The `authorizedObjectIds` half is
 > deferred to phase 2 and lands with

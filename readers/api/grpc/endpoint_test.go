@@ -25,7 +25,7 @@ import (
 
 const (
 	channelID    = "testChannelID"
-	domain       = "testDomain"
+	workspace    = "testWorkspace"
 	validID      = "validID"
 	validToken   = "valid"
 	inValidToken = "invalid"
@@ -100,8 +100,8 @@ func TestReadMessages(t *testing.T) {
 			desc:  "read valid req",
 			token: validToken,
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
-				ChannelId: channelID,
-				DomainId:  domain,
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -116,8 +116,8 @@ func TestReadMessages(t *testing.T) {
 			desc:  " read missing channel id",
 			token: validToken,
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
-				ChannelId: "",
-				DomainId:  domain,
+				ChannelId:   "",
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -130,8 +130,8 @@ func TestReadMessages(t *testing.T) {
 			desc:  "read valid SenML message",
 			token: validToken,
 			ReadMessagesReq: &grpcReadersV1.ReadMessagesReq{
-				ChannelId: channelID,
-				DomainId:  domain,
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -228,7 +228,7 @@ func TestListGatewayDevices(t *testing.T) {
 			desc: "valid request",
 			req: &grpcReadersV1.ListGatewayDevicesReq{
 				ChannelId:   channelID,
-				DomainId:    domain,
+				WorkspaceId: workspace,
 				PublisherId: "1dcf1a0e-7a9d-4b1e-8d5f-9c2e6a3b4d01",
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
@@ -252,7 +252,7 @@ func TestListGatewayDevices(t *testing.T) {
 			desc: "malformed publisher id",
 			req: &grpcReadersV1.ListGatewayDevicesReq{
 				ChannelId:   channelID,
-				DomainId:    domain,
+				WorkspaceId: workspace,
 				PublisherId: "gateway-1",
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
@@ -265,8 +265,8 @@ func TestListGatewayDevices(t *testing.T) {
 		{
 			desc: "missing publisher id",
 			req: &grpcReadersV1.ListGatewayDevicesReq{
-				ChannelId: channelID,
-				DomainId:  domain,
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -307,9 +307,9 @@ func TestListDeviceGateways(t *testing.T) {
 		{
 			desc: "valid request",
 			req: &grpcReadersV1.ListDeviceGatewaysReq{
-				ChannelId: channelID,
-				DomainId:  domain,
-				DeviceId:  "Meter.A-01:X",
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
+				DeviceId:    "Meter.A-01:X",
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -337,8 +337,8 @@ func TestListDeviceGateways(t *testing.T) {
 		{
 			desc: "missing device id",
 			req: &grpcReadersV1.ListDeviceGatewaysReq{
-				ChannelId: channelID,
-				DomainId:  domain,
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset: testOffset,
 					Limit:  testLimit,
@@ -419,8 +419,8 @@ func TestReadMessagesCarriesListFilters(t *testing.T) {
 			defer repoCall.Unset()
 
 			_, err := grpcClient.ReadMessages(context.Background(), &grpcReadersV1.ReadMessagesReq{
-				ChannelId: channelID,
-				DomainId:  domain,
+				ChannelId:   channelID,
+				WorkspaceId: workspace,
 				PageMetadata: &grpcReadersV1.PageMetadata{
 					Offset:     testOffset,
 					Limit:      testLimit,

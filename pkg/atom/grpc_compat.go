@@ -12,7 +12,7 @@ import (
 	channelsv1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	commonv1 "github.com/absmach/magistrala/api/grpc/common/v1"
 	devicesv1 "github.com/absmach/magistrala/api/grpc/devices/v1"
-	domainsv1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	workspacesv1 "github.com/absmach/magistrala/api/grpc/workspaces/v1"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/connections"
 	"github.com/absmach/magistrala/pkg/policies"
@@ -53,7 +53,7 @@ func (c AtomDevicesCompat) Authenticate(ctx context.Context, in *devicesv1.Authn
 				return nil, loginErr
 			}
 			token = key
-		case smqauthn.DomainAuth:
+		case smqauthn.WorkspaceAuth:
 			token = key
 		case smqauthn.Unknown:
 			token = key
@@ -117,7 +117,7 @@ func connectionPolicies(conns []*commonv1.Connection) ([]policies.Policy, error)
 			return nil, err
 		}
 		prs = append(prs, policies.Policy{
-			Domain:      conn.GetDomainId(),
+			Workspace:   conn.GetWorkspaceId(),
 			Subject:     conn.GetClientId(),
 			SubjectType: policies.ClientType,
 			Object:      conn.GetChannelId(),
@@ -139,19 +139,19 @@ func connectionPermission(connType connections.ConnType) (string, error) {
 	}
 }
 
-type AtomDomainsCompat struct {
+type AtomWorkspacesCompat struct {
 	Client *Client
 }
 
-func NewDomainsCompat(client *Client) domainsv1.DomainsServiceClient {
-	return AtomDomainsCompat{Client: client}
+func NewWorkspacesCompat(client *Client) workspacesv1.WorkspacesServiceClient {
+	return AtomWorkspacesCompat{Client: client}
 }
 
-func (c AtomDomainsCompat) DeleteUserFromDomains(context.Context, *domainsv1.DeleteUserReq, ...grpc.CallOption) (*domainsv1.DeleteUserRes, error) {
-	return nil, status.Error(codes.Unimplemented, "atom domains compatibility does not delete user memberships")
+func (c AtomWorkspacesCompat) DeleteUserFromWorkspaces(context.Context, *workspacesv1.DeleteUserReq, ...grpc.CallOption) (*workspacesv1.DeleteUserRes, error) {
+	return nil, status.Error(codes.Unimplemented, "atom workspaces compatibility does not delete user memberships")
 }
 
-func (c AtomDomainsCompat) RetrieveStatus(ctx context.Context, in *commonv1.RetrieveEntityReq, _ ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
+func (c AtomWorkspacesCompat) RetrieveStatus(ctx context.Context, in *commonv1.RetrieveEntityReq, _ ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
 	tenant, err := c.Client.GetTenant(ctx, in.GetId())
 	if err != nil {
 		return nil, err
@@ -162,7 +162,7 @@ func (c AtomDomainsCompat) RetrieveStatus(ctx context.Context, in *commonv1.Retr
 	}}, nil
 }
 
-func (c AtomDomainsCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.RetrieveIDByRouteReq, _ ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
+func (c AtomWorkspacesCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.RetrieveIDByRouteReq, _ ...grpc.CallOption) (*commonv1.RetrieveEntityRes, error) {
 	tenants, err := c.Client.ListTenants(ctx, Query{Route: in.GetRoute(), Limit: 1})
 	if err != nil {
 		return nil, err
@@ -192,7 +192,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 	if connections.ConnType(in.GetType()) == connections.Publish {
 		action = "publish"
 	}
-	subjectID := strings.TrimPrefix(in.GetClientId(), in.GetDomainId()+"_")
+	subjectID := strings.TrimPrefix(in.GetClientId(), in.GetWorkspaceId()+"_")
 	resp, err := c.Client.CheckAuthz(ctx, AuthzRequest{
 		SubjectID:  subjectID,
 		Action:     action,
@@ -200,7 +200,7 @@ func (c AtomChannelsCompat) Authorize(ctx context.Context, in *channelsv1.AuthzR
 		ObjectKind: atomObjectKindResource,
 		ObjectID:   in.GetChannelId(),
 		Context: map[string]any{
-			atomContextDomainID: in.GetDomainId(),
+			atomContextWorkspaceID: in.GetWorkspaceId(),
 		},
 	})
 	if err != nil {
@@ -227,7 +227,7 @@ func (c AtomChannelsCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.
 	}
 	resources, err := c.Atom.ListResources(ctx, Query{
 		Kind:     KindChannel,
-		TenantID: in.GetDomainId(),
+		TenantID: in.GetWorkspaceId(),
 		Q:        in.GetRoute(),
 		Limit:    20,
 	})
@@ -237,9 +237,9 @@ func (c AtomChannelsCompat) RetrieveIDByRoute(ctx context.Context, in *commonv1.
 	for _, resource := range resources.Items {
 		if resource.Name == in.GetRoute() || attrString(resource.Attributes, atomAttributeRoute) == in.GetRoute() {
 			return &commonv1.RetrieveEntityRes{Entity: &commonv1.EntityBasic{
-				Id:       resource.ID,
-				DomainId: resource.TenantID,
-				Status:   atomStatusCode(attrString(resource.Attributes, atomAttributeStatus)),
+				Id:          resource.ID,
+				WorkspaceId: resource.TenantID,
+				Status:      atomStatusCode(attrString(resource.Attributes, atomAttributeStatus)),
 			}}, nil
 		}
 	}

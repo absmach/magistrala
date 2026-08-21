@@ -28,12 +28,12 @@ func TestGraphQLClientAddsBearerTokenAndDecodesData(t *testing.T) {
 		authz = r.Header.Get("Authorization")
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"data":{"tenant":{"id":"domain-1","name":"Domain"}}}`))
+		_, _ = w.Write([]byte(`{"data":{"tenant":{"id":"workspace-1","name":"Workspace"}}}`))
 	}))
 	defer server.Close()
 
 	client := newGraphQLClient(server.URL, "test-token", testTimeout)
-	value, err := client.do(context.Background(), "query { tenant { id } }", map[string]any{varID: "domain-1"}, respTenant)
+	value, err := client.do(context.Background(), "query { tenant { id } }", map[string]any{varID: "workspace-1"}, respTenant)
 	if err != nil {
 		t.Fatalf("request failed: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestGraphQLClientAddsBearerTokenAndDecodesData(t *testing.T) {
 	if !strings.Contains(req.Query, respTenant) {
 		t.Errorf("query was not sent: %q", req.Query)
 	}
-	if got, want := req.Variables[varID], "domain-1"; got != want {
+	if got, want := req.Variables[varID], "workspace-1"; got != want {
 		t.Errorf("unexpected variable: got %v want %v", got, want)
 	}
 
@@ -55,7 +55,7 @@ func TestGraphQLClientAddsBearerTokenAndDecodesData(t *testing.T) {
 	if err := json.Unmarshal(value, &tenant); err != nil {
 		t.Fatalf("failed to decode tenant: %v", err)
 	}
-	if got, want := tenant[varID], "domain-1"; got != want {
+	if got, want := tenant[varID], "workspace-1"; got != want {
 		t.Errorf("unexpected tenant id: got %v want %v", got, want)
 	}
 }
@@ -65,7 +65,7 @@ func TestGraphQLClientTrimsEndpointAndToken(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authz = r.Header.Get("Authorization")
 		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"data":{"tenant":{"id":"domain-1"}}}`))
+		_, _ = w.Write([]byte(`{"data":{"tenant":{"id":"workspace-1"}}}`))
 	}))
 	defer server.Close()
 

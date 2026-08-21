@@ -26,7 +26,7 @@ type Channel struct {
 	Tags        []string  `json:"tags,omitempty"`
 	Route       string    `json:"route,omitempty"`
 	ParentGroup string    `json:"parent_group_id,omitempty"`
-	DomainID    string    `json:"domain_id,omitempty"`
+	WorkspaceID string    `json:"workspace_id,omitempty"`
 	Metadata    Metadata  `json:"metadata,omitempty"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
@@ -35,12 +35,12 @@ type Channel struct {
 	Permissions []string  `json:"permissions,omitempty"`
 }
 
-func (sdk mgSDK) CreateChannel(ctx context.Context, c Channel, domainID, token string) (Channel, errors.SDKError) {
+func (sdk mgSDK) CreateChannel(ctx context.Context, c Channel, workspaceID, token string) (Channel, errors.SDKError) {
 	data, err := json.Marshal(c)
 	if err != nil {
 		return Channel{}, errors.NewSDKError(err)
 	}
-	url := fmt.Sprintf("%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint)
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated)
 	if sdkErr != nil {
@@ -55,13 +55,13 @@ func (sdk mgSDK) CreateChannel(ctx context.Context, c Channel, domainID, token s
 	return c, nil
 }
 
-func (sdk mgSDK) CreateChannels(ctx context.Context, channels []Channel, domainID, token string) ([]Channel, errors.SDKError) {
+func (sdk mgSDK) CreateChannels(ctx context.Context, channels []Channel, workspaceID, token string) ([]Channel, errors.SDKError) {
 	data, err := json.Marshal(channels)
 	if err != nil {
 		return []Channel{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, "bulk")
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, "bulk")
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK)
 	if sdkErr != nil {
@@ -76,8 +76,8 @@ func (sdk mgSDK) CreateChannels(ctx context.Context, channels []Channel, domainI
 	return res.Channels, nil
 }
 
-func (sdk mgSDK) Channels(ctx context.Context, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", domainID, channelsEndpoint)
+func (sdk mgSDK) Channels(ctx context.Context, pm PageMetadata, workspaceID, token string) (ChannelsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", workspaceID, channelsEndpoint)
 	url, err := sdk.withQueryParams(sdk.channelsURL, endpoint, pm)
 	if err != nil {
 		return ChannelsPage{}, errors.NewSDKError(err)
@@ -96,11 +96,11 @@ func (sdk mgSDK) Channels(ctx context.Context, pm PageMetadata, domainID, token 
 	return cp, nil
 }
 
-func (sdk mgSDK) Channel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError) {
+func (sdk mgSDK) Channel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError) {
 	if id == "" {
 		return Channel{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, id)
 
 	_, body, err := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if err != nil {
@@ -115,11 +115,11 @@ func (sdk mgSDK) Channel(ctx context.Context, id, domainID, token string) (Chann
 	return c, nil
 }
 
-func (sdk mgSDK) UpdateChannel(ctx context.Context, c Channel, domainID, token string) (Channel, errors.SDKError) {
+func (sdk mgSDK) UpdateChannel(ctx context.Context, c Channel, workspaceID, token string) (Channel, errors.SDKError) {
 	if c.ID == "" {
 		return Channel{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, c.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, c.ID)
 
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -139,11 +139,11 @@ func (sdk mgSDK) UpdateChannel(ctx context.Context, c Channel, domainID, token s
 	return c, nil
 }
 
-func (sdk mgSDK) UpdateChannelTags(ctx context.Context, c Channel, domainID, token string) (Channel, errors.SDKError) {
+func (sdk mgSDK) UpdateChannelTags(ctx context.Context, c Channel, workspaceID, token string) (Channel, errors.SDKError) {
 	if c.ID == "" {
 		return Channel{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s/tags", sdk.channelsURL, domainID, channelsEndpoint, c.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s/tags", sdk.channelsURL, workspaceID, channelsEndpoint, c.ID)
 
 	data, err := json.Marshal(c)
 	if err != nil {
@@ -163,33 +163,33 @@ func (sdk mgSDK) UpdateChannelTags(ctx context.Context, c Channel, domainID, tok
 	return c, nil
 }
 
-func (sdk mgSDK) Connect(ctx context.Context, conn Connection, domainID, token string) errors.SDKError {
+func (sdk mgSDK) Connect(ctx context.Context, conn Connection, workspaceID, token string) errors.SDKError {
 	data, err := json.Marshal(conn)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, connectEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, connectEndpoint)
 
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) Disconnect(ctx context.Context, conn Connection, domainID, token string) errors.SDKError {
+func (sdk mgSDK) Disconnect(ctx context.Context, conn Connection, workspaceID, token string) errors.SDKError {
 	data, err := json.Marshal(conn)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, disconnectEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, disconnectEndpoint)
 
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) errors.SDKError {
+func (sdk mgSDK) ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) errors.SDKError {
 	conn := Connection{
 		ClientIDs: clientIDs,
 		Types:     connTypes,
@@ -198,14 +198,14 @@ func (sdk mgSDK) ConnectClients(ctx context.Context, channelID string, clientIDs
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, channelID, connectEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, channelID, connectEndpoint)
 
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) errors.SDKError {
+func (sdk mgSDK) DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) errors.SDKError {
 	conn := Connection{
 		ClientIDs: clientIDs,
 		Types:     connTypes,
@@ -214,32 +214,32 @@ func (sdk mgSDK) DisconnectClients(ctx context.Context, channelID string, client
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, channelID, disconnectEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, channelID, disconnectEndpoint)
 
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) EnableChannel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError) {
-	return sdk.changeChannelStatus(ctx, id, enableEndpoint, domainID, token)
+func (sdk mgSDK) EnableChannel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError) {
+	return sdk.changeChannelStatus(ctx, id, enableEndpoint, workspaceID, token)
 }
 
-func (sdk mgSDK) DisableChannel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError) {
-	return sdk.changeChannelStatus(ctx, id, disableEndpoint, domainID, token)
+func (sdk mgSDK) DisableChannel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError) {
+	return sdk.changeChannelStatus(ctx, id, disableEndpoint, workspaceID, token)
 }
 
-func (sdk mgSDK) DeleteChannel(ctx context.Context, id, domainID, token string) errors.SDKError {
+func (sdk mgSDK) DeleteChannel(ctx context.Context, id, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, id)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkErr
 }
 
-func (sdk mgSDK) changeChannelStatus(ctx context.Context, id, status, domainID, token string) (Channel, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, id, status)
+func (sdk mgSDK) changeChannelStatus(ctx context.Context, id, status, workspaceID, token string) (Channel, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, id, status)
 
 	_, body, err := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusOK)
 	if err != nil {
@@ -253,32 +253,32 @@ func (sdk mgSDK) changeChannelStatus(ctx context.Context, id, status, domainID, 
 	return c, nil
 }
 
-func (sdk mgSDK) SetChannelParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError {
+func (sdk mgSDK) SetChannelParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError {
 	scpg := parentGroupReq{ParentGroupID: groupID}
 	data, err := json.Marshal(scpg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, id, parentEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, id, parentEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) RemoveChannelParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError {
+func (sdk mgSDK) RemoveChannelParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError {
 	pgr := parentGroupReq{ParentGroupID: groupID}
 	data, err := json.Marshal(pgr)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, domainID, channelsEndpoint, id, parentEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.channelsURL, workspaceID, channelsEndpoint, id, parentEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, data, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) ListChannelMembers(ctx context.Context, channelID, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError) {
-	return sdk.listEntityMembers(ctx, sdk.channelsURL, domainID, channelsEndpoint, channelID, token, pm)
+func (sdk mgSDK) ListChannelMembers(ctx context.Context, channelID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError) {
+	return sdk.listEntityMembers(ctx, sdk.channelsURL, workspaceID, channelsEndpoint, channelID, token, pm)
 }

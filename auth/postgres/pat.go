@@ -27,12 +27,12 @@ type dbPat struct {
 }
 
 type dbScope struct {
-	ID         string `db:"id,omitempty"`
-	PatID      string `db:"pat_id,omitempty"`
-	DomainID   string `db:"domain_id,omitempty"`
-	EntityType string `db:"entity_type,omitempty"`
-	EntityID   string `db:"entity_id,omitempty"`
-	Operation  string `db:"operation,omitempty"`
+	ID          string `db:"id,omitempty"`
+	PatID       string `db:"pat_id,omitempty"`
+	WorkspaceID string `db:"workspace_id,omitempty"`
+	EntityType  string `db:"entity_type,omitempty"`
+	EntityID    string `db:"entity_id,omitempty"`
+	Operation   string `db:"operation,omitempty"`
 }
 
 type dbPagemeta struct {
@@ -94,12 +94,12 @@ func toAuthScope(dsc []dbScope) ([]auth.Scope, error) {
 			return []auth.Scope{}, err
 		}
 		scope = append(scope, auth.Scope{
-			ID:         s.ID,
-			PatID:      s.PatID,
-			DomainID:   s.DomainID,
-			EntityType: entityType,
-			EntityID:   s.EntityID,
-			Operation:  s.Operation,
+			ID:          s.ID,
+			PatID:       s.PatID,
+			WorkspaceID: s.WorkspaceID,
+			EntityType:  entityType,
+			EntityID:    s.EntityID,
+			Operation:   s.Operation,
 		})
 	}
 
@@ -149,12 +149,12 @@ func toDBScope(sc []auth.Scope) []dbScope {
 	var scopes []dbScope
 	for _, s := range sc {
 		scopes = append(scopes, dbScope{
-			ID:         s.ID,
-			PatID:      s.PatID,
-			DomainID:   s.DomainID,
-			EntityType: s.EntityType.String(),
-			EntityID:   s.EntityID,
-			Operation:  s.Operation,
+			ID:          s.ID,
+			PatID:       s.PatID,
+			WorkspaceID: s.WorkspaceID,
+			EntityType:  s.EntityType.String(),
+			EntityID:    s.EntityID,
+			Operation:   s.Operation,
 		})
 	}
 	return scopes

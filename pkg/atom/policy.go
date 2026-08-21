@@ -27,7 +27,7 @@ func (pe PolicyEvaluator) CheckPolicy(ctx context.Context, pr policies.Policy) e
 		ObjectKind: policyObjectKind(pr),
 		ObjectID:   pr.Object,
 		Context: map[string]any{
-			atomContextDomainID:         pr.Domain,
+			atomContextWorkspaceID:      pr.Workspace,
 			atomContextLegacyObjectType: pr.ObjectType,
 			"legacy_relation":           pr.Relation,
 		},
@@ -42,8 +42,8 @@ func (pe PolicyEvaluator) CheckPolicy(ctx context.Context, pr policies.Policy) e
 }
 
 func policySubjectID(pr policies.Policy) string {
-	if pr.Domain != "" {
-		return strings.TrimPrefix(pr.Subject, pr.Domain+"_")
+	if pr.Workspace != "" {
+		return strings.TrimPrefix(pr.Subject, pr.Workspace+"_")
 	}
 	return pr.Subject
 }
@@ -57,7 +57,7 @@ func policyAction(pr policies.Policy) string {
 
 func policyObjectKind(pr policies.Policy) string {
 	switch pr.ObjectType {
-	case policies.DomainType:
+	case policies.WorkspaceType:
 		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
@@ -79,7 +79,7 @@ func policyObjectKind(pr policies.Policy) string {
 }
 
 func policyResourceID(pr policies.Policy) string {
-	if pr.ObjectType == policies.DomainType || pr.ObjectType == policies.PlatformType {
+	if pr.ObjectType == policies.WorkspaceType || pr.ObjectType == policies.PlatformType {
 		return ""
 	}
 	return pr.Object

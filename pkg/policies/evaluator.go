@@ -15,21 +15,21 @@ const (
 	ClientsKind    = "clients"
 	NewClientKind  = "new_client"
 	UsersKind      = "users"
-	DomainsKind    = "domains"
+	WorkspacesKind = "workspaces"
 	PlatformKind   = "platform"
 )
 
 const (
-	RoleType     = "role"
-	GroupType    = "group"
-	ClientType   = "client"
-	ChannelType  = "channel"
-	UserType     = "user"
-	DomainType   = "domain"
-	PlatformType = "platform"
-	RulesType    = "rules"
-	ReportsType  = "reports"
-	AlarmsType   = "alarms"
+	RoleType      = "role"
+	GroupType     = "group"
+	ClientType    = "client"
+	ChannelType   = "channel"
+	UserType      = "user"
+	WorkspaceType = "workspace"
+	PlatformType  = "platform"
+	RulesType     = "rules"
+	ReportsType   = "reports"
+	AlarmsType    = "alarms"
 )
 
 const (
@@ -37,7 +37,7 @@ const (
 	EditorRelation        = "editor"
 	ContributorRelation   = "contributor"
 	MemberRelation        = "member"
-	DomainRelation        = "domain"
+	WorkspaceRelation     = "workspace"
 	ParentGroupRelation   = "parent_group"
 	RoleGroupRelation     = "role_group"
 	GroupRelation         = "group"

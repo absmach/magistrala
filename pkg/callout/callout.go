@@ -24,13 +24,13 @@ var errFailedToRead = errors.New("failed to read callout response body")
 // Can be used in the implementation of
 // callout service with structured payload.
 type BaseRequest struct {
-	Operation  string    `json:"operation,omitempty"`
-	EntityType string    `json:"entity_type,omitempty"`
-	EntityID   string    `json:"entity_id,omitempty"`
-	CallerID   string    `json:"caller_id,omitempty"`
-	CallerType string    `json:"caller_type,omitempty"`
-	DomainID   string    `json:"domain_id,omitempty"`
-	Time       time.Time `json:"time,omitempty"`
+	Operation   string    `json:"operation,omitempty"`
+	EntityType  string    `json:"entity_type,omitempty"`
+	EntityID    string    `json:"entity_id,omitempty"`
+	CallerID    string    `json:"caller_id,omitempty"`
+	CallerType  string    `json:"caller_type,omitempty"`
+	WorkspaceID string    `json:"workspace_id,omitempty"`
+	Time        time.Time `json:"time,omitempty"`
 }
 
 type Request struct {

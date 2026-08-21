@@ -82,7 +82,7 @@ func (client authGrpcClient) Authorize(ctx context.Context, req *grpcAuthV1.Auth
 
 		if policyReq != nil {
 			authReqData = authReq{
-				Domain:      policyReq.GetDomain(),
+				Workspace:   policyReq.GetWorkspace(),
 				SubjectType: policyReq.GetSubjectType(),
 				Subject:     policyReq.GetSubject(),
 				SubjectKind: policyReq.GetSubjectKind(),
@@ -94,8 +94,8 @@ func (client authGrpcClient) Authorize(ctx context.Context, req *grpcAuthV1.Auth
 		}
 
 		if patReq != nil {
-			if patReq.GetDomain() != "" {
-				authReqData.Domain = patReq.GetDomain()
+			if patReq.GetWorkspace() != "" {
+				authReqData.Workspace = patReq.GetWorkspace()
 			}
 			authReqData.UserID = patReq.GetUserId()
 			authReqData.PatID = patReq.GetPatId()
@@ -124,7 +124,7 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
 
 	authZReq := &grpcAuthV1.AuthZReq{
 		PolicyReq: &grpcAuthV1.PolicyReq{
-			Domain:      req.Domain,
+			Workspace:   req.Workspace,
 			SubjectType: req.SubjectType,
 			Subject:     req.Subject,
 			SubjectKind: req.SubjectKind,
@@ -138,7 +138,7 @@ func encodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
 	if req.PatID != "" {
 		authZReq.PatReq = &grpcAuthV1.PATReq{
 			PatId:      req.PatID,
-			Domain:     req.Domain,
+			Workspace:  req.Workspace,
 			Operation:  req.Operation,
 			UserId:     req.UserID,
 			EntityId:   req.EntityID,

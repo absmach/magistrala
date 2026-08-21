@@ -117,11 +117,11 @@ func TestEntityExternalIDsOmitsEntitiesWithoutOne(t *testing.T) {
 // One unreadable entity must not deny the caller every device they hold, so the
 // batch keeps the ids it did resolve. An unresolved id contributes nothing to
 // the filter it feeds, which is the safe direction.
-// A top-level GraphQL failure — an expired token, a domain-wide denial — is
+// A top-level GraphQL failure — an expired token, a workspace-wide denial — is
 // commonly spelled `"data": null` on the wire, not an absent/empty "data"
 // key. That must surface as an error, not decode as a clean empty batch:
 // readAuthorizer.load would otherwise cache a zero-device grant for the full
-// TTL and every message read in the domain would come back an empty page
+// TTL and every message read in the workspace would come back an empty page
 // with HTTP 200 instead of the underlying Atom failure.
 func TestEntityExternalIDsSurfacesTopLevelDataNullFailure(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

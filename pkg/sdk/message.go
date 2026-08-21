@@ -23,10 +23,10 @@ type publishRequest struct {
 	Retain  bool   `json:"retain"`
 }
 
-func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret string) errors.SDKError {
+func (sdk mgSDK) SendMessage(ctx context.Context, workspaceID, topic, msg, secret string) errors.SDKError {
 	chanNameParts := strings.SplitN(topic, "/", channelParts)
 	chanID := chanNameParts[0]
-	brokerTopic := fmt.Sprintf("m/%s/c/%s", domainID, chanID)
+	brokerTopic := fmt.Sprintf("m/%s/c/%s", workspaceID, chanID)
 	if len(chanNameParts) == channelParts {
 		brokerTopic = fmt.Sprintf("%s/%s", brokerTopic, chanNameParts[1])
 	}
@@ -39,7 +39,7 @@ func (sdk mgSDK) SendMessage(ctx context.Context, domainID, topic, msg, secret s
 	}
 
 	headers := map[string]string{
-		"X-FluxMQ-Username": domainID,
+		"X-FluxMQ-Username": workspaceID,
 	}
 
 	reqURL := fmt.Sprintf("%s/publish", sdk.httpAdapterURL)

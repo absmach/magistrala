@@ -279,8 +279,8 @@ func TestEncodeError(t *testing.T) {
 			hasBody: true,
 		},
 		{
-			desc:    "AuthZError - Domain Authorization Failed",
-			err:     svcerr.ErrDomainAuthorization,
+			desc:    "AuthZError - Workspace Authorization Failed",
+			err:     svcerr.ErrWorkspaceAuthorization,
 			code:    http.StatusForbidden,
 			hasBody: true,
 		},

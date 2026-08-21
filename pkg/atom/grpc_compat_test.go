@@ -126,7 +126,7 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 			policies: []DirectPolicy{
 				{
 					ID:          "delete-publish",
-					TenantID:    testDomainID,
+					TenantID:    testWorkspaceID,
 					SubjectKind: atomObjectKindEntity,
 					SubjectID:   testDeviceID,
 					PermissionBlock: PermissionBlock{
@@ -140,7 +140,7 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 				},
 				{
 					ID:          "delete-subscribe",
-					TenantID:    testDomainID,
+					TenantID:    testWorkspaceID,
 					SubjectKind: atomObjectKindEntity,
 					SubjectID:   testDeviceID,
 					PermissionBlock: PermissionBlock{
@@ -154,7 +154,7 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 				},
 				{
 					ID:          "keep-other-channel",
-					TenantID:    testDomainID,
+					TenantID:    testWorkspaceID,
 					SubjectKind: atomObjectKindEntity,
 					SubjectID:   testDeviceID,
 					PermissionBlock: PermissionBlock{
@@ -174,16 +174,16 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 	res, err := compat.RemoveConnections(context.Background(), &commonv1.RemoveConnectionsReq{
 		Connections: []*commonv1.Connection{
 			{
-				ClientId:  testDeviceID,
-				ChannelId: "channel-1",
-				DomainId:  testDomainID,
-				Type:      uint32(connections.Publish),
+				ClientId:    testDeviceID,
+				ChannelId:   "channel-1",
+				WorkspaceId: testWorkspaceID,
+				Type:        uint32(connections.Publish),
 			},
 			{
-				ClientId:  testDeviceID,
-				ChannelId: "channel-1",
-				DomainId:  testDomainID,
-				Type:      uint32(connections.Subscribe),
+				ClientId:    testDeviceID,
+				ChannelId:   "channel-1",
+				WorkspaceId: testWorkspaceID,
+				Type:        uint32(connections.Subscribe),
 			},
 		},
 	})
@@ -197,7 +197,7 @@ func TestAtomDevicesCompatRemoveConnectionsDeletesConnectionPolicies(t *testing.
 		t.Fatalf("unexpected direct policy query count: %d", len(client.directPolicyQueries))
 	}
 	for _, q := range client.directPolicyQueries {
-		if q.TenantID != testDomainID || q.SubjectKind != atomObjectKindEntity || q.SubjectID != testDeviceID {
+		if q.TenantID != testWorkspaceID || q.SubjectKind != atomObjectKindEntity || q.SubjectID != testDeviceID {
 			t.Fatalf("unexpected direct policy query: %+v", q)
 		}
 	}

@@ -25,8 +25,8 @@ var (
 	// ErrAuthorization indicates failure occurred while authorizing the entity.
 	ErrAuthorization = New("failed to perform authorization over the entity")
 
-	// ErrMissingDomainMember indicates member is not part of a domain.
-	ErrMissingDomainMember = New("member id is not member of domain")
+	// ErrMissingWorkspaceMember indicates member is not part of a workspace.
+	ErrMissingWorkspaceMember = New("member id is not member of workspace")
 
 	// ErrMissingMember indicates member is not found.
 	ErrMissingMember = New("member id is not found")
@@ -37,8 +37,8 @@ var (
 	// ErrUsernameNotAvailable indicates that the username is not available.
 	ErrUsernameNotAvailable = New("username not available")
 
-	// ErrDomainRouteNotAvailable indicates that the domain route is not available.
-	ErrDomainRouteNotAvailable = New("domain route not available")
+	// ErrWorkspaceRouteNotAvailable indicates that the workspace route is not available.
+	ErrWorkspaceRouteNotAvailable = New("workspace route not available")
 
 	// ErrChannelRouteNotAvailable indicates that the channel route is not available.
 	ErrChannelRouteNotAvailable = New("channel route not available")

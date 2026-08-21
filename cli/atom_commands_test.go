@@ -41,7 +41,7 @@ func TestChannelSelectionsUseAtomObjectGroupFields(t *testing.T) {
 	clearAtomEnv(t)
 	server, req := recordingServer(t, `{"data":{"resources":{"total":0,"items":[]}}}`)
 
-	err := runRootCmd(t, "--graphql-url", server.URL, "--token", "test-token", cmdChannels, useList, "domain-1")
+	err := runRootCmd(t, "--graphql-url", server.URL, "--token", "test-token", cmdChannels, useList, "workspace-1")
 	if err != nil {
 		t.Fatalf("execute command: %v", err)
 	}
@@ -72,7 +72,7 @@ func TestGroupCreateUsesSpecializedAtomMutations(t *testing.T) {
 			err := runRootCmd(t,
 				"--graphql-url", server.URL,
 				"--token", "test-token",
-				cmdGroups, "create", "domain-1", "Group",
+				cmdGroups, "create", "workspace-1", "Group",
 				"--type", tc.groupType,
 			)
 			if err != nil {
@@ -100,7 +100,7 @@ func TestGroupCreateRejectsUnsupportedGroupType(t *testing.T) {
 	clearAtomEnv(t)
 	// No endpoint is configured: the group type has to be rejected before the
 	// command reaches the network.
-	err := runRootCmd(t, "--token", "test-token", cmdGroups, "create", "domain-1", "Group", "--type", "invalid")
+	err := runRootCmd(t, "--token", "test-token", cmdGroups, "create", "workspace-1", "Group", "--type", "invalid")
 	if err == nil {
 		t.Fatal("expected unsupported group type error")
 	}
@@ -109,7 +109,7 @@ func TestGroupCreateRejectsUnsupportedGroupType(t *testing.T) {
 	}
 }
 
-func TestDomainCreateSeedsDefaultDeviceTypes(t *testing.T) {
+func TestWorkspaceCreateSeedsDefaultDeviceTypes(t *testing.T) {
 	clearAtomEnv(t)
 	createdKeys := map[string]bool{}
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -180,8 +180,8 @@ func TestDomainCreateSeedsDefaultDeviceTypes(t *testing.T) {
 	err := runRootCmd(t,
 		"--graphql-url", server.URL+atomGraphQLPath,
 		"--token", "test-token",
-		cmdDomains, "create", "Domain",
-		"--alias", "domain",
+		cmdWorkspaces, "create", "Workspace",
+		"--alias", "workspace",
 	)
 	if err != nil {
 		t.Fatalf("execute command: %v", err)

@@ -88,8 +88,8 @@ type MembershipsPage struct {
 	Memberships []Group `json:"memberships"`
 }
 
-type DomainsPage struct {
-	Domains []Domain `json:"domains"`
+type WorkspacesPage struct {
+	Workspaces []Workspace `json:"workspaces"`
 	PageRes
 }
 

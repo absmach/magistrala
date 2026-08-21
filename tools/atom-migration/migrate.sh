@@ -106,7 +106,7 @@ log "Atom image       : $ATOM_IMAGE (pull_policy=$ATOM_PULL_POLICY)"
 
 # --- preflight: every source volume must exist ---
 missing=()
-for svc in domains users clients channels groups auth re reports; do
+for svc in workspaces users clients channels groups auth re reports; do
 	vol="${SRC_VOL_PREFIX}${svc}-db-volume"
 	docker volume inspect "$vol" >/dev/null 2>&1 || missing+=("$vol")
 done
@@ -183,7 +183,7 @@ trap cleanup EXIT
 
 # --- bring up source DBs + Atom DB, seed the Atom schema ---
 log "Starting source DBs, Atom DB and Atom schema seeder"
-dc up -d --wait domains-db users-db devices-db channels-db groups-db auth-db re-db reports-db atom-db
+dc up -d --wait workspaces-db users-db devices-db channels-db groups-db auth-db re-db reports-db atom-db
 dc up -d atom
 
 log "Waiting for Atom to apply its schema into the target volume"

@@ -215,7 +215,7 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 	if handleErr != nil {
 		ps.logWarn("failed to handle message",
 			"channel", m.Channel,
-			"domain", m.Domain,
+			"workspace", m.Workspace,
 			"subtopic", m.Subtopic,
 			"publisher", m.Publisher,
 			"error", handleErr,
@@ -230,7 +230,7 @@ func (ps *pubsub) handle(h messaging.MessageHandler, msg *fluxamqp.QueueMessage)
 }
 
 func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, prefix, mqttTopic string) (*messaging.Message, error) {
-	domain, channel, subtopic, err := parseMQTTTopic(prefix, mqttTopic)
+	workspace, channel, subtopic, err := parseMQTTTopic(prefix, mqttTopic)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +277,7 @@ func messageFromDelivery(body []byte, headers map[string]any, ts time.Time, pref
 	}
 
 	return &messaging.Message{
-		Domain:    domain,
+		Workspace: workspace,
 		Channel:   channel,
 		Subtopic:  subtopic,
 		Payload:   body,

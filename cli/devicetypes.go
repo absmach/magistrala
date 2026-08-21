@@ -23,8 +23,8 @@ const (
 )
 
 const (
-	usageDeviceTypeCreate        = "cli devicetypes create <JSON_device_type> <domain_id>"
-	usageDeviceTypeGet           = "cli devicetypes <device_type_id|all> get <domain_id>"
+	usageDeviceTypeCreate        = "cli devicetypes create <JSON_device_type> <workspace_id>"
+	usageDeviceTypeGet           = "cli devicetypes <device_type_id|all> get <workspace_id>"
 	usageDeviceTypeUpdate        = "cli devicetypes <device_type_id> update <JSON_string>"
 	usageDeviceTypeVersions      = "cli devicetypes <device_type_id> versions"
 	usageDeviceTypeCreateVersion = "cli devicetypes <device_type_id> create-version <JSON_version>"
@@ -40,15 +40,15 @@ func NewDeviceTypesCmd() *cobra.Command {
 		Use:   "devicetypes <device_type_id|all|create> [operation] [args...]",
 		Short: "Device types management",
 		Long: `Format:
-  devicetypes create <JSON_device_type> <domain_id>
+  devicetypes create <JSON_device_type> <workspace_id>
   devicetypes <device_type_id|all> <operation> [args...]
 
 Operations (require device_type_id/all): get, update, versions, create-version,
 active-version, bind
 
-Listing is always domain-scoped. Atom's device type filter is "this tenant" or
+Listing is always workspace-scoped. Atom's device type filter is "this tenant" or
 "no filter at all", and no filter at all crosses tenants, so "all get" takes a
-domain_id.
+workspace_id.
 
 There is no delete: status carries retirement instead, and its three values
 (active, deprecated, disabled) do not reduce to an enable/disable pair, so it
@@ -63,8 +63,8 @@ version that is not active, which writing device_type_id through
 "devices <device_id> update" does not.
 
 Examples:
-  devicetypes create '{"key":"thermostat","name":"Thermostat"}' <domain_id>
-  devicetypes all get <domain_id>
+  devicetypes create '{"key":"thermostat","name":"Thermostat"}' <workspace_id>
+  devicetypes all get <workspace_id>
   devicetypes <device_type_id> get
   devicetypes <device_type_id> update '{"name":"Thermostat","status":"deprecated"}'
   devicetypes <device_type_id> versions
@@ -139,7 +139,7 @@ func handleDeviceTypeCreate(cmd *cobra.Command, args []string) {
 	logJSONCmd(*cmd, created)
 }
 
-// handleDeviceTypeGet's "all" branch needs the domain argument that a single
+// handleDeviceTypeGet's "all" branch needs the workspace argument that a single
 // lookup does not: ListDeviceTypes refuses a tenant-less listing, since Atom
 // would answer it with every tenant's types.
 func handleDeviceTypeGet(cmd *cobra.Command, deviceTypeID string, args []string) {

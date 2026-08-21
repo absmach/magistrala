@@ -95,8 +95,8 @@ func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 
 	page, err := svc.ListAllObjects(context.Background(), policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     testDomainID + "_user-1",
-		Domain:      testDomainID,
+		Subject:     testWorkspaceID + "_user-1",
+		Workspace:   testWorkspaceID,
 		ObjectType:  policies.ClientType,
 		Permission:  policies.ViewPermission,
 	})
@@ -114,7 +114,7 @@ func TestPolicyServiceListAllObjectsUsesAtomAuthorizedObjectIds(t *testing.T) {
 		query.Action != atomActionRead ||
 		query.ObjectKind != atomObjectKindEntity ||
 		query.ObjectType != atomObjectTypeEntityDevice ||
-		query.TenantID != testDomainID {
+		query.TenantID != testWorkspaceID {
 		t.Fatalf("unexpected authorized object query: %+v", query)
 	}
 }
@@ -124,8 +124,8 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	err := svc.AddPolicy(context.Background(), policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_client-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_client-1",
 		SubjectType: policies.ClientType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
@@ -138,7 +138,7 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
 	}
 	block := client.blocks[0]
-	if block.TenantID != testDomainID ||
+	if block.TenantID != testWorkspaceID ||
 		block.ScopeMode != atomScopeModeObject ||
 		block.ObjectKind != atomObjectKindResource ||
 		block.ObjectType != "resource:channel" ||
@@ -149,7 +149,7 @@ func TestPolicyServiceAddPolicyCreatesInternalCapabilityPolicy(t *testing.T) {
 		t.Fatalf("unexpected permission block: %+v", block)
 	}
 	created := client.created[0]
-	if created.TenantID != testDomainID ||
+	if created.TenantID != testWorkspaceID ||
 		created.SubjectKind != atomObjectKindEntity ||
 		created.SubjectID != "client-1" ||
 		created.PermissionBlockID != "block-1" {
@@ -162,8 +162,8 @@ func TestPolicyServiceAddPolicyCreatesGroupCapabilityPolicy(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	err := svc.AddPolicy(context.Background(), policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_user-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
 		Object:      "group-1",
 		ObjectType:  policies.GroupType,
@@ -176,7 +176,7 @@ func TestPolicyServiceAddPolicyCreatesGroupCapabilityPolicy(t *testing.T) {
 		t.Fatalf("expected one permission block and direct policy, got %d/%d", len(client.blocks), len(client.created))
 	}
 	block := client.blocks[0]
-	if block.TenantID != testDomainID ||
+	if block.TenantID != testWorkspaceID ||
 		block.ScopeMode != atomScopeModeObject ||
 		block.ObjectKind != atomObjectKindGroup ||
 		block.ObjectType != "" ||
@@ -187,7 +187,7 @@ func TestPolicyServiceAddPolicyCreatesGroupCapabilityPolicy(t *testing.T) {
 		t.Fatalf("unexpected permission block: %+v", block)
 	}
 	created := client.created[0]
-	if created.TenantID != testDomainID ||
+	if created.TenantID != testWorkspaceID ||
 		created.SubjectKind != atomObjectKindEntity ||
 		created.SubjectID != "user-1" ||
 		created.PermissionBlockID != "block-1" {
@@ -226,8 +226,8 @@ func TestPolicyServiceDeletePolicyFilterRemovesMatchingCapabilityPolicy(t *testi
 	svc := NewPolicyService(client)
 
 	err := svc.DeletePolicyFilter(context.Background(), policies.Policy{
-		Domain:      testDomainID,
-		Subject:     "domain-1_client-1",
+		Workspace:   testWorkspaceID,
+		Subject:     "workspace-1_client-1",
 		SubjectType: policies.ClientType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
@@ -260,8 +260,8 @@ func TestPolicyServiceObjectTypeMatchesOnWriteAndReadPaths(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	writePolicy := policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_user-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
 		Object:      "device-1",
 		ObjectType:  policies.ClientType,
@@ -276,8 +276,8 @@ func TestPolicyServiceObjectTypeMatchesOnWriteAndReadPaths(t *testing.T) {
 	writtenObjectType := client.blocks[0].ObjectType
 
 	readPolicy := policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_user-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
 		ObjectType:  policies.ClientType,
 		Permission:  policies.ViewPermission,
@@ -323,8 +323,8 @@ func TestPolicyServiceListAllObjectsFindsObjectScopedDeviceGrant(t *testing.T) {
 
 	page, err := svc.ListAllObjects(context.Background(), policies.Policy{
 		SubjectType: policies.UserType,
-		Subject:     testDomainID + "_user-1",
-		Domain:      testDomainID,
+		Subject:     testWorkspaceID + "_user-1",
+		Workspace:   testWorkspaceID,
 		ObjectType:  policies.ClientType,
 		Permission:  policies.ViewPermission,
 	})
@@ -357,8 +357,8 @@ func TestPolicyServiceDeletePolicyFilterPaginatesAcrossAllMatches(t *testing.T) 
 	svc := NewPolicyService(client)
 
 	pr := policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_client-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_client-1",
 		SubjectType: policies.ClientType,
 		Object:      "channel-1",
 		ObjectType:  policies.ChannelType,
@@ -385,7 +385,7 @@ func TestPolicyServiceDeletePolicyFilterPaginatesAcrossAllMatches(t *testing.T) 
 	}
 
 	remaining, err := client.ListDirectPolicies(context.Background(), DirectPolicyQuery{
-		TenantID:    pr.Domain,
+		TenantID:    pr.Workspace,
 		SubjectKind: policyGrantSubjectKind(pr),
 		SubjectID:   policySubjectID(pr),
 		Limit:       policyPageLimit,
@@ -399,18 +399,18 @@ func TestPolicyServiceDeletePolicyFilterPaginatesAcrossAllMatches(t *testing.T) 
 }
 
 // TestPolicyServiceAddPolicyCreatesTenantScopedPolicy is a regression test
-// for acceptance criterion 9: the "tenant" scope mode, used for domain-level
+// for acceptance criterion 9: the "tenant" scope mode, used for workspace-level
 // grants, must be unaffected by adding group-scoped support alongside it.
 func TestPolicyServiceAddPolicyCreatesTenantScopedPolicy(t *testing.T) {
 	client := &fakePolicyClient{capID: "cap-manage"}
 	svc := NewPolicyService(client)
 
 	err := svc.AddPolicy(context.Background(), policies.Policy{
-		Domain:      testDomainID,
-		Subject:     testDomainID + "_user-1",
+		Workspace:   testWorkspaceID,
+		Subject:     testWorkspaceID + "_user-1",
 		SubjectType: policies.UserType,
-		Object:      testDomainID,
-		ObjectType:  policies.DomainType,
+		Object:      testWorkspaceID,
+		ObjectType:  policies.WorkspaceType,
 		Permission:  policies.AdminPermission,
 	})
 	if err != nil {
@@ -436,7 +436,7 @@ func TestGrantGroupAccessCreatesOneBlockAndOnePolicy(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	grant := GroupGrant{
-		TenantID:    testDomainID,
+		TenantID:    testWorkspaceID,
 		GroupID:     "group-1",
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
@@ -452,7 +452,7 @@ func TestGrantGroupAccessCreatesOneBlockAndOnePolicy(t *testing.T) {
 	}
 
 	block := client.blocks[0]
-	if block.TenantID != testDomainID ||
+	if block.TenantID != testWorkspaceID ||
 		block.ScopeMode != atomScopeModeGroupDirectObjects ||
 		block.ObjectKind != atomObjectKindEntity ||
 		block.ObjectType != "entity:device" ||
@@ -465,7 +465,7 @@ func TestGrantGroupAccessCreatesOneBlockAndOnePolicy(t *testing.T) {
 	}
 
 	created := client.created[0]
-	if created.TenantID != testDomainID ||
+	if created.TenantID != testWorkspaceID ||
 		created.SubjectKind != atomObjectKindEntity ||
 		created.SubjectID != "user-1" ||
 		created.PermissionBlockID != "block-1" {
@@ -480,7 +480,7 @@ func TestGrantGroupAccessIncludeDescendantsUsesDescendantScopeMode(t *testing.T)
 	svc := NewPolicyService(client)
 
 	grant := GroupGrant{
-		TenantID:           testDomainID,
+		TenantID:           testWorkspaceID,
 		GroupID:            "group-1",
 		SubjectKind:        atomObjectKindEntity,
 		SubjectID:          "user-1",
@@ -507,7 +507,7 @@ func TestGrantGroupAccessResolvesMultipleActions(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	grant := GroupGrant{
-		TenantID:    testDomainID,
+		TenantID:    testWorkspaceID,
 		GroupID:     "group-1",
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
@@ -538,39 +538,39 @@ func TestGrantGroupAccessRejectsInvalidGrant(t *testing.T) {
 		},
 		{
 			name:  "missing group",
-			grant: GroupGrant{TenantID: testDomainID, SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing subject",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "missing subject kind",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "unsupported subject kind",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindResource, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindResource, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "no actions",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ClientType},
 		},
 		{
 			name:  "object kind is a group, not entity/resource",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindGroup, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "device object type with resource object kind",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.ClientType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindResource, ObjectType: policies.ClientType, Actions: []string{"read"}},
 		},
 		{
 			name:  "resource object type with entity object kind",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ChannelType, Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: policies.ChannelType, Actions: []string{"read"}},
 		},
 		{
 			name:  "unmappable object type",
-			grant: GroupGrant{TenantID: testDomainID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
+			grant: GroupGrant{TenantID: testWorkspaceID, GroupID: "group-1", SubjectKind: atomObjectKindEntity, SubjectID: "user-1", ObjectKind: atomObjectKindEntity, ObjectType: "unknown", Actions: []string{"read"}},
 		},
 	}
 	for _, tc := range cases {
@@ -626,7 +626,7 @@ func TestRevokeGroupAccessRejectsInvalidGrantBeforeListing(t *testing.T) {
 		policies: []DirectPolicy{
 			{
 				ID:          "policy-a",
-				TenantID:    testDomainID,
+				TenantID:    testWorkspaceID,
 				SubjectKind: atomObjectKindEntity,
 				SubjectID:   "user-1",
 				PermissionBlock: PermissionBlock{
@@ -699,7 +699,7 @@ func TestRevokeGroupAccessOnlyRemovesTargetedGroupsBlock(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	err := svc.RevokeGroupAccess(context.Background(), GroupGrant{
-		TenantID:    testDomainID,
+		TenantID:    testWorkspaceID,
 		GroupID:     "group-a",
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
@@ -750,7 +750,7 @@ func TestRevokeGroupAccessOnlyRemovesMatchingActionSet(t *testing.T) {
 	svc := NewPolicyService(client)
 
 	err := svc.RevokeGroupAccess(context.Background(), GroupGrant{
-		TenantID:    testDomainID,
+		TenantID:    testWorkspaceID,
 		GroupID:     "group-a",
 		SubjectKind: atomObjectKindEntity,
 		SubjectID:   "user-1",
@@ -774,7 +774,7 @@ func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
 		policies: []DirectPolicy{
 			{
 				ID:          "policy-a",
-				TenantID:    testDomainID,
+				TenantID:    testWorkspaceID,
 				SubjectKind: atomObjectKindEntity,
 				SubjectID:   "user-1",
 				PermissionBlock: PermissionBlock{
@@ -788,7 +788,7 @@ func TestListGroupGrantsFiltersByGroupID(t *testing.T) {
 			},
 			{
 				ID:          "policy-b",
-				TenantID:    testDomainID,
+				TenantID:    testWorkspaceID,
 				SubjectKind: atomObjectKindEntity,
 				SubjectID:   "user-2",
 				PermissionBlock: PermissionBlock{

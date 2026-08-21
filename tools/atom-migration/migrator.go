@@ -18,27 +18,27 @@ type migrator struct {
 	cfg   config
 	apply bool
 
-	domainsDB  *sqlx.DB
-	usersDB    *sqlx.DB
-	devicesDB  *sqlx.DB
-	channelsDB *sqlx.DB
-	groupsDB   *sqlx.DB
-	authDB     *sqlx.DB
-	reDB       *sqlx.DB
-	reportsDB  *sqlx.DB
-	atom       *sqlx.DB
+	workspacesDB *sqlx.DB
+	usersDB      *sqlx.DB
+	devicesDB    *sqlx.DB
+	channelsDB   *sqlx.DB
+	groupsDB     *sqlx.DB
+	authDB       *sqlx.DB
+	reDB         *sqlx.DB
+	reportsDB    *sqlx.DB
+	atom         *sqlx.DB
 
 	profileID        map[string]string // profile key (e.g. "user","device") -> uuid
 	profileVersionID map[string]string // profile key -> latest active profile_versions.id
 	actionID         map[string]string // action name -> uuid
 
-	migratedUsers  map[string]bool
-	migratedRoles  map[string]bool
-	tenants        map[string]bool   // domain ids that became tenants
-	deviceDomain   map[string]string // device id -> domain id
-	channelDomain  map[string]string
-	groupDomain    map[string]string
-	resourceDomain map[string]string // resource id -> tenant id
+	migratedUsers     map[string]bool
+	migratedRoles     map[string]bool
+	tenants           map[string]bool   // workspace ids that became tenants
+	deviceWorkspace   map[string]string // device id -> workspace id
+	channelWorkspace  map[string]string
+	groupWorkspace    map[string]string
+	resourceWorkspace map[string]string // resource id -> tenant id
 
 	// Collision-free names/aliases computed by buildDedup (Atom enforces unique
 	// constraints Magistrala dropped). Keyed by source id; "" alias = NULL.
@@ -53,25 +53,25 @@ type migrator struct {
 
 func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error) {
 	m := &migrator{
-		cfg:              cfg,
-		apply:            apply,
-		profileID:        map[string]string{},
-		profileVersionID: map[string]string{},
-		actionID:         map[string]string{},
-		migratedUsers:    map[string]bool{},
-		migratedRoles:    map[string]bool{},
-		tenants:          map[string]bool{},
-		deviceDomain:     map[string]string{},
-		channelDomain:    map[string]string{},
-		groupDomain:      map[string]string{},
-		resourceDomain:   map[string]string{},
-		tenantName:       map[string]string{},
-		userName:         map[string]string{},
-		deviceName:       map[string]string{},
-		groupName:        map[string]string{},
-		tenantAlias:      map[string]string{},
-		deviceAlias:      map[string]string{},
-		channelAlias:     map[string]string{},
+		cfg:               cfg,
+		apply:             apply,
+		profileID:         map[string]string{},
+		profileVersionID:  map[string]string{},
+		actionID:          map[string]string{},
+		migratedUsers:     map[string]bool{},
+		migratedRoles:     map[string]bool{},
+		tenants:           map[string]bool{},
+		deviceWorkspace:   map[string]string{},
+		channelWorkspace:  map[string]string{},
+		groupWorkspace:    map[string]string{},
+		resourceWorkspace: map[string]string{},
+		tenantName:        map[string]string{},
+		userName:          map[string]string{},
+		deviceName:        map[string]string{},
+		groupName:         map[string]string{},
+		tenantAlias:       map[string]string{},
+		deviceAlias:       map[string]string{},
+		channelAlias:      map[string]string{},
 	}
 	var err error
 	open := func(name, dsn string) *sqlx.DB {
@@ -82,7 +82,7 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 		db, err = openDB(ctx, name, dsn)
 		return db
 	}
-	m.domainsDB = open(collectionDomains, cfg.Domains.DSN())
+	m.workspacesDB = open(collectionWorkspaces, cfg.Workspaces.DSN())
 	m.usersDB = open("users", cfg.Users.DSN())
 	m.devicesDB = open("clients", cfg.Devices.DSN())
 	m.channelsDB = open("channels", cfg.Channels.DSN())
@@ -100,8 +100,8 @@ func newMigrator(ctx context.Context, cfg config, apply bool) (*migrator, error)
 const (
 	authenticatedUsersGroupID = "00000000-0000-0000-0000-000000000005"
 
-	collectionDomains = "domains"
-	collectionGroups  = "groups"
+	collectionWorkspaces = "workspaces"
+	collectionGroups     = "groups"
 
 	attributeStatus = "status"
 
@@ -116,7 +116,7 @@ const (
 )
 
 func (m *migrator) Close() {
-	for _, db := range []*sqlx.DB{m.domainsDB, m.usersDB, m.devicesDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
+	for _, db := range []*sqlx.DB{m.workspacesDB, m.usersDB, m.devicesDB, m.channelsDB, m.groupsDB, m.authDB, m.reDB, m.reportsDB, m.atom} {
 		if db != nil {
 			_ = db.Close()
 		}
@@ -221,7 +221,7 @@ func (m *migrator) exec(ctx context.Context, query string, args ...any) error {
 // --- phases ---
 
 func (m *migrator) phaseTenants(ctx context.Context, rep *report) error {
-	rows, err := readDomains(ctx, m.domainsDB)
+	rows, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -316,12 +316,12 @@ func (m *migrator) phaseDevices(ctx context.Context, rep *report) error {
 	}
 	prof, profVer := m.deviceProfile()
 	for _, c := range rows {
-		if !m.tenants[c.DomainID] {
-			rep.skip("device_orphan_domain")
-			rep.warnf("device %s skipped: domain %s not migrated", c.ID, c.DomainID)
+		if !m.tenants[c.WorkspaceID] {
+			rep.skip("device_orphan_workspace")
+			rep.warnf("device %s skipped: workspace %s not migrated", c.ID, c.WorkspaceID)
 			continue
 		}
-		m.deviceDomain[c.ID] = c.DomainID
+		m.deviceWorkspace[c.ID] = c.WorkspaceID
 		extra := map[string]any{}
 		putStr(extra, "identity", c.Identity)
 		putTags(extra, c.Tags)
@@ -331,7 +331,7 @@ func (m *migrator) phaseDevices(ctx context.Context, rep *report) error {
 		if err := m.exec(ctx,
 			`INSERT INTO entities (id, kind, name, tenant_id, status, attributes, profile_id, profile_version_id, alias, created_at, updated_at)
 			 VALUES ($1,'device',$2,$3,$4,$5,$6,$7,$8,$9,$10) ON CONFLICT (id) DO NOTHING`,
-			c.ID, name, c.DomainID, entityStatus(c.Status), attrs(c.Metadata, extra),
+			c.ID, name, c.WorkspaceID, entityStatus(c.Status), attrs(c.Metadata, extra),
 			prof, profVer, alias, ntToTime(c.CreatedAt), ntPtr(c.UpdatedAt),
 		); err != nil {
 			return err
@@ -347,7 +347,7 @@ func (m *migrator) phaseDeviceCreds(ctx context.Context, rep *report) error {
 		return err
 	}
 	for _, c := range rows {
-		if _, ok := m.deviceDomain[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
+		if _, ok := m.deviceWorkspace[c.ID]; !ok || !c.Secret.Valid || c.Secret.String == "" {
 			continue
 		}
 		// Atom shared keys can preserve the existing Magistrala device secret.
@@ -392,12 +392,12 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 		return err
 	}
 	for _, ch := range rows {
-		if !m.tenants[ch.DomainID] {
-			rep.skip("channel_orphan_domain")
+		if !m.tenants[ch.WorkspaceID] {
+			rep.skip("channel_orphan_workspace")
 			continue
 		}
-		m.channelDomain[ch.ID] = ch.DomainID
-		m.resourceDomain[ch.ID] = ch.DomainID
+		m.channelWorkspace[ch.ID] = ch.WorkspaceID
+		m.resourceWorkspace[ch.ID] = ch.WorkspaceID
 		alias := aliasOrNil(m.channelAlias[ch.ID])
 		owner := sql.NullString{}
 		if ch.CreatedBy.Valid && m.migratedUsers[ch.CreatedBy.String] {
@@ -408,7 +408,7 @@ func (m *migrator) phaseChannels(ctx context.Context, rep *report) error {
 		if err := m.exec(ctx,
 			`INSERT INTO resources (id, kind, name, tenant_id, owner_id, attributes, alias, created_at, updated_at)
 			 VALUES ($1,'channel',$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
-			ch.ID, nsToStr(ch.Name), ch.DomainID, owner, attrs(ch.Metadata, extra),
+			ch.ID, nsToStr(ch.Name), ch.WorkspaceID, owner, attrs(ch.Metadata, extra),
 			alias, ntToTime(ch.CreatedAt), ntPtr(ch.UpdatedAt),
 		); err != nil {
 			return err
@@ -457,12 +457,12 @@ func (m *migrator) phaseRules(ctx context.Context, rep *report) error {
 	}
 	seen := map[string]int{}
 	for _, r := range rows {
-		if !m.tenants[r.DomainID] {
-			rep.skip("rule_orphan_domain")
+		if !m.tenants[r.WorkspaceID] {
+			rep.skip("rule_orphan_workspace")
 			continue
 		}
-		m.resourceDomain[r.ID] = r.DomainID
-		name := uniqueResName(seen, r.DomainID, firstNonEmpty(nsToStr(r.Name), r.ID))
+		m.resourceWorkspace[r.ID] = r.WorkspaceID
+		name := uniqueResName(seen, r.WorkspaceID, firstNonEmpty(nsToStr(r.Name), r.ID))
 		extra := map[string]any{
 			attributeStatus: entityStatus(r.Status),
 			"logic_type":    r.LogicType,
@@ -491,7 +491,7 @@ func (m *migrator) phaseRules(ctx context.Context, rep *report) error {
 		if len(r.Tags) > 0 {
 			extra["tags"] = []string(r.Tags)
 		}
-		if err := m.insertResource(ctx, r.ID, "rule", name, r.DomainID, m.ownerOf(r.CreatedBy),
+		if err := m.insertResource(ctx, r.ID, "rule", name, r.WorkspaceID, m.ownerOf(r.CreatedBy),
 			attrs(r.Metadata, extra), ntToTime(r.CreatedAt), ntPtr(r.UpdatedAt)); err != nil {
 			return err
 		}
@@ -508,12 +508,12 @@ func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
 	}
 	seen := map[string]int{}
 	for _, rp := range rows {
-		if !m.tenants[rp.DomainID] {
-			rep.skip("report_orphan_domain")
+		if !m.tenants[rp.WorkspaceID] {
+			rep.skip("report_orphan_workspace")
 			continue
 		}
-		m.resourceDomain[rp.ID] = rp.DomainID
-		name := uniqueResName(seen, rp.DomainID, firstNonEmpty(nsToStr(rp.Name), rp.ID))
+		m.resourceWorkspace[rp.ID] = rp.WorkspaceID
+		name := uniqueResName(seen, rp.WorkspaceID, firstNonEmpty(nsToStr(rp.Name), rp.ID))
 		extra := map[string]any{attributeStatus: entityStatus(rp.Status)}
 		putStr(extra, "description", rp.Description)
 		putStr(extra, "report_template", rp.ReportTemplate)
@@ -539,7 +539,7 @@ func (m *migrator) phaseReports(ctx context.Context, rep *report) error {
 		if rp.StartDatetime.Valid {
 			extra["start_datetime"] = rp.StartDatetime.Time
 		}
-		if err := m.insertResource(ctx, rp.ID, "report", name, rp.DomainID, m.ownerOf(rp.CreatedBy),
+		if err := m.insertResource(ctx, rp.ID, "report", name, rp.WorkspaceID, m.ownerOf(rp.CreatedBy),
 			attrs(nil, extra), ntToTime(rp.CreatedAt), ntPtr(rp.UpdatedAt)); err != nil {
 			return err
 		}
@@ -555,15 +555,15 @@ func (m *migrator) phaseGroups(ctx context.Context, rep *report) error {
 	}
 	// First pass: groups. Second pass: hierarchy (parent must exist).
 	for _, g := range rows {
-		if !m.tenants[g.DomainID] {
-			rep.skip("group_orphan_domain")
+		if !m.tenants[g.WorkspaceID] {
+			rep.skip("group_orphan_workspace")
 			continue
 		}
-		m.groupDomain[g.ID] = g.DomainID
+		m.groupWorkspace[g.ID] = g.WorkspaceID
 		if err := m.exec(ctx,
 			`INSERT INTO object_groups (id, name, tenant_id, description, status, attributes, created_at, updated_at)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7,$8) ON CONFLICT (id) DO NOTHING`,
-			g.ID, m.groupName[g.ID], g.DomainID, nsToStr(g.Description), entityStatus(g.Status),
+			g.ID, m.groupName[g.ID], g.WorkspaceID, nsToStr(g.Description), entityStatus(g.Status),
 			attrs(g.Metadata, map[string]any{"tags": []string(g.Tags)}),
 			ntToTime(g.CreatedAt), ntToTime(g.UpdatedAt), // object_groups.updated_at is NOT NULL
 		); err != nil {
@@ -572,15 +572,15 @@ func (m *migrator) phaseGroups(ctx context.Context, rep *report) error {
 		rep.count("object_groups", 1)
 	}
 	for _, g := range rows {
-		_, haveChild := m.groupDomain[g.ID]
-		_, haveParent := m.groupDomain[g.ParentID.String]
+		_, haveChild := m.groupWorkspace[g.ID]
+		_, haveParent := m.groupWorkspace[g.ParentID.String]
 		if !g.ParentID.Valid || !haveChild || !haveParent {
 			continue
 		}
 		if err := m.exec(ctx,
 			`INSERT INTO object_group_hierarchy (parent_id, child_id, tenant_id)
 			 VALUES ($1,$2,$3) ON CONFLICT (child_id) DO NOTHING`,
-			g.ParentID.String, g.ID, g.DomainID,
+			g.ParentID.String, g.ID, g.WorkspaceID,
 		); err != nil {
 			return err
 		}
@@ -596,15 +596,15 @@ func (m *migrator) phaseGroupMembership(ctx context.Context, rep *report) error 
 		return err
 	}
 	for _, c := range devices {
-		_, haveDevice := m.deviceDomain[c.ID]
-		_, haveGroup := m.groupDomain[c.ParentGroupID.String]
+		_, haveDevice := m.deviceWorkspace[c.ID]
+		_, haveGroup := m.groupWorkspace[c.ParentGroupID.String]
 		if !c.ParentGroupID.Valid || !haveDevice || !haveGroup {
 			continue
 		}
 		if err := m.exec(ctx,
 			`INSERT INTO object_group_entities (group_id, entity_id, tenant_id)
 			 VALUES ($1,$2,$3) ON CONFLICT (entity_id) DO NOTHING`,
-			c.ParentGroupID.String, c.ID, c.DomainID,
+			c.ParentGroupID.String, c.ID, c.WorkspaceID,
 		); err != nil {
 			return err
 		}
@@ -616,15 +616,15 @@ func (m *migrator) phaseGroupMembership(ctx context.Context, rep *report) error 
 		return err
 	}
 	for _, ch := range chans {
-		_, haveChan := m.channelDomain[ch.ID]
-		_, haveGroup := m.groupDomain[ch.ParentGroupID.String]
+		_, haveChan := m.channelWorkspace[ch.ID]
+		_, haveGroup := m.groupWorkspace[ch.ParentGroupID.String]
 		if !ch.ParentGroupID.Valid || !haveChan || !haveGroup {
 			continue
 		}
 		if err := m.exec(ctx,
 			`INSERT INTO object_group_resources (group_id, resource_id, tenant_id)
 			 VALUES ($1,$2,$3) ON CONFLICT (resource_id) DO NOTHING`,
-			ch.ParentGroupID.String, ch.ID, ch.DomainID,
+			ch.ParentGroupID.String, ch.ID, ch.WorkspaceID,
 		); err != nil {
 			return err
 		}
@@ -635,21 +635,21 @@ func (m *migrator) phaseGroupMembership(ctx context.Context, rep *report) error 
 
 // roleScope describes how a Magistrala role family maps to a permission_block.
 type roleScope struct {
-	prefix    string
-	db        *sqlx.DB
-	domainOf  func(entityID string) (string, bool) // object id -> tenant id
-	scopeMode string
-	objKind   string // for object scope
+	prefix      string
+	db          *sqlx.DB
+	workspaceOf func(entityID string) (string, bool) // object id -> tenant id
+	scopeMode   string
+	objKind     string // for object scope
 }
 
 func (m *migrator) phaseRoles(ctx context.Context, rep *report) error {
 	families := []roleScope{
-		{collectionDomains, m.domainsDB, func(id string) (string, bool) { return id, m.tenants[id] }, permissionScopeTenant, ""},
-		{"clients", m.devicesDB, func(id string) (string, bool) { d, ok := m.deviceDomain[id]; return d, ok }, permissionScopeObject, objectKindEntity},
-		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
-		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
-		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceDomain[id]; return d, ok }, permissionScopeObject, objectKindResource},
-		{collectionGroups, m.groupsDB, func(id string) (string, bool) { d, ok := m.groupDomain[id]; return d, ok }, permissionScopeGroup, ""},
+		{collectionWorkspaces, m.workspacesDB, func(id string) (string, bool) { return id, m.tenants[id] }, permissionScopeTenant, ""},
+		{"clients", m.devicesDB, func(id string) (string, bool) { d, ok := m.deviceWorkspace[id]; return d, ok }, permissionScopeObject, objectKindEntity},
+		{"channels", m.channelsDB, func(id string) (string, bool) { d, ok := m.channelWorkspace[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{"rules", m.reDB, func(id string) (string, bool) { d, ok := m.resourceWorkspace[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{"reports", m.reportsDB, func(id string) (string, bool) { d, ok := m.resourceWorkspace[id]; return d, ok }, permissionScopeObject, objectKindResource},
+		{collectionGroups, m.groupsDB, func(id string) (string, bool) { d, ok := m.groupWorkspace[id]; return d, ok }, permissionScopeGroup, ""},
 	}
 	for _, f := range families {
 		if err := m.migrateRoleFamily(ctx, rep, f); err != nil {
@@ -669,7 +669,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 		actsByRole[a.RoleID] = append(actsByRole[a.RoleID], a.Action)
 	}
 	for _, r := range roles {
-		tenant, ok := f.domainOf(r.EntityID)
+		tenant, ok := f.workspaceOf(r.EntityID)
 		if !ok {
 			rep.skip("role_orphan_object")
 			continue
@@ -682,7 +682,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 		// Atom role name unique within the tenant.
 		roleName := f.prefix + ":" + r.EntityID + ":" + r.Name
 		if f.scopeMode == permissionScopeTenant {
-			roleName = f.prefix + ":" + r.Name // domain roles: one set per tenant
+			roleName = f.prefix + ":" + r.Name // workspace roles: one set per tenant
 		}
 		if err := m.exec(ctx,
 			`INSERT INTO roles (id, name, tenant_id, description, created_at, updated_at)
@@ -739,7 +739,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 			}
 		}
 
-		// members -> role_assignments (+ tenant_memberships for domain roles)
+		// members -> role_assignments (+ tenant_memberships for workspace roles)
 		for _, mem := range mems {
 			if mem.RoleID != r.ID {
 				continue
@@ -757,7 +757,7 @@ func (m *migrator) migrateRoleFamily(ctx context.Context, rep *report, f roleSco
 				return err
 			}
 			rep.count("role_assignments", 1)
-			if f.prefix == collectionDomains {
+			if f.prefix == collectionWorkspaces {
 				if err := m.exec(ctx,
 					`INSERT INTO tenant_memberships (tenant_id, entity_id, status)
 					 VALUES ($1,$2,'active') ON CONFLICT DO NOTHING`,
@@ -867,7 +867,7 @@ func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
 	seenConn := map[string]bool{}
 	conns := make([]srcConnection, 0, len(cliConns)+len(chConns))
 	for _, c := range append(cliConns, chConns...) {
-		k := c.ChannelID + "|" + c.ClientID + "|" + c.DomainID + "|" + fmt.Sprint(c.Type)
+		k := c.ChannelID + "|" + c.ClientID + "|" + c.WorkspaceID + "|" + fmt.Sprint(c.Type)
 		if seenConn[k] {
 			continue
 		}
@@ -875,19 +875,19 @@ func (m *migrator) phaseConnections(ctx context.Context, rep *report) error {
 		conns = append(conns, c)
 	}
 	for _, c := range conns {
-		dom, ok := m.channelDomain[c.ChannelID]
+		dom, ok := m.channelWorkspace[c.ChannelID]
 		if !ok {
 			rep.skip("conn_orphan_channel")
 			continue
 		}
-		deviceDom, ok := m.deviceDomain[c.ClientID]
+		deviceDom, ok := m.deviceWorkspace[c.ClientID]
 		if !ok {
 			rep.skip("conn_orphan_device")
 			continue
 		}
-		if deviceDom != dom || c.DomainID != dom {
-			rep.skip("conn_domain_mismatch")
-			rep.warnf("connection device=%s channel=%s skipped: connection domain=%s device domain=%s channel domain=%s", c.ClientID, c.ChannelID, c.DomainID, deviceDom, dom)
+		if deviceDom != dom || c.WorkspaceID != dom {
+			rep.skip("conn_workspace_mismatch")
+			rep.warnf("connection device=%s channel=%s skipped: connection workspace=%s device workspace=%s channel workspace=%s", c.ClientID, c.ChannelID, c.WorkspaceID, deviceDom, dom)
 			continue
 		}
 		act, ok := connectionAction(c.Type)
@@ -935,7 +935,7 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 	scopesByPAT := map[string][]map[string]string{}
 	for _, s := range scopeRows {
 		scopesByPAT[s.PatID] = append(scopesByPAT[s.PatID], map[string]string{
-			"domain_id": s.DomainID.String, "entity_type": s.EntityType,
+			"workspace_id": s.WorkspaceID.String, "entity_type": s.EntityType,
 			"operation": s.Operation, "entity_id": s.EntityID,
 		})
 	}
@@ -970,7 +970,7 @@ func (m *migrator) phasePATs(ctx context.Context, rep *report) error {
 }
 
 func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
-	invs, err := readInvitations(ctx, m.domainsDB)
+	invs, err := readInvitations(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}
@@ -980,7 +980,7 @@ func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
 			rep.skip("invitation_already_accepted")
 			continue
 		}
-		if !m.tenants[iv.DomainID] || !m.migratedUsers[iv.InvitedBy] {
+		if !m.tenants[iv.WorkspaceID] || !m.migratedUsers[iv.InvitedBy] {
 			rep.skip("invitation_orphan")
 			continue
 		}
@@ -988,17 +988,17 @@ func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
 		if m.migratedUsers[iv.InviteeID] {
 			invitee = sql.NullString{String: iv.InviteeID, Valid: true}
 		}
-		roleID := derivedUUID("role", collectionDomains, iv.RoleID)
+		roleID := derivedUUID("role", collectionWorkspaces, iv.RoleID)
 		roleArg := any(roleID)
 		if !m.migratedRoles[roleID] {
 			roleArg = nil
 			rep.skip("invitation_orphan_role")
-			rep.warnf("invitation for tenant %s invitee %s has missing role %s; role_id set NULL", iv.DomainID, iv.InviteeID, iv.RoleID)
+			rep.warnf("invitation for tenant %s invitee %s has missing role %s; role_id set NULL", iv.WorkspaceID, iv.InviteeID, iv.RoleID)
 		}
 		if err := m.exec(ctx,
 			`INSERT INTO tenant_invitations (id, tenant_id, invitee_user_id, invited_by, role_id, created_at, rejected_at)
 			 VALUES ($1,$2,$3,$4,$5,$6,$7) ON CONFLICT (id) DO NOTHING`,
-			derivedUUID("inv", iv.DomainID, iv.InviteeID), iv.DomainID, invitee, iv.InvitedBy,
+			derivedUUID("inv", iv.WorkspaceID, iv.InviteeID), iv.WorkspaceID, invitee, iv.InvitedBy,
 			roleArg, ntToTime(iv.CreatedAt), ntPtr(iv.RejectedAt),
 		); err != nil {
 			return err
@@ -1011,7 +1011,7 @@ func (m *migrator) phaseInvitations(ctx context.Context, rep *report) error {
 // phaseBackfill sets tenants.created_by/updated_by now that entities exist (the
 // FK could not be satisfied during phaseTenants). Only points at migrated users.
 func (m *migrator) phaseBackfill(ctx context.Context, rep *report) error {
-	doms, err := readDomains(ctx, m.domainsDB)
+	doms, err := readWorkspaces(ctx, m.workspacesDB)
 	if err != nil {
 		return err
 	}

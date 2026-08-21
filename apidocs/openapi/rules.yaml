@@ -27,7 +27,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/rules:
+  /{workspaceID}/rules:
     post:
       operationId: createRule
       summary: Create Rule
@@ -36,7 +36,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
       security:
         - bearerAuth: []
       requestBody:
@@ -62,7 +62,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Limit' 
         - $ref: '#/components/parameters/InputChannel'
@@ -83,7 +83,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/rules/{ruleID}:
+  /{workspaceID}/rules/{ruleID}:
     get:
       operationId: getRule
       summary: View Rule
@@ -91,7 +91,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
@@ -117,7 +117,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
@@ -145,7 +145,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
@@ -163,7 +163,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/rules/{ruleID}/enable:
+  /{workspaceID}/rules/{ruleID}/enable:
     put:
       operationId: enableRule
       summary: Enable Rule
@@ -171,7 +171,7 @@ paths:
       tags:
         - rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
@@ -191,7 +191,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/rules/{ruleID}/disable:
+  /{workspaceID}/rules/{ruleID}/disable:
     put:
       operationId: disableRule
       summary: Disable Rule
@@ -199,7 +199,7 @@ paths:
       tags:
         - Rules
       parameters:
-        - $ref: '#/components/parameters/DomainID'
+        - $ref: '#/components/parameters/WorkspaceID'
         - $ref: '#/components/parameters/RuleID'
       security:
         - bearerAuth: []
@@ -268,9 +268,9 @@ components:
         name:
           type: string
           description: Rule name
-        domain:
+        workspace:
           type: string
-          description: Domain ID this rule belongs to
+          description: Workspace ID this rule belongs to
         metadata:
           type: object
           description: Custom metadata
@@ -346,16 +346,16 @@ components:
           description: User who last updated the rule
       required:
         - name
-        - domain
+        - workspace
         - input_channel
         - input_topic
         - logic
         - status
 
   parameters:
-    DomainID:
-      name: domainID
-      description: Domain ID
+    WorkspaceID:
+      name: workspaceID
+      description: Workspace ID
       in: path
       required: true
       schema:
@@ -432,9 +432,9 @@ components:
               name:
                 type: string
                 description: Rule name
-              domain:
+              workspace:
                 type: string
-                description: Domain ID this rule belongs to
+                description: Workspace ID this rule belongs to
               metadata:
                 type: object
                 description: Custom metadata
@@ -495,7 +495,7 @@ components:
                 enum: [enabled, disabled]
             required:
               - name
-              - domain
+              - workspace
               - input_channel
               - input_topic
               - logic

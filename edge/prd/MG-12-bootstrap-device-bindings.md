@@ -151,7 +151,7 @@ already has a mechanism to trigger.
 
 Bootstrap `Config.ExternalID` ("a device MAC address is a good choice",
 `bootstrap/README.md`) and Device `Serial` look like the same concept but answer
-different questions: `Serial` identifies a physical device within a domain;
+different questions: `Serial` identifies a physical device within a workspace;
 `ExternalID` identifies an enrollment used to fetch a config.
 
 Per [spec §8 C3](../architecture.md#8-decision-record) they are **independent**. They may

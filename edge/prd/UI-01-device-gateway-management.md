@@ -74,7 +74,7 @@ this gateway" — not imply the devices go with it.
 3. Set a device's gateways to 0, 1 and 3 entries; each round-trips.
 4. A device that is both a gateway and a reporter renders correctly in both views.
 5. Deleting a gateway leaves its devices intact, and the confirmation says so.
-6. Two domains may each hold a device with the same serial.
+6. Two workspaces may each hold a device with the same serial.
 7. Search by serial finds the device.
 
 ## Test plan

@@ -16,12 +16,12 @@ AUTH_GRPC_SERVER_CN=auth
 AUTH_GRPC_CLIENT_CN=auth-client
 AUTH_GRPC_SERVER_CRT_FILE_NAME=auth-grpc-server
 AUTH_GRPC_CLIENT_CRT_FILE_NAME=auth-grpc-client
-DOMAINS_GRPC_SERVER_CONF_FILE_NAME=domains-grpc-server.conf
-DOMAINS_GRPC_CLIENT_CONF_FILE_NAME=domains-grpc-client.conf
-DOMAINS_GRPC_SERVER_CN=domains
-DOMAINS_GRPC_CLIENT_CN=domains-client
-DOMAINS_GRPC_SERVER_CRT_FILE_NAME=domains-grpc-server
-DOMAINS_GRPC_CLIENT_CRT_FILE_NAME=domains-grpc-client
+WORKSPACES_GRPC_SERVER_CONF_FILE_NAME=workspaces-grpc-server.conf
+WORKSPACES_GRPC_CLIENT_CONF_FILE_NAME=workspaces-grpc-client.conf
+WORKSPACES_GRPC_SERVER_CN=workspaces
+WORKSPACES_GRPC_CLIENT_CN=workspaces-client
+WORKSPACES_GRPC_SERVER_CRT_FILE_NAME=workspaces-grpc-server
+WORKSPACES_GRPC_CLIENT_CRT_FILE_NAME=workspaces-grpc-client
 GROUPS_GRPC_SERVER_CONF_FILE_NAME=groups-grpc-server.conf
 GROUPS_GRPC_CLIENT_CONF_FILE_NAME=groups-grpc-client.conf
 GROUPS_GRPC_SERVER_CN=groups
@@ -140,7 +140,7 @@ It can be downloaded from $(DOWNLOAD_URL).
 
 etc, etc.
 endef
-all: clean_certs ca server_cert auth_grpc_certs domains_grpc_certs groups_grpc_certs devices_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret re_trace_key
+all: clean_certs ca server_cert auth_grpc_certs workspaces_grpc_certs groups_grpc_certs devices_grpc_certs channels_grpc_certs coap_dtls_certs fluxmq_service_certs fluxmq_service_secret timescale_writer_fluxmq_service_secret postgres_writer_fluxmq_service_secret fluxmq_auth_fluxmq_service_secret re_trace_key
 
 # CA name and key is "ca".
 ca:
@@ -324,8 +324,8 @@ re_trace_key:
 auth_grpc_certs:
 	$(call gen_grpc_cert_pair,$(AUTH_GRPC_SERVER_CRT_FILE_NAME),$(AUTH_GRPC_SERVER_CN),$(AUTH_GRPC_CLIENT_CRT_FILE_NAME),$(AUTH_GRPC_CLIENT_CN))
 
-domains_grpc_certs:
-	$(call gen_grpc_cert_pair,$(DOMAINS_GRPC_SERVER_CRT_FILE_NAME),$(DOMAINS_GRPC_SERVER_CN),$(DOMAINS_GRPC_CLIENT_CRT_FILE_NAME),$(DOMAINS_GRPC_CLIENT_CN))
+workspaces_grpc_certs:
+	$(call gen_grpc_cert_pair,$(WORKSPACES_GRPC_SERVER_CRT_FILE_NAME),$(WORKSPACES_GRPC_SERVER_CN),$(WORKSPACES_GRPC_CLIENT_CRT_FILE_NAME),$(WORKSPACES_GRPC_CLIENT_CN))
 
 groups_grpc_certs:
 	$(call gen_grpc_cert_pair,$(GROUPS_GRPC_SERVER_CRT_FILE_NAME),$(GROUPS_GRPC_SERVER_CN),$(GROUPS_GRPC_CLIENT_CRT_FILE_NAME),$(GROUPS_GRPC_CLIENT_CN))

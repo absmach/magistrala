@@ -1,7 +1,7 @@
 // Copyright (c) Abstract Machines
 // SPDX-License-Identifier: Apache-2.0
 
-// Package events consumes the domain events Atom publishes from its
+// Package events consumes the workspace events Atom publishes from its
 // transactional outbox (absmach/atom migrations/004_event_outbox.sql,
 // src/events/publisher.rs) and turns them into cache invalidation, nothing
 // else (MG-14). Delivery is at-least-once with no ordering guarantee, so

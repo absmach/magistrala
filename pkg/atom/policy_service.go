@@ -47,7 +47,7 @@ func (ps PolicyService) AddPolicy(ctx context.Context, pr policies.Policy) error
 		return err
 	}
 	block, err := writer.CreatePermissionBlock(ctx, CreatePermissionBlock{
-		TenantID:   pr.Domain,
+		TenantID:   pr.Workspace,
 		ScopeMode:  policyGrantScopeMode(pr),
 		ObjectKind: policyGrantObjectKind(pr),
 		ObjectType: policyGrantObjectType(pr),
@@ -60,7 +60,7 @@ func (ps PolicyService) AddPolicy(ctx context.Context, pr policies.Policy) error
 		return err
 	}
 	_, err = writer.CreateDirectPolicy(ctx, CreateDirectPolicy{
-		TenantID:          pr.Domain,
+		TenantID:          pr.Workspace,
 		SubjectKind:       policyGrantSubjectKind(pr),
 		SubjectID:         policySubjectID(pr),
 		PermissionBlockID: block.ID,
@@ -93,7 +93,7 @@ func (ps PolicyService) DeletePolicyFilter(ctx context.Context, pr policies.Poli
 	var ids []string
 	for offset := uint64(0); ; offset += policyPageLimit {
 		page, err := writer.ListDirectPolicies(ctx, DirectPolicyQuery{
-			TenantID:    pr.Domain,
+			TenantID:    pr.Workspace,
 			SubjectKind: policyGrantSubjectKind(pr),
 			SubjectID:   policySubjectID(pr),
 			Limit:       policyPageLimit,
@@ -283,7 +283,7 @@ func (ps PolicyService) ListAllObjects(ctx context.Context, pr policies.Policy) 
 			Action:     CapabilityName(pr.Permission),
 			ObjectKind: policyObjectKind(pr),
 			ObjectType: atomPolicyObjectType(pr.ObjectType),
-			TenantID:   pr.Domain,
+			TenantID:   pr.Workspace,
 			Limit:      policyPageLimit,
 			Offset:     offset,
 		})
@@ -343,7 +343,7 @@ func policyGrantScopeMode(pr policies.Policy) string {
 	switch pr.ObjectType {
 	case policies.PlatformType:
 		return "platform"
-	case policies.DomainType:
+	case policies.WorkspaceType:
 		return atomObjectKindTenant
 	default:
 		return atomScopeModeObject

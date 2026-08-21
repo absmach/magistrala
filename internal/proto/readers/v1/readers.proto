@@ -93,7 +93,7 @@ message JsonMessage {
 
 message ReadMessagesReq {
   string channel_id                   = 1;
-  string domain_id                    = 2;
+  string workspace_id                    = 2;
   PageMetadata page_metadata          = 3;
 }
 
@@ -116,14 +116,14 @@ message DeviceStatsRes {
 }
 
 message ListGatewayDevicesReq {
-  string domain_id            = 1;
+  string workspace_id            = 1;
   string channel_id           = 2;
   string publisher_id         = 3;
   PageMetadata page_metadata  = 4;
 }
 
 message ListDeviceGatewaysReq {
-  string domain_id            = 1;
+  string workspace_id            = 1;
   string channel_id           = 2;
   string device_id            = 3;
   PageMetadata page_metadata  = 4;

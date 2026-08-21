@@ -66,11 +66,11 @@ func (s *connectServer) Authenticate(ctx context.Context, req *connect.Request[a
 	token := authn.AuthPack(authn.BasicAuth, username, password)
 	res, err := s.clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{Token: token})
 	if err != nil {
-		if !shouldTryDomainAuth(req.Msg, username, password) {
+		if !shouldTryWorkspaceAuth(req.Msg, username, password) {
 			return nil, encodeError(err)
 		}
 
-		token = authn.AuthPack(authn.DomainAuth, username, password)
+		token = authn.AuthPack(authn.WorkspaceAuth, username, password)
 		res, err = s.clients.Authenticate(ctx, &grpcDevicesV1.AuthnReq{Token: token})
 		if err != nil {
 			return nil, encodeError(err)
@@ -89,15 +89,15 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 		return nil, encodeError(err)
 	}
 
-	var domainID, channelID string
+	var workspaceID, channelID string
 	var topicType messaging.TopicType
 	var err error
 
 	switch connType {
 	case connections.Publish:
-		domainID, channelID, _, topicType, err = s.parser.ParsePublishTopic(ctx, req.Msg.GetTopic(), true)
+		workspaceID, channelID, _, topicType, err = s.parser.ParsePublishTopic(ctx, req.Msg.GetTopic(), true)
 	case connections.Subscribe:
-		domainID, channelID, _, topicType, err = s.parser.ParseSubscribeTopic(ctx, req.Msg.GetTopic(), true)
+		workspaceID, channelID, _, topicType, err = s.parser.ParseSubscribeTopic(ctx, req.Msg.GetTopic(), true)
 	}
 	if err != nil {
 		if shouldDenyAuthorize(err) {
@@ -122,10 +122,10 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 			ObjectKind: "resource",
 			ObjectID:   channelID,
 			Context: map[string]any{
-				"domain_id":   domainID,
-				"client_type": policies.ClientType,
-				"connection":  connType.String(),
-				"topic_type":  uint32(topicType),
+				"workspace_id": workspaceID,
+				"client_type":  policies.ClientType,
+				"connection":   connType.String(),
+				"topic_type":   uint32(topicType),
 			},
 		})
 		if err != nil {
@@ -138,11 +138,11 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 	}
 
 	ar := &grpcChannelsV1.AuthzReq{
-		Type:       uint32(connType),
-		ClientId:   req.Msg.GetExternalId(),
-		ClientType: policies.ClientType,
-		ChannelId:  channelID,
-		DomainId:   domainID,
+		Type:        uint32(connType),
+		ClientId:    req.Msg.GetExternalId(),
+		ClientType:  policies.ClientType,
+		ChannelId:   channelID,
+		WorkspaceId: workspaceID,
 	}
 	res, err := s.channels.Authorize(ctx, ar)
 	if err != nil {
@@ -155,7 +155,7 @@ func (s *connectServer) Authorize(ctx context.Context, req *connect.Request[auth
 	return connect.NewResponse(&authv1.AuthzRes{Authorized: res.GetAuthorized()}), nil
 }
 
-func shouldTryDomainAuth(msg *authv1.AuthnReq, username, password string) bool {
+func shouldTryWorkspaceAuth(msg *authv1.AuthnReq, username, password string) bool {
 	if username == "" || password == "" {
 		return false
 	}

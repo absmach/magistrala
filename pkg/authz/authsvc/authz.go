@@ -9,22 +9,22 @@ import (
 	grpcAuthV1 "github.com/absmach/magistrala/api/grpc/auth/v1"
 	"github.com/absmach/magistrala/auth/api/grpc/auth"
 	"github.com/absmach/magistrala/pkg/authz"
-	pkgDomians "github.com/absmach/magistrala/pkg/domains"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/grpcclient"
 	"github.com/absmach/magistrala/pkg/policies"
+	pkgWorkspaces "github.com/absmach/magistrala/pkg/workspaces"
 	grpchealth "google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type authorization struct {
 	authSvcClient grpcAuthV1.AuthServiceClient
-	domains       pkgDomians.Authorization
+	workspaces    pkgWorkspaces.Authorization
 }
 
 var _ authz.Authorization = (*authorization)(nil)
 
-func NewAuthorization(ctx context.Context, cfg grpcclient.Config, domainsAuthz pkgDomians.Authorization) (authz.Authorization, grpcclient.Handler, error) {
+func NewAuthorization(ctx context.Context, cfg grpcclient.Config, workspacesAuthz pkgWorkspaces.Authorization) (authz.Authorization, grpcclient.Handler, error) {
 	client, err := grpcclient.NewHandler(cfg)
 	if err != nil {
 		return nil, nil, err
@@ -41,27 +41,27 @@ func NewAuthorization(ctx context.Context, cfg grpcclient.Config, domainsAuthz p
 	authSvcClient := auth.NewAuthClient(client.Connection(), cfg.Timeout)
 	return authorization{
 		authSvcClient: authSvcClient,
-		domains:       domainsAuthz,
+		workspaces:    workspacesAuthz,
 	}, client, nil
 }
 
 func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *authz.PATReq) error {
-	if pr.SubjectType == policies.UserType && (pr.ObjectType == policies.GroupType || pr.ObjectType == policies.ClientType || pr.ObjectType == policies.DomainType) {
-		domainID := pr.Domain
-		if domainID == "" {
-			if pr.ObjectType != policies.DomainType {
-				return svcerr.ErrDomainAuthorization
+	if pr.SubjectType == policies.UserType && (pr.ObjectType == policies.GroupType || pr.ObjectType == policies.ClientType || pr.ObjectType == policies.WorkspaceType) {
+		workspaceID := pr.Workspace
+		if workspaceID == "" {
+			if pr.ObjectType != policies.WorkspaceType {
+				return svcerr.ErrWorkspaceAuthorization
 			}
-			domainID = pr.Object
+			workspaceID = pr.Object
 		}
-		if err := a.checkDomain(ctx, pr.SubjectType, pr.Subject, domainID); err != nil {
-			return errors.Wrap(svcerr.ErrDomainAuthorization, err)
+		if err := a.checkWorkspace(ctx, pr.SubjectType, pr.Subject, workspaceID); err != nil {
+			return errors.Wrap(svcerr.ErrWorkspaceAuthorization, err)
 		}
 	}
 
 	req := grpcAuthV1.AuthZReq{
 		PolicyReq: &grpcAuthV1.PolicyReq{
-			Domain:          pr.Domain,
+			Workspace:       pr.Workspace,
 			SubjectType:     pr.SubjectType,
 			SubjectKind:     pr.SubjectKind,
 			SubjectRelation: pr.SubjectRelation,
@@ -76,7 +76,7 @@ func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *a
 	if pat != nil {
 		req.PatReq = &grpcAuthV1.PATReq{
 			PatId:      pat.PatID,
-			Domain:     pat.Domain,
+			Workspace:  pat.Workspace,
 			Operation:  pat.Operation,
 			UserId:     pat.UserID,
 			EntityId:   pat.EntityID,
@@ -94,14 +94,14 @@ func (a authorization) Authorize(ctx context.Context, pr authz.PolicyReq, pat *a
 	return nil
 }
 
-func (a authorization) checkDomain(ctx context.Context, subjectType, subject, domainID string) error {
-	status, err := a.domains.RetrieveStatus(ctx, domainID)
+func (a authorization) checkWorkspace(ctx context.Context, subjectType, subject, workspaceID string) error {
+	status, err := a.workspaces.RetrieveStatus(ctx, workspaceID)
 	if err != nil {
 		return errors.Wrap(svcerr.ErrViewEntity, err)
 	}
 
 	switch status {
-	case pkgDomians.FreezeStatus:
+	case pkgWorkspaces.FreezeStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,
@@ -113,26 +113,26 @@ func (a authorization) checkDomain(ctx context.Context, subjectType, subject, do
 		})
 
 		return err
-	case pkgDomians.DisabledStatus:
+	case pkgWorkspaces.DisabledStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,
 				SubjectType: subjectType,
 				Permission:  policies.AdminPermission,
-				Object:      domainID,
-				ObjectType:  policies.DomainType,
+				Object:      workspaceID,
+				ObjectType:  policies.WorkspaceType,
 			},
 		})
 
 		return err
-	case pkgDomians.EnabledStatus:
+	case pkgWorkspaces.EnabledStatus:
 		_, err := a.authSvcClient.Authorize(ctx, &grpcAuthV1.AuthZReq{
 			PolicyReq: &grpcAuthV1.PolicyReq{
 				Subject:     subject,
 				SubjectType: subjectType,
 				Permission:  policies.MembershipPermission,
-				Object:      domainID,
-				ObjectType:  policies.DomainType,
+				Object:      workspaceID,
+				ObjectType:  policies.WorkspaceType,
 			},
 		})
 

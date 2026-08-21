@@ -766,11 +766,11 @@ components:
             - secret
         metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "workspace": "example.com" }
           description: Arbitrary, object-encoded user's data visible to other users.
         private_metadata:
           type: object
-          example: { "domain": "example.com" }
+          example: { "workspace": "example.com" }
           description: Arbitrary, object-encoded user's data private to the user.
         profile_picture:
           type: string

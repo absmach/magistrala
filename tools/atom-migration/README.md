@@ -91,7 +91,7 @@ Names are **derived by convention, not auto-discovered**. There are two sets.
 a fixed per-service suffix:
 
 ```
-<SRC_VOL_PREFIX><svc>-db-volume     # svc ∈ domains users clients channels groups auth re reports
+<SRC_VOL_PREFIX><svc>-db-volume     # svc ∈ workspaces users clients channels groups auth re reports
 ```
 
 `SRC_VOL_PREFIX` defaults to `magistrala_magistrala-`, i.e. old Compose project
@@ -161,7 +161,7 @@ depend on):
 
 ```bash
 docker compose -f docker/docker-compose.yaml up -d --no-deps \
-  auth-db users-db domains-db devices-db channels-db groups-db \
+  auth-db users-db workspaces-db devices-db channels-db groups-db \
   re-db reports-db
 ```
 

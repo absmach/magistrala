@@ -29,7 +29,7 @@ Without `ATOM_URL` the CLI defaults to `http://localhost:8080/graphql`.
 Both settings also have flags, which win over the environment:
 
 ```bash
-./build/cli --graphql-url http://localhost:8080/graphql --token "$ATOM_ADMIN_TOKEN" domains list
+./build/cli --graphql-url http://localhost:8080/graphql --token "$ATOM_ADMIN_TOKEN" workspaces list
 ```
 
 `--graphql-url` also configures the `pkg/atom` client behind `devices`,
@@ -54,18 +54,18 @@ These persistent flags apply to every listing command:
 Tenant-scoped credentials can pass either a tenant ID or alias:
 
 ```bash
-./build/cli login user@example.com secret --tenant-id <domain_id>
-./build/cli login user@example.com secret --tenant-alias <domain_alias>
+./build/cli login user@example.com secret --tenant-id <workspace_id>
+./build/cli login user@example.com secret --tenant-alias <workspace_alias>
 ```
 
-## Domains
+## Workspaces
 
-Domains map to Atom tenants.
+Workspaces map to Atom tenants.
 
 ```bash
-./build/cli domains create "Demo Domain" --alias demo
-./build/cli domains list --limit 20 --offset 0
-./build/cli domains get <domain_id>
+./build/cli workspaces create "Demo Workspace" --alias demo
+./build/cli workspaces list --limit 20 --offset 0
+./build/cli workspaces get <workspace_id>
 ```
 
 ## Channels
@@ -73,10 +73,10 @@ Domains map to Atom tenants.
 Channels map to Atom resources with `kind="channel"`.
 
 ```bash
-./build/cli channels create <domain_id> "Measurements"
-./build/cli channels create <domain_id> "Alerts" --attributes '{"retention":"7d"}'
-./build/cli channels list <domain_id>
-./build/cli channels list <domain_id> --kind ""
+./build/cli channels create <workspace_id> "Measurements"
+./build/cli channels create <workspace_id> "Alerts" --attributes '{"retention":"7d"}'
+./build/cli channels list <workspace_id>
+./build/cli channels list <workspace_id> --kind ""
 ./build/cli channels get <channel_id>
 ```
 
@@ -87,9 +87,9 @@ Atom exposes one mutation per group type, so `--type` selects between
 any other value is rejected before the request is sent.
 
 ```bash
-./build/cli groups create <domain_id> "Factory Floor" --description "Plant devices"
-./build/cli groups create <domain_id> "Operators" --type principal
-./build/cli groups list <domain_id>
+./build/cli groups create <workspace_id> "Factory Floor" --description "Plant devices"
+./build/cli groups create <workspace_id> "Operators" --type principal
+./build/cli groups list <workspace_id>
 ./build/cli groups get <group_id>
 ```
 
@@ -106,8 +106,8 @@ These commands go through `pkg/atom`'s typed client. Devices are Atom entities
 of kind `device`.
 
 ```bash
-./build/cli devices create <JSON_device> <domain_id>
-./build/cli devices all get <domain_id>
+./build/cli devices create <JSON_device> <workspace_id>
+./build/cli devices all get <workspace_id>
 ./build/cli devices <device_id> get
 ./build/cli devices <device_id> update <JSON_string>
 ./build/cli devices <device_id> enable
@@ -120,12 +120,12 @@ reachability relation between devices and gateways.
 
 ```bash
 ./build/cli gateways set <device_id> <gateway_id1,gateway_id2,...>
-./build/cli gateways <gateway_id> devices <domain_id>
+./build/cli gateways <gateway_id> devices <workspace_id>
 ```
 
 ```bash
-./build/cli devicetypes create <JSON_device_type> <domain_id>
-./build/cli devicetypes all get <domain_id>
+./build/cli devicetypes create <JSON_device_type> <workspace_id>
+./build/cli devicetypes all get <workspace_id>
 ./build/cli devicetypes <device_type_id> update <JSON_string>
 ./build/cli devicetypes <device_type_id> versions
 ./build/cli devicetypes <device_type_id> create-version <JSON_version>

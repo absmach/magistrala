@@ -36,7 +36,7 @@ func EncodeError(err error) error {
 		err == apiutil.ErrBearerToken:
 		return status.Error(codes.Unauthenticated, err.Error())
 	case errors.Contains(err, svcerr.ErrAuthorization),
-		errors.Contains(err, svcerr.ErrDomainAuthorization):
+		errors.Contains(err, svcerr.ErrWorkspaceAuthorization):
 		return status.Error(codes.PermissionDenied, err.Error())
 	case errors.Contains(err, svcerr.ErrNotFound):
 		return status.Error(codes.NotFound, err.Error())

@@ -13,8 +13,8 @@ func TestCanonicalStream(t *testing.T) {
 	}{
 		{
 			name:   "raw magistrala stream",
-			stream: "magistrala.domain.create",
-			want:   "events.magistrala.domain.create",
+			stream: "magistrala.workspace.create",
+			want:   "events.magistrala.workspace.create",
 		},
 		{
 			name:   "already prefixed stream",
@@ -44,9 +44,9 @@ func TestQueueFilter(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "domain wildcard",
-			stream: "events.magistrala.domain.*",
-			want:   "$queue/events/magistrala/domain/+",
+			name:   "workspace wildcard",
+			stream: "events.magistrala.workspace.*",
+			want:   "$queue/events/magistrala/workspace/+",
 		},
 		{
 			name:   "all events",
@@ -71,9 +71,9 @@ func TestStreamFilter(t *testing.T) {
 		want   string
 	}{
 		{
-			name:   "domain wildcard",
-			stream: "events.magistrala.domain.*",
-			want:   "magistrala/domain/+",
+			name:   "workspace wildcard",
+			stream: "events.magistrala.workspace.*",
+			want:   "magistrala/workspace/+",
 		},
 		{
 			name:   "all events",

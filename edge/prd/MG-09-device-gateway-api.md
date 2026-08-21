@@ -46,7 +46,7 @@ Widest blast radius in the programme — this freezes the public API shape.
 
 | Field | Meaning |
 |---|---|
-| `Serial` | **The device identifier.** Arbitrary string, Atom `external_id`, unique per domain (ATOM-06). Appears verbatim in publish topics. Independent of Bootstrap `ExternalID` (C3) |
+| `Serial` | **The device identifier.** Arbitrary string, Atom `external_id`, unique per workspace (ATOM-06). Appears verbatim in publish topics. Independent of Bootstrap `ExternalID` (C3) |
 | ~~`DeviceTypeID`~~ | ⏸ phase 2 — device types are deferred (MG-02) |
 | `ProvisioningState` | `pending` / `provisioned` / `rejected` — an **attribute**, per spec §8 A2. Lifecycle only; nothing on the publish path reads it |
 
@@ -106,9 +106,9 @@ type Device struct {
     Gateways []string `json:"gateways,omitempty"`   // 0..N gateway IDs
 }
 
-SetDeviceGateways(ctx, deviceID, gatewayIDs []string, domainID, token) error
-DeviceGateways(ctx, deviceID, domainID, token) ([]Gateway, error)
-GatewayDevices(ctx, gatewayID, pm, domainID, token) (DevicesPage, error)
+SetDeviceGateways(ctx, deviceID, gatewayIDs []string, workspaceID, token) error
+DeviceGateways(ctx, deviceID, workspaceID, token) ([]Gateway, error)
+GatewayDevices(ctx, gatewayID, pm, workspaceID, token) (DevicesPage, error)
 ```
 
 `SetDeviceGateways` replaces the whole list rather than offering attach/detach —
@@ -123,7 +123,7 @@ explicitly. **Do not leave it unstated** — the failure is silent.
 
 `GatewayDevices` is the reverse lookup: devices whose `gateways` array contains
 this gateway. Needs **ATOM-01** array containment; without it the only fallback
-is fetching every device in the domain, which paginates incorrectly.
+is fetching every device in the workspace, which paginates incorrectly.
 
 This is the **declared** relation, and in phase 1 it is the whole of the gateway
 view: `GatewayDevices` plus an entity read is everything the UI needs. The
@@ -227,7 +227,7 @@ stays untouched.
    device's data, and by changes to the reachability relation.
 6a. Access to a gateway grants **no** access to the devices reachable through it,
    and vice versa (spec §2.2, consequence 3).
-7. `Serial` is queryable and unique **within a domain**; two domains may each
+7. `Serial` is queryable and unique **within a workspace**; two workspaces may each
    hold the same serial, and a lookup in one never returns the other's device.
 7a. A serial containing `/`, spaces or unicode is **accepted** — no format
    validation exists.
@@ -255,7 +255,7 @@ stays untouched.
   UI, and the docs move together. Sequence the cutover across repos rather than
   merging here and discovering the fan-out.
 - **`Serial` uniqueness is per tenant** ([spec §8 C4](../architecture.md#8-decision-record)) —
-  two domains may each hold `ABC123`; within one domain it identifies exactly one
+  two workspaces may each hold `ABC123`; within one workspace it identifies exactly one
   device. Every serial lookup must be tenant-scoped; one that is not
   cross-attributes data between customers and fails silently.
 

@@ -2,7 +2,7 @@
 
 Go SDK, a Go driver for Magistrala HTTP API.
 
-Provides comprehensive functionality for system administration (provisioning), messaging, user management, domain management, groups, channels, clients, certificates and invitations.
+Provides comprehensive functionality for system administration (provisioning), messaging, user management, workspace management, groups, channels, clients, certificates and invitations.
 
 ## Installation
 
@@ -28,7 +28,7 @@ func main() {
         UsersURL:       "http://localhost:9002",
         DevicesURL:     "http://localhost:9000",
         ChannelsURL:    "http://localhost:9001",
-        DomainsURL:     "http://localhost:8189",
+        WorkspacesURL:     "http://localhost:8189",
         HTTPAdapterURL: "http://localhost:8008",
         CertsURL:       "http://localhost:9019",
         HostURL:        "http://localhost",
@@ -82,7 +82,7 @@ type Config struct {
     UsersURL        string
     GroupsURL       string
     ChannelsURL     string
-    DomainsURL      string
+    WorkspacesURL      string
     HostURL         string
     MsgContentType  ContentType
     TLSVerification bool
@@ -140,194 +140,194 @@ CreateToken(ctx context.Context, lt Login) (Token, errors.SDKError)
 RefreshToken(ctx context.Context, token string) (Token, errors.SDKError)
 ```
 
-### Domain Management
+### Workspace Management
 
 ```go
-// Create domain
-CreateDomain(ctx context.Context, d Domain, token string) (Domain, errors.SDKError)
+// Create workspace
+CreateWorkspace(ctx context.Context, d Workspace, token string) (Workspace, errors.SDKError)
 
-// Get domain information
-Domain(ctx context.Context, domainID, token string) (Domain, errors.SDKError)
+// Get workspace information
+Workspace(ctx context.Context, workspaceID, token string) (Workspace, errors.SDKError)
 
-// List domains
-Domains(ctx context.Context, pm PageMetadata, token string) (DomainsPage, errors.SDKError)
+// List workspaces
+Workspaces(ctx context.Context, pm PageMetadata, token string) (WorkspacesPage, errors.SDKError)
 
-// Update domain
-UpdateDomain(ctx context.Context, d Domain, token string) (Domain, errors.SDKError)
+// Update workspace
+UpdateWorkspace(ctx context.Context, d Workspace, token string) (Workspace, errors.SDKError)
 
-// Domain status management
-EnableDomain(ctx context.Context, domainID, token string) errors.SDKError
-DisableDomain(ctx context.Context, domainID, token string) errors.SDKError
-FreezeDomain(ctx context.Context, domainID, token string) errors.SDKError
+// Workspace status management
+EnableWorkspace(ctx context.Context, workspaceID, token string) errors.SDKError
+DisableWorkspace(ctx context.Context, workspaceID, token string) errors.SDKError
+FreezeWorkspace(ctx context.Context, workspaceID, token string) errors.SDKError
 
-// Domain roles management
-CreateDomainRole(ctx context.Context, id string, rq RoleReq, token string) (Role, errors.SDKError)
-DomainRoles(ctx context.Context, id string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
-DomainRole(ctx context.Context, id, roleID, token string) (Role, errors.SDKError)
-UpdateDomainRole(ctx context.Context, id, roleID, newName string, token string) (Role, errors.SDKError)
-DeleteDomainRole(ctx context.Context, id, roleID, token string) errors.SDKError
+// Workspace roles management
+CreateWorkspaceRole(ctx context.Context, id string, rq RoleReq, token string) (Role, errors.SDKError)
+WorkspaceRoles(ctx context.Context, id string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
+WorkspaceRole(ctx context.Context, id, roleID, token string) (Role, errors.SDKError)
+UpdateWorkspaceRole(ctx context.Context, id, roleID, newName string, token string) (Role, errors.SDKError)
+DeleteWorkspaceRole(ctx context.Context, id, roleID, token string) errors.SDKError
 
-// Domain role actions management
-AddDomainRoleActions(ctx context.Context, id, roleID string, actions []string, token string) ([]string, errors.SDKError)
-DomainRoleActions(ctx context.Context, id, roleID string, token string) ([]string, errors.SDKError)
-RemoveDomainRoleActions(ctx context.Context, id, roleID string, actions []string, token string) errors.SDKError
-RemoveAllDomainRoleActions(ctx context.Context, id, roleID, token string) errors.SDKError
-AvailableDomainRoleActions(ctx context.Context, token string) ([]string, errors.SDKError)
+// Workspace role actions management
+AddWorkspaceRoleActions(ctx context.Context, id, roleID string, actions []string, token string) ([]string, errors.SDKError)
+WorkspaceRoleActions(ctx context.Context, id, roleID string, token string) ([]string, errors.SDKError)
+RemoveWorkspaceRoleActions(ctx context.Context, id, roleID string, actions []string, token string) errors.SDKError
+RemoveAllWorkspaceRoleActions(ctx context.Context, id, roleID, token string) errors.SDKError
+AvailableWorkspaceRoleActions(ctx context.Context, token string) ([]string, errors.SDKError)
 
-// Domain role members management
-AddDomainRoleMembers(ctx context.Context, id, roleID string, members []string, token string) ([]string, errors.SDKError)
-DomainRoleMembers(ctx context.Context, id, roleID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
-RemoveDomainRoleMembers(ctx context.Context, id, roleID string, members []string, token string) errors.SDKError
-RemoveAllDomainRoleMembers(ctx context.Context, id, roleID, token string) errors.SDKError
-ListDomainMembers(ctx context.Context, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
+// Workspace role members management
+AddWorkspaceRoleMembers(ctx context.Context, id, roleID string, members []string, token string) ([]string, errors.SDKError)
+WorkspaceRoleMembers(ctx context.Context, id, roleID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
+RemoveWorkspaceRoleMembers(ctx context.Context, id, roleID string, members []string, token string) errors.SDKError
+RemoveAllWorkspaceRoleMembers(ctx context.Context, id, roleID, token string) errors.SDKError
+ListWorkspaceMembers(ctx context.Context, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
 ```
 
 ### Client Management
 
 ```go
 // Create clients
-CreateClient(ctx context.Context, client Client, domainID, token string) (Client, errors.SDKError)
-CreateClients(ctx context.Context, client []Client, domainID, token string) ([]Client, errors.SDKError)
+CreateClient(ctx context.Context, client Client, workspaceID, token string) (Client, errors.SDKError)
+CreateClients(ctx context.Context, client []Client, workspaceID, token string) ([]Client, errors.SDKError)
 
 // Get client information
-Client(ctx context.Context, id, domainID, token string) (Client, errors.SDKError)
-Clients(ctx context.Context, pm PageMetadata, domainID, token string) (ClientsPage, errors.SDKError)
+Client(ctx context.Context, id, workspaceID, token string) (Client, errors.SDKError)
+Clients(ctx context.Context, pm PageMetadata, workspaceID, token string) (ClientsPage, errors.SDKError)
 
 // Update clients
-UpdateClient(ctx context.Context, client Client, domainID, token string) (Client, errors.SDKError)
-UpdateClientTags(ctx context.Context, client Client, domainID, token string) (Client, errors.SDKError)
-UpdateClientSecret(ctx context.Context, id, secret, domainID, token string) (Client, errors.SDKError)
+UpdateClient(ctx context.Context, client Client, workspaceID, token string) (Client, errors.SDKError)
+UpdateClientTags(ctx context.Context, client Client, workspaceID, token string) (Client, errors.SDKError)
+UpdateClientSecret(ctx context.Context, id, secret, workspaceID, token string) (Client, errors.SDKError)
 
 // Client status management
-EnableClient(ctx context.Context, id, domainID, token string) (Client, errors.SDKError)
-DisableClient(ctx context.Context, id, domainID, token string) (Client, errors.SDKError)
-DeleteClient(ctx context.Context, id, domainID, token string) errors.SDKError
+EnableClient(ctx context.Context, id, workspaceID, token string) (Client, errors.SDKError)
+DisableClient(ctx context.Context, id, workspaceID, token string) (Client, errors.SDKError)
+DeleteClient(ctx context.Context, id, workspaceID, token string) errors.SDKError
 
 // Client hierarchy management
-SetClientParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
-RemoveClientParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
+SetClientParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
+RemoveClientParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
 
 // Client roles management
-CreateClientRole(ctx context.Context, id, domainID string, rq RoleReq, token string) (Role, errors.SDKError)
-ClientRoles(ctx context.Context, id, domainID string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
-ClientRole(ctx context.Context, id, roleID, domainID, token string) (Role, errors.SDKError)
-UpdateClientRole(ctx context.Context, id, roleID, newName, domainID string, token string) (Role, errors.SDKError)
-DeleteClientRole(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
+CreateClientRole(ctx context.Context, id, workspaceID string, rq RoleReq, token string) (Role, errors.SDKError)
+ClientRoles(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
+ClientRole(ctx context.Context, id, roleID, workspaceID, token string) (Role, errors.SDKError)
+UpdateClientRole(ctx context.Context, id, roleID, newName, workspaceID string, token string) (Role, errors.SDKError)
+DeleteClientRole(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
 
 // Client role actions management
-AddClientRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) ([]string, errors.SDKError)
-ClientRoleActions(ctx context.Context, id, roleID, domainID string, token string) ([]string, errors.SDKError)
-RemoveClientRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) errors.SDKError
-RemoveAllClientRoleActions(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
-AvailableClientRoleActions(ctx context.Context, domainID, token string) ([]string, errors.SDKError)
+AddClientRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) ([]string, errors.SDKError)
+ClientRoleActions(ctx context.Context, id, roleID, workspaceID string, token string) ([]string, errors.SDKError)
+RemoveClientRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) errors.SDKError
+RemoveAllClientRoleActions(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
+AvailableClientRoleActions(ctx context.Context, workspaceID, token string) ([]string, errors.SDKError)
 
 // Client role members management
-AddClientRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) ([]string, errors.SDKError)
-ClientRoleMembers(ctx context.Context, id, roleID, domainID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
-RemoveClientRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) errors.SDKError
-RemoveAllClientRoleMembers(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
-ListClientMembers(ctx context.Context, clientID, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
+AddClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) ([]string, errors.SDKError)
+ClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
+RemoveClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) errors.SDKError
+RemoveAllClientRoleMembers(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
+ListClientMembers(ctx context.Context, clientID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
 ```
 
 ### Channel Management
 
 ```go
 // Create channels
-CreateChannel(ctx context.Context, channel Channel, domainID, token string) (Channel, errors.SDKError)
-CreateChannels(ctx context.Context, channels []Channel, domainID, token string) ([]Channel, errors.SDKError)
+CreateChannel(ctx context.Context, channel Channel, workspaceID, token string) (Channel, errors.SDKError)
+CreateChannels(ctx context.Context, channels []Channel, workspaceID, token string) ([]Channel, errors.SDKError)
 
 // Get channel information
-Channel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError)
-Channels(ctx context.Context, pm PageMetadata, domainID, token string) (ChannelsPage, errors.SDKError)
+Channel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError)
+Channels(ctx context.Context, pm PageMetadata, workspaceID, token string) (ChannelsPage, errors.SDKError)
 
 // Update channels
-UpdateChannel(ctx context.Context, channel Channel, domainID, token string) (Channel, errors.SDKError)
-UpdateChannelTags(ctx context.Context, c Channel, domainID, token string) (Channel, errors.SDKError)
+UpdateChannel(ctx context.Context, channel Channel, workspaceID, token string) (Channel, errors.SDKError)
+UpdateChannelTags(ctx context.Context, c Channel, workspaceID, token string) (Channel, errors.SDKError)
 
 // Channel status management
-EnableChannel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError)
-DisableChannel(ctx context.Context, id, domainID, token string) (Channel, errors.SDKError)
-DeleteChannel(ctx context.Context, id, domainID, token string) errors.SDKError
+EnableChannel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError)
+DisableChannel(ctx context.Context, id, workspaceID, token string) (Channel, errors.SDKError)
+DeleteChannel(ctx context.Context, id, workspaceID, token string) errors.SDKError
 
 // Channel hierarchy management
-SetChannelParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
-RemoveChannelParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
+SetChannelParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
+RemoveChannelParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
 
 // Channel connections
-Connect(ctx context.Context, conn Connection, domainID, token string) errors.SDKError
-Disconnect(ctx context.Context, conn Connection, domainID, token string) errors.SDKError
-ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) errors.SDKError
-DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) errors.SDKError
+Connect(ctx context.Context, conn Connection, workspaceID, token string) errors.SDKError
+Disconnect(ctx context.Context, conn Connection, workspaceID, token string) errors.SDKError
+ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) errors.SDKError
+DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) errors.SDKError
 
 // List channel members
-ListChannelMembers(ctx context.Context, channelID, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
+ListChannelMembers(ctx context.Context, channelID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
 ```
 
 ### Group Management
 
 ```go
 // Create group
-CreateGroup(ctx context.Context, group Group, domainID, token string) (Group, errors.SDKError)
+CreateGroup(ctx context.Context, group Group, workspaceID, token string) (Group, errors.SDKError)
 
 // Get group information
-Group(ctx context.Context, id, domainID, token string) (Group, errors.SDKError)
-Groups(ctx context.Context, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError)
+Group(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError)
+Groups(ctx context.Context, pm PageMetadata, workspaceID, token string) (GroupsPage, errors.SDKError)
 
 // Update groups
-UpdateGroup(ctx context.Context, group Group, domainID, token string) (Group, errors.SDKError)
-UpdateGroupTags(ctx context.Context, group Group, domainID, token string) (Group, errors.SDKError)
+UpdateGroup(ctx context.Context, group Group, workspaceID, token string) (Group, errors.SDKError)
+UpdateGroupTags(ctx context.Context, group Group, workspaceID, token string) (Group, errors.SDKError)
 
 // Group status management
-EnableGroup(ctx context.Context, id, domainID, token string) (Group, errors.SDKError)
-DisableGroup(ctx context.Context, id, domainID, token string) (Group, errors.SDKError)
-DeleteGroup(ctx context.Context, id, domainID, token string) errors.SDKError
+EnableGroup(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError)
+DisableGroup(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError)
+DeleteGroup(ctx context.Context, id, workspaceID, token string) errors.SDKError
 
 // Group hierarchy management
-SetGroupParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
-RemoveGroupParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError
-AddChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) errors.SDKError
-RemoveChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) errors.SDKError
-RemoveAllChildren(ctx context.Context, id, domainID, token string) errors.SDKError
-Children(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
-Hierarchy(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsHierarchyPage, errors.SDKError)
+SetGroupParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
+RemoveGroupParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError
+AddChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) errors.SDKError
+RemoveChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) errors.SDKError
+RemoveAllChildren(ctx context.Context, id, workspaceID, token string) errors.SDKError
+Children(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError)
+Hierarchy(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsHierarchyPage, errors.SDKError)
 
 // Group roles management
-CreateGroupRole(ctx context.Context, id, domainID string, rq RoleReq, token string) (Role, errors.SDKError)
-GroupRoles(ctx context.Context, id, domainID string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
-GroupRole(ctx context.Context, id, roleID, domainID, token string) (Role, errors.SDKError)
-UpdateGroupRole(ctx context.Context, id, roleID, newName, domainID string, token string) (Role, errors.SDKError)
-DeleteGroupRole(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
+CreateGroupRole(ctx context.Context, id, workspaceID string, rq RoleReq, token string) (Role, errors.SDKError)
+GroupRoles(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (RolesPage, errors.SDKError)
+GroupRole(ctx context.Context, id, roleID, workspaceID, token string) (Role, errors.SDKError)
+UpdateGroupRole(ctx context.Context, id, roleID, newName, workspaceID string, token string) (Role, errors.SDKError)
+DeleteGroupRole(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
 
 // Group role actions management
-AddGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) ([]string, errors.SDKError)
-GroupRoleActions(ctx context.Context, id, roleID, domainID string, token string) ([]string, errors.SDKError)
-RemoveGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) errors.SDKError
-RemoveAllGroupRoleActions(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
+AddGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) ([]string, errors.SDKError)
+GroupRoleActions(ctx context.Context, id, roleID, workspaceID string, token string) ([]string, errors.SDKError)
+RemoveGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) errors.SDKError
+RemoveAllGroupRoleActions(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
 AvailableGroupRoleActions(ctx context.Context, id, token string) ([]string, errors.SDKError)
 
 // Group role members management
-AddGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) ([]string, errors.SDKError)
-GroupRoleMembers(ctx context.Context, id, roleID, domainID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
-RemoveGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) errors.SDKError
-RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, domainID, token string) errors.SDKError
-ListGroupMembers(ctx context.Context, groupID, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
+AddGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) ([]string, errors.SDKError)
+GroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError)
+RemoveGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) errors.SDKError
+RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError
+ListGroupMembers(ctx context.Context, groupID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError)
 ```
 
 ### Certificate Management
 
 ```go
 // Issue certificate for mTLS
-IssueCert(ctx context.Context, clientID, validity, domainID, token string) (Cert, errors.SDKError)
+IssueCert(ctx context.Context, clientID, validity, workspaceID, token string) (Cert, errors.SDKError)
 
 // View certificate
-ViewCert(ctx context.Context, certID, domainID, token string) (Cert, errors.SDKError)
+ViewCert(ctx context.Context, certID, workspaceID, token string) (Cert, errors.SDKError)
 
 // View certificates by client
-ViewCertByClient(ctx context.Context, clientID, domainID, token string) (CertSerials, errors.SDKError)
+ViewCertByClient(ctx context.Context, clientID, workspaceID, token string) (CertSerials, errors.SDKError)
 
 // Revoke certificates
-RevokeCert(ctx context.Context, certID, domainID, token string) (time.Time, errors.SDKError)
-RevokeAllCerts(ctx context.Context, clientID, domainID, token string) (time.Time, errors.SDKError)
+RevokeCert(ctx context.Context, certID, workspaceID, token string) (time.Time, errors.SDKError)
+RevokeAllCerts(ctx context.Context, clientID, workspaceID, token string) (time.Time, errors.SDKError)
 ```
 
 ### Invitation Management
@@ -338,19 +338,19 @@ SendInvitation(ctx context.Context, invitation Invitation, token string) error
 
 // List invitations
 Invitations(ctx context.Context, pm PageMetadata, token string) (InvitationPage, error)
-DomainInvitations(ctx context.Context, pm PageMetadata, token, domainID string) (InvitationPage, error)
+WorkspaceInvitations(ctx context.Context, pm PageMetadata, token, workspaceID string) (InvitationPage, error)
 
 // Manage invitations
-AcceptInvitation(ctx context.Context, domainID, token string) error
-RejectInvitation(ctx context.Context, domainID, token string) error
-DeleteInvitation(ctx context.Context, userID, domainID, token string) error
+AcceptInvitation(ctx context.Context, workspaceID, token string) error
+RejectInvitation(ctx context.Context, workspaceID, token string) error
+DeleteInvitation(ctx context.Context, userID, workspaceID, token string) error
 ```
 
 ### Messaging
 
 ```go
 // Send message to channel
-SendMessage(ctx context.Context, domainID, topic, msg, secret string) errors.SDKError
+SendMessage(ctx context.Context, workspaceID, topic, msg, secret string) errors.SDKError
 
 // Set message content type
 SetContentType(ct ContentType) errors.SDKError
@@ -365,19 +365,19 @@ Health(service string) (HealthInfo, errors.SDKError)
 
 ## Examples
 
-### Domain and User Management
+### Workspace and User Management
 
 ```go
 ctx := context.Background()
 
-// Create domain
-domain := sdk.Domain{
-    Name: "My Domain",
+// Create workspace
+workspace := sdk.Workspace{
+    Name: "My Workspace",
     Metadata: sdk.Metadata{"key": "value"},
 }
-domain, err := smqsdk.CreateDomain(ctx, domain, adminToken)
+workspace, err := smqsdk.CreateWorkspace(ctx, workspace, adminToken)
 
-// Create user in domain
+// Create user in workspace
 user := sdk.User{
     Name: "Jane Doe",
     Email: "jane@example.com",
@@ -397,14 +397,14 @@ client := sdk.Client{
     Name: "Temperature Sensor",
     Metadata: sdk.Metadata{"location": "office"},
 }
-client, err := smqsdk.CreateClient(ctx, client, domainID, token)
+client, err := smqsdk.CreateClient(ctx, client, workspaceID, token)
 
 // Create channel
 channel := sdk.Channel{
     Name: "Temperature Data",
     Metadata: sdk.Metadata{"type": "sensor_data"},
 }
-channel, err = smqsdk.CreateChannel(ctx, channel, domainID, token)
+channel, err = smqsdk.CreateChannel(ctx, channel, workspaceID, token)
 
 // Connect client to channel
 conn := sdk.Connection{
@@ -412,7 +412,7 @@ conn := sdk.Connection{
     ChannelIDs: []string{channel.ID},
     Types:      []string{"publish", "subscribe"},
 }
-err = smqsdk.Connect(ctx, conn, domainID, token)
+err = smqsdk.Connect(ctx, conn, workspaceID, token)
 ```
 
 ### Group Management
@@ -423,24 +423,24 @@ group := sdk.Group{
     Name: "Sensors Group",
     Metadata: sdk.Metadata{"type": "sensors"},
 }
-group, err := smqsdk.CreateGroup(ctx, group, domainID, token)
+group, err := smqsdk.CreateGroup(ctx, group, workspaceID, token)
 
 // Set client parent group
-err = smqsdk.SetClientParent(ctx, client.ID, domainID, group.ID, token)
+err = smqsdk.SetClientParent(ctx, client.ID, workspaceID, group.ID, token)
 ```
 
 ### Role Management
 
 ```go
-// Create domain role
+// Create workspace role
 roleReq := sdk.RoleReq{
     RoleName: "Editor",
     OptionalActions: []string{"read", "update"},
     OptionalMembers: []string{user.ID},
 }
-role, err := smqsdk.CreateDomainRole(ctx, domainID, roleReq, token)
+role, err := smqsdk.CreateWorkspaceRole(ctx, workspaceID, roleReq, token)
 
 // Add role members
 members := []string{user.ID}
-addedMembers, err := smqsdk.AddDomainRoleMembers(ctx, domainID, role.ID, members, token)
+addedMembers, err := smqsdk.AddWorkspaceRoleMembers(ctx, workspaceID, role.ID, members, token)
 ```

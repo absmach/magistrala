@@ -10,7 +10,7 @@ import (
 )
 
 // Invalidator drops cached state keyed by key -- in this package, always a
-// tenant/domain id -- rather than reading, reconstructing, or otherwise
+// tenant/workspace id -- rather than reading, reconstructing, or otherwise
 // trusting anything about what changed. Invalidate must be safe to call for
 // a key that was never cached and safe to call twice running for the same
 // change: at-least-once, unordered delivery means both happen routinely,

@@ -451,182 +451,6 @@ func (_c *SDK_AddClientRoleMembers_Call) RunAndReturn(run func(ctx context.Conte
 	return _c
 }
 
-// AddWorkspaceRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AddWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, actions, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddWorkspaceRoleActions")
-	}
-
-	var r0 []string
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, actions, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, actions, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, actions, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_AddWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleActions'
-type SDK_AddWorkspaceRoleActions_Call struct {
-	*mock.Call
-}
-
-// AddWorkspaceRoleActions is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - actions []string
-//   - token string
-func (_e *SDK_Expecter) AddWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddWorkspaceRoleActions_Call {
-	return &SDK_AddWorkspaceRoleActions_Call{Call: _e.mock.On("AddWorkspaceRoleActions", ctx, id, roleID, actions, token)}
-}
-
-func (_c *SDK_AddWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_AddWorkspaceRoleActions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 []string
-		if args[3] != nil {
-			arg3 = args[3].([]string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_AddWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleActions_Call {
-	_c.Call.Return(strings, sDKError)
-	return _c
-}
-
-func (_c *SDK_AddWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleActions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AddWorkspaceRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) AddWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, members, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AddWorkspaceRoleMembers")
-	}
-
-	var r0 []string
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, members, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, members, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, members, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_AddWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleMembers'
-type SDK_AddWorkspaceRoleMembers_Call struct {
-	*mock.Call
-}
-
-// AddWorkspaceRoleMembers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - members []string
-//   - token string
-func (_e *SDK_Expecter) AddWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddWorkspaceRoleMembers_Call {
-	return &SDK_AddWorkspaceRoleMembers_Call{Call: _e.mock.On("AddWorkspaceRoleMembers", ctx, id, roleID, members, token)}
-}
-
-func (_c *SDK_AddWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_AddWorkspaceRoleMembers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 []string
-		if args[3] != nil {
-			arg3 = args[3].([]string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_AddWorkspaceRoleMembers_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleMembers_Call {
-	_c.Call.Return(strings, sDKError)
-	return _c
-}
-
-func (_c *SDK_AddWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleMembers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AddGroupRoleActions provides a mock function for the type SDK
 func (_mock *SDK) AddGroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, actions []string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, id, roleID, workspaceID, actions, token)
@@ -975,6 +799,182 @@ func (_c *SDK_AddRule_Call) RunAndReturn(run func(ctx context.Context, r sdk.Rul
 	return _c
 }
 
+// AddWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) AddWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, actions, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddWorkspaceRoleActions")
+	}
+
+	var r0 []string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) ([]string, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, actions, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) []string); ok {
+		r0 = returnFunc(ctx, id, roleID, actions, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, actions, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AddWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleActions'
+type SDK_AddWorkspaceRoleActions_Call struct {
+	*mock.Call
+}
+
+// AddWorkspaceRoleActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - actions []string
+//   - token string
+func (_e *SDK_Expecter) AddWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddWorkspaceRoleActions_Call {
+	return &SDK_AddWorkspaceRoleActions_Call{Call: _e.mock.On("AddWorkspaceRoleActions", ctx, id, roleID, actions, token)}
+}
+
+func (_c *SDK_AddWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_AddWorkspaceRoleActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AddWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleActions_Call {
+	_c.Call.Return(strings, sDKError)
+	return _c
+}
+
+func (_c *SDK_AddWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AddWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) AddWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, members, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AddWorkspaceRoleMembers")
+	}
+
+	var r0 []string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) ([]string, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, members, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) []string); ok {
+		r0 = returnFunc(ctx, id, roleID, members, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, members, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AddWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AddWorkspaceRoleMembers'
+type SDK_AddWorkspaceRoleMembers_Call struct {
+	*mock.Call
+}
+
+// AddWorkspaceRoleMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - members []string
+//   - token string
+func (_e *SDK_Expecter) AddWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddWorkspaceRoleMembers_Call {
+	return &SDK_AddWorkspaceRoleMembers_Call{Call: _e.mock.On("AddWorkspaceRoleMembers", ctx, id, roleID, members, token)}
+}
+
+func (_c *SDK_AddWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_AddWorkspaceRoleMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AddWorkspaceRoleMembers_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AddWorkspaceRoleMembers_Call {
+	_c.Call.Return(strings, sDKError)
+	return _c
+}
+
+func (_c *SDK_AddWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) ([]string, errors.SDKError)) *SDK_AddWorkspaceRoleMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // AssignBootstrapProfile provides a mock function for the type SDK
 func (_mock *SDK) AssignBootstrapProfile(ctx context.Context, configID string, profileID string, workspaceID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, configID, profileID, workspaceID, token)
@@ -1128,76 +1128,6 @@ func (_c *SDK_AvailableClientRoleActions_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
-// AvailableWorkspaceRoleActions provides a mock function for the type SDK
-func (_mock *SDK) AvailableWorkspaceRoleActions(ctx context.Context, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AvailableWorkspaceRoleActions")
-	}
-
-	var r0 []string
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
-		r0 = returnFunc(ctx, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_AvailableWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AvailableWorkspaceRoleActions'
-type SDK_AvailableWorkspaceRoleActions_Call struct {
-	*mock.Call
-}
-
-// AvailableWorkspaceRoleActions is a helper method to define mock.On call
-//   - ctx context.Context
-//   - token string
-func (_e *SDK_Expecter) AvailableWorkspaceRoleActions(ctx interface{}, token interface{}) *SDK_AvailableWorkspaceRoleActions_Call {
-	return &SDK_AvailableWorkspaceRoleActions_Call{Call: _e.mock.On("AvailableWorkspaceRoleActions", ctx, token)}
-}
-
-func (_c *SDK_AvailableWorkspaceRoleActions_Call) Run(run func(ctx context.Context, token string)) *SDK_AvailableWorkspaceRoleActions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_AvailableWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AvailableWorkspaceRoleActions_Call {
-	_c.Call.Return(strings, sDKError)
-	return _c
-}
-
-func (_c *SDK_AvailableWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, token string) ([]string, errors.SDKError)) *SDK_AvailableWorkspaceRoleActions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // AvailableGroupRoleActions provides a mock function for the type SDK
 func (_mock *SDK) AvailableGroupRoleActions(ctx context.Context, id string, token string) ([]string, errors.SDKError) {
 	ret := _mock.Called(ctx, id, token)
@@ -1270,6 +1200,76 @@ func (_c *SDK_AvailableGroupRoleActions_Call) Return(strings []string, sDKError 
 }
 
 func (_c *SDK_AvailableGroupRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, token string) ([]string, errors.SDKError)) *SDK_AvailableGroupRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// AvailableWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) AvailableWorkspaceRoleActions(ctx context.Context, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for AvailableWorkspaceRoleActions")
+	}
+
+	var r0 []string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, errors.SDKError)); ok {
+		return returnFunc(ctx, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_AvailableWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AvailableWorkspaceRoleActions'
+type SDK_AvailableWorkspaceRoleActions_Call struct {
+	*mock.Call
+}
+
+// AvailableWorkspaceRoleActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - token string
+func (_e *SDK_Expecter) AvailableWorkspaceRoleActions(ctx interface{}, token interface{}) *SDK_AvailableWorkspaceRoleActions_Call {
+	return &SDK_AvailableWorkspaceRoleActions_Call{Call: _e.mock.On("AvailableWorkspaceRoleActions", ctx, token)}
+}
+
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) Run(run func(ctx context.Context, token string)) *SDK_AvailableWorkspaceRoleActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_AvailableWorkspaceRoleActions_Call {
+	_c.Call.Return(strings, sDKError)
+	return _c
+}
+
+func (_c *SDK_AvailableWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, token string) ([]string, errors.SDKError)) *SDK_AvailableWorkspaceRoleActions_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3223,160 +3223,6 @@ func (_c *SDK_CreateClients_Call) RunAndReturn(run func(ctx context.Context, cli
 	return _c
 }
 
-// CreateWorkspace provides a mock function for the type SDK
-func (_mock *SDK) CreateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
-	ret := _mock.Called(ctx, d, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateWorkspace")
-	}
-
-	var r0 sdk.Workspace
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
-		return returnFunc(ctx, d, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
-		r0 = returnFunc(ctx, d, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Workspace)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, d, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_CreateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspace'
-type SDK_CreateWorkspace_Call struct {
-	*mock.Call
-}
-
-// CreateWorkspace is a helper method to define mock.On call
-//   - ctx context.Context
-//   - d sdk.Workspace
-//   - token string
-func (_e *SDK_Expecter) CreateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_CreateWorkspace_Call {
-	return &SDK_CreateWorkspace_Call{Call: _e.mock.On("CreateWorkspace", ctx, d, token)}
-}
-
-func (_c *SDK_CreateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_CreateWorkspace_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.Workspace
-		if args[1] != nil {
-			arg1 = args[1].(sdk.Workspace)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_CreateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_CreateWorkspace_Call {
-	_c.Call.Return(workspace, sDKError)
-	return _c
-}
-
-func (_c *SDK_CreateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_CreateWorkspace_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// CreateWorkspaceRole provides a mock function for the type SDK
-func (_mock *SDK) CreateWorkspaceRole(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, rq, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateWorkspaceRole")
-	}
-
-	var r0 sdk.Role
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.RoleReq, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, rq, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.RoleReq, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, rq, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Role)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.RoleReq, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, rq, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_CreateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspaceRole'
-type SDK_CreateWorkspaceRole_Call struct {
-	*mock.Call
-}
-
-// CreateWorkspaceRole is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - rq sdk.RoleReq
-//   - token string
-func (_e *SDK_Expecter) CreateWorkspaceRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateWorkspaceRole_Call {
-	return &SDK_CreateWorkspaceRole_Call{Call: _e.mock.On("CreateWorkspaceRole", ctx, id, rq, token)}
-}
-
-func (_c *SDK_CreateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, rq sdk.RoleReq, token string)) *SDK_CreateWorkspaceRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 sdk.RoleReq
-		if args[2] != nil {
-			arg2 = args[2].(sdk.RoleReq)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_CreateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_CreateWorkspaceRole_Call {
-	_c.Call.Return(role, sDKError)
-	return _c
-}
-
-func (_c *SDK_CreateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateWorkspaceRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // CreateGroup provides a mock function for the type SDK
 func (_mock *SDK) CreateGroup(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError) {
 	ret := _mock.Called(ctx, group, workspaceID, token)
@@ -3765,6 +3611,160 @@ func (_c *SDK_CreateUser_Call) RunAndReturn(run func(ctx context.Context, user s
 	return _c
 }
 
+// CreateWorkspace provides a mock function for the type SDK
+func (_mock *SDK) CreateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
+	ret := _mock.Called(ctx, d, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateWorkspace")
+	}
+
+	var r0 sdk.Workspace
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
+		return returnFunc(ctx, d, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
+		r0 = returnFunc(ctx, d, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Workspace)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, d, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_CreateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspace'
+type SDK_CreateWorkspace_Call struct {
+	*mock.Call
+}
+
+// CreateWorkspace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - d sdk.Workspace
+//   - token string
+func (_e *SDK_Expecter) CreateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_CreateWorkspace_Call {
+	return &SDK_CreateWorkspace_Call{Call: _e.mock.On("CreateWorkspace", ctx, d, token)}
+}
+
+func (_c *SDK_CreateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_CreateWorkspace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Workspace
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Workspace)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_CreateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_CreateWorkspace_Call {
+	_c.Call.Return(workspace, sDKError)
+	return _c
+}
+
+func (_c *SDK_CreateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_CreateWorkspace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CreateWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) CreateWorkspaceRole(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, rq, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateWorkspaceRole")
+	}
+
+	var r0 sdk.Role
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.RoleReq, string) (sdk.Role, errors.SDKError)); ok {
+		return returnFunc(ctx, id, rq, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.RoleReq, string) sdk.Role); ok {
+		r0 = returnFunc(ctx, id, rq, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.RoleReq, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, rq, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_CreateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateWorkspaceRole'
+type SDK_CreateWorkspaceRole_Call struct {
+	*mock.Call
+}
+
+// CreateWorkspaceRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - rq sdk.RoleReq
+//   - token string
+func (_e *SDK_Expecter) CreateWorkspaceRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateWorkspaceRole_Call {
+	return &SDK_CreateWorkspaceRole_Call{Call: _e.mock.On("CreateWorkspaceRole", ctx, id, rq, token)}
+}
+
+func (_c *SDK_CreateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, rq sdk.RoleReq, token string)) *SDK_CreateWorkspaceRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk.RoleReq
+		if args[2] != nil {
+			arg2 = args[2].(sdk.RoleReq)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_CreateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_CreateWorkspaceRole_Call {
+	_c.Call.Return(role, sDKError)
+	return _c
+}
+
+func (_c *SDK_CreateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, rq sdk.RoleReq, token string) (sdk.Role, errors.SDKError)) *SDK_CreateWorkspaceRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteAlarm provides a mock function for the type SDK
 func (_mock *SDK) DeleteAlarm(ctx context.Context, id string, workspaceID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, workspaceID, token)
@@ -4122,77 +4122,6 @@ func (_c *SDK_DeleteClientRole_Call) Return(sDKError errors.SDKError) *SDK_Delet
 }
 
 func (_c *SDK_DeleteClientRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_DeleteClientRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DeleteWorkspaceRole provides a mock function for the type SDK
-func (_mock *SDK) DeleteWorkspaceRole(ctx context.Context, id string, roleID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DeleteWorkspaceRole")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_DeleteWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWorkspaceRole'
-type SDK_DeleteWorkspaceRole_Call struct {
-	*mock.Call
-}
-
-// DeleteWorkspaceRole is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - token string
-func (_e *SDK_Expecter) DeleteWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteWorkspaceRole_Call {
-	return &SDK_DeleteWorkspaceRole_Call{Call: _e.mock.On("DeleteWorkspaceRole", ctx, id, roleID, token)}
-}
-
-func (_c *SDK_DeleteWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DeleteWorkspaceRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_DeleteWorkspaceRole_Call) Return(sDKError errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_DeleteWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4615,6 +4544,77 @@ func (_c *SDK_DeleteUser_Call) RunAndReturn(run func(ctx context.Context, id str
 	return _c
 }
 
+// DeleteWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) DeleteWorkspaceRole(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteWorkspaceRole")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_DeleteWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteWorkspaceRole'
+type SDK_DeleteWorkspaceRole_Call struct {
+	*mock.Call
+}
+
+// DeleteWorkspaceRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
+func (_e *SDK_Expecter) DeleteWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteWorkspaceRole_Call {
+	return &SDK_DeleteWorkspaceRole_Call{Call: _e.mock.On("DeleteWorkspaceRole", ctx, id, roleID, token)}
+}
+
+func (_c *SDK_DeleteWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_DeleteWorkspaceRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DeleteWorkspaceRole_Call) Return(sDKError errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_DeleteWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_DeleteWorkspaceRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DisableChannel provides a mock function for the type SDK
 func (_mock *SDK) DisableChannel(ctx context.Context, id string, workspaceID string, token string) (sdk.Channel, errors.SDKError) {
 	ret := _mock.Called(ctx, id, workspaceID, token)
@@ -4771,71 +4771,6 @@ func (_c *SDK_DisableClient_Call) Return(client sdk.Client, sDKError errors.SDKE
 }
 
 func (_c *SDK_DisableClient_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_DisableClient_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DisableWorkspace provides a mock function for the type SDK
-func (_mock *SDK) DisableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, workspaceID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DisableWorkspace")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, workspaceID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_DisableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableWorkspace'
-type SDK_DisableWorkspace_Call struct {
-	*mock.Call
-}
-
-// DisableWorkspace is a helper method to define mock.On call
-//   - ctx context.Context
-//   - workspaceID string
-//   - token string
-func (_e *SDK_Expecter) DisableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_DisableWorkspace_Call {
-	return &SDK_DisableWorkspace_Call{Call: _e.mock.On("DisableWorkspace", ctx, workspaceID, token)}
-}
-
-func (_c *SDK_DisableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_DisableWorkspace_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_DisableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_DisableWorkspace_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_DisableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_DisableWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -5154,6 +5089,71 @@ func (_c *SDK_DisableUser_Call) RunAndReturn(run func(ctx context.Context, id st
 	return _c
 }
 
+// DisableWorkspace provides a mock function for the type SDK
+func (_mock *SDK) DisableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DisableWorkspace")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, workspaceID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_DisableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DisableWorkspace'
+type SDK_DisableWorkspace_Call struct {
+	*mock.Call
+}
+
+// DisableWorkspace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - workspaceID string
+//   - token string
+func (_e *SDK_Expecter) DisableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_DisableWorkspace_Call {
+	return &SDK_DisableWorkspace_Call{Call: _e.mock.On("DisableWorkspace", ctx, workspaceID, token)}
+}
+
+func (_c *SDK_DisableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_DisableWorkspace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_DisableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_DisableWorkspace_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_DisableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_DisableWorkspace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Disconnect provides a mock function for the type SDK
 func (_mock *SDK) Disconnect(ctx context.Context, conn sdk.Connection, workspaceID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, conn, workspaceID, token)
@@ -5304,560 +5304,6 @@ func (_c *SDK_DisconnectClients_Call) Return(sDKError errors.SDKError) *SDK_Disc
 }
 
 func (_c *SDK_DisconnectClients_Call) RunAndReturn(run func(ctx context.Context, channelID string, clientIDs []string, connTypes []string, workspaceID string, token string) errors.SDKError) *SDK_DisconnectClients_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Workspace provides a mock function for the type SDK
-func (_mock *SDK) Workspace(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError) {
-	ret := _mock.Called(ctx, workspaceID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Workspace")
-	}
-
-	var r0 sdk.Workspace
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.Workspace, errors.SDKError)); ok {
-		return returnFunc(ctx, workspaceID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.Workspace); ok {
-		r0 = returnFunc(ctx, workspaceID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Workspace)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, workspaceID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_Workspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspace'
-type SDK_Workspace_Call struct {
-	*mock.Call
-}
-
-// Workspace is a helper method to define mock.On call
-//   - ctx context.Context
-//   - workspaceID string
-//   - token string
-func (_e *SDK_Expecter) Workspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_Workspace_Call {
-	return &SDK_Workspace_Call{Call: _e.mock.On("Workspace", ctx, workspaceID, token)}
-}
-
-func (_c *SDK_Workspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_Workspace_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_Workspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_Workspace_Call {
-	_c.Call.Return(workspace, sDKError)
-	return _c
-}
-
-func (_c *SDK_Workspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError)) *SDK_Workspace_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WorkspaceInvitations provides a mock function for the type SDK
-func (_mock *SDK) WorkspaceInvitations(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error) {
-	ret := _mock.Called(ctx, pm, token, workspaceID)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WorkspaceInvitations")
-	}
-
-	var r0 sdk.InvitationPage
-	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.InvitationPage, error)); ok {
-		return returnFunc(ctx, pm, token, workspaceID)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.InvitationPage); ok {
-		r0 = returnFunc(ctx, pm, token, workspaceID)
-	} else {
-		r0 = ret.Get(0).(sdk.InvitationPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) error); ok {
-		r1 = returnFunc(ctx, pm, token, workspaceID)
-	} else {
-		r1 = ret.Error(1)
-	}
-	return r0, r1
-}
-
-// SDK_WorkspaceInvitations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceInvitations'
-type SDK_WorkspaceInvitations_Call struct {
-	*mock.Call
-}
-
-// WorkspaceInvitations is a helper method to define mock.On call
-//   - ctx context.Context
-//   - pm sdk.PageMetadata
-//   - token string
-//   - workspaceID string
-func (_e *SDK_Expecter) WorkspaceInvitations(ctx interface{}, pm interface{}, token interface{}, workspaceID interface{}) *SDK_WorkspaceInvitations_Call {
-	return &SDK_WorkspaceInvitations_Call{Call: _e.mock.On("WorkspaceInvitations", ctx, pm, token, workspaceID)}
-}
-
-func (_c *SDK_WorkspaceInvitations_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string)) *SDK_WorkspaceInvitations_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.PageMetadata
-		if args[1] != nil {
-			arg1 = args[1].(sdk.PageMetadata)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_WorkspaceInvitations_Call) Return(invitations sdk.InvitationPage, err error) *SDK_WorkspaceInvitations_Call {
-	_c.Call.Return(invitations, err)
-	return _c
-}
-
-func (_c *SDK_WorkspaceInvitations_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error)) *SDK_WorkspaceInvitations_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WorkspaceRole provides a mock function for the type SDK
-func (_mock *SDK) WorkspaceRole(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WorkspaceRole")
-	}
-
-	var r0 sdk.Role
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Role)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_WorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRole'
-type SDK_WorkspaceRole_Call struct {
-	*mock.Call
-}
-
-// WorkspaceRole is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - token string
-func (_e *SDK_Expecter) WorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRole_Call {
-	return &SDK_WorkspaceRole_Call{Call: _e.mock.On("WorkspaceRole", ctx, id, roleID, token)}
-}
-
-func (_c *SDK_WorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_WorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_WorkspaceRole_Call {
-	_c.Call.Return(role, sDKError)
-	return _c
-}
-
-func (_c *SDK_WorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError)) *SDK_WorkspaceRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WorkspaceRoleActions provides a mock function for the type SDK
-func (_mock *SDK) WorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WorkspaceRoleActions")
-	}
-
-	var r0 []string
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) ([]string, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) []string); ok {
-		r0 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]string)
-		}
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_WorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleActions'
-type SDK_WorkspaceRoleActions_Call struct {
-	*mock.Call
-}
-
-// WorkspaceRoleActions is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - token string
-func (_e *SDK_Expecter) WorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRoleActions_Call {
-	return &SDK_WorkspaceRoleActions_Call{Call: _e.mock.On("WorkspaceRoleActions", ctx, id, roleID, token)}
-}
-
-func (_c *SDK_WorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRoleActions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_WorkspaceRoleActions_Call {
-	_c.Call.Return(strings, sDKError)
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError)) *SDK_WorkspaceRoleActions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WorkspaceRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) WorkspaceRoleMembers(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, pm, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WorkspaceRoleMembers")
-	}
-
-	var r0 sdk.RoleMembersPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.RoleMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, pm, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.RoleMembersPage); ok {
-		r0 = returnFunc(ctx, id, roleID, pm, token)
-	} else {
-		r0 = ret.Get(0).(sdk.RoleMembersPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_WorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleMembers'
-type SDK_WorkspaceRoleMembers_Call struct {
-	*mock.Call
-}
-
-// WorkspaceRoleMembers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - pm sdk.PageMetadata
-//   - token string
-func (_e *SDK_Expecter) WorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoleMembers_Call {
-	return &SDK_WorkspaceRoleMembers_Call{Call: _e.mock.On("WorkspaceRoleMembers", ctx, id, roleID, pm, token)}
-}
-
-func (_c *SDK_WorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoleMembers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 sdk.PageMetadata
-		if args[3] != nil {
-			arg3 = args[3].(sdk.PageMetadata)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage, sDKError errors.SDKError) *SDK_WorkspaceRoleMembers_Call {
-	_c.Call.Return(roleMembersPage, sDKError)
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_WorkspaceRoleMembers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// WorkspaceRoles provides a mock function for the type SDK
-func (_mock *SDK) WorkspaceRoles(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, id, pm, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for WorkspaceRoles")
-	}
-
-	var r0 sdk.RolesPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) (sdk.RolesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, id, pm, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) sdk.RolesPage); ok {
-		r0 = returnFunc(ctx, id, pm, token)
-	} else {
-		r0 = ret.Get(0).(sdk.RolesPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_WorkspaceRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoles'
-type SDK_WorkspaceRoles_Call struct {
-	*mock.Call
-}
-
-// WorkspaceRoles is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - pm sdk.PageMetadata
-//   - token string
-func (_e *SDK_Expecter) WorkspaceRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoles_Call {
-	return &SDK_WorkspaceRoles_Call{Call: _e.mock.On("WorkspaceRoles", ctx, id, pm, token)}
-}
-
-func (_c *SDK_WorkspaceRoles_Call) Run(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoles_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 sdk.PageMetadata
-		if args[2] != nil {
-			arg2 = args[2].(sdk.PageMetadata)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.SDKError) *SDK_WorkspaceRoles_Call {
-	_c.Call.Return(rolesPage, sDKError)
-	return _c
-}
-
-func (_c *SDK_WorkspaceRoles_Call) RunAndReturn(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_WorkspaceRoles_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Workspaces provides a mock function for the type SDK
-func (_mock *SDK) Workspaces(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError) {
-	ret := _mock.Called(ctx, pm, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Workspaces")
-	}
-
-	var r0 sdk.WorkspacesPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) (sdk.WorkspacesPage, errors.SDKError)); ok {
-		return returnFunc(ctx, pm, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) sdk.WorkspacesPage); ok {
-		r0 = returnFunc(ctx, pm, token)
-	} else {
-		r0 = ret.Get(0).(sdk.WorkspacesPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_Workspaces_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspaces'
-type SDK_Workspaces_Call struct {
-	*mock.Call
-}
-
-// Workspaces is a helper method to define mock.On call
-//   - ctx context.Context
-//   - pm sdk.PageMetadata
-//   - token string
-func (_e *SDK_Expecter) Workspaces(ctx interface{}, pm interface{}, token interface{}) *SDK_Workspaces_Call {
-	return &SDK_Workspaces_Call{Call: _e.mock.On("Workspaces", ctx, pm, token)}
-}
-
-func (_c *SDK_Workspaces_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_Workspaces_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.PageMetadata
-		if args[1] != nil {
-			arg1 = args[1].(sdk.PageMetadata)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_Workspaces_Call) Return(workspacesPage sdk.WorkspacesPage, sDKError errors.SDKError) *SDK_Workspaces_Call {
-	_c.Call.Return(workspacesPage, sDKError)
-	return _c
-}
-
-func (_c *SDK_Workspaces_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError)) *SDK_Workspaces_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6080,71 +5526,6 @@ func (_c *SDK_EnableClient_Call) Return(client sdk.Client, sDKError errors.SDKEr
 }
 
 func (_c *SDK_EnableClient_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) (sdk.Client, errors.SDKError)) *SDK_EnableClient_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// EnableWorkspace provides a mock function for the type SDK
-func (_mock *SDK) EnableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, workspaceID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for EnableWorkspace")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, workspaceID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_EnableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableWorkspace'
-type SDK_EnableWorkspace_Call struct {
-	*mock.Call
-}
-
-// EnableWorkspace is a helper method to define mock.On call
-//   - ctx context.Context
-//   - workspaceID string
-//   - token string
-func (_e *SDK_Expecter) EnableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_EnableWorkspace_Call {
-	return &SDK_EnableWorkspace_Call{Call: _e.mock.On("EnableWorkspace", ctx, workspaceID, token)}
-}
-
-func (_c *SDK_EnableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_EnableWorkspace_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_EnableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_EnableWorkspace_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_EnableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_EnableWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -6459,6 +5840,71 @@ func (_c *SDK_EnableUser_Call) Return(user sdk.User, sDKError errors.SDKError) *
 }
 
 func (_c *SDK_EnableUser_Call) RunAndReturn(run func(ctx context.Context, id string, token string) (sdk.User, errors.SDKError)) *SDK_EnableUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// EnableWorkspace provides a mock function for the type SDK
+func (_mock *SDK) EnableWorkspace(ctx context.Context, workspaceID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, workspaceID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EnableWorkspace")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, workspaceID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_EnableWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EnableWorkspace'
+type SDK_EnableWorkspace_Call struct {
+	*mock.Call
+}
+
+// EnableWorkspace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - workspaceID string
+//   - token string
+func (_e *SDK_Expecter) EnableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_EnableWorkspace_Call {
+	return &SDK_EnableWorkspace_Call{Call: _e.mock.On("EnableWorkspace", ctx, workspaceID, token)}
+}
+
+func (_c *SDK_EnableWorkspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_EnableWorkspace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_EnableWorkspace_Call) Return(sDKError errors.SDKError) *SDK_EnableWorkspace_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_EnableWorkspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) errors.SDKError) *SDK_EnableWorkspace_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -8198,86 +7644,6 @@ func (_c *SDK_ListDeviceGateways_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
-// ListWorkspaceMembers provides a mock function for the type SDK
-func (_mock *SDK) ListWorkspaceMembers(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
-	ret := _mock.Called(ctx, workspaceID, pm, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for ListWorkspaceMembers")
-	}
-
-	var r0 sdk.EntityMembersPage
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
-		return returnFunc(ctx, workspaceID, pm, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
-		r0 = returnFunc(ctx, workspaceID, pm, token)
-	} else {
-		r0 = ret.Get(0).(sdk.EntityMembersPage)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.PageMetadata, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, workspaceID, pm, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_ListWorkspaceMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWorkspaceMembers'
-type SDK_ListWorkspaceMembers_Call struct {
-	*mock.Call
-}
-
-// ListWorkspaceMembers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - workspaceID string
-//   - pm sdk.PageMetadata
-//   - token string
-func (_e *SDK_Expecter) ListWorkspaceMembers(ctx interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListWorkspaceMembers_Call {
-	return &SDK_ListWorkspaceMembers_Call{Call: _e.mock.On("ListWorkspaceMembers", ctx, workspaceID, pm, token)}
-}
-
-func (_c *SDK_ListWorkspaceMembers_Call) Run(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListWorkspaceMembers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 sdk.PageMetadata
-		if args[2] != nil {
-			arg2 = args[2].(sdk.PageMetadata)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_ListWorkspaceMembers_Call) Return(entityMembersPage sdk.EntityMembersPage, sDKError errors.SDKError) *SDK_ListWorkspaceMembers_Call {
-	_c.Call.Return(entityMembersPage, sDKError)
-	return _c
-}
-
-func (_c *SDK_ListWorkspaceMembers_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListWorkspaceMembers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // ListGatewayDevices provides a mock function for the type SDK
 func (_mock *SDK) ListGatewayDevices(ctx context.Context, chanID string, publisherID string, pm sdk.DeviceViewPageMetadata, workspaceID string, token string) (sdk.GatewayDevicesPage, errors.SDKError) {
 	ret := _mock.Called(ctx, chanID, publisherID, pm, workspaceID, token)
@@ -8686,6 +8052,86 @@ func (_c *SDK_ListSubscriptions_Call) Return(subscriptionPage sdk.SubscriptionPa
 }
 
 func (_c *SDK_ListSubscriptions_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.SubscriptionPage, errors.SDKError)) *SDK_ListSubscriptions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListWorkspaceMembers provides a mock function for the type SDK
+func (_mock *SDK) ListWorkspaceMembers(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, workspaceID, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListWorkspaceMembers")
+	}
+
+	var r0 sdk.EntityMembersPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) (sdk.EntityMembersPage, errors.SDKError)); ok {
+		return returnFunc(ctx, workspaceID, pm, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) sdk.EntityMembersPage); ok {
+		r0 = returnFunc(ctx, workspaceID, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.EntityMembersPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, workspaceID, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_ListWorkspaceMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListWorkspaceMembers'
+type SDK_ListWorkspaceMembers_Call struct {
+	*mock.Call
+}
+
+// ListWorkspaceMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - workspaceID string
+//   - pm sdk.PageMetadata
+//   - token string
+func (_e *SDK_Expecter) ListWorkspaceMembers(ctx interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListWorkspaceMembers_Call {
+	return &SDK_ListWorkspaceMembers_Call{Call: _e.mock.On("ListWorkspaceMembers", ctx, workspaceID, pm, token)}
+}
+
+func (_c *SDK_ListWorkspaceMembers_Call) Run(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string)) *SDK_ListWorkspaceMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(sdk.PageMetadata)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_ListWorkspaceMembers_Call) Return(entityMembersPage sdk.EntityMembersPage, sDKError errors.SDKError) *SDK_ListWorkspaceMembers_Call {
+	_c.Call.Return(entityMembersPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_ListWorkspaceMembers_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, pm sdk.PageMetadata, token string) (sdk.EntityMembersPage, errors.SDKError)) *SDK_ListWorkspaceMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -9277,148 +8723,6 @@ func (_c *SDK_RemoveAllClientRoleMembers_Call) RunAndReturn(run func(ctx context
 	return _c
 }
 
-// RemoveAllWorkspaceRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllWorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveAllWorkspaceRoleActions")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_RemoveAllWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleActions'
-type SDK_RemoveAllWorkspaceRoleActions_Call struct {
-	*mock.Call
-}
-
-// RemoveAllWorkspaceRoleActions is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - token string
-func (_e *SDK_Expecter) RemoveAllWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleActions_Call {
-	return &SDK_RemoveAllWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleActions", ctx, id, roleID, token)}
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleActions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveAllWorkspaceRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveAllWorkspaceRoleMembers(ctx context.Context, id string, roleID string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveAllWorkspaceRoleMembers")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_RemoveAllWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleMembers'
-type SDK_RemoveAllWorkspaceRoleMembers_Call struct {
-	*mock.Call
-}
-
-// RemoveAllWorkspaceRoleMembers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - token string
-func (_e *SDK_Expecter) RemoveAllWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleMembers_Call {
-	return &SDK_RemoveAllWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleMembers", ctx, id, roleID, token)}
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleMembers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RemoveAllGroupRoleActions provides a mock function for the type SDK
 func (_mock *SDK) RemoveAllGroupRoleActions(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, roleID, workspaceID, token)
@@ -9569,6 +8873,148 @@ func (_c *SDK_RemoveAllGroupRoleMembers_Call) Return(sDKError errors.SDKError) *
 }
 
 func (_c *SDK_RemoveAllGroupRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, workspaceID string, token string) errors.SDKError) *SDK_RemoveAllGroupRoleMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveAllWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) RemoveAllWorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveAllWorkspaceRoleActions")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveAllWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleActions'
+type SDK_RemoveAllWorkspaceRoleActions_Call struct {
+	*mock.Call
+}
+
+// RemoveAllWorkspaceRoleActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleActions_Call {
+	return &SDK_RemoveAllWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleActions", ctx, id, roleID, token)}
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveAllWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) RemoveAllWorkspaceRoleMembers(ctx context.Context, id string, roleID string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveAllWorkspaceRoleMembers")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveAllWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveAllWorkspaceRoleMembers'
+type SDK_RemoveAllWorkspaceRoleMembers_Call struct {
+	*mock.Call
+}
+
+// RemoveAllWorkspaceRoleMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleMembers_Call {
+	return &SDK_RemoveAllWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleMembers", ctx, id, roleID, token)}
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_RemoveAllWorkspaceRoleMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveAllWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) errors.SDKError) *SDK_RemoveAllWorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -10112,160 +9558,6 @@ func (_c *SDK_RemoveClientRoleMembers_Call) RunAndReturn(run func(ctx context.Co
 	return _c
 }
 
-// RemoveWorkspaceRoleActions provides a mock function for the type SDK
-func (_mock *SDK) RemoveWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, actions, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveWorkspaceRoleActions")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, actions, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_RemoveWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleActions'
-type SDK_RemoveWorkspaceRoleActions_Call struct {
-	*mock.Call
-}
-
-// RemoveWorkspaceRoleActions is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - actions []string
-//   - token string
-func (_e *SDK_Expecter) RemoveWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveWorkspaceRoleActions_Call {
-	return &SDK_RemoveWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveWorkspaceRoleActions", ctx, id, roleID, actions, token)}
-}
-
-func (_c *SDK_RemoveWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_RemoveWorkspaceRoleActions_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 []string
-		if args[3] != nil {
-			arg3 = args[3].([]string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_RemoveWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RemoveWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// RemoveWorkspaceRoleMembers provides a mock function for the type SDK
-func (_mock *SDK) RemoveWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError {
-	ret := _mock.Called(ctx, id, roleID, members, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for RemoveWorkspaceRoleMembers")
-	}
-
-	var r0 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
-		r0 = returnFunc(ctx, id, roleID, members, token)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(errors.SDKError)
-		}
-	}
-	return r0
-}
-
-// SDK_RemoveWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleMembers'
-type SDK_RemoveWorkspaceRoleMembers_Call struct {
-	*mock.Call
-}
-
-// RemoveWorkspaceRoleMembers is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - members []string
-//   - token string
-func (_e *SDK_Expecter) RemoveWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveWorkspaceRoleMembers_Call {
-	return &SDK_RemoveWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveWorkspaceRoleMembers", ctx, id, roleID, members, token)}
-}
-
-func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_RemoveWorkspaceRoleMembers_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 []string
-		if args[3] != nil {
-			arg3 = args[3].([]string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
-	_c.Call.Return(sDKError)
-	return _c
-}
-
-func (_c *SDK_RemoveWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // RemoveGroupParent provides a mock function for the type SDK
 func (_mock *SDK) RemoveGroupParent(ctx context.Context, id string, workspaceID string, groupID string, token string) errors.SDKError {
 	ret := _mock.Called(ctx, id, workspaceID, groupID, token)
@@ -10647,6 +9939,160 @@ func (_c *SDK_RemoveRule_Call) Return(sDKError errors.SDKError) *SDK_RemoveRule_
 }
 
 func (_c *SDK_RemoveRule_Call) RunAndReturn(run func(ctx context.Context, id string, workspaceID string, token string) errors.SDKError) *SDK_RemoveRule_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveWorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) RemoveWorkspaceRoleActions(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, actions, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveWorkspaceRoleActions")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, roleID, actions, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveWorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleActions'
+type SDK_RemoveWorkspaceRoleActions_Call struct {
+	*mock.Call
+}
+
+// RemoveWorkspaceRoleActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - actions []string
+//   - token string
+func (_e *SDK_Expecter) RemoveWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveWorkspaceRoleActions_Call {
+	return &SDK_RemoveWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveWorkspaceRoleActions", ctx, id, roleID, actions, token)}
+}
+
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, actions []string, token string)) *SDK_RemoveWorkspaceRoleActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveWorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, actions []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RemoveWorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) RemoveWorkspaceRoleMembers(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError {
+	ret := _mock.Called(ctx, id, roleID, members, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RemoveWorkspaceRoleMembers")
+	}
+
+	var r0 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, []string, string) errors.SDKError); ok {
+		r0 = returnFunc(ctx, id, roleID, members, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(errors.SDKError)
+		}
+	}
+	return r0
+}
+
+// SDK_RemoveWorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RemoveWorkspaceRoleMembers'
+type SDK_RemoveWorkspaceRoleMembers_Call struct {
+	*mock.Call
+}
+
+// RemoveWorkspaceRoleMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - members []string
+//   - token string
+func (_e *SDK_Expecter) RemoveWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveWorkspaceRoleMembers_Call {
+	return &SDK_RemoveWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveWorkspaceRoleMembers", ctx, id, roleID, members, token)}
+}
+
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, members []string, token string)) *SDK_RemoveWorkspaceRoleMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 []string
+		if args[3] != nil {
+			arg3 = args[3].([]string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) Return(sDKError errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
+	_c.Call.Return(sDKError)
+	return _c
+}
+
+func (_c *SDK_RemoveWorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, members []string, token string) errors.SDKError) *SDK_RemoveWorkspaceRoleMembers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -12464,166 +11910,6 @@ func (_c *SDK_UpdateClientTags_Call) RunAndReturn(run func(ctx context.Context, 
 	return _c
 }
 
-// UpdateWorkspace provides a mock function for the type SDK
-func (_mock *SDK) UpdateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
-	ret := _mock.Called(ctx, d, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateWorkspace")
-	}
-
-	var r0 sdk.Workspace
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
-		return returnFunc(ctx, d, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
-		r0 = returnFunc(ctx, d, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Workspace)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, d, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_UpdateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspace'
-type SDK_UpdateWorkspace_Call struct {
-	*mock.Call
-}
-
-// UpdateWorkspace is a helper method to define mock.On call
-//   - ctx context.Context
-//   - d sdk.Workspace
-//   - token string
-func (_e *SDK_Expecter) UpdateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateWorkspace_Call {
-	return &SDK_UpdateWorkspace_Call{Call: _e.mock.On("UpdateWorkspace", ctx, d, token)}
-}
-
-func (_c *SDK_UpdateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_UpdateWorkspace_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 sdk.Workspace
-		if args[1] != nil {
-			arg1 = args[1].(sdk.Workspace)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_UpdateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_UpdateWorkspace_Call {
-	_c.Call.Return(workspace, sDKError)
-	return _c
-}
-
-func (_c *SDK_UpdateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_UpdateWorkspace_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// UpdateWorkspaceRole provides a mock function for the type SDK
-func (_mock *SDK) UpdateWorkspaceRole(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError) {
-	ret := _mock.Called(ctx, id, roleID, newName, token)
-
-	if len(ret) == 0 {
-		panic("no return value specified for UpdateWorkspaceRole")
-	}
-
-	var r0 sdk.Role
-	var r1 errors.SDKError
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
-		return returnFunc(ctx, id, roleID, newName, token)
-	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) sdk.Role); ok {
-		r0 = returnFunc(ctx, id, roleID, newName, token)
-	} else {
-		r0 = ret.Get(0).(sdk.Role)
-	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
-		r1 = returnFunc(ctx, id, roleID, newName, token)
-	} else {
-		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(errors.SDKError)
-		}
-	}
-	return r0, r1
-}
-
-// SDK_UpdateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspaceRole'
-type SDK_UpdateWorkspaceRole_Call struct {
-	*mock.Call
-}
-
-// UpdateWorkspaceRole is a helper method to define mock.On call
-//   - ctx context.Context
-//   - id string
-//   - roleID string
-//   - newName string
-//   - token string
-func (_e *SDK_Expecter) UpdateWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateWorkspaceRole_Call {
-	return &SDK_UpdateWorkspaceRole_Call{Call: _e.mock.On("UpdateWorkspaceRole", ctx, id, roleID, newName, token)}
-}
-
-func (_c *SDK_UpdateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, token string)) *SDK_UpdateWorkspaceRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 string
-		if args[1] != nil {
-			arg1 = args[1].(string)
-		}
-		var arg2 string
-		if args[2] != nil {
-			arg2 = args[2].(string)
-		}
-		var arg3 string
-		if args[3] != nil {
-			arg3 = args[3].(string)
-		}
-		var arg4 string
-		if args[4] != nil {
-			arg4 = args[4].(string)
-		}
-		run(
-			arg0,
-			arg1,
-			arg2,
-			arg3,
-			arg4,
-		)
-	})
-	return _c
-}
-
-func (_c *SDK_UpdateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_UpdateWorkspaceRole_Call {
-	_c.Call.Return(role, sDKError)
-	return _c
-}
-
-func (_c *SDK_UpdateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateWorkspaceRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // UpdateGroup provides a mock function for the type SDK
 func (_mock *SDK) UpdateGroup(ctx context.Context, group sdk.Group, workspaceID string, token string) (sdk.Group, errors.SDKError) {
 	ret := _mock.Called(ctx, group, workspaceID, token)
@@ -13871,6 +13157,166 @@ func (_c *SDK_UpdateUsername_Call) RunAndReturn(run func(ctx context.Context, us
 	return _c
 }
 
+// UpdateWorkspace provides a mock function for the type SDK
+func (_mock *SDK) UpdateWorkspace(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError) {
+	ret := _mock.Called(ctx, d, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateWorkspace")
+	}
+
+	var r0 sdk.Workspace
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) (sdk.Workspace, errors.SDKError)); ok {
+		return returnFunc(ctx, d, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.Workspace, string) sdk.Workspace); ok {
+		r0 = returnFunc(ctx, d, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Workspace)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.Workspace, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, d, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateWorkspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspace'
+type SDK_UpdateWorkspace_Call struct {
+	*mock.Call
+}
+
+// UpdateWorkspace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - d sdk.Workspace
+//   - token string
+func (_e *SDK_Expecter) UpdateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateWorkspace_Call {
+	return &SDK_UpdateWorkspace_Call{Call: _e.mock.On("UpdateWorkspace", ctx, d, token)}
+}
+
+func (_c *SDK_UpdateWorkspace_Call) Run(run func(ctx context.Context, d sdk.Workspace, token string)) *SDK_UpdateWorkspace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.Workspace
+		if args[1] != nil {
+			arg1 = args[1].(sdk.Workspace)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateWorkspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_UpdateWorkspace_Call {
+	_c.Call.Return(workspace, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateWorkspace_Call) RunAndReturn(run func(ctx context.Context, d sdk.Workspace, token string) (sdk.Workspace, errors.SDKError)) *SDK_UpdateWorkspace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateWorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) UpdateWorkspaceRole(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, newName, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateWorkspaceRole")
+	}
+
+	var r0 sdk.Role
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) (sdk.Role, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, newName, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string, string) sdk.Role); ok {
+		r0 = returnFunc(ctx, id, roleID, newName, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, newName, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_UpdateWorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateWorkspaceRole'
+type SDK_UpdateWorkspaceRole_Call struct {
+	*mock.Call
+}
+
+// UpdateWorkspaceRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - newName string
+//   - token string
+func (_e *SDK_Expecter) UpdateWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateWorkspaceRole_Call {
+	return &SDK_UpdateWorkspaceRole_Call{Call: _e.mock.On("UpdateWorkspaceRole", ctx, id, roleID, newName, token)}
+}
+
+func (_c *SDK_UpdateWorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, newName string, token string)) *SDK_UpdateWorkspaceRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_UpdateWorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_UpdateWorkspaceRole_Call {
+	_c.Call.Return(role, sDKError)
+	return _c
+}
+
+func (_c *SDK_UpdateWorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, newName string, token string) (sdk.Role, errors.SDKError)) *SDK_UpdateWorkspaceRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // User provides a mock function for the type SDK
 func (_mock *SDK) User(ctx context.Context, id string, token string) (sdk.User, errors.SDKError) {
 	ret := _mock.Called(ctx, id, token)
@@ -14917,6 +14363,560 @@ func (_c *SDK_Whitelist_Call) Return(sDKError errors.SDKError) *SDK_Whitelist_Ca
 }
 
 func (_c *SDK_Whitelist_Call) RunAndReturn(run func(ctx context.Context, clientID string, status sdk.BootstrapStatus, workspaceID string, token string) errors.SDKError) *SDK_Whitelist_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Workspace provides a mock function for the type SDK
+func (_mock *SDK) Workspace(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError) {
+	ret := _mock.Called(ctx, workspaceID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Workspace")
+	}
+
+	var r0 sdk.Workspace
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) (sdk.Workspace, errors.SDKError)); ok {
+		return returnFunc(ctx, workspaceID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string) sdk.Workspace); ok {
+		r0 = returnFunc(ctx, workspaceID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Workspace)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, workspaceID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_Workspace_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspace'
+type SDK_Workspace_Call struct {
+	*mock.Call
+}
+
+// Workspace is a helper method to define mock.On call
+//   - ctx context.Context
+//   - workspaceID string
+//   - token string
+func (_e *SDK_Expecter) Workspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_Workspace_Call {
+	return &SDK_Workspace_Call{Call: _e.mock.On("Workspace", ctx, workspaceID, token)}
+}
+
+func (_c *SDK_Workspace_Call) Run(run func(ctx context.Context, workspaceID string, token string)) *SDK_Workspace_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_Workspace_Call) Return(workspace sdk.Workspace, sDKError errors.SDKError) *SDK_Workspace_Call {
+	_c.Call.Return(workspace, sDKError)
+	return _c
+}
+
+func (_c *SDK_Workspace_Call) RunAndReturn(run func(ctx context.Context, workspaceID string, token string) (sdk.Workspace, errors.SDKError)) *SDK_Workspace_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WorkspaceInvitations provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceInvitations(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error) {
+	ret := _mock.Called(ctx, pm, token, workspaceID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WorkspaceInvitations")
+	}
+
+	var r0 sdk.InvitationPage
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) (sdk.InvitationPage, error)); ok {
+		return returnFunc(ctx, pm, token, workspaceID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string, string) sdk.InvitationPage); ok {
+		r0 = returnFunc(ctx, pm, token, workspaceID)
+	} else {
+		r0 = ret.Get(0).(sdk.InvitationPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string, string) error); ok {
+		r1 = returnFunc(ctx, pm, token, workspaceID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// SDK_WorkspaceInvitations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceInvitations'
+type SDK_WorkspaceInvitations_Call struct {
+	*mock.Call
+}
+
+// WorkspaceInvitations is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - token string
+//   - workspaceID string
+func (_e *SDK_Expecter) WorkspaceInvitations(ctx interface{}, pm interface{}, token interface{}, workspaceID interface{}) *SDK_WorkspaceInvitations_Call {
+	return &SDK_WorkspaceInvitations_Call{Call: _e.mock.On("WorkspaceInvitations", ctx, pm, token, workspaceID)}
+}
+
+func (_c *SDK_WorkspaceInvitations_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string)) *SDK_WorkspaceInvitations_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_WorkspaceInvitations_Call) Return(invitations sdk.InvitationPage, err error) *SDK_WorkspaceInvitations_Call {
+	_c.Call.Return(invitations, err)
+	return _c
+}
+
+func (_c *SDK_WorkspaceInvitations_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string, workspaceID string) (sdk.InvitationPage, error)) *SDK_WorkspaceInvitations_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WorkspaceRole provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRole(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WorkspaceRole")
+	}
+
+	var r0 sdk.Role
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) (sdk.Role, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) sdk.Role); ok {
+		r0 = returnFunc(ctx, id, roleID, token)
+	} else {
+		r0 = ret.Get(0).(sdk.Role)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_WorkspaceRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRole'
+type SDK_WorkspaceRole_Call struct {
+	*mock.Call
+}
+
+// WorkspaceRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
+func (_e *SDK_Expecter) WorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRole_Call {
+	return &SDK_WorkspaceRole_Call{Call: _e.mock.On("WorkspaceRole", ctx, id, roleID, token)}
+}
+
+func (_c *SDK_WorkspaceRole_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_WorkspaceRole_Call) Return(role sdk.Role, sDKError errors.SDKError) *SDK_WorkspaceRole_Call {
+	_c.Call.Return(role, sDKError)
+	return _c
+}
+
+func (_c *SDK_WorkspaceRole_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) (sdk.Role, errors.SDKError)) *SDK_WorkspaceRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WorkspaceRoleActions provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoleActions(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WorkspaceRoleActions")
+	}
+
+	var r0 []string
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) ([]string, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, string) []string); ok {
+		r0 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_WorkspaceRoleActions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleActions'
+type SDK_WorkspaceRoleActions_Call struct {
+	*mock.Call
+}
+
+// WorkspaceRoleActions is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - token string
+func (_e *SDK_Expecter) WorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRoleActions_Call {
+	return &SDK_WorkspaceRoleActions_Call{Call: _e.mock.On("WorkspaceRoleActions", ctx, id, roleID, token)}
+}
+
+func (_c *SDK_WorkspaceRoleActions_Call) Run(run func(ctx context.Context, id string, roleID string, token string)) *SDK_WorkspaceRoleActions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoleActions_Call) Return(strings []string, sDKError errors.SDKError) *SDK_WorkspaceRoleActions_Call {
+	_c.Call.Return(strings, sDKError)
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoleActions_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, token string) ([]string, errors.SDKError)) *SDK_WorkspaceRoleActions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WorkspaceRoleMembers provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoleMembers(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, roleID, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WorkspaceRoleMembers")
+	}
+
+	var r0 sdk.RoleMembersPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) (sdk.RoleMembersPage, errors.SDKError)); ok {
+		return returnFunc(ctx, id, roleID, pm, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, sdk.PageMetadata, string) sdk.RoleMembersPage); ok {
+		r0 = returnFunc(ctx, id, roleID, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.RoleMembersPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, string, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, roleID, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_WorkspaceRoleMembers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoleMembers'
+type SDK_WorkspaceRoleMembers_Call struct {
+	*mock.Call
+}
+
+// WorkspaceRoleMembers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - roleID string
+//   - pm sdk.PageMetadata
+//   - token string
+func (_e *SDK_Expecter) WorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoleMembers_Call {
+	return &SDK_WorkspaceRoleMembers_Call{Call: _e.mock.On("WorkspaceRoleMembers", ctx, id, roleID, pm, token)}
+}
+
+func (_c *SDK_WorkspaceRoleMembers_Call) Run(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoleMembers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		var arg3 sdk.PageMetadata
+		if args[3] != nil {
+			arg3 = args[3].(sdk.PageMetadata)
+		}
+		var arg4 string
+		if args[4] != nil {
+			arg4 = args[4].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+			arg4,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoleMembers_Call) Return(roleMembersPage sdk.RoleMembersPage, sDKError errors.SDKError) *SDK_WorkspaceRoleMembers_Call {
+	_c.Call.Return(roleMembersPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoleMembers_Call) RunAndReturn(run func(ctx context.Context, id string, roleID string, pm sdk.PageMetadata, token string) (sdk.RoleMembersPage, errors.SDKError)) *SDK_WorkspaceRoleMembers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// WorkspaceRoles provides a mock function for the type SDK
+func (_mock *SDK) WorkspaceRoles(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, id, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for WorkspaceRoles")
+	}
+
+	var r0 sdk.RolesPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) (sdk.RolesPage, errors.SDKError)); ok {
+		return returnFunc(ctx, id, pm, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string, sdk.PageMetadata, string) sdk.RolesPage); ok {
+		r0 = returnFunc(ctx, id, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.RolesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, id, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_WorkspaceRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'WorkspaceRoles'
+type SDK_WorkspaceRoles_Call struct {
+	*mock.Call
+}
+
+// WorkspaceRoles is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id string
+//   - pm sdk.PageMetadata
+//   - token string
+func (_e *SDK_Expecter) WorkspaceRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoles_Call {
+	return &SDK_WorkspaceRoles_Call{Call: _e.mock.On("WorkspaceRoles", ctx, id, pm, token)}
+}
+
+func (_c *SDK_WorkspaceRoles_Call) Run(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string)) *SDK_WorkspaceRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		var arg2 sdk.PageMetadata
+		if args[2] != nil {
+			arg2 = args[2].(sdk.PageMetadata)
+		}
+		var arg3 string
+		if args[3] != nil {
+			arg3 = args[3].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+			arg3,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoles_Call) Return(rolesPage sdk.RolesPage, sDKError errors.SDKError) *SDK_WorkspaceRoles_Call {
+	_c.Call.Return(rolesPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_WorkspaceRoles_Call) RunAndReturn(run func(ctx context.Context, id string, pm sdk.PageMetadata, token string) (sdk.RolesPage, errors.SDKError)) *SDK_WorkspaceRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Workspaces provides a mock function for the type SDK
+func (_mock *SDK) Workspaces(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError) {
+	ret := _mock.Called(ctx, pm, token)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Workspaces")
+	}
+
+	var r0 sdk.WorkspacesPage
+	var r1 errors.SDKError
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) (sdk.WorkspacesPage, errors.SDKError)); ok {
+		return returnFunc(ctx, pm, token)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, sdk.PageMetadata, string) sdk.WorkspacesPage); ok {
+		r0 = returnFunc(ctx, pm, token)
+	} else {
+		r0 = ret.Get(0).(sdk.WorkspacesPage)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, sdk.PageMetadata, string) errors.SDKError); ok {
+		r1 = returnFunc(ctx, pm, token)
+	} else {
+		if ret.Get(1) != nil {
+			r1 = ret.Get(1).(errors.SDKError)
+		}
+	}
+	return r0, r1
+}
+
+// SDK_Workspaces_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Workspaces'
+type SDK_Workspaces_Call struct {
+	*mock.Call
+}
+
+// Workspaces is a helper method to define mock.On call
+//   - ctx context.Context
+//   - pm sdk.PageMetadata
+//   - token string
+func (_e *SDK_Expecter) Workspaces(ctx interface{}, pm interface{}, token interface{}) *SDK_Workspaces_Call {
+	return &SDK_Workspaces_Call{Call: _e.mock.On("Workspaces", ctx, pm, token)}
+}
+
+func (_c *SDK_Workspaces_Call) Run(run func(ctx context.Context, pm sdk.PageMetadata, token string)) *SDK_Workspaces_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 sdk.PageMetadata
+		if args[1] != nil {
+			arg1 = args[1].(sdk.PageMetadata)
+		}
+		var arg2 string
+		if args[2] != nil {
+			arg2 = args[2].(string)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *SDK_Workspaces_Call) Return(workspacesPage sdk.WorkspacesPage, sDKError errors.SDKError) *SDK_Workspaces_Call {
+	_c.Call.Return(workspacesPage, sDKError)
+	return _c
+}
+
+func (_c *SDK_Workspaces_Call) RunAndReturn(run func(ctx context.Context, pm sdk.PageMetadata, token string) (sdk.WorkspacesPage, errors.SDKError)) *SDK_Workspaces_Call {
 	_c.Call.Return(run)
 	return _c
 }

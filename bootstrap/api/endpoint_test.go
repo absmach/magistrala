@@ -18,11 +18,11 @@ import (
 	"github.com/absmach/magistrala/bootstrap"
 	bsapi "github.com/absmach/magistrala/bootstrap/api"
 	"github.com/absmach/magistrala/bootstrap/mocks"
-	"github.com/absmach/magistrala/pkg/testsutil"
 	mglog "github.com/absmach/magistrala/logger"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	authnmocks "github.com/absmach/magistrala/pkg/authn/mocks"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -43,7 +43,6 @@ const (
 )
 
 var (
-	encKey         = []byte("12345678910111213141516171819202")
 	addExternalID  = testsutil.GenerateUUID(&testing.T{})
 	addExternalKey = testsutil.GenerateUUID(&testing.T{})
 	addID          = testsutil.GenerateUUID(&testing.T{})
@@ -74,8 +73,6 @@ var (
 		CACert:        "newca",
 		RenderContext: map[string]any{"site": "warehouse-2", "region": "mombasa"},
 	}
-
-	missingIDRes = toJSON(apiutil.ErrMissingID)
 )
 
 type testRequest struct {

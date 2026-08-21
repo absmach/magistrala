@@ -10,11 +10,11 @@ import (
 
 	"github.com/absmach/magistrala/bootstrap"
 	mocks "github.com/absmach/magistrala/bootstrap/mocks"
-	"github.com/absmach/magistrala/pkg/testsutil"
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
+	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

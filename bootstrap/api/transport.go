@@ -102,7 +102,6 @@ func MakeHandler(svc bootstrap.Service, authn smqauthn.AuthNMiddleware, reader b
 					decodeChangeConfigStatusRequest,
 					api.EncodeResponse,
 					opts...), "disable_config").ServeHTTP)
-
 			})
 		})
 

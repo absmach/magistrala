@@ -11,15 +11,15 @@ import (
 	"testing"
 )
 
-func TestClientAndChannelSelectionsUseAtomObjectGroupFields(t *testing.T) {
+func TestDeviceAndChannelSelectionsUseAtomObjectGroupFields(t *testing.T) {
 	tests := []struct {
 		name string
 		args []string
 		data string
 	}{
 		{
-			name: "clients list",
-			args: []string{"--graphql-url", "", "--token", "test-token", "clients", "list", "domain-1"},
+			name: "devices list",
+			args: []string{"--graphql-url", "", "--token", "test-token", "devices", "list", "domain-1"},
 			data: `{"data":{"entities":{"total":0,"items":[]}}}`,
 		},
 		{

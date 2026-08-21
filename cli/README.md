@@ -54,15 +54,15 @@ Domains map to Atom tenants.
 ./build/cli domains get <domain_id>
 ```
 
-## Clients
+## Devices
 
-Clients map to Atom entities. The default entity kind is `device`.
+Devices map to Atom entities. The default entity kind is `device`.
 
 ```bash
-./build/cli clients create <domain_id> "Thermostat 1"
-./build/cli clients create <domain_id> "Gateway" --kind application --attributes '{"site":"lab"}'
-./build/cli clients list <domain_id>
-./build/cli clients get <client_id>
+./build/cli devices create <domain_id> "Thermostat 1"
+./build/cli devices create <domain_id> "Gateway" --kind application --attributes '{"site":"lab"}'
+./build/cli devices list <domain_id>
+./build/cli devices get <device_id>
 ```
 
 ## Channels

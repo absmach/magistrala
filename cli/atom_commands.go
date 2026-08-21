@@ -157,17 +157,17 @@ query GetDomain($id: ID!) {
 	return cmd
 }
 
-func newGraphQLClientsCmd(opts *rootOptions) *cobra.Command {
-	cmd := &cobra.Command{Use: "clients", Short: "Manage Magistrala clients through Atom entities"}
-	cmd.AddCommand(newClientCreateCmd(opts), newClientListCmd(opts), newClientGetCmd(opts))
+func newGraphQLDevicesCmd(opts *rootOptions) *cobra.Command {
+	cmd := &cobra.Command{Use: "devices", Short: "Manage Magistrala devices through Atom entities"}
+	cmd.AddCommand(newDeviceCreateCmd(opts), newDeviceListCmd(opts), newDeviceGetCmd(opts))
 	return cmd
 }
 
-func newClientCreateCmd(opts *rootOptions) *cobra.Command {
+func newDeviceCreateCmd(opts *rootOptions) *cobra.Command {
 	var alias, kind, attrs string
 	cmd := &cobra.Command{
 		Use:   "create <domain_id> <name>",
-		Short: "Create a client",
+		Short: "Create a device",
 		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.authedClient()
@@ -182,7 +182,7 @@ func newClientCreateCmd(opts *rootOptions) *cobra.Command {
 				CreateEntity map[string]any `json:"createEntity"`
 			}
 			err = client.do(context.Background(), `
-mutation CreateClient($input: CreateEntityInput!) {
+mutation CreateDevice($input: CreateEntityInput!) {
   createEntity(input: $input) { `+entityFields+` }
 }`, map[string]any{"input": map[string]any{
 				"tenantId":   args[0],
@@ -197,18 +197,18 @@ mutation CreateClient($input: CreateEntityInput!) {
 			return writeOutput(cmd, out.CreateEntity)
 		},
 	}
-	cmd.Flags().StringVar(&alias, "alias", "", "client alias")
+	cmd.Flags().StringVar(&alias, "alias", "", "device alias")
 	cmd.Flags().StringVar(&kind, "kind", "device", "Atom EntityKind value")
 	cmd.Flags().StringVar(&attrs, "attributes", "", "JSON attributes")
 	return cmd
 }
 
-func newClientListCmd(opts *rootOptions) *cobra.Command {
+func newDeviceListCmd(opts *rootOptions) *cobra.Command {
 	var limit, offset int
 	var kind string
 	cmd := &cobra.Command{
 		Use:   "list <domain_id>",
-		Short: "List clients",
+		Short: "List devices",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.authedClient()
@@ -219,7 +219,7 @@ func newClientListCmd(opts *rootOptions) *cobra.Command {
 				Entities map[string]any `json:"entities"`
 			}
 			err = client.do(context.Background(), `
-query ListClients($tenantId: ID!, $kind: EntityKind, $limit: Int, $offset: Int) {
+query ListDevices($tenantId: ID!, $kind: EntityKind, $limit: Int, $offset: Int) {
   entities(tenantId: $tenantId, kind: $kind, limit: $limit, offset: $offset) {
     total
     items { `+entityFields+` }
@@ -236,10 +236,10 @@ query ListClients($tenantId: ID!, $kind: EntityKind, $limit: Int, $offset: Int) 
 	return cmd
 }
 
-func newClientGetCmd(opts *rootOptions) *cobra.Command {
+func newDeviceGetCmd(opts *rootOptions) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "get <client_id>",
-		Short: "Get a client",
+		Use:   "get <device_id>",
+		Short: "Get a device",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			client, err := opts.authedClient()
@@ -250,7 +250,7 @@ func newClientGetCmd(opts *rootOptions) *cobra.Command {
 				Entity map[string]any `json:"entity"`
 			}
 			err = client.do(context.Background(), `
-query GetClient($id: ID!) {
+query GetDevice($id: ID!) {
   entity(id: $id) { `+entityFields+` }
 }`, map[string]any{"id": args[0]}, &out)
 			if err != nil {

@@ -35,7 +35,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(
 		newLoginCmd(opts),
 		newDomainsCmd(opts),
-		newGraphQLClientsCmd(opts),
+		newGraphQLDevicesCmd(opts),
 		newGraphQLChannelsCmd(opts),
 		newGraphQLGroupsCmd(opts),
 		newAuthzCmd(opts),

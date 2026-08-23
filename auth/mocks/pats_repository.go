@@ -69,7 +69,7 @@ type PATSRepository_AddScope_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - scopes []auth.Scope
-func (_e *PATSRepository_Expecter) AddScope(ctx interface{}, userID interface{}, scopes interface{}) *PATSRepository_AddScope_Call {
+func (_e *PATSRepository_Expecter) AddScope(ctx any, userID any, scopes any) *PATSRepository_AddScope_Call {
 	return &PATSRepository_AddScope_Call{Call: _e.mock.On("AddScope", ctx, userID, scopes)}
 }
 
@@ -136,7 +136,7 @@ type PATSRepository_CheckScope_Call struct {
 //   - workspaceID string
 //   - operation string
 //   - entityID string
-func (_e *PATSRepository_Expecter) CheckScope(ctx interface{}, userID interface{}, patID interface{}, entityType interface{}, workspaceID interface{}, operation interface{}, entityID interface{}) *PATSRepository_CheckScope_Call {
+func (_e *PATSRepository_Expecter) CheckScope(ctx any, userID any, patID any, entityType any, workspaceID any, operation any, entityID any) *PATSRepository_CheckScope_Call {
 	return &PATSRepository_CheckScope_Call{Call: _e.mock.On("CheckScope", ctx, userID, patID, entityType, workspaceID, operation, entityID)}
 }
 
@@ -219,7 +219,7 @@ type PATSRepository_Reactivate_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATSRepository_Expecter) Reactivate(ctx interface{}, userID interface{}, patID interface{}) *PATSRepository_Reactivate_Call {
+func (_e *PATSRepository_Expecter) Reactivate(ctx any, userID any, patID any) *PATSRepository_Reactivate_Call {
 	return &PATSRepository_Reactivate_Call{Call: _e.mock.On("Reactivate", ctx, userID, patID)}
 }
 
@@ -282,7 +282,7 @@ type PATSRepository_Remove_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATSRepository_Expecter) Remove(ctx interface{}, userID interface{}, patID interface{}) *PATSRepository_Remove_Call {
+func (_e *PATSRepository_Expecter) Remove(ctx any, userID any, patID any) *PATSRepository_Remove_Call {
 	return &PATSRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, userID, patID)}
 }
 
@@ -344,7 +344,7 @@ type PATSRepository_RemoveAllPAT_Call struct {
 // RemoveAllPAT is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *PATSRepository_Expecter) RemoveAllPAT(ctx interface{}, userID interface{}) *PATSRepository_RemoveAllPAT_Call {
+func (_e *PATSRepository_Expecter) RemoveAllPAT(ctx any, userID any) *PATSRepository_RemoveAllPAT_Call {
 	return &PATSRepository_RemoveAllPAT_Call{Call: _e.mock.On("RemoveAllPAT", ctx, userID)}
 }
 
@@ -401,7 +401,7 @@ type PATSRepository_RemoveAllScope_Call struct {
 // RemoveAllScope is a helper method to define mock.On call
 //   - ctx context.Context
 //   - patID string
-func (_e *PATSRepository_Expecter) RemoveAllScope(ctx interface{}, patID interface{}) *PATSRepository_RemoveAllScope_Call {
+func (_e *PATSRepository_Expecter) RemoveAllScope(ctx any, patID any) *PATSRepository_RemoveAllScope_Call {
 	return &PATSRepository_RemoveAllScope_Call{Call: _e.mock.On("RemoveAllScope", ctx, patID)}
 }
 
@@ -465,9 +465,9 @@ type PATSRepository_RemoveScope_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - scopesIDs ...string
-func (_e *PATSRepository_Expecter) RemoveScope(ctx interface{}, userID interface{}, scopesIDs ...interface{}) *PATSRepository_RemoveScope_Call {
+func (_e *PATSRepository_Expecter) RemoveScope(ctx any, userID any, scopesIDs ...any) *PATSRepository_RemoveScope_Call {
 	return &PATSRepository_RemoveScope_Call{Call: _e.mock.On("RemoveScope",
-		append([]interface{}{ctx, userID}, scopesIDs...)...)}
+		append([]any{ctx, userID}, scopesIDs...)...)}
 }
 
 func (_c *PATSRepository_RemoveScope_Call) Run(run func(ctx context.Context, userID string, scopesIDs ...string)) *PATSRepository_RemoveScope_Call {
@@ -540,7 +540,7 @@ type PATSRepository_Retrieve_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATSRepository_Expecter) Retrieve(ctx interface{}, userID interface{}, patID interface{}) *PATSRepository_Retrieve_Call {
+func (_e *PATSRepository_Expecter) Retrieve(ctx any, userID any, patID any) *PATSRepository_Retrieve_Call {
 	return &PATSRepository_Retrieve_Call{Call: _e.mock.On("Retrieve", ctx, userID, patID)}
 }
 
@@ -612,7 +612,7 @@ type PATSRepository_RetrieveAll_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - pm auth.PATSPageMeta
-func (_e *PATSRepository_Expecter) RetrieveAll(ctx interface{}, userID interface{}, pm interface{}) *PATSRepository_RetrieveAll_Call {
+func (_e *PATSRepository_Expecter) RetrieveAll(ctx any, userID any, pm any) *PATSRepository_RetrieveAll_Call {
 	return &PATSRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, userID, pm)}
 }
 
@@ -683,7 +683,7 @@ type PATSRepository_RetrieveScope_Call struct {
 // RetrieveScope is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm auth.ScopesPageMeta
-func (_e *PATSRepository_Expecter) RetrieveScope(ctx interface{}, pm interface{}) *PATSRepository_RetrieveScope_Call {
+func (_e *PATSRepository_Expecter) RetrieveScope(ctx any, pm any) *PATSRepository_RetrieveScope_Call {
 	return &PATSRepository_RetrieveScope_Call{Call: _e.mock.On("RetrieveScope", ctx, pm)}
 }
 
@@ -762,7 +762,7 @@ type PATSRepository_RetrieveSecretAndRevokeStatus_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATSRepository_Expecter) RetrieveSecretAndRevokeStatus(ctx interface{}, userID interface{}, patID interface{}) *PATSRepository_RetrieveSecretAndRevokeStatus_Call {
+func (_e *PATSRepository_Expecter) RetrieveSecretAndRevokeStatus(ctx any, userID any, patID any) *PATSRepository_RetrieveSecretAndRevokeStatus_Call {
 	return &PATSRepository_RetrieveSecretAndRevokeStatus_Call{Call: _e.mock.On("RetrieveSecretAndRevokeStatus", ctx, userID, patID)}
 }
 
@@ -825,7 +825,7 @@ type PATSRepository_Revoke_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATSRepository_Expecter) Revoke(ctx interface{}, userID interface{}, patID interface{}) *PATSRepository_Revoke_Call {
+func (_e *PATSRepository_Expecter) Revoke(ctx any, userID any, patID any) *PATSRepository_Revoke_Call {
 	return &PATSRepository_Revoke_Call{Call: _e.mock.On("Revoke", ctx, userID, patID)}
 }
 
@@ -887,7 +887,7 @@ type PATSRepository_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pat auth.PAT
-func (_e *PATSRepository_Expecter) Save(ctx interface{}, pat interface{}) *PATSRepository_Save_Call {
+func (_e *PATSRepository_Expecter) Save(ctx any, pat any) *PATSRepository_Save_Call {
 	return &PATSRepository_Save_Call{Call: _e.mock.On("Save", ctx, pat)}
 }
 
@@ -955,7 +955,7 @@ type PATSRepository_UpdateDescription_Call struct {
 //   - userID string
 //   - patID string
 //   - description string
-func (_e *PATSRepository_Expecter) UpdateDescription(ctx interface{}, userID interface{}, patID interface{}, description interface{}) *PATSRepository_UpdateDescription_Call {
+func (_e *PATSRepository_Expecter) UpdateDescription(ctx any, userID any, patID any, description any) *PATSRepository_UpdateDescription_Call {
 	return &PATSRepository_UpdateDescription_Call{Call: _e.mock.On("UpdateDescription", ctx, userID, patID, description)}
 }
 
@@ -1033,7 +1033,7 @@ type PATSRepository_UpdateName_Call struct {
 //   - userID string
 //   - patID string
 //   - name string
-func (_e *PATSRepository_Expecter) UpdateName(ctx interface{}, userID interface{}, patID interface{}, name interface{}) *PATSRepository_UpdateName_Call {
+func (_e *PATSRepository_Expecter) UpdateName(ctx any, userID any, patID any, name any) *PATSRepository_UpdateName_Call {
 	return &PATSRepository_UpdateName_Call{Call: _e.mock.On("UpdateName", ctx, userID, patID, name)}
 }
 
@@ -1112,7 +1112,7 @@ type PATSRepository_UpdateTokenHash_Call struct {
 //   - patID string
 //   - tokenHash string
 //   - expiryAt time.Time
-func (_e *PATSRepository_Expecter) UpdateTokenHash(ctx interface{}, userID interface{}, patID interface{}, tokenHash interface{}, expiryAt interface{}) *PATSRepository_UpdateTokenHash_Call {
+func (_e *PATSRepository_Expecter) UpdateTokenHash(ctx any, userID any, patID any, tokenHash any, expiryAt any) *PATSRepository_UpdateTokenHash_Call {
 	return &PATSRepository_UpdateTokenHash_Call{Call: _e.mock.On("UpdateTokenHash", ctx, userID, patID, tokenHash, expiryAt)}
 }
 

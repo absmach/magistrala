@@ -77,7 +77,7 @@ type AuthNMiddleware_Authenticate_Call struct {
 // Authenticate is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *AuthNMiddleware_Expecter) Authenticate(ctx interface{}, token interface{}) *AuthNMiddleware_Authenticate_Call {
+func (_e *AuthNMiddleware_Expecter) Authenticate(ctx any, token any) *AuthNMiddleware_Authenticate_Call {
 	return &AuthNMiddleware_Authenticate_Call{Call: _e.mock.On("Authenticate", ctx, token)}
 }
 
@@ -187,9 +187,9 @@ type AuthNMiddleware_WithOptions_Call struct {
 
 // WithOptions is a helper method to define mock.On call
 //   - options ...authn.MiddlewareOption
-func (_e *AuthNMiddleware_Expecter) WithOptions(options ...interface{}) *AuthNMiddleware_WithOptions_Call {
+func (_e *AuthNMiddleware_Expecter) WithOptions(options ...any) *AuthNMiddleware_WithOptions_Call {
 	return &AuthNMiddleware_WithOptions_Call{Call: _e.mock.On("WithOptions",
-		append([]interface{}{}, options...)...)}
+		append([]any{}, options...)...)}
 }
 
 func (_c *AuthNMiddleware_WithOptions_Call) Run(run func(options ...authn.MiddlewareOption)) *AuthNMiddleware_WithOptions_Call {

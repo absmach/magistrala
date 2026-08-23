@@ -112,7 +112,7 @@ type Publisher_Publish_Call struct {
 //   - ctx context.Context
 //   - stream string
 //   - event events.Event
-func (_e *Publisher_Expecter) Publish(ctx interface{}, stream interface{}, event interface{}) *Publisher_Publish_Call {
+func (_e *Publisher_Expecter) Publish(ctx any, stream any, event any) *Publisher_Publish_Call {
 	return &Publisher_Publish_Call{Call: _e.mock.On("Publish", ctx, stream, event)}
 }
 

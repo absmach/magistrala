@@ -68,7 +68,7 @@ type KeyRepository_Remove_Call struct {
 //   - ctx context.Context
 //   - issuer string
 //   - id string
-func (_e *KeyRepository_Expecter) Remove(ctx interface{}, issuer interface{}, id interface{}) *KeyRepository_Remove_Call {
+func (_e *KeyRepository_Expecter) Remove(ctx any, issuer any, id any) *KeyRepository_Remove_Call {
 	return &KeyRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, issuer, id)}
 }
 
@@ -140,7 +140,7 @@ type KeyRepository_Retrieve_Call struct {
 //   - ctx context.Context
 //   - issuer string
 //   - id string
-func (_e *KeyRepository_Expecter) Retrieve(ctx interface{}, issuer interface{}, id interface{}) *KeyRepository_Retrieve_Call {
+func (_e *KeyRepository_Expecter) Retrieve(ctx any, issuer any, id any) *KeyRepository_Retrieve_Call {
 	return &KeyRepository_Retrieve_Call{Call: _e.mock.On("Retrieve", ctx, issuer, id)}
 }
 
@@ -211,7 +211,7 @@ type KeyRepository_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - key auth.Key
-func (_e *KeyRepository_Expecter) Save(ctx interface{}, key interface{}) *KeyRepository_Save_Call {
+func (_e *KeyRepository_Expecter) Save(ctx any, key any) *KeyRepository_Save_Call {
 	return &KeyRepository_Save_Call{Call: _e.mock.On("Save", ctx, key)}
 }
 

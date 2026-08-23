@@ -34,14 +34,14 @@ func MakeHandler(svc auth.Service, mux *chi.Mux, logger *slog.Logger, jwksCacheM
 		).ServeHTTP)
 
 		r.Get("/{id}", kithttp.NewServer(
-			(retrieveEndpoint(svc)),
+			retrieveEndpoint(svc),
 			decodeKeyReq,
 			api.EncodeResponse,
 			opts...,
 		).ServeHTTP)
 
 		r.Delete("/{id}", kithttp.NewServer(
-			(revokeEndpoint(svc)),
+			revokeEndpoint(svc),
 			decodeKeyReq,
 			api.EncodeResponse,
 			opts...,

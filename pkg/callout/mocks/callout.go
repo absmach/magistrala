@@ -67,7 +67,7 @@ type Callout_Callout_Call struct {
 // Callout is a helper method to define mock.On call
 //   - ctx context.Context
 //   - req callout.Request
-func (_e *Callout_Expecter) Callout(ctx interface{}, req interface{}) *Callout_Callout_Call {
+func (_e *Callout_Expecter) Callout(ctx any, req any) *Callout_Callout_Call {
 	return &Callout_Callout_Call{Call: _e.mock.On("Callout", ctx, req)}
 }
 

@@ -72,7 +72,7 @@ type Cache_CheckScope_Call struct {
 //   - entityType auth.EntityType
 //   - operation string
 //   - entityID string
-func (_e *Cache_Expecter) CheckScope(ctx interface{}, userID interface{}, patID interface{}, optionalWorkspaceID interface{}, entityType interface{}, operation interface{}, entityID interface{}) *Cache_CheckScope_Call {
+func (_e *Cache_Expecter) CheckScope(ctx any, userID any, patID any, optionalWorkspaceID any, entityType any, operation any, entityID any) *Cache_CheckScope_Call {
 	return &Cache_CheckScope_Call{Call: _e.mock.On("CheckScope", ctx, userID, patID, optionalWorkspaceID, entityType, operation, entityID)}
 }
 
@@ -155,7 +155,7 @@ type Cache_Remove_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - scopesID []string
-func (_e *Cache_Expecter) Remove(ctx interface{}, userID interface{}, scopesID interface{}) *Cache_Remove_Call {
+func (_e *Cache_Expecter) Remove(ctx any, userID any, scopesID any) *Cache_Remove_Call {
 	return &Cache_Remove_Call{Call: _e.mock.On("Remove", ctx, userID, scopesID)}
 }
 
@@ -218,7 +218,7 @@ type Cache_RemoveAllScope_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *Cache_Expecter) RemoveAllScope(ctx interface{}, userID interface{}, patID interface{}) *Cache_RemoveAllScope_Call {
+func (_e *Cache_Expecter) RemoveAllScope(ctx any, userID any, patID any) *Cache_RemoveAllScope_Call {
 	return &Cache_RemoveAllScope_Call{Call: _e.mock.On("RemoveAllScope", ctx, userID, patID)}
 }
 
@@ -280,7 +280,7 @@ type Cache_RemoveUserAllScope_Call struct {
 // RemoveUserAllScope is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *Cache_Expecter) RemoveUserAllScope(ctx interface{}, userID interface{}) *Cache_RemoveUserAllScope_Call {
+func (_e *Cache_Expecter) RemoveUserAllScope(ctx any, userID any) *Cache_RemoveUserAllScope_Call {
 	return &Cache_RemoveUserAllScope_Call{Call: _e.mock.On("RemoveUserAllScope", ctx, userID)}
 }
 
@@ -338,7 +338,7 @@ type Cache_Save_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - scopes []auth.Scope
-func (_e *Cache_Expecter) Save(ctx interface{}, userID interface{}, scopes interface{}) *Cache_Save_Call {
+func (_e *Cache_Expecter) Save(ctx any, userID any, scopes any) *Cache_Save_Call {
 	return &Cache_Save_Call{Call: _e.mock.On("Save", ctx, userID, scopes)}
 }
 

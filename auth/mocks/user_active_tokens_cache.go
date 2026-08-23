@@ -77,7 +77,7 @@ type UserActiveTokensCache_IsActive_Call struct {
 // IsActive is a helper method to define mock.On call
 //   - ctx context.Context
 //   - tokenID string
-func (_e *UserActiveTokensCache_Expecter) IsActive(ctx interface{}, tokenID interface{}) *UserActiveTokensCache_IsActive_Call {
+func (_e *UserActiveTokensCache_Expecter) IsActive(ctx any, tokenID any) *UserActiveTokensCache_IsActive_Call {
 	return &UserActiveTokensCache_IsActive_Call{Call: _e.mock.On("IsActive", ctx, tokenID)}
 }
 
@@ -145,7 +145,7 @@ type UserActiveTokensCache_ListUserTokens_Call struct {
 // ListUserTokens is a helper method to define mock.On call
 //   - ctx context.Context
 //   - userID string
-func (_e *UserActiveTokensCache_Expecter) ListUserTokens(ctx interface{}, userID interface{}) *UserActiveTokensCache_ListUserTokens_Call {
+func (_e *UserActiveTokensCache_Expecter) ListUserTokens(ctx any, userID any) *UserActiveTokensCache_ListUserTokens_Call {
 	return &UserActiveTokensCache_ListUserTokens_Call{Call: _e.mock.On("ListUserTokens", ctx, userID)}
 }
 
@@ -203,7 +203,7 @@ type UserActiveTokensCache_RemoveActive_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - tokenID string
-func (_e *UserActiveTokensCache_Expecter) RemoveActive(ctx interface{}, userID interface{}, tokenID interface{}) *UserActiveTokensCache_RemoveActive_Call {
+func (_e *UserActiveTokensCache_Expecter) RemoveActive(ctx any, userID any, tokenID any) *UserActiveTokensCache_RemoveActive_Call {
 	return &UserActiveTokensCache_RemoveActive_Call{Call: _e.mock.On("RemoveActive", ctx, userID, tokenID)}
 }
 
@@ -268,7 +268,7 @@ type UserActiveTokensCache_SaveActive_Call struct {
 //   - tokenID string
 //   - description string
 //   - expiry time.Time
-func (_e *UserActiveTokensCache_Expecter) SaveActive(ctx interface{}, userID interface{}, tokenID interface{}, description interface{}, expiry interface{}) *UserActiveTokensCache_SaveActive_Call {
+func (_e *UserActiveTokensCache_Expecter) SaveActive(ctx any, userID any, tokenID any, description any, expiry any) *UserActiveTokensCache_SaveActive_Call {
 	return &UserActiveTokensCache_SaveActive_Call{Call: _e.mock.On("SaveActive", ctx, userID, tokenID, description, expiry)}
 }
 

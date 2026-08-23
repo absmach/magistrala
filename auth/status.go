@@ -67,7 +67,7 @@ func (p PAT) MarshalJSON() ([]byte, error) {
 		Alias
 		Status string `json:"status,omitempty"`
 	}{
-		Alias:  (Alias)(p),
+		Alias:  Alias(p),
 		Status: p.Status.String(),
 	})
 }

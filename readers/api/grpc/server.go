@@ -26,7 +26,7 @@ type readersGrpcServer struct {
 func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServiceServer {
 	return &readersGrpcServer{
 		readMessages: kitgrpc.NewServer(
-			(readMessagesEndpoint(svc)),
+			readMessagesEndpoint(svc),
 			decodeReadMessagesRequest,
 			encodeReadMessagesResponse,
 		),

@@ -69,7 +69,7 @@ type SDK_AcceptInvitation_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AcceptInvitation(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_AcceptInvitation_Call {
+func (_e *SDK_Expecter) AcceptInvitation(ctx any, workspaceID any, token any) *SDK_AcceptInvitation_Call {
 	return &SDK_AcceptInvitation_Call{Call: _e.mock.On("AcceptInvitation", ctx, workspaceID, token)}
 }
 
@@ -144,7 +144,7 @@ type SDK_AddBootstrap_Call struct {
 //   - cfg sdk.BootstrapConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddBootstrap(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_AddBootstrap_Call {
+func (_e *SDK_Expecter) AddBootstrap(ctx any, cfg any, workspaceID any, token any) *SDK_AddBootstrap_Call {
 	return &SDK_AddBootstrap_Call{Call: _e.mock.On("AddBootstrap", ctx, cfg, workspaceID, token)}
 }
 
@@ -216,7 +216,7 @@ type SDK_AddChildren_Call struct {
 //   - workspaceID string
 //   - groupIDs []string
 //   - token string
-func (_e *SDK_Expecter) AddChildren(ctx interface{}, id interface{}, workspaceID interface{}, groupIDs interface{}, token interface{}) *SDK_AddChildren_Call {
+func (_e *SDK_Expecter) AddChildren(ctx any, id any, workspaceID any, groupIDs any, token any) *SDK_AddChildren_Call {
 	return &SDK_AddChildren_Call{Call: _e.mock.On("AddChildren", ctx, id, workspaceID, groupIDs, token)}
 }
 
@@ -305,7 +305,7 @@ type SDK_AddClientRoleActions_Call struct {
 //   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_AddClientRoleActions_Call {
+func (_e *SDK_Expecter) AddClientRoleActions(ctx any, id any, roleID any, workspaceID any, actions any, token any) *SDK_AddClientRoleActions_Call {
 	return &SDK_AddClientRoleActions_Call{Call: _e.mock.On("AddClientRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
@@ -399,7 +399,7 @@ type SDK_AddClientRoleMembers_Call struct {
 //   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_AddClientRoleMembers_Call {
+func (_e *SDK_Expecter) AddClientRoleMembers(ctx any, id any, roleID any, workspaceID any, members any, token any) *SDK_AddClientRoleMembers_Call {
 	return &SDK_AddClientRoleMembers_Call{Call: _e.mock.On("AddClientRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
@@ -493,7 +493,7 @@ type SDK_AddGroupRoleActions_Call struct {
 //   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_AddGroupRoleActions_Call {
+func (_e *SDK_Expecter) AddGroupRoleActions(ctx any, id any, roleID any, workspaceID any, actions any, token any) *SDK_AddGroupRoleActions_Call {
 	return &SDK_AddGroupRoleActions_Call{Call: _e.mock.On("AddGroupRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
@@ -587,7 +587,7 @@ type SDK_AddGroupRoleMembers_Call struct {
 //   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_AddGroupRoleMembers_Call {
+func (_e *SDK_Expecter) AddGroupRoleMembers(ctx any, id any, roleID any, workspaceID any, members any, token any) *SDK_AddGroupRoleMembers_Call {
 	return &SDK_AddGroupRoleMembers_Call{Call: _e.mock.On("AddGroupRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
@@ -677,7 +677,7 @@ type SDK_AddReportConfig_Call struct {
 //   - cfg sdk.ReportConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddReportConfig(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_AddReportConfig_Call {
+func (_e *SDK_Expecter) AddReportConfig(ctx any, cfg any, workspaceID any, token any) *SDK_AddReportConfig_Call {
 	return &SDK_AddReportConfig_Call{Call: _e.mock.On("AddReportConfig", ctx, cfg, workspaceID, token)}
 }
 
@@ -757,7 +757,7 @@ type SDK_AddRule_Call struct {
 //   - r sdk.Rule
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AddRule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_AddRule_Call {
+func (_e *SDK_Expecter) AddRule(ctx any, r any, workspaceID any, token any) *SDK_AddRule_Call {
 	return &SDK_AddRule_Call{Call: _e.mock.On("AddRule", ctx, r, workspaceID, token)}
 }
 
@@ -840,7 +840,7 @@ type SDK_AddWorkspaceRoleActions_Call struct {
 //   - roleID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) AddWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_AddWorkspaceRoleActions_Call {
+func (_e *SDK_Expecter) AddWorkspaceRoleActions(ctx any, id any, roleID any, actions any, token any) *SDK_AddWorkspaceRoleActions_Call {
 	return &SDK_AddWorkspaceRoleActions_Call{Call: _e.mock.On("AddWorkspaceRoleActions", ctx, id, roleID, actions, token)}
 }
 
@@ -928,7 +928,7 @@ type SDK_AddWorkspaceRoleMembers_Call struct {
 //   - roleID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) AddWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_AddWorkspaceRoleMembers_Call {
+func (_e *SDK_Expecter) AddWorkspaceRoleMembers(ctx any, id any, roleID any, members any, token any) *SDK_AddWorkspaceRoleMembers_Call {
 	return &SDK_AddWorkspaceRoleMembers_Call{Call: _e.mock.On("AddWorkspaceRoleMembers", ctx, id, roleID, members, token)}
 }
 
@@ -1005,7 +1005,7 @@ type SDK_AssignBootstrapProfile_Call struct {
 //   - profileID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AssignBootstrapProfile(ctx interface{}, configID interface{}, profileID interface{}, workspaceID interface{}, token interface{}) *SDK_AssignBootstrapProfile_Call {
+func (_e *SDK_Expecter) AssignBootstrapProfile(ctx any, configID any, profileID any, workspaceID any, token any) *SDK_AssignBootstrapProfile_Call {
 	return &SDK_AssignBootstrapProfile_Call{Call: _e.mock.On("AssignBootstrapProfile", ctx, configID, profileID, workspaceID, token)}
 }
 
@@ -1091,7 +1091,7 @@ type SDK_AvailableClientRoleActions_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) AvailableClientRoleActions(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_AvailableClientRoleActions_Call {
+func (_e *SDK_Expecter) AvailableClientRoleActions(ctx any, workspaceID any, token any) *SDK_AvailableClientRoleActions_Call {
 	return &SDK_AvailableClientRoleActions_Call{Call: _e.mock.On("AvailableClientRoleActions", ctx, workspaceID, token)}
 }
 
@@ -1167,7 +1167,7 @@ type SDK_AvailableGroupRoleActions_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) AvailableGroupRoleActions(ctx interface{}, id interface{}, token interface{}) *SDK_AvailableGroupRoleActions_Call {
+func (_e *SDK_Expecter) AvailableGroupRoleActions(ctx any, id any, token any) *SDK_AvailableGroupRoleActions_Call {
 	return &SDK_AvailableGroupRoleActions_Call{Call: _e.mock.On("AvailableGroupRoleActions", ctx, id, token)}
 }
 
@@ -1242,7 +1242,7 @@ type SDK_AvailableWorkspaceRoleActions_Call struct {
 // AvailableWorkspaceRoleActions is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *SDK_Expecter) AvailableWorkspaceRoleActions(ctx interface{}, token interface{}) *SDK_AvailableWorkspaceRoleActions_Call {
+func (_e *SDK_Expecter) AvailableWorkspaceRoleActions(ctx any, token any) *SDK_AvailableWorkspaceRoleActions_Call {
 	return &SDK_AvailableWorkspaceRoleActions_Call{Call: _e.mock.On("AvailableWorkspaceRoleActions", ctx, token)}
 }
 
@@ -1304,7 +1304,7 @@ type SDK_BindBootstrapResources_Call struct {
 //   - bindings []sdk.BootstrapBindingRequest
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BindBootstrapResources(ctx interface{}, configID interface{}, bindings interface{}, workspaceID interface{}, token interface{}) *SDK_BindBootstrapResources_Call {
+func (_e *SDK_Expecter) BindBootstrapResources(ctx any, configID any, bindings any, workspaceID any, token any) *SDK_BindBootstrapResources_Call {
 	return &SDK_BindBootstrapResources_Call{Call: _e.mock.On("BindBootstrapResources", ctx, configID, bindings, workspaceID, token)}
 }
 
@@ -1388,7 +1388,7 @@ type SDK_Bootstrap_Call struct {
 //   - ctx context.Context
 //   - externalID string
 //   - externalKey string
-func (_e *SDK_Expecter) Bootstrap(ctx interface{}, externalID interface{}, externalKey interface{}) *SDK_Bootstrap_Call {
+func (_e *SDK_Expecter) Bootstrap(ctx any, externalID any, externalKey any) *SDK_Bootstrap_Call {
 	return &SDK_Bootstrap_Call{Call: _e.mock.On("Bootstrap", ctx, externalID, externalKey)}
 }
 
@@ -1465,7 +1465,7 @@ type SDK_BootstrapBindings_Call struct {
 //   - configID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BootstrapBindings(ctx interface{}, configID interface{}, workspaceID interface{}, token interface{}) *SDK_BootstrapBindings_Call {
+func (_e *SDK_Expecter) BootstrapBindings(ctx any, configID any, workspaceID any, token any) *SDK_BootstrapBindings_Call {
 	return &SDK_BootstrapBindings_Call{Call: _e.mock.On("BootstrapBindings", ctx, configID, workspaceID, token)}
 }
 
@@ -1545,7 +1545,7 @@ type SDK_BootstrapProfiles_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) BootstrapProfiles(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_BootstrapProfiles_Call {
+func (_e *SDK_Expecter) BootstrapProfiles(ctx any, pm any, workspaceID any, token any) *SDK_BootstrapProfiles_Call {
 	return &SDK_BootstrapProfiles_Call{Call: _e.mock.On("BootstrapProfiles", ctx, pm, workspaceID, token)}
 }
 
@@ -1625,7 +1625,7 @@ type SDK_BootstrapSecure_Call struct {
 //   - externalID string
 //   - externalKey string
 //   - cryptoKey string
-func (_e *SDK_Expecter) BootstrapSecure(ctx interface{}, externalID interface{}, externalKey interface{}, cryptoKey interface{}) *SDK_BootstrapSecure_Call {
+func (_e *SDK_Expecter) BootstrapSecure(ctx any, externalID any, externalKey any, cryptoKey any) *SDK_BootstrapSecure_Call {
 	return &SDK_BootstrapSecure_Call{Call: _e.mock.On("BootstrapSecure", ctx, externalID, externalKey, cryptoKey)}
 }
 
@@ -1705,7 +1705,7 @@ type SDK_Bootstraps_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Bootstraps(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Bootstraps_Call {
+func (_e *SDK_Expecter) Bootstraps(ctx any, pm any, workspaceID any, token any) *SDK_Bootstraps_Call {
 	return &SDK_Bootstraps_Call{Call: _e.mock.On("Bootstraps", ctx, pm, workspaceID, token)}
 }
 
@@ -1785,7 +1785,7 @@ type SDK_Channel_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Channel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Channel_Call {
+func (_e *SDK_Expecter) Channel(ctx any, id any, workspaceID any, token any) *SDK_Channel_Call {
 	return &SDK_Channel_Call{Call: _e.mock.On("Channel", ctx, id, workspaceID, token)}
 }
 
@@ -1865,7 +1865,7 @@ type SDK_Channels_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Channels(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Channels_Call {
+func (_e *SDK_Expecter) Channels(ctx any, pm any, workspaceID any, token any) *SDK_Channels_Call {
 	return &SDK_Channels_Call{Call: _e.mock.On("Channels", ctx, pm, workspaceID, token)}
 }
 
@@ -1946,7 +1946,7 @@ type SDK_Children_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Children(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_Children_Call {
+func (_e *SDK_Expecter) Children(ctx any, id any, workspaceID any, pm any, token any) *SDK_Children_Call {
 	return &SDK_Children_Call{Call: _e.mock.On("Children", ctx, id, workspaceID, pm, token)}
 }
 
@@ -2031,7 +2031,7 @@ type SDK_Client_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Client(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Client_Call {
+func (_e *SDK_Expecter) Client(ctx any, id any, workspaceID any, token any) *SDK_Client_Call {
 	return &SDK_Client_Call{Call: _e.mock.On("Client", ctx, id, workspaceID, token)}
 }
 
@@ -2112,7 +2112,7 @@ type SDK_ClientRole_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ClientRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_ClientRole_Call {
+func (_e *SDK_Expecter) ClientRole(ctx any, id any, roleID any, workspaceID any, token any) *SDK_ClientRole_Call {
 	return &SDK_ClientRole_Call{Call: _e.mock.On("ClientRole", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -2200,7 +2200,7 @@ type SDK_ClientRoleActions_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_ClientRoleActions_Call {
+func (_e *SDK_Expecter) ClientRoleActions(ctx any, id any, roleID any, workspaceID any, token any) *SDK_ClientRoleActions_Call {
 	return &SDK_ClientRoleActions_Call{Call: _e.mock.On("ClientRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -2287,7 +2287,7 @@ type SDK_ClientRoleMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ClientRoleMembers_Call {
+func (_e *SDK_Expecter) ClientRoleMembers(ctx any, id any, roleID any, workspaceID any, pm any, token any) *SDK_ClientRoleMembers_Call {
 	return &SDK_ClientRoleMembers_Call{Call: _e.mock.On("ClientRoleMembers", ctx, id, roleID, workspaceID, pm, token)}
 }
 
@@ -2378,7 +2378,7 @@ type SDK_ClientRoles_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ClientRoles(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ClientRoles_Call {
+func (_e *SDK_Expecter) ClientRoles(ctx any, id any, workspaceID any, pm any, token any) *SDK_ClientRoles_Call {
 	return &SDK_ClientRoles_Call{Call: _e.mock.On("ClientRoles", ctx, id, workspaceID, pm, token)}
 }
 
@@ -2463,7 +2463,7 @@ type SDK_Clients_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Clients(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Clients_Call {
+func (_e *SDK_Expecter) Clients(ctx any, pm any, workspaceID any, token any) *SDK_Clients_Call {
 	return &SDK_Clients_Call{Call: _e.mock.On("Clients", ctx, pm, workspaceID, token)}
 }
 
@@ -2534,7 +2534,7 @@ type SDK_Connect_Call struct {
 //   - conn sdk.Connection
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Connect(ctx interface{}, conn interface{}, workspaceID interface{}, token interface{}) *SDK_Connect_Call {
+func (_e *SDK_Expecter) Connect(ctx any, conn any, workspaceID any, token any) *SDK_Connect_Call {
 	return &SDK_Connect_Call{Call: _e.mock.On("Connect", ctx, conn, workspaceID, token)}
 }
 
@@ -2607,7 +2607,7 @@ type SDK_ConnectClients_Call struct {
 //   - connTypes []string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ConnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, workspaceID interface{}, token interface{}) *SDK_ConnectClients_Call {
+func (_e *SDK_Expecter) ConnectClients(ctx any, channelID any, clientIDs any, connTypes any, workspaceID any, token any) *SDK_ConnectClients_Call {
 	return &SDK_ConnectClients_Call{Call: _e.mock.On("ConnectClients", ctx, channelID, clientIDs, connTypes, workspaceID, token)}
 }
 
@@ -2697,7 +2697,7 @@ type SDK_CreateBootstrapProfile_Call struct {
 //   - profile sdk.BootstrapProfile
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateBootstrapProfile(ctx interface{}, profile interface{}, workspaceID interface{}, token interface{}) *SDK_CreateBootstrapProfile_Call {
+func (_e *SDK_Expecter) CreateBootstrapProfile(ctx any, profile any, workspaceID any, token any) *SDK_CreateBootstrapProfile_Call {
 	return &SDK_CreateBootstrapProfile_Call{Call: _e.mock.On("CreateBootstrapProfile", ctx, profile, workspaceID, token)}
 }
 
@@ -2776,7 +2776,7 @@ type SDK_CreateCSR_Call struct {
 //   - ctx context.Context
 //   - metadata sdk.CSRMetadata
 //   - privKey any
-func (_e *SDK_Expecter) CreateCSR(ctx interface{}, metadata interface{}, privKey interface{}) *SDK_CreateCSR_Call {
+func (_e *SDK_Expecter) CreateCSR(ctx any, metadata any, privKey any) *SDK_CreateCSR_Call {
 	return &SDK_CreateCSR_Call{Call: _e.mock.On("CreateCSR", ctx, metadata, privKey)}
 }
 
@@ -2851,7 +2851,7 @@ type SDK_CreateChannel_Call struct {
 //   - channel sdk.Channel
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateChannel(ctx interface{}, channel interface{}, workspaceID interface{}, token interface{}) *SDK_CreateChannel_Call {
+func (_e *SDK_Expecter) CreateChannel(ctx any, channel any, workspaceID any, token any) *SDK_CreateChannel_Call {
 	return &SDK_CreateChannel_Call{Call: _e.mock.On("CreateChannel", ctx, channel, workspaceID, token)}
 }
 
@@ -2933,7 +2933,7 @@ type SDK_CreateChannels_Call struct {
 //   - channels []sdk.Channel
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateChannels(ctx interface{}, channels interface{}, workspaceID interface{}, token interface{}) *SDK_CreateChannels_Call {
+func (_e *SDK_Expecter) CreateChannels(ctx any, channels any, workspaceID any, token any) *SDK_CreateChannels_Call {
 	return &SDK_CreateChannels_Call{Call: _e.mock.On("CreateChannels", ctx, channels, workspaceID, token)}
 }
 
@@ -3013,7 +3013,7 @@ type SDK_CreateClient_Call struct {
 //   - client sdk.Client
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateClient(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_CreateClient_Call {
+func (_e *SDK_Expecter) CreateClient(ctx any, client any, workspaceID any, token any) *SDK_CreateClient_Call {
 	return &SDK_CreateClient_Call{Call: _e.mock.On("CreateClient", ctx, client, workspaceID, token)}
 }
 
@@ -3094,7 +3094,7 @@ type SDK_CreateClientRole_Call struct {
 //   - workspaceID string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateClientRole(ctx interface{}, id interface{}, workspaceID interface{}, rq interface{}, token interface{}) *SDK_CreateClientRole_Call {
+func (_e *SDK_Expecter) CreateClientRole(ctx any, id any, workspaceID any, rq any, token any) *SDK_CreateClientRole_Call {
 	return &SDK_CreateClientRole_Call{Call: _e.mock.On("CreateClientRole", ctx, id, workspaceID, rq, token)}
 }
 
@@ -3181,7 +3181,7 @@ type SDK_CreateClients_Call struct {
 //   - client []sdk.Client
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateClients(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_CreateClients_Call {
+func (_e *SDK_Expecter) CreateClients(ctx any, client any, workspaceID any, token any) *SDK_CreateClients_Call {
 	return &SDK_CreateClients_Call{Call: _e.mock.On("CreateClients", ctx, client, workspaceID, token)}
 }
 
@@ -3261,7 +3261,7 @@ type SDK_CreateGroup_Call struct {
 //   - group sdk.Group
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) CreateGroup(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_CreateGroup_Call {
+func (_e *SDK_Expecter) CreateGroup(ctx any, group any, workspaceID any, token any) *SDK_CreateGroup_Call {
 	return &SDK_CreateGroup_Call{Call: _e.mock.On("CreateGroup", ctx, group, workspaceID, token)}
 }
 
@@ -3342,7 +3342,7 @@ type SDK_CreateGroupRole_Call struct {
 //   - workspaceID string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateGroupRole(ctx interface{}, id interface{}, workspaceID interface{}, rq interface{}, token interface{}) *SDK_CreateGroupRole_Call {
+func (_e *SDK_Expecter) CreateGroupRole(ctx any, id any, workspaceID any, rq any, token any) *SDK_CreateGroupRole_Call {
 	return &SDK_CreateGroupRole_Call{Call: _e.mock.On("CreateGroupRole", ctx, id, workspaceID, rq, token)}
 }
 
@@ -3427,7 +3427,7 @@ type SDK_CreateSubscription_Call struct {
 //   - topic string
 //   - contact string
 //   - token string
-func (_e *SDK_Expecter) CreateSubscription(ctx interface{}, topic interface{}, contact interface{}, token interface{}) *SDK_CreateSubscription_Call {
+func (_e *SDK_Expecter) CreateSubscription(ctx any, topic any, contact any, token any) *SDK_CreateSubscription_Call {
 	return &SDK_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, topic, contact, token)}
 }
 
@@ -3505,7 +3505,7 @@ type SDK_CreateToken_Call struct {
 // CreateToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - lt sdk.Login
-func (_e *SDK_Expecter) CreateToken(ctx interface{}, lt interface{}) *SDK_CreateToken_Call {
+func (_e *SDK_Expecter) CreateToken(ctx any, lt any) *SDK_CreateToken_Call {
 	return &SDK_CreateToken_Call{Call: _e.mock.On("CreateToken", ctx, lt)}
 }
 
@@ -3574,7 +3574,7 @@ type SDK_CreateUser_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) CreateUser(ctx interface{}, user interface{}, token interface{}) *SDK_CreateUser_Call {
+func (_e *SDK_Expecter) CreateUser(ctx any, user any, token any) *SDK_CreateUser_Call {
 	return &SDK_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, user, token)}
 }
 
@@ -3648,7 +3648,7 @@ type SDK_CreateWorkspace_Call struct {
 //   - ctx context.Context
 //   - d sdk.Workspace
 //   - token string
-func (_e *SDK_Expecter) CreateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_CreateWorkspace_Call {
+func (_e *SDK_Expecter) CreateWorkspace(ctx any, d any, token any) *SDK_CreateWorkspace_Call {
 	return &SDK_CreateWorkspace_Call{Call: _e.mock.On("CreateWorkspace", ctx, d, token)}
 }
 
@@ -3723,7 +3723,7 @@ type SDK_CreateWorkspaceRole_Call struct {
 //   - id string
 //   - rq sdk.RoleReq
 //   - token string
-func (_e *SDK_Expecter) CreateWorkspaceRole(ctx interface{}, id interface{}, rq interface{}, token interface{}) *SDK_CreateWorkspaceRole_Call {
+func (_e *SDK_Expecter) CreateWorkspaceRole(ctx any, id any, rq any, token any) *SDK_CreateWorkspaceRole_Call {
 	return &SDK_CreateWorkspaceRole_Call{Call: _e.mock.On("CreateWorkspaceRole", ctx, id, rq, token)}
 }
 
@@ -3794,7 +3794,7 @@ type SDK_DeleteAlarm_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteAlarm(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteAlarm_Call {
+func (_e *SDK_Expecter) DeleteAlarm(ctx any, id any, workspaceID any, token any) *SDK_DeleteAlarm_Call {
 	return &SDK_DeleteAlarm_Call{Call: _e.mock.On("DeleteAlarm", ctx, id, workspaceID, token)}
 }
 
@@ -3865,7 +3865,7 @@ type SDK_DeleteCert_Call struct {
 //   - entityID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteCert(ctx interface{}, entityID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteCert_Call {
+func (_e *SDK_Expecter) DeleteCert(ctx any, entityID any, workspaceID any, token any) *SDK_DeleteCert_Call {
 	return &SDK_DeleteCert_Call{Call: _e.mock.On("DeleteCert", ctx, entityID, workspaceID, token)}
 }
 
@@ -3936,7 +3936,7 @@ type SDK_DeleteChannel_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteChannel_Call {
+func (_e *SDK_Expecter) DeleteChannel(ctx any, id any, workspaceID any, token any) *SDK_DeleteChannel_Call {
 	return &SDK_DeleteChannel_Call{Call: _e.mock.On("DeleteChannel", ctx, id, workspaceID, token)}
 }
 
@@ -4007,7 +4007,7 @@ type SDK_DeleteClient_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteClient_Call {
+func (_e *SDK_Expecter) DeleteClient(ctx any, id any, workspaceID any, token any) *SDK_DeleteClient_Call {
 	return &SDK_DeleteClient_Call{Call: _e.mock.On("DeleteClient", ctx, id, workspaceID, token)}
 }
 
@@ -4079,7 +4079,7 @@ type SDK_DeleteClientRole_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteClientRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteClientRole_Call {
+func (_e *SDK_Expecter) DeleteClientRole(ctx any, id any, roleID any, workspaceID any, token any) *SDK_DeleteClientRole_Call {
 	return &SDK_DeleteClientRole_Call{Call: _e.mock.On("DeleteClientRole", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -4155,7 +4155,7 @@ type SDK_DeleteGroup_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteGroup_Call {
+func (_e *SDK_Expecter) DeleteGroup(ctx any, id any, workspaceID any, token any) *SDK_DeleteGroup_Call {
 	return &SDK_DeleteGroup_Call{Call: _e.mock.On("DeleteGroup", ctx, id, workspaceID, token)}
 }
 
@@ -4227,7 +4227,7 @@ type SDK_DeleteGroupRole_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteGroupRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteGroupRole_Call {
+func (_e *SDK_Expecter) DeleteGroupRole(ctx any, id any, roleID any, workspaceID any, token any) *SDK_DeleteGroupRole_Call {
 	return &SDK_DeleteGroupRole_Call{Call: _e.mock.On("DeleteGroupRole", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -4301,7 +4301,7 @@ type SDK_DeleteInvitation_Call struct {
 //   - userID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteInvitation(ctx interface{}, userID interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteInvitation_Call {
+func (_e *SDK_Expecter) DeleteInvitation(ctx any, userID any, workspaceID any, token any) *SDK_DeleteInvitation_Call {
 	return &SDK_DeleteInvitation_Call{Call: _e.mock.On("DeleteInvitation", ctx, userID, workspaceID, token)}
 }
 
@@ -4372,7 +4372,7 @@ type SDK_DeleteReportTemplate_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DeleteReportTemplate(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DeleteReportTemplate_Call {
+func (_e *SDK_Expecter) DeleteReportTemplate(ctx any, id any, workspaceID any, token any) *SDK_DeleteReportTemplate_Call {
 	return &SDK_DeleteReportTemplate_Call{Call: _e.mock.On("DeleteReportTemplate", ctx, id, workspaceID, token)}
 }
 
@@ -4442,7 +4442,7 @@ type SDK_DeleteSubscription_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) DeleteSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_DeleteSubscription_Call {
+func (_e *SDK_Expecter) DeleteSubscription(ctx any, id any, token any) *SDK_DeleteSubscription_Call {
 	return &SDK_DeleteSubscription_Call{Call: _e.mock.On("DeleteSubscription", ctx, id, token)}
 }
 
@@ -4507,7 +4507,7 @@ type SDK_DeleteUser_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) DeleteUser(ctx interface{}, id interface{}, token interface{}) *SDK_DeleteUser_Call {
+func (_e *SDK_Expecter) DeleteUser(ctx any, id any, token any) *SDK_DeleteUser_Call {
 	return &SDK_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, id, token)}
 }
 
@@ -4573,7 +4573,7 @@ type SDK_DeleteWorkspaceRole_Call struct {
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) DeleteWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_DeleteWorkspaceRole_Call {
+func (_e *SDK_Expecter) DeleteWorkspaceRole(ctx any, id any, roleID any, token any) *SDK_DeleteWorkspaceRole_Call {
 	return &SDK_DeleteWorkspaceRole_Call{Call: _e.mock.On("DeleteWorkspaceRole", ctx, id, roleID, token)}
 }
 
@@ -4653,7 +4653,7 @@ type SDK_DisableChannel_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableChannel_Call {
+func (_e *SDK_Expecter) DisableChannel(ctx any, id any, workspaceID any, token any) *SDK_DisableChannel_Call {
 	return &SDK_DisableChannel_Call{Call: _e.mock.On("DisableChannel", ctx, id, workspaceID, token)}
 }
 
@@ -4733,7 +4733,7 @@ type SDK_DisableClient_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableClient_Call {
+func (_e *SDK_Expecter) DisableClient(ctx any, id any, workspaceID any, token any) *SDK_DisableClient_Call {
 	return &SDK_DisableClient_Call{Call: _e.mock.On("DisableClient", ctx, id, workspaceID, token)}
 }
 
@@ -4813,7 +4813,7 @@ type SDK_DisableGroup_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableGroup_Call {
+func (_e *SDK_Expecter) DisableGroup(ctx any, id any, workspaceID any, token any) *SDK_DisableGroup_Call {
 	return &SDK_DisableGroup_Call{Call: _e.mock.On("DisableGroup", ctx, id, workspaceID, token)}
 }
 
@@ -4893,7 +4893,7 @@ type SDK_DisableReportConfig_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableReportConfig_Call {
+func (_e *SDK_Expecter) DisableReportConfig(ctx any, id any, workspaceID any, token any) *SDK_DisableReportConfig_Call {
 	return &SDK_DisableReportConfig_Call{Call: _e.mock.On("DisableReportConfig", ctx, id, workspaceID, token)}
 }
 
@@ -4973,7 +4973,7 @@ type SDK_DisableRule_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_DisableRule_Call {
+func (_e *SDK_Expecter) DisableRule(ctx any, id any, workspaceID any, token any) *SDK_DisableRule_Call {
 	return &SDK_DisableRule_Call{Call: _e.mock.On("DisableRule", ctx, id, workspaceID, token)}
 }
 
@@ -5052,7 +5052,7 @@ type SDK_DisableUser_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) DisableUser(ctx interface{}, id interface{}, token interface{}) *SDK_DisableUser_Call {
+func (_e *SDK_Expecter) DisableUser(ctx any, id any, token any) *SDK_DisableUser_Call {
 	return &SDK_DisableUser_Call{Call: _e.mock.On("DisableUser", ctx, id, token)}
 }
 
@@ -5117,7 +5117,7 @@ type SDK_DisableWorkspace_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_DisableWorkspace_Call {
+func (_e *SDK_Expecter) DisableWorkspace(ctx any, workspaceID any, token any) *SDK_DisableWorkspace_Call {
 	return &SDK_DisableWorkspace_Call{Call: _e.mock.On("DisableWorkspace", ctx, workspaceID, token)}
 }
 
@@ -5183,7 +5183,7 @@ type SDK_Disconnect_Call struct {
 //   - conn sdk.Connection
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Disconnect(ctx interface{}, conn interface{}, workspaceID interface{}, token interface{}) *SDK_Disconnect_Call {
+func (_e *SDK_Expecter) Disconnect(ctx any, conn any, workspaceID any, token any) *SDK_Disconnect_Call {
 	return &SDK_Disconnect_Call{Call: _e.mock.On("Disconnect", ctx, conn, workspaceID, token)}
 }
 
@@ -5256,7 +5256,7 @@ type SDK_DisconnectClients_Call struct {
 //   - connTypes []string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) DisconnectClients(ctx interface{}, channelID interface{}, clientIDs interface{}, connTypes interface{}, workspaceID interface{}, token interface{}) *SDK_DisconnectClients_Call {
+func (_e *SDK_Expecter) DisconnectClients(ctx any, channelID any, clientIDs any, connTypes any, workspaceID any, token any) *SDK_DisconnectClients_Call {
 	return &SDK_DisconnectClients_Call{Call: _e.mock.On("DisconnectClients", ctx, channelID, clientIDs, connTypes, workspaceID, token)}
 }
 
@@ -5343,7 +5343,7 @@ type SDK_DownloadCA_Call struct {
 
 // DownloadCA is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *SDK_Expecter) DownloadCA(ctx interface{}) *SDK_DownloadCA_Call {
+func (_e *SDK_Expecter) DownloadCA(ctx any) *SDK_DownloadCA_Call {
 	return &SDK_DownloadCA_Call{Call: _e.mock.On("DownloadCA", ctx)}
 }
 
@@ -5408,7 +5408,7 @@ type SDK_EnableChannel_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableChannel(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableChannel_Call {
+func (_e *SDK_Expecter) EnableChannel(ctx any, id any, workspaceID any, token any) *SDK_EnableChannel_Call {
 	return &SDK_EnableChannel_Call{Call: _e.mock.On("EnableChannel", ctx, id, workspaceID, token)}
 }
 
@@ -5488,7 +5488,7 @@ type SDK_EnableClient_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableClient(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableClient_Call {
+func (_e *SDK_Expecter) EnableClient(ctx any, id any, workspaceID any, token any) *SDK_EnableClient_Call {
 	return &SDK_EnableClient_Call{Call: _e.mock.On("EnableClient", ctx, id, workspaceID, token)}
 }
 
@@ -5568,7 +5568,7 @@ type SDK_EnableGroup_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableGroup(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableGroup_Call {
+func (_e *SDK_Expecter) EnableGroup(ctx any, id any, workspaceID any, token any) *SDK_EnableGroup_Call {
 	return &SDK_EnableGroup_Call{Call: _e.mock.On("EnableGroup", ctx, id, workspaceID, token)}
 }
 
@@ -5648,7 +5648,7 @@ type SDK_EnableReportConfig_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableReportConfig_Call {
+func (_e *SDK_Expecter) EnableReportConfig(ctx any, id any, workspaceID any, token any) *SDK_EnableReportConfig_Call {
 	return &SDK_EnableReportConfig_Call{Call: _e.mock.On("EnableReportConfig", ctx, id, workspaceID, token)}
 }
 
@@ -5728,7 +5728,7 @@ type SDK_EnableRule_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_EnableRule_Call {
+func (_e *SDK_Expecter) EnableRule(ctx any, id any, workspaceID any, token any) *SDK_EnableRule_Call {
 	return &SDK_EnableRule_Call{Call: _e.mock.On("EnableRule", ctx, id, workspaceID, token)}
 }
 
@@ -5807,7 +5807,7 @@ type SDK_EnableUser_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) EnableUser(ctx interface{}, id interface{}, token interface{}) *SDK_EnableUser_Call {
+func (_e *SDK_Expecter) EnableUser(ctx any, id any, token any) *SDK_EnableUser_Call {
 	return &SDK_EnableUser_Call{Call: _e.mock.On("EnableUser", ctx, id, token)}
 }
 
@@ -5872,7 +5872,7 @@ type SDK_EnableWorkspace_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EnableWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_EnableWorkspace_Call {
+func (_e *SDK_Expecter) EnableWorkspace(ctx any, workspaceID any, token any) *SDK_EnableWorkspace_Call {
 	return &SDK_EnableWorkspace_Call{Call: _e.mock.On("EnableWorkspace", ctx, workspaceID, token)}
 }
 
@@ -5947,7 +5947,7 @@ type SDK_EntityID_Call struct {
 //   - serialNumber string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) EntityID(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_EntityID_Call {
+func (_e *SDK_Expecter) EntityID(ctx any, serialNumber any, workspaceID any, token any) *SDK_EntityID_Call {
 	return &SDK_EntityID_Call{Call: _e.mock.On("EntityID", ctx, serialNumber, workspaceID, token)}
 }
 
@@ -6017,7 +6017,7 @@ type SDK_FreezeWorkspace_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) FreezeWorkspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_FreezeWorkspace_Call {
+func (_e *SDK_Expecter) FreezeWorkspace(ctx any, workspaceID any, token any) *SDK_FreezeWorkspace_Call {
 	return &SDK_FreezeWorkspace_Call{Call: _e.mock.On("FreezeWorkspace", ctx, workspaceID, token)}
 }
 
@@ -6091,7 +6091,7 @@ type SDK_GenerateCRL_Call struct {
 
 // GenerateCRL is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *SDK_Expecter) GenerateCRL(ctx interface{}) *SDK_GenerateCRL_Call {
+func (_e *SDK_Expecter) GenerateCRL(ctx any) *SDK_GenerateCRL_Call {
 	return &SDK_GenerateCRL_Call{Call: _e.mock.On("GenerateCRL", ctx)}
 }
 
@@ -6165,7 +6165,7 @@ type SDK_GenerateReport_Call struct {
 //   - action sdk.ReportAction
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GenerateReport(ctx interface{}, config interface{}, action interface{}, workspaceID interface{}, token interface{}) *SDK_GenerateReport_Call {
+func (_e *SDK_Expecter) GenerateReport(ctx any, config any, action any, workspaceID any, token any) *SDK_GenerateReport_Call {
 	return &SDK_GenerateReport_Call{Call: _e.mock.On("GenerateReport", ctx, config, action, workspaceID, token)}
 }
 
@@ -6250,7 +6250,7 @@ type SDK_Group_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Group(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_Group_Call {
+func (_e *SDK_Expecter) Group(ctx any, id any, workspaceID any, token any) *SDK_Group_Call {
 	return &SDK_Group_Call{Call: _e.mock.On("Group", ctx, id, workspaceID, token)}
 }
 
@@ -6331,7 +6331,7 @@ type SDK_GroupRole_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GroupRole(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_GroupRole_Call {
+func (_e *SDK_Expecter) GroupRole(ctx any, id any, roleID any, workspaceID any, token any) *SDK_GroupRole_Call {
 	return &SDK_GroupRole_Call{Call: _e.mock.On("GroupRole", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -6419,7 +6419,7 @@ type SDK_GroupRoleActions_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) GroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_GroupRoleActions_Call {
+func (_e *SDK_Expecter) GroupRoleActions(ctx any, id any, roleID any, workspaceID any, token any) *SDK_GroupRoleActions_Call {
 	return &SDK_GroupRoleActions_Call{Call: _e.mock.On("GroupRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -6506,7 +6506,7 @@ type SDK_GroupRoleMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) GroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_GroupRoleMembers_Call {
+func (_e *SDK_Expecter) GroupRoleMembers(ctx any, id any, roleID any, workspaceID any, pm any, token any) *SDK_GroupRoleMembers_Call {
 	return &SDK_GroupRoleMembers_Call{Call: _e.mock.On("GroupRoleMembers", ctx, id, roleID, workspaceID, pm, token)}
 }
 
@@ -6597,7 +6597,7 @@ type SDK_GroupRoles_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) GroupRoles(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_GroupRoles_Call {
+func (_e *SDK_Expecter) GroupRoles(ctx any, id any, workspaceID any, pm any, token any) *SDK_GroupRoles_Call {
 	return &SDK_GroupRoles_Call{Call: _e.mock.On("GroupRoles", ctx, id, workspaceID, pm, token)}
 }
 
@@ -6682,7 +6682,7 @@ type SDK_Groups_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Groups(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_Groups_Call {
+func (_e *SDK_Expecter) Groups(ctx any, pm any, workspaceID any, token any) *SDK_Groups_Call {
 	return &SDK_Groups_Call{Call: _e.mock.On("Groups", ctx, pm, workspaceID, token)}
 }
 
@@ -6759,7 +6759,7 @@ type SDK_Health_Call struct {
 
 // Health is a helper method to define mock.On call
 //   - service string
-func (_e *SDK_Expecter) Health(service interface{}) *SDK_Health_Call {
+func (_e *SDK_Expecter) Health(service any) *SDK_Health_Call {
 	return &SDK_Health_Call{Call: _e.mock.On("Health", service)}
 }
 
@@ -6825,7 +6825,7 @@ type SDK_Hierarchy_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Hierarchy(ctx interface{}, id interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_Hierarchy_Call {
+func (_e *SDK_Expecter) Hierarchy(ctx any, id any, workspaceID any, pm any, token any) *SDK_Hierarchy_Call {
 	return &SDK_Hierarchy_Call{Call: _e.mock.On("Hierarchy", ctx, id, workspaceID, pm, token)}
 }
 
@@ -6907,7 +6907,7 @@ type SDK_Invitations_Call struct {
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Invitations(ctx interface{}, pm interface{}, token interface{}) *SDK_Invitations_Call {
+func (_e *SDK_Expecter) Invitations(ctx any, pm any, token any) *SDK_Invitations_Call {
 	return &SDK_Invitations_Call{Call: _e.mock.On("Invitations", ctx, pm, token)}
 }
 
@@ -6985,7 +6985,7 @@ type SDK_IssueCert_Call struct {
 //   - opts sdk.Options
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) IssueCert(ctx interface{}, entityID interface{}, ttl interface{}, ipAddrs interface{}, opts interface{}, workspaceID interface{}, token interface{}) *SDK_IssueCert_Call {
+func (_e *SDK_Expecter) IssueCert(ctx any, entityID any, ttl any, ipAddrs any, opts any, workspaceID any, token any) *SDK_IssueCert_Call {
 	return &SDK_IssueCert_Call{Call: _e.mock.On("IssueCert", ctx, entityID, ttl, ipAddrs, opts, workspaceID, token)}
 }
 
@@ -7082,7 +7082,7 @@ type SDK_IssueFromCSR_Call struct {
 //   - csr string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) IssueFromCSR(ctx interface{}, entityID interface{}, ttl interface{}, csr interface{}, workspaceID interface{}, token interface{}) *SDK_IssueFromCSR_Call {
+func (_e *SDK_Expecter) IssueFromCSR(ctx any, entityID any, ttl any, csr any, workspaceID any, token any) *SDK_IssueFromCSR_Call {
 	return &SDK_IssueFromCSR_Call{Call: _e.mock.On("IssueFromCSR", ctx, entityID, ttl, csr, workspaceID, token)}
 }
 
@@ -7173,7 +7173,7 @@ type SDK_IssueFromCSRInternal_Call struct {
 //   - ttl string
 //   - csr string
 //   - token string
-func (_e *SDK_Expecter) IssueFromCSRInternal(ctx interface{}, entityID interface{}, ttl interface{}, csr interface{}, token interface{}) *SDK_IssueFromCSRInternal_Call {
+func (_e *SDK_Expecter) IssueFromCSRInternal(ctx any, entityID any, ttl any, csr any, token any) *SDK_IssueFromCSRInternal_Call {
 	return &SDK_IssueFromCSRInternal_Call{Call: _e.mock.On("IssueFromCSRInternal", ctx, entityID, ttl, csr, token)}
 }
 
@@ -7258,7 +7258,7 @@ type SDK_ListAlarms_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListAlarms(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListAlarms_Call {
+func (_e *SDK_Expecter) ListAlarms(ctx any, pm any, workspaceID any, token any) *SDK_ListAlarms_Call {
 	return &SDK_ListAlarms_Call{Call: _e.mock.On("ListAlarms", ctx, pm, workspaceID, token)}
 }
 
@@ -7338,7 +7338,7 @@ type SDK_ListCerts_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListCerts(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListCerts_Call {
+func (_e *SDK_Expecter) ListCerts(ctx any, pm any, workspaceID any, token any) *SDK_ListCerts_Call {
 	return &SDK_ListCerts_Call{Call: _e.mock.On("ListCerts", ctx, pm, workspaceID, token)}
 }
 
@@ -7419,7 +7419,7 @@ type SDK_ListChannelMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListChannelMembers(ctx interface{}, channelID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListChannelMembers_Call {
+func (_e *SDK_Expecter) ListChannelMembers(ctx any, channelID any, workspaceID any, pm any, token any) *SDK_ListChannelMembers_Call {
 	return &SDK_ListChannelMembers_Call{Call: _e.mock.On("ListChannelMembers", ctx, channelID, workspaceID, pm, token)}
 }
 
@@ -7505,7 +7505,7 @@ type SDK_ListClientMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListClientMembers(ctx interface{}, clientID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListClientMembers_Call {
+func (_e *SDK_Expecter) ListClientMembers(ctx any, clientID any, workspaceID any, pm any, token any) *SDK_ListClientMembers_Call {
 	return &SDK_ListClientMembers_Call{Call: _e.mock.On("ListClientMembers", ctx, clientID, workspaceID, pm, token)}
 }
 
@@ -7592,7 +7592,7 @@ type SDK_ListDeviceGateways_Call struct {
 //   - pm sdk.DeviceViewPageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListDeviceGateways(ctx interface{}, chanID interface{}, deviceID interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListDeviceGateways_Call {
+func (_e *SDK_Expecter) ListDeviceGateways(ctx any, chanID any, deviceID any, pm any, workspaceID any, token any) *SDK_ListDeviceGateways_Call {
 	return &SDK_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", ctx, chanID, deviceID, pm, workspaceID, token)}
 }
 
@@ -7684,7 +7684,7 @@ type SDK_ListGatewayDevices_Call struct {
 //   - pm sdk.DeviceViewPageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListGatewayDevices(ctx interface{}, chanID interface{}, publisherID interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListGatewayDevices_Call {
+func (_e *SDK_Expecter) ListGatewayDevices(ctx any, chanID any, publisherID any, pm any, workspaceID any, token any) *SDK_ListGatewayDevices_Call {
 	return &SDK_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", ctx, chanID, publisherID, pm, workspaceID, token)}
 }
 
@@ -7775,7 +7775,7 @@ type SDK_ListGroupMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListGroupMembers(ctx interface{}, groupID interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListGroupMembers_Call {
+func (_e *SDK_Expecter) ListGroupMembers(ctx any, groupID any, workspaceID any, pm any, token any) *SDK_ListGroupMembers_Call {
 	return &SDK_ListGroupMembers_Call{Call: _e.mock.On("ListGroupMembers", ctx, groupID, workspaceID, pm, token)}
 }
 
@@ -7860,7 +7860,7 @@ type SDK_ListReportsConfig_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListReportsConfig(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListReportsConfig_Call {
+func (_e *SDK_Expecter) ListReportsConfig(ctx any, pm any, workspaceID any, token any) *SDK_ListReportsConfig_Call {
 	return &SDK_ListReportsConfig_Call{Call: _e.mock.On("ListReportsConfig", ctx, pm, workspaceID, token)}
 }
 
@@ -7940,7 +7940,7 @@ type SDK_ListRules_Call struct {
 //   - pm sdk.PageMetadata
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ListRules(ctx interface{}, pm interface{}, workspaceID interface{}, token interface{}) *SDK_ListRules_Call {
+func (_e *SDK_Expecter) ListRules(ctx any, pm any, workspaceID any, token any) *SDK_ListRules_Call {
 	return &SDK_ListRules_Call{Call: _e.mock.On("ListRules", ctx, pm, workspaceID, token)}
 }
 
@@ -8019,7 +8019,7 @@ type SDK_ListSubscriptions_Call struct {
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListSubscriptions(ctx interface{}, pm interface{}, token interface{}) *SDK_ListSubscriptions_Call {
+func (_e *SDK_Expecter) ListSubscriptions(ctx any, pm any, token any) *SDK_ListSubscriptions_Call {
 	return &SDK_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, pm, token)}
 }
 
@@ -8094,7 +8094,7 @@ type SDK_ListWorkspaceMembers_Call struct {
 //   - workspaceID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) ListWorkspaceMembers(ctx interface{}, workspaceID interface{}, pm interface{}, token interface{}) *SDK_ListWorkspaceMembers_Call {
+func (_e *SDK_Expecter) ListWorkspaceMembers(ctx any, workspaceID any, pm any, token any) *SDK_ListWorkspaceMembers_Call {
 	return &SDK_ListWorkspaceMembers_Call{Call: _e.mock.On("ListWorkspaceMembers", ctx, workspaceID, pm, token)}
 }
 
@@ -8173,7 +8173,7 @@ type SDK_OCSP_Call struct {
 //   - ctx context.Context
 //   - serialNumber string
 //   - cert string
-func (_e *SDK_Expecter) OCSP(ctx interface{}, serialNumber interface{}, cert interface{}) *SDK_OCSP_Call {
+func (_e *SDK_Expecter) OCSP(ctx any, serialNumber any, cert any) *SDK_OCSP_Call {
 	return &SDK_OCSP_Call{Call: _e.mock.On("OCSP", ctx, serialNumber, cert)}
 }
 
@@ -8249,7 +8249,7 @@ type SDK_ReadMessages_Call struct {
 //   - chanID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ReadMessages(ctx interface{}, pm interface{}, chanID interface{}, workspaceID interface{}, token interface{}) *SDK_ReadMessages_Call {
+func (_e *SDK_Expecter) ReadMessages(ctx any, pm any, chanID any, workspaceID any, token any) *SDK_ReadMessages_Call {
 	return &SDK_ReadMessages_Call{Call: _e.mock.On("ReadMessages", ctx, pm, chanID, workspaceID, token)}
 }
 
@@ -8325,7 +8325,7 @@ type SDK_RefreshBootstrapBindings_Call struct {
 //   - configID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx interface{}, configID interface{}, workspaceID interface{}, token interface{}) *SDK_RefreshBootstrapBindings_Call {
+func (_e *SDK_Expecter) RefreshBootstrapBindings(ctx any, configID any, workspaceID any, token any) *SDK_RefreshBootstrapBindings_Call {
 	return &SDK_RefreshBootstrapBindings_Call{Call: _e.mock.On("RefreshBootstrapBindings", ctx, configID, workspaceID, token)}
 }
 
@@ -8403,7 +8403,7 @@ type SDK_RefreshToken_Call struct {
 // RefreshToken is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *SDK_Expecter) RefreshToken(ctx interface{}, token interface{}) *SDK_RefreshToken_Call {
+func (_e *SDK_Expecter) RefreshToken(ctx any, token any) *SDK_RefreshToken_Call {
 	return &SDK_RefreshToken_Call{Call: _e.mock.On("RefreshToken", ctx, token)}
 }
 
@@ -8461,7 +8461,7 @@ type SDK_RejectInvitation_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RejectInvitation(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_RejectInvitation_Call {
+func (_e *SDK_Expecter) RejectInvitation(ctx any, workspaceID any, token any) *SDK_RejectInvitation_Call {
 	return &SDK_RejectInvitation_Call{Call: _e.mock.On("RejectInvitation", ctx, workspaceID, token)}
 }
 
@@ -8527,7 +8527,7 @@ type SDK_RemoveAllChildren_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllChildren(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllChildren_Call {
+func (_e *SDK_Expecter) RemoveAllChildren(ctx any, id any, workspaceID any, token any) *SDK_RemoveAllChildren_Call {
 	return &SDK_RemoveAllChildren_Call{Call: _e.mock.On("RemoveAllChildren", ctx, id, workspaceID, token)}
 }
 
@@ -8599,7 +8599,7 @@ type SDK_RemoveAllClientRoleActions_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllClientRoleActions_Call {
+func (_e *SDK_Expecter) RemoveAllClientRoleActions(ctx any, id any, roleID any, workspaceID any, token any) *SDK_RemoveAllClientRoleActions_Call {
 	return &SDK_RemoveAllClientRoleActions_Call{Call: _e.mock.On("RemoveAllClientRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -8676,7 +8676,7 @@ type SDK_RemoveAllClientRoleMembers_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllClientRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveAllClientRoleMembers(ctx any, id any, roleID any, workspaceID any, token any) *SDK_RemoveAllClientRoleMembers_Call {
 	return &SDK_RemoveAllClientRoleMembers_Call{Call: _e.mock.On("RemoveAllClientRoleMembers", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -8753,7 +8753,7 @@ type SDK_RemoveAllGroupRoleActions_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllGroupRoleActions_Call {
+func (_e *SDK_Expecter) RemoveAllGroupRoleActions(ctx any, id any, roleID any, workspaceID any, token any) *SDK_RemoveAllGroupRoleActions_Call {
 	return &SDK_RemoveAllGroupRoleActions_Call{Call: _e.mock.On("RemoveAllGroupRoleActions", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -8830,7 +8830,7 @@ type SDK_RemoveAllGroupRoleMembers_Call struct {
 //   - roleID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveAllGroupRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveAllGroupRoleMembers(ctx any, id any, roleID any, workspaceID any, token any) *SDK_RemoveAllGroupRoleMembers_Call {
 	return &SDK_RemoveAllGroupRoleMembers_Call{Call: _e.mock.On("RemoveAllGroupRoleMembers", ctx, id, roleID, workspaceID, token)}
 }
 
@@ -8906,7 +8906,7 @@ type SDK_RemoveAllWorkspaceRoleActions_Call struct {
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleActions_Call {
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleActions(ctx any, id any, roleID any, token any) *SDK_RemoveAllWorkspaceRoleActions_Call {
 	return &SDK_RemoveAllWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleActions", ctx, id, roleID, token)}
 }
 
@@ -8977,7 +8977,7 @@ type SDK_RemoveAllWorkspaceRoleMembers_Call struct {
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) RemoveAllWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_RemoveAllWorkspaceRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveAllWorkspaceRoleMembers(ctx any, id any, roleID any, token any) *SDK_RemoveAllWorkspaceRoleMembers_Call {
 	return &SDK_RemoveAllWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveAllWorkspaceRoleMembers", ctx, id, roleID, token)}
 }
 
@@ -9048,7 +9048,7 @@ type SDK_RemoveBootstrap_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveBootstrap(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveBootstrap_Call {
+func (_e *SDK_Expecter) RemoveBootstrap(ctx any, id any, workspaceID any, token any) *SDK_RemoveBootstrap_Call {
 	return &SDK_RemoveBootstrap_Call{Call: _e.mock.On("RemoveBootstrap", ctx, id, workspaceID, token)}
 }
 
@@ -9119,7 +9119,7 @@ type SDK_RemoveBootstrapProfile_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveBootstrapProfile_Call {
+func (_e *SDK_Expecter) RemoveBootstrapProfile(ctx any, id any, workspaceID any, token any) *SDK_RemoveBootstrapProfile_Call {
 	return &SDK_RemoveBootstrapProfile_Call{Call: _e.mock.On("RemoveBootstrapProfile", ctx, id, workspaceID, token)}
 }
 
@@ -9191,7 +9191,7 @@ type SDK_RemoveChannelParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveChannelParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveChannelParent_Call {
+func (_e *SDK_Expecter) RemoveChannelParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_RemoveChannelParent_Call {
 	return &SDK_RemoveChannelParent_Call{Call: _e.mock.On("RemoveChannelParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -9268,7 +9268,7 @@ type SDK_RemoveChildren_Call struct {
 //   - workspaceID string
 //   - groupIDs []string
 //   - token string
-func (_e *SDK_Expecter) RemoveChildren(ctx interface{}, id interface{}, workspaceID interface{}, groupIDs interface{}, token interface{}) *SDK_RemoveChildren_Call {
+func (_e *SDK_Expecter) RemoveChildren(ctx any, id any, workspaceID any, groupIDs any, token any) *SDK_RemoveChildren_Call {
 	return &SDK_RemoveChildren_Call{Call: _e.mock.On("RemoveChildren", ctx, id, workspaceID, groupIDs, token)}
 }
 
@@ -9345,7 +9345,7 @@ type SDK_RemoveClientParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveClientParent_Call {
+func (_e *SDK_Expecter) RemoveClientParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_RemoveClientParent_Call {
 	return &SDK_RemoveClientParent_Call{Call: _e.mock.On("RemoveClientParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -9423,7 +9423,7 @@ type SDK_RemoveClientRoleActions_Call struct {
 //   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_RemoveClientRoleActions_Call {
+func (_e *SDK_Expecter) RemoveClientRoleActions(ctx any, id any, roleID any, workspaceID any, actions any, token any) *SDK_RemoveClientRoleActions_Call {
 	return &SDK_RemoveClientRoleActions_Call{Call: _e.mock.On("RemoveClientRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
@@ -9506,7 +9506,7 @@ type SDK_RemoveClientRoleMembers_Call struct {
 //   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveClientRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_RemoveClientRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveClientRoleMembers(ctx any, id any, roleID any, workspaceID any, members any, token any) *SDK_RemoveClientRoleMembers_Call {
 	return &SDK_RemoveClientRoleMembers_Call{Call: _e.mock.On("RemoveClientRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
@@ -9588,7 +9588,7 @@ type SDK_RemoveGroupParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_RemoveGroupParent_Call {
+func (_e *SDK_Expecter) RemoveGroupParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_RemoveGroupParent_Call {
 	return &SDK_RemoveGroupParent_Call{Call: _e.mock.On("RemoveGroupParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -9666,7 +9666,7 @@ type SDK_RemoveGroupRoleActions_Call struct {
 //   - workspaceID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupRoleActions(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, actions interface{}, token interface{}) *SDK_RemoveGroupRoleActions_Call {
+func (_e *SDK_Expecter) RemoveGroupRoleActions(ctx any, id any, roleID any, workspaceID any, actions any, token any) *SDK_RemoveGroupRoleActions_Call {
 	return &SDK_RemoveGroupRoleActions_Call{Call: _e.mock.On("RemoveGroupRoleActions", ctx, id, roleID, workspaceID, actions, token)}
 }
 
@@ -9749,7 +9749,7 @@ type SDK_RemoveGroupRoleMembers_Call struct {
 //   - workspaceID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveGroupRoleMembers(ctx interface{}, id interface{}, roleID interface{}, workspaceID interface{}, members interface{}, token interface{}) *SDK_RemoveGroupRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveGroupRoleMembers(ctx any, id any, roleID any, workspaceID any, members any, token any) *SDK_RemoveGroupRoleMembers_Call {
 	return &SDK_RemoveGroupRoleMembers_Call{Call: _e.mock.On("RemoveGroupRoleMembers", ctx, id, roleID, workspaceID, members, token)}
 }
 
@@ -9830,7 +9830,7 @@ type SDK_RemoveReportConfig_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveReportConfig_Call {
+func (_e *SDK_Expecter) RemoveReportConfig(ctx any, id any, workspaceID any, token any) *SDK_RemoveReportConfig_Call {
 	return &SDK_RemoveReportConfig_Call{Call: _e.mock.On("RemoveReportConfig", ctx, id, workspaceID, token)}
 }
 
@@ -9901,7 +9901,7 @@ type SDK_RemoveRule_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RemoveRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_RemoveRule_Call {
+func (_e *SDK_Expecter) RemoveRule(ctx any, id any, workspaceID any, token any) *SDK_RemoveRule_Call {
 	return &SDK_RemoveRule_Call{Call: _e.mock.On("RemoveRule", ctx, id, workspaceID, token)}
 }
 
@@ -9973,7 +9973,7 @@ type SDK_RemoveWorkspaceRoleActions_Call struct {
 //   - roleID string
 //   - actions []string
 //   - token string
-func (_e *SDK_Expecter) RemoveWorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, actions interface{}, token interface{}) *SDK_RemoveWorkspaceRoleActions_Call {
+func (_e *SDK_Expecter) RemoveWorkspaceRoleActions(ctx any, id any, roleID any, actions any, token any) *SDK_RemoveWorkspaceRoleActions_Call {
 	return &SDK_RemoveWorkspaceRoleActions_Call{Call: _e.mock.On("RemoveWorkspaceRoleActions", ctx, id, roleID, actions, token)}
 }
 
@@ -10050,7 +10050,7 @@ type SDK_RemoveWorkspaceRoleMembers_Call struct {
 //   - roleID string
 //   - members []string
 //   - token string
-func (_e *SDK_Expecter) RemoveWorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, members interface{}, token interface{}) *SDK_RemoveWorkspaceRoleMembers_Call {
+func (_e *SDK_Expecter) RemoveWorkspaceRoleMembers(ctx any, id any, roleID any, members any, token any) *SDK_RemoveWorkspaceRoleMembers_Call {
 	return &SDK_RemoveWorkspaceRoleMembers_Call{Call: _e.mock.On("RemoveWorkspaceRoleMembers", ctx, id, roleID, members, token)}
 }
 
@@ -10135,7 +10135,7 @@ type SDK_RenewCert_Call struct {
 //   - serialNumber string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RenewCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_RenewCert_Call {
+func (_e *SDK_Expecter) RenewCert(ctx any, serialNumber any, workspaceID any, token any) *SDK_RenewCert_Call {
 	return &SDK_RenewCert_Call{Call: _e.mock.On("RenewCert", ctx, serialNumber, workspaceID, token)}
 }
 
@@ -10206,7 +10206,7 @@ type SDK_ResetPassword_Call struct {
 //   - password string
 //   - confPass string
 //   - token string
-func (_e *SDK_Expecter) ResetPassword(ctx interface{}, password interface{}, confPass interface{}, token interface{}) *SDK_ResetPassword_Call {
+func (_e *SDK_Expecter) ResetPassword(ctx any, password any, confPass any, token any) *SDK_ResetPassword_Call {
 	return &SDK_ResetPassword_Call{Call: _e.mock.On("ResetPassword", ctx, password, confPass, token)}
 }
 
@@ -10275,7 +10275,7 @@ type SDK_ResetPasswordRequest_Call struct {
 // ResetPasswordRequest is a helper method to define mock.On call
 //   - ctx context.Context
 //   - email string
-func (_e *SDK_Expecter) ResetPasswordRequest(ctx interface{}, email interface{}) *SDK_ResetPasswordRequest_Call {
+func (_e *SDK_Expecter) ResetPasswordRequest(ctx any, email any) *SDK_ResetPasswordRequest_Call {
 	return &SDK_ResetPasswordRequest_Call{Call: _e.mock.On("ResetPasswordRequest", ctx, email)}
 }
 
@@ -10336,7 +10336,7 @@ type SDK_RevokeAll_Call struct {
 //   - entityID string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RevokeAll(ctx interface{}, entityID interface{}, workspaceID interface{}, token interface{}) *SDK_RevokeAll_Call {
+func (_e *SDK_Expecter) RevokeAll(ctx any, entityID any, workspaceID any, token any) *SDK_RevokeAll_Call {
 	return &SDK_RevokeAll_Call{Call: _e.mock.On("RevokeAll", ctx, entityID, workspaceID, token)}
 }
 
@@ -10407,7 +10407,7 @@ type SDK_RevokeCert_Call struct {
 //   - serialNumber string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) RevokeCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_RevokeCert_Call {
+func (_e *SDK_Expecter) RevokeCert(ctx any, serialNumber any, workspaceID any, token any) *SDK_RevokeCert_Call {
 	return &SDK_RevokeCert_Call{Call: _e.mock.On("RevokeCert", ctx, serialNumber, workspaceID, token)}
 }
 
@@ -10486,7 +10486,7 @@ type SDK_SearchUsers_Call struct {
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) SearchUsers(ctx interface{}, pm interface{}, token interface{}) *SDK_SearchUsers_Call {
+func (_e *SDK_Expecter) SearchUsers(ctx any, pm any, token any) *SDK_SearchUsers_Call {
 	return &SDK_SearchUsers_Call{Call: _e.mock.On("SearchUsers", ctx, pm, token)}
 }
 
@@ -10549,7 +10549,7 @@ type SDK_SendInvitation_Call struct {
 //   - ctx context.Context
 //   - invitation sdk.Invitation
 //   - token string
-func (_e *SDK_Expecter) SendInvitation(ctx interface{}, invitation interface{}, token interface{}) *SDK_SendInvitation_Call {
+func (_e *SDK_Expecter) SendInvitation(ctx any, invitation any, token any) *SDK_SendInvitation_Call {
 	return &SDK_SendInvitation_Call{Call: _e.mock.On("SendInvitation", ctx, invitation, token)}
 }
 
@@ -10616,7 +10616,7 @@ type SDK_SendMessage_Call struct {
 //   - topic string
 //   - msg string
 //   - secret string
-func (_e *SDK_Expecter) SendMessage(ctx interface{}, workspaceID interface{}, topic interface{}, msg interface{}, secret interface{}) *SDK_SendMessage_Call {
+func (_e *SDK_Expecter) SendMessage(ctx any, workspaceID any, topic any, msg any, secret any) *SDK_SendMessage_Call {
 	return &SDK_SendMessage_Call{Call: _e.mock.On("SendMessage", ctx, workspaceID, topic, msg, secret)}
 }
 
@@ -10690,7 +10690,7 @@ type SDK_SendVerification_Call struct {
 // SendVerification is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *SDK_Expecter) SendVerification(ctx interface{}, token interface{}) *SDK_SendVerification_Call {
+func (_e *SDK_Expecter) SendVerification(ctx any, token any) *SDK_SendVerification_Call {
 	return &SDK_SendVerification_Call{Call: _e.mock.On("SendVerification", ctx, token)}
 }
 
@@ -10752,7 +10752,7 @@ type SDK_SetChannelParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetChannelParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetChannelParent_Call {
+func (_e *SDK_Expecter) SetChannelParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_SetChannelParent_Call {
 	return &SDK_SetChannelParent_Call{Call: _e.mock.On("SetChannelParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -10829,7 +10829,7 @@ type SDK_SetClientParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetClientParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetClientParent_Call {
+func (_e *SDK_Expecter) SetClientParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_SetClientParent_Call {
 	return &SDK_SetClientParent_Call{Call: _e.mock.On("SetClientParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -10902,7 +10902,7 @@ type SDK_SetContentType_Call struct {
 
 // SetContentType is a helper method to define mock.On call
 //   - ct sdk.ContentType
-func (_e *SDK_Expecter) SetContentType(ct interface{}) *SDK_SetContentType_Call {
+func (_e *SDK_Expecter) SetContentType(ct any) *SDK_SetContentType_Call {
 	return &SDK_SetContentType_Call{Call: _e.mock.On("SetContentType", ct)}
 }
 
@@ -10959,7 +10959,7 @@ type SDK_SetGroupParent_Call struct {
 //   - workspaceID string
 //   - groupID string
 //   - token string
-func (_e *SDK_Expecter) SetGroupParent(ctx interface{}, id interface{}, workspaceID interface{}, groupID interface{}, token interface{}) *SDK_SetGroupParent_Call {
+func (_e *SDK_Expecter) SetGroupParent(ctx any, id any, workspaceID any, groupID any, token any) *SDK_SetGroupParent_Call {
 	return &SDK_SetGroupParent_Call{Call: _e.mock.On("SetGroupParent", ctx, id, workspaceID, groupID, token)}
 }
 
@@ -11044,7 +11044,7 @@ type SDK_UpdateAlarm_Call struct {
 //   - alarm sdk.Alarm
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateAlarm(ctx interface{}, alarm interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateAlarm_Call {
+func (_e *SDK_Expecter) UpdateAlarm(ctx any, alarm any, workspaceID any, token any) *SDK_UpdateAlarm_Call {
 	return &SDK_UpdateAlarm_Call{Call: _e.mock.On("UpdateAlarm", ctx, alarm, workspaceID, token)}
 }
 
@@ -11115,7 +11115,7 @@ type SDK_UpdateBootstrap_Call struct {
 //   - cfg sdk.BootstrapConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrap(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrap_Call {
+func (_e *SDK_Expecter) UpdateBootstrap(ctx any, cfg any, workspaceID any, token any) *SDK_UpdateBootstrap_Call {
 	return &SDK_UpdateBootstrap_Call{Call: _e.mock.On("UpdateBootstrap", ctx, cfg, workspaceID, token)}
 }
 
@@ -11198,7 +11198,7 @@ type SDK_UpdateBootstrapCerts_Call struct {
 //   - ca string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx interface{}, id interface{}, clientCert interface{}, clientKey interface{}, ca interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapCerts_Call {
+func (_e *SDK_Expecter) UpdateBootstrapCerts(ctx any, id any, clientCert any, clientKey any, ca any, workspaceID any, token any) *SDK_UpdateBootstrapCerts_Call {
 	return &SDK_UpdateBootstrapCerts_Call{Call: _e.mock.On("UpdateBootstrapCerts", ctx, id, clientCert, clientKey, ca, workspaceID, token)}
 }
 
@@ -11285,7 +11285,7 @@ type SDK_UpdateBootstrapConnection_Call struct {
 //   - channels []string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx interface{}, id interface{}, channels interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapConnection_Call {
+func (_e *SDK_Expecter) UpdateBootstrapConnection(ctx any, id any, channels any, workspaceID any, token any) *SDK_UpdateBootstrapConnection_Call {
 	return &SDK_UpdateBootstrapConnection_Call{Call: _e.mock.On("UpdateBootstrapConnection", ctx, id, channels, workspaceID, token)}
 }
 
@@ -11370,7 +11370,7 @@ type SDK_UpdateBootstrapProfile_Call struct {
 //   - profile sdk.BootstrapProfile
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx interface{}, profile interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateBootstrapProfile_Call {
+func (_e *SDK_Expecter) UpdateBootstrapProfile(ctx any, profile any, workspaceID any, token any) *SDK_UpdateBootstrapProfile_Call {
 	return &SDK_UpdateBootstrapProfile_Call{Call: _e.mock.On("UpdateBootstrapProfile", ctx, profile, workspaceID, token)}
 }
 
@@ -11450,7 +11450,7 @@ type SDK_UpdateChannel_Call struct {
 //   - channel sdk.Channel
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateChannel(ctx interface{}, channel interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateChannel_Call {
+func (_e *SDK_Expecter) UpdateChannel(ctx any, channel any, workspaceID any, token any) *SDK_UpdateChannel_Call {
 	return &SDK_UpdateChannel_Call{Call: _e.mock.On("UpdateChannel", ctx, channel, workspaceID, token)}
 }
 
@@ -11530,7 +11530,7 @@ type SDK_UpdateChannelTags_Call struct {
 //   - c sdk.Channel
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateChannelTags(ctx interface{}, c interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateChannelTags_Call {
+func (_e *SDK_Expecter) UpdateChannelTags(ctx any, c any, workspaceID any, token any) *SDK_UpdateChannelTags_Call {
 	return &SDK_UpdateChannelTags_Call{Call: _e.mock.On("UpdateChannelTags", ctx, c, workspaceID, token)}
 }
 
@@ -11610,7 +11610,7 @@ type SDK_UpdateClient_Call struct {
 //   - client sdk.Client
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClient(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClient_Call {
+func (_e *SDK_Expecter) UpdateClient(ctx any, client any, workspaceID any, token any) *SDK_UpdateClient_Call {
 	return &SDK_UpdateClient_Call{Call: _e.mock.On("UpdateClient", ctx, client, workspaceID, token)}
 }
 
@@ -11692,7 +11692,7 @@ type SDK_UpdateClientRole_Call struct {
 //   - newName string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientRole_Call {
+func (_e *SDK_Expecter) UpdateClientRole(ctx any, id any, roleID any, newName any, workspaceID any, token any) *SDK_UpdateClientRole_Call {
 	return &SDK_UpdateClientRole_Call{Call: _e.mock.On("UpdateClientRole", ctx, id, roleID, newName, workspaceID, token)}
 }
 
@@ -11783,7 +11783,7 @@ type SDK_UpdateClientSecret_Call struct {
 //   - secret string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientSecret(ctx interface{}, id interface{}, secret interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientSecret_Call {
+func (_e *SDK_Expecter) UpdateClientSecret(ctx any, id any, secret any, workspaceID any, token any) *SDK_UpdateClientSecret_Call {
 	return &SDK_UpdateClientSecret_Call{Call: _e.mock.On("UpdateClientSecret", ctx, id, secret, workspaceID, token)}
 }
 
@@ -11868,7 +11868,7 @@ type SDK_UpdateClientTags_Call struct {
 //   - client sdk.Client
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateClientTags(ctx interface{}, client interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateClientTags_Call {
+func (_e *SDK_Expecter) UpdateClientTags(ctx any, client any, workspaceID any, token any) *SDK_UpdateClientTags_Call {
 	return &SDK_UpdateClientTags_Call{Call: _e.mock.On("UpdateClientTags", ctx, client, workspaceID, token)}
 }
 
@@ -11948,7 +11948,7 @@ type SDK_UpdateGroup_Call struct {
 //   - group sdk.Group
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroup(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroup_Call {
+func (_e *SDK_Expecter) UpdateGroup(ctx any, group any, workspaceID any, token any) *SDK_UpdateGroup_Call {
 	return &SDK_UpdateGroup_Call{Call: _e.mock.On("UpdateGroup", ctx, group, workspaceID, token)}
 }
 
@@ -12030,7 +12030,7 @@ type SDK_UpdateGroupRole_Call struct {
 //   - newName string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroupRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroupRole_Call {
+func (_e *SDK_Expecter) UpdateGroupRole(ctx any, id any, roleID any, newName any, workspaceID any, token any) *SDK_UpdateGroupRole_Call {
 	return &SDK_UpdateGroupRole_Call{Call: _e.mock.On("UpdateGroupRole", ctx, id, roleID, newName, workspaceID, token)}
 }
 
@@ -12120,7 +12120,7 @@ type SDK_UpdateGroupTags_Call struct {
 //   - group sdk.Group
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateGroupTags(ctx interface{}, group interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateGroupTags_Call {
+func (_e *SDK_Expecter) UpdateGroupTags(ctx any, group any, workspaceID any, token any) *SDK_UpdateGroupTags_Call {
 	return &SDK_UpdateGroupTags_Call{Call: _e.mock.On("UpdateGroupTags", ctx, group, workspaceID, token)}
 }
 
@@ -12200,7 +12200,7 @@ type SDK_UpdatePassword_Call struct {
 //   - oldPass string
 //   - newPass string
 //   - token string
-func (_e *SDK_Expecter) UpdatePassword(ctx interface{}, oldPass interface{}, newPass interface{}, token interface{}) *SDK_UpdatePassword_Call {
+func (_e *SDK_Expecter) UpdatePassword(ctx any, oldPass any, newPass any, token any) *SDK_UpdatePassword_Call {
 	return &SDK_UpdatePassword_Call{Call: _e.mock.On("UpdatePassword", ctx, oldPass, newPass, token)}
 }
 
@@ -12279,7 +12279,7 @@ type SDK_UpdateProfilePicture_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateProfilePicture(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateProfilePicture_Call {
+func (_e *SDK_Expecter) UpdateProfilePicture(ctx any, user any, token any) *SDK_UpdateProfilePicture_Call {
 	return &SDK_UpdateProfilePicture_Call{Call: _e.mock.On("UpdateProfilePicture", ctx, user, token)}
 }
 
@@ -12354,7 +12354,7 @@ type SDK_UpdateReportConfig_Call struct {
 //   - cfg sdk.ReportConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportConfig(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportConfig_Call {
+func (_e *SDK_Expecter) UpdateReportConfig(ctx any, cfg any, workspaceID any, token any) *SDK_UpdateReportConfig_Call {
 	return &SDK_UpdateReportConfig_Call{Call: _e.mock.On("UpdateReportConfig", ctx, cfg, workspaceID, token)}
 }
 
@@ -12434,7 +12434,7 @@ type SDK_UpdateReportSchedule_Call struct {
 //   - cfg sdk.ReportConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportSchedule(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportSchedule_Call {
+func (_e *SDK_Expecter) UpdateReportSchedule(ctx any, cfg any, workspaceID any, token any) *SDK_UpdateReportSchedule_Call {
 	return &SDK_UpdateReportSchedule_Call{Call: _e.mock.On("UpdateReportSchedule", ctx, cfg, workspaceID, token)}
 }
 
@@ -12505,7 +12505,7 @@ type SDK_UpdateReportTemplate_Call struct {
 //   - cfg sdk.ReportConfig
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateReportTemplate(ctx interface{}, cfg interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateReportTemplate_Call {
+func (_e *SDK_Expecter) UpdateReportTemplate(ctx any, cfg any, workspaceID any, token any) *SDK_UpdateReportTemplate_Call {
 	return &SDK_UpdateReportTemplate_Call{Call: _e.mock.On("UpdateReportTemplate", ctx, cfg, workspaceID, token)}
 }
 
@@ -12585,7 +12585,7 @@ type SDK_UpdateRule_Call struct {
 //   - r sdk.Rule
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRule_Call {
+func (_e *SDK_Expecter) UpdateRule(ctx any, r any, workspaceID any, token any) *SDK_UpdateRule_Call {
 	return &SDK_UpdateRule_Call{Call: _e.mock.On("UpdateRule", ctx, r, workspaceID, token)}
 }
 
@@ -12665,7 +12665,7 @@ type SDK_UpdateRuleSchedule_Call struct {
 //   - r sdk.Rule
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRuleSchedule(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRuleSchedule_Call {
+func (_e *SDK_Expecter) UpdateRuleSchedule(ctx any, r any, workspaceID any, token any) *SDK_UpdateRuleSchedule_Call {
 	return &SDK_UpdateRuleSchedule_Call{Call: _e.mock.On("UpdateRuleSchedule", ctx, r, workspaceID, token)}
 }
 
@@ -12745,7 +12745,7 @@ type SDK_UpdateRuleTags_Call struct {
 //   - r sdk.Rule
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) UpdateRuleTags(ctx interface{}, r interface{}, workspaceID interface{}, token interface{}) *SDK_UpdateRuleTags_Call {
+func (_e *SDK_Expecter) UpdateRuleTags(ctx any, r any, workspaceID any, token any) *SDK_UpdateRuleTags_Call {
 	return &SDK_UpdateRuleTags_Call{Call: _e.mock.On("UpdateRuleTags", ctx, r, workspaceID, token)}
 }
 
@@ -12824,7 +12824,7 @@ type SDK_UpdateUser_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateUser(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUser_Call {
+func (_e *SDK_Expecter) UpdateUser(ctx any, user any, token any) *SDK_UpdateUser_Call {
 	return &SDK_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, user, token)}
 }
 
@@ -12898,7 +12898,7 @@ type SDK_UpdateUserEmail_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateUserEmail(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserEmail_Call {
+func (_e *SDK_Expecter) UpdateUserEmail(ctx any, user any, token any) *SDK_UpdateUserEmail_Call {
 	return &SDK_UpdateUserEmail_Call{Call: _e.mock.On("UpdateUserEmail", ctx, user, token)}
 }
 
@@ -12972,7 +12972,7 @@ type SDK_UpdateUserRole_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateUserRole(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserRole_Call {
+func (_e *SDK_Expecter) UpdateUserRole(ctx any, user any, token any) *SDK_UpdateUserRole_Call {
 	return &SDK_UpdateUserRole_Call{Call: _e.mock.On("UpdateUserRole", ctx, user, token)}
 }
 
@@ -13046,7 +13046,7 @@ type SDK_UpdateUserTags_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateUserTags(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUserTags_Call {
+func (_e *SDK_Expecter) UpdateUserTags(ctx any, user any, token any) *SDK_UpdateUserTags_Call {
 	return &SDK_UpdateUserTags_Call{Call: _e.mock.On("UpdateUserTags", ctx, user, token)}
 }
 
@@ -13120,7 +13120,7 @@ type SDK_UpdateUsername_Call struct {
 //   - ctx context.Context
 //   - user sdk.User
 //   - token string
-func (_e *SDK_Expecter) UpdateUsername(ctx interface{}, user interface{}, token interface{}) *SDK_UpdateUsername_Call {
+func (_e *SDK_Expecter) UpdateUsername(ctx any, user any, token any) *SDK_UpdateUsername_Call {
 	return &SDK_UpdateUsername_Call{Call: _e.mock.On("UpdateUsername", ctx, user, token)}
 }
 
@@ -13194,7 +13194,7 @@ type SDK_UpdateWorkspace_Call struct {
 //   - ctx context.Context
 //   - d sdk.Workspace
 //   - token string
-func (_e *SDK_Expecter) UpdateWorkspace(ctx interface{}, d interface{}, token interface{}) *SDK_UpdateWorkspace_Call {
+func (_e *SDK_Expecter) UpdateWorkspace(ctx any, d any, token any) *SDK_UpdateWorkspace_Call {
 	return &SDK_UpdateWorkspace_Call{Call: _e.mock.On("UpdateWorkspace", ctx, d, token)}
 }
 
@@ -13270,7 +13270,7 @@ type SDK_UpdateWorkspaceRole_Call struct {
 //   - roleID string
 //   - newName string
 //   - token string
-func (_e *SDK_Expecter) UpdateWorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, newName interface{}, token interface{}) *SDK_UpdateWorkspaceRole_Call {
+func (_e *SDK_Expecter) UpdateWorkspaceRole(ctx any, id any, roleID any, newName any, token any) *SDK_UpdateWorkspaceRole_Call {
 	return &SDK_UpdateWorkspaceRole_Call{Call: _e.mock.On("UpdateWorkspaceRole", ctx, id, roleID, newName, token)}
 }
 
@@ -13354,7 +13354,7 @@ type SDK_User_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) User(ctx interface{}, id interface{}, token interface{}) *SDK_User_Call {
+func (_e *SDK_Expecter) User(ctx any, id any, token any) *SDK_User_Call {
 	return &SDK_User_Call{Call: _e.mock.On("User", ctx, id, token)}
 }
 
@@ -13427,7 +13427,7 @@ type SDK_UserProfile_Call struct {
 // UserProfile is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *SDK_Expecter) UserProfile(ctx interface{}, token interface{}) *SDK_UserProfile_Call {
+func (_e *SDK_Expecter) UserProfile(ctx any, token any) *SDK_UserProfile_Call {
 	return &SDK_UserProfile_Call{Call: _e.mock.On("UserProfile", ctx, token)}
 }
 
@@ -13496,7 +13496,7 @@ type SDK_Users_Call struct {
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Users(ctx interface{}, pm interface{}, token interface{}) *SDK_Users_Call {
+func (_e *SDK_Expecter) Users(ctx any, pm any, token any) *SDK_Users_Call {
 	return &SDK_Users_Call{Call: _e.mock.On("Users", ctx, pm, token)}
 }
 
@@ -13560,7 +13560,7 @@ type SDK_VerifyEmail_Call struct {
 // VerifyEmail is a helper method to define mock.On call
 //   - ctx context.Context
 //   - verificationToken string
-func (_e *SDK_Expecter) VerifyEmail(ctx interface{}, verificationToken interface{}) *SDK_VerifyEmail_Call {
+func (_e *SDK_Expecter) VerifyEmail(ctx any, verificationToken any) *SDK_VerifyEmail_Call {
 	return &SDK_VerifyEmail_Call{Call: _e.mock.On("VerifyEmail", ctx, verificationToken)}
 }
 
@@ -13630,7 +13630,7 @@ type SDK_ViewAlarm_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewAlarm(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewAlarm_Call {
+func (_e *SDK_Expecter) ViewAlarm(ctx any, id any, workspaceID any, token any) *SDK_ViewAlarm_Call {
 	return &SDK_ViewAlarm_Call{Call: _e.mock.On("ViewAlarm", ctx, id, workspaceID, token)}
 }
 
@@ -13710,7 +13710,7 @@ type SDK_ViewBootstrap_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewBootstrap(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewBootstrap_Call {
+func (_e *SDK_Expecter) ViewBootstrap(ctx any, id any, workspaceID any, token any) *SDK_ViewBootstrap_Call {
 	return &SDK_ViewBootstrap_Call{Call: _e.mock.On("ViewBootstrap", ctx, id, workspaceID, token)}
 }
 
@@ -13790,7 +13790,7 @@ type SDK_ViewBootstrapProfile_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewBootstrapProfile(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewBootstrapProfile_Call {
+func (_e *SDK_Expecter) ViewBootstrapProfile(ctx any, id any, workspaceID any, token any) *SDK_ViewBootstrapProfile_Call {
 	return &SDK_ViewBootstrapProfile_Call{Call: _e.mock.On("ViewBootstrapProfile", ctx, id, workspaceID, token)}
 }
 
@@ -13867,7 +13867,7 @@ type SDK_ViewCA_Call struct {
 
 // ViewCA is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *SDK_Expecter) ViewCA(ctx interface{}) *SDK_ViewCA_Call {
+func (_e *SDK_Expecter) ViewCA(ctx any) *SDK_ViewCA_Call {
 	return &SDK_ViewCA_Call{Call: _e.mock.On("ViewCA", ctx)}
 }
 
@@ -13932,7 +13932,7 @@ type SDK_ViewCert_Call struct {
 //   - serialNumber string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewCert(ctx interface{}, serialNumber interface{}, workspaceID interface{}, token interface{}) *SDK_ViewCert_Call {
+func (_e *SDK_Expecter) ViewCert(ctx any, serialNumber any, workspaceID any, token any) *SDK_ViewCert_Call {
 	return &SDK_ViewCert_Call{Call: _e.mock.On("ViewCert", ctx, serialNumber, workspaceID, token)}
 }
 
@@ -14012,7 +14012,7 @@ type SDK_ViewReportConfig_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewReportConfig(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewReportConfig_Call {
+func (_e *SDK_Expecter) ViewReportConfig(ctx any, id any, workspaceID any, token any) *SDK_ViewReportConfig_Call {
 	return &SDK_ViewReportConfig_Call{Call: _e.mock.On("ViewReportConfig", ctx, id, workspaceID, token)}
 }
 
@@ -14094,7 +14094,7 @@ type SDK_ViewReportTemplate_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewReportTemplate(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewReportTemplate_Call {
+func (_e *SDK_Expecter) ViewReportTemplate(ctx any, id any, workspaceID any, token any) *SDK_ViewReportTemplate_Call {
 	return &SDK_ViewReportTemplate_Call{Call: _e.mock.On("ViewReportTemplate", ctx, id, workspaceID, token)}
 }
 
@@ -14174,7 +14174,7 @@ type SDK_ViewRule_Call struct {
 //   - id string
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) ViewRule(ctx interface{}, id interface{}, workspaceID interface{}, token interface{}) *SDK_ViewRule_Call {
+func (_e *SDK_Expecter) ViewRule(ctx any, id any, workspaceID any, token any) *SDK_ViewRule_Call {
 	return &SDK_ViewRule_Call{Call: _e.mock.On("ViewRule", ctx, id, workspaceID, token)}
 }
 
@@ -14253,7 +14253,7 @@ type SDK_ViewSubscription_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - token string
-func (_e *SDK_Expecter) ViewSubscription(ctx interface{}, id interface{}, token interface{}) *SDK_ViewSubscription_Call {
+func (_e *SDK_Expecter) ViewSubscription(ctx any, id any, token any) *SDK_ViewSubscription_Call {
 	return &SDK_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, id, token)}
 }
 
@@ -14320,7 +14320,7 @@ type SDK_Whitelist_Call struct {
 //   - status sdk.BootstrapStatus
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Whitelist(ctx interface{}, clientID interface{}, status interface{}, workspaceID interface{}, token interface{}) *SDK_Whitelist_Call {
+func (_e *SDK_Expecter) Whitelist(ctx any, clientID any, status any, workspaceID any, token any) *SDK_Whitelist_Call {
 	return &SDK_Whitelist_Call{Call: _e.mock.On("Whitelist", ctx, clientID, status, workspaceID, token)}
 }
 
@@ -14404,7 +14404,7 @@ type SDK_Workspace_Call struct {
 //   - ctx context.Context
 //   - workspaceID string
 //   - token string
-func (_e *SDK_Expecter) Workspace(ctx interface{}, workspaceID interface{}, token interface{}) *SDK_Workspace_Call {
+func (_e *SDK_Expecter) Workspace(ctx any, workspaceID any, token any) *SDK_Workspace_Call {
 	return &SDK_Workspace_Call{Call: _e.mock.On("Workspace", ctx, workspaceID, token)}
 }
 
@@ -14477,7 +14477,7 @@ type SDK_WorkspaceInvitations_Call struct {
 //   - pm sdk.PageMetadata
 //   - token string
 //   - workspaceID string
-func (_e *SDK_Expecter) WorkspaceInvitations(ctx interface{}, pm interface{}, token interface{}, workspaceID interface{}) *SDK_WorkspaceInvitations_Call {
+func (_e *SDK_Expecter) WorkspaceInvitations(ctx any, pm any, token any, workspaceID any) *SDK_WorkspaceInvitations_Call {
 	return &SDK_WorkspaceInvitations_Call{Call: _e.mock.On("WorkspaceInvitations", ctx, pm, token, workspaceID)}
 }
 
@@ -14557,7 +14557,7 @@ type SDK_WorkspaceRole_Call struct {
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) WorkspaceRole(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRole_Call {
+func (_e *SDK_Expecter) WorkspaceRole(ctx any, id any, roleID any, token any) *SDK_WorkspaceRole_Call {
 	return &SDK_WorkspaceRole_Call{Call: _e.mock.On("WorkspaceRole", ctx, id, roleID, token)}
 }
 
@@ -14639,7 +14639,7 @@ type SDK_WorkspaceRoleActions_Call struct {
 //   - id string
 //   - roleID string
 //   - token string
-func (_e *SDK_Expecter) WorkspaceRoleActions(ctx interface{}, id interface{}, roleID interface{}, token interface{}) *SDK_WorkspaceRoleActions_Call {
+func (_e *SDK_Expecter) WorkspaceRoleActions(ctx any, id any, roleID any, token any) *SDK_WorkspaceRoleActions_Call {
 	return &SDK_WorkspaceRoleActions_Call{Call: _e.mock.On("WorkspaceRoleActions", ctx, id, roleID, token)}
 }
 
@@ -14720,7 +14720,7 @@ type SDK_WorkspaceRoleMembers_Call struct {
 //   - roleID string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) WorkspaceRoleMembers(ctx interface{}, id interface{}, roleID interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoleMembers_Call {
+func (_e *SDK_Expecter) WorkspaceRoleMembers(ctx any, id any, roleID any, pm any, token any) *SDK_WorkspaceRoleMembers_Call {
 	return &SDK_WorkspaceRoleMembers_Call{Call: _e.mock.On("WorkspaceRoleMembers", ctx, id, roleID, pm, token)}
 }
 
@@ -14805,7 +14805,7 @@ type SDK_WorkspaceRoles_Call struct {
 //   - id string
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) WorkspaceRoles(ctx interface{}, id interface{}, pm interface{}, token interface{}) *SDK_WorkspaceRoles_Call {
+func (_e *SDK_Expecter) WorkspaceRoles(ctx any, id any, pm any, token any) *SDK_WorkspaceRoles_Call {
 	return &SDK_WorkspaceRoles_Call{Call: _e.mock.On("WorkspaceRoles", ctx, id, pm, token)}
 }
 
@@ -14884,7 +14884,7 @@ type SDK_Workspaces_Call struct {
 //   - ctx context.Context
 //   - pm sdk.PageMetadata
 //   - token string
-func (_e *SDK_Expecter) Workspaces(ctx interface{}, pm interface{}, token interface{}) *SDK_Workspaces_Call {
+func (_e *SDK_Expecter) Workspaces(ctx any, pm any, token any) *SDK_Workspaces_Call {
 	return &SDK_Workspaces_Call{Call: _e.mock.On("Workspaces", ctx, pm, token)}
 }
 

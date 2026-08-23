@@ -368,10 +368,10 @@ func deviceTypeQueryVariables(q DeviceTypeQuery) map[string]any {
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
-		vars["limit"] = int(q.Limit)
+		vars[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		vars["offset"] = int(q.Offset)
+		vars[varOffset] = int(q.Offset)
 	}
 	return vars
 }

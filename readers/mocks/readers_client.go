@@ -86,9 +86,9 @@ type ReadersServiceClient_ListDeviceGateways_Call struct {
 //   - ctx context.Context
 //   - in *v1.ListDeviceGatewaysReq
 //   - opts ...grpc.CallOption
-func (_e *ReadersServiceClient_Expecter) ListDeviceGateways(ctx interface{}, in interface{}, opts ...interface{}) *ReadersServiceClient_ListDeviceGateways_Call {
+func (_e *ReadersServiceClient_Expecter) ListDeviceGateways(ctx any, in any, opts ...any) *ReadersServiceClient_ListDeviceGateways_Call {
 	return &ReadersServiceClient_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *ReadersServiceClient_ListDeviceGateways_Call) Run(run func(ctx context.Context, in *v1.ListDeviceGatewaysReq, opts ...grpc.CallOption)) *ReadersServiceClient_ListDeviceGateways_Call {
@@ -169,9 +169,9 @@ type ReadersServiceClient_ListGatewayDevices_Call struct {
 //   - ctx context.Context
 //   - in *v1.ListGatewayDevicesReq
 //   - opts ...grpc.CallOption
-func (_e *ReadersServiceClient_Expecter) ListGatewayDevices(ctx interface{}, in interface{}, opts ...interface{}) *ReadersServiceClient_ListGatewayDevices_Call {
+func (_e *ReadersServiceClient_Expecter) ListGatewayDevices(ctx any, in any, opts ...any) *ReadersServiceClient_ListGatewayDevices_Call {
 	return &ReadersServiceClient_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *ReadersServiceClient_ListGatewayDevices_Call) Run(run func(ctx context.Context, in *v1.ListGatewayDevicesReq, opts ...grpc.CallOption)) *ReadersServiceClient_ListGatewayDevices_Call {
@@ -252,9 +252,9 @@ type ReadersServiceClient_ReadMessages_Call struct {
 //   - ctx context.Context
 //   - in *v1.ReadMessagesReq
 //   - opts ...grpc.CallOption
-func (_e *ReadersServiceClient_Expecter) ReadMessages(ctx interface{}, in interface{}, opts ...interface{}) *ReadersServiceClient_ReadMessages_Call {
+func (_e *ReadersServiceClient_Expecter) ReadMessages(ctx any, in any, opts ...any) *ReadersServiceClient_ReadMessages_Call {
 	return &ReadersServiceClient_ReadMessages_Call{Call: _e.mock.On("ReadMessages",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *ReadersServiceClient_ReadMessages_Call) Run(run func(ctx context.Context, in *v1.ReadMessagesReq, opts ...grpc.CallOption)) *ReadersServiceClient_ReadMessages_Call {

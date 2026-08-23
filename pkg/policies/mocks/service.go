@@ -67,7 +67,7 @@ type Service_AddPolicies_Call struct {
 // AddPolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - prs []policies.Policy
-func (_e *Service_Expecter) AddPolicies(ctx interface{}, prs interface{}) *Service_AddPolicies_Call {
+func (_e *Service_Expecter) AddPolicies(ctx any, prs any) *Service_AddPolicies_Call {
 	return &Service_AddPolicies_Call{Call: _e.mock.On("AddPolicies", ctx, prs)}
 }
 
@@ -124,7 +124,7 @@ type Service_AddPolicy_Call struct {
 // AddPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) AddPolicy(ctx interface{}, pr interface{}) *Service_AddPolicy_Call {
+func (_e *Service_Expecter) AddPolicy(ctx any, pr any) *Service_AddPolicy_Call {
 	return &Service_AddPolicy_Call{Call: _e.mock.On("AddPolicy", ctx, pr)}
 }
 
@@ -190,7 +190,7 @@ type Service_CountObjects_Call struct {
 // CountObjects is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) CountObjects(ctx interface{}, pr interface{}) *Service_CountObjects_Call {
+func (_e *Service_Expecter) CountObjects(ctx any, pr any) *Service_CountObjects_Call {
 	return &Service_CountObjects_Call{Call: _e.mock.On("CountObjects", ctx, pr)}
 }
 
@@ -256,7 +256,7 @@ type Service_CountSubjects_Call struct {
 // CountSubjects is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) CountSubjects(ctx interface{}, pr interface{}) *Service_CountSubjects_Call {
+func (_e *Service_Expecter) CountSubjects(ctx any, pr any) *Service_CountSubjects_Call {
 	return &Service_CountSubjects_Call{Call: _e.mock.On("CountSubjects", ctx, pr)}
 }
 
@@ -313,7 +313,7 @@ type Service_DeletePolicies_Call struct {
 // DeletePolicies is a helper method to define mock.On call
 //   - ctx context.Context
 //   - prs []policies.Policy
-func (_e *Service_Expecter) DeletePolicies(ctx interface{}, prs interface{}) *Service_DeletePolicies_Call {
+func (_e *Service_Expecter) DeletePolicies(ctx any, prs any) *Service_DeletePolicies_Call {
 	return &Service_DeletePolicies_Call{Call: _e.mock.On("DeletePolicies", ctx, prs)}
 }
 
@@ -370,7 +370,7 @@ type Service_DeletePolicyFilter_Call struct {
 // DeletePolicyFilter is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) DeletePolicyFilter(ctx interface{}, pr interface{}) *Service_DeletePolicyFilter_Call {
+func (_e *Service_Expecter) DeletePolicyFilter(ctx any, pr any) *Service_DeletePolicyFilter_Call {
 	return &Service_DeletePolicyFilter_Call{Call: _e.mock.On("DeletePolicyFilter", ctx, pr)}
 }
 
@@ -436,7 +436,7 @@ type Service_ListAllObjects_Call struct {
 // ListAllObjects is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) ListAllObjects(ctx interface{}, pr interface{}) *Service_ListAllObjects_Call {
+func (_e *Service_Expecter) ListAllObjects(ctx any, pr any) *Service_ListAllObjects_Call {
 	return &Service_ListAllObjects_Call{Call: _e.mock.On("ListAllObjects", ctx, pr)}
 }
 
@@ -502,7 +502,7 @@ type Service_ListAllSubjects_Call struct {
 // ListAllSubjects is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Service_Expecter) ListAllSubjects(ctx interface{}, pr interface{}) *Service_ListAllSubjects_Call {
+func (_e *Service_Expecter) ListAllSubjects(ctx any, pr any) *Service_ListAllSubjects_Call {
 	return &Service_ListAllSubjects_Call{Call: _e.mock.On("ListAllSubjects", ctx, pr)}
 }
 
@@ -570,7 +570,7 @@ type Service_ListObjects_Call struct {
 //   - pr policies.Policy
 //   - nextPageToken string
 //   - limit uint64
-func (_e *Service_Expecter) ListObjects(ctx interface{}, pr interface{}, nextPageToken interface{}, limit interface{}) *Service_ListObjects_Call {
+func (_e *Service_Expecter) ListObjects(ctx any, pr any, nextPageToken any, limit any) *Service_ListObjects_Call {
 	return &Service_ListObjects_Call{Call: _e.mock.On("ListObjects", ctx, pr, nextPageToken, limit)}
 }
 
@@ -649,7 +649,7 @@ type Service_ListPermissions_Call struct {
 //   - ctx context.Context
 //   - pr policies.Policy
 //   - permissionsFilter []string
-func (_e *Service_Expecter) ListPermissions(ctx interface{}, pr interface{}, permissionsFilter interface{}) *Service_ListPermissions_Call {
+func (_e *Service_Expecter) ListPermissions(ctx any, pr any, permissionsFilter any) *Service_ListPermissions_Call {
 	return &Service_ListPermissions_Call{Call: _e.mock.On("ListPermissions", ctx, pr, permissionsFilter)}
 }
 
@@ -722,7 +722,7 @@ type Service_ListSubjects_Call struct {
 //   - pr policies.Policy
 //   - nextPageToken string
 //   - limit uint64
-func (_e *Service_Expecter) ListSubjects(ctx interface{}, pr interface{}, nextPageToken interface{}, limit interface{}) *Service_ListSubjects_Call {
+func (_e *Service_Expecter) ListSubjects(ctx any, pr any, nextPageToken any, limit any) *Service_ListSubjects_Call {
 	return &Service_ListSubjects_Call{Call: _e.mock.On("ListSubjects", ctx, pr, nextPageToken, limit)}
 }
 

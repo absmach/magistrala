@@ -24,13 +24,13 @@ type authGrpcServer struct {
 func NewAuthServer(svc auth.Service) grpcAuthV1.AuthServiceServer {
 	return &authGrpcServer{
 		authorize: kitgrpc.NewServer(
-			(authorizeEndpoint(svc)),
+			authorizeEndpoint(svc),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
 
 		authenticate: kitgrpc.NewServer(
-			(authenticateEndpoint(svc)),
+			authenticateEndpoint(svc),
 			decodeAuthenticateRequest,
 			encodeAuthenticateResponse,
 		),

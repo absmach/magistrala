@@ -87,9 +87,9 @@ type CertsServiceClient_GetEntityID_Call struct {
 //   - ctx context.Context
 //   - in *v1.EntityReq
 //   - opts ...grpc.CallOption
-func (_e *CertsServiceClient_Expecter) GetEntityID(ctx interface{}, in interface{}, opts ...interface{}) *CertsServiceClient_GetEntityID_Call {
+func (_e *CertsServiceClient_Expecter) GetEntityID(ctx any, in any, opts ...any) *CertsServiceClient_GetEntityID_Call {
 	return &CertsServiceClient_GetEntityID_Call{Call: _e.mock.On("GetEntityID",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *CertsServiceClient_GetEntityID_Call) Run(run func(ctx context.Context, in *v1.EntityReq, opts ...grpc.CallOption)) *CertsServiceClient_GetEntityID_Call {
@@ -170,9 +170,9 @@ type CertsServiceClient_RevokeCerts_Call struct {
 //   - ctx context.Context
 //   - in *v1.RevokeReq
 //   - opts ...grpc.CallOption
-func (_e *CertsServiceClient_Expecter) RevokeCerts(ctx interface{}, in interface{}, opts ...interface{}) *CertsServiceClient_RevokeCerts_Call {
+func (_e *CertsServiceClient_Expecter) RevokeCerts(ctx any, in any, opts ...any) *CertsServiceClient_RevokeCerts_Call {
 	return &CertsServiceClient_RevokeCerts_Call{Call: _e.mock.On("RevokeCerts",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *CertsServiceClient_RevokeCerts_Call) Run(run func(ctx context.Context, in *v1.RevokeReq, opts ...grpc.CallOption)) *CertsServiceClient_RevokeCerts_Call {

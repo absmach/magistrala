@@ -86,9 +86,9 @@ type TokenServiceClient_Issue_Call struct {
 //   - ctx context.Context
 //   - in *v1.IssueReq
 //   - opts ...grpc.CallOption
-func (_e *TokenServiceClient_Expecter) Issue(ctx interface{}, in interface{}, opts ...interface{}) *TokenServiceClient_Issue_Call {
+func (_e *TokenServiceClient_Expecter) Issue(ctx any, in any, opts ...any) *TokenServiceClient_Issue_Call {
 	return &TokenServiceClient_Issue_Call{Call: _e.mock.On("Issue",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *TokenServiceClient_Issue_Call) Run(run func(ctx context.Context, in *v1.IssueReq, opts ...grpc.CallOption)) *TokenServiceClient_Issue_Call {
@@ -169,9 +169,9 @@ type TokenServiceClient_ListUserRefreshTokens_Call struct {
 //   - ctx context.Context
 //   - in *v1.ListUserRefreshTokensReq
 //   - opts ...grpc.CallOption
-func (_e *TokenServiceClient_Expecter) ListUserRefreshTokens(ctx interface{}, in interface{}, opts ...interface{}) *TokenServiceClient_ListUserRefreshTokens_Call {
+func (_e *TokenServiceClient_Expecter) ListUserRefreshTokens(ctx any, in any, opts ...any) *TokenServiceClient_ListUserRefreshTokens_Call {
 	return &TokenServiceClient_ListUserRefreshTokens_Call{Call: _e.mock.On("ListUserRefreshTokens",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *TokenServiceClient_ListUserRefreshTokens_Call) Run(run func(ctx context.Context, in *v1.ListUserRefreshTokensReq, opts ...grpc.CallOption)) *TokenServiceClient_ListUserRefreshTokens_Call {
@@ -252,9 +252,9 @@ type TokenServiceClient_Refresh_Call struct {
 //   - ctx context.Context
 //   - in *v1.RefreshReq
 //   - opts ...grpc.CallOption
-func (_e *TokenServiceClient_Expecter) Refresh(ctx interface{}, in interface{}, opts ...interface{}) *TokenServiceClient_Refresh_Call {
+func (_e *TokenServiceClient_Expecter) Refresh(ctx any, in any, opts ...any) *TokenServiceClient_Refresh_Call {
 	return &TokenServiceClient_Refresh_Call{Call: _e.mock.On("Refresh",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *TokenServiceClient_Refresh_Call) Run(run func(ctx context.Context, in *v1.RefreshReq, opts ...grpc.CallOption)) *TokenServiceClient_Refresh_Call {
@@ -335,9 +335,9 @@ type TokenServiceClient_Revoke_Call struct {
 //   - ctx context.Context
 //   - in *v1.RevokeReq
 //   - opts ...grpc.CallOption
-func (_e *TokenServiceClient_Expecter) Revoke(ctx interface{}, in interface{}, opts ...interface{}) *TokenServiceClient_Revoke_Call {
+func (_e *TokenServiceClient_Expecter) Revoke(ctx any, in any, opts ...any) *TokenServiceClient_Revoke_Call {
 	return &TokenServiceClient_Revoke_Call{Call: _e.mock.On("Revoke",
-		append([]interface{}{ctx, in}, opts...)...)}
+		append([]any{ctx, in}, opts...)...)}
 }
 
 func (_c *TokenServiceClient_Revoke_Call) Run(run func(ctx context.Context, in *v1.RevokeReq, opts ...grpc.CallOption)) *TokenServiceClient_Revoke_Call {

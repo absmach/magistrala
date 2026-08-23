@@ -64,7 +64,7 @@ type Hasher_Compare_Call struct {
 // Compare is a helper method to define mock.On call
 //   - s string
 //   - s1 string
-func (_e *Hasher_Expecter) Compare(s interface{}, s1 interface{}) *Hasher_Compare_Call {
+func (_e *Hasher_Expecter) Compare(s any, s1 any) *Hasher_Compare_Call {
 	return &Hasher_Compare_Call{Call: _e.mock.On("Compare", s, s1)}
 }
 
@@ -129,7 +129,7 @@ type Hasher_Hash_Call struct {
 
 // Hash is a helper method to define mock.On call
 //   - s string
-func (_e *Hasher_Expecter) Hash(s interface{}) *Hasher_Hash_Call {
+func (_e *Hasher_Expecter) Hash(s any) *Hasher_Hash_Call {
 	return &Hasher_Hash_Call{Call: _e.mock.On("Hash", s)}
 }
 

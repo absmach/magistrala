@@ -155,6 +155,9 @@ type gqlCmdConfig struct {
 	// anonymous commands run without a bearer token; every other command
 	// requires one.
 	anonymous bool
+	// requiresAtomClient commands fail fast, before the GraphQL operation
+	// runs, if atomClient is not configured.
+	requiresAtomClient bool
 	// vars builds the GraphQL variables from the positional arguments. It runs
 	// after flag parsing, so it may read flag-backed values.
 	vars func(args []string) (map[string]any, error)
@@ -173,6 +176,10 @@ func newGQLCmd(opts *rootOptions, cfg gqlCmdConfig) *cobra.Command {
 			// Arguments and flags already parsed, so any failure past this
 			// point is a runtime one and printing usage would only be noise.
 			cmd.SilenceUsage = true
+
+			if cfg.requiresAtomClient && !requireAtomClient(cmd) {
+				return nil
+			}
 
 			client := opts.client()
 			if !cfg.anonymous {
@@ -269,11 +276,12 @@ func newWorkspaceCreateCmd(opts *rootOptions) *cobra.Command {
 	var alias, attrs string
 
 	return newGQLCmd(opts, gqlCmdConfig{
-		use:   "create <name>",
-		short: "Create a workspace",
-		args:  cobra.ExactArgs(1),
-		query: createWorkspaceMutation,
-		field: respCreateTenant,
+		use:                "create <name>",
+		short:              "Create a workspace",
+		args:               cobra.ExactArgs(1),
+		query:              createWorkspaceMutation,
+		field:              respCreateTenant,
+		requiresAtomClient: true,
 		vars: func(args []string) (map[string]any, error) {
 			attributes, err := parseJSONFlag(attrs)
 			if err != nil {
@@ -289,9 +297,6 @@ func newWorkspaceCreateCmd(opts *rootOptions) *cobra.Command {
 			return map[string]any{varInput: input}, nil
 		},
 		after: func(cmd *cobra.Command, value json.RawMessage) error {
-			if atomClient == nil {
-				return errors.New("atom client is not configured: call cli.SetAtomClient before running this command")
-			}
 			var tenant struct {
 				ID string `json:"id"`
 			}

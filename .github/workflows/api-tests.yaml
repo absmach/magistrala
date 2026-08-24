@@ -10,12 +10,6 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "internal/atom/**"
-      - "channels/api/http/**"
-      - "clients/api/http/**"
-      - "workspaces/api/http/**"
-      - "groups/api/http/**"
-      - "users/api/**"
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
@@ -26,12 +20,6 @@ on:
     paths:
       - ".github/workflows/api-tests.yaml"
       - "api/**"
-      - "internal/atom/**"
-      - "channels/api/http/**"
-      - "clients/api/http/**"
-      - "workspaces/api/http/**"
-      - "groups/api/http/**"
-      - "users/api/**"
       - "bootstrap/api/**"
       - "certs/api/http/**"
       - "readers/api/http/**"
@@ -45,12 +33,6 @@ env:
   ATOM_LOGIN_URL: http://localhost/auth/login
   USER_IDENTITY: admin
   USER_SECRET: 12345678
-  WORKSPACE_NAME: demo-test
-  USERS_URL: http://localhost
-  WORKSPACE_URL: http://localhost
-  CLIENTS_URL: http://localhost
-  CHANNELS_URL: http://localhost
-  GROUPS_URL: http://localhost
   BOOTSTRAP_URL: http://localhost:9010
   CERTS_URL: http://localhost:9019
   READERS_URL: http://localhost:9011
@@ -75,34 +57,6 @@ jobs:
         id: changes
         with:
           filters: |
-            workflow:
-              - ".github/workflows/api-tests.yaml"
-
-            workspaces:
-              - "apidocs/openapi/workspaces.yaml"
-              - "internal/atom/**"
-              - "workspaces/api/http/**"
-
-            clients:
-              - "apidocs/openapi/devices.yaml"
-              - "internal/atom/**"
-              - "clients/api/http/**"
-
-            channels:
-              - "apidocs/openapi/channels.yaml"
-              - "internal/atom/**"
-              - "channels/api/http/**"
-
-            groups:
-              - "apidocs/openapi/groups.yaml"
-              - "internal/atom/**"
-              - "groups/api/http/**"
-
-            users:
-              - "apidocs/openapi/users.yaml"
-              - "internal/atom/**"
-              - "users/api/**"
-
             bootstrap:
               - "apidocs/openapi/bootstrap.yaml"
               - "bootstrap/api/**"
@@ -116,15 +70,19 @@ jobs:
               - "readers/api/http/**"
 
       - name: Build images
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: make all -j $(nproc) && make dockers_dev -j $(nproc)
 
       - name: Provision Atom service tokens
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: make provision_atom_tokens
 
       - name: Start containers
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: make run_latest_ci up args="-d" && make run_addons up args="-d"
 
       - name: Wait for services to be ready
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: |
           echo "Waiting for services to start..."
           sleep 15
@@ -147,67 +105,13 @@ jobs:
           exit 1
 
       - name: Set access token
+        if: steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true'
         run: |
           export USER_TOKEN=$(curl -fsS -X POST "$ATOM_LOGIN_URL" -H "Content-Type: application/json" -d "{\"identifier\":\"$USER_IDENTITY\",\"secret\":\"$USER_SECRET\",\"kind\":\"password\"}" | jq -er .token)
           echo "USER_TOKEN=$USER_TOKEN" >> $GITHUB_ENV
 
-      - name: Run Users API tests
-        if: (steps.changes.outputs.users == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('users/api/**') != ''
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/users.yaml
-          base-url: ${{ env.USERS_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --exclude-operation-id=requestPasswordReset --phases=examples'
-          coverage-artifact-name: schema-coverage-users
-          coverage-pr-comment: false
-
-      - name: Run Groups API tests
-        if: (steps.changes.outputs.groups == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('groups/api/http/**') != ''
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/groups.yaml
-          base-url: ${{ env.GROUPS_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-          coverage-artifact-name: schema-coverage-groups
-          coverage-pr-comment: false
-
-      - name: Run Clients API tests
-        if: (steps.changes.outputs.clients == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('clients/api/http/**') != ''
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/devices.yaml
-          base-url: ${{ env.CLIENTS_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-          coverage-artifact-name: schema-coverage-clients
-          coverage-pr-comment: false
-
-      - name: Run Channels API tests
-        if: (steps.changes.outputs.channels == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('channels/api/http/**') != ''
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/channels.yaml
-          base-url: ${{ env.CHANNELS_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-          coverage-artifact-name: schema-coverage-channels
-          coverage-pr-comment: false
-
-      - name: Run Workspaces API tests
-        if: (steps.changes.outputs.workspaces == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('workspaces/api/http/**') != ''
-        uses: schemathesis/action@v3.0.0
-        with:
-          schema: apidocs/openapi/workspaces.yaml
-          base-url: ${{ env.WORKSPACE_URL }}
-          checks: all
-          args: '--header "Authorization: Bearer ${{ env.USER_TOKEN }}" --suppress-health-check=filter_too_much --exclude-checks=positive_data_acceptance --phases=examples'
-          coverage-artifact-name: schema-coverage-workspaces
-          coverage-pr-comment: false
-
       - name: Run Bootstrap API tests
-        if: (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('bootstrap/api/**') != ''
+        if: steps.changes.outputs.bootstrap == 'true' && hashFiles('bootstrap/api/**') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/bootstrap.yaml
@@ -218,7 +122,7 @@ jobs:
           coverage-pr-comment: false
 
       - name: Run Certs API tests
-        if: (steps.changes.outputs.certs == 'true' || steps.changes.outputs.workflow == 'true') && hashFiles('docker/addons/certs/docker-compose.yaml') != ''
+        if: steps.changes.outputs.certs == 'true' && hashFiles('docker/addons/certs/docker-compose.yaml') != ''
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/certs.yaml
@@ -229,7 +133,7 @@ jobs:
           coverage-pr-comment: false
 
       - name: Run Readers API tests
-        if: steps.changes.outputs.readers == 'true' || steps.changes.outputs.workflow == 'true'
+        if: steps.changes.outputs.readers == 'true'
         uses: schemathesis/action@v3.0.0
         with:
           schema: apidocs/openapi/readers.yaml
@@ -240,5 +144,5 @@ jobs:
           coverage-pr-comment: false
 
       - name: Stop containers
-        if: always()
+        if: always() && (steps.changes.outputs.bootstrap == 'true' || steps.changes.outputs.certs == 'true' || steps.changes.outputs.readers == 'true')
         run: make run_latest_ci down args="-v" && make run_addons down args="-v"

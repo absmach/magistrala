@@ -6,7 +6,7 @@ MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
 SERVICES = atom-bootstrap bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
 CLI = cli
-TEST_API_SERVICES = certs clients users channels groups workspaces
+TEST_API_SERVICES = certs
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -290,11 +290,6 @@ define test_api_service
 	--phases=examples,stateful
 endef
 
-test_api_users: TEST_API_URL := http://localhost:9000
-test_api_clients: TEST_API_URL := http://localhost:9000
-test_api_workspaces: TEST_API_URL := http://localhost:9000
-test_api_channels: TEST_API_URL := http://localhost:9000
-test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019
 
 $(TEST_API):
@@ -472,9 +467,11 @@ run_stable: check_certs
 run_addons: check_certs
 	$(call require_atom_tokens_env)
 	$(foreach SVC,$(RUN_ADDON_ARGS),$(if $(filter $(SVC),$(ADDON_SERVICES) $(EXTERNAL_SERVICES)),,$(error Invalid Service $(SVC))))
-	@$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d atom atom-bootstrap jaeger
+	@if [ -z "$(filter down,$(DOCKER_COMPOSE_COMMAND))" ]; then \
+		$(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml $(DOCKER_ENV_FILES) -p $(DOCKER_PROJECT) up -d atom atom-bootstrap jaeger; \
+	fi
 	@for SVC in $(RUN_ADDON_ARGS); do \
-		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) $(DOCKER_ENV_FILES) $(DOCKER_COMPOSE_COMMAND) $(args) & \
+		MG_ADDONS_CERTS_PATH_PREFIX="../" $(DOCKER_PLATFORM) docker compose -f docker/docker-compose.yaml -f docker/addons/$$SVC/docker-compose.yaml -p $(DOCKER_PROJECT) $(DOCKER_ENV_FILES) $(DOCKER_COMPOSE_COMMAND) $(args) & \
 	done
 
 run_live: check_certs

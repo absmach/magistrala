@@ -27,6 +27,8 @@ const (
 	bootstrapProfilesPath    = "clients/bootstrap/profiles"
 	bootstrapEnrollmentsPath = "clients/bootstrap/enrollments"
 	secureEndpoint           = "secure"
+	enableEndpoint           = "enable"
+	disableEndpoint          = "disable"
 )
 
 var (

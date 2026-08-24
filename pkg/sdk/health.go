@@ -32,18 +32,8 @@ type HealthInfo struct {
 func (sdk mgSDK) Health(service string) (HealthInfo, errors.SDKError) {
 	var url string
 	switch service {
-	case "clients":
-		url = fmt.Sprintf("%s/health", sdk.clientsURL)
-	case "users":
-		url = fmt.Sprintf("%s/health", sdk.usersURL)
 	case "certs":
 		url = fmt.Sprintf("%s/health", sdk.certsURL)
-	case "groups":
-		url = fmt.Sprintf("%s/health", sdk.groupsURL)
-	case "channels":
-		url = fmt.Sprintf("%s/health", sdk.channelsURL)
-	case "workspaces":
-		url = fmt.Sprintf("%s/health", sdk.workspacesURL)
 	case "fluxmq":
 		url = fmt.Sprintf("%s/health", sdk.httpAdapterURL)
 	}

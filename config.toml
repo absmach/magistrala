@@ -11,11 +11,6 @@ user_token = ""
 
 [remotes]
   certs_url = "http://localhost:9019"
-  channels_url = "http://localhost:9005"
-  devices_url = "http://localhost:9006"
-  workspaces_url = "http://localhost:9003"
-  groups_url = "http://localhost:9004"
   host_url = "http://localhost"
   http_adapter_url = "http://localhost:8008"
   tls_verification = false
-  users_url = "http://localhost:9002"

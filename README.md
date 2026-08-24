@@ -15,10 +15,34 @@
 [![License](https://img.shields.io/badge/license-Apache%20v2.0-blue.svg)](LICENSE)
 [![Matrix](https://img.shields.io/matrix/supermq%3Amatrix.org?label=Chat&style=flat&logo=matrix&logoColor=white)](https://matrix.to/#/#supermq:matrix.org)
 
-[Guide](https://magistrala.absmach.eu/docs/) | [Contributing](CONTRIBUTING.md) | [Website](https://absmach.eu/) | [Chat](https://matrix.to/#/#supermq:matrix.org)
+💡 [Get Started](#-quick-start)&ensp;•&ensp;🌐 [Website](https://www.absmach.eu/products/magistrala/)&ensp;•&ensp;📚 [Documentation](https://www.absmach.eu/docs/magistrala)&ensp;•&ensp;🤝 [Contributing](CONTRIBUTING.md)&ensp;•&ensp;💬 [Chat](https://matrix.to/#/#supermq:matrix.org)
+
 </div>
 
-## Introduction 🌍
+## 🚀 Quick Start
+
+Get Magistrala running locally in a few commands:
+
+```bash
+git clone https://github.com/absmach/magistrala.git
+cd magistrala
+make provision_atom_tokens
+make run_latest
+```
+
+This brings up the full stack — messaging, identity, and all core services — via Docker Compose. See [Installation](#installation) for what each step does, how certificates and secrets are generated, and how to point the stack at a different deployment.
+
+## 💡 Getting Started
+
+Once the stack is up, head to the [documentation](https://www.absmach.eu/docs/magistrala) to learn how to:
+
+- Create a workspace and invite users
+- Provision devices and connect them over MQTT, HTTP, CoAP, or WebSocket
+- Create channels and start publishing and subscribing to messages
+- Define access policies and roles for fine-grained control
+- Build automations with the rules engine and alarms (Enterprise Edition)
+
+## 🌍 Introduction
 
 Magistrala is an open-source IoT platform built for engineers who need full control over their messaging, device management, and data pipelines.
 
@@ -35,37 +59,6 @@ IoT systems usually involve brokers, databases, rule engines, and custom service
 - Not just an MQTT broker
 - Not a black-box SaaS
 - Not tied to a single cloud or vendor
-
----
-
-## 🧩 IoT Platform Framework
-
-We call Magistrala a **framework**, not just a platform.
-
-It is extremely flexible and lets you build systems the way you want — from simple prototypes to complex, large-scale deployments — without forcing you into rigid patterns.
-
-At the same time, it avoids the typical complexity of many IoT platforms, where you need to learn an entirely new set of concepts before you can even get started.
-
-Magistrala is built around a small number of main concepts:
-- users
-- devices
-- channels
-- messages
-- policies
-
-Most engineers are already familiar with these ideas, so you can start building immediately.
-
-You can keep things simple:
-- connect devices
-- send messages
-- store data
-
-Or you can go deeper:
-- define complex access control policies
-- build event-driven pipelines
-- integrate custom processing and automation
-
-Magistrala scales with your needs — simple when you want it, powerful when you need it.
 
 ---
 
@@ -139,156 +132,16 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 - CLI and SDKs for fast integration
 - Straightforward APIs and concepts
 - Documentation focused on getting you running quickly
+
 ---
 
-## Atom Integration Model
-
-Magistrala uses **Atom** as the backend for identity, authorization, and the catalog.
-
-Atom is the source of truth for:
-- workspaces
-- users
-- devices
-- channels
-- groups
-- roles
-- access policies
-
-Magistrala services such as rules, alarms, and reports remain Magistrala services, but they use Atom for identity and authorization.
-
-Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `docker/.env`. For compatibility with the current Magistrala integration, the generated `MG_ATOM_TOKEN_*` service credentials are unscoped Atom access tokens. Scoped Atom access tokens should not be used for these service env vars until Magistrala stops using owner-wide Atom listing APIs such as `authorizedObjectIds` in service policy paths.
-
-### Core Entity Mapping
-
-| Magistrala concept | Atom concept                 | Meaning                                                            |
-| ------------------ | ---------------------------- | ------------------------------------------------------------------ |
-| Workspace             | Tenant                       | Isolation boundary for one organization, project, or environment   |
-| User               | Entity with kind `human`     | A person who logs in and uses the UI/API                           |
-| Device             | Entity with kind `device`    | A device or application that sends/receives data                   |
-| Channel            | Resource with kind `channel` | A messaging/data path that devices can publish or subscribe to     |
-| Group              | Group                        | A collection of users, devices, channels, or other grouped objects |
-
-In simple terms:
-
-```text
-MG Workspace  = Atom Tenant
-MG User    = Atom Human Entity
-MG Device  = Atom Device Entity
-MG Channel = Atom Channel Resource
-MG Group   = Atom Group
-```
-
-### Actions, Permission Blocks, Roles, and Assignments
-
-Atom access control has these basic parts:
-
-| Atom word        | Simple meaning                | Example                                                   |
-| ---------------- | ----------------------------- | --------------------------------------------------------- |
-| Action           | One permission verb           | `read`, `write`, `delete`, `role.manage`, `policy.manage` |
-| Permission Block | Where actions apply           | all channels in workspace `d1` can `read`, `publish`         |
-| Role             | A bundle of permission blocks | `tenant-admin` bundles workspace, role, and member access    |
-| Role Assignment  | Who gets a role               | give `user1` the `tenant-admin` role                      |
-
-Read an assignment like this:
-
-```text
-Give <who> this <role>.
-The role contains permission blocks that say where and what.
-```
-
-Example:
-
-```text
-Give user1 the tenant-admin role on workspace d1.
-```
-
-That means:
-
-```text
-user1 can use the tenant-admin permissions inside workspace d1.
-```
-
-### How MG Roles Work With Atom
-
-MG UI shows actions such as:
-- read
-- update
-- delete
-- manage roles
-- add/remove members
-- publish
-- subscribe
-
-These are mapped to Atom actions:
-
-| MG action                    | Atom action     |
-| ---------------------------- | --------------- |
-| view/read                    | `read`          |
-| create/update/edit/connect   | `write`         |
-| delete/remove                | `delete`        |
-| manage roles                 | `role.manage`   |
-| add/remove members or access | `policy.manage` |
-| channel publish              | `publish`       |
-| channel subscribe            | `subscribe`     |
-
-So when MG UI checks:
-
-```text
-Can user1 manage roles for client1?
-```
-
-Atom checks:
-
-```text
-Does user1 have role.manage on device1, or on the workspace that contains device1?
-```
-
-When MG UI checks:
-
-```text
-Can user1 add a member to channel1?
-```
-
-Atom checks:
-
-```text
-Does user1 have policy.manage on channel1, or on the workspace that contains channel1?
-```
-
-### Practical Rule
-
-If a user is workspace admin, they usually receive a tenant-scoped role in Atom.
-
-That tenant-scoped role can allow them to manage objects inside the workspace:
-- devices
-- channels
-- groups
-- rules
-- alarms
-- reports
-
-For narrower access, create object-scoped roles. For example:
-
-```text
-Give user2 a reader role only on channel1.
-```
-
-Then user2 can read only that channel, not the whole workspace.
-
 ## Installation
-
-```bash
-git clone https://github.com/absmach/magistrala.git
-cd magistrala
-make provision_atom_tokens
-make run_latest
-```
 
 A fresh clone carries no generated secrets. Two sets have to exist before the
 stack can start — certificates and keys the internal services authenticate
 with, and the Atom service tokens each service presents to Atom. `make
 run_latest` produces the first set itself but expects the second to be there
-already, which is why the token step comes first above.
+already, which is why the token step comes first in [Quick Start](#-quick-start).
 
 ### Certificates, broker secret and trace key
 
@@ -356,7 +209,7 @@ Each local-principal secret must stay equal to the corresponding value in
 changing one, re-run its target:
 
 | Variable                            | Target                                    |
-| ----------------------------------- | ----------------------------------------- |
+| ------------------------------------ | ----------------------------------------- |
 | `MG_RE_BROKER_SECRET`               | `fluxmq_service_secret`                   |
 | `MG_TIMESCALE_WRITER_BROKER_SECRET` | `timescale_writer_fluxmq_service_secret`  |
 | `MG_POSTGRES_WRITER_BROKER_SECRET`  | `postgres_writer_fluxmq_service_secret`   |
@@ -411,6 +264,173 @@ The CLI reads the same `ATOM_URL`, `ATOM_SERVICE_TOKEN`/`ATOM_ADMIN_TOKEN` and
 `docker/.env` needs no extra flags.
 
 See [cli/README.md](cli/README.md) for the Atom GraphQL-backed command reference.
+
+---
+
+## 🧩 IoT Platform Framework
+
+We call Magistrala a **framework**, not just a platform.
+
+It is extremely flexible and lets you build systems the way you want — from simple prototypes to complex, large-scale deployments — without forcing you into rigid patterns.
+
+At the same time, it avoids the typical complexity of many IoT platforms, where you need to learn an entirely new set of concepts before you can even get started.
+
+Magistrala is built around a small number of main concepts:
+- users
+- devices
+- channels
+- messages
+- policies
+
+Most engineers are already familiar with these ideas, so you can start building immediately.
+
+You can keep things simple:
+- connect devices
+- send messages
+- store data
+
+Or you can go deeper:
+- define complex access control policies
+- build event-driven pipelines
+- integrate custom processing and automation
+
+Magistrala scales with your needs — simple when you want it, powerful when you need it.
+
+---
+
+## Atom Integration Model
+
+Magistrala uses **Atom** as the backend for identity, authorization, and the catalog.
+
+Atom is the source of truth for:
+- workspaces
+- users
+- devices
+- channels
+- groups
+- roles
+- access policies
+
+Magistrala services such as rules, alarms, and reports remain Magistrala services, but they use Atom for identity and authorization.
+
+Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `docker/.env`. For compatibility with the current Magistrala integration, the generated `MG_ATOM_TOKEN_*` service credentials are unscoped Atom access tokens. Scoped Atom access tokens should not be used for these service env vars until Magistrala stops using owner-wide Atom listing APIs such as `authorizedObjectIds` in service policy paths.
+
+### Core Entity Mapping
+
+| Magistrala concept | Atom concept                 | Meaning                                                            |
+| ------------------- | ----------------------------- | -------------------------------------------------------------------- |
+| Workspace           | Tenant                       | Isolation boundary for one organization, project, or environment   |
+| User                | Entity with kind `human`     | A person who logs in and uses the UI/API                           |
+| Device              | Entity with kind `device`    | A device or application that sends/receives data                   |
+| Channel             | Resource with kind `channel` | A messaging/data path that devices can publish or subscribe to     |
+| Group               | Group                        | A collection of users, devices, channels, or other grouped objects |
+
+In simple terms:
+
+```text
+MG Workspace = Atom Tenant
+MG User      = Atom Human Entity
+MG Device    = Atom Device Entity
+MG Channel   = Atom Channel Resource
+MG Group     = Atom Group
+```
+
+### Actions, Permission Blocks, Roles, and Assignments
+
+Atom access control has these basic parts:
+
+| Atom word        | Simple meaning                | Example                                                   |
+| ----------------- | ------------------------------ | ------------------------------------------------------------- |
+| Action            | One permission verb           | `read`, `write`, `delete`, `role.manage`, `policy.manage` |
+| Permission Block  | Where actions apply           | all channels in workspace `d1` can `read`, `publish`         |
+| Role              | A bundle of permission blocks | `tenant-admin` bundles workspace, role, and member access    |
+| Role Assignment   | Who gets a role               | give `user1` the `tenant-admin` role                      |
+
+Read an assignment like this:
+
+```text
+Give <who> this <role>.
+The role contains permission blocks that say where and what.
+```
+
+Example:
+
+```text
+Give user1 the tenant-admin role on workspace d1.
+```
+
+That means:
+
+```text
+user1 can use the tenant-admin permissions inside workspace d1.
+```
+
+### How MG Roles Work With Atom
+
+MG UI shows actions such as:
+- read
+- update
+- delete
+- manage roles
+- add/remove members
+- publish
+- subscribe
+
+These are mapped to Atom actions:
+
+| MG action                    | Atom action     |
+| ----------------------------- | ----------------- |
+| view/read                    | `read`          |
+| create/update/edit/connect   | `write`         |
+| delete/remove                | `delete`        |
+| manage roles                 | `role.manage`   |
+| add/remove members or access | `policy.manage` |
+| channel publish              | `publish`       |
+| channel subscribe            | `subscribe`     |
+
+So when MG UI checks:
+
+```text
+Can user1 manage roles for client1?
+```
+
+Atom checks:
+
+```text
+Does user1 have role.manage on device1, or on the workspace that contains device1?
+```
+
+When MG UI checks:
+
+```text
+Can user1 add a member to channel1?
+```
+
+Atom checks:
+
+```text
+Does user1 have policy.manage on channel1, or on the workspace that contains channel1?
+```
+
+### Practical Rule
+
+If a user is workspace admin, they usually receive a tenant-scoped role in Atom.
+
+That tenant-scoped role can allow them to manage objects inside the workspace:
+- devices
+- channels
+- groups
+- rules
+- alarms
+- reports
+
+For narrower access, create object-scoped roles. For example:
+
+```text
+Give user2 a reader role only on channel1.
+```
+
+Then user2 can read only that channel, not the whole workspace.
 
 ---
 

@@ -37,11 +37,11 @@ const (
 	TagsKey     = "tags"
 	StatusKey   = "status"
 
-	ClientKey   = "client"
-	ChannelKey  = "channel"
-	ConnTypeKey = "connection_type"
-	GroupKey    = "group"
-	DomainKey   = "domain"
+	ClientKey    = "client"
+	ChannelKey   = "channel"
+	ConnTypeKey  = "connection_type"
+	GroupKey     = "group"
+	WorkspaceKey = "workspace"
 
 	StartLevelKey = "start_level"
 	EndLevelKey   = "end_level"

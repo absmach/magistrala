@@ -45,7 +45,7 @@ func PgError(err error) (*pgconn.PgError, bool) {
 // that has no device_id column yet. It has to catch the column both when the
 // caller filtered on it explicitly (rpm.DeviceIDs) and when an authorization
 // scope referenced it implicitly (rpm.DeviceScope, set whenever the caller
-// is a non-admin domain user regardless of whether they also passed a
+// is a non-admin workspace user regardless of whether they also passed a
 // filter) — otherwise a scoped, filter-less request against such a table
 // surfaces as a 500 instead of an empty page. The message is matched
 // quoted, the way Postgres reports an undefined column, so an unrelated

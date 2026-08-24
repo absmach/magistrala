@@ -21,7 +21,7 @@ const (
 	defURL             string = "http://localhost"
 	defUsersURL        string = defURL + ":9002"
 	defDevicesURL      string = defURL + ":9006"
-	defDomainsURL      string = defURL + ":9003"
+	defWorkspacesURL   string = defURL + ":9003"
 	defChannelsURL     string = defURL + ":9005"
 	defGroupsURL       string = defURL + ":9004"
 	defHTTPURL         string = defURL + ":8008"
@@ -35,7 +35,7 @@ const (
 type remotes struct {
 	DevicesURL      string `toml:"devices_url"`
 	UsersURL        string `toml:"users_url"`
-	DomainsURL      string `toml:"domains_url"`
+	WorkspacesURL   string `toml:"workspaces_url"`
 	ChannelsURL     string `toml:"channels_url"`
 	GroupsURL       string `toml:"groups_url"`
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
@@ -104,7 +104,7 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 			Remotes: remotes{
 				DevicesURL:      defDevicesURL,
 				UsersURL:        defUsersURL,
-				DomainsURL:      defDomainsURL,
+				WorkspacesURL:   defWorkspacesURL,
 				ChannelsURL:     defChannelsURL,
 				GroupsURL:       defGroupsURL,
 				HTTPAdapterURL:  defHTTPURL,
@@ -171,8 +171,8 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 		sdkConf.UsersURL = config.Remotes.UsersURL
 	}
 
-	if sdkConf.DomainsURL == "" && config.Remotes.DomainsURL != "" {
-		sdkConf.DomainsURL = config.Remotes.DomainsURL
+	if sdkConf.WorkspacesURL == "" && config.Remotes.WorkspacesURL != "" {
+		sdkConf.WorkspacesURL = config.Remotes.WorkspacesURL
 	}
 
 	if sdkConf.ChannelsURL == "" && config.Remotes.ChannelsURL != "" {

@@ -109,7 +109,7 @@ func main() {
 	atomAuthz := atom.NewClient(atomCfg)
 	authn := atomauthn.NewAuthentication()
 	clientsClient := atom.NewDevicesCompat(authn, atomAuthz)
-	domainsClient := atom.NewDomainsCompat(atomAuthz)
+	workspacesClient := atom.NewWorkspacesCompat(atomAuthz)
 	channelsClient := atom.NewChannelsCompat(atomAuthz)
 	logger.Info("FluxMQ authentication, authorization, and route resolution configured to use Atom")
 
@@ -120,7 +120,7 @@ func main() {
 		exitCode = 1
 		return
 	}
-	parser, err := messaging.NewTopicParser(cacheConfig, channelsClient, domainsClient)
+	parser, err := messaging.NewTopicParser(cacheConfig, channelsClient, workspacesClient)
 	if err != nil {
 		logger.Error(fmt.Sprintf("failed to create topic parser: %s", err))
 		exitCode = 1

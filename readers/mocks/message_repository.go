@@ -75,7 +75,7 @@ type MessageRepository_ListDeviceGateways_Call struct {
 //   - chanID string
 //   - deviceID string
 //   - pm readers.PageMetadata
-func (_e *MessageRepository_Expecter) ListDeviceGateways(chanID interface{}, deviceID interface{}, pm interface{}) *MessageRepository_ListDeviceGateways_Call {
+func (_e *MessageRepository_Expecter) ListDeviceGateways(chanID any, deviceID any, pm any) *MessageRepository_ListDeviceGateways_Call {
 	return &MessageRepository_ListDeviceGateways_Call{Call: _e.mock.On("ListDeviceGateways", chanID, deviceID, pm)}
 }
 
@@ -147,7 +147,7 @@ type MessageRepository_ListGatewayDevices_Call struct {
 //   - chanID string
 //   - publisherID string
 //   - pm readers.PageMetadata
-func (_e *MessageRepository_Expecter) ListGatewayDevices(chanID interface{}, publisherID interface{}, pm interface{}) *MessageRepository_ListGatewayDevices_Call {
+func (_e *MessageRepository_Expecter) ListGatewayDevices(chanID any, publisherID any, pm any) *MessageRepository_ListGatewayDevices_Call {
 	return &MessageRepository_ListGatewayDevices_Call{Call: _e.mock.On("ListGatewayDevices", chanID, publisherID, pm)}
 }
 
@@ -218,7 +218,7 @@ type MessageRepository_ReadAll_Call struct {
 // ReadAll is a helper method to define mock.On call
 //   - chanID string
 //   - pm readers.PageMetadata
-func (_e *MessageRepository_Expecter) ReadAll(chanID interface{}, pm interface{}) *MessageRepository_ReadAll_Call {
+func (_e *MessageRepository_Expecter) ReadAll(chanID any, pm any) *MessageRepository_ReadAll_Call {
 	return &MessageRepository_ReadAll_Call{Call: _e.mock.On("ReadAll", chanID, pm)}
 }
 

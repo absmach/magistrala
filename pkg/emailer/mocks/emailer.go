@@ -70,7 +70,7 @@ type Emailer_SendEmailNotification_Call struct {
 //   - content string
 //   - footer string
 //   - attachments map[string][]byte
-func (_e *Emailer_Expecter) SendEmailNotification(to interface{}, from interface{}, subject interface{}, header interface{}, user interface{}, content interface{}, footer interface{}, attachments interface{}) *Emailer_SendEmailNotification_Call {
+func (_e *Emailer_Expecter) SendEmailNotification(to any, from any, subject any, header any, user any, content any, footer any, attachments any) *Emailer_SendEmailNotification_Call {
 	return &Emailer_SendEmailNotification_Call{Call: _e.mock.On("SendEmailNotification", to, from, subject, header, user, content, footer, attachments)}
 }
 

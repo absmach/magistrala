@@ -27,8 +27,8 @@ const (
 )
 
 const (
-	usageDeviceCreate  = "cli devices create <JSON_device> <domain_id>"
-	usageDeviceGet     = "cli devices <device_id|all> get <domain_id>"
+	usageDeviceCreate  = "cli devices create <JSON_device> <workspace_id>"
+	usageDeviceGet     = "cli devices <device_id|all> get <workspace_id>"
 	usageDeviceUpdate  = "cli devices <device_id> update <JSON_string>"
 	usageDeviceDelete  = "cli devices <device_id> delete"
 	usageDeviceEnable  = "cli devices <device_id> enable"
@@ -40,7 +40,7 @@ func NewDevicesCmd() *cobra.Command {
 		Use:   "devices <device_id|all|create> [operation] [args...]",
 		Short: "Devices management",
 		Long: `Format:
-  devices create <JSON_device> <domain_id>
+  devices create <JSON_device> <workspace_id>
   devices <device_id|all> <operation> [args...]
 
 Operations (require device_id/all): get, update, delete, enable, disable
@@ -49,8 +49,8 @@ A gateway is a device with attributes.is_gateway set — create or update one
 with this command, then use "gateways" to manage its reachability relation.
 
 Examples:
-  devices create <JSON_device> <domain_id>
-  devices all get <domain_id>
+  devices create <JSON_device> <workspace_id>
+  devices all get <workspace_id>
   devices <device_id> get
   devices <device_id> update <JSON_string>
   devices <device_id> delete
@@ -134,9 +134,9 @@ func handleDeviceCreate(cmd *cobra.Command, args []string) {
 	logJSONCmd(*cmd, created)
 }
 
-// handleDeviceGet's "all" branch lists devices in a domain, mirroring
+// handleDeviceGet's "all" branch lists devices in a workspace, mirroring
 // channels.go's get-with-all-sentinel shape; a single device ID needs no
-// domain argument since GetEntity takes only the entity ID.
+// workspace argument since GetEntity takes only the entity ID.
 func handleDeviceGet(cmd *cobra.Command, deviceID string, args []string) {
 	if deviceID == all {
 		if len(args) != 1 {

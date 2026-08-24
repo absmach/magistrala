@@ -67,7 +67,7 @@ type Evaluator_CheckPolicy_Call struct {
 // CheckPolicy is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pr policies.Policy
-func (_e *Evaluator_Expecter) CheckPolicy(ctx interface{}, pr interface{}) *Evaluator_CheckPolicy_Call {
+func (_e *Evaluator_Expecter) CheckPolicy(ctx any, pr any) *Evaluator_CheckPolicy_Call {
 	return &Evaluator_CheckPolicy_Call{Call: _e.mock.On("CheckPolicy", ctx, pr)}
 }
 

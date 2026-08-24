@@ -27,12 +27,12 @@ type grpcServer struct {
 func NewServer(svc certs.Service) grpcCertsV1.CertsServiceServer {
 	return &grpcServer{
 		getEntity: kitgrpc.NewServer(
-			(getEntityEndpoint(svc)),
+			getEntityEndpoint(svc),
 			decodeGetEntityReq,
 			encodeGetEntityRes,
 		),
 		revokeCerts: kitgrpc.NewServer(
-			(revokeCertsEndpoint(svc)),
+			revokeCertsEndpoint(svc),
 			decodeRevokeCertsReq,
 			encodeRevokeCertsRes,
 		),

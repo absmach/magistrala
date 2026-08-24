@@ -25,10 +25,10 @@ import (
 )
 
 const (
-	e2eDomain  = "domain-1"
-	e2eChanID  = "chan-1"
-	e2eUserID  = "user-1"
-	e2eSubject = e2eDomain + "_" + e2eUserID
+	e2eWorkspace = "workspace-1"
+	e2eChanID    = "chan-1"
+	e2eUserID    = "user-1"
+	e2eSubject   = e2eWorkspace + "_" + e2eUserID
 )
 
 // fakeClientsClient satisfies grpcDevicesV1.DevicesServiceClient without implementing every
@@ -118,9 +118,9 @@ func TestDecodeListWithoutDeviceIDFilterLeavesItUnset(t *testing.T) {
 
 func tokenReq(publisher string, publishers []string) listMessagesReq {
 	return listMessagesReq{
-		chanID: e2eChanID,
-		token:  "token",
-		domain: e2eDomain,
+		chanID:    e2eChanID,
+		token:     "token",
+		workspace: e2eWorkspace,
 		pageMeta: readers.PageMetadata{
 			Limit:      10,
 			Publisher:  publisher,
@@ -137,32 +137,32 @@ func deviceReq(deviceIDs []string) listMessagesReq {
 
 func expectUser(authn *authnmocks.Authentication) {
 	authn.EXPECT().Authenticate(mock.Anything, "token").Return(smqauthn.Session{
-		UserID:   e2eUserID,
-		DomainID: e2eDomain,
-		Role:     smqauthn.UserRole,
-		Verified: true,
+		UserID:      e2eUserID,
+		WorkspaceID: e2eWorkspace,
+		Role:        smqauthn.UserRole,
+		Verified:    true,
 	}, nil)
 }
 
 func expectSuperAdmin(authn *authnmocks.Authentication) {
 	authn.EXPECT().Authenticate(mock.Anything, "token").Return(smqauthn.Session{
-		UserID:   e2eUserID,
-		DomainID: e2eDomain,
-		Role:     smqauthn.SuperAdminRole,
-		Verified: true,
+		UserID:      e2eUserID,
+		WorkspaceID: e2eWorkspace,
+		Role:        smqauthn.SuperAdminRole,
+		Verified:    true,
 	}, nil)
 }
 
 func expectGrants(evaluator *policymocks.Evaluator, lister *policymocks.Service, granted []string) {
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.Anything).Return(errors.New("not admin"))
 	lister.EXPECT().ListAllObjects(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.Subject == e2eSubject && pr.Domain == e2eDomain && pr.ObjectType == policies.ClientType
+		return pr.Subject == e2eSubject && pr.Workspace == e2eWorkspace && pr.ObjectType == policies.ClientType
 	})).Return(policies.PolicyPage{Policies: granted}, nil)
 }
 
 func expectAdmin(evaluator *policymocks.Evaluator) {
 	evaluator.EXPECT().CheckPolicy(mock.Anything, mock.MatchedBy(func(pr policies.Policy) bool {
-		return pr.ObjectType == policies.DomainType && pr.Permission == policies.AdminPermission
+		return pr.ObjectType == policies.WorkspaceType && pr.Permission == policies.AdminPermission
 	})).Return(nil)
 }
 
@@ -383,7 +383,7 @@ func TestListMessagesNoDeviceGrantsIsEmptyNotEverything(t *testing.T) {
 	assert.Zero(t, page.Total)
 }
 
-// Criteria 5 and 11: a domain admin reads all three meters, and the query is not
+// Criteria 5 and 11: a workspace admin reads all three meters, and the query is not
 // bounded at all — which is also what keeps orphan rows, whose device_id matches
 // no entity, readable through channel-level access.
 func TestListMessagesAdminQueryIsUnbounded(t *testing.T) {

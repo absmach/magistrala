@@ -36,8 +36,8 @@ Two identities are needed, answering different questions:
 
 - Topic grammar:
   ```
-  m/<domain>/c/<channel>[/d/<device>][/<subtopic>]
-  hc/<domain>
+  m/<workspace>/c/<channel>[/d/<device>][/<subtopic>]
+  hc/<workspace>
   ```
   `<device>` is the device's **serial** — an arbitrary string, carried verbatim.
   Serial *is* the device id in this model
@@ -114,7 +114,7 @@ the cost of no multi-sensor batching in a single pack.
 
 ## Acceptance criteria
 
-1. `m/dom/c/chan/d/dev123/sub/topic` parses to domain, channel, device `dev123`,
+1. `m/dom/c/chan/d/dev123/sub/topic` parses to workspace, channel, device `dev123`,
    subtopic `sub/topic`.
 2. `m/dom/c/chan/d/dev123` parses with an empty subtopic.
 3. `m/dom/c/chan/sub/topic` parses with an empty device — existing behaviour is

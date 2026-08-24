@@ -44,7 +44,7 @@ func TestHandleTopicMessageNormalizesAMQPRoutingKey(t *testing.T) {
 				"client_id":   "client-9",
 			},
 		},
-		Topic: "m.domain.c.channel.test",
+		Topic: "m.workspace.c.channel.test",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -52,7 +52,7 @@ func TestHandleTopicMessageNormalizesAMQPRoutingKey(t *testing.T) {
 	if h.msg == nil {
 		t.Fatal("expected handler to receive a message")
 	}
-	if h.msg.Domain != "domain" || h.msg.Channel != "channel" || h.msg.Subtopic != "test" {
+	if h.msg.Workspace != "workspace" || h.msg.Channel != "channel" || h.msg.Subtopic != "test" {
 		t.Fatalf("unexpected parsed message: %+v", h.msg)
 	}
 	if string(h.msg.Payload) != "payload" {
@@ -89,7 +89,7 @@ func TestHandleTopicMessageUsesMQTTIdentityFields(t *testing.T) {
 				"created":     "1234567890000000000",
 			},
 		},
-		Topic: "m.domain.c.channel.sub",
+		Topic: "m.workspace.c.channel.sub",
 	})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -133,10 +133,10 @@ func TestMessageFromDelivery(t *testing.T) {
 			},
 			ts:        time.Unix(1710000000, 0),
 			prefix:    "writers",
-			mqttTopic: "writers/domain/c/channel/temp",
+			mqttTopic: "writers/workspace/c/channel/temp",
 			want: &messaging.Message{
 				Metadata:  map[string]string{"magistrala.re.trace": `["rule-1"]`},
-				Domain:    "domain",
+				Workspace: "workspace",
 				Channel:   "channel",
 				Subtopic:  "temp",
 				Payload:   []byte(`{"temperature":22.5}`),
@@ -154,7 +154,7 @@ func TestMessageFromDelivery(t *testing.T) {
 			prefix:    "m",
 			mqttTopic: "m/dom/c/ch",
 			want: &messaging.Message{
-				Domain:    "dom",
+				Workspace: "dom",
 				Channel:   "ch",
 				Subtopic:  "",
 				Payload:   []byte("raw"),
@@ -172,7 +172,7 @@ func TestMessageFromDelivery(t *testing.T) {
 			prefix:    "m",
 			mqttTopic: "m/dom/c/ch",
 			want: &messaging.Message{
-				Domain:    "dom",
+				Workspace: "dom",
 				Channel:   "ch",
 				Subtopic:  "",
 				Payload:   []byte("raw"),
@@ -203,8 +203,8 @@ func TestMessageFromDelivery(t *testing.T) {
 			if err != nil {
 				t.Fatalf("unexpected error: %v", err)
 			}
-			if got.Domain != tc.want.Domain || got.Channel != tc.want.Channel || got.Subtopic != tc.want.Subtopic {
-				t.Fatalf("topic mismatch: got domain=%q channel=%q subtopic=%q", got.Domain, got.Channel, got.Subtopic)
+			if got.Workspace != tc.want.Workspace || got.Channel != tc.want.Channel || got.Subtopic != tc.want.Subtopic {
+				t.Fatalf("topic mismatch: got workspace=%q channel=%q subtopic=%q", got.Workspace, got.Channel, got.Subtopic)
 			}
 			if string(got.Payload) != string(tc.want.Payload) {
 				t.Fatalf("payload mismatch: got %q, want %q", got.Payload, tc.want.Payload)
@@ -280,7 +280,7 @@ func TestMetadataPropertyRoundTrip(t *testing.T) {
 		headers[key] = value
 	}
 
-	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/workspace/c/channel/subtopic")
 	if err != nil {
 		t.Fatalf("reconstruct message: %v", err)
 	}
@@ -306,7 +306,7 @@ func TestDeviceIDPropertyRoundTrip(t *testing.T) {
 		headers[key] = value
 	}
 
-	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/domain/c/channel/subtopic")
+	got, err := messageFromDelivery(want.Payload, headers, time.Time{}, "m", "m/workspace/c/channel/subtopic")
 	if err != nil {
 		t.Fatalf("reconstruct message: %v", err)
 	}

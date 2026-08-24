@@ -13,7 +13,7 @@ import (
 
 var cmdCerts = []cobra.Command{
 	{
-		Use:   "get [all | <entity_id>] <domain_id> <token>",
+		Use:   "get [all | <entity_id>] <workspace_id> <token>",
 		Short: "Get certificate",
 		Long:  `Gets a certificate for a given entity ID or all certificates.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -48,7 +48,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "revoke <serial_number> <domain_id> <token>",
+		Use:   "revoke <serial_number> <workspace_id> <token>",
 		Short: "Revoke certificate",
 		Long:  `Revokes a certificate for a given serial number.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -65,7 +65,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "delete <entity_id> <domain_id> <token>",
+		Use:   "delete <entity_id> <workspace_id> <token>",
 		Short: "Delete certificate",
 		Long:  `Deletes certificates for a given entity id.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -82,7 +82,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "renew <serial_number> <domain_id> <token>",
+		Use:   "renew <serial_number> <workspace_id> <token>",
 		Short: "Renew certificate",
 		Long:  `Renews a certificate for a given serial number.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -127,7 +127,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "view <serial_number> <domain_id> <token>",
+		Use:   "view <serial_number> <workspace_id> <token>",
 		Short: "View certificate",
 		Long:  `Views a certificate for a given serial number.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -205,7 +205,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "issue-csr <entity_id> <ttl> <path_to_csr> <domain_id> <token>",
+		Use:   "issue-csr <entity_id> <ttl> <path_to_csr> <workspace_id> <token>",
 		Short: "Issue from CSR",
 		Long:  `issues a certificate for a given csr.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -268,7 +268,7 @@ var cmdCerts = []cobra.Command{
 		},
 	},
 	{
-		Use:   "entity-id <serial_number> <domain_id> <token>",
+		Use:   "entity-id <serial_number> <workspace_id> <token>",
 		Short: "Get entity ID by serial number",
 		Long:  `Gets the entity ID for a certificate by its serial number.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -290,7 +290,7 @@ var cmdCerts = []cobra.Command{
 func NewCertsCmd() *cobra.Command {
 	var ttl string
 	issueCmd := cobra.Command{
-		Use:   "issue <entity_id> <common_name> <ip_addrs_json> [<options_json>] <domain_id> <token> [--ttl=8760h]",
+		Use:   "issue <entity_id> <common_name> <ip_addrs_json> [<options_json>] <workspace_id> <token> [--ttl=8760h]",
 		Short: "Issue certificate",
 		Long:  `Issues a certificate for a given entity ID.`,
 		Run: func(cmd *cobra.Command, args []string) {
@@ -305,19 +305,19 @@ func NewCertsCmd() *cobra.Command {
 			}
 			var option smqsdk.Options
 			option.CommonName = args[1]
-			var domainID, token string
+			var workspaceID, token string
 			if len(args) == 5 {
-				domainID = args[3]
+				workspaceID = args[3]
 				token = args[4]
 			} else {
 				if err := json.Unmarshal([]byte(args[3]), &option); err != nil {
 					logErrorCmd(*cmd, err)
 					return
 				}
-				domainID = args[4]
+				workspaceID = args[4]
 				token = args[5]
 			}
-			cert, err := sdk.IssueCert(cmd.Context(), args[0], ttl, ipAddrs, option, domainID, token)
+			cert, err := sdk.IssueCert(cmd.Context(), args[0], ttl, ipAddrs, option, workspaceID, token)
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return

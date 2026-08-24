@@ -24,7 +24,7 @@ type ReportConfig struct {
 	ID             string         `json:"id,omitempty"`
 	Name           string         `json:"name,omitempty"`
 	Description    string         `json:"description,omitempty"`
-	DomainID       string         `json:"domain_id,omitempty"`
+	WorkspaceID    string         `json:"workspace_id,omitempty"`
 	Schedule       any            `json:"schedule,omitempty"`
 	Config         any            `json:"config,omitempty"`
 	Email          any            `json:"email,omitempty"`
@@ -69,13 +69,13 @@ const (
 	EmailReportAction    ReportAction = "email"
 )
 
-func (sdk mgSDK) AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError) {
+func (sdk mgSDK) AddReportConfig(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return ReportConfig{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated, http.StatusOK)
 	if sdkerr != nil {
@@ -90,8 +90,8 @@ func (sdk mgSDK) AddReportConfig(ctx context.Context, cfg ReportConfig, domainID
 	return rc, nil
 }
 
-func (sdk mgSDK) ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) ViewReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -106,13 +106,13 @@ func (sdk mgSDK) ViewReportConfig(ctx context.Context, id, domainID, token strin
 	return rc, nil
 }
 
-func (sdk mgSDK) UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError) {
+func (sdk mgSDK) UpdateReportConfig(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, errors.SDKError) {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return ReportConfig{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, cfg.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, cfg.ID)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -127,13 +127,13 @@ func (sdk mgSDK) UpdateReportConfig(ctx context.Context, cfg ReportConfig, domai
 	return rc, nil
 }
 
-func (sdk mgSDK) UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, errors.SDKError) {
+func (sdk mgSDK) UpdateReportSchedule(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, errors.SDKError) {
 	data, err := json.Marshal(map[string]any{"schedule": cfg.Schedule})
 	if err != nil {
 		return ReportConfig{}, errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/schedule", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, cfg.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/schedule", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, cfg.ID)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPatch, url, token, data, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -148,15 +148,15 @@ func (sdk mgSDK) UpdateReportSchedule(ctx context.Context, cfg ReportConfig, dom
 	return rc, nil
 }
 
-func (sdk mgSDK) RemoveReportConfig(ctx context.Context, id, domainID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) RemoveReportConfig(ctx context.Context, id, workspaceID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent, http.StatusOK)
 	return sdkerr
 }
 
-func (sdk mgSDK) ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s/%s", domainID, reportsEndpoint, configsEndpointReports)
+func (sdk mgSDK) ListReportsConfig(ctx context.Context, pm PageMetadata, workspaceID, token string) (ReportConfigPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s/%s", workspaceID, reportsEndpoint, configsEndpointReports)
 	url, err := sdk.withQueryParams(sdk.reportsURL, endpoint, pm)
 	if err != nil {
 		return ReportConfigPage{}, errors.NewSDKError(err)
@@ -175,8 +175,8 @@ func (sdk mgSDK) ListReportsConfig(ctx context.Context, pm PageMetadata, domainI
 	return rcp, nil
 }
 
-func (sdk mgSDK) EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/enable", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) EnableReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/enable", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -191,8 +191,8 @@ func (sdk mgSDK) EnableReportConfig(ctx context.Context, id, domainID, token str
 	return rc, nil
 }
 
-func (sdk mgSDK) DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/disable", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) DisableReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/disable", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -207,20 +207,20 @@ func (sdk mgSDK) DisableReportConfig(ctx context.Context, id, domainID, token st
 	return rc, nil
 }
 
-func (sdk mgSDK) UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) errors.SDKError {
+func (sdk mgSDK) UpdateReportTemplate(ctx context.Context, cfg ReportConfig, workspaceID, token string) errors.SDKError {
 	data, err := json.Marshal(cfg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, cfg.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, cfg.ID)
 
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusNoContent)
 	return sdkerr
 }
 
-func (sdk mgSDK) ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) ViewReportTemplate(ctx context.Context, id, workspaceID, token string) (ReportTemplate, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, body, sdkerr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkerr != nil {
@@ -235,8 +235,8 @@ func (sdk mgSDK) ViewReportTemplate(ctx context.Context, id, domainID, token str
 	return rt, nil
 }
 
-func (sdk mgSDK) DeleteReportTemplate(ctx context.Context, id, domainID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, domainID, reportsEndpoint, configsEndpointReports, id)
+func (sdk mgSDK) DeleteReportTemplate(ctx context.Context, id, workspaceID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/template", sdk.reportsURL, workspaceID, reportsEndpoint, configsEndpointReports, id)
 
 	_, _, sdkerr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent, http.StatusOK)
 	return sdkerr
@@ -246,7 +246,7 @@ func (sdk mgSDK) GenerateReport(
 	ctx context.Context,
 	config ReportConfig,
 	action ReportAction,
-	domainID,
+	workspaceID,
 	token string,
 ) (ReportPage, *ReportFile, errors.SDKError) {
 	data, err := json.Marshal(config)
@@ -256,7 +256,7 @@ func (sdk mgSDK) GenerateReport(
 
 	url := fmt.Sprintf("%s/%s/%s?action=%s",
 		sdk.reportsURL,
-		domainID,
+		workspaceID,
 		reportsEndpoint,
 		action,
 	)

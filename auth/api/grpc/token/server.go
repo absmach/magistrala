@@ -26,22 +26,22 @@ type tokenGrpcServer struct {
 func NewTokenServer(svc auth.Service) grpcTokenV1.TokenServiceServer {
 	return &tokenGrpcServer{
 		issue: kitgrpc.NewServer(
-			(issueEndpoint(svc)),
+			issueEndpoint(svc),
 			decodeIssueRequest,
 			encodeIssueResponse,
 		),
 		refresh: kitgrpc.NewServer(
-			(refreshEndpoint(svc)),
+			refreshEndpoint(svc),
 			decodeRefreshRequest,
 			encodeIssueResponse,
 		),
 		revoke: kitgrpc.NewServer(
-			(revokeEndpoint(svc)),
+			revokeEndpoint(svc),
 			decodeRevokeRequest,
 			encodeRevokeResponse,
 		),
 		listUserRefreshTokens: kitgrpc.NewServer(
-			(listUserRefreshTokensEndpoint(svc)),
+			listUserRefreshTokensEndpoint(svc),
 			decodeListUserRefreshTokensRequest,
 			encodeListUserRefreshTokensResponse,
 		),

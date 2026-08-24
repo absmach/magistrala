@@ -75,7 +75,7 @@ type Tokenizer_Issue_Call struct {
 
 // Issue is a helper method to define mock.On call
 //   - key auth.Key
-func (_e *Tokenizer_Expecter) Issue(key interface{}) *Tokenizer_Issue_Call {
+func (_e *Tokenizer_Expecter) Issue(key any) *Tokenizer_Issue_Call {
 	return &Tokenizer_Issue_Call{Call: _e.mock.On("Issue", key)}
 }
 
@@ -136,7 +136,7 @@ type Tokenizer_Parse_Call struct {
 // Parse is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *Tokenizer_Expecter) Parse(ctx interface{}, token interface{}) *Tokenizer_Parse_Call {
+func (_e *Tokenizer_Expecter) Parse(ctx any, token any) *Tokenizer_Parse_Call {
 	return &Tokenizer_Parse_Call{Call: _e.mock.On("Parse", ctx, token)}
 }
 

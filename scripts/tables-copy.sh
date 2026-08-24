@@ -4,7 +4,7 @@
 
 ####
 ## The script helps to copy tables from one database to another database
-## This script can be used to synchronize domains and domains roles tables to groups, channels and clients database
+## This script can be used to synchronize workspaces and workspaces roles tables to groups, channels and clients database
 ## and groups and groups roles to channels and clients database
 ####
 
@@ -17,8 +17,8 @@ SRC_DB_HOST="localhost"
 SRC_DB_PORT="6003"
 SRC_DB_USER="magistrala"
 SRC_DB_PASSWORD="magistrala"
-SRC_DB_NAME="domains"
-TABLENAME_PREFIX=domains
+SRC_DB_NAME="workspaces"
+TABLENAME_PREFIX=workspaces
 
 DEST_DB_HOST="localhost"
 DEST_DB_PORT="6005"

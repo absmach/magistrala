@@ -75,7 +75,7 @@ type Repository_GetEntityIDBySerial_Call struct {
 // GetEntityIDBySerial is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-func (_e *Repository_Expecter) GetEntityIDBySerial(ctx interface{}, serialNumber interface{}) *Repository_GetEntityIDBySerial_Call {
+func (_e *Repository_Expecter) GetEntityIDBySerial(ctx any, serialNumber any) *Repository_GetEntityIDBySerial_Call {
 	return &Repository_GetEntityIDBySerial_Call{Call: _e.mock.On("GetEntityIDBySerial", ctx, serialNumber)}
 }
 
@@ -143,7 +143,7 @@ type Repository_ListCertsByEntityID_Call struct {
 // ListCertsByEntityID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - entityID string
-func (_e *Repository_Expecter) ListCertsByEntityID(ctx interface{}, entityID interface{}) *Repository_ListCertsByEntityID_Call {
+func (_e *Repository_Expecter) ListCertsByEntityID(ctx any, entityID any) *Repository_ListCertsByEntityID_Call {
 	return &Repository_ListCertsByEntityID_Call{Call: _e.mock.On("ListCertsByEntityID", ctx, entityID)}
 }
 
@@ -200,7 +200,7 @@ type Repository_RemoveCertEntityMapping_Call struct {
 // RemoveCertEntityMapping is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-func (_e *Repository_Expecter) RemoveCertEntityMapping(ctx interface{}, serialNumber interface{}) *Repository_RemoveCertEntityMapping_Call {
+func (_e *Repository_Expecter) RemoveCertEntityMapping(ctx any, serialNumber any) *Repository_RemoveCertEntityMapping_Call {
 	return &Repository_RemoveCertEntityMapping_Call{Call: _e.mock.On("RemoveCertEntityMapping", ctx, serialNumber)}
 }
 
@@ -258,7 +258,7 @@ type Repository_SaveCertEntityMapping_Call struct {
 //   - ctx context.Context
 //   - serialNumber string
 //   - entityID string
-func (_e *Repository_Expecter) SaveCertEntityMapping(ctx interface{}, serialNumber interface{}, entityID interface{}) *Repository_SaveCertEntityMapping_Call {
+func (_e *Repository_Expecter) SaveCertEntityMapping(ctx any, serialNumber any, entityID any) *Repository_SaveCertEntityMapping_Call {
 	return &Repository_SaveCertEntityMapping_Call{Call: _e.mock.On("SaveCertEntityMapping", ctx, serialNumber, entityID)}
 }
 

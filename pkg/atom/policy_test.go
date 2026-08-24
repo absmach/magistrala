@@ -18,8 +18,8 @@ func TestPolicyEvaluatorCheckPolicy(t *testing.T) {
 	evaluator := atom.NewPolicyEvaluator(client)
 
 	err := evaluator.CheckPolicy(context.Background(), policies.Policy{
-		Domain:     "domain-1",
-		Subject:    "domain-1_user-1",
+		Workspace:  "workspace-1",
+		Subject:    "workspace-1_user-1",
 		Permission: policies.ViewPermission,
 		ObjectType: policies.RulesType,
 		Object:     "rule-1",
@@ -33,7 +33,7 @@ func TestPolicyEvaluatorCheckPolicy(t *testing.T) {
 		ObjectKind: "resource",
 		ObjectID:   "rule-1",
 		Context: map[string]any{
-			"domain_id":          "domain-1",
+			"workspace_id":       "workspace-1",
 			"legacy_object_type": policies.RulesType,
 			"legacy_relation":    "",
 		},

@@ -51,7 +51,7 @@ var (
 	errAlarmOpRequiresWildcardEntityID = errors.NewRequestError("alarm operations on rules entity type require wildcard entity ID")
 )
 
-// alarmOnlyOperations are RulesType operations authorized at the domain level; only wildcard entity ID is valid.
+// alarmOnlyOperations are RulesType operations authorized at the workspace level; only wildcard entity ID is valid.
 var alarmOnlyOperations = map[string]struct{}{
 	"alarm_assign":      {},
 	"alarm_acknowledge": {},
@@ -84,7 +84,7 @@ const (
 	BootstrapType   EntityType = 3
 	DashboardType   EntityType = 4
 	MessagesType    EntityType = 5
-	DomainsType     EntityType = 6
+	WorkspacesType  EntityType = 6
 	UsersType       EntityType = 7
 	RulesType       EntityType = 8
 	ReportsType     EntityType = 9
@@ -100,7 +100,7 @@ const (
 	BootstrapStr        = "bootstrap"
 	DashboardsStr       = "dashboards"
 	MessagesStr         = "messages"
-	DomainsStr          = "domains"
+	WorkspacesStr       = "workspaces"
 	UsersStr            = "users"
 	RulesScopeStr       = "rules"
 	ReportsScopeStr     = "reports"
@@ -122,8 +122,8 @@ func (et EntityType) String() string {
 		return DashboardsStr
 	case MessagesType:
 		return MessagesStr
-	case DomainsType:
-		return DomainsStr
+	case WorkspacesType:
+		return WorkspacesStr
 	case UsersType:
 		return UsersStr
 	case RulesType:
@@ -131,7 +131,7 @@ func (et EntityType) String() string {
 	case ReportsType:
 		return ReportsScopeStr
 	default:
-		return fmt.Sprintf("unknown domain entity type %d", et)
+		return fmt.Sprintf("unknown workspace entity type %d", et)
 	}
 }
 
@@ -151,8 +151,8 @@ func ParseEntityType(et string) (EntityType, error) {
 		return DashboardType, nil
 	case MessagesStr:
 		return MessagesType, nil
-	case DomainsStr:
-		return DomainsType, nil
+	case WorkspacesStr:
+		return WorkspacesType, nil
 	case UsersStr:
 		return UsersType, nil
 	case RulesScopeStr:
@@ -160,7 +160,7 @@ func ParseEntityType(et string) (EntityType, error) {
 	case ReportsScopeStr:
 		return ReportsType, nil
 	default:
-		return 0, fmt.Errorf("unknown domain entity type %s", et)
+		return 0, fmt.Errorf("unknown workspace entity type %s", et)
 	}
 }
 
@@ -187,7 +187,7 @@ func (et *EntityType) UnmarshalText(data []byte) (err error) {
 
 func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 	switch entityType {
-	case DevicesType, DeviceTypesType, ChannelsType, GroupsType, BootstrapType, DomainsType, RulesType, ReportsType:
+	case DevicesType, DeviceTypesType, ChannelsType, GroupsType, BootstrapType, WorkspacesType, RulesType, ReportsType:
 		return true
 	case DashboardType:
 		return operation == OpDashboardShare || operation == OpDashboardUnshare
@@ -202,19 +202,19 @@ func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 //
 // [
 //     {
-//         "domain_id": "domain_1",
+//         "workspace_id": "workspace_1",
 //         "entity_type": "groups",
 //         "operation": "view",
 //         "entity_id": "*"
 //     },
 //     {
-//         "domain_id": "domain_1",
+//         "workspace_id": "workspace_1",
 //         "entity_type": "channels",
 //         "operation": "delete",
 //         "entity_id": "channel1"
 //     },
 //     {
-//         "domain_id": "domain_1",
+//         "workspace_id": "workspace_1",
 //         "entity_type": "devices",
 //         "operation": "update",
 //         "entity_id": "*"
@@ -222,12 +222,12 @@ func IsValidOperationForEntity(entityType EntityType, operation string) bool {
 // ]
 
 type Scope struct {
-	ID         string     `json:"id"`
-	PatID      string     `json:"pat_id"`
-	DomainID   string     `json:"domain_id"`
-	EntityType EntityType `json:"entity_type"`
-	EntityID   string     `json:"entity_id"`
-	Operation  string     `json:"operation"`
+	ID          string     `json:"id"`
+	PatID       string     `json:"pat_id"`
+	WorkspaceID string     `json:"workspace_id"`
+	EntityType  EntityType `json:"entity_type"`
+	EntityID    string     `json:"entity_id"`
+	Operation   string     `json:"operation"`
 }
 
 func (s *Scope) UnmarshalJSON(data []byte) error {
@@ -286,7 +286,7 @@ func (s *Scope) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (s *Scope) Authorized(entityType EntityType, domainID string, operation string, entityID string) bool {
+func (s *Scope) Authorized(entityType EntityType, workspaceID string, operation string, entityID string) bool {
 	if s == nil {
 		return false
 	}
@@ -295,7 +295,7 @@ func (s *Scope) Authorized(entityType EntityType, domainID string, operation str
 		return false
 	}
 
-	if s.DomainID != "" && s.DomainID != domainID {
+	if s.WorkspaceID != "" && s.WorkspaceID != workspaceID {
 		return false
 	}
 
@@ -322,8 +322,8 @@ func (s *Scope) Validate() error {
 		return apiutil.ErrMissingEntityID
 	}
 
-	if s.DomainID == "" {
-		return apiutil.ErrMissingDomainID
+	if s.WorkspaceID == "" {
+		return apiutil.ErrMissingWorkspaceID
 	}
 
 	if !IsValidOperationForEntity(s.EntityType, s.Operation) {
@@ -346,7 +346,7 @@ type PATAuthz struct {
 	EntityType EntityType
 	EntityID   string
 	Operation  string
-	Domain     string
+	Workspace  string
 }
 
 // PAT represents Personal Access Token.
@@ -461,7 +461,7 @@ type PATS interface {
 	IdentifyPAT(ctx context.Context, paToken string) (PAT, error)
 
 	// AuthorizePAT function will valid the secret and check the given scope exists.
-	AuthorizePAT(ctx context.Context, userID, patID string, entityType EntityType, domainID string, operation string, entityID string) error
+	AuthorizePAT(ctx context.Context, userID, patID string, entityType EntityType, workspaceID string, operation string, entityID string) error
 }
 
 // PATSRepository specifies PATS persistence API.
@@ -506,7 +506,7 @@ type PATSRepository interface {
 
 	RemoveScope(ctx context.Context, userID string, scopesIDs ...string) error
 
-	CheckScope(ctx context.Context, userID, patID string, entityType EntityType, domainID string, operation string, entityID string) error
+	CheckScope(ctx context.Context, userID, patID string, entityType EntityType, workspaceID string, operation string, entityID string) error
 
 	RemoveAllScope(ctx context.Context, patID string) error
 }
@@ -514,7 +514,7 @@ type PATSRepository interface {
 type Cache interface {
 	Save(ctx context.Context, userID string, scopes []Scope) error
 
-	CheckScope(ctx context.Context, userID, patID, optionalDomainID string, entityType EntityType, operation string, entityID string) bool
+	CheckScope(ctx context.Context, userID, patID, optionalWorkspaceID string, entityType EntityType, operation string, entityID string) bool
 
 	Remove(ctx context.Context, userID string, scopesID []string) error
 

@@ -62,7 +62,7 @@ type Authz interface {
 	Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error
 }
 
-// Authn specifies an API that must be fulfilled by the domain service
+// Authn specifies an API that must be fulfilled by the workspace service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
 // an Auth service request.
@@ -93,7 +93,7 @@ type Authn interface {
 	ListUserRefreshTokens(ctx context.Context, userID string) ([]TokenInfo, error)
 }
 
-// Service specifies an API that must be fulfilled by the domain service
+// Service specifies an API that must be fulfilled by the workspace service
 // implementation, and all of its decorators (e.g. logging & metrics).
 // Token is a string value of the actual Key and is used to authenticate
 // an Auth service request.
@@ -235,7 +235,7 @@ func (svc service) ListUserRefreshTokens(ctx context.Context, userID string) ([]
 
 func (svc service) Authorize(ctx context.Context, pr policies.Policy, patAuthz *PATAuthz) error {
 	if patAuthz != nil {
-		if err := svc.AuthorizePAT(ctx, patAuthz.UserID, patAuthz.PatID, patAuthz.EntityType, patAuthz.Domain, patAuthz.Operation, patAuthz.EntityID); err != nil {
+		if err := svc.AuthorizePAT(ctx, patAuthz.UserID, patAuthz.PatID, patAuthz.EntityType, patAuthz.Workspace, patAuthz.Operation, patAuthz.EntityID); err != nil {
 			return err
 		}
 	}
@@ -481,18 +481,18 @@ func SwitchToPermission(relation string) string {
 	}
 }
 
-func EncodeDomainUserID(domainID, userID string) string {
-	if domainID == "" || userID == "" {
+func EncodeWorkspaceUserID(workspaceID, userID string) string {
+	if workspaceID == "" || userID == "" {
 		return ""
 	}
-	return domainID + "_" + userID
+	return workspaceID + "_" + userID
 }
 
-func DecodeDomainUserID(domainUserID string) (string, string) {
-	if domainUserID == "" {
-		return domainUserID, domainUserID
+func DecodeWorkspaceUserID(workspaceUserID string) (string, string) {
+	if workspaceUserID == "" {
+		return workspaceUserID, workspaceUserID
 	}
-	duid := strings.Split(domainUserID, "_")
+	duid := strings.Split(workspaceUserID, "_")
 
 	switch {
 	case len(duid) == 2:
@@ -740,8 +740,8 @@ func (svc service) IdentifyPAT(ctx context.Context, secret string) (PAT, error) 
 	return pat, nil
 }
 
-func (svc service) AuthorizePAT(ctx context.Context, userID, patID string, entityType EntityType, domainID string, operation string, entityID string) error {
-	if err := svc.pats.CheckScope(ctx, userID, patID, entityType, domainID, operation, entityID); err != nil {
+func (svc service) AuthorizePAT(ctx context.Context, userID, patID string, entityType EntityType, workspaceID string, operation string, entityID string) error {
+	if err := svc.pats.CheckScope(ctx, userID, patID, entityType, workspaceID, operation, entityID); err != nil {
 		return errors.Wrap(svcerr.ErrAuthorization, err)
 	}
 

@@ -127,7 +127,7 @@ groups:
     - remove_members: remove_role_users_permission
     - remove_all_members: remove_role_users_permission
 
-domains:
+workspaces:
   operations:
     - create: create_permission
     - update: update_permission
@@ -137,7 +137,7 @@ domains:
     - list: read_permission
     - send_invitation: manage_role_permission
     - list_invitation: membership_permission
-    - list_domain_invitation: manage_role_permission
+    - list_workspace_invitation: manage_role_permission
     - delete_invitation: manage_role_permission
     - create_clients: client_create_permission
     - list_clients: client_read_permission

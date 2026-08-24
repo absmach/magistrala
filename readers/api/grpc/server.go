@@ -26,7 +26,7 @@ type readersGrpcServer struct {
 func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServiceServer {
 	return &readersGrpcServer{
 		readMessages: kitgrpc.NewServer(
-			(readMessagesEndpoint(svc)),
+			readMessagesEndpoint(svc),
 			decodeReadMessagesRequest,
 			encodeReadMessagesResponse,
 		),
@@ -46,8 +46,8 @@ func NewReadersServer(svc readers.MessageRepository) grpcReadersV1.ReadersServic
 func decodeReadMessagesRequest(_ context.Context, grpcReq any) (any, error) {
 	req := grpcReq.(*grpcReadersV1.ReadMessagesReq)
 	return readMessagesReq{
-		chanID: req.GetChannelId(),
-		domain: req.GetDomainId(),
+		chanID:    req.GetChannelId(),
+		workspace: req.GetWorkspaceId(),
 		pageMeta: readers.PageMetadata{
 			Offset:      req.GetPageMetadata().GetOffset(),
 			Limit:       req.GetPageMetadata().GetLimit(),
@@ -102,7 +102,7 @@ func decodeListGatewayDevicesRequest(_ context.Context, grpcReq any) (any, error
 	from, to := readers.DefaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
 	return deviceViewReq{
 		chanID:            req.GetChannelId(),
-		domain:            req.GetDomainId(),
+		workspace:         req.GetWorkspaceId(),
 		filterVal:         req.GetPublisherId(),
 		filterIsPublisher: true,
 		pageMeta: readers.PageMetadata{
@@ -119,7 +119,7 @@ func decodeListDeviceGatewaysRequest(_ context.Context, grpcReq any) (any, error
 	from, to := readers.DefaultTimeWindow(req.GetPageMetadata().GetFrom(), req.GetPageMetadata().GetTo())
 	return deviceViewReq{
 		chanID:    req.GetChannelId(),
-		domain:    req.GetDomainId(),
+		workspace: req.GetWorkspaceId(),
 		filterVal: req.GetDeviceId(),
 		pageMeta: readers.PageMetadata{
 			Offset: req.GetPageMetadata().GetOffset(),

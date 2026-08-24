@@ -70,7 +70,7 @@ type PATS_AddScope_Call struct {
 //   - token string
 //   - patID string
 //   - scopes []auth.Scope
-func (_e *PATS_Expecter) AddScope(ctx interface{}, token interface{}, patID interface{}, scopes interface{}) *PATS_AddScope_Call {
+func (_e *PATS_Expecter) AddScope(ctx any, token any, patID any, scopes any) *PATS_AddScope_Call {
 	return &PATS_AddScope_Call{Call: _e.mock.On("AddScope", ctx, token, patID, scopes)}
 }
 
@@ -113,8 +113,8 @@ func (_c *PATS_AddScope_Call) RunAndReturn(run func(ctx context.Context, token s
 }
 
 // AuthorizePAT provides a mock function for the type PATS
-func (_mock *PATS) AuthorizePAT(ctx context.Context, userID string, patID string, entityType auth.EntityType, domainID string, operation string, entityID string) error {
-	ret := _mock.Called(ctx, userID, patID, entityType, domainID, operation, entityID)
+func (_mock *PATS) AuthorizePAT(ctx context.Context, userID string, patID string, entityType auth.EntityType, workspaceID string, operation string, entityID string) error {
+	ret := _mock.Called(ctx, userID, patID, entityType, workspaceID, operation, entityID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for AuthorizePAT")
@@ -122,7 +122,7 @@ func (_mock *PATS) AuthorizePAT(ctx context.Context, userID string, patID string
 
 	var r0 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, string, string, auth.EntityType, string, string, string) error); ok {
-		r0 = returnFunc(ctx, userID, patID, entityType, domainID, operation, entityID)
+		r0 = returnFunc(ctx, userID, patID, entityType, workspaceID, operation, entityID)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -139,14 +139,14 @@ type PATS_AuthorizePAT_Call struct {
 //   - userID string
 //   - patID string
 //   - entityType auth.EntityType
-//   - domainID string
+//   - workspaceID string
 //   - operation string
 //   - entityID string
-func (_e *PATS_Expecter) AuthorizePAT(ctx interface{}, userID interface{}, patID interface{}, entityType interface{}, domainID interface{}, operation interface{}, entityID interface{}) *PATS_AuthorizePAT_Call {
-	return &PATS_AuthorizePAT_Call{Call: _e.mock.On("AuthorizePAT", ctx, userID, patID, entityType, domainID, operation, entityID)}
+func (_e *PATS_Expecter) AuthorizePAT(ctx any, userID any, patID any, entityType any, workspaceID any, operation any, entityID any) *PATS_AuthorizePAT_Call {
+	return &PATS_AuthorizePAT_Call{Call: _e.mock.On("AuthorizePAT", ctx, userID, patID, entityType, workspaceID, operation, entityID)}
 }
 
-func (_c *PATS_AuthorizePAT_Call) Run(run func(ctx context.Context, userID string, patID string, entityType auth.EntityType, domainID string, operation string, entityID string)) *PATS_AuthorizePAT_Call {
+func (_c *PATS_AuthorizePAT_Call) Run(run func(ctx context.Context, userID string, patID string, entityType auth.EntityType, workspaceID string, operation string, entityID string)) *PATS_AuthorizePAT_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -194,7 +194,7 @@ func (_c *PATS_AuthorizePAT_Call) Return(err error) *PATS_AuthorizePAT_Call {
 	return _c
 }
 
-func (_c *PATS_AuthorizePAT_Call) RunAndReturn(run func(ctx context.Context, userID string, patID string, entityType auth.EntityType, domainID string, operation string, entityID string) error) *PATS_AuthorizePAT_Call {
+func (_c *PATS_AuthorizePAT_Call) RunAndReturn(run func(ctx context.Context, userID string, patID string, entityType auth.EntityType, workspaceID string, operation string, entityID string) error) *PATS_AuthorizePAT_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -236,7 +236,7 @@ type PATS_CreatePAT_Call struct {
 //   - name string
 //   - description string
 //   - duration time.Duration
-func (_e *PATS_Expecter) CreatePAT(ctx interface{}, token interface{}, name interface{}, description interface{}, duration interface{}) *PATS_CreatePAT_Call {
+func (_e *PATS_Expecter) CreatePAT(ctx any, token any, name any, description any, duration any) *PATS_CreatePAT_Call {
 	return &PATS_CreatePAT_Call{Call: _e.mock.On("CreatePAT", ctx, token, name, description, duration)}
 }
 
@@ -309,7 +309,7 @@ type PATS_DeletePAT_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - patID string
-func (_e *PATS_Expecter) DeletePAT(ctx interface{}, token interface{}, patID interface{}) *PATS_DeletePAT_Call {
+func (_e *PATS_Expecter) DeletePAT(ctx any, token any, patID any) *PATS_DeletePAT_Call {
 	return &PATS_DeletePAT_Call{Call: _e.mock.On("DeletePAT", ctx, token, patID)}
 }
 
@@ -380,7 +380,7 @@ type PATS_IdentifyPAT_Call struct {
 // IdentifyPAT is a helper method to define mock.On call
 //   - ctx context.Context
 //   - paToken string
-func (_e *PATS_Expecter) IdentifyPAT(ctx interface{}, paToken interface{}) *PATS_IdentifyPAT_Call {
+func (_e *PATS_Expecter) IdentifyPAT(ctx any, paToken any) *PATS_IdentifyPAT_Call {
 	return &PATS_IdentifyPAT_Call{Call: _e.mock.On("IdentifyPAT", ctx, paToken)}
 }
 
@@ -447,7 +447,7 @@ type PATS_ListPATS_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - pm auth.PATSPageMeta
-func (_e *PATS_Expecter) ListPATS(ctx interface{}, token interface{}, pm interface{}) *PATS_ListPATS_Call {
+func (_e *PATS_Expecter) ListPATS(ctx any, token any, pm any) *PATS_ListPATS_Call {
 	return &PATS_ListPATS_Call{Call: _e.mock.On("ListPATS", ctx, token, pm)}
 }
 
@@ -519,7 +519,7 @@ type PATS_ListScopes_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - pm auth.ScopesPageMeta
-func (_e *PATS_Expecter) ListScopes(ctx interface{}, token interface{}, pm interface{}) *PATS_ListScopes_Call {
+func (_e *PATS_Expecter) ListScopes(ctx any, token any, pm any) *PATS_ListScopes_Call {
 	return &PATS_ListScopes_Call{Call: _e.mock.On("ListScopes", ctx, token, pm)}
 }
 
@@ -581,7 +581,7 @@ type PATS_RemoveAllPAT_Call struct {
 // RemoveAllPAT is a helper method to define mock.On call
 //   - ctx context.Context
 //   - token string
-func (_e *PATS_Expecter) RemoveAllPAT(ctx interface{}, token interface{}) *PATS_RemoveAllPAT_Call {
+func (_e *PATS_Expecter) RemoveAllPAT(ctx any, token any) *PATS_RemoveAllPAT_Call {
 	return &PATS_RemoveAllPAT_Call{Call: _e.mock.On("RemoveAllPAT", ctx, token)}
 }
 
@@ -639,7 +639,7 @@ type PATS_RemovePATAllScope_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - patID string
-func (_e *PATS_Expecter) RemovePATAllScope(ctx interface{}, token interface{}, patID interface{}) *PATS_RemovePATAllScope_Call {
+func (_e *PATS_Expecter) RemovePATAllScope(ctx any, token any, patID any) *PATS_RemovePATAllScope_Call {
 	return &PATS_RemovePATAllScope_Call{Call: _e.mock.On("RemovePATAllScope", ctx, token, patID)}
 }
 
@@ -709,9 +709,9 @@ type PATS_RemoveScope_Call struct {
 //   - token string
 //   - patID string
 //   - scopeIDs ...string
-func (_e *PATS_Expecter) RemoveScope(ctx interface{}, token interface{}, patID interface{}, scopeIDs ...interface{}) *PATS_RemoveScope_Call {
+func (_e *PATS_Expecter) RemoveScope(ctx any, token any, patID any, scopeIDs ...any) *PATS_RemoveScope_Call {
 	return &PATS_RemoveScope_Call{Call: _e.mock.On("RemoveScope",
-		append([]interface{}{ctx, token, patID}, scopeIDs...)...)}
+		append([]any{ctx, token, patID}, scopeIDs...)...)}
 }
 
 func (_c *PATS_RemoveScope_Call) Run(run func(ctx context.Context, token string, patID string, scopeIDs ...string)) *PATS_RemoveScope_Call {
@@ -790,7 +790,7 @@ type PATS_ResetPATSecret_Call struct {
 //   - token string
 //   - patID string
 //   - duration time.Duration
-func (_e *PATS_Expecter) ResetPATSecret(ctx interface{}, token interface{}, patID interface{}, duration interface{}) *PATS_ResetPATSecret_Call {
+func (_e *PATS_Expecter) ResetPATSecret(ctx any, token any, patID any, duration any) *PATS_ResetPATSecret_Call {
 	return &PATS_ResetPATSecret_Call{Call: _e.mock.On("ResetPATSecret", ctx, token, patID, duration)}
 }
 
@@ -867,7 +867,7 @@ type PATS_RetrievePAT_Call struct {
 //   - ctx context.Context
 //   - userID string
 //   - patID string
-func (_e *PATS_Expecter) RetrievePAT(ctx interface{}, userID interface{}, patID interface{}) *PATS_RetrievePAT_Call {
+func (_e *PATS_Expecter) RetrievePAT(ctx any, userID any, patID any) *PATS_RetrievePAT_Call {
 	return &PATS_RetrievePAT_Call{Call: _e.mock.On("RetrievePAT", ctx, userID, patID)}
 }
 
@@ -930,7 +930,7 @@ type PATS_RevokePATSecret_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - patID string
-func (_e *PATS_Expecter) RevokePATSecret(ctx interface{}, token interface{}, patID interface{}) *PATS_RevokePATSecret_Call {
+func (_e *PATS_Expecter) RevokePATSecret(ctx any, token any, patID any) *PATS_RevokePATSecret_Call {
 	return &PATS_RevokePATSecret_Call{Call: _e.mock.On("RevokePATSecret", ctx, token, patID)}
 }
 
@@ -1003,7 +1003,7 @@ type PATS_UpdatePATDescription_Call struct {
 //   - token string
 //   - patID string
 //   - description string
-func (_e *PATS_Expecter) UpdatePATDescription(ctx interface{}, token interface{}, patID interface{}, description interface{}) *PATS_UpdatePATDescription_Call {
+func (_e *PATS_Expecter) UpdatePATDescription(ctx any, token any, patID any, description any) *PATS_UpdatePATDescription_Call {
 	return &PATS_UpdatePATDescription_Call{Call: _e.mock.On("UpdatePATDescription", ctx, token, patID, description)}
 }
 
@@ -1081,7 +1081,7 @@ type PATS_UpdatePATName_Call struct {
 //   - token string
 //   - patID string
 //   - name string
-func (_e *PATS_Expecter) UpdatePATName(ctx interface{}, token interface{}, patID interface{}, name interface{}) *PATS_UpdatePATName_Call {
+func (_e *PATS_Expecter) UpdatePATName(ctx any, token any, patID any, name any) *PATS_UpdatePATName_Call {
 	return &PATS_UpdatePATName_Call{Call: _e.mock.On("UpdatePATName", ctx, token, patID, name)}
 }
 

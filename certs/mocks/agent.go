@@ -242,7 +242,7 @@ type Agent_Issue_Call struct {
 //   - ttl string
 //   - ipAddrs []string
 //   - options certs.SubjectOptions
-func (_e *Agent_Expecter) Issue(ttl interface{}, ipAddrs interface{}, options interface{}) *Agent_Issue_Call {
+func (_e *Agent_Expecter) Issue(ttl any, ipAddrs any, options any) *Agent_Issue_Call {
 	return &Agent_Issue_Call{Call: _e.mock.On("Issue", ttl, ipAddrs, options)}
 }
 
@@ -312,7 +312,7 @@ type Agent_ListCerts_Call struct {
 
 // ListCerts is a helper method to define mock.On call
 //   - pm certs.PageMetadata
-func (_e *Agent_Expecter) ListCerts(pm interface{}) *Agent_ListCerts_Call {
+func (_e *Agent_Expecter) ListCerts(pm any) *Agent_ListCerts_Call {
 	return &Agent_ListCerts_Call{Call: _e.mock.On("ListCerts", pm)}
 }
 
@@ -375,7 +375,7 @@ type Agent_OCSP_Call struct {
 // OCSP is a helper method to define mock.On call
 //   - serialNumber string
 //   - ocspRequestDER []byte
-func (_e *Agent_Expecter) OCSP(serialNumber interface{}, ocspRequestDER interface{}) *Agent_OCSP_Call {
+func (_e *Agent_Expecter) OCSP(serialNumber any, ocspRequestDER any) *Agent_OCSP_Call {
 	return &Agent_OCSP_Call{Call: _e.mock.On("OCSP", serialNumber, ocspRequestDER)}
 }
 
@@ -441,7 +441,7 @@ type Agent_Renew_Call struct {
 // Renew is a helper method to define mock.On call
 //   - cert certs.Certificate
 //   - increment string
-func (_e *Agent_Expecter) Renew(cert interface{}, increment interface{}) *Agent_Renew_Call {
+func (_e *Agent_Expecter) Renew(cert any, increment any) *Agent_Renew_Call {
 	return &Agent_Renew_Call{Call: _e.mock.On("Renew", cert, increment)}
 }
 
@@ -497,7 +497,7 @@ type Agent_Revoke_Call struct {
 
 // Revoke is a helper method to define mock.On call
 //   - serialNumber string
-func (_e *Agent_Expecter) Revoke(serialNumber interface{}) *Agent_Revoke_Call {
+func (_e *Agent_Expecter) Revoke(serialNumber any) *Agent_Revoke_Call {
 	return &Agent_Revoke_Call{Call: _e.mock.On("Revoke", serialNumber)}
 }
 
@@ -558,7 +558,7 @@ type Agent_SignCSR_Call struct {
 // SignCSR is a helper method to define mock.On call
 //   - csr []byte
 //   - ttl string
-func (_e *Agent_Expecter) SignCSR(csr interface{}, ttl interface{}) *Agent_SignCSR_Call {
+func (_e *Agent_Expecter) SignCSR(csr any, ttl any) *Agent_SignCSR_Call {
 	return &Agent_SignCSR_Call{Call: _e.mock.On("SignCSR", csr, ttl)}
 }
 
@@ -614,7 +614,7 @@ type Agent_StartSecretRenewal_Call struct {
 
 // StartSecretRenewal is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Agent_Expecter) StartSecretRenewal(ctx interface{}) *Agent_StartSecretRenewal_Call {
+func (_e *Agent_Expecter) StartSecretRenewal(ctx any) *Agent_StartSecretRenewal_Call {
 	return &Agent_StartSecretRenewal_Call{Call: _e.mock.On("StartSecretRenewal", ctx)}
 }
 
@@ -674,7 +674,7 @@ type Agent_View_Call struct {
 
 // View is a helper method to define mock.On call
 //   - serialNumber string
-func (_e *Agent_Expecter) View(serialNumber interface{}) *Agent_View_Call {
+func (_e *Agent_Expecter) View(serialNumber any) *Agent_View_Call {
 	return &Agent_View_Call{Call: _e.mock.On("View", serialNumber)}
 }
 

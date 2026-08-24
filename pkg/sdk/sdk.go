@@ -177,7 +177,7 @@ type PageMetadata struct {
 	ListPermissions    string    `json:"list_perms,omitempty"`
 	InvitedBy          string    `json:"invited_by,omitempty"`
 	UserID             string    `json:"user_id,omitempty"`
-	DomainID           string    `json:"domain_id,omitempty"`
+	WorkspaceID        string    `json:"workspace_id,omitempty"`
 	Relation           string    `json:"relation,omitempty"`
 	Operation          string    `json:"operation,omitempty"`
 	From               int64     `json:"from,omitempty"`
@@ -594,13 +594,13 @@ type SDK interface {
 	//  ctx := context.Background()
 	//  client := sdk.Client{
 	//    Name: "My Client",
-	//    Metadata: sdk.Metadata{"domain_1"
+	//    Metadata: sdk.Metadata{"workspace_1"
 	//      "key": "value",
 	//    },
 	//  }
-	//  client, _ := sdk.CreateClient(ctx, client, "domainID", "token")
+	//  client, _ := sdk.CreateClient(ctx, client, "workspaceID", "token")
 	//  fmt.Println(client)
-	CreateClient(ctx context.Context, client Client, domainID, token string) (Client, smqerrors.SDKError)
+	CreateClient(ctx context.Context, client Client, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// CreateClients registers new clients and returns their ids.
 	//
@@ -620,9 +620,9 @@ type SDK interface {
 	//      },
 	//    },
 	//  }
-	//  clients, _ := sdk.CreateClients(ctx, clients, "domainID", "token")
+	//  clients, _ := sdk.CreateClients(ctx, clients, "workspaceID", "token")
 	//  fmt.Println(clients)
-	CreateClients(ctx context.Context, client []Client, domainID, token string) ([]Client, smqerrors.SDKError)
+	CreateClients(ctx context.Context, client []Client, workspaceID, token string) ([]Client, smqerrors.SDKError)
 
 	// Filters clients and returns a page result.
 	//
@@ -633,17 +633,17 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Client",
 	//  }
-	//  clients, _ := sdk.Clients(ctx, pm, "domainID", "token")
+	//  clients, _ := sdk.Clients(ctx, pm, "workspaceID", "token")
 	//  fmt.Println(clients)
-	Clients(ctx context.Context, pm PageMetadata, domainID, token string) (ClientsPage, smqerrors.SDKError)
+	Clients(ctx context.Context, pm PageMetadata, workspaceID, token string) (ClientsPage, smqerrors.SDKError)
 
 	// Client returns client object by id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  client, _ := sdk.Client(ctx, "clientID", "domainID", "token")
+	//  client, _ := sdk.Client(ctx, "clientID", "workspaceID", "token")
 	//  fmt.Println(client)
-	Client(ctx context.Context, id, domainID, token string) (Client, smqerrors.SDKError)
+	Client(ctx context.Context, id, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// UpdateClient updates existing client.
 	//
@@ -656,9 +656,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  client, _ := sdk.UpdateClient(ctx, client, "domainID", "token")
+	//  client, _ := sdk.UpdateClient(ctx, client, "workspaceID", "token")
 	//  fmt.Println(client)
-	UpdateClient(ctx context.Context, client Client, domainID, token string) (Client, smqerrors.SDKError)
+	UpdateClient(ctx context.Context, client Client, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// UpdateClientTags updates the client's tags.
 	//
@@ -668,57 +668,57 @@ type SDK interface {
 	//    ID:   "clientID",
 	//    Tags: []string{"tag1", "tag2"},
 	//  }
-	//  client, _ := sdk.UpdateClientTags(ctx, client, "domainID", "token")
+	//  client, _ := sdk.UpdateClientTags(ctx, client, "workspaceID", "token")
 	//  fmt.Println(client)
-	UpdateClientTags(ctx context.Context, client Client, domainID, token string) (Client, smqerrors.SDKError)
+	UpdateClientTags(ctx context.Context, client Client, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// UpdateClientSecret updates the client's secret
 	//
 	// example:
 	//  ctx := context.Background()
-	//  client, err := sdk.UpdateClientSecret(ctx, "clientID", "newSecret", "domainID," "token")
+	//  client, err := sdk.UpdateClientSecret(ctx, "clientID", "newSecret", "workspaceID," "token")
 	//  fmt.Println(client)
-	UpdateClientSecret(ctx context.Context, id, secret, domainID, token string) (Client, smqerrors.SDKError)
+	UpdateClientSecret(ctx context.Context, id, secret, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// EnableClient changes client status to enabled.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  client, _ := sdk.EnableClient(ctx, "clientID", "domainID", "token")
+	//  client, _ := sdk.EnableClient(ctx, "clientID", "workspaceID", "token")
 	//  fmt.Println(client)
-	EnableClient(ctx context.Context, id, domainID, token string) (Client, smqerrors.SDKError)
+	EnableClient(ctx context.Context, id, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// DisableClient changes client status to disabled - soft delete.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  client, _ := sdk.DisableClient(ctx, "clientID", "domainID", "token")
+	//  client, _ := sdk.DisableClient(ctx, "clientID", "workspaceID", "token")
 	//  fmt.Println(client)
-	DisableClient(ctx context.Context, id, domainID, token string) (Client, smqerrors.SDKError)
+	DisableClient(ctx context.Context, id, workspaceID, token string) (Client, smqerrors.SDKError)
 
 	// DeleteClient deletes a client with the given id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteClient(ctx, "clientID", "domainID", "token")
+	//  err := sdk.DeleteClient(ctx, "clientID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteClient(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	DeleteClient(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// SetClientParent sets the parent group of a client.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.SetClientParent(ctx, "clientID", "domainID", "groupID", "token")
+	//  err := sdk.SetClientParent(ctx, "clientID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	SetClientParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	SetClientParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// RemoveClientParent removes the parent group of a client.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveClientParent(ctx, "clientID", "domainID", "groupID", "token")
+	//  err := sdk.RemoveClientParent(ctx, "clientID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	RemoveClientParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	RemoveClientParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// CreateClientRole creates new client role and returns its id.
 	//
@@ -729,9 +729,9 @@ type SDK interface {
 	//    OptionalActions: []string{"read", "update"},
 	//    OptionalMembers: []string{"member_id_1", "member_id_2"},
 	//  }
-	//  role, _ := sdk.CreateClientRole(ctx, "clientID", "domainID", rq, "token")
+	//  role, _ := sdk.CreateClientRole(ctx, "clientID", "workspaceID", rq, "token")
 	//  fmt.Println(role)
-	CreateClientRole(ctx context.Context, id, domainID string, rq RoleReq, token string) (Role, smqerrors.SDKError)
+	CreateClientRole(ctx context.Context, id, workspaceID string, rq RoleReq, token string) (Role, smqerrors.SDKError)
 
 	// ClientRoles returns client roles.
 	//
@@ -741,76 +741,76 @@ type SDK interface {
 	//   Offset: 0,
 	//   Limit:  10,
 	// }
-	//  roles, _ := sdk.ClientRoles(ctx, "clientID", "domainID", pm, "token")
+	//  roles, _ := sdk.ClientRoles(ctx, "clientID", "workspaceID", pm, "token")
 	//  fmt.Println(roles)
-	ClientRoles(ctx context.Context, id, domainID string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
+	ClientRoles(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
 
 	// ClientRole returns client role object by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.ClientRole(ctx, "clientID", "roleID", "domainID", "token")
+	//  role, _ := sdk.ClientRole(ctx, "clientID", "roleID", "workspaceID", "token")
 	//  fmt.Println(role)
-	ClientRole(ctx context.Context, id, roleID, domainID, token string) (Role, smqerrors.SDKError)
+	ClientRole(ctx context.Context, id, roleID, workspaceID, token string) (Role, smqerrors.SDKError)
 
 	// UpdateClientRole updates existing client role name.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.UpdateClientRole(ctx, "clientID", "roleID", "newName", "domainID", "token")
+	//  role, _ := sdk.UpdateClientRole(ctx, "clientID", "roleID", "newName", "workspaceID", "token")
 	//  fmt.Println(role)
-	UpdateClientRole(ctx context.Context, id, roleID, newName, domainID string, token string) (Role, smqerrors.SDKError)
+	UpdateClientRole(ctx context.Context, id, roleID, newName, workspaceID string, token string) (Role, smqerrors.SDKError)
 
 	// DeleteClientRole deletes a client role with the given clientID and  roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteClientRole(ctx, "clientID", "roleID", "domainID", "token")
+	//  err := sdk.DeleteClientRole(ctx, "clientID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteClientRole(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	DeleteClientRole(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AddClientRoleActions adds actions to a client role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  actions, _ := sdk.AddClientRoleActions(ctx, "clientID", "roleID", "domainID", actions, "token")
+	//  actions, _ := sdk.AddClientRoleActions(ctx, "clientID", "roleID", "workspaceID", actions, "token")
 	//  fmt.Println(actions)
-	AddClientRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) ([]string, smqerrors.SDKError)
+	AddClientRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) ([]string, smqerrors.SDKError)
 
 	// ClientRoleActions returns client role actions by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  actions, _ := sdk.ClientRoleActions(ctx, "clientID", "roleID", "domainID", "token")
+	//  actions, _ := sdk.ClientRoleActions(ctx, "clientID", "roleID", "workspaceID", "token")
 	//  fmt.Println(actions)
-	ClientRoleActions(ctx context.Context, id, roleID, domainID string, token string) ([]string, smqerrors.SDKError)
+	ClientRoleActions(ctx context.Context, id, roleID, workspaceID string, token string) ([]string, smqerrors.SDKError)
 
 	// RemoveClientRoleActions removes actions from a client role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  err := sdk.RemoveClientRoleActions(ctx, "clientID", "roleID", "domainID", actions, "token")
+	//  err := sdk.RemoveClientRoleActions(ctx, "clientID", "roleID", "workspaceID", actions, "token")
 	//  fmt.Println(err)
-	RemoveClientRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) smqerrors.SDKError
+	RemoveClientRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) smqerrors.SDKError
 
 	// RemoveAllClientRoleActions removes all actions from a client role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllClientRoleActions(ctx, "clientID", "roleID", "domainID", "token")
+	//  err := sdk.RemoveAllClientRoleActions(ctx, "clientID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	RemoveAllClientRoleActions(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	RemoveAllClientRoleActions(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AddClientRoleMembers adds members to a client role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  members, _ := sdk.AddClientRoleMembers(ctx, "clientID", "roleID", "domainID", members, "token")
+	//  members, _ := sdk.AddClientRoleMembers(ctx, "clientID", "roleID", "workspaceID", members, "token")
 	//  fmt.Println(members)
-	AddClientRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) ([]string, smqerrors.SDKError)
+	AddClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) ([]string, smqerrors.SDKError)
 
 	// ClientRoleMembers returns client role members by roleID.
 	//
@@ -820,34 +820,34 @@ type SDK interface {
 	//   Offset: 0,
 	//  Limit:  10,
 	// }
-	//  members, _ := sdk.ClientRoleMembers(ctx, "clientID", "roleID", "domainID", pm,"token")
+	//  members, _ := sdk.ClientRoleMembers(ctx, "clientID", "roleID", "workspaceID", pm,"token")
 	//  fmt.Println(members)
-	ClientRoleMembers(ctx context.Context, id, roleID, domainID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
+	ClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
 
 	// RemoveClientRoleMembers removes members from a client role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  err := sdk.RemoveClientRoleMembers(ctx, "clientID", "roleID", "domainID", members, "token")
+	//  err := sdk.RemoveClientRoleMembers(ctx, "clientID", "roleID", "workspaceID", members, "token")
 	//  fmt.Println(err)
-	RemoveClientRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) smqerrors.SDKError
+	RemoveClientRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) smqerrors.SDKError
 
 	// RemoveAllClientRoleMembers removes all members from a client role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllClientRoleMembers(ctx, "clientID", "roleID", "domainID", "token")
+	//  err := sdk.RemoveAllClientRoleMembers(ctx, "clientID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	RemoveAllClientRoleMembers(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	RemoveAllClientRoleMembers(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AvailableClientRoleActions returns available actions for a client role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  actions, _ := sdk.AvailableClientRoleActions(ctx, "domainID", "token")
+	//  actions, _ := sdk.AvailableClientRoleActions(ctx, "workspaceID", "token")
 	//  fmt.Println(actions)
-	AvailableClientRoleActions(ctx context.Context, domainID, token string) ([]string, smqerrors.SDKError)
+	AvailableClientRoleActions(ctx context.Context, workspaceID, token string) ([]string, smqerrors.SDKError)
 
 	// ListClientMembers list all members from all roles in a client .
 	//
@@ -857,9 +857,9 @@ type SDK interface {
 	//		Offset: 0,
 	//		Limit:  10,
 	//	}
-	//  members, _ := sdk.ListClientMembers(ctx, "client_id","domainID", pm, "token")
+	//  members, _ := sdk.ListClientMembers(ctx, "client_id","workspaceID", pm, "token")
 	//  fmt.Println(members)
-	ListClientMembers(ctx context.Context, clientID, domainID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
+	ListClientMembers(ctx context.Context, clientID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
 
 	// CreateGroup creates new group and returns its id.
 	//
@@ -871,9 +871,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.CreateGroup(ctx, group, "domainID", "token")
+	//  group, _ := sdk.CreateGroup(ctx, group, "workspaceID", "token")
 	//  fmt.Println(group)
-	CreateGroup(ctx context.Context, group Group, domainID, token string) (Group, smqerrors.SDKError)
+	CreateGroup(ctx context.Context, group Group, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// Groups returns page of groups.
 	//
@@ -884,17 +884,17 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Group",
 	//  }
-	//  groups, _ := sdk.Groups(ctx, pm, "domainID", "token")
+	//  groups, _ := sdk.Groups(ctx, pm, "workspaceID", "token")
 	//  fmt.Println(groups)
-	Groups(ctx context.Context, pm PageMetadata, domainID, token string) (GroupsPage, smqerrors.SDKError)
+	Groups(ctx context.Context, pm PageMetadata, workspaceID, token string) (GroupsPage, smqerrors.SDKError)
 
 	// Group returns users group object by id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  group, _ := sdk.Group(ctx, "groupID", "domainID", "token")
+	//  group, _ := sdk.Group(ctx, "groupID", "workspaceID", "token")
 	//  fmt.Println(group)
-	Group(ctx context.Context, id, domainID, token string) (Group, smqerrors.SDKError)
+	Group(ctx context.Context, id, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// UpdateGroup updates existing group.
 	//
@@ -907,9 +907,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  group, _ := sdk.UpdateGroup(ctx, group, "domainID", "token")
+	//  group, _ := sdk.UpdateGroup(ctx, group, "workspaceID", "token")
 	//  fmt.Println(group)
-	UpdateGroup(ctx context.Context, group Group, domainID, token string) (Group, smqerrors.SDKError)
+	UpdateGroup(ctx context.Context, group Group, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// UpdateGroupTags updates tags for existing group.
 	//
@@ -919,51 +919,51 @@ type SDK interface {
 	//    ID:   "groupID",
 	//    Tags: []string{"tag1", "tag2"}
 	//  }
-	//  group, _ := sdk.UpdateGroupTags(ctx, group, "domainID", "token")
+	//  group, _ := sdk.UpdateGroupTags(ctx, group, "workspaceID", "token")
 	//  fmt.Println(group)
-	UpdateGroupTags(ctx context.Context, group Group, domainID, token string) (Group, smqerrors.SDKError)
+	UpdateGroupTags(ctx context.Context, group Group, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// SetGroupParent sets the parent group of a group.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.SetGroupParent(ctx, "groupID", "domainID", "groupID", "token")
+	//  err := sdk.SetGroupParent(ctx, "groupID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	SetGroupParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	SetGroupParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// RemoveGroupParent removes the parent group of a group.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveGroupParent(ctx, "groupID", "domainID", "groupID", "token")
+	//  err := sdk.RemoveGroupParent(ctx, "groupID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	RemoveGroupParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	RemoveGroupParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// AddChildren adds children groups to a group.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  groupIDs := []string{"groupID1", "groupID2"}
-	//  err := sdk.AddChildren(ctx, "groupID", "domainID", groupIDs, "token")
+	//  err := sdk.AddChildren(ctx, "groupID", "workspaceID", groupIDs, "token")
 	//  fmt.Println(err)
-	AddChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) smqerrors.SDKError
+	AddChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) smqerrors.SDKError
 
 	// RemoveChildren removes children groups from a group.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  groupIDs := []string{"groupID1", "groupID2"}
-	//  err := sdk.RemoveChildren(ctx, "groupID", "domainID", groupIDs, "token")
+	//  err := sdk.RemoveChildren(ctx, "groupID", "workspaceID", groupIDs, "token")
 	//  fmt.Println(err)
-	RemoveChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) smqerrors.SDKError
+	RemoveChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) smqerrors.SDKError
 
 	// RemoveAllChildren removes all children groups from a group.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllChildren(ctx, "groupID", "domainID", "token")
+	//  err := sdk.RemoveAllChildren(ctx, "groupID", "workspaceID", "token")
 	//  fmt.Println(err)
-	RemoveAllChildren(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	RemoveAllChildren(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// Children returns page of children groups.
 	//
@@ -973,33 +973,33 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  groups, _ := sdk.Children(ctx, "groupID", "domainID", pm, "token")
+	//  groups, _ := sdk.Children(ctx, "groupID", "workspaceID", pm, "token")
 	//  fmt.Println(groups)
-	Children(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsPage, smqerrors.SDKError)
+	Children(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsPage, smqerrors.SDKError)
 
 	// EnableGroup changes group status to enabled.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  group, _ := sdk.EnableGroup(ctx, "groupID", "domainID", "token")
+	//  group, _ := sdk.EnableGroup(ctx, "groupID", "workspaceID", "token")
 	//  fmt.Println(group)
-	EnableGroup(ctx context.Context, id, domainID, token string) (Group, smqerrors.SDKError)
+	EnableGroup(ctx context.Context, id, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// DisableGroup changes group status to disabled - soft delete.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  group, _ := sdk.DisableGroup(ctx, "groupID", "domainID", "token")
+	//  group, _ := sdk.DisableGroup(ctx, "groupID", "workspaceID", "token")
 	//  fmt.Println(group)
-	DisableGroup(ctx context.Context, id, domainID, token string) (Group, smqerrors.SDKError)
+	DisableGroup(ctx context.Context, id, workspaceID, token string) (Group, smqerrors.SDKError)
 
 	// DeleteGroup delete given group id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteGroup(ctx, "groupID", "domainID", "token")
+	//  err := sdk.DeleteGroup(ctx, "groupID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteGroup(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	DeleteGroup(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// Hierarchy returns page of groups hierarchy.
 	//
@@ -1010,9 +1010,9 @@ type SDK interface {
 	//    Direction : -1,
 	//	  Tree: true,
 	//  }
-	// groups, _ := sdk.Hierarchy(ctx, "groupID", "domainID", pm, "token")
+	// groups, _ := sdk.Hierarchy(ctx, "groupID", "workspaceID", pm, "token")
 	// fmt.Println(groups)
-	Hierarchy(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsHierarchyPage, smqerrors.SDKError)
+	Hierarchy(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsHierarchyPage, smqerrors.SDKError)
 
 	// CreateGroupRole creates new group role and returns its id.
 	//
@@ -1023,9 +1023,9 @@ type SDK interface {
 	//    OptionalActions: []string{"read", "update"},
 	//    OptionalMembers: []string{"member_id_1", "member_id_2"},
 	//  }
-	//  role, _ := sdk.CreateGroupRole(ctx, "groupID", "domainID", rq, "token")
+	//  role, _ := sdk.CreateGroupRole(ctx, "groupID", "workspaceID", rq, "token")
 	//  fmt.Println(role)
-	CreateGroupRole(ctx context.Context, id, domainID string, rq RoleReq, token string) (Role, smqerrors.SDKError)
+	CreateGroupRole(ctx context.Context, id, workspaceID string, rq RoleReq, token string) (Role, smqerrors.SDKError)
 
 	// GroupRoles returns group roles.
 	//
@@ -1035,76 +1035,76 @@ type SDK interface {
 	//   Offset: 0,
 	//   Limit:  10,
 	// }
-	//  roles, _ := sdk.GroupRoles(ctx, "groupID", "domainID",pm, "token")
+	//  roles, _ := sdk.GroupRoles(ctx, "groupID", "workspaceID",pm, "token")
 	//  fmt.Println(roles)
-	GroupRoles(ctx context.Context, id, domainID string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
+	GroupRoles(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
 
 	// GroupRole returns group role object by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.GroupRole(ctx, "groupID", "roleID", "domainID", "token")
+	//  role, _ := sdk.GroupRole(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(role)
-	GroupRole(ctx context.Context, id, roleID, domainID, token string) (Role, smqerrors.SDKError)
+	GroupRole(ctx context.Context, id, roleID, workspaceID, token string) (Role, smqerrors.SDKError)
 
 	// UpdateGroupRole updates existing group role name.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.UpdateGroupRole(ctx, "groupID", "roleID", "newName", "domainID", "token")
+	//  role, _ := sdk.UpdateGroupRole(ctx, "groupID", "roleID", "newName", "workspaceID", "token")
 	//  fmt.Println(role)
-	UpdateGroupRole(ctx context.Context, id, roleID, newName, domainID string, token string) (Role, smqerrors.SDKError)
+	UpdateGroupRole(ctx context.Context, id, roleID, newName, workspaceID string, token string) (Role, smqerrors.SDKError)
 
 	// DeleteGroupRole deletes a group role with the given groupID and  roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteGroupRole(ctx, "groupID", "roleID", "domainID", "token")
+	//  err := sdk.DeleteGroupRole(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteGroupRole(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	DeleteGroupRole(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AddGroupRoleActions adds actions to a group role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  actions, _ := sdk.AddGroupRoleActions(ctx, "groupID", "roleID", "domainID", actions, "token")
+	//  actions, _ := sdk.AddGroupRoleActions(ctx, "groupID", "roleID", "workspaceID", actions, "token")
 	//  fmt.Println(actions)
-	AddGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) ([]string, smqerrors.SDKError)
+	AddGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) ([]string, smqerrors.SDKError)
 
 	// GroupRoleActions returns group role actions by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  actions, _ := sdk.GroupRoleActions(ctx, "groupID", "roleID", "domainID", "token")
+	//  actions, _ := sdk.GroupRoleActions(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(actions)
-	GroupRoleActions(ctx context.Context, id, roleID, domainID string, token string) ([]string, smqerrors.SDKError)
+	GroupRoleActions(ctx context.Context, id, roleID, workspaceID string, token string) ([]string, smqerrors.SDKError)
 
 	// RemoveGroupRoleActions removes actions from a group role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  err := sdk.RemoveGroupRoleActions(ctx, "groupID", "roleID", "domainID", actions, "token")
+	//  err := sdk.RemoveGroupRoleActions(ctx, "groupID", "roleID", "workspaceID", actions, "token")
 	//  fmt.Println(err)
-	RemoveGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) smqerrors.SDKError
+	RemoveGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) smqerrors.SDKError
 
 	// RemoveAllGroupRoleActions removes all actions from a group role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllGroupRoleActions(ctx, "groupID", "roleID", "domainID", "token")
+	//  err := sdk.RemoveAllGroupRoleActions(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	RemoveAllGroupRoleActions(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	RemoveAllGroupRoleActions(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AddGroupRoleMembers adds members to a group role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  members, _ := sdk.AddGroupRoleMembers(ctx, "groupID", "roleID", "domainID", members, "token")
+	//  members, _ := sdk.AddGroupRoleMembers(ctx, "groupID", "roleID", "workspaceID", members, "token")
 	//  fmt.Println(members)
-	AddGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) ([]string, smqerrors.SDKError)
+	AddGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) ([]string, smqerrors.SDKError)
 
 	// GroupRoleMembers returns group role members by roleID.
 	//
@@ -1114,26 +1114,26 @@ type SDK interface {
 	//   Offset: 0,
 	//  Limit:  10,
 	// }
-	//  members, _ := sdk.GroupRoleMembers(ctx, "groupID", "roleID", "domainID", "token")
+	//  members, _ := sdk.GroupRoleMembers(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(members)
-	GroupRoleMembers(ctx context.Context, id, roleID, domainID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
+	GroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
 
 	// RemoveGroupRoleMembers removes members from a group role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  err := sdk.RemoveGroupRoleMembers(ctx, "groupID", "roleID", "domainID", members, "token")
+	//  err := sdk.RemoveGroupRoleMembers(ctx, "groupID", "roleID", "workspaceID", members, "token")
 	//  fmt.Println(err)
-	RemoveGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) smqerrors.SDKError
+	RemoveGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) smqerrors.SDKError
 
 	// RemoveAllGroupRoleMembers removes all members from a group role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllGroupRoleMembers(ctx, "groupID", "roleID", "domainID", "token")
+	//  err := sdk.RemoveAllGroupRoleMembers(ctx, "groupID", "roleID", "workspaceID", "token")
 	//  fmt.Println(err)
-	RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, domainID, token string) smqerrors.SDKError
+	RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, workspaceID, token string) smqerrors.SDKError
 
 	// AvailableGroupRoleActions returns available actions for a group role.
 	//
@@ -1151,9 +1151,9 @@ type SDK interface {
 	//		Offset: 0,
 	//		Limit:  10,
 	//	}
-	//  members, _ := sdk.ListGroupMembers(ctx, "group_id","domainID", pm, "token")
+	//  members, _ := sdk.ListGroupMembers(ctx, "group_id","workspaceID", pm, "token")
 	//  fmt.Println(members)
-	ListGroupMembers(ctx context.Context, groupID, domainID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
+	ListGroupMembers(ctx context.Context, groupID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
 
 	// CreateChannel creates new channel and returns its id.
 	//
@@ -1165,9 +1165,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.CreateChannel(ctx, channel, "domainID", "token")
+	//  channel, _ := sdk.CreateChannel(ctx, channel, "workspaceID", "token")
 	//  fmt.Println(channel)
-	CreateChannel(ctx context.Context, channel Channel, domainID, token string) (Channel, smqerrors.SDKError)
+	CreateChannel(ctx context.Context, channel Channel, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// CreateChannels creates new channels and returns their ids.
 	//
@@ -1187,9 +1187,9 @@ type SDK interface {
 	//      },
 	//    },
 	//  }
-	//  channels, _ := sdk.CreateChannels(ctx, channels, "domainID", "token")
+	//  channels, _ := sdk.CreateChannels(ctx, channels, "workspaceID", "token")
 	//  fmt.Println(channels)
-	CreateChannels(ctx context.Context, channels []Channel, domainID, token string) ([]Channel, smqerrors.SDKError)
+	CreateChannels(ctx context.Context, channels []Channel, workspaceID, token string) ([]Channel, smqerrors.SDKError)
 
 	// Channels returns page of channels.
 	//
@@ -1200,17 +1200,17 @@ type SDK interface {
 	//    Limit:  10,
 	//    Name:   "My Channel",
 	//  }
-	//  channels, _ := sdk.Channels(ctx, pm, "domainID", "token")
+	//  channels, _ := sdk.Channels(ctx, pm, "workspaceID", "token")
 	//  fmt.Println(channels)
-	Channels(ctx context.Context, pm PageMetadata, domainID, token string) (ChannelsPage, smqerrors.SDKError)
+	Channels(ctx context.Context, pm PageMetadata, workspaceID, token string) (ChannelsPage, smqerrors.SDKError)
 
 	// Channel returns channel data by id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  channel, _ := sdk.Channel(ctx, "channelID", "domainID", "token")
+	//  channel, _ := sdk.Channel(ctx, "channelID", "workspaceID", "token")
 	//  fmt.Println(channel)
-	Channel(ctx context.Context, id, domainID, token string) (Channel, smqerrors.SDKError)
+	Channel(ctx context.Context, id, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// UpdateChannel updates existing channel.
 	//
@@ -1223,9 +1223,9 @@ type SDK interface {
 	//      "key": "value",
 	//    },
 	//  }
-	//  channel, _ := sdk.UpdateChannel(ctx, channel, "domainID", "token")
+	//  channel, _ := sdk.UpdateChannel(ctx, channel, "workspaceID", "token")
 	//  fmt.Println(channel)
-	UpdateChannel(ctx context.Context, channel Channel, domainID, token string) (Channel, smqerrors.SDKError)
+	UpdateChannel(ctx context.Context, channel Channel, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// UpdateChannelTags updates the channel's tags.
 	//
@@ -1235,49 +1235,49 @@ type SDK interface {
 	//    ID:   "channelID",
 	//    Tags: []string{"tag1", "tag2"},
 	//  }
-	//  channel, _ := sdk.UpdateChannelTags(ctx, channel, "domainID", "token")
+	//  channel, _ := sdk.UpdateChannelTags(ctx, channel, "workspaceID", "token")
 	//  fmt.Println(channel)
-	UpdateChannelTags(ctx context.Context, c Channel, domainID, token string) (Channel, smqerrors.SDKError)
+	UpdateChannelTags(ctx context.Context, c Channel, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// EnableChannel changes channel status to enabled.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  channel, _ := sdk.EnableChannel(ctx, "channelID", "domainID", "token")
+	//  channel, _ := sdk.EnableChannel(ctx, "channelID", "workspaceID", "token")
 	//  fmt.Println(channel)
-	EnableChannel(ctx context.Context, id, domainID, token string) (Channel, smqerrors.SDKError)
+	EnableChannel(ctx context.Context, id, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// DisableChannel changes channel status to disabled - soft delete.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  channel, _ := sdk.DisableChannel(ctx, "channelID", "domainID", "token")
+	//  channel, _ := sdk.DisableChannel(ctx, "channelID", "workspaceID", "token")
 	//  fmt.Println(channel)
-	DisableChannel(ctx context.Context, id, domainID, token string) (Channel, smqerrors.SDKError)
+	DisableChannel(ctx context.Context, id, workspaceID, token string) (Channel, smqerrors.SDKError)
 
 	// DeleteChannel delete given group id.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteChannel(ctx, "channelID", "domainID", "token")
+	//  err := sdk.DeleteChannel(ctx, "channelID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteChannel(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	DeleteChannel(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// SetChannelParent sets the parent group of a channel.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.SetChannelParent(ctx, "channelID", "domainID", "groupID", "token")
+	//  err := sdk.SetChannelParent(ctx, "channelID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	SetChannelParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	SetChannelParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// RemoveChannelParent removes the parent group of a channel.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveChannelParent(ctx, "channelID", "domainID", "groupID", "token")
+	//  err := sdk.RemoveChannelParent(ctx, "channelID", "workspaceID", "groupID", "token")
 	//  fmt.Println(err)
-	RemoveChannelParent(ctx context.Context, id, domainID, groupID, token string) smqerrors.SDKError
+	RemoveChannelParent(ctx context.Context, id, workspaceID, groupID, token string) smqerrors.SDKError
 
 	// Connect bulk connects clients to channels specified by id.
 	//
@@ -1288,9 +1288,9 @@ type SDK interface {
 	//    ClientIDs:  []string{"client_id_1"},
 	//    Types:   	  []string{"Publish", "Subscribe"},
 	//  }
-	//  err := sdk.Connect(ctx, conns, "domainID", "token")
+	//  err := sdk.Connect(ctx, conns, "workspaceID", "token")
 	//  fmt.Println(err)
-	Connect(ctx context.Context, conn Connection, domainID, token string) smqerrors.SDKError
+	Connect(ctx context.Context, conn Connection, workspaceID, token string) smqerrors.SDKError
 
 	// Disconnect
 	//
@@ -1301,27 +1301,27 @@ type SDK interface {
 	//    ClientIDs:  []string{"client_id_1"},
 	//    Types:   	  []string{"Publish", "Subscribe"},
 	//  }
-	//  err := sdk.Disconnect(ctx, conns, "domainID", "token")
+	//  err := sdk.Disconnect(ctx, conns, "workspaceID", "token")
 	//  fmt.Println(err)
-	Disconnect(ctx context.Context, conn Connection, domainID, token string) smqerrors.SDKError
+	Disconnect(ctx context.Context, conn Connection, workspaceID, token string) smqerrors.SDKError
 
 	// ConnectClient connects client to specified channel by id.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  clientIDs := []string{"client_id_1", "client_id_2"}
-	//  err := sdk.ConnectClients(ctx, "channelID", clientIDs, []string{"Publish", "Subscribe"}, "domainID", "token")
+	//  err := sdk.ConnectClients(ctx, "channelID", clientIDs, []string{"Publish", "Subscribe"}, "workspaceID", "token")
 	//  fmt.Println(err)
-	ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) smqerrors.SDKError
+	ConnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) smqerrors.SDKError
 
 	// DisconnectClient disconnect client from specified channel by id.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  clientIDs := []string{"client_id_1", "client_id_2"}
-	//  err := sdk.DisconnectClients(ctx, "channelID", clientIDs, []string{"Publish", "Subscribe"}, "domainID", "token")
+	//  err := sdk.DisconnectClients(ctx, "channelID", clientIDs, []string{"Publish", "Subscribe"}, "workspaceID", "token")
 	//  fmt.Println(err)
-	DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, domainID, token string) smqerrors.SDKError
+	DisconnectClients(ctx context.Context, channelID string, clientIDs, connTypes []string, workspaceID, token string) smqerrors.SDKError
 
 	// ListChannelMembers list all members from all roles in a channel .
 	//
@@ -1331,18 +1331,18 @@ type SDK interface {
 	//		Offset: 0,
 	//		Limit:  10,
 	//	}
-	//  members, _ := sdk.ListChannelMembers(ctx, "channel_id","domainID", pm, "token")
+	//  members, _ := sdk.ListChannelMembers(ctx, "channel_id","workspaceID", pm, "token")
 	//  fmt.Println(members)
-	ListChannelMembers(ctx context.Context, channelID, domainID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
+	ListChannelMembers(ctx context.Context, channelID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
 
 	// SendMessage send message to specified channel.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  msg := '[{"bn":"some-base-name:","bt":1.276020076001e+09, "bu":"A","bver":5, "n":"voltage","u":"V","v":120.1}, {"n":"current","t":-5,"v":1.2}, {"n":"current","t":-4,"v":1.3}]'
-	//  err := sdk.SendMessage(ctx, "domainID", "76cc9425-9df0-4b53-99b8-8dabbd3444fc/test", msg, "clientSecret")
+	//  err := sdk.SendMessage(ctx, "workspaceID", "76cc9425-9df0-4b53-99b8-8dabbd3444fc/test", msg, "clientSecret")
 	//  fmt.Println(err)
-	SendMessage(ctx context.Context, domainID, topic, msg, secret string) smqerrors.SDKError
+	SendMessage(ctx context.Context, workspaceID, topic, msg, secret string) smqerrors.SDKError
 
 	// SetContentType sets message content type.
 	//
@@ -1358,82 +1358,82 @@ type SDK interface {
 	//  fmt.Println(health)
 	Health(service string) (HealthInfo, smqerrors.SDKError)
 
-	// CreateDomain creates new domain and returns its details.
+	// CreateWorkspace creates new workspace and returns its details.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  domain := sdk.Domain{
-	//    Name: "My Domain",
+	//  workspace := sdk.Workspace{
+	//    Name: "My Workspace",
 	//    Metadata: sdk.Metadata{
 	//      "key": "value",
 	//    },
 	//  }
-	//  domain, _ := sdk.CreateDomain(ctx, group, "token")
-	//  fmt.Println(domain)
-	CreateDomain(ctx context.Context, d Domain, token string) (Domain, smqerrors.SDKError)
+	//  workspace, _ := sdk.CreateWorkspace(ctx, group, "token")
+	//  fmt.Println(workspace)
+	CreateWorkspace(ctx context.Context, d Workspace, token string) (Workspace, smqerrors.SDKError)
 
-	// Domain retrieve domain information of given domain ID .
+	// Workspace retrieve workspace information of given workspace ID .
 	//
 	// example:
 	//  ctx := context.Background()
-	//  domain, _ := sdk.Domain(ctx, "domainID", "token")
-	//  fmt.Println(domain)
-	Domain(ctx context.Context, domainID, token string) (Domain, smqerrors.SDKError)
+	//  workspace, _ := sdk.Workspace(ctx, "workspaceID", "token")
+	//  fmt.Println(workspace)
+	Workspace(ctx context.Context, workspaceID, token string) (Workspace, smqerrors.SDKError)
 
-	// UpdateDomain updates details of the given domain ID.
+	// UpdateWorkspace updates details of the given workspace ID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  domain := sdk.Domain{
-	//    ID : "domainID"
-	//    Name: "New Domain Name",
+	//  workspace := sdk.Workspace{
+	//    ID : "workspaceID"
+	//    Name: "New Workspace Name",
 	//    Metadata: sdk.Metadata{
 	//      "key": "value",
 	//    },
 	//  }
-	//  domain, _ := sdk.UpdateDomain(ctx, domain, "token")
-	//  fmt.Println(domain)
-	UpdateDomain(ctx context.Context, d Domain, token string) (Domain, smqerrors.SDKError)
+	//  workspace, _ := sdk.UpdateWorkspace(ctx, workspace, "token")
+	//  fmt.Println(workspace)
+	UpdateWorkspace(ctx context.Context, d Workspace, token string) (Workspace, smqerrors.SDKError)
 
-	// Domains returns list of domain for the given filters.
+	// Workspaces returns list of workspace for the given filters.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  pm := sdk.PageMetadata{
 	//    Offset: 0,
 	//    Limit:  10,
-	//    Name:   "My Domain",
+	//    Name:   "My Workspace",
 	//    Permission : "view"
 	//  }
-	//  domains, _ := sdk.Domains(ctx, pm, "token")
-	//  fmt.Println(domains)
-	Domains(ctx context.Context, pm PageMetadata, token string) (DomainsPage, smqerrors.SDKError)
+	//  workspaces, _ := sdk.Workspaces(ctx, pm, "token")
+	//  fmt.Println(workspaces)
+	Workspaces(ctx context.Context, pm PageMetadata, token string) (WorkspacesPage, smqerrors.SDKError)
 
-	// EnableDomain changes the status of the domain to enabled.
+	// EnableWorkspace changes the status of the workspace to enabled.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.EnableDomain(ctx, "domainID", "token")
+	//  err := sdk.EnableWorkspace(ctx, "workspaceID", "token")
 	//  fmt.Println(err)
-	EnableDomain(ctx context.Context, domainID, token string) smqerrors.SDKError
+	EnableWorkspace(ctx context.Context, workspaceID, token string) smqerrors.SDKError
 
-	// DisableDomain changes the status of the domain to disabled.
+	// DisableWorkspace changes the status of the workspace to disabled.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DisableDomain(ctx, "domainID", "token")
+	//  err := sdk.DisableWorkspace(ctx, "workspaceID", "token")
 	//  fmt.Println(err)
-	DisableDomain(ctx context.Context, domainID, token string) smqerrors.SDKError
+	DisableWorkspace(ctx context.Context, workspaceID, token string) smqerrors.SDKError
 
-	// FreezeDomain changes the status of the domain to frozen.
+	// FreezeWorkspace changes the status of the workspace to frozen.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.FreezeDomain(ctx, "domainID", "token")
+	//  err := sdk.FreezeWorkspace(ctx, "workspaceID", "token")
 	//  fmt.Println(err)
-	FreezeDomain(ctx context.Context, domainID, token string) smqerrors.SDKError
+	FreezeWorkspace(ctx context.Context, workspaceID, token string) smqerrors.SDKError
 
-	// CreateDomainRole creates new domain role and returns its id.
+	// CreateWorkspaceRole creates new workspace role and returns its id.
 	//
 	// example:
 	//  ctx := context.Background()
@@ -1442,11 +1442,11 @@ type SDK interface {
 	//    OptionalActions: []string{"read", "update"},
 	//    OptionalMembers: []string{"member_id_1", "member_id_2"},
 	//  }
-	//  role, _ := sdk.CreateDomainRole(ctx, "domainID", rq, "token")
+	//  role, _ := sdk.CreateWorkspaceRole(ctx, "workspaceID", rq, "token")
 	//  fmt.Println(role)
-	CreateDomainRole(ctx context.Context, id string, rq RoleReq, token string) (Role, smqerrors.SDKError)
+	CreateWorkspaceRole(ctx context.Context, id string, rq RoleReq, token string) (Role, smqerrors.SDKError)
 
-	// DomainRoles returns domain roles.
+	// WorkspaceRoles returns workspace roles.
 	//
 	// example:
 	//  ctx := context.Background()
@@ -1454,78 +1454,78 @@ type SDK interface {
 	//   Offset: 0,
 	//   Limit:  10,
 	// }
-	//  roles, _ := sdk.DomainRoles(ctx, "domainID", pm, "token")
+	//  roles, _ := sdk.WorkspaceRoles(ctx, "workspaceID", pm, "token")
 	//  fmt.Println(roles)
-	DomainRoles(ctx context.Context, id string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
+	WorkspaceRoles(ctx context.Context, id string, pm PageMetadata, token string) (RolesPage, smqerrors.SDKError)
 
-	// DomainRole returns domain role object by roleID.
+	// WorkspaceRole returns workspace role object by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.DomainRole(ctx, "domainID", "roleID", "token")
+	//  role, _ := sdk.WorkspaceRole(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(role)
-	DomainRole(ctx context.Context, id, roleID, token string) (Role, smqerrors.SDKError)
+	WorkspaceRole(ctx context.Context, id, roleID, token string) (Role, smqerrors.SDKError)
 
-	// UpdateDomainRole updates existing domain role name.
+	// UpdateWorkspaceRole updates existing workspace role name.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  role, _ := sdk.UpdateDomainRole(ctx, "domainID", "roleID", "newName", "token")
+	//  role, _ := sdk.UpdateWorkspaceRole(ctx, "workspaceID", "roleID", "newName", "token")
 	//  fmt.Println(role)
-	UpdateDomainRole(ctx context.Context, id, roleID, newName string, token string) (Role, smqerrors.SDKError)
+	UpdateWorkspaceRole(ctx context.Context, id, roleID, newName string, token string) (Role, smqerrors.SDKError)
 
-	// DeleteDomainRole deletes a domain role with the given domainID and roleID.
+	// DeleteWorkspaceRole deletes a workspace role with the given workspaceID and roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteDomainRole(ctx, "domainID", "roleID", "token")
+	//  err := sdk.DeleteWorkspaceRole(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(err)
-	DeleteDomainRole(ctx context.Context, id, roleID, token string) smqerrors.SDKError
+	DeleteWorkspaceRole(ctx context.Context, id, roleID, token string) smqerrors.SDKError
 
-	// AddDomainRoleActions adds actions to a domain role.
+	// AddWorkspaceRoleActions adds actions to a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  actions, _ := sdk.AddDomainRoleActions(ctx, "domainID", "roleID", actions, "token")
+	//  actions, _ := sdk.AddWorkspaceRoleActions(ctx, "workspaceID", "roleID", actions, "token")
 	//  fmt.Println(actions)
-	AddDomainRoleActions(ctx context.Context, id, roleID string, actions []string, token string) ([]string, smqerrors.SDKError)
+	AddWorkspaceRoleActions(ctx context.Context, id, roleID string, actions []string, token string) ([]string, smqerrors.SDKError)
 
-	// DomainRoleActions returns domain role actions by roleID.
+	// WorkspaceRoleActions returns workspace role actions by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  actions, _ := sdk.DomainRoleActions(ctx, "domainID", "roleID", "token")
+	//  actions, _ := sdk.WorkspaceRoleActions(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(actions)
-	DomainRoleActions(ctx context.Context, id, roleID string, token string) ([]string, smqerrors.SDKError)
+	WorkspaceRoleActions(ctx context.Context, id, roleID string, token string) ([]string, smqerrors.SDKError)
 
-	// RemoveDomainRoleActions removes actions from a domain role.
+	// RemoveWorkspaceRoleActions removes actions from a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  actions := []string{"read", "update"}
-	//  err := sdk.RemoveDomainRoleActions(ctx, "domainID", "roleID", actions, "token")
+	//  err := sdk.RemoveWorkspaceRoleActions(ctx, "workspaceID", "roleID", actions, "token")
 	//  fmt.Println(err)
-	RemoveDomainRoleActions(ctx context.Context, id, roleID string, actions []string, token string) smqerrors.SDKError
+	RemoveWorkspaceRoleActions(ctx context.Context, id, roleID string, actions []string, token string) smqerrors.SDKError
 
-	// RemoveAllDomainRoleActions removes all actions from a domain role.
+	// RemoveAllWorkspaceRoleActions removes all actions from a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllDomainRoleActions(ctx, "domainID", "roleID", "token")
+	//  err := sdk.RemoveAllWorkspaceRoleActions(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(err)
-	RemoveAllDomainRoleActions(ctx context.Context, id, roleID, token string) smqerrors.SDKError
+	RemoveAllWorkspaceRoleActions(ctx context.Context, id, roleID, token string) smqerrors.SDKError
 
-	// AddDomainRoleMembers adds members to a domain role.
+	// AddWorkspaceRoleMembers adds members to a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  members, _ := sdk.AddDomainRoleMembers(ctx, "domainID", "roleID", members, "token")
+	//  members, _ := sdk.AddWorkspaceRoleMembers(ctx, "workspaceID", "roleID", members, "token")
 	//  fmt.Println(members)
-	AddDomainRoleMembers(ctx context.Context, id, roleID string, members []string, token string) ([]string, smqerrors.SDKError)
+	AddWorkspaceRoleMembers(ctx context.Context, id, roleID string, members []string, token string) ([]string, smqerrors.SDKError)
 
-	// DomainRoleMembers returns domain role members by roleID.
+	// WorkspaceRoleMembers returns workspace role members by roleID.
 	//
 	// example:
 	//  ctx := context.Background()
@@ -1533,36 +1533,36 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  members, _ := sdk.DomainRoleMembers(ctx, "domainID", "roleID", "token")
+	//  members, _ := sdk.WorkspaceRoleMembers(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(members)
-	DomainRoleMembers(ctx context.Context, id, roleID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
+	WorkspaceRoleMembers(ctx context.Context, id, roleID string, pm PageMetadata, token string) (RoleMembersPage, smqerrors.SDKError)
 
-	// RemoveDomainRoleMembers removes members from a domain role.
+	// RemoveWorkspaceRoleMembers removes members from a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
 	//  members := []string{"member_id_1", "member_id_2"}
-	//  err := sdk.RemoveDomainRoleMembers(ctx, "domainID", "roleID", members, "token")
+	//  err := sdk.RemoveWorkspaceRoleMembers(ctx, "workspaceID", "roleID", members, "token")
 	//  fmt.Println(err)
-	RemoveDomainRoleMembers(ctx context.Context, id, roleID string, members []string, token string) smqerrors.SDKError
+	RemoveWorkspaceRoleMembers(ctx context.Context, id, roleID string, members []string, token string) smqerrors.SDKError
 
-	// RemoveAllDomainRoleMembers removes all members from a domain role.
+	// RemoveAllWorkspaceRoleMembers removes all members from a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  err := sdk.RemoveAllDomainRoleMembers(ctx, "domainID", "roleID", "token")
+	//  err := sdk.RemoveAllWorkspaceRoleMembers(ctx, "workspaceID", "roleID", "token")
 	//  fmt.Println(err)
-	RemoveAllDomainRoleMembers(ctx context.Context, id, roleID, token string) smqerrors.SDKError
+	RemoveAllWorkspaceRoleMembers(ctx context.Context, id, roleID, token string) smqerrors.SDKError
 
-	// AvailableDomainRoleActions returns available actions for a domain role.
+	// AvailableWorkspaceRoleActions returns available actions for a workspace role.
 	//
 	// example:
 	//  ctx := context.Background()
-	//  actions, _ := sdk.AvailableDomainRoleActions(ctx, "token")
+	//  actions, _ := sdk.AvailableWorkspaceRoleActions(ctx, "token")
 	//  fmt.Println(actions)
-	AvailableDomainRoleActions(ctx context.Context, token string) ([]string, smqerrors.SDKError)
+	AvailableWorkspaceRoleActions(ctx context.Context, token string) ([]string, smqerrors.SDKError)
 
-	// ListDomainUsers returns list of users for the given domain ID and filters.
+	// ListWorkspaceUsers returns list of users for the given workspace ID and filters.
 	//
 	// example:
 	//  ctx := context.Background()
@@ -1570,16 +1570,16 @@ type SDK interface {
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  members, _ := sdk.ListDomainMembers(ctx, "domain_id", pm, "token")
+	//  members, _ := sdk.ListWorkspaceMembers(ctx, "workspace_id", pm, "token")
 	//  fmt.Println(members)
-	ListDomainMembers(ctx context.Context, domainID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
+	ListWorkspaceMembers(ctx context.Context, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, smqerrors.SDKError)
 
 	// SendInvitation sends an invitation to the email address associated with the given user.
 	//
 	// For example:
 	//  ctx := context.Background()
 	//  invitation := sdk.Invitation{
-	//    DomainID: "domainID",
+	//    WorkspaceID: "workspaceID",
 	//    UserID:   "userID",
 	//    Relation: "contributor", // available options: "owner", "admin", "editor", "contributor", "guest"
 	//  }
@@ -1595,70 +1595,70 @@ type SDK interface {
 	//  fmt.Println(invitations)
 	Invitations(ctx context.Context, pm PageMetadata, token string) (invitations InvitationPage, err error)
 
-	// AcceptInvitation accepts an invitation by adding the user to the domain that they were invited to.
+	// AcceptInvitation accepts an invitation by adding the user to the workspace that they were invited to.
 	//
 	// For example:
 	//  ctx := context.Background()
-	//  err := sdk.AcceptInvitation(ctx, "domainID", "token")
+	//  err := sdk.AcceptInvitation(ctx, "workspaceID", "token")
 	//  fmt.Println(err)
-	AcceptInvitation(ctx context.Context, domainID, token string) (err error)
+	AcceptInvitation(ctx context.Context, workspaceID, token string) (err error)
 
 	// RejectInvitation rejects an invitation.
 	//
 	// For example:
 	//  ctx := context.Background()
-	//  err := sdk.RejectInvitation(ctx, "domainID", "token")
+	//  err := sdk.RejectInvitation(ctx, "workspaceID", "token")
 	//  fmt.Println(err)
-	RejectInvitation(ctx context.Context, domainID, token string) (err error)
+	RejectInvitation(ctx context.Context, workspaceID, token string) (err error)
 
 	// DeleteInvitation deletes an invitation.
 	//
 	// For example:
 	//  ctx := context.Background()
-	//  err := sdk.DeleteInvitation(ctx, "userID", "domainID", "token")
+	//  err := sdk.DeleteInvitation(ctx, "userID", "workspaceID", "token")
 	//  fmt.Println(err)
-	DeleteInvitation(ctx context.Context, userID, domainID, token string) (err error)
+	DeleteInvitation(ctx context.Context, userID, workspaceID, token string) (err error)
 
-	// DomainInvitations returns a list of invitations for a specific domain.
+	// WorkspaceInvitations returns a list of invitations for a specific workspace.
 	// For example:
 	//  ctx := context.Background()
 	//  pm := sdk.PageMetadata{
 	//    Offset: 0,
 	//    Limit:  10,
 	//  }
-	//  invitations, _ := sdk.DomainInvitations(ctx, "domainID", pm, "token")
+	//  invitations, _ := sdk.WorkspaceInvitations(ctx, "workspaceID", pm, "token")
 	//  fmt.Println(invitations)
-	DomainInvitations(ctx context.Context, pm PageMetadata, token, domainID string) (invitations InvitationPage, err error)
+	WorkspaceInvitations(ctx context.Context, pm PageMetadata, token, workspaceID string) (invitations InvitationPage, err error)
 
 	// AddBootstrap add bootstrap configuration
-	AddBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) (string, smqerrors.SDKError)
+	AddBootstrap(ctx context.Context, cfg BootstrapConfig, workspaceID, token string) (string, smqerrors.SDKError)
 
 	// CreateBootstrapProfile creates a bootstrap profile template.
-	CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
+	CreateBootstrapProfile(ctx context.Context, profile BootstrapProfile, workspaceID, token string) (BootstrapProfile, smqerrors.SDKError)
 
 	// ViewBootstrap returns Client Config with given ID belonging to the user identified by the given token.
-	ViewBootstrap(ctx context.Context, id, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
+	ViewBootstrap(ctx context.Context, id, workspaceID, token string) (BootstrapConfig, smqerrors.SDKError)
 
 	// ViewBootstrapProfile returns bootstrap profile with the given ID.
-	ViewBootstrapProfile(ctx context.Context, id, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
+	ViewBootstrapProfile(ctx context.Context, id, workspaceID, token string) (BootstrapProfile, smqerrors.SDKError)
 
 	// UpdateBootstrap updates editable fields of the provided Config.
-	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, domainID, token string) smqerrors.SDKError
+	UpdateBootstrap(ctx context.Context, cfg BootstrapConfig, workspaceID, token string) smqerrors.SDKError
 
 	// UpdateBootstrapProfile updates editable fields of the provided bootstrap profile and returns the updated profile.
-	UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, domainID, token string) (BootstrapProfile, smqerrors.SDKError)
+	UpdateBootstrapProfile(ctx context.Context, profile BootstrapProfile, workspaceID, token string) (BootstrapProfile, smqerrors.SDKError)
 
 	// UpdateBootstrapCerts updates bootstrap config certificates.
-	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, domainID, token string) (BootstrapConfig, smqerrors.SDKError)
+	UpdateBootstrapCerts(ctx context.Context, id string, clientCert, clientKey, ca string, workspaceID, token string) (BootstrapConfig, smqerrors.SDKError)
 
 	// UpdateBootstrapConnection updates connections performs update of the channel list corresponding Client is connected to.
-	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, domainID, token string) smqerrors.SDKError
+	UpdateBootstrapConnection(ctx context.Context, id string, channels []string, workspaceID, token string) smqerrors.SDKError
 
 	// RemoveBootstrap removes Config with specified token that belongs to the user identified by the given token.
-	RemoveBootstrap(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	RemoveBootstrap(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// RemoveBootstrapProfile removes a bootstrap profile with the given ID.
-	RemoveBootstrapProfile(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	RemoveBootstrapProfile(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// Bootstrap returns Config to the Client with provided external ID using external key.
 	Bootstrap(ctx context.Context, externalID, externalKey string) (BootstrapConfig, smqerrors.SDKError)
@@ -1667,38 +1667,38 @@ type SDK interface {
 	BootstrapSecure(ctx context.Context, externalID, externalKey, cryptoKey string) (BootstrapConfig, smqerrors.SDKError)
 
 	// Bootstraps retrieves a list of managed configs.
-	Bootstraps(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapPage, smqerrors.SDKError)
+	Bootstraps(ctx context.Context, pm PageMetadata, workspaceID, token string) (BootstrapPage, smqerrors.SDKError)
 
 	// BootstrapProfiles retrieves a list of bootstrap profiles.
-	BootstrapProfiles(ctx context.Context, pm PageMetadata, domainID, token string) (BootstrapProfilesPage, smqerrors.SDKError)
+	BootstrapProfiles(ctx context.Context, pm PageMetadata, workspaceID, token string) (BootstrapProfilesPage, smqerrors.SDKError)
 
 	// Whitelist updates Client bootstrap status with given ID belonging to the user identified by the given token.
-	Whitelist(ctx context.Context, clientID string, status BootstrapStatus, domainID, token string) smqerrors.SDKError
+	Whitelist(ctx context.Context, clientID string, status BootstrapStatus, workspaceID, token string) smqerrors.SDKError
 
 	// AssignBootstrapProfile assigns a bootstrap profile to the given enrollment.
-	AssignBootstrapProfile(ctx context.Context, configID, profileID, domainID, token string) smqerrors.SDKError
+	AssignBootstrapProfile(ctx context.Context, configID, profileID, workspaceID, token string) smqerrors.SDKError
 
 	// BindBootstrapResources stores resolved binding snapshots for the given enrollment.
-	BindBootstrapResources(ctx context.Context, configID string, bindings []BootstrapBindingRequest, domainID, token string) smqerrors.SDKError
+	BindBootstrapResources(ctx context.Context, configID string, bindings []BootstrapBindingRequest, workspaceID, token string) smqerrors.SDKError
 
 	// BootstrapBindings lists stored binding snapshots for the given enrollment.
-	BootstrapBindings(ctx context.Context, configID, domainID, token string) ([]BootstrapBindingSnapshot, smqerrors.SDKError)
+	BootstrapBindings(ctx context.Context, configID, workspaceID, token string) ([]BootstrapBindingSnapshot, smqerrors.SDKError)
 
 	// RefreshBootstrapBindings refreshes stored binding snapshots for the given enrollment.
-	RefreshBootstrapBindings(ctx context.Context, configID, domainID, token string) smqerrors.SDKError
+	RefreshBootstrapBindings(ctx context.Context, configID, workspaceID, token string) smqerrors.SDKError
 
 	// ReadMessages reads messages of specified channel.
-	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, domainID, token string) (MessagesPage, smqerrors.SDKError)
+	ReadMessages(ctx context.Context, pm MessagePageMetadata, chanID, workspaceID, token string) (MessagesPage, smqerrors.SDKError)
 
 	// ListGatewayDevices lists the devices observed publishing through a
 	// gateway on a channel (MG-15): distinct device_id values, each with its
 	// last-seen time and message count.
-	ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, domainID, token string) (GatewayDevicesPage, smqerrors.SDKError)
+	ListGatewayDevices(ctx context.Context, chanID, publisherID string, pm DeviceViewPageMetadata, workspaceID, token string) (GatewayDevicesPage, smqerrors.SDKError)
 
 	// ListDeviceGateways lists the gateways observed relaying for a device on
 	// a channel (MG-15): distinct publisher values, each with its last-seen
 	// time and message count.
-	ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, domainID, token string) (DeviceGatewaysPage, smqerrors.SDKError)
+	ListDeviceGateways(ctx context.Context, chanID, deviceID string, pm DeviceViewPageMetadata, workspaceID, token string) (DeviceGatewaysPage, smqerrors.SDKError)
 
 	// CreateSubscription creates a new subscription.
 	CreateSubscription(ctx context.Context, topic, contact, token string) (string, smqerrors.SDKError)
@@ -1713,115 +1713,115 @@ type SDK interface {
 	DeleteSubscription(ctx context.Context, id, token string) smqerrors.SDKError
 
 	// UpdateAlarm updates an existing alarm.
-	UpdateAlarm(ctx context.Context, alarm Alarm, domainID, token string) (Alarm, smqerrors.SDKError)
+	UpdateAlarm(ctx context.Context, alarm Alarm, workspaceID, token string) (Alarm, smqerrors.SDKError)
 
 	// ViewAlarm retrieves an alarm by its ID.
-	ViewAlarm(ctx context.Context, id, domainID, token string) (Alarm, smqerrors.SDKError)
+	ViewAlarm(ctx context.Context, id, workspaceID, token string) (Alarm, smqerrors.SDKError)
 
 	// ListAlarms retrieves a page of alarms.
-	ListAlarms(ctx context.Context, pm PageMetadata, domainID, token string) (AlarmsPage, smqerrors.SDKError)
+	ListAlarms(ctx context.Context, pm PageMetadata, workspaceID, token string) (AlarmsPage, smqerrors.SDKError)
 
 	// DeleteAlarm deletes an alarm.
-	DeleteAlarm(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	DeleteAlarm(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// AddReportConfig creates a new report configuration.
-	AddReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	AddReportConfig(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// ViewReportConfig retrieves a report config by its ID.
-	ViewReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	ViewReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportConfig updates an existing report configuration.
-	UpdateReportConfig(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	UpdateReportConfig(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportSchedule updates an existing report configuration's schedule.
-	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	UpdateReportSchedule(ctx context.Context, cfg ReportConfig, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// RemoveReportConfig deletes a report config.
-	RemoveReportConfig(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	RemoveReportConfig(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// ListReportsConfig retrieves a page of report configs.
-	ListReportsConfig(ctx context.Context, pm PageMetadata, domainID, token string) (ReportConfigPage, smqerrors.SDKError)
+	ListReportsConfig(ctx context.Context, pm PageMetadata, workspaceID, token string) (ReportConfigPage, smqerrors.SDKError)
 
 	// EnableReportConfig enables a report config.
-	EnableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	EnableReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// DisableReportConfig disables a report config.
-	DisableReportConfig(ctx context.Context, id, domainID, token string) (ReportConfig, smqerrors.SDKError)
+	DisableReportConfig(ctx context.Context, id, workspaceID, token string) (ReportConfig, smqerrors.SDKError)
 
 	// UpdateReportTemplate updates a report template.
-	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, domainID, token string) smqerrors.SDKError
+	UpdateReportTemplate(ctx context.Context, cfg ReportConfig, workspaceID, token string) smqerrors.SDKError
 
 	// ViewReportTemplate retrieves a report template.
-	ViewReportTemplate(ctx context.Context, id, domainID, token string) (ReportTemplate, smqerrors.SDKError)
+	ViewReportTemplate(ctx context.Context, id, workspaceID, token string) (ReportTemplate, smqerrors.SDKError)
 
 	// DeleteReportTemplate deletes a report template.
-	DeleteReportTemplate(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	DeleteReportTemplate(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// GenerateReport generates a report from a configuration.
-	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, domainID, token string) (ReportPage, *ReportFile, smqerrors.SDKError)
+	GenerateReport(ctx context.Context, config ReportConfig, action ReportAction, workspaceID, token string) (ReportPage, *ReportFile, smqerrors.SDKError)
 
 	// AddRule creates a new rule.
-	AddRule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
+	AddRule(ctx context.Context, r Rule, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// ViewRule retrieves a rule by its ID.
-	ViewRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
+	ViewRule(ctx context.Context, id, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRule updates an existing rule.
-	UpdateRule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
+	UpdateRule(ctx context.Context, r Rule, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRuleTags updates an existing rule's tags.
-	UpdateRuleTags(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
+	UpdateRuleTags(ctx context.Context, r Rule, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// UpdateRuleSchedule updates an existing rule's schedule.
-	UpdateRuleSchedule(ctx context.Context, r Rule, domainID, token string) (Rule, smqerrors.SDKError)
+	UpdateRuleSchedule(ctx context.Context, r Rule, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// ListRules retrieves a page of rules.
-	ListRules(ctx context.Context, pm PageMetadata, domainID, token string) (Page, smqerrors.SDKError)
+	ListRules(ctx context.Context, pm PageMetadata, workspaceID, token string) (Page, smqerrors.SDKError)
 
 	// RemoveRule deletes a rule.
-	RemoveRule(ctx context.Context, id, domainID, token string) smqerrors.SDKError
+	RemoveRule(ctx context.Context, id, workspaceID, token string) smqerrors.SDKError
 
 	// EnableRule enables a rule.
-	EnableRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
+	EnableRule(ctx context.Context, id, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// DisableRule disables a rule.
-	DisableRule(ctx context.Context, id, domainID, token string) (Rule, smqerrors.SDKError)
+	DisableRule(ctx context.Context, id, workspaceID, token string) (Rule, smqerrors.SDKError)
 
 	// IssueCert issues a certificate for an entity.
 	//
 	// example:
-	//  cert, _ := sdk.IssueCert(context.Background(), "entityID", "8760h", []string{"127.0.0.1"}, sdk.Options{CommonName: "cn"}, "domainID", "token")
-	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, domainID, token string) (Certificate, smqerrors.SDKError)
+	//  cert, _ := sdk.IssueCert(context.Background(), "entityID", "8760h", []string{"127.0.0.1"}, sdk.Options{CommonName: "cn"}, "workspaceID", "token")
+	IssueCert(ctx context.Context, entityID, ttl string, ipAddrs []string, opts Options, workspaceID, token string) (Certificate, smqerrors.SDKError)
 
 	// RevokeCert revokes a certificate by serial number.
 	//
 	// example:
-	//  err := sdk.RevokeCert(context.Background(), "serialNumber", "domainID", "token")
-	RevokeCert(ctx context.Context, serialNumber, domainID, token string) smqerrors.SDKError
+	//  err := sdk.RevokeCert(context.Background(), "serialNumber", "workspaceID", "token")
+	RevokeCert(ctx context.Context, serialNumber, workspaceID, token string) smqerrors.SDKError
 
 	// RenewCert renews a certificate by serial number.
 	//
 	// example:
-	//  cert, _ := sdk.RenewCert(context.Background(), "serialNumber", "domainID", "token")
-	RenewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, smqerrors.SDKError)
+	//  cert, _ := sdk.RenewCert(context.Background(), "serialNumber", "workspaceID", "token")
+	RenewCert(ctx context.Context, serialNumber, workspaceID, token string) (Certificate, smqerrors.SDKError)
 
 	// ListCerts lists certificates matching the given metadata filter.
 	//
 	// example:
-	//  page, _ := sdk.ListCerts(context.Background(), sdk.PageMetadata{Limit: 10}, "domainID", "token")
-	ListCerts(ctx context.Context, pm PageMetadata, domainID, token string) (CertificatePage, smqerrors.SDKError)
+	//  page, _ := sdk.ListCerts(context.Background(), sdk.PageMetadata{Limit: 10}, "workspaceID", "token")
+	ListCerts(ctx context.Context, pm PageMetadata, workspaceID, token string) (CertificatePage, smqerrors.SDKError)
 
 	// DeleteCert deletes all certificates for the given entity ID.
 	//
 	// example:
-	//  err := sdk.DeleteCert(context.Background(), "entityID", "domainID", "token")
-	DeleteCert(ctx context.Context, entityID, domainID, token string) smqerrors.SDKError
+	//  err := sdk.DeleteCert(context.Background(), "entityID", "workspaceID", "token")
+	DeleteCert(ctx context.Context, entityID, workspaceID, token string) smqerrors.SDKError
 
 	// ViewCert retrieves a certificate by serial number.
 	//
 	// example:
-	//  cert, _ := sdk.ViewCert(context.Background(), "serialNumber", "domainID", "token")
-	ViewCert(ctx context.Context, serialNumber, domainID, token string) (Certificate, smqerrors.SDKError)
+	//  cert, _ := sdk.ViewCert(context.Background(), "serialNumber", "workspaceID", "token")
+	ViewCert(ctx context.Context, serialNumber, workspaceID, token string) (Certificate, smqerrors.SDKError)
 
 	// OCSP checks the revocation status of a certificate.
 	//
@@ -1844,8 +1844,8 @@ type SDK interface {
 	// IssueFromCSR issues a certificate from a provided CSR.
 	//
 	// example:
-	//  cert, _ := sdk.IssueFromCSR(context.Background(), "entityID", "8760h", csrPEM, "domainID", "token")
-	IssueFromCSR(ctx context.Context, entityID, ttl, csr, domainID, token string) (Certificate, smqerrors.SDKError)
+	//  cert, _ := sdk.IssueFromCSR(context.Background(), "entityID", "8760h", csrPEM, "workspaceID", "token")
+	IssueFromCSR(ctx context.Context, entityID, ttl, csr, workspaceID, token string) (Certificate, smqerrors.SDKError)
 
 	// IssueFromCSRInternal issues a certificate from a CSR using agent authentication.
 	//
@@ -1862,14 +1862,14 @@ type SDK interface {
 	// RevokeAll revokes all certificates for an entity ID.
 	//
 	// example:
-	//  err := sdk.RevokeAll(context.Background(), "entityID", "domainID", "token")
-	RevokeAll(ctx context.Context, entityID, domainID, token string) smqerrors.SDKError
+	//  err := sdk.RevokeAll(context.Background(), "entityID", "workspaceID", "token")
+	RevokeAll(ctx context.Context, entityID, workspaceID, token string) smqerrors.SDKError
 
 	// EntityID gets the entity ID for a certificate by serial number.
 	//
 	// example:
-	//  id, _ := sdk.EntityID(context.Background(), "serialNumber", "domainID", "token")
-	EntityID(ctx context.Context, serialNumber, domainID, token string) (string, smqerrors.SDKError)
+	//  id, _ := sdk.EntityID(context.Background(), "serialNumber", "workspaceID", "token")
+	EntityID(ctx context.Context, serialNumber, workspaceID, token string) (string, smqerrors.SDKError)
 
 	// CreateCSR creates a Certificate Signing Request from metadata and a private key.
 	//
@@ -1885,7 +1885,7 @@ type mgSDK struct {
 	usersURL       string
 	groupsURL      string
 	channelsURL    string
-	domainsURL     string
+	workspacesURL  string
 	HostURL        string
 	bootstrapURL   string
 	readersURL     string
@@ -1907,7 +1907,7 @@ type Config struct {
 	UsersURL       string
 	GroupsURL      string
 	ChannelsURL    string
-	DomainsURL     string
+	WorkspacesURL  string
 	HostURL        string
 	BootstrapURL   string
 	ReaderURL      string
@@ -1930,7 +1930,7 @@ func NewSDK(conf Config) SDK {
 		usersURL:       conf.UsersURL,
 		groupsURL:      conf.GroupsURL,
 		channelsURL:    conf.ChannelsURL,
-		domainsURL:     conf.DomainsURL,
+		workspacesURL:  conf.WorkspacesURL,
 		HostURL:        conf.HostURL,
 		bootstrapURL:   conf.BootstrapURL,
 		readersURL:     conf.ReaderURL,
@@ -2134,8 +2134,8 @@ func (pm PageMetadata) query() (string, error) {
 	if pm.UserID != "" {
 		q.Add("user_id", pm.UserID)
 	}
-	if pm.DomainID != "" {
-		q.Add("domain_id", pm.DomainID)
+	if pm.WorkspaceID != "" {
+		q.Add("workspace_id", pm.WorkspaceID)
 	}
 	if pm.Relation != "" {
 		q.Add("relation", pm.Relation)

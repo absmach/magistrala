@@ -15,6 +15,12 @@ import (
 	"sync"
 )
 
+// GraphQL variable keys shared across paginated queries.
+const (
+	varLimit  = "limit"
+	varOffset = "offset"
+)
+
 type Client struct {
 	baseURL       string
 	token         string
@@ -271,8 +277,8 @@ func (c *Client) GroupMembers(ctx context.Context, groupID string) ([]Entity, er
 			}
 		}`, map[string]any{
 			atomInputKeyParentGroupID: groupID,
-			"limit":                   groupMembersPageLimit,
-			"offset":                  offset,
+			varLimit:                  groupMembersPageLimit,
+			varOffset:                 offset,
 		}, &out)
 		if err != nil {
 			return nil, err
@@ -344,10 +350,10 @@ func (c *Client) ChildGroups(ctx context.Context, parentID string, limit, offset
 	}
 	vars := map[string]any{atomInputKeyParentID: parentID}
 	if limit > 0 {
-		vars["limit"] = int(limit)
+		vars[varLimit] = int(limit)
 	}
 	if offset > 0 {
-		vars["offset"] = int(offset)
+		vars[varOffset] = int(offset)
 	}
 	err := c.graphQL(ctx, `query ChildGroups($parentId: ID!, $limit: Int, $offset: Int) {
 		childGroups(parentId: $parentId, limit: $limit, offset: $offset) {
@@ -479,7 +485,7 @@ func (c *Client) listCapabilitiesPage(ctx context.Context, limit, offset int) (C
 	}
 	err := c.graphQL(ctx, `query Actions($limit: Int!, $offset: Int!) {
 		actions(limit: $limit, offset: $offset) { total items { id name description } }
-	}`, map[string]any{"limit": limit, "offset": offset}, &out)
+	}`, map[string]any{varLimit: limit, varOffset: offset}, &out)
 	return out.Actions, err
 }
 
@@ -561,7 +567,7 @@ func (c *Client) ListActionAssignmentRules(ctx context.Context, spec ActionAssig
 	var out struct {
 		ActionAssignmentRules ActionAssignmentRuleList `json:"actionAssignmentRules"`
 	}
-	vars := map[string]any{"limit": 100, "offset": 0}
+	vars := map[string]any{varLimit: 100, varOffset: 0}
 	setIfNotEmpty(vars, "tenantId", spec.TenantID)
 	setIfNotEmpty(vars, "entityKind", spec.EntityKind)
 	setIfNotEmpty(vars, "actionName", spec.ActionName)
@@ -1096,10 +1102,10 @@ func directPolicyQueryVariables(q DirectPolicyQuery) map[string]any {
 	setIfNotEmpty(vars, "subjectKind", q.SubjectKind)
 	setIfNotEmpty(vars, atomInputKeySubjectID, q.SubjectID)
 	if q.Limit > 0 {
-		vars["limit"] = int(q.Limit)
+		vars[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		vars["offset"] = int(q.Offset)
+		vars[varOffset] = int(q.Offset)
 	}
 	return vars
 }
@@ -1114,10 +1120,10 @@ func authorizedObjectIDVariables(q AuthorizedObjectIDsQuery) map[string]any {
 	setIfNotEmpty(input, "tenantId", q.TenantID)
 	setIfNotEmpty(input, "q", q.Q)
 	if q.Limit > 0 {
-		input["limit"] = int(q.Limit)
+		input[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		input["offset"] = int(q.Offset)
+		input[varOffset] = int(q.Offset)
 	}
 	return map[string]any{atomInputKeyInput: input}
 }
@@ -1131,10 +1137,10 @@ func queryVariables(q Query) map[string]any {
 	setIfNotEmpty(vars, "tenantId", q.TenantID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
-		vars["limit"] = int(q.Limit)
+		vars[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		vars["offset"] = int(q.Offset)
+		vars[varOffset] = int(q.Offset)
 	}
 	return vars
 }
@@ -1150,10 +1156,10 @@ func objectQueryVariables(q Query) map[string]any {
 		vars["attributesContains"] = q.AttributesContains
 	}
 	if q.Limit > 0 {
-		vars["limit"] = int(q.Limit)
+		vars[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		vars["offset"] = int(q.Offset)
+		vars[varOffset] = int(q.Offset)
 	}
 	return vars
 }
@@ -1168,10 +1174,10 @@ func groupListVariables(q Query) map[string]any {
 	setIfNotEmpty(vars, atomInputKeyParentID, q.ParentID)
 	setIfNotEmpty(vars, atomAttributeStatus, q.Status)
 	if q.Limit > 0 {
-		vars["limit"] = int(q.Limit)
+		vars[varLimit] = int(q.Limit)
 	}
 	if q.Offset > 0 {
-		vars["offset"] = int(q.Offset)
+		vars[varOffset] = int(q.Offset)
 	}
 	return vars
 }

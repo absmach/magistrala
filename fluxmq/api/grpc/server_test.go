@@ -15,19 +15,19 @@ import (
 )
 
 type fakeTopicParser struct {
-	domainID  string
-	channelID string
-	subtopic  string
-	topicType messaging.TopicType
-	err       error
+	workspaceID string
+	channelID   string
+	subtopic    string
+	topicType   messaging.TopicType
+	err         error
 }
 
 func (p fakeTopicParser) ParsePublishTopic(context.Context, string, bool) (string, string, string, messaging.TopicType, error) {
-	return p.domainID, p.channelID, p.subtopic, p.topicType, p.err
+	return p.workspaceID, p.channelID, p.subtopic, p.topicType, p.err
 }
 
 func (p fakeTopicParser) ParseSubscribeTopic(context.Context, string, bool) (string, string, string, messaging.TopicType, error) {
-	return p.domainID, p.channelID, p.subtopic, p.topicType, p.err
+	return p.workspaceID, p.channelID, p.subtopic, p.topicType, p.err
 }
 
 type fakeAtomAuthorizer struct {
@@ -41,10 +41,10 @@ func (a fakeAtomAuthorizer) CheckAuthz(context.Context, atom.AuthzRequest) (atom
 
 func TestAuthorizeReturnsAuthorizedOnlyWhenAllowed(t *testing.T) {
 	srv := NewServer(nil, nil, fakeTopicParser{
-		domainID:  "26ad5c3f-cd91-4ff0-9685-0c3115643174",
-		channelID: "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
-		subtopic:  "messages",
-		topicType: messaging.MessageType,
+		workspaceID: "26ad5c3f-cd91-4ff0-9685-0c3115643174",
+		channelID:   "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
+		subtopic:    "messages",
+		topicType:   messaging.MessageType,
 	}, fakeAtomAuthorizer{resp: atom.AuthzResponse{Allowed: true}}).(*connectServer)
 
 	res, err := srv.Authorize(context.Background(), connect.NewRequest(&authv1.AuthzReq{
@@ -59,10 +59,10 @@ func TestAuthorizeReturnsAuthorizedOnlyWhenAllowed(t *testing.T) {
 
 func TestAuthorizeReturnsDeniedOnlyWhenDenied(t *testing.T) {
 	srv := NewServer(nil, nil, fakeTopicParser{
-		domainID:  "26ad5c3f-cd91-4ff0-9685-0c3115643174",
-		channelID: "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
-		subtopic:  "messages",
-		topicType: messaging.MessageType,
+		workspaceID: "26ad5c3f-cd91-4ff0-9685-0c3115643174",
+		channelID:   "cdc8f55f-0c54-4a9f-b4aa-8c69d4a8ce15",
+		subtopic:    "messages",
+		topicType:   messaging.MessageType,
 	}, fakeAtomAuthorizer{resp: atom.AuthzResponse{Allowed: false}}).(*connectServer)
 
 	res, err := srv.Authorize(context.Background(), connect.NewRequest(&authv1.AuthzReq{

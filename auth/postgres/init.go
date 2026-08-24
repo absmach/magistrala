@@ -25,7 +25,7 @@ func Migration() *migrate.MemoryMigrationSource {
                         PRIMARY KEY (id, issuer_id)
                     )`,
 
-					`CREATE TABLE IF NOT EXISTS domains (
+					`CREATE TABLE IF NOT EXISTS workspaces (
                         id          VARCHAR(36) PRIMARY KEY,
                         name        VARCHAR(254),
                         tags        TEXT[],
@@ -54,14 +54,14 @@ func Migration() *migrate.MemoryMigrationSource {
 			{
 				Id: "auth_2",
 				Up: []string{
-					`ALTER TABLE domains ALTER COLUMN alias SET NOT NULL`,
+					`ALTER TABLE workspaces ALTER COLUMN alias SET NOT NULL`,
 				},
 			},
 			{
 				Id: "auth_3",
 				Up: []string{
 					`DROP TABLE IF EXISTS policies;
-                     DROP TABLE IF EXISTS domains;
+                     DROP TABLE IF EXISTS workspaces;
                     `,
 				},
 			},
@@ -93,11 +93,11 @@ func Migration() *migrate.MemoryMigrationSource {
 					`CREATE TABLE IF NOT EXISTS pat_scopes (
 						id              	VARCHAR(36) PRIMARY KEY,
 						pat_id          	VARCHAR(36) REFERENCES pats(id) ON DELETE CASCADE,
-						optional_domain_id	VARCHAR(36),
+						optional_workspace_id	VARCHAR(36),
 						entity_type     	VARCHAR(50) NOT NULL,
 						operation 			VARCHAR(50) NOT NULL,
 						entity_id			VARCHAR(50) NOT NULL,
-						UNIQUE (pat_id, optional_domain_id, entity_type, operation, entity_id)
+						UNIQUE (pat_id, optional_workspace_id, entity_type, operation, entity_id)
 					);`,
 				},
 				Down: []string{
@@ -128,10 +128,10 @@ func Migration() *migrate.MemoryMigrationSource {
 			{
 				Id: "auth_7",
 				Up: []string{
-					`ALTER TABLE pat_scopes RENAME COLUMN optional_domain_id TO domain_id;`,
+					`ALTER TABLE pat_scopes RENAME COLUMN optional_workspace_id TO workspace_id;`,
 				},
 				Down: []string{
-					`ALTER TABLE pat_scopes RENAME COLUMN domain_id TO optional_domain_id;`,
+					`ALTER TABLE pat_scopes RENAME COLUMN workspace_id TO optional_workspace_id;`,
 				},
 			},
 			{

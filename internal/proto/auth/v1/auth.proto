@@ -27,7 +27,7 @@ message AuthNRes {
 }
 
 message PolicyReq {
-  string domain = 1;
+  string workspace = 1;
   string subject_type = 2;
   string subject_kind = 3;
   string subject_relation = 4;
@@ -40,7 +40,7 @@ message PolicyReq {
 
 message PATReq {
   string pat_id = 1;
-  string domain = 2;
+  string workspace = 2;
   string operation = 3;
   string user_id = 4;
   string entity_id = 5;

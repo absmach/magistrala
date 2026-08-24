@@ -95,7 +95,7 @@ Five concepts. Nothing else.
 
 | Concept | What it is |
 |---|---|
-| **Device** | A thing that produces or consumes data. Identified by a **serial** — an arbitrary string, unique within a domain. Has a **device type**. Credentials optional. |
+| **Device** | A thing that produces or consumes data. Identified by a **serial** — an arbitrary string, unique within a workspace. Has a **device type**. Credentials optional. |
 | **Gateway** | **Not a separate concept — a capability.** A Device with `is_gateway` set: it holds credentials, publishes its own telemetry like any device, and additionally serves as a **reachability path** for devices that cannot reach the platform themselves. |
 | **Device Type** | A named, versioned declaration of what a class of devices measures and accepts as commands. |
 | **Channel** | The messaging path. Unchanged from today. |
@@ -241,7 +241,7 @@ Every message carries two identities answering different questions:
 | `device_id` | **Whose data it is** — the meter's serial | Taken verbatim from the topic |
 
 ```
-m/<domain>/c/<channel>[/d/<serial>][/<subtopic>]
+m/<workspace>/c/<channel>[/d/<serial>][/<subtopic>]
 ```
 
 `device_id` is the serial, carried as an **opaque string**. It is not resolved to
@@ -275,7 +275,7 @@ on channels it holds — mitigated by segregating channels per site or customer.
 | Field | Notes |
 |---|---|
 | `id` | Platform-assigned, stable |
-| `serial` | **The identifier that matters.** Arbitrary string, unique per domain, appears verbatim in publish topics. Must not contain `/` — the topic separator |
+| `serial` | **The identifier that matters.** Arbitrary string, unique per workspace, appears verbatim in publish topics. Must not contain `/` — the topic separator |
 | `name`, `tags`, `metadata` | As today |
 | `device_type_id`, `device_type_version_id` | What it measures and accepts |
 | `gateways []` | Declared relation, 0..N |
@@ -297,7 +297,7 @@ devices that name it — and is derived on demand, never stored on the gateway.
 
 The distinct kind earns its place in three ways: gateway *types* namespace
 separately from device types (so a watermeter type cannot be bound to a gateway);
-"every gateway in this domain" becomes expressible as a single grant; and
+"every gateway in this workspace" becomes expressible as a single grant; and
 listing gateways is a native filter rather than an attribute scan.
 
 A device may be promoted to a gateway. The kind changes; identity, history and
@@ -402,7 +402,7 @@ application logic; neither is needed today.
 #### Writing it
 
 ```
-PUT /{domain}/devices/{id}/gateways   { "gateways": ["gw-a", "gw-b"] }
+PUT /{workspace}/devices/{id}/gateways   { "gateways": ["gw-a", "gw-b"] }
 ```
 
 Replace-the-list rather than attach/detach: the list is short, and replacement
@@ -562,7 +562,7 @@ Each of these is a test of the model, drawn from real deployments:
 | Meter moved to another gateway | Update its `gateways`. History intact under both publishers |
 | Gateway replaced | New publisher, same serials. Declared list re-pointed |
 | Wired meter goes silent | Declared ✓, observed ✗ → **fault**, visible in the gateway view |
-| Two domains, same serial | Distinct devices — serial is unique *per domain* |
+| Two workspaces, same serial | Distinct devices — serial is unique *per workspace* |
 | Serial with `/`, `.`, uppercase | `.` and uppercase fine; `/` rejected at creation |
 | Gateway publishes an unknown serial | Stored as orphan data; visible to operators, grantable to nobody |
 | Meter replaced, same serial | Same device, continuous history. Correct for a swap; an operational choice, not a platform one |
@@ -573,7 +573,7 @@ Each of these is a test of the model, drawn from real deployments:
 ## 4. Mapping to Atom
 
 Atom is the entity store and authorization engine. It is deliberately
-domain-agnostic: it knows about principals, objects, groups and policies, and
+workspace-agnostic: it knows about principals, objects, groups and policies, and
 nothing about meters.
 
 ### 4.1 Atom's vocabulary
@@ -591,7 +591,7 @@ nothing about meters.
 
 | Magistrala | Atom | Notes |
 |---|---|---|
-| Domain | `Tenant` | Unchanged |
+| Workspace | `Tenant` | Unchanged |
 | **Device** | `Entity`, `kind = device` | |
 | **Gateway** | `Entity`, `kind = device`, attribute `is_gateway: true` | No new Atom kind — §4.4 |
 | **Serial** | `entities.external_id` | Arbitrary string, unique per tenant — §4.4 |
@@ -620,7 +620,7 @@ needs exists server-side and is simply not wired up:
 | Grant scope modes | 10, incl. `object_type`, `group_direct_objects`, `group_descendant_objects` (`001_initial.sql:607`) | Writes only `object`, `tenant`, `platform` (`policy_service.go:196-205`) |
 | Entity list filters | `profileId`, `parentGroupId`, `includeDescendants`, `status` (`entities.rs:74-87`) | Sends none |
 | Authorization-filtered listing | `entities()` routes through `authorized_object_ids` (`entities.rs:123`) | Unused |
-| Domain events (~40 kinds, transactional outbox) | `migrations/004_event_outbox.sql`, `src/events/publisher.rs` | Not consumed; not even enabled |
+| Workspace events (~40 kinds, transactional outbox) | `migrations/004_event_outbox.sql`, `src/events/publisher.rs` | Not consumed; not even enabled |
 
 ### 4.4 Required Atom changes
 
@@ -653,7 +653,7 @@ design removed its justification; the relation restores it.
 | Rejected | Why |
 |---|---|
 | `sensor` as an entity kind | Profile uniqueness is `(tenant, object_kind, kind, key)`, so one hardware model deployed both behind a gateway and directly would need two profiles that then drift. It also encodes topology into identity |
-| Device↔gateway as an Atom relation | Topology is Magistrala's domain semantics. Atom stores the attribute and never interprets it |
+| Device↔gateway as an Atom relation | Topology is Magistrala's workspace semantics. Atom stores the attribute and never interprets it |
 | Capability schemas as an Atom concept | Already generic — a JSON Schema on a profile version. Atom needs no IoT awareness |
 | Message or telemetry concepts | Atom is identity and authorization |
 
@@ -671,7 +671,7 @@ Unchanged. It connects over MQTT and publishes, exactly as today, to a topic wit
 one extra segment:
 
 ```
-m/<domain>/c/<channel>/d/<serial>
+m/<workspace>/c/<channel>/d/<serial>
 ```
 
 Nothing in the model requires the agent to hold a roster, resolve identifiers, or
@@ -755,7 +755,7 @@ crypto, templates, binding slots — is untouched and out of scope.
 |---|---|---|
 | **Atom** | A2 scoping filters on `authorizedObjectIds` | ATOM-02 |
 | **`pkg/atom`** | Device Type API | MG-02 |
-| **`pkg/atom`** | Consume Atom domain events for cache invalidation | MG-14 |
+| **`pkg/atom`** | Consume Atom workspace events for cache invalidation | MG-14 |
 | **Messaging** | `d` topic segment; `device_id` on `Message`, carried verbatim | MG-05 |
 | **Storage** | `device_id` column + index; `DeviceIDs` reader filter | MG-06 |
 | **Readers** | Intersect the device filter with the authorized set | MG-08 (B) |
@@ -925,7 +925,7 @@ group.** The whole customer-sharing design rests on group-scoped grants, so this
 is the load-bearing constraint.
 
 Concretely: a rented flat's watermeter visible to *both* the landlord and the
-tenant, as independent parties, neither being a domain admin.
+tenant, as independent parties, neither being a workspace admin.
 
 **Correction to the original framing.** This question conflated two things.
 *Multiple users accessing one device* already works with no Atom change: a
@@ -1066,12 +1066,12 @@ Revisit if manual local configuration or remote diagnostics become requirements.
 
 Atom profiles can be global or tenant-scoped, with different uniqueness
 constraints (`001_initial.sql:66-72`). A global "watermeter-v2" shared across all
-domains, or per-domain types only?
+workspaces, or per-workspace types only?
 
 - **A. Tenant-scoped only.** Always send `tenant_id`. Simple, isolated.
-- **B. Both.** Platform-defined catalogue plus domain-specific types. Needs
+- **B. Both.** Platform-defined catalogue plus workspace-specific types. Needs
   precedence rules when keys collide and an answer to who may edit global types.
-- **C. Global read-only**, seeded by the platform operator; domains may bind but
+- **C. Global read-only**, seeded by the platform operator; workspaces may bind but
   not modify.
 
 **Recommendation:** A for 1.0. B is a genuine feature (a vendor catalogue) but
@@ -1668,7 +1668,7 @@ model and needed one of the two changed to match.
 **Ref:** [architecture.md §10](./architecture.md#10-open-questions)
 
 **Largely answered by a later finding.** The question assumed Magistrala would
-have to *produce* these events. It does not — **Atom already publishes ~40 domain
+have to *produce* these events. It does not — **Atom already publishes ~40 workspace
 events** through a transactional outbox with an AMQP publisher
 (`atom/migrations/004_event_outbox.sql`, `atom/src/events/publisher.rs`),
 including `entity.create/update/delete`, `group_member.add/remove`,
@@ -1785,10 +1785,10 @@ events exist.
 
 **Blocks:** MG-08
 
-Domain admins legitimately read all devices on a channel. How is that recognised?
+Workspace admins legitimately read all devices on a channel. How is that recognised?
 
 **Why this needs care.** After MG-08 the reader asks Atom "which devices may this
-caller read?" and intersects that with the requested filter. A domain admin must
+caller read?" and intersects that with the requested filter. A workspace admin must
 still see everything — so how does the code recognise one?
 
 The tempting shortcut is *"if the authorized list is empty, skip filtering"*,
@@ -1797,14 +1797,14 @@ an identical empty list:
 
 | Caller | Per-device grants | Should see |
 |---|---|---|
-| Domain admin | none — holds a *tenant-wide* grant | everything |
+| Workspace admin | none — holds a *tenant-wide* grant | everything |
 | User with no access at all | none | nothing |
 
 Under that shortcut both get everything, so the caller with the fewest
 permissions receives the most data.
 
 - **A. Explicit tenant-scoped capability check** — "may read all devices in this
-  domain".
+  workspace".
 - **B. Role-name matching.**
 - **C. Treat an empty authorized set as unrestricted.**
 
@@ -1828,7 +1828,7 @@ tests rather than incidental coverage.
 - **B. Pass `device_id` in the authz context** and let Atom enforce. No new cache,
   but Atom must understand `gateway_id`.
 
-**Recommendation:** A — B breaks Atom's domain-agnosticism, which is a stated
+**Recommendation:** A — B breaks Atom's workspace-agnosticism, which is a stated
 constraint. Recorded so it is rejected deliberately rather than rediscovered.
 
 **Decision:**
@@ -1900,7 +1900,7 @@ the residual half of C2.
 **Blocks:** MG-11 (downgraded from 🔴 to a migration note)
 
 **What a PAT scope is.** A personal access token carries *scopes* — tuples of
-(domain, entity type, operation, entity id). `EntityType` is the "which kind of
+(workspace, entity type, operation, entity id). `EntityType` is the "which kind of
 thing" part, declared positionally (`auth/pat.go:75-86`):
 
 ```go
@@ -1958,7 +1958,7 @@ Device `Serial` and Bootstrap `ExternalID` are **not** required to be the same
 value. They may coincide, and often will, but nothing enforces it.
 
 Rationale: they answer different questions. `Serial` identifies a physical device
-within a domain; `ExternalID` identifies an enrollment used to fetch a config.
+within a workspace; `ExternalID` identifies an enrollment used to fetch a config.
 Forcing them equal couples the device model to the bootstrap flow for no
 requirement that exists today.
 
@@ -1995,9 +1995,9 @@ constraint and (apparently) uniqueness semantics
   constraint.
 - **C. Attribute + a unique index** added in Atom.
 
-**DECIDED: unique per Atom tenant (= Magistrala domain), not globally.**
+**DECIDED: unique per Atom tenant (= Magistrala workspace), not globally.**
 
-Two domains may each hold a meter with serial `ABC123`; within one domain the
+Two workspaces may each hold a meter with serial `ABC123`; within one workspace the
 serial identifies exactly one device.
 
 **Consequences**
@@ -2005,8 +2005,8 @@ serial identifies exactly one device.
 - Every serial lookup is tenant-scoped. A resolution path that forgets the tenant
   filter would cross-attribute data between customers — the failure is silent, so
   this needs an explicit test, not just care.
-- MG-05's device-route resolution must scope by domain, which it already has from
-  the topic (`m/<domain>/c/...`).
+- MG-05's device-route resolution must scope by workspace, which it already has from
+  the topic (`m/<workspace>/c/...`).
 - MG-13's announce path enforces uniqueness within the announcing gateway's
   tenant.
 
@@ -2027,7 +2027,7 @@ attribute is needed instead.
 
 **Blocks:** MG-05
 
-The topic grammar `m/<domain>/c/<channel>[/d/<device>][/<subtopic>]` is ambiguous
+The topic grammar `m/<workspace>/c/<channel>[/d/<device>][/<subtopic>]` is ambiguous
 unless `d` is reserved as a leading subtopic segment. Breaking change for anyone
 publishing to such a subtopic today.
 
@@ -2049,7 +2049,7 @@ convention, and the collision is unlikely in practice.
 **Blocks:** MG-09
 
 `internal/proto/common/v1/common.proto:52` is
-`{client_id, channel_id, domain_id, type}`. Are channel connections gateway-level
+`{client_id, channel_id, workspace_id, type}`. Are channel connections gateway-level
 only, or can a sub-device be connected independently?
 
 - **A. Gateway-level only.** The gateway connects; its devices inherit. Simpler,
@@ -2088,7 +2088,7 @@ cannot be run — is the worst of both.
 
 #### C8 ⚪ Resolve the channel-roles inconsistency before 1.0?
 
-Clients, groups and domains have full role APIs; **channels have none**
+Clients, groups and workspaces have full role APIs; **channels have none**
 (`pkg/sdk/channels.go` has no role methods). 1.0 freezes this.
 
 - **A. Add channel roles.**

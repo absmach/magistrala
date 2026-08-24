@@ -64,7 +64,7 @@ func TestEntityTypeString(t *testing.T) {
 		{
 			desc:     "Unknown entity type",
 			et:       auth.EntityType(100),
-			expected: "unknown domain entity type 100",
+			expected: "unknown workspace entity type 100",
 		},
 	}
 
@@ -368,7 +368,7 @@ func TestEntityTypeRoundTrip(t *testing.T) {
 		{auth.BootstrapType, "bootstrap"},
 		{auth.DashboardType, "dashboards"},
 		{auth.MessagesType, "messages"},
-		{auth.DomainsType, "domains"},
+		{auth.WorkspacesType, "workspaces"},
 		{auth.UsersType, "users"},
 		{auth.RulesType, "rules"},
 		{auth.ReportsType, "reports"},

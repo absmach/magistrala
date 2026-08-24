@@ -35,7 +35,7 @@ func TestInternalMetadataPreprovisionedStream(t *testing.T) {
 	t.Cleanup(func() { _ = ps.Close() })
 
 	stamp := time.Now().UnixNano()
-	topic := "m/integration-domain/c/integration-channel/" + time.Unix(0, stamp).Format("150405.000000000")
+	topic := "m/integration-workspace/c/integration-channel/" + time.Unix(0, stamp).Format("150405.000000000")
 	handler := &integrationHandler{}
 	subscribeErr := ps.Subscribe(ctx, messaging.SubscriberConfig{
 		ID:             "internal-metadata-integration",
@@ -50,7 +50,7 @@ func TestInternalMetadataPreprovisionedStream(t *testing.T) {
 	require.NoError(t, subscribeErr)
 
 	msg := &messaging.Message{
-		Domain:    "integration-domain",
+		Workspace: "integration-workspace",
 		Channel:   "integration-channel",
 		Subtopic:  time.Unix(0, stamp).Format("150405.000000000"),
 		Payload:   []byte("metadata-round-trip"),

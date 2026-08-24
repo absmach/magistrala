@@ -13,7 +13,7 @@ import (
 
 var defaultAttributes = []attribute.KeyValue{
 	attribute.Bool("messaging.destination.anonymous", false),
-	attribute.String("messaging.destination.template", "m/{domainID}/c/{channelID}/*"),
+	attribute.String("messaging.destination.template", "m/{workspaceID}/c/{channelID}/*"),
 	attribute.Bool("messaging.destination.temporary", true),
 	attribute.String("network.transport", "tcp"),
 	attribute.String("network.type", "ipv4"),

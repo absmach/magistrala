@@ -36,9 +36,9 @@ var cmdUserInvitations = []cobra.Command{
 		},
 	},
 	{
-		Use:   "accept <domain_id> <user_auth_token>",
+		Use:   "accept <workspace_id> <user_auth_token>",
 		Short: "Accept invitation",
-		Long: "Accept invitation to domain\n" +
+		Long: "Accept invitation to workspace\n" +
 			"Usage:\n" +
 			"\tmagistrala-cli invitations user accept 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -56,9 +56,9 @@ var cmdUserInvitations = []cobra.Command{
 		},
 	},
 	{
-		Use:   "reject <domain_id> <user_auth_token>",
+		Use:   "reject <workspace_id> <user_auth_token>",
 		Short: "Reject invitation",
-		Long: "Reject invitation to domain\n" +
+		Long: "Reject invitation to workspace\n" +
 			"Usage:\n" +
 			"\tmagistrala-cli invitations user reject 39f97daf-d6b6-40f4-b229-2697be8006ef $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
@@ -77,13 +77,13 @@ var cmdUserInvitations = []cobra.Command{
 	},
 }
 
-var cmdDomainInvitations = []cobra.Command{
+var cmdWorkspaceInvitations = []cobra.Command{
 	{
-		Use:   "send <user_id> <domain_id> <role_id> <user_auth_token>",
-		Short: "Send domain invitation",
-		Long: "Send invitation to user for a domain\n" +
+		Use:   "send <user_id> <workspace_id> <role_id> <user_auth_token>",
+		Short: "Send workspace invitation",
+		Long: "Send invitation to user for a workspace\n" +
 			"For example:\n" +
-			"\tmagistrala-cli invitations domain send 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a ba4c904c-e6d4-4978-9417-1694aac6793e $USER_AUTH_TOKEN\n",
+			"\tmagistrala-cli invitations workspace send 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a ba4c904c-e6d4-4978-9417-1694aac6793e $USER_AUTH_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 4 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -91,7 +91,7 @@ var cmdDomainInvitations = []cobra.Command{
 			}
 			inv := smqsdk.Invitation{
 				InviteeUserID: args[0],
-				DomainID:      args[1],
+				WorkspaceID:   args[1],
 				RoleID:        args[2],
 			}
 			if err := sdk.SendInvitation(cmd.Context(), inv, args[3]); err != nil {
@@ -103,12 +103,12 @@ var cmdDomainInvitations = []cobra.Command{
 		},
 	},
 	{
-		Use:   "get <domain_id> <user_auth_token>",
-		Short: "Get domain invitations",
-		Long: "Get all invitations for a specific domain\n" +
+		Use:   "get <workspace_id> <user_auth_token>",
+		Short: "Get workspace invitations",
+		Long: "Get all invitations for a specific workspace\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli invitations domain get <domain_id> <user_auth_token> - shows invitations for domain\n" +
-			"\tmagistrala-cli invitations domain get <domain_id> <user_auth_token> --offset <offset> --limit <limit> - shows invitations with provided offset and limit\n",
+			"\tmagistrala-cli invitations workspace get <workspace_id> <user_auth_token> - shows invitations for workspace\n" +
+			"\tmagistrala-cli invitations workspace get <workspace_id> <user_auth_token> --offset <offset> --limit <limit> - shows invitations with provided offset and limit\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 2 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -120,7 +120,7 @@ var cmdDomainInvitations = []cobra.Command{
 				Limit:  Limit,
 			}
 
-			u, err := sdk.DomainInvitations(cmd.Context(), pageMetadata, args[1], args[0])
+			u, err := sdk.WorkspaceInvitations(cmd.Context(), pageMetadata, args[1], args[0])
 			if err != nil {
 				logErrorCmd(*cmd, err)
 				return
@@ -130,11 +130,11 @@ var cmdDomainInvitations = []cobra.Command{
 		},
 	},
 	{
-		Use:   "delete <user_id> <domain_id> <user_auth_token>",
-		Short: "Delete domain invitation",
-		Long: "Delete invitation for a specific user and domain\n" +
+		Use:   "delete <user_id> <workspace_id> <user_auth_token>",
+		Short: "Delete workspace invitation",
+		Long: "Delete invitation for a specific user and workspace\n" +
 			"Usage:\n" +
-			"\tmagistrala-cli invitations domain delete 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a $USER_TOKEN\n",
+			"\tmagistrala-cli invitations workspace delete 39f97daf-d6b6-40f4-b229-2697be8006ef 4ef09eff-d500-4d56-b04f-d23a512d6f2a $USER_TOKEN\n",
 		Run: func(cmd *cobra.Command, args []string) {
 			if len(args) != 3 {
 				logUsageCmd(*cmd, cmd.Use)
@@ -166,16 +166,16 @@ func NewUserInvitationsCmd() *cobra.Command {
 	return &cmd
 }
 
-// NewDomainInvitationsCmd returns domain invitations command.
-func NewDomainInvitationsCmd() *cobra.Command {
+// NewWorkspaceInvitationsCmd returns workspace invitations command.
+func NewWorkspaceInvitationsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "domain [send | get | delete]",
-		Short: "Domain invitations management",
-		Long:  `Domain invitations management to send, get and delete invitations for domains`,
+		Use:   "workspace [send | get | delete]",
+		Short: "Workspace invitations management",
+		Long:  `Workspace invitations management to send, get and delete invitations for workspaces`,
 	}
 
-	for i := range cmdDomainInvitations {
-		cmd.AddCommand(&cmdDomainInvitations[i])
+	for i := range cmdWorkspaceInvitations {
+		cmd.AddCommand(&cmdWorkspaceInvitations[i])
 	}
 
 	return &cmd
@@ -184,13 +184,13 @@ func NewDomainInvitationsCmd() *cobra.Command {
 // NewInvitationsCmd returns invitations command.
 func NewInvitationsCmd() *cobra.Command {
 	cmd := cobra.Command{
-		Use:   "invitations [user | domain]",
+		Use:   "invitations [user | workspace]",
 		Short: "Invitations management",
-		Long:  `Invitations management with separate commands for user and domain invitations`,
+		Long:  `Invitations management with separate commands for user and workspace invitations`,
 	}
 
 	cmd.AddCommand(NewUserInvitationsCmd())
-	cmd.AddCommand(NewDomainInvitationsCmd())
+	cmd.AddCommand(NewWorkspaceInvitationsCmd())
 
 	return &cmd
 }

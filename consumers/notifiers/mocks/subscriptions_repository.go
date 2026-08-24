@@ -67,7 +67,7 @@ type SubscriptionsRepository_Remove_Call struct {
 // Remove is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *SubscriptionsRepository_Expecter) Remove(ctx interface{}, id interface{}) *SubscriptionsRepository_Remove_Call {
+func (_e *SubscriptionsRepository_Expecter) Remove(ctx any, id any) *SubscriptionsRepository_Remove_Call {
 	return &SubscriptionsRepository_Remove_Call{Call: _e.mock.On("Remove", ctx, id)}
 }
 
@@ -133,7 +133,7 @@ type SubscriptionsRepository_Retrieve_Call struct {
 // Retrieve is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id string
-func (_e *SubscriptionsRepository_Expecter) Retrieve(ctx interface{}, id interface{}) *SubscriptionsRepository_Retrieve_Call {
+func (_e *SubscriptionsRepository_Expecter) Retrieve(ctx any, id any) *SubscriptionsRepository_Retrieve_Call {
 	return &SubscriptionsRepository_Retrieve_Call{Call: _e.mock.On("Retrieve", ctx, id)}
 }
 
@@ -199,7 +199,7 @@ type SubscriptionsRepository_RetrieveAll_Call struct {
 // RetrieveAll is a helper method to define mock.On call
 //   - ctx context.Context
 //   - pm notifiers.PageMetadata
-func (_e *SubscriptionsRepository_Expecter) RetrieveAll(ctx interface{}, pm interface{}) *SubscriptionsRepository_RetrieveAll_Call {
+func (_e *SubscriptionsRepository_Expecter) RetrieveAll(ctx any, pm any) *SubscriptionsRepository_RetrieveAll_Call {
 	return &SubscriptionsRepository_RetrieveAll_Call{Call: _e.mock.On("RetrieveAll", ctx, pm)}
 }
 
@@ -265,7 +265,7 @@ type SubscriptionsRepository_Save_Call struct {
 // Save is a helper method to define mock.On call
 //   - ctx context.Context
 //   - sub notifiers.Subscription
-func (_e *SubscriptionsRepository_Expecter) Save(ctx interface{}, sub interface{}) *SubscriptionsRepository_Save_Call {
+func (_e *SubscriptionsRepository_Expecter) Save(ctx any, sub any) *SubscriptionsRepository_Save_Call {
 	return &SubscriptionsRepository_Save_Call{Call: _e.mock.On("Save", ctx, sub)}
 }
 

@@ -66,7 +66,7 @@ type Notifier_Notify_Call struct {
 //   - from string
 //   - to []string
 //   - msg *messaging.Message
-func (_e *Notifier_Expecter) Notify(from interface{}, to interface{}, msg interface{}) *Notifier_Notify_Call {
+func (_e *Notifier_Expecter) Notify(from any, to any, msg any) *Notifier_Notify_Call {
 	return &Notifier_Notify_Call{Call: _e.mock.On("Notify", from, to, msg)}
 }
 

@@ -23,7 +23,7 @@ func Authorize(ctx context.Context, client Authorizer, session authn.Session, ac
 		ObjectKind: ObjectKind(legacyObjectType, resourceKind),
 		ObjectID:   objectID,
 		Context: map[string]any{
-			atomContextDomainID:         session.DomainID,
+			atomContextWorkspaceID:      session.WorkspaceID,
 			atomContextLegacyObjectType: legacyObjectType,
 		},
 	}
@@ -41,12 +41,12 @@ func SubjectID(session authn.Session) string {
 	if session.UserID != "" {
 		return session.UserID
 	}
-	return session.DomainUserID
+	return session.WorkspaceUserID
 }
 
 func ObjectKind(legacyObjectType, resourceKind string) string {
 	switch legacyObjectType {
-	case policies.DomainType:
+	case policies.WorkspaceType:
 		return atomObjectKindTenant
 	case policies.PlatformType:
 		return policies.PlatformType
@@ -70,7 +70,7 @@ func ObjectKind(legacyObjectType, resourceKind string) string {
 }
 
 func resourceID(legacyObjectType, objectID string) string {
-	if legacyObjectType == policies.DomainType || legacyObjectType == policies.PlatformType {
+	if legacyObjectType == policies.WorkspaceType || legacyObjectType == policies.PlatformType {
 		return ""
 	}
 	return objectID

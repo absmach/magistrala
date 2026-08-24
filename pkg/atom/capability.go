@@ -22,6 +22,11 @@ const capabilityDeclarationKey = "x-magistrala-device-type"
 // object cannot preserve.
 const capabilityOrderKey = "ui:order"
 
+// jsonSchemaTypeKey is the JSON Schema "type" keyword, used both when
+// building a capability's json_schema and when matching Atom's validator
+// error text back to it in schema_error.go.
+const jsonSchemaTypeKey = "type"
+
 // Value types a measurement or command parameter may take. These are the JSON
 // Schema names; normalizeValueType also accepts the shorthand a declaration is
 // likely to be written with.
@@ -60,7 +65,7 @@ func BuildCapabilitySchema(doc CapabilityDocument) (jsonSchema, uiSchema map[str
 	order := make([]string, 0, len(normalized.Measurements))
 
 	for _, measurement := range normalized.Measurements {
-		property := map[string]any{"type": measurement.Type}
+		property := map[string]any{jsonSchemaTypeKey: measurement.Type}
 		if measurement.Unit != "" {
 			property["unit"] = measurement.Unit
 		}
@@ -88,8 +93,8 @@ func BuildCapabilitySchema(doc CapabilityDocument) (jsonSchema, uiSchema map[str
 	}
 
 	jsonSchema = map[string]any{
-		"type":       "object",
-		"properties": properties,
+		jsonSchemaTypeKey: "object",
+		"properties":      properties,
 	}
 	if len(required) > 0 {
 		jsonSchema["required"] = required
@@ -159,7 +164,7 @@ func capabilityDocumentFromSchema(jsonSchema map[string]any) (CapabilityDocument
 		if !ok {
 			continue
 		}
-		declared, _ := property["type"].(string)
+		declared, _ := property[jsonSchemaTypeKey].(string)
 		valueType, err := normalizeValueType(declared)
 		if err != nil {
 			continue

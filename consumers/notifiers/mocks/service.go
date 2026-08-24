@@ -67,7 +67,7 @@ type Service_ConsumeBlocking_Call struct {
 // ConsumeBlocking is a helper method to define mock.On call
 //   - ctx context.Context
 //   - messages any
-func (_e *Service_Expecter) ConsumeBlocking(ctx interface{}, messages interface{}) *Service_ConsumeBlocking_Call {
+func (_e *Service_Expecter) ConsumeBlocking(ctx any, messages any) *Service_ConsumeBlocking_Call {
 	return &Service_ConsumeBlocking_Call{Call: _e.mock.On("ConsumeBlocking", ctx, messages)}
 }
 
@@ -134,7 +134,7 @@ type Service_CreateSubscription_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - sub notifiers.Subscription
-func (_e *Service_Expecter) CreateSubscription(ctx interface{}, token interface{}, sub interface{}) *Service_CreateSubscription_Call {
+func (_e *Service_Expecter) CreateSubscription(ctx any, token any, sub any) *Service_CreateSubscription_Call {
 	return &Service_CreateSubscription_Call{Call: _e.mock.On("CreateSubscription", ctx, token, sub)}
 }
 
@@ -206,7 +206,7 @@ type Service_ListSubscriptions_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - pm notifiers.PageMetadata
-func (_e *Service_Expecter) ListSubscriptions(ctx interface{}, token interface{}, pm interface{}) *Service_ListSubscriptions_Call {
+func (_e *Service_Expecter) ListSubscriptions(ctx any, token any, pm any) *Service_ListSubscriptions_Call {
 	return &Service_ListSubscriptions_Call{Call: _e.mock.On("ListSubscriptions", ctx, token, pm)}
 }
 
@@ -269,7 +269,7 @@ type Service_RemoveSubscription_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - id string
-func (_e *Service_Expecter) RemoveSubscription(ctx interface{}, token interface{}, id interface{}) *Service_RemoveSubscription_Call {
+func (_e *Service_Expecter) RemoveSubscription(ctx any, token any, id any) *Service_RemoveSubscription_Call {
 	return &Service_RemoveSubscription_Call{Call: _e.mock.On("RemoveSubscription", ctx, token, id)}
 }
 
@@ -341,7 +341,7 @@ type Service_ViewSubscription_Call struct {
 //   - ctx context.Context
 //   - token string
 //   - id string
-func (_e *Service_Expecter) ViewSubscription(ctx interface{}, token interface{}, id interface{}) *Service_ViewSubscription_Call {
+func (_e *Service_Expecter) ViewSubscription(ctx any, token any, id any) *Service_ViewSubscription_Call {
 	return &Service_ViewSubscription_Call{Call: _e.mock.On("ViewSubscription", ctx, token, id)}
 }
 

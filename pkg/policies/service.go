@@ -12,18 +12,18 @@ type Policy struct {
 	// TokenType contains the token type.
 	TokenType uint32 `json:"token_type,omitempty"`
 
-	// Domain contains the domain ID.
-	Domain string `json:"domain,omitempty"`
+	// Workspace contains the workspace ID.
+	Workspace string `json:"workspace,omitempty"`
 
 	// Subject contains the subject ID or Token.
 	Subject string `json:"subject"`
 
 	// SubjectType contains the subject type. Supported subject types are
-	// platform, group, domain, client, users.
+	// platform, group, workspace, client, users.
 	SubjectType string `json:"subject_type"`
 
 	// SubjectKind contains the subject kind. Supported subject kinds are
-	// token, users, platform, clients,  channels, groups, domain.
+	// token, users, platform, clients,  channels, groups, workspace.
 	SubjectKind string `json:"subject_kind"`
 
 	// SubjectRelation contains subject relations.
@@ -36,14 +36,14 @@ type Policy struct {
 	Object string `json:"object"`
 
 	// ObjectKind contains the object kind. Supported object kinds are
-	// users, platform, clients,  channels, groups, domain.
+	// users, platform, clients,  channels, groups, workspace.
 	ObjectKind string `json:"object_kind"`
 
 	// ObjectType contains the object type. Supported object types are
-	// platform, group, domain, client, users.
+	// platform, group, workspace, client, users.
 	ObjectType string `json:"object_type"`
 
-	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,domain.
+	// Relation contains the relation. Supported relations are administrator, editor, contributor, member, guest, parent_group,group,workspace.
 	Relation string `json:"relation,omitempty"`
 
 	// Permission contains the permission. Supported permissions are admin, delete, edit, share, view,
@@ -106,9 +106,9 @@ type Service interface {
 	ListPermissions(ctx context.Context, pr Policy, permissionsFilter []string) (Permissions, error)
 }
 
-func EncodeDomainUserID(domainID, userID string) string {
-	if domainID == "" || userID == "" {
+func EncodeWorkspaceUserID(workspaceID, userID string) string {
+	if workspaceID == "" || userID == "" {
 		return ""
 	}
-	return domainID + "_" + userID
+	return workspaceID + "_" + userID
 }

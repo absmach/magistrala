@@ -102,19 +102,19 @@ func Provision(ctx context.Context, conf Config) error {
 		return fmt.Errorf("unable to login user: %s", err.Error())
 	}
 
-	// Create new domain
+	// Create new workspace
 	dname := fmt.Sprintf("%s%s", conf.Prefix, namesgenerator.Generate())
-	domain := mgSDK.Domain{
+	workspace := mgSDK.Workspace{
 		Name:       dname,
 		Route:      strings.ToLower(dname),
 		Permission: "admin",
 	}
 
-	domain, err = s.CreateDomain(ctx, domain, token.AccessToken)
+	workspace, err = s.CreateWorkspace(ctx, workspace, token.AccessToken)
 	if err != nil {
-		return fmt.Errorf("unable to create domain: %w", err)
+		return fmt.Errorf("unable to create workspace: %w", err)
 	}
-	// Login to domain
+	// Login to workspace
 	token, err = s.CreateToken(ctx, mgSDK.Login{
 		Username: user.Credentials.Username,
 		Password: user.Credentials.Secret,
@@ -161,14 +161,14 @@ func Provision(ctx context.Context, conf Config) error {
 		channels[i] = mgSDK.Channel{Name: fmt.Sprintf("%s-channel-%d", conf.Prefix, i)}
 	}
 
-	clients, err = s.CreateClients(ctx, clients, domain.ID, token.AccessToken)
+	clients, err = s.CreateClients(ctx, clients, workspace.ID, token.AccessToken)
 	if err != nil {
 		return fmt.Errorf("failed to create the clients: %s", err.Error())
 	}
 
 	var chs []mgSDK.Channel
 	for _, c := range channels {
-		c, err = s.CreateChannel(ctx, c, domain.ID, token.AccessToken)
+		c, err = s.CreateChannel(ctx, c, workspace.ID, token.AccessToken)
 		if err != nil {
 			return fmt.Errorf("failed to create the chennels: %s", err.Error())
 		}
@@ -264,7 +264,7 @@ func Provision(ctx context.Context, conf Config) error {
 				ChannelIDs: []string{cID},
 				Types:      []string{"publish", "subscribe"},
 			}
-			if err := s.Connect(ctx, conIDs, domain.ID, token.AccessToken); err != nil {
+			if err := s.Connect(ctx, conIDs, workspace.ID, token.AccessToken); err != nil {
 				log.Fatalf("Failed to connect clients %s to channels %s: %s", tID, cID, err)
 			}
 		}

@@ -11,7 +11,7 @@ import (
 
 	grpcChannelsV1 "github.com/absmach/magistrala/api/grpc/channels/v1"
 	grpcCommonV1 "github.com/absmach/magistrala/api/grpc/common/v1"
-	grpcDomainsV1 "github.com/absmach/magistrala/api/grpc/domains/v1"
+	grpcWorkspacesV1 "github.com/absmach/magistrala/api/grpc/workspaces/v1"
 	"github.com/absmach/magistrala/pkg/errors"
 	"github.com/dgraph-io/ristretto/v2"
 	"github.com/gofrs/uuid/v5"
@@ -35,12 +35,12 @@ var (
 		BufferItems: 64,
 	}
 
-	ErrMalformedTopic       = errors.New("malformed topic")
-	ErrMalformedSubtopic    = errors.New("malformed subtopic")
-	ErrEmptyRouteID         = errors.New("empty route or id")
-	ErrFailedResolveDomain  = errors.New("failed to resolve domain route")
-	ErrFailedResolveChannel = errors.New("failed to resolve channel route")
-	ErrCreateCache          = errors.New("failed to create cache")
+	ErrMalformedTopic         = errors.New("malformed topic")
+	ErrMalformedSubtopic      = errors.New("malformed subtopic")
+	ErrEmptyRouteID           = errors.New("empty route or id")
+	ErrFailedResolveWorkspace = errors.New("failed to resolve workspace route")
+	ErrFailedResolveChannel   = errors.New("failed to resolve channel route")
+	ErrCreateCache            = errors.New("failed to create cache")
 )
 
 type TopicType uint8
@@ -58,18 +58,18 @@ type CacheConfig struct {
 }
 
 type parsedTopic struct {
-	domainID  string
-	channelID string
-	subtopic  string
-	err       error
+	workspaceID string
+	channelID   string
+	subtopic    string
+	err         error
 }
 
 // TopicParser defines methods for parsing publish and subscribe topics.
 // It uses a cache to store parsed topics for quick retrieval.
-// It also resolves domain and channel IDs if requested.
+// It also resolves workspace and channel IDs if requested.
 type TopicParser interface {
-	ParsePublishTopic(ctx context.Context, topic string, resolve bool) (domainID, channelID, subtopic string, topicType TopicType, err error)
-	ParseSubscribeTopic(ctx context.Context, topic string, resolve bool) (domainID, channelID, subtopic string, topicType TopicType, err error)
+	ParsePublishTopic(ctx context.Context, topic string, resolve bool) (workspaceID, channelID, subtopic string, topicType TopicType, err error)
+	ParseSubscribeTopic(ctx context.Context, topic string, resolve bool) (workspaceID, channelID, subtopic string, topicType TopicType, err error)
 }
 
 type parser struct {
@@ -78,7 +78,7 @@ type parser struct {
 }
 
 // NewTopicParser creates a new instance of TopicParser.
-func NewTopicParser(cfg CacheConfig, channels grpcChannelsV1.ChannelsServiceClient, domains grpcDomainsV1.DomainsServiceClient) (TopicParser, error) {
+func NewTopicParser(cfg CacheConfig, channels grpcChannelsV1.ChannelsServiceClient, workspaces grpcWorkspacesV1.WorkspacesServiceClient) (TopicParser, error) {
 	cache, err := ristretto.NewCache(&ristretto.Config[string, *parsedTopic]{
 		NumCounters: cfg.NumCounters,
 		MaxCost:     cfg.MaxCost,
@@ -90,55 +90,55 @@ func NewTopicParser(cfg CacheConfig, channels grpcChannelsV1.ChannelsServiceClie
 	}
 	return &parser{
 		cache:    cache,
-		resolver: NewTopicResolver(channels, domains),
+		resolver: NewTopicResolver(channels, workspaces),
 	}, nil
 }
 
 func (p *parser) ParsePublishTopic(ctx context.Context, topic string, resolve bool) (string, string, string, TopicType, error) {
 	val, ok := p.cache.Get(topic)
 	if ok {
-		return val.domainID, val.channelID, val.subtopic, MessageType, val.err
+		return val.workspaceID, val.channelID, val.subtopic, MessageType, val.err
 	}
-	domainID, channelID, subtopic, topicType, err := ParsePublishTopic(topic)
+	workspaceID, channelID, subtopic, topicType, err := ParsePublishTopic(topic)
 	if err != nil {
 		p.saveToCache(topic, "", "", "", err)
 		return "", "", "", InvalidType, err
 	}
 	var isRoute bool
 	if resolve {
-		domainID, channelID, isRoute, err = p.resolver.Resolve(ctx, domainID, channelID)
+		workspaceID, channelID, isRoute, err = p.resolver.Resolve(ctx, workspaceID, channelID)
 		if err != nil {
 			return "", "", "", InvalidType, err
 		}
 	}
 	if !isRoute && topicType == MessageType {
-		p.saveToCache(topic, domainID, channelID, subtopic, nil)
+		p.saveToCache(topic, workspaceID, channelID, subtopic, nil)
 	}
 
-	return domainID, channelID, subtopic, topicType, nil
+	return workspaceID, channelID, subtopic, topicType, nil
 }
 
 func (p *parser) ParseSubscribeTopic(ctx context.Context, topic string, resolve bool) (string, string, string, TopicType, error) {
-	domainID, channelID, subtopic, topicType, err := ParseSubscribeTopic(topic)
+	workspaceID, channelID, subtopic, topicType, err := ParseSubscribeTopic(topic)
 	if err != nil {
 		return "", "", "", InvalidType, err
 	}
 	if resolve {
-		domainID, channelID, _, err = p.resolver.Resolve(ctx, domainID, channelID)
+		workspaceID, channelID, _, err = p.resolver.Resolve(ctx, workspaceID, channelID)
 		if err != nil {
 			return "", "", "", InvalidType, err
 		}
 	}
 
-	return domainID, channelID, subtopic, topicType, nil
+	return workspaceID, channelID, subtopic, topicType, nil
 }
 
-func (p *parser) saveToCache(topic string, domainID, channelID, subtopic string, err error) {
+func (p *parser) saveToCache(topic string, workspaceID, channelID, subtopic string, err error) {
 	p.cache.Set(topic, &parsedTopic{
-		domainID:  domainID,
-		channelID: channelID,
-		subtopic:  subtopic,
-		err:       err,
+		workspaceID: workspaceID,
+		channelID:   channelID,
+		subtopic:    subtopic,
+		err:         err,
 	}, 0)
 }
 
@@ -147,73 +147,73 @@ func costFunc(val *parsedTopic) int64 {
 	if val.err != nil {
 		errLen = len(val.err.Error())
 	}
-	cost := int64(len(val.domainID) + len(val.channelID) + len(val.subtopic) + errLen)
+	cost := int64(len(val.workspaceID) + len(val.channelID) + len(val.subtopic) + errLen)
 
 	return cost
 }
 
-// TopicResolver contains definitions for resolving domain and channel IDs
+// TopicResolver contains definitions for resolving workspace and channel IDs
 // from their respective routes from the message topic.
 type TopicResolver interface {
-	Resolve(ctx context.Context, domain, channel string) (domainID string, channelID string, isRoute bool, err error)
+	Resolve(ctx context.Context, workspace, channel string) (workspaceID string, channelID string, isRoute bool, err error)
 	ResolveTopic(ctx context.Context, topic string) (rtopic string, err error)
 }
 
 type resolver struct {
-	channels grpcChannelsV1.ChannelsServiceClient
-	domains  grpcDomainsV1.DomainsServiceClient
+	channels   grpcChannelsV1.ChannelsServiceClient
+	workspaces grpcWorkspacesV1.WorkspacesServiceClient
 }
 
 // NewTopicResolver creates a new instance of TopicResolver.
-func NewTopicResolver(channelsClient grpcChannelsV1.ChannelsServiceClient, domainsClient grpcDomainsV1.DomainsServiceClient) TopicResolver {
+func NewTopicResolver(channelsClient grpcChannelsV1.ChannelsServiceClient, workspacesClient grpcWorkspacesV1.WorkspacesServiceClient) TopicResolver {
 	return &resolver{
-		channels: channelsClient,
-		domains:  domainsClient,
+		channels:   channelsClient,
+		workspaces: workspacesClient,
 	}
 }
 
-func (r *resolver) Resolve(ctx context.Context, domain, channel string) (string, string, bool, error) {
-	if domain == "" {
+func (r *resolver) Resolve(ctx context.Context, workspace, channel string) (string, string, bool, error) {
+	if workspace == "" {
 		return "", "", false, ErrEmptyRouteID
 	}
 
-	domainID, isDomainRoute, err := r.resolveDomain(ctx, domain)
+	workspaceID, isWorkspaceRoute, err := r.resolveWorkspace(ctx, workspace)
 	if err != nil {
-		return "", "", false, errors.Wrap(ErrFailedResolveDomain, err)
+		return "", "", false, errors.Wrap(ErrFailedResolveWorkspace, err)
 	}
 	if channel == "" {
-		return domainID, "", isDomainRoute, nil
+		return workspaceID, "", isWorkspaceRoute, nil
 	}
-	channelID, isChannelRoute, err := r.resolveChannel(ctx, channel, domainID)
+	channelID, isChannelRoute, err := r.resolveChannel(ctx, channel, workspaceID)
 	if err != nil {
 		return "", "", false, errors.Wrap(ErrFailedResolveChannel, err)
 	}
-	isRoute := isDomainRoute || isChannelRoute
+	isRoute := isWorkspaceRoute || isChannelRoute
 
-	return domainID, channelID, isRoute, nil
+	return workspaceID, channelID, isRoute, nil
 }
 
 func (r *resolver) ResolveTopic(ctx context.Context, topic string) (string, error) {
-	domain, channel, subtopic, topicType, err := ParseTopic(topic)
+	workspace, channel, subtopic, topicType, err := ParseTopic(topic)
 	if err != nil {
 		return "", errors.Wrap(ErrMalformedTopic, err)
 	}
 
-	domainID, channelID, _, err := r.Resolve(ctx, domain, channel)
+	workspaceID, channelID, _, err := r.Resolve(ctx, workspace, channel)
 	if err != nil {
 		return "", err
 	}
-	rtopic := encodeAdapterTopic(domainID, channelID, subtopic, topicType)
+	rtopic := encodeAdapterTopic(workspaceID, channelID, subtopic, topicType)
 
 	return rtopic, nil
 }
 
-func (r *resolver) resolveDomain(ctx context.Context, domain string) (string, bool, error) {
-	if validateUUID(domain) == nil {
-		return domain, false, nil
+func (r *resolver) resolveWorkspace(ctx context.Context, workspace string) (string, bool, error) {
+	if validateUUID(workspace) == nil {
+		return workspace, false, nil
 	}
-	d, err := r.domains.RetrieveIDByRoute(ctx, &grpcCommonV1.RetrieveIDByRouteReq{
-		Route: domain,
+	d, err := r.workspaces.RetrieveIDByRoute(ctx, &grpcCommonV1.RetrieveIDByRouteReq{
+		Route: workspace,
 	})
 	if err != nil {
 		return "", false, err
@@ -222,13 +222,13 @@ func (r *resolver) resolveDomain(ctx context.Context, domain string) (string, bo
 	return d.Entity.Id, true, nil
 }
 
-func (r *resolver) resolveChannel(ctx context.Context, channel, domainID string) (string, bool, error) {
+func (r *resolver) resolveChannel(ctx context.Context, channel, workspaceID string) (string, bool, error) {
 	if validateUUID(channel) == nil {
 		return channel, false, nil
 	}
 	c, err := r.channels.RetrieveIDByRoute(ctx, &grpcCommonV1.RetrieveIDByRouteReq{
-		Route:    channel,
-		DomainId: domainID,
+		Route:       channel,
+		WorkspaceId: workspaceID,
 	})
 	if err != nil {
 		return "", false, err
@@ -246,8 +246,8 @@ func validateUUID(extID string) (err error) {
 	return nil
 }
 
-func ParsePublishTopic(topic string) (domainID, chanID, subtopic string, topicType TopicType, err error) {
-	domainID, chanID, subtopic, topicType, err = ParseTopic(topic)
+func ParsePublishTopic(topic string) (workspaceID, chanID, subtopic string, topicType TopicType, err error) {
+	workspaceID, chanID, subtopic, topicType, err = ParseTopic(topic)
 	if err != nil {
 		return "", "", "", InvalidType, err
 	}
@@ -256,7 +256,7 @@ func ParsePublishTopic(topic string) (domainID, chanID, subtopic string, topicTy
 		return "", "", "", InvalidType, errors.Wrap(ErrMalformedTopic, err)
 	}
 
-	return domainID, chanID, subtopic, topicType, nil
+	return workspaceID, chanID, subtopic, topicType, nil
 }
 
 func ParsePublishSubtopic(subtopic string) (parseSubTopic string, err error) {
@@ -280,8 +280,8 @@ func ParsePublishSubtopic(subtopic string) (parseSubTopic string, err error) {
 	return subtopic, nil
 }
 
-func ParseSubscribeTopic(topic string) (domainID string, chanID string, subtopic string, topicType TopicType, err error) {
-	domainID, chanID, subtopic, topicType, err = ParseTopic(topic)
+func ParseSubscribeTopic(topic string) (workspaceID string, chanID string, subtopic string, topicType TopicType, err error) {
+	workspaceID, chanID, subtopic, topicType, err = ParseTopic(topic)
 	if err != nil {
 		return "", "", "", InvalidType, err
 	}
@@ -290,7 +290,7 @@ func ParseSubscribeTopic(topic string) (domainID string, chanID string, subtopic
 		return "", "", "", InvalidType, errors.Wrap(ErrMalformedTopic, err)
 	}
 
-	return domainID, chanID, subtopic, topicType, nil
+	return workspaceID, chanID, subtopic, topicType, nil
 }
 
 func ParseSubscribeSubtopic(subtopic string) (parseSubTopic string, err error) {
@@ -330,12 +330,12 @@ func formatSubtopic(subtopic string) (string, error) {
 	return subtopic, nil
 }
 
-func EncodeTopic(domainID string, channelID string, subtopic string) string {
-	return fmt.Sprintf("%s/%s", string(MsgTopicPrefix), EncodeTopicSuffix(domainID, channelID, subtopic))
+func EncodeTopic(workspaceID string, channelID string, subtopic string) string {
+	return fmt.Sprintf("%s/%s", string(MsgTopicPrefix), EncodeTopicSuffix(workspaceID, channelID, subtopic))
 }
 
-func EncodeTopicSuffix(domainID string, channelID string, subtopic string) string {
-	subject := fmt.Sprintf("%s/%s/%s", domainID, string(ChannelTopicPrefix), channelID)
+func EncodeTopicSuffix(workspaceID string, channelID string, subtopic string) string {
+	subject := fmt.Sprintf("%s/%s/%s", workspaceID, string(ChannelTopicPrefix), channelID)
 	if subtopic != "" {
 		subject = fmt.Sprintf("%s/%s", subject, subtopic)
 	}
@@ -343,19 +343,19 @@ func EncodeTopicSuffix(domainID string, channelID string, subtopic string) strin
 }
 
 func EncodeMessageTopic(m *Message) string {
-	return EncodeTopicSuffix(m.GetDomain(), m.GetChannel(), m.GetSubtopic())
+	return EncodeTopicSuffix(m.GetWorkspace(), m.GetChannel(), m.GetSubtopic())
 }
 
 func EncodeMessageMQTTTopic(m *Message) string {
-	return EncodeTopic(m.GetDomain(), m.GetChannel(), m.GetSubtopic())
+	return EncodeTopic(m.GetWorkspace(), m.GetChannel(), m.GetSubtopic())
 }
 
-func encodeAdapterTopic(domain, channel, subtopic string, topicType TopicType) string {
+func encodeAdapterTopic(workspace, channel, subtopic string, topicType TopicType) string {
 	switch topicType {
 	case HealthType:
-		return fmt.Sprintf("%s/%s", string(HealthTopicPrefix), domain)
+		return fmt.Sprintf("%s/%s", string(HealthTopicPrefix), workspace)
 	default:
-		topic := fmt.Sprintf("%s/%s/%s/%s", string(MsgTopicPrefix), domain, string(ChannelTopicPrefix), channel)
+		topic := fmt.Sprintf("%s/%s/%s/%s", string(MsgTopicPrefix), workspace, string(ChannelTopicPrefix), channel)
 		if subtopic != "" {
 			topic = topic + "/" + subtopic
 		}
@@ -363,14 +363,14 @@ func encodeAdapterTopic(domain, channel, subtopic string, topicType TopicType) s
 	}
 }
 
-// ParseTopic parses a messaging topic string and returns the domain ID, channel ID, and subtopic.
+// ParseTopic parses a messaging topic string and returns the workspace ID, channel ID, and subtopic.
 // Supported formats (leading '/' optional):
 //
-//	m/<domain_id>/c/<channel_id>[/<subtopic>]
-//	hc/<domain_id>
+//	m/<workspace_id>/c/<channel_id>[/<subtopic>]
+//	hc/<workspace_id>
 //
 // This is an optimized version with no regex and minimal allocations.
-func ParseTopic(topic string) (domainID, chanID, subtopic string, topicType TopicType, err error) {
+func ParseTopic(topic string) (workspaceID, chanID, subtopic string, topicType TopicType, err error) {
 	start := 0
 	n := len(topic)
 	if n > 0 && topic[0] == '/' {
@@ -380,26 +380,26 @@ func ParseTopic(topic string) (domainID, chanID, subtopic string, topicType Topi
 		return "", "", "", InvalidType, ErrMalformedTopic
 	}
 
-	// Healthcheck: "hc/<domain_id>"
+	// Healthcheck: "hc/<workspace_id>"
 	// Check first because it's shortest and avoids extra work.
 	if n > start+3 && topic[start:start+2] == HealthTopicPrefix {
 		if n == start+3 {
-			// "hc/" with no domain
+			// "hc/" with no workspace
 			return "", "", "", InvalidType, ErrMalformedTopic
 		}
-		// Domain is the remainder; ensure no extra '/'
-		domainID = topic[start+3:]
+		// Workspace is the remainder; ensure no extra '/'
+		workspaceID = topic[start+3:]
 		for i := start + 3; i < n; i++ {
 			if topic[i] == '/' {
 				return "", "", "", InvalidType, ErrMalformedTopic
 			}
 		}
-		return domainID, "", "", HealthType, nil
+		return workspaceID, "", "", HealthType, nil
 	}
 
-	// Messaging: "m/<domain_id>/c/<channel_id>[/<subtopic>]"
-	// length check - minimum: "m/<domain_id>/c/" = 5 characters if ignore <domain_id> and in this case start will be 0
-	// length check - minimum: "/m/<domain_id>/c/" = 6 characters if ignore <domain_id> and in this case start will be 1
+	// Messaging: "m/<workspace_id>/c/<channel_id>[/<subtopic>]"
+	// length check - minimum: "m/<workspace_id>/c/" = 5 characters if ignore <workspace_id> and in this case start will be 0
+	// length check - minimum: "/m/<workspace_id>/c/" = 6 characters if ignore <workspace_id> and in this case start will be 1
 	if n < start+5 {
 		return "", "", "", InvalidType, ErrMalformedTopic
 	}
@@ -408,7 +408,7 @@ func ParseTopic(topic string) (domainID, chanID, subtopic string, topicType Topi
 	}
 	pos := start + 2
 
-	// Find "/c/" to locate domain ID
+	// Find "/c/" to locate workspace ID
 	cPos := -1
 	for i := pos; i <= n-3; i++ {
 		if topic[i] == '/' && topic[i+1] == ChannelTopicPrefix && topic[i+2] == '/' {
@@ -419,7 +419,7 @@ func ParseTopic(topic string) (domainID, chanID, subtopic string, topicType Topi
 	if cPos == -1 || cPos == 0 {
 		return "", "", "", InvalidType, ErrMalformedTopic
 	}
-	domainID = topic[pos : pos+cPos]
+	workspaceID = topic[pos : pos+cPos]
 	// skip "/c/"
 	pos = pos + cPos + 3
 
@@ -448,5 +448,5 @@ func ParseTopic(topic string) (domainID, chanID, subtopic string, topicType Topi
 		return "", "", "", InvalidType, ErrMalformedTopic
 	}
 
-	return domainID, chanID, subtopic, MessageType, nil
+	return workspaceID, chanID, subtopic, MessageType, nil
 }

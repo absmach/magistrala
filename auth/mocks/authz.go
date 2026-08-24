@@ -69,7 +69,7 @@ type Authz_Authorize_Call struct {
 //   - ctx context.Context
 //   - pr policies.Policy
 //   - patAuthz *auth.PATAuthz
-func (_e *Authz_Expecter) Authorize(ctx interface{}, pr interface{}, patAuthz interface{}) *Authz_Authorize_Call {
+func (_e *Authz_Expecter) Authorize(ctx any, pr any, patAuthz any) *Authz_Authorize_Call {
 	return &Authz_Authorize_Call{Call: _e.mock.On("Authorize", ctx, pr, patAuthz)}
 }
 

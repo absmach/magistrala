@@ -26,16 +26,16 @@ const (
 var validAggregations = []string{aggregationMax, aggregationMin, aggregationAvg, aggregationSum, aggregationCount}
 
 type readMessagesReq struct {
-	chanID   string
-	domain   string
-	pageMeta readers.PageMetadata
+	chanID    string
+	workspace string
+	pageMeta  readers.PageMetadata
 }
 
 func (req readMessagesReq) validate() error {
 	if req.chanID == "" {
 		return apiutil.ErrMissingID
 	}
-	if req.domain == "" {
+	if req.workspace == "" {
 		return apiutil.ErrMissingID
 	}
 
@@ -93,14 +93,14 @@ func (req readMessagesReq) validate() error {
 // HTTP-only (MG-08).
 type deviceViewReq struct {
 	chanID            string
-	domain            string
+	workspace         string
 	filterVal         string
 	filterIsPublisher bool
 	pageMeta          readers.PageMetadata
 }
 
 func (req deviceViewReq) validate() error {
-	if req.chanID == "" || req.domain == "" || req.filterVal == "" {
+	if req.chanID == "" || req.workspace == "" || req.filterVal == "" {
 		return apiutil.ErrMissingID
 	}
 

@@ -146,7 +146,7 @@ func (x *AuthNRes) GetTokenType() uint32 {
 
 type PolicyReq struct {
 	state           protoimpl.MessageState `protogen:"open.v1"`
-	Domain          string                 `protobuf:"bytes,1,opt,name=domain,proto3" json:"domain,omitempty"`
+	Workspace       string                 `protobuf:"bytes,1,opt,name=workspace,proto3" json:"workspace,omitempty"`
 	SubjectType     string                 `protobuf:"bytes,2,opt,name=subject_type,json=subjectType,proto3" json:"subject_type,omitempty"`
 	SubjectKind     string                 `protobuf:"bytes,3,opt,name=subject_kind,json=subjectKind,proto3" json:"subject_kind,omitempty"`
 	SubjectRelation string                 `protobuf:"bytes,4,opt,name=subject_relation,json=subjectRelation,proto3" json:"subject_relation,omitempty"`
@@ -189,9 +189,9 @@ func (*PolicyReq) Descriptor() ([]byte, []int) {
 	return file_auth_v1_auth_proto_rawDescGZIP(), []int{2}
 }
 
-func (x *PolicyReq) GetDomain() string {
+func (x *PolicyReq) GetWorkspace() string {
 	if x != nil {
-		return x.Domain
+		return x.Workspace
 	}
 	return ""
 }
@@ -255,7 +255,7 @@ func (x *PolicyReq) GetObjectType() string {
 type PATReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PatId         string                 `protobuf:"bytes,1,opt,name=pat_id,json=patId,proto3" json:"pat_id,omitempty"`
-	Domain        string                 `protobuf:"bytes,2,opt,name=domain,proto3" json:"domain,omitempty"`
+	Workspace     string                 `protobuf:"bytes,2,opt,name=workspace,proto3" json:"workspace,omitempty"`
 	Operation     string                 `protobuf:"bytes,3,opt,name=operation,proto3" json:"operation,omitempty"`
 	UserId        string                 `protobuf:"bytes,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
 	EntityId      string                 `protobuf:"bytes,5,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
@@ -301,9 +301,9 @@ func (x *PATReq) GetPatId() string {
 	return ""
 }
 
-func (x *PATReq) GetDomain() string {
+func (x *PATReq) GetWorkspace() string {
 	if x != nil {
-		return x.Domain
+		return x.Workspace
 	}
 	return ""
 }
@@ -453,9 +453,9 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"\tuser_role\x18\x03 \x01(\rR\buserRole\x12\x1a\n" +
 	"\bverified\x18\x04 \x01(\bR\bverified\x12\x1d\n" +
 	"\n" +
-	"token_type\x18\x05 \x01(\rR\ttokenType\"\xa3\x02\n" +
-	"\tPolicyReq\x12\x16\n" +
-	"\x06domain\x18\x01 \x01(\tR\x06domain\x12!\n" +
+	"token_type\x18\x05 \x01(\rR\ttokenType\"\xa9\x02\n" +
+	"\tPolicyReq\x12\x1c\n" +
+	"\tworkspace\x18\x01 \x01(\tR\tworkspace\x12!\n" +
 	"\fsubject_type\x18\x02 \x01(\tR\vsubjectType\x12!\n" +
 	"\fsubject_kind\x18\x03 \x01(\tR\vsubjectKind\x12)\n" +
 	"\x10subject_relation\x18\x04 \x01(\tR\x0fsubjectRelation\x12\x18\n" +
@@ -466,10 +466,10 @@ const file_auth_v1_auth_proto_rawDesc = "" +
 	"permission\x12\x16\n" +
 	"\x06object\x18\b \x01(\tR\x06object\x12\x1f\n" +
 	"\vobject_type\x18\t \x01(\tR\n" +
-	"objectType\"\xac\x01\n" +
+	"objectType\"\xb2\x01\n" +
 	"\x06PATReq\x12\x15\n" +
-	"\x06pat_id\x18\x01 \x01(\tR\x05patId\x12\x16\n" +
-	"\x06domain\x18\x02 \x01(\tR\x06domain\x12\x1c\n" +
+	"\x06pat_id\x18\x01 \x01(\tR\x05patId\x12\x1c\n" +
+	"\tworkspace\x18\x02 \x01(\tR\tworkspace\x12\x1c\n" +
 	"\toperation\x18\x03 \x01(\tR\toperation\x12\x17\n" +
 	"\auser_id\x18\x04 \x01(\tR\x06userId\x12\x1b\n" +
 	"\tentity_id\x18\x05 \x01(\tR\bentityId\x12\x1f\n" +

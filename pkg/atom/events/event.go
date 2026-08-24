@@ -18,7 +18,7 @@ import (
 // against FamilyTranslation. Keeping them apart is what lets a
 // translation-only event (entity.create, entity.update) refresh just the
 // lightweight translation cache instead of forcing every subject's
-// authorized set in the domain to be recomputed.
+// authorized set in the workspace to be recomputed.
 const (
 	// FamilyTranslation covers Atom's UUID -> external_id (device serial)
 	// resolution -- ATOM-06, pkg/atom.Client.EntityExternalIDs.
@@ -28,9 +28,9 @@ const (
 	FamilyAuthorizedSet = "authorized_set"
 )
 
-// eventFamilies maps the Atom domain-event names that matter for cache
+// eventFamilies maps the Atom workspace-event names that matter for cache
 // invalidation (MG-14's PRD) to the families they invalidate. An event name
-// with no entry here is ignored: Atom emits roughly 40 domain events in
+// with no entry here is ignored: Atom emits roughly 40 workspace events in
 // total (audit, purge, profile/version management, ...) and this consumer
 // only cares about the handful that change a UUID's external_id or a
 // subject's authorized device set.
@@ -91,7 +91,7 @@ var eventFamilies = map[string][]string{
 	"role.purge":                     {FamilyAuthorizedSet},
 }
 
-// Handler adapts Atom's domain-event wire format (DomainEventPayload in
+// Handler adapts Atom's workspace-event wire format (WorkspaceEventPayload in
 // absmach/atom src/events/mod.rs, delivered here as JSON) into Registry
 // invalidations. It is the events.EventHandler that
 // pkg/events/fluxmq.NewQueueSubscriber calls once per message.
@@ -108,15 +108,15 @@ func NewHandler(registry *Registry, logger *slog.Logger) *Handler {
 	return &Handler{registry: registry, logger: logger}
 }
 
-// Handle decodes one Atom domain event and invalidates every family it maps
+// Handle decodes one Atom workspace event and invalidates every family it maps
 // to, scoped to the event's own tenant_id. Atom's tenant is Magistrala's
-// domain -- pkg/atom/policy_service.go binds TenantID: pr.Domain on every
+// workspace -- pkg/atom/policy_service.go binds TenantID: pr.Workspace on every
 // call it makes -- so tenant_id is exactly the scope a cache keyed by
-// domain needs to clear, and clearing by domain rather than by a narrower
+// workspace needs to clear, and clearing by workspace rather than by a narrower
 // key (e.g. one specific subject) is deliberate: several of the events this
 // package tracks (direct_policy.create/delete in particular) carry no
 // subject at all in their payload, only the policy row's own id, so a
-// domain-wide invalidation is the coarsest -- and only reliably correct --
+// workspace-wide invalidation is the coarsest -- and only reliably correct --
 // granularity available without inspecting payload content the invalidate-
 // only design already refuses to trust.
 //

@@ -32,14 +32,14 @@ func (d dbConn) DSN() string {
 
 // config holds every source DB plus the Atom target DSN.
 type config struct {
-	Domains  dbConn
-	Users    dbConn
-	Devices  dbConn
-	Channels dbConn
-	Groups   dbConn
-	Auth     dbConn
-	RE       dbConn // rules engine
-	Reports  dbConn
+	Workspaces dbConn
+	Users      dbConn
+	Devices    dbConn
+	Channels   dbConn
+	Groups     dbConn
+	Auth       dbConn
+	RE         dbConn // rules engine
+	Reports    dbConn
 
 	AtomDSN        string
 	UnmappedAction string
@@ -73,15 +73,15 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 	}
 
 	cfg := config{
-		Domains:  mk("MG_DOMAINS"),
-		Users:    mk("MG_USERS"),
-		Devices:  mk("MG_DEVICES"),
-		Channels: mk("MG_CHANNELS"),
-		Groups:   mk("MG_GROUPS"),
-		Auth:     mk("MG_AUTH"),
-		RE:       mk("MG_RE"),
-		Reports:  mk("MG_REPORTS"),
-		AtomDSN:  atomDSN,
+		Workspaces: mk("MG_WORKSPACES"),
+		Users:      mk("MG_USERS"),
+		Devices:    mk("MG_DEVICES"),
+		Channels:   mk("MG_CHANNELS"),
+		Groups:     mk("MG_GROUPS"),
+		Auth:       mk("MG_AUTH"),
+		RE:         mk("MG_RE"),
+		Reports:    mk("MG_REPORTS"),
+		AtomDSN:    atomDSN,
 	}
 	if key := strings.TrimSpace(firstNonEmpty(env["ATOM_KEY_ENCRYPTION_KEY"], os.Getenv("ATOM_KEY_ENCRYPTION_KEY"))); key != "" {
 		decoded, err := base64.StdEncoding.DecodeString(key)
@@ -97,7 +97,7 @@ func loadConfig(envPath, atomDSN string, fromHost bool) (config, error) {
 
 	// Default names if .env omitted them.
 	defName := map[*string]string{
-		&cfg.Domains.Name: collectionDomains, &cfg.Users.Name: "users",
+		&cfg.Workspaces.Name: collectionWorkspaces, &cfg.Users.Name: "users",
 		&cfg.Devices.Name: "clients", &cfg.Channels.Name: "channels",
 		&cfg.Groups.Name: collectionGroups, &cfg.Auth.Name: "auth",
 		&cfg.RE.Name: "rules_engine", &cfg.Reports.Name: "reports",

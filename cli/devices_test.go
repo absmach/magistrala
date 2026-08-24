@@ -18,13 +18,13 @@ func TestDevicesCreateCmd(t *testing.T) {
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
 	deviceJSON := `{"name":"pump-1","attributes":{"is_gateway":true}}`
-	out := executeCommand(t, rootCmd, createCmd, deviceJSON, "domain-1")
+	out := executeCommand(t, rootCmd, createCmd, deviceJSON, "workspace-1")
 
 	var got atom.Entity
 	require.NoError(t, json.Unmarshal([]byte(out), &got))
 	assert.Equal(t, "device", got.Kind)
 	assert.Equal(t, "pump-1", got.Name)
-	assert.Equal(t, "domain-1", got.TenantID)
+	assert.Equal(t, "workspace-1", got.TenantID)
 	assert.Equal(t, true, got.Attributes["is_gateway"])
 
 	// The literal wire kind must be "device" — atom.KindDevice/KindDevice
@@ -35,7 +35,7 @@ func TestDevicesCreateCmd(t *testing.T) {
 }
 
 func TestDevicesGetCmd(t *testing.T) {
-	newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Name: "pump-1", TenantID: "domain-1"})
+	newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Name: "pump-1", TenantID: "workspace-1"})
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
 	out := executeCommand(t, rootCmd, "device-1", getCmd)
@@ -48,13 +48,13 @@ func TestDevicesGetCmd(t *testing.T) {
 
 func TestDevicesGetAllCmd(t *testing.T) {
 	newFakeAtom(t,
-		atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"},
-		atom.Entity{ID: "device-2", Kind: "device", TenantID: "domain-1"},
-		atom.Entity{ID: "device-3", Kind: "device", TenantID: "domain-2"},
+		atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"},
+		atom.Entity{ID: "device-2", Kind: "device", TenantID: "workspace-1"},
+		atom.Entity{ID: "device-3", Kind: "device", TenantID: "workspace-2"},
 	)
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
-	out := executeCommand(t, rootCmd, allCmd, getCmd, "domain-1")
+	out := executeCommand(t, rootCmd, allCmd, getCmd, "workspace-1")
 
 	var got atom.EntityList
 	require.NoError(t, json.Unmarshal([]byte(out), &got))
@@ -62,7 +62,7 @@ func TestDevicesGetAllCmd(t *testing.T) {
 }
 
 func TestDevicesUpdateCmd(t *testing.T) {
-	newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Name: "old-name", TenantID: "domain-1"})
+	newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", Name: "old-name", TenantID: "workspace-1"})
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
 	out := executeCommand(t, rootCmd, "device-1", updateCmd, `{"name":"new-name"}`)
@@ -121,7 +121,7 @@ func TestDevicesDisableCmd(t *testing.T) {
 // attribute through this command must still flag the ids it names.
 func TestDevicesUpdateCmdFlagsDeclaredGateways(t *testing.T) {
 	fa := newFakeAtom(t,
-		atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"},
+		atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"},
 		atom.Entity{ID: "gw-1", Kind: "device"},
 	)
 	rootCmd := setFlags(cli.NewDevicesCmd())
@@ -137,7 +137,7 @@ func TestDevicesCreateCmdFlagsDeclaredGateways(t *testing.T) {
 	fa := newFakeAtom(t, atom.Entity{ID: "gw-1", Kind: "device"})
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
-	executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"gateways":["gw-1"]}}`, "domain-1")
+	executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"gateways":["gw-1"]}}`, "workspace-1")
 
 	gw := fa.entities["gw-1"]
 	assert.Equal(t, true, gw.Attributes["is_gateway"], "expected gw-1 to be flagged is_gateway after being declared, got: %+v", gw.Attributes)
@@ -156,7 +156,7 @@ func TestDevicesCreateCmdFailsWhenMarkingDeclaredGatewaysFails(t *testing.T) {
 	fa.failEntityUpdate("boom")
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
-	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"gateways":["gw-1"]}}`, "domain-1")
+	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"gateways":["gw-1"]}}`, "workspace-1")
 
 	assert.Contains(t, out, "error")
 	assert.Contains(t, out, "boom")
@@ -175,7 +175,7 @@ func TestDevicesCreateCmdFailsWhenMarkingDeclaredGatewaysFails(t *testing.T) {
 // gateway of its own -- itself). The update must be rejected before it
 // reaches Atom, not written through as it was before A15.
 func TestDevicesUpdateCmdRejectsSelfReference(t *testing.T) {
-	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "domain-1"})
+	fa := newFakeAtom(t, atom.Entity{ID: "device-1", Kind: "device", TenantID: "workspace-1"})
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
 	out := executeCommand(t, rootCmd, "device-1", updateCmd, `{"attributes":{"gateways":["device-1"]}}`)
@@ -194,7 +194,7 @@ func TestDevicesCreateCmdRejectsGatewayDeclaringItsOwnGateways(t *testing.T) {
 	fa := newFakeAtom(t)
 	rootCmd := setFlags(cli.NewDevicesCmd())
 
-	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"is_gateway":true,"gateways":["gw-1"]}}`, "domain-1")
+	out := executeCommand(t, rootCmd, createCmd, `{"name":"pump-1","attributes":{"is_gateway":true,"gateways":["gw-1"]}}`, "workspace-1")
 
 	assert.Contains(t, out, "error")
 	assert.Contains(t, out, "cannot declare its own gateways")

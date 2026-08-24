@@ -24,13 +24,13 @@ type authGrpcServer struct {
 func NewAuthServer(svc auth.Service) grpcAuthV1.AuthServiceServer {
 	return &authGrpcServer{
 		authorize: kitgrpc.NewServer(
-			(authorizeEndpoint(svc)),
+			authorizeEndpoint(svc),
 			decodeAuthorizeRequest,
 			encodeAuthorizeResponse,
 		),
 
 		authenticate: kitgrpc.NewServer(
-			(authenticateEndpoint(svc)),
+			authenticateEndpoint(svc),
 			decodeAuthenticateRequest,
 			encodeAuthenticateResponse,
 		),
@@ -77,7 +77,7 @@ func decodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
 	}
 
 	authRequest := authReq{
-		Domain:      policyReq.GetDomain(),
+		Workspace:   policyReq.GetWorkspace(),
 		SubjectType: policyReq.GetSubjectType(),
 		SubjectKind: policyReq.GetSubjectKind(),
 		Subject:     policyReq.GetSubject(),
@@ -88,8 +88,8 @@ func decodeAuthorizeRequest(_ context.Context, grpcReq any) (any, error) {
 	}
 
 	if patReq != nil {
-		if patReq.GetDomain() != "" {
-			authRequest.Domain = patReq.GetDomain()
+		if patReq.GetWorkspace() != "" {
+			authRequest.Workspace = patReq.GetWorkspace()
 		}
 		authRequest.UserID = patReq.GetUserId()
 		authRequest.PatID = patReq.GetPatId()

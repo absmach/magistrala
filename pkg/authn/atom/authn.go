@@ -28,10 +28,10 @@ func (a authentication) Authenticate(ctx context.Context, token string) (authn.S
 		return authn.Session{}, errors.Wrap(svcerr.ErrAuthentication, err)
 	}
 	return authn.Session{
-		Type:     authn.AccessToken,
-		UserID:   claims.SubjectID,
-		DomainID: claims.TenantID,
-		Role:     authn.UserRole,
-		Verified: true,
+		Type:        authn.AccessToken,
+		UserID:      claims.SubjectID,
+		WorkspaceID: claims.TenantID,
+		Role:        authn.UserRole,
+		Verified:    true,
 	}, nil
 }

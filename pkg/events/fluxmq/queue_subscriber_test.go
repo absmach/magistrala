@@ -62,7 +62,7 @@ func TestHandleAcksSuccessfulEvent(t *testing.T) {
 func TestHandleNacksOnceThenRejectsOnRedelivery(t *testing.T) {
 	sub := &subQueueStore{}
 	handler := stubHandler{err: errors.New("invalidator failed")}
-	body := []byte(`{"event":"entity.update","tenant_id":"domain-1"}`)
+	body := []byte(`{"event":"entity.update","tenant_id":"workspace-1"}`)
 
 	first := &fakeDelivery{}
 	err := sub.handle(context.Background(), handler, body, false, first)
@@ -96,7 +96,7 @@ func TestHandleRejectsUnparsableBody(t *testing.T) {
 func TestHandlePropagatesAcknowledgmentErrors(t *testing.T) {
 	sub := &subQueueStore{}
 	handler := stubHandler{err: errors.New("invalidator failed")}
-	body := []byte(`{"event":"entity.update","tenant_id":"domain-1"}`)
+	body := []byte(`{"event":"entity.update","tenant_id":"workspace-1"}`)
 
 	msg := &fakeDelivery{nackErr: errors.New("channel closed")}
 	err := sub.handle(context.Background(), handler, body, false, msg)

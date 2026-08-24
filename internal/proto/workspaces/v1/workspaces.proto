@@ -3,17 +3,17 @@
 
 syntax = "proto3";
 
-package domains.v1;
+package workspaces.v1;
 
 import "common/v1/common.proto";
 
-option go_package = "github.com/absmach/magistrala/internal/grpc/domains/v1";
+option go_package = "github.com/absmach/magistrala/internal/grpc/workspaces/v1";
 
 
-// DomainsService is a service that provides access to
-// domains functionalities for Magistrala services.
-service DomainsService {
-  rpc DeleteUserFromDomains(DeleteUserReq)
+// WorkspacesService is a service that provides access to
+// workspaces functionalities for Magistrala services.
+service WorkspacesService {
+  rpc DeleteUserFromWorkspaces(DeleteUserReq)
     returns (DeleteUserRes) {}
   rpc RetrieveStatus(common.v1.RetrieveEntityReq) 
     returns (common.v1.RetrieveEntityRes) {}

@@ -128,9 +128,9 @@ devices that may ultimately be rejected.
 ### Approval
 
 ```
-POST /{domainID}/devices/{id}/approve   { device_type_id, group_id }
-POST /{domainID}/devices/{id}/reject
-POST /{domainID}/devices/approve        (bulk)
+POST /{workspaceID}/devices/{id}/approve   { device_type_id, group_id }
+POST /{workspaceID}/devices/{id}/reject
+POST /{workspaceID}/devices/approve        (bulk)
 ```
 
 Approval assigns the device type and optionally the sharing group — the two
@@ -176,7 +176,7 @@ reachable with one gateway credential.
 ## Risks
 
 - **Serial uniqueness is per tenant** ([spec §8 C4](../architecture.md#8-decision-record)) — two
-  domains may each hold a meter with serial `ABC123`. The announce path must
+  workspaces may each hold a meter with serial `ABC123`. The announce path must
   resolve serials **within the announcing gateway's tenant**; a lookup that
   forgets the tenant filter cross-attributes data between customers and fails
   silently. Needs an explicit test, not care.

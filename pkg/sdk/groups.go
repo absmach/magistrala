@@ -27,7 +27,7 @@ const (
 // Paths are unique per owner.
 type Group struct {
 	ID                        string    `json:"id,omitempty"`
-	DomainID                  string    `json:"domain_id,omitempty"`
+	WorkspaceID               string    `json:"workspace_id,omitempty"`
 	ParentID                  string    `json:"parent_id,omitempty"`
 	Name                      string    `json:"name,omitempty"`
 	Description               string    `json:"description,omitempty"`
@@ -50,12 +50,12 @@ type Group struct {
 	AccessProviderRoleActions []string  `json:"-"`
 }
 
-func (sdk mgSDK) CreateGroup(ctx context.Context, g Group, domainID, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) CreateGroup(ctx context.Context, g Group, workspaceID, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {
 		return Group{}, errors.NewSDKError(err)
 	}
-	url := fmt.Sprintf("%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint)
+	url := fmt.Sprintf("%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint)
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusCreated)
 	if sdkErr != nil {
@@ -70,8 +70,8 @@ func (sdk mgSDK) CreateGroup(ctx context.Context, g Group, domainID, token strin
 	return g, nil
 }
 
-func (sdk mgSDK) Groups(ctx context.Context, pm PageMetadata, domainID, token string) (GroupsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s", domainID, groupsEndpoint)
+func (sdk mgSDK) Groups(ctx context.Context, pm PageMetadata, workspaceID, token string) (GroupsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s", workspaceID, groupsEndpoint)
 	url, err := sdk.withQueryParams(sdk.groupsURL, endpoint, pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -90,12 +90,12 @@ func (sdk mgSDK) Groups(ctx context.Context, pm PageMetadata, domainID, token st
 	return gp, nil
 }
 
-func (sdk mgSDK) Group(ctx context.Context, id, domainID, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) Group(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError) {
 	if id == "" {
 		return Group{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id)
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodGet, url, token, nil, nil, http.StatusOK)
 	if sdkErr != nil {
@@ -110,7 +110,7 @@ func (sdk mgSDK) Group(ctx context.Context, id, domainID, token string) (Group, 
 	return t, nil
 }
 
-func (sdk mgSDK) UpdateGroup(ctx context.Context, g Group, domainID, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) UpdateGroup(ctx context.Context, g Group, workspaceID, token string) (Group, errors.SDKError) {
 	data, err := json.Marshal(g)
 	if err != nil {
 		return Group{}, errors.NewSDKError(err)
@@ -119,7 +119,7 @@ func (sdk mgSDK) UpdateGroup(ctx context.Context, g Group, domainID, token strin
 	if g.ID == "" {
 		return Group{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, g.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, g.ID)
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodPut, url, token, data, nil, http.StatusOK)
 	if sdkErr != nil {
@@ -134,11 +134,11 @@ func (sdk mgSDK) UpdateGroup(ctx context.Context, g Group, domainID, token strin
 	return g, nil
 }
 
-func (sdk mgSDK) UpdateGroupTags(ctx context.Context, g Group, domainID, token string) (Group, errors.SDKError) {
+func (sdk mgSDK) UpdateGroupTags(ctx context.Context, g Group, workspaceID, token string) (Group, errors.SDKError) {
 	if g.ID == "" {
 		return Group{}, errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s/tags", sdk.groupsURL, domainID, groupsEndpoint, g.ID)
+	url := fmt.Sprintf("%s/%s/%s/%s/tags", sdk.groupsURL, workspaceID, groupsEndpoint, g.ID)
 
 	data, err := json.Marshal(g)
 	if err != nil {
@@ -158,67 +158,67 @@ func (sdk mgSDK) UpdateGroupTags(ctx context.Context, g Group, domainID, token s
 	return g, nil
 }
 
-func (sdk mgSDK) SetGroupParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError {
+func (sdk mgSDK) SetGroupParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError {
 	scpg := groupParentReq{ParentID: groupID}
 	data, err := json.Marshal(scpg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, parentEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, parentEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) RemoveGroupParent(ctx context.Context, id, domainID, groupID, token string) errors.SDKError {
+func (sdk mgSDK) RemoveGroupParent(ctx context.Context, id, workspaceID, groupID, token string) errors.SDKError {
 	pgr := groupParentReq{ParentID: groupID}
 	data, err := json.Marshal(pgr)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, parentEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, parentEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, data, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) AddChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) errors.SDKError {
+func (sdk mgSDK) AddChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) errors.SDKError {
 	acg := childrenGroupsReq{ChildrenIDs: groupIDs}
 	data, err := json.Marshal(acg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, childrenEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, childrenEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, data, nil, http.StatusOK)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) RemoveChildren(ctx context.Context, id, domainID string, groupIDs []string, token string) errors.SDKError {
+func (sdk mgSDK) RemoveChildren(ctx context.Context, id, workspaceID string, groupIDs []string, token string) errors.SDKError {
 	rcg := childrenGroupsReq{ChildrenIDs: groupIDs}
 	data, err := json.Marshal(rcg)
 	if err != nil {
 		return errors.NewSDKError(err)
 	}
 
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, childrenEndpoint)
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, childrenEndpoint)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, data, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) RemoveAllChildren(ctx context.Context, id, domainID, token string) errors.SDKError {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, childrenEndpoint, "all")
+func (sdk mgSDK) RemoveAllChildren(ctx context.Context, id, workspaceID, token string) errors.SDKError {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, childrenEndpoint, "all")
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 
 	return sdkErr
 }
 
-func (sdk mgSDK) Children(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s/%s/%s", domainID, groupsEndpoint, id, childrenEndpoint)
+func (sdk mgSDK) Children(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s/%s/%s", workspaceID, groupsEndpoint, id, childrenEndpoint)
 	url, err := sdk.withQueryParams(sdk.groupsURL, endpoint, pm)
 	if err != nil {
 		return GroupsPage{}, errors.NewSDKError(err)
@@ -237,16 +237,16 @@ func (sdk mgSDK) Children(ctx context.Context, id, domainID string, pm PageMetad
 	return gp, nil
 }
 
-func (sdk mgSDK) EnableGroup(ctx context.Context, id, domainID, token string) (Group, errors.SDKError) {
-	return sdk.changeGroupStatus(ctx, id, enableEndpoint, domainID, token)
+func (sdk mgSDK) EnableGroup(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError) {
+	return sdk.changeGroupStatus(ctx, id, enableEndpoint, workspaceID, token)
 }
 
-func (sdk mgSDK) DisableGroup(ctx context.Context, id, domainID, token string) (Group, errors.SDKError) {
-	return sdk.changeGroupStatus(ctx, id, disableEndpoint, domainID, token)
+func (sdk mgSDK) DisableGroup(ctx context.Context, id, workspaceID, token string) (Group, errors.SDKError) {
+	return sdk.changeGroupStatus(ctx, id, disableEndpoint, workspaceID, token)
 }
 
-func (sdk mgSDK) changeGroupStatus(ctx context.Context, id, status, domainID, token string) (Group, errors.SDKError) {
-	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id, status)
+func (sdk mgSDK) changeGroupStatus(ctx context.Context, id, status, workspaceID, token string) (Group, errors.SDKError) {
+	url := fmt.Sprintf("%s/%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id, status)
 
 	_, body, sdkErr := sdk.processRequest(ctx, http.MethodPost, url, token, nil, nil, http.StatusOK)
 	if sdkErr != nil {
@@ -260,17 +260,17 @@ func (sdk mgSDK) changeGroupStatus(ctx context.Context, id, status, domainID, to
 	return g, nil
 }
 
-func (sdk mgSDK) DeleteGroup(ctx context.Context, id, domainID, token string) errors.SDKError {
+func (sdk mgSDK) DeleteGroup(ctx context.Context, id, workspaceID, token string) errors.SDKError {
 	if id == "" {
 		return errors.NewSDKError(apiutil.ErrMissingID)
 	}
-	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, domainID, groupsEndpoint, id)
+	url := fmt.Sprintf("%s/%s/%s/%s", sdk.groupsURL, workspaceID, groupsEndpoint, id)
 	_, _, sdkErr := sdk.processRequest(ctx, http.MethodDelete, url, token, nil, nil, http.StatusNoContent)
 	return sdkErr
 }
 
-func (sdk mgSDK) Hierarchy(ctx context.Context, id, domainID string, pm PageMetadata, token string) (GroupsHierarchyPage, errors.SDKError) {
-	endpoint := fmt.Sprintf("%s/%s/%s/hierarchy", domainID, groupsEndpoint, id)
+func (sdk mgSDK) Hierarchy(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (GroupsHierarchyPage, errors.SDKError) {
+	endpoint := fmt.Sprintf("%s/%s/%s/hierarchy", workspaceID, groupsEndpoint, id)
 	url, err := sdk.withQueryParams(sdk.groupsURL, endpoint, pm)
 	if err != nil {
 		return GroupsHierarchyPage{}, errors.NewSDKError(err)
@@ -289,62 +289,62 @@ func (sdk mgSDK) Hierarchy(ctx context.Context, id, domainID string, pm PageMeta
 	return hp, nil
 }
 
-func (sdk mgSDK) CreateGroupRole(ctx context.Context, id, domainID string, rq RoleReq, token string) (Role, errors.SDKError) {
-	return sdk.createRole(ctx, sdk.groupsURL, groupsEndpoint, id, domainID, rq, token)
+func (sdk mgSDK) CreateGroupRole(ctx context.Context, id, workspaceID string, rq RoleReq, token string) (Role, errors.SDKError) {
+	return sdk.createRole(ctx, sdk.groupsURL, groupsEndpoint, id, workspaceID, rq, token)
 }
 
-func (sdk mgSDK) GroupRoles(ctx context.Context, id, domainID string, pm PageMetadata, token string) (RolesPage, errors.SDKError) {
-	return sdk.listRoles(ctx, sdk.groupsURL, groupsEndpoint, id, domainID, pm, token)
+func (sdk mgSDK) GroupRoles(ctx context.Context, id, workspaceID string, pm PageMetadata, token string) (RolesPage, errors.SDKError) {
+	return sdk.listRoles(ctx, sdk.groupsURL, groupsEndpoint, id, workspaceID, pm, token)
 }
 
-func (sdk mgSDK) GroupRole(ctx context.Context, id, roleID, domainID, token string) (Role, errors.SDKError) {
-	return sdk.viewRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, token)
+func (sdk mgSDK) GroupRole(ctx context.Context, id, roleID, workspaceID, token string) (Role, errors.SDKError) {
+	return sdk.viewRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, token)
 }
 
-func (sdk mgSDK) UpdateGroupRole(ctx context.Context, id, roleID, newName, domainID string, token string) (Role, errors.SDKError) {
-	return sdk.updateRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, newName, domainID, token)
+func (sdk mgSDK) UpdateGroupRole(ctx context.Context, id, roleID, newName, workspaceID string, token string) (Role, errors.SDKError) {
+	return sdk.updateRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, newName, workspaceID, token)
 }
 
-func (sdk mgSDK) DeleteGroupRole(ctx context.Context, id, roleID, domainID, token string) errors.SDKError {
-	return sdk.deleteRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, token)
+func (sdk mgSDK) DeleteGroupRole(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError {
+	return sdk.deleteRole(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, token)
 }
 
-func (sdk mgSDK) AddGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) ([]string, errors.SDKError) {
-	return sdk.addRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, actions, token)
+func (sdk mgSDK) AddGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) ([]string, errors.SDKError) {
+	return sdk.addRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, actions, token)
 }
 
-func (sdk mgSDK) GroupRoleActions(ctx context.Context, id, roleID, domainID string, token string) ([]string, errors.SDKError) {
-	return sdk.listRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, token)
+func (sdk mgSDK) GroupRoleActions(ctx context.Context, id, roleID, workspaceID string, token string) ([]string, errors.SDKError) {
+	return sdk.listRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, token)
 }
 
-func (sdk mgSDK) RemoveGroupRoleActions(ctx context.Context, id, roleID, domainID string, actions []string, token string) errors.SDKError {
-	return sdk.removeRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, actions, token)
+func (sdk mgSDK) RemoveGroupRoleActions(ctx context.Context, id, roleID, workspaceID string, actions []string, token string) errors.SDKError {
+	return sdk.removeRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, actions, token)
 }
 
-func (sdk mgSDK) RemoveAllGroupRoleActions(ctx context.Context, id, roleID, domainID, token string) errors.SDKError {
-	return sdk.removeAllRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, token)
+func (sdk mgSDK) RemoveAllGroupRoleActions(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError {
+	return sdk.removeAllRoleActions(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, token)
 }
 
-func (sdk mgSDK) AddGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) ([]string, errors.SDKError) {
-	return sdk.addRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, members, token)
+func (sdk mgSDK) AddGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) ([]string, errors.SDKError) {
+	return sdk.addRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, members, token)
 }
 
-func (sdk mgSDK) GroupRoleMembers(ctx context.Context, id, roleID, domainID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError) {
-	return sdk.listRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, pm, token)
+func (sdk mgSDK) GroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, pm PageMetadata, token string) (RoleMembersPage, errors.SDKError) {
+	return sdk.listRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, pm, token)
 }
 
-func (sdk mgSDK) RemoveGroupRoleMembers(ctx context.Context, id, roleID, domainID string, members []string, token string) errors.SDKError {
-	return sdk.removeRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, members, token)
+func (sdk mgSDK) RemoveGroupRoleMembers(ctx context.Context, id, roleID, workspaceID string, members []string, token string) errors.SDKError {
+	return sdk.removeRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, members, token)
 }
 
-func (sdk mgSDK) RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, domainID, token string) errors.SDKError {
-	return sdk.removeAllRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, domainID, token)
+func (sdk mgSDK) RemoveAllGroupRoleMembers(ctx context.Context, id, roleID, workspaceID, token string) errors.SDKError {
+	return sdk.removeAllRoleMembers(ctx, sdk.groupsURL, groupsEndpoint, id, roleID, workspaceID, token)
 }
 
-func (sdk mgSDK) AvailableGroupRoleActions(ctx context.Context, domainID, token string) ([]string, errors.SDKError) {
-	return sdk.listAvailableRoleActions(ctx, sdk.groupsURL, groupsEndpoint, domainID, token)
+func (sdk mgSDK) AvailableGroupRoleActions(ctx context.Context, workspaceID, token string) ([]string, errors.SDKError) {
+	return sdk.listAvailableRoleActions(ctx, sdk.groupsURL, groupsEndpoint, workspaceID, token)
 }
 
-func (sdk mgSDK) ListGroupMembers(ctx context.Context, groupID, domainID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError) {
-	return sdk.listEntityMembers(ctx, sdk.groupsURL, domainID, groupsEndpoint, groupID, token, pm)
+func (sdk mgSDK) ListGroupMembers(ctx context.Context, groupID, workspaceID string, pm PageMetadata, token string) (EntityMembersPage, errors.SDKError) {
+	return sdk.listEntityMembers(ctx, sdk.groupsURL, workspaceID, groupsEndpoint, groupID, token, pm)
 }

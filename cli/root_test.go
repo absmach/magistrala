@@ -22,7 +22,7 @@ func TestRootCommandContainsAtomBackedCommands(t *testing.T) {
 	clearAtomEnv(t)
 	cmd := NewRootCmd()
 	for _, name := range []string{
-		"health", "login", cmdDomains, cmdChannels, cmdGroups, "authz",
+		"health", "login", cmdWorkspaces, cmdChannels, cmdGroups, "authz",
 		"devices", "gateways", "devicetypes",
 	} {
 		if subcmd, _, err := cmd.Find([]string{name}); err != nil || subcmd == nil || subcmd.Name() != name {
@@ -34,7 +34,7 @@ func TestRootCommandContainsAtomBackedCommands(t *testing.T) {
 func TestAuthedCommandsRequireToken(t *testing.T) {
 	clearAtomEnv(t)
 	cmd := NewRootCmd()
-	cmd.SetArgs([]string{cmdDomains, "list"})
+	cmd.SetArgs([]string{cmdWorkspaces, "list"})
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
 
@@ -103,7 +103,7 @@ func TestRootCommandConfiguresAtomClient(t *testing.T) {
 	t.Cleanup(func() { SetAtomClient(nil) })
 
 	cmd := NewRootCmd()
-	cmd.SetArgs([]string{cmdDomains, "list"})
+	cmd.SetArgs([]string{cmdWorkspaces, "list"})
 	cmd.SetOut(&bytes.Buffer{})
 	cmd.SetErr(&bytes.Buffer{})
 	// The command itself fails on the missing token, but PersistentPreRun has

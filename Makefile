@@ -6,7 +6,7 @@ MG_DOCKER_VOLUME_NAME_PREFIX ?= magistrala
 BUILD_DIR ?= build
 SERVICES = atom-bootstrap certs postgres-writer postgres-reader timescale-writer timescale-reader fluxmq
 CLI = cli
-TEST_API_SERVICES = certs clients users channels groups domains
+TEST_API_SERVICES = certs clients users channels groups workspaces
 TEST_API = $(addprefix test_api_,$(TEST_API_SERVICES))
 DOCKERS = $(addprefix docker_,$(SERVICES))
 DOCKERS_DEV = $(addprefix docker_dev_,$(SERVICES))
@@ -35,7 +35,7 @@ HOST_UID := $(shell id -u)
 HOST_GID := $(shell id -g)
 GRPC_MTLS_CERT_FILES_EXISTS = 0
 MOCKERY = $(GOBIN)/mockery
-MOCKERY_VERSION=3.6.4
+MOCKERY_VERSION=3.7.4
 PKG_PROTO_GEN_OUT_DIR=api/grpc
 INTERNAL_PROTO_DIR=internal/proto
 INTERNAL_PROTO_FILES := $(shell find $(INTERNAL_PROTO_DIR) -name "*.proto" | sed 's|$(INTERNAL_PROTO_DIR)/||')
@@ -292,7 +292,7 @@ endef
 
 test_api_users: TEST_API_URL := http://localhost:9000
 test_api_clients: TEST_API_URL := http://localhost:9000
-test_api_domains: TEST_API_URL := http://localhost:9000
+test_api_workspaces: TEST_API_URL := http://localhost:9000
 test_api_channels: TEST_API_URL := http://localhost:9000
 test_api_groups: TEST_API_URL := http://localhost:9000
 test_api_certs: TEST_API_URL := http://localhost:9019

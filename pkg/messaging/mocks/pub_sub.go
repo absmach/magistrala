@@ -112,7 +112,7 @@ type PubSub_Publish_Call struct {
 //   - ctx context.Context
 //   - topic string
 //   - msg *messaging.Message
-func (_e *PubSub_Expecter) Publish(ctx interface{}, topic interface{}, msg interface{}) *PubSub_Publish_Call {
+func (_e *PubSub_Expecter) Publish(ctx any, topic any, msg any) *PubSub_Publish_Call {
 	return &PubSub_Publish_Call{Call: _e.mock.On("Publish", ctx, topic, msg)}
 }
 
@@ -174,7 +174,7 @@ type PubSub_Subscribe_Call struct {
 // Subscribe is a helper method to define mock.On call
 //   - ctx context.Context
 //   - cfg messaging.SubscriberConfig
-func (_e *PubSub_Expecter) Subscribe(ctx interface{}, cfg interface{}) *PubSub_Subscribe_Call {
+func (_e *PubSub_Expecter) Subscribe(ctx any, cfg any) *PubSub_Subscribe_Call {
 	return &PubSub_Subscribe_Call{Call: _e.mock.On("Subscribe", ctx, cfg)}
 }
 
@@ -232,7 +232,7 @@ type PubSub_Unsubscribe_Call struct {
 //   - ctx context.Context
 //   - id string
 //   - topic string
-func (_e *PubSub_Expecter) Unsubscribe(ctx interface{}, id interface{}, topic interface{}) *PubSub_Unsubscribe_Call {
+func (_e *PubSub_Expecter) Unsubscribe(ctx any, id any, topic any) *PubSub_Unsubscribe_Call {
 	return &PubSub_Unsubscribe_Call{Call: _e.mock.On("Unsubscribe", ctx, id, topic)}
 }
 

@@ -78,7 +78,7 @@ type Service_GenerateCRL_Call struct {
 
 // GenerateCRL is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Service_Expecter) GenerateCRL(ctx interface{}) *Service_GenerateCRL_Call {
+func (_e *Service_Expecter) GenerateCRL(ctx any) *Service_GenerateCRL_Call {
 	return &Service_GenerateCRL_Call{Call: _e.mock.On("GenerateCRL", ctx)}
 }
 
@@ -139,7 +139,7 @@ type Service_GetEntityID_Call struct {
 // GetEntityID is a helper method to define mock.On call
 //   - ctx context.Context
 //   - serialNumber string
-func (_e *Service_Expecter) GetEntityID(ctx interface{}, serialNumber interface{}) *Service_GetEntityID_Call {
+func (_e *Service_Expecter) GetEntityID(ctx any, serialNumber any) *Service_GetEntityID_Call {
 	return &Service_GetEntityID_Call{Call: _e.mock.On("GetEntityID", ctx, serialNumber)}
 }
 
@@ -209,7 +209,7 @@ type Service_IssueCert_Call struct {
 //   - ttl string
 //   - ipAddrs []string
 //   - option certs.SubjectOptions
-func (_e *Service_Expecter) IssueCert(ctx interface{}, session interface{}, entityID interface{}, ttl interface{}, ipAddrs interface{}, option interface{}) *Service_IssueCert_Call {
+func (_e *Service_Expecter) IssueCert(ctx any, session any, entityID any, ttl any, ipAddrs any, option any) *Service_IssueCert_Call {
 	return &Service_IssueCert_Call{Call: _e.mock.On("IssueCert", ctx, session, entityID, ttl, ipAddrs, option)}
 }
 
@@ -298,7 +298,7 @@ type Service_IssueFromCSR_Call struct {
 //   - entityID string
 //   - ttl string
 //   - csr certs.CSR
-func (_e *Service_Expecter) IssueFromCSR(ctx interface{}, session interface{}, entityID interface{}, ttl interface{}, csr interface{}) *Service_IssueFromCSR_Call {
+func (_e *Service_Expecter) IssueFromCSR(ctx any, session any, entityID any, ttl any, csr any) *Service_IssueFromCSR_Call {
 	return &Service_IssueFromCSR_Call{Call: _e.mock.On("IssueFromCSR", ctx, session, entityID, ttl, csr)}
 }
 
@@ -381,7 +381,7 @@ type Service_IssueFromCSRInternal_Call struct {
 //   - entityID string
 //   - ttl string
 //   - csr certs.CSR
-func (_e *Service_Expecter) IssueFromCSRInternal(ctx interface{}, entityID interface{}, ttl interface{}, csr interface{}) *Service_IssueFromCSRInternal_Call {
+func (_e *Service_Expecter) IssueFromCSRInternal(ctx any, entityID any, ttl any, csr any) *Service_IssueFromCSRInternal_Call {
 	return &Service_IssueFromCSRInternal_Call{Call: _e.mock.On("IssueFromCSRInternal", ctx, entityID, ttl, csr)}
 }
 
@@ -458,7 +458,7 @@ type Service_ListCerts_Call struct {
 //   - ctx context.Context
 //   - session authn.Session
 //   - pm certs.PageMetadata
-func (_e *Service_Expecter) ListCerts(ctx interface{}, session interface{}, pm interface{}) *Service_ListCerts_Call {
+func (_e *Service_Expecter) ListCerts(ctx any, session any, pm any) *Service_ListCerts_Call {
 	return &Service_ListCerts_Call{Call: _e.mock.On("ListCerts", ctx, session, pm)}
 }
 
@@ -532,7 +532,7 @@ type Service_OCSP_Call struct {
 //   - ctx context.Context
 //   - serialNumber string
 //   - ocspRequestDER []byte
-func (_e *Service_Expecter) OCSP(ctx interface{}, serialNumber interface{}, ocspRequestDER interface{}) *Service_OCSP_Call {
+func (_e *Service_Expecter) OCSP(ctx any, serialNumber any, ocspRequestDER any) *Service_OCSP_Call {
 	return &Service_OCSP_Call{Call: _e.mock.On("OCSP", ctx, serialNumber, ocspRequestDER)}
 }
 
@@ -604,7 +604,7 @@ type Service_RenewCert_Call struct {
 //   - ctx context.Context
 //   - session authn.Session
 //   - serialNumber string
-func (_e *Service_Expecter) RenewCert(ctx interface{}, session interface{}, serialNumber interface{}) *Service_RenewCert_Call {
+func (_e *Service_Expecter) RenewCert(ctx any, session any, serialNumber any) *Service_RenewCert_Call {
 	return &Service_RenewCert_Call{Call: _e.mock.On("RenewCert", ctx, session, serialNumber)}
 }
 
@@ -674,7 +674,7 @@ type Service_RetrieveCAChain_Call struct {
 
 // RetrieveCAChain is a helper method to define mock.On call
 //   - ctx context.Context
-func (_e *Service_Expecter) RetrieveCAChain(ctx interface{}) *Service_RetrieveCAChain_Call {
+func (_e *Service_Expecter) RetrieveCAChain(ctx any) *Service_RetrieveCAChain_Call {
 	return &Service_RetrieveCAChain_Call{Call: _e.mock.On("RetrieveCAChain", ctx)}
 }
 
@@ -727,7 +727,7 @@ type Service_RevokeAll_Call struct {
 //   - ctx context.Context
 //   - session authn.Session
 //   - entityID string
-func (_e *Service_Expecter) RevokeAll(ctx interface{}, session interface{}, entityID interface{}) *Service_RevokeAll_Call {
+func (_e *Service_Expecter) RevokeAll(ctx any, session any, entityID any) *Service_RevokeAll_Call {
 	return &Service_RevokeAll_Call{Call: _e.mock.On("RevokeAll", ctx, session, entityID)}
 }
 
@@ -790,7 +790,7 @@ type Service_RevokeBySerial_Call struct {
 //   - ctx context.Context
 //   - session authn.Session
 //   - serialNumber string
-func (_e *Service_Expecter) RevokeBySerial(ctx interface{}, session interface{}, serialNumber interface{}) *Service_RevokeBySerial_Call {
+func (_e *Service_Expecter) RevokeBySerial(ctx any, session any, serialNumber any) *Service_RevokeBySerial_Call {
 	return &Service_RevokeBySerial_Call{Call: _e.mock.On("RevokeBySerial", ctx, session, serialNumber)}
 }
 
@@ -862,7 +862,7 @@ type Service_ViewCert_Call struct {
 //   - ctx context.Context
 //   - session authn.Session
 //   - serialNumber string
-func (_e *Service_Expecter) ViewCert(ctx interface{}, session interface{}, serialNumber interface{}) *Service_ViewCert_Call {
+func (_e *Service_Expecter) ViewCert(ctx any, session any, serialNumber any) *Service_ViewCert_Call {
 	return &Service_ViewCert_Call{Call: _e.mock.On("ViewCert", ctx, session, serialNumber)}
 }
 

@@ -95,7 +95,7 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 
 ### 🔐 Identity & Access
 
-- Multi-tenant domains for isolating environments
+- Multi-tenant workspaces for isolating environments
 - Users, roles, and organizational hierarchies
 - Fine-grained access control (ABAC + RBAC)
 - Mutual TLS (X.509) and JWT-based authentication
@@ -146,7 +146,7 @@ Magistrala provides a complete set of building blocks for IoT systems — from d
 Magistrala uses **Atom** as the backend for identity, authorization, and the catalog.
 
 Atom is the source of truth for:
-- domains
+- workspaces
 - users
 - devices
 - channels
@@ -162,7 +162,7 @@ Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `doc
 
 | Magistrala concept | Atom concept                 | Meaning                                                            |
 | ------------------ | ---------------------------- | ------------------------------------------------------------------ |
-| Domain             | Tenant                       | Isolation boundary for one organization, project, or environment   |
+| Workspace             | Tenant                       | Isolation boundary for one organization, project, or environment   |
 | User               | Entity with kind `human`     | A person who logs in and uses the UI/API                           |
 | Device             | Entity with kind `device`    | A device or application that sends/receives data                   |
 | Channel            | Resource with kind `channel` | A messaging/data path that devices can publish or subscribe to     |
@@ -171,7 +171,7 @@ Current Docker deployments use the Atom image configured by `ATOM_IMAGE` in `doc
 In simple terms:
 
 ```text
-MG Domain  = Atom Tenant
+MG Workspace  = Atom Tenant
 MG User    = Atom Human Entity
 MG Device  = Atom Device Entity
 MG Channel = Atom Channel Resource
@@ -185,8 +185,8 @@ Atom access control has these basic parts:
 | Atom word        | Simple meaning                | Example                                                   |
 | ---------------- | ----------------------------- | --------------------------------------------------------- |
 | Action           | One permission verb           | `read`, `write`, `delete`, `role.manage`, `policy.manage` |
-| Permission Block | Where actions apply           | all channels in domain `d1` can `read`, `publish`         |
-| Role             | A bundle of permission blocks | `tenant-admin` bundles domain, role, and member access    |
+| Permission Block | Where actions apply           | all channels in workspace `d1` can `read`, `publish`         |
+| Role             | A bundle of permission blocks | `tenant-admin` bundles workspace, role, and member access    |
 | Role Assignment  | Who gets a role               | give `user1` the `tenant-admin` role                      |
 
 Read an assignment like this:
@@ -199,13 +199,13 @@ The role contains permission blocks that say where and what.
 Example:
 
 ```text
-Give user1 the tenant-admin role on domain d1.
+Give user1 the tenant-admin role on workspace d1.
 ```
 
 That means:
 
 ```text
-user1 can use the tenant-admin permissions inside domain d1.
+user1 can use the tenant-admin permissions inside workspace d1.
 ```
 
 ### How MG Roles Work With Atom
@@ -240,7 +240,7 @@ Can user1 manage roles for client1?
 Atom checks:
 
 ```text
-Does user1 have role.manage on device1, or on the domain that contains device1?
+Does user1 have role.manage on device1, or on the workspace that contains device1?
 ```
 
 When MG UI checks:
@@ -252,14 +252,14 @@ Can user1 add a member to channel1?
 Atom checks:
 
 ```text
-Does user1 have policy.manage on channel1, or on the domain that contains channel1?
+Does user1 have policy.manage on channel1, or on the workspace that contains channel1?
 ```
 
 ### Practical Rule
 
-If a user is domain admin, they usually receive a tenant-scoped role in Atom.
+If a user is workspace admin, they usually receive a tenant-scoped role in Atom.
 
-That tenant-scoped role can allow them to manage objects inside the domain:
+That tenant-scoped role can allow them to manage objects inside the workspace:
 - devices
 - channels
 - groups
@@ -273,7 +273,7 @@ For narrower access, create object-scoped roles. For example:
 Give user2 a reader role only on channel1.
 ```
 
-Then user2 can read only that channel, not the whole domain.
+Then user2 can read only that channel, not the whole workspace.
 
 ## Installation
 
@@ -403,7 +403,7 @@ old tokens do not survive it.
 ```bash
 make cli
 ./build/cli login admin 12345678
-./build/cli --token "$ATOM_ADMIN_TOKEN" domains list
+./build/cli --token "$ATOM_ADMIN_TOKEN" workspaces list
 ```
 
 The CLI reads the same `ATOM_URL`, `ATOM_SERVICE_TOKEN`/`ATOM_ADMIN_TOKEN` and

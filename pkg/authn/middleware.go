@@ -27,14 +27,14 @@ const (
 
 // middlewareOptions contains configuration for authentication middleware.
 type middlewareOptions struct {
-	domainCheck         bool
+	workspaceCheck      bool
 	allowUnverifiedUser bool
 }
 
 // defaultMiddlewareOptions returns the default middleware configuration.
 func defaultMiddlewareOptions() *middlewareOptions {
 	return &middlewareOptions{
-		domainCheck:         true,
+		workspaceCheck:      true,
 		allowUnverifiedUser: false,
 	}
 }
@@ -42,10 +42,10 @@ func defaultMiddlewareOptions() *middlewareOptions {
 // MiddlewareOption is a function that modifies middleware options.
 type MiddlewareOption func(*middlewareOptions)
 
-// WithDomainCheck sets whether domain checking is enabled.
-func WithDomainCheck(enabled bool) MiddlewareOption {
+// WithWorkspaceCheck sets whether workspace checking is enabled.
+func WithWorkspaceCheck(enabled bool) MiddlewareOption {
 	return func(opts *middlewareOptions) {
-		opts.domainCheck = enabled
+		opts.workspaceCheck = enabled
 	}
 }
 
@@ -60,7 +60,7 @@ func WithAllowUnverifiedUser(allowed bool) MiddlewareOption {
 func WithDefaultMiddlewareOptions() MiddlewareOption {
 	return func(opts *middlewareOptions) {
 		defaults := defaultMiddlewareOptions()
-		opts.domainCheck = defaults.domainCheck
+		opts.workspaceCheck = defaults.workspaceCheck
 		opts.allowUnverifiedUser = defaults.allowUnverifiedUser
 	}
 }
@@ -143,18 +143,18 @@ func (a *authnMiddleware) Middleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			if opts.domainCheck {
-				domain := chi.URLParam(r, "domainID")
-				if domain == "" {
-					encodeError(w, apiutil.ErrMissingDomainID, http.StatusBadRequest)
+			if opts.workspaceCheck {
+				workspace := chi.URLParam(r, "workspaceID")
+				if workspace == "" {
+					encodeError(w, apiutil.ErrMissingWorkspaceID, http.StatusBadRequest)
 					return
 				}
-				resp.DomainID = domain
+				resp.WorkspaceID = workspace
 				switch resp.Role {
 				case SuperAdminRole:
-					resp.DomainUserID = resp.UserID
+					resp.WorkspaceUserID = resp.UserID
 				case UserRole:
-					resp.DomainUserID = policies.EncodeDomainUserID(domain, resp.UserID)
+					resp.WorkspaceUserID = policies.EncodeWorkspaceUserID(workspace, resp.UserID)
 				}
 			}
 

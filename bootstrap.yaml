@@ -34,7 +34,7 @@ tags:
 paths:
   # ── Enrollment configs ────────────────────────────────────────────────────
 
-  /{domainID}/clients/configs:
+  /{workspaceID}/clients/configs:
     post:
       operationId: createConfig
       summary: Adds a new enrollment config
@@ -44,7 +44,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCreateReq"
       responses:
@@ -70,7 +70,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Status"
@@ -85,14 +85,14 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/{configID}:
+  /{workspaceID}/clients/configs/{configID}:
     get:
       operationId: getConfig
       summary: Retrieves a config
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
@@ -113,7 +113,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigUpdateReq"
@@ -138,7 +138,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "204":
@@ -150,7 +150,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/certs/{configID}:
+  /{workspaceID}/clients/configs/certs/{configID}:
     patch:
       operationId: updateConfigCerts
       summary: Updates client certificates
@@ -160,7 +160,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       requestBody:
         $ref: "#/components/requestBodies/ConfigCertUpdateReq"
@@ -180,7 +180,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/{configID}/enable:
+  /{workspaceID}/clients/configs/{configID}/enable:
     post:
       operationId: enableConfig
       summary: Enables a config
@@ -190,7 +190,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
@@ -204,7 +204,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/configs/{configID}/disable:
+  /{workspaceID}/clients/configs/{configID}/disable:
     post:
       operationId: disableConfig
       summary: Disables a config
@@ -214,7 +214,7 @@ paths:
       tags:
         - configs
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
@@ -291,14 +291,14 @@ paths:
 
   # ── Device profiles ───────────────────────────────────────────────────────
 
-  /{domainID}/clients/bootstrap/profiles:
+  /{workspaceID}/clients/bootstrap/profiles:
     post:
       operationId: createProfile
       summary: Creates a device profile
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
       requestBody:
         $ref: "#/components/requestBodies/ProfileCreateReq"
       responses:
@@ -311,7 +311,7 @@ paths:
         "403":
           description: Failed to perform authorization over the entity.
         "409":
-          description: A profile with the same name already exists in this domain.
+          description: A profile with the same name already exists in this workspace.
         "415":
           description: Missing or invalid content type.
         "500":
@@ -322,7 +322,7 @@ paths:
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
       responses:
@@ -335,7 +335,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/profiles/upload:
+  /{workspaceID}/clients/bootstrap/profiles/upload:
     post:
       operationId: uploadProfile
       summary: Uploads a device profile
@@ -345,7 +345,7 @@ paths:
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
       requestBody:
         required: true
         content:
@@ -370,14 +370,14 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/profiles/{profileID}:
+  /{workspaceID}/clients/bootstrap/profiles/{profileID}:
     get:
       operationId: getProfile
       summary: Retrieves a device profile
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ProfileID"
       responses:
         "200":
@@ -394,7 +394,7 @@ paths:
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ProfileID"
       requestBody:
         $ref: "#/components/requestBodies/ProfileUpdateReq"
@@ -417,7 +417,7 @@ paths:
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ProfileID"
       responses:
         "204":
@@ -429,14 +429,14 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/profiles/{profileID}/slots:
+  /{workspaceID}/clients/bootstrap/profiles/{profileID}/slots:
     get:
       operationId: getProfileSlots
       summary: Retrieves the binding slots declared by a profile
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ProfileID"
       responses:
         "200":
@@ -457,7 +457,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/profiles/{profileID}/render-preview:
+  /{workspaceID}/clients/bootstrap/profiles/{profileID}/render-preview:
     post:
       operationId: renderPreview
       summary: Renders a profile template preview
@@ -468,7 +468,7 @@ paths:
       tags:
         - profiles
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ProfileID"
       requestBody:
         required: true
@@ -508,14 +508,14 @@ paths:
 
   # ── Enrollment bindings ───────────────────────────────────────────────────
 
-  /{domainID}/clients/bootstrap/enrollments/{configID}/profile:
+  /{workspaceID}/clients/bootstrap/enrollments/{configID}/profile:
     patch:
       operationId: assignProfile
       summary: Assigns a profile to an enrollment
       tags:
         - enrollments
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       requestBody:
         required: true
@@ -543,7 +543,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/enrollments/{configID}/bindings:
+  /{workspaceID}/clients/bootstrap/enrollments/{configID}/bindings:
     put:
       operationId: bindResources
       summary: Binds resources to profile slots
@@ -554,7 +554,7 @@ paths:
       tags:
         - enrollments
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       requestBody:
         required: true
@@ -589,7 +589,7 @@ paths:
       tags:
         - enrollments
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
@@ -601,7 +601,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/clients/bootstrap/enrollments/{configID}/bindings/refresh:
+  /{workspaceID}/clients/bootstrap/enrollments/{configID}/bindings/refresh:
     post:
       operationId: refreshBindings
       summary: Refreshes all binding snapshots
@@ -611,7 +611,7 @@ paths:
       tags:
         - enrollments
       parameters:
-        - $ref: "#/components/parameters/DomainID"
+        - $ref: "#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/ConfigID"
       responses:
         "200":
@@ -651,10 +651,10 @@ components:
           type: string
           format: uuid
           description: Enrollment ID.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
-          description: Domain the enrollment belongs to.
+          description: Workspace the enrollment belongs to.
         external_id:
           type: string
           description: External device identifier (e.g. MAC address).
@@ -744,7 +744,7 @@ components:
           type: string
         ca_cert:
           type: string
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
 
@@ -755,7 +755,7 @@ components:
           type: string
           format: uuid
           readOnly: true
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           readOnly: true
@@ -903,9 +903,9 @@ components:
         type: string
       required: true
 
-    DomainID:
-      name: domainID
-      description: Unique domain identifier.
+    WorkspaceID:
+      name: workspaceID
+      description: Unique workspace identifier.
       in: path
       schema:
         type: string

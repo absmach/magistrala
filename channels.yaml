@@ -37,20 +37,20 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/channels:
+  /{workspaceID}/channels:
     post:
       operationId: createChannel
       tags:
         - Channels
       summary: Creates new channel
       description: |
-        Creates new channel in domain.
+        Creates new channel in workspace.
       requestBody:
         $ref: "#/components/requestBodies/ChannelCreateReq"
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       responses:
         "201":
           $ref: "#/components/responses/ChannelCreateRes"
@@ -84,7 +84,7 @@ paths:
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Order"
@@ -120,20 +120,20 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/bulk:
+  /{workspaceID}/channels/bulk:
     post:
       operationId: createChannels
       tags:
         - Channels
       summary: Creates new channels
       description: |
-        Creates new channels in domain.
+        Creates new channels in workspace.
       requestBody:
         $ref: "#/components/requestBodies/ChannelsCreateReq"
       security:
         - bearerAuth: []
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       responses:
         "201":
           $ref: "#/components/responses/ChannelsCreateRes"
@@ -154,7 +154,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}:
+  /{workspaceID}/channels/{chanID}:
     get:
       operationId: getChannel
       summary: Retrieves channel info.
@@ -163,7 +163,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -171,7 +171,7 @@ paths:
         "200":
           $ref: "#/components/responses/ChannelRes"
         "400":
-          description: Failed due to malformed channel's or domain ID.
+          description: Failed due to malformed channel's or workspace ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -193,7 +193,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -226,7 +226,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -234,7 +234,7 @@ paths:
         "204":
           description: Channel deleted.
         "400":
-          description: Failed due to malformed domain ID.
+          description: Failed due to malformed workspace ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -244,7 +244,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/tags:
+  /{workspaceID}/channels/{chanID}/tags:
     patch:
       operationId: updateChannelTags
       summary: Updates channel tags.
@@ -255,7 +255,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -281,7 +281,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/enable:
+  /{workspaceID}/channels/{chanID}/enable:
     post:
       operationId: enableChannel
       summary: Enables a channel
@@ -290,7 +290,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -312,7 +312,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/disable:
+  /{workspaceID}/channels/{chanID}/disable:
     post:
       operationId: disableChannel
       summary: Disables a channel
@@ -321,7 +321,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       security:
         - bearerAuth: []
@@ -343,7 +343,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/parent:
+  /{workspaceID}/channels/{chanID}/parent:
     post:
       operationId: setChannelParentGroup
       summary: Sets a parent group for a channel
@@ -352,7 +352,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/ChannelParentGroupReq"
@@ -382,7 +382,7 @@ paths:
       tags:
         - Channels
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/ChannelParentGroupReq"
@@ -404,7 +404,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/connect:
+  /{workspaceID}/channels/connect:
     post:
       operationId: connectClientsAndChannels
       summary: Connects client and channel.
@@ -412,7 +412,7 @@ paths:
         Connect clients specified by IDs to channels specified by IDs.
         Channel and client are owned by user identified using the provided access token.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       tags:
         - Connections
       requestBody:
@@ -437,7 +437,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/disconnect:
+  /{workspaceID}/channels/disconnect:
     post:
       operationId: disconnectClientsAndChannels
       summary: Disconnects client and channel.
@@ -445,7 +445,7 @@ paths:
         Disconnect clients specified by IDs from channels specified by IDs.
         Channel and client are owned by user identified using the provided access token.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       tags:
         - Connections
       requestBody:
@@ -470,7 +470,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/connect:
+  /{workspaceID}/channels/{chanID}/connect:
     post:
       operationId: connectClientsToChannel
       summary: Connects clients to a channel
@@ -479,7 +479,7 @@ paths:
       tags:
         - Connections
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/ChannelConnReq"
@@ -499,7 +499,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/channels/{chanID}/disconnect:
+  /{workspaceID}/channels/{chanID}/disconnect:
     post:
       operationId: disconnectClientsFromChannel
       summary: Disconnects clients from a channel
@@ -508,7 +508,7 @@ paths:
       tags:
         - Connections
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/chanID"
       requestBody:
         $ref: "#/components/requestBodies/ChannelConnReq"
@@ -592,11 +592,11 @@ components:
           type: string
           example: channelName
           description: Free-form channel name. Channel name is unique on the given hierarchy level.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which the group belongs.
+          description: ID of the workspace to which the group belongs.
         parent_id:
           type: string
           format: uuid
@@ -898,7 +898,7 @@ components:
         type: string
         enum:
           - direct
-          - domain
+          - workspace
           - indirect
           - indirect_group
       required: false

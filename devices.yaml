@@ -37,7 +37,7 @@ tags:
       url: https://magistrala.absmach.eu/docs/
 
 paths:
-  /{domainID}/devices:
+  /{workspaceID}/devices:
     post:
       operationId: createDevice
       tags:
@@ -47,7 +47,7 @@ paths:
         Adds new device to the list of devices owned by user identified using
         the provided access token.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceCreateReq"
       responses:
@@ -81,7 +81,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
         - $ref: "#/components/parameters/Order"
@@ -121,7 +121,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/bulk:
+  /{workspaceID}/devices/bulk:
     post:
       operationId: bulkCreateDevices
       summary: Bulk provisions new devices
@@ -129,7 +129,7 @@ paths:
         Adds a list of new devices to the list of devices owned by user identified using
         the provided access token.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       tags:
         - Devices
       requestBody:
@@ -152,7 +152,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}:
+  /{workspaceID}/devices/{deviceID}:
     get:
       operationId: getDevice
       summary: Retrieves device info
@@ -161,7 +161,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
@@ -169,7 +169,7 @@ paths:
         "200":
           $ref: "#/components/responses/DeviceRes"
         "400":
-          description: Failed due to malformed domain ID.
+          description: Failed due to malformed workspace ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -191,7 +191,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceUpdateReq"
@@ -224,7 +224,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
@@ -232,7 +232,7 @@ paths:
         "204":
           description: Device deleted.
         "400":
-          description: Failed due to malformed domain ID.
+          description: Failed due to malformed workspace ID.
         "401":
           description: Missing or invalid access token provided.
         "403":
@@ -242,7 +242,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/tags:
+  /{workspaceID}/devices/{deviceID}/tags:
     patch:
       operationId: updateDeviceTags
       summary: Updates tags the device.
@@ -252,7 +252,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceUpdateTagsReq"
@@ -274,7 +274,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/secret:
+  /{workspaceID}/devices/{deviceID}/secret:
     patch:
       operationId: updateDeviceSecret
       summary: Updates Secret of the identified device.
@@ -284,7 +284,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceUpdateSecretReq"
@@ -310,7 +310,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/disable:
+  /{workspaceID}/devices/{deviceID}/disable:
     post:
       operationId: disableDevice
       summary: Disables a device
@@ -319,7 +319,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
@@ -341,7 +341,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/enable:
+  /{workspaceID}/devices/{deviceID}/enable:
     post:
       operationId: enableDevice
       summary: Enables a device
@@ -350,7 +350,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
@@ -372,7 +372,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/parent:
+  /{workspaceID}/devices/{deviceID}/parent:
     post:
       operationId: setDeviceParentGroup
       summary: Sets a parent group for a device
@@ -381,7 +381,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceParentGroupReq"
@@ -411,7 +411,7 @@ paths:
       tags:
         - Devices
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "#/components/requestBodies/DeviceParentGroupReq"
@@ -433,7 +433,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles:
+  /{workspaceID}/devices/{deviceID}/roles:
     post:
       operationId: createDeviceRole
       summary: Creates a role for a device
@@ -442,7 +442,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       requestBody:
         $ref: "./schemas/roles.yaml#/components/requestBodies/CreateRoleReq"
@@ -475,7 +475,7 @@ paths:
         dataset is consumed either by making subsequent requests, or by
         increasing the subset size of the initial request.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "#/components/parameters/Limit"
         - $ref: "#/components/parameters/Offset"
@@ -498,7 +498,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/members:
+  /{workspaceID}/devices/{deviceID}/roles/members:
     get:
       operationId: getDeviceMembers
       tags:
@@ -507,7 +507,7 @@ paths:
       description: |
         Retrieves members from role for the specific device.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
       security:
         - bearerAuth: []
@@ -528,7 +528,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}:
     get:
       operationId: getDeviceRole
       tags:
@@ -537,7 +537,7 @@ paths:
       description: |
         Retrieves a specific device role that is identified by the role name.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -567,7 +567,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -599,7 +599,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -621,7 +621,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/actions:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/actions:
     post:
       operationId: addDeviceRoleAction
       summary: Adds a role action for a device role.
@@ -630,7 +630,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -662,7 +662,7 @@ paths:
       description: |
         Retrieves a list of device role actions.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -684,7 +684,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/actions/delete:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/actions/delete:
     post:
       operationId: deleteDeviceRoleAction
       summary: Deletes role actions for a device role.
@@ -693,7 +693,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -717,7 +717,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/actions/delete-all:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/actions/delete-all:
     post:
       operationId: deleteAllDeviceRoleActions
       summary: Deletes all role actions for a device role.
@@ -726,7 +726,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -748,7 +748,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/members:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/members:
     post:
       operationId: addDeviceRoleMember
       summary: Adds a member to a device role.
@@ -757,7 +757,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -789,7 +789,7 @@ paths:
       description: |
         Retrieves a list of device role members.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -811,7 +811,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/members/delete:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/members/delete:
     post:
       operationId: deleteDeviceRoleMembers
       summary: Deletes members from a device role.
@@ -820,7 +820,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       requestBody:
@@ -844,7 +844,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/{deviceID}/roles/{roleID}/members/delete-all:
+  /{workspaceID}/devices/{deviceID}/roles/{roleID}/members/delete-all:
     post:
       operationId: deleteAllDeviceRoleMembers
       summary: Deletes all members from a device role.
@@ -853,7 +853,7 @@ paths:
       tags:
         - Roles
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
         - $ref: "#/components/parameters/deviceID"
         - $ref: "./schemas/roles.yaml#/components/parameters/RoleID"
       security:
@@ -875,7 +875,7 @@ paths:
         "500":
           $ref: "#/components/responses/ServiceError"
 
-  /{domainID}/devices/roles/available-actions:
+  /{workspaceID}/devices/roles/available-actions:
     get:
       operationId: listAvailableActions
       tags:
@@ -884,7 +884,7 @@ paths:
       description: |
         Retrieves a list of available actions.
       parameters:
-        - $ref: "auth.yaml#/components/parameters/DomainID"
+        - $ref: "auth.yaml#/components/parameters/WorkspaceID"
       security:
         - bearerAuth: []
       responses:
@@ -991,11 +991,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Device tags.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which device belongs.
+          description: ID of the workspace to which device belongs.
         credentials:
           type: object
           properties:
@@ -1052,11 +1052,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Device tags.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which device belongs.
+          description: ID of the workspace to which device belongs.
         credentials:
           type: object
           properties:
@@ -1168,11 +1168,11 @@ components:
             type: string
           example: ["tag1", "tag2"]
           description: Device tags.
-        domain_id:
+        workspace_id:
           type: string
           format: uuid
           example: bb7edb32-2eac-4aad-aebe-ed96fe073879
-          description: ID of the domain to which device belongs.
+          description: ID of the workspace to which device belongs.
         credentials:
           type: object
           properties:
@@ -1361,7 +1361,7 @@ components:
         type: string
         enum:
           - direct
-          - domain
+          - workspace
           - indirect
           - indirect_group
       required: false

@@ -52,9 +52,9 @@ func (r *atomResolver) entity(ctx context.Context, tenantID string, binding Bind
 	if err != nil || entity.TenantID != tenantID || entity.Kind != "device" {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("client %q not found in tenant", binding.ResourceID))
 	}
-	values := map[string]any{"id": entity.ID, "name": entity.Name, "workspace_id": entity.TenantID}
-	copyStringAttribute(values, entity.Attributes, "identity")
-	copyStringAttribute(values, entity.Attributes, "route")
+	values := map[string]any{snapshotKeyID: entity.ID, snapshotKeyName: entity.Name, snapshotKeyWorkspaceID: entity.TenantID}
+	copyStringAttribute(values, entity.Attributes, snapshotKeyIdentity)
+	copyStringAttribute(values, entity.Attributes, snapshotKeyRoute)
 	return BindingSnapshot{Slot: binding.Slot, Type: binding.Type, ResourceID: binding.ResourceID, Snapshot: values, UpdatedAt: time.Now().UTC()}, nil
 }
 
@@ -63,9 +63,9 @@ func (r *atomResolver) resource(ctx context.Context, tenantID string, binding Bi
 	if err != nil || resource.TenantID != tenantID || resource.Kind != atom.KindChannel {
 		return BindingSnapshot{}, errors.Wrap(svcerr.ErrNotFound, fmt.Errorf("channel %q not found in tenant", binding.ResourceID))
 	}
-	values := map[string]any{"id": resource.ID, "name": resource.Name, "workspace_id": resource.TenantID}
-	copyStringAttribute(values, resource.Attributes, "route")
-	copyStringAttribute(values, resource.Attributes, "topic")
+	values := map[string]any{snapshotKeyID: resource.ID, snapshotKeyName: resource.Name, snapshotKeyWorkspaceID: resource.TenantID}
+	copyStringAttribute(values, resource.Attributes, snapshotKeyRoute)
+	copyStringAttribute(values, resource.Attributes, snapshotKeyTopic)
 	return BindingSnapshot{Slot: binding.Slot, Type: binding.Type, ResourceID: binding.ResourceID, Snapshot: values, UpdatedAt: time.Now().UTC()}, nil
 }
 

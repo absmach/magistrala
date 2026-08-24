@@ -29,6 +29,18 @@ type BindingSnapshot struct {
 	UpdatedAt      time.Time      `json:"updated_at,omitempty"`
 }
 
+// Snapshot keys. These form the vocabulary a profile template sees under
+// .Bindings.<slot>, so both resolvers must populate the same names.
+const (
+	snapshotKeyID          = "id"
+	snapshotKeyName        = "name"
+	snapshotKeyWorkspaceID = "workspace_id"
+	snapshotKeyIdentity    = "identity"
+	snapshotKeyRoute       = "route"
+	snapshotKeyTopic       = "topic"
+	snapshotKeySecret      = "secret"
+)
+
 // BindingStore is the persistence interface for BindingSnapshots.
 type BindingStore interface {
 	// Save upserts all given snapshots for the config.

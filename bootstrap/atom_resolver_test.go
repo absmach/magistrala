@@ -17,6 +17,7 @@ type atomReaderStub struct {
 }
 
 func (s atomReaderStub) GetEntity(context.Context, string) (atom.Entity, error) { return s.entity, nil }
+
 func (s atomReaderStub) GetResource(context.Context, string) (atom.Resource, error) {
 	return s.resource, nil
 }

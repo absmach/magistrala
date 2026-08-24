@@ -59,19 +59,19 @@ func (r *sdkResolver) resolveClient(ctx context.Context, workspaceID, token stri
 	}
 
 	snapshot := map[string]any{
-		"id":   client.ID,
-		"name": client.Name,
+		snapshotKeyID:   client.ID,
+		snapshotKeyName: client.Name,
 	}
 	if client.Credentials.Identity != "" {
-		snapshot["identity"] = client.Credentials.Identity
+		snapshot[snapshotKeyIdentity] = client.Credentials.Identity
 	}
 	if client.WorkspaceID != "" {
-		snapshot["workspace_id"] = client.WorkspaceID
+		snapshot[snapshotKeyWorkspaceID] = client.WorkspaceID
 	}
 
 	secret := map[string]any{}
 	if client.Credentials.Secret != "" {
-		secret["secret"] = client.Credentials.Secret
+		secret[snapshotKeySecret] = client.Credentials.Secret
 	}
 
 	return BindingSnapshot{
@@ -92,14 +92,14 @@ func (r *sdkResolver) resolveChannel(ctx context.Context, workspaceID, token str
 	}
 
 	snapshot := map[string]any{
-		"id":   channel.ID,
-		"name": channel.Name,
+		snapshotKeyID:   channel.ID,
+		snapshotKeyName: channel.Name,
 	}
 	if channel.Route != "" {
-		snapshot["topic"] = channel.Route
+		snapshot[snapshotKeyTopic] = channel.Route
 	}
 	if channel.WorkspaceID != "" {
-		snapshot["workspace_id"] = channel.WorkspaceID
+		snapshot[snapshotKeyWorkspaceID] = channel.WorkspaceID
 	}
 	if channel.Metadata != nil {
 		snapshot["metadata"] = channel.Metadata

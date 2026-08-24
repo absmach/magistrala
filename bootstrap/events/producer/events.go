@@ -34,6 +34,12 @@ const (
 	bindingsRefresh = bindingsPrefix + "refresh"
 )
 
+// Payload keys shared across the encoded events.
+const (
+	keyOperation = "operation"
+	keyConfigID  = "config_id"
+)
+
 var (
 	_ events.Event = (*configEvent)(nil)
 	_ events.Event = (*removeConfigEvent)(nil)
@@ -57,8 +63,8 @@ type configEvent struct {
 
 func (ce configEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
-		"status":    ce.Status.String(),
-		"operation": ce.operation,
+		"status":     ce.Status.String(),
+		keyOperation: ce.operation,
 	}
 	if ce.ID != "" {
 		val["config_id"] = ce.ID
@@ -92,8 +98,8 @@ type removeConfigEvent struct {
 
 func (rce removeConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": rce.config,
-		"operation": configRemove,
+		keyConfigID:  rce.config,
+		keyOperation: configRemove,
 	}, nil
 }
 
@@ -106,9 +112,9 @@ type listConfigsEvent struct {
 
 func (rce listConfigsEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
-		"offset":    rce.offset,
-		"limit":     rce.limit,
-		"operation": configList,
+		"offset":     rce.offset,
+		"limit":      rce.limit,
+		keyOperation: configList,
 	}
 	if len(rce.fullMatch) > 0 {
 		val["full_match"] = rce.fullMatch
@@ -130,7 +136,7 @@ func (be bootstrapEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
 		"external_id": be.externalID,
 		"success":     be.success,
-		"operation":   clientBootstrap,
+		keyOperation:  clientBootstrap,
 	}
 
 	if be.ID != "" {
@@ -162,8 +168,8 @@ type enableConfigEvent struct {
 
 func (e enableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": e.configID,
-		"operation": configEnable,
+		keyConfigID:  e.configID,
+		keyOperation: configEnable,
 	}, nil
 }
 
@@ -173,8 +179,8 @@ type disableConfigEvent struct {
 
 func (e disableConfigEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": e.configID,
-		"operation": configDisable,
+		keyConfigID:  e.configID,
+		keyOperation: configDisable,
 	}, nil
 }
 
@@ -188,10 +194,10 @@ func (uce updateCertEvent) Encode() (map[string]any, error) {
 	// clientKey is the device private key and is never published; see
 	// configEvent.Encode.
 	return map[string]any{
-		"config_id":   uce.configID,
+		keyConfigID:   uce.configID,
 		"client_cert": uce.clientCert,
 		"ca_cert":     uce.caCert,
-		"operation":   certUpdate,
+		keyOperation:  certUpdate,
 	}, nil
 }
 
@@ -202,7 +208,7 @@ type profileEvent struct {
 
 func (pe profileEvent) Encode() (map[string]any, error) {
 	val := map[string]any{
-		"operation": pe.operation,
+		keyOperation: pe.operation,
 	}
 	if pe.ID != "" {
 		val["profile_id"] = pe.ID
@@ -223,7 +229,7 @@ type deleteProfileEvent struct {
 func (dpe deleteProfileEvent) Encode() (map[string]any, error) {
 	return map[string]any{
 		"profile_id": dpe.profileID,
-		"operation":  profileDelete,
+		keyOperation: profileDelete,
 	}, nil
 }
 
@@ -234,9 +240,9 @@ type assignProfileEvent struct {
 
 func (ape assignProfileEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id":  ape.configID,
+		keyConfigID:  ape.configID,
 		"profile_id": ape.profileID,
-		"operation":  profileAssign,
+		keyOperation: profileAssign,
 	}, nil
 }
 
@@ -247,9 +253,9 @@ type bindResourcesEvent struct {
 
 func (bre bindResourcesEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": bre.configID,
-		"slots":     bre.slots,
-		"operation": bindingsBind,
+		keyConfigID:  bre.configID,
+		"slots":      bre.slots,
+		keyOperation: bindingsBind,
 	}, nil
 }
 
@@ -259,8 +265,8 @@ type listBindingsEvent struct {
 
 func (lbe listBindingsEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": lbe.configID,
-		"operation": bindingsList,
+		keyConfigID:  lbe.configID,
+		keyOperation: bindingsList,
 	}, nil
 }
 
@@ -270,7 +276,7 @@ type refreshBindingsEvent struct {
 
 func (rbe refreshBindingsEvent) Encode() (map[string]any, error) {
 	return map[string]any{
-		"config_id": rbe.configID,
-		"operation": bindingsRefresh,
+		keyConfigID:  rbe.configID,
+		keyOperation: bindingsRefresh,
 	}, nil
 }

@@ -71,8 +71,14 @@ func (res configRes) Code() int {
 	return http.StatusOK
 }
 
+// noStoreHeaders keeps bootstrap responses out of caches: they carry device
+// credentials and rendered configuration.
+func noStoreHeaders() map[string]string {
+	return map[string]string{"Cache-Control": "no-store"}
+}
+
 func (res configRes) Headers() map[string]string {
-	headers := map[string]string{"Cache-Control": "no-store"}
+	headers := noStoreHeaders()
 	if res.created {
 		headers["Location"] = fmt.Sprintf("/clients/configs/%s", res.ID)
 	}
@@ -103,7 +109,7 @@ func (res viewRes) Code() int {
 }
 
 func (res viewRes) Headers() map[string]string {
-	return map[string]string{"Cache-Control": "no-store"}
+	return noStoreHeaders()
 }
 
 func (res viewRes) Empty() bool {
@@ -122,7 +128,7 @@ func (res listRes) Code() int {
 }
 
 func (res listRes) Headers() map[string]string {
-	return map[string]string{"Cache-Control": "no-store"}
+	return noStoreHeaders()
 }
 
 func (res listRes) Empty() bool {
@@ -138,7 +144,7 @@ func (res changeConfigStatusRes) Code() int {
 }
 
 func (res changeConfigStatusRes) Headers() map[string]string {
-	return map[string]string{"Cache-Control": "no-store"}
+	return noStoreHeaders()
 }
 
 func (res changeConfigStatusRes) Empty() bool {
@@ -232,7 +238,7 @@ type bootstrapChallengeRes struct {
 func (res bootstrapChallengeRes) Code() int { return http.StatusOK }
 
 func (res bootstrapChallengeRes) Headers() map[string]string {
-	return map[string]string{"Cache-Control": "no-store"}
+	return noStoreHeaders()
 }
 
 func (res bootstrapChallengeRes) Empty() bool { return false }

@@ -57,4 +57,3 @@ type BootstrapProfilesPage struct {
 	Profiles []BootstrapProfile `json:"profiles"`
 	PageRes
 }
-

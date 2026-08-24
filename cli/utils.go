@@ -15,6 +15,17 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// Operation name literals shared across CLI subcommands.
+const (
+	all     = "all"
+	create  = "create"
+	get     = "get"
+	update  = "update"
+	delete  = "delete"
+	enable  = "enable"
+	disable = "disable"
+)
+
 var (
 	// Limit query parameter.
 	Limit uint64 = 10
@@ -83,17 +94,6 @@ func logCreatedCmd(cmd cobra.Command, e string) {
 	} else {
 		fmt.Fprintf(cmd.OutOrStdout(), color.BlueString("\ncreated: %s\n\n"), e)
 	}
-}
-
-func convertMetadata(m string) (map[string]any, error) {
-	var metadata map[string]any
-	if m == "" {
-		return nil, nil
-	}
-	if err := json.Unmarshal([]byte(Metadata), &metadata); err != nil {
-		return nil, err
-	}
-	return nil, nil
 }
 
 const certFileMode = 0o644

@@ -19,11 +19,6 @@ import (
 
 const (
 	defURL             string = "http://localhost"
-	defUsersURL        string = defURL + ":9002"
-	defDevicesURL      string = defURL + ":9006"
-	defWorkspacesURL   string = defURL + ":9003"
-	defChannelsURL     string = defURL + ":9005"
-	defGroupsURL       string = defURL + ":9004"
 	defHTTPURL         string = defURL + ":8008"
 	defTLSVerification bool   = false
 	defOffset          string = "0"
@@ -33,11 +28,6 @@ const (
 )
 
 type remotes struct {
-	DevicesURL      string `toml:"devices_url"`
-	UsersURL        string `toml:"users_url"`
-	WorkspacesURL   string `toml:"workspaces_url"`
-	ChannelsURL     string `toml:"channels_url"`
-	GroupsURL       string `toml:"groups_url"`
 	HTTPAdapterURL  string `toml:"http_adapter_url"`
 	CertsURL        string `toml:"certs_url"`
 	HostURL         string `toml:"host_url"`
@@ -102,11 +92,6 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 	case os.IsNotExist(err):
 		defaultConfig := config{
 			Remotes: remotes{
-				DevicesURL:      defDevicesURL,
-				UsersURL:        defUsersURL,
-				WorkspacesURL:   defWorkspacesURL,
-				ChannelsURL:     defChannelsURL,
-				GroupsURL:       defGroupsURL,
 				HTTPAdapterURL:  defHTTPURL,
 				HostURL:         defURL,
 				TLSVerification: defTLSVerification,
@@ -161,26 +146,6 @@ func ParseConfig(sdkConf smqsdk.Config) (smqsdk.Config, error) {
 		}
 		// check for config file value or flag input value is true
 		RawOutput = rawOutput || RawOutput
-	}
-
-	if sdkConf.DevicesURL == "" && config.Remotes.DevicesURL != "" {
-		sdkConf.DevicesURL = config.Remotes.DevicesURL
-	}
-
-	if sdkConf.UsersURL == "" && config.Remotes.UsersURL != "" {
-		sdkConf.UsersURL = config.Remotes.UsersURL
-	}
-
-	if sdkConf.WorkspacesURL == "" && config.Remotes.WorkspacesURL != "" {
-		sdkConf.WorkspacesURL = config.Remotes.WorkspacesURL
-	}
-
-	if sdkConf.ChannelsURL == "" && config.Remotes.ChannelsURL != "" {
-		sdkConf.ChannelsURL = config.Remotes.ChannelsURL
-	}
-
-	if sdkConf.GroupsURL == "" && config.Remotes.GroupsURL != "" {
-		sdkConf.GroupsURL = config.Remotes.GroupsURL
 	}
 
 	if sdkConf.HTTPAdapterURL == "" && config.Remotes.HTTPAdapterURL != "" {
@@ -242,8 +207,6 @@ func setConfigValue(key, value string) error {
 	}
 
 	configKeyToField := map[string]any{
-		"devices_url":      &config.Remotes.DevicesURL,
-		"users_url":        &config.Remotes.UsersURL,
 		"http_adapter_url": &config.Remotes.HTTPAdapterURL,
 		"certs_url":        &config.Remotes.CertsURL,
 		"tls_verification": &config.Remotes.TLSVerification,

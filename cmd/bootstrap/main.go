@@ -29,7 +29,6 @@ import (
 	"github.com/absmach/magistrala/pkg/jaeger"
 	pgclient "github.com/absmach/magistrala/pkg/postgres"
 	"github.com/absmach/magistrala/pkg/prometheus"
-	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 	"github.com/absmach/magistrala/pkg/server"
 	httpserver "github.com/absmach/magistrala/pkg/server/http"
 	"github.com/absmach/magistrala/pkg/uuid"
@@ -168,7 +167,6 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 	repoBindings := bootstrappg.NewBindingRepository(database, logger)
 	repoChallenges := bootstrappg.NewBootstrapChallengeRepository(database)
 
-	sdk := mgsdk.NewSDK(mgsdk.Config{})
 	idp := uuid.New()
 	resolver := bootstrap.NewAtomResolver(atomClient)
 	renderer := bootstrap.NewRenderer()
@@ -185,7 +183,6 @@ func newService(ctx context.Context, atomClient *atom.Client, database pgclient.
 		repoChallenges,
 		resolver,
 		renderer,
-		sdk,
 		[]byte(cfg.DBEncryptionKey),
 		cfg.DBEncryptionKeyID,
 		idp,

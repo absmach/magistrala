@@ -15,7 +15,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	repoerr "github.com/absmach/magistrala/pkg/errors/repository"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	mgsdk "github.com/absmach/magistrala/pkg/sdk"
 )
 
 var (
@@ -138,7 +137,6 @@ type bootstrapService struct {
 	challenges BootstrapChallengeRepository
 	resolver   BindingResolver
 	renderer   Renderer
-	sdk        mgsdk.SDK
 	dbCipher   *SecretCipher
 	idProvider magistrala.IDProvider
 	now        func() time.Time
@@ -162,7 +160,6 @@ func New(
 	challenges BootstrapChallengeRepository,
 	resolver BindingResolver,
 	renderer Renderer,
-	sdk mgsdk.SDK,
 	encKey []byte,
 	encKeyID string,
 	idp magistrala.IDProvider,
@@ -179,7 +176,6 @@ func New(
 		challenges: challenges,
 		resolver:   resolver,
 		renderer:   renderer,
-		sdk:        sdk,
 		dbCipher:   dbCipher,
 		idProvider: idp,
 		now:        time.Now,

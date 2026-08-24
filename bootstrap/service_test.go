@@ -13,7 +13,6 @@ import (
 	smqauthn "github.com/absmach/magistrala/pkg/authn"
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
-	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/stretchr/testify/assert"
@@ -41,7 +40,6 @@ var (
 
 var (
 	boot         *mocks.ConfigRepository
-	sdk          *sdkmocks.SDK
 	profileRepo  *mocks.ProfileRepository
 	bindingStore *mocks.BindingStore
 	resolver     *mocks.BindingResolver
@@ -50,13 +48,12 @@ var (
 
 func newService() bootstrap.Service {
 	boot = new(mocks.ConfigRepository)
-	sdk = new(sdkmocks.SDK)
 	profileRepo = new(mocks.ProfileRepository)
 	bindingStore = new(mocks.BindingStore)
 	resolver = new(mocks.BindingResolver)
 	renderer = new(mocks.Renderer)
 	idp := uuid.NewMock()
-	svc, err := bootstrap.New(boot, profileRepo, bindingStore, nil, resolver, renderer, sdk, encKey, "primary", idp)
+	svc, err := bootstrap.New(boot, profileRepo, bindingStore, nil, resolver, renderer, encKey, "primary", idp)
 	if err != nil {
 		panic(fmt.Sprintf("failed to build test service: %s", err))
 	}

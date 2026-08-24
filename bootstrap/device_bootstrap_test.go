@@ -123,7 +123,7 @@ func TestDeviceBootstrapChallengeProofAndReplayProtection(t *testing.T) {
 	configs := &deviceTestConfigRepository{config: cfg}
 	challenges := &deviceTestChallengeRepository{challenges: make(map[string]BootstrapChallenge)}
 	svcIface, err := New(
-		configs, nil, nil, challenges, nil, nil, nil,
+		configs, nil, nil, challenges, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "challenge-id"},
 	)
@@ -173,7 +173,7 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 	require.NoError(t, err)
 	challenges := &deviceTestChallengeRepository{challenges: make(map[string]BootstrapChallenge)}
 	svcIface, err := New(
-		&deviceTestConfigRepository{config: cfg}, nil, nil, challenges, nil, nil, nil,
+		&deviceTestConfigRepository{config: cfg}, nil, nil, challenges, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "challenge-id"},
 	)
@@ -204,7 +204,7 @@ func TestDeviceBootstrapRejectsWrongProofWithoutConsumingChallenge(t *testing.T)
 func TestAddGeneratesRecoverableDeviceKey(t *testing.T) {
 	configs := &deviceTestConfigRepository{}
 	svc, err := New(
-		configs, nil, nil, nil, nil, nil, nil,
+		configs, nil, nil, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "config-id"},
 	)
@@ -226,7 +226,7 @@ func TestAddGeneratesRecoverableDeviceKey(t *testing.T) {
 
 func TestAddRejectsShortBootstrapKey(t *testing.T) {
 	svc, err := New(
-		&deviceTestConfigRepository{}, nil, nil, nil, nil, nil, nil,
+		&deviceTestConfigRepository{}, nil, nil, nil, nil, nil,
 		[]byte("12345678910111213141516171819202"), "primary",
 		deviceTestIDProvider{id: "config-id"},
 	)

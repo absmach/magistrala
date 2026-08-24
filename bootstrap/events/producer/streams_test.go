@@ -18,7 +18,6 @@ import (
 	"github.com/absmach/magistrala/pkg/errors"
 	svcerr "github.com/absmach/magistrala/pkg/errors/service"
 	"github.com/absmach/magistrala/pkg/events/store"
-	sdkmocks "github.com/absmach/magistrala/pkg/sdk/mocks"
 	"github.com/absmach/magistrala/pkg/testsutil"
 	"github.com/absmach/magistrala/pkg/uuid"
 	"github.com/redis/go-redis/v9"
@@ -64,14 +63,12 @@ var (
 type testVariable struct {
 	svc  bootstrap.Service
 	boot *mocks.ConfigRepository
-	sdk  *sdkmocks.SDK
 }
 
 func newTestVariable(t *testing.T, redisURL string) testVariable {
 	boot := new(mocks.ConfigRepository)
-	sdk := new(sdkmocks.SDK)
 	idp := uuid.NewMock()
-	svc, err := bootstrap.New(boot, nil, nil, nil, nil, nil, sdk, encKey, "primary", idp)
+	svc, err := bootstrap.New(boot, nil, nil, nil, nil, nil, encKey, "primary", idp)
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
 	publisher, err := store.NewPublisher(context.Background(), redisURL, "bootstrap-es-pub-test")
 	require.Nil(t, err, fmt.Sprintf("got unexpected error: %s", err))
@@ -79,7 +76,6 @@ func newTestVariable(t *testing.T, redisURL string) testVariable {
 	return testVariable{
 		svc:  svc,
 		boot: boot,
-		sdk:  sdk,
 	}
 }
 

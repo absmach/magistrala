@@ -50,7 +50,7 @@ func TestAuthorizeReturnsAuthorizedOnlyWhenAllowed(t *testing.T) {
 	res, err := srv.Authorize(context.Background(), connect.NewRequest(&authv1.AuthzReq{
 		ExternalId: "64d6bc95-b313-4412-9369-299543d9c63b",
 		Topic:      "m/d1/c/ch1/messages",
-		Action:     authv1.Action_Publish,
+		Action:     authv1.Action_ACTION_PUBLISH,
 	}))
 	require.NoError(t, err)
 	require.True(t, res.Msg.GetAuthorized())
@@ -68,7 +68,7 @@ func TestAuthorizeReturnsDeniedOnlyWhenDenied(t *testing.T) {
 	res, err := srv.Authorize(context.Background(), connect.NewRequest(&authv1.AuthzReq{
 		ExternalId: "64d6bc95-b313-4412-9369-299543d9c63b",
 		Topic:      "m/d1/c/ch1/messages",
-		Action:     authv1.Action_Subscribe,
+		Action:     authv1.Action_ACTION_SUBSCRIBE,
 	}))
 	require.NoError(t, err)
 	require.False(t, res.Msg.GetAuthorized())

@@ -83,11 +83,12 @@ storage:
 
 cluster:
   enabled: true
+  allow_insecure: true
   node_id: "node3"
   etcd:
     data_dir: "/tmp/fluxmq/etcd"
     bind_addr: "172.30.0.203:2380"
-    client_addr: "172.30.0.203:2379"
+    client_addr: "127.0.0.1:2379"
     initial_cluster: "node1=http://172.30.0.201:2380,node2=http://172.30.0.202:2380,node3=http://172.30.0.203:2380"
     bootstrap: true
     hybrid_retained_size_threshold: 1024
